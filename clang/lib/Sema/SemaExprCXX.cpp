@@ -1858,7 +1858,7 @@ QualType Sema::CheckPointerToMemberOperands(
     else {
       Diag(Loc, diag::err_bad_memptr_lhs)
         << OpSpelling << 1 << LType
-        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ".*");
+        << FixItHint::CreateReplacement(SourceRange(Loc), ".*");
       return QualType();
     }
   }
@@ -2589,7 +2589,7 @@ Sema::OwningExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
   SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(NameLoc);
   Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
     << isa<CXXPseudoDestructorExpr>(E)
-    << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
+    << FixItHint::CreateInsertion(ExpectedLParenLoc, "()");
   
   return ActOnCallExpr(/*Scope*/ 0,
                        move(MemExpr),
@@ -2623,7 +2623,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
       // The user wrote "p->" when she probably meant "p."; fix it.
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
         << ObjectType << true
-        << CodeModificationHint::CreateReplacement(OpLoc, ".");
+        << FixItHint::CreateReplacement(OpLoc, ".");
       if (isSFINAEContext())
         return ExprError();
       
@@ -2728,7 +2728,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
       // The user wrote "p->" when she probably meant "p."; fix it.
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
         << ObjectType << true
-        << CodeModificationHint::CreateReplacement(OpLoc, ".");
+        << FixItHint::CreateReplacement(OpLoc, ".");
       if (isSFINAEContext())
         return ExprError();
       

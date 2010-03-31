@@ -504,13 +504,11 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
     SemaRef.Diag(StructuredSubobjectInitList->getLocStart(),
                  diag::warn_missing_braces)
     << StructuredSubobjectInitList->getSourceRange()
-    << CodeModificationHint::CreateInsertion(
-                                    StructuredSubobjectInitList->getLocStart(), 
-                                    "{")
-    << CodeModificationHint::CreateInsertion(
-                                    SemaRef.PP.getLocForEndOfToken(
+    << FixItHint::CreateInsertion(StructuredSubobjectInitList->getLocStart(), 
+                                  "{")
+    << FixItHint::CreateInsertion(SemaRef.PP.getLocForEndOfToken(
                                       StructuredSubobjectInitList->getLocEnd()), 
-                                      "}");
+                                  "}");
   }
 }
 
@@ -571,8 +569,8 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
   if (T->isScalarType() && !TopLevelObject)
     SemaRef.Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
       << IList->getSourceRange()
-      << CodeModificationHint::CreateRemoval(IList->getLocStart())
-      << CodeModificationHint::CreateRemoval(IList->getLocEnd());
+      << FixItHint::CreateRemoval(IList->getLocStart())
+      << FixItHint::CreateRemoval(IList->getLocEnd());
 }
 
 void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
@@ -1363,8 +1361,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           SemaRef.Diag(D->getFieldLoc(), 
                        diag::err_field_designator_unknown_suggest)
             << FieldName << CurrentObjectType << R.getLookupName()
-            << CodeModificationHint::CreateReplacement(D->getFieldLoc(),
-                                               R.getLookupName().getAsString());
+            << FixItHint::CreateReplacement(D->getFieldLoc(),
+                                            R.getLookupName().getAsString());
           SemaRef.Diag(ReplacementField->getLocation(), 
                        diag::note_previous_decl)
             << ReplacementField->getDeclName();

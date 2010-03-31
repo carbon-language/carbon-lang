@@ -95,7 +95,7 @@ namespace clang {
 /// should also provide full recovery from such errors, such that
 /// suppressing the diagnostic output can still result in successful
 /// compilation.
-class CodeModificationHint {
+class FixItHint {
 public:
   /// \brief Tokens that should be removed to correct the error.
   SourceRange RemoveRange;
@@ -110,7 +110,7 @@ public:
 
   /// \brief Empty code modification hint, indicating that no code
   /// modification is known.
-  CodeModificationHint() : RemoveRange(), InsertionLoc() { }
+  FixItHint() : RemoveRange(), InsertionLoc() { }
 
   bool isNull() const {
     return !RemoveRange.isValid() && !InsertionLoc.isValid();
@@ -118,9 +118,9 @@ public:
   
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
-  static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc,
-                                              llvm::StringRef Code) {
-    CodeModificationHint Hint;
+  static FixItHint CreateInsertion(SourceLocation InsertionLoc,
+                                   llvm::StringRef Code) {
+    FixItHint Hint;
     Hint.InsertionLoc = InsertionLoc;
     Hint.CodeToInsert = Code;
     return Hint;
@@ -128,17 +128,17 @@ public:
 
   /// \brief Create a code modification hint that removes the given
   /// source range.
-  static CodeModificationHint CreateRemoval(SourceRange RemoveRange) {
-    CodeModificationHint Hint;
+  static FixItHint CreateRemoval(SourceRange RemoveRange) {
+    FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
     return Hint;
   }
 
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
-  static CodeModificationHint CreateReplacement(SourceRange RemoveRange,
-                                                llvm::StringRef Code) {
-    CodeModificationHint Hint;
+  static FixItHint CreateReplacement(SourceRange RemoveRange,
+                                     llvm::StringRef Code) {
+    FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
     Hint.InsertionLoc = RemoveRange.getBegin();
     Hint.CodeToInsert = Code;
@@ -519,8 +519,8 @@ private:
   /// NumRanges - This is the number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
   /// \brief The number of code modifications hints in the
-  /// CodeModificationHints array.
-  unsigned char NumCodeModificationHints;
+  /// FixItHints array.
+  unsigned char NumFixItHints;
 
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
@@ -542,11 +542,11 @@ private:
   /// only support 10 ranges, could easily be extended if needed.
   SourceRange DiagRanges[10];
 
-  enum { MaxCodeModificationHints = 3 };
+  enum { MaxFixItHints = 3 };
 
-  /// CodeModificationHints - If valid, provides a hint with some code
+  /// FixItHints - If valid, provides a hint with some code
   /// to insert, remove, or modify at a particular position.
-  CodeModificationHint CodeModificationHints[MaxCodeModificationHints];
+  FixItHint FixItHints[MaxFixItHints];
 
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
@@ -573,13 +573,12 @@ private:
 /// for example.
 class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
+  mutable unsigned NumArgs, NumRanges, NumFixItHints;
 
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0),
-      NumCodeModificationHints(0) {}
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixItHints(0) {}
 
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -589,7 +588,7 @@ public:
     D.DiagObj = 0;
     NumArgs = D.NumArgs;
     NumRanges = D.NumRanges;
-    NumCodeModificationHints = D.NumCodeModificationHints;
+    NumFixItHints = D.NumFixItHints;
   }
 
   /// \brief Simple enumeration value used to give a name to the
@@ -599,7 +598,7 @@ public:
   /// \brief Create an empty DiagnosticBuilder object that represents
   /// no actual diagnostic.
   explicit DiagnosticBuilder(SuppressKind)
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumCodeModificationHints(0) { }
+    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixItHints(0) { }
 
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
@@ -648,14 +647,14 @@ public:
       DiagObj->DiagRanges[NumRanges++] = R;
   }
 
-  void AddCodeModificationHint(const CodeModificationHint &Hint) const {
+  void AddFixItHint(const FixItHint &Hint) const {
     if (Hint.isNull())
       return;
     
-    assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
-           "Too many code modification hints!");
+    assert(NumFixItHints < Diagnostic::MaxFixItHints &&
+           "Too many fix-it hints!");
     if (DiagObj)
-      DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
+      DiagObj->FixItHints[NumFixItHints++] = Hint;
   }
 };
 
@@ -716,8 +715,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 }
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const CodeModificationHint &Hint) {
-  DB.AddCodeModificationHint(Hint);
+                                           const FixItHint &Hint) {
+  DB.AddFixItHint(Hint);
   return DB;
 }
 
@@ -813,17 +812,17 @@ public:
     return DiagObj->DiagRanges[Idx];
   }
 
-  unsigned getNumCodeModificationHints() const {
-    return DiagObj->NumCodeModificationHints;
+  unsigned getNumFixItHints() const {
+    return DiagObj->NumFixItHints;
   }
 
-  const CodeModificationHint &getCodeModificationHint(unsigned Idx) const {
-    return DiagObj->CodeModificationHints[Idx];
+  const FixItHint &getFixItHint(unsigned Idx) const {
+    return DiagObj->FixItHints[Idx];
   }
 
-  const CodeModificationHint *getCodeModificationHints() const {
-    return DiagObj->NumCodeModificationHints?
-             &DiagObj->CodeModificationHints[0] : 0;
+  const FixItHint *getFixItHints() const {
+    return DiagObj->NumFixItHints?
+             &DiagObj->FixItHints[0] : 0;
   }
 
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
@@ -846,7 +845,7 @@ class StoredDiagnostic {
   FullSourceLoc Loc;
   std::string Message;
   std::vector<SourceRange> Ranges;
-  std::vector<CodeModificationHint> FixIts;
+  std::vector<FixItHint> FixIts;
 
 public:
   StoredDiagnostic();
@@ -866,7 +865,7 @@ public:
   range_iterator range_end() const { return Ranges.end(); }
   unsigned range_size() const { return Ranges.size(); }
 
-  typedef std::vector<CodeModificationHint>::const_iterator fixit_iterator;
+  typedef std::vector<FixItHint>::const_iterator fixit_iterator;
   fixit_iterator fixit_begin() const { return FixIts.begin(); }
   fixit_iterator fixit_end() const { return FixIts.end(); }
   unsigned fixit_size() const { return FixIts.size(); }

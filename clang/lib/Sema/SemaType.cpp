@@ -183,8 +183,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
       if (DS.isEmpty()) {
         TheSema.Diag(DeclLoc, diag::ext_missing_declspec)
           << DS.getSourceRange()
-        << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
-                                                 "int");
+        << FixItHint::CreateInsertion(DS.getSourceRange().getBegin(), "int");
       }
     } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:

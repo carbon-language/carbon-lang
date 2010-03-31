@@ -660,7 +660,7 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
         ReplaceStr = "> > ";
 
       Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space)
-        << CodeModificationHint::CreateReplacement(
+        << FixItHint::CreateReplacement(
                                  SourceRange(Tok.getLocation()), ReplaceStr);
     }
 

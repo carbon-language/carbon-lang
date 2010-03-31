@@ -161,7 +161,7 @@ bool Sema::DiagnoseUnknownTemplateName(const IdentifierInfo &II,
   NestedNameSpecifier *Qualifier = (NestedNameSpecifier*)SS->getScopeRep();
   Diag(IILoc, diag::err_template_kw_missing)
     << Qualifier << II.getName()
-    << CodeModificationHint::CreateInsertion(IILoc, "template ");
+    << FixItHint::CreateInsertion(IILoc, "template ");
   SuggestedTemplate 
     = TemplateTy::make(Context.getDependentTemplateName(Qualifier, &II));
   SuggestedKind = TNK_Dependent_template_name;
@@ -240,12 +240,12 @@ void Sema::LookupTemplateName(LookupResult &Found,
         if (LookupCtx)
           Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
             << Name << LookupCtx << Found.getLookupName() << SS.getRange()
-            << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+            << FixItHint::CreateReplacement(Found.getNameLoc(),
                                           Found.getLookupName().getAsString());
         else
           Diag(Found.getNameLoc(), diag::err_no_template_suggest)
             << Name << Found.getLookupName()
-            << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+            << FixItHint::CreateReplacement(Found.getNameLoc(),
                                           Found.getLookupName().getAsString());
         if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
           Diag(Template->getLocation(), diag::note_previous_decl)
@@ -822,8 +822,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     if (!isAcceptableTagRedeclaration(PrevRecordDecl, Kind, KWLoc, *Name)) {
       Diag(KWLoc, diag::err_use_with_wrong_tag)
         << Name
-        << CodeModificationHint::CreateReplacement(KWLoc,
-                            PrevRecordDecl->getKindName());
+        << FixItHint::CreateReplacement(KWLoc, PrevRecordDecl->getKindName());
       Diag(PrevRecordDecl->getLocation(), diag::note_previous_use);
       Kind = PrevRecordDecl->getTagKind();
     }
@@ -1295,8 +1294,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       } else {
         Diag(SS.getRange().getBegin(), diag::err_template_spec_needs_header)
           << SS.getRange()
-          << CodeModificationHint::CreateInsertion(FirstTemplateLoc,
-                                                   "template<> ");
+          << FixItHint::CreateInsertion(FirstTemplateLoc, "template<> ");
         IsExplicitSpecialization = true;
       }
       return 0;
@@ -1499,8 +1497,7 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
     if (!isAcceptableTagRedeclaration(D, TagKind, TagLoc, *Id)) {
       Diag(TagLoc, diag::err_use_with_wrong_tag)
         << Type
-        << CodeModificationHint::CreateReplacement(SourceRange(TagLoc),
-                                                   D->getKindName());
+        << FixItHint::CreateReplacement(SourceRange(TagLoc), D->getKindName());
       Diag(D->getLocation(), diag::note_previous_use);
     }
   }
@@ -3463,7 +3460,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   } else if (TemplateParams) {
     if (TUK == TUK_Friend)
       Diag(KWLoc, diag::err_template_spec_friend)
-        << CodeModificationHint::CreateRemoval(
+        << FixItHint::CreateRemoval(
                                 SourceRange(TemplateParams->getTemplateLoc(),
                                             TemplateParams->getRAngleLoc()))
         << SourceRange(LAngleLoc, RAngleLoc);
@@ -3471,7 +3468,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       isExplicitSpecialization = true;
   } else if (TUK != TUK_Friend) {
     Diag(KWLoc, diag::err_template_spec_needs_header)
-      << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
+      << FixItHint::CreateInsertion(KWLoc, "template<> ");
     isExplicitSpecialization = true;
   }
 
@@ -3489,7 +3486,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                     *ClassTemplate->getIdentifier())) {
     Diag(KWLoc, diag::err_use_with_wrong_tag)
       << ClassTemplate
-      << CodeModificationHint::CreateReplacement(KWLoc,
+      << FixItHint::CreateReplacement(KWLoc,
                             ClassTemplate->getTemplatedDecl()->getKindName());
     Diag(ClassTemplate->getTemplatedDecl()->getLocation(),
          diag::note_previous_use);
@@ -3531,8 +3528,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       //      to the implicit argument list of the primary template.
       Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
         << (TUK == TUK_Definition)
-        << CodeModificationHint::CreateRemoval(SourceRange(LAngleLoc,
-                                                           RAngleLoc));
+        << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
       return CheckClassTemplate(S, TagSpec, TUK, KWLoc, SS,
                                 ClassTemplate->getIdentifier(),
                                 TemplateNameLoc,
@@ -4379,7 +4375,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                     *ClassTemplate->getIdentifier())) {
     Diag(KWLoc, diag::err_use_with_wrong_tag)
       << ClassTemplate
-      << CodeModificationHint::CreateReplacement(KWLoc,
+      << FixItHint::CreateReplacement(KWLoc,
                             ClassTemplate->getTemplatedDecl()->getKindName());
     Diag(ClassTemplate->getTemplatedDecl()->getLocation(),
          diag::note_previous_use);
@@ -4697,7 +4693,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (D.getDeclSpec().isInlineSpecified() && getLangOptions().CPlusPlus0x)
     Diag(D.getDeclSpec().getInlineSpecLoc(), 
          diag::err_explicit_instantiation_inline)
-      <<CodeModificationHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
+      <<FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
   
   // FIXME: check for constexpr specifier.
   

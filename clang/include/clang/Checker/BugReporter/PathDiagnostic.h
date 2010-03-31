@@ -168,7 +168,7 @@ public:
 
 private:
   const std::string str;
-  std::vector<CodeModificationHint> CodeModificationHints;
+  std::vector<FixItHint> FixItHints;
   const Kind kind;
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
@@ -203,8 +203,8 @@ public:
     ranges.push_back(SourceRange(B,E));
   }
 
-  void addCodeModificationHint(const CodeModificationHint& Hint) {
-    CodeModificationHints.push_back(Hint);
+  void addFixItHint(const FixItHint& Hint) {
+    FixItHints.push_back(Hint);
   }
 
   typedef const SourceRange* range_iterator;
@@ -217,15 +217,15 @@ public:
     return ranges_begin() + ranges.size();
   }
 
-  typedef const CodeModificationHint *code_modifications_iterator;
+  typedef const FixItHint *fixit_iterator;
 
-  code_modifications_iterator code_modifications_begin() const {
-    return CodeModificationHints.empty()? 0 : &CodeModificationHints[0];
+  fixit_iterator fixit_begin() const {
+    return FixItHints.empty()? 0 : &FixItHints[0];
   }
 
-  code_modifications_iterator code_modifications_end() const {
-    return CodeModificationHints.empty()? 0
-                   : &CodeModificationHints[0] + CodeModificationHints.size();
+  fixit_iterator fixit_end() const {
+    return FixItHints.empty()? 0
+                   : &FixItHints[0] + FixItHints.size();
   }
 
   static inline bool classof(const PathDiagnosticPiece* P) {

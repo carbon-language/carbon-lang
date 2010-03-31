@@ -127,10 +127,10 @@ void Preprocessor::CheckEndOfDirective(const char *DirType, bool EnableMacros) {
     // Add a fixit in GNU/C99/C++ mode.  Don't offer a fixit for strict-C89,
     // because it is more trouble than it is worth to insert /**/ and check that
     // there is no /**/ in the range also.
-    CodeModificationHint FixItHint;
+    FixItHint Hint;
     if (Features.GNUMode || Features.C99 || Features.CPlusPlus)
-      FixItHint = CodeModificationHint::CreateInsertion(Tmp.getLocation(),"//");
-    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType << FixItHint;
+      Hint = FixItHint::CreateInsertion(Tmp.getLocation(),"//");
+    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType << Hint;
     DiscardUntilEndOfDirective();
   }
 }

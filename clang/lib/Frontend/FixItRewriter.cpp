@@ -93,7 +93,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     // completely ignore it, even if it's an error: fix-it locations
     // are meant to perform specific fix-ups even in the presence of
     // other errors.
-    if (Info.getNumCodeModificationHints() == 0)
+    if (Info.getNumFixItHints() == 0)
       return;
 
     // See if the location of the error is one that matches what the
@@ -122,10 +122,10 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.
-  bool CanRewrite = Info.getNumCodeModificationHints() > 0;
-  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints();
+  bool CanRewrite = Info.getNumFixItHints() > 0;
+  for (unsigned Idx = 0, Last = Info.getNumFixItHints();
        Idx < Last; ++Idx) {
-    const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
+    const FixItHint &Hint = Info.getFixItHint(Idx);
     if (Hint.RemoveRange.isValid() &&
         Rewrite.getRangeSize(Hint.RemoveRange) == -1) {
       CanRewrite = false;
@@ -140,7 +140,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   }
 
   if (!CanRewrite) {
-    if (Info.getNumCodeModificationHints() > 0)
+    if (Info.getNumFixItHints() > 0)
       Diag(Info.getLocation(), diag::note_fixit_in_macro);
 
     // If this was an error, refuse to perform any rewriting.
@@ -152,9 +152,9 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   }
 
   bool Failed = false;
-  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints();
+  for (unsigned Idx = 0, Last = Info.getNumFixItHints();
        Idx < Last; ++Idx) {
-    const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
+    const FixItHint &Hint = Info.getFixItHint(Idx);
     if (!Hint.RemoveRange.isValid()) {
       // We're adding code.
       if (Rewrite.InsertTextBefore(Hint.InsertionLoc, Hint.CodeToInsert))

@@ -486,13 +486,13 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
           << Name << LookupCtx << Found.getLookupName() << SS.getRange()
-          << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
-                                           Found.getLookupName().getAsString());
+          << FixItHint::CreateReplacement(Found.getNameLoc(),
+                                          Found.getLookupName().getAsString());
       else
         Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
           << Name << Found.getLookupName()
-          << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
-                                           Found.getLookupName().getAsString());
+          << FixItHint::CreateReplacement(Found.getNameLoc(),
+                                          Found.getLookupName().getAsString());
       
       if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
         Diag(ND->getLocation(), diag::note_previous_decl)

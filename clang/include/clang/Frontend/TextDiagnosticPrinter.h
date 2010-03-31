@@ -69,7 +69,7 @@ public:
   void EmitCaretDiagnostic(SourceLocation Loc,
                            SourceRange *Ranges, unsigned NumRanges,
                            SourceManager &SM,
-                           const CodeModificationHint *Hints,
+                           const FixItHint *Hints,
                            unsigned NumHints,
                            unsigned Columns);
 
