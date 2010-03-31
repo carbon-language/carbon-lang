@@ -230,14 +230,14 @@ public:
 
   void fixInstructionMarkers(DenseMap<const MachineInstr *, 
                              unsigned> &MIIndexMap) {
-    assert (getFirstInsn() && "First instruction is missing!");
+    assert(getFirstInsn() && "First instruction is missing!");
     
     // Use the end of last child scope as end of this scope.
     const SmallVector<DbgScope *, 4> &Scopes = getScopes();
     const MachineInstr *LastInsn = getFirstInsn();
     unsigned LIndex = 0;
     if (Scopes.empty()) {
-      assert (getLastInsn() && "Inner most scope does not have last insn!");
+      assert(getLastInsn() && "Inner most scope does not have last insn!");
       return;
     }
     for (SmallVector<DbgScope *, 4>::const_iterator SI = Scopes.begin(),
@@ -1243,9 +1243,9 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
 /// getUpdatedDbgScope - Find or create DbgScope assicated with the instruction.
 /// Initialize scope and update scope hierarchy.
 DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
-  MDNode *InlinedAt) {
-  assert (N && "Invalid Scope encoding!");
-  assert (MI && "Missing machine instruction!");
+                                         MDNode *InlinedAt) {
+  assert(N && "Invalid Scope encoding!");
+  assert(MI && "Missing machine instruction!");
   bool GetConcreteScope = (MI && InlinedAt);
 
   DbgScope *NScope = NULL;
@@ -1254,7 +1254,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
     NScope = DbgScopeMap.lookup(InlinedAt);
   else
     NScope = DbgScopeMap.lookup(N);
-  assert (NScope && "Unable to find working scope!");
+  assert(NScope && "Unable to find working scope!");
 
   if (NScope->getFirstInsn())
     return NScope;
@@ -1264,7 +1264,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
     DILocation IL(InlinedAt);
     Parent = getUpdatedDbgScope(IL.getScope().getNode(), MI,
                          IL.getOrigLocation().getNode());
-    assert (Parent && "Unable to find Parent scope!");
+    assert(Parent && "Unable to find Parent scope!");
     NScope->setParent(Parent);
     Parent->addScope(NScope);
   } else if (DIDescriptor(N).isLexicalBlock()) {
@@ -1291,7 +1291,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
 }
 
 DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
-  assert (N && "Invalid Scope encoding!");
+  assert(N && "Invalid Scope encoding!");
 
   DbgScope *AScope = AbstractScopes.lookup(N);
   if (AScope)
@@ -1409,7 +1409,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
 
   DISubprogram InlinedSP = getDISubprogram(DS.getNode());
   DIE *OriginDIE = ModuleCU->getDIE(InlinedSP.getNode());
-  assert (OriginDIE && "Unable to find Origin DIE!");
+  assert(OriginDIE && "Unable to find Origin DIE!");
   addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, OriginDIE);
 
@@ -1473,9 +1473,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     DISubprogram InlinedSP = getDISubprogram(DS.getNode());
     DIE *OriginSPDIE = ModuleCU->getDIE(InlinedSP.getNode());
     (void) OriginSPDIE;
-    assert (OriginSPDIE && "Unable to find Origin DIE for the SP!");
+    assert(OriginSPDIE && "Unable to find Origin DIE for the SP!");
     DIE *AbsDIE = DV->getAbstractVariable()->getDIE();
-    assert (AbsDIE && "Unable to find Origin DIE for the Variable!");
+    assert(AbsDIE && "Unable to find Origin DIE for the Variable!");
     addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
                 dwarf::DW_FORM_ref4, AbsDIE);
   }
@@ -1750,7 +1750,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   DIType GTy = DI_GV.getType();
   if (GTy.isCompositeType() && !GTy.getName().empty()) {
     DIEEntry *Entry = ModuleCU->getDIEEntry(GTy.getNode());
-    assert (Entry && "Missing global type!");
+    assert(Entry && "Missing global type!");
     ModuleCU->addGlobalType(GTy.getName(), Entry->getEntry());
   }
   return;
@@ -2220,7 +2220,7 @@ bool DwarfDebug::extractScopeInformation() {
     if (S->isAbstractScope())
       continue;
     const MachineInstr *MI = S->getFirstInsn();
-    assert (MI && "DbgScope does not have first instruction!");
+    assert(MI && "DbgScope does not have first instruction!");
 
     InsnToDbgScopeMapTy::iterator IDI = DbgScopeBeginMap.find(MI);
     if (IDI != DbgScopeBeginMap.end())
@@ -2229,7 +2229,7 @@ bool DwarfDebug::extractScopeInformation() {
       DbgScopeBeginMap[MI].push_back(S);
 
     MI = S->getLastInsn();
-    assert (MI && "DbgScope does not have last instruction!");
+    assert(MI && "DbgScope does not have last instruction!");
     IDI = DbgScopeEndMap.find(MI);
     if (IDI != DbgScopeEndMap.end())
       IDI->second.push_back(S);
