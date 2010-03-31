@@ -156,6 +156,16 @@ public:
   void setMetadata(unsigned KindID, MDNode *Node);
   void setMetadata(const char *Kind, MDNode *Node);
 
+  /// setDbgMetadata - This is just an optimized helper function that is
+  /// equivalent to setMetadata("dbg", Node);
+  void setDbgMetadata(MDNode *Node);
+  
+  /// getDbgMetadata - This is just an optimized helper function that is
+  /// equivalent to calling getMetadata("dbg").
+  MDNode *getDbgMetadata() const {
+    return DbgInfo;
+  }
+  
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
   /// metadata hash.

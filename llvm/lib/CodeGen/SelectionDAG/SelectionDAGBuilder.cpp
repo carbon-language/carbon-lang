@@ -3800,7 +3800,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     int FI = SI->second;
 
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (MDNode *Dbg = DI.getMetadata("dbg"))
+      if (MDNode *Dbg = DI.getDbgMetadata())
         MMI->setVariableDbgInfo(Variable, FI, Dbg);
     return 0;
   }
@@ -3852,7 +3852,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0; // VLAs.
     int FI = SI->second;
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (MDNode *Dbg = DI.getMetadata("dbg"))
+      if (MDNode *Dbg = DI.getDbgMetadata())
         MMI->setVariableDbgInfo(Variable, FI, Dbg);
     return 0;
   }

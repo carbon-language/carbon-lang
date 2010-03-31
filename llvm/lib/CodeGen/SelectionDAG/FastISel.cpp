@@ -340,10 +340,9 @@ bool FastISel::SelectCall(User *I) {
       StaticAllocaMap.find(AI);
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
-    if (MMI) {
-      if (MDNode *Dbg = DI->getMetadata("dbg"))
-        MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
-    }
+    if (MDNode *Dbg = DI->getDbgMetadata())
+      MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
+    
     // Building the map above is target independent.  Generating DBG_VALUE
     // inline is target dependent; do this now.
     (void)TargetSelectInstruction(cast<Instruction>(I));

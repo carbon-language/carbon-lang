@@ -284,8 +284,7 @@ class TrackingVH : public ValueHandleBase {
     Value *VP = ValueHandleBase::getValPtr();
 
     // Null is always ok.
-    if (!VP)
-        return;
+    if (!VP) return;
 
     // Check that this value is valid (i.e., it hasn't been deleted). We
     // explicitly delay this check until access to avoid requiring clients to be
