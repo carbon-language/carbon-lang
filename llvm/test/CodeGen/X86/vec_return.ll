@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 > %t
-; RUN: grep xorps %t | count 1
+; RUN: grep pxor %t | count 1
 ; RUN: grep movaps %t | count 1
 ; RUN: not grep shuf %t
 

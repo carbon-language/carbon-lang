@@ -2514,7 +2514,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     Alignment = (*LoadMI->memoperands_begin())->getAlignment();
   else
     switch (LoadMI->getOpcode()) {
-    case X86::V_SET0:
+    case X86::V_SET0PS:
+    case X86::V_SET0PD:
+    case X86::V_SET0PI:
     case X86::V_SETALLONES:
       Alignment = 16;
       break;
@@ -2544,11 +2546,13 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
   SmallVector<MachineOperand,X86AddrNumOperands> MOs;
   switch (LoadMI->getOpcode()) {
-  case X86::V_SET0:
+  case X86::V_SET0PS:
+  case X86::V_SET0PD:
+  case X86::V_SET0PI:
   case X86::V_SETALLONES:
   case X86::FsFLD0SD:
   case X86::FsFLD0SS: {
-    // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
+    // Folding a V_SET0P? or V_SETALLONES as a load, to ease register pressure.
     // Create a constant-pool entry and operands to load from it.
 
     // Medium and large mode can't fold loads this way.
@@ -3675,6 +3679,7 @@ static const unsigned ReplaceableInstrs[][3] = {
   { X86::ANDPSrr,    X86::ANDPDrr,   X86::PANDrr    },
   { X86::ORPSrm,     X86::ORPDrm,    X86::PORrm     },
   { X86::ORPSrr,     X86::ORPDrr,    X86::PORrr     },
+  { X86::V_SET0PS,   X86::V_SET0PD,  X86::V_SET0PI  },
   { X86::XORPSrm,    X86::XORPDrm,   X86::PXORrm    },
   { X86::XORPSrr,    X86::XORPDrr,   X86::PXORrr    },
 };
