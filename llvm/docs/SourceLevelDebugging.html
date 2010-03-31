@@ -289,26 +289,25 @@ height="369">
    0x1000.)</p>
 
 <p>The fields of debug descriptors used internally by LLVM 
-   are restricted to only the simple data types <tt>int</tt>, <tt>uint</tt>,
-   <tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>mdstring</tt> and
-   <tt>mdnode</tt>. </p>
+   are restricted to only the simple data types <tt>i32</tt>, <tt>i1</tt>,
+   <tt>float</tt>, <tt>double</tt>, <tt>mdstring</tt> and <tt>mdnode</tt>. </p>
 
 <div class="doc_code">
 <pre>
 !1 = metadata !{
-  uint,   ;; A tag
+  i32,   ;; A tag
   ...
 }
 </pre>
 </div>
 
 <p><a name="LLVMDebugVersion">The first field of a descriptor is always an
-   <tt>uint</tt> containing a tag value identifying the content of the
+   <tt>i32</tt> containing a tag value identifying the content of the
    descriptor.  The remaining fields are specific to the descriptor.  The values
    of tags are loosely bound to the tag values of DWARF information entries.
    However, that does not restrict the use of the information supplied to DWARF
    targets.  To facilitate versioning of debug information, the tag is augmented
-   with the current debug version (LLVMDebugVersion = 8 << 16 or 0x80000 or
+   with the current debug version (LLVMDebugVersion = 8 &lt;&lt; 16 or 0x80000 or
    524288.)</a></p>
 
 <p>The details of the various descriptors follow.</p>  
@@ -829,8 +828,8 @@ DW_TAG_return_variable = 258
    rules.</p>
 
 <p>In order to handle this, the LLVM debug format uses the metadata attached to
-   llvm instructions to encode line nuber and scoping information. Consider the
-   following C fragment, for example:</p>
+   llvm instructions to encode line number and scoping information. Consider
+   the following C fragment, for example:</p>
 
 <div class="doc_code">
 <pre>
