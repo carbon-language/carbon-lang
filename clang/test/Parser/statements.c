@@ -57,3 +57,8 @@ void test6(void) {
 int test7() {
   return 4     // expected-error {{expected ';' after return statement}}
 }
+
+void test8() {
+  // Should not skip '}' and produce a "expected '}'" error.
+  undecl // expected-error {{use of undeclared identifier 'undecl'}}
+}

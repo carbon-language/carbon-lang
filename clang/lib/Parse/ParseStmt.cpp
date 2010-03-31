@@ -125,10 +125,12 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     // expression[opt] ';'
     OwningExprResult Expr(ParseExpression());
     if (Expr.isInvalid()) {
-      // If the expression is invalid, skip ahead to the next semicolon.  Not
-      // doing this opens us up to the possibility of infinite loops if
+      // If the expression is invalid, skip ahead to the next semicolon or '}'.
+      // Not doing this opens us up to the possibility of infinite loops if
       // ParseExpression does not consume any tokens.
-      SkipUntil(tok::semi);
+      SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+      if (Tok.is(tok::semi))
+        ConsumeToken();
       return StmtError();
     }
     // Otherwise, eat the semicolon.

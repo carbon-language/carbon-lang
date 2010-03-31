@@ -11,4 +11,3 @@ int foo(int x) {
 
 // CHECK: 9:3: error: use of undeclared identifier 'help'
 // CHECK:  help
-// CHECK: 14:102: error: expected '}'
