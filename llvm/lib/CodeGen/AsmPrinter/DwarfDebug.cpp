@@ -692,9 +692,9 @@ void DwarfDebug::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   }
 
   // Get the offsets for the forwarding field and the variable field.
-  unsigned int forwardingFieldOffset =
+  unsigned forwardingFieldOffset =
     DIDerivedType(forwardingField.getNode()).getOffsetInBits() >> 3;
-  unsigned int varFieldOffset =
+  unsigned varFieldOffset =
     DIDerivedType(varField.getNode()).getOffsetInBits() >> 3;
 
   // Decode the original location, and use that as the start of the byref
@@ -1525,7 +1525,8 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     } else {
       MachineLocation Location;
       unsigned FrameReg;
-      int Offset = RI->getFrameIndexReference(*MF, DV->getFrameIndex(), FrameReg);
+      int Offset = RI->getFrameIndexReference(*MF, DV->getFrameIndex(),
+                                              FrameReg);
       Location.set(FrameReg, Offset);
       
       if (VD.hasComplexAddress())
@@ -1609,7 +1610,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
 /// source file names. If none currently exists, create a new id and insert it
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
-unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName) {
+unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName){
   unsigned DId;
   StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
   if (DI != DirectoryIdMap.end()) {
@@ -1722,8 +1723,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   DIDescriptor GVContext = DI_GV.getContext();
   // Do not create specification DIE if context is either compile unit
   // or a subprogram.
-  if (DI_GV.isDefinition() && !GVContext.isCompileUnit()
-      && !GVContext.isFile() && !GVContext.isSubprogram()) {
+  if (DI_GV.isDefinition() && !GVContext.isCompileUnit() &&
+      !GVContext.isFile() && !GVContext.isSubprogram()) {
     // Create specification DIE.
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
@@ -1871,7 +1872,7 @@ void DwarfDebug::endModule() {
     if (!NDie) continue;
     addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
     // FIXME - This is not the correct approach.
-    // addDIEEntry(NDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
+    //addDIEEntry(NDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie
   }
 
   // Standard sections final addresses.
