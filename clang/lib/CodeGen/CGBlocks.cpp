@@ -17,6 +17,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Target/TargetData.h"
 #include <algorithm>
 

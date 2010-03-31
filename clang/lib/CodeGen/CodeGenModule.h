@@ -31,7 +31,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ValueHandle.h"
-#include <list>
 
 namespace llvm {
   class Module;

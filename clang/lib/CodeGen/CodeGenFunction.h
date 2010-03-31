@@ -22,7 +22,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
-#include <map>
 #include "CodeGenModule.h"
 #include "CGBlocks.h"
 #include "CGBuilder.h"

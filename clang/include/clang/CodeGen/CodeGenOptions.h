@@ -15,7 +15,6 @@
 #define LLVM_CLANG_CODEGEN_CODEGENOPTIONS_H
 
 #include <string>
-#include <vector>
 
 namespace clang {
 

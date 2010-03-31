@@ -15,7 +15,6 @@
 #define CLANG_CODEGEN_CGVTABLE_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/GlobalVariable.h"
 #include "GlobalDecl.h"
 

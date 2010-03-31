@@ -16,7 +16,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
 #include <vector>
 
 #include "CGCall.h"

@@ -21,7 +21,6 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"
-#include <map>
 
 #include "CGBuilder.h"
 

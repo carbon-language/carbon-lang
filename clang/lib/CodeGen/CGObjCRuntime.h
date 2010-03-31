@@ -16,7 +16,6 @@
 #ifndef CLANG_CODEGEN_OBCJRUNTIME_H
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 #include "clang/Basic/IdentifierTable.h" // Selector
-#include "llvm/ADT/SmallVector.h"
 #include "clang/AST/DeclObjC.h"
 #include <string>
 
