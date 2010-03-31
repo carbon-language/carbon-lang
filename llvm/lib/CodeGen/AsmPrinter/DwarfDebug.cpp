@@ -92,11 +92,11 @@ public:
 
   /// addGlobal - Add a new global entity to the compile unit.
   ///
-  void addGlobal(const std::string &Name, DIE *Die) { Globals[Name] = Die; }
+  void addGlobal(StringRef Name, DIE *Die) { Globals[Name] = Die; }
 
   /// addGlobalType - Add a new global type to the compile unit.
   ///
-  void addGlobalType(const std::string &Name, DIE *Die) { 
+  void addGlobalType(StringRef Name, DIE *Die) { 
     GlobalTypes[Name] = Die; 
   }
 
