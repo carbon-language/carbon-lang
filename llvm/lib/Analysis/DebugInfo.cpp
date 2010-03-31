@@ -96,9 +96,8 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   if (DbgNode == 0)
     return DIDescriptor();
 
-  if (Elt < DbgNode->getNumOperands() && DbgNode->getOperand(Elt))
-    return DIDescriptor(dyn_cast<MDNode>(DbgNode->getOperand(Elt)));
-
+  if (Elt < DbgNode->getNumOperands())
+    return DIDescriptor(dyn_cast_or_null<MDNode>(DbgNode->getOperand(Elt)));
   return DIDescriptor();
 }
 
