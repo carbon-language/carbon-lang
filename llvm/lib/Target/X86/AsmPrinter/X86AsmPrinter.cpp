@@ -524,6 +524,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
           OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
         else
           // Internal to current translation unit.
+          //
+          // When we place the LSDA into the TEXT section, the type info
+          // pointers need to be indirect and pc-rel. We accomplish this by
+          // using NLPs.  However, sometimes the types are local to the file. So
+          // we need to fill in the value for the NLP in those cases.
           OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
                                                         OutContext),
                                 4/*size*/, 0/*addrspace*/);
