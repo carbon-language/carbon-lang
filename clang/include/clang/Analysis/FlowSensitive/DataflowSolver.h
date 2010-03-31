@@ -17,7 +17,8 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "functional" // STL
 
 namespace clang {
@@ -28,23 +29,30 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 
 class DataflowWorkListTy {
-  typedef llvm::SmallPtrSet<const CFGBlock*,20> BlockSet;
-  BlockSet wlist;
+  llvm::DenseMap<const CFGBlock*, unsigned char> BlockSet;
+  llvm::SmallVector<const CFGBlock *, 10> BlockQueue;
 public:
   /// enqueue - Add a block to the worklist.  Blocks already on the
   ///  worklist are not added a second time.
-  void enqueue(const CFGBlock* B) { wlist.insert(B); }
+  void enqueue(const CFGBlock* B) {
+    unsigned char &x = BlockSet[B];
+    if (x == 1)
+      return;
+    x = 1;
+    BlockQueue.push_back(B);
+  }
 
   /// dequeue - Remove a block from the worklist.
   const CFGBlock* dequeue() {
-    assert (!wlist.empty());
-    const CFGBlock* B = *wlist.begin();
-    wlist.erase(B);
+    assert(!BlockQueue.empty());
+    const CFGBlock *B = BlockQueue.back();
+    BlockQueue.pop_back();
+    BlockSet[B] = 0;
     return B;
   }
 
   /// isEmpty - Return true if the worklist is empty.
-  bool isEmpty() const { return wlist.empty(); }
+  bool isEmpty() const { return BlockQueue.empty(); }
 };
 
 //===----------------------------------------------------------------------===//
