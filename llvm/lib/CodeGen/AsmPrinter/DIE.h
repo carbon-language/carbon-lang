@@ -174,7 +174,7 @@ namespace llvm {
     /// The caller is responsible for deleting the return value at or after the
     /// same time it destroys this DIE.
     ///
-    DIEValue *addSiblingOffset();
+    DIEValue *addSiblingOffset(BumpPtrAllocator &A);
 
     /// addChild - Add a child to the DIE.
     ///

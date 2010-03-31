@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -98,9 +99,11 @@ class DwarfDebug : public DwarfPrinter {
   /// Lines - List of source line correspondence.
   std::vector<SrcLineInfo> Lines;
 
-  /// DIEValues - A list of all the unique values in use.
-  ///
-  std::vector<DIEValue *> DIEValues;
+  /// DIEBlocks - A list of all the DIEBlocks in use.
+  std::vector<DIEBlock *> DIEBlocks;
+
+  // DIEValueAllocator - All DIEValues are allocated through this allocator.
+  BumpPtrAllocator DIEValueAllocator;
 
   /// StringPool - A String->Symbol mapping of strings used by indirect
   /// references.

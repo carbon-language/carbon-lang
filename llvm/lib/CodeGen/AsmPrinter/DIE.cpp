@@ -19,6 +19,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
@@ -114,8 +115,8 @@ DIE::~DIE() {
 
 /// addSiblingOffset - Add a sibling offset field to the front of the DIE.
 ///
-DIEValue *DIE::addSiblingOffset() {
-  DIEInteger *DI = new DIEInteger(0);
+DIEValue *DIE::addSiblingOffset(BumpPtrAllocator &A) {
+  DIEInteger *DI = new (A) DIEInteger(0);
   Values.insert(Values.begin(), DI);
   Abbrev.AddFirstAttribute(dwarf::DW_AT_sibling, dwarf::DW_FORM_ref4);
   return DI;

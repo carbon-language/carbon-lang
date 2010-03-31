@@ -301,15 +301,15 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : DwarfPrinter(OS, A, T), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
-    DIEValues(), SectionSourceLines(), didInitial(false), shouldEmit(false),
+    DIEBlocks(), SectionSourceLines(), didInitial(false), shouldEmit(false),
     CurrentFnDbgScope(0), PrevDILoc(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
 }
 DwarfDebug::~DwarfDebug() {
-  for (unsigned j = 0, M = DIEValues.size(); j < M; ++j)
-    delete DIEValues[j];
+  for (unsigned j = 0, M = DIEBlocks.size(); j < M; ++j)
+    DIEBlocks[j]->~DIEBlock();
 
   delete DebugTimer;
 }
@@ -349,8 +349,7 @@ void DwarfDebug::assignAbbrevNumber(DIEAbbrev &Abbrev) {
 /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
 /// information entry.
 DIEEntry *DwarfDebug::createDIEEntry(DIE *Entry) {
-  DIEEntry *Value = new DIEEntry(Entry);
-  DIEValues.push_back(Value);
+  DIEEntry *Value = new (DIEValueAllocator) DIEEntry(Entry);
   return Value;
 }
 
@@ -359,8 +358,7 @@ DIEEntry *DwarfDebug::createDIEEntry(DIE *Entry) {
 void DwarfDebug::addUInt(DIE *Die, unsigned Attribute,
                          unsigned Form, uint64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(false, Integer);
-  DIEValue *Value = new DIEInteger(Integer);
-  DIEValues.push_back(Value);
+  DIEValue *Value = new (DIEValueAllocator) DIEInteger(Integer);
   Die->addValue(Attribute, Form, Value);
 }
 
@@ -369,8 +367,7 @@ void DwarfDebug::addUInt(DIE *Die, unsigned Attribute,
 void DwarfDebug::addSInt(DIE *Die, unsigned Attribute,
                          unsigned Form, int64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(true, Integer);
-  DIEValue *Value = new DIEInteger(Integer);
-  DIEValues.push_back(Value);
+  DIEValue *Value = new (DIEValueAllocator) DIEInteger(Integer);
   Die->addValue(Attribute, Form, Value);
 }
 
@@ -378,8 +375,7 @@ void DwarfDebug::addSInt(DIE *Die, unsigned Attribute,
 /// keeps string reference. 
 void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
                            StringRef String) {
-  DIEValue *Value = new DIEString(String);
-  DIEValues.push_back(Value);
+  DIEValue *Value = new (DIEValueAllocator) DIEString(String);
   Die->addValue(Attribute, Form, Value);
 }
 
@@ -387,8 +383,7 @@ void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                           const MCSymbol *Label) {
-  DIEValue *Value = new DIELabel(Label);
-  DIEValues.push_back(Value);
+  DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
   Die->addValue(Attribute, Form, Value);
 }
 
@@ -396,8 +391,7 @@ void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
                           const MCSymbol *Hi, const MCSymbol *Lo) {
-  DIEValue *Value = new DIEDelta(Hi, Lo);
-  DIEValues.push_back(Value);
+  DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
   Die->addValue(Attribute, Form, Value);
 }
 
@@ -406,7 +400,7 @@ void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
 void DwarfDebug::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
                           DIEBlock *Block) {
   Block->ComputeSize(TD);
-  DIEValues.push_back(Block);
+  DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
   Die->addValue(Attribute, Block->BestForm(), Block);
 }
 
@@ -560,7 +554,7 @@ void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
   // Decode the original location, and use that as the start of the byref
   // variable's location.
   unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
-  DIEBlock *Block = new DIEBlock();
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
   if (Location.isReg()) {
     if (Reg < 32) {
@@ -700,7 +694,7 @@ void DwarfDebug::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   // Decode the original location, and use that as the start of the byref
   // variable's location.
   unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
-  DIEBlock *Block = new DIEBlock();
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
   if (Location.isReg()) {
     if (Reg < 32)
@@ -755,7 +749,7 @@ void DwarfDebug::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
 void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
                             const MachineLocation &Location) {
   unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
-  DIEBlock *Block = new DIEBlock();
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
   if (Location.isReg()) {
     if (Reg < 32) {
@@ -1102,7 +1096,7 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
 
   addSourceLine(MemberDie, &DT);
 
-  DIEBlock *MemLocationDie = new DIEBlock();
+  DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
   addUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
   uint64_t Size = DT.getSizeInBits();
@@ -1138,7 +1132,7 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
     // expression to extract appropriate offset from vtable.
     // BaseAddr = ObAddr + *((*ObAddr) - Offset)
 
-    DIEBlock *VBaseLocationDie = new DIEBlock();
+    DIEBlock *VBaseLocationDie = new (DIEValueAllocator) DIEBlock();
     addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
     addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
@@ -1204,7 +1198,7 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   unsigned VK = SP.getVirtuality();
   if (VK) {
     addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag, VK);
-    DIEBlock *Block = new DIEBlock();
+    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     addUInt(Block, 0, dwarf::DW_FORM_data1, SP.getVirtualIndex());
     addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
@@ -1509,7 +1503,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
                      VS);
         } else if (DbgValueInsn->getOperand(0).getType() == 
                    MachineOperand::MO_Immediate) {
-          DIEBlock *Block = new DIEBlock();
+          DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
           unsigned Imm = DbgValueInsn->getOperand(0).getImm();
           addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
           addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
@@ -1729,7 +1723,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
                 dwarf::DW_FORM_ref4, VariableDie);
-    DIEBlock *Block = new DIEBlock();
+    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Block, 0, dwarf::DW_FORM_udata,
              Asm->Mang->getSymbol(DI_GV.getGlobal()));
@@ -1737,7 +1731,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     ModuleCU->addDie(VariableSpecDIE);
   } else {
-    DIEBlock *Block = new DIEBlock();
+    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Block, 0, dwarf::DW_FORM_udata,
              Asm->Mang->getSymbol(DI_GV.getGlobal()));
@@ -2383,7 +2377,7 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
 
   // If not last sibling and has children then add sibling offset attribute.
   if (!Last && !Children.empty())
-    DIEValues.push_back(Die->addSiblingOffset());
+    Die->addSiblingOffset(DIEValueAllocator);
 
   // Record the abbreviation.
   assignAbbrevNumber(Die->getAbbrev());
