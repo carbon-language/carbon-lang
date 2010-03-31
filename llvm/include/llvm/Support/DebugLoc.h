@@ -1,4 +1,4 @@
-//===---- llvm/DebugLoc.h - Debug Location Information ----------*- C++ -*-===//
+//===---- llvm/Support/DebugLoc.h - Debug Location Information --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,6 @@ namespace llvm {
   /// to index into a vector of unique debug location tuples.
   class DebugLoc {
     unsigned Idx;
-
   public:
     DebugLoc() : Idx(~0U) {}  // Defaults to invalid.
 
