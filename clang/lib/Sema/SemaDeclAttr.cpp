@@ -524,7 +524,8 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isa<VarDecl>(d) && !isa<ObjCIvarDecl>(d) && !isFunctionOrMethod(d)) {
+  if (!isa<VarDecl>(d) && !isa<ObjCIvarDecl>(d) && !isFunctionOrMethod(d) &&
+      !isa<TypeDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 2 /*variable and function*/;
     return;

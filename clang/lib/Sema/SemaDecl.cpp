@@ -511,14 +511,30 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
 
   // Types of valid local variables should be complete, so this should succeed.
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+
+    // White-list anything with an __attribute__((unused)) type.
+    QualType Ty = VD->getType();
+
+    // Only look at the outermost level of typedef.
+    if (const TypedefType *TT = dyn_cast<TypedefType>(Ty)) {
+      if (TT->getDecl()->hasAttr<UnusedAttr>())
+        return false;
+    }
+
+    if (const TagType *TT = Ty->getAs<TagType>()) {
+      const TagDecl *Tag = TT->getDecl();
+      if (Tag->hasAttr<UnusedAttr>())
+        return false;
+
+      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Tag)) {
         if (!RD->hasTrivialConstructor())
           return false;
         if (!RD->hasTrivialDestructor())
           return false;
       }
     }
+
+    // TODO: __attribute__((unused)) templates?
   }
   
   return true;
