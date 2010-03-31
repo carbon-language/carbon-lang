@@ -490,12 +490,15 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
          getTargetData().getTypeAllocSize(Ty) &&
          "Type size mismatch!");
 
+  CGRecordLayout *RL =
+    new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
+
   // Add all the field numbers.
   for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i) {
     const FieldDecl *FD = Builder.LLVMFields[i].first;
     unsigned FieldNo = Builder.LLVMFields[i].second;
 
-    addFieldInfo(FD, FieldNo);
+    RL->FieldInfo.insert(std::make_pair(FD, FieldNo));
   }
 
   // Add bitfield info.
@@ -503,8 +506,9 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     const CGRecordLayoutBuilder::LLVMBitFieldInfo &Info =
       Builder.LLVMBitFields[i];
 
-    addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
+    CGRecordLayout::BitFieldInfo BFI(Info.FieldNo, Info.Start, Info.Size);
+    RL->BitFields.insert(std::make_pair(Info.FD, BFI));
   }
 
-  return new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
+  return RL;
 }

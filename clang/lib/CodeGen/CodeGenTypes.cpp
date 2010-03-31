@@ -459,35 +459,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   return ResultHolder.get();
 }
 
-/// getLLVMFieldNo - Return llvm::StructType element number
-/// that corresponds to the field FD.
-unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
-  assert(!FD->isBitField() && "Don't use getLLVMFieldNo on bit fields!");
-
-  llvm::DenseMap<const FieldDecl*, unsigned>::iterator I = FieldInfo.find(FD);
-  assert (I != FieldInfo.end()  && "Unable to find field info");
-  return I->second;
-}
-
-/// addFieldInfo - Assign field number to field FD.
-void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
-  FieldInfo[FD] = No;
-}
-
-/// getBitFieldInfo - Return the BitFieldInfo that corresponds to the field FD.
-CodeGenTypes::BitFieldInfo CodeGenTypes::getBitFieldInfo(const FieldDecl *FD) {
-  llvm::DenseMap<const FieldDecl *, BitFieldInfo>::iterator
-    I = BitFields.find(FD);
-  assert (I != BitFields.end()  && "Unable to find bitfield info");
-  return I->second;
-}
-
-/// addBitFieldInfo - Assign a start bit and a size to field FD.
-void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
-                                   unsigned Start, unsigned Size) {
-  BitFields.insert(std::make_pair(FD, BitFieldInfo(FieldNo, Start, Size)));
-}
-
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
 const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) const {

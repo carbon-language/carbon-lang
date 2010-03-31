@@ -1012,7 +1012,9 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
          E = RD->field_end(); I != E; ++I) {
       const FieldDecl *FD = *I;
       
-      unsigned FieldNo = getTypes().getLLVMFieldNo(FD);
+      const CGRecordLayout &RL =
+        getTypes().getCGRecordLayout(FD->getParent());
+      unsigned FieldNo = RL.getLLVMFieldNo(FD);
       Elements[FieldNo] = EmitNullConstant(FD->getType());
     }
     
@@ -1048,7 +1050,9 @@ CodeGenModule::EmitPointerToDataMember(const FieldDecl *FD) {
   const llvm::StructType *ClassLTy =
     cast<llvm::StructType>(getTypes().ConvertType(ClassType));
 
-  unsigned FieldNo = getTypes().getLLVMFieldNo(FD);
+  const CGRecordLayout &RL =
+    getTypes().getCGRecordLayout(FD->getParent());
+  unsigned FieldNo = RL.getLLVMFieldNo(FD);
   uint64_t Offset = 
     getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
 

@@ -13,6 +13,7 @@
 
 #include "CGObjCRuntime.h"
 
+#include "CGRecordLayout.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
@@ -3134,8 +3135,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     FieldDecl *Field = RecFields[i];
     uint64_t FieldOffset;
     if (RD) {
+      const CGRecordLayout &RL =
+        CGM.getTypes().getCGRecordLayout(Field->getParent());
       if (Field->isBitField()) {
-        CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
+        const CGRecordLayout::BitFieldInfo &Info = RL.getBitFieldInfo(Field);
 
         const llvm::Type *Ty =
           CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
@@ -3144,7 +3147,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         FieldOffset = Info.FieldNo * TypeSize;
       } else
         FieldOffset =
-          Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+          Layout->getElementOffset(RL.getLLVMFieldNo(Field));
     } else
       FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 

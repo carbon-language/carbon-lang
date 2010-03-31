@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGCall.h"
+#include "CGRecordLayout.h"
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -1468,7 +1469,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               const FieldDecl* Field,
                                               unsigned CVRQualifiers) {
-  CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
+  const CGRecordLayout &RL =
+    CGM.getTypes().getCGRecordLayout(Field->getParent());
+  const CGRecordLayout::BitFieldInfo &Info = RL.getBitFieldInfo(Field);
 
   // FIXME: CodeGenTypes should expose a method to get the appropriate type for
   // FieldTy (the appropriate type is ABI-dependent).
@@ -1496,7 +1499,9 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   if (Field->isBitField())
     return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
 
-  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  const CGRecordLayout &RL =
+    CGM.getTypes().getCGRecordLayout(Field->getParent());
+  unsigned idx = RL.getLLVMFieldNo(Field);
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   // Match union field type.
@@ -1531,7 +1536,9 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue,
   if (!FieldType->isReferenceType())
     return EmitLValueForField(BaseValue, Field, CVRQualifiers);
 
-  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  const CGRecordLayout &RL =
+    CGM.getTypes().getCGRecordLayout(Field->getParent());
+  unsigned idx = RL.getLLVMFieldNo(Field);
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");

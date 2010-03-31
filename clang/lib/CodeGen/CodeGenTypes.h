@@ -81,28 +81,10 @@ class CodeGenTypes {
   /// record layout info.
   llvm::DenseMap<const Type*, CGRecordLayout *> CGRecordLayouts;
 
-  /// FieldInfo - This maps struct field with corresponding llvm struct type
-  /// field no. This info is populated by record organizer.
-  llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
-
   /// FunctionInfos - Hold memoized CGFunctionInfo results.
   llvm::FoldingSet<CGFunctionInfo> FunctionInfos;
 
-public:
-  struct BitFieldInfo {
-    BitFieldInfo(unsigned FieldNo,
-                 unsigned Start,
-                 unsigned Size)
-      : FieldNo(FieldNo), Start(Start), Size(Size) {}
-
-    unsigned FieldNo;
-    unsigned Start;
-    unsigned Size;
-  };
-
 private:
-  llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
-
   /// TypeCache - This map keeps cache of llvm::Types (through PATypeHolder)
   /// and maps llvm::Types to corresponding clang::Type. llvm::PATypeHolder is
   /// used instead of llvm::Type because it allows us to bypass potential
@@ -149,10 +131,6 @@ public:
   const llvm::Type *GetFunctionTypeForVtable(const CXXMethodDecl *MD);
                                                      
   const CGRecordLayout &getCGRecordLayout(const RecordDecl*) const;
-
-  /// getLLVMFieldNo - Return llvm::StructType element number
-  /// that corresponds to the field FD.
-  unsigned getLLVMFieldNo(const FieldDecl *FD);
 
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
   /// replace the 'opaque' type we previously made for it if applicable.
@@ -202,17 +180,6 @@ public:
   CGRecordLayout *ComputeRecordLayout(const RecordDecl *D);
 
 public:  // These are internal details of CGT that shouldn't be used externally.
-  /// addFieldInfo - Assign field number to field FD.
-  void addFieldInfo(const FieldDecl *FD, unsigned FieldNo);
-
-  /// addBitFieldInfo - Assign a start bit and a size to field FD.
-  void addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
-                       unsigned Start, unsigned Size);
-
-  /// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field
-  /// FD.
-  BitFieldInfo getBitFieldInfo(const FieldDecl *FD);
-
   /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
   /// enum.
   const llvm::Type *ConvertTagDeclType(const TagDecl *TD);
