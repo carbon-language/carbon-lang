@@ -714,8 +714,12 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
   MemoryInst->replaceUsesOfWith(Addr, SunkAddr);
 
-  if (Addr->use_empty())
+  if (Addr->use_empty()) {
     RecursivelyDeleteTriviallyDeadInstructions(Addr);
+    // This address is now available for reassignment, so erase the table entry;
+    // we don't want to match some completely different instruction.
+    SunkAddrs[Addr] = 0;
+  }
   return true;
 }
 
