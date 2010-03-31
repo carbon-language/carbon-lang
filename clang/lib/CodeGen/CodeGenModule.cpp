@@ -1246,8 +1246,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
       CI->replaceAllUsesWith(NewCall);
 
     // Copy any custom metadata attached with CI.
-    if (llvm::MDNode *DbgNode = CI->getMetadata("dbg"))
-      NewCall->setMetadata("dbg", DbgNode);
+    if (llvm::MDNode *DbgNode = CI->getDbgMetadata())
+      NewCall->setDbgMetadata(DbgNode);
     CI->eraseFromParent();
   }
 }

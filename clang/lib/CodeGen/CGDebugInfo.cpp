@@ -1602,7 +1602,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   llvm::DILocation DO(NULL);
   llvm::DILocation DL = DebugFactory.CreateLocation(Line, Column, DS, DO);
   
-  Call->setMetadata("dbg", DL.getNode());
+  Call->setDbgMetadata(DL.getNode());
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -1670,7 +1670,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   llvm::DILocation DL = 
     DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
   
-  Call->setMetadata("dbg", DL.getNode());
+  Call->setDbgMetadata(DL.getNode());
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
