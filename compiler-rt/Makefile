@@ -206,10 +206,16 @@ $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch)/$(Tm
 $(call Set,Tmp.Dependencies,$($(Tmp.SubDirKey).Dependencies))
 $(call Set,Tmp.CC,$(strip \
   $(call GetCNAVar,CC,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.KERNEL_USE,$(strip \
+  $(call GetCNAVar,KERNEL_USE,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.VISIBILITY_HIDDEN,$(strip \
+  $(call GetCNAVar,VISIBILITY_HIDDEN,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.CFLAGS,$(strip \
   $(if $(call IsDefined,$(Tmp.Key).UniversalArchs),-arch $(Tmp.Arch),)\
-  $(if $(call streq,$($(Tmp.Key).VISIBILITY_HIDDEN),1),\
+  $(if $(call streq,$(Tmp.VISIBILITY_HIDDEN),1),\
        -fvisibility=hidden -DVISIBILITY_HIDDEN,)\
+  $(if $(call streq,$(Tmp.KERNEL_USE),1),\
+       -mkernel -DKERNEL_USE,)\
   $(call GetCNAVar,CFLAGS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.s $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir

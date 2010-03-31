@@ -47,4 +47,5 @@ $(foreach key,$(SubDirKeys),\
 AvailableOptions := AR ARFLAGS \
                     CC CFLAGS FUNCTIONS OPTIMIZED \
                     RANLIB RANLIBFLAGS \
-                    VISIBILITY_HIDDEN
+                    VISIBILITY_HIDDEN \
+                    KERNEL_USE

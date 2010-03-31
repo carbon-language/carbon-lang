@@ -242,4 +242,6 @@ FUNCTIONS.cc_kext.i386 := \
 FUNCTIONS.cc_kext.x86_64 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.x86_64))
 
+KERNEL_USE.cc_kext := 1
+
 VISIBILITY_HIDDEN := 1

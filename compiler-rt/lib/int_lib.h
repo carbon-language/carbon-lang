@@ -23,7 +23,14 @@
 #include "endianness.h"
 #include <math.h>
 
+/* If compiling for kernel use, call panic() instead of abort(). */
+#ifdef KERNEL_USE
+extern void panic (const char *, ...);
+#define compilerrt_abort() \
+  panic("%s:%d: abort in %s", __FILE__, __LINE__, __FUNCTION__)
+#else
 #define compilerrt_abort() abort()
+#endif
 
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
