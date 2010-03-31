@@ -5134,7 +5134,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
       !ArgumentChanged) {
     // FIXME: Instantiation-specific
     SemaRef.MarkDeclarationReferenced(E->getTypeBeginLoc(), Constructor);
-    return SemaRef.Owned(E->Retain());
+    return SemaRef.MaybeBindToTemporary(E->Retain());
   }
 
   // FIXME: Bogus location information
