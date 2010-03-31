@@ -25,7 +25,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-
 using namespace llvm;
 
 namespace {
@@ -67,7 +66,7 @@ public:
   }
 };
 
-/// A DomainValue is a bit like LiveIntervals' ValNo, but it laso keeps track
+/// A DomainValue is a bit like LiveIntervals' ValNo, but it also keeps track
 /// of execution domains.
 ///
 /// An open DomainValue represents a set of instructions that can still switch
@@ -168,7 +167,6 @@ private:
   void visitGenericInstr(MachineInstr*);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
-
 };
 }
 
@@ -286,22 +284,24 @@ void SSEDomainFixPass::enterBasicBlock() {
       if (fi == LiveOuts.end()) continue;
       DomainValue *pdv = fi->second[rx];
       if (!pdv) continue;
-      if (!LiveRegs || !LiveRegs[rx])
+      if (!LiveRegs || !LiveRegs[rx]) {
         SetLiveReg(rx, pdv);
-      else {
-        // We have a live DomainValue from more than one predecessor.
-        if (LiveRegs[rx]->collapsed()) {
-          // We are already collapsed, but predecessor is not. Force him.
-          if (!pdv->collapsed())
-            Collapse(pdv, LiveRegs[rx]->firstDomain());
-        } else {
-          // Currently open, merge in predecessor.
-          if (!pdv->collapsed())
-            Merge(LiveRegs[rx], pdv);
-          else
-            Collapse(LiveRegs[rx], pdv->firstDomain());
-        }
+        continue;
       }
+
+      // We have a live DomainValue from more than one predecessor.
+      if (LiveRegs[rx]->collapsed()) {
+        // We are already collapsed, but predecessor is not. Force him.
+        if (!pdv->collapsed())
+          Collapse(pdv, LiveRegs[rx]->firstDomain());
+        continue;
+      }
+      
+      // Currently open, merge in predecessor.
+      if (!pdv->collapsed())
+        Merge(LiveRegs[rx], pdv);
+      else
+        Collapse(LiveRegs[rx], pdv->firstDomain());
     }
   }
 }
@@ -338,21 +338,21 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   if (LiveRegs)
     for (unsigned i = mi->getDesc().getNumDefs(),
                   e = mi->getDesc().getNumOperands(); i != e; ++i) {
-    MachineOperand &mo = mi->getOperand(i);
-    if (!mo.isReg()) continue;
-    int rx = RegIndex(mo.getReg());
-    if (rx < 0) continue;
-    if (DomainValue *dv = LiveRegs[rx]) {
-      // Is it possible to use this collapsed register for free?
-      if (dv->collapsed()) {
-        if (unsigned m = collmask & dv->Mask)
-          collmask = m;
-      } else if (dv->compat(collmask))
-        used.push_back(rx);
-      else
-        Kill(rx);
+      MachineOperand &mo = mi->getOperand(i);
+      if (!mo.isReg()) continue;
+      int rx = RegIndex(mo.getReg());
+      if (rx < 0) continue;
+      if (DomainValue *dv = LiveRegs[rx]) {
+        // Is it possible to use this collapsed register for free?
+        if (dv->collapsed()) {
+          if (unsigned m = collmask & dv->Mask)
+            collmask = m;
+        } else if (dv->compat(collmask))
+          used.push_back(rx);
+        else
+          Kill(rx);
+      }
     }
-  }
 
   // If the collapsed operands force a single domain, propagate the collapse.
   if (isPowerOf2_32(collmask)) {
@@ -392,13 +392,17 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   //  priority to the latest ones.
   DomainValue *dv = 0;
   while (!doms.empty()) {
-    if (!dv)
-      dv = doms.back();
-    else if (!Merge(dv, doms.back()))
-      for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i!=e; ++i)
-        if (LiveRegs[*i] == doms.back())
-          Kill(*i);
-    doms.pop_back();
+    if (!dv) {
+      dv = doms.pop_back_val();
+      continue;
+    }
+    
+    DomainValue *ThisDV = doms.pop_back_val();
+    if (Merge(dv, ThisDV)) continue;
+    
+    for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
+      if (LiveRegs[*i] == ThisDV)
+        Kill(*i);
   }
 
   // dv is the DomainValue we are going to use for this instruction.
