@@ -280,7 +280,7 @@ void SSEDomainFixPass::enterBasicBlock() {
     if (rx < 0) continue;
     for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
            pe = MBB->pred_end(); pi != pe; ++pi) {
-      LiveOutMap::const_iterator fi = LiveOuts.find(*pe);
+      LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
       if (fi == LiveOuts.end()) continue;
       DomainValue *pdv = fi->second[rx];
       if (!pdv) continue;
