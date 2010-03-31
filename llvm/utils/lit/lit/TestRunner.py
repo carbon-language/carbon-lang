@@ -114,6 +114,8 @@ def executeShCmd(cmd, cfg, cwd, results):
                     else:
                         r[2] = open(r[0], r[1])
                     # Workaround a Win32 and/or subprocess bug when appending.
+                    #
+                    # FIXME: Actually, this is probably an instance of PR6753.
                     if r[1] == 'a':
                         r[2].seek(0, 2)
                     opened_files.append(r[2])
