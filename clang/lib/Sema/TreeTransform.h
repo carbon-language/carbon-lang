@@ -537,19 +537,21 @@ public:
 
   /// \brief Build a new typename type that refers to a template-id.
   ///
-  /// By default, builds a new DependentNameType type from the nested-name-specifier
+  /// By default, builds a new DependentNameType type from the 
+  /// nested-name-specifier
   /// and the given type. Subclasses may override this routine to provide
   /// different behavior.
   QualType RebuildDependentNameType(ElaboratedTypeKeyword Keyword,
                                     NestedNameSpecifier *NNS, QualType T) {
     if (NNS->isDependent()) {
+      // If the name is still dependent, just build a new dependent name type.
       CXXScopeSpec SS;
       SS.setScopeRep(NNS);
       if (!SemaRef.computeDeclContext(SS))
         return SemaRef.Context.getDependentNameType(Keyword, NNS,
                                           cast<TemplateSpecializationType>(T));
     }
-
+    
     // FIXME: Handle elaborated-type-specifiers separately.
     return SemaRef.Context.getQualifiedNameType(NNS, T);
   }
@@ -563,8 +565,76 @@ public:
                                     NestedNameSpecifier *NNS,
                                     const IdentifierInfo *Id,
                                     SourceRange SR) {
-    // FIXME: Handle elaborated-type-specifiers separately.
-    return SemaRef.CheckTypenameType(NNS, *Id, SR);
+    CXXScopeSpec SS;
+    SS.setScopeRep(NNS);
+    
+    if (NNS->isDependent()) {
+      // If the name is still dependent, just build a new dependent name type.
+      if (!SemaRef.computeDeclContext(SS))
+        return SemaRef.Context.getDependentNameType(Keyword, NNS, Id);
+    }
+
+    TagDecl::TagKind Kind = TagDecl::TK_enum;
+    switch (Keyword) {
+      case ETK_None:
+        // FIXME: Note the lack of the "typename" specifier!
+        // Fall through
+      case ETK_Typename:
+        return SemaRef.CheckTypenameType(NNS, *Id, SR);
+        
+      case ETK_Class: Kind = TagDecl::TK_class; break;
+      case ETK_Struct: Kind = TagDecl::TK_struct; break;
+      case ETK_Union: Kind = TagDecl::TK_union; break;
+      case ETK_Enum: Kind = TagDecl::TK_enum; break;
+    }
+    
+    // We had a dependent elaborated-type-specifier that as been transformed
+    // into a non-dependent elaborated-type-specifier. Find the tag we're
+    // referring to.
+    LookupResult Result(SemaRef, Id, SR.getEnd(), Sema::LookupTagName);
+    DeclContext *DC = SemaRef.computeDeclContext(SS, false);
+    if (!DC)
+      return QualType();
+
+    TagDecl *Tag = 0;
+    SemaRef.LookupQualifiedName(Result, DC);
+    switch (Result.getResultKind()) {
+      case LookupResult::NotFound:
+      case LookupResult::NotFoundInCurrentInstantiation:
+        break;
+        
+      case LookupResult::Found:
+        Tag = Result.getAsSingle<TagDecl>();
+        break;
+        
+      case LookupResult::FoundOverloaded:
+      case LookupResult::FoundUnresolvedValue:
+        llvm_unreachable("Tag lookup cannot find non-tags");
+        return QualType();
+        
+      case LookupResult::Ambiguous:
+        // Let the LookupResult structure handle ambiguities.
+        return QualType();
+    }
+
+    if (!Tag) {
+      // FIXME: Crummy diagnostic
+      SemaRef.Diag(SR.getEnd(), diag::err_not_tag_in_scope)
+        << Id << SR;
+      return QualType();
+    }
+    
+    // FIXME: Terrible location information
+    if (!SemaRef.isAcceptableTagRedeclaration(Tag, Kind, SR.getEnd(), *Id)) {
+      SemaRef.Diag(SR.getBegin(), diag::err_use_with_wrong_tag) << Id;
+      SemaRef.Diag(Tag->getLocation(), diag::note_previous_use);
+      return QualType();
+    }
+
+    // Build the elaborated-type-specifier type.
+    QualType T = SemaRef.Context.getTypeDeclType(Tag);
+    T = SemaRef.Context.getQualifiedNameType(NNS, T);
+    return SemaRef.Context.getElaboratedType(T, Kind);
   }
 
   /// \brief Build a new nested-name-specifier given the prefix and an

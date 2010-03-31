@@ -4915,14 +4915,15 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (!NNS)
     return true;
 
-  QualType T = CheckTypenameType(NNS, *Name, SourceRange(TagLoc, NameLoc));
-  if (T.isNull())
-    return true;
-
-  TagDecl::TagKind TagKind = TagDecl::getTagKindForTypeSpec(TagSpec);
-  QualType ElabType = Context.getElaboratedType(T, TagKind);
-
-  return ElabType.getAsOpaquePtr();
+  ElaboratedTypeKeyword Keyword;
+  switch (TagDecl::getTagKindForTypeSpec(TagSpec)) {
+  case TagDecl::TK_struct: Keyword = ETK_Struct; break;
+  case TagDecl::TK_class: Keyword = ETK_Class; break;
+  case TagDecl::TK_union: Keyword = ETK_Union; break;
+  case TagDecl::TK_enum: Keyword = ETK_Enum; break;
+  }
+  
+  return Context.getDependentNameType(Keyword, NNS, Name).getAsOpaquePtr();
 }
 
 Sema::TypeResult

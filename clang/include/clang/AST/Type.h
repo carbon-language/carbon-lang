@@ -894,6 +894,9 @@ public:
   bool isDependentType() const { return Dependent; }
   bool isOverloadableType() const;
 
+  /// \brief Determine wither this type is a C++ elaborated-type-specifier.
+  bool isElaboratedTypeSpecifier() const;
+  
   /// hasPointerRepresentation - Whether this type is represented
   /// natively as a pointer; this includes pointers, references, block
   /// pointers, and Objective-C interface, qualified id, and qualified

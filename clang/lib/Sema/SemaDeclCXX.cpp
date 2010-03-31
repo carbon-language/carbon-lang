@@ -5408,7 +5408,7 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   //
   // FIXME: handle "template <> friend class A<T>;", which
   // is possibly well-formed?  Who even knows?
-  if (TempParams.size() && !isa<ElaboratedType>(T)) {
+  if (TempParams.size() && !T->isElaboratedTypeSpecifier()) {
     Diag(Loc, diag::err_tagless_friend_type_template)
       << DS.getSourceRange();
     return DeclPtrTy();
@@ -5420,7 +5420,7 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   //   * The class-key of the elaborated-type-specifier is required.
   // This is one of the rare places in Clang where it's legitimate to
   // ask about the "spelling" of the type.
-  if (!getLangOptions().CPlusPlus0x && !isa<ElaboratedType>(T)) {
+  if (!getLangOptions().CPlusPlus0x && !T->isElaboratedTypeSpecifier()) {
     // If we evaluated the type to a record type, suggest putting
     // a tag in front.
     if (const RecordType *RT = T->getAs<RecordType>()) {

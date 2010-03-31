@@ -760,6 +760,27 @@ bool Type::isSpecifierType() const {
   }
 }
 
+bool Type::isElaboratedTypeSpecifier() const {
+  if (getTypeClass() == Elaborated)
+    return true;
+  
+  if (const DependentNameType *Dependent = dyn_cast<DependentNameType>(this)) {
+    switch (Dependent->getKeyword()) {
+    case ETK_None:
+    case ETK_Typename:
+      return false;
+        
+    case ETK_Class:
+    case ETK_Struct:
+    case ETK_Union:
+    case ETK_Enum:
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 const char *Type::getTypeClassName() const {
   switch (TC) {
   default: assert(0 && "Type class not in TypeNodes.def!");
