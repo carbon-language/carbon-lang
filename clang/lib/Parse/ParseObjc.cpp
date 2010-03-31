@@ -1817,9 +1817,12 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     SkipUntil(tok::r_square);
     return ExprError();
   }
-
+    
   if (Tok.isNot(tok::r_square)) {
-    Diag(Tok, diag::err_expected_rsquare);
+    if (Tok.is(tok::identifier))
+      Diag(Tok, diag::err_expected_colon);
+    else
+      Diag(Tok, diag::err_expected_rsquare);
     // We must manually skip to a ']', otherwise the expression skipper will
     // stop at the ']' when it skips to the ';'.  We want it to skip beyond
     // the enclosing expression.
