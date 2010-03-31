@@ -108,8 +108,8 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
     P->addRange(Info.getRange(i));
-  for (unsigned i = 0, e = Info.getNumCodeModificationHints(); i != e; ++i)
-    P->addCodeModificationHint(Info.getCodeModificationHint(i));
+  for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i)
+    P->addFixItHint(Info.getFixItHint(i));
   D->push_front(P);
 
   HandlePathDiagnostic(D);

@@ -484,8 +484,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   // FIXME: This code is disabled because it seems to mangle the HTML
   // output. I'm leaving it here because it's generally the right idea,
   // but needs some help from someone more familiar with the rewriter.
-  for (const CodeModificationHint *Hint = P.code_modifications_begin(),
-                               *HintEnd = P.code_modifications_end();
+  for (const FixItHint *Hint = P.fixit_begin(), *HintEnd = P.fixit_end();
        Hint != HintEnd; ++Hint) {
     if (Hint->RemoveRange.isValid()) {
       HighlightRange(R, LPosInfo.first, Hint->RemoveRange,

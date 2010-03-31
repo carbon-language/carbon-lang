@@ -95,8 +95,8 @@ void Parser::SuggestParentheses(SourceLocation Loc, unsigned DK,
   }
 
   Diag(Loc, DK)
-    << CodeModificationHint::CreateInsertion(ParenRange.getBegin(), "(")
-    << CodeModificationHint::CreateInsertion(EndLoc, ")");
+    << FixItHint::CreateInsertion(ParenRange.getBegin(), "(")
+    << FixItHint::CreateInsertion(EndLoc, ")");
 }
 
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
@@ -146,7 +146,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
     // Show what code to insert to fix this problem.
     Diag(EndLoc, DiagID)
       << Msg
-      << CodeModificationHint::CreateInsertion(EndLoc, Spelling);
+      << FixItHint::CreateInsertion(EndLoc, Spelling);
   } else
     Diag(Tok, DiagID) << Msg;
 
@@ -395,7 +395,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
   case tok::semi:
     if (!getLang().CPlusPlus0x)
       Diag(Tok, diag::ext_top_level_semi)
-        << CodeModificationHint::CreateRemoval(Tok.getLocation());
+        << FixItHint::CreateRemoval(Tok.getLocation());
 
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
@@ -829,7 +829,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
                              PP.getLocForEndOfToken(Tok.getLocation()));
 
     Diag(Tok, diag::warn_file_asm_volatile)
-      << CodeModificationHint::CreateRemoval(RemovalRange);
+      << FixItHint::CreateRemoval(RemovalRange);
     ConsumeToken();
   }
 

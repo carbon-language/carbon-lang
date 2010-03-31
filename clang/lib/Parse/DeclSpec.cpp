@@ -481,7 +481,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
       Diag(D, TSCLoc, SrcMgr, diag::ext_plain_complex)
-        << CodeModificationHint::CreateInsertion(
+        << FixItHint::CreateInsertion(
                               PP.getLocForEndOfToken(getTypeSpecComplexLoc()),
                                                  " double");
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
@@ -507,7 +507,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
 
     Diag(D, SCLoc, SrcMgr, diag::err_friend_storage_spec)
       << SpecName
-      << CodeModificationHint::CreateRemoval(SourceRange(SCLoc, SCEndLoc));
+      << FixItHint::CreateRemoval(SourceRange(SCLoc, SCEndLoc));
 
     ClearStorageClassSpecs();
   }

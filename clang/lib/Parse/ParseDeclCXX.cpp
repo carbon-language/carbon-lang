@@ -837,7 +837,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         Diag(TemplateId->TemplateNameLoc,
              diag::err_explicit_instantiation_with_definition)
           << SourceRange(TemplateInfo.TemplateLoc)
-          << CodeModificationHint::CreateInsertion(LAngleLoc, "<>");
+          << FixItHint::CreateInsertion(LAngleLoc, "<>");
 
         // Create a fake template parameter list that contains only
         // "template<>", so that we treat this construct as a class
@@ -1079,7 +1079,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
     if (IsVirtual) {
       // Complain about duplicate 'virtual'
       Diag(VirtualLoc, diag::err_dup_virtual)
-        << CodeModificationHint::CreateRemoval(VirtualLoc);
+        << FixItHint::CreateRemoval(VirtualLoc);
     }
 
     IsVirtual = true;
@@ -1554,7 +1554,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
       Diag(Tok, diag::ext_extra_struct_semi)
-        << CodeModificationHint::CreateRemoval(Tok.getLocation());
+        << FixItHint::CreateRemoval(Tok.getLocation());
       ConsumeToken();
       continue;
     }

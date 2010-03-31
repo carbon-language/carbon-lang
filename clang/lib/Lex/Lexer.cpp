@@ -1372,8 +1372,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // a pedwarn.
   if (CurPtr != BufferStart && (CurPtr[-1] != '\n' && CurPtr[-1] != '\r'))
     Diag(BufferEnd, diag::ext_no_newline_eof)
-      << CodeModificationHint::CreateInsertion(getSourceLocation(BufferEnd),
-                                               "\n");
+      << FixItHint::CreateInsertion(getSourceLocation(BufferEnd), "\n");
 
   BufferPtr = CurPtr;
 

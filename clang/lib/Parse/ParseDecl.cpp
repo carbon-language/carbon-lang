@@ -734,7 +734,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     if (TagName) {
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
         << Tok.getIdentifierInfo() << TagName << getLang().CPlusPlus
-        << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
+        << FixItHint::CreateInsertion(Tok.getLocation(),TagName);
 
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
@@ -1360,7 +1360,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         DS.SetRangeEnd(EndProtoLoc);
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
-          << CodeModificationHint::CreateInsertion(Loc, "id")
+          << FixItHint::CreateInsertion(Loc, "id")
           << SourceRange(Loc, EndProtoLoc);
         // Need to support trailing type qualifiers (e.g. "id<p> const").
         // If a type specifier follows, it will be diagnosed elsewhere.
@@ -1756,7 +1756,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
       Diag(Tok, diag::ext_extra_struct_semi)
-        << CodeModificationHint::CreateRemoval(Tok.getLocation());
+        << FixItHint::CreateRemoval(Tok.getLocation());
       ConsumeToken();
       continue;
     }
@@ -1999,7 +1999,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
         !(getLang().C99 || getLang().CPlusPlus0x))
       Diag(CommaLoc, diag::ext_enumerator_list_comma)
         << getLang().CPlusPlus
-        << CodeModificationHint::CreateRemoval(CommaLoc);
+        << FixItHint::CreateRemoval(CommaLoc);
   }
 
   // Eat the }.
@@ -3009,7 +3009,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           // We have ellipsis without a preceding ',', which is ill-formed
           // in C. Complain and provide the fix.
           Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
-            << CodeModificationHint::CreateInsertion(EllipsisLoc, ", ");
+            << FixItHint::CreateInsertion(EllipsisLoc, ", ");
         }
       }
       

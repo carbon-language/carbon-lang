@@ -571,7 +571,7 @@ bool DiagnosticBuilder::Emit() {
   // the Diagnostic object.
   DiagObj->NumDiagArgs = NumArgs;
   DiagObj->NumDiagRanges = NumRanges;
-  DiagObj->NumCodeModificationHints = NumCodeModificationHints;
+  DiagObj->NumFixItHints = NumFixItHints;
 
   // Process the diagnostic, sending the accumulated information to the
   // DiagnosticClient.
@@ -996,9 +996,9 @@ StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level,
   for (unsigned I = 0, N = Info.getNumRanges(); I != N; ++I)
     Ranges.push_back(Info.getRange(I));
 
-  FixIts.reserve(Info.getNumCodeModificationHints());
-  for (unsigned I = 0, N = Info.getNumCodeModificationHints(); I != N; ++I)
-    FixIts.push_back(Info.getCodeModificationHint(I));
+  FixIts.reserve(Info.getNumFixItHints());
+  for (unsigned I = 0, N = Info.getNumFixItHints(); I != N; ++I)
+    FixIts.push_back(Info.getFixItHint(I));
 }
 
 StoredDiagnostic::~StoredDiagnostic() { }
@@ -1231,7 +1231,7 @@ StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM,
       return Diag;
     }
 
-    CodeModificationHint Hint;
+    FixItHint Hint;
     Hint.RemoveRange = SourceRange(RemoveBegin, RemoveEnd);
     Hint.InsertionLoc = InsertionLoc;
     Hint.CodeToInsert.assign(Memory, Memory + InsertLen);
