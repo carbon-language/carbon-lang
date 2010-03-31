@@ -10,6 +10,10 @@
 #ifndef CLANG_CODEGEN_CGRECORDLAYOUT_H
 #define CLANG_CODEGEN_CGRECORDLAYOUT_H
 
+namespace llvm {
+  class Type;
+}
+
 namespace clang {
 namespace CodeGen {
 

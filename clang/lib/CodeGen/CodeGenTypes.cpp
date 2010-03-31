@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTypes.h"
+#include "CGCall.h"
 #include "CGRecordLayout.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -21,10 +22,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
-
-#include "CGCall.h"
-#include "CGRecordLayoutBuilder.h"
-
 using namespace clang;
 using namespace CodeGen;
 
@@ -401,7 +398,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
 /// enum.
 const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
-
   // TagDecl's are not necessarily unique, instead use the (clang)
   // type connected to the decl.
   const Type *Key =
@@ -450,7 +446,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   }
 
   // Layout fields.
-  CGRecordLayout *Layout = CGRecordLayoutBuilder::ComputeLayout(*this, RD);
+  CGRecordLayout *Layout = ComputeRecordLayout(RD);
 
   CGRecordLayouts[Key] = Layout;
   const llvm::Type *ResultType = Layout->getLLVMType();
@@ -496,9 +492,7 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
 const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) const {
   const Type *Key = Context.getTagDeclType(TD).getTypePtr();
-  llvm::DenseMap<const Type*, CGRecordLayout *>::const_iterator I
-    = CGRecordLayouts.find(Key);
-  assert (I != CGRecordLayouts.end()
-          && "Unable to find record layout information for type");
-  return *I->second;
+  const CGRecordLayout *Layout = CGRecordLayouts.lookup(Key);
+  assert(Layout && "Unable to find record layout information for type");
+  return *Layout;
 }

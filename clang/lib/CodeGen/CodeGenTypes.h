@@ -198,6 +198,9 @@ public:
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys,
                                         const FunctionType::ExtInfo &Info);
 
+  /// \brief Compute a new LLVM record layout object for the given record.
+  CGRecordLayout *ComputeRecordLayout(const RecordDecl *D);
+
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.
   void addFieldInfo(const FieldDecl *FD, unsigned FieldNo);

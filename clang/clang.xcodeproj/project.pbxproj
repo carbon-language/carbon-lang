@@ -454,7 +454,6 @@
 		1AFDD8701161085D00AE030A /* ASTMerge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTMerge.cpp; path = lib/Frontend/ASTMerge.cpp; sourceTree = "<group>"; };
 		1AFDD8711161085D00AE030A /* CodeGenAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenAction.cpp; path = lib/Frontend/CodeGenAction.cpp; sourceTree = "<group>"; };
 		1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRecordLayoutBuilder.cpp; path = lib/CodeGen/CGRecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGRecordLayoutBuilder.h; path = lib/CodeGen/CGRecordLayoutBuilder.h; sourceTree = "<group>"; tabWidth = 2; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Frontend/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitHeaderSearch.cpp; path = lib/Frontend/InitHeaderSearch.cpp; sourceTree = "<group>"; };
@@ -1360,7 +1359,6 @@
 				DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */,
 				3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */,
 				1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */,
-				1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */,
 				1A6C01F6108128710072DEE4 /* CGRTTI.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				1A6FE7080FD6F85800E00CA9 /* CGTemporaries.cpp */,
