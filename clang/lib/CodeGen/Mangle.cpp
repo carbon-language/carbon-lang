@@ -1456,8 +1456,9 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     // It isn't clear that we ever actually want to have such a
     // nested-name-specifier; why not just represent it as a typename type?
     if (!QTy && NNS->getAsIdentifier() && NNS->getPrefix()) {
-      QTy = getASTContext().getDependentNameType(NNS->getPrefix(),
-                                            NNS->getAsIdentifier())
+      QTy = getASTContext().getDependentNameType(ETK_Typename,
+                                                 NNS->getPrefix(),
+                                                 NNS->getAsIdentifier())
               .getTypePtr();
     }
     assert(QTy && "Qualifier was not type!");

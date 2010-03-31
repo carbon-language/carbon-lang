@@ -540,15 +540,17 @@ public:
   /// By default, builds a new DependentNameType type from the nested-name-specifier
   /// and the given type. Subclasses may override this routine to provide
   /// different behavior.
-  QualType RebuildDependentNameType(NestedNameSpecifier *NNS, QualType T) {
+  QualType RebuildDependentNameType(ElaboratedTypeKeyword Keyword,
+                                    NestedNameSpecifier *NNS, QualType T) {
     if (NNS->isDependent()) {
       CXXScopeSpec SS;
       SS.setScopeRep(NNS);
       if (!SemaRef.computeDeclContext(SS))
-        return SemaRef.Context.getDependentNameType(NNS,
+        return SemaRef.Context.getDependentNameType(Keyword, NNS,
                                           cast<TemplateSpecializationType>(T));
     }
 
+    // FIXME: Handle elaborated-type-specifiers separately.
     return SemaRef.Context.getQualifiedNameType(NNS, T);
   }
 
@@ -557,9 +559,11 @@ public:
   /// By default, performs semantic analysis when building the typename type
   /// (or qualified name type). Subclasses may override this routine to provide
   /// different behavior.
-  QualType RebuildDependentNameType(NestedNameSpecifier *NNS,
-                               const IdentifierInfo *Id,
-                               SourceRange SR) {
+  QualType RebuildDependentNameType(ElaboratedTypeKeyword Keyword, 
+                                    NestedNameSpecifier *NNS,
+                                    const IdentifierInfo *Id,
+                                    SourceRange SR) {
+    // FIXME: Handle elaborated-type-specifiers separately.
     return SemaRef.CheckTypenameType(NNS, *Id, SR);
   }
 
@@ -3023,9 +3027,11 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
         NewTemplateId == QualType(TemplateId, 0))
       return QualType(T, 0);
 
-    Result = getDerived().RebuildDependentNameType(NNS, NewTemplateId);
+    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS, 
+                                                   NewTemplateId);
   } else {
-    Result = getDerived().RebuildDependentNameType(NNS, T->getIdentifier(), SR);
+    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS, 
+                                                   T->getIdentifier(), SR);
   }
   if (Result.isNull())
     return QualType();

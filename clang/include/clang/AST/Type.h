@@ -2550,6 +2550,24 @@ public:
   static bool classof(const InjectedClassNameType *T) { return true; }
 };
 
+/// \brief The elaboration keyword that precedes a qualified type name or
+/// introduces an elaborated-type-specifier.
+enum ElaboratedTypeKeyword {
+  /// \brief No keyword precedes the qualified type name.
+  ETK_None,
+  /// \brief The "typename" keyword precedes the qualified type name, e.g.,
+  /// \c typename T::type.
+  ETK_Typename,
+  /// \brief The "class" keyword introduces the elaborated-type-specifier.
+  ETK_Class,
+  /// \brief The "struct" keyword introduces the elaborated-type-specifier.
+  ETK_Struct,
+  /// \brief The "union" keyword introduces the elaborated-type-specifier.
+  ETK_Union,
+  /// \brief The "enum" keyword introduces the elaborated-type-specifier.
+  ETK_Enum
+};
+  
 /// \brief Represents a type that was referred to via a qualified
 /// name, e.g., N::M::type.
 ///
@@ -2600,19 +2618,19 @@ public:
   static bool classof(const QualifiedNameType *T) { return true; }
 };
 
-/// \brief Represents a 'typename' specifier that names a type within
-/// a dependent type, e.g., "typename T::type".
+/// \brief Represents a qualified type name for which the type name is
+/// dependent. 
 ///
-/// DependentNameType has a very similar structure to QualifiedNameType,
-/// which also involves a nested-name-specifier following by a type,
-/// and (FIXME!) both can even be prefixed by the 'typename'
-/// keyword. However, the two types serve very different roles:
-/// QualifiedNameType is a non-semantic type that serves only as sugar
-/// to show how a particular type was written in the source
-/// code. DependentNameType, on the other hand, only occurs when the
-/// nested-name-specifier is dependent, such that we cannot resolve
-/// the actual type until after instantiation.
+/// DependentNameType represents a class of dependent types that involve a 
+/// dependent nested-name-specifier (e.g., "T::") followed by a (dependent) 
+/// name of a type. The DependentNameType may start with a "typename" (for a
+/// typename-specifier), "class", "struct", "union", or "enum" (for a 
+/// dependent elaborated-type-specifier), or nothing (in contexts where we
+/// know that we must be referring to a type, e.g., in a base class specifier).
 class DependentNameType : public Type, public llvm::FoldingSetNode {
+  /// \brief The keyword used to elaborate this type.
+  ElaboratedTypeKeyword Keyword;
+  
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
@@ -2622,16 +2640,18 @@ class DependentNameType : public Type, public llvm::FoldingSetNode {
   /// \brief The type that this typename specifier refers to.
   NameType Name;
 
-  DependentNameType(NestedNameSpecifier *NNS, const IdentifierInfo *Name,
-               QualType CanonType)
-    : Type(DependentName, CanonType, true), NNS(NNS), Name(Name) {
+  DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS, 
+                    const IdentifierInfo *Name, QualType CanonType)
+    : Type(DependentName, CanonType, true), 
+      Keyword(Keyword), NNS(NNS), Name(Name) {
     assert(NNS->isDependent() &&
            "DependentNameType requires a dependent nested-name-specifier");
   }
 
-  DependentNameType(NestedNameSpecifier *NNS, const TemplateSpecializationType *Ty,
-               QualType CanonType)
-    : Type(DependentName, CanonType, true), NNS(NNS), Name(Ty) {
+  DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
+                    const TemplateSpecializationType *Ty, QualType CanonType)
+    : Type(DependentName, CanonType, true), 
+      Keyword(Keyword), NNS(NNS), Name(Ty) {
     assert(NNS->isDependent() &&
            "DependentNameType requires a dependent nested-name-specifier");
   }
@@ -2639,6 +2659,9 @@ class DependentNameType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these
 
 public:
+  /// \brief Retrieve the keyword used to elaborate this type.
+  ElaboratedTypeKeyword getKeyword() const { return Keyword; }
+  
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
@@ -2662,11 +2685,12 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, NNS, Name);
+    Profile(ID, Keyword, NNS, Name);
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
-                      NameType Name) {
+  static void Profile(llvm::FoldingSetNodeID &ID, ElaboratedTypeKeyword Keyword,
+                      NestedNameSpecifier *NNS, NameType Name) {
+    ID.AddInteger(Keyword);
     ID.AddPointer(NNS);
     ID.AddPointer(Name.getOpaqueValue());
   }

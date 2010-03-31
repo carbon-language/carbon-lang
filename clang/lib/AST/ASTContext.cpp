@@ -1962,19 +1962,24 @@ ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
   return QualType(T, 0);
 }
 
-QualType ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
-                                     const IdentifierInfo *Name,
-                                     QualType Canon) {
+QualType ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
+                                          NestedNameSpecifier *NNS,
+                                          const IdentifierInfo *Name,
+                                          QualType Canon) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
 
   if (Canon.isNull()) {
     NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
-    if (CanonNNS != NNS)
-      Canon = getDependentNameType(CanonNNS, Name);
+    ElaboratedTypeKeyword CanonKeyword = Keyword;
+    if (Keyword == ETK_None)
+      CanonKeyword = ETK_Typename;
+    
+    if (CanonNNS != NNS || CanonKeyword != Keyword)
+      Canon = getDependentNameType(CanonKeyword, CanonNNS, Name);
   }
 
   llvm::FoldingSetNodeID ID;
-  DependentNameType::Profile(ID, NNS, Name);
+  DependentNameType::Profile(ID, Keyword, NNS, Name);
 
   void *InsertPos = 0;
   DependentNameType *T
@@ -1982,20 +1987,21 @@ QualType ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
   if (T)
     return QualType(T, 0);
 
-  T = new (*this) DependentNameType(NNS, Name, Canon);
+  T = new (*this) DependentNameType(Keyword, NNS, Name, Canon);
   Types.push_back(T);
   DependentNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 
 QualType
-ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
-                            const TemplateSpecializationType *TemplateId,
-                            QualType Canon) {
+ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
+                                 NestedNameSpecifier *NNS,
+                                 const TemplateSpecializationType *TemplateId,
+                                 QualType Canon) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
 
   llvm::FoldingSetNodeID ID;
-  DependentNameType::Profile(ID, NNS, TemplateId);
+  DependentNameType::Profile(ID, Keyword, NNS, TemplateId);
 
   void *InsertPos = 0;
   DependentNameType *T
@@ -2006,12 +2012,16 @@ ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
   if (Canon.isNull()) {
     NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
     QualType CanonType = getCanonicalType(QualType(TemplateId, 0));
-    if (CanonNNS != NNS || CanonType != QualType(TemplateId, 0)) {
+    ElaboratedTypeKeyword CanonKeyword = Keyword;
+    if (Keyword == ETK_None)
+      CanonKeyword = ETK_Typename;
+    if (CanonNNS != NNS || CanonKeyword != Keyword ||
+        CanonType != QualType(TemplateId, 0)) {
       const TemplateSpecializationType *CanonTemplateId
         = CanonType->getAs<TemplateSpecializationType>();
       assert(CanonTemplateId &&
              "Canonical type must also be a template specialization type");
-      Canon = getDependentNameType(CanonNNS, CanonTemplateId);
+      Canon = getDependentNameType(CanonKeyword, CanonNNS, CanonTemplateId);
     }
 
     DependentNameType *CheckT
@@ -2019,7 +2029,7 @@ ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
     assert(!CheckT && "Typename canonical type is broken"); (void)CheckT;
   }
 
-  T = new (*this) DependentNameType(NNS, TemplateId, Canon);
+  T = new (*this) DependentNameType(Keyword, NNS, TemplateId, Canon);
   Types.push_back(T);
   DependentNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);

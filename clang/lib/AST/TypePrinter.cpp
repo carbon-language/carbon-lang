@@ -572,7 +572,15 @@ void TypePrinter::PrintDependentName(const DependentNameType *T, std::string &S)
   
   {
     llvm::raw_string_ostream OS(MyString);
-    OS << "typename ";
+    switch (T->getKeyword()) {
+    case ETK_None: break;
+    case ETK_Typename: OS << "typename "; break;
+    case ETK_Class: OS << "class "; break;
+    case ETK_Struct: OS << "struct "; break;
+    case ETK_Union: OS << "union "; break;
+    case ETK_Enum: OS << "enum "; break;
+    }
+    
     T->getQualifier()->print(OS, Policy);
     
     if (const IdentifierInfo *Ident = T->getIdentifier())

@@ -630,12 +630,14 @@ public:
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);
-  QualType getDependentNameType(NestedNameSpecifier *NNS,
-                           const IdentifierInfo *Name,
-                           QualType Canon = QualType());
-  QualType getDependentNameType(NestedNameSpecifier *NNS,
-                           const TemplateSpecializationType *TemplateId,
-                           QualType Canon = QualType());
+  QualType getDependentNameType(ElaboratedTypeKeyword Keyword,
+                                NestedNameSpecifier *NNS,
+                                const IdentifierInfo *Name,
+                                QualType Canon = QualType());
+  QualType getDependentNameType(ElaboratedTypeKeyword Keyword,
+                                NestedNameSpecifier *NNS,
+                                const TemplateSpecializationType *TemplateId,
+                                QualType Canon = QualType());
   QualType getElaboratedType(QualType UnderlyingType,
                              ElaboratedType::TagKind Tag);
 

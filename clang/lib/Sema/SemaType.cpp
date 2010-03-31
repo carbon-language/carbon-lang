@@ -1261,7 +1261,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         NestedNameSpecifier *NNSPrefix = NNS->getPrefix();
         switch (NNS->getKind()) {
         case NestedNameSpecifier::Identifier:
-          ClsType = Context.getDependentNameType(NNSPrefix, NNS->getAsIdentifier());
+          ClsType = Context.getDependentNameType(ETK_None, NNSPrefix, 
+                                                 NNS->getAsIdentifier());
           break;
 
         case NestedNameSpecifier::Namespace:

@@ -198,7 +198,9 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   } else if (UnresolvedUsingTypenameDecl *UUDecl =
                dyn_cast<UnresolvedUsingTypenameDecl>(IIDecl)) {
     // FIXME: preserve source structure information.
-    T = Context.getDependentNameType(UUDecl->getTargetNestedNameSpecifier(), &II);
+    T = Context.getDependentNameType(ETK_None, 
+                                     UUDecl->getTargetNestedNameSpecifier(), 
+                                     &II);
   } else {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();

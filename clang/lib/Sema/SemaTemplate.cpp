@@ -4958,7 +4958,8 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
   }
 
-  return Context.getDependentNameType(NNS, TemplateId).getAsOpaquePtr();
+  return Context.getDependentNameType(ETK_Typename, NNS, TemplateId)
+                                                            .getAsOpaquePtr();
 }
 
 /// \brief Build the type that describes a C++ typename specifier,
@@ -4973,7 +4974,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     // If the nested-name-specifier does not refer to the current
     // instantiation, then build a typename type.
     if (!CurrentInstantiation)
-      return Context.getDependentNameType(NNS, &II);
+      return Context.getDependentNameType(ETK_Typename, NNS, &II);
 
     // The nested-name-specifier refers to the current instantiation, so the
     // "typename" keyword itself is superfluous. In C++03, the program is
@@ -5009,7 +5010,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
       
   case LookupResult::NotFoundInCurrentInstantiation:
     // Okay, it's a member of an unknown instantiation.
-    return Context.getDependentNameType(NNS, &II);
+    return Context.getDependentNameType(ETK_Typename, NNS, &II);
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
@@ -5135,10 +5136,12 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
         NewTemplateId == QualType(TemplateId, 0))
       Result = QualType(T, 0);
     else
-      Result = getDerived().RebuildDependentNameType(NNS, NewTemplateId);
+      Result = getDerived().RebuildDependentNameType(T->getKeyword(), 
+                                                     NNS, NewTemplateId);
   } else
-    Result = getDerived().RebuildDependentNameType(NNS, T->getIdentifier(),
-                                              SourceRange(TL.getNameLoc()));
+    Result = getDerived().RebuildDependentNameType(T->getKeyword(),
+                                                   NNS, T->getIdentifier(),
+                                                  SourceRange(TL.getNameLoc()));
 
   if (Result.isNull())
     return QualType();
