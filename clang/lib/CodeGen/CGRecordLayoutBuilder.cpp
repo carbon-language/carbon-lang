@@ -288,9 +288,10 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
         continue;
 
       // Add the bit field info.
-      Types.addBitFieldInfo(*Field, 0, 0, FieldSize);
-    } else
-      Types.addFieldInfo(*Field, 0);
+      LLVMBitFields.push_back(LLVMBitFieldInfo(*Field, 0, 0, FieldSize));
+    } else {
+      LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
+    }
 
     HasOnlyZeroSizedBitFields = false;
 
