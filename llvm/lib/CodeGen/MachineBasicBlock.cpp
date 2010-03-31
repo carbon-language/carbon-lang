@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -459,54 +460,41 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   //    conditional branch followed by an unconditional branch. DestA is the
   //    'true' destination and DestB is the 'false' destination.
 
-  bool MadeChange = false;
-  bool AddedFallThrough = false;
+  bool Changed = false;
 
   MachineFunction::iterator FallThru =
     llvm::next(MachineFunction::iterator(this));
-  
-  if (isCond) {
-    // If this block ends with a conditional branch that falls through to its
-    // successor, set DestB as the successor.
-    if (DestB == 0 && FallThru != getParent()->end()) {
+
+  if (DestA == 0 && DestB == 0) {
+    // Block falls through to successor.
+    DestA = FallThru;
+    DestB = FallThru;
+  } else if (DestA != 0 && DestB == 0) {
+    if (isCond)
+      // Block ends in conditional jump that falls through to successor.
       DestB = FallThru;
-      AddedFallThrough = true;
-    }
   } else {
-    // If this is an unconditional branch with no explicit dest, it must just be
-    // a fallthrough into DestA.
-    if (DestA == 0 && FallThru != getParent()->end()) {
-      DestA = FallThru;
-      AddedFallThrough = true;
-    }
+    assert(DestA && DestB && isCond &&
+           "CFG in a bad state. Cannot correct CFG edges");
   }
-  
+
+  // Remove superfluous edges. I.e., those which aren't destinations of this
+  // basic block, duplicate edges, or landing pads.
+  SmallPtrSet<const MachineBasicBlock*, 8> SeenMBBs;
   MachineBasicBlock::succ_iterator SI = succ_begin();
-  MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
   while (SI != succ_end()) {
     const MachineBasicBlock *MBB = *SI;
-    if (MBB == DestA) {
-      DestA = 0;
-      ++SI;
-    } else if (MBB == DestB) {
-      DestB = 0;
-      ++SI;
-    } else if (MBB->isLandingPad() && 
-               MBB != OrigDestA && MBB != OrigDestB) {
-      ++SI;
-    } else {
-      // Otherwise, this is a superfluous edge, remove it.
+    if (!SeenMBBs.insert(MBB) ||
+        (MBB != DestA && MBB != DestB && !MBB->isLandingPad())) {
+      // This is a superfluous edge, remove it.
       SI = removeSuccessor(SI);
-      MadeChange = true;
+      Changed = true;
+    } else {
+      ++SI;
     }
   }
 
-  if (!AddedFallThrough)
-    assert(DestA == 0 && DestB == 0 && "MachineCFG is missing edges!");
-  else if (isCond)
-    assert(DestA == 0 && "MachineCFG is missing edges!");
-
-  return MadeChange;
+  return Changed;
 }
 
 /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
