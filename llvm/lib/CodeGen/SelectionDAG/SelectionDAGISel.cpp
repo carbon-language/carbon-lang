@@ -366,23 +366,23 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
 /// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
 /// attached with this instruction.
-static void SetDebugLoc(unsigned MDDbgKind, Instruction *I,
-                        SelectionDAGBuilder *SDB,
+static void SetDebugLoc(Instruction *I, SelectionDAGBuilder *SDB,
                         FastISel *FastIS, MachineFunction *MF) {
-  if (MDNode *Dbg = I->getMetadata(MDDbgKind)) {
-    DILocation DILoc(Dbg);
-    DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
+  MDNode *Dbg = I->getDbgMetadata();
+  if (Dbg == 0) return;
+  
+  DILocation DILoc(Dbg);
+  DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
 
-    SDB->setCurDebugLoc(Loc);
+  SDB->setCurDebugLoc(Loc);
 
-    if (FastIS)
-      FastIS->setCurDebugLoc(Loc);
+  if (FastIS)
+    FastIS->setCurDebugLoc(Loc);
 
-    // If the function doesn't have a default debug location yet, set
-    // it. This is kind of a hack.
-    if (MF->getDefaultDebugLoc().isUnknown())
-      MF->setDefaultDebugLoc(Loc);
-  }
+  // If the function doesn't have a default debug location yet, set
+  // it. This is kind of a hack.
+  if (MF->getDefaultDebugLoc().isUnknown())
+    MF->setDefaultDebugLoc(Loc);
 }
 
 /// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
@@ -397,12 +397,11 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator End,
                                         bool &HadTailCall) {
   SDB->setCurrentBasicBlock(BB);
-  unsigned MDDbgKind = LLVMBB->getContext().getMDKindID("dbg");
 
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
   for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
-    SetDebugLoc(MDDbgKind, I, SDB, 0, MF);
+    SetDebugLoc(I, SDB, 0, MF);
 
     if (!isa<TerminatorInst>(I)) {
       SDB->visit(*I);
@@ -425,7 +424,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
       HandlePHINodesInSuccessorBlocks(LLVMBB);
 
       // Lower the terminator after the copies are emitted.
-      SetDebugLoc(MDDbgKind, LLVMBB->getTerminator(), SDB, 0, MF);
+      SetDebugLoc(LLVMBB->getTerminator(), SDB, 0, MF);
       SDB->visit(*LLVMBB->getTerminator());
       ResetDebugLoc(SDB, 0);
     }
@@ -863,8 +862,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 #endif
                                 );
 
-  unsigned MDDbgKind = Fn.getContext().getMDKindID("dbg");
-
   // Iterate over all basic blocks in the function.
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     BasicBlock *LLVMBB = &*I;
@@ -962,7 +959,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             break;
           }
 
-        SetDebugLoc(MDDbgKind, BI, SDB, FastIS, &MF);
+        SetDebugLoc(BI, SDB, FastIS, &MF);
 
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(BI)) {
