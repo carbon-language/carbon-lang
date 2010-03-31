@@ -61,7 +61,6 @@ CCKEXT_COMMON_FUNCTIONS := \
 	divdi3 \
 	divsc3 \
 	do_global_dtors \
-	enable_execute_stack \
 	eprintf \
 	ffsdi2 \
 	fixdfdi \
