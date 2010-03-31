@@ -27,22 +27,28 @@ namespace llvm {
 /// transformation wants to rewrite a set of uses of one value with uses of a
 /// set of values.
 class SSAUpdater {
+public:
+  class BBInfo;
+
+private:
   /// AvailableVals - This keeps track of which value to use on a per-block
-  /// basis.  When we insert PHI nodes, we keep track of them here.  We use
-  /// TrackingVH's for the value of the map because we RAUW PHI nodes when we
-  /// eliminate them, and want the TrackingVH's to track this.
-  //typedef DenseMap<BasicBlock*, TrackingVH<Value> > AvailableValsTy;
+  /// basis.  When we insert PHI nodes, we keep track of them here.
+  //typedef DenseMap<BasicBlock*, Value*> AvailableValsTy;
   void *AV;
 
   /// PrototypeValue is an arbitrary representative value, which we derive names
   /// and a type for PHI nodes.
   Value *PrototypeValue;
 
-  /// IncomingPredInfo - We use this as scratch space when doing our recursive
-  /// walk.  This should only be used in GetValueInBlockInternal, normally it
-  /// should be empty.
-  //std::vector<std::pair<BasicBlock*, TrackingVH<Value> > > IncomingPredInfo;
-  void *IPI;
+  /// BBMap - The GetValueAtEndOfBlock method maintains this mapping from
+  /// basic blocks to BBInfo structures.
+  /// typedef DenseMap<BasicBlock*, BBInfo*> BBMapTy;
+  void *BM;
+
+  /// Allocator - The GetValueAtEndOfBlock method uses this BumpPtrAllocator to
+  /// hold its internal data.  The allocator and its storage is created and
+  /// discarded for each invocation of GetValueAtEndOfBlock.
+  void *BPA;
 
   /// InsertedPHIs - If this is non-null, the SSAUpdater adds all PHI nodes that
   /// it creates to the vector.
@@ -99,6 +105,14 @@ public:
 
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
+  void FindPHIPlacement(BasicBlock *BB, BBInfo *Info, bool &Changed,
+                        unsigned Counter);
+  void FindAvailableVal(BasicBlock *BB, BBInfo *Info, unsigned Counter);
+  void FindExistingPHI(BasicBlock *BB, BBInfo *Info);
+  bool CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val);
+  void RecordMatchingPHI(BasicBlock *BB, BBInfo *Info, PHINode *PHI);
+  void ClearPHITags(BasicBlock *BB, BBInfo *Info, PHINode *PHI);
+
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
   SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT
 };

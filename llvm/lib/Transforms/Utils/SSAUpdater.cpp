@@ -14,31 +14,82 @@
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/AlignOf.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-typedef DenseMap<BasicBlock*, TrackingVH<Value> > AvailableValsTy;
-typedef std::vector<std::pair<BasicBlock*, TrackingVH<Value> > >
-                IncomingPredInfoTy;
+/// BBInfo - Per-basic block information used internally by SSAUpdater.
+/// The predecessors of each block are cached here since pred_iterator is
+/// slow and we need to iterate over the blocks at least a few times.
+class SSAUpdater::BBInfo {
+public:
+  Value *AvailableVal; // Value to use in this block.
+  BasicBlock *DefBB;   // Block that defines the available value.
+  unsigned NumPreds;   // Number of predecessor blocks.
+  BasicBlock **Preds;  // Array[NumPreds] of predecessor blocks.
+  unsigned Counter;    // Marker to identify blocks already visited.
+  PHINode *PHITag;     // Marker for existing PHIs that match.
 
+  BBInfo(BasicBlock *BB, Value *V, BumpPtrAllocator *Allocator);
+};
+typedef DenseMap<BasicBlock*, SSAUpdater::BBInfo*> BBMapTy;
+
+SSAUpdater::BBInfo::BBInfo(BasicBlock *BB, Value *V,
+                           BumpPtrAllocator *Allocator)
+  : AvailableVal(V), DefBB(0), NumPreds(0), Preds(0), Counter(0), PHITag(0) {
+  // If this block has a known value, don't bother finding its predecessors.
+  if (V) {
+    DefBB = BB;
+    return;
+  }
+
+  // We can get our predecessor info by walking the pred_iterator list, but it
+  // is relatively slow.  If we already have PHI nodes in this block, walk one
+  // of them to get the predecessor list instead.
+  if (PHINode *SomePhi = dyn_cast<PHINode>(BB->begin())) {
+    NumPreds = SomePhi->getNumIncomingValues();
+    Preds = static_cast<BasicBlock**>
+      (Allocator->Allocate(NumPreds * sizeof(BasicBlock*),
+                           AlignOf<BasicBlock*>::Alignment));
+    for (unsigned pi = 0; pi != NumPreds; ++pi)
+      Preds[pi] = SomePhi->getIncomingBlock(pi);
+    return;
+  }
+
+  // Stash the predecessors in a temporary vector until we know how much space
+  // to allocate for them.
+  SmallVector<BasicBlock*, 10> TmpPreds;
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+    TmpPreds.push_back(*PI);
+    ++NumPreds;
+  } 
+  Preds = static_cast<BasicBlock**>
+    (Allocator->Allocate(NumPreds * sizeof(BasicBlock*),
+                         AlignOf<BasicBlock*>::Alignment));
+  memcpy(Preds, TmpPreds.data(), NumPreds * sizeof(BasicBlock*));
+}
+
+typedef DenseMap<BasicBlock*, Value*> AvailableValsTy;
 static AvailableValsTy &getAvailableVals(void *AV) {
   return *static_cast<AvailableValsTy*>(AV);
 }
 
-static IncomingPredInfoTy &getIncomingPredInfo(void *IPI) {
-  return *static_cast<IncomingPredInfoTy*>(IPI);
+static BBMapTy *getBBMap(void *BM) {
+  return static_cast<BBMapTy*>(BM);
 }
 
+static BumpPtrAllocator *getAllocator(void *BPA) {
+  return static_cast<BumpPtrAllocator*>(BPA);
+}
 
 SSAUpdater::SSAUpdater(SmallVectorImpl<PHINode*> *NewPHI)
-  : AV(0), PrototypeValue(0), IPI(0), InsertedPHIs(NewPHI) {}
+  : AV(0), PrototypeValue(0), BM(0), BPA(0), InsertedPHIs(NewPHI) {}
 
 SSAUpdater::~SSAUpdater() {
   delete &getAvailableVals(AV);
-  delete &getIncomingPredInfo(IPI);
 }
 
 /// Initialize - Reset this object to get ready for a new set of SSA
@@ -48,11 +99,6 @@ void SSAUpdater::Initialize(Value *ProtoValue) {
     AV = new AvailableValsTy();
   else
     getAvailableVals(AV).clear();
-
-  if (IPI == 0)
-    IPI = new IncomingPredInfoTy();
-  else
-    getIncomingPredInfo(IPI).clear();
   PrototypeValue = ProtoValue;
 }
 
@@ -118,9 +164,9 @@ static Value *GetExistingPHI(BasicBlock *BB, const InputIt &I,
 /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
 /// live at the end of the specified block.
 Value *SSAUpdater::GetValueAtEndOfBlock(BasicBlock *BB) {
-  assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
+  assert(BM == 0 && BPA == 0 && "Unexpected Internal State");
   Value *Res = GetValueAtEndOfBlockInternal(BB);
-  assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
+  assert(BM == 0 && BPA == 0 && "Unexpected Internal State");
   return Res;
 }
 
@@ -146,7 +192,7 @@ Value *SSAUpdater::GetValueAtEndOfBlock(BasicBlock *BB) {
 Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   // If there is no definition of the renamed variable in this block, just use
   // GetValueAtEndOfBlock to do our work.
-  if (!getAvailableVals(AV).count(BB))
+  if (!HasValueForBlock(BB))
     return GetValueAtEndOfBlock(BB);
 
   // Otherwise, we have the hard case.  Get the live-in values for each
@@ -236,161 +282,228 @@ void SSAUpdater::RewriteUse(Use &U) {
   U.set(V);
 }
 
-
 /// GetValueAtEndOfBlockInternal - Check to see if AvailableVals has an entry
 /// for the specified BB and if so, return it.  If not, construct SSA form by
-/// walking predecessors inserting PHI nodes as needed until we get to a block
-/// where the value is available.
-///
+/// first calculating the required placement of PHIs and then inserting new
+/// PHIs where needed.
 Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
   AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  if (Value *V = AvailableVals[BB])
+    return V;
 
-  // Query AvailableVals by doing an insertion of null.
-  std::pair<AvailableValsTy::iterator, bool> InsertRes =
-    AvailableVals.insert(std::make_pair(BB, TrackingVH<Value>()));
+  // Pool allocation used internally by GetValueAtEndOfBlock.
+  BumpPtrAllocator AllocatorObj;
+  BBMapTy BBMapObj;
+  BPA = &AllocatorObj;
+  BM = &BBMapObj;
 
-  // Handle the case when the insertion fails because we have already seen BB.
-  if (!InsertRes.second) {
-    // If the insertion failed, there are two cases.  The first case is that the
-    // value is already available for the specified block.  If we get this, just
-    // return the value.
-    if (InsertRes.first->second != 0)
-      return InsertRes.first->second;
+  BBInfo *Info = new (AllocatorObj) BBInfo(BB, 0, &AllocatorObj);
+  BBMapObj[BB] = Info;
 
-    // Otherwise, if the value we find is null, then this is the value is not
-    // known but it is being computed elsewhere in our recursion.  This means
-    // that we have a cycle.  Handle this by inserting a PHI node and returning
-    // it.  When we get back to the first instance of the recursion we will fill
-    // in the PHI node.
-    return InsertRes.first->second =
-      PHINode::Create(PrototypeValue->getType(), PrototypeValue->getName(),
-                      &BB->front());
+  bool Changed;
+  unsigned Counter = 1;
+  do {
+    Changed = false;
+    FindPHIPlacement(BB, Info, Changed, Counter);
+    ++Counter;
+  } while (Changed);
+
+  FindAvailableVal(BB, Info, Counter);
+
+  BPA = 0;
+  BM = 0;
+  return Info->AvailableVal;
+}
+
+/// FindPHIPlacement - Recursively visit the predecessors of a block to find
+/// the reaching definition for each predecessor and then determine whether
+/// a PHI is needed in this block.  
+void SSAUpdater::FindPHIPlacement(BasicBlock *BB, BBInfo *Info, bool &Changed,
+                                  unsigned Counter) {
+  AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  BBMapTy *BBMap = getBBMap(BM);
+  BumpPtrAllocator *Allocator = getAllocator(BPA);
+  bool BBNeedsPHI = false;
+  BasicBlock *SamePredDefBB = 0;
+
+  // If there are no predecessors, then we must have found an unreachable
+  // block.  Treat it as a definition with 'undef'.
+  if (Info->NumPreds == 0) {
+    Info->AvailableVal = UndefValue::get(PrototypeValue->getType());
+    Info->DefBB = BB;
+    return;
   }
 
-  // Okay, the value isn't in the map and we just inserted a null in the entry
-  // to indicate that we're processing the block.  Since we have no idea what
-  // value is in this block, we have to recurse through our predecessors.
-  //
-  // While we're walking our predecessors, we keep track of them in a vector,
-  // then insert a PHI node in the end if we actually need one.  We could use a
-  // smallvector here, but that would take a lot of stack space for every level
-  // of the recursion, just use IncomingPredInfo as an explicit stack.
-  IncomingPredInfoTy &IncomingPredInfo = getIncomingPredInfo(IPI);
-  unsigned FirstPredInfoEntry = IncomingPredInfo.size();
-
-  // As we're walking the predecessors, keep track of whether they are all
-  // producing the same value.  If so, this value will capture it, if not, it
-  // will get reset to null.  We distinguish the no-predecessor case explicitly
-  // below.
-  TrackingVH<Value> ExistingValue;
-
-  // We can get our predecessor info by walking the pred_iterator list, but it
-  // is relatively slow.  If we already have PHI nodes in this block, walk one
-  // of them to get the predecessor list instead.
-  if (PHINode *SomePhi = dyn_cast<PHINode>(BB->begin())) {
-    for (unsigned i = 0, e = SomePhi->getNumIncomingValues(); i != e; ++i) {
-      BasicBlock *PredBB = SomePhi->getIncomingBlock(i);
-      Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
-      IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
-
-      // Set ExistingValue to singular value from all predecessors so far.
-      if (i == 0)
-        ExistingValue = PredVal;
-      else if (PredVal != ExistingValue)
-        ExistingValue = 0;
+  Info->Counter = Counter;
+  for (unsigned pi = 0; pi != Info->NumPreds; ++pi) {
+    BasicBlock *Pred = Info->Preds[pi];
+    BBMapTy::value_type &BBMapBucket = BBMap->FindAndConstruct(Pred);
+    if (!BBMapBucket.second) {
+      Value *PredVal = AvailableVals.lookup(Pred);
+      BBMapBucket.second = new (*Allocator) BBInfo(Pred, PredVal, Allocator);
     }
-  } else {
-    bool isFirstPred = true;
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      BasicBlock *PredBB = *PI;
-      Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
-      IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
+    BBInfo *PredInfo = BBMapBucket.second;
+    BasicBlock *DefBB = 0;
+    if (!PredInfo->AvailableVal) {
+      if (PredInfo->Counter != Counter)
+        FindPHIPlacement(Pred, PredInfo, Changed, Counter);
 
-      // Set ExistingValue to singular value from all predecessors so far.
-      if (isFirstPred) {
-        ExistingValue = PredVal;
-        isFirstPred = false;
-      } else if (PredVal != ExistingValue)
-        ExistingValue = 0;
+      // Ignore back edges where the value is not yet known.
+      if (!PredInfo->DefBB)
+        continue;
+    }
+    DefBB = PredInfo->DefBB;
+
+    if (!SamePredDefBB)
+      SamePredDefBB = DefBB;
+    else if (DefBB != SamePredDefBB)
+      BBNeedsPHI = true;
+  }
+
+  BasicBlock *NewDefBB = (BBNeedsPHI ? BB : SamePredDefBB);
+  if (Info->DefBB != NewDefBB) {
+    Changed = true;
+    Info->DefBB = NewDefBB;
+  }
+}
+
+/// FindAvailableVal - If this block requires a PHI, first check if an existing
+/// PHI matches the PHI placement and reaching definitions computed earlier,
+/// and if not, create a new PHI.  Visit all the block's predecessors to
+/// calculate the available value for each one and fill in the incoming values
+/// for a new PHI.
+void SSAUpdater::FindAvailableVal(BasicBlock *BB, BBInfo *Info,
+                                  unsigned Counter) {
+  if (Info->AvailableVal || Info->Counter == Counter)
+    return;
+
+  AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  BBMapTy *BBMap = getBBMap(BM);
+
+  // Check if there needs to be a PHI in BB.
+  PHINode *NewPHI = 0;
+  if (Info->DefBB == BB) {
+    // Look for an existing PHI.
+    FindExistingPHI(BB, Info);
+    if (!Info->AvailableVal) {
+      NewPHI = PHINode::Create(PrototypeValue->getType(),
+                               PrototypeValue->getName(), &BB->front());
+      NewPHI->reserveOperandSpace(Info->NumPreds);
+      Info->AvailableVal = NewPHI;
+      AvailableVals[BB] = NewPHI;
     }
   }
 
-  // If there are no predecessors, then we must have found an unreachable block
-  // just return 'undef'.  Since there are no predecessors, InsertRes must not
-  // be invalidated.
-  if (IncomingPredInfo.size() == FirstPredInfoEntry)
-    return InsertRes.first->second = UndefValue::get(PrototypeValue->getType());
-
-  /// Look up BB's entry in AvailableVals.  'InsertRes' may be invalidated.  If
-  /// this block is involved in a loop, a no-entry PHI node will have been
-  /// inserted as InsertedVal.  Otherwise, we'll still have the null we inserted
-  /// above.
-  TrackingVH<Value> &InsertedVal = AvailableVals[BB];
-
-  // If the predecessor values are not all the same, then check to see if there
-  // is an existing PHI that can be used.
-  if (!ExistingValue)
-    ExistingValue = GetExistingPHI(BB,
-                                   IncomingPredInfo.begin()+FirstPredInfoEntry,
-                                   IncomingPredInfo.end());
-
-  // If there is an existing value we can use, then we don't need to insert a
-  // PHI.  This is the simple and common case.
-  if (ExistingValue) {
-    // If a PHI node got inserted, replace it with the existing value and delete
-    // it.
-    if (InsertedVal) {
-      PHINode *OldVal = cast<PHINode>(InsertedVal);
-      // Be careful about dead loops.  These RAUW's also update InsertedVal.
-      if (InsertedVal != ExistingValue)
-        OldVal->replaceAllUsesWith(ExistingValue);
-      else
-        OldVal->replaceAllUsesWith(UndefValue::get(InsertedVal->getType()));
-      OldVal->eraseFromParent();
-    } else {
-      InsertedVal = ExistingValue;
-    }
-
-    // Either path through the 'if' should have set InsertedVal -> ExistingVal.
-    assert((InsertedVal == ExistingValue || isa<UndefValue>(InsertedVal)) &&
-           "RAUW didn't change InsertedVal to be ExistingValue");
-
-    // Drop the entries we added in IncomingPredInfo to restore the stack.
-    IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
-                           IncomingPredInfo.end());
-    return ExistingValue;
+  // Iterate through the block's predecessors.
+  Info->Counter = Counter;
+  for (unsigned pi = 0; pi != Info->NumPreds; ++pi) {
+    BasicBlock *Pred = Info->Preds[pi];
+    BBInfo *PredInfo = (*BBMap)[Pred];
+    FindAvailableVal(Pred, PredInfo, Counter);
+    if (NewPHI) {
+      // Skip to the nearest preceding definition.
+      if (PredInfo->DefBB != Pred)
+        PredInfo = (*BBMap)[PredInfo->DefBB];
+      NewPHI->addIncoming(PredInfo->AvailableVal, Pred);
+    } else if (!Info->AvailableVal)
+      Info->AvailableVal = PredInfo->AvailableVal;
   }
-
-  // Otherwise, we do need a PHI: insert one now if we don't already have one.
-  if (InsertedVal == 0)
-    InsertedVal = PHINode::Create(PrototypeValue->getType(),
-                                  PrototypeValue->getName(), &BB->front());
-
-  PHINode *InsertedPHI = cast<PHINode>(InsertedVal);
-  InsertedPHI->reserveOperandSpace(IncomingPredInfo.size()-FirstPredInfoEntry);
-
-  // Fill in all the predecessors of the PHI.
-  for (IncomingPredInfoTy::iterator I =
-         IncomingPredInfo.begin()+FirstPredInfoEntry,
-       E = IncomingPredInfo.end(); I != E; ++I)
-    InsertedPHI->addIncoming(I->second, I->first);
-
-  // Drop the entries we added in IncomingPredInfo to restore the stack.
-  IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
-                         IncomingPredInfo.end());
-
-  // See if the PHI node can be merged to a single value.  This can happen in
-  // loop cases when we get a PHI of itself and one other value.
-  if (Value *ConstVal = InsertedPHI->hasConstantValue()) {
-    InsertedPHI->replaceAllUsesWith(ConstVal);
-    InsertedPHI->eraseFromParent();
-    InsertedVal = ConstVal;
-  } else {
-    DEBUG(dbgs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+ 
+  if (NewPHI) {
+    DEBUG(dbgs() << "  Inserted PHI: " << *NewPHI << "\n");
 
     // If the client wants to know about all new instructions, tell it.
-    if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
+    if (InsertedPHIs) InsertedPHIs->push_back(NewPHI);
   }
+}
 
-  return InsertedVal;
+/// FindExistingPHI - Look through the PHI nodes in a block to see if any of
+/// them match what is needed.
+void SSAUpdater::FindExistingPHI(BasicBlock *BB, BBInfo *Info) {
+  PHINode *SomePHI;
+  for (BasicBlock::iterator It = BB->begin();
+       (SomePHI = dyn_cast<PHINode>(It)); ++It) {
+    if (CheckIfPHIMatches(BB, Info, SomePHI)) {
+      RecordMatchingPHI(BB, Info, SomePHI);
+      break;
+    }
+    ClearPHITags(BB, Info, SomePHI);
+  }
+}
+
+/// CheckIfPHIMatches - Check if Val is a PHI node in block BB that matches
+/// the placement and values in the BBMap.
+bool SSAUpdater::CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val) {
+  if (Info->AvailableVal)
+    return Val == Info->AvailableVal;
+
+  // Check if Val is a PHI in this block.
+  PHINode *PHI = dyn_cast<PHINode>(Val);
+  if (!PHI || PHI->getParent() != BB)
+    return false;
+
+  // If this block has already been visited, check if this PHI matches.
+  if (Info->PHITag)
+    return PHI == Info->PHITag;
+  Info->PHITag = PHI;
+  bool IsMatch = true;
+
+  // Iterate through the predecessors.
+  BBMapTy *BBMap = getBBMap(BM);
+  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+    BasicBlock *Pred = PHI->getIncomingBlock(i);
+    Value *IncomingVal = PHI->getIncomingValue(i);
+    BBInfo *PredInfo = (*BBMap)[Pred];
+    // Skip to the nearest preceding definition.
+    if (PredInfo->DefBB != Pred) {
+      Pred = PredInfo->DefBB;
+      PredInfo = (*BBMap)[Pred];
+    }
+    if (!CheckIfPHIMatches(Pred, PredInfo, IncomingVal)) {
+      IsMatch = false;
+      break;
+    }
+  }
+  return IsMatch;
+}
+
+/// RecordMatchingPHI - For a PHI node that matches, record it in both the
+/// BBMap and the AvailableVals mapping.  Recursively record its input PHIs
+/// as well.
+void SSAUpdater::RecordMatchingPHI(BasicBlock *BB, BBInfo *Info, PHINode *PHI) {
+  if (!Info || Info->AvailableVal)
+    return;
+
+  // Record the PHI.
+  AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  AvailableVals[BB] = PHI;
+  Info->AvailableVal = PHI;
+
+  // Iterate through the predecessors.
+  BBMapTy *BBMap = getBBMap(BM);
+  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+    PHINode *PHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+    if (!PHIVal) continue;
+    BasicBlock *Pred = PHIVal->getParent();
+    RecordMatchingPHI(Pred, (*BBMap)[Pred], PHIVal);
+  }
+}
+
+/// ClearPHITags - When one of the existing PHI nodes fails to match, clear
+/// the PHITag values stored in the BBMap while checking to see if it matched.
+void SSAUpdater::ClearPHITags(BasicBlock *BB, BBInfo *Info, PHINode *PHI) {
+  if (!Info || Info->AvailableVal || !Info->PHITag)
+    return;
+
+  // Clear the tag.
+  Info->PHITag = 0;
+
+  // Iterate through the predecessors.
+  BBMapTy *BBMap = getBBMap(BM);
+  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+    PHINode *PHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+    if (!PHIVal) continue;
+    BasicBlock *Pred = PHIVal->getParent();
+    ClearPHITags(Pred, (*BBMap)[Pred], PHIVal);
+  }
 }
