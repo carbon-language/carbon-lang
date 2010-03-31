@@ -233,7 +233,7 @@ NODE_XML(QualifiedNameType, "QualifiedNameType")
   TYPE_ATTRIBUTE_XML(getNamedType())
 END_NODE_XML
 
-NODE_XML(TypenameType, "TypenameType")
+NODE_XML(DependentNameType, "DependentNameType")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 

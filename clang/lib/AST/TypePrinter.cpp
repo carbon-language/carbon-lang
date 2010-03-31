@@ -567,7 +567,7 @@ void TypePrinter::PrintQualifiedName(const QualifiedNameType *T,
     S = MyString + ' ' + S;  
 }
 
-void TypePrinter::PrintTypename(const TypenameType *T, std::string &S) { 
+void TypePrinter::PrintDependentName(const DependentNameType *T, std::string &S) { 
   std::string MyString;
   
   {

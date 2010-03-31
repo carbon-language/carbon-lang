@@ -406,7 +406,7 @@ void TypeLocWriter::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
 void TypeLocWriter::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
-void TypeLocWriter::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
+void TypeLocWriter::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {

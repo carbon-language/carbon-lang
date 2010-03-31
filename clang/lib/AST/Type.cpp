@@ -757,7 +757,7 @@ bool Type::isSpecifierType() const {
   case SubstTemplateTypeParm:
   case TemplateSpecialization:
   case QualifiedName:
-  case Typename:
+  case DependentName:
   case ObjCInterface:
   case ObjCObjectPointer:
   case Elaborated:

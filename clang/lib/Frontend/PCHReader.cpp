@@ -2351,7 +2351,7 @@ void TypeLocReader::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
 void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
+void TypeLocReader::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {

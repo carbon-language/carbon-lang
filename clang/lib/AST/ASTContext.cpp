@@ -1962,7 +1962,7 @@ ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
   return QualType(T, 0);
 }
 
-QualType ASTContext::getTypenameType(NestedNameSpecifier *NNS,
+QualType ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
                                      const IdentifierInfo *Name,
                                      QualType Canon) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
@@ -1970,36 +1970,36 @@ QualType ASTContext::getTypenameType(NestedNameSpecifier *NNS,
   if (Canon.isNull()) {
     NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
     if (CanonNNS != NNS)
-      Canon = getTypenameType(CanonNNS, Name);
+      Canon = getDependentNameType(CanonNNS, Name);
   }
 
   llvm::FoldingSetNodeID ID;
-  TypenameType::Profile(ID, NNS, Name);
+  DependentNameType::Profile(ID, NNS, Name);
 
   void *InsertPos = 0;
-  TypenameType *T
-    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentNameType *T
+    = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
 
-  T = new (*this) TypenameType(NNS, Name, Canon);
+  T = new (*this) DependentNameType(NNS, Name, Canon);
   Types.push_back(T);
-  TypenameTypes.InsertNode(T, InsertPos);
+  DependentNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 
 QualType
-ASTContext::getTypenameType(NestedNameSpecifier *NNS,
+ASTContext::getDependentNameType(NestedNameSpecifier *NNS,
                             const TemplateSpecializationType *TemplateId,
                             QualType Canon) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
 
   llvm::FoldingSetNodeID ID;
-  TypenameType::Profile(ID, NNS, TemplateId);
+  DependentNameType::Profile(ID, NNS, TemplateId);
 
   void *InsertPos = 0;
-  TypenameType *T
-    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentNameType *T
+    = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
 
@@ -2011,17 +2011,17 @@ ASTContext::getTypenameType(NestedNameSpecifier *NNS,
         = CanonType->getAs<TemplateSpecializationType>();
       assert(CanonTemplateId &&
              "Canonical type must also be a template specialization type");
-      Canon = getTypenameType(CanonNNS, CanonTemplateId);
+      Canon = getDependentNameType(CanonNNS, CanonTemplateId);
     }
 
-    TypenameType *CheckT
-      = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+    DependentNameType *CheckT
+      = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(!CheckT && "Typename canonical type is broken"); (void)CheckT;
   }
 
-  T = new (*this) TypenameType(NNS, TemplateId, Canon);
+  T = new (*this) DependentNameType(NNS, TemplateId, Canon);
   Types.push_back(T);
-  TypenameTypes.InsertNode(T, InsertPos);
+  DependentNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 

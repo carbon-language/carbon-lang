@@ -92,7 +92,7 @@ NON_CANONICAL_TYPE(SubstTemplateTypeParm, Type)
 NON_CANONICAL_UNLESS_DEPENDENT_TYPE(TemplateSpecialization, Type)
 NON_CANONICAL_TYPE(QualifiedName, Type)
 NON_CANONICAL_TYPE(InjectedClassName, Type)
-DEPENDENT_TYPE(Typename, Type)
+DEPENDENT_TYPE(DependentName, Type)
 TYPE(ObjCInterface, Type)
 TYPE(ObjCObjectPointer, Type)
 

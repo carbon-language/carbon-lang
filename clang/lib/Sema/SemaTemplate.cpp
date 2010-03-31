@@ -4962,7 +4962,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
   }
 
-  return Context.getTypenameType(NNS, TemplateId).getAsOpaquePtr();
+  return Context.getDependentNameType(NNS, TemplateId).getAsOpaquePtr();
 }
 
 /// \brief Build the type that describes a C++ typename specifier,
@@ -4977,7 +4977,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     // If the nested-name-specifier does not refer to the current
     // instantiation, then build a typename type.
     if (!CurrentInstantiation)
-      return Context.getTypenameType(NNS, &II);
+      return Context.getDependentNameType(NNS, &II);
 
     // The nested-name-specifier refers to the current instantiation, so the
     // "typename" keyword itself is superfluous. In C++03, the program is
@@ -5013,7 +5013,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
       
   case LookupResult::NotFoundInCurrentInstantiation:
     // Okay, it's a member of an unknown instantiation.
-    return Context.getTypenameType(NNS, &II);
+    return Context.getDependentNameType(NNS, &II);
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
@@ -5098,16 +5098,16 @@ namespace {
     /// \brief Transforms a typename type by determining whether the type now
     /// refers to a member of the current instantiation, and then
     /// type-checking and building a QualifiedNameType (when possible).
-    QualType TransformTypenameType(TypeLocBuilder &TLB, TypenameTypeLoc TL, 
+    QualType TransformDependentNameType(TypeLocBuilder &TLB, DependentNameTypeLoc TL, 
                                    QualType ObjectType);
   };
 }
 
 QualType
-CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
-                                                     TypenameTypeLoc TL, 
+CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
+                                                     DependentNameTypeLoc TL, 
                                                      QualType ObjectType) {
-  TypenameType *T = TL.getTypePtr();
+  DependentNameType *T = TL.getTypePtr();
 
   NestedNameSpecifier *NNS
     = TransformNestedNameSpecifier(T->getQualifier(),
@@ -5139,15 +5139,15 @@ CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
         NewTemplateId == QualType(TemplateId, 0))
       Result = QualType(T, 0);
     else
-      Result = getDerived().RebuildTypenameType(NNS, NewTemplateId);
+      Result = getDerived().RebuildDependentNameType(NNS, NewTemplateId);
   } else
-    Result = getDerived().RebuildTypenameType(NNS, T->getIdentifier(),
+    Result = getDerived().RebuildDependentNameType(NNS, T->getIdentifier(),
                                               SourceRange(TL.getNameLoc()));
 
   if (Result.isNull())
     return QualType();
 
-  TypenameTypeLoc NewTL = TLB.push<TypenameTypeLoc>(Result);
+  DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
   return Result;
 }
@@ -5172,7 +5172,7 @@ CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
 /// typename X<T>::pointer X<T>::data() { ... }
 /// \endcode
 ///
-/// Here, the type "typename X<T>::pointer" will be created as a TypenameType,
+/// Here, the type "typename X<T>::pointer" will be created as a DependentNameType,
 /// since we do not know that we can look into X<T> when we parsed the type.
 /// This function will rebuild the type, performing the lookup of "pointer"
 /// in X<T> and returning a QualifiedNameType whose canonical type is the same

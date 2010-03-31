@@ -1164,7 +1164,7 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
   mangleName(TD, T->getArgs(), T->getNumArgs());
 }
 
-void CXXNameMangler::mangleType(const TypenameType *T) {
+void CXXNameMangler::mangleType(const DependentNameType *T) {
   // Typename types are always nested
   Out << 'N';
   mangleUnresolvedScope(T->getQualifier());
@@ -1456,7 +1456,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     // It isn't clear that we ever actually want to have such a
     // nested-name-specifier; why not just represent it as a typename type?
     if (!QTy && NNS->getAsIdentifier() && NNS->getPrefix()) {
-      QTy = getASTContext().getTypenameType(NNS->getPrefix(),
+      QTy = getASTContext().getDependentNameType(NNS->getPrefix(),
                                             NNS->getAsIdentifier())
               .getTypePtr();
     }

@@ -773,7 +773,7 @@ DeduceTemplateArguments(Sema &S,
 
     case Type::TypeOfExpr:
     case Type::TypeOf:
-    case Type::Typename:
+    case Type::DependentName:
       // No template argument deduction for these types
       return Sema::TDK_Success;
 
@@ -2555,10 +2555,10 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                                  OnlyDeduced, Depth, Used);
     break;
 
-  case Type::Typename:
+  case Type::DependentName:
     if (!OnlyDeduced)
       MarkUsedTemplateParameters(SemaRef,
-                                 cast<TypenameType>(T)->getQualifier(),
+                                 cast<DependentNameType>(T)->getQualifier(),
                                  OnlyDeduced, Depth, Used);
     break;
 

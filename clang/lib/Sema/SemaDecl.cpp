@@ -88,8 +88,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
           return 0;
         
         // We know from the grammar that this name refers to a type, so build a
-        // TypenameType node to describe the type.
-        // FIXME: Record somewhere that this TypenameType node has no "typename"
+        // DependentNameType node to describe the type.
+        // FIXME: Record somewhere that this DependentNameType node has no "typename"
         // keyword associated with it.
         return CheckTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
                                  II, SS->getRange()).getAsOpaquePtr();
@@ -198,7 +198,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   } else if (UnresolvedUsingTypenameDecl *UUDecl =
                dyn_cast<UnresolvedUsingTypenameDecl>(IIDecl)) {
     // FIXME: preserve source structure information.
-    T = Context.getTypenameType(UUDecl->getTargetNestedNameSpecifier(), &II);
+    T = Context.getDependentNameType(UUDecl->getTargetNestedNameSpecifier(), &II);
   } else {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();

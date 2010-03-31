@@ -1242,9 +1242,9 @@ class QualifiedNameTypeLoc :
 };
 
 // FIXME: locations for the typename keyword and nested name specifier.
-class TypenameTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                         TypenameTypeLoc,
-                                                         TypenameType> {
+class DependentNameTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                         DependentNameTypeLoc,
+                                                         DependentNameType> {
 };
 
 }

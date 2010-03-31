@@ -73,7 +73,7 @@ namespace {
     // FIXME: SubstTemplateTypeParmType
     // FIXME: TemplateSpecializationType
     QualType VisitQualifiedNameType(QualifiedNameType *T);
-    // FIXME: TypenameType
+    // FIXME: DependentNameType
     QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
                             
@@ -618,9 +618,9 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     break;
   }
 
-  case Type::Typename: {
-    const TypenameType *Typename1 = cast<TypenameType>(T1);
-    const TypenameType *Typename2 = cast<TypenameType>(T2);
+  case Type::DependentName: {
+    const DependentNameType *Typename1 = cast<DependentNameType>(T1);
+    const DependentNameType *Typename2 = cast<DependentNameType>(T2);
     if (!IsStructurallyEquivalent(Context, 
                                   Typename1->getQualifier(),
                                   Typename2->getQualifier()))

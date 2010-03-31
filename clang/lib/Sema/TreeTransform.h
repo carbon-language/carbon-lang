@@ -537,15 +537,15 @@ public:
 
   /// \brief Build a new typename type that refers to a template-id.
   ///
-  /// By default, builds a new TypenameType type from the nested-name-specifier
+  /// By default, builds a new DependentNameType type from the nested-name-specifier
   /// and the given type. Subclasses may override this routine to provide
   /// different behavior.
-  QualType RebuildTypenameType(NestedNameSpecifier *NNS, QualType T) {
+  QualType RebuildDependentNameType(NestedNameSpecifier *NNS, QualType T) {
     if (NNS->isDependent()) {
       CXXScopeSpec SS;
       SS.setScopeRep(NNS);
       if (!SemaRef.computeDeclContext(SS))
-        return SemaRef.Context.getTypenameType(NNS,
+        return SemaRef.Context.getDependentNameType(NNS,
                                           cast<TemplateSpecializationType>(T));
     }
 
@@ -557,7 +557,7 @@ public:
   /// By default, performs semantic analysis when building the typename type
   /// (or qualified name type). Subclasses may override this routine to provide
   /// different behavior.
-  QualType RebuildTypenameType(NestedNameSpecifier *NNS,
+  QualType RebuildDependentNameType(NestedNameSpecifier *NNS,
                                const IdentifierInfo *Id,
                                SourceRange SR) {
     return SemaRef.CheckTypenameType(NNS, *Id, SR);
@@ -2996,10 +2996,10 @@ TreeTransform<Derived>::TransformQualifiedNameType(TypeLocBuilder &TLB,
 }
 
 template<typename Derived>
-QualType TreeTransform<Derived>::TransformTypenameType(TypeLocBuilder &TLB,
-                                                       TypenameTypeLoc TL,
+QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
+                                                       DependentNameTypeLoc TL,
                                                        QualType ObjectType) {
-  TypenameType *T = TL.getTypePtr();
+  DependentNameType *T = TL.getTypePtr();
 
   /* FIXME: preserve source information better than this */
   SourceRange SR(TL.getNameLoc());
@@ -3023,14 +3023,14 @@ QualType TreeTransform<Derived>::TransformTypenameType(TypeLocBuilder &TLB,
         NewTemplateId == QualType(TemplateId, 0))
       return QualType(T, 0);
 
-    Result = getDerived().RebuildTypenameType(NNS, NewTemplateId);
+    Result = getDerived().RebuildDependentNameType(NNS, NewTemplateId);
   } else {
-    Result = getDerived().RebuildTypenameType(NNS, T->getIdentifier(), SR);
+    Result = getDerived().RebuildDependentNameType(NNS, T->getIdentifier(), SR);
   }
   if (Result.isNull())
     return QualType();
 
-  TypenameTypeLoc NewTL = TLB.push<TypenameTypeLoc>(Result);
+  DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
 
   return Result;

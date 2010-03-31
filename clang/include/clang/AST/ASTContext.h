@@ -117,7 +117,7 @@ class ASTContext {
   llvm::FoldingSet<SubstTemplateTypeParmType> SubstTemplateTypeParmTypes;
   llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
-  llvm::FoldingSet<TypenameType> TypenameTypes;
+  llvm::FoldingSet<DependentNameType> DependentNameTypes;
   llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
@@ -630,10 +630,10 @@ public:
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);
-  QualType getTypenameType(NestedNameSpecifier *NNS,
+  QualType getDependentNameType(NestedNameSpecifier *NNS,
                            const IdentifierInfo *Name,
                            QualType Canon = QualType());
-  QualType getTypenameType(NestedNameSpecifier *NNS,
+  QualType getDependentNameType(NestedNameSpecifier *NNS,
                            const TemplateSpecializationType *TemplateId,
                            QualType Canon = QualType());
   QualType getElaboratedType(QualType UnderlyingType,
