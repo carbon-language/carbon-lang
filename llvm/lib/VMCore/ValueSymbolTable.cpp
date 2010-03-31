@@ -55,9 +55,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
     raw_svector_ostream(UniqueName) << ++LastUnique;
 
     // Try insert the vmap entry with this suffix.
-    ValueName &NewName =
-      vmap.GetOrCreateValue(StringRef(UniqueName.data(),
-                                      UniqueName.size()));
+    ValueName &NewName = vmap.GetOrCreateValue(UniqueName);
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
@@ -88,7 +86,7 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
   }
   
   // Otherwise, there is a naming conflict.  Rename this value.
-  SmallString<128> UniqueName(Name.begin(), Name.end());
+  SmallString<256> UniqueName(Name.begin(), Name.end());
   
   while (1) {
     // Trim any suffix off and append the next number.
@@ -96,9 +94,7 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
     raw_svector_ostream(UniqueName) << ++LastUnique;
     
     // Try insert the vmap entry with this suffix.
-    ValueName &NewName =
-      vmap.GetOrCreateValue(StringRef(UniqueName.data(),
-                                      UniqueName.size()));
+    ValueName &NewName = vmap.GetOrCreateValue(UniqueName);
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
