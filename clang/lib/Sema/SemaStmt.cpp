@@ -471,9 +471,9 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
 
         S.Diag(SwitchLoc, diag::err_switch_explicit_conversion)
           << CondType << ConvTy << CondExpr->getSourceRange()
-          << FixItHint::CreateInsertion(CondExpr->getLocStart(),
-                                        "static_cast<" + TypeStr + ">(")
-          << FixItHint::CreateInsertion(
+          << CodeModificationHint::CreateInsertion(CondExpr->getLocStart(),
+                                         "static_cast<" + TypeStr + ">(")
+          << CodeModificationHint::CreateInsertion(
                             S.PP.getLocForEndOfToken(CondExpr->getLocEnd()),
                                ")");
         S.Diag(Conversion->getLocation(), diag::note_switch_conversion)

@@ -276,7 +276,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 SourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 SourceManager &SM,
-                                                const FixItHint *Hints,
+                                          const CodeModificationHint *Hints,
                                                 unsigned NumHints,
                                                 unsigned Columns) {
   assert(LangOpts && "Unexpected diagnostic outside source file processing");
@@ -409,7 +409,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
   std::string FixItInsertionLine;
   if (NumHints && DiagOpts->ShowFixits) {
-    for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
+    for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
       if (Hint->InsertionLoc.isValid()) {
         // We have an insertion hint. Determine whether the inserted
@@ -833,7 +833,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (DiagOpts->ShowCarets && Info.getLocation().isValid() &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
        (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
-       Info.getNumFixItHints())) {
+       Info.getNumCodeModificationHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
     LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
@@ -845,9 +845,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     for (unsigned i = 0; i != NumRanges; ++i)
       Ranges[i] = Info.getRange(i);
 
-    unsigned NumHints = Info.getNumFixItHints();
+    unsigned NumHints = Info.getNumCodeModificationHints();
     for (unsigned idx = 0; idx < NumHints; ++idx) {
-      const FixItHint &Hint = Info.getFixItHint(idx);
+      const CodeModificationHint &Hint = Info.getCodeModificationHint(idx);
       if (Hint.RemoveRange.isValid()) {
         assert(NumRanges < 20 && "Out of space");
         Ranges[NumRanges++] = Hint.RemoveRange;
@@ -855,8 +855,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
 
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
-                        Info.getFixItHints(),
-                        Info.getNumFixItHints(),
+                        Info.getCodeModificationHints(),
+                        Info.getNumCodeModificationHints(),
                         DiagOpts->MessageLength);
   }
 

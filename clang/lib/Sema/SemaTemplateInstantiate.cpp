@@ -689,8 +689,8 @@ TemplateInstantiator::RebuildElaboratedType(QualType T,
     if (!SemaRef.isAcceptableTagRedeclaration(TD, Tag, TagLocation, *Id)) {
       SemaRef.Diag(TagLocation, diag::err_use_with_wrong_tag)
         << Id
-        << FixItHint::CreateReplacement(SourceRange(TagLocation),
-                                        TD->getKindName());
+        << CodeModificationHint::CreateReplacement(SourceRange(TagLocation),
+                                                   TD->getKindName());
       SemaRef.Diag(TD->getLocation(), diag::note_previous_use);
     }
   }

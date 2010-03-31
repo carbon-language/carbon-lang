@@ -210,7 +210,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       // late-specified return types.
       Diag(New->getLocation(), diag::warn_missing_exception_specification)
         << New << OS.str()
-        << FixItHint::CreateInsertion(AfterParenLoc, " " + OS.str().str());
+        << CodeModificationHint::CreateInsertion(AfterParenLoc,
+                                                 " " + OS.str().str());
     }
 
     if (!Old->getLocation().isInvalid())

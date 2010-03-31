@@ -14,8 +14,6 @@
 #ifndef LLVM_CLANG_AST_STATISTICS_H
 #define LLVM_CLANG_AST_STATISTICS_H
 
-#define CLANG_C_ONLY 1
-
 #ifndef NDEBUG
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Casting.h"
@@ -37,16 +35,7 @@ struct isa_impl<clang::Type, From> {            \
   }                                             \
 };                                              \
 }
-#elif defined(CLANG_C_ONLY)
-#define CLANG_ISA_STATISTIC(Type,Counter)       \
-  namespace llvm {                                \
-    template <typename From>                        \
-    struct isa_impl<clang::Type, From> {            \
-      static inline bool doit(const From &Val) __attribute__((always_inline)) { \
-        return false;                               \
-      }                                             \
-    };                                              \
-  }
+
 #else
 #define CLANG_ISA_STATISTIC(Type,Counter)
 #endif

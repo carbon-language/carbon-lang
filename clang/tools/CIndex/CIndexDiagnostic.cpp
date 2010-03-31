@@ -201,7 +201,7 @@ CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic, unsigned FixIt,
     return createCXString("");
   }
 
-  const FixItHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
+  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
   if (ReplacementRange) {
     if (Hint.RemoveRange.isInvalid())  {
       // Create an empty range that refers to a single source

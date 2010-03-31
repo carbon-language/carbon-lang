@@ -76,8 +76,9 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     SourceLocation ColonLoc = ConsumeToken();
 
     Diag(Tok, diag::ext_gnu_old_style_field_designator)
-      << FixItHint::CreateReplacement(SourceRange(NameLoc, ColonLoc),
-                                      NewSyntax.str());
+      << CodeModificationHint::CreateReplacement(SourceRange(NameLoc,
+                                                             ColonLoc),
+                                                 NewSyntax.str());
 
     Designation D;
     D.AddDesignator(Designator::getField(FieldName, SourceLocation(), NameLoc));
@@ -217,7 +218,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       (Desig.getDesignator(0).isArrayDesignator() ||
        Desig.getDesignator(0).isArrayRangeDesignator())) {
     Diag(Tok, diag::ext_gnu_missing_equal_designator)
-      << FixItHint::CreateInsertion(Tok.getLocation(), "= ");
+      << CodeModificationHint::CreateInsertion(Tok.getLocation(), "= ");
     return Actions.ActOnDesignatedInitializer(Desig, Tok.getLocation(),
                                               true, ParseInitializer());
   }

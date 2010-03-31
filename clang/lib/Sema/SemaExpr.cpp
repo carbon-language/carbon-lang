@@ -949,7 +949,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
         // Actually quite difficult!
         if (isInstance)
           Diag(R.getNameLoc(), diagnostic) << Name
-            << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
+            << CodeModificationHint::CreateInsertion(R.getNameLoc(),
+                                                     "this->");
         else
           Diag(R.getNameLoc(), diagnostic) << Name;
 
@@ -968,14 +969,14 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
     if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
       if (SS.isEmpty())
         Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
-          << FixItHint::CreateReplacement(R.getNameLoc(),
-                                          R.getLookupName().getAsString());
+          << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                              R.getLookupName().getAsString());
       else
         Diag(R.getNameLoc(), diag::err_no_member_suggest)
           << Name << computeDeclContext(SS, false) << R.getLookupName()
           << SS.getRange()
-          << FixItHint::CreateReplacement(R.getNameLoc(),
-                                          R.getLookupName().getAsString());
+          << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                              R.getLookupName().getAsString());
       if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
         Diag(ND->getLocation(), diag::note_previous_decl)
           << ND->getDeclName();
@@ -2613,8 +2614,8 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
       (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
       << Name << DC << R.getLookupName() << SS.getRange()
-      << FixItHint::CreateReplacement(R.getNameLoc(),
-                                      R.getLookupName().getAsString());
+      << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                         R.getLookupName().getAsString());
     if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
       SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
         << ND->getDeclName();
@@ -2892,7 +2893,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
         Diag(Loc, diag::err_member_reference_needs_call)
           << QualType(Fun, 0)
-          << FixItHint::CreateInsertion(Loc, "()");
+          << CodeModificationHint::CreateInsertion(Loc, "()");
 
         OwningExprResult NewBase
           = ActOnCallExpr(0, ExprArg(*this, BaseExpr), Loc,
@@ -3011,7 +3012,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       // by now.
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
         << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
-        << FixItHint::CreateReplacement(OpLoc, ".");
+        << CodeModificationHint::CreateReplacement(OpLoc, ".");
       IsArrow = false;
     } else {
       Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
@@ -3031,7 +3032,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       if (PT && PT->getPointeeType()->isRecordType()) {
         Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
           << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
-          << FixItHint::CreateReplacement(OpLoc, "->");
+          << CodeModificationHint::CreateReplacement(OpLoc, "->");
         BaseType = PT->getPointeeType();
         IsArrow = true;
       }
@@ -3070,8 +3071,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           Diag(R.getNameLoc(),
                diag::err_typecheck_member_reference_ivar_suggest)
             << IDecl->getDeclName() << MemberName << IV->getDeclName()
-            << FixItHint::CreateReplacement(R.getNameLoc(),
-                                            IV->getNameAsString());
+            << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                                       IV->getNameAsString());
           Diag(IV->getLocation(), diag::note_previous_decl)
             << IV->getDeclName();
         }
@@ -3245,8 +3246,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         Res.getAsSingle<ObjCPropertyDecl>()) {
       Diag(R.getNameLoc(), diag::err_property_not_found_suggest)
         << MemberName << BaseType << Res.getLookupName()
-        << FixItHint::CreateReplacement(R.getNameLoc(),
-                                        Res.getLookupName().getAsString());
+        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                           Res.getLookupName().getAsString());
       ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
       Diag(Property->getLocation(), diag::note_previous_decl)
         << Property->getDeclName();
@@ -3575,7 +3576,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       if (NumArgs > 0) {
         // Pseudo-destructor calls should not have any arguments.
         Diag(Fn->getLocStart(), diag::err_pseudo_dtor_call_with_args)
-          << FixItHint::CreateRemoval(
+          << CodeModificationHint::CreateRemoval(
                                     SourceRange(Args[0]->getLocStart(),
                                                 Args[NumArgs-1]->getLocEnd()));
 
@@ -5425,10 +5426,12 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         PDiag(diag::warn_stringcompare)
           << isa<ObjCEncodeExpr>(literalStringStripped)
           << literalString->getSourceRange()
-          << FixItHint::CreateReplacement(SourceRange(Loc), ", ")
-          << FixItHint::CreateInsertion(lex->getLocStart(), "strcmp(")
-          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(rex->getLocEnd()),
-                                        resultComparison));
+          << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
+          << CodeModificationHint::CreateInsertion(lex->getLocStart(),
+                                                   "strcmp(")
+          << CodeModificationHint::CreateInsertion(
+                                         PP.getLocForEndOfToken(rex->getLocEnd()),
+                                         resultComparison));
     }
   }
 
@@ -6412,8 +6415,8 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
   }
 
   Self.Diag(Loc, PD)
-    << FixItHint::CreateInsertion(ParenRange.getBegin(), "(")
-    << FixItHint::CreateInsertion(EndLoc, ")");
+    << CodeModificationHint::CreateInsertion(ParenRange.getBegin(), "(")
+    << CodeModificationHint::CreateInsertion(EndLoc, ")");
 
   if (!SecondPD.getDiagID())
     return;
@@ -6427,8 +6430,8 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
   }
 
   Self.Diag(Loc, SecondPD)
-    << FixItHint::CreateInsertion(SecondParenRange.getBegin(), "(")
-    << FixItHint::CreateInsertion(EndLoc, ")");
+    << CodeModificationHint::CreateInsertion(SecondParenRange.getBegin(), "(")
+    << CodeModificationHint::CreateInsertion(EndLoc, ")");
 }
 
 /// DiagnoseBitwisePrecedence - Emit a warning when bitwise and comparison
@@ -7132,8 +7135,11 @@ Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
 
-static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType, 
-                                           Expr *SrcExpr, FixItHint &Hint) {
+static void
+MakeObjCStringLiteralCodeModificationHint(Sema& SemaRef,
+                                          QualType DstType,
+                                          Expr *SrcExpr,
+                                          CodeModificationHint &Hint) {
   if (!SemaRef.getLangOptions().ObjC1)
     return;
 
@@ -7154,7 +7160,7 @@ static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
   if (!SL || SL->isWide())
     return;
 
-  Hint = FixItHint::CreateInsertion(SL->getLocStart(), "@");
+  Hint = CodeModificationHint::CreateInsertion(SL->getLocStart(), "@");
 }
 
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
@@ -7164,7 +7170,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   // Decode the result (notice that AST's are still created for extensions).
   bool isInvalid = false;
   unsigned DiagKind;
-  FixItHint Hint;
+  CodeModificationHint Hint;
 
   switch (ConvTy) {
   default: assert(0 && "Unknown conversion type");
@@ -7176,7 +7182,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::ext_typecheck_convert_int_pointer;
     break;
   case IncompatiblePointer:
-    MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint);
+    MakeObjCStringLiteralCodeModificationHint(*this, DstType, SrcExpr, Hint);
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
     break;
   case IncompatiblePointerSign:
@@ -7543,10 +7549,10 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 
   Diag(Loc, diagnostic)
     << E->getSourceRange()
-    << FixItHint::CreateInsertion(Open, "(")
-    << FixItHint::CreateInsertion(Close, ")");
+    << CodeModificationHint::CreateInsertion(Open, "(")
+    << CodeModificationHint::CreateInsertion(Close, ")");
   Diag(Loc, diag::note_condition_assign_to_comparison)
-    << FixItHint::CreateReplacement(Loc, "==");
+    << CodeModificationHint::CreateReplacement(Loc, "==");
 }
 
 bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {

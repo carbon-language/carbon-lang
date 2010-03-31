@@ -559,8 +559,8 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
         << ClassName << R.getLookupName();
       Diag(IDecl->getLocation(), diag::note_previous_decl)
         << R.getLookupName()
-        << FixItHint::CreateReplacement(ClassLoc,
-                                        R.getLookupName().getAsString());
+        << CodeModificationHint::CreateReplacement(ClassLoc,
+                                               R.getLookupName().getAsString());
       IDecl = 0;
     } else {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;

@@ -255,13 +255,13 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       if (!SS || !SS->isSet())
         Diag(IILoc, diag::err_unknown_typename_suggest)
           << &II << Lookup.getLookupName()
-          << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                          Result->getNameAsString());
+          << CodeModificationHint::CreateReplacement(SourceRange(IILoc),
+                                                     Result->getNameAsString());
       else if (DeclContext *DC = computeDeclContext(*SS, false))
         Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
           << &II << DC << Lookup.getLookupName() << SS->getRange()
-          << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                          Result->getNameAsString());
+          << CodeModificationHint::CreateReplacement(SourceRange(IILoc),
+                                                     Result->getNameAsString());
       else
         llvm_unreachable("could not have corrected a typo here");
 
@@ -285,7 +285,8 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
     Diag(SS->getRange().getBegin(), diag::err_typename_missing)
       << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
-      << FixItHint::CreateInsertion(SS->getRange().getBegin(), "typename ");
+      << CodeModificationHint::CreateInsertion(SS->getRange().getBegin(),
+                                               "typename ");
     SuggestedType = ActOnTypenameType(SourceLocation(), *SS, II, IILoc).get();
   } else {
     assert(SS && SS->isInvalid() && 
@@ -589,7 +590,8 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
       Diag(RecoverLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 
-        << FixItHint::CreateReplacement(RecoverLoc, IDecl->getNameAsString());
+        << CodeModificationHint::CreateReplacement(RecoverLoc, 
+                                                   IDecl->getNameAsString());
       Diag(IDecl->getLocation(), diag::note_previous_decl)
         << IDecl->getDeclName();
       
@@ -2343,7 +2345,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (SC == VarDecl::Static) {
       Diag(D.getDeclSpec().getStorageClassSpecLoc(),
            diag::err_static_out_of_line)
-        << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+        << CodeModificationHint::CreateRemoval(
+                                      D.getDeclSpec().getStorageClassSpecLoc());
     } else if (SC == VarDecl::None)
       SC = VarDecl::Static;
   }
@@ -2951,8 +2954,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
         Diag(D.getIdentifierLoc(), diag::err_template_spec_decl_friend)
           << Name << RemoveRange
-          << FixItHint::CreateRemoval(RemoveRange)
-          << FixItHint::CreateInsertion(InsertLoc, "<>");
+          << CodeModificationHint::CreateRemoval(RemoveRange)
+          << CodeModificationHint::CreateInsertion(InsertLoc, "<>");
       }
     }
 
@@ -2972,7 +2975,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else if (!CurContext->isRecord()) {
       // 'virtual' was specified outside of the class.
       Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_virtual_out_of_class)
-        << FixItHint::CreateRemoval(D.getDeclSpec().getVirtualSpecLoc());
+        << CodeModificationHint::CreateRemoval(
+                                           D.getDeclSpec().getVirtualSpecLoc());
     } else {
       // Okay: Add virtual to the method.
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
@@ -2989,14 +2993,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // 'explicit' was specified outside of the class.
       Diag(D.getDeclSpec().getExplicitSpecLoc(), 
            diag::err_explicit_out_of_class)
-        << FixItHint::CreateRemoval(D.getDeclSpec().getExplicitSpecLoc());
+        << CodeModificationHint::CreateRemoval(
+                                          D.getDeclSpec().getExplicitSpecLoc());
     } else if (!isa<CXXConstructorDecl>(NewFD) && 
                !isa<CXXConversionDecl>(NewFD)) {
       // 'explicit' was specified on a function that wasn't a constructor
       // or conversion function.
       Diag(D.getDeclSpec().getExplicitSpecLoc(),
            diag::err_explicit_non_ctor_or_conv_function)
-        << FixItHint::CreateRemoval(D.getDeclSpec().getExplicitSpecLoc());
+        << CodeModificationHint::CreateRemoval(
+                                          D.getDeclSpec().getExplicitSpecLoc());
     }      
   }
 
@@ -3031,7 +3037,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // member function definition.
     Diag(D.getDeclSpec().getStorageClassSpecLoc(),
          diag::err_static_out_of_line)
-      << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+      << CodeModificationHint::CreateRemoval(
+                                      D.getDeclSpec().getStorageClassSpecLoc());
   }
 
   // Handle GNU asm-label extension (encoded as an attribute).
@@ -3129,7 +3136,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // too few of them).
       Diag(D.getIdentifierLoc(), diag::err_template_spec_needs_header)
         << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
-        << FixItHint::CreateInsertion(
+        << CodeModificationHint::CreateInsertion(
                                    D.getDeclSpec().getSourceRange().getBegin(),
                                                  "template<> ");
       isFunctionTemplateSpecialization = true;
@@ -4167,7 +4174,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
                                         << ";\n";
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
           << FTI.ArgInfo[i].Ident
-          << FixItHint::CreateInsertion(LocAfterDecls, Code.str());
+          << CodeModificationHint::CreateInsertion(LocAfterDecls, Code.str());
 
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
@@ -4677,7 +4684,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
     Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
       << (NewTag == TagDecl::TK_class)
       << isTemplate << &Name
-      << FixItHint::CreateReplacement(SourceRange(NewTagLoc),
+      << CodeModificationHint::CreateReplacement(SourceRange(NewTagLoc),
                               OldTag == TagDecl::TK_class? "class" : "struct");
     Diag(Previous->getLocation(), diag::note_previous_use);
     return true;
@@ -4923,8 +4930,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           if (SafeToContinue)
             Diag(KWLoc, diag::err_use_with_wrong_tag)
               << Name
-              << FixItHint::CreateReplacement(SourceRange(KWLoc),
-                                              PrevTagDecl->getKindName());
+              << CodeModificationHint::CreateReplacement(SourceRange(KWLoc),
+                                                  PrevTagDecl->getKindName());
           else
             Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
           Diag(PrevTagDecl->getLocation(), diag::note_previous_use);

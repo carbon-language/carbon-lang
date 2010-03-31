@@ -29,7 +29,8 @@ class DeclarationName;
 class PartialDiagnostic {
 public:
   struct Storage {
-    Storage() : NumDiagArgs(0), NumDiagRanges(0), NumFixItHints(0) { }
+    Storage() : NumDiagArgs(0), NumDiagRanges(0), NumCodeModificationHints(0) {
+    }
 
     enum {
         /// MaxArguments - The maximum number of arguments we can hold. We 
@@ -46,8 +47,8 @@ public:
     unsigned char NumDiagRanges;
 
     /// \brief The number of code modifications hints in the
-    /// FixItHints array.
-    unsigned char NumFixItHints;
+    /// CodeModificationHints array.
+    unsigned char NumCodeModificationHints;
     
     /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
     /// values, with one for each argument.  This specifies whether the argument
@@ -64,11 +65,11 @@ public:
     /// only support 10 ranges, could easily be extended if needed.
     SourceRange DiagRanges[10];
     
-    enum { MaxFixItHints = 3 };
+    enum { MaxCodeModificationHints = 3 };
     
-    /// FixItHints - If valid, provides a hint with some code
+    /// CodeModificationHints - If valid, provides a hint with some code
     /// to insert, remove, or modify at a particular position.
-    FixItHint FixItHints[MaxFixItHints];    
+    CodeModificationHint CodeModificationHints[MaxCodeModificationHints];    
   };
 
   /// \brief An allocator for Storage objects, which uses a small cache to 
@@ -91,7 +92,7 @@ public:
       Storage *Result = FreeList[--NumFreeListEntries];
       Result->NumDiagArgs = 0;
       Result->NumDiagRanges = 0;
-      Result->NumFixItHints = 0;
+      Result->NumCodeModificationHints = 0;
       return Result;
     }
     
@@ -165,16 +166,17 @@ private:
     DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = R;
   }  
 
-  void AddFixItHint(const FixItHint &Hint) const {
+  void AddCodeModificationHint(const CodeModificationHint &Hint) const {
     if (Hint.isNull())
       return;
     
     if (!DiagStorage)
       DiagStorage = getStorage();
 
-    assert(DiagStorage->NumFixItHints < Storage::MaxFixItHints &&
+    assert(DiagStorage->NumCodeModificationHints < 
+             Storage::MaxCodeModificationHints &&
            "Too many code modification hints!");
-    DiagStorage->FixItHints[DiagStorage->NumFixItHints++]
+    DiagStorage->CodeModificationHints[DiagStorage->NumCodeModificationHints++]
       = Hint;
   }
   
@@ -234,8 +236,8 @@ public:
       DB.AddSourceRange(DiagStorage->DiagRanges[i]);
     
     // Add all code modification hints
-    for (unsigned i = 0, e = DiagStorage->NumFixItHints; i != e; ++i)
-      DB.AddFixItHint(DiagStorage->FixItHints[i]);
+    for (unsigned i = 0, e = DiagStorage->NumCodeModificationHints; i != e; ++i)
+      DB.AddCodeModificationHint(DiagStorage->CodeModificationHints[i]);
   }
   
   /// \brief Clear out this partial diagnostic, giving it a new diagnostic ID
@@ -282,8 +284,8 @@ public:
                                              DeclarationName N);
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                             const FixItHint &Hint) {
-    PD.AddFixItHint(Hint);
+                                             const CodeModificationHint &Hint) {
+    PD.AddCodeModificationHint(Hint);
     return PD;
   }
   

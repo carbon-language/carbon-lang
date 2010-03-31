@@ -246,7 +246,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           // recover like this.
           PP.LookAhead(1).is(tok::identifier)) {
         Diag(Next, diag::err_unexected_colon_in_nested_name_spec)
-          << FixItHint::CreateReplacement(Next.getLocation(), "::");
+          << CodeModificationHint::CreateReplacement(Next.getLocation(), "::");
         
         // Recover as if the user wrote '::'.
         Next.setKind(tok::coloncolon);
@@ -1313,7 +1313,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
         Diag(TemplateId->TemplateNameLoc, 
              diag::err_out_of_line_constructor_template_id)
           << TemplateId->Name
-          << FixItHint::CreateRemoval(
+          << CodeModificationHint::CreateRemoval(
                     SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc));
         Result.setConstructorName(Actions.getTypeName(*TemplateId->Name,
                                                   TemplateId->TemplateNameLoc, 

@@ -988,7 +988,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
       Diag(Tok, diag::ext_extra_struct_semi)
-        << FixItHint::CreateRemoval(Tok.getLocation());
+        << CodeModificationHint::CreateRemoval(Tok.getLocation());
       ConsumeToken();
       continue;
     }
@@ -1571,7 +1571,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDefinition() {
   if (Tok.is(tok::semi)) {
     if (ObjCImpDecl) {
       Diag(Tok, diag::warn_semicolon_before_method_body)
-        << FixItHint::CreateRemoval(Tok.getLocation());
+        << CodeModificationHint::CreateRemoval(Tok.getLocation());
     }
     ConsumeToken();
   }

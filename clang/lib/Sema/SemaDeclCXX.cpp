@@ -1104,8 +1104,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
             // member.
             Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
               << MemberOrBase << true << R.getLookupName()
-              << FixItHint::CreateReplacement(R.getNameLoc(),
-                                              R.getLookupName().getAsString());
+              << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                               R.getLookupName().getAsString());
             Diag(Member->getLocation(), diag::note_previous_decl)
               << Member->getDeclName();
 
@@ -1123,8 +1123,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
             // that base class.
             Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
               << MemberOrBase << false << R.getLookupName()
-              << FixItHint::CreateReplacement(R.getNameLoc(),
-                                              R.getLookupName().getAsString());
+              << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                               R.getLookupName().getAsString());
 
             const CXXBaseSpecifier *BaseSpec = DirectBaseSpec? DirectBaseSpec 
                                                              : VirtualBaseSpec;
@@ -2612,7 +2612,7 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
       SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
       Diag(ParamLoc, diag::err_constructor_byvalue_arg)
-        << FixItHint::CreateInsertion(ParamLoc, " const &");
+        << CodeModificationHint::CreateInsertion(ParamLoc, " const &");
 
       // FIXME: Rather that making the constructor invalid, we should endeavor
       // to fix the type.
@@ -3157,7 +3157,8 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     UsingLoc = Name.getSourceRange().getBegin();
     
     Diag(UsingLoc, diag::warn_access_decl_deprecated)
-      << FixItHint::CreateInsertion(SS.getRange().getBegin(), "using ");
+      << CodeModificationHint::CreateInsertion(SS.getRange().getBegin(),
+                                               "using ");
   }
 
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
@@ -5432,7 +5433,8 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
         << (unsigned) RD->getTagKind()
         << T
         << SourceRange(DS.getFriendSpecLoc())
-        << FixItHint::CreateInsertion(DS.getTypeSpecTypeLoc(), InsertionText);
+        << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                                 InsertionText);
       return DeclPtrTy();
     }else {
       Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
