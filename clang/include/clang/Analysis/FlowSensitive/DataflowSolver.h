@@ -196,10 +196,7 @@ private:
   /// SolveDataflowEquations - Perform the actual worklist algorithm
   ///  to compute dataflow values.
   void SolveDataflowEquations(CFG& cfg, bool recordStmtValues) {
-    // Enqueue all blocks to ensure the dataflow values are computed
-    // for every block.  Not all blocks are guaranteed to reach the exit block.
-    for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-      WorkList.enqueue(&**I);
+    EnqueueBlocksOnWorklist(cfg, AnalysisDirTag());
 
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
@@ -207,6 +204,22 @@ private:
       ProcessBlock(B, recordStmtValues, AnalysisDirTag());
       UpdateEdges(cfg, B, TF.getVal());
     }
+  }
+
+  void EnqueueBlocksOnWorklist(CFG &cfg, dataflow::forward_analysis_tag) {
+    // Enqueue all blocks to ensure the dataflow values are computed
+    // for every block.  Not all blocks are guaranteed to reach the exit block.
+    for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
+      WorkList.enqueue(&**I);
+  }
+
+  void EnqueueBlocksOnWorklist(CFG &cfg, dataflow::backward_analysis_tag) {
+    // Enqueue all blocks to ensure the dataflow values are computed
+    // for every block.  Not all blocks are guaranteed to reach the exit block.
+    // Enqueue in reverse order since that will more likely match with
+    // the order they should ideally processed by the dataflow algorithm.
+    for (CFG::reverse_iterator I=cfg.rbegin(), E=cfg.rend(); I!=E; ++I)
+      WorkList.enqueue(&**I);
   }
 
   void ProcessMerge(CFG& cfg, const CFGBlock* B) {
