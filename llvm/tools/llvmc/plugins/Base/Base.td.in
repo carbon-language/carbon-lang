@@ -233,6 +233,8 @@ def llvm_gcc_assembler : Tool<
           (switch_on "c"), (stop_compilation),
           (not_empty "arch"), (forward "arch"),
           (not_empty "Xassembler"), (forward "Xassembler"),
+          (switch_on "m32"), (forward "m32"),
+          (switch_on "m64"), (forward "m64"),
           (not_empty "Wa,"), (forward "Wa,")))
 ]>;
 
