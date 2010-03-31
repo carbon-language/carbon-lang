@@ -3797,6 +3797,41 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   return;
 }
 
+/// ActOnInitializerError - Given that there was an error parsing an
+/// initializer for the given declaration, try to return to some form
+/// of sanity.
+void Sema::ActOnInitializerError(DeclPtrTy dcl) {
+  // Our main concern here is re-establishing invariants like "a
+  // variable's type is either dependent or complete".
+  Decl *D = dcl.getAs<Decl>();
+  if (!D || D->isInvalidDecl()) return;
+
+  VarDecl *VD = dyn_cast<VarDecl>(D);
+  if (!VD) return;
+
+  QualType Ty = VD->getType();
+  if (Ty->isDependentType()) return;
+
+  // Require a complete type.
+  if (RequireCompleteType(VD->getLocation(), 
+                          Context.getBaseElementType(Ty),
+                          diag::err_typecheck_decl_incomplete_type)) {
+    VD->setInvalidDecl();
+    return;
+  }
+
+  // Require an abstract type.
+  if (RequireNonAbstractType(VD->getLocation(), Ty,
+                             diag::err_abstract_type_in_decl,
+                             AbstractVariableType)) {
+    VD->setInvalidDecl();
+    return;
+  }
+
+  // Don't bother complaining about constructors or destructors,
+  // though.
+}
+
 void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
                                   bool TypeContainsUndeducedAuto) {
   Decl *RealDecl = dcl.getAs<Decl>();

@@ -19,3 +19,21 @@ void test2() {
   x->operator; // expected-error{{missing type specifier after 'operator'}}
   x->operator typedef; // expected-error{{missing type specifier after 'operator'}}
 }
+
+// PR6327
+namespace test3 {
+  template <class A, class B> struct pair {};
+
+  void test0() {
+    pair<int, int> z = minmax({}); // expected-error {{expected expression}}
+  }
+
+  struct string {
+    class iterator {};
+  };
+
+  void test1() {
+    string s;
+    string::iterator i = s.foo(); // expected-error {{no member named 'foo'}}
+  }
+}
