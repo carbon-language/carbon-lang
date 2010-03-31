@@ -3327,6 +3327,11 @@ UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
     CurContext->addDecl(Shadow);
   Shadow->setAccess(UD->getAccess());
 
+  // Register it as a conversion if appropriate.
+  if (Shadow->getDeclName().getNameKind()
+        == DeclarationName::CXXConversionFunctionName)
+    cast<CXXRecordDecl>(CurContext)->addConversionFunction(Shadow);
+
   if (Orig->isInvalidDecl() || UD->isInvalidDecl())
     Shadow->setInvalidDecl();
 
@@ -3361,6 +3366,10 @@ UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
 /// decl structures are (very reasonably) not designed for removal.
 /// (2) avoids this but is very fiddly and phase-dependent.
 void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
+  if (Shadow->getDeclName().getNameKind() ==
+        DeclarationName::CXXConversionFunctionName)
+    cast<CXXRecordDecl>(Shadow->getDeclContext())->removeConversion(Shadow);
+
   // Remove it from the DeclContext...
   Shadow->getDeclContext()->removeDecl(Shadow);
 
@@ -3374,7 +3383,7 @@ void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
   Shadow->getUsingDecl()->removeShadowDecl(Shadow);
 
   // TODO: complain somehow if Shadow was used.  It shouldn't
-  // be possible for this to happen, because 
+  // be possible for this to happen, because...?
 }
 
 /// Builds a using declaration.

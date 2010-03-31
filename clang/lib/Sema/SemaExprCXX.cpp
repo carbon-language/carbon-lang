@@ -1302,17 +1302,21 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     QualType Type = Ex->getType();
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
-      llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
+      llvm::SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
+
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
-      const UnresolvedSetImpl *Conversions = RD->getVisibleConversionFunctions();
-      
+      const UnresolvedSetImpl *Conversions = RD->getVisibleConversionFunctions();      
       for (UnresolvedSetImpl::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
+        NamedDecl *D = I.getDecl();
+        if (isa<UsingShadowDecl>(D))
+          D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
         // Skip over templated conversion functions; they aren't considered.
-        if (isa<FunctionTemplateDecl>(*I))
+        if (isa<FunctionTemplateDecl>(D))
           continue;
         
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*I);
+        CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
         
         QualType ConvType = Conv->getConversionType().getNonReferenceType();
         if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
@@ -1322,9 +1326,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       if (ObjectPtrConversions.size() == 1) {
         // We have a single conversion to a pointer-to-object type. Perform
         // that conversion.
+        // TODO: don't redo the conversion calculation.
         Operand.release();
-        if (!PerformImplicitConversion(Ex, 
-                            ObjectPtrConversions.front()->getConversionType(), 
+        if (!PerformImplicitConversion(Ex,
+                            ObjectPtrConversions.front()->getConversionType(),
                                       AA_Converting)) {
           Operand = Owned(Ex);
           Type = Ex->getType();
@@ -1333,10 +1338,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       else if (ObjectPtrConversions.size() > 1) {
         Diag(StartLoc, diag::err_ambiguous_delete_operand)
               << Type << Ex->getSourceRange();
-        for (unsigned i= 0; i < ObjectPtrConversions.size(); i++) {
-          CXXConversionDecl *Conv = ObjectPtrConversions[i];
-          NoteOverloadCandidate(Conv);
-        }
+        for (unsigned i= 0; i < ObjectPtrConversions.size(); i++)
+          NoteOverloadCandidate(ObjectPtrConversions[i]);
         return ExprError();
       }
     }

@@ -2838,7 +2838,7 @@ static void TryUserDefinedConversion(Sema &S,
         if (ConvTemplate)
           Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
         else
-          Conv = cast<CXXConversionDecl>(*I);
+          Conv = cast<CXXConversionDecl>(D);
         
         if (AllowExplicit || !Conv->isExplicit()) {
           if (ConvTemplate)

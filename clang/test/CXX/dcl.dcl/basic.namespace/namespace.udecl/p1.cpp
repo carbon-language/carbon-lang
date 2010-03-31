@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
 
 // We have to avoid ADL for this test.
 
@@ -63,5 +63,46 @@ namespace Test1 {
 
     a _1 = A::a();
     b _2 = B::b();
+  }
+}
+
+namespace test2 {
+  class A {
+  protected:
+    operator int();
+    operator bool();
+  };
+
+  class B : private A {
+  protected:
+    using A::operator int; // expected-note {{'declared protected here'}}
+  public:
+    using A::operator bool;
+  };
+
+  int test() {
+    bool b = B();
+    return B(); // expected-error {{'operator int' is a protected member of 'test2::B'}}
+  }
+}
+
+namespace test3 {
+  class A {
+    ~A();
+  };
+
+  class B {
+    friend class C;
+  private:
+    operator A*();
+  };
+
+  class C : public B {
+  public:
+    using B::operator A*;
+  };
+
+  void test() {
+    delete C();
   }
 }

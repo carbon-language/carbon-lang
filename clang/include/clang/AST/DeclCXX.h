@@ -329,6 +329,10 @@ class CXXRecordDecl : public RecordDecl {
   /// instantiated or specialized.
   llvm::PointerUnion<ClassTemplateDecl*, MemberSpecializationInfo*>
     TemplateOrInstantiation;
+
+#ifndef NDEBUG
+  void CheckConversionFunction(NamedDecl *D);
+#endif
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -550,17 +554,26 @@ public:
     return getConversionFunctions()->replace(Old, New);
   }
 
+  /// Removes a conversion function from this class.  The conversion
+  /// function must currently be a member of this class.  Furthermore,
+  /// this class must currently be in the process of being defined.
+  void removeConversion(const NamedDecl *Old);
+
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
   const UnresolvedSetImpl *getVisibleConversionFunctions();
 
-  /// addConversionFunction - Add a new conversion function to the
-  /// list of conversion functions.
-  void addConversionFunction(CXXConversionDecl *ConvDecl);
+  /// addConversionFunction - Registers a conversion function which
+  /// this class declares directly.
+  void addConversionFunction(NamedDecl *Decl) {
+#ifndef NDEBUG
+    CheckConversionFunction(Decl);
+#endif
 
-  /// \brief Add a new conversion function template to the list of conversion
-  /// functions.
-  void addConversionFunction(FunctionTemplateDecl *ConvDecl);
+    // We intentionally don't use the decl's access here because it
+    // hasn't been set yet.  That's really just a misdesign in Sema.
+    data().Conversions.addDecl(Decl);
+  }
 
   /// isAggregate - Whether this class is an aggregate (C++
   /// [dcl.init.aggr]), which is a class with no user-declared

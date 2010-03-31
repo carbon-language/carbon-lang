@@ -1582,10 +1582,10 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
 
         CXXConversionDecl *Conv;
         FunctionTemplateDecl *ConvTemplate;
-        if ((ConvTemplate = dyn_cast<FunctionTemplateDecl>(*I)))
-          Conv = dyn_cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+        if ((ConvTemplate = dyn_cast<FunctionTemplateDecl>(D)))
+          Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
         else
-          Conv = dyn_cast<CXXConversionDecl>(*I);
+          Conv = cast<CXXConversionDecl>(D);
 
         if (AllowExplicit || !Conv->isExplicit()) {
           if (ConvTemplate)
@@ -3310,13 +3310,16 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
         = ClassDecl->getVisibleConversionFunctions();
       for (UnresolvedSetImpl::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
+        NamedDecl *D = I.getDecl();
+        if (isa<UsingShadowDecl>(D))
+          D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
         // Skip conversion function templates; they don't tell us anything
         // about which builtin types we can convert to.
-        if (isa<FunctionTemplateDecl>(*I))
+        if (isa<FunctionTemplateDecl>(D))
           continue;
 
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*I);
+        CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
         if (AllowExplicitConversions || !Conv->isExplicit()) {
           AddTypesConvertedFrom(Conv->getConversionType(), Loc, false, false, 
                                 VisibleQuals);
@@ -3378,7 +3381,10 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     
     for (UnresolvedSetImpl::iterator I = Conversions->begin(),
            E = Conversions->end(); I != E; ++I) {
-      if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(*I)) {
+      NamedDecl *D = I.getDecl();
+      if (isa<UsingShadowDecl>(D))
+        D = cast<UsingShadowDecl>(D)->getTargetDecl();
+      if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(D)) {
         QualType CanTy = Context.getCanonicalType(Conv->getConversionType());
         if (const ReferenceType *ResTypeRef = CanTy->getAs<ReferenceType>())
           CanTy = ResTypeRef->getPointeeType();

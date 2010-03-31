@@ -308,6 +308,8 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
   QualType T;
+  if (isa<UsingShadowDecl>(Conv))
+    Conv = cast<UsingShadowDecl>(Conv)->getTargetDecl();
   if (FunctionTemplateDecl *ConvTemp = dyn_cast<FunctionTemplateDecl>(Conv))
     T = ConvTemp->getTemplatedDecl()->getResultType();
   else 
@@ -445,25 +447,44 @@ const UnresolvedSetImpl *CXXRecordDecl::getVisibleConversionFunctions() {
   return &data().VisibleConversions;
 }
 
-void CXXRecordDecl::addConversionFunction(CXXConversionDecl *ConvDecl) {
-  assert(!ConvDecl->getDescribedFunctionTemplate() &&
-         "Conversion function templates should cast to FunctionTemplateDecl.");
+#ifndef NDEBUG
+void CXXRecordDecl::CheckConversionFunction(NamedDecl *ConvDecl) {
   assert(ConvDecl->getDeclContext() == this &&
          "conversion function does not belong to this record");
 
-  // We intentionally don't use the decl's access here because it
-  // hasn't been set yet.  That's really just a misdesign in Sema.
-  data().Conversions.addDecl(ConvDecl);
+  ConvDecl = ConvDecl->getUnderlyingDecl();
+  if (FunctionTemplateDecl *Temp = dyn_cast<FunctionTemplateDecl>(ConvDecl)) {
+    assert(isa<CXXConversionDecl>(Temp->getTemplatedDecl()));
+  } else {
+    assert(isa<CXXConversionDecl>(ConvDecl));
+  }
 }
+#endif
 
-void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
-  assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
-         "Function template is not a conversion function template");
-  assert(ConvDecl->getDeclContext() == this &&
-         "conversion function does not belong to this record");
-  data().Conversions.addDecl(ConvDecl);
+void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
+  // This operation is O(N) but extremely rare.  Sema only uses it to
+  // remove UsingShadowDecls in a class that were followed by a direct
+  // declaration, e.g.:
+  //   class A : B {
+  //     using B::operator int;
+  //     operator int();
+  //   };
+  // This is uncommon by itself and even more uncommon in conjunction
+  // with sufficiently large numbers of directly-declared conversions
+  // that asymptotic behavior matters.
+
+  UnresolvedSetImpl &Convs = *getConversionFunctions();
+  for (unsigned I = 0, E = Convs.size(); I != E; ++I) {
+    if (Convs[I].getDecl() == ConvDecl) {
+      Convs.erase(I);
+      assert(std::find(Convs.begin(), Convs.end(), ConvDecl) == Convs.end()
+             && "conversion was found multiple times in unresolved set");
+      return;
+    }
+  }
+
+  llvm_unreachable("conversion not found in set!");
 }
-
 
 void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
   Method->setVirtualAsWritten(true);
