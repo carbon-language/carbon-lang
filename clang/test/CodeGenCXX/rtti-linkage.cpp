@@ -92,6 +92,7 @@ const std::type_info &t2() {
   (void)typeid(D *);
   (void)typeid(D (*)());
   (void)typeid(void (*)(D));
+  (void)typeid(void (*)(D&));
   // The exception specification is not part of the RTTI descriptor, so it should not have
   // internal linkage.
   (void)typeid(void (*)() throw (D));

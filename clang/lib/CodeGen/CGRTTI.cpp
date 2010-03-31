@@ -327,83 +327,20 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
   if (ContainsIncompleteClassType(Ty))
     return llvm::GlobalValue::InternalLinkage;
   
-  switch (Ty->getTypeClass()) {
-  default:   
-    // FIXME: We need to add code to handle all types.
-    assert(false && "Unhandled type!");
-    break;
+  switch (Ty->getLinkage()) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return llvm::GlobalValue::InternalLinkage;
 
-  case Type::Pointer: {
-    const PointerType *PointerTy = cast<PointerType>(Ty);
- 
-    // If the pointee type has internal linkage, then the pointer type needs to
-    // have it as well.
-    if (getTypeInfoLinkage(PointerTy->getPointeeType()) == 
-        llvm::GlobalVariable::InternalLinkage)
-      return llvm::GlobalVariable::InternalLinkage;
-    
-    return llvm::GlobalVariable::WeakODRLinkage;
-  }
-
-  case Type::Enum: {
-    const EnumType *EnumTy = cast<EnumType>(Ty);
-    const EnumDecl *ED = EnumTy->getDecl();
-    
-    // If we're in an anonymous namespace, then we always want internal linkage.
-    if (ED->isInAnonymousNamespace() || !ED->hasLinkage())
-      return llvm::GlobalVariable::InternalLinkage;
-    
-    return llvm::GlobalValue::WeakODRLinkage;
-  }
-
-  case Type::Record: {
-    const RecordType *RecordTy = cast<RecordType>(Ty);
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
-
-    // If we're in an anonymous namespace, then we always want internal linkage.
-    if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
-      return llvm::GlobalVariable::InternalLinkage;
-
-    // If this class does not have a vtable, we want weak linkage.
-    if (!RD->isDynamicClass())
-      return llvm::GlobalValue::WeakODRLinkage;
-    
-    return CodeGenModule::getVtableLinkage(RD);
-  }
-
-  case Type::Vector:
-  case Type::ExtVector:
-  case Type::Builtin:
-    return llvm::GlobalValue::WeakODRLinkage;
-
-  case Type::FunctionProto: {
-    const FunctionProtoType *FPT = cast<FunctionProtoType>(Ty);
-
-    // Check the return type.
-    if (getTypeInfoLinkage(FPT->getResultType()) == 
-        llvm::GlobalValue::InternalLinkage)
-      return llvm::GlobalValue::InternalLinkage;
-    
-    // Check the parameter types.
-    for (unsigned i = 0; i != FPT->getNumArgs(); ++i) {
-      if (getTypeInfoLinkage(FPT->getArgType(i)) == 
-          llvm::GlobalValue::InternalLinkage)
-        return llvm::GlobalValue::InternalLinkage;
+  case ExternalLinkage:
+    if (const RecordType *Record = dyn_cast<RecordType>(Ty)) {
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+      if (RD->isDynamicClass())
+        return CodeGenModule::getVtableLinkage(RD);
     }
-    
+
     return llvm::GlobalValue::WeakODRLinkage;
-  }
-  
-  case Type::ConstantArray: 
-  case Type::IncompleteArray: {
-    const ArrayType *AT = cast<ArrayType>(Ty);
-
-    // Check the element type.
-    if (getTypeInfoLinkage(AT->getElementType()) ==
-        llvm::GlobalValue::InternalLinkage)
-      return llvm::GlobalValue::InternalLinkage;
-  }
-
   }
 
   return llvm::GlobalValue::WeakODRLinkage;
@@ -444,8 +381,8 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   switch (Ty->getTypeClass()) {
   default: assert(0 && "Unhandled type!");
 
-  // GCC treats vector types as fundamental types.
   case Type::Builtin:
+  // GCC treats vector types as fundamental types.
   case Type::Vector:
   case Type::ExtVector:
     // abi::__fundamental_type_info.
