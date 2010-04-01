@@ -4915,14 +4915,15 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (!NNS)
     return true;
 
-  ElaboratedTypeKeyword Keyword;
+  ElaboratedTypeKeyword Keyword = ETK_None;
   switch (TagDecl::getTagKindForTypeSpec(TagSpec)) {
   case TagDecl::TK_struct: Keyword = ETK_Struct; break;
   case TagDecl::TK_class: Keyword = ETK_Class; break;
   case TagDecl::TK_union: Keyword = ETK_Union; break;
   case TagDecl::TK_enum: Keyword = ETK_Enum; break;
   }
-  
+  assert(Keyword != ETK_None && "Invalid tag kind!");
+
   return Context.getDependentNameType(Keyword, NNS, Name).getAsOpaquePtr();
 }
 
