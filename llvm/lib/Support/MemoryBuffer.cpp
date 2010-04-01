@@ -14,7 +14,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/System/Errno.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
@@ -242,8 +241,9 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
       if (ErrStr) *ErrStr = sys::StrError();
       return 0;
     } else if (NumRead == 0) {
+      // We hit EOF early, truncate and terminate buffer.
       Buf->BufferEnd = BufPtr;
-      *BufPtr = 0; // Null terminate buffer.
+      *BufPtr = 0;
       return SB.take();
     }
     BytesLeft -= NumRead;
