@@ -51,7 +51,7 @@ _mm_aesdec_si128(__m128i __V, __m128i __R)
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_aesdeclast_si128(__m128i __V, __m128i __R)
 {
-  return (__m128i)__builtin_ia32_aesdeclast128(__V1, __V2);
+  return (__m128i)__builtin_ia32_aesdeclast128(__V, __R);
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
