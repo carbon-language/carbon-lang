@@ -207,3 +207,19 @@ void rdar7283470_2_positive(void) {
     [numbers[i] release];
 }
 
+void pr6699(int x) {
+  CFDateRef values[2];
+  values[0] = values[1] = 0;
+
+  if (x) {
+    CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+    values[1] = CFDateCreate(0, t);
+  }
+
+  if (values[1]) {
+    // A bug in RegionStore::RemoveDeadBindings caused 'values[1]' to get prematurely
+    // pruned from the store.
+    CFRelease(values[1]); // no-warning
+  }
+}
+

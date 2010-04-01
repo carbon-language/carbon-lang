@@ -536,15 +536,15 @@ public:
         // First visit the cluster.
       static_cast<DERIVED*>(this)->VisitCluster(baseR, C->begin(), C->end());
 
-        // Next, visit the region.
-      static_cast<DERIVED*>(this)->VisitRegion(baseR);
+        // Next, visit the base region.
+      static_cast<DERIVED*>(this)->VisitBaseRegion(baseR);
     }
   }
 
 public:
   void VisitAddedToCluster(const MemRegion *baseR, RegionCluster &C) {}
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E) {}
-  void VisitRegion(const MemRegion *baseR) {}
+  void VisitBaseRegion(const MemRegion *baseR) {}
 };
 }
 
@@ -580,7 +580,7 @@ public:
       Ex(ex), Count(count), IS(is) {}
 
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E);
-  void VisitRegion(const MemRegion *baseR);
+  void VisitBaseRegion(const MemRegion *baseR);
 
 private:
   void VisitBinding(SVal V);
@@ -627,7 +627,7 @@ void InvalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
   }
 }
 
-void InvalidateRegionsWorker::VisitRegion(const MemRegion *baseR) {
+void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (IS) {
     // Symbolic region?  Mark that symbol touched by the invalidation.
     if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
@@ -1706,8 +1706,8 @@ public:
   // Called by ClusterAnalysis.
   void VisitAddedToCluster(const MemRegion *baseR, RegionCluster &C);
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E);
-  void VisitRegion(const MemRegion *baseR);
 
+  void VisitBindingKey(BindingKey K);
   bool UpdatePostponed();
   void VisitBinding(SVal V);
 };
@@ -1744,11 +1744,8 @@ void RemoveDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
 
 void RemoveDeadBindingsWorker::VisitCluster(const MemRegion *baseR,
                                             BindingKey *I, BindingKey *E) {
-  for ( ; I != E; ++I) {
-    const MemRegion *R = I->getRegion();
-    if (R != baseR)
-      VisitRegion(R);
-  }
+  for ( ; I != E; ++I)
+    VisitBindingKey(*I);
 }
 
 void RemoveDeadBindingsWorker::VisitBinding(SVal V) {
@@ -1776,34 +1773,36 @@ void RemoveDeadBindingsWorker::VisitBinding(SVal V) {
     SymReaper.markLive(*SI);
 }
 
-void RemoveDeadBindingsWorker::VisitRegion(const MemRegion *R) {
+void RemoveDeadBindingsWorker::VisitBindingKey(BindingKey K) {
+  const MemRegion *R = K.getRegion();
+
   // Mark this region "live" by adding it to the worklist.  This will cause
   // use to visit all regions in the cluster (if we haven't visited them
   // already).
-  AddToWorkList(R);
+  if (AddToWorkList(R)) {
+    // Mark the symbol for any live SymbolicRegion as "live".  This means we
+    // should continue to track that symbol.
+    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
+      SymReaper.markLive(SymR->getSymbol());
 
-  // Mark the symbol for any live SymbolicRegion as "live".  This means we
-  // should continue to track that symbol.
-  if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
-    SymReaper.markLive(SymR->getSymbol());
+    // For BlockDataRegions, enqueue the VarRegions for variables marked
+    // with __block (passed-by-reference).
+    // via BlockDeclRefExprs.
+    if (const BlockDataRegion *BD = dyn_cast<BlockDataRegion>(R)) {
+      for (BlockDataRegion::referenced_vars_iterator
+           RI = BD->referenced_vars_begin(), RE = BD->referenced_vars_end();
+           RI != RE; ++RI) {
+        if ((*RI)->getDecl()->getAttr<BlocksAttr>())
+          AddToWorkList(*RI);
+      }
 
-  // For BlockDataRegions, enqueue the VarRegions for variables marked
-  // with __block (passed-by-reference).
-  // via BlockDeclRefExprs.
-  if (const BlockDataRegion *BD = dyn_cast<BlockDataRegion>(R)) {
-    for (BlockDataRegion::referenced_vars_iterator
-         RI = BD->referenced_vars_begin(), RE = BD->referenced_vars_end();
-         RI != RE; ++RI) {
-      if ((*RI)->getDecl()->getAttr<BlocksAttr>())
-        AddToWorkList(*RI);
+      // No possible data bindings on a BlockDataRegion.
+      return;
     }
-
-    // No possible data bindings on a BlockDataRegion.
-    return;
   }
 
-  // Get the data binding for R (if any).
-  if (const Optional<SVal> &V = RM.getBinding(B, R))
+  // Visit the data binding for K.
+  if (const SVal *V = RM.Lookup(B, K))
     VisitBinding(*V);
 }
 
