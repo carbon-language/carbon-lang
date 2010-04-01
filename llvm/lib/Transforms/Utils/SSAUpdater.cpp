@@ -135,32 +135,6 @@ static bool IsEquivalentPHI(PHINode *PHI,
   return true;
 }
 
-/// GetExistingPHI - Check if BB already contains a phi node that is equivalent
-/// to the specified mapping from predecessor blocks to incoming values.
-static Value *GetExistingPHI(BasicBlock *BB,
-                             DenseMap<BasicBlock*, Value*> &ValueMapping) {
-  PHINode *SomePHI;
-  for (BasicBlock::iterator It = BB->begin();
-       (SomePHI = dyn_cast<PHINode>(It)); ++It) {
-    if (IsEquivalentPHI(SomePHI, ValueMapping))
-      return SomePHI;
-  }
-  return 0;
-}
-
-/// GetExistingPHI - Check if BB already contains an equivalent phi node.
-/// The InputIt type must be an iterator over std::pair<BasicBlock*, Value*>
-/// objects that specify the mapping from predecessor blocks to incoming values.
-template<typename InputIt>
-static Value *GetExistingPHI(BasicBlock *BB, const InputIt &I,
-                             const InputIt &E) {
-  // Avoid create the mapping if BB has no phi nodes at all.
-  if (!isa<PHINode>(BB->begin()))
-    return 0;
-  DenseMap<BasicBlock*, Value*> ValueMapping(I, E);
-  return GetExistingPHI(BB, ValueMapping);
-}
-
 /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
 /// live at the end of the specified block.
 Value *SSAUpdater::GetValueAtEndOfBlock(BasicBlock *BB) {
@@ -239,10 +213,18 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   if (SingularValue != 0)
     return SingularValue;
 
-  // Otherwise, we do need a PHI.
-  if (Value *ExistingPHI = GetExistingPHI(BB, PredValues.begin(),
-                                          PredValues.end()))
-    return ExistingPHI;
+  // Otherwise, we do need a PHI: check to see if we already have one available
+  // in this block that produces the right value.
+  if (isa<PHINode>(BB->begin())) {
+    DenseMap<BasicBlock*, Value*> ValueMapping(PredValues.begin(),
+                                               PredValues.end());
+    PHINode *SomePHI;
+    for (BasicBlock::iterator It = BB->begin();
+         (SomePHI = dyn_cast<PHINode>(It)); ++It) {
+      if (IsEquivalentPHI(SomePHI, ValueMapping))
+        return SomePHI;
+    }
+  }
 
   // Ok, we have no way out, insert a new one now.
   PHINode *InsertedPHI = PHINode::Create(PrototypeValue->getType(),
