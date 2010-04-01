@@ -2152,7 +2152,7 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C++0x 5.16p4
   //   If the second and third operands are lvalues and have the same type,
   //   the result is of that type [...]
-  bool Same = Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy);
+  bool Same = Context.hasSameType(LTy, RTy);
   if (Same && LHS->isLvalue(Context) == Expr::LV_Valid &&
       RHS->isLvalue(Context) == Expr::LV_Valid)
     return LTy;
@@ -2213,7 +2213,7 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     return Composite;
   }
   
-  // Similarly, attempt to find composite type of twp objective-c pointers.
+  // Similarly, attempt to find composite type of two objective-c pointers.
   Composite = FindCompositeObjCPointerType(LHS, RHS, QuestionLoc);
   if (!Composite.isNull())
     return Composite;
