@@ -111,7 +111,7 @@ private:
   void FindExistingPHI(BasicBlock *BB, BBInfo *Info);
   bool CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val);
   void RecordMatchingPHI(BasicBlock *BB, BBInfo *Info, PHINode *PHI);
-  void ClearPHITags(BasicBlock *BB, BBInfo *Info, PHINode *PHI);
+  void ClearPHITags(PHINode *PHI);
 
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
   SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT

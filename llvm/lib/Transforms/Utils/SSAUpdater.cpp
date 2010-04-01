@@ -427,7 +427,7 @@ void SSAUpdater::FindExistingPHI(BasicBlock *BB, BBInfo *Info) {
       RecordMatchingPHI(BB, Info, SomePHI);
       break;
     }
-    ClearPHITags(BB, Info, SomePHI);
+    ClearPHITags(SomePHI);
   }
 }
 
@@ -490,20 +490,28 @@ void SSAUpdater::RecordMatchingPHI(BasicBlock *BB, BBInfo *Info, PHINode *PHI) {
 }
 
 /// ClearPHITags - When one of the existing PHI nodes fails to match, clear
-/// the PHITag values stored in the BBMap while checking to see if it matched.
-void SSAUpdater::ClearPHITags(BasicBlock *BB, BBInfo *Info, PHINode *PHI) {
-  if (!Info || Info->AvailableVal || !Info->PHITag)
-    return;
-
-  // Clear the tag.
-  Info->PHITag = 0;
-
-  // Iterate through the predecessors.
+/// the PHITag values that were stored in the BBMap when checking to see if
+/// it matched.
+void SSAUpdater::ClearPHITags(PHINode *PHI) {
   BBMapTy *BBMap = getBBMap(BM);
-  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-    PHINode *PHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
-    if (!PHIVal) continue;
-    BasicBlock *Pred = PHIVal->getParent();
-    ClearPHITags(Pred, (*BBMap)[Pred], PHIVal);
+  SmallVector<PHINode*, 20> WorkList;
+  WorkList.push_back(PHI);
+
+  while (!WorkList.empty()) {
+    PHI = WorkList.pop_back_val();
+    BasicBlock *BB = PHI->getParent();
+    BBInfo *Info = (*BBMap)[BB];
+    if (!Info || Info->AvailableVal || !Info->PHITag)
+      continue;
+
+    // Clear the tag.
+    Info->PHITag = 0;
+
+    // Iterate through the PHI's incoming values.
+    for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+      PHINode *IncomingVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+      if (!IncomingVal) continue;
+      WorkList.push_back(IncomingVal);
+    }
   }
 }
