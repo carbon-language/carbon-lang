@@ -71,7 +71,8 @@ int main(int argc, const char **argv, char * const *envp) {
   Diagnostic Diags(&DiagClient);
   Driver TheDriver(Path.getBasename(), Path.getDirname(),
                    llvm::sys::getHostTriple(),
-                   "a.out", /*IsProduction=*/false, Diags);
+                   "a.out", /*IsProduction=*/false, /*CXXIsProduction=*/false,
+                   Diags);
   TheDriver.setTitle("clang interpreter");
 
   // FIXME: This is a hack to try to force the driver to do something we can

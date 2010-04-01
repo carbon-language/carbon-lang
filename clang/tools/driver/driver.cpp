@@ -197,12 +197,19 @@ int main(int argc, const char **argv) {
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;
+#  ifdef CLANGXX_IS_PRODUCTION
+  const bool CXXIsProduction = true;
+#  else
+  const bool CXXIsProduction = false;
+#  endif
 #else
   const bool IsProduction = false;
+  const bool CXXIsProduction = false;
 #endif
   Driver TheDriver(Path.getBasename(), Path.getDirname(),
                    llvm::sys::getHostTriple(),
-                   "a.out", IsProduction, Diags);
+                   "a.out", IsProduction, CXXIsProduction,
+                   Diags);
 
   // Check for ".*++" or ".*++-[^-]*" to determine if we are a C++
   // compiler. This matches things like "c++", "clang++", and "clang++-1.1".

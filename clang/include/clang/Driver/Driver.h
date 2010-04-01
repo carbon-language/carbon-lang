@@ -139,7 +139,8 @@ public:
   Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
          llvm::StringRef _DefaultHostTriple,
          llvm::StringRef _DefaultImageName,
-         bool IsProduction, Diagnostic &_Diags);
+         bool IsProduction, bool CXXIsProduction,
+         Diagnostic &_Diags);
   ~Driver();
 
   /// @name Accessors

@@ -45,7 +45,8 @@ using namespace clang;
 Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
                llvm::StringRef _DefaultHostTriple,
                llvm::StringRef _DefaultImageName,
-               bool IsProduction, Diagnostic &_Diags)
+               bool IsProduction, bool CXXIsProduction,
+               Diagnostic &_Diags)
   : Opts(createDriverOptTable()), Diags(_Diags),
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
@@ -66,7 +67,8 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
     CCCClangArchs.insert(llvm::Triple::x86_64);
     CCCClangArchs.insert(llvm::Triple::arm);
 
-    CCCUseClangCXX = false;
+    if (!CXXIsProduction)
+      CCCUseClangCXX = false;
   }
 
   // Compute the path to the resource directory.

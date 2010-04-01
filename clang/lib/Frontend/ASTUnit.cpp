@@ -378,7 +378,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   // FIXME: We shouldn't have to pass in the path info.
   driver::Driver TheDriver("clang", "/", llvm::sys::getHostTriple(),
-                           "a.out", false, Diags);
+                           "a.out", false, false, Diags);
 
   // Don't check that inputs exist, they have been remapped.
   TheDriver.setCheckInputsExist(false);
