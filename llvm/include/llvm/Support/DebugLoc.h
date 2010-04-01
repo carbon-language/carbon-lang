@@ -40,6 +40,9 @@ namespace llvm {
     static NewDebugLoc get(unsigned Line, unsigned Col,
                            MDNode *Scope, MDNode *InlinedAt);
     
+    /// getFromDILocation - Translate the DILocation quad into a NewDebugLoc.
+    static NewDebugLoc getFromDILocation(MDNode *N);
+    
     /// isUnknown - Return true if this is an unknown location.
     bool isUnknown() const { return ScopeIdx == 0; }
     
@@ -96,7 +99,7 @@ namespace llvm {
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
   };
 
-    /// DebugLocTracker - This class tracks debug location information.
+  /// DebugLocTracker - This class tracks debug location information.
   ///
   struct DebugLocTracker {
     /// DebugLocations - A vector of unique DebugLocTuple's.

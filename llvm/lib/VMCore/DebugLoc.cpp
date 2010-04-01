@@ -111,6 +111,21 @@ MDNode *NewDebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
   return MDNode::get(Ctx2, &Elts[0], 4);
 }
 
+/// getFromDILocation - Translate the DILocation quad into a NewDebugLoc.
+NewDebugLoc NewDebugLoc::getFromDILocation(MDNode *N) {
+  if (N == 0 || N->getNumOperands() != 4) return NewDebugLoc();
+  
+  MDNode *Scope = dyn_cast_or_null<MDNode>(N->getOperand(2));
+  if (Scope == 0) return NewDebugLoc();
+  
+  unsigned LineNo = 0, ColNo = 0;
+  if (ConstantInt *Line = dyn_cast_or_null<ConstantInt>(N->getOperand(0)))
+    LineNo = Line->getZExtValue();
+  if (ConstantInt *Col = dyn_cast_or_null<ConstantInt>(N->getOperand(1)))
+    ColNo = Col->getZExtValue();
+  
+  return get(LineNo, ColNo, Scope, dyn_cast_or_null<MDNode>(N->getOperand(3)));
+}
 
 //===----------------------------------------------------------------------===//
 // LLVMContextImpl Implementation
