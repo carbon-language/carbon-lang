@@ -129,11 +129,11 @@ namespace {
 
   private:
     Liveness MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses);
-    Liveness SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
+    Liveness SurveyUse(Value::const_use_iterator U, UseVector &MaybeLiveUses,
                        unsigned RetValNum = 0);
-    Liveness SurveyUses(Value *V, UseVector &MaybeLiveUses);
+    Liveness SurveyUses(const Value *V, UseVector &MaybeLiveUses);
 
-    void SurveyFunction(Function &F);
+    void SurveyFunction(const Function &F);
     void MarkValue(const RetOrArg &RA, Liveness L,
                    const UseVector &MaybeLiveUses);
     void MarkLive(const RetOrArg &RA);
@@ -310,10 +310,10 @@ DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
 /// RetValNum is the return value number to use when this use is used in a
 /// return instruction. This is used in the recursion, you should always leave
 /// it at 0.
-DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
-                             unsigned RetValNum) {
-    User *V = *U;
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(V)) {
+DAE::Liveness DAE::SurveyUse(Value::const_use_iterator U,
+                             UseVector &MaybeLiveUses, unsigned RetValNum) {
+    const User *V = *U;
+    if (const ReturnInst *RI = dyn_cast<ReturnInst>(V)) {
       // The value is returned from a function. It's only live when the
       // function's return value is live. We use RetValNum here, for the case
       // that U is really a use of an insertvalue instruction that uses the
@@ -322,7 +322,7 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
       // We might be live, depending on the liveness of Use.
       return MarkIfNotLive(Use, MaybeLiveUses);
     }
-    if (InsertValueInst *IV = dyn_cast<InsertValueInst>(V)) {
+    if (const InsertValueInst *IV = dyn_cast<InsertValueInst>(V)) {
       if (U.getOperandNo() != InsertValueInst::getAggregateOperandIndex()
           && IV->hasIndices())
         // The use we are examining is inserted into an aggregate. Our liveness
@@ -334,7 +334,7 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
       // we don't change RetValNum, but do survey all our uses.
 
       Liveness Result = MaybeLive;
-      for (Value::use_iterator I = IV->use_begin(),
+      for (Value::const_use_iterator I = IV->use_begin(),
            E = V->use_end(); I != E; ++I) {
         Result = SurveyUse(I, MaybeLiveUses, RetValNum);
         if (Result == Live)
@@ -342,9 +342,9 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
       }
       return Result;
     }
-    CallSite CS = CallSite::get(V);
-    if (CS.getInstruction()) {
-      Function *F = CS.getCalledFunction();
+
+    if (ImmutableCallSite CS = V) {
+      const Function *F = CS.getCalledFunction();
       if (F) {
         // Used in a direct call.
 
@@ -359,7 +359,7 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
           return Live;
 
         assert(CS.getArgument(ArgNo)
-               == CS.getInstruction()->getOperand(U.getOperandNo())
+               == CS->getOperand(U.getOperandNo())
                && "Argument is not where we expected it");
 
         // Value passed to a normal call. It's only live when the corresponding
@@ -378,11 +378,11 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
 /// Adds all uses that cause the result to be MaybeLive to MaybeLiveRetUses. If
 /// the result is Live, MaybeLiveUses might be modified but its content should
 /// be ignored (since it might not be complete).
-DAE::Liveness DAE::SurveyUses(Value *V, UseVector &MaybeLiveUses) {
+DAE::Liveness DAE::SurveyUses(const Value *V, UseVector &MaybeLiveUses) {
   // Assume it's dead (which will only hold if there are no uses at all..).
   Liveness Result = MaybeLive;
   // Check each use.
-  for (Value::use_iterator I = V->use_begin(),
+  for (Value::const_use_iterator I = V->use_begin(),
        E = V->use_end(); I != E; ++I) {
     Result = SurveyUse(I, MaybeLiveUses);
     if (Result == Live)
@@ -399,7 +399,7 @@ DAE::Liveness DAE::SurveyUses(Value *V, UseVector &MaybeLiveUses) {
 // We consider arguments of non-internal functions to be intrinsically alive as
 // well as arguments to functions which have their "address taken".
 //
-void DAE::SurveyFunction(Function &F) {
+void DAE::SurveyFunction(const Function &F) {
   unsigned RetCount = NumRetVals(&F);
   // Assume all return values are dead
   typedef SmallVector<Liveness, 5> RetVals;
@@ -411,8 +411,8 @@ void DAE::SurveyFunction(Function &F) {
   // MaybeLive. Initialized to a list of RetCount empty lists.
   RetUses MaybeLiveRetUses(RetCount);
 
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (const ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
       if (RI->getNumOperands() != 0 && RI->getOperand(0)->getType()
           != F.getFunctionType()->getReturnType()) {
         // We don't support old style multiple return values.
@@ -431,17 +431,18 @@ void DAE::SurveyFunction(Function &F) {
   unsigned NumLiveRetVals = 0;
   const Type *STy = dyn_cast<StructType>(F.getReturnType());
   // Loop all uses of the function.
-  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
+  for (Value::const_use_iterator I = F.use_begin(), E = F.use_end();
+       I != E; ++I) {
     // If the function is PASSED IN as an argument, its address has been
     // taken.
-    CallSite CS = CallSite::get(*I);
-    if (!CS.getInstruction() || !CS.isCallee(I)) {
+    ImmutableCallSite CS(*I);
+    if (!CS || !CS.isCallee(I)) {
       MarkLive(F);
       return;
     }
 
     // If this use is anything other than a call site, the function is alive.
-    Instruction *TheCall = CS.getInstruction();
+    const Instruction *TheCall = CS.getInstruction();
     if (!TheCall) {   // Not a direct call site?
       MarkLive(F);
       return;
@@ -454,9 +455,9 @@ void DAE::SurveyFunction(Function &F) {
     if (NumLiveRetVals != RetCount) {
       if (STy) {
         // Check all uses of the return value.
-        for (Value::use_iterator I = TheCall->use_begin(),
+        for (Value::const_use_iterator I = TheCall->use_begin(),
              E = TheCall->use_end(); I != E; ++I) {
-          ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
+          const ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
           if (Ext && Ext->hasIndices()) {
             // This use uses a part of our return value, survey the uses of
             // that part and store the results for this index only.
@@ -493,7 +494,7 @@ void DAE::SurveyFunction(Function &F) {
   // Now, check all of our arguments.
   unsigned i = 0;
   UseVector MaybeLiveArgUses;
-  for (Function::arg_iterator AI = F.arg_begin(),
+  for (Function::const_arg_iterator AI = F.arg_begin(),
        E = F.arg_end(); AI != E; ++AI, ++i) {
     // See what the effect of this use is (recording any uses that cause
     // MaybeLive in MaybeLiveArgUses).
@@ -690,7 +691,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   // Reconstruct the AttributesList based on the vector we constructed.
-  AttrListPtr NewPAL = AttrListPtr::get(AttributesVec.begin(), AttributesVec.end());
+  AttrListPtr NewPAL = AttrListPtr::get(AttributesVec.begin(),
+                                        AttributesVec.end());
 
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.

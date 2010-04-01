@@ -43,11 +43,6 @@ using namespace llvm;
   else                                   \
     cast<InvokeInst>(II)->METHOD
 
-CallSite::CallSite(Instruction *C) {
-  assert((isa<CallInst>(C) || isa<InvokeInst>(C)) && "Not a call!");
-  I.setPointer(C);
-  I.setInt(isa<CallInst>(C));
-}
 CallingConv::ID CallSite::getCallingConv() const {
   CALLSITE_DELEGATE_GETTER(getCallingConv());
 }

@@ -119,7 +119,7 @@ struct GlobalStatus {
   /// null/false.  When the first accessing function is noticed, it is recorded.
   /// When a second different accessing function is noticed,
   /// HasMultipleAccessingFunctions is set to true.
-  Function *AccessingFunction;
+  const Function *AccessingFunction;
   bool HasMultipleAccessingFunctions;
 
   /// HasNonInstructionUser - Set to true if this global has a user that is not
@@ -140,11 +140,11 @@ struct GlobalStatus {
 // by constants itself.  Note that constants cannot be cyclic, so this test is
 // pretty easy to implement recursively.
 //
-static bool SafeToDestroyConstant(Constant *C) {
+static bool SafeToDestroyConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) return false;
 
-  for (Value::use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
-    if (Constant *CU = dyn_cast<Constant>(*UI)) {
+  for (Value::const_use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
+    if (const Constant *CU = dyn_cast<Constant>(*UI)) {
       if (!SafeToDestroyConstant(CU)) return false;
     } else
       return false;
@@ -156,26 +156,26 @@ static bool SafeToDestroyConstant(Constant *C) {
 /// structure.  If the global has its address taken, return true to indicate we
 /// can't do anything with it.
 ///
-static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
-                          SmallPtrSet<PHINode*, 16> &PHIUsers) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
+                          SmallPtrSet<const PHINode*, 16> &PHIUsers) {
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
+    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
       GS.HasNonInstructionUser = true;
 
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
 
-    } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
+    } else if (const Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (!GS.HasMultipleAccessingFunctions) {
-        Function *F = I->getParent()->getParent();
+        const Function *F = I->getParent()->getParent();
         if (GS.AccessingFunction == 0)
           GS.AccessingFunction = F;
         else if (GS.AccessingFunction != F)
           GS.HasMultipleAccessingFunctions = true;
       }
-      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
         GS.isLoaded = true;
         if (LI->isVolatile()) return true;  // Don't hack on volatile loads.
-      } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+      } else if (const StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Don't allow a store OF the address, only stores TO the address.
         if (SI->getOperand(0) == V) return true;
 
@@ -185,14 +185,13 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         // value, not an aggregate), keep more specific information about
         // stores.
         if (GS.StoredType != GlobalStatus::isStored) {
-          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
+          if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
             Value *StoredVal = SI->getOperand(0);
             if (StoredVal == GV->getInitializer()) {
               if (GS.StoredType < GlobalStatus::isInitializerStored)
                 GS.StoredType = GlobalStatus::isInitializerStored;
             } else if (isa<LoadInst>(StoredVal) &&
                        cast<LoadInst>(StoredVal)->getOperand(0) == GV) {
-              // G = G
               if (GS.StoredType < GlobalStatus::isInitializerStored)
                 GS.StoredType = GlobalStatus::isInitializerStored;
             } else if (GS.StoredType < GlobalStatus::isStoredOnce) {
@@ -212,7 +211,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
       } else if (isa<SelectInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-      } else if (PHINode *PN = dyn_cast<PHINode>(I)) {
+      } else if (const PHINode *PN = dyn_cast<PHINode>(I)) {
         // PHI nodes we can check just like select or GEP instructions, but we
         // have to be careful about infinite recursion.
         if (PHIUsers.insert(PN))  // Not already visited.
@@ -230,7 +229,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       } else {
         return true;  // Any other non-load instruction might take address!
       }
-    } else if (Constant *C = dyn_cast<Constant>(*UI)) {
+    } else if (const Constant *C = dyn_cast<Constant>(*UI)) {
       GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
       if (!SafeToDestroyConstant(C))
@@ -1029,23 +1028,23 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// LoadUsesSimpleEnoughForHeapSRA - Verify that all uses of V (a load, or a phi
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
-static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
-                              SmallPtrSet<PHINode*, 32> &LoadUsingPHIs,
-                              SmallPtrSet<PHINode*, 32> &LoadUsingPHIsPerLoad) {
+static bool LoadUsesSimpleEnoughForHeapSRA(const Value *V,
+                              SmallPtrSet<const PHINode*, 32> &LoadUsingPHIs,
+                              SmallPtrSet<const PHINode*, 32> &LoadUsingPHIsPerLoad) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    Instruction *User = cast<Instruction>(*UI);
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    const Instruction *User = cast<Instruction>(*UI);
     
     // Comparison against null is ok.
-    if (ICmpInst *ICI = dyn_cast<ICmpInst>(User)) {
+    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(User)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return false;
       continue;
     }
     
     // getelementptr is also ok, but only a simple form.
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+    if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
       // Must index into the array and into the struct.
       if (GEPI->getNumOperands() < 3)
         return false;
@@ -1054,7 +1053,7 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
       continue;
     }
     
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+    if (const PHINode *PN = dyn_cast<PHINode>(User)) {
       if (!LoadUsingPHIsPerLoad.insert(PN))
         // This means some phi nodes are dependent on each other.
         // Avoid infinite looping!
@@ -1081,13 +1080,13 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
 
 /// AllGlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
 /// GV are simple enough to perform HeapSRA, return true.
-static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
+static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(const GlobalVariable *GV,
                                                     Instruction *StoredVal) {
-  SmallPtrSet<PHINode*, 32> LoadUsingPHIs;
-  SmallPtrSet<PHINode*, 32> LoadUsingPHIsPerLoad;
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
+  SmallPtrSet<const PHINode*, 32> LoadUsingPHIs;
+  SmallPtrSet<const PHINode*, 32> LoadUsingPHIsPerLoad;
+  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
        ++UI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+    if (const LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs,
                                           LoadUsingPHIsPerLoad))
         return false;
@@ -1099,16 +1098,16 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
   // that all inputs the to the PHI nodes are in the same equivalence sets. 
   // Check to verify that all operands of the PHIs are either PHIS that can be
   // transformed, loads from GV, or MI itself.
-  for (SmallPtrSet<PHINode*, 32>::iterator I = LoadUsingPHIs.begin(),
+  for (SmallPtrSet<const PHINode*, 32>::const_iterator I = LoadUsingPHIs.begin(),
        E = LoadUsingPHIs.end(); I != E; ++I) {
-    PHINode *PN = *I;
+    const PHINode *PN = *I;
     for (unsigned op = 0, e = PN->getNumIncomingValues(); op != e; ++op) {
       Value *InVal = PN->getIncomingValue(op);
       
       // PHI of the stored value itself is ok.
       if (InVal == StoredVal) continue;
       
-      if (PHINode *InPN = dyn_cast<PHINode>(InVal)) {
+      if (const PHINode *InPN = dyn_cast<PHINode>(InVal)) {
         // One of the PHIs in our set is (optimistically) ok.
         if (LoadUsingPHIs.count(InPN))
           continue;
@@ -1116,7 +1115,7 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
       }
       
       // Load from GV is ok.
-      if (LoadInst *LI = dyn_cast<LoadInst>(InVal))
+      if (const LoadInst *LI = dyn_cast<LoadInst>(InVal))
         if (LI->getOperand(0) == GV)
           continue;
       
@@ -1664,7 +1663,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 /// it if possible.  If we make a change, return true.
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                       Module::global_iterator &GVI) {
-  SmallPtrSet<PHINode*, 16> PHIUsers;
+  SmallPtrSet<const PHINode*, 16> PHIUsers;
   GlobalStatus GS;
   GV->removeDeadConstantUsers();
 
@@ -1715,12 +1714,13 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GS.AccessingFunction->hasExternalLinkage() &&
         GV->getType()->getAddressSpace() == 0) {
       DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV);
-      Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
+      Instruction& FirstI = const_cast<Instruction&>(*GS.AccessingFunction
+                                                     ->getEntryBlock().begin());
       const Type* ElemTy = GV->getType()->getElementType();
       // FIXME: Pass Global's alignment when globals have alignment
-      AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), FirstI);
+      AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), &FirstI);
       if (!isa<UndefValue>(GV->getInitializer()))
-        new StoreInst(GV->getInitializer(), Alloca, FirstI);
+        new StoreInst(GV->getInitializer(), Alloca, &FirstI);
 
       GV->replaceAllUsesWith(Alloca);
       GV->eraseFromParent();

@@ -408,7 +408,7 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
     const User *U = *I;
     if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
       return PutOffender ? (*PutOffender = U, true) : true;
-    CallSite CS(const_cast<Instruction*>(static_cast<const Instruction*>(U)));
+    ImmutableCallSite CS(cast<Instruction>(U));
     if (!CS.isCallee(I))
       return PutOffender ? (*PutOffender = U, true) : true;
   }
