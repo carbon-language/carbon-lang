@@ -50,7 +50,7 @@ namespace {
     /// argument.  Used so that arguments and return values can be used
     /// interchangably.
     struct RetOrArg {
-      RetOrArg(const Function* F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
+      RetOrArg(const Function *F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
                IsArg(IsArg) {}
       const Function *F;
       unsigned Idx;
@@ -280,7 +280,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 /// for void functions and 1 for functions not returning a struct. It returns
 /// the number of struct elements for functions returning a struct.
 static unsigned NumRetVals(const Function *F) {
-  if (F->getReturnType() == Type::getVoidTy(F->getContext()))
+  if (F->getReturnType()->isVoidTy())
     return 0;
   else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType()))
     return STy->getNumElements();
@@ -305,7 +305,7 @@ DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
 
 /// SurveyUse - This looks at a single use of an argument or return value
 /// and determines if it should be alive or not. Adds this use to MaybeLiveUses
-/// if it causes the used value to become MaybeAlive.
+/// if it causes the used value to become MaybeLive.
 ///
 /// RetValNum is the return value number to use when this use is used in a
 /// return instruction. This is used in the recursion, you should always leave
@@ -603,8 +603,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
-  if (RetTy == Type::getVoidTy(F->getContext())) {
-    NRetTy = Type::getVoidTy(F->getContext());
+  if (RetTy->isVoidTy()) {
+    NRetTy = RetTy;
   } else {
     const StructType *STy = dyn_cast<StructType>(RetTy);
     if (STy)
@@ -653,7 +653,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // values. Otherwise, ensure that we don't have any conflicting attributes
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
-  if (NRetTy == Type::getVoidTy(F->getContext()))
+  if (NRetTy->isVoidTy())
     RAttrs &= ~Attribute::typeIncompatible(NRetTy);
   else
     assert((RAttrs & Attribute::typeIncompatible(NRetTy)) == 0
@@ -705,8 +705,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   // Create the new function type based on the recomputed parameters.
-  FunctionType *NFTy = FunctionType::get(NRetTy, Params,
-                                                FTy->isVarArg());
+  FunctionType *NFTy = FunctionType::get(NRetTy, Params, FTy->isVarArg());
 
   // No change?
   if (NFTy == FTy)
@@ -791,7 +790,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Return type not changed? Just replace users then.
         Call->replaceAllUsesWith(New);
         New->takeName(Call);
-      } else if (New->getType() == Type::getVoidTy(F->getContext())) {
+      } else if (New->getType()->isVoidTy()) {
         // Our return value has uses, but they will get removed later on.
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
@@ -931,9 +930,9 @@ bool DAE::runOnModule(Module &M) {
     SurveyFunction(*I);
 
   // Now, remove all dead arguments and return values from each function in
-  // turn
+  // turn.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    // Increment now, because the function will probably get removed (ie
+    // Increment now, because the function will probably get removed (ie.
     // replaced by a new one).
     Function *F = I++;
     Changed |= RemoveDeadStuffFromFunction(F);
