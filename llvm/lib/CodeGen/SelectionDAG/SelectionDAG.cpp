@@ -6152,7 +6152,7 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
     unsigned Align = GV->getAlignment();
     if (!Align) {
       if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-        if (GV->getType()->getElementType()->isSized()) {
+        if (GVar->hasInitializer()) {
           const TargetData *TD = TLI.getTargetData();
           Align = TD->getPreferredAlignment(GVar);
         }
