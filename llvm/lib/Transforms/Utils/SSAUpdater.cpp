@@ -366,7 +366,7 @@ void SSAUpdater::FindAvailableVal(BasicBlock *BB, BBInfo *Info,
   PHINode *NewPHI = 0;
   if (Info->DefBB == BB) {
     // Look for an existing PHI.
-    FindExistingPHI(BB, Info);
+    FindExistingPHI(BB);
     if (!Info->AvailableVal) {
       NewPHI = PHINode::Create(PrototypeValue->getType(),
                                PrototypeValue->getName(), &BB->front());
@@ -401,11 +401,11 @@ void SSAUpdater::FindAvailableVal(BasicBlock *BB, BBInfo *Info,
 
 /// FindExistingPHI - Look through the PHI nodes in a block to see if any of
 /// them match what is needed.
-void SSAUpdater::FindExistingPHI(BasicBlock *BB, BBInfo *Info) {
+void SSAUpdater::FindExistingPHI(BasicBlock *BB) {
   PHINode *SomePHI;
   for (BasicBlock::iterator It = BB->begin();
        (SomePHI = dyn_cast<PHINode>(It)); ++It) {
-    if (CheckIfPHIMatches(BB, Info, SomePHI)) {
+    if (CheckIfPHIMatches(SomePHI)) {
       RecordMatchingPHI(SomePHI);
       break;
     }
@@ -413,40 +413,54 @@ void SSAUpdater::FindExistingPHI(BasicBlock *BB, BBInfo *Info) {
   }
 }
 
-/// CheckIfPHIMatches - Check if Val is a PHI node in block BB that matches
-/// the placement and values in the BBMap.
-bool SSAUpdater::CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val) {
-  if (Info->AvailableVal)
-    return Val == Info->AvailableVal;
-
-  // Check if Val is a PHI in this block.
-  PHINode *PHI = dyn_cast<PHINode>(Val);
-  if (!PHI || PHI->getParent() != BB)
-    return false;
-
-  // If this block has already been visited, check if this PHI matches.
-  if (Info->PHITag)
-    return PHI == Info->PHITag;
-  Info->PHITag = PHI;
-  bool IsMatch = true;
-
-  // Iterate through the predecessors.
+/// CheckIfPHIMatches - Check if a PHI node matches the placement and values
+/// in the BBMap.
+bool SSAUpdater::CheckIfPHIMatches(PHINode *PHI) {
   BBMapTy *BBMap = getBBMap(BM);
-  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-    BasicBlock *Pred = PHI->getIncomingBlock(i);
-    Value *IncomingVal = PHI->getIncomingValue(i);
-    BBInfo *PredInfo = (*BBMap)[Pred];
-    // Skip to the nearest preceding definition.
-    if (PredInfo->DefBB != Pred) {
-      Pred = PredInfo->DefBB;
-      PredInfo = (*BBMap)[Pred];
-    }
-    if (!CheckIfPHIMatches(Pred, PredInfo, IncomingVal)) {
-      IsMatch = false;
-      break;
+  SmallVector<PHINode*, 20> WorkList;
+  WorkList.push_back(PHI);
+
+  // Mark that the block containing this PHI has been visited.
+  (*BBMap)[PHI->getParent()]->PHITag = PHI;
+
+  while (!WorkList.empty()) {
+    PHI = WorkList.pop_back_val();
+
+    // Iterate through the PHI's incoming values.
+    for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+      Value *IncomingVal = PHI->getIncomingValue(i);
+      BasicBlock *Pred = PHI->getIncomingBlock(i);
+      BBInfo *PredInfo = (*BBMap)[Pred];
+      // Skip to the nearest preceding definition.
+      if (PredInfo->DefBB != Pred) {
+        Pred = PredInfo->DefBB;
+        PredInfo = (*BBMap)[Pred];
+      }
+
+      // Check if it matches the expected value.
+      if (PredInfo->AvailableVal) {
+        if (IncomingVal == PredInfo->AvailableVal)
+          continue;
+        return false;
+      }
+
+      // Check if the value is a PHI in the correct block.
+      PHINode *IncomingPHIVal = dyn_cast<PHINode>(IncomingVal);
+      if (!IncomingPHIVal || IncomingPHIVal->getParent() != Pred)
+        return false;
+
+      // If this block has already been visited, check if this PHI matches.
+      if (PredInfo->PHITag) {
+        if (IncomingPHIVal == PredInfo->PHITag)
+          continue;
+        return false;
+      }
+      PredInfo->PHITag = IncomingPHIVal;
+
+      WorkList.push_back(IncomingPHIVal);
     }
   }
-  return IsMatch;
+  return true;
 }
 
 /// RecordMatchingPHI - For a PHI node that matches, record it and its input

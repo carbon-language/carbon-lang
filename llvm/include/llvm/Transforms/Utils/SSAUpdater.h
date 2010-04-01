@@ -108,8 +108,8 @@ private:
   void FindPHIPlacement(BasicBlock *BB, BBInfo *Info, bool &Changed,
                         unsigned Counter);
   void FindAvailableVal(BasicBlock *BB, BBInfo *Info, unsigned Counter);
-  void FindExistingPHI(BasicBlock *BB, BBInfo *Info);
-  bool CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val);
+  void FindExistingPHI(BasicBlock *BB);
+  bool CheckIfPHIMatches(PHINode *PHI);
   void RecordMatchingPHI(PHINode *PHI);
   void ClearPHITags(PHINode *PHI);
 
