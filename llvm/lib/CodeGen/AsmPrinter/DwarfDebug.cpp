@@ -2051,7 +2051,6 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   // Check and update last known location info.
   if(DILoc.getNode() == PrevDILoc)
     return;
-  PrevDILoc = DILoc.getNode();
 
   // DBG_VALUE instruction establishes new value.
   if (MI->isDebugValue()) {
@@ -2061,6 +2060,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
       MCSymbol *Label = recordSourceLine(DILoc.getLineNumber(),
                                          DILoc.getColumnNumber(),
                                          DILoc.getScope().getNode());
+      PrevDILoc = DILoc.getNode();
       DI->second->setDbgValueLabel(Label);
     }
     return;
@@ -2071,6 +2071,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   MCSymbol *Label = recordSourceLine(DILoc.getLineNumber(),
                                      DILoc.getColumnNumber(),
                                      DILoc.getScope().getNode());
+  PrevDILoc = DILoc.getNode();
 
   // update DbgScope if this instruction starts a new scope.
   InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
