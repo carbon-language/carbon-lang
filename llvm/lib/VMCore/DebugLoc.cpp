@@ -220,9 +220,10 @@ void DebugRecVH::deleted() {
          "Mapping out of date");
   Ctx->ScopeInlinedAtIdx.erase(std::make_pair(OldScope, OldInlinedAt));
   
-  // Reset this VH to null.
+  // Reset this VH to null.  Drop both 'Idx' values to null to indicate that
+  // we're in non-canonical form now.
   setValPtr(0);
-  Idx = 0;
+  Entry.first.Idx = Entry.second.Idx = 0;
 }
 
 void DebugRecVH::allUsesReplacedWith(Value *NewVa) {
@@ -280,6 +281,8 @@ void DebugRecVH::allUsesReplacedWith(Value *NewVa) {
                                                    Entry.second.get(), Idx);
   // If NewVal already has an entry, this becomes a non-canonical reference,
   // just drop Idx to 0 to signify this.
-  if (NewIdx != Idx)
-    Idx = 0;
+  if (NewIdx != Idx) {
+    std::pair<DebugRecVH, DebugRecVH> &Entry=Ctx->ScopeInlinedAtRecords[-Idx-1];
+    Entry.first.Idx = Entry.second.Idx = 0;
+  }
 }
