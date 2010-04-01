@@ -17,7 +17,7 @@
 
 #include "llvm/User.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 
@@ -32,7 +32,7 @@ class Instruction : public User, public ilist_node<Instruction> {
   Instruction(const Instruction &);        // Do not implement
 
   BasicBlock *Parent;
-  TrackingVH<MDNode> DbgInfo;         // 'dbg' Metadata cache.
+  NewDebugLoc DbgLoc;                      // 'dbg' Metadata cache.
   
   enum {
     /// HasMetadataBit - This is a bit stored in the SubClassData field which
@@ -125,7 +125,13 @@ public:
   /// hasMetadata() - Return true if this instruction has any metadata attached
   /// to it.
   bool hasMetadata() const {
-    return DbgInfo != 0 || hasMetadataHashEntry();
+    return !DbgLoc.isUnknown() || hasMetadataHashEntry();
+  }
+  
+  /// hasMetadataOtherThanDebugLoc - Return true if this instruction has
+  /// metadata attached to it other than a debug location.
+  bool hasMetadataOtherThanDebugLoc() const {
+    return hasMetadataHashEntry();
   }
   
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
@@ -150,6 +156,14 @@ public:
       getAllMetadataImpl(MDs);
   }
   
+  /// getAllMetadataOtherThanDebugLoc - This does the same thing as
+  /// getAllMetadata, except that it filters out the debug location.
+  void getAllMetadataOtherThanDebugLoc(SmallVectorImpl<std::pair<unsigned,
+                                       MDNode*> > &MDs) const {
+    if (hasMetadataOtherThanDebugLoc())
+      getAllMetadataOtherThanDebugLocImpl(MDs);
+  }
+  
   /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
   /// Node is null.
@@ -163,8 +177,14 @@ public:
   /// getDbgMetadata - This is just an optimized helper function that is
   /// equivalent to calling getMetadata("dbg").
   MDNode *getDbgMetadata() const {
-    return DbgInfo;
+    return DbgLoc.getAsMDNode(getContext());
   }
+
+  /// setDebugLoc - Set the debug location information for this instruction.
+  void setDebugLoc(const NewDebugLoc &Loc) { DbgLoc = Loc; }
+  
+  /// getDebugLoc - Return the debug location for this node as a DebugLoc.
+  const NewDebugLoc &getDebugLoc() const { return DbgLoc; }
   
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
@@ -177,6 +197,8 @@ private:
   MDNode *getMetadataImpl(unsigned KindID) const;
   MDNode *getMetadataImpl(const char *Kind) const;
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
+  void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
+                                           MDNode*> > &) const;
   void removeAllMetadata();
 public:
   //===--------------------------------------------------------------------===//

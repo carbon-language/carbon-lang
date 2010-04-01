@@ -22,7 +22,7 @@ using namespace llvm;
 
 Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
                          Instruction *InsertBefore)
-  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0), DbgInfo(0) {
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
 
@@ -36,7 +36,7 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
 
 Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
                          BasicBlock *InsertAtEnd)
-  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0), DbgInfo(0) {
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
 
