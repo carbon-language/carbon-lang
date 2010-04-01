@@ -1026,20 +1026,6 @@ ignored</a>.</li>
 </ul>
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-	<a name="ocaml-bindings">Known problems with the O'Caml bindings</a>
-</div>
-
-<div class="doc_text">
-
-<p>The <tt>Llvm.Linkage</tt> module is broken, and has incorrect values. Only
-<tt>Llvm.Linkage.External</tt>, <tt>Llvm.Linkage.Available_externally</tt>, and
-<tt>Llvm.Linkage.Link_once</tt> will be correct. If you need any of the other linkage
-modes, you'll have to write an external C library in order to expose the
-functionality. This has been fixed in the trunk.</p>
-</div>
-
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="additionalinfo">Additional Information</a>
