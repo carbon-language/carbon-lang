@@ -787,9 +787,12 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
         return ValMgr.makeIntVal(CAT->getSize(), false);
       }
 
-      // Clients can use ordinary variables as if they were arrays.  These
-      // essentially are arrays of size 1.
-      return ValMgr.makeIntVal(1, false);
+      // Clients can reinterpret ordinary variables as arrays, possibly of
+      // another type. The width is rounded down to ensure that an access is
+      // entirely within bounds.
+      CharUnits VarSize = getContext().getTypeSizeInChars(T);
+      CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
+      return ValMgr.makeIntVal(VarSize / EleSize, false);
     }
   }
 
