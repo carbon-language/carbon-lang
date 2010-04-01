@@ -37,8 +37,10 @@ namespace llvm {
   public:
     NewDebugLoc() : LineCol(0), ScopeIdx(0) {}  // Defaults to unknown.
     
+    /// get - Get a new DebugLoc that corresponds to the specified line/col
+    /// scope/inline location.
     static NewDebugLoc get(unsigned Line, unsigned Col,
-                           MDNode *Scope, MDNode *InlinedAt);
+                           MDNode *Scope, MDNode *InlinedAt = 0);
     
     /// getFromDILocation - Translate the DILocation quad into a NewDebugLoc.
     static NewDebugLoc getFromDILocation(MDNode *N);
