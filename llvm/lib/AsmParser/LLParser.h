@@ -76,6 +76,14 @@ namespace llvm {
     LLVMContext& Context;
     LLLexer Lex;
     Module *M;
+    
+    // Instruction metadata resolution.  Each instruction can have a list of
+    // MDRef info associated with them.
+    struct MDRef {
+      SMLoc Loc;
+      unsigned MDKind, MDSlot;
+    };
+    DenseMap<Instruction*, std::vector<MDRef> > ForwardRefInstMetadata;
 
     // Type resolution handling data structures.
     std::map<std::string, std::pair<PATypeHolder, LocTy> > ForwardRefTypes;
@@ -203,6 +211,7 @@ namespace llvm {
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);
     bool ParseMDNodeID(MDNode *&Result);
+    bool ParseMDNodeID(MDNode *&Result, unsigned &SlotNo);
 
     // Type Parsing.
     bool ParseType(PATypeHolder &Result, bool AllowVoid = false);
