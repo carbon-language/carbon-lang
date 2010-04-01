@@ -1389,13 +1389,10 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
   llvm::DIFile Unit = getOrCreateFile(CurLoc);
   PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
 
-  llvm::DIDescriptor DR(RegionStack.back());
-  llvm::DIScope DS = llvm::DIScope(DR.getNode());
-  llvm::DILocation DO(NULL);
-  llvm::DILocation DL = 
-    DebugFactory.CreateLocation(PLoc.getLine(), PLoc.getColumn(),
-                                DS, DO);
-  Builder.SetCurrentDebugLocation(DL.getNode());
+  llvm::MDNode *Scope = RegionStack.back();
+  Builder.SetCurrentDebugLocation(llvm::NewDebugLoc::get(PLoc.getLine(),
+                                                         PLoc.getColumn(),
+                                                         Scope));
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -1598,11 +1595,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   llvm::Instruction *Call =
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
 
-  llvm::DIScope DS(RegionStack.back());
-  llvm::DILocation DO(NULL);
-  llvm::DILocation DL = DebugFactory.CreateLocation(Line, Column, DS, DO);
-  
-  Call->setDbgMetadata(DL.getNode());
+  llvm::MDNode *Scope = RegionStack.back();
+  Call->setDebugLoc(llvm::NewDebugLoc::get(Line, Column, Scope));
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -1664,13 +1658,9 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
-
-  llvm::DIScope DS(RegionStack.back());
-  llvm::DILocation DO(NULL);
-  llvm::DILocation DL = 
-    DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
   
-  Call->setDbgMetadata(DL.getNode());
+  llvm::MDNode *Scope = RegionStack.back();
+  Call->setDebugLoc(llvm::NewDebugLoc::get(Line, PLoc.getColumn(), Scope));
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
