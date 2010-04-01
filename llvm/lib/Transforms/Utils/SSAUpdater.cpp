@@ -406,7 +406,7 @@ void SSAUpdater::FindExistingPHI(BasicBlock *BB, BBInfo *Info) {
   for (BasicBlock::iterator It = BB->begin();
        (SomePHI = dyn_cast<PHINode>(It)); ++It) {
     if (CheckIfPHIMatches(BB, Info, SomePHI)) {
-      RecordMatchingPHI(BB, Info, SomePHI);
+      RecordMatchingPHI(SomePHI);
       break;
     }
     ClearPHITags(SomePHI);
@@ -449,25 +449,31 @@ bool SSAUpdater::CheckIfPHIMatches(BasicBlock *BB, BBInfo *Info, Value *Val) {
   return IsMatch;
 }
 
-/// RecordMatchingPHI - For a PHI node that matches, record it in both the
-/// BBMap and the AvailableVals mapping.  Recursively record its input PHIs
-/// as well.
-void SSAUpdater::RecordMatchingPHI(BasicBlock *BB, BBInfo *Info, PHINode *PHI) {
-  if (!Info || Info->AvailableVal)
-    return;
-
-  // Record the PHI.
-  AvailableValsTy &AvailableVals = getAvailableVals(AV);
-  AvailableVals[BB] = PHI;
-  Info->AvailableVal = PHI;
-
-  // Iterate through the predecessors.
+/// RecordMatchingPHI - For a PHI node that matches, record it and its input
+/// PHIs in both the BBMap and the AvailableVals mapping.
+void SSAUpdater::RecordMatchingPHI(PHINode *PHI) {
   BBMapTy *BBMap = getBBMap(BM);
-  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-    PHINode *PHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
-    if (!PHIVal) continue;
-    BasicBlock *Pred = PHIVal->getParent();
-    RecordMatchingPHI(Pred, (*BBMap)[Pred], PHIVal);
+  AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  SmallVector<PHINode*, 20> WorkList;
+  WorkList.push_back(PHI);
+
+  while (!WorkList.empty()) {
+    PHI = WorkList.pop_back_val();
+    BasicBlock *BB = PHI->getParent();
+    BBInfo *Info = (*BBMap)[BB];
+    if (!Info || Info->AvailableVal)
+      return;
+
+    // Record the PHI.
+    AvailableVals[BB] = PHI;
+    Info->AvailableVal = PHI;
+
+    // Iterate through the PHI's incoming values.
+    for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+      PHINode *IncomingVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+      if (!IncomingVal) continue;
+      WorkList.push_back(IncomingVal);
+    }
   }
 }
 
