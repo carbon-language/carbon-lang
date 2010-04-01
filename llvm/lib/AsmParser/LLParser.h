@@ -171,8 +171,7 @@ namespace llvm {
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseOptionalStackAlignment(unsigned &Alignment);
-    bool ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
-                                                            MDNode *> > &);
+    bool ParseInstructionMetadata(Instruction *Inst);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {

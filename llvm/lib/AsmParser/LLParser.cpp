@@ -1078,9 +1078,7 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
 
 /// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
-bool LLParser::
-ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
-                                                 MDNode *> > &Result){
+bool LLParser::ParseInstructionMetadata(Instruction *Inst) {
   do {
     if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected metadata after comma");
@@ -1094,7 +1092,7 @@ ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
       return true;
 
     unsigned MDK = M->getMDKindID(Name.c_str());
-    Result.push_back(std::make_pair(MDK, Node));
+    Inst->setMetadata(MDK, Node);
 
     // If this is the end of the list, we're done.
   } while (EatIfPresent(lltok::comma));
@@ -2896,21 +2894,16 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
-        if (ParseInstructionMetadata(MetadataOnInst))
+        if (ParseInstructionMetadata(Inst))
           return true;
       break;
     case InstExtraComma:
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
-      if (ParseInstructionMetadata(MetadataOnInst))
+      if (ParseInstructionMetadata(Inst))
         return true;
       break;        
     }
-
-    // Set metadata attached with this instruction.
-    for (unsigned i = 0, e = MetadataOnInst.size(); i != e; ++i)
-      Inst->setMetadata(MetadataOnInst[i].first, MetadataOnInst[i].second);
-    MetadataOnInst.clear();
 
     BB->getInstList().push_back(Inst);
 
