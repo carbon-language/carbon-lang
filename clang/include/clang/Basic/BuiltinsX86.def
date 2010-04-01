@@ -317,4 +317,12 @@ BUILTIN(__builtin_ia32_crc32qi, "iic", "")
 BUILTIN(__builtin_ia32_crc32hi, "iis", "")
 BUILTIN(__builtin_ia32_crc32si, "iii", "")
 BUILTIN(__builtin_ia32_crc32di, "LLiLLiLLi", "")
+
+// AES
+BUILTIN(__builtin_ia32_aesenc128, "V2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_aesenclast128, "V2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_aesdec128, "V2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_aesdeclast128, "V2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_aesimc128, "V2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_aeskeygenassist128, "V2LLiV2LLii", "")
 #undef BUILTIN
