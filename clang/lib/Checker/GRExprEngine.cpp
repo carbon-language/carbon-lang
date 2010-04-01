@@ -584,7 +584,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   switch (S->getStmtClass()) {
     // C++ stuff we don't support yet.
-    case Stmt::CXXMemberCallExprClass:
     case Stmt::CXXNamedCastExprClass:
     case Stmt::CXXStaticCastExprClass:
     case Stmt::CXXDynamicCastExprClass:
@@ -670,6 +669,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXOperatorCallExprClass: {
       CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
+      break;
+    }
+
+    case Stmt::CXXMemberCallExprClass: {
+      CXXMemberCallExpr *MCE = cast<CXXMemberCallExpr>(S);
+      VisitCXXMemberCallExpr(MCE, Pred, Dst);
       break;
     }
 
@@ -1342,7 +1347,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
 
   // Bind the constructed object value to CXXConstructExpr.
   if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
-    const CXXThisRegion *ThisR = getCXXThisRegion(CCE, LocCtx);
+    const CXXThisRegion *ThisR = getCXXThisRegion(CCE->getConstructor(),LocCtx);
     // We might not have 'this' region in the binding if we didn't inline
     // the ctor call.
     SVal ThisV = state->getSVal(ThisR);
@@ -3222,7 +3227,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
                                                     Pred->getLocationContext(),
                                    E, Builder->getBlock(), Builder->getIndex());
 
-  const CXXThisRegion *ThisR = getCXXThisRegion(E, SFC);
+  const CXXThisRegion *ThisR = getCXXThisRegion(E->getConstructor(), SFC);
 
   CallEnter Loc(E, CD, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
@@ -3236,12 +3241,90 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
   }
 }
 
-const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXConstructExpr *E,
+void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, 
+                                          ExplodedNode *Pred, 
+                                          ExplodedNodeSet &Dst) {
+  // Get the method type.
+  const FunctionProtoType *FnType = 
+                       MCE->getCallee()->getType()->getAs<FunctionProtoType>();
+  assert(FnType && "Method type not available");
+
+  // Evaluate explicit arguments with a worklist.
+  CallExpr::arg_iterator AB = const_cast<CXXMemberCallExpr*>(MCE)->arg_begin(),
+                         AE = const_cast<CXXMemberCallExpr*>(MCE)->arg_end();
+  llvm::SmallVector<CallExprWLItem, 20> WorkList;
+  WorkList.reserve(AE - AB);
+  WorkList.push_back(CallExprWLItem(AB, Pred));
+  ExplodedNodeSet ArgsEvaluated;
+
+  while (!WorkList.empty()) {
+    CallExprWLItem Item = WorkList.back();
+    WorkList.pop_back();
+
+    if (Item.I == AE) {
+      ArgsEvaluated.insert(Item.N);
+      continue;
+    }
+
+    ExplodedNodeSet Tmp;
+    const unsigned ParamIdx = Item.I - AB;
+    bool VisitAsLvalue = FnType->getArgType(ParamIdx)->isReferenceType();
+
+    if (VisitAsLvalue)
+      VisitLValue(*Item.I, Item.N, Tmp);
+    else
+      Visit(*Item.I, Item.N, Tmp);
+
+    ++(Item.I);
+    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI != NE; ++NI)
+      WorkList.push_back(CallExprWLItem(Item.I, *NI));
+  }
+  // Evaluate the implicit object argument.
+  ExplodedNodeSet AllArgsEvaluated;
+  const MemberExpr *ME = dyn_cast<MemberExpr>(MCE->getCallee()->IgnoreParens());
+  if (!ME)
+    return;
+  Expr *ObjArgExpr = ME->getBase();
+  for (ExplodedNodeSet::iterator I = ArgsEvaluated.begin(), 
+                                 E = ArgsEvaluated.end(); I != E; ++I) {
+    if (ME->isArrow())
+      Visit(ObjArgExpr, *I, AllArgsEvaluated);
+    else
+      VisitLValue(ObjArgExpr, *I, AllArgsEvaluated);
+  }
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
+  assert(MD && "not a CXXMethodDecl?");
+
+  if (!MD->isThisDeclarationADefinition())
+    // FIXME: conservative method call evaluation.
+    return;
+
+  const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
+                                                    Pred->getLocationContext(),
+                                                    MCE, 
+                                                    Builder->getBlock(), 
+                                                    Builder->getIndex());
+  const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
+  CallEnter Loc(MCE, MD, Pred->getLocationContext());
+  for (ExplodedNodeSet::iterator I = AllArgsEvaluated.begin(),
+         E = AllArgsEvaluated.end(); I != E; ++I) {
+    // Set up 'this' region.
+    const GRState *state = GetState(*I);
+    state = state->bindLoc(loc::MemRegionVal(ThisR),state->getSVal(ObjArgExpr));
+    ExplodedNode *N = Builder->generateNode(Loc, state, *I);
+    if (N)
+      Dst.Add(N);
+  }
+}
+
+const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *D,
                                                  const StackFrameContext *SFC) {
-  Type *T = E->getConstructor()->getParent()->getTypeForDecl();
+  Type *T = D->getParent()->getTypeForDecl();
   QualType PT = getContext().getPointerType(QualType(T,0));
   return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
+
 //===----------------------------------------------------------------------===//
 // Checker registration/lookup.
 //===----------------------------------------------------------------------===//

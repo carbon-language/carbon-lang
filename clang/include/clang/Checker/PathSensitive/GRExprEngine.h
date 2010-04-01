@@ -348,6 +348,10 @@ public:
   void VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
                              ExplodedNode *Pred,
                              ExplodedNodeSet &Dst);
+
+  void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
+                              ExplodedNodeSet &Dst);
+
   void VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
                     ExplodedNodeSet &Dst);
 
@@ -356,7 +360,7 @@ public:
                                 ExplodedNodeSet &Dst);
 
   /// Synthesize CXXThisRegion.
-  const CXXThisRegion *getCXXThisRegion(const CXXConstructExpr *E,
+  const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *MD,
                                         const StackFrameContext *SFC);
 
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
