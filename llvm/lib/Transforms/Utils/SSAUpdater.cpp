@@ -65,7 +65,7 @@ SSAUpdater::BBInfo::BBInfo(BasicBlock *BB, Value *V,
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     TmpPreds.push_back(*PI);
     ++NumPreds;
-  } 
+  }
   Preds = static_cast<BasicBlock**>
     (Allocator->Allocate(NumPreds * sizeof(BasicBlock*),
                          AlignOf<BasicBlock*>::Alignment));
@@ -119,7 +119,7 @@ void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
 
 /// IsEquivalentPHI - Check if PHI has the same incoming value as specified
 /// in ValueMapping for each predecessor block.
-static bool IsEquivalentPHI(PHINode *PHI, 
+static bool IsEquivalentPHI(PHINode *PHI,
                             DenseMap<BasicBlock*, Value*> &ValueMapping) {
   unsigned PHINumValues = PHI->getNumIncomingValues();
   if (PHINumValues != ValueMapping.size())
@@ -254,7 +254,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
 /// which use their value in the corresponding predecessor.
 void SSAUpdater::RewriteUse(Use &U) {
   Instruction *User = cast<Instruction>(U.getUser());
-  
+
   Value *V;
   if (PHINode *UserPN = dyn_cast<PHINode>(User))
     V = GetValueAtEndOfBlock(UserPN->getIncomingBlock(U));
@@ -299,7 +299,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 
 /// FindPHIPlacement - Recursively visit the predecessors of a block to find
 /// the reaching definition for each predecessor and then determine whether
-/// a PHI is needed in this block.  
+/// a PHI is needed in this block.
 void SSAUpdater::FindPHIPlacement(BasicBlock *BB, BBInfo *Info, bool &Changed,
                                   unsigned Counter) {
   AvailableValsTy &AvailableVals = getAvailableVals(AV);
@@ -390,7 +390,7 @@ void SSAUpdater::FindAvailableVal(BasicBlock *BB, BBInfo *Info,
     } else if (!Info->AvailableVal)
       Info->AvailableVal = PredInfo->AvailableVal;
   }
- 
+
   if (NewPHI) {
     DEBUG(dbgs() << "  Inserted PHI: " << *NewPHI << "\n");
 
