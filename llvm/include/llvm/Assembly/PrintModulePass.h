@@ -27,9 +27,7 @@ namespace llvm {
   
   /// createPrintModulePass - Create and return a pass that writes the
   /// module to the specified raw_ostream.
-  ModulePass *createPrintModulePass(raw_ostream *OS,
-                                    bool DeleteStream=false,
-                                    const std::string &Banner = "");
+  ModulePass *createPrintModulePass(raw_ostream *OS, bool DeleteStream=false);
   
   /// createPrintFunctionPass - Create and return a pass that prints
   /// functions to the specified raw_ostream as they are processed.

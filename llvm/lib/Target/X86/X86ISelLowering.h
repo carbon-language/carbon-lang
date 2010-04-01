@@ -234,9 +234,6 @@ namespace llvm {
       PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
       PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
 
-      // Advanced Encryption Standard (AES) Instructions
-      AESIMC, AESENC, AESENCLAST, AESDEC, AESDECLAST,
-
       // ADD, SUB, SMUL, UMUL, etc. - Arithmetic operations with FLAGS results.
       ADD, SUB, SMUL, UMUL,
       INC, DEC, OR, XOR, AND,
