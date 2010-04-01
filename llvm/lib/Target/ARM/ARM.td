@@ -107,7 +107,8 @@ def : ProcNoItin<"iwmmxt",          [ArchV5TE]>;
 
 // V6 Processors.
 def : Processor<"arm1136j-s",       ARMV6Itineraries, [ArchV6]>;
-def : Processor<"arm1136jf-s",      ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
+def : Processor<"arm1136jf-s",      ARMV6Itineraries, [ArchV6, FeatureVFP2,
+                                                       FeatureHasSlowVMLx]>;
 def : Processor<"arm1176jz-s",      ARMV6Itineraries, [ArchV6]>;
 def : Processor<"arm1176jzf-s",     ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
 def : Processor<"mpcorenovfp",      ARMV6Itineraries, [ArchV6]>;
