@@ -14,6 +14,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/System/Errno.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
@@ -167,6 +169,14 @@ public:
     sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
   }
 };
+
+/// FileCloser - RAII object to make sure an FD gets closed properly.
+class FileCloser {
+  int FD;
+public:
+  FileCloser(int FD) : FD(FD) {}
+  ~FileCloser() { ::close(FD); }
+};
 }
 
 MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
@@ -178,9 +188,10 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
   SmallString<256> PathBuf(Filename.begin(), Filename.end());
   int FD = ::open(PathBuf.c_str(), O_RDONLY|OpenFlags);
   if (FD == -1) {
-    if (ErrStr) *ErrStr = strerror(errno);
+    if (ErrStr) *ErrStr = sys::StrError();
     return 0;
   }
+  FileCloser FC(FD); // Close FD on return.
   
   // If we don't know the file size, use fstat to find out.  fstat on an open
   // file descriptor is cheaper than stat on a random path.
@@ -190,8 +201,7 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
     
     // TODO: This should use fstat64 when available.
     if (fstat(FD, FileInfoPtr) == -1) {
-      if (ErrStr) *ErrStr = strerror(errno);
-      ::close(FD);
+      if (ErrStr) *ErrStr = sys::StrError();
       return 0;
     }
     FileSize = FileInfoPtr->st_size;
@@ -208,7 +218,6 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
       (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
     if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
       // Close the file descriptor, now that the whole file is in memory.
-      ::close(FD);
       return new MemoryBufferMMapFile(Filename, Pages, FileSize);
     }
   }
@@ -217,30 +226,30 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
   if (!Buf) {
     // Failed to create a buffer.
     if (ErrStr) *ErrStr = "could not allocate buffer";
-    ::close(FD);
     return 0;
   }
 
   OwningPtr<MemoryBuffer> SB(Buf);
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
-  
+
   size_t BytesLeft = FileSize;
   while (BytesLeft) {
     ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
-    if (NumRead > 0) {
-      BytesLeft -= NumRead;
-      BufPtr += NumRead;
-    } else if (NumRead == -1 && errno == EINTR) {
-      // try again
-    } else {
-      // error reading.
-      if (ErrStr) *ErrStr = strerror(errno);
-      close(FD);
+    if (NumRead == -1) {
+      if (errno == EINTR)
+        continue;
+      // Error while reading.
+      if (ErrStr) *ErrStr = sys::StrError();
       return 0;
+    } else if (NumRead == 0) {
+      Buf->BufferEnd = BufPtr;
+      *BufPtr = 0; // Null terminate buffer.
+      return SB.take();
     }
+    BytesLeft -= NumRead;
+    BufPtr += NumRead;
   }
-  close(FD);
-  
+
   return SB.take();
 }
 
