@@ -347,8 +347,8 @@ namespace llvm {
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     
-    virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                    bool isSrcConst, bool isSrcStr,
+    virtual EVT getOptimalMemOpType(uint64_t Size,
+                                    unsigned DstAlign, unsigned SrcAlign,
                                     SelectionDAG &DAG) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.

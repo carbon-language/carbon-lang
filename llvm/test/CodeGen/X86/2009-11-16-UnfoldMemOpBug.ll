@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 | FileCheck %s
 ; rdar://7396984
 
 @str = private constant [28 x i8] c"xxxxxxxxxxxxxxxxxxxxxxxxxxx\00", align 1

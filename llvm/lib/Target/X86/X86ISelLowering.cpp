@@ -1012,7 +1012,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // FIXME: These should be based on subtarget info. Plus, the values should
   // be smaller when we are in optimizing for size mode.
   maxStoresPerMemset = 16; // For @llvm.memset -> sequence of stores
-  maxStoresPerMemcpy = 16; // For @llvm.memcpy -> sequence of stores
+  maxStoresPerMemcpy = 8; // For @llvm.memcpy -> sequence of stores
   maxStoresPerMemmove = 3; // For @llvm.memmove -> sequence of stores
   setPrefLoopAlignment(16);
   benefitFromCodePlacementOpt = true;
@@ -1074,19 +1074,27 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 /// lowering. It returns MVT::iAny if SelectionDAG should be responsible for
 /// determining it.
 EVT
-X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                       bool isSrcConst, bool isSrcStr,
+X86TargetLowering::getOptimalMemOpType(uint64_t Size,
+                                       unsigned DstAlign, unsigned SrcAlign,
                                        SelectionDAG &DAG) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
   const Function *F = DAG.getMachineFunction().getFunction();
-  bool NoImplicitFloatOps = F->hasFnAttr(Attribute::NoImplicitFloat);
-  if (!NoImplicitFloatOps && Subtarget->getStackAlignment() >= 16) {
-    if ((isSrcConst || isSrcStr) && Subtarget->hasSSE2() && Size >= 16)
-      return MVT::v4i32;
-    if ((isSrcConst || isSrcStr) && Subtarget->hasSSE1() && Size >= 16)
-      return MVT::v4f32;
+  if (!F->hasFnAttr(Attribute::NoImplicitFloat)) {
+    if (Size >= 16 &&
+        (Subtarget->isUnalignedMemAccessFast() ||
+         (DstAlign == 0 || DstAlign >= 16) &&
+         (SrcAlign == 0 || SrcAlign >= 16)) &&
+        Subtarget->getStackAlignment() >= 16) {
+      if (Subtarget->hasSSE2())
+        return MVT::v4i32;
+      if (Subtarget->hasSSE1())
+        return MVT::v4f32;
+    } else if (Size >= 8 &&
+               Subtarget->getStackAlignment() >= 8 &&
+               Subtarget->hasSSE2())
+      return MVT::f64;
   }
   if (Subtarget->is64Bit() && Size >= 8)
     return MVT::i64;

@@ -5539,8 +5539,8 @@ PPCTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   return false;
 }
 
-EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                           bool isSrcConst, bool isSrcStr,
+EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
+                                           unsigned DstAlign, unsigned SrcAlign,
                                            SelectionDAG &DAG) const {
   if (this->PPCSubTarget.isPPC64()) {
     return MVT::i64;

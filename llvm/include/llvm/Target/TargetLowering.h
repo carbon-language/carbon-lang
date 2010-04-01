@@ -522,7 +522,7 @@ public:
   /// counterpart (e.g. structs), otherwise it will assert.
   EVT getValueType(const Type *Ty, bool AllowUnknown = false) const {
     EVT VT = EVT::getEVT(Ty, AllowUnknown);
-    return VT == MVT:: iPTR ? PointerTy : VT;
+    return VT == MVT::iPTR ? PointerTy : VT;
   }
 
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
@@ -636,8 +636,8 @@ public:
   /// and store operations as a result of memset, memcpy, and memmove lowering.
   /// It returns EVT::Other if SelectionDAG should be responsible for
   /// determining it.
-  virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                  bool isSrcConst, bool isSrcStr,
+  virtual EVT getOptimalMemOpType(uint64_t Size,
+                                  unsigned DstAlign, unsigned SrcAlign,
                                   SelectionDAG &DAG) const {
     return MVT::Other;
   }

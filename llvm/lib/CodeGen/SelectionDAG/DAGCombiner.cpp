@@ -5022,18 +5022,6 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   SDValue Chain = LD->getChain();
   SDValue Ptr   = LD->getBasePtr();
 
-  // Try to infer better alignment information than the load already has.
-  if (OptLevel != CodeGenOpt::None && LD->isUnindexed()) {
-    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
-      if (Align > LD->getAlignment())
-        return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
-                              LD->getValueType(0),
-                              Chain, Ptr, LD->getSrcValue(),
-                              LD->getSrcValueOffset(), LD->getMemoryVT(),
-                              LD->isVolatile(), LD->isNonTemporal(), Align);
-    }
-  }
-
   // If load is not volatile and there are no uses of the loaded value (and
   // the updated indexed value in case of indexed loads), change uses of the
   // chain value into uses of the chain input (i.e. delete the dead load).
@@ -5096,6 +5084,18 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       if (PrevST->getBasePtr() == Ptr &&
           PrevST->getValue().getValueType() == N->getValueType(0))
       return CombineTo(N, Chain.getOperand(1), Chain);
+    }
+  }
+
+  // Try to infer better alignment information than the load already has.
+  if (OptLevel != CodeGenOpt::None && LD->isUnindexed()) {
+    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
+      if (Align > LD->getAlignment())
+        return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
+                              LD->getValueType(0),
+                              Chain, Ptr, LD->getSrcValue(),
+                              LD->getSrcValueOffset(), LD->getMemoryVT(),
+                              LD->isVolatile(), LD->isNonTemporal(), Align);
     }
   }
 
@@ -5250,17 +5250,6 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   SDValue Value = ST->getValue();
   SDValue Ptr   = ST->getBasePtr();
 
-  // Try to infer better alignment information than the store already has.
-  if (OptLevel != CodeGenOpt::None && ST->isUnindexed()) {
-    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
-      if (Align > ST->getAlignment())
-        return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
-                                 Ptr, ST->getSrcValue(),
-                                 ST->getSrcValueOffset(), ST->getMemoryVT(),
-                                 ST->isVolatile(), ST->isNonTemporal(), Align);
-    }
-  }
-
   // If this is a store of a bit convert, store the input value if the
   // resultant store does not need a higher alignment than the original.
   if (Value.getOpcode() == ISD::BIT_CONVERT && !ST->isTruncatingStore() &&
@@ -5348,6 +5337,17 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
         break;
       }
+    }
+  }
+
+  // Try to infer better alignment information than the store already has.
+  if (OptLevel != CodeGenOpt::None && ST->isUnindexed()) {
+    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
+      if (Align > ST->getAlignment())
+        return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
+                                 Ptr, ST->getSrcValue(),
+                                 ST->getSrcValueOffset(), ST->getMemoryVT(),
+                                 ST->isVolatile(), ST->isNonTemporal(), Align);
     }
   }
 

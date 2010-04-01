@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin | grep stosl
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep movl | count 20
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep movq | count 10
 
 define void @bork() nounwind {
