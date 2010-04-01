@@ -17,6 +17,7 @@
 #include "LLLexer.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include <map>
 
