@@ -7,6 +7,14 @@
 //   program is ill-formed.
 //     -- for a non-type template-parameter of integral or enumeration type,
 //        integral promotions (4.5) and integral conversions (4.7) are applied.
+namespace integral_parameters {
+  template<short s> struct X0 { };
+  X0<17> x0i;
+  X0<'a'> x0c;
+  template<char c> struct X1 { };
+  X1<100l> x1l;
+}
+
 //     -- for a non-type template-parameter of type pointer to object,
 //        qualification conversions (4.4) and the array-to-pointer conversion
 //        (4.2) are applied; if the template-argument is of type
@@ -37,12 +45,12 @@ namespace pointer_to_object_parameters {
     operator int() const;
   };
   
-  template<X const *Ptr> struct A2;
+  template<X const *Ptr> struct A2; // expected-note{{template parameter is declared here}}
   
   X *X_ptr;
   X an_X;
   X array_of_Xs[10];
-  A2<X_ptr> *a12;
+  A2<X_ptr> *a12; // expected-error{{must have its address taken}}
   A2<array_of_Xs> *a13;
   A2<&an_X> *a13_2;
   A2<(&an_X)> *a13_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
@@ -52,6 +60,16 @@ namespace pointer_to_object_parameters {
   template <X1*> struct X2 { };
   template <X1* Value> struct X3 : X2<Value> { };
   struct X4 : X3<&X1v> { };
+
+  // PR6563
+  int *bar;
+  template <int *> struct zed {}; // expected-note 2{{template parameter is declared here}}
+  void g(zed<bar>*); // expected-error{{must have its address taken}}
+
+  int baz;
+  void g2(zed<baz>*); // expected-error{{must have its address taken}}
+
+  void g3(zed<&baz>*); // okay
 }
 
 //     -- For a non-type template-parameter of type reference to object, no
@@ -105,6 +123,12 @@ namespace reference_parameters {
       bind<int, counter>(); // expected-note{{instantiation of}}
     }
   }
+
+  namespace PR6749 {
+    template <int& i> struct foo {}; // expected-note{{template parameter is declared here}}
+    int x, &y = x;
+    foo<y> f; // expected-error{{is not an object}}
+  }
 }
 
 //     -- For a non-type template-parameter of type pointer to function, the
@@ -113,17 +137,69 @@ namespace reference_parameters {
 //        conversion (4.10) is applied. If the template-argument represents
 //        a set of overloaded functions (or a pointer to such), the matching
 //        function is selected from the set (13.4).
+namespace pointer_to_function {
+  template<int (*)(int)> struct X0 { }; // expected-note 3{{template parameter is declared here}}
+  int f(int);
+  int f(float);
+  int g(float);
+  int (*funcptr)(int);
+  void x0a(X0<f>);
+  void x0b(X0<&f>);
+  void x0c(X0<g>); // expected-error{{non-type template argument of type 'int (float)' cannot be converted to a value of type 'int (*)(int)'}}
+  void x0d(X0<&g>); // expected-error{{non-type template argument of type 'int (*)(float)' cannot be converted to a value of type 'int (*)(int)'}}
+  void x0e(X0<funcptr>); // expected-error{{must have its address taken}}
+}
+
 //     -- For a non-type template-parameter of type reference to function, no
 //        conversions apply. If the template-argument represents a set of
 //        overloaded functions, the matching function is selected from the set
 //        (13.4).
+namespace reference_to_function {
+  template<int (&)(int)> struct X0 { }; // expected-note 4{{template parameter is declared here}}
+  int f(int);
+  int f(float);
+  int g(float);
+  int (*funcptr)(int);
+  void x0a(X0<f>);
+  void x0b(X0<&f>); // expected-error{{address taken in non-type template argument for template parameter of reference type 'int (&)(int)'}}
+  void x0c(X0<g>); // expected-error{{non-type template parameter of reference type 'int (&)(int)' cannot bind to template argument of type 'int (float)'}}
+  void x0d(X0<&g>); // expected-error{{address taken in non-type template argument for template parameter of reference type 'int (&)(int)'}}
+  void x0e(X0<funcptr>); // expected-error{{non-type template parameter of reference type 'int (&)(int)' cannot bind to template argument of type 'int (*)(int)'}}
+}
 //     -- For a non-type template-parameter of type pointer to member function,
 //        if the template-argument is of type std::nullptr_t, the null member
 //        pointer conversion (4.11) is applied; otherwise, no conversions
 //        apply. If the template-argument represents a set of overloaded member
 //        functions, the matching member function is selected from the set
 //        (13.4).
+namespace pointer_to_member_function {
+  struct X { };
+  struct Y : X { 
+    int f(int);
+    int g(int);
+    int g(float);
+    float h(float);
+  };
+
+  template<int (Y::*)(int)> struct X0 {}; // expected-note{{template parameter is declared here}}
+  X0<&Y::f> x0a;
+  X0<&Y::g> x0b;
+  X0<&Y::h> x0c; // expected-error{{non-type template argument of type 'float (pointer_to_member_function::Y::*)(float)' cannot be converted to a value of type 'int (pointer_to_member_function::Y::*)(int)'}}
+}
+
 //     -- For a non-type template-parameter of type pointer to data member,
 //        qualification conversions (4.4) are applied; if the template-argument
 //        is of type std::nullptr_t, the null member pointer conversion (4.11)
 //        is applied.
+namespace pointer_to_member_data {
+  struct X { int x; };
+  struct Y : X { int y; };
+
+  template<int Y::*> struct X0 {}; // expected-note{{template parameter is declared here}}
+  X0<&Y::y> x0a;
+  X0<&Y::x> x0b;  // expected-error{{non-type template argument of type 'int pointer_to_member_data::X::*' cannot be converted to a value of type 'int pointer_to_member_data::Y::*'}}
+
+  // Test qualification conversions
+  template<const int Y::*> struct X1 {};
+  X1<&Y::y> x1a;
+}

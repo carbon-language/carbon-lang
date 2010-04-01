@@ -49,9 +49,9 @@ namespace addr_of_obj_or_func {
 //   -- a pointer to member expressed as described in 5.3.1.
 
 namespace bad_args {
-  template <int* N> struct X0 { };
+  template <int* N> struct X0 { }; // expected-note 2{{template parameter is declared here}}
   int i = 42;
   X0<&i + 2> x0a; // expected-error{{non-type template argument does not refer to any declaration}}
   int* iptr = &i;
-  X0<iptr> x0b; // FIXME: This should not be accepted.
+  X0<iptr> x0b; // expected-error{{non-type template argument for template parameter of pointer type 'int *' must have its address taken}}
 }

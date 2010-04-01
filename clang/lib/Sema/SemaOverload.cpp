@@ -4991,6 +4991,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   llvm::SmallVector<std::pair<DeclAccessPair, FunctionDecl*>, 4> Matches;
+  llvm::SmallVector<FunctionDecl *, 4> NonMatches;
+
   bool FoundNonTemplateFunction = false;
   for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
          E = OvlExpr->decls_end(); I != E; ++I) {

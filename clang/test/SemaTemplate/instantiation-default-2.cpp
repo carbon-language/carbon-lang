@@ -13,6 +13,6 @@ Constant<int*, &x> *c3;
 Constant<float (*)(int, double), f> *c4;
 Constant<float (*)(int, double), &f> *c5;
 
-Constant<float (*)(int, int), f> *c6; // expected-error{{non-type template argument of type 'float (*)(int, double)' cannot be converted to a value of type 'float (*)(int, int)'}}
+Constant<float (*)(int, int), f> *c6; // expected-error{{non-type template argument of type 'float (int, double)' cannot be converted to a value of type 'float (*)(int, int)'}}
 
 Constant<float, 0> *c7; // expected-note{{while substituting}}

@@ -26,8 +26,7 @@ template <int N1, const int& N2, const int* N3> struct X1 {
 // FIXME: Test this clause.
 
 int i = 42;
-int* iptr = &i;
 void test() {
   X0<int> x0; (void)x0;
-  X1<42, i, iptr> x1; (void)x1;
+  X1<42, i, &i> x1; (void)x1;
 }

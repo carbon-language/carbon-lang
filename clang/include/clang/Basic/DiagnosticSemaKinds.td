@@ -1227,11 +1227,22 @@ def err_template_arg_no_ref_bind : Error<
 def err_template_arg_ref_bind_ignores_quals : Error<
   "reference binding of non-type template parameter of type %0 to template "
   "argument of type %1 ignores qualifiers">;
+def err_template_arg_unresolved_overloaded_function : Error<
+  "overloaded function cannot be resolved to a non-type template parameter of "
+  "type %0">;
 def err_template_arg_not_decl_ref : Error<
   "non-type template argument does not refer to any declaration">;
 def err_template_arg_not_object_or_func_form : Error<
   "non-type template argument does not directly refer to an object or "
   "function">;
+def err_template_arg_not_address_of : Error<
+  "non-type template argument for template parameter of pointer type %0 must "
+  "have its address taken">;
+def err_template_arg_address_of_non_pointer : Error<
+  "address taken in non-type template argument for template parameter of "
+  "reference type %0">;
+def err_template_arg_reference_var : Error<
+  "non-type template argument of reference type %0 is not an object">;
 def err_template_arg_field : Error<
   "non-type template argument refers to non-static data member %0">;
 def err_template_arg_method : Error<

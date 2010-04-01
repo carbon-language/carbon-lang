@@ -2920,8 +2920,6 @@ public:
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
                              TypeSourceInfo *Arg);
-  bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
-                                                      NamedDecl *&Entity);
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, 
                                             TemplateArgument &Converted);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
