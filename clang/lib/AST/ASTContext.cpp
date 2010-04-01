@@ -4136,14 +4136,15 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
 bool ASTContext::canAssignObjCInterfacesInBlockPointer(
                                          const ObjCObjectPointerType *LHSOPT,
                                          const ObjCObjectPointerType *RHSOPT) {
-  if (RHSOPT->isObjCBuiltinType())
+  if (RHSOPT->isObjCBuiltinType() || 
+      LHSOPT->isObjCIdType() || LHSOPT->isObjCQualifiedIdType())
     return true;
   
   if (LHSOPT->isObjCBuiltinType()) {
     return RHSOPT->isObjCBuiltinType() || RHSOPT->isObjCQualifiedIdType();
   }
   
-  if (LHSOPT->isObjCQualifiedIdType() || RHSOPT->isObjCQualifiedIdType())
+  if (RHSOPT->isObjCQualifiedIdType())
     return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
                                              QualType(RHSOPT,0),
                                              false);

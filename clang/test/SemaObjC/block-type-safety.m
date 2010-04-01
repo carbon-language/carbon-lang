@@ -34,11 +34,11 @@ void test1() {
 
     r0(^Super* () { return 0; });  // OK
     r0(^Sub* () { return 0; });    // OK, variable of type Super* gets return value of type Sub*
-    r0(^id () { return 0; });  // expected-error {{incompatible block pointer types passing 'id (^)(void)', expected 'Super *(^)()'}}
+    r0(^id () { return 0; });
 
     r1(^Super* () { return 0; });  // expected-error {{incompatible block pointer types passing 'Super *(^)(void)', expected 'Sub *(^)()'}}
     r1(^Sub* () { return 0; });    // OK
-    r1(^id () { return 0; });      // expected-error {{incompatible block pointer types passing 'id (^)(void)', expected 'Sub *(^)()'}}
+    r1(^id () { return 0; }); 
      
     r2(^id<NSObject>() { return 0; });
 }
@@ -60,7 +60,7 @@ void f1(void (^f)(id x)) {
 void test2(void) 
 { 
   f0(^(id a) { }); // OK
-  f1(^(A* a) { }); // expected-error {{incompatible block pointer types passing 'void (^)(A *)', expected 'void (^)(id)'}}
+  f1(^(A* a) { });
    f1(^(id<NSObject> a) { });	// OK
 }
 
@@ -80,7 +80,7 @@ void test2(void)
 
 // programmer wants to write this:
    -printMyThings1 {
-       [myThings enumerateObjectsWithBlock: ^(MyThing *obj) { // expected-error {{incompatible block pointer types sending 'void (^)(MyThing *)', expected 'void (^)(id)'}}
+       [myThings enumerateObjectsWithBlock: ^(MyThing *obj) {
            [obj printThing];
        }];
    }
