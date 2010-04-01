@@ -349,7 +349,7 @@ namespace llvm {
     
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
-                                    SelectionDAG &DAG) const;
+                                    bool SafeToUseFP, SelectionDAG &DAG) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;

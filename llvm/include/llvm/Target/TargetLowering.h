@@ -638,7 +638,7 @@ public:
   /// determining it.
   virtual EVT getOptimalMemOpType(uint64_t Size,
                                   unsigned DstAlign, unsigned SrcAlign,
-                                  SelectionDAG &DAG) const {
+                                  bool SafeToUseFP, SelectionDAG &DAG) const {
     return MVT::Other;
   }
   

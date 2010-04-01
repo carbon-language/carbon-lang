@@ -425,7 +425,7 @@ namespace llvm {
     /// determining it.
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
-                                    SelectionDAG &DAG) const;
+                                    bool SafeToUseFP, SelectionDAG &DAG) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type.

@@ -1076,6 +1076,7 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 EVT
 X86TargetLowering::getOptimalMemOpType(uint64_t Size,
                                        unsigned DstAlign, unsigned SrcAlign,
+                                       bool SafeToUseFP,
                                        SelectionDAG &DAG) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
@@ -1089,9 +1090,10 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         Subtarget->getStackAlignment() >= 16) {
       if (Subtarget->hasSSE2())
         return MVT::v4i32;
-      if (Subtarget->hasSSE1())
+      if (SafeToUseFP && Subtarget->hasSSE1())
         return MVT::v4f32;
-    } else if (Size >= 8 &&
+    } else if (SafeToUseFP &&
+               Size >= 8 &&
                Subtarget->getStackAlignment() >= 8 &&
                Subtarget->hasSSE2())
       return MVT::f64;

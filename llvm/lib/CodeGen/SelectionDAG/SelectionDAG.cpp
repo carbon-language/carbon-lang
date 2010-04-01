@@ -3195,9 +3195,9 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
 /// is below the threshold. It returns the types of the sequence of
 /// memory ops to perform memset / memcpy by reference.
 static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
-                                     SDValue Dst, SDValue Src,
                                      unsigned Limit, uint64_t Size,
                                      unsigned DstAlign, unsigned SrcAlign,
+                                     bool SafeToUseFP,
                                      SelectionDAG &DAG,
                                      const TargetLowering &TLI) {
   assert((SrcAlign == 0 || SrcAlign >= DstAlign) &&
@@ -3207,7 +3207,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // the inferred alignment of the source. 'DstAlign', on the other hand, is the
   // specified alignment of the memory operation. If it is zero, that means
   // it's possible to change the alignment of the destination.
-  EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign, DAG);
+  EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign, SafeToUseFP, DAG);
 
   if (VT == MVT::Other) {
     VT = TLI.getPointerTy();
@@ -3285,9 +3285,9 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   std::string Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
-  if (!FindOptimalMemOpLowering(MemOps, Dst, Src, Limit, Size,
+  if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
-                                (isZeroStr ? 0 : SrcAlign), DAG, TLI))
+                                (isZeroStr ? 0 : SrcAlign), true, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
@@ -3369,9 +3369,9 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   if (Align > SrcAlign)
     SrcAlign = Align;
 
-  if (!FindOptimalMemOpLowering(MemOps, Dst, Src, Limit, Size,
+  if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
-                                SrcAlign, DAG, TLI))
+                                SrcAlign, true, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
@@ -3436,9 +3436,11 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
   if (FI && !MFI->isFixedObjectIndex(FI->getIndex()))
     DstAlignCanChange = true;
-  if (!FindOptimalMemOpLowering(MemOps, Dst, Src, TLI.getMaxStoresPerMemset(),
+  bool IsZero = isa<ConstantSDNode>(Src) &&
+    cast<ConstantSDNode>(Src)->isNullValue();
+  if (!FindOptimalMemOpLowering(MemOps, TLI.getMaxStoresPerMemset(),
                                 Size, (DstAlignCanChange ? 0 : Align), 0,
-                                DAG, TLI))
+                                IsZero, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
@@ -6150,8 +6152,10 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
     unsigned Align = GV->getAlignment();
     if (!Align) {
       if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-        const TargetData *TD = TLI.getTargetData();
-        Align = TD->getPreferredAlignment(GVar);
+        if (GV->getType()->getElementType()->isSized()) {
+          const TargetData *TD = TLI.getTargetData();
+          Align = TD->getPreferredAlignment(GVar);
+        }
       }
     }
     return MinAlign(Align, GVOffset);
