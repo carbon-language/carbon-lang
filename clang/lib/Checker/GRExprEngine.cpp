@@ -2363,8 +2363,10 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet Tmp;
 
   if (InitEx) {
-    if (const CXXConstructExpr *E = dyn_cast<CXXConstructExpr>(InitEx)) {
-      VisitCXXConstructExpr(E, GetState(Pred)->getLValue(VD,
+    QualType InitTy = InitEx->getType();
+    if (getContext().getLangOptions().CPlusPlus && InitTy->isRecordType()) {
+      // Delegate expressions of C++ record type evaluation to AggExprVisitor.
+      VisitAggExpr(InitEx, GetState(Pred)->getLValue(VD,
                                        Pred->getLocationContext()), Pred, Dst);
       return;
     } else if (VD->getType()->isReferenceType())
