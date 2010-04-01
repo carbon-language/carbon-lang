@@ -92,6 +92,12 @@ install(DIRECTORY include/
   PATTERN ".svn" EXCLUDE
   )
 
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+  DESTINATION include
+  FILES_MATCHING
+  PATTERN "*.inc"
+  )
+
 add_definitions( -D_GNU_SOURCE )
 
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs." OFF)
