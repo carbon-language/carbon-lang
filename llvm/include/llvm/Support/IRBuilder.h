@@ -40,7 +40,7 @@ protected:
 
 /// IRBuilderBase - Common base class shared among various IRBuilders.
 class IRBuilderBase {
-  MDNode *CurDbgLocation;
+  NewDebugLoc CurDbgLocation;
 protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
@@ -48,7 +48,7 @@ protected:
 public:
   
   IRBuilderBase(LLVMContext &context)
-    : CurDbgLocation(0), Context(context) {
+    : Context(context) {
     ClearInsertionPoint();
   }
   
@@ -64,6 +64,7 @@ public:
   
   BasicBlock *GetInsertBlock() const { return BB; }
   BasicBlock::iterator GetInsertPoint() const { return InsertPt; }
+  LLVMContext &getContext() const { return Context; }
   
   /// SetInsertPoint - This specifies that created instructions should be
   /// appended to the end of the specified block.
@@ -81,19 +82,19 @@ public:
   
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
-  void SetCurrentDebugLocation(MDNode *L) {
+  void SetCurrentDebugLocation(const NewDebugLoc &L) {
     CurDbgLocation = L;
   }
   
   /// getCurrentDebugLocation - Get location information used by debugging
   /// information.
-  MDNode *getCurrentDebugLocation() const { return CurDbgLocation; }
+  const NewDebugLoc &getCurrentDebugLocation() const { return CurDbgLocation; }
   
   /// SetInstDebugLocation - If this builder has a current debug location, set
   /// it on the specified instruction.
   void SetInstDebugLocation(Instruction *I) const {
-    if (CurDbgLocation)
-      I->setDbgMetadata(CurDbgLocation);
+    if (!CurDbgLocation.isUnknown())
+      I->setDebugLoc(CurDbgLocation);
   }
 
   //===--------------------------------------------------------------------===//
@@ -215,7 +216,7 @@ public:
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
-    if (getCurrentDebugLocation() != 0)
+    if (!getCurrentDebugLocation().isUnknown())
       this->SetInstDebugLocation(I);
     return I;
   }
