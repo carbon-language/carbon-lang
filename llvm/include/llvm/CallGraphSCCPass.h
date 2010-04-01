@@ -35,6 +35,10 @@ struct CallGraphSCCPass : public Pass {
   explicit CallGraphSCCPass(intptr_t pid) : Pass(PT_CallGraphSCC, pid) {}
   explicit CallGraphSCCPass(void *pid) : Pass(PT_CallGraphSCC, pid) {}
 
+  /// createPrinterPass - Get a pass that prints the Module
+  /// corresponding to a CallGraph.
+  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.
   virtual bool doInitialization(CallGraph &CG) {
