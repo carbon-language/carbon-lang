@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mattr=+sse2      -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE2
 ; RUN: llc < %s -mattr=+sse,-sse2 -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE1
 ; RUN: llc < %s -mattr=-sse       -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=NOSSE
+; RUN: llc < %s                 -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=X86-64
 
 	%struct.ParmT = type { [25 x i8], i8, i8* }
 @.str12 = internal constant [25 x i8] c"image\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"		; <[25 x i8]*> [#uses=1]
@@ -29,6 +30,12 @@ entry:
 ; NOSSE: movl $0
 ; NOSSE: movl $101
 ; NOSSE: movl $1734438249
+
+; X86-64: t1:
+; X86-64: movaps _.str12(%rip), %xmm0
+; X86-64: movaps %xmm0
+; X86-64: movb $0
+; X86-64: movq $0
 	%parms.i = alloca [13 x %struct.ParmT]		; <[13 x %struct.ParmT]*> [#uses=1]
 	%parms1.i = getelementptr [13 x %struct.ParmT]* %parms.i, i32 0, i32 0, i32 0, i32 0		; <i8*> [#uses=1]
 	call void @llvm.memcpy.i32( i8* %parms1.i, i8* getelementptr ([25 x i8]* @.str12, i32 0, i32 0), i32 25, i32 1 ) nounwind 
@@ -59,6 +66,10 @@ entry:
 ; NOSSE: movl
 ; NOSSE: movl
 ; NOSSE: movl
+
+; X86-64: t2:
+; X86-64: movaps (%rsi), %xmm0
+; X86-64: movaps %xmm0, (%rdi)
   %tmp2 = bitcast %struct.s0* %a to i8*           ; <i8*> [#uses=1]
   %tmp3 = bitcast %struct.s0* %b to i8*           ; <i8*> [#uses=1]
   tail call void @llvm.memcpy.i32(i8* %tmp2, i8* %tmp3, i32 16, i32 16)
@@ -96,6 +107,12 @@ entry:
 ; NOSSE: movl
 ; NOSSE: movl
 ; NOSSE: movl
+
+; X86-64: t3:
+; X86-64: movq (%rsi), %rax
+; X86-64: movq 8(%rsi), %rcx
+; X86-64: movq %rcx, 8(%rdi)
+; X86-64: movq %rax, (%rdi)
   %tmp2 = bitcast %struct.s0* %a to i8*           ; <i8*> [#uses=1]
   %tmp3 = bitcast %struct.s0* %b to i8*           ; <i8*> [#uses=1]
   tail call void @llvm.memcpy.i32(i8* %tmp2, i8* %tmp3, i32 16, i32 8)

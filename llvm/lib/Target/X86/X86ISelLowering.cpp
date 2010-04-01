@@ -1097,6 +1097,7 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         return MVT::v4f32;
     } else if (SafeToUseFP &&
                Size >= 8 &&
+               !Subtarget->is64Bit() &&
                Subtarget->getStackAlignment() >= 8 &&
                Subtarget->hasSSE2())
       return MVT::f64;

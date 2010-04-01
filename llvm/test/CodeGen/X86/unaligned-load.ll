@@ -1,3 +1,4 @@
+; RUN: llc < %s -mtriple=i386-apple-darwin10.0 -mcpu=core2  -relocation-model=dynamic-no-pic --asm-verbose=0   | FileCheck -check-prefix=I386 %s
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -mcpu=core2  -relocation-model=dynamic-no-pic --asm-verbose=0 | FileCheck -check-prefix=CORE2 %s
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -mcpu=corei7 -relocation-model=dynamic-no-pic --asm-verbose=0 | FileCheck -check-prefix=COREI7 %s
 
@@ -12,9 +13,13 @@ entry:
 bb:
   %String2Loc9 = getelementptr inbounds [31 x i8]* %String2Loc, i64 0, i64 0
   call void @llvm.memcpy.i64(i8* %String2Loc9, i8* getelementptr inbounds ([31 x i8]* @.str3, i64 0, i64 0), i64 31, i32 1)
-; CORE2: movsd _.str3+16
-; CORE2: movsd _.str3+8
-; CORE2: movsd _.str3
+; I386: movsd _.str3+16
+; I386: movsd _.str3+8
+; I386: movsd _.str3
+
+; CORE2: movabsq
+; CORE2: movabsq
+; CORE2: movabsq
 
 ; COREI7: movups _.str3
   br label %bb
@@ -30,9 +35,3 @@ declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
 ; CORE2-NEXT: .asciz "DHRYSTONE PROGRAM, SOME STRING"
 ; CORE2: .align 3
 ; CORE2-NEXT: _.str3:
-
-; COREI7: .align  3
-; COREI7-NEXT: _.str1:
-; COREI7-NEXT: .asciz "DHRYSTONE PROGRAM, SOME STRING"
-; COREI7: .align 3
-; COREI7-NEXT: _.str3:
