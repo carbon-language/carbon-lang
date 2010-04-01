@@ -347,6 +347,13 @@ namespace llvm {
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     
+    /// getOptimalMemOpType - Returns the target specific optimal type for load
+    /// and store operations as a result of memset, memcpy, and memmove lowering.
+    /// If DstAlign is zero that means it's safe to destination alignment can
+    /// satisfy any constraint. Similarly if SrcAlign is zero it means there
+    /// isn't a need to check it against alignment requirement, probably because
+    /// the source does not need to be loaded. It returns EVT::Other if
+    /// SelectionDAG should be responsible for determining it.
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
                                     bool SafeToUseFP, SelectionDAG &DAG) const;
