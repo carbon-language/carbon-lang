@@ -2146,6 +2146,8 @@ bool DwarfDebug::extractScopeInformation() {
 
   DenseMap<const MachineInstr *, unsigned> MIIndexMap;
   unsigned MIIndex = 0;
+  MDNode *PrevScope = NULL;
+  MDNode *PrevInlinedAt = NULL;
   // Scan each instruction and create scopes. First build working set of scopes.
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I) {
@@ -2159,17 +2161,23 @@ bool DwarfDebug::extractScopeInformation() {
       if (DL.isUnknown()) continue;
       DILocation DLT = MF->getDILocation(DL);
       DIScope DLTScope = DLT.getScope();
-      if (!DLTScope.getNode()) continue;
+      MDNode *NewScope = DLTScope.getNode();
+      if (!NewScope) continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
       if (DLTScope.isCompileUnit()) continue;
-      createDbgScope(DLTScope.getNode(), DLT.getOrigLocation().getNode());
+      MDNode *NewInlinedAt = DLT.getOrigLocation().getNode();
+      if (NewScope == PrevScope && NewInlinedAt == PrevInlinedAt) continue;
+      createDbgScope(NewScope, NewInlinedAt);
+      PrevScope = NewScope;
+      PrevInlinedAt = NewInlinedAt;
     }
   }
 
-
   // Build scope hierarchy using working set of scopes.
+  PrevScope = NULL;
+  PrevInlinedAt = NULL;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I) {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
@@ -2181,14 +2189,18 @@ bool DwarfDebug::extractScopeInformation() {
       if (DL.isUnknown())  continue;
       DILocation DLT = MF->getDILocation(DL);
       DIScope DLTScope = DLT.getScope();
-      if (!DLTScope.getNode()) continue;
+      MDNode *NewScope = DLTScope.getNode();
+      if (!NewScope) continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
       if (DLTScope.isCompileUnit()) continue;
-      DbgScope *Scope = getUpdatedDbgScope(DLTScope.getNode(), MInsn, 
-                                           DLT.getOrigLocation().getNode());
+      MDNode *NewInlinedAt = DLT.getOrigLocation().getNode();
+      if (NewScope == PrevScope && NewInlinedAt == PrevInlinedAt) continue;
+      DbgScope *Scope = getUpdatedDbgScope(NewScope, MInsn, NewInlinedAt);
       Scope->setLastInsn(MInsn);
+      PrevScope = NewScope;
+      PrevInlinedAt = NewInlinedAt;
     }
   }
 
