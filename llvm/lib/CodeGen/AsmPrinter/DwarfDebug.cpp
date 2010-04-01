@@ -1234,13 +1234,13 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   return SPDie;
 }
 
-/// getUpdatedDbgScope - Find or create DbgScope assicated with the instruction.
-/// Initialize scope and update scope hierarchy.
+/// getUpdatedDbgScope - Find DbgScope assicated with the instruction.
+/// Update scope hierarchy. Create abstract scope if required.
 DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
                                          MDNode *InlinedAt) {
   assert(N && "Invalid Scope encoding!");
   assert(MI && "Missing machine instruction!");
-  bool GetConcreteScope = InlinedAt != 0;
+  bool isAConcreteScope = InlinedAt != 0;
 
   DbgScope *NScope = NULL;
 
@@ -1254,7 +1254,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
     return NScope;
 
   DbgScope *Parent = NULL;
-  if (GetConcreteScope) {
+  if (isAConcreteScope) {
     DILocation IL(InlinedAt);
     Parent = getUpdatedDbgScope(IL.getScope().getNode(), MI,
                          IL.getOrigLocation().getNode());
@@ -1276,7 +1276,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
       CurrentFnDbgScope = NScope;
   }
 
-  if (GetConcreteScope) {
+  if (isAConcreteScope) {
     ConcreteScopes[InlinedAt] = NScope;
     getOrCreateAbstractScope(N);
   }
