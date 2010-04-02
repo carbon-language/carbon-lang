@@ -136,8 +136,14 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
     return 0;  // If not 1/2/4/8 bytes, exit.
   
   // Use an integer load+store unless we can find something better.
-  Type *NewPtrTy =
-            PointerType::getUnqual(IntegerType::get(MI->getContext(), Size<<3));
+  unsigned SrcAddrSp =
+    cast<PointerType>(MI->getOperand(2)->getType())->getAddressSpace();
+  unsigned DstAddrSp =
+    cast<PointerType>(MI->getOperand(1)->getType())->getAddressSpace();
+
+  const IntegerType* IntType = IntegerType::get(MI->getContext(), Size<<3);
+  Type *NewSrcPtrTy = PointerType::get(IntType, SrcAddrSp);
+  Type *NewDstPtrTy = PointerType::get(IntType, DstAddrSp);
   
   // Memcpy forces the use of i8* for the source and destination.  That means
   // that if you're using memcpy to move one double around, you'll get a cast
@@ -167,8 +173,10 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
           break;
       }
       
-      if (SrcETy->isSingleValueType())
-        NewPtrTy = PointerType::getUnqual(SrcETy);
+      if (SrcETy->isSingleValueType()) {
+        NewSrcPtrTy = PointerType::get(SrcETy, SrcAddrSp);
+        NewDstPtrTy = PointerType::get(SrcETy, DstAddrSp);
+      }
     }
   }
   
@@ -178,11 +186,12 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   SrcAlign = std::max(SrcAlign, CopyAlign);
   DstAlign = std::max(DstAlign, CopyAlign);
   
-  Value *Src = Builder->CreateBitCast(MI->getOperand(2), NewPtrTy);
-  Value *Dest = Builder->CreateBitCast(MI->getOperand(1), NewPtrTy);
-  Instruction *L = new LoadInst(Src, "tmp", false, SrcAlign);
+  Value *Src = Builder->CreateBitCast(MI->getOperand(2), NewSrcPtrTy);
+  Value *Dest = Builder->CreateBitCast(MI->getOperand(1), NewDstPtrTy);
+  Instruction *L = new LoadInst(Src, "tmp", MI->isVolatile(), SrcAlign);
   InsertNewInstBefore(L, *MI);
-  InsertNewInstBefore(new StoreInst(L, Dest, false, DstAlign), *MI);
+  InsertNewInstBefore(new StoreInst(L, Dest, MI->isVolatile(), DstAlign),
+                      *MI);
 
   // Set the size of the copy to 0, it will be deleted on the next iteration.
   MI->setOperand(3, Constant::getNullValue(MemOpLength->getType()));
@@ -275,10 +284,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
           Intrinsic::ID MemCpyID = Intrinsic::memcpy;
-          const Type *Tys[1];
-          Tys[0] = CI.getOperand(3)->getType();
+          const Type *Tys[3] = { CI.getOperand(1)->getType(),
+                                 CI.getOperand(2)->getType(),
+                                 CI.getOperand(3)->getType() };
           CI.setOperand(0, 
-                        Intrinsic::getDeclaration(M, MemCpyID, Tys, 1));
+                        Intrinsic::getDeclaration(M, MemCpyID, Tys, 3));
           Changed = true;
         }
     }

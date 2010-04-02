@@ -8,6 +8,7 @@ entry:
         tail call void @llvm.memcpy.i64( i8* %tmp.1, i8* %tmp.3, i64 100000, i32 1 )
         tail call void @llvm.memset.i32( i8* %tmp.3, i8 14, i32 10000, i32 0 )
         tail call void @llvm.memmove.i32( i8* %tmp.1, i8* %tmp.3, i32 123124, i32 1 )
+        tail call void @llvm.memmove.i64( i8* %tmp.1, i8* %tmp.3, i64 123124, i32 1 )
         ret void
 }
 
@@ -19,3 +20,4 @@ declare void @llvm.memset.i32(i8*, i8, i32, i32)
 
 declare void @llvm.memmove.i32(i8*, i8*, i32, i32)
 
+declare void @llvm.memmove.i64(i8*, i8*, i32, i32)

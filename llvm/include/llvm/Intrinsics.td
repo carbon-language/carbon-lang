@@ -224,16 +224,16 @@ def int_stackprotector : Intrinsic<[],
 //
 
 def int_memcpy  : Intrinsic<[],
-                             [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
-                              llvm_i32_ty],
+                             [llvm_anyptr_ty, llvm_anyptr_ty, llvm_anyint_ty,
+                              llvm_i32_ty, llvm_i1_ty],
                             [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
 def int_memmove : Intrinsic<[],
-                            [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
-                             llvm_i32_ty],
+                            [llvm_anyptr_ty, llvm_anyptr_ty, llvm_anyint_ty,
+                             llvm_i32_ty, llvm_i1_ty],
                             [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
 def int_memset  : Intrinsic<[],
-                            [llvm_ptr_ty, llvm_i8_ty, llvm_anyint_ty,
-                             llvm_i32_ty],
+                            [llvm_anyptr_ty, llvm_i8_ty, llvm_anyint_ty,
+                             llvm_i32_ty, llvm_i1_ty],
                             [IntrWriteArgMem, NoCapture<0>]>;
 
 // These functions do not actually read memory, but they are sensitive to the

@@ -21,7 +21,7 @@ define i32 @t1() {
   %arg1 = getelementptr [1024 x i8]* %target, i32 0, i32 0
   %arg2 = getelementptr [6 x i8]* @hello, i32 0, i32 0
   %rslt1 = call i8* @strcpy( i8* %arg1, i8* %arg2 )
-; CHECK: @llvm.memcpy.i32
+; CHECK: @llvm.memcpy.p0i8.p0i8.i32
   ret i32 0
 }
 

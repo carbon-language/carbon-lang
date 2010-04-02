@@ -133,6 +133,13 @@ namespace llvm {
       return getAlignmentCst()->getZExtValue();
     }
 
+    ConstantInt *getVolatileCst() const {
+      return cast<ConstantInt>(const_cast<Value*>(getOperand(5)));
+    }
+    bool isVolatile() const {
+      return getVolatileCst()->getZExtValue() != 0;
+    }
+
     /// getDest - This is just like getRawDest, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
@@ -155,7 +162,11 @@ namespace llvm {
     void setAlignment(Constant* A) {
       setOperand(4, A);
     }
-    
+
+    void setVolatile(Constant* V) {
+      setOperand(5, V);
+    }
+
     const Type *getAlignmentType() const {
       return getOperand(4)->getType();
     }

@@ -297,10 +297,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
                                           I->getName(), 
                                           &*Caller->begin()->begin());
         // Emit a memcpy.
-        const Type *Tys[] = { Type::getInt64Ty(Context) };
+        const Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};
         Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
                                                        Intrinsic::memcpy, 
-                                                       Tys, 1);
+                                                       Tys, 3);
         Value *DestCast = new BitCastInst(NewAlloca, VoidPtrTy, "tmp", TheCall);
         Value *SrcCast = new BitCastInst(*AI, VoidPtrTy, "tmp", TheCall);
 
@@ -309,17 +309,18 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
           Size = ConstantExpr::getSizeOf(AggTy);
         else
           Size = ConstantInt::get(Type::getInt64Ty(Context),
-                                         TD->getTypeStoreSize(AggTy));
+                                  TD->getTypeStoreSize(AggTy));
 
         // Always generate a memcpy of alignment 1 here because we don't know
         // the alignment of the src pointer.  Other optimizations can infer
         // better alignment.
         Value *CallArgs[] = {
           DestCast, SrcCast, Size,
-          ConstantInt::get(Type::getInt32Ty(Context), 1)
+          ConstantInt::get(Type::getInt32Ty(Context), 1),
+          ConstantInt::get(Type::getInt1Ty(Context), 0)
         };
         CallInst *TheMemCpy =
-          CallInst::Create(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
+          CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);
 
         // If we have a call graph, update it.
         if (CG) {

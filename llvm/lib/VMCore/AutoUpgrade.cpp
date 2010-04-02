@@ -145,6 +145,54 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
 
+  case 'm': {
+    // This upgrades the llvm.memcpy, llvm.memmove, and llvm.memset to the
+    // new format that allows overloading the pointer for different address
+    // space (e.g., llvm.memcpy.i16 => llvm.memcpy.p0i8.p0i8.i16)
+    const char* NewFnName = NULL;
+    if (Name.compare(5,8,"memcpy.i",8) == 0) {
+      if (Name[13] == '8')
+        NewFnName = "llvm.memcpy.p0i8.p0i8.i8";
+      else if (Name.compare(13,2,"16") == 0)
+        NewFnName = "llvm.memcpy.p0i8.p0i8.i16";
+      else if (Name.compare(13,2,"32") == 0)
+        NewFnName = "llvm.memcpy.p0i8.p0i8.i32";
+      else if (Name.compare(13,2,"64") == 0)
+        NewFnName = "llvm.memcpy.p0i8.p0i8.i64";
+    } else if (Name.compare(5,9,"memmove.i",9) == 0) {
+      if (Name[14] == '8')
+        NewFnName = "llvm.memmove.p0i8.p0i8.i8";
+      else if (Name.compare(14,2,"16") == 0)
+        NewFnName = "llvm.memmove.p0i8.p0i8.i16";
+      else if (Name.compare(14,2,"32") == 0)
+        NewFnName = "llvm.memmove.p0i8.p0i8.i32";
+      else if (Name.compare(14,2,"64") == 0)
+        NewFnName = "llvm.memmove.p0i8.p0i8.i64";
+    }
+    else if (Name.compare(5,8,"memset.i",8) == 0) {
+      if (Name[13] == '8')
+        NewFnName = "llvm.memset.p0i8.i8";
+      else if (Name.compare(13,2,"16") == 0)
+        NewFnName = "llvm.memset.p0i8.i16";
+      else if (Name.compare(13,2,"32") == 0)
+        NewFnName = "llvm.memset.p0i8.i32";
+      else if (Name.compare(13,2,"64") == 0)
+        NewFnName = "llvm.memset.p0i8.i64";
+    }
+    if (NewFnName) {
+      const FunctionType *FTy = F->getFunctionType();
+      NewFn = cast<Function>(M->getOrInsertFunction(NewFnName, 
+                                            FTy->getReturnType(),
+                                            FTy->getParamType(0),
+                                            FTy->getParamType(1),
+                                            FTy->getParamType(2),
+                                            FTy->getParamType(3),
+                                            Type::getInt1Ty(F->getContext()),
+                                            (Type *)0));
+      return true;
+    }
+    break;
+  }
   case 'p':
     //  This upgrades the llvm.part.select overloaded intrinsic names to only 
     //  use one type specifier in the name. We only care about the old format
@@ -472,6 +520,28 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     CI->eraseFromParent();
   }
   break;
+  case Intrinsic::memcpy:
+  case Intrinsic::memmove:
+  case Intrinsic::memset: {
+    // Add isVolatile
+    const llvm::Type *I1Ty = llvm::Type::getInt1Ty(CI->getContext());
+    Value *Operands[5] = { CI->getOperand(1), CI->getOperand(2),
+                           CI->getOperand(3), CI->getOperand(4),
+                           llvm::ConstantInt::get(I1Ty, 0) };
+    CallInst *NewCI = CallInst::Create(NewFn, Operands, Operands+5,
+                                       CI->getName(), CI);
+    NewCI->setTailCall(CI->isTailCall());
+    NewCI->setCallingConv(CI->getCallingConv());
+    //  Handle any uses of the old CallInst.
+    if (!CI->use_empty())
+      //  Replace all uses of the old call with the new cast which has the 
+      //  correct type.
+      CI->replaceAllUsesWith(NewCI);
+    
+    //  Clean up the old call now that it has been completely upgraded.
+    CI->eraseFromParent();
+    break;
+  }
   }
 }
 

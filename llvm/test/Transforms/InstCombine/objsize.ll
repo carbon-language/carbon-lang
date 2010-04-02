@@ -113,7 +113,7 @@ entry:
   %1 = bitcast %struct.data* %0 to i8*
   %2 = call i64 @llvm.objectsize.i64(i8* %1, i1 false) nounwind
 ; CHECK-NOT: @llvm.objectsize
-; CHECK: @llvm.memset.i64(i8* %1, i8 0, i64 1824, i32 8)
+; CHECK: @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 1824, i32 8, i1 false)
   %3 = call i8* @__memset_chk(i8* %1, i32 0, i64 1824, i64 %2) nounwind
   ret i32 0
 }
@@ -128,7 +128,7 @@ entry:
   %1 = tail call i32 @llvm.objectsize.i32(i8* %0, i1 false)
   %2 = load i8** @s, align 8
 ; CHECK-NOT: @llvm.objectsize
-; CHECK: @llvm.memcpy.i32(i8* %0, i8* %1, i32 10, i32 1)
+; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 10, i32 1, i1 false)
   %3 = tail call i8* @__memcpy_chk(i8* %0, i8* %2, i32 10, i32 %1) nounwind
   ret void
 }

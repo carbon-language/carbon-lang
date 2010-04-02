@@ -3731,28 +3731,50 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::longjmp:
     return "_longjmp"+!TLI.usesUnderscoreLongJmp();
   case Intrinsic::memcpy: {
+    // Assert for address < 256 since we support only user defined address
+    // spaces.
+    assert(cast<PointerType>(I.getOperand(1)->getType())->getAddressSpace()
+           < 256 &&
+           cast<PointerType>(I.getOperand(2)->getType())->getAddressSpace()
+           < 256 &&
+           "Unknown address space");
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
+    bool isVol = cast<ConstantInt>(I.getOperand(5))->getZExtValue();
+    DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, isVol, false,
                               I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
   case Intrinsic::memset: {
+    // Assert for address < 256 since we support only user defined address
+    // spaces.
+    assert(cast<PointerType>(I.getOperand(1)->getType())->getAddressSpace()
+           < 256 &&
+           "Unknown address space");
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align,
+    bool isVol = cast<ConstantInt>(I.getOperand(5))->getZExtValue();
+    DAG.setRoot(DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
                               I.getOperand(1), 0));
     return 0;
   }
   case Intrinsic::memmove: {
+    // Assert for address < 256 since we support only user defined address
+    // spaces.
+    assert(cast<PointerType>(I.getOperand(1)->getType())->getAddressSpace()
+           < 256 &&
+           cast<PointerType>(I.getOperand(2)->getType())->getAddressSpace()
+           < 256 &&
+           "Unknown address space");
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
+    bool isVol = cast<ConstantInt>(I.getOperand(5))->getZExtValue();
 
     // If the source and destination are known to not be aliases, we can
     // lower memmove as memcpy.
@@ -3761,12 +3783,12 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       Size = C->getZExtValue();
     if (AA->alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
         AliasAnalysis::NoAlias) {
-      DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
-                                I.getOperand(1), 0, I.getOperand(2), 0));
+      DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, isVol, 
+                                false, I.getOperand(1), 0, I.getOperand(2), 0));
       return 0;
     }
 
-    DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align,
+    DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
                                I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
