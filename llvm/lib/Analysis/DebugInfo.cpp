@@ -1146,16 +1146,31 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
-  unsigned MDDbgKind = M.getMDKindID("dbg");
-
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
            ++BI) {
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI)) {
           processDeclare(DDI);
-        else if (MDNode *L = BI->getMetadata(MDDbgKind)) 
-          processLocation(DILocation(L));
+          continue;
+        }
+        
+        DebugLoc Loc = BI->getDebugLoc();
+        if (Loc.isUnknown())
+          continue;
+        
+        LLVMContext &Ctx = BI->getContext();
+        DIDescriptor Scope(Loc.getScope(Ctx));
+        
+        if (Scope.isCompileUnit())
+          addCompileUnit(DICompileUnit(Scope.getNode()));
+        else if (Scope.isSubprogram())
+          processSubprogram(DISubprogram(Scope.getNode()));
+        else if (Scope.isLexicalBlock())
+          processLexicalBlock(DILexicalBlock(Scope.getNode()));
+        
+        if (MDNode *IA = Loc.getInlinedAt(Ctx))
+          processLocation(DILocation(IA));
       }
 
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
