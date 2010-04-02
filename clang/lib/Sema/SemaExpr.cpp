@@ -1345,11 +1345,6 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       }
     }
   }
-  if (LangOpts.ObjCNonFragileABI2 && LookForIvars && Lookup.empty()) {
-    ObjCIvarDecl *Ivar = SynthesizeNewPropertyIvar(IFace, II);
-    if (Ivar)
-      return LookupInObjCMethod(Lookup, S, II, AllowBuiltinCreation);
-  }
   // Sentinel value saying that we didn't do anything special.
   return Owned((Expr*) 0);
 }

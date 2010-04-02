@@ -23,12 +23,12 @@
 //@synthesize howMany, what;
 
 - (int) howMany {
-    return howMany;
+    return self.howMany;
 }
 // - (void) setHowMany: (int) value
 
 - (NSString*) what {
-    return what;
+    return self.what;
 }
 // - (void) setWhat: (NSString*) value    
 @end
@@ -44,12 +44,12 @@
 
 // - (int) howMany
 - (void) setHowMany: (int) value {
-    howMany = value;
+    self.howMany = value;
 }
 
 // - (NSString*) what
 - (void) setWhat: (NSString*) value {
-    if (what != value) {
+    if (self.what != value) {
     }
 }
 @end
@@ -64,17 +64,17 @@
 //@synthesize howMany, what;  // REM: Redundant anyway
 
 - (int) howMany {
-    return howMany;
+    return self.howMany;
 }
 - (void) setHowMany: (int) value {
-    howMany = value;
+    self.howMany = value;
 }
 
 - (NSString*) what {
-    return what;
+    return self.what;
 }
 - (void) setWhat: (NSString*) value {
-    if (what != value) {
+    if (self.what != value) {
     }
 }
 @end
