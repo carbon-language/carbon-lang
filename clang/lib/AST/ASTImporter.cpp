@@ -2013,7 +2013,8 @@ Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   if (!BitWidth && D->getBitWidth())
     return 0;
   
-  ObjCIvarDecl *ToIvar = ObjCIvarDecl::Create(Importer.getToContext(), DC, 
+  ObjCIvarDecl *ToIvar = ObjCIvarDecl::Create(Importer.getToContext(),
+                                              cast<ObjCContainerDecl>(DC),
                                               Loc, Name.getAsIdentifierInfo(),
                                               T, TInfo, D->getAccessControl(),
                                               BitWidth);
