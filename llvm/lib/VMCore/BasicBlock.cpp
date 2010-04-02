@@ -14,6 +14,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
@@ -133,6 +134,16 @@ Instruction* BasicBlock::getFirstNonPHI() {
   // block we'll get an assertion failure when dereferencing
   // a past-the-end iterator.
   while (isa<PHINode>(i)) ++i;
+  return &*i;
+}
+
+Instruction* BasicBlock::getFirstNonPHIOrDbg() {
+  BasicBlock::iterator i = begin();
+  // All valid basic blocks should have a terminator,
+  // which is not a PHINode. If we have an invalid basic
+  // block we'll get an assertion failure when dereferencing
+  // a past-the-end iterator.
+  while (isa<PHINode>(i) || isa<DbgInfoIntrinsic>(i)) ++i;
   return &*i;
 }
 

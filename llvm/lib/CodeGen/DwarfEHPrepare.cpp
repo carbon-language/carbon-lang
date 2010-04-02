@@ -661,7 +661,7 @@ bool DwarfEHPrepare::PromoteStackTemporaries() {
 /// the start of the basic block (unless there already is one, in which case
 /// the existing call is returned).
 Instruction *DwarfEHPrepare::CreateExceptionValueCall(BasicBlock *BB) {
-  Instruction *Start = BB->getFirstNonPHI();
+  Instruction *Start = BB->getFirstNonPHIOrDbg();
   // Is this a call to eh.exception?
   if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(Start))
     if (CI->getIntrinsicID() == Intrinsic::eh_exception)
@@ -681,7 +681,7 @@ Instruction *DwarfEHPrepare::CreateExceptionValueCall(BasicBlock *BB) {
 /// (creating it if necessary) at the start of the basic block (unless
 /// there already is a load, in which case the existing load is returned).
 Instruction *DwarfEHPrepare::CreateValueLoad(BasicBlock *BB) {
-  Instruction *Start = BB->getFirstNonPHI();
+  Instruction *Start = BB->getFirstNonPHIOrDbg();
   // Is this a load of the exception temporary?
   if (ExceptionValueVar)
     if (LoadInst* LI = dyn_cast<LoadInst>(Start))

@@ -131,6 +131,12 @@ public:
   const Instruction* getFirstNonPHI() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHI();
   }
+
+  // Same as above, but also skip debug intrinsics.
+  Instruction* getFirstNonPHIOrDbg();
+  const Instruction* getFirstNonPHIOrDbg() const {
+    return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbg();
+  }
   
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.
