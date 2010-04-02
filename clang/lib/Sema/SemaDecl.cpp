@@ -5740,17 +5740,15 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
     Visibility != tok::objc_not_keyword ? TranslateIvarVisibility(Visibility)
                                         : ObjCIvarDecl::None;
   // Must set ivar's DeclContext to its enclosing interface.
-  Decl *EnclosingDecl = IntfDecl.getAs<Decl>();
-  DeclContext *EnclosingContext;
+  ObjCContainerDecl *EnclosingDecl = IntfDecl.getAs<ObjCContainerDecl>();
+  ObjCContainerDecl *EnclosingContext;
   if (ObjCImplementationDecl *IMPDecl =
       dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
     // Case of ivar declared in an implementation. Context is that of its class.
-    ObjCInterfaceDecl* IDecl = IMPDecl->getClassInterface();
-    assert(IDecl && "No class- ActOnIvar");
-    EnclosingContext = cast_or_null<DeclContext>(IDecl);
+    EnclosingContext = IMPDecl->getClassInterface();
+    assert(EnclosingContext && "Implementation has no class interface!");
   } else
-    EnclosingContext = dyn_cast<DeclContext>(EnclosingDecl);
-  assert(EnclosingContext && "null DeclContext for ivar - ActOnIvar");
+    EnclosingContext = EnclosingDecl;
 
   // Construct the decl.
   ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context,
