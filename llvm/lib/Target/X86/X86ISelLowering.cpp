@@ -1088,8 +1088,8 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   if (!F->hasFnAttr(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
         (Subtarget->isUnalignedMemAccessFast() ||
-         (DstAlign == 0 || DstAlign >= 16) &&
-         (SrcAlign == 0 || SrcAlign >= 16)) &&
+         ((DstAlign == 0 || DstAlign >= 16) &&
+          (SrcAlign == 0 || SrcAlign >= 16))) &&
         Subtarget->getStackAlignment() >= 16) {
       if (Subtarget->hasSSE2())
         return MVT::v4i32;
