@@ -4033,8 +4033,6 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
-defm AESIMC          : AESI_binop_rm_int<0xDB, "aesimc",
-                       int_x86_aesni_aesimc>;
 defm AESENC          : AESI_binop_rm_int<0xDC, "aesenc",
                        int_x86_aesni_aesenc>;
 defm AESENCLAST      : AESI_binop_rm_int<0xDD, "aesenclast",
@@ -4044,10 +4042,6 @@ defm AESDEC          : AESI_binop_rm_int<0xDE, "aesdec",
 defm AESDECLAST      : AESI_binop_rm_int<0xDF, "aesdeclast",
                        int_x86_aesni_aesdeclast>;
 
-def : Pat<(v2i64 (int_x86_aesni_aesimc VR128:$src1, VR128:$src2)),
-          (AESIMCrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (int_x86_aesni_aesimc VR128:$src1, (memop addr:$src2))),
-          (AESIMCrm VR128:$src1, addr:$src2)>;
 def : Pat<(v2i64 (int_x86_aesni_aesenc VR128:$src1, VR128:$src2)),
           (AESENCrr VR128:$src1, VR128:$src2)>;
 def : Pat<(v2i64 (int_x86_aesni_aesenc VR128:$src1, (memop addr:$src2))),
@@ -4064,6 +4058,20 @@ def : Pat<(v2i64 (int_x86_aesni_aesdeclast VR128:$src1, VR128:$src2)),
           (AESDECLASTrr VR128:$src1, VR128:$src2)>;
 def : Pat<(v2i64 (int_x86_aesni_aesdeclast VR128:$src1, (memop addr:$src2))),
           (AESDECLASTrm VR128:$src1, addr:$src2)>;
+
+def AESIMCrr : AES8I<0xDB, MRMSrcReg, (outs VR128:$dst),
+  (ins VR128:$src1),
+  "aesimc\t{$src1, $dst|$dst, $src1}",
+  [(set VR128:$dst,
+    (int_x86_aesni_aesimc VR128:$src1))]>,
+  OpSize;
+
+def AESIMCrm : AES8I<0xDB, MRMSrcMem, (outs VR128:$dst),
+  (ins i128mem:$src1),
+  "aesimc\t{$src1, $dst|$dst, $src1}",
+  [(set VR128:$dst,
+    (int_x86_aesni_aesimc (bitconvert (memopv2i64 addr:$src1))))]>,
+  OpSize;
 
 def AESKEYGENASSIST128rr : AESAI<0xDF, MRMSrcReg, (outs VR128:$dst),
   (ins VR128:$src1, i32i8imm:$src2),
