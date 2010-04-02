@@ -1071,18 +1071,21 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 /// If DstAlign is zero that means it's safe to destination alignment can
 /// satisfy any constraint. Similarly if SrcAlign is zero it means there
 /// isn't a need to check it against alignment requirement, probably because
-/// the source does not need to be loaded. It returns EVT::Other if
-/// SelectionDAG should be responsible for determining it.
+/// the source does not need to be loaded. If 'NonScalarIntSafe' is true, that
+/// means it's safe to return a non-scalar-integer type, e.g. constant string
+/// source or loaded from memory. It returns EVT::Other if SelectionDAG should
+/// be responsible for determining it.
 EVT
 X86TargetLowering::getOptimalMemOpType(uint64_t Size,
                                        unsigned DstAlign, unsigned SrcAlign,
-                                       bool SafeToUseFP,
+                                       bool NonScalarIntSafe,
                                        SelectionDAG &DAG) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
   const Function *F = DAG.getMachineFunction().getFunction();
-  if (!F->hasFnAttr(Attribute::NoImplicitFloat)) {
+  if (NonScalarIntSafe &&
+      !F->hasFnAttr(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
         (Subtarget->isUnalignedMemAccessFast() ||
          ((DstAlign == 0 || DstAlign >= 16) &&
@@ -1090,10 +1093,9 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         Subtarget->getStackAlignment() >= 16) {
       if (Subtarget->hasSSE2())
         return MVT::v4i32;
-      if (SafeToUseFP && Subtarget->hasSSE1())
+      if (Subtarget->hasSSE1())
         return MVT::v4f32;
-    } else if (SafeToUseFP &&
-               Size >= 8 &&
+    } else if (Size >= 8 &&
                !Subtarget->is64Bit() &&
                Subtarget->getStackAlignment() >= 8 &&
                Subtarget->hasSSE2())
