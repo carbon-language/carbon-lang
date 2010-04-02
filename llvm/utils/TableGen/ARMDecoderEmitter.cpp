@@ -300,7 +300,7 @@ public:
   FilterChooser &getVariableFC() {
     assert(NumFiltered == 1);
     assert(FilterChooserMap.size() == 1);
-    return *(FilterChooserMap.find(-1)->second);
+    return *(FilterChooserMap.find((unsigned)-1)->second);
   }
 
   Filter(const Filter &f);
