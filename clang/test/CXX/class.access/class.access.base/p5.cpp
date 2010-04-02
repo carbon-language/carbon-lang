@@ -56,4 +56,20 @@ namespace test2 {
   };
 }
 
+namespace test3 {
+  class A {
+  protected: static int x;
+  };
+
+  class B : public A {};
+  class C : private A {
+    int test(B *b) {
+      // x is accessible at C when named in A.
+      // A is an accessible base of B at C.
+      // Therefore this succeeds.
+      return b->x;
+    }
+  };
+}
+
 // TODO: flesh out these cases
