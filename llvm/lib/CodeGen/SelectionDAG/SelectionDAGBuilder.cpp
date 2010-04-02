@@ -546,7 +546,7 @@ void SelectionDAGBuilder::clear() {
   PendingExports.clear();
   EdgeMapping.clear();
   DAG.clear();
-  CurDebugLoc = DebugLoc::getUnknownLoc();
+  CurDebugLoc = DebugLoc();
   HasTailCall = false;
 }
 

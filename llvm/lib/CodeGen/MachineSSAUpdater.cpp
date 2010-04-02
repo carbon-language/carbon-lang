@@ -125,7 +125,7 @@ MachineInstr *InsertNewDef(unsigned Opcode,
                            const TargetRegisterClass *RC,
                            MachineRegisterInfo *MRI, const TargetInstrInfo *TII) {
   unsigned NewVR = MRI->createVirtualRegister(RC);
-  return BuildMI(*BB, I, DebugLoc::getUnknownLoc(), TII->get(Opcode), NewVR);
+  return BuildMI(*BB, I, DebugLoc(), TII->get(Opcode), NewVR);
 }
                           
 /// GetValueInMiddleOfBlock - Construct SSA form, materializing a value that

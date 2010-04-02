@@ -306,10 +306,8 @@ public:
   SelectionDAGBuilder(SelectionDAG &dag, TargetLowering &tli,
                       FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : CurDebugLoc(DebugLoc::getUnknownLoc()), SDNodeOrder(0),
-      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
-      HasTailCall(false),
-      Context(dag.getContext()) {
+    : SDNodeOrder(0), TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
+      HasTailCall(false), Context(dag.getContext()) {
   }
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);

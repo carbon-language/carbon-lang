@@ -384,9 +384,9 @@ static void SetDebugLoc(Instruction *I, SelectionDAGBuilder *SDB,
 
 /// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
 static void ResetDebugLoc(SelectionDAGBuilder *SDB, FastISel *FastIS) {
-  SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
+  SDB->setCurDebugLoc(DebugLoc());
   if (FastIS)
-    FastIS->setCurDebugLoc(DebugLoc::getUnknownLoc());
+    FastIS->setCurDebugLoc(DebugLoc());
 }
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,

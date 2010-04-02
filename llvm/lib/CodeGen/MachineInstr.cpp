@@ -395,7 +395,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
   : TID(0), NumImplicitOps(0), AsmPrinterFlags(0), MemRefs(0), MemRefsEnd(0),
-    Parent(0), debugLoc(DebugLoc::getUnknownLoc()) {
+    Parent(0) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -415,8 +415,7 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// instructions with variable number of operands).
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0),
-    debugLoc(DebugLoc::getUnknownLoc()) {
+    MemRefs(0), MemRefsEnd(0), Parent(0) {
   if (!NoImp && TID->getImplicitDefs())
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
@@ -454,8 +453,7 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0), 
-    debugLoc(DebugLoc::getUnknownLoc()) {
+    MemRefs(0), MemRefsEnd(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
