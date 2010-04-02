@@ -294,8 +294,12 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
     bool FoundCSE = VNT.count(MI);
     if (!FoundCSE) {
       // Look for trivial copy coalescing opportunities.
-      if (PerformTrivialCoalescing(MI, MBB))
+      if (PerformTrivialCoalescing(MI, MBB)) {
+        // After coalescing MI itself may become a copy.
+        if (isCopy(MI, TII))
+          continue;
         FoundCSE = VNT.count(MI);
+      }
     }
     // FIXME: commute commutable instructions?
 
