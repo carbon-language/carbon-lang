@@ -584,7 +584,30 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
   return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW);
 }
 
+const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
+  const ObjCContainerDecl *DC = cast<ObjCContainerDecl>(getDeclContext());
 
+  switch (DC->getKind()) {
+  default:
+  case ObjCCategoryImpl:
+  case ObjCProtocol:
+    assert(0 && "invalid ivar container!");
+    return 0;
+
+    // Ivars can only appear in class extension categories.
+  case ObjCCategory: {
+    const ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(DC);
+    assert(CD->IsClassExtension() && "invalid container for ivar!");
+    return CD->getClassInterface();
+  }
+
+  case ObjCImplementation:
+    return cast<ObjCImplementationDecl>(DC)->getClassInterface();
+
+  case ObjCInterface:
+    return cast<ObjCInterfaceDecl>(DC);
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // ObjCAtDefsFieldDecl

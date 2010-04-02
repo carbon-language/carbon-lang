@@ -635,6 +635,12 @@ public:
                               TypeSourceInfo *TInfo,
                               AccessControl ac, Expr *BW = NULL);
 
+  /// \brief Return the class interface that this ivar is logically contained
+  /// in; this is either the interface where the ivar was declared, or the
+  /// interface the ivar is conceptually a part of in the case of synthesized
+  /// ivars.
+  const ObjCInterfaceDecl *getContainingInterface() const;
+
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
 
   AccessControl getAccessControl() const { return AccessControl(DeclAccess); }
