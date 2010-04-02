@@ -78,6 +78,19 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
     FindIvarInterface(CGM.getContext(), OID, Ivar, Index);
   assert(Container && "Unable to find ivar container");
 
+  // Check that the Obj-C decl contexts match what we expect.
+  const ObjCContainerDecl *DC = cast<ObjCContainerDecl>(Ivar->getDeclContext());
+  assert(isa<ObjCInterfaceDecl>(DC) || isa<ObjCImplDecl>(DC) ||
+         isa<ObjCCategoryDecl>(DC));
+  if (isa<ObjCImplDecl>(DC)) {
+    assert(DC == ID);
+    assert(Container == cast<ObjCImplDecl>(DC)->getClassInterface());
+  } else if (isa<ObjCCategoryDecl>(DC)) {
+    assert(Container == cast<ObjCCategoryDecl>(DC)->getClassInterface());
+  }  else {
+    assert(Container == DC);
+  }
+
   // If we know have an implementation (and the ivar is in it) then
   // look up in the implementation layout.
   const ASTRecordLayout *RL;
