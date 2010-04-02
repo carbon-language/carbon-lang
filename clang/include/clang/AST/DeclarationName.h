@@ -378,7 +378,7 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                   Diagnostic::ak_declarationname);
   return PD;
 }
-  
+
 }  // end namespace clang
 
 namespace llvm {

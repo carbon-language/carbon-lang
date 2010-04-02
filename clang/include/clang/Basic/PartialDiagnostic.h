@@ -15,7 +15,6 @@
 #ifndef LLVM_CLANG_PARTIALDIAGNOSTIC_H
 #define LLVM_CLANG_PARTIALDIAGNOSTIC_H
 
-#include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/STLExtras.h"
@@ -24,8 +23,6 @@
 
 namespace clang {
 
-class DeclarationName;
-  
 class PartialDiagnostic {
 public:
   struct Storage {
@@ -145,16 +142,6 @@ private:
     DiagStorage = 0;
   }
   
-  void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
-    if (!DiagStorage)
-      DiagStorage = getStorage();
-    
-    assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagStorage->DiagArgumentsKind[DiagStorage->NumDiagArgs] = Kind;
-    DiagStorage->DiagArgumentsVal[DiagStorage->NumDiagArgs++] = V;
-  }
-
   void AddSourceRange(const SourceRange &R) const {
     if (!DiagStorage)
       DiagStorage = getStorage();
@@ -219,6 +206,16 @@ public:
 
   unsigned getDiagID() const { return DiagID; }
 
+  void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
+    if (!DiagStorage)
+      DiagStorage = getStorage();
+
+    assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagStorage->DiagArgumentsKind[DiagStorage->NumDiagArgs] = Kind;
+    DiagStorage->DiagArgumentsVal[DiagStorage->NumDiagArgs++] = V;
+  }
+
   void Emit(const DiagnosticBuilder &DB) const {
     if (!DiagStorage)
       return;
@@ -248,13 +245,6 @@ public:
   bool hasStorage() const { return DiagStorage != 0; }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                             QualType T) {
-    PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
-                    Diagnostic::ak_qualtype);
-    return PD;
-  }
-
-  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              unsigned I) {
     PD.AddTaggedVal(I, Diagnostic::ak_uint);
     return PD;
@@ -278,9 +268,6 @@ public:
     return PD;
   }
 
-  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                             DeclarationName N);
-  
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              const FixItHint &Hint) {
     PD.AddFixItHint(Hint);

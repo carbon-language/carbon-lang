@@ -17,6 +17,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Linkage.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
@@ -3227,6 +3228,15 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
                   Diagnostic::ak_qualtype);
   return DB;
+}
+
+/// Insertion operator for partial diagnostics.  This allows sending QualType's
+/// into a diagnostic with <<.
+inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                           QualType T) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  Diagnostic::ak_qualtype);
+  return PD;
 }
 
 // Helper class template that is used by Type::getAs to ensure that one does
