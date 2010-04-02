@@ -48,18 +48,9 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
                                      const ObjCIvarDecl *Ivar) {
   const ObjCInterfaceDecl *Container = Ivar->getContainingInterface();
 
-  // Check that the Obj-C decl contexts match what we expect.
-  const ObjCContainerDecl *DC = cast<ObjCContainerDecl>(Ivar->getDeclContext());
-  assert(isa<ObjCInterfaceDecl>(DC) || isa<ObjCImplDecl>(DC) ||
-         isa<ObjCCategoryDecl>(DC));
-  if (isa<ObjCImplDecl>(DC)) {
-    assert(DC == ID);
-    assert(Container == cast<ObjCImplDecl>(DC)->getClassInterface());
-  } else if (isa<ObjCCategoryDecl>(DC)) {
-    assert(Container == cast<ObjCCategoryDecl>(DC)->getClassInterface());
-  }  else {
-    assert(Container == DC);
-  }
+  // FIXME: We should eliminate the need to have ObjCImplementationDecl passed
+  // in here; it should never be necessary because that should be the lexical
+  // decl context for the ivar.
 
   // If we know have an implementation (and the ivar is in it) then
   // look up in the implementation layout.
