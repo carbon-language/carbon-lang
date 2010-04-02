@@ -1612,6 +1612,11 @@ $(ObjDir)/%GenIntrinsics.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) intrinsics information with tblgen"
 	$(Verb) $(TableGen) -gen-tgt-intrinsic -o $(call SYSPATH, $@) $<
 
+$(ObjDir)/ARMGenDecoderTables.inc.tmp : ARM.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) decoder tables with tblgen"
+	$(Verb) $(TableGen) -gen-arm-decoder -o $(call SYSPATH, $@) $<
+
+
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 
