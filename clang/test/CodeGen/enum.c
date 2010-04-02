@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm-bc -o - | opt -std-compile-opts | llvm-dis | grep 'ret i32 6'
-// RUN: %clang_cc1 -triple i386-unknown-unknown -x c++ %s -emit-llvm-bc -o - | opt -std-compile-opts | llvm-dis | grep 'ret i32 7'
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -O3 -emit-llvm -o - | grep 'ret i32 6'
+// RUN: %clang_cc1 -triple i386-unknown-unknown -x c++ %s -O3 -emit-llvm -o - | grep 'ret i32 7'
 
 static enum { foo, bar = 1U } z;
 
