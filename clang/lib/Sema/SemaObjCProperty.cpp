@@ -281,7 +281,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
                                             DeclPtrTy ClassCatImpDecl,
                                             IdentifierInfo *PropertyId,
                                             IdentifierInfo *PropertyIvar) {
-  Decl *ClassImpDecl = ClassCatImpDecl.getAs<Decl>();
+  ObjCContainerDecl *ClassImpDecl = ClassCatImpDecl.getAs<ObjCContainerDecl>();
   // Make sure we have a context for the property implementation declaration.
   if (!ClassImpDecl) {
     Diag(AtLoc, diag::error_missing_property_context);
@@ -353,14 +353,11 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      DeclContext *EnclosingContext = cast_or_null<DeclContext>(ClassImpDecl);
-      assert(EnclosingContext &&
-             "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
-      Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc,
+      Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, PropertyLoc,
                                   PropertyIvar, PropType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Public,
                                   (Expr *)0);
-      EnclosingContext->addDecl(Ivar);
+      ClassImpDecl->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar, false);
       property->setPropertyIvarDecl(Ivar);
 
@@ -1072,15 +1069,10 @@ Sema::SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
   ObjCIvarDecl *Ivar = 0;
   ObjCPropertyDecl *Prop = LookupPropertyDecl(IDecl, NameII);
   if (Prop && !Prop->isInvalidDecl()) {
-    DeclContext *EnclosingContext = cast_or_null<DeclContext>(IDecl);
     QualType PropType = Context.getCanonicalType(Prop->getType());
-    assert(EnclosingContext &&
-           "null DeclContext for synthesized ivar - SynthesizeNewPropertyIvar");
-    Ivar = ObjCIvarDecl::Create(Context, EnclosingContext,
-                                              Prop->getLocation(),
-                                              NameII, PropType, /*Dinfo=*/0,
-                                              ObjCIvarDecl::Public,
-                                              (Expr *)0);
+    Ivar = ObjCIvarDecl::Create(Context, IDecl, Prop->getLocation(), NameII,
+                                PropType, /*Dinfo=*/0,
+                                ObjCIvarDecl::Public, (Expr *)0);
     Ivar->setLexicalDeclContext(IDecl);
     IDecl->addDecl(Ivar);
     Prop->setPropertyIvarDecl(Ivar);
