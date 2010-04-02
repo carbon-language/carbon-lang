@@ -471,27 +471,22 @@ void SSAUpdater::RecordMatchingPHI(PHINode *PHI) {
   SmallVector<PHINode*, 20> WorkList;
   WorkList.push_back(PHI);
 
-  // Record this PHI.
-  BasicBlock *BB = PHI->getParent();
-  AvailableVals[BB] = PHI;
-  (*BBMap)[BB]->AvailableVal = PHI;
-
   while (!WorkList.empty()) {
     PHI = WorkList.pop_back_val();
+    BasicBlock *BB = PHI->getParent();
+    BBInfo *Info = (*BBMap)[BB];
+    if (!Info || Info->AvailableVal)
+      return;
+
+    // Record the PHI.
+    AvailableVals[BB] = PHI;
+    Info->AvailableVal = PHI;
 
     // Iterate through the PHI's incoming values.
     for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-      PHINode *IncomingPHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
-      if (!IncomingPHIVal) continue;
-      BB = IncomingPHIVal->getParent();
-      BBInfo *Info = (*BBMap)[BB];
-      if (!Info || Info->AvailableVal)
-        continue;
-
-      // Record the PHI and add it to the worklist.
-      AvailableVals[BB] = IncomingPHIVal;
-      Info->AvailableVal = IncomingPHIVal;
-      WorkList.push_back(IncomingPHIVal);
+      PHINode *IncomingVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+      if (!IncomingVal) continue;
+      WorkList.push_back(IncomingVal);
     }
   }
 }
@@ -504,24 +499,21 @@ void SSAUpdater::ClearPHITags(PHINode *PHI) {
   SmallVector<PHINode*, 20> WorkList;
   WorkList.push_back(PHI);
 
-  // Clear the tag for this PHI.
-  (*BBMap)[PHI->getParent()]->PHITag = 0;
-
   while (!WorkList.empty()) {
     PHI = WorkList.pop_back_val();
+    BasicBlock *BB = PHI->getParent();
+    BBInfo *Info = (*BBMap)[BB];
+    if (!Info || Info->AvailableVal || !Info->PHITag)
+      continue;
+
+    // Clear the tag.
+    Info->PHITag = 0;
 
     // Iterate through the PHI's incoming values.
     for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-      PHINode *IncomingPHIVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
-      if (!IncomingPHIVal) continue;
-      BasicBlock *BB = IncomingPHIVal->getParent();
-      BBInfo *Info = (*BBMap)[BB];
-      if (!Info || Info->AvailableVal || !Info->PHITag)
-        continue;
-
-      // Clear the tag and add the PHI to the worklist.
-      Info->PHITag = 0;
-      WorkList.push_back(IncomingPHIVal);
+      PHINode *IncomingVal = dyn_cast<PHINode>(PHI->getIncomingValue(i));
+      if (!IncomingVal) continue;
+      WorkList.push_back(IncomingVal);
     }
   }
 }
