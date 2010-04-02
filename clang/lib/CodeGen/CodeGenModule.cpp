@@ -47,8 +47,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
-    MangleCtx(C), VTables(*this), Runtime(0),
-    MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
+    MangleCtx(C), VTables(*this), Runtime(0), CFConstantStringClassRef(0),
     VMContext(M.getContext()) {
 
   if (!Features.ObjC1)
@@ -1414,22 +1413,25 @@ llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
                                          (llvm::Intrinsic::ID)IID, Tys, NumTys);
 }
 
-llvm::Function *CodeGenModule::getMemCpyFn() {
-  if (MemCpyFn) return MemCpyFn;
-  const llvm::Type *IntPtr = TheTargetData.getIntPtrType(VMContext);
-  return MemCpyFn = getIntrinsic(llvm::Intrinsic::memcpy, &IntPtr, 1);
+
+llvm::Function *CodeGenModule::getMemCpyFn(const llvm::Type *DestType,
+                                           const llvm::Type *SrcType,
+                                           const llvm::Type *SizeType) {
+  const llvm::Type *ArgTypes[3] = {DestType, SrcType, SizeType };
+  return getIntrinsic(llvm::Intrinsic::memcpy, ArgTypes, 3);
 }
 
-llvm::Function *CodeGenModule::getMemMoveFn() {
-  if (MemMoveFn) return MemMoveFn;
-  const llvm::Type *IntPtr = TheTargetData.getIntPtrType(VMContext);
-  return MemMoveFn = getIntrinsic(llvm::Intrinsic::memmove, &IntPtr, 1);
+llvm::Function *CodeGenModule::getMemMoveFn(const llvm::Type *DestType,
+                                            const llvm::Type *SrcType,
+                                            const llvm::Type *SizeType) {
+  const llvm::Type *ArgTypes[3] = {DestType, SrcType, SizeType };
+  return getIntrinsic(llvm::Intrinsic::memmove, ArgTypes, 3);
 }
 
-llvm::Function *CodeGenModule::getMemSetFn() {
-  if (MemSetFn) return MemSetFn;
-  const llvm::Type *IntPtr = TheTargetData.getIntPtrType(VMContext);
-  return MemSetFn = getIntrinsic(llvm::Intrinsic::memset, &IntPtr, 1);
+llvm::Function *CodeGenModule::getMemSetFn(const llvm::Type *DestType,
+                                           const llvm::Type *SizeType) {
+  const llvm::Type *ArgTypes[2] = { DestType, SizeType };
+  return getIntrinsic(llvm::Intrinsic::memset, ArgTypes, 2);
 }
 
 static llvm::StringMapEntry<llvm::Constant*> &

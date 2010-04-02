@@ -290,9 +290,17 @@ public:
   llvm::Value *getBuiltinLibFunction(const FunctionDecl *FD,
                                      unsigned BuiltinID);
 
-  llvm::Function *getMemCpyFn();
-  llvm::Function *getMemMoveFn();
-  llvm::Function *getMemSetFn();
+  llvm::Function *getMemCpyFn(const llvm::Type *DestType,
+                              const llvm::Type *SrcType,
+                              const llvm::Type *SizeType);
+
+  llvm::Function *getMemMoveFn(const llvm::Type *DestType,
+                               const llvm::Type *SrcType,
+                               const llvm::Type *SizeType);
+
+  llvm::Function *getMemSetFn(const llvm::Type *DestType,
+                              const llvm::Type *SizeType);
+
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0,
                                unsigned NumTys = 0);
 

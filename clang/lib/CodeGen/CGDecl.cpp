@@ -564,11 +564,15 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       if (Loc->getType() != BP)
         Loc = Builder.CreateBitCast(Loc, BP, "tmp");
       
+      llvm::Value *NotVolatile =
+        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0);
+
       // If the initializer is all zeros, codegen with memset.
       if (isa<llvm::ConstantAggregateZero>(Init)) {
         llvm::Value *Zero =
-        llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0);
-        Builder.CreateCall4(CGM.getMemSetFn(), Loc, Zero, SizeVal, AlignVal);
+          llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0);
+        Builder.CreateCall5(CGM.getMemSetFn(Loc->getType(), SizeVal->getType()),
+                            Loc, Zero, SizeVal, AlignVal, NotVolatile);
       } else {
         // Otherwise, create a temporary global with the initializer then 
         // memcpy from the global to the alloca.
@@ -582,8 +586,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         llvm::Value *SrcPtr = GV;
         if (SrcPtr->getType() != BP)
           SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-        
-        Builder.CreateCall4(CGM.getMemCpyFn(), Loc, SrcPtr, SizeVal, AlignVal);
+
+        Builder.CreateCall5(CGM.getMemCpyFn(Loc->getType(), SrcPtr->getType(),
+                                            SizeVal->getType()),
+                            Loc, SrcPtr, SizeVal, AlignVal, NotVolatile);
       }
     } else if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, /*IsInitializer=*/true);
