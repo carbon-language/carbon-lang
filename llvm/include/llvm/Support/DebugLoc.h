@@ -75,8 +75,6 @@ namespace llvm {
     }
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
   };
-  
-  typedef DebugLoc NewDebugLoc;
 } // end namespace llvm
 
 #endif /* LLVM_DEBUGLOC_H */
