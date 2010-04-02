@@ -1547,7 +1547,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
   const Record &Def = *CGI.TheDef;
   const StringRef Name = Def.getName();
   uint8_t Form = getByteField(Def, "Form");
-  BitsInit &Bits = getBitsField(Def, "Inst");
 
   if (TN == TARGET_ARM) {
     // FIXME: what about Int_MemBarrierV6 and Int_SyncBarrierV6?
@@ -1738,6 +1737,8 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
   }
 
   DEBUG({
+      BitsInit &Bits = getBitsField(Def, "Inst");
+
       errs() << " ";
 
       // Dumps the instruction encoding bits.
