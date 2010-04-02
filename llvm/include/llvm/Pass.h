@@ -30,7 +30,9 @@
 #define LLVM_PASS_H
 
 #include "llvm/System/DataTypes.h"
+
 #include <cassert>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -119,6 +121,11 @@ public:
   ///
   virtual void print(raw_ostream &O, const Module *M) const;
   void dump() const; // dump - Print to stderr.
+
+  /// createPrinterPass - Get a Pass appropriate to print the IR this
+  /// pass operates one (Module, Function or MachineFunction).
+  virtual Pass *createPrinterPass(raw_ostream &O,
+                                  const std::string &Banner) const = 0;
 
   /// Each pass is responsible for assigning a pass manager to itself.
   /// PMS is the stack of available pass manager. 
@@ -233,6 +240,9 @@ public:
 ///
 class ModulePass : public Pass {
 public:
+  /// createPrinterPass - Get a module printer pass.
+  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+
   /// runOnModule - Virtual method overriden by subclasses to process the module
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
@@ -293,6 +303,9 @@ public:
   explicit FunctionPass(intptr_t pid) : Pass(PT_Function, pid) {}
   explicit FunctionPass(const void *pid) : Pass(PT_Function, pid) {}
 
+  /// createPrinterPass - Get a function printer pass.
+  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
@@ -342,6 +355,9 @@ class BasicBlockPass : public Pass {
 public:
   explicit BasicBlockPass(intptr_t pid) : Pass(PT_BasicBlock, pid) {}
   explicit BasicBlockPass(const void *pid) : Pass(PT_BasicBlock, pid) {}
+
+  /// createPrinterPass - Get a function printer pass.
+  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
 
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.

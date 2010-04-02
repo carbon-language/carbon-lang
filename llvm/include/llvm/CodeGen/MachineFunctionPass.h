@@ -34,6 +34,9 @@ protected:
   explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
   explicit MachineFunctionPass(void *ID) : FunctionPass(ID) {}
 
+  /// createPrinterPass - Get a machine function printer pass.
+  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+
   /// runOnMachineFunction - This method must be overloaded to perform the
   /// desired machine code transformation or analysis.
   ///

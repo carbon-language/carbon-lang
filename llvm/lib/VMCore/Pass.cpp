@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PassNameParser.h"
@@ -41,6 +42,11 @@ Pass::~Pass() {
 
 // Force out-of-line virtual method.
 ModulePass::~ModulePass() { }
+
+Pass *ModulePass::createPrinterPass(raw_ostream &O,
+                                    const std::string &Banner) const {
+  return createPrintModulePass(&O, false, Banner);
+}
 
 PassManagerType ModulePass::getPotentialPassManagerType() const {
   return PMT_ModulePassManager;
@@ -113,6 +119,11 @@ void ImmutablePass::initializePass() {
 // FunctionPass Implementation
 //
 
+Pass *FunctionPass::createPrinterPass(raw_ostream &O,
+                                      const std::string &Banner) const {
+  return createPrintFunctionPass(Banner, &O);
+}
+
 // run - On a module, we run this pass by initializing, runOnFunction'ing once
 // for every function in the module, then by finalizing.
 //
@@ -154,6 +165,13 @@ PassManagerType FunctionPass::getPotentialPassManagerType() const {
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation
 //
+
+Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
+                                        const std::string &Banner) const {
+  
+  llvm_unreachable("BasicBlockPass printing unsupported.");
+  return 0;
+}
 
 // To run this pass on a function, we simply call runOnBasicBlock once for each
 // function.

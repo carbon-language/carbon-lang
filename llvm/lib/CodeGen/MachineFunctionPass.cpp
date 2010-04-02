@@ -15,7 +15,13 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/Passes.h"
 using namespace llvm;
+
+Pass *MachineFunctionPass::createPrinterPass(raw_ostream &O,
+                                             const std::string &Banner) const {
+  return createMachineFunctionPrinterPass(O, Banner);
+}
 
 bool MachineFunctionPass::runOnFunction(Function &F) {
   // Do not codegen any 'available_externally' functions at all, they have
