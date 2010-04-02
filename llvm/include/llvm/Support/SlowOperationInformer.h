@@ -41,7 +41,7 @@ namespace llvm {
     SlowOperationInformer(const SlowOperationInformer&);   // DO NOT IMPLEMENT
     void operator=(const SlowOperationInformer&);          // DO NOT IMPLEMENT
   public:
-    SlowOperationInformer(const std::string &Name);
+    explicit SlowOperationInformer(const std::string &Name);
     ~SlowOperationInformer();
 
     /// progress - Clients should periodically call this method when they can
