@@ -215,7 +215,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(MachineFunction &Fn) {
   
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   MachineBasicBlock &EntryBB = *Fn.begin();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl;
   // Emit the following code into the entry block:
   // InVRSAVE = MFVRSAVE
   // UpdatedVRSAVE = UPDATE_VRSAVE InVRSAVE
@@ -253,7 +253,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = MF->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    DebugLoc dl = DebugLoc::getUnknownLoc();
+    DebugLoc dl;
 
     if (PPCLowering.getPointerTy() == MVT::i32) {
       GlobalBaseReg = RegInfo->createVirtualRegister(PPC::GPRCRegisterClass);

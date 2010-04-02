@@ -72,7 +72,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, bool isKill, int FI,
                                          const TargetRegisterClass *RC) const {
   PIC16TargetLowering *PTLI = TM.getTargetLowering();
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   const Function *Func = MBB.getParent()->getFunction();
@@ -114,7 +114,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FI,
                                           const TargetRegisterClass *RC) const {
   PIC16TargetLowering *PTLI = TM.getTargetLowering();
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   const Function *Func = MBB.getParent()->getFunction();
@@ -154,7 +154,7 @@ bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC == PIC16::FSR16RegisterClass) {
@@ -202,7 +202,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch?
-      DebugLoc dl = DebugLoc::getUnknownLoc();
+      DebugLoc dl;
       BuildMI(&MBB, dl, get(PIC16::br_uncond)).addMBB(TBB);
     }
     return 1;

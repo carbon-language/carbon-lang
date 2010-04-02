@@ -1149,8 +1149,7 @@ SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
   if (!Subtarget->is64Bit())
     // This doesn't have DebugLoc associated with it, but is not really the
     // same as a Register.
-    return DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc::getUnknownLoc(),
-                       getPointerTy());
+    return DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc(), getPointerTy());
   return Table;
 }
 
@@ -1931,8 +1930,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (!isTailCall) {
       Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
                                DAG.getNode(X86ISD::GlobalBaseReg,
-                                           DebugLoc::getUnknownLoc(),
-                                           getPointerTy()),
+                                           DebugLoc(), getPointerTy()),
                                InFlag);
       InFlag = Chain.getValue(1);
     } else {
@@ -5061,7 +5059,7 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   if (OpFlag) {
     Result = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg,
-                                     DebugLoc::getUnknownLoc(), getPointerTy()),
+                                     DebugLoc(), getPointerTy()),
                          Result);
   }
 
@@ -5094,7 +5092,7 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   if (OpFlag) {
     Result = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg,
-                                     DebugLoc::getUnknownLoc(), getPointerTy()),
+                                     DebugLoc(), getPointerTy()),
                          Result);
   }
 
@@ -5130,8 +5128,7 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
       !Subtarget->is64Bit()) {
     Result = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg,
-                                     DebugLoc::getUnknownLoc(),
-                                     getPointerTy()),
+                                     DebugLoc(), getPointerTy()),
                          Result);
   }
 
@@ -5253,8 +5250,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
   SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, X86::EBX,
                                      DAG.getNode(X86ISD::GlobalBaseReg,
-                                                 DebugLoc::getUnknownLoc(),
-                                                 PtrVT), InFlag);
+                                                 DebugLoc(), PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
   return GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX, X86II::MO_TLSGD);
@@ -5276,7 +5272,7 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
   SDValue Base = DAG.getNode(X86ISD::SegmentBaseAddress,
-                             DebugLoc::getUnknownLoc(), PtrVT,
+                             DebugLoc(), PtrVT,
                              DAG.getRegister(is64Bit? X86::FS : X86::GS,
                                              MVT::i32));
 

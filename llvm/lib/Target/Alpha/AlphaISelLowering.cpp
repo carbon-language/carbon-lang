@@ -471,8 +471,7 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
 
   SDValue Copy = DAG.getCopyToReg(Chain, dl, Alpha::R26,
                                   DAG.getNode(AlphaISD::GlobalRetAddr,
-                                              DebugLoc::getUnknownLoc(),
-                                              MVT::i64),
+                                              DebugLoc(), MVT::i64),
                                   SDValue());
   switch (Outs.size()) {
   default:
@@ -740,8 +739,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
                              SA2, NULL, 0, MVT::i32, false, false, 0);
   }
   case ISD::RETURNADDR:
-    return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc::getUnknownLoc(),
-                       MVT::i64);
+    return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc(), MVT::i64);
       //FIXME: implement
   case ISD::FRAMEADDR:          break;
   }

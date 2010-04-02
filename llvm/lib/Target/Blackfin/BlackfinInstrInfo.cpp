@@ -106,7 +106,7 @@ InsertBranch(MachineBasicBlock &MBB,
              MachineBasicBlock *FBB,
              const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc operand
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -116,7 +116,7 @@ InsertBranch(MachineBasicBlock &MBB,
   if (Cond.empty()) {
     // Unconditional branch?
     assert(!FBB && "Unconditional branch with multiple successors!");
-    BuildMI(&MBB, dl, get(BF::JUMPa)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(BF::JUMPa)).addMBB(TBB);
     return 1;
   }
 
@@ -139,27 +139,27 @@ bool BlackfinInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      unsigned SrcReg,
                                      const TargetRegisterClass *DestRC,
                                      const TargetRegisterClass *SrcRC) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
 
   if (inClass(BF::ALLRegClass, DestReg, DestRC) &&
       inClass(BF::ALLRegClass, SrcReg,  SrcRC)) {
-    BuildMI(MBB, I, dl, get(BF::MOVE), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(BF::MOVE), DestReg).addReg(SrcReg);
     return true;
   }
 
   if (inClass(BF::D16RegClass, DestReg, DestRC) &&
       inClass(BF::D16RegClass, SrcReg,  SrcRC)) {
-    BuildMI(MBB, I, dl, get(BF::SLL16i), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, I, DL, get(BF::SLL16i), DestReg).addReg(SrcReg).addImm(0);
     return true;
   }
 
   if (inClass(BF::AnyCCRegClass, SrcReg, SrcRC) &&
       inClass(BF::DRegClass, DestReg, DestRC)) {
     if (inClass(BF::NotCCRegClass, SrcReg, SrcRC)) {
-      BuildMI(MBB, I, dl, get(BF::MOVENCC_z), DestReg).addReg(SrcReg);
-      BuildMI(MBB, I, dl, get(BF::BITTGL), DestReg).addReg(DestReg).addImm(0);
+      BuildMI(MBB, I, DL, get(BF::MOVENCC_z), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(BF::BITTGL), DestReg).addReg(DestReg).addImm(0);
     } else {
-      BuildMI(MBB, I, dl, get(BF::MOVECC_zext), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(BF::MOVECC_zext), DestReg).addReg(SrcReg);
     }
     return true;
   }
@@ -167,21 +167,21 @@ bool BlackfinInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (inClass(BF::AnyCCRegClass, DestReg, DestRC) &&
       inClass(BF::DRegClass, SrcReg,  SrcRC)) {
     if (inClass(BF::NotCCRegClass, DestReg, DestRC))
-      BuildMI(MBB, I, dl, get(BF::SETEQri_not), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(BF::SETEQri_not), DestReg).addReg(SrcReg);
     else
-      BuildMI(MBB, I, dl, get(BF::MOVECC_nz), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(BF::MOVECC_nz), DestReg).addReg(SrcReg);
     return true;
   }
 
   if (inClass(BF::NotCCRegClass, DestReg, DestRC) &&
       inClass(BF::JustCCRegClass, SrcReg,  SrcRC)) {
-    BuildMI(MBB, I, dl, get(BF::MOVE_ncccc), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(BF::MOVE_ncccc), DestReg).addReg(SrcReg);
     return true;
   }
 
   if (inClass(BF::JustCCRegClass, DestReg, DestRC) &&
       inClass(BF::NotCCRegClass, SrcReg,  SrcRC)) {
-    BuildMI(MBB, I, dl, get(BF::MOVE_ccncc), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(BF::MOVE_ccncc), DestReg).addReg(SrcReg);
     return true;
   }
 
@@ -197,8 +197,7 @@ BlackfinInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        bool isKill,
                                        int FI,
                                        const TargetRegisterClass *RC) const {
-  DebugLoc DL = I != MBB.end() ?
-    I->getDebugLoc() : DebugLoc::getUnknownLoc();
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
 
   if (inClass(BF::DPRegClass, SrcReg, RC)) {
     BuildMI(MBB, I, DL, get(BF::STORE32fi))
@@ -244,8 +243,7 @@ BlackfinInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg,
                                         int FI,
                                         const TargetRegisterClass *RC) const {
-  DebugLoc DL = I != MBB.end() ?
-    I->getDebugLoc() : DebugLoc::getUnknownLoc();
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (inClass(BF::DPRegClass, DestReg, RC)) {
     BuildMI(MBB, I, DL, get(BF::LOAD32fi), DestReg)
       .addFrameIndex(FI)

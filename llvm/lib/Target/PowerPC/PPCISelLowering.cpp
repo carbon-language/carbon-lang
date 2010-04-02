@@ -1122,7 +1122,7 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg,
-                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
+                                 DebugLoc(), PtrVT), Hi);
   }
 
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
@@ -1155,7 +1155,7 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg,
-                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
+                                 DebugLoc(), PtrVT), Hi);
   }
 
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
@@ -1192,7 +1192,7 @@ SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, DL, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg,
-                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
+                                 DebugLoc(), PtrVT), Hi);
   }
 
   return DAG.getNode(ISD::ADD, DL, PtrVT, Hi, Lo);
@@ -1233,7 +1233,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg,
-                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
+                                 DebugLoc(), PtrVT), Hi);
   }
 
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);

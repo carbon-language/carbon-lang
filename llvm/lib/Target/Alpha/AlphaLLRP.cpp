@@ -49,7 +49,7 @@ namespace {
       const TargetInstrInfo *TII = F.getTarget().getInstrInfo();
       bool Changed = false;
       MachineInstr* prev[3] = {0,0,0};
-      DebugLoc dl = DebugLoc::getUnknownLoc();
+      DebugLoc dl;
       unsigned count = 0;
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI) {

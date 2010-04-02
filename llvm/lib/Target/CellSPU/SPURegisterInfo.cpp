@@ -452,8 +452,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  DebugLoc dl = (MBBI != MBB.end() ?
-                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
+  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   // Prepare for debug frame info.
   bool hasDebugInfo = MMI && MMI->hasDebugInfo();

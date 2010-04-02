@@ -106,7 +106,7 @@ isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const {
 /// instruction.
 void MBlazeInstrInfo::
 insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const {
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   BuildMI(MBB, MI, DL, get(MBlaze::NOP));
 }
@@ -116,8 +116,8 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              unsigned DestReg, unsigned SrcReg,
              const TargetRegisterClass *DestRC,
              const TargetRegisterClass *SrcRC) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
-  llvm::BuildMI(MBB, I, dl, get(MBlaze::ADD), DestReg)
+  DebugLoc DL;
+  llvm::BuildMI(MBB, I, DL, get(MBlaze::ADD), DestReg)
       .addReg(SrcReg).addReg(MBlaze::R0);
   return true;
 }
@@ -126,8 +126,8 @@ void MBlazeInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
-  BuildMI(MBB, I, dl, get(MBlaze::SWI)).addReg(SrcReg,getKillRegState(isKill))
+  DebugLoc DL;
+  BuildMI(MBB, I, DL, get(MBlaze::SWI)).addReg(SrcReg,getKillRegState(isKill))
     .addImm(0).addFrameIndex(FI);
 }
 
@@ -135,8 +135,8 @@ void MBlazeInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
-  BuildMI(MBB, I, dl, get(MBlaze::LWI), DestReg)
+  DebugLoc DL;
+  BuildMI(MBB, I, DL, get(MBlaze::LWI), DestReg)
       .addImm(0).addFrameIndex(FI);
 }
 
@@ -185,11 +185,9 @@ unsigned MBlazeInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
              MachineBasicBlock *FBB,
              const SmallVectorImpl<MachineOperand> &Cond) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
-
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, dl, get(MBlaze::BRI)).addMBB(TBB);
+  BuildMI(&MBB, DebugLoc(), get(MBlaze::BRI)).addMBB(TBB);
   return 1;
 }
 

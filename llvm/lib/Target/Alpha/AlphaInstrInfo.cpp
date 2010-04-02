@@ -112,7 +112,7 @@ unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                       MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc argument
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl;
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
          "Alpha branch conditions have two components!");
@@ -153,7 +153,7 @@ bool AlphaInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     return false;
   }
 
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   if (DestRC == Alpha::GPRCRegisterClass) {
@@ -185,7 +185,7 @@ AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   //     << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
 
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   if (RC == Alpha::F4RCRegisterClass)
@@ -211,7 +211,7 @@ AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterClass *RC) const {
   //cerr << "Trying to load " << getPrettyName(DestReg) << " to "
   //     << FrameIdx << "\n";
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   if (RC == Alpha::F4RCRegisterClass)
@@ -398,7 +398,7 @@ unsigned AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                                 MachineBasicBlock::iterator MI) const {
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   BuildMI(MBB, MI, DL, get(Alpha::BISr), Alpha::R31)
     .addReg(Alpha::R31)

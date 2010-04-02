@@ -1281,7 +1281,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl;
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
        !MF.getFunction()->doesNotThrow() ||
        UnwindTablesMandatory;
@@ -1521,7 +1521,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl;
 
   assert( (RetOpcode == PPC::BLR ||
            RetOpcode == PPC::TCRETURNri ||
