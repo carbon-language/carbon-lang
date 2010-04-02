@@ -221,15 +221,35 @@ License, a "BSD-style" license.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="dragonegg">DragonEgg: GCC-4.5 as an LLVM frontend</a>
+<a name="dragonegg">DragonEgg: llvm-gcc ported to gcc-4.5</a>
 </div>
 
 <div class="doc_text">
 <p>
-The goal of <a href="http://dragonegg.llvm.org/">DragonEgg</a> is to make
-gcc-4.5 act like llvm-gcc without requiring any gcc modifications whatsoever.
-<a href="http://dragonegg.llvm.org/">DragonEgg</a> is a shared library (dragonegg.so)
-that is loaded by gcc at runtime.  It ...
+<a href="http://dragonegg.llvm.org/">DragonEgg</a> is a port of llvm-gcc to
+gcc-4.5.  Unlike llvm-gcc, which makes many intrusive changes to the underlying
+gcc-4.2 code, dragonegg in theory does not require any gcc-4.5 modifications
+whatsoever (currently one small patch is needed).  This is thanks to the new
+<a href="http://gcc.gnu.org/wiki/plugins">gcc plugin architecture</a>, which
+makes it possible to modify the behaviour of gcc at runtime by loading a plugin,
+which is nothing more than a dynamic library which conforms to the gcc plugin
+interface.  DragonEgg is a gcc plugin that causes the LLVM optimizers to be run
+instead of the gcc optimizers, and the LLVM code generators instead of the gcc
+code generators, just like llvm-gcc.  To use it, you add
+"-fplugin=path/dragonegg.so" to the gcc-4.5 command line, and gcc-4.5 magically
+becomes llvm-gcc-4.5!
+</p>
+
+<p>
+DragonEgg is still a work in progress.  Currently C works very well, while C++,
+Ada and Fortran work fairly well.  All other languages either don't work at all,
+or only work poorly.  For the moment only the x86-32 and x86-64 targets are
+supported, and only on linux.
+</p>
+
+<p>
+DragonEgg has not yet been released.  Once gcc-4.5 has been released, dragonegg
+will probably be released as part of the following LLVM release.
 </p>
 
 </div>
