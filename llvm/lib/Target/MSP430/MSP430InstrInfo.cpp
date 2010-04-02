@@ -173,6 +173,8 @@ unsigned MSP430InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   while (I != MBB.begin()) {
     --I;
+    if (I->isDebugValue())
+      continue;
     if (I->getOpcode() != MSP430::JMP &&
         I->getOpcode() != MSP430::JCC)
       break;
@@ -241,6 +243,9 @@ bool MSP430InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   MachineBasicBlock::iterator I = MBB.end();
   while (I != MBB.begin()) {
     --I;
+    if (I->isDebugValue())
+      continue;
+
     // Working from the bottom, when we see a non-terminator
     // instruction, we're done.
     if (!isUnpredicatedTerminator(I))

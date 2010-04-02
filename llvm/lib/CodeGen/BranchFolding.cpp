@@ -972,15 +972,21 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
   // MBB1 doesn't, we prefer to fall through into MBB1.  This allows us to
   // optimize branches that branch to either a return block or an assert block
   // into a fallthrough to the return.
-  if (MBB1->empty() || MBB2->empty()) return false;
+  if (IsEmptyBlock(MBB1) || IsEmptyBlock(MBB2)) return false;
 
   // If there is a clear successor ordering we make sure that one block
   // will fall through to the next
   if (MBB1->isSuccessor(MBB2)) return true;
   if (MBB2->isSuccessor(MBB1)) return false;
 
-  MachineInstr *MBB1I = --MBB1->end();
-  MachineInstr *MBB2I = --MBB2->end();
+  // Neither block consists entirely of debug info (per IsEmptyBlock check),
+  // so we needn't test for falling off the beginning here.
+  MachineBasicBlock::iterator MBB1I = --MBB1->end();
+  while (MBB1I->isDebugValue())
+    --MBB1I;
+  MachineBasicBlock::iterator MBB2I = --MBB2->end();
+  while (MBB2I->isDebugValue())
+    --MBB2I;
   return MBB2I->getDesc().isCall() && !MBB1I->getDesc().isCall();
 }
 

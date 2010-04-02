@@ -450,7 +450,15 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                             bool AllowModify) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
+  if (I == MBB.begin())
+    return false;
+  --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return false;
+    --I;
+  }
+  if (!isUnpredicatedTerminator(I))
     return false;
 
   // Get the last instruction in the block.
@@ -513,6 +521,11 @@ SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   if (I == MBB.begin())
     return 0;
   --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return 0;
+    --I;
+  }
   if (!isCondBranch(I) && !isUncondBranch(I))
     return 0;
 

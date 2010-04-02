@@ -226,6 +226,11 @@ bool PIC16InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // Get the terminator instruction.
   --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return true;
+    --I;
+  }
   // Handle unconditional branches. If the unconditional branch's target is
   // successor basic block then remove the unconditional branch. 
   if (I->getOpcode() == PIC16::br_uncond  && AllowModify) {

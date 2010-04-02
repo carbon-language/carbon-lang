@@ -1686,6 +1686,8 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   MachineBasicBlock::iterator I = MBB.end();
   while (I != MBB.begin()) {
     --I;
+    if (I->isDebugValue())
+      continue;
 
     // Working from the bottom, when we see a non-terminator instruction, we're
     // done.
@@ -1782,6 +1784,8 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   while (I != MBB.begin()) {
     --I;
+    if (I->isDebugValue())
+      continue;
     if (I->getOpcode() != X86::JMP_4 &&
         GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
       break;
