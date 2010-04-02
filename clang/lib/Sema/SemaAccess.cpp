@@ -370,10 +370,6 @@ static Sema::AccessResult MatchesFriend(Sema &S,
 static Sema::AccessResult GetFriendKind(Sema &S,
                                         const EffectiveContext &EC,
                                         const CXXRecordDecl *Class) {
-  // A class always has access to its own members.
-  if (EC.includesClass(Class))
-    return Sema::AR_accessible;
-
   Sema::AccessResult OnFailure = Sema::AR_inaccessible;
 
   // Okay, check friends.
@@ -401,8 +397,87 @@ static Sema::AccessResult GetFriendKind(Sema &S,
   return OnFailure;
 }
 
+static Sema::AccessResult HasAccess(Sema &S,
+                                    const EffectiveContext &EC,
+                                    const CXXRecordDecl *NamingClass,
+                                    AccessSpecifier Access) {
+  assert(NamingClass->getCanonicalDecl() == NamingClass &&
+         "declaration should be canonicalized before being passed here");
+
+  if (Access == AS_public) return Sema::AR_accessible;
+  assert(Access == AS_private || Access == AS_protected);
+
+  for (EffectiveContext::record_iterator
+         I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
+    // All the declarations in EC have been canonicalized, so pointer
+    // equality from this point on will work fine.
+    const CXXRecordDecl *ECRecord = *I;
+
+    // [B2] and [M2]
+    if (ECRecord == NamingClass)
+      return Sema::AR_accessible;
+
+    // [B3] and [M3]
+    if (Access == AS_protected &&
+        ECRecord->isDerivedFrom(const_cast<CXXRecordDecl*>(NamingClass)))
+      return Sema::AR_accessible;
+  }
+
+  return GetFriendKind(S, EC, NamingClass);
+}
+
 /// Finds the best path from the naming class to the declaring class,
 /// taking friend declarations into account.
+///
+/// C++0x [class.access.base]p5:
+///   A member m is accessible at the point R when named in class N if
+///   [M1] m as a member of N is public, or
+///   [M2] m as a member of N is private, and R occurs in a member or
+///        friend of class N, or
+///   [M3] m as a member of N is protected, and R occurs in a member or
+///        friend of class N, or in a member or friend of a class P
+///        derived from N, where m as a member of P is public, private,
+///        or protected, or
+///   [M4] there exists a base class B of N that is accessible at R, and
+///        m is accessible at R when named in class B.
+///
+/// C++0x [class.access.base]p4:
+///   A base class B of N is accessible at R, if
+///   [B1] an invented public member of B would be a public member of N, or
+///   [B2] R occurs in a member or friend of class N, and an invented public
+///        member of B would be a private or protected member of N, or
+///   [B3] R occurs in a member or friend of a class P derived from N, and an
+///        invented public member of B would be a private or protected member
+///        of P, or
+///   [B4] there exists a class S such that B is a base class of S accessible
+///        at R and S is a base class of N accessible at R.
+///
+/// Along a single inheritance path we can restate both of these
+/// iteratively:
+///
+/// First, we note that M1-4 are equivalent to B1-4 if the member is
+/// treated as a notional base of its declaring class with inheritance
+/// access equivalent to the member's access.  Therefore we need only
+/// ask whether a class B is accessible from a class N in context R.
+///
+/// Let B_1 .. B_n be the inheritance path in question (i.e. where
+/// B_1 = N, B_n = B, and for all i, B_{i+1} is a direct base class of
+/// B_i).  For i in 1..n, we will calculate ACAB(i), the access to the
+/// closest accessible base in the path:
+///   Access(a, b) = (* access on the base specifier from a to b *)
+///   Merge(a, forbidden) = forbidden
+///   Merge(a, private) = forbidden
+///   Merge(a, b) = min(a,b)
+///   Accessible(c, forbidden) = false
+///   Accessible(c, private) = (R is c) || IsFriend(c, R)
+///   Accessible(c, protected) = (R derived from c) || IsFriend(c, R)
+///   Accessible(c, public) = true
+///   ACAB(n) = public
+///   ACAB(i) =
+///     let AccessToBase = Merge(Access(B_i, B_{i+1}), ACAB(i+1)) in
+///     if Accessible(B_i, AccessToBase) then public else AccessToBase
+///
+/// B is an accessible base of N at R iff ACAB(1) = public.
 ///
 /// \param FinalAccess the access of the "final step", or AS_none if
 ///   there is no final step.
@@ -445,20 +520,15 @@ static CXXBasePath *FindBestPath(Sema &S,
       }
 
       AccessSpecifier BaseAccess = I->Base->getAccessSpecifier();
-      if (BaseAccess != AS_public || PathAccess != AS_public) {
-        switch (GetFriendKind(S, EC, I->Class)) {
-        case Sema::AR_inaccessible:
-          PathAccess = CXXRecordDecl::MergeAccess(BaseAccess, PathAccess);
-          break;
-        case Sema::AR_accessible:
-          PathAccess = AS_public;
-          break;
-        case Sema::AR_dependent:
-          AnyDependent = true;
-          goto Next;
-        case Sema::AR_delayed:
-          llvm_unreachable("friend resolution is never delayed"); break;
-        }
+      PathAccess = std::max(PathAccess, BaseAccess);
+      switch (HasAccess(S, EC, I->Class, PathAccess)) {
+      case Sema::AR_inaccessible: break;
+      case Sema::AR_accessible: PathAccess = AS_public; break;
+      case Sema::AR_dependent:
+        AnyDependent = true;
+        goto Next;
+      case Sema::AR_delayed:
+        llvm_unreachable("friend resolution is never delayed"); break;
       }
     }
 
@@ -491,16 +561,27 @@ static CXXBasePath *FindBestPath(Sema &S,
 /// to become inaccessible.
 static void DiagnoseAccessPath(Sema &S,
                                const EffectiveContext &EC,
-                               CXXRecordDecl *NamingClass,
-                               CXXRecordDecl *DeclaringClass,
-                               NamedDecl *D, AccessSpecifier Access) {
+                               const Sema::AccessedEntity &Entity) {
+  AccessSpecifier Access = Entity.getAccess();
+  CXXRecordDecl *NamingClass = Entity.getNamingClass();
+  NamingClass = NamingClass->getCanonicalDecl();
+
+  NamedDecl *D;
+  CXXRecordDecl *DeclaringClass;
+  if (Entity.isMemberAccess()) {
+    D = Entity.getTargetDecl();
+    DeclaringClass = FindDeclaringClass(D);
+  } else {
+    D = 0;
+    DeclaringClass = Entity.getBaseClass();
+  }
+  DeclaringClass = DeclaringClass->getCanonicalDecl();
+
   // Easy case: the decl's natural access determined its path access.
   // We have to check against AS_private here in case Access is AS_none,
   // indicating a non-public member of a private base class.
-  //
-  // DependentFriend should be impossible here.
   if (D && (Access == D->getAccess() || D->getAccess() == AS_private)) {
-    switch (GetFriendKind(S, EC, DeclaringClass)) {
+    switch (HasAccess(S, EC, DeclaringClass, D->getAccess())) {
     case Sema::AR_inaccessible: {
       S.Diag(D->getLocation(), diag::note_access_natural)
         << (unsigned) (Access == AS_protected)
@@ -566,101 +647,113 @@ static void DiagnoseAccessPath(Sema &S,
   llvm_unreachable("access not apparently constrained by path");
 }
 
-/// Diagnose an inaccessible class member.
-static void DiagnoseInaccessibleMember(Sema &S, SourceLocation Loc,
-                                       const EffectiveContext &EC,
-                                       CXXRecordDecl *NamingClass,
-                                       AccessSpecifier Access,
-                                       const Sema::AccessedEntity &Entity) {
-  NamedDecl *D = Entity.getTargetDecl();
-  CXXRecordDecl *DeclaringClass = FindDeclaringClass(D);
-
-  S.Diag(Loc, Entity.getDiag())
-    << (Access == AS_protected)
-    << D->getDeclName()
-    << S.Context.getTypeDeclType(NamingClass)
-    << S.Context.getTypeDeclType(DeclaringClass);
-  DiagnoseAccessPath(S, EC, NamingClass, DeclaringClass, D, Access);
-}
-
-/// Diagnose an inaccessible hierarchy conversion.
-static void DiagnoseInaccessibleBase(Sema &S, SourceLocation Loc,
-                                     const EffectiveContext &EC,
-                                     AccessSpecifier Access,
-                                     const Sema::AccessedEntity &Entity) {
-  S.Diag(Loc, Entity.getDiag())
-    << (Access == AS_protected)
-    << DeclarationName()
-    << S.Context.getTypeDeclType(Entity.getDerivedClass())
-    << S.Context.getTypeDeclType(Entity.getBaseClass());
-  DiagnoseAccessPath(S, EC, Entity.getDerivedClass(),
-                     Entity.getBaseClass(), 0, Access);
-}
-
 static void DiagnoseBadAccess(Sema &S, SourceLocation Loc,
                               const EffectiveContext &EC,
-                              CXXRecordDecl *NamingClass,
-                              AccessSpecifier Access,
                               const Sema::AccessedEntity &Entity) {
-  if (Entity.isMemberAccess())
-    DiagnoseInaccessibleMember(S, Loc, EC, NamingClass, Access, Entity);
-  else
-    DiagnoseInaccessibleBase(S, Loc, EC, Access, Entity);
+  const CXXRecordDecl *NamingClass = Entity.getNamingClass();
+  NamedDecl *D;
+  const CXXRecordDecl *DeclaringClass;
+  if (Entity.isMemberAccess()) {
+    D = Entity.getTargetDecl();
+    DeclaringClass = FindDeclaringClass(D);
+  } else {
+    D = 0;
+    DeclaringClass = Entity.getBaseClass();
+  }
+
+  S.Diag(Loc, Entity.getDiag())
+    << (Entity.getAccess() == AS_protected)
+    << (D ? D->getDeclName() : DeclarationName())
+    << S.Context.getTypeDeclType(NamingClass)
+    << S.Context.getTypeDeclType(DeclaringClass);
+  DiagnoseAccessPath(S, EC, Entity);
 }
 
+/// Determines whether the accessed entity is accessible.  Public members
+/// have been weeded out by this point.
+static Sema::AccessResult IsAccessible(Sema &S,
+                                       const EffectiveContext &EC,
+                                       const Sema::AccessedEntity &Entity) {
+  // Determine the actual naming class.
+  CXXRecordDecl *NamingClass = Entity.getNamingClass();
+  while (NamingClass->isAnonymousStructOrUnion())
+    NamingClass = cast<CXXRecordDecl>(NamingClass->getParent());
+  NamingClass = NamingClass->getCanonicalDecl();
 
-/// Try to elevate access using friend declarations.  This is
-/// potentially quite expensive.
-///
-/// \return true if elevation was dependent
-static bool TryElevateAccess(Sema &S,
-                             const EffectiveContext &EC,
-                             const Sema::AccessedEntity &Entity,
-                             AccessSpecifier &Access) {
+  AccessSpecifier UnprivilegedAccess = Entity.getAccess();
+  assert(UnprivilegedAccess != AS_public && "public access not weeded out");
+
+  // Before we try to recalculate access paths, try to white-list
+  // accesses which just trade in on the final step, i.e. accesses
+  // which don't require [M4] or [B4]. These are by far the most
+  // common forms of access.
+  if (UnprivilegedAccess != AS_none) {
+    switch (HasAccess(S, EC, NamingClass, UnprivilegedAccess)) {
+    case Sema::AR_dependent:
+      // This is actually an interesting policy decision.  We don't
+      // *have* to delay immediately here: we can do the full access
+      // calculation in the hope that friendship on some intermediate
+      // class will make the declaration accessible non-dependently.
+      // But that's not cheap, and odds are very good (note: assertion
+      // made without data) that the friend declaration will determine
+      // access.
+      return Sema::AR_dependent;
+
+    case Sema::AR_accessible: return Sema::AR_accessible;
+    case Sema::AR_inaccessible: break;
+    case Sema::AR_delayed:
+      llvm_unreachable("friendship never subject to contextual delay");
+    }
+  }
+
+  // Determine the declaring class.
   CXXRecordDecl *DeclaringClass;
   if (Entity.isMemberAccess()) {
     DeclaringClass = FindDeclaringClass(Entity.getTargetDecl());
   } else {
     DeclaringClass = Entity.getBaseClass();
   }
-  CXXRecordDecl *NamingClass = Entity.getNamingClass();
+  DeclaringClass = DeclaringClass->getCanonicalDecl();
 
-  // Adjust the declaration of the referred entity.
-  AccessSpecifier DeclAccess = AS_public;
+  // We lower member accesses to base accesses by pretending that the
+  // member is a base class of its declaring class.
+  AccessSpecifier FinalAccess;
+
   if (Entity.isMemberAccess()) {
+    // Determine if the declaration is accessible from EC when named
+    // in its declaring class.
     NamedDecl *Target = Entity.getTargetDecl();
 
-    DeclAccess = Target->getAccess();
-    if (DeclAccess != AS_public) {
-      switch (GetFriendKind(S, EC, DeclaringClass)) {
-      case Sema::AR_accessible: DeclAccess = AS_public; break;
-      case Sema::AR_inaccessible: break;
-      case Sema::AR_dependent: return true;
-      case Sema::AR_delayed: llvm_unreachable("friend status is never delayed");
-      }
+    FinalAccess = Target->getAccess();
+    switch (HasAccess(S, EC, DeclaringClass, FinalAccess)) {
+    case Sema::AR_accessible: FinalAccess = AS_public; break;
+    case Sema::AR_inaccessible: break;
+    case Sema::AR_dependent: return Sema::AR_dependent; // see above
+    case Sema::AR_delayed: llvm_unreachable("friend status is never delayed");
     }
 
-    if (DeclaringClass == NamingClass) {
-      Access = DeclAccess;
-      return false;
-    }
+    if (DeclaringClass == NamingClass)
+      return (FinalAccess == AS_public
+              ? Sema::AR_accessible
+              : Sema::AR_inaccessible);
+  } else {
+    FinalAccess = AS_public;
   }
 
   assert(DeclaringClass != NamingClass);
 
   // Append the declaration's access if applicable.
   CXXBasePaths Paths;
-  CXXBasePath *Path = FindBestPath(S, EC, Entity.getNamingClass(),
-                                   DeclaringClass, DeclAccess, Paths);
+  CXXBasePath *Path = FindBestPath(S, EC, NamingClass, DeclaringClass,
+                                   FinalAccess, Paths);
   if (!Path)
-    return true;
+    return Sema::AR_dependent;
 
-  // Grab the access along the best path (note that this includes the
-  // final-step access).
-  AccessSpecifier NewAccess = Path->Access;
-  assert(NewAccess <= Access && "access along best path worse than direct?");
-  Access = NewAccess;
-  return false;
+  assert(Path->Access <= UnprivilegedAccess &&
+         "access along best path worse than direct?");
+  if (Path->Access == AS_public)
+    return Sema::AR_accessible;
+  return Sema::AR_inaccessible;
 }
 
 static void DelayAccess(Sema &S,
@@ -683,47 +776,37 @@ static void DelayAccess(Sema &S,
 static Sema::AccessResult CheckEffectiveAccess(Sema &S,
                                                const EffectiveContext &EC,
                                                SourceLocation Loc,
-                                         Sema::AccessedEntity const &Entity) {
-  AccessSpecifier Access = Entity.getAccess();
-  assert(Access != AS_public && "called for public access!");
+                                         const Sema::AccessedEntity &Entity) {
+  assert(Entity.getAccess() != AS_public && "called for public access!");
 
-  // Find a non-anonymous naming class.  For records with access,
-  // there should always be one of these.
-  CXXRecordDecl *NamingClass = Entity.getNamingClass();
-  while (NamingClass->isAnonymousStructOrUnion())
-    NamingClass = cast<CXXRecordDecl>(NamingClass->getParent());
-
-  // White-list accesses from classes with privileges equivalent to the
-  // naming class --- but only if the access path isn't forbidden
-  // (i.e. an access of a private member from a subclass).
-  if (Access != AS_none && EC.includesClass(NamingClass))
-    return Sema::AR_accessible;
-
-  // Try to elevate access.
-  // TODO: on some code, it might be better to do the protected check
-  // without trying to elevate first.
-  if (TryElevateAccess(S, EC, Entity, Access)) {
+  switch (IsAccessible(S, EC, Entity)) {
+  case Sema::AR_dependent:
     DelayAccess(S, EC, Loc, Entity);
     return Sema::AR_dependent;
+
+  case Sema::AR_delayed:
+    llvm_unreachable("IsAccessible cannot contextually delay");
+
+  case Sema::AR_inaccessible:
+    if (!Entity.isQuiet())
+      DiagnoseBadAccess(S, Loc, EC, Entity);
+    return Sema::AR_inaccessible;
+
+  case Sema::AR_accessible:
+    break;
   }
 
-  if (Access == AS_public) return Sema::AR_accessible;
-
-  // Protected access.
-  if (Access == AS_protected) {
-    // FIXME: implement [class.protected]p1
-    for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
-           I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I)
-      if ((*I)->isDerivedFrom(NamingClass))
-        return Sema::AR_accessible;
-
-    // FIXME: delay if we can't decide class derivation yet.
+  // We only consider the natural access of the declaration when
+  // deciding whether to do the protected check.
+  if (Entity.isMemberAccess() && Entity.getAccess() == AS_protected) {
+    NamedDecl *D = Entity.getTargetDecl();
+    if (isa<FieldDecl>(D) ||
+        (isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance())) {
+      // FIXME: implement [class.protected]
+    }
   }
 
-  // Okay, that's it, reject it.
-  if (!Entity.isQuiet())
-    DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity);
-  return Sema::AR_inaccessible;
+  return Sema::AR_accessible;
 }
 
 static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
