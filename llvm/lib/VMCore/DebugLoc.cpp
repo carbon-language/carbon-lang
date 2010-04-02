@@ -15,7 +15,7 @@ using namespace llvm;
 // DebugLoc Implementation
 //===----------------------------------------------------------------------===//
 
-MDNode *NewDebugLoc::getScope(const LLVMContext &Ctx) const {
+MDNode *DebugLoc::getScope(const LLVMContext &Ctx) const {
   if (ScopeIdx == 0) return 0;
   
   if (ScopeIdx > 0) {
@@ -32,7 +32,7 @@ MDNode *NewDebugLoc::getScope(const LLVMContext &Ctx) const {
   return Ctx.pImpl->ScopeInlinedAtRecords[-ScopeIdx-1].first.get();
 }
 
-MDNode *NewDebugLoc::getInlinedAt(const LLVMContext &Ctx) const {
+MDNode *DebugLoc::getInlinedAt(const LLVMContext &Ctx) const {
   // Positive ScopeIdx is an index into ScopeRecords, which has no inlined-at
   // position specified.  Zero is invalid.
   if (ScopeIdx >= 0) return 0;
@@ -44,8 +44,8 @@ MDNode *NewDebugLoc::getInlinedAt(const LLVMContext &Ctx) const {
 }
 
 /// Return both the Scope and the InlinedAt values.
-void NewDebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
-                                       const LLVMContext &Ctx) const {
+void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
+                                    const LLVMContext &Ctx) const {
   if (ScopeIdx == 0) {
     Scope = IA = 0;
     return;
@@ -69,9 +69,9 @@ void NewDebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
 }
 
 
-NewDebugLoc NewDebugLoc::get(unsigned Line, unsigned Col,
-                             MDNode *Scope, MDNode *InlinedAt) {
-  NewDebugLoc Result;
+DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
+                       MDNode *Scope, MDNode *InlinedAt) {
+  DebugLoc Result;
   
   // If no scope is available, this is an unknown location.
   if (Scope == 0) return Result;
@@ -95,7 +95,7 @@ NewDebugLoc NewDebugLoc::get(unsigned Line, unsigned Col,
 
 /// getAsMDNode - This method converts the compressed DebugLoc node into a
 /// DILocation compatible MDNode.
-MDNode *NewDebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
+MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
   if (isUnknown()) return 0;
   
   MDNode *Scope, *IA;
@@ -111,12 +111,12 @@ MDNode *NewDebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
   return MDNode::get(Ctx2, &Elts[0], 4);
 }
 
-/// getFromDILocation - Translate the DILocation quad into a NewDebugLoc.
-NewDebugLoc NewDebugLoc::getFromDILocation(MDNode *N) {
-  if (N == 0 || N->getNumOperands() != 4) return NewDebugLoc();
+/// getFromDILocation - Translate the DILocation quad into a DebugLoc.
+DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
+  if (N == 0 || N->getNumOperands() != 4) return DebugLoc();
   
   MDNode *Scope = dyn_cast_or_null<MDNode>(N->getOperand(2));
-  if (Scope == 0) return NewDebugLoc();
+  if (Scope == 0) return DebugLoc();
   
   unsigned LineNo = 0, ColNo = 0;
   if (ConstantInt *Line = dyn_cast_or_null<ConstantInt>(N->getOperand(0)))

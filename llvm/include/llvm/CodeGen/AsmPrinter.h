@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class BlockAddress;

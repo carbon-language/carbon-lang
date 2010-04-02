@@ -425,7 +425,7 @@ MDNode *Instruction::getMetadataImpl(const char *Kind) const {
 }
 
 void Instruction::setDbgMetadata(MDNode *Node) {
-  DbgLoc = NewDebugLoc::getFromDILocation(Node);
+  DbgLoc = DebugLoc::getFromDILocation(Node);
 }
 
 /// setMetadata - Set the metadata of of the specified kind to the specified
@@ -436,7 +436,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
 
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg) {
-    DbgLoc = NewDebugLoc::getFromDILocation(Node);
+    DbgLoc = DebugLoc::getFromDILocation(Node);
     return;
   }
   
@@ -549,7 +549,7 @@ getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
 /// removeAllMetadata - Remove all metadata from this instruction.
 void Instruction::removeAllMetadata() {
   assert(hasMetadata() && "Caller should check");
-  DbgLoc = NewDebugLoc();
+  DbgLoc = DebugLoc();
   if (hasMetadataHashEntry()) {
     getContext().pImpl->MetadataStore.erase(this);
     setHasMetadataHashEntry(false);

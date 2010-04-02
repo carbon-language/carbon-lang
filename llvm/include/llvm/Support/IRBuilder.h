@@ -40,7 +40,7 @@ protected:
 
 /// IRBuilderBase - Common base class shared among various IRBuilders.
 class IRBuilderBase {
-  NewDebugLoc CurDbgLocation;
+  DebugLoc CurDbgLocation;
 protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
@@ -82,13 +82,13 @@ public:
   
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
-  void SetCurrentDebugLocation(const NewDebugLoc &L) {
+  void SetCurrentDebugLocation(const DebugLoc &L) {
     CurDbgLocation = L;
   }
   
   /// getCurrentDebugLocation - Get location information used by debugging
   /// information.
-  const NewDebugLoc &getCurrentDebugLocation() const { return CurDbgLocation; }
+  const DebugLoc &getCurrentDebugLocation() const { return CurDbgLocation; }
   
   /// SetInstDebugLocation - If this builder has a current debug location, set
   /// it on the specified instruction.

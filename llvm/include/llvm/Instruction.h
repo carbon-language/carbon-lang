@@ -32,7 +32,7 @@ class Instruction : public User, public ilist_node<Instruction> {
   Instruction(const Instruction &);        // Do not implement
 
   BasicBlock *Parent;
-  NewDebugLoc DbgLoc;                      // 'dbg' Metadata cache.
+  DebugLoc DbgLoc;                         // 'dbg' Metadata cache.
   
   enum {
     /// HasMetadataBit - This is a bit stored in the SubClassData field which
@@ -181,10 +181,10 @@ public:
   }
 
   /// setDebugLoc - Set the debug location information for this instruction.
-  void setDebugLoc(const NewDebugLoc &Loc) { DbgLoc = Loc; }
+  void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }
   
   /// getDebugLoc - Return the debug location for this node as a DebugLoc.
-  const NewDebugLoc &getDebugLoc() const { return DbgLoc; }
+  const DebugLoc &getDebugLoc() const { return DbgLoc; }
   
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side

@@ -1671,7 +1671,7 @@ void LLVMDisposeBuilder(LLVMBuilderRef Builder) {
 
 void LLVMSetCurrentDebugLocation(LLVMBuilderRef Builder, LLVMValueRef L) {
   MDNode *Loc = L ? unwrap<MDNode>(L) : NULL;
-  unwrap(Builder)->SetCurrentDebugLocation(NewDebugLoc::getFromDILocation(Loc));
+  unwrap(Builder)->SetCurrentDebugLocation(DebugLoc::getFromDILocation(Loc));
 }
 
 LLVMValueRef LLVMGetCurrentDebugLocation(LLVMBuilderRef Builder) {
