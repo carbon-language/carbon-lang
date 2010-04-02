@@ -39,40 +39,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-namespace {
-  struct Printer : public MachineFunctionPass {
-    static char ID;
-
-    raw_ostream &OS;
-    const std::string Banner;
-
-    Printer(raw_ostream &os, const std::string &banner) 
-      : MachineFunctionPass(&ID), OS(os), Banner(banner) {}
-
-    const char *getPassName() const { return "MachineFunction Printer"; }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
-
-    bool runOnMachineFunction(MachineFunction &MF) {
-      OS << "# " << Banner << ":\n";
-      MF.print(OS);
-      return false;
-    }
-  };
-  char Printer::ID = 0;
-}
-
-/// Returns a newly-created MachineFunction Printer pass. The default banner is
-/// empty.
-///
-FunctionPass *llvm::createMachineFunctionPrinterPass(raw_ostream &OS,
-                                                     const std::string &Banner){
-  return new Printer(OS, Banner);
-}
-
 //===----------------------------------------------------------------------===//
 // MachineFunction implementation
 //===----------------------------------------------------------------------===//
