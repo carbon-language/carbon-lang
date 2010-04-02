@@ -223,6 +223,8 @@ public:
     : Opcode(opc), Format(format), NumOps(num), Algo(algo), SP(0)
   {}
 
+  virtual ~ARMBasicMCBuilder() {}
+
   void setSession(Session *sp) {
     SP = sp;
   }
