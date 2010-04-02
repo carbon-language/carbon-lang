@@ -794,9 +794,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
-    // FIXME: This produces lots of inefficiencies in isel since
-    // we then need notice that most of our operands have been implicitly
-    // converted to v2i64.
     for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v2i64; i++) {
       MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
       EVT VT = SVT;
