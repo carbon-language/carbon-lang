@@ -182,6 +182,8 @@ def err_unexected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier">;
 
 /// Objective-C parser diagnostics
+def err_expected_minus_or_plus : Error<
+  "method type specifier must start with '-' or '+'">;
 def err_objc_no_attributes_on_category : Error<
   "attributes may not be specified on a category">;
 def err_objc_missing_end : Error<"missing @end">;
