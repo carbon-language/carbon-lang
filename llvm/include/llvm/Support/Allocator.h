@@ -200,7 +200,7 @@ public:
     while (Slab) {
       char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr :
                                               (char *)Slab + Slab->Size;
-      for (char *Ptr = (char*)Slab+1; Ptr < End; Ptr += sizeof(T)) {
+      for (char *Ptr = (char*)(Slab+1); Ptr < End; Ptr += sizeof(T)) {
         Ptr = Allocator.AlignPtr(Ptr, alignof<T>());
 	if (Ptr + sizeof(T) <= End)
           reinterpret_cast<T*>(Ptr)->~T();
