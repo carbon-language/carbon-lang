@@ -1390,9 +1390,9 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
   PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
 
   llvm::MDNode *Scope = RegionStack.back();
-  Builder.SetCurrentDebugLocation(llvm::NewDebugLoc::get(PLoc.getLine(),
-                                                         PLoc.getColumn(),
-                                                         Scope));
+  Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(PLoc.getLine(),
+                                                      PLoc.getColumn(),
+                                                      Scope));
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -1596,7 +1596,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
 
   llvm::MDNode *Scope = RegionStack.back();
-  Call->setDebugLoc(llvm::NewDebugLoc::get(Line, Column, Scope));
+  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -1660,7 +1660,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
   
   llvm::MDNode *Scope = RegionStack.back();
-  Call->setDebugLoc(llvm::NewDebugLoc::get(Line, PLoc.getColumn(), Scope));
+  Call->setDebugLoc(llvm::DebugLoc::get(Line, PLoc.getColumn(), Scope));
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
