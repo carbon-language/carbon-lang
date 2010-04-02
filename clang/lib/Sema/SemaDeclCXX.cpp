@@ -1430,6 +1430,21 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
                                   unsigned NumInitializers,
                                   bool AnyErrors) {
+  if (Constructor->isDependentContext()) {
+    // Just store the initializers as written, they will be checked during
+    // instantiation.
+    if (NumInitializers > 0) {
+      Constructor->setNumBaseOrMemberInitializers(NumInitializers);
+      CXXBaseOrMemberInitializer **baseOrMemberInitializers =
+        new (Context) CXXBaseOrMemberInitializer*[NumInitializers];
+      memcpy(baseOrMemberInitializers, Initializers,
+             NumInitializers * sizeof(CXXBaseOrMemberInitializer*));
+      Constructor->setBaseOrMemberInitializers(baseOrMemberInitializers);
+    }
+    
+    return false;
+  }
+
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
   CXXRecordDecl *ClassDecl = Constructor->getParent()->getDefinition();
@@ -1438,127 +1453,82 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
   
   llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
   llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
-  bool HasDependentBaseInit = false;
   bool HadError = false;
 
   for (unsigned i = 0; i < NumInitializers; i++) {
     CXXBaseOrMemberInitializer *Member = Initializers[i];
-    if (Member->isBaseInitializer()) {
-      if (Member->getBaseClass()->isDependentType())
-        HasDependentBaseInit = true;
+    
+    if (Member->isBaseInitializer())
       AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
-    } else {
+    else
       AllBaseFields[Member->getMember()] = Member;
+  }
+
+  llvm::SmallVector<CXXBaseSpecifier *, 4> BasesToDefaultInit;
+
+  // Push virtual bases before others.
+  for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+
+    if (CXXBaseOrMemberInitializer *Value
+        = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
+      AllToInit.push_back(Value);
+    } else if (!AnyErrors) {
+      InitializedEntity InitEntity
+        = InitializedEntity::InitializeBase(Context, VBase);
+      InitializationKind InitKind
+        = InitializationKind::CreateDefault(Constructor->getLocation());
+      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
+      OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
+                                                  MultiExprArg(*this, 0, 0));
+      BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
+      if (BaseInit.isInvalid()) {
+        HadError = true;
+        continue;
+      }
+        
+      CXXBaseOrMemberInitializer *CXXBaseInit =
+        new (Context) CXXBaseOrMemberInitializer(Context,
+                           Context.getTrivialTypeSourceInfo(VBase->getType(), 
+                                                            SourceLocation()),
+                                                 SourceLocation(),
+                                                 BaseInit.takeAs<Expr>(),
+                                                 SourceLocation());
+      AllToInit.push_back(CXXBaseInit);
     }
   }
 
-  if (HasDependentBaseInit) {
-    // FIXME. This does not preserve the ordering of the initializers.
-    // Try (with -Wreorder)
-    // template<class X> struct A {};
-    // template<class X> struct B : A<X> {
-    //   B() : x1(10), A<X>() {}
-    //   int x1;
-    // };
-    // B<int> x;
-    // On seeing one dependent type, we should essentially exit this routine
-    // while preserving user-declared initializer list. When this routine is
-    // called during instantiatiation process, this routine will rebuild the
-    // ordered initializer list correctly.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
+    // Virtuals are in the virtual base list and already constructed.
+    if (Base->isVirtual())
+      continue;
 
-    // If we have a dependent base initialization, we can't determine the
-    // association between initializers and bases; just dump the known
-    // initializers into the list, and don't try to deal with other bases.
-    for (unsigned i = 0; i < NumInitializers; i++) {
-      CXXBaseOrMemberInitializer *Member = Initializers[i];
-      if (Member->isBaseInitializer())
-        AllToInit.push_back(Member);
-    }
-  } else {
-    llvm::SmallVector<CXXBaseSpecifier *, 4> BasesToDefaultInit;
-    
-    // Push virtual bases before others.
-    for (CXXRecordDecl::base_class_iterator VBase =
-         ClassDecl->vbases_begin(),
-         E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-      if (VBase->getType()->isDependentType())
+    if (CXXBaseOrMemberInitializer *Value
+          = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
+      AllToInit.push_back(Value);
+    } else if (!AnyErrors) {
+      InitializedEntity InitEntity
+        = InitializedEntity::InitializeBase(Context, Base);
+      InitializationKind InitKind
+        = InitializationKind::CreateDefault(Constructor->getLocation());
+      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
+      OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
+                                                  MultiExprArg(*this, 0, 0));
+      BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
+      if (BaseInit.isInvalid()) {
+        HadError = true;
         continue;
-      if (CXXBaseOrMemberInitializer *Value
-            = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
-        AllToInit.push_back(Value);
-      } else if (!AnyErrors) {
-        InitializedEntity InitEntity
-          = InitializedEntity::InitializeBase(Context, VBase);
-        InitializationKind InitKind
-          = InitializationKind::CreateDefault(Constructor->getLocation());
-        InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
-        OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
-                                                    MultiExprArg(*this, 0, 0));
-        BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
-        if (BaseInit.isInvalid()) {
-          HadError = true;
-          continue;
-        }
+      }
 
-        // Don't attach synthesized base initializers in a dependent
-        // context; they'll be checked again at template instantiation
-        // time.
-        if (CurContext->isDependentContext())
-          continue;
-        
-        CXXBaseOrMemberInitializer *CXXBaseInit =
-          new (Context) CXXBaseOrMemberInitializer(Context,
-                             Context.getTrivialTypeSourceInfo(VBase->getType(), 
-                                                              SourceLocation()),
-                                                   SourceLocation(),
-                                                   BaseInit.takeAs<Expr>(),
-                                                   SourceLocation());
-        AllToInit.push_back(CXXBaseInit);
-      }
-    }
-
-    for (CXXRecordDecl::base_class_iterator Base =
-         ClassDecl->bases_begin(),
-         E = ClassDecl->bases_end(); Base != E; ++Base) {
-      // Virtuals are in the virtual base list and already constructed.
-      if (Base->isVirtual())
-        continue;
-      // Skip dependent types.
-      if (Base->getType()->isDependentType())
-        continue;
-      if (CXXBaseOrMemberInitializer *Value
-            = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
-        AllToInit.push_back(Value);
-      }
-      else if (!AnyErrors) {
-        InitializedEntity InitEntity
-          = InitializedEntity::InitializeBase(Context, Base);
-        InitializationKind InitKind
-          = InitializationKind::CreateDefault(Constructor->getLocation());
-        InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
-        OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
-                                                    MultiExprArg(*this, 0, 0));
-        BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
-        if (BaseInit.isInvalid()) {
-          HadError = true;
-          continue;
-        }
-        
-        // Don't attach synthesized base initializers in a dependent
-        // context; they'll be regenerated at template instantiation
-        // time.
-        if (CurContext->isDependentContext())
-          continue;
-        
-        CXXBaseOrMemberInitializer *CXXBaseInit =
-          new (Context) CXXBaseOrMemberInitializer(Context,
-                             Context.getTrivialTypeSourceInfo(Base->getType(), 
-                                                              SourceLocation()),
-                                                   SourceLocation(),
-                                                   BaseInit.takeAs<Expr>(),
-                                                   SourceLocation());
-        AllToInit.push_back(CXXBaseInit);
-      }
+      CXXBaseOrMemberInitializer *CXXBaseInit =
+        new (Context) CXXBaseOrMemberInitializer(Context,
+                           Context.getTrivialTypeSourceInfo(Base->getType(), 
+                                                            SourceLocation()),
+                                                 SourceLocation(),
+                                                 BaseInit.takeAs<Expr>(),
+                                                 SourceLocation());
+      AllToInit.push_back(CXXBaseInit);
     }
   }
 

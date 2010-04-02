@@ -10,14 +10,14 @@ A<int> a0;
 A<void*> a1; // expected-note{{in instantiation of member function 'A<void *>::A' requested here}}
 
 template<typename T> struct B {
-  // FIXME: This should warn about initialization order
-  B() : b(1), a(2) { }
+  B() : b(1), // expected-warning {{member 'b' will be initialized after}}
+    a(2) { } // expected-note {{field a}}
   
   int a;
   int b;
 };
 
-B<int> b0;
+B<int> b0; // expected-note {{in instantiation of member function 'B<int>::B' requested here}}
 
 template <class T> struct AA { AA(int); };
 template <class T> class BB : public AA<T> {
