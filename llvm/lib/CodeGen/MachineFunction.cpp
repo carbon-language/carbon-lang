@@ -436,15 +436,6 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
   return VReg;
 }
 
-/// getDILocation - Get the DILocation for a given DebugLoc object.
-DILocation MachineFunction::getDILocation(DebugLoc DL) const {
-  unsigned Idx = DL.getIndex();
-  assert(Idx < DebugLocInfo.DebugLocations.size() &&
-         "Invalid index into debug locations!");
-  return DILocation(DebugLocInfo.DebugLocations[Idx]);
-}
-
-
 /// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
 /// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
 /// normal 'L' label is returned.

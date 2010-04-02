@@ -340,19 +340,17 @@ static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   const MachineFunction *MF = MI.getParent()->getParent();
   const TargetMachine &TM = MF->getTarget();
   
-  if (!MI.getDebugLoc().isUnknown()) {
-    DILocation DLT = MF->getDILocation(MI.getDebugLoc());
-    
-    // Print source line info.
-    DIScope Scope = DLT.getScope();
+  DebugLoc DL = MI.getDebugLoc();
+  if (!DL.isUnknown()) {          // Print source line info.
+    DIScope Scope(DL.getScope(MF->getFunction()->getContext()));
     // Omit the directory, because it's likely to be long and uninteresting.
     if (Scope.Verify())
       CommentOS << Scope.getFilename();
     else
       CommentOS << "<unknown>";
-    CommentOS << ':' << DLT.getLineNumber();
-    if (DLT.getColumnNumber() != 0)
-      CommentOS << ':' << DLT.getColumnNumber();
+    CommentOS << ':' << DL.getLine();
+    if (DL.getCol() != 0)
+      CommentOS << ':' << DL.getCol();
     CommentOS << '\n';
   }
   

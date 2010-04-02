@@ -368,21 +368,18 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 /// attached with this instruction.
 static void SetDebugLoc(Instruction *I, SelectionDAGBuilder *SDB,
                         FastISel *FastIS, MachineFunction *MF) {
-  MDNode *Dbg = I->getDbgMetadata();
-  if (Dbg == 0) return;
+  DebugLoc DL = I->getDebugLoc();
+  if (DL.isUnknown()) return;
   
-  DILocation DILoc(Dbg);
-  DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
-
-  SDB->setCurDebugLoc(Loc);
+  SDB->setCurDebugLoc(DL);
 
   if (FastIS)
-    FastIS->setCurDebugLoc(Loc);
+    FastIS->setCurDebugLoc(DL);
 
   // If the function doesn't have a default debug location yet, set
   // it. This is kind of a hack.
   if (MF->getDefaultDebugLoc().isUnknown())
-    MF->setDefaultDebugLoc(Loc);
+    MF->setDefaultDebugLoc(DL);
 }
 
 /// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.

@@ -195,7 +195,7 @@ class DwarfDebug : public DwarfPrinter {
 
   /// Previous instruction's location information. This is used to determine
   /// label location to indicate scope boundries in dwarf debug info.
-  mutable const MDNode *PrevDILoc;
+  DebugLoc PrevInstLoc;
 
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
@@ -361,7 +361,8 @@ class DwarfDebug : public DwarfPrinter {
 
   /// getUpdatedDbgScope - Find or create DbgScope assicated with 
   /// the instruction. Initialize scope and update scope hierarchy.
-  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI, MDNode *InlinedAt);
+  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
+                               MDNode *InlinedAt);
 
   /// createDbgScope - Create DbgScope for the scope.
   void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
@@ -370,9 +371,9 @@ class DwarfDebug : public DwarfPrinter {
 
   /// findAbstractVariable - Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, unsigned FrameIdx, 
-                                    DILocation &Loc);
+                                    DebugLoc Loc);
   DbgVariable *findAbstractVariable(DIVariable &Var, const MachineInstr *MI,
-                                    DILocation &Loc);
+                                    DebugLoc Loc);
 
   /// updateSubprogramScopeDIE - Find DIE for the given subprogram and 
   /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.

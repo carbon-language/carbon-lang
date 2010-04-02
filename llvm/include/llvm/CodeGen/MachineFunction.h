@@ -26,7 +26,6 @@
 
 namespace llvm {
 
-class DILocation;
 class Value;
 class Function;
 class MachineRegisterInfo;
@@ -111,9 +110,6 @@ class MachineFunction {
   // Default debug location. Used to print out the debug label at the beginning
   // of a function.
   DebugLoc DefaultDebugLoc;
-
-  // Tracks debug locations.
-  DebugLocTracker DebugLocInfo;
 
   /// FunctionNumber - This provides a unique ID for each function emitted in
   /// this translation unit.
@@ -402,9 +398,6 @@ public:
   // Debug location.
   //
 
-  /// getDILocation - Get the DILocation for a given DebugLoc object.
-  DILocation getDILocation(DebugLoc DL) const;
-
   /// getDefaultDebugLoc - Get the default debug location for the machine
   /// function.
   DebugLoc getDefaultDebugLoc() const { return DefaultDebugLoc; }
@@ -412,9 +405,6 @@ public:
   /// setDefaultDebugLoc - Get the default debug location for the machine
   /// function.
   void setDefaultDebugLoc(DebugLoc DL) { DefaultDebugLoc = DL; }
-
-  /// getDebugLocInfo - Get the debug info location tracker.
-  DebugLocTracker &getDebugLocInfo() { return DebugLocInfo; }
 };
 
 //===--------------------------------------------------------------------===//

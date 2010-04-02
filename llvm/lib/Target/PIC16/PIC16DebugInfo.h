@@ -19,7 +19,7 @@
 
 namespace llvm {
   class MachineFunction;
-  class DebugLoc;
+  class NewDebugLoc; typedef NewDebugLoc DebugLoc;
   namespace PIC16Dbg {
     enum VarType {
       T_NULL,

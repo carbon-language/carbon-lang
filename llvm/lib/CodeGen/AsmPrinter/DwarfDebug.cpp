@@ -302,7 +302,7 @@ DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : DwarfPrinter(OS, A, T), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
     DIEBlocks(), SectionSourceLines(), didInitial(false), shouldEmit(false),
-    CurrentFnDbgScope(0), PrevDILoc(0), DebugTimer(0) {
+    CurrentFnDbgScope(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
@@ -1932,13 +1932,14 @@ void DwarfDebug::endModule() {
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
 DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
                                               unsigned FrameIdx,
-                                              DILocation &ScopeLoc) {
+                                              DebugLoc ScopeLoc) {
 
   DbgVariable *AbsDbgVariable = AbstractVariables.lookup(Var.getNode());
   if (AbsDbgVariable)
     return AbsDbgVariable;
 
-  DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope().getNode());
+  LLVMContext &Ctx = Var.getNode()->getContext();
+  DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope(Ctx));
   if (!Scope)
     return NULL;
 
@@ -1953,13 +1954,14 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
 /// FIXME : Refactor findAbstractVariable.
 DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
                                               const MachineInstr *MI,
-                                              DILocation &ScopeLoc) {
+                                              DebugLoc ScopeLoc) {
 
   DbgVariable *AbsDbgVariable = AbstractVariables.lookup(Var.getNode());
   if (AbsDbgVariable)
     return AbsDbgVariable;
 
-  DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope().getNode());
+  LLVMContext &Ctx = Var.getNode()->getContext();
+  DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope(Ctx));
   if (!Scope)
     return NULL;
 
@@ -1975,24 +1977,27 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
 void DwarfDebug::collectVariableInfo() {
   if (!MMI) return;
 
+  const LLVMContext &Ctx = MF->getFunction()->getContext();
+
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
     MDNode *Var = VI->first;
     if (!Var) continue;
-    DIVariable DV (Var);
-    std::pair< unsigned, MDNode *> VP = VI->second;
-    DILocation ScopeLoc(VP.second);
+    DIVariable DV(Var);
+    const std::pair<unsigned, DebugLoc> &VP = VI->second;
 
-    DbgScope *Scope =
-      ConcreteScopes.lookup(ScopeLoc.getOrigLocation().getNode());
-    if (!Scope)
-      Scope = DbgScopeMap.lookup(ScopeLoc.getScope().getNode());
+    DbgScope *Scope = 0;
+    if (MDNode *IA = VP.second.getInlinedAt(Ctx))
+      Scope = ConcreteScopes.lookup(IA);
+    if (Scope == 0)
+      Scope = DbgScopeMap.lookup(VP.second.getScope(Ctx));
+    
     // If variable scope is not found then skip this variable.
-    if (!Scope)
+    if (Scope == 0)
       continue;
 
-    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first, ScopeLoc);
+    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first, VP.second);
     DbgVariable *RegVar = new DbgVariable(DV, VP.first, AbsDbgVariable);
     Scope->addVariable(RegVar);
   }
@@ -2021,16 +2026,17 @@ void DwarfDebug::collectVariableInfo() {
 
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
-      DILocation ScopeLoc = MF->getDILocation(DL);
-      DbgScope *Scope =
-        ConcreteScopes.lookup(ScopeLoc.getOrigLocation().getNode());
-      if (!Scope)
-        Scope = DbgScopeMap.lookup(ScopeLoc.getScope().getNode());
+      DbgScope *Scope = 0;
+      if (MDNode *IA = DL.getInlinedAt(Ctx))
+        Scope = ConcreteScopes.lookup(IA);
+      if (Scope == 0)
+        Scope = DbgScopeMap.lookup(DL.getScope(Ctx));
+      
       // If variable scope is not found then skip this variable.
-      if (!Scope)
+      if (Scope == 0)
         continue;
 
-      DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn, ScopeLoc);
+      DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn, DL);
       DbgVariable *RegVar = new DbgVariable(DV, MInsn, AbsDbgVariable);
       DbgValueStartMap[MInsn] = RegVar;
       Scope->addVariable(RegVar);
@@ -2044,12 +2050,15 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   DebugLoc DL = MI->getDebugLoc();
   if (DL.isUnknown())
     return;
-  DILocation DILoc = MF->getDILocation(DL);
-  if (!DILoc.getScope().Verify())
-    return;
 
   // Check and update last known location info.
-  if(DILoc.getNode() == PrevDILoc)
+  if (DL == PrevInstLoc)
+    return;
+  
+  MDNode *Scope = DL.getScope(MF->getFunction()->getContext());
+  
+  // FIXME: Should only verify each scope once!
+  if (!DIScope(Scope).Verify())
     return;
 
   // DBG_VALUE instruction establishes new value.
@@ -2057,10 +2066,8 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
     DenseMap<const MachineInstr *, DbgVariable *>::iterator DI
       = DbgValueStartMap.find(MI);
     if (DI != DbgValueStartMap.end()) {
-      MCSymbol *Label = recordSourceLine(DILoc.getLineNumber(),
-                                         DILoc.getColumnNumber(),
-                                         DILoc.getScope().getNode());
-      PrevDILoc = DILoc.getNode();
+      MCSymbol *Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
+      PrevInstLoc = DL;
       DI->second->setDbgValueLabel(Label);
     }
     return;
@@ -2068,10 +2075,8 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
 
   // Emit a label to indicate location change. This is used for line 
   // table even if this instruction does start a new scope.
-  MCSymbol *Label = recordSourceLine(DILoc.getLineNumber(),
-                                     DILoc.getColumnNumber(),
-                                     DILoc.getScope().getNode());
-  PrevDILoc = DILoc.getNode();
+  MCSymbol *Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
+  PrevInstLoc = DL;
 
   // update DbgScope if this instruction starts a new scope.
   InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
@@ -2094,15 +2099,12 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
   DebugLoc DL = MI->getDebugLoc();
   if (DL.isUnknown())
     return;
-  DILocation DILoc = MF->getDILocation(DL);
-  if (!DILoc.getScope().Verify())
-    return;
-  
+
   // Emit a label and update DbgScope if this instruction ends a scope.
   InsnToDbgScopeMapTy::iterator I = DbgScopeEndMap.find(MI);
   if (I == DbgScopeEndMap.end())
     return;
-
+  
   MCSymbol *Label = MMI->getContext().CreateTempSymbol();
   Asm->OutStreamer.EmitLabel(Label);
 
@@ -2115,7 +2117,6 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
 
 /// createDbgScope - Create DbgScope for the scope.
 void DwarfDebug::createDbgScope(MDNode *Scope, MDNode *InlinedAt) {
-
   if (!InlinedAt) {
     DbgScope *WScope = DbgScopeMap.lookup(Scope);
     if (WScope)
@@ -2147,6 +2148,8 @@ bool DwarfDebug::extractScopeInformation() {
 
   DenseMap<const MachineInstr *, unsigned> MIIndexMap;
   unsigned MIIndex = 0;
+  LLVMContext &Ctx = MF->getFunction()->getContext();
+  
   // Scan each instruction and create scopes. First build working set of scopes.
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I) {
@@ -2156,16 +2159,17 @@ bool DwarfDebug::extractScopeInformation() {
       // FIXME : Remove DBG_VALUE check.
       if (MInsn->isDebugValue()) continue;
       MIIndexMap[MInsn] = MIIndex++;
+      
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
-      DILocation DLT = MF->getDILocation(DL);
-      DIScope DLTScope = DLT.getScope();
-      if (!DLTScope.getNode()) continue;
+      
+      MDNode *Scope = DL.getScope(Ctx);
+      
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
-      if (DLTScope.isCompileUnit()) continue;
-      createDbgScope(DLTScope.getNode(), DLT.getOrigLocation().getNode());
+      if (DIScope(Scope).isCompileUnit()) continue;
+      createDbgScope(Scope, DL.getInlinedAt(Ctx));
     }
   }
 
@@ -2179,17 +2183,17 @@ bool DwarfDebug::extractScopeInformation() {
       // FIXME : Remove DBG_VALUE check.
       if (MInsn->isDebugValue()) continue;
       DebugLoc DL = MInsn->getDebugLoc();
-      if (DL.isUnknown())  continue;
-      DILocation DLT = MF->getDILocation(DL);
-      DIScope DLTScope = DLT.getScope();
-      if (!DLTScope.getNode()) continue;
+      if (DL.isUnknown()) continue;
+
+      MDNode *Scope = DL.getScope(Ctx);
+      if (Scope == 0) continue;
+      
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
-      if (DLTScope.isCompileUnit()) continue;
-      DbgScope *Scope = getUpdatedDbgScope(DLTScope.getNode(), MInsn, 
-                                           DLT.getOrigLocation().getNode());
-      Scope->setLastInsn(MInsn);
+      if (DIScope(Scope).isCompileUnit()) continue;
+      DbgScope *DScope = getUpdatedDbgScope(Scope, MInsn, DL.getInlinedAt(Ctx));
+      DScope->setLastInsn(MInsn);
     }
   }
 
@@ -2255,20 +2259,21 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Emit label for the implicitly defined dbg.stoppoint at the start of the
   // function.
   DebugLoc FDL = MF->getDefaultDebugLoc();
-  if (!FDL.isUnknown()) {
-    DILocation DLT = MF->getDILocation(FDL);
-    DISubprogram SP = getDISubprogram(DLT.getScope().getNode());
-    unsigned Line, Col;
-    if (SP.Verify()) {
-      Line = SP.getLineNumber();
-      Col = 0;
-    } else {
-      Line = DLT.getLineNumber();
-      Col = DLT.getColumnNumber();
-    }
-    
-    recordSourceLine(Line, Col, DLT.getScope().getNode());
+  if (FDL.isUnknown()) return;
+  
+  MDNode *Scope = FDL.getScope(MF->getFunction()->getContext());
+  
+  DISubprogram SP = getDISubprogram(Scope);
+  unsigned Line, Col;
+  if (SP.Verify()) {
+    Line = SP.getLineNumber();
+    Col = 0;
+  } else {
+    Line = FDL.getLine();
+    Col = FDL.getCol();
   }
+  
+  recordSourceLine(Line, Col, Scope);
 }
 
 /// endFunction - Gather and emit post-function debug information.

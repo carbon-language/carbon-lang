@@ -1221,17 +1221,16 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
     // TODO: print InlinedAtLoc information
 
-    DILocation DLT = MF->getDILocation(debugLoc);
-    DIScope Scope = DLT.getScope();
+    DIScope Scope(debugLoc.getScope(MF->getFunction()->getContext()));
     OS << " dbg:";
     // Omit the directory, since it's usually long and uninteresting.
     if (Scope.Verify())
       OS << Scope.getFilename();
     else
       OS << "<unknown>";
-    OS << ':' << DLT.getLineNumber();
-    if (DLT.getColumnNumber() != 0)
-      OS << ':' << DLT.getColumnNumber();
+    OS << ':' << debugLoc.getLine();
+    if (debugLoc.getCol() != 0)
+      OS << ':' << debugLoc.getCol();
   }
 
   OS << "\n";

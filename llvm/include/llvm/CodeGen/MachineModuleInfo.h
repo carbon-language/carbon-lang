@@ -37,6 +37,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/System/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
@@ -156,8 +157,8 @@ class MachineModuleInfo : public ImmutablePass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  typedef std::pair<unsigned, TrackingVH<MDNode> > UnsignedAndMDNodePair;
-  typedef SmallVector< std::pair<TrackingVH<MDNode>, UnsignedAndMDNodePair>, 4>
+  typedef std::pair<unsigned, DebugLoc> UnsignedDebugLocPair;
+  typedef SmallVector<std::pair<TrackingVH<MDNode>, UnsignedDebugLocPair>, 4>
     VariableDbgInfoMapTy;
   VariableDbgInfoMapTy VariableDbgInfo;
 
@@ -330,10 +331,10 @@ public:
   /// of one is required to emit exception handling info.
   Function *getPersonality() const;
 
-  /// setVariableDbgInfo - Collect information used to emit debugging information
-  /// of a variable.
-  void setVariableDbgInfo(MDNode *N, unsigned Slot, MDNode *Scope) {
-    VariableDbgInfo.push_back(std::make_pair(N, std::make_pair(Slot, Scope)));
+  /// setVariableDbgInfo - Collect information used to emit debugging
+  /// information of a variable.
+  void setVariableDbgInfo(MDNode *N, unsigned Slot, DebugLoc Loc) {
+    VariableDbgInfo.push_back(std::make_pair(N, std::make_pair(Slot, Loc)));
   }
 
   VariableDbgInfoMapTy &getVariableDbgInfo() {  return VariableDbgInfo;  }

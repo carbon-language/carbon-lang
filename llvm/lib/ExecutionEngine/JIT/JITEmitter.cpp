@@ -821,21 +821,20 @@ void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference) {
 }
 
 void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
-  if (!DL.isUnknown()) {
-    DILocation CurDLT = EmissionDetails.MF->getDILocation(DL);
+  if (DL.isUnknown()) return;
+  if (!BeforePrintingInsn) return;
 
-    if (BeforePrintingInsn) {
-      if (CurDLT.getScope().getNode() != 0 
-          && PrevDLT.getNode() != CurDLT.getNode()) {
-        JITEvent_EmittedFunctionDetails::LineStart NextLine;
-        NextLine.Address = getCurrentPCValue();
-        NextLine.Loc = DL;
-        EmissionDetails.LineStarts.push_back(NextLine);
-      }
-
-      PrevDLT = CurDLT;
-    }
+  // FIXME: This is horribly inefficient.
+  DILocation CurDLT(DL.getAsMDNode(CurFn->getContext()));
+  
+  if (CurDLT.getScope().getNode() != 0 && PrevDLT.getNode() !=CurDLT.getNode()){
+    JITEvent_EmittedFunctionDetails::LineStart NextLine;
+    NextLine.Address = getCurrentPCValue();
+    NextLine.Loc = DL;
+    EmissionDetails.LineStarts.push_back(NextLine);
   }
+
+  PrevDLT = CurDLT;
 }
 
 static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,

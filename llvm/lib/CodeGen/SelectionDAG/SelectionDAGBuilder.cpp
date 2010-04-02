@@ -3800,8 +3800,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     int FI = SI->second;
 
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (MDNode *Dbg = DI.getDbgMetadata())
-        MMI->setVariableDbgInfo(Variable, FI, Dbg);
+      if (!DI.getDebugLoc().isUnknown())
+        MMI->setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return 0;
   }
   case Intrinsic::dbg_value: {
@@ -3851,9 +3851,10 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (SI == FuncInfo.StaticAllocaMap.end())
       return 0; // VLAs.
     int FI = SI->second;
+    
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (MDNode *Dbg = DI.getDbgMetadata())
-        MMI->setVariableDbgInfo(Variable, FI, Dbg);
+      if (!DI.getDebugLoc().isUnknown())
+        MMI->setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return 0;
   }
   case Intrinsic::eh_exception: {

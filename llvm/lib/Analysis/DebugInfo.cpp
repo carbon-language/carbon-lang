@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -1370,23 +1369,6 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
   if (!D.empty())
     Dir = D;
   return true;
-}
-
-/// ExtractDebugLocation - Extract debug location information
-/// from DILocation.
-DebugLoc llvm::ExtractDebugLocation(DILocation &Loc,
-                                    DebugLocTracker &DebugLocInfo) {
-  DenseMap<MDNode *, unsigned>::iterator II
-    = DebugLocInfo.DebugIdMap.find(Loc.getNode());
-  if (II != DebugLocInfo.DebugIdMap.end())
-    return DebugLoc::get(II->second);
-
-  // Add a new location entry.
-  unsigned Id = DebugLocInfo.DebugLocations.size();
-  DebugLocInfo.DebugLocations.push_back(Loc.getNode());
-  DebugLocInfo.DebugIdMap[Loc.getNode()] = Id;
-
-  return DebugLoc::get(Id);
 }
 
 /// getDISubprogram - Find subprogram that is enclosing this scope.

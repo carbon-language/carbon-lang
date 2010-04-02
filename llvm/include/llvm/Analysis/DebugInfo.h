@@ -31,8 +31,6 @@ namespace llvm {
   class Type;
   class Value;
   class DbgDeclareInst;
-  class DebugLoc;
-  struct DebugLocTracker;
   class Instruction;
   class MDNode;
   class LLVMContext;
@@ -709,11 +707,6 @@ namespace llvm {
   bool getLocationInfo(const Value *V, std::string &DisplayName,
                        std::string &Type, unsigned &LineNo, std::string &File,
                        std::string &Dir);
-
-  /// ExtractDebugLocation - Extract debug location information
-  /// from DILocation.
-  DebugLoc ExtractDebugLocation(DILocation &Loc,
-                                DebugLocTracker &DebugLocInfo);
 
   /// getDISubprogram - Find subprogram that is enclosing this scope.
   DISubprogram getDISubprogram(MDNode *Scope);
