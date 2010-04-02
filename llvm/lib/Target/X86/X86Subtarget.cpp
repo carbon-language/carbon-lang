@@ -259,6 +259,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   HasFMA3 = IsIntel && ((ECX >> 12) & 0x1);
   HasAVX = ((ECX >> 28) & 0x1);
+  HasAES = IsIntel && ((ECX >> 25) & 0x1);
 
   if (IsIntel || IsAMD) {
     // Determine if bit test memory instructions are slow.
@@ -286,6 +287,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , HasX86_64(false)
   , HasSSE4A(false)
   , HasAVX(false)
+  , HasAES(false)
   , HasFMA3(false)
   , HasFMA4(false)
   , IsBTMemSlow(false)

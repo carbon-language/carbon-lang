@@ -69,6 +69,9 @@ protected:
   /// HasAVX - Target has AVX instructions
   bool HasAVX;
 
+  /// HasAES - Target has AES instructions
+  bool HasAES;
+
   /// HasFMA3 - Target has 3-operand fused multiply-add
   bool HasFMA3;
 
@@ -148,6 +151,7 @@ public:
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasAVX() const { return HasAVX; }
+  bool hasAES() const { return HasAES; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
   bool isBTMemSlow() const { return IsBTMemSlow; }

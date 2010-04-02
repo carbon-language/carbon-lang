@@ -330,6 +330,7 @@ def OptForSize   : Predicate<"OptForSize">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
+def HasAES       : Predicate<"Subtarget->hasAES()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
