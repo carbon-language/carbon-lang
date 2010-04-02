@@ -461,8 +461,7 @@ public:
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain,  Op };
-    return getNode(ISD::CALLSEQ_START, DebugLoc::getUnknownLoc(),
-                   VTs, Ops, 2);
+    return getNode(ISD::CALLSEQ_START, DebugLoc(), VTs, Ops, 2);
   }
 
   /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
@@ -476,20 +475,19 @@ public:
     Ops.push_back(Op1);
     Ops.push_back(Op2);
     Ops.push_back(InFlag);
-    return getNode(ISD::CALLSEQ_END, DebugLoc::getUnknownLoc(), NodeTys,
-                   &Ops[0],
+    return getNode(ISD::CALLSEQ_END, DebugLoc(), NodeTys, &Ops[0],
                    (unsigned)Ops.size() - (InFlag.getNode() == 0 ? 1 : 0));
   }
 
   /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful DebugLoc.
   SDValue getUNDEF(EVT VT) {
-    return getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(), VT);
+    return getNode(ISD::UNDEF, DebugLoc(), VT);
   }
 
   /// getGLOBAL_OFFSET_TABLE - Return a GLOBAL_OFFSET_TABLE node.  This does
   /// not have a useful DebugLoc.
   SDValue getGLOBAL_OFFSET_TABLE(EVT VT) {
-    return getNode(ISD::GLOBAL_OFFSET_TABLE, DebugLoc::getUnknownLoc(), VT);
+    return getNode(ISD::GLOBAL_OFFSET_TABLE, DebugLoc(), VT);
   }
 
   /// getNode - Gets or creates the specified node.

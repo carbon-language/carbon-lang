@@ -1569,8 +1569,7 @@ public:
 #else
   explicit HandleSDNode(SDValue X)
 #endif
-    : SDNode(ISD::HANDLENODE, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)) {
+    : SDNode(ISD::HANDLENODE, DebugLoc(), getSDVTList(MVT::Other)) {
     InitOperands(&Op, X);
   }
   ~HandleSDNode();
@@ -1801,7 +1800,7 @@ class ConstantSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, const ConstantInt *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
-             DebugLoc::getUnknownLoc(), getSDVTList(VT)), Value(val) {
+             DebugLoc(), getSDVTList(VT)), Value(val) {
   }
 public:
 
@@ -1825,7 +1824,7 @@ class ConstantFPSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, const ConstantFP *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             DebugLoc::getUnknownLoc(), getSDVTList(VT)), Value(val) {
+             DebugLoc(), getSDVTList(VT)), Value(val) {
   }
 public:
 
@@ -1896,7 +1895,7 @@ class FrameIndexSDNode : public SDNode {
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, EVT VT, bool isTarg)
     : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex,
-      DebugLoc::getUnknownLoc(), getSDVTList(VT)), FI(fi) {
+      DebugLoc(), getSDVTList(VT)), FI(fi) {
   }
 public:
 
@@ -1915,7 +1914,7 @@ class JumpTableSDNode : public SDNode {
   friend class SelectionDAG;
   JumpTableSDNode(int jti, EVT VT, bool isTarg, unsigned char TF)
     : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable,
-      DebugLoc::getUnknownLoc(), getSDVTList(VT)), JTI(jti), TargetFlags(TF) {
+      DebugLoc(), getSDVTList(VT)), JTI(jti), TargetFlags(TF) {
   }
 public:
 
@@ -1941,7 +1940,7 @@ class ConstantPoolSDNode : public SDNode {
   ConstantPoolSDNode(bool isTarget, Constant *c, EVT VT, int o, unsigned Align,
                      unsigned char TF)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc::getUnknownLoc(),
+             DebugLoc(),
              getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
@@ -1949,7 +1948,7 @@ class ConstantPoolSDNode : public SDNode {
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      EVT VT, int o, unsigned Align, unsigned char TF)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc::getUnknownLoc(),
+             DebugLoc(),
              getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
@@ -1997,8 +1996,7 @@ class BasicBlockSDNode : public SDNode {
   /// blocks out of order when they're jumped to, which makes it a bit
   /// harder.  Let's see if we need it first.
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
-    : SDNode(ISD::BasicBlock, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), MBB(mbb) {
+    : SDNode(ISD::BasicBlock, DebugLoc(), getSDVTList(MVT::Other)), MBB(mbb) {
   }
 public:
 
@@ -2044,8 +2042,7 @@ class SrcValueSDNode : public SDNode {
   friend class SelectionDAG;
   /// Create a SrcValue for a general value.
   explicit SrcValueSDNode(const Value *v)
-    : SDNode(ISD::SRCVALUE, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), V(v) {}
+    : SDNode(ISD::SRCVALUE, DebugLoc(), getSDVTList(MVT::Other)), V(v) {}
 
 public:
   /// getValue - return the contained Value.
@@ -2062,8 +2059,7 @@ class RegisterSDNode : public SDNode {
   unsigned Reg;
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, EVT VT)
-    : SDNode(ISD::Register, DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Reg(reg) {
+    : SDNode(ISD::Register, DebugLoc(), getSDVTList(VT)), Reg(reg) {
   }
 public:
 
@@ -2081,7 +2077,7 @@ class BlockAddressSDNode : public SDNode {
   friend class SelectionDAG;
   BlockAddressSDNode(unsigned NodeTy, EVT VT, BlockAddress *ba,
                      unsigned char Flags)
-    : SDNode(NodeTy, DebugLoc::getUnknownLoc(), getSDVTList(VT)),
+    : SDNode(NodeTy, DebugLoc(), getSDVTList(VT)),
              BA(ba), TargetFlags(Flags) {
   }
 public:
@@ -2119,8 +2115,7 @@ class ExternalSymbolSDNode : public SDNode {
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, unsigned char TF, EVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
-             DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Symbol(Sym), TargetFlags(TF) {
+             DebugLoc(), getSDVTList(VT)), Symbol(Sym), TargetFlags(TF) {
   }
 public:
 
@@ -2138,8 +2133,8 @@ class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
   friend class SelectionDAG;
   explicit CondCodeSDNode(ISD::CondCode Cond)
-    : SDNode(ISD::CONDCODE, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), Condition(Cond) {
+    : SDNode(ISD::CONDCODE, DebugLoc(), getSDVTList(MVT::Other)),
+      Condition(Cond) {
   }
 public:
 
@@ -2296,8 +2291,8 @@ class VTSDNode : public SDNode {
   EVT ValueType;
   friend class SelectionDAG;
   explicit VTSDNode(EVT VT)
-    : SDNode(ISD::VALUETYPE, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), ValueType(VT) {
+    : SDNode(ISD::VALUETYPE, DebugLoc(), getSDVTList(MVT::Other)),
+      ValueType(VT) {
   }
 public:
 
