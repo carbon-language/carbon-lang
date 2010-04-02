@@ -510,6 +510,13 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
     // Now expand it into actual Instructions and patch it into place.
     Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
 
+    // Inform ScalarEvolution that this value is changing. The change doesn't
+    // affect its value, but it does potentially affect which use lists the
+    // value will be on after the replacement, which affects ScalarEvolution's
+    // ability to walk use lists and drop dangling pointers when a value is
+    // deleted.
+    SE->forgetValue(User);
+
     // Patch the new value into place.
     if (Op->hasName())
       NewVal->takeName(Op);
