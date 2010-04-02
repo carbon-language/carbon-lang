@@ -1705,7 +1705,7 @@ static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
 
 static void
 DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
-                                  CXXConstructorDecl *Constructor,
+                                  const CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **MemInits,
                                   unsigned NumMemInits) {
   if (Constructor->isDependentContext())
@@ -1721,15 +1721,15 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   // of 1) base class declarations and 2) order of non-static data members.
   llvm::SmallVector<const void*, 32> AllBaseOrMembers;
 
-  CXXRecordDecl *ClassDecl
-    = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  const CXXRecordDecl *ClassDecl = Constructor->getParent();
+
   // Push virtual bases before others.
-  for (CXXRecordDecl::base_class_iterator VBase =
+  for (CXXRecordDecl::base_class_const_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase)
     AllBaseOrMembers.push_back(GetKeyForBase(VBase->getType()));
 
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     // Virtuals are alread in the virtual base list and are constructed
     // first.
