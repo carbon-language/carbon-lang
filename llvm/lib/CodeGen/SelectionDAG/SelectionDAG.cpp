@@ -3263,8 +3263,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
 static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
                                        SDValue Chain, SDValue Dst,
                                        SDValue Src, uint64_t Size,
-                                       unsigned Align, bool isVol,
-                                       bool AlwaysInline,
+                                       unsigned Align, bool AlwaysInline,
                                        const Value *DstSV, uint64_t DstSVOff,
                                        const Value *SrcSV, uint64_t SrcSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -3320,7 +3319,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       Value = getMemsetStringVal(VT, dl, DAG, TLI, Str, SrcOff);
       Store = DAG.getStore(Chain, dl, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
-                           DstSV, DstSVOff + DstOff, isVol, false, Align);
+                           DstSV, DstSVOff + DstOff, false, false, Align);
     } else {
       // The type might not be legal for the target.  This should only happen
       // if the type is smaller than a legal type, as on PPC, so the right
@@ -3331,11 +3330,11 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       assert(NVT.bitsGE(VT));
       Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
                              getMemBasePlusOffset(Src, SrcOff, DAG),
-                             SrcSV, SrcSVOff + SrcOff, VT, isVol, false,
+                             SrcSV, SrcSVOff + SrcOff, VT, false, false,
                              MinAlign(SrcAlign, SrcOff));
       Store = DAG.getTruncStore(Chain, dl, Value,
                                 getMemBasePlusOffset(Dst, DstOff, DAG),
-                                DstSV, DstSVOff + DstOff, VT, isVol, false,
+                                DstSV, DstSVOff + DstOff, VT, false, false,
                                 Align);
     }
     OutChains.push_back(Store);
@@ -3350,8 +3349,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
                                         SDValue Chain, SDValue Dst,
                                         SDValue Src, uint64_t Size,
-                                        unsigned Align,  bool isVol,
-                                        bool AlwaysInline,
+                                        unsigned Align,bool AlwaysInline,
                                         const Value *DstSV, uint64_t DstSVOff,
                                         const Value *SrcSV, uint64_t SrcSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -3399,7 +3397,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Value = DAG.getLoad(VT, dl, Chain,
                         getMemBasePlusOffset(Src, SrcOff, DAG),
-                        SrcSV, SrcSVOff + SrcOff, isVol, false, SrcAlign);
+                        SrcSV, SrcSVOff + SrcOff, false, false, SrcAlign);
     LoadValues.push_back(Value);
     LoadChains.push_back(Value.getValue(1));
     SrcOff += VTSize;
@@ -3414,7 +3412,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Store = DAG.getStore(Chain, dl, LoadValues[i],
                          getMemBasePlusOffset(Dst, DstOff, DAG),
-                         DstSV, DstSVOff + DstOff, isVol, false, Align);
+                         DstSV, DstSVOff + DstOff, false, false, Align);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3426,7 +3424,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
                                SDValue Chain, SDValue Dst,
                                SDValue Src, uint64_t Size,
-                               unsigned Align, bool isVol,
+                               unsigned Align,
                                const Value *DstSV, uint64_t DstSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
@@ -3465,7 +3463,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     SDValue Value = getMemsetValue(Src, VT, DAG, dl);
     SDValue Store = DAG.getStore(Chain, dl, Value,
                                  getMemBasePlusOffset(Dst, DstOff, DAG),
-                                 DstSV, DstSVOff + DstOff, isVol, false, 0);
+                                 DstSV, DstSVOff + DstOff, false, false, 0);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3476,7 +3474,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
 
 SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
-                                unsigned Align, bool isVol, bool AlwaysInline,
+                                unsigned Align, bool AlwaysInline,
                                 const Value *DstSV, uint64_t DstSVOff,
                                 const Value *SrcSV, uint64_t SrcSVOff) {
 
@@ -3490,7 +3488,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
 
     SDValue Result = getMemcpyLoadsAndStores(*this, dl, Chain, Dst, Src,
                                              ConstantSize->getZExtValue(),Align,
-                                isVol, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                       false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.getNode())
       return Result;
   }
@@ -3499,7 +3497,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
     TLI.EmitTargetCodeForMemcpy(*this, dl, Chain, Dst, Src, Size, Align,
-                                isVol, AlwaysInline,
+                                AlwaysInline,
                                 DstSV, DstSVOff, SrcSV, SrcSVOff);
   if (Result.getNode())
     return Result;
@@ -3509,12 +3507,11 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   if (AlwaysInline) {
     assert(ConstantSize && "AlwaysInline requires a constant size!");
     return getMemcpyLoadsAndStores(*this, dl, Chain, Dst, Src,
-                                   ConstantSize->getZExtValue(), Align, isVol,
-                                   true, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                   ConstantSize->getZExtValue(), Align, true,
+                                   DstSV, DstSVOff, SrcSV, SrcSVOff);
   }
 
   // Emit a library call.
-  assert(!isVol && "library memcpy does not support volatile");
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
@@ -3535,7 +3532,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
 
 SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
                                  SDValue Src, SDValue Size,
-                                 unsigned Align, bool isVol,
+                                 unsigned Align,
                                  const Value *DstSV, uint64_t DstSVOff,
                                  const Value *SrcSV, uint64_t SrcSVOff) {
 
@@ -3549,8 +3546,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
 
     SDValue Result =
       getMemmoveLoadsAndStores(*this, dl, Chain, Dst, Src,
-                               ConstantSize->getZExtValue(), Align, isVol,
-                               false, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                               ConstantSize->getZExtValue(),
+                               Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.getNode())
       return Result;
   }
@@ -3558,13 +3555,12 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Then check to see if we should lower the memmove with target-specific
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
-    TLI.EmitTargetCodeForMemmove(*this, dl, Chain, Dst, Src, Size, Align, isVol,
+    TLI.EmitTargetCodeForMemmove(*this, dl, Chain, Dst, Src, Size, Align,
                                  DstSV, DstSVOff, SrcSV, SrcSVOff);
   if (Result.getNode())
     return Result;
 
   // Emit a library call.
-  assert(!isVol && "library memmove does not support volatile");
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
@@ -3585,7 +3581,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
 
 SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
-                                unsigned Align, bool isVol,
+                                unsigned Align,
                                 const Value *DstSV, uint64_t DstSVOff) {
 
   // Check to see if we should lower the memset to stores first.
@@ -3598,7 +3594,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
 
     SDValue Result =
       getMemsetStores(*this, dl, Chain, Dst, Src, ConstantSize->getZExtValue(),
-                      Align, isVol, DstSV, DstSVOff);
+                      Align, DstSV, DstSVOff);
     if (Result.getNode())
       return Result;
   }
@@ -3606,13 +3602,12 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Then check to see if we should lower the memset with target-specific
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
-    TLI.EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src, Size, Align, isVol,
+    TLI.EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src, Size, Align,
                                 DstSV, DstSVOff);
   if (Result.getNode())
     return Result;
 
   // Emit a library call.
-  assert(!isVol && "library memset does not support volatile");
   const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;

@@ -534,17 +534,17 @@ public:
   SDValue getStackArgumentTokenFactor(SDValue Chain);
 
   SDValue getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
-                    SDValue Size, unsigned Align, bool isVol, bool AlwaysInline,
+                    SDValue Size, unsigned Align, bool AlwaysInline,
                     const Value *DstSV, uint64_t DstSVOff,
                     const Value *SrcSV, uint64_t SrcSVOff);
 
   SDValue getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
-                     SDValue Size, unsigned Align, bool isVol,
+                     SDValue Size, unsigned Align,
                      const Value *DstSV, uint64_t DstOSVff,
                      const Value *SrcSV, uint64_t SrcSVOff);
 
   SDValue getMemset(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
-                    SDValue Size, unsigned Align, bool isVol,
+                    SDValue Size, unsigned Align,
                     const Value *DstSV, uint64_t DstSVOff);
 
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
