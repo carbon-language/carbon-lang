@@ -1430,12 +1430,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
                                   unsigned NumInitializers,
                                   bool AnyErrors) {
-//  assert((Constructor->isImplicit() == IsImplicitConstructor));
-
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
-  CXXRecordDecl *ClassDecl
-    = cast<CXXRecordDecl>(Constructor->getDeclContext())->getDefinition();
+  CXXRecordDecl *ClassDecl = Constructor->getParent()->getDefinition();
   if (!ClassDecl)
     return true;
   
@@ -1670,18 +1667,15 @@ static void *GetKeyForTopLevelField(FieldDecl *Field) {
   return static_cast<void *>(Field);
 }
 
-static void *GetKeyForBase(QualType BaseType) {
-  if (const RecordType *RT = BaseType->getAs<RecordType>())
-    return (void *)RT;
-
-  assert(0 && "Unexpected base type!");
-  return 0;
+static void *GetKeyForBase(ASTContext &Context, QualType BaseType) {
+  return Context.getCanonicalType(BaseType).getTypePtr();
 }
 
-static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
+static void *GetKeyForMember(ASTContext &Context,
+                             CXXBaseOrMemberInitializer *Member,
                              bool MemberMaybeAnon = false) {
   if (!Member->isMemberInitializer())
-    return GetKeyForBase(QualType(Member->getBaseClass(), 0));
+    return GetKeyForBase(Context, QualType(Member->getBaseClass(), 0));
     
   // For fields injected into the class via declaration of an anonymous union,
   // use its anonymous union class declaration as the unique key.
@@ -1726,7 +1720,8 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   for (CXXRecordDecl::base_class_const_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase)
-    AllBaseOrMembers.push_back(GetKeyForBase(VBase->getType()));
+    AllBaseOrMembers.push_back(GetKeyForBase(SemaRef.Context,
+                                             VBase->getType()));
 
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
@@ -1734,7 +1729,8 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
     // first.
     if (Base->isVirtual())
       continue;
-    AllBaseOrMembers.push_back(GetKeyForBase(Base->getType()));
+    AllBaseOrMembers.push_back(GetKeyForBase(SemaRef.Context,
+                                             Base->getType()));
   }
 
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -1746,7 +1742,7 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   CXXBaseOrMemberInitializer *PrevMember = 0;
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Member = MemInits[i];
-    void *MemberInCtorList = GetKeyForMember(Member, true);
+    void *MemberInCtorList = GetKeyForMember(SemaRef.Context, Member, true);
 
     for (; curIndex < Last; curIndex++)
       if (MemberInCtorList == AllBaseOrMembers[curIndex])
@@ -1807,39 +1803,37 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   CXXBaseOrMemberInitializer **MemInits =
     reinterpret_cast<CXXBaseOrMemberInitializer **>(meminits);
   
-  if (!Constructor->isDependentContext()) {
-    llvm::DenseMap<void*, CXXBaseOrMemberInitializer *> Members;
-    bool err = false;
-    for (unsigned i = 0; i < NumMemInits; i++) {
-      CXXBaseOrMemberInitializer *Member = MemInits[i];
+  llvm::DenseMap<void*, CXXBaseOrMemberInitializer *> Members;
+  bool HadError = false;
+  for (unsigned i = 0; i < NumMemInits; i++) {
+    CXXBaseOrMemberInitializer *Member = MemInits[i];
 
-      void *KeyToMember = GetKeyForMember(Member);
-      CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
-      if (!PrevMember) {
-        PrevMember = Member;
-        continue;
-      }
-      if (FieldDecl *Field = Member->getMember())
-        Diag(Member->getSourceLocation(),
-             diag::error_multiple_mem_initialization)
-          << Field->getNameAsString()
-          << Member->getSourceRange();
-      else {
-        Type *BaseClass = Member->getBaseClass();
-        assert(BaseClass && "ActOnMemInitializers - neither field or base");
-        Diag(Member->getSourceLocation(),
-             diag::error_multiple_base_initialization)
-          << QualType(BaseClass, 0)
-          << Member->getSourceRange();
-      }
-      Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
-        << 0;
-      err = true;
+    void *KeyToMember = GetKeyForMember(Context, Member);
+    CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
+    if (!PrevMember) {
+      PrevMember = Member;
+      continue;
     }
-
-    if (err)
-      return;
+    if (FieldDecl *Field = Member->getMember())
+      Diag(Member->getSourceLocation(),
+           diag::error_multiple_mem_initialization)
+        << Field->getNameAsString()
+        << Member->getSourceRange();
+    else {
+      Type *BaseClass = Member->getBaseClass();
+      assert(BaseClass && "ActOnMemInitializers - neither field or base");
+      Diag(Member->getSourceLocation(),
+           diag::error_multiple_base_initialization)
+        << QualType(BaseClass, 0)
+        << Member->getSourceRange();
+    }
+    Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
+      << 0;
+    HadError = true;
   }
+
+  if (HadError)
+    return;
 
   DiagnoseBaseOrMemInitializerOrder(*this, Constructor, MemInits, NumMemInits);
 
