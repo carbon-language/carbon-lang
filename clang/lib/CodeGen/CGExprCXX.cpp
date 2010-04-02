@@ -307,23 +307,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
-    const Expr *Arg = E->getArg(0);
-    
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
-      assert((ICE->getCastKind() == CastExpr::CK_NoOp ||
-              ICE->getCastKind() == CastExpr::CK_ConstructorConversion ||
-              ICE->getCastKind() == CastExpr::CK_UserDefinedConversion) &&
-             "Unknown implicit cast kind in constructor elision");
-      Arg = ICE->getSubExpr();
-    }
-    
-    if (const CXXFunctionalCastExpr *FCE = dyn_cast<CXXFunctionalCastExpr>(Arg))
-      Arg = FCE->getSubExpr();
-    
-    if (const CXXBindTemporaryExpr *BindExpr = 
-        dyn_cast<CXXBindTemporaryExpr>(Arg))
-      Arg = BindExpr->getSubExpr();
-    
+    const Expr *Arg = E->getArg(0)->getTemporaryObject();
     EmitAggExpr(Arg, Dest, false);
     return;
   }

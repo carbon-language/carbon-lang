@@ -213,3 +213,30 @@ namespace PR6595 {
     (void)(Cond? a : S);
   }
 }
+
+namespace PR6757 {
+  struct Foo1 {
+    Foo1();
+    Foo1(const Foo1&);
+  };
+
+  struct Foo2 { };
+
+  struct Foo3 {
+    Foo3();
+    Foo3(Foo3&);
+  };
+
+  struct Bar {
+    operator const Foo1&() const;
+    operator const Foo2&() const;
+    operator const Foo3&() const;
+  };
+
+  void f() {
+    (void)(true ? Bar() : Foo1()); // okay
+    (void)(true ? Bar() : Foo2()); // okay
+    // FIXME: Diagnostic below could be improved
+    (void)(true ? Bar() : Foo3()); // expected-error{{incompatible operand types ('PR6757::Bar' and 'PR6757::Foo3')}}
+  }
+}

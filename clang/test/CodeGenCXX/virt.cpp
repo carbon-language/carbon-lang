@@ -104,7 +104,7 @@ struct test7_B1 : virtual test7_B2 { virtual void funcB1(); };
 struct test7_D : test7_B2, virtual test7_B1 {
 };
 
-// CHECK-LP64: .zerofill __DATA,__common,_d7,16,3
+// CHECK-LP64: .zerofill __DATA,__common,_d7,16,4
 
 
 struct test3_B3 { virtual void funcB3(); };

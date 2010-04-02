@@ -1476,6 +1476,71 @@ bool Expr::isDefaultArgument() const {
   return isa<CXXDefaultArgExpr>(E);
 }
 
+/// \brief Skip over any no-op casts and any temporary-binding
+/// expressions.
+static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ICE->getCastKind() == CastExpr::CK_NoOp)
+      E = ICE->getSubExpr();
+    else
+      break;
+  }
+
+  while (const CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
+    E = BE->getSubExpr();
+
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ICE->getCastKind() == CastExpr::CK_NoOp)
+      E = ICE->getSubExpr();
+    else
+      break;
+  }
+  
+  return E;
+}
+
+const Expr *Expr::getTemporaryObject() const {
+  const Expr *E = skipTemporaryBindingsAndNoOpCasts(this);
+
+  // A cast can produce a temporary object. The object's construction
+  // is represented as a CXXConstructExpr.
+  if (const CastExpr *Cast = dyn_cast<CastExpr>(E)) {
+    // Only user-defined and constructor conversions can produce
+    // temporary objects.
+    if (Cast->getCastKind() != CastExpr::CK_ConstructorConversion &&
+        Cast->getCastKind() != CastExpr::CK_UserDefinedConversion)
+      return 0;
+
+    // Strip off temporary bindings and no-op casts.
+    const Expr *Sub = skipTemporaryBindingsAndNoOpCasts(Cast->getSubExpr());
+
+    // If this is a constructor conversion, see if we have an object
+    // construction.
+    if (Cast->getCastKind() == CastExpr::CK_ConstructorConversion)
+      return dyn_cast<CXXConstructExpr>(Sub);
+
+    // If this is a user-defined conversion, see if we have a call to
+    // a function that itself returns a temporary object.
+    if (Cast->getCastKind() == CastExpr::CK_UserDefinedConversion)
+      if (const CallExpr *CE = dyn_cast<CallExpr>(Sub))
+        if (CE->getCallReturnType()->isRecordType())
+          return CE;
+
+    return 0;
+  }
+
+  // A call returning a class type returns a temporary.
+  if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
+    if (CE->getCallReturnType()->isRecordType())
+      return CE;
+
+    return 0;
+  }
+
+  // Explicit temporary object constructors create temporaries.
+  return dyn_cast<CXXTemporaryObjectExpr>(E);
+}
+
 /// hasAnyTypeDependentArguments - Determines if any of the expressions
 /// in Exprs is type-dependent.
 bool Expr::hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs) {

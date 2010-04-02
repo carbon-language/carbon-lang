@@ -3965,33 +3965,21 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             bool BaseInitialization) {
   bool Elidable = false;
 
-  // C++ [class.copy]p15:
-  //   Whenever a temporary class object is copied using a copy constructor, and
-  //   this object and the copy have the same cv-unqualified type, an
-  //   implementation is permitted to treat the original and the copy as two
-  //   different ways of referring to the same object and not perform a copy at
-  //   all, even if the class copy constructor or destructor have side effects.
-
-  // FIXME: Is this enough?
-  if (Constructor->isCopyConstructor()) {
-    Expr *E = ((Expr **)ExprArgs.get())[0];
-    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
-      if (ICE->getCastKind() == CastExpr::CK_NoOp)
-        E = ICE->getSubExpr();
-    if (CXXFunctionalCastExpr *FCE = dyn_cast<CXXFunctionalCastExpr>(E))
-      E = FCE->getSubExpr();
-    while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
-      E = BE->getSubExpr();
-    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
-      if (ICE->getCastKind() == CastExpr::CK_NoOp)
-        E = ICE->getSubExpr();
-
-    if (CallExpr *CE = dyn_cast<CallExpr>(E))
-      Elidable = !CE->getCallReturnType()->isReferenceType();
-    else if (isa<CXXTemporaryObjectExpr>(E))
-      Elidable = true;
-    else if (isa<CXXConstructExpr>(E))
-      Elidable = true;
+  // C++0x [class.copy]p34:
+  //   When certain criteria are met, an implementation is allowed to
+  //   omit the copy/move construction of a class object, even if the
+  //   copy/move constructor and/or destructor for the object have
+  //   side effects. [...]
+  //     - when a temporary class object that has not been bound to a
+  //       reference (12.2) would be copied/moved to a class object
+  //       with the same cv-unqualified type, the copy/move operation
+  //       can be omitted by constructing the temporary object
+  //       directly into the target of the omitted copy/move
+  if (Constructor->isCopyConstructor() && ExprArgs.size() >= 1) {
+    Expr *SubExpr = ((Expr **)ExprArgs.get())[0];
+    Elidable = SubExpr->isTemporaryObject() &&
+      Context.hasSameUnqualifiedType(SubExpr->getType(), 
+                           Context.getTypeDeclType(Constructor->getParent()));
   }
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,

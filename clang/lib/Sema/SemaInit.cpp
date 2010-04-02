@@ -2583,10 +2583,7 @@ static void TryConstructorInitialization(Sema &S,
                                          Expr **Args, unsigned NumArgs,
                                          QualType DestType,
                                          InitializationSequence &Sequence) {
-  if (Kind.getKind() == InitializationKind::IK_Copy)
-    Sequence.setSequenceKind(InitializationSequence::UserDefinedConversion);
-  else
-    Sequence.setSequenceKind(InitializationSequence::ConstructorInitialization);
+  Sequence.setSequenceKind(InitializationSequence::ConstructorInitialization);
   
   // Build the candidate set directly in the initialization sequence
   // structure, so that it will persist if we fail.
@@ -2597,7 +2594,7 @@ static void TryConstructorInitialization(Sema &S,
   // explicit conversion operators.
   bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
                         Kind.getKind() == InitializationKind::IK_Value ||
-                        Kind.getKind() == InitializationKind::IK_Default);                      
+                        Kind.getKind() == InitializationKind::IK_Default);
   
   // The type we're converting to is a class type. Enumerate its constructors
   // to see if one is suitable.
@@ -2661,14 +2658,10 @@ static void TryConstructorInitialization(Sema &S,
 
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
-  if (Kind.getKind() == InitializationKind::IK_Copy) {
-    Sequence.AddUserConversionStep(Best->Function, Best->FoundDecl, DestType);
-  } else {
-    Sequence.AddConstructorInitializationStep(
+  Sequence.AddConstructorInitializationStep(
                                       cast<CXXConstructorDecl>(Best->Function), 
                                       Best->FoundDecl.getAccess(),
                                       DestType);
-  }
 }
 
 /// \brief Attempt value initialization (C++ [dcl.init]p7).
@@ -3085,14 +3078,11 @@ getAssignmentAction(const InitializedEntity &Entity) {
   return Sema::AA_Converting;
 }
 
-static bool shouldBindAsTemporary(const InitializedEntity &Entity,
-                                  bool IsCopy) {
+static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   switch (Entity.getKind()) {
-  case InitializedEntity::EK_Result:
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_Member:
-    return !IsCopy;
-      
+  case InitializedEntity::EK_Result:
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
@@ -3108,21 +3098,38 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
   llvm_unreachable("missed an InitializedEntity kind?");
 }
 
-/// \brief If we need to perform an additional copy of the initialized object
-/// for this kind of entity (e.g., the result of a function or an object being
-/// thrown), make the copy. 
-static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
-                                            const InitializedEntity &Entity,
-                                             const InitializationKind &Kind,
-                                             Sema::OwningExprResult CurInit) {
+static Sema::OwningExprResult CopyObject(Sema &S,
+                                         const InitializedEntity &Entity,
+                                         const InitializationKind &Kind,
+                                         Sema::OwningExprResult CurInit) {
+  // Determine which class type we're copying.
   Expr *CurInitExpr = (Expr *)CurInit.get();
-  
+  CXXRecordDecl *Class = 0; 
+  if (const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>())
+    Class = cast<CXXRecordDecl>(Record->getDecl());
+  if (!Class)
+    return move(CurInit);
+
+  // C++0x [class.copy]p34:
+  //   When certain criteria are met, an implementation is allowed to
+  //   omit the copy/move construction of a class object, even if the
+  //   copy/move constructor and/or destructor for the object have
+  //   side effects. [...]
+  //     - when a temporary class object that has not been bound to a
+  //       reference (12.2) would be copied/moved to a class object
+  //       with the same cv-unqualified type, the copy/move operation
+  //       can be omitted by constructing the temporary object
+  //       directly into the target of the omitted copy/move
+  // 
+  // Note that the other three bullets are handled elsewhere. Copy
+  // elision for return statements and throw expressions are (FIXME:
+  // not yet) handled as part of constructor initialization, while
+  // copy elision for exception handlers is handled by the run-time.
+  bool Elidable = CurInitExpr->isTemporaryObject() &&
+    S.Context.hasSameUnqualifiedType(Entity.getType(), CurInitExpr->getType());
   SourceLocation Loc;
-  
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
-    if (Entity.getType()->isReferenceType())
-      return move(CurInit);
     Loc = Entity.getReturnLoc();
     break;
       
@@ -3131,38 +3138,20 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     break;
     
   case InitializedEntity::EK_Variable:
-    if (Entity.getType()->isReferenceType() ||
-        Kind.getKind() != InitializationKind::IK_Copy)
-      return move(CurInit);
     Loc = Entity.getDecl()->getLocation();
     break;
 
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_Member:
-    if (Entity.getType()->isReferenceType() ||
-        Kind.getKind() != InitializationKind::IK_Copy)
-      return move(CurInit);
-    Loc = CurInitExpr->getLocStart();
-    break;
-
   case InitializedEntity::EK_Parameter:
-    // FIXME: Do we need this initialization for a parameter?
-    return move(CurInit);
-
-  case InitializedEntity::EK_New:
   case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_New:
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_VectorElement:
-    // We don't need to copy for any of these initialized entities.
-    return move(CurInit);
+    Loc = CurInitExpr->getLocStart();
+    break;
   }
-  
-  CXXRecordDecl *Class = 0; 
-  if (const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>())
-    Class = cast<CXXRecordDecl>(Record->getDecl());
-  if (!Class)
-    return move(CurInit);
-  
+    
   // Perform overload resolution using the class's copy constructors.
   DeclarationName ConstructorName
     = S.Context.DeclarationNames.getCXXConstructorName(
@@ -3171,7 +3160,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
   OverloadCandidateSet CandidateSet(Loc);
   for (llvm::tie(Con, ConEnd) = Class->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
-    // Find the constructor (which may be a template).
+    // Only consider copy constructors.
     CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(*Con);
     if (!Constructor || Constructor->isInvalidDecl() ||
         !Constructor->isCopyConstructor())
@@ -3181,7 +3170,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
       = DeclAccessPair::make(Constructor, Constructor->getAccess());
     S.AddOverloadCandidate(Constructor, FoundDecl,
                            &CurInitExpr, 1, CandidateSet);
-  }    
+  }
   
   OverloadCandidateSet::iterator Best;
   switch (S.BestViableFunction(CandidateSet, Loc, Best)) {
@@ -3218,9 +3207,9 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
                            Best->FoundDecl.getAccess());
 
   CurInit.release();
-  return S.BuildCXXConstructExpr(Loc, CurInitExpr->getType(),
+  return S.BuildCXXConstructExpr(Loc, Entity.getType().getNonReferenceType(),
                                  cast<CXXConstructorDecl>(Best->Function),
-                                 /*Elidable=*/true,
+                                 Elidable,
                                  Sema::MultiExprArg(S, 
                                                     (void**)&CurInitExpr, 1));
 }
@@ -3474,7 +3463,9 @@ InitializationSequence::Perform(Sema &S,
         CastKind = CastExpr::CK_UserDefinedConversion;
       }
       
-      if (shouldBindAsTemporary(Entity, IsCopy))
+      bool RequiresCopy = !IsCopy && 
+        getKind() != InitializationSequence::ReferenceBinding;
+      if (RequiresCopy || shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
 
       CurInitExpr = CurInit.takeAs<Expr>();
@@ -3483,8 +3474,8 @@ InitializationSequence::Perform(Sema &S,
                                                          CurInitExpr,
                                                          IsLvalue));
       
-      if (!IsCopy)
-        CurInit = CopyIfRequiredForEntity(S, Entity, Kind, move(CurInit));
+      if (RequiresCopy)
+        CurInit = CopyObject(S, Entity, Kind, move(CurInit));
       break;
     }
         
@@ -3560,13 +3551,9 @@ InitializationSequence::Perform(Sema &S,
       S.CheckConstructorAccess(Loc, Constructor,
                                Step->Function.FoundDecl.getAccess());
       
-      bool Elidable 
-        = cast<CXXConstructExpr>((Expr *)CurInit.get())->isElidable();
-      if (shouldBindAsTemporary(Entity, Elidable))
+      if (shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
-      
-      if (!Elidable)
-        CurInit = CopyIfRequiredForEntity(S, Entity, Kind, move(CurInit));
+
       break;
     }
         
