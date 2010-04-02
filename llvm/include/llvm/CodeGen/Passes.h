@@ -21,7 +21,6 @@
 namespace llvm {
 
   class FunctionPass;
-  class MachineFunctionPass;
   class PassInfo;
   class TargetLowering;
   class RegisterCoalescer;
@@ -37,9 +36,8 @@ namespace llvm {
 
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
   /// the given stream, as a debugging tool.
-  MachineFunctionPass *
-  createMachineFunctionPrinterPass(raw_ostream &OS,
-                                   const std::string &Banner ="");
+  FunctionPass *createMachineFunctionPrinterPass(raw_ostream &OS,
+                                                 const std::string &Banner ="");
 
   /// MachineLoopInfo pass - This pass is a loop analysis pass.
   /// 

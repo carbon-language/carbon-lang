@@ -14,43 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 using namespace llvm;
-
-namespace {
-
-/// PrintLoopPass - Print a Function corresponding to a Loop.
-///
-class PrintLoopPass : public LoopPass {
-private:
-  std::string Banner;
-  raw_ostream &Out;       // raw_ostream to print on.
-
-public:
-  static char ID;
-  PrintLoopPass() : LoopPass(&ID), Out(dbgs()) {}
-  PrintLoopPass(const std::string &B, raw_ostream &o)
-      : LoopPass(&ID), Banner(B), Out(o) {}
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-
-  bool runOnLoop(Loop *L, LPPassManager &) {
-    Out << Banner;
-    for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
-         b != be;
-         ++b) {
-      (*b)->print(Out);
-    }
-    return false;
-  }
-};
-
-char PrintLoopPass::ID = 0;
-}
 
 //===----------------------------------------------------------------------===//
 // LPPassManager
@@ -340,11 +305,6 @@ void LPPassManager::dumpPassStructure(unsigned Offset) {
 
 //===----------------------------------------------------------------------===//
 // LoopPass
-
-Pass *LoopPass::createPrinterPass(raw_ostream &O,
-                                  const std::string &Banner) const {
-  return new PrintLoopPass(Banner, O);
-}
 
 // Check if this pass is suitable for the current LPPassManager, if
 // available. This pass P is not suitable for a LPPassManager if P

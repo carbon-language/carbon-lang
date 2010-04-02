@@ -23,22 +23,21 @@ using namespace llvm;
 namespace {
 
   class PrintModulePass : public ModulePass {
-    std::string Banner;
     raw_ostream *Out;       // raw_ostream to print on
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:
     static char ID;
     PrintModulePass() : ModulePass(&ID), Out(&dbgs()), 
       DeleteStream(false) {}
-    PrintModulePass(const std::string &B, raw_ostream *o, bool DS)
-        : ModulePass(&ID), Banner(B), Out(o), DeleteStream(DS) {}
+    PrintModulePass(raw_ostream *o, bool DS)
+      : ModulePass(&ID), Out(o), DeleteStream(DS) {}
     
     ~PrintModulePass() {
       if (DeleteStream) delete Out;
     }
     
     bool runOnModule(Module &M) {
-      (*Out) << Banner << M;
+      (*Out) << M;
       return false;
     }
     
@@ -86,9 +85,8 @@ Y("print-function","Print function to stderr");
 /// createPrintModulePass - Create and return a pass that writes the
 /// module to the specified raw_ostream.
 ModulePass *llvm::createPrintModulePass(llvm::raw_ostream *OS, 
-                                        bool DeleteStream,
-                                        const std::string &Banner) {
-  return new PrintModulePass(Banner, OS, DeleteStream);
+                                        bool DeleteStream) {
+  return new PrintModulePass(OS, DeleteStream);
 }
 
 /// createPrintFunctionPass - Create and return a pass that prints
