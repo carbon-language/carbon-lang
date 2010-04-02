@@ -1880,7 +1880,6 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
 
 bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   bool Changed = false;
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
@@ -1890,16 +1889,11 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
     // Simplify the initializer.
     if (GV->hasInitializer())
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GV->getInitializer())) {
+        TargetData *TD = getAnalysisIfAvailable<TargetData>();
         Constant *New = ConstantFoldConstantExpression(CE, TD);
         if (New && New != CE)
           GV->setInitializer(New);
       }
-    // Refine the alignment value.
-    if (TD && GV->hasDefinitiveInitializer()) {
-      unsigned Align = TD->getPreferredAlignment(GV);
-      if (Align > GV->getAlignment())
-        GV->setAlignment(Align);
-    }
     // Do more involved optimizations if the global is internal.
     if (!GV->isConstant() && GV->hasLocalLinkage() &&
         GV->hasInitializer())

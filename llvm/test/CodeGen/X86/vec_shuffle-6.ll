@@ -4,7 +4,7 @@
 ; RUN: grep movups %t | count 2
 
 target triple = "i686-apple-darwin"
-@x = external global [4 x i32]
+@x = global [4 x i32] [ i32 1, i32 2, i32 3, i32 4 ]		; <[4 x i32]*> [#uses=4]
 
 define <2 x i64> @test1() {
 	%tmp = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]

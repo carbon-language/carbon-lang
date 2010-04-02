@@ -113,7 +113,7 @@
 ; DARWIN:	.globl _G9
 ; DARWIN: _G9:
 
-; LINUX:	.section		.rodata.str4.16,"aMS",@progbits,4
+; LINUX:	.section		.rodata.str4.4,"aMS",@progbits,4
 ; LINUX:	.globl G9
 ; LINUX:G9
 

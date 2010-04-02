@@ -651,7 +651,7 @@ unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
     if (Alignment < 16) {
       // If the global is not external, see if it is large.  If so, give it a
       // larger alignment.
-      if (getTypeSizeInBits(ElemType) >= 128)
+      if (getTypeSizeInBits(ElemType) > 128)
         Alignment = 16;    // 16-byte alignment.
     }
   }
