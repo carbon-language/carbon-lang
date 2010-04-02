@@ -431,6 +431,11 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     // Class extensions require a special treatment. Use an existing one.
     // Note that 'getClassExtension()' can return NULL.
     CDecl = IDecl->getClassExtension();
+    if (IDecl->getImplementation()) {
+      Diag(ClassLoc, diag::err_class_extension_after_impl) << ClassName;
+      Diag(IDecl->getImplementation()->getLocation(), 
+           diag::note_implementation_declared);
+    }
   }
 
   if (!CDecl) {

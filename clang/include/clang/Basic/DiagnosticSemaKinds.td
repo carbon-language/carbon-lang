@@ -256,6 +256,10 @@ def warn_property_attribute : Warning<
 def warn_property_types_are_incompatible : Warning<
   "property type %0 is incompatible with type %1 inherited from %2">;
 def err_undef_interface : Error<"cannot find interface declaration for %0">;
+def err_class_extension_after_impl : Error<
+  "cannot declare class extension for %0 after class implementation">;
+def note_implementation_declared : Note<
+  "class implementation is declared here">;
 def warn_dup_category_def : Warning<
   "duplicate definition of category %1 on interface %0">;
 def err_conflicting_super_class : Error<"conflicting super class name %0">;
