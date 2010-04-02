@@ -508,6 +508,17 @@ int decodeInstruction(struct InternalInstruction* insn,
                       uint64_t startLoc,
                       DisassemblerMode mode);
 
+/* x86DisassemblerDebug - C-accessible function for printing a message to
+ *   debugs()
+ * @param file  - The name of the file printing the debug message.
+ * @param line  - The line number that printed the debug message.
+ * @param s     - The message to print.
+ */
+  
+void x86DisassemblerDebug(const char *file,
+                          unsigned line,
+                          const char *s);
+
 #ifdef __cplusplus 
 }
 #endif

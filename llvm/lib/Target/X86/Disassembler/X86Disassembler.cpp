@@ -21,14 +21,22 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "X86GenRegisterNames.inc"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;
+
+void x86DisassemblerDebug(const char *file,
+                          unsigned line,
+                          const char *s) {
+  dbgs() << file << ":" << line << ": " << s;
+}
+
+#define debug(s) DEBUG(x86DisassemblerDebug(__FILE__, __LINE__, s));
 
 namespace llvm {  
   
@@ -50,8 +58,8 @@ extern Target TheX86_32Target, TheX86_64Target;
 
 }
 
-static void translateInstruction(MCInst &target,
-                                 InternalInstruction &source);
+static bool translateInstruction(MCInst &target,
+                                InternalInstruction &source);
 
 X86GenericDisassembler::X86GenericDisassembler(DisassemblerMode mode) :
     MCDisassembler(),
@@ -106,14 +114,13 @@ bool X86GenericDisassembler::getInstruction(MCInst &instr,
                               address,
                               fMode);
 
-  if(ret) {
+  if (ret) {
     size = internalInstr.readerCursor - address;
     return false;
   }
   else {
     size = internalInstr.length;
-    translateInstruction(instr, internalInstr);
-    return true;
+    return !translateInstruction(instr, internalInstr);
   }
 }
 
@@ -151,29 +158,35 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate) {
 /// @param mcInst       - The MCInst to append to.
 /// @param insn         - The internal instruction to extract the R/M field
 ///                       from.
-static void translateRMRegister(MCInst &mcInst,
+/// @return             - 0 on success; -1 otherwise
+static bool translateRMRegister(MCInst &mcInst,
                                 InternalInstruction &insn) {
-  assert(insn.eaBase != EA_BASE_sib && insn.eaBase != EA_BASE_sib64 && 
-         "A R/M register operand may not have a SIB byte");
+  if (insn.eaBase == EA_BASE_sib || insn.eaBase == EA_BASE_sib64) {
+    debug("A R/M register operand may not have a SIB byte");
+    return true;
+  }
   
   switch (insn.eaBase) {
+  default:
+    debug("Unexpected EA base register");
+    return true;
   case EA_BASE_NONE:
-    llvm_unreachable("EA_BASE_NONE for ModR/M base");
-    break;
+    debug("EA_BASE_NONE for ModR/M base");
+    return true;
 #define ENTRY(x) case EA_BASE_##x:
   ALL_EA_BASES
 #undef ENTRY
-    llvm_unreachable("A R/M register operand may not have a base; "
-                     "the operand must be a register.");
-    break;
-#define ENTRY(x)                                                        \
+    debug("A R/M register operand may not have a base; "
+          "the operand must be a register.");
+    return true;
+#define ENTRY(x)                                                      \
   case EA_REG_##x:                                                    \
     mcInst.addOperand(MCOperand::CreateReg(X86::x)); break;
   ALL_REGS
 #undef ENTRY
-  default:
-    llvm_unreachable("Unexpected EA base register");
   }
+  
+  return false;
 }
 
 /// translateRMMemory - Translates a memory operand stored in the Mod and R/M
@@ -186,7 +199,8 @@ static void translateRMRegister(MCInst &mcInst,
 /// @param sr           - Whether or not to emit the segment register.  The
 ///                       LEA instruction does not expect a segment-register
 ///                       operand.
-static void translateRMMemory(MCInst &mcInst,
+/// @return             - 0 on success; nonzero otherwise
+static bool translateRMMemory(MCInst &mcInst,
                               InternalInstruction &insn,
                               bool sr) {
   // Addresses in an MCInst are represented as five operands:
@@ -211,7 +225,8 @@ static void translateRMMemory(MCInst &mcInst,
     if (insn.sibBase != SIB_BASE_NONE) {
       switch (insn.sibBase) {
       default:
-        llvm_unreachable("Unexpected sibBase");
+        debug("Unexpected sibBase");
+        return true;
 #define ENTRY(x)                                          \
       case SIB_BASE_##x:                                  \
         baseReg = MCOperand::CreateReg(X86::x); break;
@@ -225,7 +240,8 @@ static void translateRMMemory(MCInst &mcInst,
     if (insn.sibIndex != SIB_INDEX_NONE) {
       switch (insn.sibIndex) {
       default:
-        llvm_unreachable("Unexpected sibIndex");
+        debug("Unexpected sibIndex");
+        return true;
 #define ENTRY(x)                                          \
       case SIB_INDEX_##x:                                 \
         indexReg = MCOperand::CreateReg(X86::x); break;
@@ -241,9 +257,10 @@ static void translateRMMemory(MCInst &mcInst,
   } else {
     switch (insn.eaBase) {
     case EA_BASE_NONE:
-      assert(insn.eaDisplacement != EA_DISP_NONE && 
-             "EA_BASE_NONE and EA_DISP_NONE for ModR/M base");
-      
+      if (insn.eaDisplacement == EA_DISP_NONE) {
+        debug("EA_BASE_NONE and EA_DISP_NONE for ModR/M base");
+        return true;
+      }
       if (insn.mode == MODE_64BIT)
         baseReg = MCOperand::CreateReg(X86::RIP); // Section 2.2.1.6
       else
@@ -271,8 +288,8 @@ static void translateRMMemory(MCInst &mcInst,
       indexReg = MCOperand::CreateReg(0);
       switch (insn.eaBase) {
       default:
-        llvm_unreachable("Unexpected eaBase");
-        break;
+        debug("Unexpected eaBase");
+        return true;
         // Here, we will use the fill-ins defined above.  However,
         //   BX_SI, BX_DI, BP_SI, and BP_DI are all handled above and
         //   sib and sib64 were handled in the top-level if, so they're only
@@ -285,9 +302,9 @@ static void translateRMMemory(MCInst &mcInst,
 #define ENTRY(x) case EA_REG_##x:
       ALL_REGS
 #undef ENTRY
-        llvm_unreachable("A R/M memory operand may not be a register; "
-                         "the base field must be a base.");
-            break;
+        debug("A R/M memory operand may not be a register; "
+              "the base field must be a base.");
+        return true;
       }
     }
     
@@ -315,6 +332,8 @@ static void translateRMMemory(MCInst &mcInst,
   
   if (sr)
     mcInst.addOperand(segmentReg);
+  
+  return false;
 }
 
 /// translateRM - Translates an operand stored in the R/M (and possibly SIB)
@@ -324,12 +343,14 @@ static void translateRMMemory(MCInst &mcInst,
 /// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The instruction to extract Mod, R/M, and SIB fields
 ///                       from.
-static void translateRM(MCInst &mcInst,
-                        OperandSpecifier &operand,
-                        InternalInstruction &insn) {
+/// @return             - 0 on success; nonzero otherwise
+static bool translateRM(MCInst &mcInst,
+                       OperandSpecifier &operand,
+                       InternalInstruction &insn) {
   switch (operand.type) {
   default:
-    llvm_unreachable("Unexpected type for a R/M operand");
+    debug("Unexpected type for a R/M operand");
+    return true;
   case TYPE_R8:
   case TYPE_R16:
   case TYPE_R32:
@@ -345,8 +366,7 @@ static void translateRM(MCInst &mcInst,
   case TYPE_DEBUGREG:
   case TYPE_CR32:
   case TYPE_CR64:
-    translateRMRegister(mcInst, insn);
-    break;
+    return translateRMRegister(mcInst, insn);
   case TYPE_M:
   case TYPE_M8:
   case TYPE_M16:
@@ -364,11 +384,9 @@ static void translateRM(MCInst &mcInst,
   case TYPE_M1616:
   case TYPE_M1632:
   case TYPE_M1664:
-    translateRMMemory(mcInst, insn, true);
-    break;
+    return translateRMMemory(mcInst, insn, true);
   case TYPE_LEA:
-    translateRMMemory(mcInst, insn, false);
-    break;
+    return translateRMMemory(mcInst, insn, false);
   }
 }
   
@@ -377,11 +395,17 @@ static void translateRM(MCInst &mcInst,
 ///
 /// @param mcInst       - The MCInst to append to.
 /// @param stackPos     - The stack position to translate.
-static void translateFPRegister(MCInst &mcInst,
-                                uint8_t stackPos) {
-  assert(stackPos < 8 && "Invalid FP stack position");
+/// @return             - 0 on success; nonzero otherwise.
+static bool translateFPRegister(MCInst &mcInst,
+                               uint8_t stackPos) {
+  if (stackPos >= 8) {
+    debug("Invalid FP stack position");
+    return true;
+  }
   
   mcInst.addOperand(MCOperand::CreateReg(X86::ST0 + stackPos));
+
+  return false;
 }
 
 /// translateOperand - Translates an operand stored in an internal instruction 
@@ -390,25 +414,27 @@ static void translateFPRegister(MCInst &mcInst,
 /// @param mcInst       - The MCInst to append to.
 /// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The internal instruction.
-static void translateOperand(MCInst &mcInst,
-                             OperandSpecifier &operand,
-                             InternalInstruction &insn) {
+/// @return             - false on success; true otherwise.
+static bool translateOperand(MCInst &mcInst,
+                            OperandSpecifier &operand,
+                            InternalInstruction &insn) {
   switch (operand.encoding) {
   default:
-    llvm_unreachable("Unhandled operand encoding during translation");
+    debug("Unhandled operand encoding during translation");
+    return true;
   case ENCODING_REG:
     translateRegister(mcInst, insn.reg);
-    break;
+    return false;
   case ENCODING_RM:
-    translateRM(mcInst, operand, insn);
-    break;
+    return translateRM(mcInst, operand, insn);
   case ENCODING_CB:
   case ENCODING_CW:
   case ENCODING_CD:
   case ENCODING_CP:
   case ENCODING_CO:
   case ENCODING_CT:
-    llvm_unreachable("Translation of code offsets isn't supported.");
+    debug("Translation of code offsets isn't supported.");
+    return true;
   case ENCODING_IB:
   case ENCODING_IW:
   case ENCODING_ID:
@@ -417,24 +443,22 @@ static void translateOperand(MCInst &mcInst,
   case ENCODING_Ia:
     translateImmediate(mcInst, 
                        insn.immediates[insn.numImmediatesTranslated++]);
-    break;
+    return false;
   case ENCODING_RB:
   case ENCODING_RW:
   case ENCODING_RD:
   case ENCODING_RO:
     translateRegister(mcInst, insn.opcodeRegister);
-    break;
+    return false;
   case ENCODING_I:
-    translateFPRegister(mcInst, insn.opcodeModifier);
-    break;
+    return translateFPRegister(mcInst, insn.opcodeModifier);
   case ENCODING_Rv:
     translateRegister(mcInst, insn.opcodeRegister);
-    break;
+    return false;
   case ENCODING_DUP:
-    translateOperand(mcInst,
-                     insn.spec->operands[operand.type - TYPE_DUP0],
-                     insn);
-    break;
+    return translateOperand(mcInst,
+                            insn.spec->operands[operand.type - TYPE_DUP0],
+                            insn);
   }
 }
   
@@ -443,9 +467,13 @@ static void translateOperand(MCInst &mcInst,
 ///
 /// @param mcInst       - The MCInst to populate with the instruction's data.
 /// @param insn         - The internal instruction.
-static void translateInstruction(MCInst &mcInst,
-                                 InternalInstruction &insn) {  
-  assert(insn.spec);
+/// @return             - false on success; true otherwise.
+static bool translateInstruction(MCInst &mcInst,
+                                InternalInstruction &insn) {  
+  if (!insn.spec) {
+    debug("Instruction has no specification");
+    return true;
+  }
   
   mcInst.setOpcode(insn.instructionID);
   
@@ -454,9 +482,14 @@ static void translateInstruction(MCInst &mcInst,
   insn.numImmediatesTranslated = 0;
   
   for (index = 0; index < X86_MAX_OPERANDS; ++index) {
-    if (insn.spec->operands[index].encoding != ENCODING_NONE)                
-      translateOperand(mcInst, insn.spec->operands[index], insn);
+    if (insn.spec->operands[index].encoding != ENCODING_NONE) {
+      if (translateOperand(mcInst, insn.spec->operands[index], insn)) {
+        return true;
+      }
+    }
   }
+  
+  return false;
 }
 
 static MCDisassembler *createX86_32Disassembler(const Target &T) {
