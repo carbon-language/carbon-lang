@@ -17,7 +17,7 @@
 
 #include "TableGenBackend.h"
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 
