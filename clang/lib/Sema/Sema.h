@@ -2478,9 +2478,7 @@ public:
 
   bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                    CXXBaseOrMemberInitializer **Initializers,
-                                   unsigned NumInitializers,
-                                   bool IsImplicitConstructor,
-                                   bool AnyErrors);
+                                   unsigned NumInitializers, bool AnyErrors);
 
   /// MarkBaseAndMemberDestructorsReferenced - Given a record decl,
   /// mark all the non-trivial destructors of its members and bases as

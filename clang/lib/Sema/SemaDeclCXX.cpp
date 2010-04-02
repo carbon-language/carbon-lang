@@ -1429,9 +1429,8 @@ bool
 Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
                                   unsigned NumInitializers,
-                                  bool IsImplicitConstructor,
                                   bool AnyErrors) {
-  assert((Constructor->isImplicit() == IsImplicitConstructor));
+//  assert((Constructor->isImplicit() == IsImplicitConstructor));
 
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
@@ -1630,14 +1629,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     }
     else if (FT->isReferenceType()) {
       Diag(Constructor->getLocation(), diag::err_uninitialized_member_in_ctor)
-        << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
+        << (int)Constructor->isImplicit() << Context.getTagDeclType(ClassDecl)
         << 0 << (*Field)->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       HadError = true;
     }
     else if (FT.isConstQualified()) {
       Diag(Constructor->getLocation(), diag::err_uninitialized_member_in_ctor)
-        << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
+        << (int)Constructor->isImplicit() << Context.getTagDeclType(ClassDecl)
         << 1 << (*Field)->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       HadError = true;
@@ -1842,10 +1841,9 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       return;
   }
 
-  SetBaseOrMemberInitializers(Constructor, MemInits, NumMemInits, 
-                              /*IsImplicitConstructor=*/false, AnyErrors);
-
   DiagnoseBaseOrMemInitializerOrder(*this, Constructor, MemInits, NumMemInits);
+
+  SetBaseOrMemberInitializers(Constructor, MemInits, NumMemInits, AnyErrors);
 }
 
 void
@@ -1943,9 +1941,7 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
 
   if (CXXConstructorDecl *Constructor
       = dyn_cast<CXXConstructorDecl>(CDtorDecl.getAs<Decl>()))
-    SetBaseOrMemberInitializers(Constructor, 0, 0, 
-                                /*IsImplicitConstructor=*/false,
-                                /*AnyErrors=*/false);
+    SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false);
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
@@ -3798,9 +3794,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 
   DeclContext *PreviousContext = CurContext;
   CurContext = Constructor;
-  if (SetBaseOrMemberInitializers(Constructor, 0, 0, 
-                                  /*IsImplicitConstructor=*/true, 
-                                  /*AnyErrors=*/false)) {
+  if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false)) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXDefaultConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
