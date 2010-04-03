@@ -478,7 +478,7 @@ static inline ARM_AM::AMSubMode getAMSubModeForBits(unsigned bits) {
 /// followed by possible src(s).
 ///
 /// The processing of the predicate, and the 'S' modifier bit, if MI modifies
-/// the CPSR, is factored into ARMBasicMCBuilder's class method named
+/// the CPSR, is factored into ARMBasicMCBuilder's method named
 /// TryPredicateAndSBitModifier.
 
 static bool DisassemblePseudo(MCInst &MI, unsigned Opcode, uint32_t insn,
@@ -3159,7 +3159,7 @@ ARMAlgorithm *ARMAlgorithm::GetInstance(ARMFormat Format) {
 /// The general idea is to set the Opcode for the MCInst, followed by adding
 /// the appropriate MCOperands to the MCInst.  ARM Basic MC Builder delegates
 /// to the Algo (ARM Disassemble Algorithm) object to perform Format-specific
-/// disassembly, followed by class method TryPredicateAndSBitModifier() to do
+/// disassembly, followed by TryPredicateAndSBitModifier() to do
 /// PredicateOperand and OptionalDefOperand which follow the Dst/Src Operands.
 bool ARMBasicMCBuilder::BuildIt(MCInst &MI, uint32_t insn) {
   // Stage 1 sets the Opcode.
