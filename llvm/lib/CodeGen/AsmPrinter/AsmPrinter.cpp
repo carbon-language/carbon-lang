@@ -164,7 +164,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
       // .linkonce discard
       // FIXME: It would be nice to use .linkonce samesize for non-common
       // globals.
-      OutStreamer.EmitRawText(LinkOnce);
+      OutStreamer.EmitRawText(StringRef(LinkOnce));
     } else {
       // .weak _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
@@ -322,9 +322,13 @@ void AsmPrinter::EmitFunctionHeader() {
   
   // Add some workaround for linkonce linkage on Cygwin\MinGW.
   if (MAI->getLinkOnceDirective() != 0 &&
-      (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
+      (F->hasLinkOnceLinkage() || F->hasWeakLinkage())) {
     // FIXME: What is this?
-    O << "Lllvm$workaround$fake$stub$" << *CurrentFnSym << ":\n";
+    MCSymbol *FakeStub = 
+      OutContext.GetOrCreateSymbol(Twine("Lllvm$workaround$fake$stub$")+
+                                   CurrentFnSym->getName());
+    OutStreamer.EmitLabel(FakeStub);
+  }
   
   // Emit pre-function debug and/or EH information.
   if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
@@ -454,8 +458,11 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
   
-  if (MAI->hasDotTypeDotSizeDirective())
+  // If the target wants a .size directive for the size of the function, emit
+  // it.
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
+  }
   
   // Emit post-function debug information.
   if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
