@@ -47,10 +47,10 @@ bb:		; preds = %bb, %entry
 	%2 = fcmp olt double %1, -1.000000e+00
 	br i1 %2, label %bb, label %return
 
-return:		; preds = %bb
+return:
 	ret void
 ; CHECK: @test3
-; CHECK: icmp
+; CHECK: fcmp
 }
 
 define void @test4() nounwind {
@@ -64,10 +64,10 @@ bb:		; preds = %bb, %entry
 	%2 = fcmp olt double %1, 1.000000e+00		; <i1> [#uses=1]
 	br i1 %2, label %bb, label %return
 
-return:		; preds = %bb
+return:
 	ret void
 ; CHECK: @test4
-; CHECK: icmp
+; CHECK: fcmp
 }
 
 ; PR6761
