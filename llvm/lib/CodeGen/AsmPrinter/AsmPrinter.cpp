@@ -126,11 +126,16 @@ bool AsmPrinter::doInitialization(Module &M) {
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
       MP->beginAssembly(O, *this, *MAI);
   
-  if (!M.getModuleInlineAsm().empty())
-    O << MAI->getCommentString() << " Start of file scope inline assembly\n"
-      << M.getModuleInlineAsm()
-      << '\n' << MAI->getCommentString()
-      << " End of file scope inline assembly\n";
+  if (!M.getModuleInlineAsm().empty()) {
+    OutStreamer.AddComment("Start of file scope inline assembly");
+    OutStreamer.AddBlankLine();
+    O << M.getModuleInlineAsm();
+    
+    if (*M.getModuleInlineAsm().rbegin() != '\n')
+      OutStreamer.AddBlankLine();
+    OutStreamer.AddComment("End of file scope inline assembly");
+    OutStreamer.AddBlankLine();
+  }
 
   DW = getAnalysisIfAvailable<DwarfWriter>();
   if (DW)
