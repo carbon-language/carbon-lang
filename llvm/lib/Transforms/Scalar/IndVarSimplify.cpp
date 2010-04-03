@@ -691,8 +691,15 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   
   BranchInst *TheBr = cast<BranchInst>(Compare->use_back());
 
-  // FIXME: Need to verify that the branch actually controls the iteration count
-  // of the loop.  If not, the new IV can overflow and noone will notice.
+  // We need to verify that the branch actually controls the iteration count
+  // of the loop.  If not, the new IV can overflow and no one will notice.
+  // The branch block must be in the loop and one of the successors must be out
+  // of the loop.
+  assert(TheBr->isConditional() && "Can't use fcmp if not conditional");
+  if (!L->contains(TheBr->getParent()) ||
+      (L->contains(TheBr->getSuccessor(0)) &&
+       L->contains(TheBr->getSuccessor(1))))
+    return;
   
   
   // If it isn't a comparison with an integer-as-fp (the exit value), we can't
