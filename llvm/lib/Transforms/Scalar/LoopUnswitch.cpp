@@ -415,46 +415,44 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
 
   Function *F = loopHeader->getParent();
 
-  // If the condition is trivial, always unswitch.  There is no code growth for
-  // this case.
-  if (!IsTrivialUnswitchCondition(LoopCond)) {
-    // Check to see if it would be profitable to unswitch current loop.
-
-    // Do not do non-trivial unswitch while optimizing for size.
-    if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
-      return false;
-
-    // FIXME: This is overly conservative because it does not take into
-    // consideration code simplification opportunities and code that can
-    // be shared by the resultant unswitched loops.
-    CodeMetrics Metrics;
-    for (Loop::block_iterator I = currentLoop->block_begin(), 
-           E = currentLoop->block_end();
-         I != E; ++I)
-      Metrics.analyzeBasicBlock(*I);
-
-    // Limit the number of instructions to avoid causing significant code
-    // expansion, and the number of basic blocks, to avoid loops with
-    // large numbers of branches which cause loop unswitching to go crazy.
-    // This is a very ad-hoc heuristic.
-    if (Metrics.NumInsts > Threshold ||
-        Metrics.NumBlocks * 5 > Threshold ||
-        Metrics.NeverInline) {
-      DEBUG(dbgs() << "NOT unswitching loop %"
-            << currentLoop->getHeader()->getName() << ", cost too high: "
-            << currentLoop->getBlocks().size() << "\n");
-      return false;
-    }
-  }
-
-  Constant *CondVal;
-  BasicBlock *ExitBlock;
+  Constant *CondVal = 0;
+  BasicBlock *ExitBlock = 0;
   if (IsTrivialUnswitchCondition(LoopCond, &CondVal, &ExitBlock)) {
+    // If the condition is trivial, always unswitch. There is no code growth
+    // for this case.
     UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, ExitBlock);
-  } else {
-    UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
+    return true;
   }
 
+  // Check to see if it would be profitable to unswitch current loop.
+
+  // Do not do non-trivial unswitch while optimizing for size.
+  if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
+    return false;
+
+  // FIXME: This is overly conservative because it does not take into
+  // consideration code simplification opportunities and code that can
+  // be shared by the resultant unswitched loops.
+  CodeMetrics Metrics;
+  for (Loop::block_iterator I = currentLoop->block_begin(), 
+         E = currentLoop->block_end();
+       I != E; ++I)
+    Metrics.analyzeBasicBlock(*I);
+
+  // Limit the number of instructions to avoid causing significant code
+  // expansion, and the number of basic blocks, to avoid loops with
+  // large numbers of branches which cause loop unswitching to go crazy.
+  // This is a very ad-hoc heuristic.
+  if (Metrics.NumInsts > Threshold ||
+      Metrics.NumBlocks * 5 > Threshold ||
+      Metrics.NeverInline) {
+    DEBUG(dbgs() << "NOT unswitching loop %"
+          << currentLoop->getHeader()->getName() << ", cost too high: "
+          << currentLoop->getBlocks().size() << "\n");
+    return false;
+  }
+
+  UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
   return true;
 }
 
