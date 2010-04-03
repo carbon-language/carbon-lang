@@ -623,21 +623,6 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
   }
 }
 
-/// Return true if it is OK to use SIToFPInst for an induction variable
-/// with given initial and exit values.
-static bool CanUseSIToFP(ConstantFP *InitV, ConstantFP *ExitV,
-                         uint64_t intIV, uint64_t intEV) {
-
-  if (InitV->getValueAPF().isNegative() || ExitV->getValueAPF().isNegative())
-    return true;
-
-  // If the iteration range can be handled by SIToFPInst then use it.
-  if (abs64(intEV - intIV) < INT32_MAX)
-    return true;
-
-  return false;
-}
-
 /// convertToInt - Convert APF to an integer, if possible.
 static bool convertToInt(const APFloat &APF, uint64_t &intVal) {
   bool isExact = false;
@@ -720,9 +705,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   case CmpInst::FCMP_OEQ:
   case CmpInst::FCMP_UEQ: NewPred = CmpInst::ICMP_EQ; break;
   case CmpInst::FCMP_OGT:
-  case CmpInst::FCMP_UGT: NewPred = CmpInst::ICMP_UGT; break;
+  case CmpInst::FCMP_UGT: NewPred = CmpInst::ICMP_SGT; break;
   case CmpInst::FCMP_OGE:
-  case CmpInst::FCMP_UGE: NewPred = CmpInst::ICMP_UGE; break;
+  case CmpInst::FCMP_UGE: NewPred = CmpInst::ICMP_SGE; break;
   case CmpInst::FCMP_OLT:
   case CmpInst::FCMP_ULT: NewPred = CmpInst::ICMP_ULT; break;
   case CmpInst::FCMP_OLE:
@@ -767,15 +752,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // We give preference to sitofp over uitofp because it is faster on most
   // platforms.
   if (WeakPH) {
-    if (CanUseSIToFP(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
-      SIToFPInst *Conv = new SIToFPInst(NewPHI, PN->getType(), "indvar.conv",
-                                        PN->getParent()->getFirstNonPHI());
-      PN->replaceAllUsesWith(Conv);
-    } else {
-      UIToFPInst *Conv = new UIToFPInst(NewPHI, PN->getType(), "indvar.conv",
-                                        PN->getParent()->getFirstNonPHI());
-      PN->replaceAllUsesWith(Conv);
-    }
+    Value *Conv = new SIToFPInst(NewPHI, PN->getType(), "indvar.conv",
+                                 PN->getParent()->getFirstNonPHI());
+    PN->replaceAllUsesWith(Conv);
     RecursivelyDeleteTriviallyDeadInstructions(PN);
   }
 
