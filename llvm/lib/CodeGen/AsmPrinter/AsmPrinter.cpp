@@ -164,7 +164,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
       // .linkonce discard
       // FIXME: It would be nice to use .linkonce samesize for non-common
       // globals.
-      O << LinkOnce;
+      OutStreamer.EmitRawText(LinkOnce);
     } else {
       // .weak _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
@@ -1386,9 +1386,9 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   if (AsmStr[0] == 0) {
     if (!OutStreamer.hasRawTextSupport()) return;
 
-    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
                             MAI->getInlineAsmStart());
-    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
                             MAI->getInlineAsmEnd());
     return;
   }
@@ -1396,7 +1396,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
   if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
                             MAI->getInlineAsmStart());
 
   // Emit the inline asm to a temporary string so we can emit it through
@@ -1584,7 +1584,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
   if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
                             MAI->getInlineAsmEnd());
 }
 
@@ -1592,21 +1592,24 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// that is an implicit def.
 void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
-  O.PadToColumn(MAI->getCommentColumn());
-  O << MAI->getCommentString() << " implicit-def: "
-    << TRI->getName(MI->getOperand(0).getReg());
+  OutStreamer.AddComment(Twine("implicit-def: ") +
+                         TRI->getName(MI->getOperand(0).getReg()));
   OutStreamer.AddBlankLine();
 }
 
 void AsmPrinter::printKill(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   O.PadToColumn(MAI->getCommentColumn());
-  O << MAI->getCommentString() << " kill:";
+  
+  std::string Str = "kill:";
   for (unsigned n = 0, e = MI->getNumOperands(); n != e; ++n) {
-    const MachineOperand &op = MI->getOperand(n);
-    assert(op.isReg() && "KILL instruction must have only register operands");
-    O << ' ' << TRI->getName(op.getReg()) << (op.isDef() ? "<def>" : "<kill>");
+    const MachineOperand &Op = MI->getOperand(n);
+    assert(Op.isReg() && "KILL instruction must have only register operands");
+    Str += ' ';
+    Str += TRI->getName(Op.getReg());
+    Str += (Op.isDef() ? "<def>" : "<kill>");
   }
+  OutStreamer.AddComment(Str);
   OutStreamer.AddBlankLine();
 }
 
@@ -1772,15 +1775,16 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 
   // Print the main label for the block.
   if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
-    if (VerboseAsm) {
-      // NOTE: Want this comment at start of line.
-      O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
+    if (VerboseAsm && OutStreamer.hasRawTextSupport()) {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
       
       PrintBasicBlockLoopComments(*MBB, LI, *this);
-      OutStreamer.AddBlankLine();
+      
+      // NOTE: Want this comment at start of line, don't emit with AddComment.
+      OutStreamer.EmitRawText(Twine(MAI->getCommentString()) + " BB#" +
+                              Twine(MBB->getNumber()) + ":");
     }
   } else {
     if (VerboseAsm) {

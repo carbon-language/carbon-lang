@@ -10,6 +10,8 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 #include <cstdlib>
 using namespace llvm;
 
@@ -53,4 +55,10 @@ void MCStreamer::EmitRawText(StringRef String) {
   errs() << "EmitRawText called on an MCStreamer that doesn't support it, "
   " something must not be fully mc'ized\n";
   abort();
+}
+
+void MCStreamer::EmitRawText(const Twine &T) {
+  SmallString<128> Str;
+  T.toVector(Str);
+  EmitRawText(Str.str());
 }

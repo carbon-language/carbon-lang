@@ -286,6 +286,7 @@ class TargetAsmBackend;
     /// the specified string in the output .s file.  This capability is
     /// indicated by the hasRawTextSupport() predicate.  By default this aborts.
     virtual void EmitRawText(StringRef String);
+    void EmitRawText(const Twine &String);
     
     /// Finish - Finish emission of machine code and flush any output.
     virtual void Finish() = 0;
