@@ -3130,6 +3130,13 @@ static const DisassembleFP FuncPtrs[] = {
 /// Algorithms - Algorithms stores a map from Format to ARMAlgorithm*.
 static std::vector<ARMAlgorithm*> Algorithms;
 
+/// DoCleanup - Do cleanup of Algorithms upon exit.
+void ARMAlgorithm::DoCleanup() {
+  for (unsigned i = 0; i < array_lengthof(FuncPtrs); ++i)
+    if (Algorithms[i])
+      delete Algorithms[i];
+}
+
 /// GetInstance - GetInstance returns an instance of ARMAlgorithm given the
 /// encoding Format.  API clients should not free up the returned instance.
 ARMAlgorithm *ARMAlgorithm::GetInstance(ARMFormat Format) {
@@ -3141,10 +3148,12 @@ ARMAlgorithm *ARMAlgorithm::GetInstance(ARMFormat Format) {
         Algorithms[i] = new ARMAlgorithm(FuncPtrs[i]);
       else
         Algorithms[i] = NULL;
+
+    // Register cleanup routine.
+    atexit(DoCleanup);
   }
   return Algorithms[Format];
 }
-
 
 /// BuildIt - BuildIt performs the build step for this ARM Basic MC Builder.
 /// The general idea is to set the Opcode for the MCInst, followed by adding

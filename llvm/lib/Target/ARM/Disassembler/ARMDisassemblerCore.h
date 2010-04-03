@@ -181,6 +181,9 @@ public:
   /// encoding Format.  API clients should not free up the returned instance.
   static ARMAlgorithm *GetInstance(ARMFormat Format);
 
+  /// DoCleanup - DoCleanup is meant to be called upon exit as an exit handler.
+  static void DoCleanup();
+
   /// Return true if this algorithm successfully disassembles the instruction.
   /// NumOpsAdded is updated to reflect the number of operands added by the
   /// algorithm.  NumOpsAdded may be less than NumOps, in which case, there are
