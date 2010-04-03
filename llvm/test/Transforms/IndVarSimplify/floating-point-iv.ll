@@ -1,5 +1,5 @@
-; RUN: opt < %s -indvars -S | grep icmp | count 4
-define void @bar() nounwind {
+; RUN: opt < %s -indvars -S | FileCheck %s
+define void @test1() nounwind {
 entry:
 	br label %bb
 
@@ -12,11 +12,13 @@ bb:		; preds = %bb, %entry
 
 return:		; preds = %bb
 	ret void
+; CHECK: @test1
+; CHECK: icmp
 }
 
 declare i32 @foo(double)
 
-define void @bar2() nounwind {
+define void @test2() nounwind {
 entry:
 	br label %bb
 
@@ -29,10 +31,12 @@ bb:		; preds = %bb, %entry
 
 return:		; preds = %bb
 	ret void
+; CHECK: @test2
+; CHECK: icmp
 }
 
 
-define void @bar3() nounwind {
+define void @test3() nounwind {
 entry:
 	br label %bb
 
@@ -45,9 +49,11 @@ bb:		; preds = %bb, %entry
 
 return:		; preds = %bb
 	ret void
+; CHECK: @test3
+; CHECK: icmp
 }
 
-define void @bar4() nounwind {
+define void @test4() nounwind {
 entry:
 	br label %bb
 
@@ -60,6 +66,8 @@ bb:		; preds = %bb, %entry
 
 return:		; preds = %bb
 	ret void
+; CHECK: @test4
+; CHECK: icmp
 }
 
 
