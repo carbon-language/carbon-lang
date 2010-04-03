@@ -625,10 +625,10 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
 
 /// Return true if it is OK to use SIToFPInst for an induction variable
 /// with given initial and exit values.
-static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
+static bool useSIToFPInst(ConstantFP *InitV, ConstantFP *ExitV,
                           uint64_t intIV, uint64_t intEV) {
 
-  if (InitV.getValueAPF().isNegative() || ExitV.getValueAPF().isNegative())
+  if (InitV->getValueAPF().isNegative() || ExitV->getValueAPF().isNegative())
     return true;
 
   // If the iteration range can be handled by SIToFPInst then use it.
@@ -640,19 +640,16 @@ static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
 }
 
 /// convertToInt - Convert APF to an integer, if possible.
-static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
-
+static bool convertToInt(const APFloat &APF, uint64_t &intVal) {
   bool isExact = false;
   if (&APF.getSemantics() == &APFloat::PPCDoubleDouble)
     return false;
-  if (APF.convertToInteger(intVal, 32, APF.isNegative(),
-                           APFloat::rmTowardZero, &isExact)
-      != APFloat::opOK)
+  if (APF.convertToInteger(&intVal, 32, APF.isNegative(),
+                           APFloat::rmTowardZero, &isExact) != APFloat::opOK)
     return false;
   if (!isExact)
     return false;
   return true;
-
 }
 
 /// HandleFloatingPointIV - If the loop has floating induction variable
@@ -665,64 +662,53 @@ static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
 ///   bar((double)i);
 ///
 void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
-
   unsigned IncomingEdge = L->contains(PH->getIncomingBlock(0));
   unsigned BackEdge     = IncomingEdge^1;
 
   // Check incoming value.
-  ConstantFP *InitValue = dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
+  ConstantFP *InitValue =
+    dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
   if (!InitValue) return;
-  uint64_t newInitValue =
-              Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
-  if (!convertToInt(InitValue->getValueAPF(), &newInitValue))
+  
+  uint64_t newInitValue;
+  if (!convertToInt(InitValue->getValueAPF(), newInitValue))
     return;
 
   // Check IV increment. Reject this PH if increment operation is not
   // an add or increment value can not be represented by an integer.
   BinaryOperator *Incr =
     dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
-  if (!Incr) return;
-  if (Incr->getOpcode() != Instruction::FAdd) return;
-  ConstantFP *IncrValue = NULL;
-  unsigned IncrVIndex = 1;
-  if (Incr->getOperand(1) == PH)
-    IncrVIndex = 0;
-  IncrValue = dyn_cast<ConstantFP>(Incr->getOperand(IncrVIndex));
-  if (!IncrValue) return;
-  uint64_t newIncrValue =
-              Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
-  if (!convertToInt(IncrValue->getValueAPF(), &newIncrValue))
+  if (Incr == 0 || Incr->getOpcode() != Instruction::FAdd) return;
+  
+  // If this is not an add of the PHI with a constantfp, or if the constant fp
+  // is not an integer, bail out.
+  ConstantFP *IncrValue = dyn_cast<ConstantFP>(Incr->getOperand(1));
+  uint64_t newIncrValue;
+  if (IncrValue == 0 || Incr->getOperand(0) != PH ||
+      !convertToInt(IncrValue->getValueAPF(), newIncrValue))
     return;
 
-  // Check Incr uses. One user is PH and the other users is exit condition used
-  // by the conditional terminator.
+  // Check Incr uses. One user is PH and the other user is an exit condition
+  // used by the conditional terminator.
   Value::use_iterator IncrUse = Incr->use_begin();
   Instruction *U1 = cast<Instruction>(IncrUse++);
   if (IncrUse == Incr->use_end()) return;
   Instruction *U2 = cast<Instruction>(IncrUse++);
   if (IncrUse != Incr->use_end()) return;
 
-  // Find exit condition.
+  // Find exit condition, which is an fcmp.  If it doesn't exist, or if it isn't
+  // only used by a branch, we can't transform it.
   FCmpInst *EC = dyn_cast<FCmpInst>(U1);
   if (!EC)
     EC = dyn_cast<FCmpInst>(U2);
-  if (!EC) return;
+  if (EC == 0 || !EC->hasOneUse() || !isa<BranchInst>(EC->use_back()))
+    return;
 
-  if (BranchInst *BI = dyn_cast<BranchInst>(EC->getParent()->getTerminator())) {
-    if (!BI->isConditional()) return;
-    if (BI->getCondition() != EC) return;
-  }
-
-  // Find exit value. If exit value can not be represented as an integer then
-  // do not handle this floating point PH.
-  ConstantFP *EV = NULL;
-  unsigned EVIndex = 1;
-  if (EC->getOperand(1) == Incr)
-    EVIndex = 0;
-  EV = dyn_cast<ConstantFP>(EC->getOperand(EVIndex));
-  if (!EV) return;
-  uint64_t intEV = Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
-  if (!convertToInt(EV->getValueAPF(), &intEV))
+  // If it isn't a comparison with an integer-as-fp (the exit value), we can't
+  // transform it.
+  ConstantFP *ExitValueVal = dyn_cast<ConstantFP>(EC->getOperand(1));
+  uint64_t ExitValue;
+  if (ExitValueVal == 0 || !convertToInt(ExitValueVal->getValueAPF(),ExitValue))
     return;
 
   // Find new predicate for integer comparison.
@@ -769,9 +755,11 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // The back edge is edge 1 of newPHI, whatever it may have been in the
   // original PHI.
   ConstantInt *NewEV = ConstantInt::get(Type::getInt32Ty(PH->getContext()),
-                                        intEV);
-  Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
-  Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
+                                        ExitValue);
+  
+  // FIXME: This is probably wrong.
+  Value *LHS = NewPHI->getIncomingValue(1);
+  Value *RHS = NewEV;
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
                                  NewPred, LHS, RHS, EC->getName());
 
@@ -792,7 +780,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Give SIToFPInst preference over UIToFPInst because it is faster on
   // platforms that are widely used.
   if (WeakPH && !PH->use_empty()) {
-    if (useSIToFPInst(*InitValue, *EV, newInitValue, intEV)) {
+    if (useSIToFPInst(InitValue, ExitValueVal, newInitValue, ExitValue)) {
       SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                         PH->getParent()->getFirstNonPHI());
       PH->replaceAllUsesWith(Conv);
