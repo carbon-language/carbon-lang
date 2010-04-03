@@ -359,7 +359,7 @@ namespace llvm {
 
   private:
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-    void EmitInlineAsm(StringRef Str);
+    void EmitInlineAsm(StringRef Str) const;
 
     /// processDebugLoc - Processes the debug information of each machine
     /// instruction's DebugLoc. 

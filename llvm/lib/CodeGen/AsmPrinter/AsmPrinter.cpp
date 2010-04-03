@@ -878,7 +878,7 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 }
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-void AsmPrinter::EmitInlineAsm(StringRef Str) {
+void AsmPrinter::EmitInlineAsm(StringRef Str) const {
   assert(!Str.empty() && "Can't emit empty inline asm block");
   
   // If the output streamer is actually a .s file, just emit the blob textually.
@@ -1366,9 +1366,11 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
+  assert(MI->isInlineAsm() && "printInlineAsm only works on inline asms");
+  
   unsigned NumOperands = MI->getNumOperands();
   
-  // Count the number of register definitions.
+  // Count the number of register definitions to find the asm string.
   unsigned NumDefs = 0;
   for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
        ++NumDefs)
@@ -1379,17 +1381,32 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
 
-  O << '\t';
-
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
-    O << MAI->getCommentString() << MAI->getInlineAsmStart() << "\n\t";
-    O << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
+    if (!OutStreamer.hasRawTextSupport()) return;
+
+    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmStart());
+    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmEnd());
     return;
   }
+
+  // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
+  // enabled, so we use EmitRawText.
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmStart());
+
+  // Emit the inline asm to a temporary string so we can emit it through
+  // EmitInlineAsm.
+#if 0
+  SmallString<256> StringData;
+  raw_svector_ostream O(StringData);
+#endif
   
-  O << MAI->getCommentString() << MAI->getInlineAsmStart() << "\n\t";
+  O << '\t';
 
   // The variant of the current asmprinter.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
@@ -1558,8 +1575,17 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd();
-  OutStreamer.AddBlankLine();
+  O << "\n";
+  
+#if 0
+  EmitInlineAsm(O.str());
+#endif
+  
+  // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
+  // enabled, so we use EmitRawText.
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText(std::string("\t")+MAI->getCommentString()+
+                            MAI->getInlineAsmEnd());
 }
 
 /// printImplicitDef - This method prints the specified machine instruction
