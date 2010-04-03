@@ -623,16 +623,17 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
   }
 }
 
-/// convertToInt - Convert APF to an integer, if possible.
-static bool convertToInt(const APFloat &APF, uint64_t &intVal) {
+/// ConvertToSInt - Convert APF to an integer, if possible.
+static bool ConvertToSInt(const APFloat &APF, int64_t &IntVal) {
   bool isExact = false;
   if (&APF.getSemantics() == &APFloat::PPCDoubleDouble)
     return false;
-  if (APF.convertToInteger(&intVal, 32, APF.isNegative(),
-                           APFloat::rmTowardZero, &isExact) != APFloat::opOK)
+  // See if we can convert this to an int64_t
+  uint64_t UIntVal;
+  if (APF.convertToInteger(&UIntVal, 64, true, APFloat::rmTowardZero,
+                           &isExact) != APFloat::opOK || !isExact)
     return false;
-  if (!isExact)
-    return false;
+  IntVal = UIntVal;
   return true;
 }
 
@@ -654,8 +655,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
     dyn_cast<ConstantFP>(PN->getIncomingValue(IncomingEdge));
   if (!InitValueVal) return;
   
-  uint64_t InitValue;
-  if (!convertToInt(InitValueVal->getValueAPF(), InitValue))
+  int64_t InitValue;
+  if (!ConvertToSInt(InitValueVal->getValueAPF(), InitValue))
     return;
 
   // Check IV increment. Reject this PN if increment operation is not
@@ -667,9 +668,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // If this is not an add of the PHI with a constantfp, or if the constant fp
   // is not an integer, bail out.
   ConstantFP *IncValueVal = dyn_cast<ConstantFP>(Incr->getOperand(1));
-  uint64_t IntValue;
+  int64_t IntValue;
   if (IncValueVal == 0 || Incr->getOperand(0) != PN ||
-      !convertToInt(IncValueVal->getValueAPF(), IntValue))
+      !ConvertToSInt(IncValueVal->getValueAPF(), IntValue))
     return;
 
   // Check Incr uses. One user is PN and the other user is an exit condition
@@ -694,9 +695,20 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // If it isn't a comparison with an integer-as-fp (the exit value), we can't
   // transform it.
   ConstantFP *ExitValueVal = dyn_cast<ConstantFP>(Compare->getOperand(1));
-  uint64_t ExitValue;
-  if (ExitValueVal == 0 || !convertToInt(ExitValueVal->getValueAPF(),ExitValue))
+  int64_t ExitValue;
+  if (ExitValueVal == 0 ||
+      !ConvertToSInt(ExitValueVal->getValueAPF(), ExitValue))
     return;
+  
+  // We convert the floating point induction variable to a signed i32 value if
+  // we can.  This is only safe if the comparison will not overflow in a way
+  // that won't be trapped by the integer equivalent operations.  Check for this
+  // now.
+  // TODO: We could use i64 if it is native and the range requires it.
+
+  
+  
+  const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
 
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
@@ -714,9 +726,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_SLE; break;
   }
 
-  const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
-  
-  // Insert new i32 integer induction variable.
+  // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Int32Ty, PN->getName()+".int", PN);
   NewPHI->addIncoming(ConstantInt::get(Int32Ty, InitValue),
                       PN->getIncomingBlock(IncomingEdge));
