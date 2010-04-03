@@ -240,7 +240,10 @@ namespace bitc {
     // new select on i1 or [N x i1]
     FUNC_CODE_INST_VSELECT     = 29, // VSELECT:    [ty,opval,opval,predty,pred]
     FUNC_CODE_INST_INBOUNDS_GEP= 30, // INBOUNDS_GEP: [n x operands]
-    FUNC_CODE_INST_INDIRECTBR  = 31  // INDIRECTBR: [opty, op0, op1, ...]
+    FUNC_CODE_INST_INDIRECTBR  = 31, // INDIRECTBR: [opty, op0, op1, ...]
+    
+    FUNC_CODE_DEBUG_LOC        = 32, // DEBUG_LOC: [Line,Col,ScopeVal, IAVal]
+    FUNC_CODE_DEBUG_LOC_AGAIN  = 33  // DEBUG_LOC_AGAIN
   };
 } // End bitc namespace
 } // End llvm namespace

@@ -104,9 +104,16 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
 
         // Enumerate metadata attached with this instruction.
         MDs.clear();
-        I->getAllMetadata(MDs);
+        I->getAllMetadataOtherThanDebugLoc(MDs);
         for (unsigned i = 0, e = MDs.size(); i != e; ++i)
           EnumerateMetadata(MDs[i].second);
+        
+        if (!I->getDebugLoc().isUnknown()) {
+          MDNode *Scope, *IA;
+          I->getDebugLoc().getScopeAndInlinedAt(Scope, IA, I->getContext());
+          if (Scope) EnumerateMetadata(Scope);
+          if (IA) EnumerateMetadata(IA);
+        }
       }
   }
 

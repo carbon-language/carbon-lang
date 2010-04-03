@@ -237,6 +237,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::FUNC_CODE_INST_INSERTVAL:    return "INST_INSERTVAL";
     case bitc::FUNC_CODE_INST_CMP2:         return "INST_CMP2";
     case bitc::FUNC_CODE_INST_VSELECT:      return "INST_VSELECT";
+    case bitc::FUNC_CODE_DEBUG_LOC:         return "DEBUG_LOC";
+    case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:   return "DEBUG_LOC_AGAIN";
     }
   case bitc::TYPE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
