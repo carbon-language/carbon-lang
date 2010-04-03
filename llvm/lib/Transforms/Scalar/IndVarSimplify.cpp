@@ -632,8 +632,7 @@ static bool CanUseSIToFP(ConstantFP *InitV, ConstantFP *ExitV,
     return true;
 
   // If the iteration range can be handled by SIToFPInst then use it.
-  APInt Max = APInt::getSignedMaxValue(32);
-  if (Max.getZExtValue() > static_cast<uint64_t>(abs64(intEV - intIV)))
+  if (abs64(intEV - intIV) < INT32_MAX)
     return true;
 
   return false;
