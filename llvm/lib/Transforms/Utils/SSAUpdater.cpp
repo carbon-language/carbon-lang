@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ssaupdater"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
