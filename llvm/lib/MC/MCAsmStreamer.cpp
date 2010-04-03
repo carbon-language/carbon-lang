@@ -645,13 +645,10 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
 /// the specified string in the output .s file.  This capability is
 /// indicated by the hasRawTextSupport() predicate.
 void MCAsmStreamer::EmitRawText(StringRef String) {
-  if (!CommentToEmit.empty() || CommentStream.GetNumBytesInBuffer() != 0)
-    EmitCommentsAndEOL();
-  
+  if (!String.empty() && String.back() == '\n')
+    String = String.substr(0, String.size()-1);
   OS << String;
-  
-  if (!String.empty() && String.back() != '\n')
-    OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::Finish() {
