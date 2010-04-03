@@ -625,8 +625,8 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
 
 /// Return true if it is OK to use SIToFPInst for an induction variable
 /// with given initial and exit values.
-static bool useSIToFPInst(ConstantFP *InitV, ConstantFP *ExitV,
-                          uint64_t intIV, uint64_t intEV) {
+static bool CanUseSIToFP(ConstantFP *InitV, ConstantFP *ExitV,
+                         uint64_t intIV, uint64_t intEV) {
 
   if (InitV->getValueAPF().isNegative() || ExitV->getValueAPF().isNegative())
     return true;
@@ -698,24 +698,25 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
 
   // Find exit condition, which is an fcmp.  If it doesn't exist, or if it isn't
   // only used by a branch, we can't transform it.
-  FCmpInst *EC = dyn_cast<FCmpInst>(U1);
-  if (!EC)
-    EC = dyn_cast<FCmpInst>(U2);
-  if (EC == 0 || !EC->hasOneUse() || !isa<BranchInst>(EC->use_back()))
+  FCmpInst *Compare = dyn_cast<FCmpInst>(U1);
+  if (!Compare)
+    Compare = dyn_cast<FCmpInst>(U2);
+  if (Compare == 0 || !Compare->hasOneUse() ||
+      !isa<BranchInst>(Compare->use_back()))
     return;
   
-  BranchInst *TheBr = cast<BranchInst>(EC->use_back());
+  BranchInst *TheBr = cast<BranchInst>(Compare->use_back());
 
   // If it isn't a comparison with an integer-as-fp (the exit value), we can't
   // transform it.
-  ConstantFP *ExitValueVal = dyn_cast<ConstantFP>(EC->getOperand(1));
+  ConstantFP *ExitValueVal = dyn_cast<ConstantFP>(Compare->getOperand(1));
   uint64_t ExitValue;
   if (ExitValueVal == 0 || !convertToInt(ExitValueVal->getValueAPF(),ExitValue))
     return;
 
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
-  switch (EC->getPredicate()) {
+  switch (Compare->getPredicate()) {
   default: return;  // Unknown comparison.
   case CmpInst::FCMP_OEQ:
   case CmpInst::FCMP_UEQ: NewPred = CmpInst::ICMP_EQ; break;
@@ -731,7 +732,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
 
   const IntegerType *Int32Ty = Type::getInt32Ty(PH->getContext());
   
-  // Insert new integer induction variable.
+  // Insert new i32 integer induction variable.
   PHINode *NewPHI = PHINode::Create(Int32Ty, PH->getName()+".int", PH);
   NewPHI->addIncoming(ConstantInt::get(Int32Ty, InitValue),
                       PH->getIncomingBlock(IncomingEdge));
@@ -741,23 +742,21 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
                               Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
-  // The back edge is edge 1 of newPHI, whatever it may have been in the
-  // original PHI.
-  ConstantInt *NewEV = ConstantInt::get(Int32Ty, ExitValue);
-  
-  ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, NewAdd, NewEV,
-                                      EC->getName());
+  ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, NewAdd,
+                                      ConstantInt::get(Int32Ty, ExitValue),
+                                      Compare->getName());
 
   // In the following deletions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.
   WeakVH WeakPH = PH;
 
-  // Delete old, floating point, exit comparison instruction.
-  NewCompare->takeName(EC);
-  EC->replaceAllUsesWith(NewCompare);
-  RecursivelyDeleteTriviallyDeadInstructions(EC);
+  // Delete the old floating point exit comparison.  The branch starts using the
+  // new comparison.
+  NewCompare->takeName(Compare);
+  Compare->replaceAllUsesWith(NewCompare);
+  RecursivelyDeleteTriviallyDeadInstructions(Compare);
 
-  // Delete old, floating point, increment instruction.
+  // Delete the old floating point increment.
   Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
   RecursivelyDeleteTriviallyDeadInstructions(Incr);
 
@@ -765,7 +764,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Give SIToFPInst preference over UIToFPInst because it is faster on
   // platforms that are widely used.
   if (WeakPH && !PH->use_empty()) {
-    if (useSIToFPInst(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
+    if (CanUseSIToFP(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
       SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                         PH->getParent()->getFirstNonPHI());
       PH->replaceAllUsesWith(Conv);
