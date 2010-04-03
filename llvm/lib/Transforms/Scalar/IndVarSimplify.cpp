@@ -666,12 +666,12 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   unsigned BackEdge     = IncomingEdge^1;
 
   // Check incoming value.
-  ConstantFP *InitValue =
+  ConstantFP *InitValueVal =
     dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
-  if (!InitValue) return;
+  if (!InitValueVal) return;
   
-  uint64_t newInitValue;
-  if (!convertToInt(InitValue->getValueAPF(), newInitValue))
+  uint64_t InitValue;
+  if (!convertToInt(InitValueVal->getValueAPF(), InitValue))
     return;
 
   // Check IV increment. Reject this PH if increment operation is not
@@ -682,10 +682,10 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   
   // If this is not an add of the PHI with a constantfp, or if the constant fp
   // is not an integer, bail out.
-  ConstantFP *IncrValue = dyn_cast<ConstantFP>(Incr->getOperand(1));
-  uint64_t newIncrValue;
-  if (IncrValue == 0 || Incr->getOperand(0) != PH ||
-      !convertToInt(IncrValue->getValueAPF(), newIncrValue))
+  ConstantFP *IncValueVal = dyn_cast<ConstantFP>(Incr->getOperand(1));
+  uint64_t IntValue;
+  if (IncValueVal == 0 || Incr->getOperand(0) != PH ||
+      !convertToInt(IncValueVal->getValueAPF(), IntValue))
     return;
 
   // Check Incr uses. One user is PH and the other user is an exit condition
@@ -703,6 +703,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
     EC = dyn_cast<FCmpInst>(U2);
   if (EC == 0 || !EC->hasOneUse() || !isa<BranchInst>(EC->use_back()))
     return;
+  
+  BranchInst *TheBr = cast<BranchInst>(EC->use_back());
 
   // If it isn't a comparison with an integer-as-fp (the exit value), we can't
   // transform it.
@@ -714,62 +716,47 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
   switch (EC->getPredicate()) {
+  default: return;  // Unknown comparison.
   case CmpInst::FCMP_OEQ:
-  case CmpInst::FCMP_UEQ:
-    NewPred = CmpInst::ICMP_EQ;
-    break;
+  case CmpInst::FCMP_UEQ: NewPred = CmpInst::ICMP_EQ; break;
   case CmpInst::FCMP_OGT:
-  case CmpInst::FCMP_UGT:
-    NewPred = CmpInst::ICMP_UGT;
-    break;
+  case CmpInst::FCMP_UGT: NewPred = CmpInst::ICMP_UGT; break;
   case CmpInst::FCMP_OGE:
-  case CmpInst::FCMP_UGE:
-    NewPred = CmpInst::ICMP_UGE;
-    break;
+  case CmpInst::FCMP_UGE: NewPred = CmpInst::ICMP_UGE; break;
   case CmpInst::FCMP_OLT:
-  case CmpInst::FCMP_ULT:
-    NewPred = CmpInst::ICMP_ULT;
-    break;
+  case CmpInst::FCMP_ULT: NewPred = CmpInst::ICMP_ULT; break;
   case CmpInst::FCMP_OLE:
-  case CmpInst::FCMP_ULE:
-    NewPred = CmpInst::ICMP_ULE;
-    break;
-  default:
-    break;
+  case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_ULE; break;
   }
-  if (NewPred == CmpInst::BAD_ICMP_PREDICATE) return;
 
+  const IntegerType *Int32Ty = Type::getInt32Ty(PH->getContext());
+  
   // Insert new integer induction variable.
-  PHINode *NewPHI = PHINode::Create(Type::getInt32Ty(PH->getContext()),
-                                    PH->getName()+".int", PH);
-  NewPHI->addIncoming(ConstantInt::get(Type::getInt32Ty(PH->getContext()),
-                                       newInitValue),
+  PHINode *NewPHI = PHINode::Create(Int32Ty, PH->getName()+".int", PH);
+  NewPHI->addIncoming(ConstantInt::get(Int32Ty, InitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
-  Value *NewAdd = BinaryOperator::CreateAdd(NewPHI,
-                           ConstantInt::get(Type::getInt32Ty(PH->getContext()),
-                                                             newIncrValue),
-                                            Incr->getName()+".int", Incr);
+  Value *NewAdd =
+    BinaryOperator::CreateAdd(NewPHI, ConstantInt::get(Int32Ty, IntValue),
+                              Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
   // The back edge is edge 1 of newPHI, whatever it may have been in the
   // original PHI.
-  ConstantInt *NewEV = ConstantInt::get(Type::getInt32Ty(PH->getContext()),
-                                        ExitValue);
+  ConstantInt *NewEV = ConstantInt::get(Int32Ty, ExitValue);
   
   // FIXME: This is probably wrong.
   Value *LHS = NewPHI->getIncomingValue(1);
   Value *RHS = NewEV;
-  ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
-                                 NewPred, LHS, RHS, EC->getName());
+  ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, LHS, RHS, EC->getName());
 
   // In the following deletions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.
   WeakVH WeakPH = PH;
 
   // Delete old, floating point, exit comparison instruction.
-  NewEC->takeName(EC);
-  EC->replaceAllUsesWith(NewEC);
+  NewCompare->takeName(EC);
+  EC->replaceAllUsesWith(NewCompare);
   RecursivelyDeleteTriviallyDeadInstructions(EC);
 
   // Delete old, floating point, increment instruction.
@@ -780,7 +767,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Give SIToFPInst preference over UIToFPInst because it is faster on
   // platforms that are widely used.
   if (WeakPH && !PH->use_empty()) {
-    if (useSIToFPInst(InitValue, ExitValueVal, newInitValue, ExitValue)) {
+    if (useSIToFPInst(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
       SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                         PH->getParent()->getFirstNonPHI());
       PH->replaceAllUsesWith(Conv);
