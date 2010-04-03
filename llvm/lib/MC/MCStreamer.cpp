@@ -10,6 +10,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdlib>
 using namespace llvm;
 
 MCStreamer::MCStreamer(MCContext &_Context) : Context(_Context), CurSection(0) {
