@@ -100,7 +100,7 @@ static const char *stringForARMFormat(ARMFormat form) {
 #undef ENTRY
 }
 
-typedef enum {
+enum {
   IndexModeNone = 0,
   IndexModePre  = 1,
   IndexModePost = 2,
