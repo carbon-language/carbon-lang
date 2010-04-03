@@ -660,34 +660,34 @@ static bool convertToInt(const APFloat &APF, uint64_t &intVal) {
 /// for(int i = 0; i < 10000; ++i)
 ///   bar((double)i);
 ///
-void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
-  unsigned IncomingEdge = L->contains(PH->getIncomingBlock(0));
+void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
+  unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
   unsigned BackEdge     = IncomingEdge^1;
 
   // Check incoming value.
   ConstantFP *InitValueVal =
-    dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
+    dyn_cast<ConstantFP>(PN->getIncomingValue(IncomingEdge));
   if (!InitValueVal) return;
   
   uint64_t InitValue;
   if (!convertToInt(InitValueVal->getValueAPF(), InitValue))
     return;
 
-  // Check IV increment. Reject this PH if increment operation is not
+  // Check IV increment. Reject this PN if increment operation is not
   // an add or increment value can not be represented by an integer.
   BinaryOperator *Incr =
-    dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
+    dyn_cast<BinaryOperator>(PN->getIncomingValue(BackEdge));
   if (Incr == 0 || Incr->getOpcode() != Instruction::FAdd) return;
   
   // If this is not an add of the PHI with a constantfp, or if the constant fp
   // is not an integer, bail out.
   ConstantFP *IncValueVal = dyn_cast<ConstantFP>(Incr->getOperand(1));
   uint64_t IntValue;
-  if (IncValueVal == 0 || Incr->getOperand(0) != PH ||
+  if (IncValueVal == 0 || Incr->getOperand(0) != PN ||
       !convertToInt(IncValueVal->getValueAPF(), IntValue))
     return;
 
-  // Check Incr uses. One user is PH and the other user is an exit condition
+  // Check Incr uses. One user is PN and the other user is an exit condition
   // used by the conditional terminator.
   Value::use_iterator IncrUse = Incr->use_begin();
   Instruction *U1 = cast<Instruction>(IncrUse++);
@@ -729,25 +729,25 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_ULE; break;
   }
 
-  const IntegerType *Int32Ty = Type::getInt32Ty(PH->getContext());
+  const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
   
   // Insert new i32 integer induction variable.
-  PHINode *NewPHI = PHINode::Create(Int32Ty, PH->getName()+".int", PH);
+  PHINode *NewPHI = PHINode::Create(Int32Ty, PN->getName()+".int", PN);
   NewPHI->addIncoming(ConstantInt::get(Int32Ty, InitValue),
-                      PH->getIncomingBlock(IncomingEdge));
+                      PN->getIncomingBlock(IncomingEdge));
 
   Value *NewAdd =
     BinaryOperator::CreateAdd(NewPHI, ConstantInt::get(Int32Ty, IntValue),
                               Incr->getName()+".int", Incr);
-  NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
+  NewPHI->addIncoming(NewAdd, PN->getIncomingBlock(BackEdge));
 
   ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, NewAdd,
                                       ConstantInt::get(Int32Ty, ExitValue),
                                       Compare->getName());
 
-  // In the following deletions, PH may become dead and may be deleted.
+  // In the following deletions, PN may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.
-  WeakVH WeakPH = PH;
+  WeakVH WeakPH = PN;
 
   // Delete the old floating point exit comparison.  The branch starts using the
   // new comparison.
@@ -768,15 +768,15 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // platforms.
   if (WeakPH) {
     if (CanUseSIToFP(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
-      SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
-                                        PH->getParent()->getFirstNonPHI());
-      PH->replaceAllUsesWith(Conv);
+      SIToFPInst *Conv = new SIToFPInst(NewPHI, PN->getType(), "indvar.conv",
+                                        PN->getParent()->getFirstNonPHI());
+      PN->replaceAllUsesWith(Conv);
     } else {
-      UIToFPInst *Conv = new UIToFPInst(NewPHI, PH->getType(), "indvar.conv",
-                                        PH->getParent()->getFirstNonPHI());
-      PH->replaceAllUsesWith(Conv);
+      UIToFPInst *Conv = new UIToFPInst(NewPHI, PN->getType(), "indvar.conv",
+                                        PN->getParent()->getFirstNonPHI());
+      PN->replaceAllUsesWith(Conv);
     }
-    RecursivelyDeleteTriviallyDeadInstructions(PH);
+    RecursivelyDeleteTriviallyDeadInstructions(PN);
   }
 
   // Add a new IVUsers entry for the newly-created integer PHI.
