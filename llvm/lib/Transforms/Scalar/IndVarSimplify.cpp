@@ -759,10 +759,14 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
   RecursivelyDeleteTriviallyDeadInstructions(Incr);
 
-  // Replace floating induction variable, if it isn't already deleted.
-  // Give SIToFPInst preference over UIToFPInst because it is faster on
-  // platforms that are widely used.
-  if (WeakPH && !PH->use_empty()) {
+  // If the FP induction variable still has uses, this is because something else
+  // in the loop uses its value.  In order to canonicalize the induction
+  // variable, we chose to eliminate the IV and rewrite it in terms of an
+  // int->fp cast.
+  //
+  // We give preference to sitofp over uitofp because it is faster on most
+  // platforms.
+  if (WeakPH) {
     if (CanUseSIToFP(InitValueVal, ExitValueVal, InitValue, ExitValue)) {
       SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                         PH->getParent()->getFirstNonPHI());
