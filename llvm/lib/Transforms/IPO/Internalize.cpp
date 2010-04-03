@@ -156,6 +156,8 @@ bool InternalizePass::runOnModule(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (!I->isDeclaration() && !I->hasLocalLinkage() &&
+        // Available externally is really just a "declaration with a body".
+        !I->hasAvailableExternallyLinkage() &&
         !ExternalNames.count(I->getName())) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
@@ -167,6 +169,8 @@ bool InternalizePass::runOnModule(Module &M) {
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I)
     if (!I->isDeclaration() && !I->hasInternalLinkage() &&
+        // Available externally is really just a "declaration with a body".
+        !I->hasAvailableExternallyLinkage() &&
         !ExternalNames.count(I->getName())) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
