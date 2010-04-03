@@ -3146,11 +3146,16 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
     if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
       return;
   } else {
+    // If we have no key funcion and this is a explicit instantiation declaration,
+    // we will produce a vtable at the explicit instantiation. We don't need one
+    // here.
+    if (RDKind == clang::TSK_ExplicitInstantiationDeclaration)
+      return;
+
     // If this is an explicit instantiation of a method, we don't need a vtable.
     // Since we have no key function, we will emit the vtable when we see
     // a use, and just defining a function is not an use.
-    if ((RDKind == TSK_ImplicitInstantiation ||
-         RDKind == TSK_ExplicitInstantiationDeclaration) &&
+    if (RDKind == TSK_ImplicitInstantiation &&
         MDKind == TSK_ExplicitInstantiationDefinition)
       return;
   }
