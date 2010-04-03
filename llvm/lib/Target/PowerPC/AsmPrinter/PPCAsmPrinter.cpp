@@ -446,7 +446,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     
     O << *SymToPrint;
 
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
     return;
   }
 

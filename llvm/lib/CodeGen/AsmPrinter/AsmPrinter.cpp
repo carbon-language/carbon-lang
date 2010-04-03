@@ -461,7 +461,16 @@ void AsmPrinter::EmitFunctionBody() {
   // If the target wants a .size directive for the size of the function, emit
   // it.
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
+    // Create a symbol for the end of function, so we can get the size as
+    // difference between the function label and the temp label.
+    MCSymbol *FnEndLabel = OutContext.CreateTempSymbol();
+    OutStreamer.EmitLabel(FnEndLabel);
+    
+    const MCExpr *SizeExp =
+      MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(FnEndLabel, OutContext),
+                              MCSymbolRefExpr::Create(CurrentFnSym, OutContext),
+                              OutContext);
+    OutStreamer.EmitELFSize(CurrentFnSym, SizeExp);
   }
   
   // Emit post-function debug information.
@@ -920,12 +929,6 @@ void AsmPrinter::EmitInt16(int Value) const {
 ///
 void AsmPrinter::EmitInt32(int Value) const {
   OutStreamer.EmitIntValue(Value, 4, 0/*addrspace*/);
-}
-
-/// EmitInt64 - Emit a long long directive and value.
-///
-void AsmPrinter::EmitInt64(uint64_t Value) const {
-  OutStreamer.EmitIntValue(Value, 8, 0/*addrspace*/);
 }
 
 /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
@@ -1822,11 +1825,11 @@ void AsmPrinter::EmitVisibility(MCSymbol *Sym, unsigned Visibility) const {
     OutStreamer.EmitSymbolAttribute(Sym, Attr);
 }
 
-void AsmPrinter::printOffset(int64_t Offset) const {
+void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
   if (Offset > 0)
-    O << '+' << Offset;
+    OS << '+' << Offset;
   else if (Offset < 0)
-    O << Offset;
+    OS << Offset;
 }
 
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has

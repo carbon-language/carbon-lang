@@ -319,7 +319,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
       O << ":upper16:";
     O << *Mang->getSymbol(GV);
 
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
 
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)

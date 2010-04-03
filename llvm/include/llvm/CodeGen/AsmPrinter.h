@@ -269,11 +269,6 @@ namespace llvm {
     ///
     void EmitInt32(int Value) const;
 
-    /// EmitInt64 - Emit a long long directive and value.
-    ///
-    void EmitInt64(uint64_t Value) const;
-    
-    
     /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
     /// in bytes of the directive is specified by Size and Hi/Lo specify the
     /// labels.  This implicitly uses .set if it is available.
@@ -349,7 +344,7 @@ namespace llvm {
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     /// printOffset - This is just convenient handler for printing offsets.
-    void printOffset(int64_t Offset) const;
+    void printOffset(int64_t Offset, raw_ostream &OS) const;
 
     /// isBlockOnlyReachableByFallthough - Return true if the basic block has
     /// exactly one predecessor and the control transfer mechanism between

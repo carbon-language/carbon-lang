@@ -101,7 +101,7 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum){
         !GV->hasLocalLinkage())
       O << "@PLT";
 
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
@@ -155,7 +155,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
 
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
     break;
   case MachineOperand::MO_GlobalAddress:
     O << *Mang->getSymbol(MO.getGlobal());
@@ -177,7 +177,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case SystemZII::MO_PLT:       O << "@PLT";       break;
   }
 
-  printOffset(MO.getOffset());
+  printOffset(MO.getOffset(), O);
 }
 
 void SystemZAsmPrinter::printRIAddrOperand(const MachineInstr *MI, int OpNum,

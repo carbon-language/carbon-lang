@@ -87,7 +87,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     O << *GetCPISymbol(MO.getIndex());
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
     break;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
@@ -136,7 +136,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       O << *GVSym;
     else
       O << '(' << *GVSym << ')';
-    printOffset(MO.getOffset());
+    printOffset(MO.getOffset(), O);
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
