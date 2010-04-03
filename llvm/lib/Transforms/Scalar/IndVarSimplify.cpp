@@ -745,10 +745,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // original PHI.
   ConstantInt *NewEV = ConstantInt::get(Int32Ty, ExitValue);
   
-  // FIXME: This is probably wrong.
-  Value *LHS = NewPHI->getIncomingValue(1);
-  Value *RHS = NewEV;
-  ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, LHS, RHS, EC->getName());
+  ICmpInst *NewCompare = new ICmpInst(TheBr, NewPred, NewAdd, NewEV,
+                                      EC->getName());
 
   // In the following deletions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.
