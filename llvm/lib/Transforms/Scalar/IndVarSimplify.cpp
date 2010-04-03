@@ -709,9 +709,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   case CmpInst::FCMP_OGE:
   case CmpInst::FCMP_UGE: NewPred = CmpInst::ICMP_SGE; break;
   case CmpInst::FCMP_OLT:
-  case CmpInst::FCMP_ULT: NewPred = CmpInst::ICMP_ULT; break;
+  case CmpInst::FCMP_ULT: NewPred = CmpInst::ICMP_SLT; break;
   case CmpInst::FCMP_OLE:
-  case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_ULE; break;
+  case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_SLE; break;
   }
 
   const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
