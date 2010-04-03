@@ -44,3 +44,12 @@ void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
     EmitValue(E, 1, AddrSpace);
 }
+
+/// EmitRawText - If this file is backed by a assembly streamer, this dumps
+/// the specified string in the output .s file.  This capability is
+/// indicated by the hasRawTextSupport() predicate.
+void MCStreamer::EmitRawText(StringRef String) {
+  errs() << "EmitRawText called on an MCStreamer that doesn't support it, "
+  " something must not be fully mc'ized\n";
+  abort();
+}

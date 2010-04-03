@@ -125,14 +125,12 @@ bool AsmPrinter::doInitialization(Module &M) {
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
       MP->beginAssembly(O, *this, *MAI);
-  
+
+  // Emit module-level inline asm if it exists.
   if (!M.getModuleInlineAsm().empty()) {
     OutStreamer.AddComment("Start of file scope inline assembly");
     OutStreamer.AddBlankLine();
-    O << M.getModuleInlineAsm();
-    
-    if (*M.getModuleInlineAsm().rbegin() != '\n')
-      OutStreamer.AddBlankLine();
+    EmitInlineAsm(M.getModuleInlineAsm());
     OutStreamer.AddComment("End of file scope inline assembly");
     OutStreamer.AddBlankLine();
   }
@@ -878,6 +876,22 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
       EmitGlobalConstant(CS->getOperand(1));
     }
 }
+
+/// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
+void AsmPrinter::EmitInlineAsm(StringRef Str) {
+  assert(!Str.empty() && "Can't emit empty inline asm block");
+  
+  // If the output streamer is actually a .s file, just emit the blob textually.
+  // This is useful in case the asm parser doesn't handle something but the
+  // system assembler does.
+  if (OutStreamer.hasRawTextSupport()) {
+    OutStreamer.EmitRawText(Str);
+    return;
+  }
+  
+  errs() << "Inline asm not supported by this streamer!\n";
+}
+
 
 //===--------------------------------------------------------------------===//
 // Emission and print routines

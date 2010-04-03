@@ -354,9 +354,12 @@ namespace llvm {
     /// isBlockOnlyReachableByFallthough - Return true if the basic block has
     /// exactly one predecessor and the control transfer mechanism between
     /// the predecessor and this block is a fall-through.
-    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
+    virtual bool
+    isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
 
   private:
+    /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
+    void EmitInlineAsm(StringRef Str);
 
     /// processDebugLoc - Processes the debug information of each machine
     /// instruction's DebugLoc. 

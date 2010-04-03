@@ -68,6 +68,9 @@ public:
   /// isVerboseAsm - Return true if this streamer supports verbose assembly at
   /// all.
   virtual bool isVerboseAsm() const { return IsVerboseAsm; }
+  
+  /// hasRawTextSupport - We support EmitRawText.
+  virtual bool hasRawTextSupport() const { return true; }
 
   /// AddComment - Add a comment that can be emitted to the generated .s
   /// file if applicable as a QoI issue to make the output of the compiler
@@ -145,6 +148,11 @@ public:
 
   virtual void EmitInstruction(const MCInst &Inst);
   
+  /// EmitRawText - If this file is backed by a assembly streamer, this dumps
+  /// the specified string in the output .s file.  This capability is
+  /// indicated by the hasRawTextSupport() predicate.
+  virtual void EmitRawText(StringRef String);
+  
   virtual void Finish();
   
   /// @}
@@ -194,7 +202,6 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
   // Tell the comment stream that the vector changed underneath it.
   CommentStream.resync();
 }
-
 
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
@@ -632,6 +639,19 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   else
     Inst.print(OS, &MAI);
   EmitEOL();
+}
+
+/// EmitRawText - If this file is backed by a assembly streamer, this dumps
+/// the specified string in the output .s file.  This capability is
+/// indicated by the hasRawTextSupport() predicate.
+void MCAsmStreamer::EmitRawText(StringRef String) {
+  if (!CommentToEmit.empty() || CommentStream.GetNumBytesInBuffer() != 0)
+    EmitCommentsAndEOL();
+  
+  OS << String;
+  
+  if (!String.empty() && String.back() != '\n')
+    OS << '\n';
 }
 
 void MCAsmStreamer::Finish() {
