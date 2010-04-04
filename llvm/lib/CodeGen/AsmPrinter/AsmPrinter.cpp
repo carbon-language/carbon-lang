@@ -101,7 +101,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  MMI = &getAnalysis<MachineModuleInfo>();
   MMI->AnalyzeModule(M);
 
   // Initialize TargetLoweringObjectFile.
@@ -1413,10 +1413,11 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // EmitInlineAsm.
 #if 0
   SmallString<256> StringData;
-  raw_svector_ostream O(StringData);
+  raw_svector_ostream OS(StringData);
 #endif
+  raw_ostream &OS = O;
   
-  O << '\t';
+  OS << '\t';
 
   // The variant of the current asmprinter.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
@@ -1433,13 +1434,13 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
              *LiteralEnd != '}' && *LiteralEnd != '$' && *LiteralEnd != '\n')
         ++LiteralEnd;
       if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
-        O.write(LastEmitted, LiteralEnd-LastEmitted);
+        OS.write(LastEmitted, LiteralEnd-LastEmitted);
       LastEmitted = LiteralEnd;
       break;
     }
     case '\n':
       ++LastEmitted;   // Consume newline character.
-      O << '\n';       // Indent code with newline.
+      OS << '\n';       // Indent code with newline.
       break;
     case '$': {
       ++LastEmitted;   // Consume '$' character.
@@ -1450,7 +1451,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       default: Done = false; break;
       case '$':     // $$ -> $
         if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
-          O << '$';
+          OS << '$';
         ++LastEmitted;  // Consume second '$' character.
         break;
       case '(':             // $( -> same as GCC's { character.
@@ -1464,14 +1465,14 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       case '|':
         ++LastEmitted;  // consume '|' character.
         if (CurVariant == -1)
-          O << '|';       // this is gcc's behavior for | outside a variant
+          OS << '|';       // this is gcc's behavior for | outside a variant
         else
           ++CurVariant;   // We're in the next variant.
         break;
       case ')':         // $) -> same as GCC's } char.
         ++LastEmitted;  // consume ')' character.
         if (CurVariant == -1)
-          O << '}';     // this is gcc's behavior for } outside a variant
+          OS << '}';     // this is gcc's behavior for } outside a variant
         else 
           CurVariant = -1;
         break;
@@ -1491,13 +1492,12 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         ++LastEmitted;
         const char *StrStart = LastEmitted;
         const char *StrEnd = strchr(StrStart, '}');
-        if (StrEnd == 0) {
-          llvm_report_error("Unterminated ${:foo} operand in inline asm string: '" 
-                            + std::string(AsmStr) + "'");
-        }
+        if (StrEnd == 0)
+          llvm_report_error(Twine("Unterminated ${:foo} operand in inline asm"
+                                  " string: '") + Twine(AsmStr_ + "'"));
         
         std::string Val(StrStart, StrEnd);
-        PrintSpecial(MI, O, Val.c_str());
+        PrintSpecial(MI, OS, Val.c_str());
         LastEmitted = StrEnd+1;
         break;
       }
@@ -1561,7 +1561,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0] == 'l')  // labels are target independent
-            O << *MI->getOperand(OpNo).getMBB()->getSymbol();
+            OS << *MI->getOperand(OpNo).getMBB()->getSymbol();
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
@@ -1585,10 +1585,10 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n";
+  OS << "\n";
   
 #if 0
-  EmitInlineAsm(O.str());
+  EmitInlineAsm(OS.str());
 #endif
   
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
