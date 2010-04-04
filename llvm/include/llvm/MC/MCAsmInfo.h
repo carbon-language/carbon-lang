@@ -227,10 +227,6 @@ namespace llvm {
     /// offsets for debug information.
     bool AbsoluteDebugSectionOffsets;        // Defaults to false.
 
-    /// AbsoluteEHSectionOffsets - True if we should emit abolute section
-    /// offsets for EH information. Defaults to false.
-    bool AbsoluteEHSectionOffsets;
-
     /// HasLEB128 - True if target asm supports leb128 directives.
     bool HasLEB128;                          // Defaults to false.
 
@@ -391,9 +387,6 @@ namespace llvm {
     }
     bool isAbsoluteDebugSectionOffsets() const {
       return AbsoluteDebugSectionOffsets;
-    }
-    bool isAbsoluteEHSectionOffsets() const {
-      return AbsoluteEHSectionOffsets;
     }
     bool hasLEB128() const {
       return HasLEB128;

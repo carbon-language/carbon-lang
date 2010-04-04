@@ -43,7 +43,7 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      bool IsSmall, bool isEH) {
   bool isAbsolute;
   if (isEH)
-    isAbsolute = MAI->isAbsoluteEHSectionOffsets();
+    isAbsolute = false;
   else
     isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 

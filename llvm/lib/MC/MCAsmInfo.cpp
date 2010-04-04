@@ -61,7 +61,6 @@ MCAsmInfo::MCAsmInfo() {
   HiddenVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
   AbsoluteDebugSectionOffsets = false;
-  AbsoluteEHSectionOffsets = false;
   HasLEB128 = false;
   HasDotLocAndDotFile = false;
   SupportsDebugInformation = false;
