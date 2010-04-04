@@ -22,7 +22,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cerrno>  // FIXME: Stop using this.
 using namespace llvm;
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
@@ -168,13 +167,13 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       }
             
       const char *IDStart = LastEmitted;
-      char *IDEnd;
-      errno = 0;
-      long Val = strtol(IDStart, &IDEnd, 10); // We only accept numbers for IDs.
-      if (!isdigit(*IDStart) || (Val == 0 && errno == EINVAL)) {
+      const char *IDEnd = IDStart;
+      while (*IDEnd >= '0' && *IDEnd <= '9') ++IDEnd;      
+      
+      unsigned Val;
+      if (StringRef(IDStart, IDEnd-IDStart).getAsInteger(10, Val))
         llvm_report_error("Bad $ operand number in inline asm string: '" 
                           + std::string(AsmStr) + "'");
-      }
       LastEmitted = IDEnd;
       
       char Modifier[2] = { 0, 0 };
@@ -200,7 +199,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         ++LastEmitted;    // Consume '}' character.
       }
       
-      if ((unsigned)Val >= NumOperands-1) {
+      if (Val >= NumOperands-1) {
         llvm_report_error("Invalid $ operand number in inline asm string: '" 
                           + std::string(AsmStr) + "'");
       }
