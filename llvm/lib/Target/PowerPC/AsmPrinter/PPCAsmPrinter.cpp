@@ -732,22 +732,31 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer.EmitLabel(Stub);
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
       // FIXME: MCize this.
-      O << "\tmflr r0\n";
-      O << "\tbcl 20,31," << *AnonSymbol << '\n';
+      OutStreamer.EmitRawText(StringRef("\tmflr r0"));
+      OutStreamer.EmitRawText("\tbcl 20,31," + Twine(AnonSymbol->getName()));
       OutStreamer.EmitLabel(AnonSymbol);
-      O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(" << *LazyPtr << '-' << *AnonSymbol
-      << ")\n";
-      O << "\tmtlr r0\n";
-      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(" << *LazyPtr
-      << '-' << *AnonSymbol << ")(r11)\n";
-      O << "\tmtctr r12\n";
-      O << "\tbctr\n";
+      OutStreamer.EmitRawText(StringRef("\tmflr r11"));
+      OutStreamer.EmitRawText("\taddis r11,r11,ha16("+Twine(LazyPtr->getName())+
+                              "-" + AnonSymbol->getName() + ")");
+      OutStreamer.EmitRawText(StringRef("\tmtlr r0"));
+      
+      if (isPPC64)
+        OutStreamer.EmitRawText("\tldu r12,lo16(" + Twine(LazyPtr->getName()) +
+                                "-" + AnonSymbol->getName() + ")(r11)");
+      else
+        OutStreamer.EmitRawText("\tlwzu r12,lo16(" + Twine(LazyPtr->getName()) +
+                                "-" + AnonSymbol->getName() + ")(r11)");
+      OutStreamer.EmitRawText(StringRef("\tmtctr r12"));
+      OutStreamer.EmitRawText(StringRef("\tbctr"));
       
       OutStreamer.SwitchSection(LSPSection);
       OutStreamer.EmitLabel(LazyPtr);
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-      O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
+      
+      if (isPPC64)
+        OutStreamer.EmitRawText(StringRef("\t.quad dyld_stub_binding_helper"));
+      else
+        OutStreamer.EmitRawText(StringRef("\t.long dyld_stub_binding_helper"));
     }
     OutStreamer.AddBlankLine();
     return;
@@ -767,15 +776,23 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     EmitAlignment(4);
     OutStreamer.EmitLabel(Stub);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-    O << "\tlis r11,ha16(" << *LazyPtr << ")\n";
-    O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *LazyPtr
-    << ")(r11)\n";
-    O << "\tmtctr r12\n";
-    O << "\tbctr\n";
+    OutStreamer.EmitRawText("\tlis r11,ha16(" + Twine(LazyPtr->getName()) +")");
+    if (isPPC64)
+      OutStreamer.EmitRawText("\tldu r12,lo16(" + Twine(LazyPtr->getName()) +
+                              ")(r11)");
+    else
+      OutStreamer.EmitRawText("\tlwzu r12,lo16(" + Twine(LazyPtr->getName()) +
+                              ")(r11)");
+    OutStreamer.EmitRawText(StringRef("\tmtctr r12"));
+    OutStreamer.EmitRawText(StringRef("\tbctr"));
     OutStreamer.SwitchSection(LSPSection);
     OutStreamer.EmitLabel(LazyPtr);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-    O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
+    
+    if (isPPC64)
+      OutStreamer.EmitRawText(StringRef("\t.quad dyld_stub_binding_helper"));
+    else
+      OutStreamer.EmitRawText(StringRef("\t.long dyld_stub_binding_helper"));
   }
   
   OutStreamer.AddBlankLine();
