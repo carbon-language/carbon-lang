@@ -388,7 +388,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
-    if (VerboseAsm && OutStreamer.hasRawTextSupport()) {
+    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       std::string TmpStr;
       raw_string_ostream OS(TmpStr);
       PrintDebugValueComment(MI, OS);

@@ -418,7 +418,7 @@ void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum,
                                       raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImm() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImm(), VerboseAsm, MAI);
+  printSOImm(O, MO.getImm(), isVerbose(), MAI);
 }
 
 /// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
@@ -429,7 +429,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum,
   assert(MO.isImm() && "Not a valid so_imm value!");
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImm());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImm());
-  printSOImm(O, V1, VerboseAsm, MAI);
+  printSOImm(O, V1, isVerbose(), MAI);
   O << "\n\torr";
   printPredicateOperand(MI, 2, O);
   O << "\t";
@@ -437,7 +437,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum,
   O << ", ";
   printOperand(MI, 0, O);
   O << ", ";
-  printSOImm(O, V2, VerboseAsm, MAI);
+  printSOImm(O, V2, isVerbose(), MAI);
 }
 
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
@@ -1021,7 +1021,7 @@ void ARMAsmPrinter::printVFPf32ImmOperand(const MachineInstr *MI, int OpNum,
                                           raw_ostream &O) {
   const ConstantFP *FP = MI->getOperand(OpNum).getFPImm();
   O << '#' << FP->getValueAPF().convertToFloat();
-  if (VerboseAsm) {
+  if (isVerbose()) {
     O << "\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, FP, /*PrintType=*/false);
   }
@@ -1031,7 +1031,7 @@ void ARMAsmPrinter::printVFPf64ImmOperand(const MachineInstr *MI, int OpNum,
                                           raw_ostream &O) {
   const ConstantFP *FP = MI->getOperand(OpNum).getFPImm();
   O << '#' << FP->getValueAPF().convertToDouble();
-  if (VerboseAsm) {
+  if (isVerbose()) {
     O << "\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, FP, /*PrintType=*/false);
   }

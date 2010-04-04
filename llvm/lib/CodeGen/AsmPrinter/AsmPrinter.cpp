@@ -62,7 +62,7 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
-  DW = 0; MMI = 0;
+  DW = 0; MMI = 0; LI = 0;
   GCMetadataPrinters = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
@@ -101,7 +101,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<MachineModuleInfo>();
   AU.addRequired<GCModuleInfo>();
-  if (VerboseAsm)
+  if (isVerbose())
     AU.addRequired<MachineLoopInfo>();
 }
 
@@ -218,7 +218,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
-    if (VerboseAsm) {
+    if (isVerbose()) {
       WriteAsOperand(OutStreamer.GetCommentOS(), GV,
                      /*PrintType=*/false, GV->getParent());
       OutStreamer.GetCommentOS() << '\n';
@@ -271,7 +271,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   EmitLinkage(GV->getLinkage(), GVSym);
   EmitAlignment(AlignLog, GV);
 
-  if (VerboseAsm) {
+  if (isVerbose()) {
     WriteAsOperand(OutStreamer.GetCommentOS(), GV,
                    /*PrintType=*/false, GV->getParent());
     OutStreamer.GetCommentOS() << '\n';
@@ -305,7 +305,7 @@ void AsmPrinter::EmitFunctionHeader() {
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
 
-  if (VerboseAsm) {
+  if (isVerbose()) {
     WriteAsOperand(OutStreamer.GetCommentOS(), F,
                    /*PrintType=*/false, F->getParent());
     OutStreamer.GetCommentOS() << '\n';
@@ -429,7 +429,7 @@ void AsmPrinter::EmitFunctionBody() {
       if (ShouldPrintDebugScopes)
         DW->BeginScope(II);
       
-      if (VerboseAsm)
+      if (isVerbose())
         EmitComments(*II, OutStreamer.GetCommentOS());
 
       switch (II->getOpcode()) {
@@ -575,7 +575,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // Get the function symbol.
   CurrentFnSym = Mang->getSymbol(MF.getFunction());
 
-  if (VerboseAsm)
+  if (isVerbose())
     LI = &getAnalysis<MachineLoopInfo>();
 }
 
@@ -663,7 +663,7 @@ void AsmPrinter::EmitConstantPool() {
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
 
       // Emit the label with a comment on it.
-      if (VerboseAsm) {
+      if (isVerbose()) {
         OutStreamer.GetCommentOS() << "constant pool ";
         WriteTypeSymbolic(OutStreamer.GetCommentOS(), CPE.getType(),
                           MF->getFunction()->getParent());
@@ -1177,7 +1177,7 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   // FP Constants are printed as integer constants to avoid losing
   // precision.
   if (CFP->getType()->isDoubleTy()) {
-    if (AP.VerboseAsm) {
+    if (AP.isVerbose()) {
       double Val = CFP->getValueAPF().convertToDouble();
       AP.OutStreamer.GetCommentOS() << "double " << Val << '\n';
     }
@@ -1188,7 +1188,7 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   }
   
   if (CFP->getType()->isFloatTy()) {
-    if (AP.VerboseAsm) {
+    if (AP.isVerbose()) {
       float Val = CFP->getValueAPF().convertToFloat();
       AP.OutStreamer.GetCommentOS() << "float " << Val << '\n';
     }
@@ -1202,7 +1202,7 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
     // api needed to prevent premature destruction
     APInt API = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = API.getRawData();
-    if (AP.VerboseAsm) {
+    if (AP.isVerbose()) {
       // Convert to double so we can print the approximate val as a comment.
       APFloat DoubleVal = CFP->getValueAPF();
       bool ignored;
@@ -1273,7 +1273,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     case 2:
     case 4:
     case 8:
-      if (VerboseAsm)
+      if (isVerbose())
         OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
       OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
       return;
@@ -1327,7 +1327,7 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
 /// EmitImplicitDef - This method emits the specified machine instruction
 /// that is an implicit def.
 void AsmPrinter::EmitImplicitDef(const MachineInstr *MI) const {
-  if (!VerboseAsm) return;
+  if (!isVerbose()) return;
   unsigned RegNo = MI->getOperand(0).getReg();
   OutStreamer.AddComment(Twine("implicit-def: ") +
                          TM.getRegisterInfo()->getName(RegNo));
@@ -1335,7 +1335,7 @@ void AsmPrinter::EmitImplicitDef(const MachineInstr *MI) const {
 }
 
 void AsmPrinter::EmitKill(const MachineInstr *MI) const {
-  if (!VerboseAsm) return;
+  if (!isVerbose()) return;
   
   std::string Str = "kill:";
   for (unsigned n = 0, e = MI->getNumOperands(); n != e; ++n) {
@@ -1478,7 +1478,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   // the references were generated.
   if (MBB->hasAddressTaken()) {
     const BasicBlock *BB = MBB->getBasicBlock();
-    if (VerboseAsm)
+    if (isVerbose())
       OutStreamer.AddComment("Block address taken");
     
     std::vector<MCSymbol*> Syms = MMI->getAddrLabelSymbolToEmit(BB);
@@ -1489,7 +1489,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 
   // Print the main label for the block.
   if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
-    if (VerboseAsm && OutStreamer.hasRawTextSupport()) {
+    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
@@ -1501,7 +1501,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
                               Twine(MBB->getNumber()) + ":");
     }
   } else {
-    if (VerboseAsm) {
+    if (isVerbose()) {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());

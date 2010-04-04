@@ -2491,7 +2491,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
   const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
 
   // Emit the code (index) for the abbreviation.
-  if (Asm->VerboseAsm)
+  if (Asm->isVerbose())
     Asm->OutStreamer.AddComment("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
                                 Twine::utohexstr(Die->getOffset()) + ":0x" +
                                 Twine::utohexstr(Die->getSize()) + " " +
@@ -2507,7 +2507,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
     unsigned Form = AbbrevData[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
 
-    if (Asm->VerboseAsm)
+    if (Asm->isVerbose())
       Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
     
     switch (Attr) {
@@ -2535,7 +2535,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
       emitDIE(Children[j]);
 
-    if (Asm->VerboseAsm)
+    if (Asm->isVerbose())
       Asm->OutStreamer.AddComment("End Of Children Mark");
     Asm->EmitInt8(0);
   }
@@ -2698,7 +2698,7 @@ void DwarfDebug::emitDebugLines() {
   // Emit directories.
   for (unsigned DI = 1, DE = getNumSourceDirectories()+1; DI != DE; ++DI) {
     const std::string &Dir = getSourceDirectoryName(DI);
-    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("Directory");
+    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("Directory");
     Asm->OutStreamer.EmitBytes(StringRef(Dir.c_str(), Dir.size()+1), 0);
   }
 
@@ -2710,7 +2710,7 @@ void DwarfDebug::emitDebugLines() {
     // Remember source id starts at 1.
     std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(SI);
     const std::string &FN = getSourceFileName(Id.second);
-    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("Source");
+    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("Source");
     Asm->OutStreamer.EmitBytes(StringRef(FN.c_str(), FN.size()+1), 0);
     
     EmitULEB128(Id.first, "Directory #");
@@ -2927,7 +2927,7 @@ void DwarfDebug::emitDebugPubNames() {
     Asm->OutStreamer.AddComment("DIE offset");
     Asm->EmitInt32(Entity->getOffset());
     
-    if (Asm->VerboseAsm)
+    if (Asm->isVerbose())
       Asm->OutStreamer.AddComment("External Name");
     Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
   }
@@ -2947,7 +2947,7 @@ void DwarfDebug::emitDebugPubTypes() {
 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubtypes_begin", ModuleCU->getID()));
 
-  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DWARF Version");
+  if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
 
   Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
@@ -2965,10 +2965,10 @@ void DwarfDebug::emitDebugPubTypes() {
     const char *Name = GI->getKeyData();
     DIE * Entity = GI->second;
 
-    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DIE offset");
+    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
     Asm->EmitInt32(Entity->getOffset());
     
-    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("External Name");
+    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("External Name");
     Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
   }
 
@@ -3106,10 +3106,10 @@ void DwarfDebug::emitDebugInlineInfo() {
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
            LE = Labels.end(); LI != LE; ++LI) {
-      if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DIE offset");
+      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(LI->second->getOffset());
 
-      if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("low_pc");
+      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("low_pc");
       Asm->OutStreamer.EmitSymbolValue(LI->first, TD->getPointerSize(), 0);
     }
   }

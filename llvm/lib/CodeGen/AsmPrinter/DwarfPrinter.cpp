@@ -109,7 +109,7 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
 /// describing the encoding.  Desc is an optional string saying what the
 /// encoding is specifying (e.g. "LSDA").
 void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
-  if (Asm->VerboseAsm) {
+  if (Asm->isVerbose()) {
     if (Desc != 0)
       Asm->OutStreamer.AddComment(Twine(Desc)+" Encoding = " +
                                   Twine(DecodeDWARFEncoding(Val)));
@@ -123,7 +123,7 @@ void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
 
 /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
 void DwarfPrinter::EmitCFAByte(unsigned Val) {
-  if (Asm->VerboseAsm) {
+  if (Asm->isVerbose()) {
     if (Val >= dwarf::DW_CFA_offset && Val < dwarf::DW_CFA_offset+64)
       Asm->OutStreamer.AddComment("DW_CFA_offset + Reg (" + 
                                   Twine(Val-dwarf::DW_CFA_offset) + ")");
@@ -135,7 +135,7 @@ void DwarfPrinter::EmitCFAByte(unsigned Val) {
 
 /// EmitSLEB128 - emit the specified signed leb128 value.
 void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
-  if (Asm->VerboseAsm && Desc)
+  if (Asm->isVerbose() && Desc)
     Asm->OutStreamer.AddComment(Desc);
     
   if (MAI->hasLEB128()) {
@@ -160,7 +160,7 @@ void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
 /// EmitULEB128 - emit the specified signed leb128 value.
 void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
                                unsigned PadTo) const {
-  if (Asm->VerboseAsm && Desc)
+  if (Asm->isVerbose() && Desc)
     Asm->OutStreamer.AddComment(Desc);
  
   if (MAI->hasLEB128() && PadTo == 0) {

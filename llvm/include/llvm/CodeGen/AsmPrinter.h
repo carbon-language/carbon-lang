@@ -56,18 +56,10 @@ namespace llvm {
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
   class AsmPrinter : public MachineFunctionPass {
-    static char ID;
-
-    /// If VerboseAsm is set, a pointer to the loop info for this
-    /// function.
-    ///
-    MachineLoopInfo *LI;
-    
-  protected:
+  public:
     /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
 
-  public:
 
     /// Target machine description.
     ///
@@ -103,10 +95,6 @@ namespace llvm {
     ///
     MCSymbol *CurrentFnSym;
     
-    /// VerboseAsm - Emit comments in assembly output if this is true.
-    ///
-    bool VerboseAsm;
-
     /// getObjFileLowering - Return information about object file lowering.
     TargetLoweringObjectFile &getObjFileLowering() const;
     
@@ -116,6 +104,16 @@ namespace llvm {
   private:
     // GCMetadataPrinters - The garbage collection metadata printer table.
     void *GCMetadataPrinters;  // Really a DenseMap.
+    
+    /// VerboseAsm - Emit comments in assembly output if this is true.
+    ///
+    bool VerboseAsm;
+    static char ID;
+    
+    /// If VerboseAsm is set, a pointer to the loop info for this
+    /// function.
+    ///
+    MachineLoopInfo *LI;
     
   protected:
     explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
@@ -131,6 +129,10 @@ namespace llvm {
     ///
     unsigned getFunctionNumber() const;
     
+    //===------------------------------------------------------------------===//
+    // MachineFunctionPass Implementation.
+    //===------------------------------------------------------------------===//
+    
     /// getAnalysisUsage - Record analysis usage.
     /// 
     void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -140,14 +142,6 @@ namespace llvm {
     /// call this implementation.
     bool doInitialization(Module &M);
 
-    /// EmitStartOfAsmFile - This virtual method can be overridden by targets
-    /// that want to emit something at the start of their file.
-    virtual void EmitStartOfAsmFile(Module &) {}
-    
-    /// EmitEndOfAsmFile - This virtual method can be overridden by targets that
-    /// want to emit something at the end of their file.
-    virtual void EmitEndOfAsmFile(Module &) {}
-    
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
@@ -161,6 +155,10 @@ namespace llvm {
       return false;
     }      
     
+    //===------------------------------------------------------------------===//
+    // Coarse grained IR lowering routines.
+    //===------------------------------------------------------------------===//
+    
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
@@ -173,19 +171,6 @@ namespace llvm {
     /// function.
     void EmitFunctionBody();
 
-    /// EmitInstruction - Targets should implement this to emit instructions.
-    virtual void EmitInstruction(const MachineInstr *) {
-      assert(0 && "EmitInstruction not implemented");
-    }
-    
-    /// EmitFunctionBodyStart - Targets can override this to emit stuff before
-    /// the first basic block in the function.
-    virtual void EmitFunctionBodyStart() {}
-
-    /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
-    /// the last basic block in the function.
-    virtual void EmitFunctionBodyEnd() {}
-    
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
     /// used to print out constants which have been "spilled to memory" by
@@ -206,30 +191,38 @@ namespace llvm {
     /// do nothing and return false.
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
 
+    //===------------------------------------------------------------------===//
+    // Overridable Hooks
+    //===------------------------------------------------------------------===//
+    
+    // Targets can, or in the case of EmitInstruction, must implement these to
+    // customize output.
+    
+    /// EmitStartOfAsmFile - This virtual method can be overridden by targets
+    /// that want to emit something at the start of their file.
+    virtual void EmitStartOfAsmFile(Module &) {}
+    
+    /// EmitEndOfAsmFile - This virtual method can be overridden by targets that
+    /// want to emit something at the end of their file.
+    virtual void EmitEndOfAsmFile(Module &) {}
+    
+    /// EmitFunctionBodyStart - Targets can override this to emit stuff before
+    /// the first basic block in the function.
+    virtual void EmitFunctionBodyStart() {}
+    
+    /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
+    /// the last basic block in the function.
+    virtual void EmitFunctionBodyEnd() {}
+    
+    /// EmitInstruction - Targets should implement this to emit instructions.
+    virtual void EmitInstruction(const MachineInstr *) {
+      assert(0 && "EmitInstruction not implemented");
+    }
+    
+    //===------------------------------------------------------------------===//
+    // Lowering Routines.
+    //===------------------------------------------------------------------===//
   public:
-    //===------------------------------------------------------------------===//
-    // Emission routines.
-    //
-
-    /// EmitInt8 - Emit a byte directive and value.
-    ///
-    void EmitInt8(int Value) const;
-
-    /// EmitInt16 - Emit a short directive and value.
-    ///
-    void EmitInt16(int Value) const;
-
-    /// EmitInt32 - Emit a long directive and value.
-    ///
-    void EmitInt32(int Value) const;
-
-    /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
-    /// in bytes of the directive is specified by Size and Hi/Lo specify the
-    /// labels.  This implicitly uses .set if it is available.
-    void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
-                             unsigned Size) const;
-
-    //===------------------------------------------------------------------===//
 
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
@@ -286,7 +279,7 @@ namespace llvm {
     // Data emission.
     
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
+    void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);
     
   protected:
     virtual void EmitFunctionEntryLabel();
@@ -322,6 +315,31 @@ namespace llvm {
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
+    
+    
+    //===------------------------------------------------------------------===//
+    // Emission Helper Routines.
+    //===------------------------------------------------------------------===//
+  public:
+    
+    /// EmitInt8 - Emit a byte directive and value.
+    ///
+    void EmitInt8(int Value) const;
+    
+    /// EmitInt16 - Emit a short directive and value.
+    ///
+    void EmitInt16(int Value) const;
+    
+    /// EmitInt32 - Emit a long directive and value.
+    ///
+    void EmitInt32(int Value) const;
+    
+    /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
+    /// in bytes of the directive is specified by Size and Hi/Lo specify the
+    /// labels.  This implicitly uses .set if it is available.
+    void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
+                             unsigned Size) const;
+    
     
     //===------------------------------------------------------------------===//
     // Inline Asm Support
