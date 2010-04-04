@@ -577,10 +577,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // Emit type information for external functions
     for (X86COFFMachineModuleInfo::stub_iterator I = COFFMMI.stub_begin(),
            E = COFFMMI.stub_end(); I != E; ++I) {
-      O << "\t.def\t " << I->getKeyData()
-        << ";\t.scl\t" << COFF::C_EXT
-        << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
-        << ";\t.endef\n";
+      OutStreamer.EmitRawText("\t.def\t " + Twine(I->getKeyData()) +
+                              ";\t.scl\t" + Twine(COFF::C_EXT) +
+                              ";\t.type\t" +
+                              Twine(COFF::DT_FCN << COFF::N_BTSHFT) +
+                              ";\t.endef");
     }
 
     if (Subtarget->isTargetCygMing()) {
@@ -605,10 +606,13 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
                                                           true,
                                                    SectionKind::getMetadata()));
         for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
-          O << "\t.ascii \" -export:" << *DLLExportedGlobals[i] << ",data\"\n";
+          OutStreamer.EmitRawText("\t.ascii \" -export:" +
+                                  Twine(DLLExportedGlobals[i]->getName()) +
+                                  ",data\"");
 
         for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
-          O << "\t.ascii \" -export:" << *DLLExportedFns[i] << "\"\n";
+          OutStreamer.EmitRawText("\t.ascii \" -export:" +
+                                  Twine(DLLExportedFns[i]->getName()) + "\"");
       }
     }
   }
@@ -625,12 +629,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
       const TargetData *TD = TM.getTargetData();
 
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i)
-        O << *Stubs[i].first << ":\n"
-          << (TD->getPointerSize() == 8 ?
-              MAI->getData64bitsDirective() : MAI->getData32bitsDirective())
-          << *Stubs[i].second.getPointer() << '\n';
-
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        OutStreamer.EmitLabel(Stubs[i].first);
+        OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(),
+                                    TD->getPointerSize(), 0);
+      }
       Stubs.clear();
     }
   }
