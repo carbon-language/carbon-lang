@@ -79,9 +79,10 @@ public:
   /// it (e.g. cygwin) or by emitting it as an offset from a label at the start
   /// of the section.
   ///
-  /// SectionLabel is the name of a temporary label emitted at the start of the
-  /// section.
-  void EmitSectionOffset(const MCSymbol *Label, const char *SectionLabel);
+  /// SectionLabel is a temporary label emitted at the start of the section that
+  /// Label lives in.
+  void EmitSectionOffset(const MCSymbol *Label,
+                         const MCSymbol *SectionLabel) const;
   
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.

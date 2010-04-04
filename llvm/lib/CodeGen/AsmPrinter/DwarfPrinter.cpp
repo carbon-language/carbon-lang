@@ -35,11 +35,19 @@ using namespace llvm;
 DwarfPrinter::DwarfPrinter(AsmPrinter *A)
 : Asm(A), MAI(A->MAI), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
-  SubprogramCount(0) {}
+  SubprogramCount(0) {
+}
 
 
+/// EmitSectionOffset - Emit the 4-byte offset of Label from the start of its
+/// section.  This can be done with a special directive if the target supports
+/// it (e.g. cygwin) or by emitting it as an offset from a label at the start
+/// of the section.
+///
+/// SectionLabel is a temporary label emitted at the start of the section that
+/// Label lives in.
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
-                                     const char *SectionLabel) {
+                                     const MCSymbol *SectionLabel) const {
   // On COFF targets, we have to emit the special .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
     // FIXME: MCize.
@@ -54,8 +62,7 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
     return;
   }
 
-  MCSymbol *SectionSym = Asm->GetTempSymbol(SectionLabel);
-  Asm->EmitLabelDifference(Label, SectionSym, 4);
+  Asm->EmitLabelDifference(Label, SectionLabel, 4);
 }
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the

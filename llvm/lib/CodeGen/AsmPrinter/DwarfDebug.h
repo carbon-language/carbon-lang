@@ -120,10 +120,6 @@ class DwarfDebug : public DwarfPrinter {
   ///
   std::vector<std::vector<SrcLineInfo> > SectionSourceLines;
 
-  /// didInitial - Flag to indicate if initial emission has been done.
-  ///
-  bool didInitial;
-
   /// shouldEmit - Flag to indicate if debug information should be emitted.
   ///
   bool shouldEmit;
@@ -396,9 +392,9 @@ class DwarfDebug : public DwarfPrinter {
   /// constructScopeDIE - Construct a DIE for this scope.
   DIE *constructScopeDIE(DbgScope *Scope);
 
-  /// emitInitial - Emit initial Dwarf declarations.  This is necessary for cc
-  /// tools to recognize the object file contains Dwarf information.
-  void emitInitial();
+  /// EmitSectionLabels - Emit initial Dwarf sections with a label at
+  /// the start of each one.
+  void EmitSectionLabels();
 
   /// emitDIE - Recusively Emits a debug information entry.
   ///
