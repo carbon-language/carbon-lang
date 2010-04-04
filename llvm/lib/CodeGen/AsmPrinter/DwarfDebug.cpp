@@ -2444,9 +2444,13 @@ void DwarfDebug::computeSizeAndOffsets() {
   CompileUnitOffsets[ModuleCU] = 0;
 }
 
+/// EmitSectionSym - Switch to the specified MCSection and emit an assembler
+/// temporary label to it if SymbolStem is specified.
 static MCSymbol *EmitSectionSym(AsmPrinter *Asm, const MCSection *Section,
-                                const char *SymbolStem) {
+                                const char *SymbolStem = 0) {
   Asm->OutStreamer.SwitchSection(Section);
+  if (!SymbolStem) return 0;
+  
   MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
   Asm->OutStreamer.EmitLabel(TmpSym);
   return TmpSym;
@@ -2467,19 +2471,18 @@ void DwarfDebug::EmitSectionLabels() {
     EmitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
   DwarfAbbrevSectionSym = 
     EmitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
-  EmitSectionSym(Asm, TLOF.getDwarfARangesSection(), "section_aranges");
+  EmitSectionSym(Asm, TLOF.getDwarfARangesSection());
   
   if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
-    EmitSectionSym(Asm, MacroInfo,"section_macinfo");
+    EmitSectionSym(Asm, MacroInfo);
 
-  EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
-  EmitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_loc");
-  EmitSectionSym(Asm, TLOF.getDwarfPubNamesSection(), "section_pubnames");
-  EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection(), "section_pubtypes");
+  EmitSectionSym(Asm, TLOF.getDwarfLineSection());
+  EmitSectionSym(Asm, TLOF.getDwarfLocSection());
+  EmitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
+  EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym = 
     EmitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
- 
-  EmitSectionSym(Asm, TLOF.getDwarfRangesSection(), "section_ranges");
+  EmitSectionSym(Asm, TLOF.getDwarfRangesSection());
 
   TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
   
