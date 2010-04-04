@@ -206,6 +206,14 @@ class DwarfDebug : public DwarfPrinter {
 
   std::vector<FunctionDebugFrameInfo> DebugFrames;
 
+  // Section Symbols: these are assembler temporary labels that are emitted at
+  // the beginning of each supported dwarf section.  These are used to form
+  // section offsets and are created by EmitSectionLabels.
+  MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
+  MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DataSectionSym;
+  
+private:
+  
   /// getSourceDirectoryAndFileIds - Return the directory and file ids that
   /// maps to the source id. Source id starts at 1.
   std::pair<unsigned, unsigned>

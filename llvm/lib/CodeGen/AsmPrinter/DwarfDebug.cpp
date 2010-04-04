@@ -304,6 +304,14 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
     AbbreviationsSet(InitAbbreviationsSetSize), shouldEmit(false),
     CurrentFnDbgScope(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
+      
+  DwarfFrameSectionSym = 0;
+  DwarfInfoSectionSym = 0;
+  DwarfAbbrevSectionSym = 0;
+  DwarfStrSectionSym = 0;
+  TextSectionSym = 0;
+  DataSectionSym = 0;
+      
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
 }
@@ -1667,8 +1675,7 @@ void DwarfDebug::constructCompileUnit(MDNode *N) {
   addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
           DIUnit.getLanguage());
   addString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
-  addLabel(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           Asm->GetTempSymbol("text_begin"));
+  addLabel(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, TextSectionSym);
   addLabel(Die, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
            Asm->GetTempSymbol("text_end"));
   // DW_AT_stmt_list is a offset of line number information for this
@@ -1791,6 +1798,9 @@ void DwarfDebug::beginModule(Module *M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
+  // Emit initial sections
+  EmitSectionLabels();
+
   // Create all the compile unit DIEs.
   for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
          E = DbgFinder.compile_unit_end(); I != E; ++I)
@@ -1832,9 +1842,6 @@ void DwarfDebug::beginModule(Module *M) {
       Asm->OutStreamer.EmitDwarfFileDirective(i, FullPath.str());
     }
   }
-
-  // Emit initial sections
-  EmitSectionLabels();
 }
 
 /// endModule - Emit all Dwarf sections that should come after the content.
@@ -2437,46 +2444,47 @@ void DwarfDebug::computeSizeAndOffsets() {
   CompileUnitOffsets[ModuleCU] = 0;
 }
 
-/// EmitSectionLabels - Emit initial Dwarf declarations.  This is necessary for cc
-/// tools to recognize the object file contains Dwarf information.
+static MCSymbol *EmitSectionSym(AsmPrinter *Asm, const MCSection *Section,
+                                const char *SymbolStem) {
+  Asm->OutStreamer.SwitchSection(Section);
+  MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
+  Asm->OutStreamer.EmitLabel(TmpSym);
+  return TmpSym;
+}
+
+/// EmitSectionLabels - Emit initial Dwarf sections with a label at
+/// the start of each one.
 void DwarfDebug::EmitSectionLabels() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   // Dwarf sections base addresses.
   if (MAI->doesDwarfRequireFrameSection()) {
-    Asm->OutStreamer.SwitchSection(TLOF.getDwarfFrameSection());
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_debug_frame"));
-  }
+    DwarfFrameSectionSym =
+      EmitSectionSym(Asm, TLOF.getDwarfFrameSection(), "section_debug_frame");
+   }
 
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfInfoSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_info"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfAbbrevSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_abbrev"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfARangesSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_aranges"));
+  DwarfInfoSectionSym = 
+    EmitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
+  DwarfAbbrevSectionSym = 
+    EmitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
+  EmitSectionSym(Asm, TLOF.getDwarfARangesSection(), "section_aranges");
+  
+  if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
+    EmitSectionSym(Asm, MacroInfo,"section_macinfo");
 
-  if (const MCSection *LineInfoDirective = TLOF.getDwarfMacroInfoSection()) {
-    Asm->OutStreamer.SwitchSection(LineInfoDirective);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_macinfo"));
-  }
+  EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
+  EmitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_loc");
+  EmitSectionSym(Asm, TLOF.getDwarfPubNamesSection(), "section_pubnames");
+  EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection(), "section_pubtypes");
+  DwarfStrSectionSym = 
+    EmitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
+ 
+  EmitSectionSym(Asm, TLOF.getDwarfRangesSection(), "section_ranges");
 
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfLineSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_line"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfLocSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_loc"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfPubNamesSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_pubnames"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfPubTypesSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_pubtypes"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfStrSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_str"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDwarfRangesSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_ranges"));
-
-  Asm->OutStreamer.SwitchSection(TLOF.getTextSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("text_begin"));
-  Asm->OutStreamer.SwitchSection(TLOF.getDataSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("data_begin"));
+  TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
+  
+  // This is subtly used by the ocaml GC stuff.
+  DataSectionSym = EmitSectionSym(Asm, TLOF.getDataSection(), "data_begin");
 }
 
 /// emitDIE - Recusively Emits a debug information entry.
@@ -2561,8 +2569,7 @@ void DwarfDebug::emitDebugInfo() {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-  EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
-                    Asm->GetTempSymbol("section_abbrev"));
+  EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"), DwarfAbbrevSectionSym);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(TD->getPointerSize());
 
@@ -2874,7 +2881,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
 
   Asm->OutStreamer.AddComment("FDE CIE offset");
   EmitSectionOffset(Asm->GetTempSymbol("debug_frame_common"), 
-                    Asm->GetTempSymbol("section_debug_frame"));
+                    DwarfFrameSectionSym);
 
   Asm->OutStreamer.AddComment("FDE initial location");
   MCSymbol *FuncBeginSym =
@@ -2913,7 +2920,7 @@ void DwarfDebug::emitDebugPubNames() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
   EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()), 
-                    Asm->GetTempSymbol("section_info"));
+                    DwarfInfoSectionSym);
 
   Asm->OutStreamer.AddComment("Compilation Unit Length");
   Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
@@ -2957,7 +2964,7 @@ void DwarfDebug::emitDebugPubTypes() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
   EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                    Asm->GetTempSymbol("section_info"));
+                    DwarfInfoSectionSym);
 
   Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
   Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
@@ -3103,11 +3110,10 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
     } else 
       EmitSectionOffset(getStringPoolEntry(getRealLinkageName(LName)),
-                        Asm->GetTempSymbol("section_str"));
+                        DwarfStrSectionSym);
 
     Asm->OutStreamer.AddComment("Function name");
-    EmitSectionOffset(getStringPoolEntry(Name),
-                      Asm->GetTempSymbol("section_str"));
+    EmitSectionOffset(getStringPoolEntry(Name), DwarfStrSectionSym);
     Asm->EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
