@@ -1,4 +1,4 @@
-//===-- AsmPrinter.cpp - Common AsmPrinter code ---------------------------===//
+//===-- AsmPrinterInlineAsm.cpp - AsmPrinter Inline Asm Handling ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the AsmPrinter class.
+// This file implements the inline assembler pieces of the AsmPrinter class.
 //
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
-#include "llvm/InlineAsm.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"

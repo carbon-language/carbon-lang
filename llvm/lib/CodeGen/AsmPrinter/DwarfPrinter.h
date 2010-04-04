@@ -94,15 +94,7 @@ public:
   /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
   void EmitCFAByte(unsigned Val);
   
-  
-  /// EmitSLEB128 - emit the specified signed leb128 value.
-  void EmitSLEB128(int Value, const char *Desc) const;
-
-  /// EmitULEB128 - emit the specified unsigned leb128 value.
-  void EmitULEB128(unsigned Value, const char *Desc = 0,
-                   unsigned PadTo = 0) const;
-
-  
+    
   /// EmitReference - Emit a reference to a label.
   ///
   void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;

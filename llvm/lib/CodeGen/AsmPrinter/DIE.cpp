@@ -57,11 +57,11 @@ void DIEAbbrev::Profile(FoldingSetNodeID &ID) const {
 void DIEAbbrev::Emit(const DwarfPrinter *DP) const {
   // Emit its Dwarf tag type.
   // FIXME: Doing work even in non-asm-verbose runs.
-  DP->EmitULEB128(Tag, dwarf::TagString(Tag));
+  DP->getAsm()->EmitULEB128(Tag, dwarf::TagString(Tag));
 
   // Emit whether it has children DIEs.
   // FIXME: Doing work even in non-asm-verbose runs.
-  DP->EmitULEB128(ChildrenFlag, dwarf::ChildrenString(ChildrenFlag));
+  DP->getAsm()->EmitULEB128(ChildrenFlag, dwarf::ChildrenString(ChildrenFlag));
 
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
@@ -69,18 +69,18 @@ void DIEAbbrev::Emit(const DwarfPrinter *DP) const {
 
     // Emit attribute type.
     // FIXME: Doing work even in non-asm-verbose runs.
-    DP->EmitULEB128(AttrData.getAttribute(),
-                    dwarf::AttributeString(AttrData.getAttribute()));
+    DP->getAsm()->EmitULEB128(AttrData.getAttribute(),
+                              dwarf::AttributeString(AttrData.getAttribute()));
 
     // Emit form type.
     // FIXME: Doing work even in non-asm-verbose runs.
-    DP->EmitULEB128(AttrData.getForm(),
-                    dwarf::FormEncodingString(AttrData.getForm()));
+    DP->getAsm()->EmitULEB128(AttrData.getForm(),
+                              dwarf::FormEncodingString(AttrData.getForm()));
   }
 
   // Mark end of abbreviation.
-  DP->EmitULEB128(0, "EOM(1)");
-  DP->EmitULEB128(0, "EOM(2)");
+  DP->getAsm()->EmitULEB128(0, "EOM(1)");
+  DP->getAsm()->EmitULEB128(0, "EOM(2)");
 }
 
 #ifndef NDEBUG
@@ -201,8 +201,8 @@ void DIEInteger::EmitValue(DwarfPrinter *D, unsigned Form) const {
   case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
   case dwarf::DW_FORM_data8: Size = 8; break;
-  case dwarf::DW_FORM_udata: D->EmitULEB128(Integer); return;
-  case dwarf::DW_FORM_sdata: D->EmitSLEB128(Integer, ""); return;
+  case dwarf::DW_FORM_udata: Asm->EmitULEB128(Integer); return;
+  case dwarf::DW_FORM_sdata: Asm->EmitSLEB128(Integer); return;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
   Asm->OutStreamer.EmitIntValue(Integer, Size, 0/*addrspace*/);
@@ -339,11 +339,11 @@ unsigned DIEBlock::ComputeSize(const TargetData *TD) {
 void DIEBlock::EmitValue(DwarfPrinter *D, unsigned Form) const {
   const AsmPrinter *Asm = D->getAsm();
   switch (Form) {
-  case dwarf::DW_FORM_block1: Asm->EmitInt8(Size);         break;
-  case dwarf::DW_FORM_block2: Asm->EmitInt16(Size);        break;
-  case dwarf::DW_FORM_block4: Asm->EmitInt32(Size);        break;
-  case dwarf::DW_FORM_block:  D->EmitULEB128(Size);        break;
-  default: llvm_unreachable("Improper form for block");    break;
+  default: assert(0 && "Improper form for block");    break;
+  case dwarf::DW_FORM_block1: Asm->EmitInt8(Size);    break;
+  case dwarf::DW_FORM_block2: Asm->EmitInt16(Size);   break;
+  case dwarf::DW_FORM_block4: Asm->EmitInt32(Size);   break;
+  case dwarf::DW_FORM_block:  Asm->EmitULEB128(Size); break;
   }
 
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
@@ -358,7 +358,7 @@ unsigned DIEBlock::SizeOf(const TargetData *TD, unsigned Form) const {
   case dwarf::DW_FORM_block1: return Size + sizeof(int8_t);
   case dwarf::DW_FORM_block2: return Size + sizeof(int16_t);
   case dwarf::DW_FORM_block4: return Size + sizeof(int32_t);
-  case dwarf::DW_FORM_block: return Size + MCAsmInfo::getULEB128Size(Size);
+  case dwarf::DW_FORM_block:  return Size + MCAsmInfo::getULEB128Size(Size);
   default: llvm_unreachable("Improper form for block"); break;
   }
   return 0;

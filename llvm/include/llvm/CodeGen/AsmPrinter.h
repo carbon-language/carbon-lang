@@ -313,6 +313,16 @@ namespace llvm {
     void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                              unsigned Size) const;
     
+    //===------------------------------------------------------------------===//
+    // Dwarf Emission Helper Routines
+    //===------------------------------------------------------------------===//
+    
+    /// EmitSLEB128 - emit the specified signed leb128 value.
+    void EmitSLEB128(int Value, const char *Desc = 0) const;
+    
+    /// EmitULEB128 - emit the specified unsigned leb128 value.
+    void EmitULEB128(unsigned Value, const char *Desc = 0,
+                     unsigned PadTo = 0) const;
     
     //===------------------------------------------------------------------===//
     // Inline Asm Support
