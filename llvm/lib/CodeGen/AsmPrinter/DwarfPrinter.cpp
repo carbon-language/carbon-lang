@@ -43,18 +43,12 @@ unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
     return 0;
 
   switch (Encoding & 0x07) {
-  case dwarf::DW_EH_PE_absptr:
-    return TD->getPointerSize();
-  case dwarf::DW_EH_PE_udata2:
-    return 2;
-  case dwarf::DW_EH_PE_udata4:
-    return 4;
-  case dwarf::DW_EH_PE_udata8:
-    return 8;
+  default:   assert(0 && "Invalid encoded value.");
+  case dwarf::DW_EH_PE_absptr: return TD->getPointerSize();
+  case dwarf::DW_EH_PE_udata2: return 2;
+  case dwarf::DW_EH_PE_udata4: return 4;
+  case dwarf::DW_EH_PE_udata8: return 8;
   }
-
-  assert(0 && "Invalid encoded value.");
-  return 0;
 }
 
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {

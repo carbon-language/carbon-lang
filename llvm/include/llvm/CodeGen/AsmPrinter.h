@@ -334,6 +334,15 @@ namespace llvm {
     void EmitULEB128(unsigned Value, const char *Desc = 0,
                      unsigned PadTo = 0) const;
     
+    /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
+    void EmitCFAByte(unsigned Val) const;
+
+    /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
+    /// encoding.  If verbose assembly output is enabled, we output comments
+    /// describing the encoding.  Desc is a string saying what the encoding is
+    /// specifying (e.g. "LSDA").
+    void EmitEncodingByte(unsigned Val, const char *Desc = 0);
+    
     //===------------------------------------------------------------------===//
     // Inline Asm Support
     //===------------------------------------------------------------------===//

@@ -354,7 +354,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
          I = LandingPads.begin(), E = LandingPads.end(); I != E; ++I) {
     const LandingPadInfo *LPI = *I;
     const std::vector<int> &TypeIds = LPI->TypeIds;
-    const unsigned NumShared = PrevLPI ? SharedTypeIds(LPI, PrevLPI) : 0;
+    unsigned NumShared = PrevLPI ? SharedTypeIds(LPI, PrevLPI) : 0;
     unsigned SizeSiteActions = 0;
 
     if (NumShared < TypeIds.size()) {
@@ -362,7 +362,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
       unsigned PrevAction = (unsigned)-1;
 
       if (NumShared) {
-        const unsigned SizePrevIds = PrevLPI->TypeIds.size();
+        unsigned SizePrevIds = PrevLPI->TypeIds.size();
         assert(Actions.size());
         PrevAction = Actions.size() - 1;
         SizeAction =
@@ -622,18 +622,19 @@ void DwarfException::EmitExceptionTable() {
   // Final tallies.
 
   // Call sites.
-  const unsigned SiteStartSize  = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
-  const unsigned SiteLengthSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
-  const unsigned LandingPadSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   bool IsSJLJ = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
   bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+  
   unsigned CallSiteTableLength;
-
   if (IsSJLJ)
     CallSiteTableLength = 0;
-  else
-    CallSiteTableLength = CallSites.size() *
-      (SiteStartSize + SiteLengthSize + LandingPadSize);
+  else {
+    unsigned SiteStartSize  = 4; // dwarf::DW_EH_PE_udata4
+    unsigned SiteLengthSize = 4; // dwarf::DW_EH_PE_udata4
+    unsigned LandingPadSize = 4; // dwarf::DW_EH_PE_udata4
+    CallSiteTableLength = 
+      CallSites.size() * (SiteStartSize + SiteLengthSize + LandingPadSize);
+  }
 
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
     CallSiteTableLength += MCAsmInfo::getULEB128Size(CallSites[i].Action);
@@ -650,7 +651,7 @@ void DwarfException::EmitExceptionTable() {
     // For SjLj exceptions, if there is no TypeInfo, then we just explicitly say
     // that we're omitting that bit.
     TTypeEncoding = dwarf::DW_EH_PE_omit;
-    TypeFormatSize = SizeOfEncodedValue(dwarf::DW_EH_PE_absptr);
+    TypeFormatSize = TD->getPointerSize(); // dwarf::DW_EH_PE_absptr
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
