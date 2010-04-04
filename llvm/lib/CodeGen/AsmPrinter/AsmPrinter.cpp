@@ -440,16 +440,16 @@ void AsmPrinter::EmitFunctionBody() {
       case TargetOpcode::DBG_LABEL:
       case TargetOpcode::EH_LABEL:
       case TargetOpcode::GC_LABEL:
-        printLabelInst(II);
+        OutStreamer.EmitLabel(II->getOperand(0).getMCSymbol());
         break;
       case TargetOpcode::INLINEASM:
-        printInlineAsm(II);
+        EmitInlineAsm(II);
         break;
       case TargetOpcode::IMPLICIT_DEF:
-        printImplicitDef(II);
+        EmitImplicitDef(II);
         break;
       case TargetOpcode::KILL:
-        printKill(II);
+        EmitKill(II);
         break;
       default:
         EmitInstruction(II);
@@ -1385,9 +1385,9 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
 }
 
 
-/// printInlineAsm - This method formats and prints the specified machine
+/// EmitInlineAsm - This method formats and emits the specified machine
 /// instruction that is an inline asm.
-void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
+void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   assert(MI->isInlineAsm() && "printInlineAsm only works on inline asms");
   
   unsigned NumOperands = MI->getNumOperands();
@@ -1606,9 +1606,9 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
                             MAI->getInlineAsmEnd());
 }
 
-/// printImplicitDef - This method prints the specified machine instruction
+/// EmitImplicitDef - This method emits the specified machine instruction
 /// that is an implicit def.
-void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
+void AsmPrinter::EmitImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   unsigned RegNo = MI->getOperand(0).getReg();
   OutStreamer.AddComment(Twine("implicit-def: ") +
@@ -1616,7 +1616,7 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   OutStreamer.AddBlankLine();
 }
 
-void AsmPrinter::printKill(const MachineInstr *MI) const {
+void AsmPrinter::EmitKill(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   
   std::string Str = "kill:";
@@ -1629,12 +1629,6 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
   }
   OutStreamer.AddComment(Str);
   OutStreamer.AddBlankLine();
-}
-
-/// printLabel - This method prints a local label used by debug and
-/// exception handling tables.
-void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
-  OutStreamer.EmitLabel(MI->getOperand(0).getMCSymbol());
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM

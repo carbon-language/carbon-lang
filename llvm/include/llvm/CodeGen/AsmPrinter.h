@@ -62,9 +62,6 @@ namespace llvm {
     /// function.
     ///
     MachineLoopInfo *LI;
-  public:
-    /// MMI - This is a pointer to the current MachineModuleInfo.
-    MachineModuleInfo *MMI;
     
   protected:
     /// DW - If available, this is a pointer to the current dwarf writer.
@@ -75,9 +72,6 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
-    
-    /// getObjFileLowering - Return information about object file lowering.
-    TargetLoweringObjectFile &getObjFileLowering() const;
     
     /// Target Asm Printer information.
     ///
@@ -97,6 +91,9 @@ namespace llvm {
     /// The current machine function.
     const MachineFunction *MF;
 
+    /// MMI - This is a pointer to the current MachineModuleInfo.
+    MachineModuleInfo *MMI;
+
     /// Name-mangler for global names.
     ///
     Mangler *Mang;
@@ -108,12 +105,13 @@ namespace llvm {
     
     /// getCurrentSection() - Return the current section we are emitting to.
     const MCSection *getCurrentSection() const;
-    
 
     /// VerboseAsm - Emit comments in assembly output if this is true.
     ///
     bool VerboseAsm;
 
+    /// getObjFileLowering - Return information about object file lowering.
+    TargetLoweringObjectFile &getObjFileLowering() const;
     
   private:
     // GCMetadataPrinters - The garbage collection metadata printer table.
@@ -140,7 +138,6 @@ namespace llvm {
     ///
     unsigned getFunctionNumber() const;
     
-  protected:
     /// getAnalysisUsage - Record analysis usage.
     /// 
     void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -244,7 +241,7 @@ namespace llvm {
 
   public:
     //===------------------------------------------------------------------===//
-    // Emission and print routines
+    // Emission routines.
     //
 
     /// EmitInt8 - Emit a byte directive and value.
@@ -286,10 +283,6 @@ namespace llvm {
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
                        unsigned ForcedAlignBits = 0,
                        bool UseFillExpr = true) const;
-
-    /// printDeclare - This method prints a local variable declaration used by
-    /// debug tables.
-    void printDeclare(const MachineInstr *MI) const;
 
     /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
     /// global value name as its base, with the specified suffix, and where the
@@ -350,18 +343,16 @@ namespace llvm {
     /// instruction's DebugLoc. 
     void processDebugLoc(const MachineInstr *MI, bool BeforePrintingInsn);
     
-    void printLabelInst(const MachineInstr *MI) const;
-
-    /// printInlineAsm - This method formats and prints the specified machine
+    /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.
-    void printInlineAsm(const MachineInstr *MI) const;
+    void EmitInlineAsm(const MachineInstr *MI) const;
 
-    /// printImplicitDef - This method prints the specified machine instruction
+    /// EmitImplicitDef - This method emits the specified machine instruction
     /// that is an implicit def.
-    void printImplicitDef(const MachineInstr *MI) const;
+    void EmitImplicitDef(const MachineInstr *MI) const;
 
-    /// printKill - This method prints the specified kill machine instruction.
-    void printKill(const MachineInstr *MI) const;
+    /// EmitKill - This method emits the specified kill machine instruction.
+    void EmitKill(const MachineInstr *MI) const;
 
     /// EmitVisibility - This emits visibility information about symbol, if
     /// this is suported by the target.
