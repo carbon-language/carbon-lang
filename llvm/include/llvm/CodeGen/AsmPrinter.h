@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class BlockAddress;
@@ -59,11 +58,6 @@ namespace llvm {
   /// asm writers.
   class AsmPrinter : public MachineFunctionPass {
     static char ID;
-
-    // GCMetadataPrinters - The garbage collection metadata printer table.
-    typedef DenseMap<GCStrategy*,GCMetadataPrinter*> gcp_map_type;
-    typedef gcp_map_type::iterator gcp_iterator;
-    gcp_map_type GCMetadataPrinters;
 
     /// If VerboseAsm is set, a pointer to the loop info for this
     /// function.
@@ -125,6 +119,11 @@ namespace llvm {
     ///
     bool VerboseAsm;
 
+    
+  private:
+    // GCMetadataPrinters - The garbage collection metadata printer table.
+    void *GCMetadataPrinters;  // Really a DenseMap.
+    
     /// Private state for PrintSpecial()
     // Assign a unique ID to this machine instruction.
     mutable const MachineInstr *LastMI;

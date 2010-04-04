@@ -55,20 +55,34 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 char AsmPrinter::ID = 0;
 
+typedef DenseMap<GCStrategy*,GCMetadataPrinter*> gcp_map_type;
+static gcp_map_type &getGCMap(void *&P) {
+  if (P == 0)
+    P = new gcp_map_type();
+  return *(gcp_map_type*)P;
+}
+
+
 AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
-  : MachineFunctionPass(&ID), 
+  : MachineFunctionPass(&ID),
     TM(tm), MAI(tm.getMCAsmInfo()), TRI(tm.getRegisterInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
   DW = 0; MMI = 0;
+  GCMetadataPrinters = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {
-  for (gcp_iterator I = GCMetadataPrinters.begin(),
-                    E = GCMetadataPrinters.end(); I != E; ++I)
-    delete I->second;
+  if (GCMetadataPrinters != 0) {
+    gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
+    
+    for (gcp_map_type::iterator I = GCMap.begin(), E = GCMap.end(); I != E; ++I)
+      delete I->second;
+    delete &GCMap;
+    GCMetadataPrinters = 0;
+  }
   
   delete &OutStreamer;
 }
@@ -1829,8 +1843,8 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
 /// exactly one predecessor and the control transfer mechanism between
 /// the predecessor and this block is a fall-through.
-bool AsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) 
-    const {
+bool AsmPrinter::
+isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   // If this is a landing pad, it isn't a fall through.  If it has no preds,
   // then nothing falls through to it.
   if (MBB->isLandingPad() || MBB->pred_empty())
@@ -1862,9 +1876,10 @@ bool AsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   if (!S->usesMetadata())
     return 0;
-  
-  gcp_iterator GCPI = GCMetadataPrinters.find(S);
-  if (GCPI != GCMetadataPrinters.end())
+
+  gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
+  gcp_map_type::iterator GCPI = GCMap.find(S);
+  if (GCPI != GCMap.end())
     return GCPI->second;
   
   const char *Name = S->getName().c_str();
@@ -1875,7 +1890,7 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
     if (strcmp(Name, I->getName()) == 0) {
       GCMetadataPrinter *GMP = I->instantiate();
       GMP->S = S;
-      GCMetadataPrinters.insert(std::make_pair(S, GMP));
+      GCMap.insert(std::make_pair(S, GMP));
       return GMP;
     }
   
