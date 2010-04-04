@@ -48,10 +48,10 @@ struct DomainValue {
   // Basic reference counting.
   unsigned Refs;
 
-  // Available domains. For an open DomainValue, it is the still possible
-  // domains for collapsing. For a collapsed DomainValue it is the domains where
-  // the register is available for free.
-  unsigned Mask;
+  // Bitmask of available domains. For an open DomainValue, it is the still
+  // possible domains for collapsing. For a collapsed DomainValue it is the
+  // domains where the register is available for free.
+  unsigned AvailableDomains;
 
   // Position of the last defining instruction.
   unsigned Dist;
@@ -59,29 +59,39 @@ struct DomainValue {
   // Twiddleable instructions using or defining these registers.
   SmallVector<MachineInstr*, 8> Instrs;
 
-  // Collapsed DomainValue have no instructions to twiddle - it simply keeps
+  // A collapsed DomainValue has no instructions to twiddle - it simply keeps
   // track of the domains where the registers are already available.
-  bool collapsed() const { return Instrs.empty(); }
+  bool isCollapsed() const { return Instrs.empty(); }
 
-  // Is any domain in mask available?
-  bool compat(unsigned mask) const {
-    return Mask & mask;
+  // Is domain available?
+  bool hasDomain(unsigned domain) const {
+    return AvailableDomains & (1u << domain);
   }
 
   // Mark domain as available.
-  void add(unsigned domain) {
-    Mask |= 1u << domain;
+  void addDomain(unsigned domain) {
+    AvailableDomains |= 1u << domain;
   }
 
-  // First domain available in mask.
-  unsigned firstDomain() const {
-    return CountTrailingZeros_32(Mask);
+  // Restrict to a single domain available.
+  void setSingleDomain(unsigned domain) {
+    AvailableDomains = 1u << domain;
+  }
+
+  // Return bitmask of domains that are available and in mask.
+  unsigned getCommonDomains(unsigned mask) const {
+    return AvailableDomains & mask;
+  }
+
+  // First domain available.
+  unsigned getFirstDomain() const {
+    return CountTrailingZeros_32(AvailableDomains);
   }
 
   DomainValue() { clear(); }
 
   void clear() {
-    Refs = Mask = Dist = 0;
+    Refs = AvailableDomains = Dist = 0;
     Instrs.clear();
   }
 };
@@ -158,7 +168,7 @@ DomainValue *SSEDomainFixPass::Alloc(int domain) {
                       Avail.pop_back_val();
   dv->Dist = Distance;
   if (domain >= 0)
-    dv->Mask = 1u << domain;
+    dv->addDomain(domain);
   return dv;
 }
 
@@ -171,8 +181,10 @@ void SSEDomainFixPass::Recycle(DomainValue *dv) {
 /// Set LiveRegs[rx] = dv, updating reference counts.
 void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
-  if (!LiveRegs)
-    LiveRegs = (DomainValue**)calloc(sizeof(DomainValue*), NumRegs);
+  if (!LiveRegs) {
+    LiveRegs = new DomainValue*[NumRegs];
+    std::fill(LiveRegs, LiveRegs+NumRegs, (DomainValue*)0);
+  }
 
   if (LiveRegs[rx] == dv)
     return;
@@ -191,8 +203,8 @@ void SSEDomainFixPass::Kill(int rx) {
 
   // Before killing the last reference to an open DomainValue, collapse it to
   // the first available domain.
-  if (LiveRegs[rx]->Refs == 1 && !LiveRegs[rx]->collapsed())
-    Collapse(LiveRegs[rx], LiveRegs[rx]->firstDomain());
+  if (LiveRegs[rx]->Refs == 1 && !LiveRegs[rx]->isCollapsed())
+    Collapse(LiveRegs[rx], LiveRegs[rx]->getFirstDomain());
   else
     SetLiveReg(rx, 0);
 }
@@ -202,8 +214,8 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   DomainValue *dv;
   if (LiveRegs && (dv = LiveRegs[rx])) {
-    if (dv->collapsed())
-      dv->add(domain);
+    if (dv->isCollapsed())
+      dv->addDomain(domain);
     else
       Collapse(dv, domain);
   } else {
@@ -215,15 +227,12 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
 /// Collapse open DomainValue into given domain. If there are multiple
 /// registers using dv, they each get a unique collapsed DomainValue.
 void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
-  assert(dv->compat(1u << domain) && "Cannot collapse");
+  assert(dv->hasDomain(domain) && "Cannot collapse");
 
   // Collapse all the instructions.
-  while (!dv->Instrs.empty()) {
-    MachineInstr *mi = dv->Instrs.back();
-    TII->SetSSEDomain(mi, domain);
-    dv->Instrs.pop_back();
-  }
-  dv->Mask = 1u << domain;
+  while (!dv->Instrs.empty())
+    TII->SetSSEDomain(dv->Instrs.pop_back_val(), domain);
+  dv->setSingleDomain(domain);
 
   // If there are multiple users, give them new, unique DomainValues.
   if (LiveRegs && dv->Refs > 1)
@@ -235,13 +244,15 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
 /// Merge - All instructions and registers in B are moved to A, and B is
 /// released.
 bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
-  assert(!A->collapsed() && "Cannot merge into collapsed");
-  assert(!B->collapsed() && "Cannot merge from collapsed");
+  assert(!A->isCollapsed() && "Cannot merge into collapsed");
+  assert(!B->isCollapsed() && "Cannot merge from collapsed");
   if (A == B)
     return true;
-  if (!A->compat(B->Mask))
+  // Restrict to the domains that A and B have in common.
+  unsigned common = A->getCommonDomains(B->AvailableDomains);
+  if (!common)
     return false;
-  A->Mask &= B->Mask;
+  A->AvailableDomains = common;
   A->Dist = std::max(A->Dist, B->Dist);
   A->Instrs.append(B->Instrs.begin(), B->Instrs.end());
   for (unsigned rx = 0; rx != NumRegs; ++rx)
@@ -268,18 +279,18 @@ void SSEDomainFixPass::enterBasicBlock() {
       }
 
       // We have a live DomainValue from more than one predecessor.
-      if (LiveRegs[rx]->collapsed()) {
+      if (LiveRegs[rx]->isCollapsed()) {
         // We are already collapsed, but predecessor is not. Force him.
-        if (!pdv->collapsed())
-          Collapse(pdv, LiveRegs[rx]->firstDomain());
+        if (!pdv->isCollapsed())
+          Collapse(pdv, LiveRegs[rx]->getFirstDomain());
         continue;
       }
 
       // Currently open, merge in predecessor.
-      if (!pdv->collapsed())
+      if (!pdv->isCollapsed())
         Merge(LiveRegs[rx], pdv);
       else
-        Collapse(LiveRegs[rx], pdv->firstDomain());
+        Collapse(LiveRegs[rx], pdv->getFirstDomain());
     }
   }
 }
@@ -310,8 +321,11 @@ void SSEDomainFixPass::visitHardInstr(MachineInstr *mi, unsigned domain) {
 
 // A soft instruction can be changed to work in other domains given by mask.
 void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
+  // Bitmask of available domains for this instruction after taking collapsed
+  // operands into account.
+  unsigned available = mask;
+
   // Scan the explicit use operands for incoming domains.
-  unsigned collmask = mask;
   SmallVector<int, 4> used;
   if (LiveRegs)
     for (unsigned i = mi->getDesc().getNumDefs(),
@@ -321,33 +335,40 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       int rx = RegIndex(mo.getReg());
       if (rx < 0) continue;
       if (DomainValue *dv = LiveRegs[rx]) {
+        // Bitmask of domains that dv and available have in common.
+        unsigned common = dv->getCommonDomains(available);
         // Is it possible to use this collapsed register for free?
-        if (dv->collapsed()) {
-          if (unsigned m = collmask & dv->Mask)
-            collmask = m;
-        } else if (dv->compat(collmask))
+        if (dv->isCollapsed()) {
+          // Restrict available domains to the ones in common with the operand.
+          // If there are no common domains, we must pay the cross-domain 
+          // penalty for this operand.
+          if (common) available = common;
+        } else if (common)
+          // Open DomainValue is compatible, save it for merging.
           used.push_back(rx);
         else
+          // Open DomainValue is not compatible with instruction. It is useless
+          // now.
           Kill(rx);
       }
     }
 
   // If the collapsed operands force a single domain, propagate the collapse.
-  if (isPowerOf2_32(collmask)) {
-    unsigned domain = CountTrailingZeros_32(collmask);
+  if (isPowerOf2_32(available)) {
+    unsigned domain = CountTrailingZeros_32(available);
     TII->SetSSEDomain(mi, domain);
     visitHardInstr(mi, domain);
     return;
   }
 
-  // Kill off any remaining uses that don't match collmask, and build a list of
-  // incoming DomainValue that we want to merge.
+  // Kill off any remaining uses that don't match available, and build a list of
+  // incoming DomainValues that we want to merge.
   SmallVector<DomainValue*,4> doms;
   for (SmallVector<int, 4>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
     int rx = *i;
     DomainValue *dv = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
-    if (!dv->compat(collmask)) {
+    if (!dv->getCommonDomains(available)) {
       Kill(*i);
       continue;
     }
@@ -366,8 +387,8 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       doms.push_back(dv);
   }
 
-  //  doms are now sorted in order of appearance. Try to merge them all, giving
-  //  priority to the latest ones.
+  // doms are now sorted in order of appearance. Try to merge them all, giving
+  // priority to the latest ones.
   DomainValue *dv = 0;
   while (!doms.empty()) {
     if (!dv) {
@@ -375,11 +396,12 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       continue;
     }
 
-    DomainValue *ThisDV = doms.pop_back_val();
-    if (Merge(dv, ThisDV)) continue;
+    DomainValue *latest = doms.pop_back_val();
+    if (Merge(dv, latest)) continue;
 
+    // If latest didn't merge, it is useless now. Kill all registers using it.
     for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
-      if (LiveRegs[*i] == ThisDV)
+      if (LiveRegs[*i] == latest)
         Kill(*i);
   }
 
@@ -387,7 +409,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   if (!dv)
     dv = Alloc();
   dv->Dist = Distance;
-  dv->Mask = collmask;
+  dv->AvailableDomains = available;
   dv->Instrs.push_back(mi);
 
   // Finally set all defs and non-collapsed uses to dv.
@@ -465,7 +487,7 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   // DomainValues?
   for (LiveOutMap::const_iterator i = LiveOuts.begin(), e = LiveOuts.end();
          i != e; ++i)
-    free(i->second);
+    delete[] i->second;
   LiveOuts.clear();
   Avail.clear();
   Allocator.DestroyAll();
