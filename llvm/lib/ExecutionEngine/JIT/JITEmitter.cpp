@@ -825,7 +825,8 @@ void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
   if (!BeforePrintingInsn) return;
 
   // FIXME: This is horribly inefficient.
-  DILocation CurDLT(DL.getAsMDNode(CurFn->getContext()));
+  DILocation CurDLT(DL.getAsMDNode(
+    EmissionDetails.MF->getFunction()->getContext()));
   
   if (CurDLT.getScope().getNode() != 0 && PrevDLT.getNode() !=CurDLT.getNode()){
     JITEvent_EmittedFunctionDetails::LineStart NextLine;
