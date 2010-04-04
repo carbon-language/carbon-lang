@@ -1411,11 +1411,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 
   // Emit the inline asm to a temporary string so we can emit it through
   // EmitInlineAsm.
-#if 0
   SmallString<256> StringData;
   raw_svector_ostream OS(StringData);
-#endif
-  raw_ostream &OS = O;
   
   OS << '\t';
 
@@ -1588,9 +1585,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   }
   OS << "\n";
   
-#if 0
   EmitInlineAsm(OS.str());
-#endif
   
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
