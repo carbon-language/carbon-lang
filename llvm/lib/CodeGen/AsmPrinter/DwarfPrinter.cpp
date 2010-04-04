@@ -70,43 +70,40 @@ void DwarfPrinter::EmitFrameMoves(MCSymbol *BaseLabel,
 
     // If advancing cfa.
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-      if (!Src.isReg()) {
-        if (Src.getReg() == MachineLocation::VirtualFP) {
-          Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa_offset);
-        } else {
-          Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa);
-          Asm->EmitULEB128(RI->getDwarfRegNum(Src.getReg(), isEH), "Register");
-        }
+      assert(!Src.isReg() && "Machine move not supported yet.");
 
-        int Offset = -Src.getOffset();
-        Asm->EmitULEB128(Offset, "Offset");
+      if (Src.getReg() == MachineLocation::VirtualFP) {
+        Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa_offset);
       } else {
-        llvm_unreachable("Machine move not supported yet.");
+        Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa);
+        Asm->EmitULEB128(RI->getDwarfRegNum(Src.getReg(), isEH), "Register");
       }
-    } else if (Src.isReg() &&
-               Src.getReg() == MachineLocation::VirtualFP) {
-      if (Dst.isReg()) {
-        Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa_register);
-        Asm->EmitULEB128(RI->getDwarfRegNum(Dst.getReg(), isEH), "Register");
-      } else {
-        llvm_unreachable("Machine move not supported yet.");
-      }
+
+      Asm->EmitULEB128(-Src.getOffset(), "Offset");
+      continue;
+    }
+    
+    if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+      assert(Dst.isReg() && "Machine move not supported yet.");
+      Asm->EmitCFAByte(dwarf::DW_CFA_def_cfa_register);
+      Asm->EmitULEB128(RI->getDwarfRegNum(Dst.getReg(), isEH), "Register");
+      continue;
+    }
+    
+    unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);
+    int Offset = Dst.getOffset() / stackGrowth;
+    
+    if (Offset < 0) {
+      Asm->EmitCFAByte(dwarf::DW_CFA_offset_extended_sf);
+      Asm->EmitULEB128(Reg, "Reg");
+      Asm->EmitSLEB128(Offset, "Offset");
+    } else if (Reg < 64) {
+      Asm->EmitCFAByte(dwarf::DW_CFA_offset + Reg);
+      Asm->EmitULEB128(Offset, "Offset");
     } else {
-      unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);
-      int Offset = Dst.getOffset() / stackGrowth;
-
-      if (Offset < 0) {
-        Asm->EmitCFAByte(dwarf::DW_CFA_offset_extended_sf);
-        Asm->EmitULEB128(Reg, "Reg");
-        Asm->EmitSLEB128(Offset, "Offset");
-      } else if (Reg < 64) {
-        Asm->EmitCFAByte(dwarf::DW_CFA_offset + Reg);
-        Asm->EmitULEB128(Offset, "Offset");
-      } else {
-        Asm->EmitCFAByte(dwarf::DW_CFA_offset_extended);
-        Asm->EmitULEB128(Reg, "Reg");
-        Asm->EmitULEB128(Offset, "Offset");
-      }
+      Asm->EmitCFAByte(dwarf::DW_CFA_offset_extended);
+      Asm->EmitULEB128(Reg, "Reg");
+      Asm->EmitULEB128(Offset, "Offset");
     }
   }
 }
