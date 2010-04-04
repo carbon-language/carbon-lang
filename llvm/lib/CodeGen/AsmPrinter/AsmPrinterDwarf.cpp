@@ -16,6 +16,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Dwarf.h"
 using namespace llvm;
 
 /// EmitSLEB128 - emit the specified signed leb128 value.
@@ -67,5 +68,17 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
       OutStreamer.EmitFill(PadTo - 1, 0x80/*fillval*/, 0/*addrspace*/);
     OutStreamer.EmitFill(1, 0/*fillval*/, 0/*addrspace*/);
   }
+}
+
+/// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
+void AsmPrinter::EmitCFAByte(unsigned Val) const {
+  if (isVerbose()) {
+    if (Val >= dwarf::DW_CFA_offset && Val < dwarf::DW_CFA_offset+64)
+      OutStreamer.AddComment("DW_CFA_offset + Reg (" + 
+                             Twine(Val-dwarf::DW_CFA_offset) + ")");
+    else
+      OutStreamer.AddComment(dwarf::CallFrameString(Val));
+  }
+  OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
