@@ -39,13 +39,8 @@ DwarfPrinter::DwarfPrinter(AsmPrinter *A)
 
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
-                                     const MCSymbol *Section,
-                                     bool IsSmall, bool isEH) {
-  bool isAbsolute;
-  if (isEH)
-    isAbsolute = false;
-  else
-    isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
+                                     const MCSymbol *Section, bool IsSmall) {
+  bool isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
   if (!isAbsolute)
     return Asm->EmitLabelDifference(Label, Section,

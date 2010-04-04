@@ -77,7 +77,7 @@ public:
   /// EmitSectionOffset - Emit Label-Section or use a special purpose directive
   /// to emit a section offset if the target has one.
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
-                         bool IsSmall = false, bool isEH = false);
+                         bool IsSmall = false);
   
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.

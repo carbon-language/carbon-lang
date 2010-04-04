@@ -218,10 +218,10 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
                                                   EHFrameInfo.Number));
 
     Asm->OutStreamer.AddComment("FDE CIE offset");
-    EmitSectionOffset(Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number),
-                      Asm->GetTempSymbol("eh_frame_common",
-                                         EHFrameInfo.PersonalityIndex),
-                      true, true);
+    Asm->EmitLabelDifference(
+                       Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number),
+                       Asm->GetTempSymbol("eh_frame_common",
+                                          EHFrameInfo.PersonalityIndex), 4);
 
     MCSymbol *EHFuncBeginSym =
       Asm->GetTempSymbol("eh_func_begin", EHFrameInfo.Number);
@@ -811,7 +811,7 @@ void DwarfException::EmitExceptionTable() {
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
       Asm->OutStreamer.AddComment("Region start");
-      EmitSectionOffset(BeginLabel, EHFuncBeginSym, true, true);
+      Asm->EmitLabelDifference(BeginLabel, EHFuncBeginSym, 4);
       
       Asm->OutStreamer.AddComment("Region length");
       Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
@@ -823,7 +823,7 @@ void DwarfException::EmitExceptionTable() {
       if (!S.PadLabel)
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       else
-        EmitSectionOffset(S.PadLabel, EHFuncBeginSym, true, true);
+        Asm->EmitLabelDifference(S.PadLabel, EHFuncBeginSym, 4);
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
