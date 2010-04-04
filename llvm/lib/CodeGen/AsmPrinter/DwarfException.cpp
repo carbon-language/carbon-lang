@@ -138,14 +138,14 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
     // If there is a personality, we need to indicate the function's location.
     if (PersonalityFn) {
-      EmitEncodingByte(PerEncoding, "Personality");
+      Asm->EmitEncodingByte(PerEncoding, "Personality");
       Asm->OutStreamer.AddComment("Personality");
       EmitReference(PersonalityFn, PerEncoding);
     }
     if (UsesLSDA[Index])
-      EmitEncodingByte(LSDAEncoding, "LSDA");
+      Asm->EmitEncodingByte(LSDAEncoding, "LSDA");
     if (FDEEncoding != dwarf::DW_EH_PE_absptr)
-      EmitEncodingByte(FDEEncoding, "FDE");
+      Asm->EmitEncodingByte(FDEEncoding, "FDE");
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -699,8 +699,8 @@ void DwarfException::EmitExceptionTable() {
                                                   Asm->getFunctionNumber()));
 
   // Emit the LSDA header.
-  EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
-  EmitEncodingByte(TTypeEncoding, "@TType");
+  Asm->EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
+  Asm->EmitEncodingByte(TTypeEncoding, "@TType");
 
   // The type infos need to be aligned. GCC does this by inserting padding just
   // before the type infos. However, this changes the size of the exception
@@ -743,7 +743,7 @@ void DwarfException::EmitExceptionTable() {
 
   // SjLj Exception handling
   if (IsSJLJ) {
-    EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
+    Asm->EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
 
     // Add extra padding if it wasn't added to the TType base offset.
     Asm->EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
@@ -786,7 +786,7 @@ void DwarfException::EmitExceptionTable() {
     // supposed to throw.
 
     // Emit the landing pad call site table.
-    EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
+    Asm->EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
 
     // Add extra padding if it wasn't added to the TType base offset.
     Asm->EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
