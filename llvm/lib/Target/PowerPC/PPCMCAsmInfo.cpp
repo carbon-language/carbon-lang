@@ -49,7 +49,6 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   // Exceptions handling
   if (!is64Bit)
     ExceptionsType = ExceptionHandling::Dwarf;
-  AbsoluteEHSectionOffsets = false;
     
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
