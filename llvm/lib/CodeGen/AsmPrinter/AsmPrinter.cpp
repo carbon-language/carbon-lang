@@ -416,6 +416,9 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk before the function body.
   EmitFunctionBodyStart();
   
+  bool ShouldPrintDebugScopes =
+    DW && MAI->doesSupportDebugInformation() &&DW->ShouldEmitDwarfDebug();
+  
   // Print out code for the function.
   bool HasAnyRealCode = false;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
@@ -430,8 +433,8 @@ void AsmPrinter::EmitFunctionBody() {
       
       ++EmittedInsts;
       
-      // FIXME: Clean up processDebugLoc.
-      processDebugLoc(II, true);
+      if (ShouldPrintDebugScopes)
+        DW->BeginScope(II);
       
       if (VerboseAsm)
         EmitComments(*II, OutStreamer.GetCommentOS());
@@ -456,8 +459,8 @@ void AsmPrinter::EmitFunctionBody() {
         break;
       }
       
-      // FIXME: Clean up processDebugLoc.
-      processDebugLoc(II, false);
+      if (ShouldPrintDebugScopes)
+        DW->EndScope(II);
     }
   }
   
@@ -1375,21 +1378,6 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
     llvm_report_error(Msg.str());
   }    
 }
-
-/// processDebugLoc - Processes the debug information of each machine
-/// instruction's DebugLoc.
-void AsmPrinter::processDebugLoc(const MachineInstr *MI, 
-                                 bool BeforePrintingInsn) {
-  if (!DW || !MAI->doesSupportDebugInformation() || !DW->ShouldEmitDwarfDebug())
-    return;
-
-  if (!BeforePrintingInsn)
-    // After printing instruction
-    DW->EndScope(MI);
-  else
-    DW->BeginScope(MI);
-}
-
 
 /// EmitInlineAsm - This method formats and emits the specified machine
 /// instruction that is an inline asm.

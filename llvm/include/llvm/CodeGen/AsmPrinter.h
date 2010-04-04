@@ -339,11 +339,7 @@ namespace llvm {
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
     void EmitInlineAsm(StringRef Str) const;
 
-    /// processDebugLoc - Processes the debug information of each machine
-    /// instruction's DebugLoc. 
-    void processDebugLoc(const MachineInstr *MI, bool BeforePrintingInsn);
-    
-    /// EmitInlineAsm - This method formats and emits the specified machine
+     /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.
     void EmitInlineAsm(const MachineInstr *MI) const;
 
