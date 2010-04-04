@@ -285,8 +285,8 @@ void DIELabel::print(raw_ostream &O) {
 /// EmitValue - Emit delta value.
 ///
 void DIEDelta::EmitValue(DwarfPrinter *D, unsigned Form) const {
-  bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitDifference(LabelHi, LabelLo, IsSmall);
+  D->getAsm()->EmitLabelDifference(LabelHi, LabelLo,
+                                   SizeOf(D->getTargetData(), Form));
 }
 
 /// SizeOf - Determine size of delta value in bytes.

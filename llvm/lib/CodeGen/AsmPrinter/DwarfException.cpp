@@ -80,8 +80,9 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
   // Define the eh frame length.
   Asm->OutStreamer.AddComment("Length of Common Information Entry");
-  EmitDifference(Asm->GetTempSymbol("eh_frame_common_end", Index),
-                 Asm->GetTempSymbol("eh_frame_common_begin", Index), true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("eh_frame_common_end", Index),
+                           Asm->GetTempSymbol("eh_frame_common_begin", Index),
+                           4);
 
   // EH frame header.
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common_begin",Index));
@@ -209,9 +210,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     // EH frame header.
     Asm->OutStreamer.AddComment("Length of Frame Information Entry");
-    EmitDifference(Asm->GetTempSymbol("eh_frame_end", EHFrameInfo.Number),
-                   Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number),
-                   true);
+    Asm->EmitLabelDifference(
+                Asm->GetTempSymbol("eh_frame_end", EHFrameInfo.Number),
+                Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number), 4);
 
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_begin",
                                                   EHFrameInfo.Number));
@@ -229,8 +230,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     EmitReference(EHFuncBeginSym, FDEEncoding);
     
     Asm->OutStreamer.AddComment("FDE address range");
-    EmitDifference(Asm->GetTempSymbol("eh_func_end", EHFrameInfo.Number),
-                   EHFuncBeginSym, SizeOfEncodedValue(FDEEncoding) == 4);
+    Asm->EmitLabelDifference(Asm->GetTempSymbol("eh_func_end",
+                                                EHFrameInfo.Number),
+                             EHFuncBeginSym, SizeOfEncodedValue(FDEEncoding));
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
@@ -810,7 +812,7 @@ void DwarfException::EmitExceptionTable() {
       EmitSectionOffset(BeginLabel, EHFuncBeginSym, true, true);
       
       Asm->OutStreamer.AddComment("Region length");
-      EmitDifference(EndLabel, BeginLabel, true);
+      Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the

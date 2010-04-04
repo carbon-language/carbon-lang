@@ -92,10 +92,6 @@ public:
   void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;
   void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
 
-  /// EmitDifference - Emit the difference between two labels.
-  void EmitDifference(const MCSymbol *LabelHi, const MCSymbol *LabelLo,
-                      bool IsSmall = false);
-
   /// EmitSectionOffset - Emit Label-Section or use a special purpose directive
   /// to emit a section offset if the target has one.
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,

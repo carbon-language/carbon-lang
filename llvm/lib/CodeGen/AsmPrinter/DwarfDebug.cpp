@@ -2655,16 +2655,16 @@ void DwarfDebug::emitDebugLines() {
 
   // Construct the section header.
   Asm->OutStreamer.AddComment("Length of Source Line Info");
-  EmitDifference(Asm->GetTempSymbol("line_end"),
-                 Asm->GetTempSymbol("line_begin"), true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("line_end"),
+                           Asm->GetTempSymbol("line_begin"), 4);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_begin"));
 
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(dwarf::DWARF_VERSION); 
 
   Asm->OutStreamer.AddComment("Prolog Length");
-  EmitDifference(Asm->GetTempSymbol("line_prolog_end"),
-                 Asm->GetTempSymbol("line_prolog_begin"), true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("line_prolog_end"),
+                           Asm->GetTempSymbol("line_prolog_begin"), 4);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_prolog_begin"));
 
   Asm->OutStreamer.AddComment("Minimum Instruction Length");
@@ -2833,8 +2833,8 @@ void DwarfDebug::emitCommonDebugFrame() {
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common"));
   Asm->OutStreamer.AddComment("Length of Common Information Entry");
-  EmitDifference(Asm->GetTempSymbol("debug_frame_common_end"),
-                 Asm->GetTempSymbol("debug_frame_common_begin"), true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("debug_frame_common_end"),
+                           Asm->GetTempSymbol("debug_frame_common_begin"), 4);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common_begin"));
   Asm->OutStreamer.AddComment("CIE Identifier Tag");
@@ -2873,7 +2873,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
     Asm->GetTempSymbol("debug_frame_begin", DebugFrameInfo.Number);
   MCSymbol *DebugFrameEnd =
     Asm->GetTempSymbol("debug_frame_end", DebugFrameInfo.Number);
-  EmitDifference(DebugFrameEnd, DebugFrameBegin, true);
+  Asm->EmitLabelDifference(DebugFrameEnd, DebugFrameBegin, 4);
 
   Asm->OutStreamer.EmitLabel(DebugFrameBegin);
 
@@ -2889,8 +2889,8 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
   
   
   Asm->OutStreamer.AddComment("FDE address range");
-  EmitDifference(Asm->GetTempSymbol("func_end", DebugFrameInfo.Number),
-                 FuncBeginSym);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("func_end",DebugFrameInfo.Number),
+                           FuncBeginSym, TD->getPointerSize());
 
   EmitFrameMoves(FuncBeginSym, DebugFrameInfo.Moves, false);
 
@@ -2906,8 +2906,9 @@ void DwarfDebug::emitDebugPubNames() {
                           Asm->getObjFileLowering().getDwarfPubNamesSection());
 
   Asm->OutStreamer.AddComment("Length of Public Names Info");
-  EmitDifference(Asm->GetTempSymbol("pubnames_end", ModuleCU->getID()),
-                 Asm->GetTempSymbol("pubnames_begin", ModuleCU->getID()), true);
+  Asm->EmitLabelDifference(
+                 Asm->GetTempSymbol("pubnames_end", ModuleCU->getID()),
+                 Asm->GetTempSymbol("pubnames_begin", ModuleCU->getID()), 4);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin",
                                                 ModuleCU->getID()));
@@ -2920,9 +2921,9 @@ void DwarfDebug::emitDebugPubNames() {
                     Asm->GetTempSymbol("section_info"), true);
 
   Asm->OutStreamer.AddComment("Compilation Unit Length");
-  EmitDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
-                 Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                 true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
+                           Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
+                           4);
 
   const StringMap<DIE*> &Globals = ModuleCU->getGlobals();
   for (StringMap<DIE*>::const_iterator
@@ -2949,8 +2950,9 @@ void DwarfDebug::emitDebugPubTypes() {
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfPubTypesSection());
   Asm->OutStreamer.AddComment("Length of Public Types Info");
-  EmitDifference(Asm->GetTempSymbol("pubtypes_end", ModuleCU->getID()),
-                 Asm->GetTempSymbol("pubtypes_begin", ModuleCU->getID()), true);
+  Asm->EmitLabelDifference(
+                    Asm->GetTempSymbol("pubtypes_end", ModuleCU->getID()),
+                    Asm->GetTempSymbol("pubtypes_begin", ModuleCU->getID()), 4);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_begin",
                                                 ModuleCU->getID()));
@@ -2963,9 +2965,9 @@ void DwarfDebug::emitDebugPubTypes() {
                     Asm->GetTempSymbol("section_info"), true);
 
   Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
-  EmitDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
-                 Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                 true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
+                           Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
+                           4);
 
   const StringMap<DIE*> &Globals = ModuleCU->getGlobalTypes();
   for (StringMap<DIE*>::const_iterator
@@ -3079,8 +3081,8 @@ void DwarfDebug::emitDebugInlineInfo() {
                         Asm->getObjFileLowering().getDwarfDebugInlineSection());
 
   Asm->OutStreamer.AddComment("Length of Debug Inlined Information Entry");
-  EmitDifference(Asm->GetTempSymbol("debug_inlined_end", 1),
-                 Asm->GetTempSymbol("debug_inlined_begin", 1), true);
+  Asm->EmitLabelDifference(Asm->GetTempSymbol("debug_inlined_end", 1),
+                           Asm->GetTempSymbol("debug_inlined_begin", 1), 4);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_begin", 1));
 

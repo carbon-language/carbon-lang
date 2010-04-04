@@ -130,14 +130,6 @@ void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
   Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
 
-/// EmitDifference - Emit the difference between two labels.  If this assembler
-/// supports .set, we emit a .set of a temporary and then use it in the .word.
-void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
-                                  bool IsSmall) {
-  unsigned Size = IsSmall ? 4 : TD->getPointerSize();
-  Asm->EmitLabelDifference(TagHi, TagLo, Size);
-}
-
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      const MCSymbol *Section,
                                      bool IsSmall, bool isEH) {
@@ -148,7 +140,8 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
     isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
   if (!isAbsolute)
-    return EmitDifference(Label, Section, IsSmall);
+    return Asm->EmitLabelDifference(Label, Section,
+                                    IsSmall ? 4 : TD->getPointerSize());
   
   // On COFF targets, we have to emit the weird .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
@@ -184,7 +177,7 @@ void DwarfPrinter::EmitFrameMoves(MCSymbol *BaseLabel,
       MCSymbol *ThisSym = Label;
       if (ThisSym != BaseLabel) {
         EmitCFAByte(dwarf::DW_CFA_advance_loc4);
-        EmitDifference(ThisSym, BaseLabel, true);
+        Asm->EmitLabelDifference(ThisSym, BaseLabel, 4);
         BaseLabel = ThisSym;
       }
     }
