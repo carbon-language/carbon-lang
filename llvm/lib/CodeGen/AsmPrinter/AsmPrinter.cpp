@@ -401,6 +401,28 @@ static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   }
 }
 
+/// EmitImplicitDef - This method emits the specified machine instruction
+/// that is an implicit def.
+static void EmitImplicitDef(const MachineInstr *MI, AsmPrinter &AP) {
+  unsigned RegNo = MI->getOperand(0).getReg();
+  AP.OutStreamer.AddComment(Twine("implicit-def: ") +
+                            AP.TM.getRegisterInfo()->getName(RegNo));
+  AP.OutStreamer.AddBlankLine();
+}
+
+static void EmitKill(const MachineInstr *MI, AsmPrinter &AP) {
+  std::string Str = "kill:";
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &Op = MI->getOperand(i);
+    assert(Op.isReg() && "KILL instruction must have only register operands");
+    Str += ' ';
+    Str += AP.TM.getRegisterInfo()->getName(Op.getReg());
+    Str += (Op.isDef() ? "<def>" : "<kill>");
+  }
+  AP.OutStreamer.AddComment(Str);
+  AP.OutStreamer.AddBlankLine();
+}
+
 
 
 /// EmitFunctionBody - This method emits the body and trailer for a
@@ -442,10 +464,10 @@ void AsmPrinter::EmitFunctionBody() {
         EmitInlineAsm(II);
         break;
       case TargetOpcode::IMPLICIT_DEF:
-        EmitImplicitDef(II);
+        if (isVerbose()) EmitImplicitDef(II, *this);
         break;
       case TargetOpcode::KILL:
-        EmitKill(II);
+        if (isVerbose()) EmitKill(II, *this);
         break;
       default:
         EmitInstruction(II);
@@ -1323,31 +1345,6 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
     OS << Offset;
 }
 
-
-/// EmitImplicitDef - This method emits the specified machine instruction
-/// that is an implicit def.
-void AsmPrinter::EmitImplicitDef(const MachineInstr *MI) const {
-  if (!isVerbose()) return;
-  unsigned RegNo = MI->getOperand(0).getReg();
-  OutStreamer.AddComment(Twine("implicit-def: ") +
-                         TM.getRegisterInfo()->getName(RegNo));
-  OutStreamer.AddBlankLine();
-}
-
-void AsmPrinter::EmitKill(const MachineInstr *MI) const {
-  if (!isVerbose()) return;
-  
-  std::string Str = "kill:";
-  for (unsigned n = 0, e = MI->getNumOperands(); n != e; ++n) {
-    const MachineOperand &Op = MI->getOperand(n);
-    assert(Op.isReg() && "KILL instruction must have only register operands");
-    Str += ' ';
-    Str += TM.getRegisterInfo()->getName(Op.getReg());
-    Str += (Op.isDef() ? "<def>" : "<kill>");
-  }
-  OutStreamer.AddComment(Str);
-  OutStreamer.AddBlankLine();
-}
 
 MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA) const {
   return MMI->getAddrLabelSymbol(BA->getBasicBlock());

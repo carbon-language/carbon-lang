@@ -59,8 +59,7 @@ namespace llvm {
   public:
     /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
-
-
+    
     /// Target machine description.
     ///
     TargetMachine &TM;
@@ -219,6 +218,16 @@ namespace llvm {
       assert(0 && "EmitInstruction not implemented");
     }
     
+    virtual void EmitFunctionEntryLabel();
+    
+    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
+    
+    /// isBlockOnlyReachableByFallthough - Return true if the basic block has
+    /// exactly one predecessor and the control transfer mechanism between
+    /// the predecessor and this block is a fall-through.
+    virtual bool
+    isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
+    
     //===------------------------------------------------------------------===//
     // Lowering Routines.
     //===------------------------------------------------------------------===//
@@ -276,51 +285,15 @@ namespace llvm {
     void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
     
     
-    // Data emission.
-    
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);
-    
-  protected:
-    virtual void EmitFunctionEntryLabel();
-    
-    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
-
-    /// printOffset - This is just convenient handler for printing offsets.
-    void printOffset(int64_t Offset, raw_ostream &OS) const;
-
-    /// isBlockOnlyReachableByFallthough - Return true if the basic block has
-    /// exactly one predecessor and the control transfer mechanism between
-    /// the predecessor and this block is a fall-through.
-    virtual bool
-    isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
-
-  private:
-    /// EmitImplicitDef - This method emits the specified machine instruction
-    /// that is an implicit def.
-    void EmitImplicitDef(const MachineInstr *MI) const;
-
-    /// EmitKill - This method emits the specified kill machine instruction.
-    void EmitKill(const MachineInstr *MI) const;
-
-    /// EmitVisibility - This emits visibility information about symbol, if
-    /// this is suported by the target.
-    void EmitVisibility(MCSymbol *Sym, unsigned Visibility) const;
-    
-    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const;
-    
-    void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                            const MachineBasicBlock *MBB,
-                            unsigned uid) const;
-    void EmitLLVMUsedList(Constant *List);
-    void EmitXXStructorList(Constant *List);
-    GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
-    
     
     //===------------------------------------------------------------------===//
     // Emission Helper Routines.
     //===------------------------------------------------------------------===//
   public:
+    /// printOffset - This is just convenient handler for printing offsets.
+    void printOffset(int64_t Offset, raw_ostream &OS) const;
     
     /// EmitInt8 - Emit a byte directive and value.
     ///
@@ -388,6 +361,23 @@ namespace llvm {
     /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.
     void EmitInlineAsm(const MachineInstr *MI) const;
+
+    //===------------------------------------------------------------------===//
+    // Internal Implementation Details
+    //===------------------------------------------------------------------===//
+    
+    /// EmitVisibility - This emits visibility information about symbol, if
+    /// this is suported by the target.
+    void EmitVisibility(MCSymbol *Sym, unsigned Visibility) const;
+    
+    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const;
+    
+    void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                            const MachineBasicBlock *MBB,
+                            unsigned uid) const;
+    void EmitLLVMUsedList(Constant *List);
+    void EmitXXStructorList(Constant *List);
+    GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }
 
