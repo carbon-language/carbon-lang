@@ -381,7 +381,6 @@ void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   }
   O << "+";
   printOperand(MI, NOps-2, O);
-  OutStreamer.AddBlankLine();
 }
 
 
@@ -389,8 +388,12 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
-    if (VerboseAsm)
-      PrintDebugValueComment(MI, O);
+    if (VerboseAsm && OutStreamer.hasRawTextSupport()) {
+      std::string TmpStr;
+      raw_string_ostream OS(TmpStr);
+      PrintDebugValueComment(MI, OS);
+      OutStreamer.EmitRawText(StringRef(OS.str()));
+    }
     return;
       
   case X86::MOVPC32r: {
