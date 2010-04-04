@@ -14,7 +14,9 @@
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -158,3 +160,40 @@ void AsmPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
     TLOF.getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
   OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
+
+/// EmitSectionOffset - Emit the 4-byte offset of Label from the start of its
+/// section.  This can be done with a special directive if the target supports
+/// it (e.g. cygwin) or by emitting it as an offset from a label at the start
+/// of the section.
+///
+/// SectionLabel is a temporary label emitted at the start of the section that
+/// Label lives in.
+void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
+                                   const MCSymbol *SectionLabel) const {
+  // On COFF targets, we have to emit the special .secrel32 directive.
+  if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
+    // FIXME: MCize.
+    OutStreamer.EmitRawText(SecOffDir + Twine(Label->getName()));
+    return;
+  }
+  
+  // Get the section that we're referring to, based on SectionLabel.
+  const MCSection &Section = SectionLabel->getSection();
+  
+  // If Label has already been emitted, verify that it is in the same section as
+  // section label for sanity.
+  assert((!Label->isInSection() || &Label->getSection() == &Section) &&
+         "Section offset using wrong section base for label");
+  
+  // If the section in question will end up with an address of 0 anyway, we can
+  // just emit an absolute reference to save a relocation.
+  if (Section.isBaseAddressKnownZero()) {
+    OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
+    return;
+  }
+  
+  // Otherwise, emit it as a label difference from the start of the section.
+  EmitLabelDifference(Label, SectionLabel, 4);
+}
+
+
