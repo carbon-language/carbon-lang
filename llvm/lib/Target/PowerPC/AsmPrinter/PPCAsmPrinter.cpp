@@ -689,14 +689,14 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 }
 
-static const MCSymbol *GetLazyPtr(const MCSymbol *Sym, MCContext &Ctx) {
+static MCSymbol *GetLazyPtr(MCSymbol *Sym, MCContext &Ctx) {
   // Remove $stub suffix, add $lazy_ptr.
   SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end()-5);
   TmpStr += "$lazy_ptr";
   return Ctx.GetOrCreateSymbol(TmpStr.str());
 }
 
-static const MCSymbol *GetAnonSym(const MCSymbol *Sym, MCContext &Ctx) {
+static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
   // Add $tmp suffix to $stub, yielding $stub$tmp.
   SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end());
   TmpStr += "$tmp";
@@ -725,15 +725,16 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       EmitAlignment(4);
       
       MCSymbol *Stub = Stubs[i].first;
-      const MCSymbol *RawSym = Stubs[i].second.getPointer();
-      const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
-      const MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
+      MCSymbol *RawSym = Stubs[i].second.getPointer();
+      MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
+      MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
                                            
       OutStreamer.EmitLabel(Stub);
-      O << "\t.indirect_symbol " << *RawSym << '\n';
+      OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
+      // FIXME: MCize this.
       O << "\tmflr r0\n";
       O << "\tbcl 20,31," << *AnonSymbol << '\n';
-      O << *AnonSymbol << ":\n";
+      OutStreamer.EmitLabel(AnonSymbol);
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(" << *LazyPtr << '-' << *AnonSymbol
       << ")\n";
@@ -744,8 +745,8 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       O << "\tbctr\n";
       
       OutStreamer.SwitchSection(LSPSection);
-      O << *LazyPtr << ":\n";
-      O << "\t.indirect_symbol " << *RawSym << '\n';
+      OutStreamer.EmitLabel(LazyPtr);
+      OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
     OutStreamer.AddBlankLine();
@@ -759,25 +760,25 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
                               16, SectionKind::getText());
   for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
     MCSymbol *Stub = Stubs[i].first;
-    const MCSymbol *RawSym = Stubs[i].second.getPointer();
-    const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
+    MCSymbol *RawSym = Stubs[i].second.getPointer();
+    MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
 
     OutStreamer.SwitchSection(StubSection);
     EmitAlignment(4);
     OutStreamer.EmitLabel(Stub);
-    O << "\t.indirect_symbol " << *RawSym << '\n';
+    OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
     O << "\tlis r11,ha16(" << *LazyPtr << ")\n";
     O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *LazyPtr
     << ")(r11)\n";
     O << "\tmtctr r12\n";
     O << "\tbctr\n";
     OutStreamer.SwitchSection(LSPSection);
-    O << *LazyPtr << ":\n";
-    O << "\t.indirect_symbol " << *RawSym << '\n';
+    OutStreamer.EmitLabel(LazyPtr);
+    OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
     O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
   }
   
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 
