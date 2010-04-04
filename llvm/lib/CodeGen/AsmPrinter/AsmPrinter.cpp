@@ -65,7 +65,7 @@ static gcp_map_type &getGCMap(void *&P) {
 
 AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
   : MachineFunctionPass(&ID),
-    TM(tm), MAI(tm.getMCAsmInfo()), TRI(tm.getRegisterInfo()),
+    TM(tm), MAI(tm.getMCAsmInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
@@ -1610,8 +1610,9 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// that is an implicit def.
 void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
+  unsigned RegNo = MI->getOperand(0).getReg();
   OutStreamer.AddComment(Twine("implicit-def: ") +
-                         TRI->getName(MI->getOperand(0).getReg()));
+                         TM.getRegisterInfo()->getName(RegNo));
   OutStreamer.AddBlankLine();
 }
 
@@ -1623,7 +1624,7 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
     const MachineOperand &Op = MI->getOperand(n);
     assert(Op.isReg() && "KILL instruction must have only register operands");
     Str += ' ';
-    Str += TRI->getName(Op.getReg());
+    Str += TM.getRegisterInfo()->getName(Op.getReg());
     Str += (Op.isDef() ? "<def>" : "<kill>");
   }
   OutStreamer.AddComment(Str);

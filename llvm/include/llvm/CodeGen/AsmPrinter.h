@@ -18,7 +18,6 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DebugLoc.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class BlockAddress;
@@ -83,10 +82,6 @@ namespace llvm {
     /// Target Asm Printer information.
     ///
     const MCAsmInfo *MAI;
-
-    /// Target Register Information.
-    ///
-    const TargetRegisterInfo *TRI;
 
     /// OutContext - This is the context for the output file that we are
     /// streaming.  This owns all of the global MC-related objects for the
