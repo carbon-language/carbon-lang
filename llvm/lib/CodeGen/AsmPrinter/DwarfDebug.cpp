@@ -2567,7 +2567,7 @@ void DwarfDebug::emitDebugInfo() {
   Asm->EmitInt16(dwarf::DWARF_VERSION);
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
   EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
-                    Asm->GetTempSymbol("section_abbrev"), true);
+                    Asm->GetTempSymbol("section_abbrev"));
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(TD->getPointerSize());
 
@@ -2879,7 +2879,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
 
   Asm->OutStreamer.AddComment("FDE CIE offset");
   EmitSectionOffset(Asm->GetTempSymbol("debug_frame_common"), 
-                    Asm->GetTempSymbol("section_debug_frame"), true);
+                    Asm->GetTempSymbol("section_debug_frame"));
 
   Asm->OutStreamer.AddComment("FDE initial location");
   MCSymbol *FuncBeginSym =
@@ -2918,7 +2918,7 @@ void DwarfDebug::emitDebugPubNames() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
   EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()), 
-                    Asm->GetTempSymbol("section_info"), true);
+                    Asm->GetTempSymbol("section_info"));
 
   Asm->OutStreamer.AddComment("Compilation Unit Length");
   Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
@@ -2962,7 +2962,7 @@ void DwarfDebug::emitDebugPubTypes() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
   EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                    Asm->GetTempSymbol("section_info"), true);
+                    Asm->GetTempSymbol("section_info"));
 
   Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
   Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
@@ -3108,11 +3108,11 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
     } else 
       EmitSectionOffset(getStringPoolEntry(getRealLinkageName(LName)),
-                        Asm->GetTempSymbol("section_str"), true);
+                        Asm->GetTempSymbol("section_str"));
 
     Asm->OutStreamer.AddComment("Function name");
     EmitSectionOffset(getStringPoolEntry(Name),
-                      Asm->GetTempSymbol("section_str"), true);
+                      Asm->GetTempSymbol("section_str"));
     Asm->EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),

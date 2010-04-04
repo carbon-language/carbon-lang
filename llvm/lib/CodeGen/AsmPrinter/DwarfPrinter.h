@@ -74,10 +74,9 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return MAI; }
   const TargetData *getTargetData() const { return TD; }
 
-  /// EmitSectionOffset - Emit Label-Section or use a special purpose directive
-  /// to emit a section offset if the target has one.
-  void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
-                         bool IsSmall = false);
+  /// EmitSectionOffset - Emit a 4-byte "Label-Section" value or use a special
+  /// purpose directive to emit a section offset if the target has one.
+  void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section);
   
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.

@@ -39,20 +39,16 @@ DwarfPrinter::DwarfPrinter(AsmPrinter *A)
 
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
-                                     const MCSymbol *Section, bool IsSmall) {
-  bool isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
-
-  if (!isAbsolute)
-    return Asm->EmitLabelDifference(Label, Section,
-                                    IsSmall ? 4 : TD->getPointerSize());
+                                     const MCSymbol *Section) {
+  if (!MAI->isAbsoluteDebugSectionOffsets())
+    return Asm->EmitLabelDifference(Label, Section, 4);
   
   // On COFF targets, we have to emit the weird .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
     // FIXME: MCize.
     Asm->OutStreamer.EmitRawText(SecOffDir + Twine(Label->getName()));
   } else {
-    unsigned Size = IsSmall ? 4 : TD->getPointerSize();
-    Asm->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);
+    Asm->OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
   }
 }
 
