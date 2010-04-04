@@ -305,12 +305,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
     CurrentFnDbgScope(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
       
-  DwarfFrameSectionSym = 0;
-  DwarfInfoSectionSym = 0;
-  DwarfAbbrevSectionSym = 0;
-  DwarfStrSectionSym = 0;
-  TextSectionSym = 0;
-  DataSectionSym = 0;
+  DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
+  DwarfStrSectionSym = TextSectionSym = 0;
       
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
@@ -2485,9 +2481,7 @@ void DwarfDebug::EmitSectionLabels() {
   EmitSectionSym(Asm, TLOF.getDwarfRangesSection());
 
   TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
-  
-  // This is subtly used by the ocaml GC stuff.
-  DataSectionSym = EmitSectionSym(Asm, TLOF.getDataSection(), "data_begin");
+  EmitSectionSym(Asm, TLOF.getDataSection());
 }
 
 /// emitDIE - Recusively Emits a debug information entry.

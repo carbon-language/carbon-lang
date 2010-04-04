@@ -210,7 +210,7 @@ class DwarfDebug : public DwarfPrinter {
   // the beginning of each supported dwarf section.  These are used to form
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
-  MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DataSectionSym;
+  MCSymbol *DwarfStrSectionSym, *TextSectionSym;
   
 private:
   
