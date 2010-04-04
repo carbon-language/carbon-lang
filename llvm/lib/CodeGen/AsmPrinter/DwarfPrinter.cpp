@@ -37,27 +37,6 @@ DwarfPrinter::DwarfPrinter(AsmPrinter *A)
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0) {}
 
-
-/// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
-/// label with the specified stem and unique ID.
-MCSymbol *DwarfPrinter::getDWLabel(const char *Name, unsigned ID) const {
-  // FIXME: REMOVE this.  However, there is stuff in EH that passes counters in
-  // here that can be zero.
-  
-  //assert(ID && "Should use getTempLabel if no ID");
-  if (ID == 0) return getTempLabel(Name);
-  return Asm->OutContext.GetOrCreateSymbol
-        (Twine(MAI->getPrivateGlobalPrefix()) + Twine(Name) + Twine(ID));
-}
-
-/// getTempLabel - Return the MCSymbol corresponding to the assembler temporary
-/// label with the specified name.
-MCSymbol *DwarfPrinter::getTempLabel(const char *Name) const {
-  return Asm->OutContext.GetOrCreateSymbol
-     (Twine(MAI->getPrivateGlobalPrefix()) + Name);
-}
-
-
 /// SizeOfEncodedValue - Return the size of the encoding in bytes.
 unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
   if (Encoding == dwarf::DW_EH_PE_omit)

@@ -67,24 +67,24 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
   MCSymbol *EHFrameSym;
   if (TLOF.isFunctionEHFrameSymbolPrivate())
-    EHFrameSym = getDWLabel("EH_frame", Index);
+    EHFrameSym = Asm->GetTempSymbol("EH_frame", Index);
   else
     EHFrameSym = Asm->OutContext.GetOrCreateSymbol(Twine("EH_frame") + 
                                                    Twine(Index));
   Asm->OutStreamer.EmitLabel(EHFrameSym);
   
-  Asm->OutStreamer.EmitLabel(getDWLabel("section_eh_frame", Index));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_eh_frame", Index));
 
   // Define base labels.
-  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common", Index));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common", Index));
 
   // Define the eh frame length.
   Asm->OutStreamer.AddComment("Length of Common Information Entry");
-  EmitDifference(getDWLabel("eh_frame_common_end", Index),
-                 getDWLabel("eh_frame_common_begin", Index), true);
+  EmitDifference(Asm->GetTempSymbol("eh_frame_common_end", Index),
+                 Asm->GetTempSymbol("eh_frame_common_begin", Index), true);
 
   // EH frame header.
-  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common_begin", Index));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common_begin",Index));
   Asm->OutStreamer.AddComment("CIE Identifier Tag");
   Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
   Asm->OutStreamer.AddComment("DW_CIE_VERSION");
@@ -156,7 +156,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
   // holes which confuse readers of eh_frame.
   Asm->EmitAlignment(TD->getPointerSize() == 4 ? 2 : 3, 0, 0, false);
-  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common_end", Index));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common_end", Index));
 }
 
 /// EmitFDE - Emit the Frame Description Entry (FDE) for the function.
@@ -209,26 +209,28 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     // EH frame header.
     Asm->OutStreamer.AddComment("Length of Frame Information Entry");
-    EmitDifference(getDWLabel("eh_frame_end", EHFrameInfo.Number),
-                   getDWLabel("eh_frame_begin", EHFrameInfo.Number),
+    EmitDifference(Asm->GetTempSymbol("eh_frame_end", EHFrameInfo.Number),
+                   Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number),
                    true);
 
-    Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_begin",EHFrameInfo.Number));
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_begin",
+                                                  EHFrameInfo.Number));
 
     Asm->OutStreamer.AddComment("FDE CIE offset");
-    EmitSectionOffset(getDWLabel("eh_frame_begin", EHFrameInfo.Number),
-                      getDWLabel("eh_frame_common",
-                                 EHFrameInfo.PersonalityIndex),
+    EmitSectionOffset(Asm->GetTempSymbol("eh_frame_begin", EHFrameInfo.Number),
+                      Asm->GetTempSymbol("eh_frame_common",
+                                         EHFrameInfo.PersonalityIndex),
                       true, true);
 
-    MCSymbol *EHFuncBeginSym = getDWLabel("eh_func_begin", EHFrameInfo.Number);
+    MCSymbol *EHFuncBeginSym =
+      Asm->GetTempSymbol("eh_func_begin", EHFrameInfo.Number);
 
     Asm->OutStreamer.AddComment("FDE initial location");
     EmitReference(EHFuncBeginSym, FDEEncoding);
     
     Asm->OutStreamer.AddComment("FDE address range");
-    EmitDifference(getDWLabel("eh_func_end", EHFrameInfo.Number),EHFuncBeginSym,
-                   SizeOfEncodedValue(FDEEncoding) == 4);
+    EmitDifference(Asm->GetTempSymbol("eh_func_end", EHFrameInfo.Number),
+                   EHFuncBeginSym, SizeOfEncodedValue(FDEEncoding) == 4);
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
@@ -238,7 +240,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       Asm->EmitULEB128(Size, "Augmentation size");
       Asm->OutStreamer.AddComment("Language Specific Data Area");
       if (EHFrameInfo.hasLandingPads)
-        EmitReference(getDWLabel("exception", EHFrameInfo.Number),LSDAEncoding);
+        EmitReference(Asm->GetTempSymbol("exception", EHFrameInfo.Number),
+                      LSDAEncoding);
       else
         Asm->OutStreamer.EmitIntValue(0, Size/*size*/, 0/*addrspace*/);
 
@@ -254,7 +257,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // get holes which confuse readers of eh_frame.
     Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3,
                        0, 0, false);
-    Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_end", EHFrameInfo.Number));
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_end",
+                                                  EHFrameInfo.Number));
 
     // If the function is marked used, this table should be also.  We cannot
     // make the mark unconditional in this case, since retaining the table also
@@ -686,10 +690,11 @@ void DwarfException::EmitExceptionTable() {
     Asm->OutContext.GetOrCreateSymbol(Twine("GCC_except_table")+
                                       Twine(SubprogramCount));
   Asm->OutStreamer.EmitLabel(GCCETSym);
-  Asm->OutStreamer.EmitLabel(getDWLabel("exception", SubprogramCount));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("exception", SubprogramCount));
 
   if (IsSJLJ)
-    Asm->OutStreamer.EmitLabel(getDWLabel("_LSDA_", Asm->getFunctionNumber()));
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("_LSDA_",
+                                                  Asm->getFunctionNumber()));
 
   // Emit the LSDA header.
   EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
@@ -788,14 +793,15 @@ void DwarfException::EmitExceptionTable() {
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
       const CallSiteEntry &S = *I;
       
-      MCSymbol *EHFuncBeginSym = getDWLabel("eh_func_begin", SubprogramCount);
+      MCSymbol *EHFuncBeginSym =
+        Asm->GetTempSymbol("eh_func_begin", SubprogramCount);
       
       MCSymbol *BeginLabel = S.BeginLabel;
       if (BeginLabel == 0)
         BeginLabel = EHFuncBeginSym;
       MCSymbol *EndLabel = S.EndLabel;
       if (EndLabel == 0)
-        EndLabel = getDWLabel("eh_func_end", SubprogramCount);
+        EndLabel = Asm->GetTempSymbol("eh_func_end", SubprogramCount);
         
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
@@ -915,7 +921,8 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 
   if (shouldEmitMoves || shouldEmitTable)
     // Assumes in correct section after the entry point.
-    Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_begin", ++SubprogramCount));
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
+                                                  ++SubprogramCount));
 
   shouldEmitTableModule |= shouldEmitTable;
   shouldEmitMovesModule |= shouldEmitMoves;
@@ -927,7 +934,7 @@ void DwarfException::EndFunction() {
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
   TimeRegion Timer(ExceptionTimer);
-  Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_end", SubprogramCount));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",SubprogramCount));
 
   // Record if this personality index uses a landing pad.
   bool HasLandingPad = !MMI->getLandingPads().empty();

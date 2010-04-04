@@ -962,9 +962,7 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
   }
 
   // Otherwise, emit with .set (aka assignment).
-  MCSymbol *SetLabel =
-    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                 "set" + Twine(SetCounter++));
+  MCSymbol *SetLabel = GetTempSymbol("set", SetCounter++);
   OutStreamer.EmitAssignment(SetLabel, Diff);
   OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
 }
@@ -1343,6 +1341,29 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
     OS << '+' << Offset;
   else if (Offset < 0)
     OS << Offset;
+}
+
+//===----------------------------------------------------------------------===//
+// Symbol Lowering Routines.
+//===----------------------------------------------------------------------===//
+
+/// GetTempSymbol - Return the MCSymbol corresponding to the assembler
+/// temporary label with the specified stem and unique ID.
+MCSymbol *AsmPrinter::GetTempSymbol(StringRef Name, unsigned ID) const {
+  // FIXME: REMOVE this.  However, there is stuff in EH that passes counters in
+  // here that can be zero.
+  
+  //assert(ID && "Should use GetTempSymbol if no ID");
+  if (ID == 0) return GetTempSymbol(Name);
+  return OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix())+
+                                      Name + Twine(ID));
+}
+
+/// GetTempSymbol - Return an assembler temporary label with the specified
+/// stem.
+MCSymbol *AsmPrinter::GetTempSymbol(StringRef Name) const {
+  return OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix())+
+                                      Name);
 }
 
 

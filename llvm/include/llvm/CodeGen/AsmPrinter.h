@@ -190,6 +190,36 @@ namespace llvm {
     /// do nothing and return false.
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
 
+    /// EmitAlignment - Emit an alignment directive to the specified power of
+    /// two boundary.  For example, if you pass in 3 here, you will get an 8
+    /// byte alignment.  If a global value is specified, and if that global has
+    /// an explicit alignment requested, it will unconditionally override the
+    /// alignment request.  However, if ForcedAlignBits is specified, this value
+    /// has final say: the ultimate alignment will be the max of ForcedAlignBits
+    /// and the alignment computed with NumBits and the global.  If UseFillExpr
+    /// is true, it also emits an optional second value FillValue which the
+    /// assembler uses to fill gaps to match alignment for text sections if the
+    /// has specified a non-zero fill value.
+    ///
+    /// The algorithm is:
+    ///     Align = NumBits;
+    ///     if (GV && GV->hasalignment) Align = GV->getalignment();
+    ///     Align = std::max(Align, ForcedAlignBits);
+    ///
+    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
+                       unsigned ForcedAlignBits = 0,
+                       bool UseFillExpr = true) const;
+    
+    /// EmitBasicBlockStart - This method prints the label for the specified
+    /// MachineBasicBlock, an alignment (if present) and a comment describing
+    /// it if appropriate.
+    void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
+    
+    
+    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
+    void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);
+    
+    
     //===------------------------------------------------------------------===//
     // Overridable Hooks
     //===------------------------------------------------------------------===//
@@ -229,30 +259,19 @@ namespace llvm {
     isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
     
     //===------------------------------------------------------------------===//
-    // Lowering Routines.
+    // Symbol Lowering Routines.
     //===------------------------------------------------------------------===//
   public:
 
-    /// EmitAlignment - Emit an alignment directive to the specified power of
-    /// two boundary.  For example, if you pass in 3 here, you will get an 8
-    /// byte alignment.  If a global value is specified, and if that global has
-    /// an explicit alignment requested, it will unconditionally override the
-    /// alignment request.  However, if ForcedAlignBits is specified, this value
-    /// has final say: the ultimate alignment will be the max of ForcedAlignBits
-    /// and the alignment computed with NumBits and the global.  If UseFillExpr
-    /// is true, it also emits an optional second value FillValue which the
-    /// assembler uses to fill gaps to match alignment for text sections if the
-    /// has specified a non-zero fill value.
-    ///
-    /// The algorithm is:
-    ///     Align = NumBits;
-    ///     if (GV && GV->hasalignment) Align = GV->getalignment();
-    ///     Align = std::max(Align, ForcedAlignBits);
-    ///
-    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
-                       unsigned ForcedAlignBits = 0,
-                       bool UseFillExpr = true) const;
-
+    /// GetTempSymbol - Return the MCSymbol corresponding to the assembler
+    /// temporary label with the specified stem and unique ID.
+    MCSymbol *GetTempSymbol(StringRef Name, unsigned ID) const;
+    
+    /// GetTempSymbol - Return an assembler temporary label with the specified
+    /// stem.
+    MCSymbol *GetTempSymbol(StringRef Name) const;
+    
+    
     /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
     /// global value name as its base, with the specified suffix, and where the
     /// symbol is forced to have private linkage if ForcePrivate is true.
@@ -279,16 +298,7 @@ namespace llvm {
     MCSymbol *GetBlockAddressSymbol(const BlockAddress *BA) const;
     MCSymbol *GetBlockAddressSymbol(const BasicBlock *BB) const;
 
-    /// EmitBasicBlockStart - This method prints the label for the specified
-    /// MachineBasicBlock, an alignment (if present) and a comment describing
-    /// it if appropriate.
-    void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
-    
-    
-    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);
-    
-    //===------------------------------------------------------------------===//
+     //===------------------------------------------------------------------===//
     // Emission Helper Routines.
     //===------------------------------------------------------------------===//
   public:

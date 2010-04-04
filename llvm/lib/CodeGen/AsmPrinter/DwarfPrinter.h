@@ -74,14 +74,6 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return MAI; }
   const TargetData *getTargetData() const { return TD; }
 
-  /// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
-  /// label with the specified stem and unique ID.
-  MCSymbol *getDWLabel(const char *Name, unsigned ID) const;
-  
-  /// getTempLabel - Return an assembler temporary label with the specified
-  /// name.
-  MCSymbol *getTempLabel(const char *Name) const;
-
   /// SizeOfEncodedValue - Return the size of the encoding in bytes.
   unsigned SizeOfEncodedValue(unsigned Encoding) const;
 
