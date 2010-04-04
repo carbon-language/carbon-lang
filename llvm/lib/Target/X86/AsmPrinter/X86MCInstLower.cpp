@@ -344,16 +344,17 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     O << " <- ";
     if (NOps==3) {
       // Register or immediate value. Register 0 means undef.
-      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register ||
-             MI->getOperand(0).getType()==MachineOperand::MO_Immediate ||
-             MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate);
-      if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
-          MI->getOperand(0).getReg()==0) {
+      assert(MI->getOperand(0).isReg() ||
+             MI->getOperand(0).isImm() ||
+             MI->getOperand(0).isFPImm());
+      if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg() == 0) {
         // Suppress offset in this case, it is not meaningful.
         O << "undef";
         OutStreamer.AddBlankLine();
         return;
-      } else if (MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate) {
+      }
+      
+      if (MI->getOperand(0).isFPImm()) {
         // This is more naturally done in printOperand, but since the only use
         // of such an operand is in this comment and that is temporary (and it's
         // ugly), we prefer to keep this localized.
@@ -373,16 +374,14 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       } else
         printOperand(MI, 0, O);
     } else {
-      if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
-          MI->getOperand(0).getReg()==0) {
+      if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg() == 0) {
         // Suppress offset in this case, it is not meaningful.
         O << "undef";
         OutStreamer.AddBlankLine();
         return;
       }
       // Frame address.  Currently handles register +- offset only.
-      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
-      assert(MI->getOperand(3).getType()==MachineOperand::MO_Immediate);
+      assert(MI->getOperand(0).isReg() && MI->getOperand(3).isImm());
       O << '['; printOperand(MI, 0, O); O << '+'; printOperand(MI, 3, O);
       O << ']';
     }
