@@ -73,8 +73,7 @@ namespace {
                          const char *Modifier = 0);
     void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                          const char *Modifier = 0);
-    void printSavedRegsBitmask();
-    void printHex32(unsigned int Value);
+    void printSavedRegsBitmask(raw_ostream &OS);
 
     const char *emitCurrentABIString();
     void emitFrameDirective();
@@ -131,9 +130,17 @@ namespace {
 // Mask directives
 //===----------------------------------------------------------------------===//
 
+// Print a 32 bit hex number with all numbers.
+static void printHex32(unsigned int Value, raw_ostream &O) {
+  O << "0x";
+  for (int i = 7; i >= 0; i--)
+    O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
+}
+
+
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
-void MBlazeAsmPrinter::printSavedRegsBitmask() {
+void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   const MBlazeFunctionInfo *MBlazeFI = MF->getInfo<MBlazeFunctionInfo>();
 
@@ -159,15 +166,8 @@ void MBlazeAsmPrinter::printSavedRegsBitmask() {
                 getRegisterNumbering(RI.getRARegister()));
 
   // Print CPUBitmask
-  O << "\t.mask \t"; printHex32(CPUBitmask); O << ','
-    << MBlazeFI->getCPUTopSavedRegOff() << '\n';
-}
-
-// Print a 32 bit hex number with all numbers.
-void MBlazeAsmPrinter::printHex32(unsigned int Value) {
-  O << "0x";
-  for (int i = 7; i >= 0; i--)
-    O << utohexstr( (Value & (0xF << (i*4))) >> (i*4) );
+  O << "\t.mask \t"; printHex32(CPUBitmask, O);
+  O << ',' << MBlazeFI->getCPUTopSavedRegOff() << '\n';
 }
 
 //===----------------------------------------------------------------------===//
@@ -183,28 +183,31 @@ void MBlazeAsmPrinter::emitFrameDirective() {
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
 
-  O << "\t.frame\t" << getRegisterName(stackReg)
-                    << ',' << stackSize << ','
-                    << getRegisterName(returnReg)
-                    << '\n';
+  OutStreamer.EmitRawText("\t.frame\t" + Twine(getRegisterName(stackReg)) +
+                          "," + Twine(stackSize) + "," +
+                          Twine(getRegisterName(returnReg)));
 }
 
 void MBlazeAsmPrinter::EmitFunctionEntryLabel() {
-      O << "\t.ent\t" << *CurrentFnSym << '\n';
-        OutStreamer.EmitLabel(CurrentFnSym);
+  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
+  OutStreamer.EmitLabel(CurrentFnSym);
 }
 
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void MBlazeAsmPrinter::EmitFunctionBodyStart() {
   emitFrameDirective();
-  printSavedRegsBitmask();
+  
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  printSavedRegsBitmask(OS);
+  OutStreamer.EmitRawText(OS.str());
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
-  O << "\t.end\t" << *CurrentFnSym << '\n';
+  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
 }
 
 // Print out an operand for an inline asm expression.
@@ -233,11 +236,11 @@ void MBlazeAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
 
   case MachineOperand::MO_FPImmediate: {
-    const ConstantFP* fp = MO.getFPImm();
-    printHex32(fp->getValueAPF().bitcastToAPInt().getZExtValue());
+    const ConstantFP *fp = MO.getFPImm();
+    printHex32(fp->getValueAPF().bitcastToAPInt().getZExtValue(), O);
     O << ";\t# immediate = " << *fp;
     break;
-    }
+  }
 
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();

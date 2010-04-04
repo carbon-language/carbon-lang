@@ -72,8 +72,8 @@ namespace {
     void printSavedRegsBitmask(raw_ostream &O);
     void printHex32(unsigned int Value, raw_ostream &O);
 
-    const char *emitCurrentABIString();
-    void emitFrameDirective(raw_ostream &O);
+    const char *getCurrentABIString() const;
+    void emitFrameDirective();
 
     void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen'd.
     void EmitInstruction(const MachineInstr *MI) {
@@ -179,29 +179,28 @@ void MipsAsmPrinter::printHex32(unsigned Value, raw_ostream &O) {
 //===----------------------------------------------------------------------===//
 
 /// Frame Directive
-void MipsAsmPrinter::emitFrameDirective(raw_ostream &O) {
+void MipsAsmPrinter::emitFrameDirective() {
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
 
   unsigned stackReg  = RI.getFrameRegister(*MF);
   unsigned returnReg = RI.getRARegister();
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
-
-  O << "\t.frame\t" << '$' << LowercaseString(getRegisterName(stackReg))
-                    << ',' << stackSize << ','
-                    << '$' << LowercaseString(getRegisterName(returnReg))
-                    << '\n';
+  OutStreamer.EmitRawText("\t.frame\t$" +
+                          Twine(LowercaseString(getRegisterName(stackReg))) +
+                          "," + Twine(stackSize) + ",$" +
+                          Twine(LowercaseString(getRegisterName(returnReg))));
 }
 
 /// Emit Set directives.
-const char *MipsAsmPrinter::emitCurrentABIString() {  
-  switch(Subtarget->getTargetABI()) {
-    case MipsSubtarget::O32:  return "abi32";  
-    case MipsSubtarget::O64:  return "abiO64";
-    case MipsSubtarget::N32:  return "abiN32";
-    case MipsSubtarget::N64:  return "abi64";
-    case MipsSubtarget::EABI: return "eabi32"; // TODO: handle eabi64
-    default: break;
+const char *MipsAsmPrinter::getCurrentABIString() const { 
+  switch (Subtarget->getTargetABI()) {
+  case MipsSubtarget::O32:  return "abi32";  
+  case MipsSubtarget::O64:  return "abiO64";
+  case MipsSubtarget::N32:  return "abiN32";
+  case MipsSubtarget::N64:  return "abi64";
+  case MipsSubtarget::EABI: return "eabi32"; // TODO: handle eabi64
+  default: break;
   }
 
   llvm_unreachable("Unknown Mips ABI");
@@ -209,15 +208,19 @@ const char *MipsAsmPrinter::emitCurrentABIString() {
 }  
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
-  O << "\t.ent\t" << *CurrentFnSym << '\n';
+  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void MipsAsmPrinter::EmitFunctionBodyStart() {
-  emitFrameDirective(O);
-  printSavedRegsBitmask(O);
+  emitFrameDirective();
+  
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  printSavedRegsBitmask(OS);
+  OutStreamer.EmitRawText(OS.str());
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
@@ -226,10 +229,9 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
   // There are instruction for this macros, but they must
   // always be at the function end, and we can't emit and
   // break with BB logic. 
-  O << "\t.set\tmacro\n"; 
-  O << "\t.set\treorder\n"; 
-  
-  O << "\t.end\t" << *CurrentFnSym << '\n';
+  OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
+  OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
+  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
 }
 
 
@@ -351,15 +353,17 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
   
   // Tell the assembler which ABI we are using
-  O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
+  OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
 
   // TODO: handle O64 ABI
   if (Subtarget->isABI_EABI())
-    O << "\t.section .gcc_compiled_long" << 
-      (Subtarget->isGP32bit() ? "32" : "64") << '\n';
+    if (Subtarget->isGP32bit())
+      OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long32"));
+    else
+      OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long64"));
 
   // return to previous section
-  O << "\t.previous" << '\n'; 
+  OutStreamer.EmitRawText(StringRef("\t.previous")); 
 }
 
 // Force static initialization.

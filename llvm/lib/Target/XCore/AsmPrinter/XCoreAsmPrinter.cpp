@@ -74,9 +74,7 @@ namespace {
                          unsigned AsmVariant, const char *ExtraCode,
                          raw_ostream &O);
 
-    void emitGlobalDirective(const MCSymbol *Sym);
-    
-    void emitArrayBound(const MCSymbol *Sym, const GlobalVariable *GV);
+    void emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV);
     virtual void EmitGlobalVariable(const GlobalVariable *GV);
 
     void emitFunctionStart(MachineFunction &MF);
@@ -99,18 +97,13 @@ namespace {
 
 #include "XCoreGenAsmWriter.inc"
 
-void XCoreAsmPrinter::emitGlobalDirective(const MCSymbol *Sym) {
-  O << MAI->getGlobalDirective() << *Sym << "\n";
-}
-
-void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
-                                     const GlobalVariable *GV) {
+void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   assert(((GV->hasExternalLinkage() ||
     GV->hasWeakLinkage()) ||
     GV->hasLinkOnceLinkage()) && "Unexpected linkage");
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType())) {
-    O << MAI->getGlobalDirective() << *Sym;
+    OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
     O << ".globound" << "\n";
     O << "\t.set\t" << *Sym;
     O << ".globound" << "," << ATy->getNumElements() << "\n";
@@ -147,7 +140,8 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::ExternalLinkage:
     emitArrayBound(GVSym, GV);
-    emitGlobalDirective(GVSym);
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+
     // TODO Use COMDAT groups for LinkOnceLinkage
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
       O << MAI->getWeakDefDirective() << *GVSym << "\n";
@@ -207,14 +201,14 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    emitGlobalDirective(CurrentFnSym);
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // TODO Use COMDAT groups for LinkOnceLinkage
-    O << MAI->getGlobalDirective() << *CurrentFnSym << "\n";
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
     O << MAI->getWeakDefDirective() << *CurrentFnSym << "\n";
     break;
   }
@@ -223,7 +217,7 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.type " << *CurrentFnSym << ",@function\n";
 
-  O << *CurrentFnSym << ":\n";
+  OutStreamer.EmitLabel(CurrentFnSym);
 }
 
 
@@ -231,7 +225,8 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
 /// the last basic block in the function.
 void XCoreAsmPrinter::EmitFunctionBodyEnd() {
   // Emit function end directives
-  O << "\t.cc_bottom " << *CurrentFnSym << ".function\n";
+  OutStreamer.EmitRawText("\t.cc_bottom " + Twine(CurrentFnSym->getName()) +
+                          ".function");
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -327,18 +322,18 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  SmallString<128> Str;
+  raw_svector_ostream O(Str);
+  
   // Check for mov mnemonic
   unsigned src, dst, srcSR, dstSR;
   if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {
     O << "\tmov " << getRegisterName(dst) << ", ";
     O << getRegisterName(src);
-    OutStreamer.AddBlankLine();
-    return;
+  } else {
+    printInstruction(MI, O);
   }
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  printInstruction(MI, OS);
-  OutStreamer.EmitRawText(OS.str());
+  OutStreamer.EmitRawText(O.str());
 }
 
 // Force static initialization.

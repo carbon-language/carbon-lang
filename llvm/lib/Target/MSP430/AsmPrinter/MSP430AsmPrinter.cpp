@@ -50,18 +50,10 @@ namespace {
       return "MSP430 Assembly Printer";
     }
 
-    void printMCInst(const MCInst *MI) {
-      MSP430InstPrinter(*MAI).printInstruction(MI, O);
-    }
     void printOperand(const MachineInstr *MI, int OpNum,
-                      const char* Modifier = 0);
-    void printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
-      printOperand(MI, OpNum);
-    }
+                      raw_ostream &O, const char* Modifier = 0);
     void printSrcMemOperand(const MachineInstr *MI, int OpNum,
-                            const char* Modifier = 0);
-    void printCCOperand(const MachineInstr *MI, int OpNum);
-    void printMachineInstruction(const MachineInstr * MI);
+                            raw_ostream &O);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
                          raw_ostream &O);
@@ -79,7 +71,7 @@ namespace {
 
 
 void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
-                                    const char* Modifier) {
+                                    raw_ostream &O, const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   default: assert(0 && "Not implemented yet!");
@@ -126,7 +118,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 }
 
 void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
-                                          const char* Modifier) {
+                                          raw_ostream &O) {
   const MachineOperand &Base = MI->getOperand(OpNum);
   const MachineOperand &Disp = MI->getOperand(OpNum+1);
 
@@ -135,25 +127,13 @@ void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
   // Imm here is in fact global address - print extra modifier.
   if (Disp.isImm() && !Base.getReg())
     O << '&';
-  printOperand(MI, OpNum+1, "nohash");
+  printOperand(MI, OpNum+1, O, "nohash");
 
   // Print register base field
   if (Base.getReg()) {
     O << '(';
-    printOperand(MI, OpNum);
+    printOperand(MI, OpNum, O);
     O << ')';
-  }
-}
-
-void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
-  switch (MI->getOperand(OpNum).getImm()) {
-  default: assert(0 && "Unknown cond");
-  case MSP430CC::COND_E:  O << "eq"; break;
-  case MSP430CC::COND_NE: O << "ne"; break;
-  case MSP430CC::COND_HS: O << "hs"; break;
-  case MSP430CC::COND_LO: O << "lo"; break;
-  case MSP430CC::COND_GE: O << "ge"; break;
-  case MSP430CC::COND_L:  O << 'l';  break;
   }
 }
 
@@ -166,7 +146,7 @@ bool MSP430AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
 
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   return false;
 }
 
@@ -177,7 +157,7 @@ bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (ExtraCode && ExtraCode[0]) {
     return true; // Unknown modifier.
   }
-  printSrcMemOperand(MI, OpNo);
+  printSrcMemOperand(MI, OpNo, O);
   return false;
 }
 

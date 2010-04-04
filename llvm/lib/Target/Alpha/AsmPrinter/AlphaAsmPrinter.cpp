@@ -130,21 +130,18 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void AlphaAsmPrinter::EmitFunctionBodyStart() {
-  O << "\t.ent " << *CurrentFnSym << "\n";
+  OutStreamer.EmitRawText("\t.ent " + Twine(CurrentFnSym->getName()));
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void AlphaAsmPrinter::EmitFunctionBodyEnd() {
-  O << "\t.end " << *CurrentFnSym << "\n";
+  OutStreamer.EmitRawText("\t.end " + Twine(CurrentFnSym->getName()));
 }
 
 void AlphaAsmPrinter::EmitStartOfAsmFile(Module &M) {
-  if (TM.getSubtarget<AlphaSubtarget>().hasCT())
-    O << "\t.arch ev6\n"; //This might need to be ev67, so leave this test here
-  else
-    O << "\t.arch ev6\n";
-  O << "\t.set noat\n";
+  OutStreamer.EmitRawText(StringRef("\t.arch ev6"));
+  OutStreamer.EmitRawText(StringRef("\t.set noat"));
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

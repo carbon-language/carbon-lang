@@ -56,7 +56,7 @@ using namespace llvm;
 namespace {
   class PPCAsmPrinter : public AsmPrinter {
   protected:
-    DenseMap<const MCSymbol*, const MCSymbol*> TOC;
+    DenseMap<MCSymbol*, MCSymbol*> TOC;
     const PPCSubtarget &Subtarget;
     uint64_t LabelID;
   public:
@@ -316,10 +316,10 @@ namespace {
                             raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       assert(MO.getType() == MachineOperand::MO_GlobalAddress);
-      const MCSymbol *Sym = Mang->getSymbol(MO.getGlobal());
+      MCSymbol *Sym = Mang->getSymbol(MO.getGlobal());
 
       // Map symbol -> label of TOC entry.
-      const MCSymbol *&TOCEntry = TOC[Sym];
+      MCSymbol *&TOCEntry = TOC[Sym];
       if (TOCEntry == 0)
         TOCEntry = OutContext.
           GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) +
@@ -553,6 +553,9 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
 /// the current output stream.
 ///
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  SmallString<128> Str;
+  raw_svector_ostream O(Str);
+
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     unsigned char SH = MI->getOperand(2).getImm();
@@ -571,7 +574,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       O << ", ";
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
-      OutStreamer.AddBlankLine();
+      OutStreamer.EmitRawText(O.str());
       return;
     }
   }
@@ -582,7 +585,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     printOperand(MI, 0, O);
     O << ", ";
     printOperand(MI, 1, O);
-    OutStreamer.AddBlankLine();
+    OutStreamer.EmitRawText(O.str());
     return;
   }
   
@@ -596,15 +599,13 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       O << ", ";
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
-      OutStreamer.AddBlankLine();
+      OutStreamer.EmitRawText(O.str());
       return;
     }
   }
 
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  printInstruction(MI, OS);
-  OutStreamer.EmitRawText(OS.str());
+  printInstruction(MI, O);
+  OutStreamer.EmitRawText(O.str());
 }
 
 void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
@@ -613,12 +614,13 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
     
   // Emit an official procedure descriptor.
   // FIXME 64-bit SVR4: Use MCSection here!
-  O << "\t.section\t\".opd\",\"aw\"\n";
-  O << "\t.align 3\n";
+  OutStreamer.EmitRawText(StringRef("\t.section\t\".opd\",\"aw\""));
+  OutStreamer.EmitRawText(StringRef("\t.align 3"));
   OutStreamer.EmitLabel(CurrentFnSym);
-  O << "\t.quad .L." << *CurrentFnSym << ",.TOC.@tocbase\n";
-  O << "\t.previous\n";
-  O << ".L." << *CurrentFnSym << ":\n";
+  OutStreamer.EmitRawText("\t.quad .L." + Twine(CurrentFnSym->getName()) +
+                          ",.TOC.@tocbase");
+  OutStreamer.EmitRawText(StringRef("\t.previous"));
+  OutStreamer.EmitRawText(".L." + Twine(CurrentFnSym->getName()) + ":");
 }
 
 
@@ -629,13 +631,14 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 
   if (isPPC64 && !TOC.empty()) {
     // FIXME 64-bit SVR4: Use MCSection here?
-    O << "\t.section\t\".toc\",\"aw\"\n";
+    OutStreamer.EmitRawText(StringRef("\t.section\t\".toc\",\"aw\""));
 
     // FIXME: This is nondeterminstic!
-    for (DenseMap<const MCSymbol*, const MCSymbol*>::iterator I = TOC.begin(),
+    for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = TOC.begin(),
          E = TOC.end(); I != E; ++I) {
-      O << *I->second << ":\n";
-      O << "\t.tc " << *I->first << "[TC]," << *I->first << '\n';
+      OutStreamer.EmitLabel(I->second);
+      OutStreamer.EmitRawText("\t.tc " + Twine(I->first->getName()) +
+                              "[TC]," + I->first->getName());
     }
   }
 
@@ -663,7 +666,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget.isPPC64() && Directive < PPC::DIR_970)
     Directive = PPC::DIR_64;
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
-  O << "\t.machine " << CPUDirectives[Directive] << '\n';
+  OutStreamer.EmitRawText("\t.machine " + Twine(CPUDirectives[Directive]));
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
@@ -721,12 +724,12 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       
-      const MCSymbol *Stub = Stubs[i].first;
+      MCSymbol *Stub = Stubs[i].first;
       const MCSymbol *RawSym = Stubs[i].second.getPointer();
       const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
       const MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
                                            
-      O << *Stub << ":\n";
+      OutStreamer.EmitLabel(Stub);
       O << "\t.indirect_symbol " << *RawSym << '\n';
       O << "\tmflr r0\n";
       O << "\tbcl 20,31," << *AnonSymbol << '\n';
@@ -745,7 +748,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       O << "\t.indirect_symbol " << *RawSym << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
-    O << '\n';
+    OutStreamer.AddBlankLine();
     return;
   }
   
@@ -755,13 +758,13 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
                               MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                               16, SectionKind::getText());
   for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-    const MCSymbol *Stub = Stubs[i].first;
+    MCSymbol *Stub = Stubs[i].first;
     const MCSymbol *RawSym = Stubs[i].second.getPointer();
     const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
 
     OutStreamer.SwitchSection(StubSection);
     EmitAlignment(4);
-    O << *Stub << ":\n";
+    OutStreamer.EmitLabel(Stub);
     O << "\t.indirect_symbol " << *RawSym << '\n';
     O << "\tlis r11,ha16(" << *LazyPtr << ")\n";
     O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *LazyPtr

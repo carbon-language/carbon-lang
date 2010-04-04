@@ -221,6 +221,14 @@ namespace {
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      EmitMachineConstantPoolValue(MCPV, OS);
+      OutStreamer.EmitRawText(OS.str());
+    }
+    
+    void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV,
+                                      raw_ostream &O) {
       switch (TM.getTargetData()->getTypeAllocSize(MCPV->getType())) {
       case 1: O << MAI->getData8bitsDirective(0); break;
       case 2: O << MAI->getData16bitsDirective(0); break;
@@ -229,12 +237,9 @@ namespace {
       }
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
-      SmallString<128> TmpNameStr;
 
       if (ACPV->isLSDA()) {
-        raw_svector_ostream(TmpNameStr) << MAI->getPrivateGlobalPrefix() <<
-          "_LSDA_" << getFunctionNumber();
-        O << TmpNameStr.str();
+        O << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
       } else if (ACPV->isBlockAddress()) {
         O << GetBlockAddressSymbol(ACPV->getBlockAddress())->getName();
       } else if (ACPV->isGlobalValue()) {
@@ -271,7 +276,6 @@ namespace {
            O << "-.";
          O << ')';
       }
-      OutStreamer.AddBlankLine();
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -287,11 +291,11 @@ namespace {
 
 void ARMAsmPrinter::EmitFunctionEntryLabel() {
   if (AFI->isThumbFunction()) {
-    O << "\t.code\t16\n";
-    O << "\t.thumb_func";
+    OutStreamer.EmitRawText(StringRef("\t.code\t16"));
     if (Subtarget->isTargetDarwin())
-      O << '\t' << *CurrentFnSym;
-    O << '\n';
+      OutStreamer.EmitRawText("\t.thumb_func\t"+Twine(CurrentFnSym->getName()));
+    else    
+      OutStreamer.EmitRawText(StringRef("\t.thumb_func"));
   }
   
   OutStreamer.EmitLabel(CurrentFnSym);
@@ -1146,38 +1150,48 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   }
 
   // Use unified assembler syntax.
-  O << "\t.syntax unified\n";
+  OutStreamer.EmitRawText(StringRef("\t.syntax unified"));
 
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF()) {
     // CPU Type
     std::string CPUString = Subtarget->getCPUString();
     if (CPUString != "generic")
-      O << "\t.cpu " << CPUString << '\n';
+      OutStreamer.EmitRawText("\t.cpu " + Twine(CPUString));
 
     // FIXME: Emit FPU type
     if (Subtarget->hasVFP2())
-      O << "\t.eabi_attribute " << ARMBuildAttrs::VFP_arch << ", 2\n";
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::VFP_arch) + ", 2");
 
     // Signal various FP modes.
-    if (!UnsafeFPMath)
-      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_denormal << ", 1\n"
-        << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_exceptions << ", 1\n";
-
+    if (!UnsafeFPMath) {
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_FP_denormal) + ", 1");
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_FP_exceptions) + ", 1");
+    }
+    
     if (FiniteOnlyFPMath())
-      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_number_model << ", 1\n";
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 1");
     else
-      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_number_model << ", 3\n";
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 3");
 
     // 8-bytes alignment stuff.
-    O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_needed << ", 1\n"
-      << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_preserved << ", 1\n";
+    OutStreamer.EmitRawText("\t.eabi_attribute " +
+                            Twine(ARMBuildAttrs::ABI_align8_needed) + ", 1");
+    OutStreamer.EmitRawText("\t.eabi_attribute " +
+                            Twine(ARMBuildAttrs::ABI_align8_preserved) + ", 1");
 
     // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
-    if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard)
-      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_HardFP_use << ", 3\n"
-        << "\t.eabi_attribute " << ARMBuildAttrs::ABI_VFP_args << ", 1\n";
-
+    if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard) {
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_HardFP_use) + ", 3");
+      OutStreamer.EmitRawText("\t.eabi_attribute " +
+                              Twine(ARMBuildAttrs::ABI_VFP_args) + ", 1");
+    }
     // FIXME: Should we signal R9 usage?
   }
 }
@@ -1190,8 +1204,6 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
       static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
     MachineModuleInfoMachO &MMIMacho =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
-
-    O << '\n';
 
     // Output non-lazy-pointers for external and common global variables.
     MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetGVStubList();
