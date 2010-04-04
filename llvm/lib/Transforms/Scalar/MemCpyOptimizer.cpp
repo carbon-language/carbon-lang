@@ -413,7 +413,6 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // interesting as a small compile-time optimization.
   Ranges.addStore(0, SI);
   
-  Function *MemSetF = 0;
   
   // Now that we have full information about ranges, loop over the ranges and
   // emit memset's for anything big enough to be worthwhile.
@@ -433,29 +432,40 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     // memset block.  This ensure that the memset is dominated by any addressing
     // instruction needed by the start of the block.
     BasicBlock::iterator InsertPt = BI;
-  
-    if (MemSetF == 0) {
-      const Type *Ty = Type::getInt64Ty(Context);
-      MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset, &Ty, 1);
-    }
-    
+
     // Get the starting pointer of the block.
     StartPtr = Range.StartPtr;
-  
+
+    // Determine alignment
+    unsigned Alignment = Range.Alignment;
+    if (Alignment == 0) {
+      const Type *EltType = 
+         cast<PointerType>(StartPtr->getType())->getElementType();
+      Alignment = TD->getABITypeAlignment(EltType);
+    }
+
     // Cast the start ptr to be i8* as memset requires.
-    const Type *i8Ptr = Type::getInt8PtrTy(Context);
-    if (StartPtr->getType() != i8Ptr)
+    const PointerType* StartPTy = cast<PointerType>(StartPtr->getType());
+    const PointerType *i8Ptr = Type::getInt8PtrTy(Context,
+                                                  StartPTy->getAddressSpace());
+    if (StartPTy!= i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getName(),
                                  InsertPt);
-  
+
     Value *Ops[] = {
       StartPtr, ByteVal,   // Start, value
       // size
       ConstantInt::get(Type::getInt64Ty(Context), Range.End-Range.Start),
       // align
-      ConstantInt::get(Type::getInt32Ty(Context), Range.Alignment)
+      ConstantInt::get(Type::getInt32Ty(Context), Alignment),
+      // volatile
+      ConstantInt::get(Type::getInt1Ty(Context), 0),
     };
-    Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
+    const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
+
+    Function *MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
+
+    Value *C = CallInst::Create(MemSetF, Ops, Ops+5, "", InsertPt);
     DEBUG(dbgs() << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
             dbgs() << *Range.TheStores[i];
@@ -680,16 +690,19 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     return false;
   
   // If all checks passed, then we can transform these memcpy's
-  const Type *Ty = M->getLength()->getType();
+  const Type *ArgTys[3] = { M->getRawDest()->getType(),
+                            MDep->getRawSource()->getType(),
+                            M->getLength()->getType() };
   Function *MemCpyFun = Intrinsic::getDeclaration(
                                  M->getParent()->getParent()->getParent(),
-                                 M->getIntrinsicID(), &Ty, 1);
+                                 M->getIntrinsicID(), ArgTys, 3);
     
-  Value *Args[4] = {
-    M->getRawDest(), MDep->getRawSource(), M->getLength(), M->getAlignmentCst()
+  Value *Args[5] = {
+    M->getRawDest(), MDep->getRawSource(), M->getLength(),
+    M->getAlignmentCst(), M->getVolatileCst()
   };
   
-  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+4, "", M);
+  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
   
   
   // If C and M don't interfere, then this is a valid transformation.  If they
@@ -728,8 +741,10 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   
   // If not, then we know we can transform this.
   Module *Mod = M->getParent()->getParent()->getParent();
-  const Type *Ty = M->getLength()->getType();
-  M->setOperand(0, Intrinsic::getDeclaration(Mod, Intrinsic::memcpy, &Ty, 1));
+  const Type *ArgTys[3] = { M->getRawDest()->getType(),
+                            M->getRawSource()->getType(),
+                            M->getLength()->getType() };
+  M->setOperand(0,Intrinsic::getDeclaration(Mod, Intrinsic::memcpy, ArgTys, 3));
 
   // MemDep may have over conservative information about this instruction, just
   // conservatively flush it from the cache.

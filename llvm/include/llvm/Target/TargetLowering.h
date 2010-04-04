@@ -1191,7 +1191,7 @@ public:
   EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
-                          SDValue Op3, unsigned Align,
+                          SDValue Op3, unsigned Align, bool isVolatile,
                           bool AlwaysInline,
                           const Value *DstSV, uint64_t DstOff,
                           const Value *SrcSV, uint64_t SrcOff) {
@@ -1208,7 +1208,7 @@ public:
   EmitTargetCodeForMemmove(SelectionDAG &DAG, DebugLoc dl,
                            SDValue Chain,
                            SDValue Op1, SDValue Op2,
-                           SDValue Op3, unsigned Align,
+                           SDValue Op3, unsigned Align, bool isVolatile,
                            const Value *DstSV, uint64_t DstOff,
                            const Value *SrcSV, uint64_t SrcOff) {
     return SDValue();
@@ -1224,7 +1224,7 @@ public:
   EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
-                          SDValue Op3, unsigned Align,
+                          SDValue Op3, unsigned Align, bool isVolatile,
                           const Value *DstSV, uint64_t DstOff) {
     return SDValue();
   }

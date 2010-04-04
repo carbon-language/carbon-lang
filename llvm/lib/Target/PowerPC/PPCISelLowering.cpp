@@ -2392,7 +2392,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           DebugLoc dl) {
   SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
-                       false, NULL, 0, NULL, 0);
+                       false, false, NULL, 0, NULL, 0);
 }
 
 /// LowerMemOpCallTo - Store the argument to the stack or remember it in case of

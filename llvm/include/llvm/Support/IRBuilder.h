@@ -917,6 +917,11 @@ public:
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
     return Insert(CallInst::Create(Callee, Args, Args+4), Name);
   }
+  CallInst *CreateCall5(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
+                        Value *Arg4, Value *Arg5, const Twine &Name = "") {
+    Value *Args[] = { Arg1, Arg2, Arg3, Arg4, Arg5 };
+    return Insert(CallInst::Create(Callee, Args, Args+5), Name);
+  }
 
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin,
