@@ -124,7 +124,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
-      MP->beginAssembly(O, *this, *MAI);
+      MP->beginAssembly(*this);
 
   // Emit module-level inline asm if it exists.
   if (!M.getModuleInlineAsm().empty()) {
@@ -542,7 +542,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->end(), E = MI->begin(); I != E; )
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))
-      MP->finishAssembly(O, *this, *MAI);
+      MP->finishAssembly(*this);
 
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
