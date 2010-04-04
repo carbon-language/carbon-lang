@@ -371,7 +371,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
           O << "(long double) " << APF.convertToDouble();
         }
       } else
-        printOperand(MI, 0);
+        printOperand(MI, 0, O);
     } else {
       if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
           MI->getOperand(0).getReg()==0) {
@@ -383,10 +383,11 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       // Frame address.  Currently handles register +- offset only.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
       assert(MI->getOperand(3).getType()==MachineOperand::MO_Immediate);
-      O << '['; printOperand(MI, 0); O << '+'; printOperand(MI, 3); O << ']';
+      O << '['; printOperand(MI, 0, O); O << '+'; printOperand(MI, 3, O);
+      O << ']';
     }
     O << "+";
-    printOperand(MI, NOps-2);
+    printOperand(MI, NOps-2, O);
     OutStreamer.AddBlankLine();
     return;
   }

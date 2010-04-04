@@ -47,7 +47,7 @@ using namespace llvm;
 // Primitive Helper Functions.
 //===----------------------------------------------------------------------===//
 
-void X86AsmPrinter::PrintPICBaseSymbol() const {
+void X86AsmPrinter::PrintPICBaseSymbol(raw_ostream &O) const {
   const TargetLowering *TLI = TM.getTargetLowering();
   O << *static_cast<const X86TargetLowering*>(TLI)->getPICBaseSymbol(MF,
                                                                     OutContext);
@@ -60,10 +60,11 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (Subtarget->isTargetCOFF()) {
     const Function *F = MF.getFunction();
-    O << "\t.def\t " << *CurrentFnSym << ";\t.scl\t" <<
-    (F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT)
-    << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
-    << ";\t.endef\n";
+    OutStreamer.EmitRawText("\t.def\t " + Twine(CurrentFnSym->getName()) +
+                            ";\t.scl\t" +
+                Twine(F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT) +
+                            ";\t.type\t" + Twine(COFF::DT_FCN << COFF::N_BTSHFT)
+                            + ";\t.endef");
   }
 
   // Have common code print out the function header with linkage info etc.
@@ -79,7 +80,8 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// printSymbolOperand - Print a raw symbol reference operand.  This handles
 /// jump tables, constant pools, global address and external symbols, all of
 /// which print to a label with various suffixes for relocation types etc.
-void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
+void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO,
+                                       raw_ostream &O) {
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
@@ -182,14 +184,14 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:
     O << " + [.-";
-    PrintPICBaseSymbol();
+    PrintPICBaseSymbol(O);
     O << ']';
     break;      
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     O << '-';
-    PrintPICBaseSymbol();
+    PrintPICBaseSymbol(O);
     break;
   case X86II::MO_TLSGD:     O << "@TLSGD";     break;
   case X86II::MO_GOTTPOFF:  O << "@GOTTPOFF";  break;
@@ -206,7 +208,8 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
-void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
+void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo,
+                                    raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("Unknown pcrel immediate operand");
@@ -218,14 +221,14 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     return;
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
-    printSymbolOperand(MO);
+    printSymbolOperand(MO, O);
     return;
   }
 }
 
 
 void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                 const char *Modifier) {
+                                 raw_ostream &O, const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("unknown operand type!");
@@ -251,13 +254,14 @@ void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_GlobalAddress: 
   case MachineOperand::MO_ExternalSymbol: {
     O << '$';
-    printSymbolOperand(MO);
+    printSymbolOperand(MO, O);
     break;
   }
   }
 }
 
-void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
+void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
+                               raw_ostream &O) {
   unsigned char value = MI->getOperand(Op).getImm();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
@@ -273,7 +277,7 @@ void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 }
 
 void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                                         const char *Modifier) {
+                                         raw_ostream &O, const char *Modifier) {
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
@@ -294,7 +298,7 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   } else {
     assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
            DispSpec.isJTI() || DispSpec.isSymbol());
-    printSymbolOperand(MI->getOperand(Op+3));
+    printSymbolOperand(MI->getOperand(Op+3), O);
   }
 
   if (HasParenPart) {
@@ -303,11 +307,11 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 
     O << '(';
     if (HasBaseReg)
-      printOperand(MI, Op, Modifier);
+      printOperand(MI, Op, O, Modifier);
 
     if (IndexReg.getReg()) {
       O << ',';
-      printOperand(MI, Op+2, Modifier);
+      printOperand(MI, Op+2, O, Modifier);
       unsigned ScaleVal = MI->getOperand(Op+1).getImm();
       if (ScaleVal != 1)
         O << ',' << ScaleVal;
@@ -317,24 +321,26 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                      const char *Modifier) {
+                                      raw_ostream &O, const char *Modifier) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   const MachineOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
-    printOperand(MI, Op+4, Modifier);
+    printOperand(MI, Op+4, O, Modifier);
     O << ':';
   }
-  printLeaMemReference(MI, Op, Modifier);
+  printLeaMemReference(MI, Op, O, Modifier);
 }
 
-void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  PrintPICBaseSymbol();
+void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op,
+                                  raw_ostream &O) {
+  PrintPICBaseSymbol(O);
   O << '\n';
-  PrintPICBaseSymbol();
+  PrintPICBaseSymbol(O);
   O << ':';
 }
 
-bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
+bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode,
+                                      raw_ostream &O) {
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
@@ -378,12 +384,12 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
         return false;
       } 
       if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol()) {
-        printSymbolOperand(MO);
+        printSymbolOperand(MO, O);
         return false;
       }
       if (MO.isReg()) {
         O << '(';
-        printOperand(MI, OpNo);
+        printOperand(MI, OpNo, O);
         O << ')';
         return false;
       }
@@ -393,15 +399,15 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       if (MO.isImm())
         O << MO.getImm();
       else if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol())
-        printSymbolOperand(MO);
+        printSymbolOperand(MO, O);
       else
-        printOperand(MI, OpNo);
+        printOperand(MI, OpNo, O);
       return false;
 
     case 'A': // Print '*' before a register (it must be a register)
       if (MO.isReg()) {
         O << '*';
-        printOperand(MI, OpNo);
+        printOperand(MI, OpNo, O);
         return false;
       }
       return true;
@@ -412,12 +418,12 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'k': // Print SImode register
     case 'q': // Print DImode register
       if (MO.isReg())
-        return printAsmMRegister(MO, ExtraCode[0]);
-      printOperand(MI, OpNo);
+        return printAsmMRegister(MO, ExtraCode[0], O);
+      printOperand(MI, OpNo, O);
       return false;
 
     case 'P': // This is the operand of a call, treat specially.
-      print_pcrel_imm(MI, OpNo);
+      print_pcrel_imm(MI, OpNo, O);
       return false;
 
     case 'n':  // Negate the immediate or print a '-' before the operand.
@@ -431,7 +437,7 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     }
   }
 
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   return false;
 }
 
@@ -451,11 +457,11 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
       // These only apply to registers, ignore on mem.
       break;
     case 'P': // Don't print @PLT, but do print as memory.
-      printMemReference(MI, OpNo, "no-rip");
+      printMemReference(MI, OpNo, O, "no-rip");
       return false;
     }
   }
-  printMemReference(MI, OpNo);
+  printMemReference(MI, OpNo, O);
   return false;
 }
 
