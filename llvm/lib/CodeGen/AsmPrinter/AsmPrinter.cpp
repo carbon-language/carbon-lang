@@ -1610,7 +1610,6 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
 
 void AsmPrinter::printKill(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
-  O.PadToColumn(MAI->getCommentColumn());
   
   std::string Str = "kill:";
   for (unsigned n = 0, e = MI->getNumOperands(); n != e; ++n) {

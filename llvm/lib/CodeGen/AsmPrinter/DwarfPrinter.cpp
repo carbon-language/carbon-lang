@@ -227,8 +227,7 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
   // On COFF targets, we have to emit the weird .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
     // FIXME: MCize.
-    Asm->O << SecOffDir << Label->getName();
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer.EmitRawText(SecOffDir + Twine(Label->getName()));
   } else {
     unsigned Size = IsSmall ? 4 : TD->getPointerSize();
     Asm->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);
