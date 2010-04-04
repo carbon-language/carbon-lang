@@ -29,8 +29,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -38,9 +37,8 @@ namespace {
     /// Unique incrementer for label values for referencing Global values.
     ///
 
-    explicit AlphaAsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                             MCStreamer &Streamer)
-      : AsmPrinter(o, tm, Streamer) {}
+    explicit AlphaAsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
+      : AsmPrinter(tm, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";

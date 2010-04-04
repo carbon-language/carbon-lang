@@ -46,11 +46,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 using namespace llvm;
 
@@ -74,9 +72,8 @@ namespace {
     const MachineConstantPool *MCP;
 
   public:
-    explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer), AFI(NULL), MCP(NULL) {
+    explicit ARMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer), AFI(NULL), MCP(NULL) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 

@@ -20,6 +20,8 @@
 namespace llvm {
   class MachineFunction;
   class DebugLoc;
+  class MCStreamer;
+  
   namespace PIC16Dbg {
     enum VarType {
       T_NULL,
@@ -88,10 +90,8 @@ namespace llvm {
     };
   }
 
-  class formatted_raw_ostream;
-
   class PIC16DbgInfo {
-    formatted_raw_ostream &O;
+    MCStreamer &OS;
     const MCAsmInfo *MAI;
     std::string CurFile;
     unsigned CurLine;
@@ -101,8 +101,7 @@ namespace llvm {
     bool EmitDebugDirectives;
 
   public:
-    PIC16DbgInfo(formatted_raw_ostream &o, const MCAsmInfo *T)
-      : O(o), MAI(T) {
+    PIC16DbgInfo(MCStreamer &os, const MCAsmInfo *T) : OS(os), MAI(T) {
       CurFile = "";
       CurLine = 0;
       EmitDebugDirectives = false; 

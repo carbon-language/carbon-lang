@@ -35,9 +35,8 @@ class MCSymbol;
 class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
  public:
-  explicit X86AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                         MCStreamer &Streamer)
-    : AsmPrinter(O, TM, Streamer) {
+  explicit X86AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+    : AsmPrinter(TM, Streamer) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 

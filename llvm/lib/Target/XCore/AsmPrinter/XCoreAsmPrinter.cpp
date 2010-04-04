@@ -38,8 +38,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
@@ -54,10 +53,8 @@ namespace {
   class XCoreAsmPrinter : public AsmPrinter {
     const XCoreSubtarget &Subtarget;
   public:
-    explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer),
-      Subtarget(TM.getSubtarget<XCoreSubtarget>()) {}
+    explicit XCoreAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()){}
 
     virtual const char *getPassName() const {
       return "XCore Assembly Printer";

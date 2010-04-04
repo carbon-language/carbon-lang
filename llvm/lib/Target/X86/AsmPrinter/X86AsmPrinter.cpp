@@ -36,7 +36,6 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"

@@ -23,7 +23,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -38,13 +37,9 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 
 using namespace llvm;
@@ -53,9 +48,8 @@ namespace {
   class MBlazeAsmPrinter : public AsmPrinter {
     const MBlazeSubtarget *Subtarget;
   public:
-    explicit MBlazeAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                              MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {
+    explicit MBlazeAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {
       Subtarget = &TM.getSubtarget<MBlazeSubtarget>();
     }
 

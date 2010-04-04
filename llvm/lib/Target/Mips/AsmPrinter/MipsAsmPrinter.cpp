@@ -19,9 +19,6 @@
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -39,20 +36,16 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/MathExtras.h"
-#include <cctype>
+#include "llvm/ADT/Twine.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
   public:
-    explicit MipsAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM, 
-                            MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {
+    explicit MipsAsmPrinter(TargetMachine &TM,  MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }
 

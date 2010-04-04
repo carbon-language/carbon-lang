@@ -44,10 +44,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -60,9 +58,8 @@ namespace {
     const PPCSubtarget &Subtarget;
     uint64_t LabelID;
   public:
-    explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer),
+    explicit PPCAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer),
         Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
 
     virtual const char *getPassName() const {
@@ -335,9 +332,8 @@ namespace {
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
   class PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
-    explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                MCStreamer &Streamer)
-      : PPCAsmPrinter(O, TM, Streamer) {}
+    explicit PPCLinuxAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : PPCAsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -358,11 +354,9 @@ namespace {
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
   /// OS X
   class PPCDarwinAsmPrinter : public PPCAsmPrinter {
-    formatted_raw_ostream &OS;
   public:
-    explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 MCStreamer &Streamer)
-      : PPCAsmPrinter(O, TM, Streamer), OS(O) {}
+    explicit PPCDarwinAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : PPCAsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -895,14 +889,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-static AsmPrinter *createPPCAsmPrinterPass(formatted_raw_ostream &o,
-                                           TargetMachine &tm,
+static AsmPrinter *createPPCAsmPrinterPass(TargetMachine &tm,
                                            MCStreamer &Streamer) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin())
-    return new PPCDarwinAsmPrinter(o, tm, Streamer);
-  return new PPCLinuxAsmPrinter(o, tm, Streamer);
+    return new PPCDarwinAsmPrinter(tm, Streamer);
+  return new PPCLinuxAsmPrinter(tm, Streamer);
 }
 
 // Force static initialization.

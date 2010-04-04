@@ -33,15 +33,14 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class SPUAsmPrinter : public AsmPrinter {
   public:
-    explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           MCStreamer &Streamer) :
-      AsmPrinter(O, TM, Streamer) {}
+    explicit SPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer) :
+      AsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";

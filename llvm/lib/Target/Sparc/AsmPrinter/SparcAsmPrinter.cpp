@@ -25,15 +25,14 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class SparcAsmPrinter : public AsmPrinter {
   public:
-    explicit SparcAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {}
+    explicit SparcAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";

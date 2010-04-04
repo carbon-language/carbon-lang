@@ -33,15 +33,14 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class BlackfinAsmPrinter : public AsmPrinter {
   public:
-    BlackfinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                       MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {}
+    BlackfinAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Blackfin Assembly Printer";

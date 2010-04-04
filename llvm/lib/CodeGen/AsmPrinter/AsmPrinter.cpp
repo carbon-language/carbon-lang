@@ -48,7 +48,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/FormattedStream.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -56,9 +55,8 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 char AsmPrinter::ID = 0;
 
-AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                       MCStreamer &Streamer)
-  : MachineFunctionPass(&ID), O(o),
+AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
+  : MachineFunctionPass(&ID), 
     TM(tm), MAI(tm.getMCAsmInfo()), TRI(tm.getRegisterInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),

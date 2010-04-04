@@ -36,15 +36,14 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class MSP430AsmPrinter : public AsmPrinter {
   public:
-    MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                     MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {}
+    MSP430AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "MSP430 Assembly Printer";

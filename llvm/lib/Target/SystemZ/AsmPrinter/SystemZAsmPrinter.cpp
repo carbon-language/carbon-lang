@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
@@ -34,16 +33,14 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
   class SystemZAsmPrinter : public AsmPrinter {
   public:
-    SystemZAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                      MCStreamer &Streamer)
-      : AsmPrinter(O, TM, Streamer) {}
+    SystemZAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "SystemZ Assembly Printer";
@@ -172,8 +169,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
 
   switch (MO.getTargetFlags()) {
-  default:
-    llvm_unreachable("Unknown target flag on GV operand");
+  default: assert(0 && "Unknown target flag on GV operand");
   case SystemZII::MO_NO_FLAG:
     break;
   case SystemZII::MO_GOTENT:    O << "@GOTENT";    break;

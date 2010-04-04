@@ -29,16 +29,15 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstring>
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
 
-PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 MCStreamer &Streamer)
-: AsmPrinter(O, TM, Streamer), DbgInfo(O, TM.getMCAsmInfo()) {
+PIC16AsmPrinter::PIC16AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+: AsmPrinter(TM, Streamer), DbgInfo(Streamer, TM.getMCAsmInfo()) {
   PTLI = static_cast<PIC16TargetLowering*>(TM.getTargetLowering());
   PMAI = static_cast<const PIC16MCAsmInfo*>(TM.getMCAsmInfo());
   PTOF = (PIC16TargetObjectFile *)&PTLI->getObjFileLowering();

@@ -54,7 +54,6 @@ namespace llvm {
   class TargetLoweringObjectFile;
   class Twine;
   class Type;
-  class formatted_raw_ostream;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
@@ -79,10 +78,6 @@ namespace llvm {
     DwarfWriter *DW;
 
   public:
-
-    /// Output stream on which we're printing assembly code.
-    ///
-    formatted_raw_ostream &O;
 
     /// Target machine description.
     ///
@@ -138,8 +133,7 @@ namespace llvm {
     mutable unsigned SetCounter;
     
   protected:
-    explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
-                        MCStreamer &Streamer);
+    explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
     
   public:
     virtual ~AsmPrinter();
