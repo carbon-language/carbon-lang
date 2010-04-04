@@ -104,12 +104,14 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType())) {
     OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
-    O << ".globound" << "\n";
-    O << "\t.set\t" << *Sym;
-    O << ".globound" << "," << ATy->getNumElements() << "\n";
+    // FIXME: MCStreamerize.
+    OutStreamer.EmitRawText(StringRef(".globound"));
+    OutStreamer.EmitRawText("\t.set\t" + Twine(Sym->getName()));
+    OutStreamer.EmitRawText(".globound," + Twine(ATy->getNumElements()));
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
-      O << MAI->getWeakDefDirective() << *Sym << ".globound" << "\n";
+      OutStreamer.EmitRawText(MAI->getWeakDefDirective() +Twine(Sym->getName())+
+                              ".globound");
     }
   }
 }
@@ -129,7 +131,8 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
   // Mark the start of the global
-  O << "\t.cc_top " << *GVSym << ".data," << *GVSym << "\n";
+  OutStreamer.EmitRawText("\t.cc_top " + Twine(GVSym->getName()) + ".data," +
+                          GVSym->getName());
 
   switch (GV->getLinkage()) {
   case GlobalValue::AppendingLinkage:
@@ -144,7 +147,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
     // TODO Use COMDAT groups for LinkOnceLinkage
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
-      O << MAI->getWeakDefDirective() << *GVSym << "\n";
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -165,10 +168,11 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     Size *= MaxThreads;
   }
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << *GVSym << ",@object\n";
-    O << "\t.size " << *GVSym << "," << Size << "\n";
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
+    OutStreamer.EmitRawText("\t.size " + Twine(GVSym->getName()) + "," +
+                            Twine(Size));
   }
-  O << *GVSym << ":\n";
+  OutStreamer.EmitLabel(GVSym);
   
   EmitGlobalConstant(C);
   if (GV->isThreadLocal()) {
@@ -181,7 +185,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     OutStreamer.EmitZeros(4 - Size, 0);
   
   // Mark the end of the global
-  O << "\t.cc_bottom " << *GVSym << ".data\n";
+  OutStreamer.EmitRawText("\t.cc_bottom " + Twine(GVSym->getName()) + ".data");
 }
 
 /// Emit the directives on the start of functions
@@ -192,7 +196,8 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   
   // Mark the start of the function
-  O << "\t.cc_top " << *CurrentFnSym << ".function," << *CurrentFnSym << "\n";
+  OutStreamer.EmitRawText("\t.cc_top " + Twine(CurrentFnSym->getName()) +
+                          ".function," + CurrentFnSym->getName());
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -209,13 +214,13 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   case Function::WeakODRLinkage:
     // TODO Use COMDAT groups for LinkOnceLinkage
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-    O << MAI->getWeakDefDirective() << *CurrentFnSym << "\n";
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Weak);
     break;
   }
   // (1 << 1) byte aligned
   EmitAlignment(MF.getAlignment(), F, 1);
   if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.type " << *CurrentFnSym << ",@function\n";
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
 
   OutStreamer.EmitLabel(CurrentFnSym);
 }
