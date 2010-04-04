@@ -1336,6 +1336,13 @@ void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   llvm_unreachable("Target does not support EmitMachineConstantPoolValue");
 }
 
+void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
+  if (Offset > 0)
+    OS << '+' << Offset;
+  else if (Offset < 0)
+    OS << Offset;
+}
+
 /// PrintSpecial - Print information related to the specified machine instr
 /// that is independent of the operand, and may be independent of the instr
 /// itself.  This can be useful for portably encoding the comment character
@@ -1373,8 +1380,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
 /// instruction's DebugLoc.
 void AsmPrinter::processDebugLoc(const MachineInstr *MI, 
                                  bool BeforePrintingInsn) {
-  if (!MAI || !DW || !MAI->doesSupportDebugInformation()
-      || !DW->ShouldEmitDwarfDebug())
+  if (!DW || !MAI->doesSupportDebugInformation() || !DW->ShouldEmitDwarfDebug())
     return;
 
   if (!BeforePrintingInsn)
@@ -1724,10 +1730,10 @@ static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
   }
 }
 
-/// PrintBasicBlockLoopComments - Pretty-print comments for basic blocks.
-static void PrintBasicBlockLoopComments(const MachineBasicBlock &MBB,
-                                        const MachineLoopInfo *LI,
-                                        const AsmPrinter &AP) {
+/// EmitBasicBlockLoopComments - Pretty-print comments for basic blocks.
+static void EmitBasicBlockLoopComments(const MachineBasicBlock &MBB,
+                                       const MachineLoopInfo *LI,
+                                       const AsmPrinter &AP) {
   // Add loop depth information
   const MachineLoop *Loop = LI->getLoopFor(&MBB);
   if (Loop == 0) return;
@@ -1793,7 +1799,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
       
-      PrintBasicBlockLoopComments(*MBB, LI, *this);
+      EmitBasicBlockLoopComments(*MBB, LI, *this);
       
       // NOTE: Want this comment at start of line, don't emit with AddComment.
       OutStreamer.EmitRawText(Twine(MAI->getCommentString()) + " BB#" +
@@ -1804,7 +1810,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
-      PrintBasicBlockLoopComments(*MBB, LI, *this);
+      EmitBasicBlockLoopComments(*MBB, LI, *this);
     }
 
     OutStreamer.EmitLabel(MBB->getSymbol());
@@ -1826,13 +1832,6 @@ void AsmPrinter::EmitVisibility(MCSymbol *Sym, unsigned Visibility) const {
 
   if (Attr != MCSA_Invalid)
     OutStreamer.EmitSymbolAttribute(Sym, Attr);
-}
-
-void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
-  if (Offset > 0)
-    OS << '+' << Offset;
-  else if (Offset < 0)
-    OS << Offset;
 }
 
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
