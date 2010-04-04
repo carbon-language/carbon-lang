@@ -70,9 +70,8 @@ namespace llvm {
     /// function.
     ///
     MachineLoopInfo *LI;
-
   public:
-    /// MMI - If available, this is a pointer to the current MachineModuleInfo.
+    /// MMI - This is a pointer to the current MachineModuleInfo.
     MachineModuleInfo *MMI;
     
   protected:
@@ -189,7 +188,8 @@ namespace llvm {
     /// override this to format as appropriate.  This method can return true if
     /// the operand is erroneous.
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                 unsigned AsmVariant, const char *ExtraCode);
+                                 unsigned AsmVariant, const char *ExtraCode,
+                                 raw_ostream &OS);
     
     /// PrintAsmMemoryOperand - Print the specified operand of MI, an INLINEASM
     /// instruction, using the specified assembler variant as an address.
@@ -197,7 +197,8 @@ namespace llvm {
     /// return true if the operand is erroneous.
     virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant, 
-                                       const char *ExtraCode);
+                                       const char *ExtraCode,
+                                       raw_ostream &OS);
     
     /// runOnMachineFunction - Emit the specified function out to the
     /// OutStreamer.

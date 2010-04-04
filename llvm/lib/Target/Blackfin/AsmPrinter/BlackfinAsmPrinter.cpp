@@ -57,9 +57,11 @@ namespace {
       OutStreamer.AddBlankLine();
     }
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                               unsigned AsmVariant, const char *ExtraCode);
+                               unsigned AsmVariant, const char *ExtraCode,
+                               raw_ostream &O);
   };
 } // end of anonymous namespace
 
@@ -120,9 +122,9 @@ void BlackfinAsmPrinter::printMemoryOperand(const MachineInstr *MI, int opNum,
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool BlackfinAsmPrinter::PrintAsmOperand(const MachineInstr *MI,
-                                         unsigned OpNo,
-                                         unsigned AsmVariant,
-                                         const char *ExtraCode) {
+                                         unsigned OpNo, unsigned AsmVariant,
+                                         const char *ExtraCode,
+                                         raw_ostream &O) {
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 
@@ -141,7 +143,8 @@ bool BlackfinAsmPrinter::PrintAsmOperand(const MachineInstr *MI,
 bool BlackfinAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                                unsigned OpNo,
                                                unsigned AsmVariant,
-                                               const char *ExtraCode) {
+                                               const char *ExtraCode,
+                                               raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
     return true;  // Unknown modifier
 

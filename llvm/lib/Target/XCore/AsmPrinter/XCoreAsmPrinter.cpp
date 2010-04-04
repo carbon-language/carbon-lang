@@ -70,7 +70,8 @@ namespace {
     }
     void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                        unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
 
     void emitGlobalDirective(const MCSymbol *Sym);
     
@@ -318,8 +319,8 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                      unsigned AsmVariant, 
-                                      const char *ExtraCode) {
+                                      unsigned AsmVariant,const char *ExtraCode,
+                                      raw_ostream &O) {
   printOperand(MI, OpNo, O);
   return false;
 }

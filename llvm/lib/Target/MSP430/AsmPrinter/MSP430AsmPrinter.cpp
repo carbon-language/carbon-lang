@@ -63,11 +63,11 @@ namespace {
     void printCCOperand(const MachineInstr *MI, int OpNum);
     void printMachineInstruction(const MachineInstr * MI);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant,
-                         const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     bool PrintAsmMemoryOperand(const MachineInstr *MI,
                                unsigned OpNo, unsigned AsmVariant,
-                               const char *ExtraCode);
+                               const char *ExtraCode, raw_ostream &O);
     void EmitInstruction(const MachineInstr *MI);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -161,7 +161,7 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
 ///
 bool MSP430AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
-                                       const char *ExtraCode) {
+                                       const char *ExtraCode, raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
@@ -172,7 +172,8 @@ bool MSP430AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 
 bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                              unsigned OpNo, unsigned AsmVariant,
-                                             const char *ExtraCode) {
+                                             const char *ExtraCode,
+                                             raw_ostream &O) {
   if (ExtraCode && ExtraCode[0]) {
     return true; // Unknown modifier.
   }

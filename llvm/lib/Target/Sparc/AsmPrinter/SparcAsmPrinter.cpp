@@ -51,9 +51,11 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                               unsigned AsmVariant, const char *ExtraCode);
+                               unsigned AsmVariant, const char *ExtraCode,
+                               raw_ostream &O);
 
     bool printGetPCX(const MachineInstr *MI, unsigned OpNo, raw_ostream &OS);
     
@@ -174,7 +176,8 @@ void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum,
 ///
 bool SparcAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                       unsigned AsmVariant,
-                                      const char *ExtraCode) {
+                                      const char *ExtraCode,
+                                      raw_ostream &O) {
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 
@@ -191,9 +194,9 @@ bool SparcAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-                                            unsigned OpNo,
-                                            unsigned AsmVariant,
-                                            const char *ExtraCode) {
+                                            unsigned OpNo, unsigned AsmVariant,
+                                            const char *ExtraCode,
+                                            raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
     return true;  // Unknown modifier
 

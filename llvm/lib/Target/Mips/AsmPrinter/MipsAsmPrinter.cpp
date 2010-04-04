@@ -61,7 +61,8 @@ namespace {
     }
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
-                         unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printUnsignedImm(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O, 
@@ -232,7 +233,8 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
 
 // Print out an operand for an inline asm expression.
 bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
-                                     unsigned AsmVariant,const char *ExtraCode){
+                                     unsigned AsmVariant,const char *ExtraCode,
+                                     raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) 
     return true; // Unknown modifier.

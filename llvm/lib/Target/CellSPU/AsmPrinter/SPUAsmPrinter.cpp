@@ -83,9 +83,11 @@ namespace {
     }
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                               unsigned AsmVariant, const char *ExtraCode);
+                               unsigned AsmVariant, const char *ExtraCode,
+                               raw_ostream &O);
 
 
     void
@@ -322,7 +324,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
 ///
 bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                     unsigned AsmVariant,
-                                    const char *ExtraCode) {
+                                    const char *ExtraCode, raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
@@ -345,9 +347,9 @@ bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-                                          unsigned OpNo,
-                                          unsigned AsmVariant,
-                                          const char *ExtraCode) {
+                                          unsigned OpNo, unsigned AsmVariant,
+                                          const char *ExtraCode,
+                                          raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
   printMemRegReg(MI, OpNo, O);

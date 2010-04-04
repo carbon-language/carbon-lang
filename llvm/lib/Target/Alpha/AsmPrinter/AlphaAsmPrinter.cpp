@@ -60,11 +60,11 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode);
+                         unsigned AsmVariant, const char *ExtraCode,
+                         raw_ostream &O);
     bool PrintAsmMemoryOperand(const MachineInstr *MI,
-                               unsigned OpNo,
-                               unsigned AsmVariant,
-                               const char *ExtraCode);
+                               unsigned OpNo, unsigned AsmVariant,
+                               const char *ExtraCode, raw_ostream &O);
   };
 } // end of anonymous namespace
 
@@ -148,15 +148,15 @@ void AlphaAsmPrinter::EmitStartOfAsmFile(Module &M) {
 ///
 bool AlphaAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                       unsigned AsmVariant,
-                                      const char *ExtraCode) {
+                                      const char *ExtraCode, raw_ostream &O) {
   printOperand(MI, OpNo, O);
   return false;
 }
 
 bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-                                            unsigned OpNo,
-                                            unsigned AsmVariant,
-                                            const char *ExtraCode) {
+                                            unsigned OpNo, unsigned AsmVariant,
+                                            const char *ExtraCode,
+                                            raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
   O << "0(";

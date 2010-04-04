@@ -1566,10 +1566,11 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
               Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
-                                                Modifier[0] ? Modifier : 0);
+                                                Modifier[0] ? Modifier : 0,
+                                                OS);
             } else {
               Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
-                                          Modifier[0] ? Modifier : 0);
+                                          Modifier[0] ? Modifier : 0, OS);
             }
           }
         }
@@ -1633,14 +1634,15 @@ void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
 /// instruction, using the specified assembler variant.  Targets should
 /// override this to format as appropriate.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                 unsigned AsmVariant, const char *ExtraCode) {
+                                 unsigned AsmVariant, const char *ExtraCode,
+                                 raw_ostream &O) {
   // Target doesn't support this yet!
   return true;
 }
 
 bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
-                                       const char *ExtraCode) {
+                                       const char *ExtraCode, raw_ostream &O) {
   // Target doesn't support this yet!
   return true;
 }

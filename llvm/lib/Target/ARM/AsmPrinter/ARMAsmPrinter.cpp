@@ -197,10 +197,11 @@ namespace {
     }
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
-                                 unsigned AsmVariant, const char *ExtraCode);
+                                 unsigned AsmVariant, const char *ExtraCode,
+                                 raw_ostream &O);
     virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
                                        unsigned AsmVariant,
-                                       const char *ExtraCode);
+                                       const char *ExtraCode, raw_ostream &O);
 
     void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen
     static const char *getRegisterName(unsigned RegNo);
@@ -1042,7 +1043,8 @@ void ARMAsmPrinter::printVFPf64ImmOperand(const MachineInstr *MI, int OpNum,
 }
 
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
-                                    unsigned AsmVariant, const char *ExtraCode){
+                                    unsigned AsmVariant, const char *ExtraCode,
+                                    raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
@@ -1088,7 +1090,8 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
 
 bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           unsigned OpNum, unsigned AsmVariant,
-                                          const char *ExtraCode) {
+                                          const char *ExtraCode,
+                                          raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
 

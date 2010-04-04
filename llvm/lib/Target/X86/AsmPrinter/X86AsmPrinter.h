@@ -69,9 +69,11 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
 
   bool printAsmMRegister(const MachineOperand &MO, char Mode, raw_ostream &O);
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                       unsigned AsmVariant, const char *ExtraCode);
+                       unsigned AsmVariant, const char *ExtraCode,
+                       raw_ostream &OS);
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                             unsigned AsmVariant, const char *ExtraCode);
+                             unsigned AsmVariant, const char *ExtraCode,
+                             raw_ostream &OS);
 
   void printMachineInstruction(const MachineInstr *MI);
   void printSSECC(const MachineInstr *MI, unsigned Op, raw_ostream &O);
