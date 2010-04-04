@@ -1,5 +1,6 @@
 add_llvm_library(LLVMAsmPrinter
   AsmPrinter.cpp
+  AsmPrinterInlineAsm.cpp
   DIE.cpp
   DwarfDebug.cpp
   DwarfException.cpp

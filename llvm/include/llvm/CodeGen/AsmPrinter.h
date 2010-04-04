@@ -103,9 +103,6 @@ namespace llvm {
     ///
     MCSymbol *CurrentFnSym;
     
-    /// getCurrentSection() - Return the current section we are emitting to.
-    const MCSection *getCurrentSection() const;
-
     /// VerboseAsm - Emit comments in assembly output if this is true.
     ///
     bool VerboseAsm;
@@ -113,16 +110,12 @@ namespace llvm {
     /// getObjFileLowering - Return information about object file lowering.
     TargetLoweringObjectFile &getObjFileLowering() const;
     
+    /// getCurrentSection() - Return the current section we are emitting to.
+    const MCSection *getCurrentSection() const;
+    
   private:
     // GCMetadataPrinters - The garbage collection metadata printer table.
     void *GCMetadataPrinters;  // Really a DenseMap.
-    
-    /// Private state for PrintSpecial()
-    // Assign a unique ID to this machine instruction.
-    mutable const MachineInstr *LastMI;
-    mutable const Function *LastFn;
-    mutable unsigned Counter;
-    mutable unsigned SetCounter;
     
   protected:
     explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
@@ -158,32 +151,6 @@ namespace llvm {
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
-    
-    /// PrintSpecial - Print information related to the specified machine instr
-    /// that is independent of the operand, and may be independent of the instr
-    /// itself.  This can be useful for portably encoding the comment character
-    /// or other bits of target-specific knowledge into the asmstrings.  The
-    /// syntax used is ${:comment}.  Targets can override this to add support
-    /// for their own strange codes.
-    virtual void PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
-                              const char *Code) const;
-
-    /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
-    /// instruction, using the specified assembler variant.  Targets should
-    /// override this to format as appropriate.  This method can return true if
-    /// the operand is erroneous.
-    virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                 unsigned AsmVariant, const char *ExtraCode,
-                                 raw_ostream &OS);
-    
-    /// PrintAsmMemoryOperand - Print the specified operand of MI, an INLINEASM
-    /// instruction, using the specified assembler variant as an address.
-    /// Targets should override this to format as appropriate.  This method can
-    /// return true if the operand is erroneous.
-    virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                                       unsigned AsmVariant, 
-                                       const char *ExtraCode,
-                                       raw_ostream &OS);
     
     /// runOnMachineFunction - Emit the specified function out to the
     /// OutStreamer.
@@ -336,13 +303,6 @@ namespace llvm {
     isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
 
   private:
-    /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-    void EmitInlineAsm(StringRef Str) const;
-
-     /// EmitInlineAsm - This method formats and emits the specified machine
-    /// instruction that is an inline asm.
-    void EmitInlineAsm(const MachineInstr *MI) const;
-
     /// EmitImplicitDef - This method emits the specified machine instruction
     /// that is an implicit def.
     void EmitImplicitDef(const MachineInstr *MI) const;
@@ -362,6 +322,54 @@ namespace llvm {
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
+    
+    //===------------------------------------------------------------------===//
+    // Inline Asm Support
+    //===------------------------------------------------------------------===//
+  public:
+    // These are hooks that targets can override to implement inline asm
+    // support.  These should probably be moved out of AsmPrinter someday.
+    
+    /// PrintSpecial - Print information related to the specified machine instr
+    /// that is independent of the operand, and may be independent of the instr
+    /// itself.  This can be useful for portably encoding the comment character
+    /// or other bits of target-specific knowledge into the asmstrings.  The
+    /// syntax used is ${:comment}.  Targets can override this to add support
+    /// for their own strange codes.
+    virtual void PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
+                              const char *Code) const;
+    
+    /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
+    /// instruction, using the specified assembler variant.  Targets should
+    /// override this to format as appropriate.  This method can return true if
+    /// the operand is erroneous.
+    virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                 unsigned AsmVariant, const char *ExtraCode,
+                                 raw_ostream &OS);
+    
+    /// PrintAsmMemoryOperand - Print the specified operand of MI, an INLINEASM
+    /// instruction, using the specified assembler variant as an address.
+    /// Targets should override this to format as appropriate.  This method can
+    /// return true if the operand is erroneous.
+    virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                                       unsigned AsmVariant, 
+                                       const char *ExtraCode,
+                                       raw_ostream &OS);
+    
+  private:
+    /// Private state for PrintSpecial()
+    // Assign a unique ID to this machine instruction.
+    mutable const MachineInstr *LastMI;
+    mutable unsigned LastFn;
+    mutable unsigned Counter;
+    mutable unsigned SetCounter;
+
+    /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
+    void EmitInlineAsm(StringRef Str) const;
+    
+    /// EmitInlineAsm - This method formats and emits the specified machine
+    /// instruction that is an inline asm.
+    void EmitInlineAsm(const MachineInstr *MI) const;
   };
 }
 
