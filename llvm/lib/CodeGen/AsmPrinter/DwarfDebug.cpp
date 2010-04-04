@@ -1794,9 +1794,10 @@ void DwarfDebug::beginModule(Module *M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
-  // Emit initial sections
-  EmitSectionLabels();
-
+  // Emit initial sections.
+  if (DbgFinder.compile_unit_begin() != DbgFinder.compile_unit_end())
+    EmitSectionLabels();
+  
   // Create all the compile unit DIEs.
   for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
          E = DbgFinder.compile_unit_end(); I != E; ++I)
@@ -1804,7 +1805,7 @@ void DwarfDebug::beginModule(Module *M) {
 
   if (!ModuleCU)
     return;
-
+  
   // Create DIEs for each subprogram.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
          E = DbgFinder.subprogram_end(); I != E; ++I)
