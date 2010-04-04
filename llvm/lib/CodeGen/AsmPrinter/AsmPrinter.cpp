@@ -1494,7 +1494,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         const char *StrEnd = strchr(StrStart, '}');
         if (StrEnd == 0)
           llvm_report_error(Twine("Unterminated ${:foo} operand in inline asm"
-                                  " string: '") + Twine(AsmStr_ + "'"));
+                                  " string: '") + Twine(AsmStr) + "'");
         
         std::string Val(StrStart, StrEnd);
         PrintSpecial(MI, OS, Val.c_str());
