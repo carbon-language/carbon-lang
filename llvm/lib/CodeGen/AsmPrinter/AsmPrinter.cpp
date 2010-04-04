@@ -101,7 +101,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
-  MMI = &getAnalysis<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   MMI->AnalyzeModule(M);
 
   // Initialize TargetLoweringObjectFile.
