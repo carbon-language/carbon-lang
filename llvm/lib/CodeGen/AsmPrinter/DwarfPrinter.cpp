@@ -39,17 +39,23 @@ DwarfPrinter::DwarfPrinter(AsmPrinter *A)
 
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
-                                     const MCSymbol *Section) {
-  if (!MAI->isAbsoluteDebugSectionOffsets())
-    return Asm->EmitLabelDifference(Label, Section, 4);
-  
-  // On COFF targets, we have to emit the weird .secrel32 directive.
+                                     const char *SectionLabel) {
+  // On COFF targets, we have to emit the special .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective()) {
     // FIXME: MCize.
     Asm->OutStreamer.EmitRawText(SecOffDir + Twine(Label->getName()));
-  } else {
-    Asm->OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
+    return;
   }
+  
+  // If the section in question will end up with an address of 0 anyway, we can
+  // just emit an absolute reference to save a relocation.
+  if (MAI->isAbsoluteDebugSectionOffsets()) {
+    Asm->OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
+    return;
+  }
+
+  MCSymbol *SectionSym = Asm->GetTempSymbol(SectionLabel);
+  Asm->EmitLabelDifference(Label, SectionSym, 4);
 }
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
