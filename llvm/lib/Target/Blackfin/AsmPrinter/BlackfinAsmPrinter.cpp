@@ -53,8 +53,10 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
     void EmitInstruction(const MachineInstr *MI) {
-      printInstruction(MI, O);
-      OutStreamer.AddBlankLine();
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      printInstruction(MI, OS);
+      OutStreamer.EmitRawText(OS.str());
     }
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,

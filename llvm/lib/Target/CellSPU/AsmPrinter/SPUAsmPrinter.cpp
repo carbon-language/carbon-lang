@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -57,8 +58,10 @@ namespace {
 
 
     void EmitInstruction(const MachineInstr *MI) {
-      printInstruction(MI, O);
-      OutStreamer.AddBlankLine();
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      printInstruction(MI, OS);
+      OutStreamer.EmitRawText(OS.str());
     }
     void printOp(const MachineOperand &MO, raw_ostream &OS);
 

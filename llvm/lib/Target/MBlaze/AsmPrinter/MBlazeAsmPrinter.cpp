@@ -37,11 +37,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
@@ -80,8 +81,10 @@ namespace {
 
     void printInstruction(const MachineInstr *MI, raw_ostream &O);
     void EmitInstruction(const MachineInstr *MI) { 
-      printInstruction(MI, O);
-      O << '\n';
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      printInstruction(MI, OS);
+      OutStreamer.EmitRawText(OS.str());
     }
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd();

@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -334,8 +335,10 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.AddBlankLine();
     return;
   }
-  printInstruction(MI, O);
-  OutStreamer.AddBlankLine();
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  printInstruction(MI, OS);
+  OutStreamer.EmitRawText(OS.str());
 }
 
 // Force static initialization.

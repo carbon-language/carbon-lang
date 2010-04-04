@@ -1000,13 +1000,6 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum,
     if (i != e-1)
       O << '\n';
   }
-
-  // Make sure the instruction that follows TBB is 2-byte aligned.
-  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
-  if (ByteOffset && (JTBBs.size() & 1)) {
-    O << '\n';
-    EmitAlignment(1);
-  }
 }
 
 void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum,
@@ -1104,14 +1097,21 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (EnableMCInst) {
     printInstructionThroughMCStreamer(MI);
-  } else {
-    int Opc = MI->getOpcode();
-    if (Opc == ARM::CONSTPOOL_ENTRY)
-      EmitAlignment(2);
-    
-    printInstruction(MI, O);
-    OutStreamer.AddBlankLine();
+    return;
   }
+  
+  if (MI->getOpcode() == ARM::CONSTPOOL_ENTRY)
+    EmitAlignment(2);
+  
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  printInstruction(MI, OS);
+  OutStreamer.EmitRawText(OS.str());
+  
+  // Make sure the instruction that follows TBB is 2-byte aligned.
+  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
+  if (MI->getOpcode() == ARM::t2TBB)
+    EmitAlignment(1);
 }
 
 void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {

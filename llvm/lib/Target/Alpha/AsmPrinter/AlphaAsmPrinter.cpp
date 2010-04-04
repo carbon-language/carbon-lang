@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
@@ -46,8 +47,10 @@ namespace {
     }
     void printInstruction(const MachineInstr *MI, raw_ostream &O);
     void EmitInstruction(const MachineInstr *MI) {
-      printInstruction(MI, O);
-      OutStreamer.AddBlankLine();
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      printInstruction(MI, OS);
+      OutStreamer.EmitRawText(OS.str());
     }
     static const char *getRegisterName(unsigned RegNo);
 

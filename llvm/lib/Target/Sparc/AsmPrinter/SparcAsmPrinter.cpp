@@ -23,6 +23,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
@@ -44,8 +45,10 @@ namespace {
     void printCCOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
 
     virtual void EmitInstruction(const MachineInstr *MI) {
-      printInstruction(MI, O);
-      OutStreamer.AddBlankLine();
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      printInstruction(MI, OS);
+      OutStreamer.EmitRawText(OS.str());
     }
     void printInstruction(const MachineInstr *MI, raw_ostream &OS);// autogen'd.
     static const char *getRegisterName(unsigned RegNo);
