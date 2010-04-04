@@ -54,6 +54,14 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
     Asm->OutStreamer.EmitRawText(SecOffDir + Twine(Label->getName()));
     return;
   }
+
+  // Get the section that we're referring to, based on SectionLabel.
+  const MCSection &Section = SectionLabel->getSection();
+  
+  // If Label has already been emitted, verify that it is in the same section as
+  // section label for sanity.
+  assert((!Label->isInSection() || &Label->getSection() == &Section) &&
+         "Section offset using wrong section base for label"); (void)Section;
   
   // If the section in question will end up with an address of 0 anyway, we can
   // just emit an absolute reference to save a relocation.
