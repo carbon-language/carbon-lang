@@ -13,16 +13,23 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Dwarf.h"
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Dwarf Emission Helper Routines
+//===----------------------------------------------------------------------===//
 
 /// EmitSLEB128 - emit the specified signed leb128 value.
 void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
@@ -118,7 +125,7 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
 /// encoding.  If verbose assembly output is enabled, we output comments
 /// describing the encoding.  Desc is an optional string saying what the
 /// encoding is specifying (e.g. "LSDA").
-void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
+void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) const {
   if (isVerbose()) {
     if (Desc != 0)
       OutStreamer.AddComment(Twine(Desc)+" Encoding = " +
@@ -196,4 +203,77 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
   EmitLabelDifference(Label, SectionLabel, 4);
 }
 
+//===----------------------------------------------------------------------===//
+// Dwarf Lowering Routines
+//===----------------------------------------------------------------------===//
 
+
+/// EmitFrameMoves - Emit frame instructions to describe the layout of the
+/// frame.
+void AsmPrinter::EmitFrameMoves(const std::vector<MachineMove> &Moves,
+                                MCSymbol *BaseLabel, bool isEH) const {
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  
+  int stackGrowth = TM.getTargetData()->getPointerSize();
+  if (TM.getFrameInfo()->getStackGrowthDirection() !=
+      TargetFrameInfo::StackGrowsUp)
+    stackGrowth *= -1;
+  
+  for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
+    const MachineMove &Move = Moves[i];
+    MCSymbol *Label = Move.getLabel();
+    // Throw out move if the label is invalid.
+    if (Label && !Label->isDefined()) continue; // Not emitted, in dead code.
+    
+    const MachineLocation &Dst = Move.getDestination();
+    const MachineLocation &Src = Move.getSource();
+    
+    // Advance row if new location.
+    if (BaseLabel && Label) {
+      MCSymbol *ThisSym = Label;
+      if (ThisSym != BaseLabel) {
+        EmitCFAByte(dwarf::DW_CFA_advance_loc4);
+        EmitLabelDifference(ThisSym, BaseLabel, 4);
+        BaseLabel = ThisSym;
+      }
+    }
+    
+    // If advancing cfa.
+    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+      assert(!Src.isReg() && "Machine move not supported yet.");
+      
+      if (Src.getReg() == MachineLocation::VirtualFP) {
+        EmitCFAByte(dwarf::DW_CFA_def_cfa_offset);
+      } else {
+        EmitCFAByte(dwarf::DW_CFA_def_cfa);
+        EmitULEB128(RI->getDwarfRegNum(Src.getReg(), isEH), "Register");
+      }
+      
+      EmitULEB128(-Src.getOffset(), "Offset");
+      continue;
+    }
+    
+    if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+      assert(Dst.isReg() && "Machine move not supported yet.");
+      EmitCFAByte(dwarf::DW_CFA_def_cfa_register);
+      EmitULEB128(RI->getDwarfRegNum(Dst.getReg(), isEH), "Register");
+      continue;
+    }
+    
+    unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);
+    int Offset = Dst.getOffset() / stackGrowth;
+    
+    if (Offset < 0) {
+      EmitCFAByte(dwarf::DW_CFA_offset_extended_sf);
+      EmitULEB128(Reg, "Reg");
+      EmitSLEB128(Offset, "Offset");
+    } else if (Reg < 64) {
+      EmitCFAByte(dwarf::DW_CFA_offset + Reg);
+      EmitULEB128(Offset, "Offset");
+    } else {
+      EmitCFAByte(dwarf::DW_CFA_offset_extended);
+      EmitULEB128(Reg, "Reg");
+      EmitULEB128(Offset, "Offset");
+    }
+  }
+}

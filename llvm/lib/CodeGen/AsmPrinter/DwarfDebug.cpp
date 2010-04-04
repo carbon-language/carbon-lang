@@ -2852,7 +2852,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
 
-  EmitFrameMoves(0, Moves, false);
+  Asm->EmitFrameMoves(Moves, 0, false);
 
   Asm->EmitAlignment(2, 0, 0, false);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common_end"));
@@ -2893,7 +2893,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
   Asm->EmitLabelDifference(Asm->GetTempSymbol("func_end",DebugFrameInfo.Number),
                            FuncBeginSym, TD->getPointerSize());
 
-  EmitFrameMoves(FuncBeginSym, DebugFrameInfo.Moves, false);
+  Asm->EmitFrameMoves(DebugFrameInfo.Moves, FuncBeginSym, false);
 
   Asm->EmitAlignment(2, 0, 0, false);
   Asm->OutStreamer.EmitLabel(DebugFrameEnd);

@@ -41,6 +41,7 @@ namespace llvm {
   class MachineConstantPoolValue;
   class MachineJumpTableInfo;
   class MachineModuleInfo;
+  class MachineMove;
   class MCInst;
   class MCContext;
   class MCSection;
@@ -341,7 +342,7 @@ namespace llvm {
     /// encoding.  If verbose assembly output is enabled, we output comments
     /// describing the encoding.  Desc is a string saying what the encoding is
     /// specifying (e.g. "LSDA").
-    void EmitEncodingByte(unsigned Val, const char *Desc = 0);
+    void EmitEncodingByte(unsigned Val, const char *Desc = 0) const;
     
     /// GetSizeOfEncodedValue - Return the size of the encoding in bytes.
     unsigned GetSizeOfEncodedValue(unsigned Encoding) const;
@@ -360,6 +361,15 @@ namespace llvm {
     /// that Label lives in.
     void EmitSectionOffset(const MCSymbol *Label,
                            const MCSymbol *SectionLabel) const;
+    
+    //===------------------------------------------------------------------===//
+    // Dwarf Lowering Routines
+    //===------------------------------------------------------------------===//
+    
+    /// EmitFrameMoves - Emit frame instructions to describe the layout of the
+    /// frame.
+    void EmitFrameMoves(const std::vector<MachineMove> &Moves, 
+                        MCSymbol *BaseLabel, bool isEH) const;
     
     
     //===------------------------------------------------------------------===//

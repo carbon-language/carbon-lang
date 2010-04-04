@@ -74,10 +74,6 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return MAI; }
   const TargetData *getTargetData() const { return TD; }
 
-  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
-  /// frame.
-  void EmitFrameMoves(MCSymbol *BaseLabel,
-                      const std::vector<MachineMove> &Moves, bool isEH);
 };
 
 } // end llvm namespace
