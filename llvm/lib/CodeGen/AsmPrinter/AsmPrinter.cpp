@@ -1350,12 +1350,7 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
 /// GetTempSymbol - Return the MCSymbol corresponding to the assembler
 /// temporary label with the specified stem and unique ID.
 MCSymbol *AsmPrinter::GetTempSymbol(StringRef Name, unsigned ID) const {
-  // FIXME: REMOVE this.  However, there is stuff in EH that passes counters in
-  // here that can be zero.
-  
-  //assert(ID && "Should use GetTempSymbol if no ID");
-  if (ID == 0) return GetTempSymbol(Name);
-  return OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix())+
+  return OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
                                       Name + Twine(ID));
 }
 
