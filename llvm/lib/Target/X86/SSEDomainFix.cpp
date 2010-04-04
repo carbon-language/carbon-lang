@@ -23,48 +23,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-
-namespace {
-
-/// Allocate objects from a pool, allow objects to be recycled, and provide a
-/// way of deleting everything.
-template<typename T, unsigned PageSize = 64>
-class PoolAllocator {
-  std::vector<T*> Pages, Avail;
-public:
-  ~PoolAllocator() { Clear(); }
-
-  T* Alloc() {
-    if (Avail.empty()) {
-      T *p = new T[PageSize];
-      Pages.push_back(p);
-      Avail.reserve(PageSize);
-      for (unsigned n = 0; n != PageSize; ++n)
-        Avail.push_back(p+n);
-    }
-    T *p = Avail.back();
-    Avail.pop_back();
-    return p;
-  }
-
-  // Allow object to be reallocated. It won't be reconstructed.
-  void Recycle(T *p) {
-    p->clear();
-    Avail.push_back(p);
-  }
-
-  // Destroy all objects, make sure there are no external pointers to them.
-  void Clear() {
-    Avail.clear();
-    while (!Pages.empty()) {
-      delete[] Pages.back();
-      Pages.pop_back();
-    }
-  }
-};
 
 /// A DomainValue is a bit like LiveIntervals' ValNo, but it also keeps track
 /// of execution domains.
@@ -81,6 +43,7 @@ public:
 /// domain, but if we were forced to pay the penalty of a domain crossing, we
 /// keep track of the fact the the register is now available in multiple
 /// domains.
+namespace {
 struct DomainValue {
   // Basic reference counting.
   unsigned Refs;
@@ -122,12 +85,15 @@ struct DomainValue {
     Instrs.clear();
   }
 };
+}
 
 static const unsigned NumRegs = 16;
 
+namespace {
 class SSEDomainFixPass : public MachineFunctionPass {
   static char ID;
-  PoolAllocator<DomainValue> Pool;
+  SpecificBumpPtrAllocator<DomainValue> Allocator;
+  SmallVector<DomainValue*,16> Avail;
 
   MachineFunction *MF;
   const X86InstrInfo *TII;
@@ -156,6 +122,10 @@ private:
   // Register mapping.
   int RegIndex(unsigned Reg);
 
+  // DomainValue allocation.
+  DomainValue *Alloc(int domain = -1);
+  void Recycle(DomainValue*);
+
   // LiveRegs manipulations.
   void SetLiveReg(int rx, DomainValue *DV);
   void Kill(int rx);
@@ -182,6 +152,22 @@ int SSEDomainFixPass::RegIndex(unsigned reg) {
   return reg < NumRegs ? reg : -1;
 }
 
+DomainValue *SSEDomainFixPass::Alloc(int domain) {
+  DomainValue *dv = Avail.empty() ?
+                      new(Allocator.Allocate()) DomainValue :
+                      Avail.pop_back_val();
+  dv->Dist = Distance;
+  if (domain >= 0)
+    dv->Mask = 1u << domain;
+  return dv;
+}
+
+void SSEDomainFixPass::Recycle(DomainValue *dv) {
+  assert(dv && "Cannot recycle NULL");
+  dv->clear();
+  Avail.push_back(dv);
+}
+
 /// Set LiveRegs[rx] = dv, updating reference counts.
 void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
@@ -192,7 +178,7 @@ void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
     return;
   if (LiveRegs[rx]) {
     assert(LiveRegs[rx]->Refs && "Bad refcount");
-    if (--LiveRegs[rx]->Refs == 0) Pool.Recycle(LiveRegs[rx]);
+    if (--LiveRegs[rx]->Refs == 0) Recycle(LiveRegs[rx]);
   }
   LiveRegs[rx] = dv;
   if (dv) ++dv->Refs;
@@ -222,10 +208,7 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
       Collapse(dv, domain);
   } else {
     // Set up basic collapsed DomainValue.
-    dv = Pool.Alloc();
-    dv->Dist = Distance;
-    dv->add(domain);
-    SetLiveReg(rx, dv);
+    SetLiveReg(rx, Alloc(domain));
   }
 }
 
@@ -243,15 +226,10 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
   dv->Mask = 1u << domain;
 
   // If there are multiple users, give them new, unique DomainValues.
-  if (LiveRegs && dv->Refs > 1) {
+  if (LiveRegs && dv->Refs > 1)
     for (unsigned rx = 0; rx != NumRegs; ++rx)
-      if (LiveRegs[rx] == dv) {
-        DomainValue *dv2 = Pool.Alloc();
-        dv2->Dist = Distance;
-        dv2->add(domain);
-        SetLiveReg(rx, dv2);
-      }
-  }
+      if (LiveRegs[rx] == dv)
+        SetLiveReg(rx, Alloc(domain));
 }
 
 /// Merge - All instructions and registers in B are moved to A, and B is
@@ -296,7 +274,7 @@ void SSEDomainFixPass::enterBasicBlock() {
           Collapse(pdv, LiveRegs[rx]->firstDomain());
         continue;
       }
-      
+
       // Currently open, merge in predecessor.
       if (!pdv->collapsed())
         Merge(LiveRegs[rx], pdv);
@@ -396,10 +374,10 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       dv = doms.pop_back_val();
       continue;
     }
-    
+
     DomainValue *ThisDV = doms.pop_back_val();
     if (Merge(dv, ThisDV)) continue;
-    
+
     for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
       if (LiveRegs[*i] == ThisDV)
         Kill(*i);
@@ -407,7 +385,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
   // dv is the DomainValue we are going to use for this instruction.
   if (!dv)
-    dv = Pool.Alloc();
+    dv = Alloc();
   dv->Dist = Distance;
   dv->Mask = collmask;
   dv->Instrs.push_back(mi);
@@ -489,7 +467,8 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
          i != e; ++i)
     free(i->second);
   LiveOuts.clear();
-  Pool.Clear();
+  Avail.clear();
+  Allocator.DestroyAll();
 
   return false;
 }

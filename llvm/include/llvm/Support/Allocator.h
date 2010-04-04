@@ -202,7 +202,7 @@ public:
                                               (char *)Slab + Slab->Size;
       for (char *Ptr = (char*)(Slab+1); Ptr < End; Ptr += sizeof(T)) {
         Ptr = Allocator.AlignPtr(Ptr, alignof<T>());
-	if (Ptr + sizeof(T) <= End)
+        if (Ptr + sizeof(T) <= End)
           reinterpret_cast<T*>(Ptr)->~T();
       }
       Slab = Slab->NextPtr;
