@@ -1330,12 +1330,12 @@ void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 /// or other bits of target-specific knowledge into the asmstrings.  The
 /// syntax used is ${:comment}.  Targets can override this to add support
 /// for their own strange codes.
-void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
+void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
+                              const char *Code) const {
   if (!strcmp(Code, "private")) {
-    O << MAI->getPrivateGlobalPrefix();
+    OS << MAI->getPrivateGlobalPrefix();
   } else if (!strcmp(Code, "comment")) {
-    if (VerboseAsm)
-      O << MAI->getCommentString();
+    OS << MAI->getCommentString();
   } else if (!strcmp(Code, "uid")) {
     // Comparing the address of MI isn't sufficient, because machineinstrs may
     // be allocated to the same address across functions.
@@ -1347,7 +1347,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
       LastMI = MI;
       LastFn = ThisF;
     }
-    O << Counter;
+    OS << Counter;
   } else {
     std::string msg;
     raw_string_ostream Msg(msg);
@@ -1497,7 +1497,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         }
         
         std::string Val(StrStart, StrEnd);
-        PrintSpecial(MI, Val.c_str());
+        PrintSpecial(MI, O, Val.c_str());
         LastEmitted = StrEnd+1;
         break;
       }

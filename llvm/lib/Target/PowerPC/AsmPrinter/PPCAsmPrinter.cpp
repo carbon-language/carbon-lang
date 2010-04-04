@@ -92,12 +92,12 @@ namespace {
     /// from the instruction set description.  This method returns true if the
     /// machine instruction was sufficiently described to print it, otherwise it
     /// returns false.
-    void printInstruction(const MachineInstr *MI);
+    void printInstruction(const MachineInstr *MI, raw_ostream &O);
     static const char *getRegisterName(unsigned RegNo);
 
 
     virtual void EmitInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO);
+    void printOp(const MachineOperand &MO, raw_ostream &O);
 
     /// stripRegisterPrefix - This method strips the character prefix from a
     /// register name so that only the number is left.  Used by for linux asm.
@@ -114,7 +114,7 @@ namespace {
 
     /// printRegister - Print register according to target requirements.
     ///
-    void printRegister(const MachineOperand &MO, bool R0AsZero) {
+    void printRegister(const MachineOperand &MO, bool R0AsZero, raw_ostream &O){
       unsigned RegNo = MO.getReg();
       assert(TargetRegisterInfo::isPhysicalRegister(RegNo) && "Not physreg??");
 
@@ -131,14 +131,14 @@ namespace {
       O << RegName;
     }
 
-    void printOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.isReg()) {
-        printRegister(MO, false);
+        printRegister(MO, false, O);
       } else if (MO.isImm()) {
         O << MO.getImm();
       } else {
-        printOp(MO);
+        printOp(MO, O);
       }
     }
 
@@ -148,49 +148,57 @@ namespace {
                                unsigned AsmVariant, const char *ExtraCode);
 
 
-    void printS5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printS5ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                           raw_ostream &O) {
       char value = MI->getOperand(OpNo).getImm();
       value = (value << (32-5)) >> (32-5);
       O << (int)value;
     }
-    void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                           raw_ostream &O) {
       unsigned char value = MI->getOperand(OpNo).getImm();
       assert(value <= 31 && "Invalid u5imm argument!");
       O << (unsigned int)value;
     }
-    void printU6ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printU6ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                           raw_ostream &O) {
       unsigned char value = MI->getOperand(OpNo).getImm();
       assert(value <= 63 && "Invalid u6imm argument!");
       O << (unsigned int)value;
     }
-    void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo, 
+                            raw_ostream &O) {
       O << (short)MI->getOperand(OpNo).getImm();
     }
-    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                            raw_ostream &O) {
       O << (unsigned short)MI->getOperand(OpNo).getImm();
     }
-    void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                              raw_ostream &O) {
       if (MI->getOperand(OpNo).isImm()) {
         O << (short)(MI->getOperand(OpNo).getImm()*4);
       } else {
         O << "lo16(";
-        printOp(MI->getOperand(OpNo));
+        printOp(MI->getOperand(OpNo), O);
         if (TM.getRelocationModel() == Reloc::PIC_)
           O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
     }
-    void printBranchOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
+                            raw_ostream &O) {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
       if (MI->getOperand(OpNo).isImm()) {
         O << "$+" << MI->getOperand(OpNo).getImm()*4;
       } else {
-        printOp(MI->getOperand(OpNo));
+        printOp(MI->getOperand(OpNo), O);
       }
     }
-    void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
+                          raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (TM.getRelocationModel() != Reloc::Static) {
         if (MO.getType() == MachineOperand::MO_GlobalAddress) {
@@ -223,21 +231,22 @@ namespace {
         }
       }
 
-      printOp(MI->getOperand(OpNo));
+      printOp(MI->getOperand(OpNo), O);
     }
-    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo) {
+    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
+                             raw_ostream &O) {
      O << (int)MI->getOperand(OpNo).getImm()*4;
     }
-    void printPICLabel(const MachineInstr *MI, unsigned OpNo) {
+    void printPICLabel(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       O << "\"L" << getFunctionNumber() << "$pb\"\n";
       O << "\"L" << getFunctionNumber() << "$pb\":";
     }
-    void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
+    void printSymbolHi(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       if (MI->getOperand(OpNo).isImm()) {
-        printS16ImmOperand(MI, OpNo);
+        printS16ImmOperand(MI, OpNo, O);
       } else {
         if (Subtarget.isDarwin()) O << "ha16(";
-        printOp(MI->getOperand(OpNo));
+        printOp(MI->getOperand(OpNo), O);
         if (TM.getRelocationModel() == Reloc::PIC_)
           O << "-\"L" << getFunctionNumber() << "$pb\"";
         if (Subtarget.isDarwin())
@@ -246,12 +255,12 @@ namespace {
           O << "@ha";
       }
     }
-    void printSymbolLo(const MachineInstr *MI, unsigned OpNo) {
+    void printSymbolLo(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       if (MI->getOperand(OpNo).isImm()) {
-        printS16ImmOperand(MI, OpNo);
+        printS16ImmOperand(MI, OpNo, O);
       } else {
         if (Subtarget.isDarwin()) O << "lo16(";
-        printOp(MI->getOperand(OpNo));
+        printOp(MI->getOperand(OpNo), O);
         if (TM.getRelocationModel() == Reloc::PIC_)
           O << "-\"L" << getFunctionNumber() << "$pb\"";
         if (Subtarget.isDarwin())
@@ -260,47 +269,49 @@ namespace {
           O << "@l";
       }
     }
-    void printcrbitm(const MachineInstr *MI, unsigned OpNo) {
+    void printcrbitm(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       unsigned CCReg = MI->getOperand(OpNo).getReg();
       unsigned RegNo = enumRegToMachineReg(CCReg);
       O << (0x80 >> RegNo);
     }
     // The new addressing mode printers.
-    void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
-      printSymbolLo(MI, OpNo);
+    void printMemRegImm(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
+      printSymbolLo(MI, OpNo, O);
       O << '(';
       if (MI->getOperand(OpNo+1).isReg() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
-        printOperand(MI, OpNo+1);
+        printOperand(MI, OpNo+1, O);
       O << ')';
     }
-    void printMemRegImmShifted(const MachineInstr *MI, unsigned OpNo) {
+    void printMemRegImmShifted(const MachineInstr *MI, unsigned OpNo,
+                               raw_ostream &O) {
       if (MI->getOperand(OpNo).isImm())
-        printS16X4ImmOperand(MI, OpNo);
+        printS16X4ImmOperand(MI, OpNo, O);
       else
-        printSymbolLo(MI, OpNo);
+        printSymbolLo(MI, OpNo, O);
       O << '(';
       if (MI->getOperand(OpNo+1).isReg() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
-        printOperand(MI, OpNo+1);
+        printOperand(MI, OpNo+1, O);
       O << ')';
     }
 
-    void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
+    void printMemRegReg(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
       // When used as the base register, r0 reads constant zero rather than
       // the value contained in the register.  For this reason, the darwin
       // assembler requires that we print r0 as 0 (no r) when used as the base.
       const MachineOperand &MO = MI->getOperand(OpNo);
-      printRegister(MO, true);
+      printRegister(MO, true, O);
       O << ", ";
-      printOperand(MI, OpNo+1);
+      printOperand(MI, OpNo+1, O);
     }
 
-    void printTOCEntryLabel(const MachineInstr *MI, unsigned OpNo) {
+    void printTOCEntryLabel(const MachineInstr *MI, unsigned OpNo,
+                            raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       assert(MO.getType() == MachineOperand::MO_GlobalAddress);
       const MCSymbol *Sym = Mang->getSymbol(MO.getGlobal());
@@ -316,7 +327,7 @@ namespace {
     }
 
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
-                               const char *Modifier);
+                               raw_ostream &O, const char *Modifier);
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
@@ -372,7 +383,7 @@ namespace {
 // Include the auto-generated portion of the assembly writer
 #include "PPCGenAsmWriter.inc"
 
-void PPCAsmPrinter::printOp(const MachineOperand &MO) {
+void PPCAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
     llvm_unreachable("printOp() does not handle immediate values");
@@ -469,7 +480,7 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
       // PPC never has a prefix.
-      printOperand(MI, OpNo);
+      printOperand(MI, OpNo, O);
       return false;
     case 'L': // Write second word of DImode reference.
       // Verify that this operand has two consecutive registers.
@@ -488,7 +499,7 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     }
   }
 
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   return false;
 }
 
@@ -503,13 +514,13 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
     return true; // Unknown modifier.
   assert (MI->getOperand(OpNo).isReg());
   O << "0(";
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   O << ")";
   return false;
 }
 
 void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
-                                          const char *Modifier) {
+                                          raw_ostream &O, const char *Modifier){
   assert(Modifier && "Must specify 'cc' or 'reg' as predicate op modifier!");
   unsigned Code = MI->getOperand(OpNo).getImm();
   if (!strcmp(Modifier, "cc")) {
@@ -530,7 +541,7 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
            "Need to specify 'cc' or 'reg' as predicate op modifier!");
     // Don't print the register for 'always'.
     if (Code == PPC::PRED_ALWAYS) return;
-    printOperand(MI, OpNo+1);
+    printOperand(MI, OpNo+1, O);
   }
 }
 
@@ -553,9 +564,9 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       SH = 32-SH;
     }
     if (useSubstituteMnemonic) {
-      printOperand(MI, 0);
+      printOperand(MI, 0, O);
       O << ", ";
-      printOperand(MI, 1);
+      printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
       OutStreamer.AddBlankLine();
       return;
@@ -565,9 +576,9 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if ((MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) &&
       MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
     O << "\tmr ";
-    printOperand(MI, 0);
+    printOperand(MI, 0, O);
     O << ", ";
-    printOperand(MI, 1);
+    printOperand(MI, 1, O);
     OutStreamer.AddBlankLine();
     return;
   }
@@ -578,16 +589,16 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
     if (63-SH == ME) {
       O << "\tsldi ";
-      printOperand(MI, 0);
+      printOperand(MI, 0, O);
       O << ", ";
-      printOperand(MI, 1);
+      printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
       OutStreamer.AddBlankLine();
       return;
     }
   }
 
-  printInstruction(MI);
+  printInstruction(MI, O);
   OutStreamer.AddBlankLine();
 }
 

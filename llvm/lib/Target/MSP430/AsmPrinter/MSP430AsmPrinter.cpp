@@ -51,7 +51,7 @@ namespace {
     }
 
     void printMCInst(const MCInst *MI) {
-      MSP430InstPrinter(O, *MAI).printInstruction(MI);
+      MSP430InstPrinter(O, *MAI).printInstruction(MI, O);
     }
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char* Modifier = 0);

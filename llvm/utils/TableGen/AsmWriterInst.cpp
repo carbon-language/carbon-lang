@@ -38,6 +38,7 @@ std::string AsmWriterOperand::getCode() const {
   std::string Result = Str + "(MI";
   if (MIOpNo != ~0U)
     Result += ", " + utostr(MIOpNo);
+  Result += ", O";
   if (!MiModifier.empty())
     Result += ", \"" + MiModifier + '"';
   return Result + "); ";

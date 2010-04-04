@@ -44,7 +44,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
 }
 
 void PIC16AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  printInstruction(MI);
+  printInstruction(MI, O);
   OutStreamer.AddBlankLine();
 }
 
@@ -156,7 +156,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 
 // printOperand - print operand of insn.
-void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
+void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum,
+                                   raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(opNum);
   const Function *F = MI->getParent()->getParent()->getFunction();
 
@@ -167,9 +168,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
         std::string RegName = getRegisterName(MO.getReg());
         if ((MI->getOpcode() == PIC16::load_indirect) ||
             (MI->getOpcode() == PIC16::store_indirect))
-        {
           RegName.replace (0, 3, "INDF");
-        }
         O << RegName;
       }
       return;
@@ -216,7 +215,8 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
 /// printCCOperand - Print the cond code operand.
 ///
-void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
+void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum,
+                                     raw_ostream &O) {
   int CC = (int)MI->getOperand(opNum).getImm();
   O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
 }

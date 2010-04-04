@@ -44,16 +44,17 @@ namespace {
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
     }
-    void printInstruction(const MachineInstr *MI);
+    void printInstruction(const MachineInstr *MI, raw_ostream &O);
     void EmitInstruction(const MachineInstr *MI) {
-      printInstruction(MI);
+      printInstruction(MI, O);
       OutStreamer.AddBlankLine();
     }
     static const char *getRegisterName(unsigned RegNo);
 
-    void printOp(const MachineOperand &MO, bool IsCallOp = false);
-    void printOperand(const MachineInstr *MI, int opNum);
-    void printBaseOffsetPair(const MachineInstr *MI, int i, bool brackets=true);
+    void printOp(const MachineOperand &MO, raw_ostream &O);
+    void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
+    void printBaseOffsetPair(const MachineInstr *MI, int i, raw_ostream &O,
+                             bool brackets=true);
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd(); 
     void EmitStartOfAsmFile(Module &M);
@@ -69,8 +70,8 @@ namespace {
 
 #include "AlphaGenAsmWriter.inc"
 
-void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
-{
+void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
+                                   raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.getType() == MachineOperand::MO_Register) {
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
@@ -80,12 +81,12 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
     O << MO.getImm();
     assert(MO.getImm() < (1 << 30));
   } else {
-    printOp(MO);
+    printOp(MO, O);
   }
 }
 
 
-void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
+void AlphaAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     O << getRegisterName(MO.getReg());
@@ -148,7 +149,7 @@ void AlphaAsmPrinter::EmitStartOfAsmFile(Module &M) {
 bool AlphaAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                       unsigned AsmVariant,
                                       const char *ExtraCode) {
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   return false;
 }
 
@@ -159,7 +160,7 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
   O << "0(";
-  printOperand(MI, OpNo);
+  printOperand(MI, OpNo, O);
   O << ")";
   return false;
 }

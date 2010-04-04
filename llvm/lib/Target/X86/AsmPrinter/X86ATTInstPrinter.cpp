@@ -29,15 +29,18 @@ using namespace llvm;
 #include "X86GenAsmWriter.inc"
 #undef MachineInstr
 
-void X86ATTInstPrinter::printInst(const MCInst *MI) { printInstruction(MI); }
+void X86ATTInstPrinter::printInst(const MCInst *MI) {
+  printInstruction(MI, O);
+}
 StringRef X86ATTInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
 }
 
 
-void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
+                                   raw_ostream &O) {
   switch (MI->getOperand(Op).getImm()) {
-  default: llvm_unreachable("Invalid ssecc argument!");
+  default: assert(0 && "Invalid ssecc argument!");
   case 0: O << "eq"; break;
   case 1: O << "lt"; break;
   case 2: O << "le"; break;
@@ -53,7 +56,8 @@ void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
 /// being encoded as a pc-relative value (e.g. for jumps and calls).  These
 /// print slightly differently than normal immediates.  For example, a $ is not
 /// emitted.
-void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
+void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
     // Print this as a signed 32-bit value.
@@ -64,8 +68,8 @@ void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   }
 }
 
-void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo) {
-  
+void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
+                                     raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     O << '%' << getRegisterName(Op.getReg());
@@ -81,7 +85,8 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo) {
   }
 }
 
-void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op,
+                                             raw_ostream &O) {
   const MCOperand &BaseReg  = MI->getOperand(Op);
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
@@ -98,11 +103,11 @@ void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   if (IndexReg.getReg() || BaseReg.getReg()) {
     O << '(';
     if (BaseReg.getReg())
-      printOperand(MI, Op);
+      printOperand(MI, Op, O);
     
     if (IndexReg.getReg()) {
       O << ',';
-      printOperand(MI, Op+2);
+      printOperand(MI, Op+2, O);
       unsigned ScaleVal = MI->getOperand(Op+1).getImm();
       if (ScaleVal != 1)
         O << ',' << ScaleVal;
@@ -111,11 +116,12 @@ void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   }
 }
 
-void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
+                                          raw_ostream &O) {
   // If this has a segment register, print it.
   if (MI->getOperand(Op+4).getReg()) {
-    printOperand(MI, Op+4);
+    printOperand(MI, Op+4, O);
     O << ':';
   }
-  printLeaMemReference(MI, Op);
+  printLeaMemReference(MI, Op, O);
 }
