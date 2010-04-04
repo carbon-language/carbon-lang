@@ -39,9 +39,6 @@ protected:
   // Core attributes used by the DWARF printer.
   //
 
-  /// O - Stream to .s file.
-  raw_ostream &O;
-
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
 
@@ -66,7 +63,7 @@ protected:
   /// SubprogramCount - The running count of functions being compiled.
   unsigned SubprogramCount;
 
-  DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
+  DwarfPrinter(AsmPrinter *A);
 public:
   
   //===------------------------------------------------------------------===//

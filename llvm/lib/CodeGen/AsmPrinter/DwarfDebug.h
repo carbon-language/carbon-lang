@@ -487,8 +487,8 @@ class DwarfDebug : public DwarfPrinter {
 
   /// GetOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
-  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
-  /// as well.
+  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
+  /// maps as well.
   unsigned GetOrCreateSourceID(StringRef DirName, StringRef FileName);
 
   void constructCompileUnit(MDNode *N);
@@ -507,7 +507,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
+  DwarfDebug(AsmPrinter *A);
   virtual ~DwarfDebug();
 
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
@@ -516,7 +516,7 @@ public:
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void beginModule(Module *M, MachineModuleInfo *MMI);
+  void beginModule(Module *M);
 
   /// endModule - Emit all Dwarf sections that should come after the content.
   ///

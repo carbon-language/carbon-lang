@@ -166,14 +166,14 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfException(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
+  DwarfException(AsmPrinter *A);
   virtual ~DwarfException();
 
   /// BeginModule - Emit all exception information that should come prior to the
   /// content.
-  void BeginModule(Module *m, MachineModuleInfo *mmi) {
+  void BeginModule(Module *m) {
     this->M = m;
-    this->MMI = mmi;
+    this->MMI = Asm->MMI;
   }
 
   /// EndModule - Emit all exception information that should come after the

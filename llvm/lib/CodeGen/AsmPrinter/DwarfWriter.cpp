@@ -36,14 +36,11 @@ DwarfWriter::~DwarfWriter() {
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the
 /// content.
-void DwarfWriter::BeginModule(Module *M,
-                              MachineModuleInfo *MMI,
-                              raw_ostream &OS, AsmPrinter *A,
-                              const MCAsmInfo *T) {
-  DE = new DwarfException(OS, A, T);
-  DD = new DwarfDebug(OS, A, T);
-  DE->BeginModule(M, MMI);
-  DD->beginModule(M, MMI);
+void DwarfWriter::BeginModule(Module *M, AsmPrinter *A) {
+  DE = new DwarfException(A);
+  DD = new DwarfDebug(A);
+  DE->BeginModule(M);
+  DD->beginModule(M);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.

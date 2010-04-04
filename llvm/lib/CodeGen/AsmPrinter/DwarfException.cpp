@@ -37,9 +37,8 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
-DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
-                               const MCAsmInfo *T)
-  : DwarfPrinter(OS, A, T), shouldEmitTable(false),shouldEmitMoves(false),
+DwarfException::DwarfException(AsmPrinter *A)
+  : DwarfPrinter(A), shouldEmitTable(false), shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)

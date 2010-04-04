@@ -31,8 +31,8 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
-DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
-: O(OS), Asm(A), MAI(T), TD(Asm->TM.getTargetData()),
+DwarfPrinter::DwarfPrinter(AsmPrinter *A)
+: Asm(A), MAI(A->MAI), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0) {}
 
@@ -139,8 +139,7 @@ void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
     
   if (MAI->hasLEB128()) {
     // FIXME: MCize.
-    O << "\t.sleb128\t" << Value;
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer.EmitRawText("\t.sleb128\t" + Twine(Value));
     return;
   }
 
@@ -165,8 +164,7 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
  
   if (MAI->hasLEB128() && PadTo == 0) {
     // FIXME: MCize.
-    O << "\t.uleb128\t" << Value;
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer.EmitRawText("\t.uleb128\t" + Twine(Value));
     return;
   }
   

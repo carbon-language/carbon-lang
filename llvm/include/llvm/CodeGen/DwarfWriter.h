@@ -68,8 +68,7 @@ public:
   
   /// BeginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void BeginModule(Module *M, MachineModuleInfo *MMI, raw_ostream &OS,
-                   AsmPrinter *A, const MCAsmInfo *T);
+  void BeginModule(Module *M, AsmPrinter *A);
   
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///

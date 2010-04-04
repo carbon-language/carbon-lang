@@ -298,8 +298,8 @@ DbgScope::~DbgScope() {
 
 } // end llvm namespace
 
-DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
-  : DwarfPrinter(OS, A, T), ModuleCU(0),
+DwarfDebug::DwarfDebug(AsmPrinter *A)
+  : DwarfPrinter(A), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
     DIEBlocks(), SectionSourceLines(), didInitial(false), shouldEmit(false),
     CurrentFnDbgScope(0), DebugTimer(0) {
@@ -1780,7 +1780,7 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// beginModule - Emit all Dwarf sections that should come prior to the
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
-void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
+void DwarfDebug::beginModule(Module *M) {
   this->M = M;
 
   if (!MAI->doesSupportDebugInformation())
@@ -1809,7 +1809,7 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
          E = DbgFinder.global_variable_end(); I != E; ++I)
     constructGlobalVariableDIE(*I);
 
-  MMI = mmi;
+  MMI = Asm->MMI;
   shouldEmit = true;
   MMI->setDebugInfoAvailability(true);
 
