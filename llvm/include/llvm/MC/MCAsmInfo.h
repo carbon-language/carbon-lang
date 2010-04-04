@@ -223,10 +223,6 @@ namespace llvm {
 
     //===--- Dwarf Emission Directives -----------------------------------===//
 
-    /// AbsoluteDebugSectionOffsets - True if we should emit abolute section
-    /// offsets for debug information.
-    bool AbsoluteDebugSectionOffsets;        // Defaults to false.
-
     /// HasLEB128 - True if target asm supports leb128 directives.
     bool HasLEB128;                          // Defaults to false.
 
@@ -384,9 +380,6 @@ namespace llvm {
     MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}
     MCSymbolAttr getProtectedVisibilityAttr() const {
       return ProtectedVisibilityAttr;
-    }
-    bool isAbsoluteDebugSectionOffsets() const {
-      return AbsoluteDebugSectionOffsets;
     }
     bool hasLEB128() const {
       return HasLEB128;

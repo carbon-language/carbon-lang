@@ -38,7 +38,6 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   UsesELFSectionDirectiveForBSS = true;  
 
   // Debug Information
-  AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
 
   PCSymbol = ".";

@@ -20,6 +20,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
@@ -61,15 +62,16 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
   // If Label has already been emitted, verify that it is in the same section as
   // section label for sanity.
   assert((!Label->isInSection() || &Label->getSection() == &Section) &&
-         "Section offset using wrong section base for label"); (void)Section;
+         "Section offset using wrong section base for label");
   
   // If the section in question will end up with an address of 0 anyway, we can
   // just emit an absolute reference to save a relocation.
-  if (MAI->isAbsoluteDebugSectionOffsets()) {
+  if (Section.isBaseAddressKnownZero()) {
     Asm->OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
     return;
   }
 
+  // Otherwise, emit it as a label difference from the start of the section.
   Asm->EmitLabelDifference(Label, SectionLabel, 4);
 }
 

@@ -31,7 +31,6 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
 
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-  AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
   DwarfSectionOffsetDirective = "\t.secrel32\t";
   HasMicrosoftFastStdCallMangling = true;

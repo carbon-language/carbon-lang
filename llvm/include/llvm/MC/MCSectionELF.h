@@ -172,6 +172,11 @@ public:
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                     raw_ostream &OS) const;
   
+  /// isBaseAddressKnownZero - We know that non-allocatable sections (like
+  /// debug info) have a base of zero.
+  virtual bool isBaseAddressKnownZero() const {
+    return (getFlags() & SHF_ALLOC) == 0;
+  }
   
   /// PrintTargetSpecificSectionFlags - Targets that define their own
   /// MCSectionELF subclasses with target specific section flags should

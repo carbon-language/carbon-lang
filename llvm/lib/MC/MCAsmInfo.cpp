@@ -60,7 +60,6 @@ MCAsmInfo::MCAsmInfo() {
   LinkOnceDirective = 0;
   HiddenVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
-  AbsoluteDebugSectionOffsets = false;
   HasLEB128 = false;
   HasDotLocAndDotFile = false;
   SupportsDebugInformation = false;

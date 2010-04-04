@@ -39,6 +39,14 @@ namespace llvm {
     
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const = 0;
+
+    /// isBaseAddressKnownZero - Return true if we know that this section will
+    /// get a base address of zero.  In cases where we know that this is true we
+    /// can emit section offsets as direct references to avoid a subtraction
+    /// from the base of the section, saving a relocation.
+    virtual bool isBaseAddressKnownZero() const {
+      return false;
+    }
   };
 
   class MCSectionCOFF : public MCSection {

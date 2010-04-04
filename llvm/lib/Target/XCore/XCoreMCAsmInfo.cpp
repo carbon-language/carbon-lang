@@ -25,6 +25,5 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, const StringRef &TT) {
 
   // Debug
   HasLEB128 = true;
-  AbsoluteDebugSectionOffsets = true;
 }
 

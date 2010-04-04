@@ -84,7 +84,6 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
   // Debug Information
-  AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
 
   // Exceptions handling
