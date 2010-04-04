@@ -771,12 +771,27 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   //   a = b;
   // }
   //
-  // we need to use a differnt call here.  We use isVolatile to indicate when
+  // we need to use a different call here.  We use isVolatile to indicate when
   // either the source or the destination is volatile.
-  Builder.CreateCall4(CGM.getMemCpyFn(),
+  const llvm::Type *I1Ty = llvm::Type::getInt1Ty(VMContext);
+  const llvm::Type *I8Ty = llvm::Type::getInt8Ty(VMContext);
+  const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
+
+  const llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
+  const llvm::Type *DBP = llvm::PointerType::get(I8Ty, DPT->getAddressSpace());
+  if (DestPtr->getType() != DBP)
+    DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
+
+  const llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
+  const llvm::Type *SBP = llvm::PointerType::get(I8Ty, SPT->getAddressSpace());
+  if (SrcPtr->getType() != SBP)
+    SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
+
+  Builder.CreateCall5(CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(),
+                                      IntPtr),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                             TypeInfo.second/8));
+                      llvm::ConstantInt::get(I32Ty,  TypeInfo.second/8),
+                      llvm::ConstantInt::get(I1Ty,  isVolatile));
 }

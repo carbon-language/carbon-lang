@@ -97,10 +97,6 @@ class CodeGenModule : public BlockModule {
   
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
-  
-  llvm::Function *MemCpyFn;
-  llvm::Function *MemMoveFn;
-  llvm::Function *MemSetFn;
 
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we ever
@@ -290,9 +286,17 @@ public:
   llvm::Value *getBuiltinLibFunction(const FunctionDecl *FD,
                                      unsigned BuiltinID);
 
-  llvm::Function *getMemCpyFn();
-  llvm::Function *getMemMoveFn();
-  llvm::Function *getMemSetFn();
+  llvm::Function *getMemCpyFn(const llvm::Type *DestType,
+                              const llvm::Type *SrcType,
+                              const llvm::Type *SizeType);
+
+  llvm::Function *getMemMoveFn(const llvm::Type *DestType,
+                               const llvm::Type *SrcType,
+                               const llvm::Type *SizeType);
+
+  llvm::Function *getMemSetFn(const llvm::Type *DestType,
+                              const llvm::Type *SizeType);
+
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0,
                                unsigned NumTys = 0);
 
