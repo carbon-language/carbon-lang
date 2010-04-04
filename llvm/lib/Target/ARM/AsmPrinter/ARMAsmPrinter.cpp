@@ -1385,10 +1385,9 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI,
-                                             raw_ostream &O) {
+                                             const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new ARMInstPrinter(O, MAI, false);
+    return new ARMInstPrinter(MAI, false);
   return 0;
 }
 

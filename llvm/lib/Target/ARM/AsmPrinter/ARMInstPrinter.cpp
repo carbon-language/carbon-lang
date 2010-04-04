@@ -98,7 +98,7 @@ static unsigned NextReg(unsigned Reg) {
   }
 }
 
-void ARMInstPrinter::printInst(const MCInst *MI) {
+void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   // Check for MOVs and print canonical forms, instead.
   if (MI->getOpcode() == ARM::MOVs) {
     const MCOperand &Dst = MI->getOperand(0);

@@ -195,10 +195,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
-  
-  InstPrinter.reset(Tgt->createMCInstPrinter(syntaxVariant,
-                                                *AsmInfo,
-                                                *InstStream));
+  InstPrinter.reset(Tgt->createMCInstPrinter(syntaxVariant, *AsmInfo));
   
   if (!InstPrinter)
     return;
@@ -314,11 +311,10 @@ bool EDDisassembler::registerIsProgramCounter(unsigned registerID) {
   return (programCounters.find(registerID) != programCounters.end());
 }
 
-int EDDisassembler::printInst(std::string& str,
-                              MCInst& inst) {
+int EDDisassembler::printInst(std::string &str, MCInst &inst) {
   PrinterMutex.acquire();
   
-  InstPrinter->printInst(&inst);
+  InstPrinter->printInst(&inst, *InstStream);
   InstStream->flush();
   str = *InstString;
   InstString->clear();

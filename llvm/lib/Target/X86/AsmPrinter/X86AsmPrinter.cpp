@@ -636,12 +636,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI,
-                                             raw_ostream &O) {
+                                             const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new X86ATTInstPrinter(O, MAI);
+    return new X86ATTInstPrinter(MAI);
   if (SyntaxVariant == 1)
-    return new X86IntelInstPrinter(O, MAI);
+    return new X86IntelInstPrinter(MAI);
   return 0;
 }
 

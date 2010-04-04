@@ -28,7 +28,7 @@ using namespace llvm;
 #include "MSP430GenAsmWriter.inc"
 #undef MachineInstr
 
-void MSP430InstPrinter::printInst(const MCInst *MI) {
+void MSP430InstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   printInstruction(MI, O);
 }
 

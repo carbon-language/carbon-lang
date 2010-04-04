@@ -290,7 +290,7 @@ static int AssembleInput(const char *ProgName) {
 
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
-      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out);
+      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     Str.reset(createAsmStreamer(Ctx, *Out,TM->getTargetData()->isLittleEndian(),

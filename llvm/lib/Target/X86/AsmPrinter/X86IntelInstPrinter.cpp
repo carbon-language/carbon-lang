@@ -28,8 +28,8 @@ using namespace llvm;
 #include "X86GenAsmWriter1.inc"
 #undef MachineInstr
 
-void X86IntelInstPrinter::printInst(const MCInst *MI) {
-  printInstruction(MI, O);
+void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
+  printInstruction(MI, OS);
 }
 StringRef X86IntelInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);

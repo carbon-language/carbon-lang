@@ -51,7 +51,7 @@ namespace {
     }
 
     void printMCInst(const MCInst *MI) {
-      MSP430InstPrinter(O, *MAI).printInstruction(MI, O);
+      MSP430InstPrinter(*MAI).printInstruction(MI, O);
     }
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char* Modifier = 0);
@@ -191,10 +191,9 @@ void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 static MCInstPrinter *createMSP430MCInstPrinter(const Target &T,
                                                 unsigned SyntaxVariant,
-                                                const MCAsmInfo &MAI,
-                                                raw_ostream &O) {
+                                                const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new MSP430InstPrinter(O, MAI);
+    return new MSP430InstPrinter(MAI);
   return 0;
 }
 

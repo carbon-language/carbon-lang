@@ -128,7 +128,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   default: return true;
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
-      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, Out);
+      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI);
     AsmStreamer.reset(createAsmStreamer(*Context, Out,
                                         getTargetData()->isLittleEndian(),
                                         getVerboseAsm(), InstPrinter,

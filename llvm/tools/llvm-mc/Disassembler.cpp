@@ -48,8 +48,8 @@ public:
 }
 
 static bool PrintInsts(const MCDisassembler &DisAsm,
-                      MCInstPrinter &Printer, const ByteArrayTy &Bytes,
-                      SourceMgr &SM) {
+                       MCInstPrinter &Printer, const ByteArrayTy &Bytes,
+                       SourceMgr &SM) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
   
@@ -62,7 +62,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
     
     if (DisAsm.getInstruction(Inst, Size, memoryObject, Index, 
                                /*REMOVE*/ nulls())) {
-      Printer.printInst(&Inst);
+      Printer.printInst(&Inst, outs());
       outs() << "\n";
     }
     else {
@@ -92,7 +92,7 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
     return -1;
   }
   
-  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(0, *AsmInfo, outs()));
+  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(0, *AsmInfo));
   if (!IP) {
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;
