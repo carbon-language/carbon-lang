@@ -37,37 +37,6 @@ DwarfPrinter::DwarfPrinter(AsmPrinter *A)
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0) {}
 
-/// SizeOfEncodedValue - Return the size of the encoding in bytes.
-unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
-  if (Encoding == dwarf::DW_EH_PE_omit)
-    return 0;
-
-  switch (Encoding & 0x07) {
-  default:   assert(0 && "Invalid encoded value.");
-  case dwarf::DW_EH_PE_absptr: return TD->getPointerSize();
-  case dwarf::DW_EH_PE_udata2: return 2;
-  case dwarf::DW_EH_PE_udata4: return 4;
-  case dwarf::DW_EH_PE_udata8: return 8;
-  }
-}
-
-void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-
-  const MCExpr *Exp = TLOF.getExprForDwarfReference(Sym, Asm->Mang,
-                                                    Asm->MMI, Encoding,
-                                                    Asm->OutStreamer);
-  Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
-}
-
-void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-
-  const MCExpr *Exp =
-    TLOF.getExprForDwarfGlobalReference(GV, Asm->Mang, Asm->MMI, Encoding,
-                                        Asm->OutStreamer);
-  Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
-}
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      const MCSymbol *Section,

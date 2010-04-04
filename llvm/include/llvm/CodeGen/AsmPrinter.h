@@ -343,6 +343,15 @@ namespace llvm {
     /// specifying (e.g. "LSDA").
     void EmitEncodingByte(unsigned Val, const char *Desc = 0);
     
+    /// GetSizeOfEncodedValue - Return the size of the encoding in bytes.
+    unsigned GetSizeOfEncodedValue(unsigned Encoding) const;
+    
+    /// EmitReference - Emit a reference to a label with a specified encoding.
+    ///
+    void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;
+    void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
+    
+    
     //===------------------------------------------------------------------===//
     // Inline Asm Support
     //===------------------------------------------------------------------===//

@@ -74,24 +74,6 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return MAI; }
   const TargetData *getTargetData() const { return TD; }
 
-  /// SizeOfEncodedValue - Return the size of the encoding in bytes.
-  unsigned SizeOfEncodedValue(unsigned Encoding) const;
-
-  /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
-  /// encoding.  If verbose assembly output is enabled, we output comments
-  /// describing the encoding.  Desc is a string saying what the encoding is
-  /// specifying (e.g. "LSDA").
-  void EmitEncodingByte(unsigned Val, const char *Desc);
-  
-  /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
-  void EmitCFAByte(unsigned Val);
-  
-    
-  /// EmitReference - Emit a reference to a label.
-  ///
-  void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;
-  void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
-
   /// EmitSectionOffset - Emit Label-Section or use a special purpose directive
   /// to emit a section offset if the target has one.
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,

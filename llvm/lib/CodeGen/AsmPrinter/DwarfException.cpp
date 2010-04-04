@@ -106,7 +106,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   if (PersonalityFn) {
     // There is a personality function.
     *APtr++ = 'P';
-    AugmentationSize += 1 + SizeOfEncodedValue(PerEncoding);
+    AugmentationSize += 1 + Asm->GetSizeOfEncodedValue(PerEncoding);
   }
 
   if (UsesLSDA[Index]) {
@@ -140,7 +140,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     if (PersonalityFn) {
       Asm->EmitEncodingByte(PerEncoding, "Personality");
       Asm->OutStreamer.AddComment("Personality");
-      EmitReference(PersonalityFn, PerEncoding);
+      Asm->EmitReference(PersonalityFn, PerEncoding);
     }
     if (UsesLSDA[Index])
       Asm->EmitEncodingByte(LSDAEncoding, "LSDA");
@@ -227,23 +227,24 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       Asm->GetTempSymbol("eh_func_begin", EHFrameInfo.Number);
 
     Asm->OutStreamer.AddComment("FDE initial location");
-    EmitReference(EHFuncBeginSym, FDEEncoding);
+    Asm->EmitReference(EHFuncBeginSym, FDEEncoding);
     
     Asm->OutStreamer.AddComment("FDE address range");
     Asm->EmitLabelDifference(Asm->GetTempSymbol("eh_func_end",
                                                 EHFrameInfo.Number),
-                             EHFuncBeginSym, SizeOfEncodedValue(FDEEncoding));
+                             EHFuncBeginSym,
+                             Asm->GetSizeOfEncodedValue(FDEEncoding));
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
     if (MMI->getPersonalities()[0] != NULL) {
-      unsigned Size = SizeOfEncodedValue(LSDAEncoding);
+      unsigned Size = Asm->GetSizeOfEncodedValue(LSDAEncoding);
 
       Asm->EmitULEB128(Size, "Augmentation size");
       Asm->OutStreamer.AddComment("Language Specific Data Area");
       if (EHFrameInfo.hasLandingPads)
-        EmitReference(Asm->GetTempSymbol("exception", EHFrameInfo.Number),
-                      LSDAEncoding);
+        Asm->EmitReference(Asm->GetTempSymbol("exception", EHFrameInfo.Number),
+                           LSDAEncoding);
       else
         Asm->OutStreamer.EmitIntValue(0, Size/*size*/, 0/*addrspace*/);
 
@@ -681,7 +682,7 @@ void DwarfException::EmitExceptionTable() {
     // in target-independent code.
     //
     TTypeEncoding = Asm->getObjFileLowering().getTTypeEncoding();
-    TypeFormatSize = SizeOfEncodedValue(TTypeEncoding);
+    TypeFormatSize = Asm->GetSizeOfEncodedValue(TTypeEncoding);
   }
 
   // Begin the exception table.
@@ -867,9 +868,10 @@ void DwarfException::EmitExceptionTable() {
 
     Asm->OutStreamer.AddComment("TypeInfo");
     if (GV)
-      EmitReference(GV, TTypeEncoding);
+      Asm->EmitReference(GV, TTypeEncoding);
     else
-      Asm->OutStreamer.EmitIntValue(0, SizeOfEncodedValue(TTypeEncoding), 0);
+      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
+                                    0);
   }
 
   // Emit the Exception Specifications.

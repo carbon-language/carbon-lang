@@ -15,6 +15,9 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Dwarf.h"
 using namespace llvm;
@@ -126,3 +129,32 @@ void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
   OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
+/// GetSizeOfEncodedValue - Return the size of the encoding in bytes.
+unsigned AsmPrinter::GetSizeOfEncodedValue(unsigned Encoding) const {
+  if (Encoding == dwarf::DW_EH_PE_omit)
+    return 0;
+  
+  switch (Encoding & 0x07) {
+  default: assert(0 && "Invalid encoded value.");
+  case dwarf::DW_EH_PE_absptr: return TM.getTargetData()->getPointerSize();
+  case dwarf::DW_EH_PE_udata2: return 2;
+  case dwarf::DW_EH_PE_udata4: return 4;
+  case dwarf::DW_EH_PE_udata8: return 8;
+  }
+}
+
+void AsmPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
+  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
+  
+  const MCExpr *Exp =
+    TLOF.getExprForDwarfReference(Sym, Mang, MMI, Encoding, OutStreamer);
+  OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
+}
+
+void AsmPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
+  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
+  
+  const MCExpr *Exp =
+    TLOF.getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
+  OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
+}
