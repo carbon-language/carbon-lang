@@ -13,6 +13,7 @@
 
 #include "DwarfException.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -917,8 +918,6 @@ void DwarfException::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(const MachineFunction *MF) {
-  if (!MMI || !Asm->MAI->doesSupportExceptionHandling()) return;
-
   TimeRegion Timer(ExceptionTimer);
   shouldEmitTable = shouldEmitMoves = false;
 

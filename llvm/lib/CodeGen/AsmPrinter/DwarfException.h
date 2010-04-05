@@ -14,18 +14,23 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 #define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/DenseMap.h"
-#include <string>
+#include <vector>
 
 namespace llvm {
 
+template <typename T> class SmallVectorImpl;
 struct LandingPadInfo;
 class MachineModuleInfo;
+class MachineMove;
+class MachineInstr;
+class MachineFunction;
 class MCAsmInfo;
 class MCExpr;
+class MCSymbol;
 class Timer;
-class raw_ostream;
+class Function;
+class AsmPrinter;
 
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
