@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is part of the ARM Disassembler.
-// It contains code to represent the core concepts of Builder and DisassembleFP
-// to solve the problem of disassembling an ARM instr.
+// It contains code to represent the core concepts of Builder, Builder Factory,
+// as well as the Algorithm to solve the problem of disassembling an ARM instr.
 //
 //===----------------------------------------------------------------------===//
 
@@ -3127,12 +3127,40 @@ static const DisassembleFP FuncPtrs[] = {
   NULL
 };
 
+/// Algorithms - Algorithms stores a map from Format to ARMAlgorithm*.
+static std::vector<ARMAlgorithm*> Algorithms;
+
+/// DoCleanup - Do cleanup of Algorithms upon exit.
+void ARMAlgorithm::DoCleanup() {
+  for (unsigned i = 0; i < array_lengthof(FuncPtrs); ++i)
+    if (Algorithms[i])
+      delete Algorithms[i];
+}
+
+/// GetInstance - GetInstance returns an instance of ARMAlgorithm given the
+/// encoding Format.  API clients should not free up the returned instance.
+ARMAlgorithm *ARMAlgorithm::GetInstance(ARMFormat Format) {
+  /// Init the first time.
+  if (Algorithms.size() == 0) {
+    Algorithms.resize(array_lengthof(FuncPtrs));
+    for (unsigned i = 0, num = array_lengthof(FuncPtrs); i < num; ++i)
+      if (FuncPtrs[i])
+        Algorithms[i] = new ARMAlgorithm(FuncPtrs[i]);
+      else
+        Algorithms[i] = NULL;
+
+    // Register cleanup routine.
+    atexit(DoCleanup);
+  }
+  return Algorithms[Format];
+}
+
 /// BuildIt - BuildIt performs the build step for this ARM Basic MC Builder.
 /// The general idea is to set the Opcode for the MCInst, followed by adding
 /// the appropriate MCOperands to the MCInst.  ARM Basic MC Builder delegates
-/// to the Format-specific disassemble function for disassembly, followed by
-/// TryPredicateAndSBitModifier() to do PredicateOperand and OptionalDefOperand
-/// which follow the Dst/Src Operands.
+/// to the Algo (ARM Disassemble Algorithm) object to perform Format-specific
+/// disassembly, followed by TryPredicateAndSBitModifier() to do
+/// PredicateOperand and OptionalDefOperand which follow the Dst/Src Operands.
 bool ARMBasicMCBuilder::BuildIt(MCInst &MI, uint32_t insn) {
   // Stage 1 sets the Opcode.
   MI.setOpcode(Opcode);
@@ -3140,12 +3168,9 @@ bool ARMBasicMCBuilder::BuildIt(MCInst &MI, uint32_t insn) {
   if (NumOps == 0)
     return true;
 
-  // Stage 2 calls the format-specific disassemble function to build the operand
-  // list.
-  if (Disasm == NULL)
-    return false;
+  // Stage 2 calls the ARM Disassembly Algorithm to build the operand list.
   unsigned NumOpsAdded = 0;
-  bool OK = (*Disasm)(MI, Opcode, insn, NumOps, NumOpsAdded, this);
+  bool OK = Algo.Solve(MI, Opcode, insn, NumOps, NumOpsAdded, this);
 
   if (!OK) return false;
   if (NumOpsAdded >= NumOps)
@@ -3231,15 +3256,6 @@ bool ARMBasicMCBuilder::RunBuildAfterHook(bool Status, MCInst &MI,
   return Status;
 }
 
-/// Opcode, Format, and NumOperands make up an ARM Basic MCBuilder.
-ARMBasicMCBuilder::ARMBasicMCBuilder(unsigned opc, ARMFormat format,
-                                     unsigned short num)
-  : Opcode(opc), Format(format), NumOps(num), SP(0) {
-  unsigned Idx = (unsigned)format;
-  assert(Idx < (array_lengthof(FuncPtrs) - 1) && "Unknown format");
-  Disasm = FuncPtrs[Idx];
-}
-
 /// CreateMCBuilder - Return an ARMBasicMCBuilder that can build up the MC
 /// infrastructure of an MCInst given the Opcode and Format of the instr.
 /// Return NULL if it fails to create/return a proper builder.  API clients
@@ -3247,6 +3263,10 @@ ARMBasicMCBuilder::ARMBasicMCBuilder(unsigned opc, ARMFormat format,
 /// performed by the API clients to improve performance.
 ARMBasicMCBuilder *llvm::CreateMCBuilder(unsigned Opcode, ARMFormat Format) {
 
+  ARMAlgorithm *Algo = ARMAlgorithm::GetInstance(Format);
+  if (!Algo)
+    return NULL;
+
   return new ARMBasicMCBuilder(Opcode, Format,
-                               ARMInsts[Opcode].getNumOperands());
+                               ARMInsts[Opcode].getNumOperands(), *Algo);
 }

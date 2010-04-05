@@ -13,8 +13,8 @@
 // specifies the encoding used by the instruction, as well as a helper function
 // to convert the enums to printable char strings.
 //
-// It also contains code to represent the concepts of Builder and DisassembleFP
-// to solve the problem of disassembling an ARM instr.
+// It also contains code to represent the concepts of Builder, Builder Factory,
+// as well as the Algorithm to solve the problem of disassembling an ARM instr.
 //
 //===----------------------------------------------------------------------===//
 
@@ -171,23 +171,60 @@ typedef ARMBasicMCBuilder *BO;
 typedef bool (*DisassembleFP)(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO Builder);
 
+/// ARMAlgorithm - ARMAlgorithm implements the ARM/Thumb disassembly by solving
+/// the problem of building the MCOperands of an MCInst.  Construction of
+/// ARMAlgorithm requires passing in a function pointer with the DisassembleFP
+/// data type.
+class ARMAlgorithm {
+public:
+  /// GetInstance - GetInstance returns an instance of ARMAlgorithm given the
+  /// encoding Format.  API clients should not free up the returned instance.
+  static ARMAlgorithm *GetInstance(ARMFormat Format);
+
+  /// DoCleanup - DoCleanup is meant to be called upon exit as an exit handler.
+  static void DoCleanup();
+
+  /// Return true if this algorithm successfully disassembles the instruction.
+  /// NumOpsAdded is updated to reflect the number of operands added by the
+  /// algorithm.  NumOpsAdded may be less than NumOps, in which case, there are
+  /// operands unaccounted for which need to be dealt with by the API client.
+  bool Solve(MCInst &MI, unsigned Opcode, uint32_t insn, unsigned short NumOps,
+      unsigned &NumOpsAdded, BO Builder) const {
+    if (Disassemble == NULL)
+      return false;
+
+    return (*Disassemble)(MI, Opcode, insn, NumOps, NumOpsAdded, Builder);
+  }
+
+private:
+  ARMAlgorithm(DisassembleFP fp) : Disassemble(fp) {}
+  ARMAlgorithm(ARMAlgorithm &AA) : Disassemble(AA.Disassemble) {}
+
+  virtual ~ARMAlgorithm() {}
+
+  DisassembleFP Disassemble;
+};
+
 /// ARMBasicMCBuilder - ARMBasicMCBuilder represents an ARM MCInst builder that
 /// knows how to build up the MCOperand list.
 class ARMBasicMCBuilder {
   unsigned Opcode;
   ARMFormat Format;
   unsigned short NumOps;
-  DisassembleFP Disasm;
+  const ARMAlgorithm &Algo;
   Session *SP;
 
 public:
   ARMBasicMCBuilder(ARMBasicMCBuilder &B)
-    : Opcode(B.Opcode), Format(B.Format), NumOps(B.NumOps), Disasm(B.Disasm),
+    : Opcode(B.Opcode), Format(B.Format), NumOps(B.NumOps), Algo(B.Algo),
       SP(B.SP)
   {}
 
-  /// Opcode, Format, and NumOperands make up an ARM Basic MCBuilder.
-  ARMBasicMCBuilder(unsigned opc, ARMFormat format, unsigned short num);
+  /// Opcode, Format, NumOperands, and Algo make an ARM Basic MCBuilder.
+  ARMBasicMCBuilder(unsigned opc, ARMFormat format, unsigned short num,
+                    const ARMAlgorithm &algo)
+    : Opcode(opc), Format(format), NumOps(num), Algo(algo), SP(0)
+  {}
 
   virtual ~ARMBasicMCBuilder() {}
 
@@ -219,9 +256,9 @@ public:
   /// BuildIt - BuildIt performs the build step for this ARM Basic MC Builder.
   /// The general idea is to set the Opcode for the MCInst, followed by adding
   /// the appropriate MCOperands to the MCInst.  ARM Basic MC Builder delegates
-  /// to the Format-specific disassemble function for disassembly, followed by
-  /// TryPredicateAndSBitModifier() for PredicateOperand and OptionalDefOperand
-  /// which follow the Dst/Src Operands.
+  /// to the Algo (ARM Disassemble Algorithm) object to perform Format-specific
+  /// disassembly, followed by class method TryPredicateAndSBitModifier() to do
+  /// PredicateOperand and OptionalDefOperand which follow the Dst/Src Operands.
   virtual bool BuildIt(MCInst &MI, uint32_t insn);
 
   /// RunBuildAfterHook - RunBuildAfterHook performs operations deemed necessary
