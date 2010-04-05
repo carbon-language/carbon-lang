@@ -13,8 +13,9 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "DwarfDebug.h"
+#include "DwarfException.h"
 #include "llvm/Module.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -62,12 +63,14 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
-  DW = 0; MMI = 0; LI = 0;
+  DD = 0; DE = 0; MMI = 0; LI = 0;
   GCMetadataPrinters = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {
+  assert(DD == 0 && DE == 0 && "Debug/EH info didn't get finalized");
+  
   if (GCMetadataPrinters != 0) {
     gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
     
@@ -108,7 +111,6 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<MachineModuleInfo>();
   AU.addRequired<GCModuleInfo>();
-  AU.addRequired<DwarfWriter>();
   if (isVerbose())
     AU.addRequired<MachineLoopInfo>();
 }
@@ -148,9 +150,11 @@ bool AsmPrinter::doInitialization(Module &M) {
     OutStreamer.AddBlankLine();
   }
 
-  DW = getAnalysisIfAvailable<DwarfWriter>();
-  if (DW)
-    DW->BeginModule(&M, this);
+  if (MAI->doesSupportDebugInformation())
+    DD = new DwarfDebug(this, &M);
+    
+  if (MAI->doesSupportExceptionHandling())
+    DE = new DwarfException(this);
 
   return false;
 }
@@ -344,8 +348,8 @@ void AsmPrinter::EmitFunctionHeader() {
   }
   
   // Emit pre-function debug and/or EH information.
-  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
-    DW->BeginFunction(MF);
+  if (DE) DE->BeginFunction(MF);
+  if (DD) DD->beginFunction(MF);
 }
 
 /// EmitFunctionEntryLabel - Emit the label that is the entrypoint for the
@@ -439,8 +443,7 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk before the function body.
   EmitFunctionBodyStart();
   
-  bool ShouldPrintDebugScopes =
-    DW && MAI->doesSupportDebugInformation() &&DW->ShouldEmitDwarfDebug();
+  bool ShouldPrintDebugScopes = DD && MMI->hasDebugInfo();
   
   // Print out code for the function.
   bool HasAnyRealCode = false;
@@ -457,7 +460,7 @@ void AsmPrinter::EmitFunctionBody() {
       ++EmittedInsts;
       
       if (ShouldPrintDebugScopes)
-        DW->BeginScope(II);
+        DD->beginScope(II);
       
       if (isVerbose())
         EmitComments(*II, OutStreamer.GetCommentOS());
@@ -483,7 +486,7 @@ void AsmPrinter::EmitFunctionBody() {
       }
       
       if (ShouldPrintDebugScopes)
-        DW->EndScope(II);
+        DD->endScope(II);
     }
   }
   
@@ -512,8 +515,9 @@ void AsmPrinter::EmitFunctionBody() {
   }
   
   // Emit post-function debug information.
-  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
-    DW->EndFunction(MF);
+  if (DD) DD->endFunction(MF);
+  if (DE) DE->EndFunction();
+  MMI->EndFunction();
   
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo();
@@ -528,9 +532,15 @@ bool AsmPrinter::doFinalization(Module &M) {
        I != E; ++I)
     EmitGlobalVariable(I);
   
-  // Emit final debug information.
-  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
-    DW->EndModule();
+  // Finalize debug and EH information.
+  if (DE) {
+    DE->EndModule();
+    delete DE; DE = 0;
+  }
+  if (DD) {
+    DD->endModule();
+    delete DD; DD = 0;
+  }
   
   // If the target wants to know about weak references, print them all.
   if (MAI->getWeakRefDirective()) {
@@ -594,7 +604,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   EmitEndOfAsmFile(M);
   
   delete Mang; Mang = 0;
-  DW = 0; MMI = 0;
+  MMI = 0;
   
   OutStreamer.Finish();
   return false;

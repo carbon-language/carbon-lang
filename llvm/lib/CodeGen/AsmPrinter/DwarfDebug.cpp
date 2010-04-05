@@ -299,7 +299,7 @@ DbgScope::~DbgScope() {
     delete Variables[j];
 }
 
-DwarfDebug::DwarfDebug(AsmPrinter *A)
+DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), 
     CurrentFnDbgScope(0), DebugTimer(0) {
@@ -310,6 +310,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
       
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
+      
+  beginModule(M);
 }
 DwarfDebug::~DwarfDebug() {
   for (unsigned j = 0, M = DIEBlocks.size(); j < M; ++j)
@@ -1791,9 +1793,6 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
-  if (!Asm->MAI->doesSupportDebugInformation())
-    return;
-  
   MMI = Asm->MMI;
 
   TimeRegion Timer(DebugTimer);

@@ -42,14 +42,15 @@ namespace llvm {
   class MachineJumpTableInfo;
   class MachineModuleInfo;
   class MachineMove;
+  class MCAsmInfo;
   class MCInst;
   class MCContext;
   class MCSection;
   class MCStreamer;
   class MCSymbol;
-  class DwarfWriter;
+  class DwarfDebug;
+  class DwarfException;
   class Mangler;
-  class MCAsmInfo;
   class TargetLoweringObjectFile;
   class TargetData;
   class Twine;
@@ -59,9 +60,6 @@ namespace llvm {
   /// asm writers.
   class AsmPrinter : public MachineFunctionPass {
   public:
-    /// DW - If available, this is a pointer to the current dwarf writer.
-    DwarfWriter *DW;
-    
     /// Target machine description.
     ///
     TargetMachine &TM;
@@ -107,8 +105,14 @@ namespace llvm {
     
     /// If VerboseAsm is set, a pointer to the loop info for this
     /// function.
-    ///
     MachineLoopInfo *LI;
+
+    /// DD - If the target supports dwarf debug info, this pointer is non-null.
+    DwarfDebug *DD;
+    
+    /// DE - If the target supports dwarf exception info, this pointer is
+    /// non-null.
+    DwarfException *DE;
     
   protected:
     explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);

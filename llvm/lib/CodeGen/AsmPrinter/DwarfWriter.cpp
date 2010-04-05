@@ -38,8 +38,7 @@ DwarfWriter::~DwarfWriter() {
 /// content.
 void DwarfWriter::BeginModule(Module *M, AsmPrinter *A) {
   DE = new DwarfException(A);
-  DD = new DwarfDebug(A);
-  DD->beginModule(M);
+  DD = new DwarfDebug(A, M);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.

@@ -513,7 +513,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfDebug(AsmPrinter *A);
+  DwarfDebug(AsmPrinter *A, Module *M);
   virtual ~DwarfDebug();
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
