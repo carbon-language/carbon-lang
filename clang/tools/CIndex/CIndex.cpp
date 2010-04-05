@@ -996,11 +996,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  // Configure the diagnostics.
-  DiagnosticOptions DiagOpts;
-  llvm::OwningPtr<Diagnostic> Diags;
-  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
-  return ASTUnit::LoadFromPCHFile(ast_filename, *Diags,
+  return ASTUnit::LoadFromPCHFile(ast_filename, DefaultDiag(),
                                   CXXIdx->getOnlyLocalDecls(),
                                   0, 0, true);
 }
@@ -1019,8 +1015,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
-  llvm::OwningPtr<Diagnostic> Diags;
-  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
+  llvm::MaybeOwningPtr<Diagnostic> Diags;
+  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0), true);
 
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
@@ -1052,7 +1048,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
     llvm::OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                   *Diags,
+                                   Diags,
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
                                    RemappedFiles.data(),
@@ -1169,7 +1165,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
   }
 
-  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
+  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, Diags,
                                           CXXIdx->getOnlyLocalDecls(),
                                           RemappedFiles.data(),
                                           RemappedFiles.size(),

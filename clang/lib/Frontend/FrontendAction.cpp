@@ -46,7 +46,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     assert(hasASTSupport() && "This action does not have AST support!");
 
     std::string Error;
-    ASTUnit *AST = ASTUnit::LoadFromPCHFile(Filename, CI.getDiagnostics());
+    ASTUnit *AST = ASTUnit::LoadFromPCHFile(Filename, 
+                                            UnownedDiag(CI.getDiagnostics()));
     if (!AST)
       goto failure;
 

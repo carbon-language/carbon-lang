@@ -37,7 +37,8 @@ void ASTMergeAction::ExecuteAction() {
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], CI.getDiagnostics(),
+    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], 
+                                             UnownedDiag(CI.getDiagnostics()),
                                              false);
     if (!Unit)
       continue;

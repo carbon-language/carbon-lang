@@ -52,6 +52,7 @@ public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
 private:
+  llvm::MaybeOwningPtr<Diagnostic>  Diagnostics;
   llvm::OwningPtr<FileManager>      FileMgr;
   llvm::OwningPtr<SourceManager>    SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
@@ -116,7 +117,7 @@ private:
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   
-  ASTUnit(Diagnostic &Diag, bool MainFileIsAST);
+  explicit ASTUnit(bool MainFileIsAST);
 
 public:
   class ConcurrencyCheck {
@@ -141,6 +142,9 @@ public:
 
   bool isMainFileAST() const { return MainFileIsAST; }
 
+  const Diagnostic &getDiagnostics() const { return *Diagnostics; }
+  Diagnostic &getDiagnostics()             { return *Diagnostics; }
+  
   const SourceManager &getSourceManager() const { return *SourceMgr; }
         SourceManager &getSourceManager()       { return *SourceMgr; }
 
@@ -210,7 +214,7 @@ public:
   ///
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
-                                  Diagnostic &Diags,
+                                  llvm::MaybeOwningPtr<Diagnostic> Diags,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
                                   unsigned NumRemappedFiles = 0,
@@ -228,7 +232,7 @@ public:
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                             Diagnostic &Diags,
+                                       llvm::MaybeOwningPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false);
 
@@ -248,7 +252,7 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
-                                      Diagnostic &Diags,
+                                      llvm::MaybeOwningPtr<Diagnostic> Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
@@ -256,6 +260,24 @@ public:
                                       bool CaptureDiagnostics = false);
 };
 
+/// \brief Return an potentially-owning pointer for the given diagnostic engine
+/// that owns the pointer.
+inline llvm::MaybeOwningPtr<Diagnostic> OwnedDiag(Diagnostic &Diags) {
+  return llvm::MaybeOwningPtr<Diagnostic>(&Diags, true);
+}
+
+/// \brief Return a potentially-owning pointer for the given diagnostic engine
+/// that does not own the pointer.
+inline llvm::MaybeOwningPtr<Diagnostic> UnownedDiag(Diagnostic &Diags) {
+  return llvm::MaybeOwningPtr<Diagnostic>(&Diags, false);
+}
+
+/// \brief Return an potentially-owning pointer that indicates that the
+/// default diagnostic engine should be used.
+inline llvm::MaybeOwningPtr<Diagnostic> DefaultDiag() {
+  return llvm::MaybeOwningPtr<Diagnostic>();
+}
+  
 } // namespace clang
 
 #endif
