@@ -19,6 +19,16 @@ namespace llvm {
 namespace clang {
 namespace CodeGen {
 
+class CGBitFieldInfo {
+public:
+  CGBitFieldInfo(unsigned FieldNo, unsigned Start, unsigned Size)
+    : FieldNo(FieldNo), Start(Start), Size(Size) {}
+
+  unsigned FieldNo;
+  unsigned Start;
+  unsigned Size;
+};
+
 /// CGRecordLayout - This class handles struct and union layout info while
 /// lowering AST types to LLVM types.
 ///
@@ -28,18 +38,6 @@ class CGRecordLayout {
 
   CGRecordLayout(const CGRecordLayout&); // DO NOT IMPLEMENT
   void operator=(const CGRecordLayout&); // DO NOT IMPLEMENT
-
-public:
-  struct BitFieldInfo {
-    BitFieldInfo(unsigned FieldNo,
-                 unsigned Start,
-                 unsigned Size)
-      : FieldNo(FieldNo), Start(Start), Size(Size) {}
-
-    unsigned FieldNo;
-    unsigned Start;
-    unsigned Size;
-  };
 
 private:
   /// The LLVMType corresponding to this record layout.
@@ -51,7 +49,7 @@ private:
 
   /// Map from (bit-field) struct field to the corresponding llvm struct type
   /// field no. This info is populated by record builder.
-  llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
+  llvm::DenseMap<const FieldDecl *, CGBitFieldInfo> BitFields;
 
   /// Whether one of the fields in this record layout is a pointer to data
   /// member, or a struct that contains pointer to data member.
@@ -80,9 +78,9 @@ public:
 
   /// \brief Return llvm::StructType element number that corresponds to the
   /// field FD.
-  const BitFieldInfo &getBitFieldInfo(const FieldDecl *FD) const {
+  const CGBitFieldInfo &getBitFieldInfo(const FieldDecl *FD) const {
     assert(FD->isBitField() && "Invalid call for non bit-field decl!");
-    llvm::DenseMap<const FieldDecl *, BitFieldInfo>::const_iterator
+    llvm::DenseMap<const FieldDecl *, CGBitFieldInfo>::const_iterator
       it = BitFields.find(FD);
     assert(it != BitFields.end()  && "Unable to find bitfield info");
     return it->second;

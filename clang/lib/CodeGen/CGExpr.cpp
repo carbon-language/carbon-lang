@@ -1471,7 +1471,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               unsigned CVRQualifiers) {
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
-  const CGRecordLayout::BitFieldInfo &Info = RL.getBitFieldInfo(Field);
+  const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
 
   // FIXME: CodeGenTypes should expose a method to get the appropriate type for
   // FieldTy (the appropriate type is ABI-dependent).

@@ -3126,7 +3126,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       const CGRecordLayout &RL =
         CGM.getTypes().getCGRecordLayout(Field->getParent());
       if (Field->isBitField()) {
-        const CGRecordLayout::BitFieldInfo &Info = RL.getBitFieldInfo(Field);
+        const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
 
         const llvm::Type *Ty =
           CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());

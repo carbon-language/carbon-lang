@@ -506,7 +506,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     const CGRecordLayoutBuilder::LLVMBitFieldInfo &Info =
       Builder.LLVMBitFields[i];
 
-    CGRecordLayout::BitFieldInfo BFI(Info.FieldNo, Info.Start, Info.Size);
+    CGBitFieldInfo BFI(Info.FieldNo, Info.Start, Info.Size);
     RL->BitFields.insert(std::make_pair(Info.FD, BFI));
   }
 
