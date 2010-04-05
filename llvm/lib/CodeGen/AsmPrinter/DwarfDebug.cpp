@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "dwarfdebug"
 #include "DwarfDebug.h"
 #include "DIE.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -1529,6 +1530,31 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
           unsigned Imm = DbgValueInsn->getOperand(0).getImm();
           addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
           addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
+          if (MCSymbol *VS = DV->getDbgValueLabel())
+            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
+                     VS);
+        } else if (DbgValueInsn->getOperand(0).getType() == 
+                   MachineOperand::MO_FPImmediate) {
+          DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+          APFloat FPImm = DbgValueInsn->getOperand(0).getFPImm()->getValueAPF();
+
+          // Get the raw data form of the floating point.
+          const APInt FltVal = FPImm.bitcastToAPInt();
+          const char *FltPtr = (const char*)FltVal.getRawData();
+
+          unsigned NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
+          bool LittleEndian = Asm->getTargetData().isLittleEndian();
+          int Incr = (LittleEndian ? 1 : -1);
+          int Start = (LittleEndian ? 0 : NumBytes - 1);
+          int Stop = (LittleEndian ? NumBytes : -1);
+
+          // Output the constant to DWARF one byte at a time.
+          for (; Start != Stop; Start += Incr)
+            addUInt(Block, 0, dwarf::DW_FORM_data1,
+                    (unsigned char)0xFF & FltPtr[Start]);
+
+          addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
+
           if (MCSymbol *VS = DV->getDbgValueLabel())
             addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
                      VS);
