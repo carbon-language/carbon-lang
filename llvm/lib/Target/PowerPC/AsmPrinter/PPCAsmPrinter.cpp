@@ -344,8 +344,6 @@ namespace {
     virtual void EmitFunctionEntryLabel();
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-      AU.addRequired<MachineModuleInfo>();
       AU.addRequired<DwarfWriter>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }

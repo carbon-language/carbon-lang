@@ -60,11 +60,6 @@ namespace {
                                unsigned OpNo, unsigned AsmVariant,
                                const char *ExtraCode, raw_ostream &O);
     void EmitInstruction(const MachineInstr *MI);
-
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AsmPrinter::getAnalysisUsage(AU);
-      AU.setPreservesAll();
-    }
   };
 } // end of anonymous namespace
 

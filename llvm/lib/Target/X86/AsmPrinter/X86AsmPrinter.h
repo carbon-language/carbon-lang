@@ -47,8 +47,6 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   const X86Subtarget &getSubtarget() const { return *Subtarget; }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<MachineModuleInfo>();
     AU.addRequired<DwarfWriter>();
     AsmPrinter::getAnalysisUsage(AU);
   }

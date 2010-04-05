@@ -64,11 +64,6 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
     void EmitInstruction(const MachineInstr *MI);
-
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AsmPrinter::getAnalysisUsage(AU);
-      AU.setPreservesAll();
-    }
   };
 } // end of anonymous namespace
 
