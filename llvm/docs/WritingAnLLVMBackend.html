@@ -561,8 +561,7 @@ def AL : Register&lt;"AL"&gt;, DwarfRegNum&lt;[0, 0, 0]&gt;;
 <p>
 This defines the register <tt>AL</tt> and assigns it values (with
 <tt>DwarfRegNum</tt>) that are used by <tt>gcc</tt>, <tt>gdb</tt>, or a debug
-information writer (such as <tt>DwarfWriter</tt>
-in <tt>llvm/lib/CodeGen/AsmPrinter</tt>) to identify a register. For register
+information writer to identify a register. For register
 <tt>AL</tt>, <tt>DwarfRegNum</tt> takes an array of 3 values representing 3
 different modes: the first element is for X86-64, the second for exception
 handling (EH) on X86-32, and the third is generic. -1 is a special Dwarf number
