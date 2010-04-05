@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetFrameInfo.h"

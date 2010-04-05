@@ -132,8 +132,8 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 //===----------------------------------------------------------------------===//
 // DwarfRegNum - This class provides a mapping of the llvm register enumeration
 // to the register numbering used by gcc and gdb.  These values are used by a
-// debug information writer (ex. DwarfWriter) to describe where values may be
-// located during execution.
+// debug information writer to describe where values may be located during
+// execution.
 class DwarfRegNum<list<int> Numbers> {
   // DwarfNumbers - Numbers used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the

@@ -41,7 +41,6 @@
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -303,8 +302,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
   AU.addPreserved<GCModuleInfo>();
-  AU.addRequired<DwarfWriter>();
-  AU.addPreserved<DwarfWriter>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 

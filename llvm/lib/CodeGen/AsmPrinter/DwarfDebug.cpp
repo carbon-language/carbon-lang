@@ -270,6 +270,8 @@ public:
   void dump() const;
 #endif
 };
+  
+} // end llvm namespace
 
 #ifndef NDEBUG
 void DbgScope::dump() const {
@@ -296,8 +298,6 @@ DbgScope::~DbgScope() {
   for (unsigned j = 0, M = Variables.size(); j < M; ++j)
     delete Variables[j];
 }
-
-} // end llvm namespace
 
 DwarfDebug::DwarfDebug(AsmPrinter *A)
   : Asm(A), MMI(Asm->MMI), ModuleCU(0),

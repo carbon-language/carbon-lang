@@ -189,7 +189,7 @@ class MachineFrameInfo {
   SmallVector<bool, 8> SpillObjects;
 
   /// MMI - This field is set (via setMachineModuleInfo) by a module info
-  /// consumer (ex. DwarfWriter) to indicate that frame layout information
+  /// consumer to indicate that frame layout information
   /// should be acquired.  Typically, it's the responsibility of the target's
   /// TargetRegisterInfo prologue/epilogue emitting code to inform
   /// MachineModuleInfo of frame layouts.
@@ -455,7 +455,7 @@ public:
   /// emitter (TargetRegisterInfo) to provide frame layout information. 
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
 
-  /// setMachineModuleInfo - Used by a meta info consumer (DwarfWriter) to
+  /// setMachineModuleInfo - Used by a meta info consumer to
   /// indicate that frame layout information should be gathered.
   void setMachineModuleInfo(MachineModuleInfo *mmi) { MMI = mmi; }
 
