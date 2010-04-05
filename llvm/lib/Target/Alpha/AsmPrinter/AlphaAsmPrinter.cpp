@@ -20,7 +20,6 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"

@@ -13,14 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
-
 #include "Mips.h"
 #include "MipsSubtarget.h"
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
