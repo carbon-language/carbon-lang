@@ -3518,6 +3518,12 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
                                    true, DstSV, DstSVOff, SrcSV, SrcSVOff);
   }
 
+  // FIXME: If the memcpy is volatile (isVol), lowering it to a plain libc
+  // memcpy is not guaranteed to be safe. libc memcpys aren't required to
+  // respect volatile, so they may do things like read or write memory
+  // beyond the given memory regions. But fixing this isn't easy, and most
+  // people don't care.
+
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
