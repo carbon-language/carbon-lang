@@ -15,7 +15,6 @@
 #define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 
 #include "DIE.h"
-#include "DwarfPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -58,7 +57,12 @@ public:
   MCSymbol *getLabel() const { return Label; }
 };
 
-class DwarfDebug : public DwarfPrinter {
+class DwarfDebug {
+  /// Asm - Target of Dwarf emission.
+  AsmPrinter *Asm;
+  /// MMI - Collected machine module information.
+  MachineModuleInfo *MMI;
+
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
   //

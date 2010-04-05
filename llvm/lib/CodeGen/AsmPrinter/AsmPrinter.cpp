@@ -90,10 +90,17 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
 
+
+/// getTargetData - Return information about data layout.
+const TargetData &AsmPrinter::getTargetData() const {
+  return *TM.getTargetData();
+}
+
 /// getCurrentSection() - Return the current section we are emitting to.
 const MCSection *AsmPrinter::getCurrentSection() const {
   return OutStreamer.getCurrentSection();
 }
+
 
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {

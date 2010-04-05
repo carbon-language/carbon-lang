@@ -65,7 +65,7 @@ void DwarfWriter::EndFunction(const MachineFunction *MF) {
   DD->endFunction(MF);
   DE->EndFunction();
 
-  if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
+  if (MachineModuleInfo *MMI = DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
 }

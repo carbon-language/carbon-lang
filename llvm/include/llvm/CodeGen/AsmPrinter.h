@@ -51,6 +51,7 @@ namespace llvm {
   class Mangler;
   class MCAsmInfo;
   class TargetLoweringObjectFile;
+  class TargetData;
   class Twine;
   class Type;
 
@@ -95,12 +96,6 @@ namespace llvm {
     ///
     MCSymbol *CurrentFnSym;
     
-    /// getObjFileLowering - Return information about object file lowering.
-    TargetLoweringObjectFile &getObjFileLowering() const;
-    
-    /// getCurrentSection() - Return the current section we are emitting to.
-    const MCSection *getCurrentSection() const;
-    
   private:
     // GCMetadataPrinters - The garbage collection metadata printer table.
     void *GCMetadataPrinters;  // Really a DenseMap.
@@ -128,6 +123,16 @@ namespace llvm {
     /// getFunctionNumber - Return a unique ID for the current function.
     ///
     unsigned getFunctionNumber() const;
+    
+    /// getObjFileLowering - Return information about object file lowering.
+    TargetLoweringObjectFile &getObjFileLowering() const;
+
+    /// getTargetData - Return information about data layout.
+    const TargetData &getTargetData() const;
+
+    /// getCurrentSection() - Return the current section we are emitting to.
+    const MCSection *getCurrentSection() const;
+    
     
     //===------------------------------------------------------------------===//
     // MachineFunctionPass Implementation.
