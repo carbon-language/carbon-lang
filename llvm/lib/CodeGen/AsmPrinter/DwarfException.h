@@ -14,8 +14,6 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 #define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
-#include "DIE.h"
-#include "DwarfPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/DenseMap.h"
 #include <string>
@@ -32,7 +30,14 @@ class raw_ostream;
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
 ///
-class DwarfException : public DwarfPrinter {
+class DwarfException {
+  /// Asm - Target of Dwarf emission.
+  AsmPrinter *Asm;
+public:
+  /// MMI - Collected machine module information.
+  MachineModuleInfo *MMI;
+private:
+
   struct FunctionEHFrameInfo {
     MCSymbol *FunctionEHSym;  // L_foo.eh
     unsigned Number;
@@ -168,13 +173,6 @@ public:
   //
   DwarfException(AsmPrinter *A);
   virtual ~DwarfException();
-
-  /// BeginModule - Emit all exception information that should come prior to the
-  /// content.
-  void BeginModule(Module *m) {
-    this->M = m;
-    this->MMI = Asm->MMI;
-  }
 
   /// EndModule - Emit all exception information that should come after the
   /// content.

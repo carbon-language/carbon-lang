@@ -39,7 +39,6 @@ DwarfWriter::~DwarfWriter() {
 void DwarfWriter::BeginModule(Module *M, AsmPrinter *A) {
   DE = new DwarfException(A);
   DD = new DwarfDebug(A);
-  DE->BeginModule(M);
   DD->beginModule(M);
 }
 
@@ -65,7 +64,7 @@ void DwarfWriter::EndFunction(const MachineFunction *MF) {
   DD->endFunction(MF);
   DE->EndFunction();
 
-  if (MachineModuleInfo *MMI = DE->getMMI())
+  if (MachineModuleInfo *MMI = DE->MMI)
     // Clear function debug information.
     MMI->EndFunction();
 }

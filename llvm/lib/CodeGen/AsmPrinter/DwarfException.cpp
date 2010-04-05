@@ -39,7 +39,7 @@
 using namespace llvm;
 
 DwarfException::DwarfException(AsmPrinter *A)
-  : DwarfPrinter(A), shouldEmitTable(false), shouldEmitMoves(false),
+  : Asm(A), MMI(Asm->MMI), shouldEmitTable(false), shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)
@@ -55,10 +55,10 @@ DwarfException::~DwarfException() {
 /// in every non-empty .debug_frame section.
 void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Size and sign of stack growth.
-  int stackGrowth =
-    Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-    TargetFrameInfo::StackGrowsUp ?
-    TD->getPointerSize() : -TD->getPointerSize();
+  int stackGrowth = Asm->getTargetData().getPointerSize();
+  if (Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+      TargetFrameInfo::StackGrowsDown)
+    stackGrowth *= -1;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
@@ -131,6 +131,8 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->EmitULEB128(1, "CIE Code Alignment Factor");
   Asm->EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->OutStreamer.AddComment("CIE Return Address Column");
+
+  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
 
   if (Augmentation[0]) {
@@ -156,7 +158,8 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // On Darwin the linker honors the alignment of eh_frame, which means it must
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
   // holes which confuse readers of eh_frame.
-  Asm->EmitAlignment(TD->getPointerSize() == 4 ? 2 : 3, 0, 0, false);
+  Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3,
+                     0, 0, false);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common_end", Index));
 }
 
@@ -179,13 +182,13 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,MCSA_Global);
 
   // If corresponding function is weak definition, this should be too.
-  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
+  if (TheFunc->isWeakForLinker() && Asm->MAI->getWeakDefDirective())
     Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                          MCSA_WeakDefinition);
 
   // If corresponding function is hidden, this should be too.
   if (TheFunc->hasHiddenVisibility())
-    if (MCSymbolAttr HiddenAttr = MAI->getHiddenVisibilityAttr())
+    if (MCSymbolAttr HiddenAttr = Asm->MAI->getHiddenVisibilityAttr())
       Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                            HiddenAttr);
 
@@ -195,14 +198,14 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   // info is to be available for non-EH uses.
   if (!EHFrameInfo.hasCalls && !UnwindTablesMandatory &&
       (!TheFunc->isWeakForLinker() ||
-       !MAI->getWeakDefDirective() ||
+       !Asm->MAI->getWeakDefDirective() ||
        TLOF.getSupportsWeakOmittedEHFrame())) {
     Asm->OutStreamer.EmitAssignment(EHFrameInfo.FunctionEHSym,
                                     MCConstantExpr::Create(0, Asm->OutContext));
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
-    if (MAI->hasNoDeadStrip())
+    if (Asm->MAI->hasNoDeadStrip())
       Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                            MCSA_NoDeadStrip);
   } else {
@@ -258,7 +261,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // On Darwin the linker honors the alignment of eh_frame, which means it
     // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise you
     // get holes which confuse readers of eh_frame.
-    Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3,
+    Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3,
                        0, 0, false);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_end",
                                                   EHFrameInfo.Number));
@@ -269,7 +272,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
-      if (MAI->hasNoDeadStrip())
+      if (Asm->MAI->hasNoDeadStrip())
         Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                              MCSA_NoDeadStrip);
   }
@@ -472,7 +475,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   bool PreviousIsInvoke = false;
 
   // Visit all instructions in order of address.
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+  for (MachineFunction::const_iterator I = Asm->MF->begin(), E = Asm->MF->end();
        I != E; ++I) {
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
          MI != E; ++MI) {
@@ -503,7 +506,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       // create a call-site entry with no landing pad for the region between the
       // try-ranges.
       if (SawPotentiallyThrowing &&
-          MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+          Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
         CallSiteEntry Site = { LastLabel, BeginLabel, 0, 0 };
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
@@ -526,7 +529,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 
         // Try to merge with the previous call-site. SJLJ doesn't do this
         if (PreviousIsInvoke &&
-          MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+          Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
           CallSiteEntry &Prev = CallSites.back();
           if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
@@ -536,7 +539,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         }
 
         // Otherwise, create a new call-site.
-        if (MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf)
+        if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf)
           CallSites.push_back(Site);
         else {
           // SjLj EH must maintain the call sites in the order assigned
@@ -555,7 +558,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // function may throw, create a call-site entry with no landing pad for the
   // region following the try-range.
   if (SawPotentiallyThrowing &&
-      MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+      Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
     CallSiteEntry Site = { LastLabel, 0, 0, 0 };
     CallSites.push_back(Site);
   }
@@ -623,7 +626,7 @@ void DwarfException::EmitExceptionTable() {
   // Final tallies.
 
   // Call sites.
-  bool IsSJLJ = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
+  bool IsSJLJ = Asm->MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
   bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
   
   unsigned CallSiteTableLength;
@@ -652,7 +655,8 @@ void DwarfException::EmitExceptionTable() {
     // For SjLj exceptions, if there is no TypeInfo, then we just explicitly say
     // that we're omitting that bit.
     TTypeEncoding = dwarf::DW_EH_PE_omit;
-    TypeFormatSize = TD->getPointerSize(); // dwarf::DW_EH_PE_absptr
+    // dwarf::DW_EH_PE_absptr
+    TypeFormatSize = Asm->getTargetData().getPointerSize();
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
@@ -692,9 +696,10 @@ void DwarfException::EmitExceptionTable() {
   // Emit the LSDA.
   MCSymbol *GCCETSym = 
     Asm->OutContext.GetOrCreateSymbol(Twine("GCC_except_table")+
-                                      Twine(SubprogramCount));
+                                      Twine(Asm->getFunctionNumber()));
   Asm->OutStreamer.EmitLabel(GCCETSym);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("exception", SubprogramCount));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("exception",
+                                                Asm->getFunctionNumber()));
 
   if (IsSJLJ)
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("_LSDA_",
@@ -767,7 +772,7 @@ void DwarfException::EmitExceptionTable() {
     }
   } else {
     // DWARF Exception handling
-    assert(MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
+    assert(Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
 
     // The call-site table is a list of all call sites that may throw an
     // exception (including C++ 'throw' statements) in the procedure
@@ -798,14 +803,14 @@ void DwarfException::EmitExceptionTable() {
       const CallSiteEntry &S = *I;
       
       MCSymbol *EHFuncBeginSym =
-        Asm->GetTempSymbol("eh_func_begin", SubprogramCount);
+        Asm->GetTempSymbol("eh_func_begin", Asm->getFunctionNumber());
       
       MCSymbol *BeginLabel = S.BeginLabel;
       if (BeginLabel == 0)
         BeginLabel = EHFuncBeginSym;
       MCSymbol *EndLabel = S.EndLabel;
       if (EndLabel == 0)
-        EndLabel = Asm->GetTempSymbol("eh_func_end", SubprogramCount);
+        EndLabel = Asm->GetTempSymbol("eh_func_end", Asm->getFunctionNumber());
         
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
@@ -891,7 +896,7 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
-  if (MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
+  if (Asm->MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
 
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
@@ -912,22 +917,22 @@ void DwarfException::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(const MachineFunction *MF) {
-  if (!MMI || !MAI->doesSupportExceptionHandling()) return;
+  if (!MMI || !Asm->MAI->doesSupportExceptionHandling()) return;
 
   TimeRegion Timer(ExceptionTimer);
-  this->MF = MF;
   shouldEmitTable = shouldEmitMoves = false;
 
   // If any landing pads survive, we need an EH table.
   shouldEmitTable = !MMI->getLandingPads().empty();
 
   // See if we need frame move info.
-  shouldEmitMoves = !MF->getFunction()->doesNotThrow() || UnwindTablesMandatory;
+  shouldEmitMoves =
+    !Asm->MF->getFunction()->doesNotThrow() || UnwindTablesMandatory;
 
   if (shouldEmitMoves || shouldEmitTable)
     // Assumes in correct section after the entry point.
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
-                                                  ++SubprogramCount));
+                                                  Asm->getFunctionNumber()));
 
   shouldEmitTableModule |= shouldEmitTable;
   shouldEmitMovesModule |= shouldEmitMoves;
@@ -939,7 +944,8 @@ void DwarfException::EndFunction() {
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
   TimeRegion Timer(ExceptionTimer);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",SubprogramCount));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
+                                                Asm->getFunctionNumber()));
 
   // Record if this personality index uses a landing pad.
   bool HasLandingPad = !MMI->getLandingPads().empty();
@@ -953,14 +959,15 @@ void DwarfException::EndFunction() {
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   MCSymbol *FunctionEHSym =
-    Asm->GetSymbolWithGlobalValueBase(MF->getFunction(), ".eh",
+    Asm->GetSymbolWithGlobalValueBase(Asm->MF->getFunction(), ".eh",
                                       TLOF.isFunctionEHFrameSymbolPrivate());
   
   // Save EH frame information
-  EHFrames.push_back(FunctionEHFrameInfo(FunctionEHSym, SubprogramCount,
+  EHFrames.push_back(FunctionEHFrameInfo(FunctionEHSym,
+                                         Asm->getFunctionNumber(),
                                          MMI->getPersonalityIndex(),
-                                         MF->getFrameInfo()->hasCalls(),
+                                         Asm->MF->getFrameInfo()->hasCalls(),
                                          !MMI->getLandingPads().empty(),
                                          MMI->getFrameMoves(),
-                                         MF->getFunction()));
+                                         Asm->MF->getFunction()));
 }
