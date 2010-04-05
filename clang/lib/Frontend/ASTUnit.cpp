@@ -141,24 +141,22 @@ const std::string &ASTUnit::getPCHFileName() {
 }
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
-                                  llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                  llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
   
-  if (Diags.get())
-    AST->Diagnostics = Diags;
-  else {
+  if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
-    AST->Diagnostics.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0),
-                           true);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
   }
   
   AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->Diagnostics = Diags;
   AST->FileMgr.reset(new FileManager);
   AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics()));
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
@@ -290,7 +288,7 @@ public:
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                         llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics) {
   // Create the compiler instance to use for building the AST.
@@ -298,16 +296,16 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   llvm::OwningPtr<ASTUnit> AST;
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
 
-  if (!Diags.get()) {
+  if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
-    Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0), true);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
   }
   
   Clang.setInvocation(CI);
 
-  Clang.setDiagnostics(Diags.get());
+  Clang.setDiagnostics(Diags.getPtr());
   Clang.setDiagnosticClient(Diags->getClient());
 
   // Create the target instance.
@@ -315,7 +313,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
     Clang.takeDiagnosticClient();
-    Clang.takeDiagnostics();
     return 0;
   }
 
@@ -370,7 +367,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   Act->EndSourceFile();
 
   Clang.takeDiagnosticClient();
-  Clang.takeDiagnostics();
   Clang.takeInvocation();
 
   AST->Invocation.reset(Clang.takeInvocation());
@@ -380,23 +376,22 @@ error:
   Clang.takeSourceManager();
   Clang.takeFileManager();
   Clang.takeDiagnosticClient();
-  Clang.takeDiagnostics();
   return 0;
 }
 
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
-                                      llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
                                       bool CaptureDiagnostics) {
-  if (!Diags.get()) {
+  if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
-    Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0), true);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
   }
   
   llvm::SmallVector<const char *, 16> Args;

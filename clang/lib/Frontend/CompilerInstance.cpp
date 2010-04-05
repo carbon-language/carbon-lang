@@ -52,7 +52,7 @@ void CompilerInstance::setInvocation(CompilerInvocation *Value) {
 }
 
 void CompilerInstance::setDiagnostics(Diagnostic *Value) {
-  Diagnostics.reset(Value);
+  Diagnostics = Value;
 }
 
 void CompilerInstance::setDiagnosticClient(DiagnosticClient *Value) {
@@ -130,15 +130,16 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
 }
 
 void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
-  Diagnostics.reset(createDiagnostics(getDiagnosticOpts(), Argc, Argv));
+  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv);
 
   if (Diagnostics)
     DiagClient.reset(Diagnostics->getClient());
 }
 
-Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
-                                                int Argc, char **Argv) {
-  llvm::OwningPtr<Diagnostic> Diags(new Diagnostic());
+llvm::IntrusiveRefCntPtr<Diagnostic> 
+CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
+                                    int Argc, char **Argv) {
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic());
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
@@ -152,7 +153,7 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
       DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
       Diags->setClient(DiagClient.take());
       Diags->Report(diag::err_fe_stderr_binary);
-      return Diags.take();
+      return Diags;
     } else {
       DiagClient.reset(new BinaryDiagnosticSerializer(llvm::errs()));
     }
@@ -171,7 +172,7 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
   // Configure our handling of diagnostics.
   ProcessWarningOptions(*Diags, Opts);
 
-  return Diags.take();
+  return Diags;
 }
 
 // File Manager

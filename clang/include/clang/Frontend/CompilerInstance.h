@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 
 #include "clang/Frontend/CompilerInvocation.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <cassert>
@@ -63,7 +64,7 @@ class CompilerInstance {
   llvm::OwningPtr<CompilerInvocation> Invocation;
 
   /// The diagnostics engine instance.
-  llvm::OwningPtr<Diagnostic> Diagnostics;
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
 
   /// The diagnostics client instance.
   llvm::OwningPtr<DiagnosticClient> DiagClient;
@@ -254,10 +255,6 @@ public:
     assert(Diagnostics && "Compiler instance has no diagnostics!");
     return *Diagnostics;
   }
-
-  /// takeDiagnostics - Remove the current diagnostics engine and give ownership
-  /// to the caller.
-  Diagnostic *takeDiagnostics() { return Diagnostics.take(); }
 
   /// setDiagnostics - Replace the current diagnostics engine; the compiler
   /// instance takes ownership of \arg Value.
@@ -469,8 +466,8 @@ public:
   /// must extend past that of the diagnostic engine.
   ///
   /// \return The new object on success, or null on failure.
-  static Diagnostic *createDiagnostics(const DiagnosticOptions &Opts,
-                                       int Argc, char **Argv);
+  static llvm::IntrusiveRefCntPtr<Diagnostic> 
+  createDiagnostics(const DiagnosticOptions &Opts, int Argc, char **Argv);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();

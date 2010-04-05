@@ -231,8 +231,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
-  llvm::OwningPtr<Diagnostic> Diags;
-  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
+  Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
   
   // The set of temporary files that we've built.
   std::vector<llvm::sys::Path> TemporaryFiles;

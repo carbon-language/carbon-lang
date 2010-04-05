@@ -16,6 +16,7 @@
 
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
@@ -52,7 +53,7 @@ public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
 private:
-  llvm::MaybeOwningPtr<Diagnostic>  Diagnostics;
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
   llvm::OwningPtr<FileManager>      FileMgr;
   llvm::OwningPtr<SourceManager>    SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
@@ -214,7 +215,7 @@ public:
   ///
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
-                                  llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                  llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
                                   unsigned NumRemappedFiles = 0,
@@ -232,7 +233,7 @@ public:
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                       llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false);
 
@@ -252,7 +253,7 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
-                                      llvm::MaybeOwningPtr<Diagnostic> Diags,
+                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
@@ -260,24 +261,6 @@ public:
                                       bool CaptureDiagnostics = false);
 };
 
-/// \brief Return an potentially-owning pointer for the given diagnostic engine
-/// that owns the pointer.
-inline llvm::MaybeOwningPtr<Diagnostic> OwnedDiag(Diagnostic &Diags) {
-  return llvm::MaybeOwningPtr<Diagnostic>(&Diags, true);
-}
-
-/// \brief Return a potentially-owning pointer for the given diagnostic engine
-/// that does not own the pointer.
-inline llvm::MaybeOwningPtr<Diagnostic> UnownedDiag(Diagnostic &Diags) {
-  return llvm::MaybeOwningPtr<Diagnostic>(&Diags, false);
-}
-
-/// \brief Return an potentially-owning pointer that indicates that the
-/// default diagnostic engine should be used.
-inline llvm::MaybeOwningPtr<Diagnostic> DefaultDiag() {
-  return llvm::MaybeOwningPtr<Diagnostic>();
-}
-  
 } // namespace clang
 
 #endif

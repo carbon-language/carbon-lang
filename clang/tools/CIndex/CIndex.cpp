@@ -996,7 +996,8 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  return ASTUnit::LoadFromPCHFile(ast_filename, DefaultDiag(),
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
+  return ASTUnit::LoadFromPCHFile(ast_filename, Diags,
                                   CXXIdx->getOnlyLocalDecls(),
                                   0, 0, true);
 }
@@ -1015,8 +1016,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
-  llvm::MaybeOwningPtr<Diagnostic> Diags;
-  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0), true);
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
+  Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
 
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {

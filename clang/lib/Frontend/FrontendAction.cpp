@@ -45,9 +45,9 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
            "Attempt to pass AST file to preprocessor only action!");
     assert(hasASTSupport() && "This action does not have AST support!");
 
+    llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
     std::string Error;
-    ASTUnit *AST = ASTUnit::LoadFromPCHFile(Filename, 
-                                            UnownedDiag(CI.getDiagnostics()));
+    ASTUnit *AST = ASTUnit::LoadFromPCHFile(Filename, Diags);
     if (!AST)
       goto failure;
 

@@ -15,6 +15,7 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/type_traits.h"
 #include <string>
@@ -150,7 +151,7 @@ public:
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
 /// reporting to the user.
-class Diagnostic {
+class Diagnostic : public llvm::RefCountedBase<Diagnostic> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {

@@ -12,6 +12,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/ASTImporter.h"
+#include "clang/Basic/Diagnostic.h"
 
 using namespace clang;
 
@@ -36,10 +37,9 @@ void ASTMergeAction::ExecuteAction() {
                                          CI.getASTContext().getLangOptions());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], 
-                                             UnownedDiag(CI.getDiagnostics()),
-                                             false);
+    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], Diags, false);
     if (!Unit)
       continue;
 
