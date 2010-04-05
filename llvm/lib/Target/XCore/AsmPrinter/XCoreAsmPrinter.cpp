@@ -82,11 +82,6 @@ namespace {
     bool runOnMachineFunction(MachineFunction &MF);
     void EmitInstruction(const MachineInstr *MI);
     void EmitFunctionBodyEnd();
-    
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AsmPrinter::getAnalysisUsage(AU);
-      AU.addRequired<DwarfWriter>();
-    }
   };
 } // end of anonymous namespace
 

@@ -26,7 +26,6 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -273,11 +272,6 @@ namespace {
            O << "-.";
          O << ')';
       }
-    }
-
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AsmPrinter::getAnalysisUsage(AU);
-      AU.addRequired<DwarfWriter>();
     }
   };
 } // end of anonymous namespace

@@ -108,6 +108,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<MachineModuleInfo>();
   AU.addRequired<GCModuleInfo>();
+  AU.addRequired<DwarfWriter>();
   if (isVerbose())
     AU.addRequired<MachineLoopInfo>();
 }

@@ -19,7 +19,6 @@
 #include "../X86TargetMachine.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Compiler.h"
@@ -45,11 +44,6 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   }
   
   const X86Subtarget &getSubtarget() const { return *Subtarget; }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<DwarfWriter>();
-    AsmPrinter::getAnalysisUsage(AU);
-  }
 
   virtual void EmitStartOfAsmFile(Module &M);
 

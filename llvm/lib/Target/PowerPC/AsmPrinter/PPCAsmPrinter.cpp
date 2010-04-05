@@ -26,7 +26,6 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -342,11 +341,6 @@ namespace {
     bool doFinalization(Module &M);
 
     virtual void EmitFunctionEntryLabel();
-
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<DwarfWriter>();
-      PPCAsmPrinter::getAnalysisUsage(AU);
-    }
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -364,13 +358,6 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
 
     void EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs);
-    
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-      AU.addRequired<MachineModuleInfo>();
-      AU.addRequired<DwarfWriter>();
-      PPCAsmPrinter::getAnalysisUsage(AU);
-    }
   };
 } // end of anonymous namespace
 
