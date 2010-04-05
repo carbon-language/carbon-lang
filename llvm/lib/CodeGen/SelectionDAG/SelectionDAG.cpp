@@ -3519,7 +3519,6 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   }
 
   // Emit a library call.
-  assert(!isVol && "library memcpy does not support volatile");
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
