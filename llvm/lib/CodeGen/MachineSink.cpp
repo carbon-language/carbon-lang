@@ -126,6 +126,11 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
   // Can't sink anything out of a block that has less than two successors.
   if (MBB.succ_size() <= 1 || MBB.empty()) return false;
 
+  // Don't bother sinking code out of unreachable blocks. In addition to being
+  // unprofitable, it can also lead to infinite looping, because in an unreachable
+  // loop there may be nowhere to stop.
+  if (!DT->isReachableFromEntry(&MBB)) return false;
+
   bool MadeChange = false;
 
   // Walk the basic block bottom-up.  Remember if we saw a store.
