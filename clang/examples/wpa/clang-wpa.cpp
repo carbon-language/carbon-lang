@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, 
-                                                          OwnedDiags(*Diags)));
+                                                          OwnedDiag(*Diags)));
     if (!AST)
       return 1;
 
