@@ -14,12 +14,9 @@
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
-#include <limits>
 #include <vector>
 
 namespace llvm {
@@ -31,22 +28,18 @@ class MachineModuleInfo;
 class MachineFunction;
 class MachineBasicBlock;
 class TargetFrameInfo;
+class BitVector;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
 /// callee saved register in the current frame.  
 class CalleeSavedInfo {
-
-private:
   unsigned Reg;
   const TargetRegisterClass *RegClass;
   int FrameIdx;
   
 public:
   CalleeSavedInfo(unsigned R, const TargetRegisterClass *RC, int FI = 0)
-  : Reg(R)
-  , RegClass(RC)
-  , FrameIdx(FI)
-  {}
+  : Reg(R), RegClass(RC), FrameIdx(FI) {}
   
   // Accessors.
   unsigned getReg()                        const { return Reg; }
