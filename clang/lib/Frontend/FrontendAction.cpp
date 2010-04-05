@@ -136,7 +136,7 @@ void FrontendAction::Execute() {
     // simplest way to reuse the logic in ParseAST.
     const char *EmptyStr = "";
     llvm::MemoryBuffer *SB =
-      llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<dummy input>");
+      llvm::MemoryBuffer::getMemBuffer(EmptyStr, "<dummy input>");
     CI.getSourceManager().createMainFileIDForMemBuffer(SB);
   } else {
     if (!CI.InitializeSourceManager(getCurrentFile()))

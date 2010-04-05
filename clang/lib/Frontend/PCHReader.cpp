@@ -950,9 +950,8 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     }
 
     llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBuffer(BlobStart,
-                                         BlobStart + BlobLen - 1,
-                                         Name);
+    = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(BlobStart, BlobLen - 1),
+                                       Name);
     FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID, Offset);
 
     if (strcmp(Name, "<built-in>") == 0) {

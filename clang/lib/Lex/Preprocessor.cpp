@@ -258,9 +258,10 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
 
   // Truncate the buffer.
   if (Position < Buffer->getBufferEnd()) {
+    llvm::StringRef Data(Buffer->getBufferStart(),
+                         Position-Buffer->getBufferStart());
     MemoryBuffer *TruncatedBuffer
-      = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position,
-                                       Buffer->getBufferIdentifier());
+      = MemoryBuffer::getMemBufferCopy(Data, Buffer->getBufferIdentifier());
     SourceMgr.overrideFileContents(File, TruncatedBuffer);
   }
 
@@ -508,9 +509,7 @@ bool Preprocessor::EnterMainSourceFile() {
 
   // Preprocess Predefines to populate the initial preprocessor state.
   llvm::MemoryBuffer *SB =
-    llvm::MemoryBuffer::getMemBufferCopy(Predefines.data(),
-                                         Predefines.data() + Predefines.size(),
-                                         "<built-in>");
+    llvm::MemoryBuffer::getMemBufferCopy(Predefines, "<built-in>");
   assert(SB && "Cannot fail to create predefined source buffer");
   FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");

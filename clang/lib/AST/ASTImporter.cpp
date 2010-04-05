@@ -3088,8 +3088,7 @@ FileID ASTImporter::Import(FileID FromID) {
     // FIXME: We want to re-use the existing MemoryBuffer!
     const llvm::MemoryBuffer *FromBuf = Cache->getBuffer(getDiags());
     llvm::MemoryBuffer *ToBuf
-      = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBufferStart(),
-                                             FromBuf->getBufferEnd(),
+      = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());
     ToID = ToSM.createFileIDForMemBuffer(ToBuf);
   }
