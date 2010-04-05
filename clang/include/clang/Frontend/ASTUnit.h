@@ -52,7 +52,6 @@ public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
 private:
-  llvm::OwningPtr<Diagnostic>       DiagEngine;
   llvm::OwningPtr<FileManager>      FileMgr;
   llvm::OwningPtr<SourceManager>    SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
@@ -117,6 +116,8 @@ private:
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   
+  ASTUnit(Diagnostic &Diag, bool MainFileIsAST);
+
 public:
   class ConcurrencyCheck {
     volatile ASTUnit &Self;
@@ -136,7 +137,6 @@ public:
   };
   friend class ConcurrencyCheck;
   
-  ASTUnit(Diagnostic &Diag, bool MainFileIsAST);
   ~ASTUnit();
 
   bool isMainFileAST() const { return MainFileIsAST; }
