@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -51,8 +52,8 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 }
 
 MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
-                                 unsigned FunctionNum, MCContext &ctx)
-  : Fn(F), Target(TM), Ctx(ctx) {
+                                 unsigned FunctionNum, MachineModuleInfo &mmi)
+  : Fn(F), Target(TM), Ctx(mmi.getContext()), MMI(mmi) {
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator) MachineRegisterInfo(*TM.getRegisterInfo());
   else

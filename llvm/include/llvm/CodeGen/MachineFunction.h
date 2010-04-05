@@ -32,6 +32,7 @@ class MachineRegisterInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
 class MachineJumpTableInfo;
+class MachineModuleInfo;
 class MCContext;
 class Pass;
 class TargetMachine;
@@ -72,7 +73,8 @@ class MachineFunction {
   Function *Fn;
   const TargetMachine &Target;
   MCContext &Ctx;
-
+  MachineModuleInfo &MMI;
+  
   // RegInfo - Information about each register in use in the function.
   MachineRegisterInfo *RegInfo;
 
@@ -107,8 +109,8 @@ class MachineFunction {
   typedef ilist<MachineBasicBlock> BasicBlockListType;
   BasicBlockListType BasicBlocks;
 
-  // Default debug location. Used to print out the debug label at the beginning
-  // of a function.
+  /// Default debug location. Used to print out the debug label at the beginning
+  /// of a function.
   DebugLoc DefaultDebugLoc;
 
   /// FunctionNumber - This provides a unique ID for each function emitted in
@@ -116,17 +118,17 @@ class MachineFunction {
   ///
   unsigned FunctionNumber;
   
-  // The alignment of the function.
+  /// The alignment of the function.
   unsigned Alignment;
 
   MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
   void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
-
 public:
   MachineFunction(Function *Fn, const TargetMachine &TM, unsigned FunctionNum,
-                  MCContext &Ctx);
+                  MachineModuleInfo &MMI);
   ~MachineFunction();
 
+  MachineModuleInfo &getMMI() const { return MMI; }
   MCContext &getContext() const { return Ctx; }
   
   /// getFunction - Return the LLVM function that this machine code represents
