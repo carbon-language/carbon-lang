@@ -126,10 +126,6 @@ private:
   ///
   std::vector<std::vector<SrcLineInfo> > SectionSourceLines;
 
-  /// shouldEmit - Flag to indicate if debug information should be emitted.
-  ///
-  bool shouldEmit;
-
   // CurrentFnDbgScope - Top level scope for the current function.
   //
   DbgScope *CurrentFnDbgScope;
@@ -519,10 +515,6 @@ public:
   //
   DwarfDebug(AsmPrinter *A);
   virtual ~DwarfDebug();
-
-  /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
-  /// be emitted.
-  bool ShouldEmitDwarfDebug() const { return shouldEmit; }
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.

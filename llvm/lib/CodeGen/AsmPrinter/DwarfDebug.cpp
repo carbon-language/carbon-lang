@@ -301,7 +301,7 @@ DbgScope::~DbgScope() {
 
 DwarfDebug::DwarfDebug(AsmPrinter *A)
   : Asm(A), MMI(Asm->MMI), ModuleCU(0),
-    AbbreviationsSet(InitAbbreviationsSetSize), shouldEmit(false),
+    AbbreviationsSet(InitAbbreviationsSetSize), 
     CurrentFnDbgScope(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
       
@@ -1815,8 +1815,6 @@ void DwarfDebug::beginModule(Module *M) {
   
   if (!HasDebugInfo) return;
 
-  shouldEmit = true;
-  
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
   
@@ -2265,7 +2263,7 @@ bool DwarfDebug::extractScopeInformation() {
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
-  if (!ShouldEmitDwarfDebug()) return;
+  if (!MMI->hasDebugInfo()) return;
   
   TimeRegion Timer(DebugTimer);
   if (!extractScopeInformation())
@@ -2300,7 +2298,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 /// endFunction - Gather and emit post-function debug information.
 ///
 void DwarfDebug::endFunction(const MachineFunction *MF) {
-  if (!ShouldEmitDwarfDebug()) return;
+  if (!MMI->hasDebugInfo()) return;
   if (DbgScopeMap.empty()) return;
   
   TimeRegion Timer(DebugTimer);
