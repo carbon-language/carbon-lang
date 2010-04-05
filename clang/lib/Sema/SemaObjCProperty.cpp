@@ -984,7 +984,10 @@ void Sema::CheckObjCPropertyAttributes(DeclPtrTy PropertyPtrTy,
                                        unsigned &Attributes) {
   // FIXME: Improve the reported location.
   Decl *PDecl = PropertyPtrTy.getAs<Decl>();
-  ObjCPropertyDecl *PropertyDecl = dyn_cast_or_null<ObjCPropertyDecl>(PDecl);
+  if (!PDecl)
+    return;
+
+  ObjCPropertyDecl *PropertyDecl = cast<ObjCPropertyDecl>(PDecl);
   QualType PropertyTy = PropertyDecl->getType(); 
 
   // readonly and readwrite/assign/retain/copy conflict.
