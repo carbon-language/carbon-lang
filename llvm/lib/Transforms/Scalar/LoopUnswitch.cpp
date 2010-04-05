@@ -619,15 +619,15 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   NewBlocks.reserve(LoopBlocks.size());
   DenseMap<const Value*, Value*> ValueMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
-    BasicBlock *New = CloneBasicBlock(LoopBlocks[i], ValueMap, ".us", F);
-    NewBlocks.push_back(New);
-    ValueMap[LoopBlocks[i]] = New;  // Keep the BB mapping.
-    LPM->cloneBasicBlockSimpleAnalysis(LoopBlocks[i], New, L);
+    BasicBlock *NewBB = CloneBasicBlock(LoopBlocks[i], ValueMap, ".us", F);
+    NewBlocks.push_back(NewBB);
+    ValueMap[LoopBlocks[i]] = NewBB;  // Keep the BB mapping.
+    LPM->cloneBasicBlockSimpleAnalysis(LoopBlocks[i], NewBB, L);
   }
 
   // Splice the newly inserted blocks into the function right before the
   // original preheader.
-  F->getBasicBlockList().splice(LoopBlocks[0], F->getBasicBlockList(),
+  F->getBasicBlockList().splice(NewPreheader, F->getBasicBlockList(),
                                 NewBlocks[0], F->end());
 
   // Now we create the new Loop object for the versioned loop.
@@ -652,8 +652,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     // If the successor of the exit block had PHI nodes, add an entry for
     // NewExit.
     PHINode *PN;
-    for (BasicBlock::iterator I = ExitSucc->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I) {
+    for (BasicBlock::iterator I = ExitSucc->begin(); isa<PHINode>(I); ++I) {
+      PN = cast<PHINode>(I);
       Value *V = PN->getIncomingValueForBlock(ExitBlocks[i]);
       DenseMap<const Value *, Value*>::iterator It = ValueMap.find(V);
       if (It != ValueMap.end()) V = It->second;
@@ -682,7 +682,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
-  RewriteLoopBodyWithConditionConstant(L      , LIC, Val, false);
+  RewriteLoopBodyWithConditionConstant(L, LIC, Val, false);
   
   // It's possible that simplifying one loop could cause the other to be
   // deleted.  If so, don't simplify it.

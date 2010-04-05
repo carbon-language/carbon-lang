@@ -336,21 +336,19 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
     if (Loop *L = LI->getLoopFor(Old))
       L->addBasicBlockToLoop(New, LI->getBase());
 
-  if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>())
-    {
-      // Old dominates New. New node domiantes all other nodes dominated by Old.
-      DomTreeNode *OldNode = DT->getNode(Old);
-      std::vector<DomTreeNode *> Children;
-      for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
-           I != E; ++I) 
-        Children.push_back(*I);
+  if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
+    // Old dominates New. New node domiantes all other nodes dominated by Old.
+    DomTreeNode *OldNode = DT->getNode(Old);
+    std::vector<DomTreeNode *> Children;
+    for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
+         I != E; ++I) 
+      Children.push_back(*I);
 
-      DomTreeNode *NewNode =   DT->addNewBlock(New,Old);
-
+      DomTreeNode *NewNode = DT->addNewBlock(New,Old);
       for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
              E = Children.end(); I != E; ++I) 
         DT->changeImmediateDominator(*I, NewNode);
-    }
+  }
 
   if (DominanceFrontier *DF = P->getAnalysisIfAvailable<DominanceFrontier>())
     DF->splitBlock(Old);
