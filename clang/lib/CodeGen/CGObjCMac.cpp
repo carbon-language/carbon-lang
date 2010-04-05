@@ -107,24 +107,22 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   Qualifiers Quals = CGF.MakeQualifiers(IvarTy);
   Quals.addCVRQualifiers(CVRQualifiers);
 
-  if (Ivar->isBitField()) {
-    // We need to compute the bit offset for the bit-field, the offset
-    // is to the byte. Note, there is a subtle invariant here: we can
-    // only call this routine on non-sythesized ivars but we may be
-    // called for synthesized ivars. However, a synthesized ivar can
-    // never be a bit-field so this is safe.
-    uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar) % 8;
+  if (!Ivar->isBitField())
+    return LValue::MakeAddr(V, Quals);
 
-    uint64_t BitFieldSize =
-      Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
-    return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
-                                IvarTy->isSignedIntegerType(),
-                                Quals.getCVRQualifiers());
-  }
+  // We need to compute the bit offset for the bit-field, the offset is to the
+  // byte. Note, there is a subtle invariant here: we can only call this routine
+  // on non-synthesized ivars but we may be called for synthesized ivars.
+  // However, a synthesized ivar can never be a bit-field, so this is safe.
+  uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar) % 8;
+  uint64_t BitFieldSize =
+    Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
 
-  
-  LValue LV = LValue::MakeAddr(V, Quals);
-  return LV;
+  // FIXME: We need to set a very conservative alignment on this, or make sure
+  // that the runtime is doing the right thing.
+  return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
+                              IvarTy->isSignedIntegerType(),
+                              Quals.getCVRQualifiers());
 }
 
 ///
