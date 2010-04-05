@@ -14,12 +14,12 @@
 #include "XCoreMachineFunctionInfo.h"
 #include "XCoreInstrInfo.h"
 #include "XCore.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "XCoreGenInstrInfo.inc"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -419,14 +419,11 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
-                                  const std::vector<CalleeSavedInfo> &CSI) const
-{
+                                const std::vector<CalleeSavedInfo> &CSI) const {
   if (CSI.empty()) {
     return true;
   }
   MachineFunction *MF = MBB.getParent();
-  const MachineFrameInfo *MFI = MF->getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   XCoreFunctionInfo *XFI = MF->getInfo<XCoreFunctionInfo>();
   
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
@@ -442,7 +439,7 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     storeRegToStackSlot(MBB, MI, it->getReg(), true,
                         it->getFrameIdx(), it->getRegClass());
     if (emitFrameMoves) {
-      MCSymbol *SaveLabel = MMI->getContext().CreateTempSymbol();
+      MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
       BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addSym(SaveLabel);
       XFI->getSpillLabels().push_back(std::make_pair(SaveLabel, *it));
     }
