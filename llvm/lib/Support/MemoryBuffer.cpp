@@ -71,13 +71,12 @@ namespace {
 class MemoryBufferMem : public MemoryBuffer {
   std::string FileID;
 public:
-  MemoryBufferMem(const char *Start, const char *End, StringRef FID,
-                  bool Copy = false)
+  MemoryBufferMem(StringRef InputData, StringRef FID, bool Copy = false)
   : FileID(FID) {
     if (!Copy)
-      init(Start, End);
+      init(InputData.data(), InputData.data()+InputData.size());
     else
-      initCopyOf(Start, End);
+      initCopyOf(InputData.data(), InputData.data()+InputData.size());
   }
   
   virtual const char *getBufferIdentifier() const {
@@ -88,19 +87,17 @@ public:
 
 /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
 /// that EndPtr[0] must be a null byte and be accessible!
-MemoryBuffer *MemoryBuffer::getMemBuffer(const char *StartPtr, 
-                                         const char *EndPtr,
+MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
                                          const char *BufferName) {
-  return new MemoryBufferMem(StartPtr, EndPtr, BufferName);
+  return new MemoryBufferMem(InputData, BufferName);
 }
 
 /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
 /// copying the contents and taking ownership of it.  This has no requirements
 /// on EndPtr[0].
-MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr, 
-                                             const char *EndPtr,
+MemoryBuffer *MemoryBuffer::getMemBufferCopy(StringRef InputData,
                                              const char *BufferName) {
-  return new MemoryBufferMem(StartPtr, EndPtr, BufferName, true);
+  return new MemoryBufferMem(InputData, BufferName, true);
 }
 
 /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
@@ -112,7 +109,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
   char *Buf = (char *)malloc(Size+1);
   if (!Buf) return 0;
   Buf[Size] = 0;
-  MemoryBufferMem *SB = new MemoryBufferMem(Buf, Buf+Size, BufferName);
+  MemoryBufferMem *SB = new MemoryBufferMem(StringRef(Buf, Size), BufferName);
   // The memory for this buffer is owned by the MemoryBuffer.
   SB->MustDeleteBuffer = true;
   return SB;

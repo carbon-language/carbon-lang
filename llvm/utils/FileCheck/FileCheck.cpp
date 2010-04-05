@@ -441,7 +441,7 @@ struct CheckString {
 /// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
 /// memory buffer, free it, and return a new one.
 static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
-  SmallVector<char, 16> NewFile;
+  SmallString<128> NewFile;
   NewFile.reserve(MB->getBufferSize());
   
   for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
@@ -461,9 +461,7 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
   
   // Free the old buffer and return a new one.
   MemoryBuffer *MB2 =
-    MemoryBuffer::getMemBufferCopy(NewFile.data(), 
-                                   NewFile.data() + NewFile.size(),
-                                   MB->getBufferIdentifier());
+    MemoryBuffer::getMemBufferCopy(NewFile.str(), MB->getBufferIdentifier());
   
   delete MB;
   return MB2;

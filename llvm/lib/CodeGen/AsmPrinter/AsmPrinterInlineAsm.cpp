@@ -61,6 +61,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
+    // Don't emit the comments if writing to a .o file.
     if (!OutStreamer.hasRawTextSupport()) return;
 
     OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
@@ -104,7 +105,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
     case '\n':
       ++LastEmitted;   // Consume newline character.
-      OS << '\n';       // Indent code with newline.
+      OS << '\n';      // Indent code with newline.
       break;
     case '$': {
       ++LastEmitted;   // Consume '$' character.
@@ -183,26 +184,23 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         // supports syntax like ${0:u}, which correspond to "%u0" in GCC asm.
         if (*LastEmitted == ':') {
           ++LastEmitted;    // Consume ':' character.
-          if (*LastEmitted == 0) {
-            llvm_report_error("Bad ${:} expression in inline asm string: '" 
-                              + std::string(AsmStr) + "'");
-          }
+          if (*LastEmitted == 0)
+            llvm_report_error("Bad ${:} expression in inline asm string: '" +
+                              std::string(AsmStr) + "'");
           
           Modifier[0] = *LastEmitted;
           ++LastEmitted;    // Consume modifier character.
         }
         
-        if (*LastEmitted != '}') {
+        if (*LastEmitted != '}')
           llvm_report_error("Bad ${} expression in inline asm string: '" 
                             + std::string(AsmStr) + "'");
-        }
         ++LastEmitted;    // Consume '}' character.
       }
       
-      if (Val >= NumOperands-1) {
+      if (Val >= NumOperands-1)
         llvm_report_error("Invalid $ operand number in inline asm string: '" 
                           + std::string(AsmStr) + "'");
-      }
       
       // Okay, we finally have a value number.  Ask the target to print this
       // operand!

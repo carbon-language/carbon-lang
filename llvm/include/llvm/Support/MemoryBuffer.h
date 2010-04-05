@@ -65,13 +65,13 @@ public:
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that EndPtr[0] must be a null byte and be accessible!
-  static MemoryBuffer *getMemBuffer(const char *StartPtr, const char *EndPtr,
+  static MemoryBuffer *getMemBuffer(StringRef InputData,
                                     const char *BufferName = "");
 
   /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
   /// copying the contents and taking ownership of it.  This has no requirements
   /// on EndPtr[0].
-  static MemoryBuffer *getMemBufferCopy(const char *StartPtr,const char *EndPtr,
+  static MemoryBuffer *getMemBufferCopy(StringRef InputData,
                                         const char *BufferName = "");
 
   /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that

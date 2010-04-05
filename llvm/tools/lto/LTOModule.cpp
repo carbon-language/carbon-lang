@@ -101,13 +101,13 @@ LTOModule* LTOModule::makeLTOModule(const char* path,
 /// Also if next byte is on a different page, don't assume it is readable.
 MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 {
-    const char* startPtr = (char*)mem;
-    const char* endPtr = startPtr+length;
-    if ((((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0) 
-        || (*endPtr != 0)) 
-        return MemoryBuffer::getMemBufferCopy(startPtr, endPtr);
-    else
-        return MemoryBuffer::getMemBuffer(startPtr, endPtr);
+    const char *startPtr = (char*)mem;
+    const char *endPtr = startPtr+length;
+    if (((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0 ||
+        *endPtr != 0) 
+        return MemoryBuffer::getMemBufferCopy(StringRef(startPtr, length));
+  
+    return MemoryBuffer::getMemBuffer(StringRef(startPtr, length));
 }
 
 
