@@ -1521,45 +1521,48 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       }
     }
   
+    // Check to see if we have a branch or switch on an undefined value.  If so
+    // we force the branch to go one way or the other to make the successor
+    // values live.  It doesn't really matter which way we force it.
     TerminatorInst *TI = BB->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       if (!BI->isConditional()) continue;
       if (!getValueState(BI->getCondition()).isUndefined())
         continue;
-    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    
+      // If the input to SCCP is actually branch on undef, fix the undef to
+      // false.
+      if (isa<UndefValue>(BI->getCondition())) {
+        BI->setCondition(ConstantInt::getFalse(BI->getContext()));
+        markEdgeExecutable(BB, TI->getSuccessor(1));
+        return true;
+      }
+      
+      // Otherwise, it is a branch on a symbolic value which is currently
+      // considered to be undef.  Handle this by forcing the input value to the
+      // branch to false.
+      markForcedConstant(BI->getCondition(),
+                         ConstantInt::getFalse(TI->getContext()));
+      return true;
+    }
+    
+    if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       if (SI->getNumSuccessors() < 2)   // no cases
         continue;
       if (!getValueState(SI->getCondition()).isUndefined())
         continue;
-    } else {
-      continue;
+      
+      // If the input to SCCP is actually switch on undef, fix the undef to
+      // the first constant.
+      if (isa<UndefValue>(SI->getCondition())) {
+        SI->setCondition(SI->getCaseValue(1));
+        markEdgeExecutable(BB, TI->getSuccessor(1));
+        return true;
+      }
+      
+      markForcedConstant(SI->getCondition(), SI->getCaseValue(1));
+      return true;
     }
-    
-    // If the edge to the second successor isn't thought to be feasible yet,
-    // mark it so now.  We pick the second one so that this goes to some
-    // enumerated value in a switch instead of going to the default destination.
-    if (KnownFeasibleEdges.count(Edge(BB, TI->getSuccessor(1))))
-      continue;
-    
-    // Otherwise, it isn't already thought to be feasible.  Mark it as such now
-    // and return.  This will make other blocks reachable, which will allow new
-    // values to be discovered and existing ones to be moved in the lattice.
-    markEdgeExecutable(BB, TI->getSuccessor(1));
-    
-    // This must be a conditional branch of switch on undef.  At this point,
-    // force the old terminator to branch to the first successor.  This is
-    // required because we are now influencing the dataflow of the function with
-    // the assumption that this edge is taken.  If we leave the branch condition
-    // as undef, then further analysis could think the undef went another way
-    // leading to an inconsistent set of conclusions.
-    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      BI->setCondition(ConstantInt::getFalse(BI->getContext()));
-    } else {
-      SwitchInst *SI = cast<SwitchInst>(TI);
-      SI->setCondition(SI->getCaseValue(1));
-    }
-    
-    return true;
   }
 
   return false;
