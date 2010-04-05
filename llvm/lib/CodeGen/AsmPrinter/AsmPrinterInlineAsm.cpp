@@ -66,7 +66,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str) const {
   Parser.setTargetParser(*TAP.get());
 
   // Don't implicitly switch to the text section before the asm.
-  int Res = Parser.Run(/*NoInitialTextSection*/ true);
+  int Res = Parser.Run(/*NoInitialTextSection*/ true,
+                       /*NoFinalize*/ true);
   if (Res)
     llvm_report_error("Error parsing inline asm\n");
 }

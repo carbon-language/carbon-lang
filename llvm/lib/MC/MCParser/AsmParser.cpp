@@ -138,7 +138,7 @@ const AsmToken &AsmParser::Lex() {
   return *tok;
 }
 
-bool AsmParser::Run(bool NoInitialTextSection) {
+bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // Create the initial section, if requested.
   //
   // FIXME: Target hook & command line option for initial section.
@@ -190,7 +190,9 @@ bool AsmParser::Run(bool NoInitialTextSection) {
       TheCondState.Ignore != StartingCondState.Ignore)
     return TokError("unmatched .ifs or .elses");
   
-  if (!HadError)  
+  // Finalize the output stream if there are no errors and if the client wants
+  // us to.
+  if (!HadError && !NoFinalize)  
     Out.Finish();
 
   return HadError;

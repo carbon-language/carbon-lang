@@ -64,7 +64,7 @@ public:
             const MCAsmInfo &MAI);
   ~AsmParser();
 
-  bool Run(bool NoInitialTextSection);
+  bool Run(bool NoInitialTextSection, bool NoFinalize = false);
 
   
   void AddDirectiveHandler(StringRef Directive,
