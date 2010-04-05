@@ -128,7 +128,99 @@ inline void swap(OwningArrayPtr<T> &a, OwningArrayPtr<T> &b) {
   a.swap(b);
 }
 
+/// \brief A smart pointer that may own the object it points to.
+///
+/// An instance of \c MaybeOwningPtr may own the object it points to. If so,
+/// it will guarantee that the object will be deleted either on destructin of
+/// the OwningPtr or via an explicit reset(). Once created, ownership of the
+/// pointee object can be taken away from OwningPtr by using the \c take()
+/// method.
+template<class T>
+class MaybeOwningPtr {
+  T *Ptr;
+  bool Owned;
+  
+  struct MaybeOwningPtrRef {
+    MaybeOwningPtrRef(T *Ptr, bool &Owned) : Ptr(Ptr), Owned(Owned) { }
+    
+    T *Ptr;
+    bool &Owned;
+  };
+  
+public:
+  MaybeOwningPtr() : Ptr(0), Owned(false) { }
+  
+  explicit MaybeOwningPtr(T *P, bool OwnP) : Ptr(P), Owned(OwnP) {}
+  
+  /// \brief Take ownership of the pointer stored in \c Other.
+  MaybeOwningPtr(MaybeOwningPtr& Other) : Ptr(Other.Ptr), Owned(Other.Owned) {
+    Other.Owned = false;
+  }
 
+  MaybeOwningPtr(MaybeOwningPtrRef Other) : Ptr(Other.Ptr), Owned(Other.Owned) {
+    Other.Owned = false;
+  }
+    
+  /// \brief Take ownership of the ppinter stored in \c Other.
+  MaybeOwningPtr &operator=(MaybeOwningPtr &Other) {
+    reset(Other.Ptr, Other.Owned);
+    Other.Owned = false;
+    return *this;
+  }
+
+  ~MaybeOwningPtr() {
+    if (Owned)
+      delete Ptr;
+  }
+  
+  operator MaybeOwningPtrRef() { return MaybeOwningPtrRef(Ptr, Owned); }
+  
+  /// reset - Change the current pointee to the specified pointer.  Note that
+  /// calling this with any pointer (including a null pointer) deletes the
+  /// current pointer.
+  void reset(T *P, bool OwnP) {
+    assert(P != Ptr);
+    if (Owned)
+      delete Ptr;
+    
+    Ptr = P;
+    Owned = OwnP;
+  }
+  
+  /// take - Return the underlying pointer and take ownership of it. This
+  /// \c MaybeOwningPtr must have ownership before the call, and will 
+  /// relinquish ownership as part of the call.
+  T *take() {
+    assert(Owned && "Cannot take ownership from a non-owning pointer");
+    Owned = false;
+    return Ptr;
+  }
+  
+  T &operator*() const {
+    assert(Ptr && "Cannot dereference null pointer");
+    return *Ptr;
+  }
+  
+  T *operator->() const { return Ptr; }
+  T *get() const { return Ptr; }
+  operator bool() const { return Ptr != 0; }
+  bool operator!() const { return Ptr == 0; }
+  
+  void swap(MaybeOwningPtr &RHS) {
+    T *Tmp = RHS.Ptr;
+    RHS.Ptr = Ptr;
+    Ptr = Tmp;
+    bool TmpOwned = RHS.Owned;
+    RHS.Owned = Owned;
+    Owned = TmpOwned;
+  }
+};
+
+template<class T>
+inline void swap(MaybeOwningPtr<T> &a, MaybeOwningPtr<T> &b) {
+  a.swap(b);
+}
+  
 } // end namespace llvm
 
 #endif
