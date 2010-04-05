@@ -40,7 +40,6 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -3798,9 +3797,6 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (OptLevel != CodeGenOpt::None)
       // FIXME: Variable debug info is not supported here.
       return 0;
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    if (!DW)
-      return 0;
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
       return 0;
@@ -3822,14 +3818,11 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     int FI = SI->second;
 
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (!DI.getDebugLoc().isUnknown())
+      if (!DI.getDebugLoc().isUnknown() && MMI->hasDebugInfo())
         MMI->setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return 0;
   }
   case Intrinsic::dbg_value: {
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    if (!DW)
-      return 0;
     DbgValueInst &DI = cast<DbgValueInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
       return 0;
@@ -3875,7 +3868,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     int FI = SI->second;
     
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
-      if (!DI.getDebugLoc().isUnknown())
+      if (!DI.getDebugLoc().isUnknown() && MMI->hasDebugInfo())
         MMI->setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return 0;
   }

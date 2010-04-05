@@ -29,7 +29,6 @@
 namespace llvm {
 
 class AliasAnalysis;
-class DwarfWriter;
 class FunctionLoweringInfo;
 class MachineConstantPoolValue;
 class MachineFunction;
@@ -123,7 +122,6 @@ class SelectionDAG {
   MachineFunction *MF;
   FunctionLoweringInfo &FLI;
   MachineModuleInfo *MMI;
-  DwarfWriter *DW;
   LLVMContext* Context;
 
   /// EntryNode - The starting token.
@@ -182,7 +180,7 @@ public:
   /// init - Prepare this SelectionDAG to process code in the given
   /// MachineFunction.
   ///
-  void init(MachineFunction &mf, MachineModuleInfo *mmi, DwarfWriter *dw);
+  void init(MachineFunction &mf, MachineModuleInfo *mmi);
 
   /// clear - Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.
@@ -194,7 +192,6 @@ public:
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
-  DwarfWriter *getDwarfWriter() const { return DW; }
   LLVMContext *getContext() const {return Context; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.

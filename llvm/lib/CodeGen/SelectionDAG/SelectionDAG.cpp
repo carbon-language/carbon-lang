@@ -793,7 +793,7 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 
 // EntryNode could meaningfully have debug info if we can find it...
 SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
-  : TLI(tli), FLI(fli), DW(0),
+  : TLI(tli), FLI(fli),
     EntryNode(ISD::EntryToken, DebugLoc(), getVTList(MVT::Other)),
     Root(getEntryNode()), Ordering(0) {
   AllNodes.push_back(&EntryNode);
@@ -801,11 +801,9 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
   DbgInfo = new SDDbgInfo();
 }
 
-void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
-                        DwarfWriter *dw) {
+void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi) {
   MF = &mf;
   MMI = mmi;
-  DW = dw;
   Context = &mf.getFunction()->getContext();
 }
 
