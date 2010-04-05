@@ -1815,6 +1815,8 @@ void DwarfDebug::beginModule(Module *M) {
   
   if (!HasDebugInfo) return;
 
+  shouldEmit = true;
+  
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
   
