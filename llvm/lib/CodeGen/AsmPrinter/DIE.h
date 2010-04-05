@@ -22,7 +22,6 @@
 
 namespace llvm {
   class AsmPrinter;
-  class TargetData;
   class MCSymbol;
   class raw_ostream;
 
@@ -224,7 +223,7 @@ namespace llvm {
 
     /// SizeOf - Return the size of a value in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const = 0;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const = 0;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEValue *) { return true; }
@@ -264,7 +263,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of integer value in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
 
     // Implement isa/cast/dyncast.
@@ -290,7 +289,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of string value in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *, unsigned /*Form*/) const {
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned /*Form*/) const {
       return Str.size() + sizeof(char); // sizeof('\0');
     }
 
@@ -317,7 +316,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of label value in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIELabel *)  { return true; }
@@ -344,7 +343,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of delta value in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEDelta *)  { return true; }
@@ -372,7 +371,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of debug information entry in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const {
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const {
       return sizeof(int32_t);
     }
 
@@ -397,7 +396,7 @@ namespace llvm {
 
     /// ComputeSize - calculate the size of the block.
     ///
-    unsigned ComputeSize(const TargetData *TD);
+    unsigned ComputeSize(AsmPrinter *AP);
 
     /// BestForm - Choose the best form for data.
     ///
@@ -414,7 +413,7 @@ namespace llvm {
 
     /// SizeOf - Determine size of block data in bytes.
     ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEBlock *)  { return true; }

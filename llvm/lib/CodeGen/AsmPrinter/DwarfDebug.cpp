@@ -403,7 +403,7 @@ void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
                           DIEBlock *Block) {
-  Block->ComputeSize(&Asm->getTargetData());
+  Block->ComputeSize(Asm);
   DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
   Die->addValue(Attribute, Block->BestForm(), Block);
 }
@@ -2413,7 +2413,7 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
   // Size the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
     // Size attribute value.
-    Offset += Values[i]->SizeOf(&Asm->getTargetData(), AbbrevData[i].getForm());
+    Offset += Values[i]->SizeOf(Asm, AbbrevData[i].getForm());
 
   // Size the DIE children if any.
   if (!Children.empty()) {

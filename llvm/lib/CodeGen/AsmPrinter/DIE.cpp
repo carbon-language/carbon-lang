@@ -208,7 +208,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, unsigned Form) const {
 
 /// SizeOf - Determine size of integer value in bytes.
 ///
-unsigned DIEInteger::SizeOf(const TargetData *TD, unsigned Form) const {
+unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
   switch (Form) {
   case dwarf::DW_FORM_flag:  // Fall thru
   case dwarf::DW_FORM_ref1:  // Fall thru
@@ -258,16 +258,14 @@ void DIEString::print(raw_ostream &O) {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  bool IsSmall = Form == dwarf::DW_FORM_data4;
-  unsigned Size = IsSmall ? 4 : AP->getTargetData().getPointerSize();
-  AP->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);
+  AP->OutStreamer.EmitSymbolValue(Label, SizeOf(AP, Form), 0/*AddrSpace*/);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIELabel::SizeOf(const TargetData *TD, unsigned Form) const {
+unsigned DIELabel::SizeOf(AsmPrinter *AP, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
-  return TD->getPointerSize();
+  return AP->getTargetData().getPointerSize();
 }
 
 #ifndef NDEBUG
@@ -283,15 +281,14 @@ void DIELabel::print(raw_ostream &O) {
 /// EmitValue - Emit delta value.
 ///
 void DIEDelta::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  AP->EmitLabelDifference(LabelHi, LabelLo,
-                          SizeOf(&AP->getTargetData(), Form));
+  AP->EmitLabelDifference(LabelHi, LabelLo, SizeOf(AP, Form));
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
-unsigned DIEDelta::SizeOf(const TargetData *TD, unsigned Form) const {
+unsigned DIEDelta::SizeOf(AsmPrinter *AP, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
-  return TD->getPointerSize();
+  return AP->getTargetData().getPointerSize();
 }
 
 #ifndef NDEBUG
@@ -322,11 +319,11 @@ void DIEEntry::print(raw_ostream &O) {
 
 /// ComputeSize - calculate the size of the block.
 ///
-unsigned DIEBlock::ComputeSize(const TargetData *TD) {
+unsigned DIEBlock::ComputeSize(AsmPrinter *AP) {
   if (!Size) {
     const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
     for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i]->SizeOf(TD, AbbrevData[i].getForm());
+      Size += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
   }
 
   return Size;
@@ -350,7 +347,7 @@ void DIEBlock::EmitValue(AsmPrinter *Asm, unsigned Form) const {
 
 /// SizeOf - Determine size of block data in bytes.
 ///
-unsigned DIEBlock::SizeOf(const TargetData *TD, unsigned Form) const {
+unsigned DIEBlock::SizeOf(AsmPrinter *AP, unsigned Form) const {
   switch (Form) {
   case dwarf::DW_FORM_block1: return Size + sizeof(int8_t);
   case dwarf::DW_FORM_block2: return Size + sizeof(int16_t);
