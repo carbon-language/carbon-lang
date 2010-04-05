@@ -38,10 +38,9 @@ class AsmPrinter;
 class DwarfException {
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
-public:
+
   /// MMI - Collected machine module information.
   MachineModuleInfo *MMI;
-private:
 
   struct FunctionEHFrameInfo {
     MCSymbol *FunctionEHSym;  // L_foo.eh

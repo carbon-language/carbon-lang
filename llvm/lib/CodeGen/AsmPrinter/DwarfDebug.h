@@ -73,10 +73,9 @@ public:
 class DwarfDebug {
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
-public:
+
   /// MMI - Collected machine module information.
   MachineModuleInfo *MMI;
-private:
 
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
