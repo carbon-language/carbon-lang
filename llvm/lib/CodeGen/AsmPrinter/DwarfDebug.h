@@ -519,12 +519,38 @@ private:
   ///
   DIType getBlockByrefType(DIType Ty, std::string Name);
 
+  /// recordSourceLine - Register a source line with debug info. Returns the
+  /// unique label that was emitted and which provides correspondence to
+  /// the source line list.
+  MCSymbol *recordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
+  
+  /// getSourceLineCount - Return the number of source lines in the debug
+  /// info.
+  unsigned getSourceLineCount() const {
+    return Lines.size();
+  }
+  
+  /// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
+  /// timed. Look up the source id with the given directory and source file
+  /// names. If none currently exists, create a new id and insert it in the
+  /// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
+  /// well.
+  unsigned getOrCreateSourceID(const std::string &DirName,
+                               const std::string &FileName);
+  
+  /// extractScopeInformation - Scan machine instructions in this function
+  /// and collect DbgScopes. Return true, if atleast one scope was found.
+  bool extractScopeInformation();
+  
+  /// collectVariableInfo - Populate DbgScope entries with variables' info.
+  void collectVariableInfo();
+  
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
   DwarfDebug(AsmPrinter *A, Module *M);
-  virtual ~DwarfDebug();
+  ~DwarfDebug();
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.
@@ -541,32 +567,6 @@ public:
   /// endFunction - Gather and emit post-function debug information.
   ///
   void endFunction(const MachineFunction *MF);
-
-  /// recordSourceLine - Register a source line with debug info. Returns the
-  /// unique label that was emitted and which provides correspondence to
-  /// the source line list.
-  MCSymbol *recordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
-
-  /// getSourceLineCount - Return the number of source lines in the debug
-  /// info.
-  unsigned getSourceLineCount() const {
-    return Lines.size();
-  }
-                            
-  /// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
-  /// timed. Look up the source id with the given directory and source file
-  /// names. If none currently exists, create a new id and insert it in the
-  /// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
-  /// well.
-  unsigned getOrCreateSourceID(const std::string &DirName,
-                               const std::string &FileName);
-
-  /// extractScopeInformation - Scan machine instructions in this function
-  /// and collect DbgScopes. Return true, if atleast one scope was found.
-  bool extractScopeInformation();
-
-  /// collectVariableInfo - Populate DbgScope entries with variables' info.
-  void collectVariableInfo();
 
   /// beginScope - Process beginning of a scope.
   void beginScope(const MachineInstr *MI);

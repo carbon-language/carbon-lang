@@ -176,7 +176,7 @@ public:
   // Main entry points.
   //
   DwarfException(AsmPrinter *A);
-  virtual ~DwarfException();
+  ~DwarfException();
 
   /// EndModule - Emit all exception information that should come after the
   /// content.
