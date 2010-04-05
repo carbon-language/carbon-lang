@@ -380,11 +380,18 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
                                      raw_ostream &os) const {
   // The machine instruction.
   uint32_t insn;
+  uint8_t bytes[4];
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t*)&insn, NULL) == -1)
+  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1)
     return false;
 
+  // Encoded as a small-endian 32-bit word in the stream.
+  insn = (bytes[3] << 24) |
+         (bytes[2] << 16) |
+         (bytes[1] <<  8) |
+         (bytes[0] <<  0);
+    
   unsigned Opcode = decodeARMInstruction(insn);
   ARMFormat Format = ARMFormats[Opcode];
   Size = 4;
@@ -414,9 +421,15 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
                                        const MemoryObject &Region,
                                        uint64_t Address,
                                        raw_ostream &os) const {
-  // The machine instruction.
+  // The Thumb instruction stream is a sequence of halhwords.
+
+  // This represents the first halfword as well as the machine instruction
+  // passed to decodeThumbInstruction().  For 16-bit Thumb instruction, the top
+  // halfword of insn is 0x00 0x00; otherwise, the first halfword is moved to
+  // the top half followed by the second halfword.
   uint32_t insn = 0;
-  uint32_t insn1 = 0;
+  // Possible second halfword.
+  uint16_t insn1 = 0;
 
   // A6.1 Thumb instruction set encoding
   //
@@ -429,9 +442,12 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
   // Otherwise, the halfword is a 16-bit instruction.
 
   // Read 2 bytes of data first.
-  if (Region.readBytes(Address, 2, (uint8_t*)&insn, NULL) == -1)
+  uint8_t bytes[2];
+  if (Region.readBytes(Address, 2, (uint8_t*)bytes, NULL) == -1)
     return false;
 
+  // Encoded as a small-endian 16-bit halfword in the stream.
+  insn = (bytes[1] << 8) | bytes[0];
   unsigned bits15_11 = slice(insn, 15, 11);
   bool IsThumb2 = false;
 
@@ -439,8 +455,10 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
   // { 0b11101 /* 0x1D */, 0b11110 /* 0x1E */, ob11111 /* 0x1F */ }.
   if (bits15_11 == 0x1D || bits15_11 == 0x1E || bits15_11 == 0x1F) {
     IsThumb2 = true;
-    if (Region.readBytes(Address + 2, 2, (uint8_t*)&insn1, NULL) == -1)
+    if (Region.readBytes(Address + 2, 2, (uint8_t*)bytes, NULL) == -1)
       return false;
+    // Encoded as a small-endian 16-bit halfword in the stream.
+    insn1 = (bytes[1] << 8) | bytes[0];
     insn = (insn << 16 | insn1);
   }
 
