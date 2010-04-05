@@ -76,6 +76,8 @@ public:
     return Buffers[i].IncludeLoc;
   }
 
+  /// AddNewSourceBuffer - Add a new source buffer to this source manager.  This
+  /// takes ownership of the memory buffer.
   unsigned AddNewSourceBuffer(MemoryBuffer *F, SMLoc IncludeLoc) {
     SrcBuffer NB;
     NB.Buffer = F;
