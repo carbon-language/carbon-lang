@@ -25,11 +25,7 @@ include "MBlazeIntrinsics.td"
 include "MBlazeInstrInfo.td"
 include "MBlazeCallingConv.td"
 
-def MBlazeInstrInfo : InstrInfo {
-  let TSFlagsFields = [];
-  let TSFlagsShifts = [];
-}
-
+def MBlazeInstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
 // Microblaze Subtarget features                                              //

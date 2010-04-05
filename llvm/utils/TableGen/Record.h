@@ -1262,9 +1262,6 @@ public:
     return 0;
   }
 
-  // Like getValue, but allow dotting into members: X.Y
-  RecordVal *getDottedValue(StringRef Name);
-
   void addTemplateArg(StringRef Name) {
     assert(!isTemplateArg(Name) && "Template arg already defined!");
     TemplateArgs.push_back(Name);

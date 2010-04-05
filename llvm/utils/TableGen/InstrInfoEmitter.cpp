@@ -288,19 +288,19 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";
   if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<TID::ExtraSrcRegAllocReq)";
   if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<TID::ExtraDefRegAllocReq)";
-  OS << ", 0";
 
   // Emit all of the target-specific flags...
-  ListInit *LI    = InstrInfo->getValueAsListInit("TSFlagsFields");
-  ListInit *Shift = InstrInfo->getValueAsListInit("TSFlagsShifts");
-  if (LI->getSize() != Shift->getSize())
-    throw "Lengths of " + InstrInfo->getName() +
-          ":(TargetInfoFields, TargetInfoPositions) must be equal!";
-
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    emitShiftedValue(Inst.TheDef, dynamic_cast<StringInit*>(LI->getElement(i)),
-                     dynamic_cast<IntInit*>(Shift->getElement(i)), OS);
-
+  BitsInit *TSF = Inst.TheDef->getValueAsBitsInit("TSFlags");
+  if (!TSF) throw "no TSFlags?";
+  uint64_t Value = 0;
+  for (unsigned i = 0, e = TSF->getNumBits(); i != e; ++i) {
+    if (BitInit *Bit = dynamic_cast<BitInit*>(TSF->getBit(i)))
+      Value |= uint64_t(Bit->getValue()) << i;
+    else
+      throw "Invalid TSFlags bit in " + Inst.TheDef->getName();
+  }
+  OS << ", 0x";
+  OS.write_hex(Value);
   OS << ", ";
 
   // Emit the implicit uses and defs lists...
@@ -328,66 +328,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "0";
   else
     OS << "OperandInfo" << OpInfo.find(OperandInfo)->second;
-  
+
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
-
-
-void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
-                                        IntInit *ShiftInt, raw_ostream &OS) {
-  if (Val == 0 || ShiftInt == 0)
-    throw std::string("Illegal value or shift amount in TargetInfo*!");
-  RecordVal *RV = R->getDottedValue(Val->getValue());
-  int Shift = ShiftInt->getValue();
-
-  if (RV == 0 || RV->getValue() == 0) {
-    // This isn't an error if this is a builtin instruction.
-    if (R->getName() != "PHI" &&
-        R->getName() != "INLINEASM" &&
-        R->getName() != "DBG_LABEL" &&
-        R->getName() != "EH_LABEL" &&
-        R->getName() != "GC_LABEL" &&
-        R->getName() != "KILL" &&
-        R->getName() != "EXTRACT_SUBREG" &&
-        R->getName() != "INSERT_SUBREG" &&
-        R->getName() != "IMPLICIT_DEF" &&
-        R->getName() != "SUBREG_TO_REG" &&
-        R->getName() != "COPY_TO_REGCLASS" &&
-        R->getName() != "DBG_VALUE")
-      throw R->getName() + " doesn't have a field named '" + 
-            Val->getValue() + "'!";
-    return;
-  }
-
-  Init *Value = RV->getValue();
-  if (BitInit *BI = dynamic_cast<BitInit*>(Value)) {
-    if (BI->getValue()) OS << "|(1<<" << Shift << ")";
-    return;
-  } else if (BitsInit *BI = dynamic_cast<BitsInit*>(Value)) {
-    // Convert the Bits to an integer to print...
-    Init *I = BI->convertInitializerTo(new IntRecTy());
-    if (I)
-      if (IntInit *II = dynamic_cast<IntInit*>(I)) {
-        if (II->getValue()) {
-          if (Shift)
-            OS << "|(" << II->getValue() << "<<" << Shift << ")";
-          else
-            OS << "|" << II->getValue();
-        }
-        return;
-      }
-
-  } else if (IntInit *II = dynamic_cast<IntInit*>(Value)) {
-    if (II->getValue()) {
-      if (Shift)
-        OS << "|(" << II->getValue() << "<<" << Shift << ")";
-      else
-        OS << II->getValue();
-    }
-    return;
-  }
-
-  errs() << "Unhandled initializer: " << *Val << "\n";
-  throw "In record '" + R->getName() + "' for TSFlag emission.";
-}
-

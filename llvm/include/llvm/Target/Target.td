@@ -224,10 +224,13 @@ class Instruction {
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
   string Constraints = "";  // OperandConstraint, e.g. $src = $dst.
-  
+
   /// DisableEncoding - List of operand names (e.g. "$op1,$op2") that should not
   /// be encoded into the output machineinstr.
   string DisableEncoding = "";
+
+  /// Target-specific flags. This becomes the TSFlags field in TargetInstrDesc.
+  bits<32> TSFlags = 0;
 }
 
 /// Predicates - These are extra conditionals which are turned into instruction
@@ -372,13 +375,6 @@ class OptionalDefOperand<ValueType ty, dag OpTypes, dag defaultops>
 // which are global to the target machine.
 //
 class InstrInfo {
-  // If the target wants to associate some target-specific information with each
-  // instruction, it should provide these two lists to indicate how to assemble
-  // the target specific information into the 32 bits available.
-  //
-  list<string> TSFlagsFields = [];
-  list<int>    TSFlagsShifts = [];
-
   // Target can specify its instructions in either big or little-endian formats.
   // For instance, while both Sparc and PowerPC are big-endian platforms, the
   // Sparc manual specifies its instructions in the format [31..0] (big), while

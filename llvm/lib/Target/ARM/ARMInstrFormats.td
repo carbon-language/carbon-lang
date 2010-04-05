@@ -185,27 +185,24 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   : Instruction {
   let Namespace = "ARM";
 
-  // TSFlagsFields
   AddrMode AM = am;
-  bits<4> AddrModeBits = AM.Value;
-
   SizeFlagVal SZ = sz;
-  bits<3> SizeFlag = SZ.Value;
-
   IndexMode IM = im;
   bits<2> IndexModeBits = IM.Value;
-
   Format F = f;
   bits<6> Form = F.Value;
-
   Domain D = d;
-  bits<2> Dom = D.Value;
-
-  //
-  // Attributes specific to ARM instructions...
-  //
   bit isUnaryDataProc = 0;
   bit canXformTo16Bit = 0;
+
+  // The layout of TSFlags should be kept in sync with ARMBaseInstrInfo.h.
+  let TSFlags{3-0}   = AM.Value;
+  let TSFlags{6-4}   = SZ.Value;
+  let TSFlags{8-7}   = IndexModeBits;
+  let TSFlags{14-9}  = Form;
+  let TSFlags{15}    = isUnaryDataProc;
+  let TSFlags{16}    = canXformTo16Bit;
+  let TSFlags{18-17} = D.Value;
 
   let Constraints = cstr;
   let Itinerary = itin;
@@ -1317,7 +1314,7 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{11-8}  = 0b1011;
 
   // 64-bit loads & stores operate on both NEON and VFP pipelines.
-  let Dom = VFPNeonDomain.Value;
+  let D = VFPNeonDomain;
 }
 
 class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
@@ -1341,7 +1338,7 @@ class AXDI5<dag oops, dag iops, IndexMode im, InstrItinClass itin,
   let Inst{11-8}  = 0b1011;
 
   // 64-bit loads & stores operate on both NEON and VFP pipelines.
-  let Dom = VFPNeonDomain.Value;
+  let D = VFPNeonDomain;
 }
 
 class AXSI5<dag oops, dag iops, IndexMode im, InstrItinClass itin,

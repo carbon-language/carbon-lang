@@ -24,10 +24,7 @@ include "XCoreRegisterInfo.td"
 include "XCoreInstrInfo.td"
 include "XCoreCallingConv.td"
 
-def XCoreInstrInfo : InstrInfo {
-  let TSFlagsFields = [];
-  let TSFlagsShifts = [];
-}
+def XCoreInstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
 // XCore processors supported.

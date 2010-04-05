@@ -61,10 +61,12 @@ class MSP430Inst<dag outs, dag ins, SizeVal sz, Format f,
   dag InOperandList  = ins;
 
   Format Form = f;
-  bits<2> FormBits = Form.Value;
-
   SizeVal Sz = sz;
-  bits<3> Size = Sz.Value;
+
+  // Define how we want to layout our TargetSpecific information field... This
+  // should be kept up-to-date with the fields in the MSP430InstrInfo.h file.
+  let TSFlags{1-0} = Form.Value;
+  let TSFlags{4-2} = Sz.Value;
 
   let AsmString   = asmstr;
 }

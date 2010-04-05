@@ -47,8 +47,6 @@ private:
                   std::map<Record*, unsigned> &BM,
                   const OperandInfoMapTy &OpInfo,
                   raw_ostream &OS);
-  void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
-                        raw_ostream &OS);
 
   // Itinerary information.
   void GatherItinClasses();

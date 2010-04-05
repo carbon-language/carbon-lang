@@ -128,6 +128,19 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
   bits<2> SegOvrBits = 0;   // Segment override prefix.
   Domain ExeDomain = d;
+
+  // TSFlags layout should be kept in sync with X86InstrInfo.h.
+  let TSFlags{5-0}   = FormBits;
+  let TSFlags{6}     = hasOpSizePrefix;
+  let TSFlags{7}     = hasAdSizePrefix;
+  let TSFlags{11-8}  = Prefix;
+  let TSFlags{12}    = hasREX_WPrefix;
+  let TSFlags{15-13} = ImmT.Value;
+  let TSFlags{18-16} = FPForm.Value;
+  let TSFlags{19}    = hasLockPrefix;
+  let TSFlags{21-20} = SegOvrBits;
+  let TSFlags{23-22} = ExeDomain.Value;
+  let TSFlags{31-24} = Opcode;
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,

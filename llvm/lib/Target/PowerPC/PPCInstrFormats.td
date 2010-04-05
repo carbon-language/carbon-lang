@@ -23,13 +23,18 @@ class I<bits<6> opcode, dag OOL, dag IOL, string asmstr, InstrItinClass itin>
   let InOperandList = IOL;
   let AsmString = asmstr;
   let Itinerary = itin;
-  
-  /// These fields correspond to the fields in PPCInstrInfo.h.  Any changes to
-  /// these must be reflected there!  See comments there for what these are.
+
   bits<1> PPC970_First = 0;
   bits<1> PPC970_Single = 0;
   bits<1> PPC970_Cracked = 0;
   bits<3> PPC970_Unit = 0;
+
+  /// These fields correspond to the fields in PPCInstrInfo.h.  Any changes to
+  /// these must be reflected there!  See comments there for what these are.
+  let TSFlags{0}   = PPC970_First;
+  let TSFlags{1}   = PPC970_Single;
+  let TSFlags{2}   = PPC970_Cracked;
+  let TSFlags{5-3} = PPC970_Unit;
 }
 
 class PPC970_DGroup_First   { bits<1> PPC970_First = 1;  }

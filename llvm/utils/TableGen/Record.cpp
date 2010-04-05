@@ -1307,17 +1307,6 @@ void Record::resolveReferencesTo(const RecordVal *RV) {
   }
 }
 
-RecordVal *Record::getDottedValue(StringRef Name) {
-  size_t pos = Name.find('.');
-  if (pos == StringRef::npos)
-    return getValue(Name);
-  RecordVal *RV = getValue(Name.substr(0, pos));
-  if (!RV) return 0;
-  DefInit *DI = dynamic_cast<DefInit*>(RV->getValue());
-  if (!DI) return 0;
-  return DI->getDef()->getDottedValue(Name.substr(pos+1));
-}
-
 void Record::dump() const { errs() << *this; }
 
 raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {

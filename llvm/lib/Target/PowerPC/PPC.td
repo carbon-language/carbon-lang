@@ -96,14 +96,6 @@ def : Processor<"ppc64", G5Itineraries,
 include "PPCCallingConv.td"
 
 def PPCInstrInfo : InstrInfo {
-  // Define how we want to layout our TargetSpecific information field... This
-  // should be kept up-to-date with the fields in the PPCInstrInfo.h file.
-  let TSFlagsFields = ["PPC970_First",
-                       "PPC970_Single",
-                       "PPC970_Cracked",
-                       "PPC970_Unit"];
-  let TSFlagsShifts = [0, 1, 2, 3];
-
   let isLittleEndianEncoding = 1;
 }
 

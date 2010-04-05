@@ -164,33 +164,7 @@ include "X86RegisterInfo.td"
 
 include "X86InstrInfo.td"
 
-def X86InstrInfo : InstrInfo {
-
-  // Define how we want to layout our TargetSpecific information field... This
-  // should be kept up-to-date with the fields in the X86InstrInfo.h file.
-  let TSFlagsFields = ["FormBits",
-                       "hasOpSizePrefix",
-                       "hasAdSizePrefix",
-                       "Prefix",
-                       "hasREX_WPrefix",
-                       "ImmT.Value",
-                       "FPForm.Value",
-                       "hasLockPrefix",
-                       "SegOvrBits",
-                       "ExeDomain.Value",
-                       "Opcode"];
-  let TSFlagsShifts = [0,
-                       6,
-                       7,
-                       8,
-                       12,
-                       13,
-                       16,
-                       19,
-                       20,
-                       22,
-                       24];
-}
+def X86InstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
 // Calling Conventions

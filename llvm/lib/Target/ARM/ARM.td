@@ -140,23 +140,7 @@ include "ARMCallingConv.td"
 
 include "ARMInstrInfo.td"
 
-def ARMInstrInfo : InstrInfo {
-  // Define how we want to layout our target-specific information field.
-  let TSFlagsFields = ["AddrModeBits",
-                       "SizeFlag",
-                       "IndexModeBits",
-                       "Form",
-                       "isUnaryDataProc",
-                       "canXformTo16Bit",
-                       "Dom"];
-  let TSFlagsShifts = [0,
-                       4,
-                       7,
-                       9,
-                       15,
-                       16,
-                       17];
-}
+def ARMInstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
