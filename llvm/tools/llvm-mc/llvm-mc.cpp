@@ -18,6 +18,13 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCParser/AsmParser.h"
+#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetMachine.h"  // FIXME.
+#include "llvm/Target/TargetSelect.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -28,13 +35,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Target/TargetAsmBackend.h"
-#include "llvm/Target/TargetAsmParser.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetMachine.h"  // FIXME.
-#include "llvm/Target/TargetSelect.h"
-#include "llvm/MC/MCParser/AsmParser.h"
 #include "Disassembler.h"
 using namespace llvm;
 
