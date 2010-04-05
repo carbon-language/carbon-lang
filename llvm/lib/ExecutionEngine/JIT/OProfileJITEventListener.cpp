@@ -19,6 +19,7 @@
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
@@ -77,10 +78,10 @@ class FilenameCache {
   DenseMap<AssertingVH<MDNode>, std::string> Filenames;
 
  public:
-  const char *getFilename(DIScope Scope) {
-    std::string &Filename = Filenames[Scope.getNode()];
+  const char *getFilename(MDNode *Scope) {
+    std::string &Filename = Filenames[Scope];
     if (Filename.empty()) {
-      Filename = Scope.getFilename();
+      Filename = DIScope(Scope).getFilename();
     }
     return Filename.c_str();
   }
@@ -91,9 +92,9 @@ static debug_line_info LineStartToOProfileFormat(
     uintptr_t Address, DebugLoc Loc) {
   debug_line_info Result;
   Result.vma = Address;
-  DILocation DILoc = MF.getDILocation(Loc);
-  Result.lineno = DILoc.getLineNumber();
-  Result.filename = Filenames.getFilename(DILoc.getScope());
+  Result.lineno = Loc.getLine();
+  Result.filename = Filenames.getFilename(
+    Loc.getScope(MF.getFunction()->getContext()));
   DEBUG(dbgs() << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
                << Result.filename << ":" << Result.lineno << "\n");
   return Result;
