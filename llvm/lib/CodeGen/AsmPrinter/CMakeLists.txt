@@ -5,6 +5,5 @@ add_llvm_library(LLVMAsmPrinter
   DIE.cpp
   DwarfDebug.cpp
   DwarfException.cpp
-  DwarfWriter.cpp
   OcamlGCPrinter.cpp
   )
