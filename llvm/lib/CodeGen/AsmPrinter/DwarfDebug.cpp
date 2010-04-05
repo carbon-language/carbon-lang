@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "dwarfdebug"
 #include "DwarfDebug.h"
+#include "DIE.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -26,6 +27,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
@@ -400,6 +402,14 @@ void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
   DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
   Die->addValue(Attribute, Form, Value);
 }
+
+/// addDIEEntry - Add a DIE attribute data and value.
+///
+void DwarfDebug::addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form,
+                             DIE *Entry) {
+  Die->addValue(Attribute, Form, createDIEEntry(Entry));
+}
+
 
 /// addBlock - Add block data.
 ///
@@ -1793,8 +1803,6 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
-  MMI = Asm->MMI;
-
   TimeRegion Timer(DebugTimer);
 
   DebugInfoFinder DbgFinder;
@@ -1994,8 +2002,6 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
 
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
 void DwarfDebug::collectVariableInfo() {
-  if (!MMI) return;
-
   const LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
 
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
@@ -2297,8 +2303,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 /// endFunction - Gather and emit post-function debug information.
 ///
 void DwarfDebug::endFunction(const MachineFunction *MF) {
-  if (!MMI->hasDebugInfo()) return;
-  if (DbgScopeMap.empty()) return;
+  if (!MMI->hasDebugInfo() ||
+      DbgScopeMap.empty()) return;
   
   TimeRegion Timer(DebugTimer);
 
@@ -2346,9 +2352,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
 MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
-  if (!MMI)
-    return 0;
-
   TimeRegion Timer(DebugTimer);
 
   StringRef Dir;

@@ -14,18 +14,13 @@
 #ifndef CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 #define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 
-#include "DIE.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineLocation.h"
-#include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/UniqueVector.h"
-#include <string>
+#include "llvm/Support/Allocator.h"
 
 namespace llvm {
 
@@ -34,9 +29,27 @@ class DbgConcreteScope;
 class DbgScope;
 class DbgVariable;
 class MachineFrameInfo;
+class MachineLocation;
 class MachineModuleInfo;
 class MCAsmInfo;
 class Timer;
+class DIEAbbrev;
+class DIE;
+class DIEBlock;
+class DIEEntry;
+
+class DIEnumerator;
+class DIDescriptor;
+class DIVariable;
+class DIGlobal;
+class DIGlobalVariable;
+class DISubprogram;
+class DIBasicType;
+class DIDerivedType;
+class DIType;
+class DINameSpace;
+class DISubrange;
+class DICompositeType;
 
 //===----------------------------------------------------------------------===//
 /// SrcLineInfo - This class is used to record source line correspondence.
@@ -279,10 +292,8 @@ private:
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
-  void addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
-    Die->addValue(Attribute, Form, createDIEEntry(Entry));
-  }
-
+  void addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry);
+  
   /// addBlock - Add block data.
   ///
   void addBlock(DIE *Die, unsigned Attribute, unsigned Form, DIEBlock *Block);
