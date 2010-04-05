@@ -1793,24 +1793,39 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 void DwarfDebug::beginModule(Module *M) {
   if (!Asm->MAI->doesSupportDebugInformation())
     return;
+  
+  MMI = Asm->MMI;
 
   TimeRegion Timer(DebugTimer);
-  
+
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
+  bool HasDebugInfo = false;
+  
+  // Scan all the compile-units to see if there are any marked as the main unit.
+  // if not, we do not generate debug info.
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+       E = DbgFinder.compile_unit_end(); I != E; ++I) {
+    if (DICompileUnit(*I).isMain()) {
+      HasDebugInfo = true;
+      break;
+    }
+  }
+  
+  if (!HasDebugInfo) return;
+
+  // Tell MMI that we have debug info.
+  MMI->setDebugInfoAvailability(true);
+  
   // Emit initial sections.
-  if (DbgFinder.compile_unit_begin() != DbgFinder.compile_unit_end())
-    EmitSectionLabels();
+  EmitSectionLabels();
   
   // Create all the compile unit DIEs.
   for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
          E = DbgFinder.compile_unit_end(); I != E; ++I)
     constructCompileUnit(*I);
 
-  if (!ModuleCU)
-    return;
-  
   // Create DIEs for each subprogram.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
          E = DbgFinder.subprogram_end(); I != E; ++I)
@@ -1820,10 +1835,6 @@ void DwarfDebug::beginModule(Module *M) {
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I)
     constructGlobalVariableDIE(*I);
-
-  MMI = Asm->MMI;
-  shouldEmit = true;
-  MMI->setDebugInfoAvailability(true);
 
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());

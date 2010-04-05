@@ -50,7 +50,6 @@ namespace llvm {
   class MachineModuleInfo;
   class MCContext;
   class MCExpr;
-  class DwarfWriter;
   class SDNode;
   class SDValue;
   class SelectionDAG;
@@ -1273,8 +1272,7 @@ public:
   /// createFastISel - This method returns a target specific FastISel object,
   /// or null if the target does not support "fast" ISel.
   virtual FastISel *
-  createFastISel(MachineFunction &,
-                 MachineModuleInfo *, DwarfWriter *,
+  createFastISel(MachineFunction &, MachineModuleInfo *,
                  DenseMap<const Value *, unsigned> &,
                  DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                  DenseMap<const AllocaInst *, int> &

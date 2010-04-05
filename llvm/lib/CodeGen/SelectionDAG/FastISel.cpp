@@ -47,7 +47,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -326,8 +325,8 @@ bool FastISel::SelectCall(User *I) {
   default: break;
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None)||!DW
-        || !DW->ShouldEmitDwarfDebug())
+    if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None) ||
+        !MMI->hasDebugInfo())
       return true;
 
     Value *Address = DI->getAddress();
@@ -735,7 +734,6 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 
 FastISel::FastISel(MachineFunction &mf,
                    MachineModuleInfo *mmi,
-                   DwarfWriter *dw,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                    DenseMap<const AllocaInst *, int> &am
@@ -752,7 +750,6 @@ FastISel::FastISel(MachineFunction &mf,
 #endif
     MF(mf),
     MMI(mmi),
-    DW(dw),
     MRI(MF.getRegInfo()),
     MFI(*MF.getFrameInfo()),
     MCP(*MF.getConstantPool()),

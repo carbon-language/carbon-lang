@@ -72,7 +72,7 @@ void DwarfWriter::EndFunction(const MachineFunction *MF) {
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
 /// be emitted.
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
-  return DD && DD->ShouldEmitDwarfDebug();
+  return DD && DD->MMI->hasDebugInfo();
 }
 
 void DwarfWriter::BeginScope(const MachineInstr *MI) {
