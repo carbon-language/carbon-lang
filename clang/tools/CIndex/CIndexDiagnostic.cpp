@@ -32,15 +32,15 @@ extern "C" {
 
 unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
-  return CXXUnit? CXXUnit->diag_size() : 0;
+  return CXXUnit? CXXUnit->stored_diag_size() : 0;
 }
 
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
-  if (!CXXUnit || Index >= CXXUnit->diag_size())
+  if (!CXXUnit || Index >= CXXUnit->stored_diag_size())
     return 0;
 
-  return new CXStoredDiagnostic(CXXUnit->diag_begin()[Index],
+  return new CXStoredDiagnostic(CXXUnit->stored_diag_begin()[Index],
                                 CXXUnit->getASTContext().getLangOptions());
 }
 

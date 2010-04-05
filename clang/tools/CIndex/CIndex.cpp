@@ -1064,8 +1064,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     if (NumErrors != Diags->getNumErrors()) {
       // Make sure to check that 'Unit' is non-NULL.
       if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
-        for (ASTUnit::diag_iterator D = Unit->diag_begin(), 
-                                 DEnd = Unit->diag_end();
+        for (ASTUnit::stored_diag_iterator D = Unit->stored_diag_begin(), 
+                                        DEnd = Unit->stored_diag_end();
              D != DEnd; ++D) {
           CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
           CXString Msg = clang_formatDiagnostic(&Diag,
@@ -1179,7 +1179,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                               num_unsaved_files, unsaved_files,
                               ATU->getFileManager(),
                               ATU->getSourceManager(),
-                              ATU->getDiagnostics());
+                              ATU->getStoredDiagnostics());
   } else if (CXXIdx->getDisplayDiagnostics()) {
     // We failed to load the ASTUnit, but we can still deserialize the
     // diagnostics and emit them.

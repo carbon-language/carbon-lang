@@ -36,8 +36,10 @@
 using namespace clang;
 
 ASTUnit::ASTUnit(Diagnostic &Diag, bool _MainFileIsAST)
-  : SourceMgr(Diag), MainFileIsAST(_MainFileIsAST), 
+  : MainFileIsAST(_MainFileIsAST), 
     ConcurrencyCheckValue(CheckUnlocked) {
+  FileMgr.reset(new FileManager);
+  SourceMgr.reset(new SourceManager(Diag));
 }
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
@@ -153,7 +155,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   // If requested, capture diagnostics in the ASTUnit.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, Diags, 
-                                    AST->Diagnostics);
+                                    AST->StoredDiagnostics);
 
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     // Create the file entry for the file that we're mapping from.
@@ -317,7 +319,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Capture any diagnostics that would otherwise be dropped.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
                                     Clang.getDiagnostics(),
-                                    AST->Diagnostics);
+                                    AST->StoredDiagnostics);
 
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(&AST->getFileManager());

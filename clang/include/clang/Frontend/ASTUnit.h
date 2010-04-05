@@ -52,10 +52,9 @@ public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
 private:
-  
-  FileManager FileMgr;
-
-  SourceManager                     SourceMgr;
+  llvm::OwningPtr<Diagnostic>       DiagEngine;
+  llvm::OwningPtr<FileManager>      FileMgr;
+  llvm::OwningPtr<SourceManager>    SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
@@ -90,7 +89,7 @@ private:
 
   /// \brief The set of diagnostics produced when creating this
   /// translation unit.
-  llvm::SmallVector<StoredDiagnostic, 4> Diagnostics;
+  llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
 
   /// \brief Temporary files that should be removed when the ASTUnit is 
   /// destroyed.
@@ -142,8 +141,8 @@ public:
 
   bool isMainFileAST() const { return MainFileIsAST; }
 
-  const SourceManager &getSourceManager() const { return SourceMgr; }
-        SourceManager &getSourceManager()       { return SourceMgr; }
+  const SourceManager &getSourceManager() const { return *SourceMgr; }
+        SourceManager &getSourceManager()       { return *SourceMgr; }
 
   const Preprocessor &getPreprocessor() const { return *PP.get(); }
         Preprocessor &getPreprocessor()       { return *PP.get(); }
@@ -151,8 +150,8 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
-  const FileManager &getFileManager() const { return FileMgr; }
-        FileManager &getFileManager()       { return FileMgr; }
+  const FileManager &getFileManager() const { return *FileMgr; }
+        FileManager &getFileManager()       { return *FileMgr; }
 
   const std::string &getOriginalSourceFileName();
   const std::string &getPCHFileName();
@@ -185,12 +184,17 @@ public:
   }
   
   // Retrieve the diagnostics associated with this AST
-  typedef const StoredDiagnostic * diag_iterator;
-  diag_iterator diag_begin() const { return Diagnostics.begin(); }
-  diag_iterator diag_end() const { return Diagnostics.end(); }
-  unsigned diag_size() const { return Diagnostics.size(); }
-  llvm::SmallVector<StoredDiagnostic, 4> &getDiagnostics() { 
-    return Diagnostics; 
+  typedef const StoredDiagnostic *stored_diag_iterator;
+  stored_diag_iterator stored_diag_begin() const { 
+    return StoredDiagnostics.begin(); 
+  }
+  stored_diag_iterator stored_diag_end() const { 
+    return StoredDiagnostics.end(); 
+  }
+  unsigned stored_diag_size() const { return StoredDiagnostics.size(); }
+  
+  llvm::SmallVector<StoredDiagnostic, 4> &getStoredDiagnostics() { 
+    return StoredDiagnostics; 
   }
 
   /// \brief A mapping from a file name to the memory buffer that stores the
