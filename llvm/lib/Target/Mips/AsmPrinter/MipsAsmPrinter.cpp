@@ -347,11 +347,12 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
 
   // TODO: handle O64 ABI
-  if (Subtarget->isABI_EABI())
+  if (Subtarget->isABI_EABI()) {
     if (Subtarget->isGP32bit())
       OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long32"));
     else
       OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long64"));
+  }
 
   // return to previous section
   OutStreamer.EmitRawText(StringRef("\t.previous")); 
