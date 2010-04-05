@@ -2707,7 +2707,7 @@ let isCodeGenOnly = 1 in {
                    "add{b}\t{$src2, $dst|$dst, $src2}", []>;
   def ADD16rr_alt: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
-  def ADD32rr_alt: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
+  def ADD32rr_alt: I<0x03, MRMSrcReg,(outs GR32:$dst),(ins GR32:$src1, GR32:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
