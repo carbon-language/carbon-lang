@@ -3206,11 +3206,9 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                    NonScalarIntSafe, DAG);
 
   if (VT == MVT::Other) {
-    VT = TLI.getPointerTy();
-    const Type *Ty = VT.getTypeForEVT(*DAG.getContext());
-    if (DstAlign >= TLI.getTargetData()->getABITypeAlignment(Ty) ||
+    if (DstAlign >= TLI.getTargetData()->getPointerPrefAlignment() ||
         TLI.allowsUnalignedMemoryAccesses(VT)) {
-      VT = MVT::i64;
+      VT = TLI.getPointerTy();
     } else {
       switch (DstAlign & 7) {
       case 0:  VT = MVT::i64; break;
