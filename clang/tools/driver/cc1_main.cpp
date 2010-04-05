@@ -211,6 +211,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
+  llvm::InitializeAllAsmParsers();
 
   // Buffer diagnostics from argument parsing so that we can output them using a
   // well formed diagnostic object.
