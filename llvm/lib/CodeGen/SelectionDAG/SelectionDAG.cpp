@@ -803,7 +803,6 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
 
 void SelectionDAG::init(MachineFunction &mf) {
   MF = &mf;
-  MMI = &mf.getMMI();
   Context = &mf.getFunction()->getContext();
 }
 
@@ -2256,7 +2255,7 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   if (GA->getOffset() != 0) return false;
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
   if (!GV) return false;
-  return MMI->hasDebugInfo();
+  return MF->getMMI().hasDebugInfo();
 }
 
 

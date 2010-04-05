@@ -32,7 +32,6 @@ class AliasAnalysis;
 class FunctionLoweringInfo;
 class MachineConstantPoolValue;
 class MachineFunction;
-class MachineModuleInfo;
 class MDNode;
 class SDNodeOrdering;
 class SDDbgValue;
@@ -121,8 +120,7 @@ class SelectionDAG {
   TargetLowering &TLI;
   MachineFunction *MF;
   FunctionLoweringInfo &FLI;
-  MachineModuleInfo *MMI;
-  LLVMContext* Context;
+  LLVMContext *Context;
 
   /// EntryNode - The starting token.
   SDNode EntryNode;
@@ -191,7 +189,6 @@ public:
   const TargetMachine &getTarget() const;
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
-  MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
   LLVMContext *getContext() const {return Context; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.

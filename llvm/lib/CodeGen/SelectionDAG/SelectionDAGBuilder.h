@@ -56,7 +56,6 @@ class InsertValueInst;
 class Instruction;
 class LoadInst;
 class MachineBasicBlock;
-class MachineFunction;
 class MachineInstr;
 class MachineRegisterInfo;
 class PHINode;
