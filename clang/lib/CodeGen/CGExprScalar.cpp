@@ -1140,7 +1140,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // specially because the result is altered by the store, i.e., [C99 6.5.16p1]
   // 'An assignment expression has the value of the left operand after the
   // assignment...'.
-  if (LHSLV.isBitfield()) {
+  if (LHSLV.isBitField()) {
     if (!LHSLV.isVolatileQualified()) {
       CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy,
                                          &Result);
@@ -1575,7 +1575,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // because the result is altered by the store, i.e., [C99 6.5.16p1]
   // 'An assignment expression has the value of the left operand after
   // the assignment...'.
-  if (LHS.isBitfield()) {
+  if (LHS.isBitField()) {
     if (!LHS.isVolatileQualified()) {
       CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
                                          &RHS);

@@ -61,12 +61,11 @@ namespace CodeGen {
 
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
-public:
+protected:
   // Utility functions for unified ivar access. These need to
   // eventually be folded into other places (the structure layout
   // code).
 
-protected:
   /// Compute an offset to the given ivar, suitable for passing to
   /// EmitValueForIvarAtOffset.  Note that the correct handling of
   /// bit-fields is carefully coordinated by these two, use caution!

@@ -27,6 +27,7 @@ namespace clang {
   class ObjCImplicitSetterGetterRefExpr;
 
 namespace CodeGen {
+  class CGBitFieldInfo;
 
 /// RValue - This trivial value class is used to represent the result of an
 /// expression that is evaluated.  It can be one of three things: either a
@@ -128,14 +129,11 @@ class LValue {
     llvm::Constant *VectorElts;
 
     // BitField start bit and size
-    struct {
-      unsigned short StartBit;
-      unsigned short Size;
-      bool IsSigned;
-    } BitfieldData;
+    const CGBitFieldInfo *BitFieldInfo;
 
     // Obj-C property reference expression
     const ObjCPropertyRefExpr *PropertyRefExpr;
+
     // ObjC 'implicit' property reference expression
     const ObjCImplicitSetterGetterRefExpr *KVCRefExpr;
   };
@@ -156,6 +154,9 @@ class LValue {
   // Lvalue is a global reference of an objective-c object
   bool GlobalObjCRef : 1;
 
+  /// Is the bit-field value signed.
+  bool BitFieldIsSigned : 1;
+
   Expr *BaseIvarExp;
 private:
   void SetQualifiers(Qualifiers Quals) {
@@ -170,7 +171,7 @@ private:
 public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
-  bool isBitfield() const { return LVType == BitField; }
+  bool isBitField() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
   bool isPropertyRef() const { return LVType == PropertyRef; }
   bool isKVCRef() const { return LVType == KVCRef; }
@@ -209,29 +210,32 @@ public:
 
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
+
   // vector elt lvalue
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
+
   // extended vector elements.
   llvm::Value *getExtVectorAddr() const { assert(isExtVectorElt()); return V; }
   llvm::Constant *getExtVectorElts() const {
     assert(isExtVectorElt());
     return VectorElts;
   }
+
   // bitfield lvalue
-  llvm::Value *getBitfieldAddr() const { assert(isBitfield()); return V; }
-  unsigned short getBitfieldStartBit() const {
-    assert(isBitfield());
-    return BitfieldData.StartBit;
+  llvm::Value *getBitFieldAddr() const {
+    assert(isBitField());
+    return V;
   }
-  unsigned short getBitfieldSize() const {
-    assert(isBitfield());
-    return BitfieldData.Size;
+  const CGBitFieldInfo &getBitFieldInfo() const {
+    assert(isBitField());
+    return *BitFieldInfo;
   }
-  bool isBitfieldSigned() const {
-    assert(isBitfield());
-    return BitfieldData.IsSigned;
+  bool isBitFieldSigned() const {
+    assert(isBitField());
+    return BitFieldIsSigned;
   }
+
   // property ref lvalue
   const ObjCPropertyRefExpr *getPropertyRefExpr() const {
     assert(isPropertyRef());
@@ -272,15 +276,13 @@ public:
     return R;
   }
 
-  static LValue MakeBitfield(llvm::Value *V, unsigned short StartBit,
-                             unsigned short Size, bool IsSigned,
-                             unsigned CVR) {
+  static LValue MakeBitfield(llvm::Value *V, const CGBitFieldInfo &Info,
+                             bool IsSigned, unsigned CVR) {
     LValue R;
     R.LVType = BitField;
     R.V = V;
-    R.BitfieldData.StartBit = StartBit;
-    R.BitfieldData.Size = Size;
-    R.BitfieldData.IsSigned = IsSigned;
+    R.BitFieldInfo = &Info;
+    R.BitFieldIsSigned = IsSigned;
     R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }

@@ -118,10 +118,19 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   uint64_t BitFieldSize =
     Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
 
+  // Allocate a new CGBitFieldInfo object to describe this access.
+  //
+  // FIXME: This is incredibly wasteful, these should be uniqued or part of some
+  // layout object. However, this is blocked on other cleanups to the
+  // Objective-C code, so for now we just live with allocating a bunch of these
+  // objects.
+  unsigned FieldNo = 0; // This value is unused.
+  CGBitFieldInfo *Info =
+    new (CGF.CGM.getContext()) CGBitFieldInfo(FieldNo, BitOffset, BitFieldSize);
+
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.
-  return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
-                              IvarTy->isSignedIntegerType(),
+  return LValue::MakeBitfield(V, *Info, IvarTy->isSignedIntegerType(),
                               Quals.getCVRQualifiers());
 }
 
