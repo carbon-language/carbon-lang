@@ -1338,8 +1338,11 @@ static void AddResultTypeChunk(ASTContext &Context,
   if (T.isNull() || Context.hasSameType(T, Context.DependentTy))
     return;
   
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  
   std::string TypeStr;
-  T.getAsStringInternal(TypeStr, Context.PrintingPolicy);
+  T.getAsStringInternal(TypeStr, Policy);
   Result->AddResultTypeChunk(TypeStr);
 }
 

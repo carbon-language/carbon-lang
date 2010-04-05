@@ -37,7 +37,8 @@ struct PrintingPolicy {
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
       SuppressTag(false), SuppressScope(false),
-      Dump(false), ConstantArraySizeAsWritten(false) { }
+      Dump(false), ConstantArraySizeAsWritten(false),
+      AnonymousTagLocations(true) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -97,7 +98,11 @@ struct PrintingPolicy {
   /// char a[9] = "A string";
   /// \endcode
   bool ConstantArraySizeAsWritten : 1;
-
+  
+  /// \brief When printing an anonymous tag name, also print the location of
+  /// that entity (e.g., "enum <anonymous at t.h:10:5>"). Otherwise, just 
+  /// prints "<anonymous>" for the name.
+  bool AnonymousTagLocations : 1;
 };
 
 } // end namespace clang

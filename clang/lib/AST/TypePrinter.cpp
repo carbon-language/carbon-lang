@@ -442,18 +442,21 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
     llvm::raw_string_ostream OS(Buffer);
     OS << "<anonymous";
 
-    // Suppress the redundant tag keyword if we just printed one.
-    // We don't have to worry about ElaboratedTypes here because you can't
-    // refer to an anonymous type with one.
-    if (!HasKindDecoration)
-      OS << " " << D->getKindName();
+    if (Policy.AnonymousTagLocations) {
+      // Suppress the redundant tag keyword if we just printed one.
+      // We don't have to worry about ElaboratedTypes here because you can't
+      // refer to an anonymous type with one.
+      if (!HasKindDecoration)
+        OS << " " << D->getKindName();
 
-    PresumedLoc PLoc = D->getASTContext().getSourceManager().getPresumedLoc(
-      D->getLocation());
-    OS << " at " << PLoc.getFilename()
-       << ':' << PLoc.getLine()
-       << ':' << PLoc.getColumn()
-       << '>';
+      PresumedLoc PLoc = D->getASTContext().getSourceManager().getPresumedLoc(
+        D->getLocation());
+      OS << " at " << PLoc.getFilename()
+         << ':' << PLoc.getLine()
+         << ':' << PLoc.getColumn();
+    }
+    
+    OS << '>';
     OS.flush();
   }
 
