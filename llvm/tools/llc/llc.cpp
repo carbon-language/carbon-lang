@@ -214,6 +214,7 @@ int main(int argc, char **argv) {
   // Initialize targets first, so that --version shows registered targets.
   InitializeAllTargets();
   InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
 
   cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
   
