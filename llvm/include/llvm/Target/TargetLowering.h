@@ -47,7 +47,6 @@ namespace llvm {
   class MachineFrameInfo;
   class MachineInstr;
   class MachineJumpTableInfo;
-  class MachineModuleInfo;
   class MCContext;
   class MCExpr;
   class SDNode;
@@ -1272,7 +1271,7 @@ public:
   /// createFastISel - This method returns a target specific FastISel object,
   /// or null if the target does not support "fast" ISel.
   virtual FastISel *
-  createFastISel(MachineFunction &, MachineModuleInfo *,
+  createFastISel(MachineFunction &,
                  DenseMap<const Value *, unsigned> &,
                  DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                  DenseMap<const AllocaInst *, int> &

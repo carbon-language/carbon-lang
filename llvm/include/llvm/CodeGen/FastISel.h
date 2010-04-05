@@ -49,7 +49,6 @@ protected:
   SmallSet<Instruction*, 8> &CatchInfoLost;
 #endif
   MachineFunction &MF;
-  MachineModuleInfo *MMI;
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
@@ -114,7 +113,6 @@ public:
 
 protected:
   FastISel(MachineFunction &mf,
-           MachineModuleInfo *mmi,
            DenseMap<const Value *, unsigned> &vm,
            DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
            DenseMap<const AllocaInst *, int> &am

@@ -2398,7 +2398,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 }
 
 FastISel *
-X86TargetLowering::createFastISel(MachineFunction &mf, MachineModuleInfo *mmo,
+X86TargetLowering::createFastISel(MachineFunction &mf,
                             DenseMap<const Value *, unsigned> &vm,
                             DenseMap<const BasicBlock*, MachineBasicBlock*> &bm,
                             DenseMap<const AllocaInst *, int> &am
@@ -2406,7 +2406,7 @@ X86TargetLowering::createFastISel(MachineFunction &mf, MachineModuleInfo *mmo,
                           , SmallSet<Instruction*, 8> &cil
 #endif
                                   ) {
-  return X86::createFastISel(mf, mmo, vm, bm, am
+  return X86::createFastISel(mf, vm, bm, am
 #ifndef NDEBUG
                              , cil
 #endif

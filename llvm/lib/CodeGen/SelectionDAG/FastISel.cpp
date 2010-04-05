@@ -326,7 +326,7 @@ bool FastISel::SelectCall(User *I) {
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None) ||
-        !MMI->hasDebugInfo())
+        !MF.getMMI().hasDebugInfo())
       return true;
 
     Value *Address = DI->getAddress();
@@ -340,7 +340,7 @@ bool FastISel::SelectCall(User *I) {
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
     if (!DI->getDebugLoc().isUnknown())
-      MMI->setVariableDbgInfo(DI->getVariable(), FI, DI->getDebugLoc());
+      MF.getMMI().setVariableDbgInfo(DI->getVariable(), FI, DI->getDebugLoc());
     
     // Building the map above is target independent.  Generating DBG_VALUE
     // inline is target dependent; do this now.
@@ -399,44 +399,39 @@ bool FastISel::SelectCall(User *I) {
     switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      if (MMI) {
-        if (MBB->isLandingPad())
-          AddCatchInfo(*cast<CallInst>(I), MMI, MBB);
-        else {
+      if (MBB->isLandingPad())
+        AddCatchInfo(*cast<CallInst>(I), &MF.getMMI(), MBB);
+      else {
 #ifndef NDEBUG
-          CatchInfoLost.insert(cast<CallInst>(I));
+        CatchInfoLost.insert(cast<CallInst>(I));
 #endif
-          // FIXME: Mark exception selector register as live in.  Hack for PR1508.
-          unsigned Reg = TLI.getExceptionSelectorRegister();
-          if (Reg) MBB->addLiveIn(Reg);
-        }
-
+        // FIXME: Mark exception selector register as live in.  Hack for PR1508.
         unsigned Reg = TLI.getExceptionSelectorRegister();
-        EVT SrcVT = TLI.getPointerTy();
-        const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
-        unsigned ResultReg = createResultReg(RC);
-        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Reg,
-                                             RC, RC);
-        assert(InsertedCopy && "Can't copy address registers!");
-        InsertedCopy = InsertedCopy;
-
-        // Cast the register to the type of the selector.
-        if (SrcVT.bitsGT(MVT::i32))
-          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32, ISD::TRUNCATE,
-                                 ResultReg);
-        else if (SrcVT.bitsLT(MVT::i32))
-          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32,
-                                 ISD::SIGN_EXTEND, ResultReg);
-        if (ResultReg == 0)
-          // Unhandled operand. Halt "fast" selection and bail.
-          return false;
-
-        UpdateValueMap(I, ResultReg);
-      } else {
-        unsigned ResultReg =
-          getRegForValue(Constant::getNullValue(I->getType()));
-        UpdateValueMap(I, ResultReg);
+        if (Reg) MBB->addLiveIn(Reg);
       }
+
+      unsigned Reg = TLI.getExceptionSelectorRegister();
+      EVT SrcVT = TLI.getPointerTy();
+      const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
+      unsigned ResultReg = createResultReg(RC);
+      bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Reg,
+                                           RC, RC);
+      assert(InsertedCopy && "Can't copy address registers!");
+      InsertedCopy = InsertedCopy;
+
+      // Cast the register to the type of the selector.
+      if (SrcVT.bitsGT(MVT::i32))
+        ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32, ISD::TRUNCATE,
+                               ResultReg);
+      else if (SrcVT.bitsLT(MVT::i32))
+        ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32,
+                               ISD::SIGN_EXTEND, ResultReg);
+      if (ResultReg == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+
+      UpdateValueMap(I, ResultReg);
+
       return true;
     }
     }
@@ -733,7 +728,6 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 }
 
 FastISel::FastISel(MachineFunction &mf,
-                   MachineModuleInfo *mmi,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                    DenseMap<const AllocaInst *, int> &am
@@ -749,7 +743,6 @@ FastISel::FastISel(MachineFunction &mf,
     CatchInfoLost(cil),
 #endif
     MF(mf),
-    MMI(mmi),
     MRI(MF.getRegInfo()),
     MFI(*MF.getFrameInfo()),
     MCP(*MF.getConstantPool()),

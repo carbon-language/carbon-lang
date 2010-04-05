@@ -845,9 +845,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (EnableFastISel)
-    FastIS = TLI.createFastISel(MF, MMI,
-                                FuncInfo->ValueMap,
-                                FuncInfo->MBBMap,
+    FastIS = TLI.createFastISel(MF, FuncInfo->ValueMap, FuncInfo->MBBMap,
                                 FuncInfo->StaticAllocaMap
 #ifndef NDEBUG
                                 , FuncInfo->CatchInfoLost
