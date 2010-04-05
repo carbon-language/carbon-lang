@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetMachine.h"
@@ -58,11 +57,6 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
   FrameConstantRegMap.clear();
-
-  // Get MachineModuleInfo so that we can track the construction of the
-  // frame.
-  if (MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>())
-    Fn.getFrameInfo()->setMachineModuleInfo(MMI);
 
   // Calculate the MaxCallFrameSize and HasCalls variables for the function's
   // frame information. Also eliminates call frame pseudo instructions.

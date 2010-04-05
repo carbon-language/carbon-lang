@@ -451,11 +451,11 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  MachineModuleInfo &MMI = MF.getMMI();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   // Prepare for debug frame info.
-  bool hasDebugInfo = MMI && MMI->hasDebugInfo();
+  bool hasDebugInfo = MMI.hasDebugInfo();
   MCSymbol *FrameLabel = 0;
 
   // Move MBBI back to the beginning of the function.
@@ -473,7 +473,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     FrameSize = -(FrameSize + SPUFrameInfo::minStackSize());
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
-      FrameLabel = MMI->getContext().CreateTempSymbol();
+      FrameLabel = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addSym(FrameLabel);
     }
 
@@ -516,7 +516,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     }
 
     if (hasDebugInfo) {
-      std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+      std::vector<MachineMove> &Moves = MMI.getFrameMoves();
 
       // Show update of SP.
       MachineLocation SPDst(MachineLocation::VirtualFP);
@@ -535,7 +535,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       }
 
       // Mark effective beginning of when frame pointer is ready.
-      MCSymbol *ReadyLabel = MMI->getContext().CreateTempSymbol();
+      MCSymbol *ReadyLabel = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addSym(ReadyLabel);
 
       MachineLocation FPDst(SPU::R1);
@@ -552,7 +552,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
 
       // Insert terminator label
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL))
-        .addSym(MMI->getContext().CreateTempSymbol());
+        .addSym(MMI.getContext().CreateTempSymbol());
     }
   }
 }

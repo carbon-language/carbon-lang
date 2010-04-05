@@ -67,12 +67,8 @@ unsigned XCoreRegisterInfo::getNumArgRegs(const MachineFunction *MF)
   return array_lengthof(XCore_ArgRegs);
 }
 
-bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF)
-{
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  return (MMI && MMI->hasDebugInfo()) ||
-          !MF.getFunction()->doesNotThrow() ||
+bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
+  return MF.getMMI().hasDebugInfo() || !MF.getFunction()->doesNotThrow() ||
           UnwindTablesMandatory;
 }
 
@@ -412,7 +408,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  MachineModuleInfo *MMI = &MF.getMMI();
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 

@@ -297,9 +297,7 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool ghcCall = false;
 
   if (MF) {
-    const MachineFrameInfo *MFI = MF->getFrameInfo();
-    const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-    callsEHReturn = (MMI ? MMI->callsEHReturn() : false);
+    callsEHReturn = MF->getMMI().callsEHReturn();
     const Function *F = MF->getFunction();
     ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
   }
@@ -348,12 +346,8 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const TargetRegisterClass* const*
 X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   bool callsEHReturn = false;
-
-  if (MF) {
-    const MachineFrameInfo *MFI = MF->getFrameInfo();
-    const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-    callsEHReturn = (MMI ? MMI->callsEHReturn() : false);
-  }
+  if (MF)
+    callsEHReturn = MF->getMMI().callsEHReturn();
 
   static const TargetRegisterClass * const CalleeSavedRegClasses32Bit[] = {
     &X86::GR32RegClass, &X86::GR32RegClass,
@@ -443,14 +437,14 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 /// or if frame pointer elimination is disabled.
 bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  const MachineModuleInfo &MMI = MF.getMMI();
 
   return (NoFramePointerElim ||
           needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
-          (MMI && MMI->callsUnwindInit()));
+          MMI.callsUnwindInit());
 }
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
@@ -800,14 +794,13 @@ void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
                                                 MCSymbol *Label,
                                                 unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  if (!MMI) return;
+  MachineModuleInfo &MMI = MF.getMMI();
 
   // Add callee saved registers to move list.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   if (CSI.empty()) return;
 
-  std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const TargetData *TD = MF.getTarget().getTargetData();
   bool HasFP = hasFP(MF);
 
@@ -874,9 +867,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
   const X86Subtarget *Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  MachineModuleInfo &MMI = MF.getMMI();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
+  bool needsFrameMoves = MMI.hasDebugInfo() ||
                           !Fn->doesNotThrow() || UnwindTablesMandatory;
   uint64_t MaxAlign  = MFI->getMaxAlignment(); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
@@ -935,7 +928,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   //        REG < 64                    => DW_CFA_offset + Reg
   //        ELSE                        => DW_CFA_offset_extended
 
-  std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const TargetData *TD = MF.getTarget().getTargetData();
   uint64_t NumBytes = 0;
   int stackGrowth = -TD->getPointerSize();
@@ -959,7 +952,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
-      MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
+      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(FrameLabel);
 
       // Define the current CFA rule to use the provided offset.
@@ -987,7 +980,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
-      MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
+      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(FrameLabel);
 
       // Define the current CFA to use the EBP/RBP register.
@@ -1027,7 +1020,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (!HasFP && needsFrameMoves) {
       // Mark callee-saved push instruction.
-      MCSymbol *Label = MMI->getContext().CreateTempSymbol();
+      MCSymbol *Label = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(Label);
 
       // Define the current CFA rule to use the provided offset.
@@ -1099,7 +1092,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
-    MCSymbol *Label = MMI->getContext().CreateTempSymbol();
+    MCSymbol *Label = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(Label);
 
     if (!HasFP && NumBytes) {

@@ -1280,9 +1280,9 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  MachineModuleInfo &MMI = MF.getMMI();
   DebugLoc dl;
-  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
+  bool needsFrameMoves = MMI.hasDebugInfo() ||
        !MF.getFunction()->doesNotThrow() ||
        UnwindTablesMandatory;
   
@@ -1442,13 +1442,13 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   
   // Add the "machine moves" for the instructions we generated above, but in
   // reverse order.
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabel = MMI->getContext().CreateTempSymbol();
+    FrameLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(FrameLabel);
   
     // Show update of SP.
@@ -1489,7 +1489,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
 
     if (needsFrameMoves) {
-      ReadyLabel = MMI->getContext().CreateTempSymbol();
+      ReadyLabel = MMI.getContext().CreateTempSymbol();
 
       // Mark effective beginning of when frame pointer is ready.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(ReadyLabel);

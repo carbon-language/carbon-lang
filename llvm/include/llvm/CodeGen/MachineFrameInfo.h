@@ -24,7 +24,6 @@ class raw_ostream;
 class TargetData;
 class TargetRegisterClass;
 class Type;
-class MachineModuleInfo;
 class MachineFunction;
 class MachineBasicBlock;
 class TargetFrameInfo;
@@ -181,13 +180,6 @@ class MachineFrameInfo {
   /// spill slots.
   SmallVector<bool, 8> SpillObjects;
 
-  /// MMI - This field is set (via setMachineModuleInfo) by a module info
-  /// consumer to indicate that frame layout information
-  /// should be acquired.  Typically, it's the responsibility of the target's
-  /// TargetRegisterInfo prologue/epilogue emitting code to inform
-  /// MachineModuleInfo of frame layouts.
-  MachineModuleInfo *MMI;
-  
   /// TargetFrameInfo - Target information about frame layout.
   ///
   const TargetFrameInfo &TFI;
@@ -201,7 +193,6 @@ public:
     StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
     CSIValid = false;
-    MMI = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -443,14 +434,6 @@ public:
   /// Before the PrologueEpilogueInserter has placed the CSR spill code, this
   /// method always returns an empty set.
   BitVector getPristineRegs(const MachineBasicBlock *MBB) const;
-
-  /// getMachineModuleInfo - Used by a prologue/epilogue
-  /// emitter (TargetRegisterInfo) to provide frame layout information. 
-  MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
-
-  /// setMachineModuleInfo - Used by a meta info consumer to
-  /// indicate that frame layout information should be gathered.
-  void setMachineModuleInfo(MachineModuleInfo *mmi) { MMI = mmi; }
 
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp
