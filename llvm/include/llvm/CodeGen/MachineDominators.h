@@ -156,8 +156,13 @@ public:
   inline void splitBlock(MachineBasicBlock* NewBB) {
     DT->splitBlock(NewBB);
   }
-  
-  
+
+  /// isReachableFromEntry - Return true if A is dominated by the entry
+  /// block of the function containing it.
+  bool isReachableFromEntry(MachineBasicBlock *A) {
+    return DT->isReachableFromEntry(A);
+  }
+
   virtual void releaseMemory();
   
   virtual void print(raw_ostream &OS, const Module*) const;
