@@ -231,8 +231,7 @@ bool LoopUnswitch::processCurrentLoop() {
   // block that is branching on a loop-invariant condition, we can unswitch this
   // loop.
   for (Loop::block_iterator I = currentLoop->block_begin(), 
-         E = currentLoop->block_end();
-       I != E; ++I) {
+         E = currentLoop->block_end(); I != E; ++I) {
     TerminatorInst *TI = (*I)->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       // If this isn't branching on an invariant condition, we can't unswitch
@@ -474,7 +473,6 @@ static inline void RemapInstruction(Instruction *I,
 static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
                        LoopInfo *LI, LPPassManager *LPM) {
   Loop *New = new Loop();
-
   LPM->insertLoop(New, PL);
 
   // Add all of the blocks in L to the new loop.
@@ -565,8 +563,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
 /// SplitExitEdges - Split all of the edges from inside the loop to their exit
 /// blocks.  Update the appropriate Phi nodes as we do so.
 void LoopUnswitch::SplitExitEdges(Loop *L, 
-                                const SmallVector<BasicBlock *, 8> &ExitBlocks) 
-{
+                                const SmallVector<BasicBlock *, 8> &ExitBlocks){
 
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
@@ -884,65 +881,66 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         U->replaceUsesOfWith(LIC, Replacement);
         Worklist.push_back(U);
       }
-  } else {
-    // Otherwise, we don't know the precise value of LIC, but we do know that it
-    // is certainly NOT "Val".  As such, simplify any uses in the loop that we
-    // can.  This case occurs when we unswitch switch statements.
-    for (unsigned i = 0, e = Users.size(); i != e; ++i)
-      if (Instruction *U = cast<Instruction>(Users[i])) {
-        if (!L->contains(U))
-          continue;
+    SimplifyCode(Worklist, L);
+    return;
+  }
+  
+  // Otherwise, we don't know the precise value of LIC, but we do know that it
+  // is certainly NOT "Val".  As such, simplify any uses in the loop that we
+  // can.  This case occurs when we unswitch switch statements.
+  for (unsigned i = 0, e = Users.size(); i != e; ++i) {
+    Instruction *U = cast<Instruction>(Users[i]);
+    if (!L->contains(U))
+      continue;
 
-        Worklist.push_back(U);
+    Worklist.push_back(U);
 
-        // If we know that LIC is not Val, use this info to simplify code.
-        if (SwitchInst *SI = dyn_cast<SwitchInst>(U)) {
-          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
-            if (SI->getCaseValue(i) == Val) {
-              // Found a dead case value.  Don't remove PHI nodes in the 
-              // successor if they become single-entry, those PHI nodes may
-              // be in the Users list.
-              
-              // FIXME: This is a hack.  We need to keep the successor around
-              // and hooked up so as to preserve the loop structure, because
-              // trying to update it is complicated.  So instead we preserve the
-              // loop structure and put the block on a dead code path.
-              BasicBlock *Switch = SI->getParent();
-              SplitEdge(Switch, SI->getSuccessor(i), this);
-              // Compute the successors instead of relying on the return value
-              // of SplitEdge, since it may have split the switch successor
-              // after PHI nodes.
-              BasicBlock *NewSISucc = SI->getSuccessor(i);
-              BasicBlock *OldSISucc = *succ_begin(NewSISucc);
-              // Create an "unreachable" destination.
-              BasicBlock *Abort = BasicBlock::Create(Context, "us-unreachable",
-                                                     Switch->getParent(),
-                                                     OldSISucc);
-              new UnreachableInst(Context, Abort);
-              // Force the new case destination to branch to the "unreachable"
-              // block while maintaining a (dead) CFG edge to the old block.
-              NewSISucc->getTerminator()->eraseFromParent();
-              BranchInst::Create(Abort, OldSISucc,
-                                 ConstantInt::getTrue(Context), NewSISucc);
-              // Release the PHI operands for this edge.
-              for (BasicBlock::iterator II = NewSISucc->begin();
-                   PHINode *PN = dyn_cast<PHINode>(II); ++II)
-                PN->setIncomingValue(PN->getBasicBlockIndex(Switch),
-                                     UndefValue::get(PN->getType()));
-              // Tell the domtree about the new block. We don't fully update the
-              // domtree here -- instead we force it to do a full recomputation
-              // after the pass is complete -- but we do need to inform it of
-              // new blocks.
-              if (DT)
-                DT->addNewBlock(Abort, NewSISucc);
-              break;
-            }
-          }
-        }
+    // TODO: We could do other simplifications, for example, turning 
+    // 'icmp eq LIC, Val' -> false.
+
+    // If we know that LIC is not Val, use this info to simplify code.
+    SwitchInst *SI = dyn_cast<SwitchInst>(U);
+    if (SI == 0 || !isa<ConstantInt>(Val)) continue;
+    
+    unsigned DeadCase = SI->findCaseValue(cast<ConstantInt>(Val));
+    if (DeadCase == 0) continue;  // Default case is live for multiple values.
+    
+    // Found a dead case value.  Don't remove PHI nodes in the 
+    // successor if they become single-entry, those PHI nodes may
+    // be in the Users list.
         
-        // TODO: We could do other simplifications, for example, turning 
-        // LIC == Val -> false.
-      }
+    // FIXME: This is a hack.  We need to keep the successor around
+    // and hooked up so as to preserve the loop structure, because
+    // trying to update it is complicated.  So instead we preserve the
+    // loop structure and put the block on a dead code path.
+    BasicBlock *Switch = SI->getParent();
+    SplitEdge(Switch, SI->getSuccessor(DeadCase), this);
+    // Compute the successors instead of relying on the return value
+    // of SplitEdge, since it may have split the switch successor
+    // after PHI nodes.
+    BasicBlock *NewSISucc = SI->getSuccessor(DeadCase);
+    BasicBlock *OldSISucc = *succ_begin(NewSISucc);
+    // Create an "unreachable" destination.
+    BasicBlock *Abort = BasicBlock::Create(Context, "us-unreachable",
+                                           Switch->getParent(),
+                                           OldSISucc);
+    new UnreachableInst(Context, Abort);
+    // Force the new case destination to branch to the "unreachable"
+    // block while maintaining a (dead) CFG edge to the old block.
+    NewSISucc->getTerminator()->eraseFromParent();
+    BranchInst::Create(Abort, OldSISucc,
+                       ConstantInt::getTrue(Context), NewSISucc);
+    // Release the PHI operands for this edge.
+    for (BasicBlock::iterator II = NewSISucc->begin();
+         PHINode *PN = dyn_cast<PHINode>(II); ++II)
+      PN->setIncomingValue(PN->getBasicBlockIndex(Switch),
+                           UndefValue::get(PN->getType()));
+    // Tell the domtree about the new block. We don't fully update the
+    // domtree here -- instead we force it to do a full recomputation
+    // after the pass is complete -- but we do need to inform it of
+    // new blocks.
+    if (DT)
+      DT->addNewBlock(Abort, NewSISucc);
   }
   
   SimplifyCode(Worklist, L);
@@ -1054,7 +1052,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         LPM->deleteSimpleAnalysisValue(Succ, L);
         Succ->eraseFromParent();
         ++NumSimplify;
-      } else if (ConstantInt *CB = dyn_cast<ConstantInt>(BI->getCondition())){
+        break;
+      }
+      
+      if (ConstantInt *CB = dyn_cast<ConstantInt>(BI->getCondition())){
         // Conditional branch.  Turn it into an unconditional branch, then
         // remove dead blocks.
         break;  // FIXME: Enable.
