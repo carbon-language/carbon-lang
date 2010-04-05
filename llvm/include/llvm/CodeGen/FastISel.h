@@ -27,7 +27,6 @@ class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
 class MachineFrameInfo;
-class MachineModuleInfo;
 class MachineRegisterInfo;
 class TargetData;
 class TargetInstrInfo;

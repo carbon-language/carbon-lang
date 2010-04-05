@@ -27,7 +27,6 @@ namespace llvm {
   class SUnit;
   class MachineConstantPool;
   class MachineFunction;
-  class MachineModuleInfo;
   class MachineRegisterInfo;
   class MachineInstr;
   class TargetRegisterInfo;
