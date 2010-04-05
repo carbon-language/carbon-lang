@@ -22,7 +22,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -74,12 +73,10 @@ namespace {
     void emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV);
     virtual void EmitGlobalVariable(const GlobalVariable *GV);
 
-    void emitFunctionStart(MachineFunction &MF);
-
     void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen'd.
     static const char *getRegisterName(unsigned RegNo);
 
-    bool runOnMachineFunction(MachineFunction &MF);
+    void EmitFunctionEntryLabel();
     void EmitInstruction(const MachineInstr *MI);
     void EmitFunctionBodyEnd();
   };
@@ -178,44 +175,6 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.EmitRawText("\t.cc_bottom " + Twine(GVSym->getName()) + ".data");
 }
 
-/// Emit the directives on the start of functions
-void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
-  // Print out the label for the function.
-  const Function *F = MF.getFunction();
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  
-  // Mark the start of the function
-  OutStreamer.EmitRawText("\t.cc_top " + Twine(CurrentFnSym->getName()) +
-                          ".function," + CurrentFnSym->getName());
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
-    break;
-  case Function::ExternalLinkage:
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-    break;
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    // TODO Use COMDAT groups for LinkOnceLinkage
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Weak);
-    break;
-  }
-  // (1 << 1) byte aligned
-  EmitAlignment(MF.getAlignment(), F, 1);
-  if (MAI->hasDotTypeDotSizeDirective())
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
-
-  OutStreamer.EmitLabel(CurrentFnSym);
-}
-
-
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void XCoreAsmPrinter::EmitFunctionBodyEnd() {
@@ -224,31 +183,18 @@ void XCoreAsmPrinter::EmitFunctionBodyEnd() {
                           ".function");
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-
-  // Print out constants referenced by the function
-  EmitConstantPool();
-
-  // Emit the function start directives
-  emitFunctionStart(MF);
-  
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
-
-  EmitFunctionBody();
-  return false;
+void XCoreAsmPrinter::EmitFunctionEntryLabel() {
+  // Mark the start of the function
+  OutStreamer.EmitRawText("\t.cc_top " + Twine(CurrentFnSym->getName()) +
+                          ".function," + CurrentFnSym->getName());
+  OutStreamer.EmitLabel(CurrentFnSym);
 }
 
 void XCoreAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
                                       raw_ostream &O) {
   printOperand(MI, opNum, O);
   
-  if (MI->getOperand(opNum+1).isImm()
-    && MI->getOperand(opNum+1).getImm() == 0)
+  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() == 0)
     return;
   
   O << "+";
