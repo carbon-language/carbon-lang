@@ -391,7 +391,7 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
          (bytes[2] << 16) |
          (bytes[1] <<  8) |
          (bytes[0] <<  0);
-    
+
   unsigned Opcode = decodeARMInstruction(insn);
   ARMFormat Format = ARMFormats[Opcode];
   Size = 4;
