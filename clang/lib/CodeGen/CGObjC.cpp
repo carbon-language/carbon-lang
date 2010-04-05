@@ -108,6 +108,10 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
 void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
                                       const ObjCContainerDecl *CD) {
   FunctionArgList Args;
+  // Check if we should generate debug info for this method.
+  if (CGM.getDebugInfo() && !OMD->hasAttr<NoDebugAttr>())
+    DebugInfo = CGM.getDebugInfo();
+
   llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD, CD);
 
   const CGFunctionInfo &FI = CGM.getTypes().getFunctionInfo(OMD);
@@ -128,9 +132,6 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 /// Generate an Objective-C method.  An Objective-C method is a C function with
 /// its pointer, name, and types registered in the class struture.
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
-  // Check if we should generate debug info for this method.
-  if (CGM.getDebugInfo() && !OMD->hasAttr<NoDebugAttr>())
-    DebugInfo = CGM.getDebugInfo();
   StartObjCMethod(OMD, OMD->getClassInterface());
   EmitStmt(OMD->getBody());
   FinishFunction(OMD->getBodyRBrace());

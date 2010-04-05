@@ -1380,7 +1380,9 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
        || (SM.getInstantiationLineNumber(CurLoc) ==
            SM.getInstantiationLineNumber(PrevLoc)
            && SM.isFromSameFile(CurLoc, PrevLoc)))
-    return;
+    // New Builder may not be in sync with CGDebugInfo.
+    if (!Builder.getCurrentDebugLocation().isUnknown())
+      return;
 
   // Update last state.
   PrevLoc = CurLoc;
