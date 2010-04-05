@@ -18,7 +18,7 @@ ifndef TESTARGS
 ifdef VERBOSE
 TESTARGS = -v
 else
-TESTARGS = -s
+TESTARGS = -s -v
 endif
 endif
 
