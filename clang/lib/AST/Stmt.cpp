@@ -249,14 +249,18 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     }
 
     char CurChar = *CurPtr++;
-    if (CurChar == '$') {
-      CurStringPiece += "$$";
-      continue;
-    } else if (CurChar != '%') {
+    switch (CurChar) {
+    case '$': CurStringPiece += "$$"; continue;
+    case '{': CurStringPiece += "$("; continue;
+    case '|': CurStringPiece += "$|"; continue;
+    case '}': CurStringPiece += "$)"; continue;
+    case '%':
+      break;
+    default:
       CurStringPiece += CurChar;
       continue;
     }
-
+    
     // Escaped "%" character in asm string.
     if (CurPtr == StrEnd) {
       // % at end of string is invalid (no escape).

@@ -135,3 +135,15 @@ int t18(unsigned data) {
 // CHECK-NEXT: extractvalue
 // CHECK-NEXT: extractvalue
 }
+
+
+// PR6780
+int t19(unsigned data) {
+  int a, b;
+  
+  asm("x{abc|def|ghi}z" :"=r"(a): "r"(data));
+  return a + b;
+  // CHECK: t19(i32
+  // CHECK: = call {{.*}}asm "x$(abc$|def$|ghi$)z"
+}
+
