@@ -96,6 +96,19 @@ public:
 };
 } // end anonymous namespace
 
+static bool isBlockExprInCallers(const Stmt *E, const LocationContext *LC) {
+  const LocationContext *ParentLC = LC->getParent();
+  while (ParentLC) {
+    CFG &C = *ParentLC->getCFG();
+    if (C.isBlkExpr(E))
+      return true;
+    ParentLC = ParentLC->getParent();
+  }
+
+  return false;
+}
+
+
 // RemoveDeadBindings:
 //  - Remove subexpression bindings.
 //  - Remove dead block expression bindings.
@@ -122,12 +135,26 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, const Stmt *S,
        I != E; ++I) {
 
     const Stmt *BlkExpr = I.getKey();
+    const SVal &X = I.getData();
+
+    // Block-level expressions in callers are assumed always live.
+    if (isBlockExprInCallers(BlkExpr, SymReaper.getLocationContext())) {
+      NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, BlkExpr, X);
+
+      if (isa<loc::MemRegionVal>(X)) {
+        const MemRegion* R = cast<loc::MemRegionVal>(X).getRegion();
+        DRoots.push_back(R);
+      }
+
+      // Mark all symbols in the block expr's value live.
+      MarkLiveCallback cb(SymReaper);
+      ST->scanReachableSymbols(X, cb);
+      continue;
+    }
 
     // Not a block-level expression?
     if (!C.isBlkExpr(BlkExpr))
       continue;
-
-    const SVal &X = I.getData();
 
     if (SymReaper.isLive(S, BlkExpr)) {
       // Copy the binding to the new map.
