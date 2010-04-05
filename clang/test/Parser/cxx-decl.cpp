@@ -62,3 +62,13 @@ struct test4 {
 // PR5825
 struct test5 {};
 ::new(static_cast<void*>(0)) test5; // expected-error {{expected unqualified-id}}
+
+
+// PR6782
+template<class T>
+class Class1;
+
+class Class2 {
+}  // no ;
+
+typedef Class1<Class2> Type1; // expected-error {{cannot combine with previous 'class' declaration specifier}}

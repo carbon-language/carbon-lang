@@ -334,7 +334,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
     SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
   default:
-    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList);
+    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList, true);
   }
   
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -348,10 +348,11 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 /// If RequireSemi is false, this does not check for a ';' at the end of the
-/// declaration.
+/// declaration.  If it is true, it checks for and eats it.
 Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
                                                       SourceLocation &DeclEnd,
-                                                      AttributeList *Attr) {
+                                                      AttributeList *Attr,
+                                                      bool RequireSemi) {
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
   if (Attr)
@@ -362,15 +363,13 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
-    ConsumeToken();
+    if (RequireSemi) ConsumeToken();
     DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
     DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
-  DeclGroupPtrTy DG = ParseDeclGroup(DS, Context, /*FunctionDefs=*/ false,
-                                     &DeclEnd);
-  return DG;
+  return ParseDeclGroup(DS, Context, /*FunctionDefs=*/ false, &DeclEnd);
 }
 
 /// ParseDeclGroup - Having concluded that this is either a function
@@ -999,6 +998,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                        DiagID, Tok.getAnnotationValue());
       else
         DS.SetTypeSpecError();
+      
+      if (isInvalid)
+        break;
+
       DS.SetRangeEnd(Tok.getAnnotationEndLoc());
       ConsumeToken(); // The typename
 

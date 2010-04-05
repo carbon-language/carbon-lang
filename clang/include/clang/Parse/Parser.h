@@ -1086,7 +1086,8 @@ private:
                                   CXX0XAttributeList Attr);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
                                         SourceLocation &DeclEnd,
-                                        AttributeList *Attr);
+                                        AttributeList *Attr,
+                                        bool RequireSemi);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0);
