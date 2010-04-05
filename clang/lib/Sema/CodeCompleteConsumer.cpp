@@ -582,9 +582,12 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
         break;
       }
       break;
-        
-    case Result::RK_Keyword:
+
     case Result::RK_Macro:
+      Kind = CXCursor_MacroDefinition;
+      break;
+
+    case Result::RK_Keyword:
     case Result::RK_Pattern:
       Kind = CXCursor_NotImplemented;
       break;

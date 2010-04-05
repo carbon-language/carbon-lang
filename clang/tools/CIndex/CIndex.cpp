@@ -2333,7 +2333,7 @@ void clang_annotateTokens(CXTranslationUnit TU,
   RegionOfInterest.setBegin(
         cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
   SourceLocation End
-  = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
+    = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
                                                         Tokens[NumTokens - 1]));
   RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
 
