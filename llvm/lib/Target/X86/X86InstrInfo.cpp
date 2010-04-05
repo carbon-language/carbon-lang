@@ -2961,10 +2961,6 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
       Load1->getOperand(2) == Load2->getOperand(2)) {
     if (cast<ConstantSDNode>(Load1->getOperand(1))->getZExtValue() != 1)
       return false;
-    SDValue Op2 = Load1->getOperand(2);
-    if (!isa<RegisterSDNode>(Op2) ||
-        cast<RegisterSDNode>(Op2)->getReg() != 0)
-      return 0;
 
     // Now let's examine the displacements.
     if (isa<ConstantSDNode>(Load1->getOperand(3)) &&
