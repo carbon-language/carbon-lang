@@ -48,6 +48,10 @@ public:
   virtual bool hasIntegratedAssembler() const { return false; }
   virtual bool hasIntegratedCPP() const = 0;
 
+  /// \brief Does this tool have "good" standardized diagnostics, or should the
+  /// driver add an additional "command failed" diagnostic on failures.
+  virtual bool hasGoodDiagnostics() const { return false; }
+
   /// ConstructJob - Construct jobs to perform the action \arg JA,
   /// writing to \arg Output and with \arg Inputs.
   ///

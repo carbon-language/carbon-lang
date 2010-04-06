@@ -239,12 +239,8 @@ int Driver::ExecuteCompilation(const Compilation &C) const {
     // other tools are less common, and they generally have worse diagnostics,
     // so always print the diagnostic there.
     const Action &Source = FailingCommand->getSource();
-    bool IsFriendlyTool = (isa<PreprocessJobAction>(Source) ||
-                           isa<PrecompileJobAction>(Source) ||
-                           isa<AnalyzeJobAction>(Source) ||
-                           isa<CompileJobAction>(Source));
 
-    if (!IsFriendlyTool || Res != 1) {
+    if (!FailingCommand->getCreator().hasGoodDiagnostics() || Res != 1) {
       // FIXME: See FIXME above regarding result code interpretation.
       if (Res < 0)
         Diag(clang::diag::err_drv_command_signalled)

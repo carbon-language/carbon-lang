@@ -42,6 +42,7 @@ namespace tools {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
+    virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedAssembler() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
@@ -79,6 +80,7 @@ namespace gcc {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
+    virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
@@ -91,6 +93,7 @@ namespace gcc {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
+    virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
@@ -103,6 +106,7 @@ namespace gcc {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
+    virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
@@ -176,6 +180,7 @@ namespace darwin {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
+    virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
