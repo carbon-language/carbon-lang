@@ -100,6 +100,9 @@ class MachineModuleInfo : public ImmutablePass {
   /// Context - This is the MCContext used for the entire code generator.
   MCContext Context;
   
+  /// TheModule - This is the LLVM Module being worked on.
+  Module *TheModule;
+  
   /// ObjFileMMI - This is the object-file-format-specific implementation of
   /// MachineModuleInfoImpl, which lets targets accumulate whatever info they
   /// want.
@@ -176,6 +179,9 @@ public:
   const MCContext &getContext() const { return Context; }
   MCContext &getContext() { return Context; }
 
+  void setModule(Module *M) { TheModule = M; }
+  Module *getModule() const { return TheModule; }
+  
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.
   ///

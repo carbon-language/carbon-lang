@@ -262,6 +262,7 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
   AddrLabelSymbols = 0;
+  TheModule = 0;
 }
 
 MachineModuleInfo::MachineModuleInfo()

@@ -35,6 +35,19 @@ MachineFunctionAnalysis::~MachineFunctionAnalysis() {
   assert(!MF && "MachineFunctionAnalysis left initialized!");
 }
 
+void MachineFunctionAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<MachineModuleInfo>();
+}
+
+bool MachineFunctionAnalysis::doInitialization(Module &M) {
+  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  assert(MMI && "MMI not around yet??");
+  MMI->setModule(&M);
+  NextFnNum = 1; return false;
+}
+
+
 bool MachineFunctionAnalysis::runOnFunction(Function &F) {
   assert(!MF && "MachineFunctionAnalysis already initialized!");
   MF = new MachineFunction(&F, TM, NextFnNum++,
@@ -45,9 +58,4 @@ bool MachineFunctionAnalysis::runOnFunction(Function &F) {
 void MachineFunctionAnalysis::releaseMemory() {
   delete MF;
   MF = 0;
-}
-
-void MachineFunctionAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AU.addRequired<MachineModuleInfo>();
 }
