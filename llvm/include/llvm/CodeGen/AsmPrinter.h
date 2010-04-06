@@ -423,7 +423,7 @@ namespace llvm {
     mutable unsigned SetCounter;
 
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-    void EmitInlineAsm(StringRef Str) const;
+    void EmitInlineAsm(StringRef Str, unsigned LocCookie) const;
     
     /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.

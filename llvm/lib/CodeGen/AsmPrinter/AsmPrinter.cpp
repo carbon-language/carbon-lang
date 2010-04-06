@@ -144,7 +144,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   if (!M.getModuleInlineAsm().empty()) {
     OutStreamer.AddComment("Start of file scope inline assembly");
     OutStreamer.AddBlankLine();
-    EmitInlineAsm(M.getModuleInlineAsm());
+    EmitInlineAsm(M.getModuleInlineAsm(), 0/*no loc cookie*/);
     OutStreamer.AddComment("End of file scope inline assembly");
     OutStreamer.AddBlankLine();
   }

@@ -35,7 +35,7 @@
 using namespace llvm;
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-void AsmPrinter::EmitInlineAsm(StringRef Str) const {
+void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   assert(!Str.empty() && "Can't emit empty inline asm block");
   
   // Remember if the buffer is nul terminated or not so we can avoid a copy.
@@ -57,9 +57,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str) const {
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
   if (void *DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler()) {
-    unsigned Cookie = 0;  // no cookie yet.
     SrcMgr.setDiagHandler((SourceMgr::DiagHandlerTy)(intptr_t)DiagHandler,
-                          LLVMCtx.getInlineAsmDiagnosticContext(), Cookie);
+                          LLVMCtx.getInlineAsmDiagnosticContext(), LocCookie);
     HasDiagHandler = true;
   }
   
@@ -297,7 +296,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
   }
   OS << '\n' << (char)0;  // null terminate string.
-  EmitInlineAsm(OS.str());
+  EmitInlineAsm(OS.str(), 0/*no loc cookie*/);
   
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
