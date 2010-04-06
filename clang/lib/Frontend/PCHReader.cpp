@@ -2843,6 +2843,14 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   return SelectorsLoaded[Index];
 }
 
+Selector PCHReader::GetSelector(uint32_t ID) { 
+  return DecodeSelector(ID);
+}
+
+uint32_t PCHReader::GetNumKnownSelectors() {
+  return TotalNumSelectors + 1;
+}
+
 DeclarationName
 PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];

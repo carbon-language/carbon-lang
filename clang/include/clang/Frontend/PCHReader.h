@@ -688,6 +688,9 @@ public:
 
   Selector DecodeSelector(unsigned Idx);
 
+  virtual Selector GetSelector(uint32_t ID);
+  virtual uint32_t GetNumKnownSelectors();
+
   Selector GetSelector(const RecordData &Record, unsigned &Idx) {
     return DecodeSelector(Record[Idx++]);
   }

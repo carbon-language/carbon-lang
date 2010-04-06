@@ -66,6 +66,13 @@ public:
   /// building a new declaration.
   virtual Decl *GetDecl(uint32_t ID) = 0;
 
+  /// \brief Resolve a selector ID into a selector.
+  virtual Selector GetSelector(uint32_t ID) = 0;
+
+  /// \brief Returns the number of selectors known to the external AST
+  /// source.
+  virtual uint32_t GetNumKnownSelectors() = 0;
+
   /// \brief Resolve the offset of a statement in the decl stream into a
   /// statement.
   ///

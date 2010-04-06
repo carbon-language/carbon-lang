@@ -13,6 +13,7 @@
 #include "Sema.h"
 #include "Lookup.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/MacroInfo.h"
@@ -2977,13 +2978,26 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
   else if (FName->isStr("id")) {
     // We're messaging "id" as a type; provide all class/factory methods.
 
-    // FIXME: Load the entire class method pool from the PCH file
+    // If we have an external source, load the entire class method
+    // pool from the PCH file.
+    if (ExternalSource) {
+      for (uint32_t I = 0, N = ExternalSource->GetNumKnownSelectors(); I != N;
+           ++I) {
+        Selector Sel = ExternalSource->GetSelector(I);
+        if (Sel.isNull() || FactoryMethodPool.count(Sel) || 
+            InstanceMethodPool.count(Sel))
+          continue;
+
+        ReadMethodPool(Sel, /*isInstance=*/false);
+      }
+    }
+
     for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
            M = FactoryMethodPool.begin(),
            MEnd = FactoryMethodPool.end();
          M != MEnd;
          ++M) {
-      for (ObjCMethodList *MethList = &M->second; MethList; 
+      for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
            MethList = MethList->Next) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
@@ -3056,13 +3070,29 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   }
   // Handle messages to "id".
   else if (ReceiverType->isObjCIdType()) {
-    // FIXME: Load the entire instance method pool from the PCH file
+    // We're messaging "id", so provide all instance methods we know
+    // about as code-completion results.
+
+    // If we have an external source, load the entire class method
+    // pool from the PCH file.
+    if (ExternalSource) {
+      for (uint32_t I = 0, N = ExternalSource->GetNumKnownSelectors(); I != N;
+           ++I) {
+        Selector Sel = ExternalSource->GetSelector(I);
+        if (Sel.isNull() || InstanceMethodPool.count(Sel) ||
+            FactoryMethodPool.count(Sel))
+          continue;
+
+        ReadMethodPool(Sel, /*isInstance=*/true);
+      }
+    }
+
     for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
            M = InstanceMethodPool.begin(),
            MEnd = InstanceMethodPool.end();
          M != MEnd;
          ++M) {
-      for (ObjCMethodList *MethList = &M->second; MethList; 
+      for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
            MethList = MethList->Next) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
