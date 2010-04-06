@@ -168,7 +168,7 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
   }
   PrintedMsg += Msg;
 
-  return SMDiagnostic(Loc,
+  return SMDiagnostic(*this, Loc,
                       CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
                       Loc.getPointer()-LineStart, PrintedMsg,
                       LineStr, ShowLine);

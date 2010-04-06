@@ -38,8 +38,7 @@ namespace llvm {
       std::string ErrMsg;
       Module *M = getLazyBitcodeModule(Buffer, Context, &ErrMsg);
       if (M == 0) {
-        Err = SMDiagnostic(SMLoc(), Buffer->getBufferIdentifier(), -1, -1,
-                           ErrMsg, "");
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), ErrMsg);
         // ParseBitcodeFile does not take ownership of the Buffer in the
         // case of an error.
         delete Buffer;
@@ -60,8 +59,8 @@ namespace llvm {
     std::string ErrMsg;
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
-      Err = SMDiagnostic(SMLoc(), Filename, -1, -1,
-                         "Could not open input file '" + Filename + "'", "");
+      Err = SMDiagnostic(Filename, 
+                         "Could not open input file '" + Filename + "'");
       return 0;
     }
 
@@ -82,8 +81,7 @@ namespace llvm {
       // ParseBitcodeFile does not take ownership of the Buffer.
       delete Buffer;
       if (M == 0)
-        Err = SMDiagnostic(SMLoc(), Buffer->getBufferIdentifier(),
-                           -1, -1, ErrMsg, "");
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), ErrMsg);
       return M;
     }
 
@@ -99,8 +97,8 @@ namespace llvm {
     std::string ErrMsg;
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
-      Err = SMDiagnostic(SMLoc(), Filename, -1, -1,
-                         "Could not open input file '" + Filename + "'", "");
+      Err = SMDiagnostic(Filename, 
+                         "Could not open input file '" + Filename + "'");
       return 0;
     }
 

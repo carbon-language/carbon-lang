@@ -148,6 +148,7 @@ private:
 /// SMDiagnostic - Instances of this class encapsulate one diagnostic report,
 /// allowing printing to a raw_ostream as a caret diagnostic.
 class SMDiagnostic {
+  const SourceMgr *SM;
   SMLoc Loc;
   std::string Filename;
   int LineNo, ColumnNo;
@@ -155,13 +156,23 @@ class SMDiagnostic {
   unsigned ShowLine : 1;
 
 public:
-  SMDiagnostic() : LineNo(0), ColumnNo(0), ShowLine(0) {}
-  SMDiagnostic(SMLoc L, const std::string &FN, int Line, int Col,
+  // Null diagnostic.
+  SMDiagnostic() : SM(0), LineNo(0), ColumnNo(0), ShowLine(0) {}
+  // Diagnostic with no location (e.g. file not found, command line arg error).
+  SMDiagnostic(const std::string &filename, const std::string &Msg,
+               bool showline = true)
+    : SM(0), Loc(), Filename(filename), LineNo(-1), ColumnNo(-1),
+      Message(Msg), LineContents(""), ShowLine(showline) {}
+  
+  // Diagnostic with a location.
+  SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
+               int Line, int Col,
                const std::string &Msg, const std::string &LineStr,
                bool showline = true)
-    : Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
+    : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
       LineContents(LineStr), ShowLine(showline) {}
 
+  const SourceMgr *getSourceMgr() const { return SM; }
   SMLoc getLoc() const { return Loc; }
   const std::string getFilename() { return Filename; }
   int getLineNo() const { return LineNo; }
