@@ -1564,7 +1564,7 @@ class HandleSDNode : public SDNode {
 public:
   // FIXME: Remove the "noinline" attribute once <rdar://problem/5852746> is
   // fixed.
-#ifdef __GNUC__
+#if __GNUC__==4 && __GNUC_MINOR__==2 && defined(__APPLE__) && !defined(__llvm__)
   explicit __attribute__((__noinline__)) HandleSDNode(SDValue X)
 #else
   explicit HandleSDNode(SDValue X)
