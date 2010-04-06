@@ -14,7 +14,10 @@
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -49,6 +52,17 @@ void AsmPrinter::EmitInlineAsm(StringRef Str) const {
   }
   
   SourceMgr SrcMgr;
+  
+  // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
+  LLVMContext &LLVMCtx = MMI->getModule()->getContext();
+  bool HasDiagHandler = false;
+  if (void *DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler()) {
+    unsigned Cookie = 0;  // no cookie yet.
+    SrcMgr.setDiagHandler((SourceMgr::DiagHandlerTy)(intptr_t)DiagHandler,
+                          LLVMCtx.getInlineAsmDiagnosticContext(), Cookie);
+    HasDiagHandler = true;
+  }
+  
   MemoryBuffer *Buffer;
   if (isNullTerminated)
     Buffer = MemoryBuffer::getMemBuffer(Str, "<inline asm>");
@@ -68,7 +82,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str) const {
   // Don't implicitly switch to the text section before the asm.
   int Res = Parser.Run(/*NoInitialTextSection*/ true,
                        /*NoFinalize*/ true);
-  if (Res)
+  if (Res && !HasDiagHandler)
     llvm_report_error("Error parsing inline asm\n");
 }
 
