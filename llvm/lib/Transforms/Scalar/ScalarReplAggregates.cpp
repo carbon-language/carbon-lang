@@ -1702,18 +1702,20 @@ static bool PointsToConstantGlobal(Value *V) {
 static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
                                            bool isOffset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
+    User *U = cast<Instruction>(*UI);
+
+    if (LoadInst *LI = dyn_cast<LoadInst>(U))
       // Ignore non-volatile loads, they are always ok.
       if (!LI->isVolatile())
         continue;
     
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       // If uses of the bitcast are ok, we are ok.
       if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset))
         return false;
       continue;
     }
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
       // If the GEP has all zero indices, it doesn't offset the pointer.  If it
       // doesn't, it does.
       if (!isOnlyCopiedFromConstantGlobal(GEP, TheCopy,
@@ -1724,7 +1726,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
-    if (!isa<MemTransferInst>(*UI))
+    if (!isa<MemTransferInst>(U))
       return false;
 
     // If we already have seen a copy, reject the second one.
@@ -1737,7 +1739,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     // If the memintrinsic isn't using the alloca as the dest, reject it.
     if (UI.getOperandNo() != 1) return false;
     
-    MemIntrinsic *MI = cast<MemIntrinsic>(*UI);
+    MemIntrinsic *MI = cast<MemIntrinsic>(U);
     
     // If the source of the memcpy/move is not a constant global, reject it.
     if (!PointsToConstantGlobal(MI->getOperand(2)))
