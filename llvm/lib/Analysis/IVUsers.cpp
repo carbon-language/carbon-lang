@@ -142,7 +142,7 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
-                                       Loop *L, DominatorTree *DT) {
+                                       const Loop *L, DominatorTree *DT) {
   // If the user is in the loop, use the preinc value.
   if (L->contains(User)) return false;
 
