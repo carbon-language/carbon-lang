@@ -1066,21 +1066,3 @@ void Sema::CheckObjCPropertyAttributes(DeclPtrTy PropertyPtrTy,
       && PropertyTy->isBlockPointerType())
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
 }
-
-ObjCIvarDecl*
-Sema::SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
-                                IdentifierInfo *NameII) {
-  ObjCIvarDecl *Ivar = 0;
-  ObjCPropertyDecl *Prop = LookupPropertyDecl(IDecl, NameII);
-  if (Prop && !Prop->isInvalidDecl()) {
-    QualType PropType = Context.getCanonicalType(Prop->getType());
-    Ivar = ObjCIvarDecl::Create(Context, IDecl, Prop->getLocation(), NameII,
-                                PropType, /*Dinfo=*/0,
-                                ObjCIvarDecl::Public, (Expr *)0);
-    Ivar->setLexicalDeclContext(IDecl);
-    IDecl->addDecl(Ivar);
-    Prop->setPropertyIvarDecl(Ivar);
-  }
-  return Ivar;
-}
-

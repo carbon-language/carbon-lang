@@ -1495,9 +1495,6 @@ public:
   ObjCPropertyDecl *LookupPropertyDecl(const ObjCContainerDecl *CDecl, 
                                        IdentifierInfo *II);
   
-  ObjCIvarDecl *SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
-                                          IdentifierInfo *NameII);
-
   /// Called by ActOnProperty to handle @property declarations in
   ////  class extensions.
   DeclPtrTy HandlePropertyInClassExtension(Scope *S,
