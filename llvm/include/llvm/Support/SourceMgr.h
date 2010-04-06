@@ -31,6 +31,12 @@ namespace llvm {
 /// SourceMgr - This owns the files read by a parser, handles include stacks,
 /// and handles diagnostic wrangling.
 class SourceMgr {
+public:
+  /// DiagHandlerTy - Clients that want to handle their own diagnostics in a
+  /// custom way can register a function pointer+context as a diagnostic
+  /// handler.  It gets called each time PrintMessage is invoked.
+  typedef void (*DiagHandlerTy)(const SMDiagnostic&, void *Context);
+private:
   struct SrcBuffer {
     /// Buffer - The memory buffer for the file.
     MemoryBuffer *Buffer;
@@ -51,14 +57,24 @@ class SourceMgr {
   /// is really private to SourceMgr.cpp.
   mutable void *LineNoCache;
 
+  DiagHandlerTy DiagHandler;
+  void *DiagContext;
+  
   SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
   void operator=(const SourceMgr&); // DO NOT IMPLEMENT
 public:
-  SourceMgr() : LineNoCache(0) {}
+  SourceMgr() : LineNoCache(0), DiagHandler(0), DiagContext(0) {}
   ~SourceMgr();
 
   void setIncludeDirs(const std::vector<std::string> &Dirs) {
     IncludeDirectories = Dirs;
+  }
+
+  /// setDiagHandler - Specify a diagnostic handler to be invoked every time
+  /// PrintMessage is called.
+  void setDiagHandler(DiagHandlerTy DH, void *Ctx = 0) {
+    DiagHandler = DH;
+    DiagContext = Ctx;
   }
 
   const SrcBuffer &getBufferInfo(unsigned i) const {
@@ -128,6 +144,7 @@ private:
 /// SMDiagnostic - Instances of this class encapsulate one diagnostic report,
 /// allowing printing to a raw_ostream as a caret diagnostic.
 class SMDiagnostic {
+  SMLoc Loc;
   std::string Filename;
   int LineNo, ColumnNo;
   std::string Message, LineContents;
@@ -135,12 +152,20 @@ class SMDiagnostic {
 
 public:
   SMDiagnostic() : LineNo(0), ColumnNo(0), ShowLine(0) {}
-  SMDiagnostic(const std::string &FN, int Line, int Col,
+  SMDiagnostic(SMLoc L, const std::string &FN, int Line, int Col,
                const std::string &Msg, const std::string &LineStr,
                bool showline = true)
-    : Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
+    : Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
       LineContents(LineStr), ShowLine(showline) {}
 
+  SMLoc getLoc() const { return Loc; }
+  const std::string getFilename() { return Filename; }
+  int getLineNo() const { return LineNo; }
+  int getColumnNo() const { return ColumnNo; }
+  const std::string &getMessage() const { return Message; }
+  const std::string &getLineContents() const { return LineContents; }
+  bool getShowLine() const { return ShowLine; }
+  
   void Print(const char *ProgName, raw_ostream &S) const;
 };
 

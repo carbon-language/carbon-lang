@@ -168,13 +168,20 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
   }
   PrintedMsg += Msg;
 
-  return SMDiagnostic(CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
+  return SMDiagnostic(Loc,
+                      CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
                       Loc.getPointer()-LineStart, PrintedMsg,
                       LineStr, ShowLine);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
                              const char *Type, bool ShowLine) const {
+  // Report the message with the diagnostic handler if present.
+  if (DiagHandler) {
+    DiagHandler(GetMessage(Loc, Msg, Type, ShowLine), DiagContext);
+    return;
+  }
+  
   raw_ostream &OS = errs();
 
   int CurBuf = FindBufferContainingLoc(Loc);
