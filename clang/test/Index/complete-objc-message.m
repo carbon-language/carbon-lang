@@ -116,6 +116,12 @@ void test_overload2(void) {
   [Overload2 Method:1 Arg1:1 OtherArg:ovl];
 }
 
+void msg_id(id x) {
+  [x Method:1 Arg1:1 OtherArg:ovl];
+  [[x blarg] Method:1 Arg1:1 OtherArg:ovl];
+  [id Method:1 Arg1:1 OtherArg:ovl];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)b}
@@ -192,3 +198,36 @@ void test_overload2(void) {
 // CHECK-CCF: TypedefDecl:{TypedText SEL}
 // CHECK-CCF: {ResultType Class}{TypedText self}
 // CHECK-CCF: {TypedText super}
+// RUN: c-index-test -code-completion-at=%s:120:6 %s | FileCheck -check-prefix=CHECK-CCG %s
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType id}{TypedText categoryInstanceMethod}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType id}{TypedText instanceMethod1}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{HorizontalSpace  }{Text second:}{Placeholder (id)y}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyPrivateInstMethod}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod:}{Placeholder (id)obj}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType id}{TypedText protocolInstanceMethod:}{Placeholder (int)value}
+// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText secondProtocolInstanceMethod}
+// RUN: c-index-test -code-completion-at=%s:121:14 %s | FileCheck -check-prefix=CHECK-CCG %s
+// RUN: c-index-test -code-completion-at=%s:122:7 %s | FileCheck -check-prefix=CHECK-CCH %s
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText categoryClassMethod}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText classMethod1:}{Placeholder (id)a}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)b}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType void}{TypedText classMethod2}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MyClassMethod:}{Placeholder (id)obj}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MyPrivateMethod}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MySubClassMethod}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MySubPrivateMethod}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText new}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText protocolClassMethod}
+

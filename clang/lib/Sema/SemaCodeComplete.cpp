@@ -2970,8 +2970,33 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
   // superclasses, categories, implementation, etc.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                 Results);  
+
+  if (CDecl) 
+    AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
+                   Results);  
+  else if (FName->isStr("id")) {
+    // We're messaging "id" as a type; provide all class/factory methods.
+
+    // FIXME: Load the entire class method pool from the PCH file
+    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
+           M = FactoryMethodPool.begin(),
+           MEnd = FactoryMethodPool.end();
+         M != MEnd;
+         ++M) {
+      for (ObjCMethodList *MethList = &M->second; MethList; 
+           MethList = MethList->Next) {
+        if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
+                                    NumSelIdents))
+          continue;
+
+        Result R(MethList->Method, 0);
+        R.StartParameter = NumSelIdents;
+        R.AllParametersAreInformative = false;
+        Results.MaybeAddResult(R, CurContext);
+      }
+    }
+  }
+
   Results.ExitScope();
   
   // This also suppresses remaining diagnostics.
@@ -2989,12 +3014,6 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   // C99 6.7.5.3p[7,8].
   DefaultFunctionArrayLvalueConversion(RecExpr);
   QualType ReceiverType = RecExpr->getType();
-  
-  if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType()) {
-    // FIXME: We're messaging 'id'. Do we actually want to look up every method
-    // in the universe?
-    return;
-  }
   
   // Build the set of methods we can see.
   ResultBuilder Results(*this);
@@ -3035,7 +3054,28 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
                      Results);
   }
-  
+  // Handle messages to "id".
+  else if (ReceiverType->isObjCIdType()) {
+    // FIXME: Load the entire instance method pool from the PCH file
+    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
+           M = InstanceMethodPool.begin(),
+           MEnd = InstanceMethodPool.end();
+         M != MEnd;
+         ++M) {
+      for (ObjCMethodList *MethList = &M->second; MethList; 
+           MethList = MethList->Next) {
+        if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
+                                    NumSelIdents))
+          continue;
+
+        Result R(MethList->Method, 0);
+        R.StartParameter = NumSelIdents;
+        R.AllParametersAreInformative = false;
+        Results.MaybeAddResult(R, CurContext);
+      }
+    }
+  }
+
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
