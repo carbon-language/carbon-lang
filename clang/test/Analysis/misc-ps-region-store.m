@@ -955,3 +955,24 @@ void pr6288_b(void) {
   *(px[0]) = 0; // no-warning
 }
 
+// <rdar://problem/7817800> - A bug in RemoveDeadBindings was causing instance variable bindings
+//  to get prematurely pruned from the state.
+@interface Rdar7817800 {
+  char *x;
+}
+- (void) rdar7817800_baz;
+@end
+
+char *rdar7817800_foobar();
+void rdar7817800_qux(void*);
+
+@implementation Rdar7817800
+- (void) rdar7817800_baz {
+  if (x)
+    rdar7817800_qux(x);
+  x = rdar7817800_foobar();
+  // Previously this triggered a bogus null dereference warning.
+  x[1] = 'a'; // no-warning
+}
+@end
+
