@@ -3571,8 +3571,10 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   if (Result.getNode())
     return Result;
 
+  // FIXME: If the memmove is volatile, lowering it to plain libc memmove may
+  // not be safe.  See memcpy above for more details.
+
   // Emit a library call.
-  assert(!isVol && "library memmove does not support volatile");
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
@@ -3620,8 +3622,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   if (Result.getNode())
     return Result;
 
-  // Emit a library call.
-  assert(!isVol && "library memset does not support volatile");
+  // Emit a library call.  
   const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
