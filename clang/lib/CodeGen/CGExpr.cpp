@@ -1481,12 +1481,8 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
   cast<llvm::PointerType>(BaseValue->getType());
   unsigned AS = BaseTy->getAddressSpace();
   BaseValue = Builder.CreateBitCast(BaseValue,
-                                    llvm::PointerType::get(FieldTy, AS),
-                                    "tmp");
-
-  llvm::Value *Idx =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Info.FieldNo);
-  llvm::Value *V = Builder.CreateGEP(BaseValue, Idx, "tmp");
+                                    llvm::PointerType::get(FieldTy, AS));
+  llvm::Value *V = Builder.CreateConstGEP1_32(BaseValue, Info.FieldNo);
 
   return LValue::MakeBitfield(V, Info, Field->getType()->isSignedIntegerType(),
                              Field->getType().getCVRQualifiers()|CVRQualifiers);
