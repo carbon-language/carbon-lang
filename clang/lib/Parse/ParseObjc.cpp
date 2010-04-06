@@ -1053,7 +1053,8 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
           = P.Actions.ActOnIvar(P.CurScope,
                                 FD.D.getDeclSpec().getSourceRange().getBegin(),
                                 IDecl, FD.D, FD.BitfieldSize, visibility);
-        AllIvarDecls.push_back(Field);
+        if (Field)
+          AllIvarDecls.push_back(Field);
         return Field;
       }
     } Callback(*this, interfaceDecl, visibility, AllIvarDecls);

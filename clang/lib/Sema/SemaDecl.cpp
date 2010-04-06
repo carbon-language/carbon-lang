@@ -5747,8 +5747,16 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
     // Case of ivar declared in an implementation. Context is that of its class.
     EnclosingContext = IMPDecl->getClassInterface();
     assert(EnclosingContext && "Implementation has no class interface!");
-  } else
+  } else {
+    if (ObjCCategoryDecl *CDecl = 
+        dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
+      if (!LangOpts.ObjCNonFragileABI2 || !CDecl->IsClassExtension()) {
+        Diag(Loc, diag::err_misplaced_ivar) << CDecl->IsClassExtension();
+        return DeclPtrTy();
+      }
+    }
     EnclosingContext = EnclosingDecl;
+  }
 
   // Construct the decl.
   ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context,
@@ -5926,16 +5934,14 @@ void Sema::ActOnFields(Scope* S,
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     } else if (ObjCCategoryDecl *CDecl = 
                 dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
-      if (!LangOpts.ObjCNonFragileABI2 || !CDecl->IsClassExtension())
-        Diag(LBrac, diag::err_misplaced_ivar) << CDecl->IsClassExtension();
-      else {
-        // FIXME. Class extension does not have a LocEnd field.
-        // CDecl->setLocEnd(RBrac);
-        // Add ivar's to class extension's DeclContext.
-        for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-          ClsFields[i]->setLexicalDeclContext(CDecl);
-          CDecl->addDecl(ClsFields[i]);
-        }
+      // case of ivars in class extension; all other cases have been
+      // reported as errors elsewhere.
+      // FIXME. Class extension does not have a LocEnd field.
+      // CDecl->setLocEnd(RBrac);
+      // Add ivar's to class extension's DeclContext.
+      for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
+        ClsFields[i]->setLexicalDeclContext(CDecl);
+        CDecl->addDecl(ClsFields[i]);
       }
     }
   }

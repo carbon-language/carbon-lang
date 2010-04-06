@@ -3,13 +3,13 @@
 
 @interface A @end
 
-@interface A () { // expected-error {{ivars may not be placed in class extension}}
-  int _p0;
+@interface A () { 
+  int _p0; // expected-error {{ivars may not be placed in class extension}}
 }
 @property int p0;
 @end
 
-@interface A(CAT) { // expected-error {{ivars may not be placed in categories}}
-  int _p1;
+@interface A(CAT) { 
+  int _p1; // expected-error {{ivars may not be placed in categories}}
 }
 @end
