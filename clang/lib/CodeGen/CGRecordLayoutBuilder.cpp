@@ -37,17 +37,7 @@ public:
   llvm::SmallVector<LLVMFieldInfo, 16> LLVMFields;
 
   /// LLVMBitFieldInfo - Holds location and size information about a bit field.
-  struct LLVMBitFieldInfo {
-    LLVMBitFieldInfo(const FieldDecl *FD, unsigned FieldNo, unsigned Start,
-                     unsigned Size)
-      : FD(FD), FieldNo(FieldNo), Start(Start), Size(Size) { }
-
-    const FieldDecl *FD;
-
-    unsigned FieldNo;
-    unsigned Start;
-    unsigned Size;
-  };
+  typedef std::pair<const FieldDecl *, CGBitFieldInfo> LLVMBitFieldInfo;
   llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
 
   /// ContainsPointerToDataMember - Whether one of the fields in this record
@@ -188,9 +178,10 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
   uint64_t TypeSizeInBits = getTypeSizeInBytes(Ty) * 8;
 
-  LLVMBitFields.push_back(LLVMBitFieldInfo(D, FieldOffset / TypeSizeInBits,
-                                           FieldOffset % TypeSizeInBits,
-                                           FieldSize));
+  LLVMBitFields.push_back(LLVMBitFieldInfo(
+                            D, CGBitFieldInfo(FieldOffset / TypeSizeInBits,
+                                              FieldOffset % TypeSizeInBits,
+                                              FieldSize)));
 
   AppendBytes(NumBytesToAppend);
 
@@ -288,7 +279,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
         continue;
 
       // Add the bit field info.
-      LLVMBitFields.push_back(LLVMBitFieldInfo(*Field, 0, 0, FieldSize));
+      LLVMBitFields.push_back(LLVMBitFieldInfo(
+                                *Field, CGBitFieldInfo(0, 0, FieldSize)));
     } else {
       LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
     }
@@ -494,21 +486,12 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
 
   // Add all the field numbers.
-  for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i) {
-    const FieldDecl *FD = Builder.LLVMFields[i].first;
-    unsigned FieldNo = Builder.LLVMFields[i].second;
-
-    RL->FieldInfo.insert(std::make_pair(FD, FieldNo));
-  }
+  for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i)
+    RL->FieldInfo.insert(Builder.LLVMFields[i]);
 
   // Add bitfield info.
-  for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i) {
-    const CGRecordLayoutBuilder::LLVMBitFieldInfo &Info =
-      Builder.LLVMBitFields[i];
-
-    CGBitFieldInfo BFI(Info.FieldNo, Info.Start, Info.Size);
-    RL->BitFields.insert(std::make_pair(Info.FD, BFI));
-  }
+  for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i)
+    RL->BitFields.insert(Builder.LLVMBitFields[i]);
 
   return RL;
 }
