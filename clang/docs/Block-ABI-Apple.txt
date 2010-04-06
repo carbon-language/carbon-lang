@@ -31,10 +31,11 @@ THE SOFTWARE.
 2008/10/30 - add __weak support
 
 2010/3/16  - rev for stret return, signature field
+2010/4/6   - improved wording
 
 This document describes the Apple ABI implementation specification of Blocks.
 
-The first shipping version of this ABI is found in Mac OS X 10.6, and shall be referred to as 10.6.ABI. Proposals have been made to enhance the blocks compiler and runtime, and these changes would form a new ABI called post-10.6.ABI if these changes were ever shipped in a product, which is purely speculative.
+The first shipping version of this ABI is found in Mac OS X 10.6, and shall be referred to as 10.6.ABI. As of 2010/3/16, the following describes the ABI contract with the runtime and the compiler, and, as necessary, will be referred to as ABI.2010.3.16.
 
 Since the Apple ABI references symbols from other elements of the system, any attempt to use this ABI on systems prior to SnowLeopard is undefined.
 
@@ -54,13 +55,13 @@ struct Block_literal_1 {
 	// optional helper functions
     	void (*copy_helper)(void *dst, void *src);     // IFF (1<<25)
     	void (*dispose_helper)(void *src);             // IFF (1<<25)
-        // required post 10.6.ABI
+        // required ABI.2010.3.16
         const char *signature;                         // IFF (1<<30)
     } *descriptor;
     // imported variables
 };
 
-The following flags bits are in use thusly for a possible post.10.6.ABI:
+The following flags bits are in use thusly for a possible ABI.2010.3.16:
 
 enum {
     BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
@@ -75,8 +76,8 @@ In 10.6.ABI the (1<<29) was unconditionally set and ignored by the runtime - it 
 switch (flags & (3<<29)) {
   case (0<<29):  <unused>    , error
   case (1<<29):      10.6.ABI, no signature field available
-  case (2<<29): post-10.6.ABI, regular calling convention, presence of signature field
-  case (3<<29): post-10.6.ABI, stret calling convention, presence of signature field,
+  case (2<<29): ABI.2010.3.16, regular calling convention, presence of signature field
+  case (3<<29): ABI.2010.3.16, stret calling convention, presence of signature field,
 }
 
 The following discussions are presented as 10.6.ABI otherwise.
