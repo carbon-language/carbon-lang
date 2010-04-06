@@ -174,7 +174,7 @@ public:
 
   const SourceMgr *getSourceMgr() const { return SM; }
   SMLoc getLoc() const { return Loc; }
-  const std::string getFilename() { return Filename; }
+  const std::string &getFilename() { return Filename; }
   int getLineNo() const { return LineNo; }
   int getColumnNo() const { return ColumnNo; }
   const std::string &getMessage() const { return Message; }
