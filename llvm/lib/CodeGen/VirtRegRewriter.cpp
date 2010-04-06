@@ -895,7 +895,7 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
 
         bool DoReMat = NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT;
         int SSorRMId = DoReMat
-          ? VRM.getReMatId(NewOp.VirtReg) : NewOp.StackSlotOrReMat;
+          ? VRM.getReMatId(NewOp.VirtReg) : (int) NewOp.StackSlotOrReMat;
 
         // Back-schedule reloads and remats.
         MachineBasicBlock::iterator InsertLoc =

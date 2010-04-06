@@ -1542,7 +1542,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
           const APInt FltVal = FPImm.bitcastToAPInt();
           const char *FltPtr = (const char*)FltVal.getRawData();
 
-          unsigned NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
+          int NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
           bool LittleEndian = Asm->getTargetData().isLittleEndian();
           int Incr = (LittleEndian ? 1 : -1);
           int Start = (LittleEndian ? 0 : NumBytes - 1);

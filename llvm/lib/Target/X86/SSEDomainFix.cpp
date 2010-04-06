@@ -159,7 +159,7 @@ int SSEDomainFixPass::RegIndex(unsigned reg) {
   // We just need them to be consecutive, ordering doesn't matter.
   assert(X86::XMM9 == X86::XMM0+NumRegs-1 && "Unexpected sort");
   reg -= X86::XMM0;
-  return reg < NumRegs ? reg : -1;
+  return reg < NumRegs ? (int) reg : -1;
 }
 
 DomainValue *SSEDomainFixPass::Alloc(int domain) {

@@ -305,7 +305,7 @@ bool X86FastISel::X86FastEmitStore(EVT VT, Value *Val,
     
     if (Opc) {
       addFullAddress(BuildMI(MBB, DL, TII.get(Opc)), AM)
-                             .addImm(Signed ? CI->getSExtValue() :
+                             .addImm(Signed ? (uint64_t) CI->getSExtValue() :
                                               CI->getZExtValue());
       return true;
     }

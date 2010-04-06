@@ -200,7 +200,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
     MachineInstr *MI =
       BuildMI(MBB, MBBI, DL, TII.get(Opc), SystemZ::R15D)
-      .addReg(SystemZ::R15D).addImm((isSub ? -(int64_t)ThisVal : ThisVal));
+      .addReg(SystemZ::R15D).addImm(isSub ? -ThisVal : ThisVal);
     // The PSW implicit def is dead.
     MI->getOperand(3).setIsDead();
     Offset -= ThisVal;
