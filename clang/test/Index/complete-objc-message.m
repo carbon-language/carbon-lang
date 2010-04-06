@@ -103,6 +103,19 @@ void f(Ellipsis *e) {
   [e Method:1, 2, 3];
 }
 
+@interface Overload2
++ (int)Method:(int)i;
++ (int)Method;
++ (int)Method:(float)f Arg1:(int)i1 Arg2:(int)i2;
++ (int)Method:(float)f Arg1:(int)i1 OtherArg:(id)obj;
++ (int)Method:(float)f SomeArg:(int)i1 OtherArg:(id)obj;
++ (int)OtherMethod:(float)f Arg1:(int)i1 Arg2:(int)i2;
+@end
+
+void test_overload2(void) {
+  [Overload2 Method:1 Arg1:1 OtherArg:ovl];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)b}
@@ -153,3 +166,29 @@ void f(Ellipsis *e) {
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}{Placeholder , ...}
+// RUN: c-index-test -code-completion-at=%s:116:14 %s | FileCheck -check-prefix=CHECK-CCC %s
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method}
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// RUN: c-index-test -code-completion-at=%s:116:23 %s | FileCheck -check-prefix=CHECK-CCD %s
+// CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText }
+// CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// RUN: c-index-test -code-completion-at=%s:116:30 %s | FileCheck -check-prefix=CHECK-CCE %s
+// CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
+// CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
+// RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCF %s
+// CHECK-CCF: {ResultType SEL}{TypedText _cmd}
+// CHECK-CCF: TypedefDecl:{TypedText Class}
+// CHECK-CCF: ObjCInterfaceDecl:{TypedText Foo}
+// CHECK-CCF: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCF: TypedefDecl:{TypedText id}
+// CHECK-CCF: ObjCInterfaceDecl:{TypedText MyClass}
+// CHECK-CCF: ObjCInterfaceDecl:{TypedText MySubClass}
+// CHECK-CCF: TypedefDecl:{TypedText SEL}
+// CHECK-CCF: {ResultType Class}{TypedText self}
+// CHECK-CCF: {TypedText super}
