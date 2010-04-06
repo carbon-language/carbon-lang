@@ -18,6 +18,7 @@ void f();
 void test() {
   f(Y(), 0, 0);
   // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC1 %s
+  // CHECK-CC1: COMPLETION: Pattern : dynamic_cast<<#type-id#>>(<#expression#>)
   // CHECK-CC1: f(N::Y y, <#int ZZ#>)
   // CHECK-CC1-NEXT: f(int i, <#int j#>, int k)
   // CHECK-CC1-NEXT: f(float x, <#float y#>)

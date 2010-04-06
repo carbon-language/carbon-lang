@@ -2260,9 +2260,8 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
     }
   }
 
-  if (Results.empty())
-    CodeCompleteOrdinaryName(S, CCC_Expression);
-  else
+  CodeCompleteOrdinaryName(S, CCC_Expression);
+  if (!Results.empty())
     CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
                                              Results.size());
 }
