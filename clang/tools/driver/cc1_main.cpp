@@ -199,7 +199,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
              const char *Argv0, void *MainAddr) {
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
-  Clang->setLLVMContext(new llvm::LLVMContext);
+  Clang->setLLVMContext(new llvm::LLVMContext());
 
   // Run clang -cc1 test.
   if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {

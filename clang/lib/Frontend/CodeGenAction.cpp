@@ -18,6 +18,7 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -87,7 +88,7 @@ namespace {
                     const LangOptions &langopts, const CodeGenOptions &compopts,
                     const TargetOptions &targetopts, bool TimePasses,
                     const std::string &infile, llvm::raw_ostream *OS,
-                    LLVMContext& C) :
+                    LLVMContext &C) :
       Diags(_Diags),
       Action(action),
       CodeGenOpts(compopts),
@@ -211,127 +212,131 @@ bool BackendConsumer::AddEmitPasses() {
 
   if (Action == Backend_EmitBC) {
     getPerModulePasses()->add(createBitcodeWriterPass(FormattedOutStream));
-  } else if (Action == Backend_EmitLL) {
+    return true;
+  }
+  
+  if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
+    return true;
+  }
+  
+  bool Fast = CodeGenOpts.OptimizationLevel == 0;
+
+  // Create the TargetMachine for generating code.
+  std::string Error;
+  std::string Triple = TheModule->getTargetTriple();
+  const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
+  if (!TheTarget) {
+    Diags.Report(diag::err_fe_unable_to_create_target) << Error;
+    return false;
+  }
+
+  // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
+  // being gross, this is also totally broken if we ever care about
+  // concurrency.
+  llvm::NoFramePointerElim = CodeGenOpts.DisableFPElim;
+  if (CodeGenOpts.FloatABI == "soft")
+    llvm::FloatABIType = llvm::FloatABI::Soft;
+  else if (CodeGenOpts.FloatABI == "hard")
+    llvm::FloatABIType = llvm::FloatABI::Hard;
+  else {
+    assert(CodeGenOpts.FloatABI.empty() && "Invalid float abi!");
+    llvm::FloatABIType = llvm::FloatABI::Default;
+  }
+  NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
+  llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
+  UnwindTablesMandatory = CodeGenOpts.UnwindTables;
+
+  TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
+
+  // FIXME: Parse this earlier.
+  if (CodeGenOpts.RelocationModel == "static") {
+    TargetMachine::setRelocationModel(llvm::Reloc::Static);
+  } else if (CodeGenOpts.RelocationModel == "pic") {
+    TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
   } else {
-    bool Fast = CodeGenOpts.OptimizationLevel == 0;
+    assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
+           "Invalid PIC model!");
+    TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
+  }
+  // FIXME: Parse this earlier.
+  if (CodeGenOpts.CodeModel == "small") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Small);
+  } else if (CodeGenOpts.CodeModel == "kernel") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
+  } else if (CodeGenOpts.CodeModel == "medium") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Medium);
+  } else if (CodeGenOpts.CodeModel == "large") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Large);
+  } else {
+    assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
+    TargetMachine::setCodeModel(llvm::CodeModel::Default);
+  }
 
-    // Create the TargetMachine for generating code.
-    std::string Error;
-    std::string Triple = TheModule->getTargetTriple();
-    const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
-    if (!TheTarget) {
-      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
-      return false;
-    }
+  std::vector<const char *> BackendArgs;
+  BackendArgs.push_back("clang"); // Fake program name.
+  if (!CodeGenOpts.DebugPass.empty()) {
+    BackendArgs.push_back("-debug-pass");
+    BackendArgs.push_back(CodeGenOpts.DebugPass.c_str());
+  }
+  if (!CodeGenOpts.LimitFloatPrecision.empty()) {
+    BackendArgs.push_back("-limit-float-precision");
+    BackendArgs.push_back(CodeGenOpts.LimitFloatPrecision.c_str());
+  }
+  if (llvm::TimePassesIsEnabled)
+    BackendArgs.push_back("-time-passes");
+  BackendArgs.push_back(0);
+  llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
+                                    (char**) &BackendArgs[0]);
 
-    // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
-    // being gross, this is also totally broken if we ever care about
-    // concurrency.
-    llvm::NoFramePointerElim = CodeGenOpts.DisableFPElim;
-    if (CodeGenOpts.FloatABI == "soft")
-      llvm::FloatABIType = llvm::FloatABI::Soft;
-    else if (CodeGenOpts.FloatABI == "hard")
-      llvm::FloatABIType = llvm::FloatABI::Hard;
-    else {
-      assert(CodeGenOpts.FloatABI.empty() && "Invalid float abi!");
-      llvm::FloatABIType = llvm::FloatABI::Default;
-    }
-    NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
-    llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
-    UnwindTablesMandatory = CodeGenOpts.UnwindTables;
+  std::string FeaturesStr;
+  if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(TargetOpts.CPU);
+    for (std::vector<std::string>::const_iterator
+           it = TargetOpts.Features.begin(),
+           ie = TargetOpts.Features.end(); it != ie; ++it)
+      Features.AddFeature(*it);
+    FeaturesStr = Features.getString();
+  }
+  TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
 
-    TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
+  // Set register scheduler & allocation policy.
+  RegisterScheduler::setDefault(createDefaultScheduler);
+  RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
+                               createLinearScanRegisterAllocator);
 
-    // FIXME: Parse this earlier.
-    if (CodeGenOpts.RelocationModel == "static") {
-      TargetMachine::setRelocationModel(llvm::Reloc::Static);
-    } else if (CodeGenOpts.RelocationModel == "pic") {
-      TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
-    } else {
-      assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
-             "Invalid PIC model!");
-      TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
-    }
-    // FIXME: Parse this earlier.
-    if (CodeGenOpts.CodeModel == "small") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Small);
-    } else if (CodeGenOpts.CodeModel == "kernel") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
-    } else if (CodeGenOpts.CodeModel == "medium") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Medium);
-    } else if (CodeGenOpts.CodeModel == "large") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Large);
-    } else {
-      assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
-      TargetMachine::setCodeModel(llvm::CodeModel::Default);
-    }
+  // From llvm-gcc:
+  // If there are passes we have to run on the entire module, we do codegen
+  // as a separate "pass" after that happens.
+  // FIXME: This is disabled right now until bugs can be worked out.  Reenable
+  // this for fast -O0 compiles!
+  FunctionPassManager *PM = getCodeGenPasses();
+  CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
 
-    std::vector<const char *> BackendArgs;
-    BackendArgs.push_back("clang"); // Fake program name.
-    if (!CodeGenOpts.DebugPass.empty()) {
-      BackendArgs.push_back("-debug-pass");
-      BackendArgs.push_back(CodeGenOpts.DebugPass.c_str());
-    }
-    if (!CodeGenOpts.LimitFloatPrecision.empty()) {
-      BackendArgs.push_back("-limit-float-precision");
-      BackendArgs.push_back(CodeGenOpts.LimitFloatPrecision.c_str());
-    }
-    if (llvm::TimePassesIsEnabled)
-      BackendArgs.push_back("-time-passes");
-    BackendArgs.push_back(0);
-    llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
-                                      (char**) &BackendArgs[0]);
+  switch (CodeGenOpts.OptimizationLevel) {
+  default: break;
+  case 0: OptLevel = CodeGenOpt::None; break;
+  case 3: OptLevel = CodeGenOpt::Aggressive; break;
+  }
 
-    std::string FeaturesStr;
-    if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
-      SubtargetFeatures Features;
-      Features.setCPU(TargetOpts.CPU);
-      for (std::vector<std::string>::const_iterator
-             it = TargetOpts.Features.begin(),
-             ie = TargetOpts.Features.end(); it != ie; ++it)
-        Features.AddFeature(*it);
-      FeaturesStr = Features.getString();
-    }
-    TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
-
-    // Set register scheduler & allocation policy.
-    RegisterScheduler::setDefault(createDefaultScheduler);
-    RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
-                                 createLinearScanRegisterAllocator);
-
-    // From llvm-gcc:
-    // If there are passes we have to run on the entire module, we do codegen
-    // as a separate "pass" after that happens.
-    // FIXME: This is disabled right now until bugs can be worked out.  Reenable
-    // this for fast -O0 compiles!
-    FunctionPassManager *PM = getCodeGenPasses();
-    CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
-
-    switch (CodeGenOpts.OptimizationLevel) {
-    default: break;
-    case 0: OptLevel = CodeGenOpt::None; break;
-    case 3: OptLevel = CodeGenOpt::Aggressive; break;
-    }
-
-    // Request that addPassesToEmitFile run the Verifier after running
-    // passes which modify the IR.
+  // Request that addPassesToEmitFile run the Verifier after running
+  // passes which modify the IR.
 #ifndef NDEBUG
-    bool DisableVerify = false;
+  bool DisableVerify = false;
 #else
-    bool DisableVerify = true;
+  bool DisableVerify = true;
 #endif
 
-    // Normal mode, emit a .s or .o file by running the code generator. Note,
-    // this also adds codegenerator level optimization passes.
-    TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
-    if (Action == Backend_EmitObj)
-      CGFT = TargetMachine::CGFT_ObjectFile;
-    if (TM->addPassesToEmitFile(*PM, FormattedOutStream, CGFT, OptLevel,
-                                DisableVerify)) {
-      Diags.Report(diag::err_fe_unable_to_interface_with_target);
-      return false;
-    }
+  // Normal mode, emit a .s or .o file by running the code generator. Note,
+  // this also adds codegenerator level optimization passes.
+  TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
+  if (Action == Backend_EmitObj)
+    CGFT = TargetMachine::CGFT_ObjectFile;
+  if (TM->addPassesToEmitFile(*PM, FormattedOutStream, CGFT, OptLevel,
+                              DisableVerify)) {
+    Diags.Report(diag::err_fe_unable_to_interface_with_target);
+    return false;
   }
 
   return true;
@@ -432,6 +437,7 @@ void BackendConsumer::EmitAssembly() {
 
   if (CodeGenPasses) {
     PrettyStackTraceString CrashInfo("Code generation");
+    
     CodeGenPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())
@@ -439,6 +445,7 @@ void BackendConsumer::EmitAssembly() {
     CodeGenPasses->doFinalization();
   }
 }
+
 
 //
 
