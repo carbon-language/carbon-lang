@@ -19,11 +19,7 @@ void test(struct Point *p) {
   // RUN: %clang_cc1 -include-pch %t -fsyntax-only -code-completion-macros -code-completion-at=%s:12:14 %s -o - | FileCheck -check-prefix=CC1 %s
   // RUN: %clang_cc1 -include-pch %t -fsyntax-only -code-completion-macros -code-completion-at=%s:14:9 %s -o - | FileCheck -check-prefix=CC2 %s
 
-  // CC1: BAR(<#X#>, <#Y#>)
   // CC1: color
-  // CC1: FOO
-  // CC1: IDENTITY(<#X#>)
-  // CC1: WIBBLE
   // CC1: x
   // CC1: y
   // CC1: z

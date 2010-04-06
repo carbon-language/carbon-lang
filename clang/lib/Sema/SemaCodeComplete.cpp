@@ -2077,10 +2077,6 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   
   Results.ExitScope();
 
-  // Add macros
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
-
   // Hand off the results found for code completion.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
@@ -2115,8 +2111,6 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   LookupVisibleDecls(S, LookupTagName, Consumer);
   
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2194,7 +2188,7 @@ void Sema::CodeCompleteCase(Scope *S) {
                       CurContext, 0, false);
   }
   Results.ExitScope();
-  
+
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
@@ -2309,8 +2303,6 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
   if (!Results.empty() && NNS->isDependent())
     Results.AddResult("template");
   
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2331,8 +2323,6 @@ void Sema::CodeCompleteUsing(Scope *S) {
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   Results.ExitScope();
   
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2347,8 +2337,6 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   Results.ExitScope();
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2383,8 +2371,6 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     Results.ExitScope();
   }
   
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2396,8 +2382,6 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2424,8 +2408,6 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   AddTypeSpecifierResults(getLangOptions(), Results);
   Results.ExitScope();
   
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
