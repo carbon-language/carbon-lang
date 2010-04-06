@@ -939,17 +939,18 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 /// to make sure that there are no complex uses of V.  We permit simple things
 /// like dereferencing the pointer, but not storing through the address, unless
 /// it is to the specified global.
-static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
-                                                      GlobalVariable *GV,
-                                              SmallPtrSet<PHINode*, 8> &PHIs) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    Instruction *Inst = cast<Instruction>(*UI);
+static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
+                                                      const GlobalVariable *GV,
+                                              SmallPtrSet<const PHINode*, 8> &PHIs) {
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E;++UI){
+    const Instruction *Inst = cast<Instruction>(*UI);
     
     if (isa<LoadInst>(Inst) || isa<CmpInst>(Inst)) {
       continue; // Fine, ignore.
     }
     
-    if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+    if (const StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (SI->getOperand(0) == V && SI->getOperand(1) != GV)
         return false;  // Storing the pointer itself... bad.
       continue; // Otherwise, storing through it, or storing into GV... fine.
@@ -961,7 +962,7 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
       continue;
     }
     
-    if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
+    if (const PHINode *PN = dyn_cast<PHINode>(Inst)) {
       // PHIs are ok if all uses are ok.  Don't infinitely recurse through PHI
       // cycles.
       if (PHIs.insert(PN))
@@ -970,7 +971,7 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
       continue;
     }
     
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(Inst)) {
+    if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Inst)) {
       if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV, PHIs))
         return false;
       continue;
@@ -1468,7 +1469,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // GEP'd.  These are all things we could transform to using the global
   // for.
   {
-    SmallPtrSet<PHINode*, 8> PHIs;
+    SmallPtrSet<const PHINode*, 8> PHIs;
     if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV, PHIs))
       return false;
   }  
