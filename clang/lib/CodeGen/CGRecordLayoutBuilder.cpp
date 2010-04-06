@@ -178,10 +178,11 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
   uint64_t TypeSizeInBits = getTypeSizeInBytes(Ty) * 8;
 
+  bool IsSigned = D->getType()->isSignedIntegerType();
   LLVMBitFields.push_back(LLVMBitFieldInfo(
                             D, CGBitFieldInfo(FieldOffset / TypeSizeInBits,
                                               FieldOffset % TypeSizeInBits,
-                                              FieldSize)));
+                                              FieldSize, IsSigned)));
 
   AppendBytes(NumBytesToAppend);
 
@@ -279,8 +280,10 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
         continue;
 
       // Add the bit field info.
+      bool IsSigned = Field->getType()->isSignedIntegerType();
       LLVMBitFields.push_back(LLVMBitFieldInfo(
-                                *Field, CGBitFieldInfo(0, 0, FieldSize)));
+                                *Field, CGBitFieldInfo(0, 0, FieldSize,
+                                                       IsSigned)));
     } else {
       LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
     }

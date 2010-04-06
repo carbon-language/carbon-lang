@@ -605,8 +605,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
                                                  QualType ExprType) {
-  unsigned StartBit = LV.getBitFieldInfo().Start;
-  unsigned BitfieldSize = LV.getBitFieldInfo().Size;
+  const CGBitFieldInfo &Info = LV.getBitFieldInfo();
+  unsigned StartBit = Info.Start;
+  unsigned BitfieldSize = Info.Size;
   llvm::Value *Ptr = LV.getBitFieldAddr();
 
   const llvm::Type *EltTy =
@@ -650,7 +651,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   }
 
   // Sign extend if necessary.
-  if (LV.isBitFieldSigned()) {
+  if (Info.IsSigned) {
     llvm::Value *ExtraBits = llvm::ConstantInt::get(EltTy,
                                                     EltTySize - BitfieldSize);
     Val = Builder.CreateAShr(Builder.CreateShl(Val, ExtraBits),
@@ -781,8 +782,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                                      QualType Ty,
                                                      llvm::Value **Result) {
-  unsigned StartBit = Dst.getBitFieldInfo().Start;
-  unsigned BitfieldSize = Dst.getBitFieldInfo().Size;
+  const CGBitFieldInfo &Info = Dst.getBitFieldInfo();
+  unsigned StartBit = Info.Start;
+  unsigned BitfieldSize = Info.Size;
   llvm::Value *Ptr = Dst.getBitFieldAddr();
 
   const llvm::Type *EltTy =
@@ -805,7 +807,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                                   "bf.reload.val");
 
     // Sign extend if necessary.
-    if (Dst.isBitFieldSigned()) {
+    if (Info.IsSigned) {
       unsigned SrcTySize = CGM.getTargetData().getTypeSizeInBits(SrcTy);
       llvm::Value *ExtraBits = llvm::ConstantInt::get(SrcTy,
                                                       SrcTySize - BitfieldSize);
@@ -1484,7 +1486,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                     llvm::PointerType::get(FieldTy, AS));
   llvm::Value *V = Builder.CreateConstGEP1_32(BaseValue, Info.FieldNo);
 
-  return LValue::MakeBitfield(V, Info, Field->getType()->isSignedIntegerType(),
+  return LValue::MakeBitfield(V, Info,
                              Field->getType().getCVRQualifiers()|CVRQualifiers);
 }
 

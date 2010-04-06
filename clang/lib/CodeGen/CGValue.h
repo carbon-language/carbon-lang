@@ -154,9 +154,6 @@ class LValue {
   // Lvalue is a global reference of an objective-c object
   bool GlobalObjCRef : 1;
 
-  /// Is the bit-field value signed.
-  bool BitFieldIsSigned : 1;
-
   Expr *BaseIvarExp;
 private:
   void SetQualifiers(Qualifiers Quals) {
@@ -231,10 +228,6 @@ public:
     assert(isBitField());
     return *BitFieldInfo;
   }
-  bool isBitFieldSigned() const {
-    assert(isBitField());
-    return BitFieldIsSigned;
-  }
 
   // property ref lvalue
   const ObjCPropertyRefExpr *getPropertyRefExpr() const {
@@ -277,12 +270,11 @@ public:
   }
 
   static LValue MakeBitfield(llvm::Value *V, const CGBitFieldInfo &Info,
-                             bool IsSigned, unsigned CVR) {
+                             unsigned CVR) {
     LValue R;
     R.LVType = BitField;
     R.V = V;
     R.BitFieldInfo = &Info;
-    R.BitFieldIsSigned = IsSigned;
     R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }

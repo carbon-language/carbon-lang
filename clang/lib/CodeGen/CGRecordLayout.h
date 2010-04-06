@@ -21,12 +21,14 @@ namespace CodeGen {
 
 class CGBitFieldInfo {
 public:
-  CGBitFieldInfo(unsigned FieldNo, unsigned Start, unsigned Size)
-    : FieldNo(FieldNo), Start(Start), Size(Size) {}
+  CGBitFieldInfo(unsigned FieldNo, unsigned Start, unsigned Size,
+                 bool IsSigned)
+    : FieldNo(FieldNo), Start(Start), Size(Size), IsSigned(IsSigned) {}
 
   unsigned FieldNo;
   unsigned Start;
   unsigned Size;
+  bool IsSigned : 1;
 };
 
 /// CGRecordLayout - This class handles struct and union layout info while
