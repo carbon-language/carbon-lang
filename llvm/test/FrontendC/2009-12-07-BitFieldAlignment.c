@@ -9,7 +9,7 @@ struct S {
 };
 
 void f0(struct S *a) {
-// CHECK: %3 = load i32* %2, align 4
-// CHECK: store i32 %4, i32* %2, align 4
+// CHECK: load {{.*}}, align 4
+// CHECK: store {{.*}}, align 4
   a->e = 0;
 }
