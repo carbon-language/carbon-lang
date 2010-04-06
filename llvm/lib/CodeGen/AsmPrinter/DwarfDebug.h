@@ -332,6 +332,9 @@ private:
   /// addToContextOwner - Add Die into the list of its context owner's children.
   void addToContextOwner(DIE *Die, DIDescriptor Context);
 
+  /// isFunctionContext - True if given Context is nested within a function. 
+  bool isFunctionContext(DIE *context);
+
   /// addType - Add a new type attribute to the specified entity.
   void addType(DIE *Entity, DIType Ty);
 

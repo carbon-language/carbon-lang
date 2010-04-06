@@ -800,10 +800,24 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   } else if (Context.isNameSpace()) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context.getNode()));
     ContextDIE->addChild(Die);
+  } else if (Context.isSubprogram()) {
+    DIE *ContextDIE = createSubprogramDIE(DISubprogram(Context.getNode()),
+                                          /*MakeDecl=*/false);
+    ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = ModuleCU->getDIE(Context.getNode()))
     ContextDIE->addChild(Die);
   else 
     ModuleCU->addDie(Die);
+}
+
+/// isFunctionContext - True if given Context is nested within a function. 
+bool DwarfDebug::isFunctionContext(DIE *context) {
+  if (context == (DIE *)0)
+    return false;
+  if (context->getTag() == dwarf::DW_TAG_subprogram)
+    return true;
+  else
+    return isFunctionContext(context->getParent());
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
@@ -987,6 +1001,10 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (DIDescriptor(ContainingType.getNode()).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, 
                   getOrCreateTypeDIE(DIType(ContainingType.getNode())));
+    else {
+      DIDescriptor Context = CTy.getContext();
+      addToContextOwner(&Buffer, Context);
+    }
     break;
   }
   default:
@@ -1802,19 +1820,15 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
 void DwarfDebug::constructSubprogramDIE(MDNode *N) {
   DISubprogram SP(N);
 
-  // Check for pre-existence.
-  if (ModuleCU->getDIE(N))
-    return;
-
   if (!SP.isDefinition())
     // This is a method declaration which will be handled while constructing
     // class type.
     return;
 
-  DIE *SubprogramDie = createSubprogramDIE(SP);
-
-  // Add to map.
-  ModuleCU->insertDIE(N, SubprogramDie);
+  // Check for pre-existence.
+  DIE *SubprogramDie = ModuleCU->getDIE(N);
+  if (!SubprogramDie)
+    SubprogramDie = createSubprogramDIE(SP);
 
   // Add to context owner.
   addToContextOwner(SubprogramDie, SP.getContext());
