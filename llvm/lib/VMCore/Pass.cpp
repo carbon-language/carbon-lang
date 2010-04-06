@@ -294,13 +294,8 @@ public:
 static std::vector<PassRegistrationListener*> *Listeners = 0;
 static sys::SmartMutex<true> ListenersLock;
 
-// FIXME: This should use ManagedStatic to manage the pass registrar.
-// Unfortunately, we can't do this, because passes are registered with static
-// ctors, and having llvm_shutdown clear this map prevents successful
-// ressurection after llvm_shutdown is run.
+static PassRegistrar *PassRegistrarObj = 0;
 static PassRegistrar *getPassRegistrar() {
-  static PassRegistrar *PassRegistrarObj = 0;
-  
   // Use double-checked locking to safely initialize the registrar when
   // we're running in multithreaded mode.
   PassRegistrar* tmp = PassRegistrarObj;
@@ -322,6 +317,19 @@ static PassRegistrar *getPassRegistrar() {
   
   return PassRegistrarObj;
 }
+
+// FIXME: We use ManagedCleanup to erase the pass registrar on shutdown.
+// Unfortunately, passes are registered with static ctors, and having
+// llvm_shutdown clear this map prevents successful ressurection after 
+// llvm_shutdown is run.  Ideally we should find a solution so that we don't
+// leak the map, AND can still resurrect after shutdown.
+void cleanupPassRegistrar(void*) {
+  if (PassRegistrarObj) {
+    delete PassRegistrarObj;
+    PassRegistrarObj = 0;
+  }
+}
+ManagedCleanup<&cleanupPassRegistrar> registrarCleanup;
 
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
