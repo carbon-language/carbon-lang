@@ -517,8 +517,19 @@ MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
   MachineInstrBuilder MIB = BuildMI(*MF, DL, II);
   if (SD->getKind() == SDDbgValue::SDNODE) {
-    AddOperand(&*MIB, SDValue(SD->getSDNode(), SD->getResNo()),
-               (*MIB).getNumOperands(), &II, VRBaseMap, true /*IsDebug*/);
+    SDNode *Node = SD->getSDNode();
+    SDValue Op = SDValue(Node, SD->getResNo());
+    // It's possible we replaced this SDNode with other(s) and therefore
+    // didn't generate code for it.  It's better to catch these cases where
+    // they happen and transfer the debug info, but trying to guarantee that
+    // in all cases would be very fragile; this is a safeguard for any
+    // that were missed.
+    DenseMap<SDValue, unsigned>::iterator I = VRBaseMap.find(Op);
+    if (I==VRBaseMap.end())
+      MIB.addReg(0U);       // undef
+    else
+      AddOperand(&*MIB, Op, (*MIB).getNumOperands(), &II, VRBaseMap,
+                 true /*IsDebug*/);
   } else if (SD->getKind() == SDDbgValue::CONST) {
     Value *V = SD->getConst();
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
