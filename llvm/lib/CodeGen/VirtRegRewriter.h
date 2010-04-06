@@ -10,11 +10,10 @@
 #ifndef LLVM_CODEGEN_VIRTREGREWRITER_H
 #define LLVM_CODEGEN_VIRTREGREWRITER_H
 
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "VirtRegMap.h"
-
 namespace llvm {
+  class LiveIntervals;
+  class MachineFunction;
+  class VirtRegMap;
   
   /// VirtRegRewriter interface: Implementations of this interface assign
   /// spilled virtual registers to stack slots, rewriting the code.

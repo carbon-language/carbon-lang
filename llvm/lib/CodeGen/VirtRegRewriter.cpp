@@ -9,7 +9,9 @@
 
 #define DEBUG_TYPE "virtregrewriter"
 #include "VirtRegRewriter.h"
+#include "VirtRegMap.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
