@@ -22,6 +22,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclContextInternals.h"
+#include "clang/AST/Type.h"
 
 namespace clang {
 
@@ -42,6 +43,7 @@ public:
                                      AccessSpecifier AS,
                                      NamedDecl *TargetDecl,
                                      CXXRecordDecl *NamingClass,
+                                     QualType BaseObjectType,
                                      const PartialDiagnostic &PDiag) {
     DependentDiagnostic *DD = Create(Context, Parent, PDiag);
     DD->AccessData.Loc = Loc.getRawEncoding();
@@ -49,6 +51,7 @@ public:
     DD->AccessData.Access = AS;
     DD->AccessData.TargetDecl = TargetDecl;
     DD->AccessData.NamingClass = NamingClass;
+    DD->AccessData.BaseObjectType = BaseObjectType.getAsOpaquePtr();
     return DD;
   }
 
@@ -81,6 +84,11 @@ public:
     return AccessData.NamingClass;
   }
 
+  QualType getAccessBaseObjectType() const {
+    assert(getKind() == Access);
+    return QualType::getFromOpaquePtr(AccessData.BaseObjectType);
+  }
+
   const PartialDiagnostic &getDiagnostic() const {
     return Diag;
   }
@@ -107,6 +115,7 @@ private:
       unsigned IsMember : 1;
       NamedDecl *TargetDecl;
       CXXRecordDecl *NamingClass;
+      void *BaseObjectType;
     } AccessData;
   };
 };

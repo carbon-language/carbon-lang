@@ -494,6 +494,24 @@ NamedDecl *NamedDecl::getUnderlyingDecl() {
   }
 }
 
+bool NamedDecl::isCXXInstanceMember() const {
+  assert(isCXXClassMember() &&
+         "checking whether non-member is instance member");
+
+  const NamedDecl *D = this;
+  if (isa<UsingShadowDecl>(D))
+    D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
+  if (isa<FieldDecl>(D))
+    return true;
+  if (isa<CXXMethodDecl>(D))
+    return cast<CXXMethodDecl>(D)->isInstance();
+  if (isa<FunctionTemplateDecl>(D))
+    return cast<CXXMethodDecl>(cast<FunctionTemplateDecl>(D)
+                                 ->getTemplatedDecl())->isInstance();
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // DeclaratorDecl Implementation
 //===----------------------------------------------------------------------===//

@@ -282,6 +282,18 @@ public:
     NamingClass = Record;
   }
 
+  /// \brief Returns the base object type associated with this lookup;
+  /// important for [class.protected].  Most lookups do not have an
+  /// associated base object.
+  QualType getBaseObjectType() const {
+    return BaseObjectType;
+  }
+
+  /// \brief Sets the base object type for this lookup.
+  void setBaseObjectType(QualType T) {
+    BaseObjectType = T;
+  }
+
   /// \brief Add a declaration to these results with its natural access.
   /// Does not test the acceptance criteria.
   void addDecl(NamedDecl *D) {
@@ -550,6 +562,7 @@ private:
   UnresolvedSet<8> Decls;
   CXXBasePaths *Paths;
   CXXRecordDecl *NamingClass;
+  QualType BaseObjectType;
 
   // Parameters.
   Sema &SemaRef;

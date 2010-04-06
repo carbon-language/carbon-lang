@@ -315,20 +315,11 @@ public:
     AccessedEntity(ASTContext &Context, 
                    MemberNonce _,
                    CXXRecordDecl *NamingClass,
-                   AccessSpecifier Access,
-                   NamedDecl *Target)
-      : Access(Access), IsMember(true), 
-        Target(Target), NamingClass(NamingClass),
-        Diag(0, Context.getDiagAllocator()) {
-    }
-
-    AccessedEntity(ASTContext &Context, 
-                   MemberNonce _,
-                   CXXRecordDecl *NamingClass,
-                   DeclAccessPair FoundDecl)
+                   DeclAccessPair FoundDecl,
+                   QualType BaseObjectType)
       : Access(FoundDecl.getAccess()), IsMember(true), 
         Target(FoundDecl.getDecl()), NamingClass(NamingClass),
-        Diag(0, Context.getDiagAllocator()) {
+        BaseObjectType(BaseObjectType), Diag(0, Context.getDiagAllocator()) {
     }
 
     AccessedEntity(ASTContext &Context, 
@@ -352,6 +343,10 @@ public:
     // ...and these apply to hierarchy conversions.
     CXXRecordDecl *getBaseClass() const { return cast<CXXRecordDecl>(Target); }
     CXXRecordDecl *getDerivedClass() const { return NamingClass; }
+
+    /// Retrieves the base object type, important when accessing
+    /// an instance member.
+    QualType getBaseObjectType() const { return BaseObjectType; }
 
     /// Sets a diagnostic to be performed.  The diagnostic is given
     /// four (additional) arguments:
@@ -378,6 +373,7 @@ public:
     bool IsMember;
     NamedDecl *Target;
     CXXRecordDecl *NamingClass;    
+    QualType BaseObjectType;
     PartialDiagnostic Diag;
   };
 
@@ -1254,10 +1250,10 @@ public:
   FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From);
 
   Expr *FixOverloadedFunctionReference(Expr *E,
-                                       NamedDecl *FoundDecl,
+                                       DeclAccessPair FoundDecl,
                                        FunctionDecl *Fn);
   OwningExprResult FixOverloadedFunctionReference(OwningExprResult, 
-                                                  NamedDecl *FoundDecl,
+                                                  DeclAccessPair FoundDecl,
                                                   FunctionDecl *Fn);
 
   void AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,

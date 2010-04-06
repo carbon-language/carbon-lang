@@ -6003,7 +6003,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
-  NamedDecl *FoundDecl = 0;
+  DeclAccessPair FoundDecl;
   NestedNameSpecifier *Qualifier = 0;
   if (isa<MemberExpr>(NakedMemExpr)) {
     MemExpr = cast<MemberExpr>(NakedMemExpr);
@@ -6486,7 +6486,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 /// perhaps a '&' around it). We have resolved the overloaded function
 /// to the function declaration Fn, so patch up the expression E to
 /// refer (possibly indirectly) to Fn. Returns the new expr.
-Expr *Sema::FixOverloadedFunctionReference(Expr *E, NamedDecl *Found,
+Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                            FunctionDecl *Fn) {
   if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
     Expr *SubExpr = FixOverloadedFunctionReference(PE->getSubExpr(),
@@ -6619,7 +6619,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, NamedDecl *Found,
 }
 
 Sema::OwningExprResult Sema::FixOverloadedFunctionReference(OwningExprResult E, 
-                                                            NamedDecl *Found,
+                                                          DeclAccessPair Found,
                                                             FunctionDecl *Fn) {
   return Owned(FixOverloadedFunctionReference((Expr *)E.get(), Found, Fn));
 }

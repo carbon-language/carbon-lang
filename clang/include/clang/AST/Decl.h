@@ -196,6 +196,10 @@ public:
     return DC->isRecord();
   }
 
+  /// \brief Given that this declaration is a C++ class member,
+  /// determine whether it's an instance member of its class.
+  bool isCXXInstanceMember() const;
+
   /// \brief Determine what kind of linkage this entity has.
   Linkage getLinkage() const;
 

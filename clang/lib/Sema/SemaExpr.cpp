@@ -769,24 +769,6 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
   return true;
 }
 
-/// Determines if this is an instance member of a class.
-static bool IsInstanceMember(NamedDecl *D) {
-  assert(D->isCXXClassMember() &&
-         "checking whether non-member is instance member");
-
-  if (isa<FieldDecl>(D)) return true;
-
-  if (isa<CXXMethodDecl>(D))
-    return !cast<CXXMethodDecl>(D)->isStatic();
-
-  if (isa<FunctionTemplateDecl>(D)) {
-    D = cast<FunctionTemplateDecl>(D)->getTemplatedDecl();
-    return !cast<CXXMethodDecl>(D)->isStatic();
-  }
-
-  return false;
-}
-
 enum IMAKind {
   /// The reference is definitely not an instance member access.
   IMA_Static,
@@ -846,8 +828,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   bool hasNonInstance = false;
   llvm::SmallPtrSet<CXXRecordDecl*, 4> Classes;
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-    NamedDecl *D = (*I)->getUnderlyingDecl();
-    if (IsInstanceMember(D)) {
+    NamedDecl *D = *I;
+    if (D->isCXXInstanceMember()) {
       CXXRecordDecl *R = cast<CXXRecordDecl>(D->getDeclContext());
 
       // If this is a member of an anonymous record, move out to the
@@ -1517,8 +1499,8 @@ Sema::PerformObjectMemberConversion(Expr *&From,
 /// \brief Build a MemberExpr AST node.
 static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    const CXXScopeSpec &SS, ValueDecl *Member,
-                                   NamedDecl *FoundDecl, SourceLocation Loc,
-                                   QualType Ty,
+                                   DeclAccessPair FoundDecl,
+                                   SourceLocation Loc, QualType Ty,
                           const TemplateArgumentListInfo *TemplateArgs = 0) {
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
@@ -2545,7 +2527,7 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
     // If this is an implicit member reference and we find a
     // non-instance member, it's not an error.
-    if (!BaseExpr && !IsInstanceMember((*I)->getUnderlyingDecl()))
+    if (!BaseExpr && !(*I)->isCXXInstanceMember())
       return false;
 
     // Note that we use the DC of the decl, not the underlying decl.
@@ -2682,6 +2664,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     assert(BaseType->isPointerType());
     BaseType = BaseType->getAs<PointerType>()->getPointeeType();
   }
+  R.setBaseObjectType(BaseType);
 
   NestedNameSpecifier *Qualifier =
     static_cast<NestedNameSpecifier*>(SS.getScopeRep());
@@ -2742,7 +2725,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   }
 
   assert(R.isSingleResult());
-  NamedDecl *FoundDecl = *R.begin();
+  DeclAccessPair FoundDecl = R.begin().getPair();
   NamedDecl *MemberDecl = R.getFoundDecl();
 
   // FIXME: diagnose the presence of template arguments now.
@@ -2756,7 +2739,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   // Handle the implicit-member-access case.
   if (!BaseExpr) {
     // If this is not an instance member, convert to a non-member access.
-    if (!IsInstanceMember(MemberDecl))
+    if (!MemberDecl->isCXXInstanceMember())
       return BuildDeclarationNameExpr(SS, R.getNameLoc(), MemberDecl);
 
     SourceLocation Loc = R.getNameLoc();

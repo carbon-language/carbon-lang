@@ -496,13 +496,15 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifier *qual,
                                SourceRange qualrange,
                                ValueDecl *memberdecl,
-                               NamedDecl *founddecl,
+                               DeclAccessPair founddecl,
                                SourceLocation l,
                                const TemplateArgumentListInfo *targs,
                                QualType ty) {
   std::size_t Size = sizeof(MemberExpr);
 
-  bool hasQualOrFound = (qual != 0 || founddecl != memberdecl);
+  bool hasQualOrFound = (qual != 0 ||
+                         founddecl.getDecl() != memberdecl ||
+                         founddecl.getAccess() != memberdecl->getAccess());
   if (hasQualOrFound)
     Size += sizeof(MemberNameQualifier);
 

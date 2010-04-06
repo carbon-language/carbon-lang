@@ -2029,7 +2029,10 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
     // function template specialization wherever deduction cannot occur.
     if (FunctionDecl *Specialization
         = ResolveSingleFunctionTemplateSpecialization(E)) {
-      E = FixOverloadedFunctionReference(E, Specialization, Specialization);
+      // The access doesn't really matter in this case.
+      DeclAccessPair Found = DeclAccessPair::make(Specialization,
+                                                  Specialization->getAccess());
+      E = FixOverloadedFunctionReference(E, Found, Specialization);
       if (!E)
         return QualType();      
     } else {
@@ -2049,7 +2052,10 @@ QualType Sema::BuildDecltypeType(Expr *E) {
     // function template specialization wherever deduction cannot occur.
     if (FunctionDecl *Specialization
           = ResolveSingleFunctionTemplateSpecialization(E)) {
-      E = FixOverloadedFunctionReference(E, Specialization, Specialization);
+      // The access doesn't really matter in this case.
+      DeclAccessPair Found = DeclAccessPair::make(Specialization,
+                                                  Specialization->getAccess());
+      E = FixOverloadedFunctionReference(E, Found, Specialization);
       if (!E)
         return QualType();      
     } else {

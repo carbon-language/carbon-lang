@@ -471,6 +471,11 @@ public:
   friend_iterator friend_end() const;
   void pushFriendDecl(FriendDecl *FD);
 
+  /// Determines whether this record has any friends.
+  bool hasFriends() const {
+    return data().FirstFriend != 0;
+  }
+
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;

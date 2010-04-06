@@ -17,6 +17,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/DeclAccessPair.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1274,7 +1275,7 @@ public:
 class MemberExpr : public Expr {
   /// Extra data stored in some member expressions.
   struct MemberNameQualifier : public NameQualifier {
-    NamedDecl *FoundDecl;
+    DeclAccessPair FoundDecl;
   };
 
   /// Base - the expression for the base pointer or structure references.  In
@@ -1349,7 +1350,7 @@ public:
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifier *qual, SourceRange qualrange,
-                            ValueDecl *memberdecl, NamedDecl *founddecl,
+                            ValueDecl *memberdecl, DeclAccessPair founddecl,
                             SourceLocation l,
                             const TemplateArgumentListInfo *targs,
                             QualType ty);
@@ -1365,9 +1366,10 @@ public:
   void setMemberDecl(ValueDecl *D) { MemberDecl = D; }
 
   /// \brief Retrieves the declaration found by lookup.
-  NamedDecl *getFoundDecl() const {
+  DeclAccessPair getFoundDecl() const {
     if (!HasQualifierOrFoundDecl)
-      return getMemberDecl();
+      return DeclAccessPair::make(getMemberDecl(),
+                                  getMemberDecl()->getAccess());
     return getMemberQualifier()->FoundDecl;
   }
 
