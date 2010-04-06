@@ -1332,6 +1332,19 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
   return AScope;
 }
 
+/// isSubprogramContext - Return true if Context is either a subprogram
+/// or another context nested inside a subprogram.
+bool isSubprogramContext(MDNode *Context) {
+  if (!Context)
+    return false;
+  DIDescriptor D(Context);
+  if (D.isSubprogram())
+    return true;
+  if (D.isType())
+    return isSubprogramContext(DIType(Context).getContext().getNode());
+  return false;
+}
+
 /// updateSubprogramScopeDIE - Find DIE for the given subprogram and
 /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
 /// If there are global variables in this scope then create and insert
@@ -1347,7 +1360,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
   // expect specification DIE in parent function. So avoid creating 
   // specification DIE for a function defined inside a function.
   if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
-      !SP.getContext().isFile() && !SP.getContext().isSubprogram()) {
+      !SP.getContext().isFile() && 
+      !isSubprogramContext(SP.getContext().getNode())) {
     addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     
     // Add arguments. 
@@ -1766,7 +1780,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   // Do not create specification DIE if context is either compile unit
   // or a subprogram.
   if (DI_GV.isDefinition() && !GVContext.isCompileUnit() &&
-      !GVContext.isFile() && !GVContext.isSubprogram()) {
+      !GVContext.isFile() && 
+      !isSubprogramContext(GVContext.getNode())) {
     // Create specification DIE.
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
