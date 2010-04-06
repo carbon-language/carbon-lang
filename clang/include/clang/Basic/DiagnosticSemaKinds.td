@@ -2359,6 +2359,9 @@ def ext_typecheck_expression_not_constant_but_accepted : Extension<
   InGroup<GNU>;
 def warn_unused_expr : Warning<"expression result unused">,
   InGroup<UnusedValue>;
+def warn_unused_voidptr : Warning<
+  "expression result unused; should this cast be to 'void'?">,
+  InGroup<UnusedValue>;
 def warn_unused_property_expr : Warning<
   "property access result unused - getters should not have side effects">,
   InGroup<UnusedValue>;

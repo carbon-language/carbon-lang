@@ -20,6 +20,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
@@ -126,6 +127,22 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       return;
     }
   }
+
+  // Diagnose "(void*) blah" as a typo for "(void) blah".
+  else if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(E)) {
+    TypeSourceInfo *TI = CE->getTypeInfoAsWritten();
+    QualType T = TI->getType();
+
+    // We really do want to use the non-canonical type here.
+    if (T == Context.VoidPtrTy) {
+      PointerTypeLoc TL = cast<PointerTypeLoc>(TI->getTypeLoc());
+
+      Diag(Loc, diag::warn_unused_voidptr)
+        << FixItHint::CreateRemoval(TL.getStarLoc());
+      return;
+    }
+  }
+
   Diag(Loc, DiagID) << R1 << R2;
 }
 

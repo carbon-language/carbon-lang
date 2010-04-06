@@ -104,3 +104,9 @@ void t8() {
 }
 
 void t9() __attribute__((warn_unused_result)); // expected-warning {{attribute 'warn_unused_result' cannot be applied to functions without return value}}
+
+// rdar://7410924
+void *some_function(void);
+void t10() {
+  (void*) some_function(); //expected-warning {{expression result unused; should this cast be to 'void'?}}
+}
