@@ -216,8 +216,15 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
   if (LiveRegs && (dv = LiveRegs[rx])) {
     if (dv->isCollapsed())
       dv->addDomain(domain);
-    else
+    else if (dv->hasDomain(domain))
       Collapse(dv, domain);
+    else {
+      // This is an incompatible open DomainValue. Collapse it to whatever and force
+      // the new value into domain. This costs a domain crossing.
+      Collapse(dv, dv->getFirstDomain());
+      assert(LiveRegs[rx] && "Not live after collapse?");
+      LiveRegs[rx]->addDomain(domain);
+    }
   } else {
     // Set up basic collapsed DomainValue.
     SetLiveReg(rx, Alloc(domain));
@@ -281,8 +288,9 @@ void SSEDomainFixPass::enterBasicBlock() {
       // We have a live DomainValue from more than one predecessor.
       if (LiveRegs[rx]->isCollapsed()) {
         // We are already collapsed, but predecessor is not. Force him.
-        if (!pdv->isCollapsed())
-          Collapse(pdv, LiveRegs[rx]->getFirstDomain());
+        unsigned domain = LiveRegs[rx]->getFirstDomain();
+        if (!pdv->isCollapsed() && pdv->hasDomain(domain))
+          Collapse(pdv, domain);
         continue;
       }
 
@@ -290,7 +298,7 @@ void SSEDomainFixPass::enterBasicBlock() {
       if (!pdv->isCollapsed())
         Merge(LiveRegs[rx], pdv);
       else
-        Collapse(LiveRegs[rx], pdv->getFirstDomain());
+        Force(rx, pdv->getFirstDomain());
     }
   }
 }
