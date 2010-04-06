@@ -612,40 +612,44 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
 /// phi nodes we've seen to avoid reprocessing them.
 static bool AllUsesOfValueWillTrapIfNull(Value *V,
                                          SmallPtrSet<PHINode*, 8> &PHIs) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (isa<LoadInst>(*UI)) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
+       ++UI) {
+    User *U = *UI;
+
+    if (isa<LoadInst>(U)) {
       // Will trap.
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == V) {
-        //cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Storing the value.
       }
-    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
       if (CI->getCalledValue() != V) {
-        //cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       if (II->getCalledValue() != V) {
-        //cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(*UI)) {
+    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(U)) {
       if (!AllUsesOfValueWillTrapIfNull(CI, PHIs)) return false;
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
       if (!AllUsesOfValueWillTrapIfNull(GEPI, PHIs)) return false;
-    } else if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+    } else if (PHINode *PN = dyn_cast<PHINode>(U)) {
       // If we've already seen this phi node, ignore it, it has already been
       // checked.
       if (PHIs.insert(PN) && !AllUsesOfValueWillTrapIfNull(PN, PHIs))
         return false;
-    } else if (isa<ICmpInst>(*UI) &&
+    } else if (isa<ICmpInst>(U) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore icmp X, null
     } else {
-      //cerr << "NONTRAPPING USE: " << **UI;
+      //cerr << "NONTRAPPING USE: " << *U;
       return false;
     }
+  }
   return true;
 }
 
@@ -653,19 +657,22 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V,
 /// from GV will trap if the loaded value is null.  Note that this also permits
 /// comparisons of the loaded value against null, as a special case.
 static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI!=E; ++UI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
+       UI != E; ++UI) {
+    User *U = *UI;
+
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       SmallPtrSet<PHINode*, 8> PHIs;
       if (!AllUsesOfValueWillTrapIfNull(LI, PHIs))
         return false;
-    } else if (isa<StoreInst>(*UI)) {
+    } else if (isa<StoreInst>(U)) {
       // Ignore stores to the global.
     } else {
       // We don't know or understand this user, bail out.
-      //cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
+      //cerr << "UNKNOWN USER OF GLOBAL!: " << *U;
       return false;
     }
-
+  }
   return true;
 }
 
@@ -941,11 +948,11 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 /// it is to the specified global.
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
                                                       const GlobalVariable *GV,
-                                              SmallPtrSet<const PHINode*, 8> &PHIs) {
+                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
   for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E;++UI){
+       UI != E; ++UI) {
     const Instruction *Inst = cast<Instruction>(*UI);
-    
+
     if (isa<LoadInst>(Inst) || isa<CmpInst>(Inst)) {
       continue; // Fine, ignore.
     }
