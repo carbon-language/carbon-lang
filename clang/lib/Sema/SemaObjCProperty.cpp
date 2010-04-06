@@ -356,7 +356,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     if (!Ivar) {
       Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, PropertyLoc,
                                   PropertyIvar, PropType, /*Dinfo=*/0,
-                                  ObjCIvarDecl::Public,
+                                  ObjCIvarDecl::Protected,
                                   (Expr *)0);
       ClassImpDecl->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar, false);
