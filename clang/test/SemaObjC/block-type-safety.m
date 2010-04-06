@@ -94,3 +94,13 @@ void test2(void)
    }
 @end
 
+@protocol P, P2;
+void f4(void (^f)(id<P> x)) {
+    NSArray<P2> *b;
+    f(b);	// expected-warning {{incompatible type passing 'NSArray<P2> *', expected 'id<P>'}}
+}
+
+void test3() {
+  f4(^(NSArray<P2>* a) { });  // expected-error {{incompatible block pointer types passing 'void (^)(NSArray<P2> *)', expected 'void (^)(id<P>)'}}
+}
+
