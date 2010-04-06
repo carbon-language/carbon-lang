@@ -6,7 +6,7 @@
 @end
 
 // RUN: c-index-test -code-completion-at=%s:2:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: {TypedText class}{HorizontalSpace  }{Placeholder identifier}{SemiColon ;}
+// CHECK-CC1: {TypedText class}{HorizontalSpace  }{Placeholder identifier}
 // CHECK-CC1: {TypedText compatibility_alias}{HorizontalSpace  }{Placeholder alias}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC1: {TypedText implementation}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC1: {TypedText interface}{HorizontalSpace  }{Placeholder class}
@@ -24,7 +24,7 @@
 // CHECK-CC3: {TypedText synthesize}{HorizontalSpace  }{Placeholder property}
 
 // RUN: c-index-test -code-completion-at=%s:2:1 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: NotImplemented:{TypedText @class}{HorizontalSpace  }{Placeholder identifier}{SemiColon ;}
+// CHECK-CC4: NotImplemented:{TypedText @class}{HorizontalSpace  }{Placeholder identifier}
 // CHECK-CC4: NotImplemented:{TypedText @compatibility_alias}{HorizontalSpace  }{Placeholder alias}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC4: NotImplemented:{TypedText @implementation}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC4: NotImplemented:{TypedText @interface}{HorizontalSpace  }{Placeholder class}

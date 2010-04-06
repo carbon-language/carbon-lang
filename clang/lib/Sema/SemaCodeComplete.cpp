@@ -884,7 +884,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddPlaceholderChunk("identifier");
       Pattern->AddChunk(CodeCompletionString::CK_Equal);
       Pattern->AddPlaceholderChunk("identifier");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
 
       // Using directives
@@ -894,7 +893,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddTextChunk("namespace");
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("identifier");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
 
       // asm(string-literal)      
@@ -903,7 +901,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("string-literal");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
 
       // Explicit template instantiation
@@ -911,7 +908,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddTypedTextChunk("template");
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("declaration");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
     }
       
@@ -928,7 +924,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddTypedTextChunk("using");
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("qualified-id");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
       
       // using typename qualified-id; (only in a dependent context)
@@ -939,7 +934,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
         Pattern->AddTextChunk("typename");
         Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
         Pattern->AddPlaceholderChunk("qualified-id");
-        Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
         Results.AddResult(Result(Pattern));
       }
 
@@ -1092,7 +1086,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("expression");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.AddResult(Result(Pattern));
 
     // for ( for-init-statement ; condition ; expression ) { statements }
@@ -1118,7 +1111,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       // continue ;
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("continue");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
     }
 
@@ -1126,7 +1118,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       // break ;
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("break");
-      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.AddResult(Result(Pattern));
     }
 
@@ -1147,7 +1138,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("expression");
     }
-    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.AddResult(Result(Pattern));
 
     // goto identifier ;
@@ -1155,7 +1145,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddTypedTextChunk("goto");
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("identifier");
-    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.AddResult(Result(Pattern));    
 
     // Using directives
@@ -1165,7 +1154,6 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddTextChunk("namespace");
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("identifier");
-    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.AddResult(Result(Pattern));
   }
 
@@ -2468,7 +2456,6 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
   Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,class));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("identifier");
-  Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
   Results.AddResult(Result(Pattern));
   
   // @interface name 
@@ -2577,7 +2564,6 @@ static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
   Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,throw));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("expression");
-  Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
   Results.AddResult(Result(Pattern));
   
   // @synchronized ( expression ) { statements }
