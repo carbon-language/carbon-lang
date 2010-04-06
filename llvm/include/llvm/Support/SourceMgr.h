@@ -35,7 +35,8 @@ public:
   /// DiagHandlerTy - Clients that want to handle their own diagnostics in a
   /// custom way can register a function pointer+context as a diagnostic
   /// handler.  It gets called each time PrintMessage is invoked.
-  typedef void (*DiagHandlerTy)(const SMDiagnostic&, void *Context);
+  typedef void (*DiagHandlerTy)(const SMDiagnostic&, void *Context,
+                                unsigned LocCookie);
 private:
   struct SrcBuffer {
     /// Buffer - The memory buffer for the file.
@@ -59,6 +60,7 @@ private:
 
   DiagHandlerTy DiagHandler;
   void *DiagContext;
+  unsigned DiagLocCookie;
   
   SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
   void operator=(const SourceMgr&); // DO NOT IMPLEMENT
@@ -71,10 +73,12 @@ public:
   }
 
   /// setDiagHandler - Specify a diagnostic handler to be invoked every time
-  /// PrintMessage is called.
-  void setDiagHandler(DiagHandlerTy DH, void *Ctx = 0) {
+  /// PrintMessage is called.  Ctx and Cookie are passed into the handler when
+  /// it is invoked.
+  void setDiagHandler(DiagHandlerTy DH, void *Ctx = 0, unsigned Cookie = 0) {
     DiagHandler = DH;
     DiagContext = Ctx;
+    DiagLocCookie = Cookie;
   }
 
   const SrcBuffer &getBufferInfo(unsigned i) const {

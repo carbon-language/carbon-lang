@@ -178,7 +178,8 @@ void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
                              const char *Type, bool ShowLine) const {
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {
-    DiagHandler(GetMessage(Loc, Msg, Type, ShowLine), DiagContext);
+    DiagHandler(GetMessage(Loc, Msg, Type, ShowLine),
+                DiagContext, DiagLocCookie);
     return;
   }
   
