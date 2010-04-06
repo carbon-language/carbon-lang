@@ -682,16 +682,17 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
         Changed = true;
       }
     } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-      if (I->getOperand(0) == V) {
+      CallSite CS(I);
+      if (CS.getCalledValue() == V) {
         // Calling through the pointer!  Turn into a direct call, but be careful
         // that the pointer is not also being passed as an argument.
-        I->setOperand(0, NewV);
+        CS.setCalledFunction(NewV);
         Changed = true;
         bool PassedAsArg = false;
-        for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i)
-          if (I->getOperand(i) == V) {
+        for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
+          if (CS.getArgument(i) == V) {
             PassedAsArg = true;
-            I->setOperand(i, NewV);
+            CS.setArgument(i, NewV);
           }
 
         if (PassedAsArg) {
