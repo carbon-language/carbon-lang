@@ -17,6 +17,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Index/CallGraph.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -37,10 +38,10 @@ int main(int argc, char **argv) {
   llvm::OwningPtr<Diagnostic> Diags(
     CompilerInstance::createDiagnostics(DiagOpts, argc, argv));
 
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic);
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-    llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, 
-                                                          OwnedDiag(*Diags)));
+    llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, Diags));
     if (!AST)
       return 1;
 
