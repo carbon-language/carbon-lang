@@ -35,10 +35,8 @@ int main(int argc, char **argv) {
     return 0;
 
   DiagnosticOptions DiagOpts;
-  llvm::OwningPtr<Diagnostic> Diags(
-    CompilerInstance::createDiagnostics(DiagOpts, argc, argv));
-
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic);
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags
+    = CompilerInstance::createDiagnostics(DiagOpts, argc, argv);
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, Diags));
