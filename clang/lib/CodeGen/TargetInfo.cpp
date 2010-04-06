@@ -1126,7 +1126,8 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // %st1.
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::StructType::get(VMContext, llvm::Type::getX86_FP80Ty(VMContext),
+    ResType = llvm::StructType::get(VMContext,
+                                    llvm::Type::getX86_FP80Ty(VMContext),
                                     llvm::Type::getX86_FP80Ty(VMContext),
                                     NULL);
     break;
@@ -1574,7 +1575,7 @@ ABIArgInfo PIC16ABIInfo::classifyArgumentType(QualType Ty,
 
 llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                        CodeGenFunction &CGF) const {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
   CGBuilderTy &Builder = CGF.Builder;
