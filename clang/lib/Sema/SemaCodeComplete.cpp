@@ -20,6 +20,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include <list>
 #include <map>
 #include <vector>
@@ -2909,6 +2910,65 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ObjCImplDecl,
   HandleCodeCompleteResults(this, CodeCompleter,Results.data(),Results.size());
 }
 
+/// \brief When we have an expression with type "id", we may assume
+/// that it has some more-specific class type based on knowledge of
+/// common uses of Objective-C. This routine returns that class type,
+/// or NULL if no better result could be determined.
+static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
+  ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E);
+  if (!Msg)
+    return 0;
+
+  Selector Sel = Msg->getSelector();
+  if (Sel.isNull())
+    return 0;
+
+  IdentifierInfo *Id = Sel.getIdentifierInfoForSlot(0);
+  if (!Id)
+    return 0;
+
+  ObjCMethodDecl *Method = Msg->getMethodDecl();
+  if (!Method)
+    return 0;
+
+  // Determine the class that we're sending the message to.
+  ObjCInterfaceDecl *IFace = Msg->getClassInfo().Decl;
+  if (!IFace) {
+    if (Expr *Receiver = Msg->getReceiver()) {
+      QualType T = Receiver->getType();
+      if (const ObjCObjectPointerType *Ptr = T->getAs<ObjCObjectPointerType>())
+        IFace = Ptr->getInterfaceDecl();
+    }
+  }
+
+  if (!IFace)
+    return 0;
+
+  ObjCInterfaceDecl *Super = IFace->getSuperClass();
+  if (Method->isInstanceMethod())
+    return llvm::StringSwitch<ObjCInterfaceDecl *>(Id->getName())
+      .Case("retain", IFace)
+      .Case("autorelease", IFace)
+      .Case("copy", IFace)
+      .Case("copyWithZone", IFace)
+      .Case("mutableCopy", IFace)
+      .Case("mutableCopyWithZone", IFace)
+      .Case("awakeFromCoder", IFace)
+      .Case("replacementObjectFromCoder", IFace)
+      .Case("class", IFace)
+      .Case("classForCoder", IFace)
+      .Case("superclass", Super)
+      .Default(0);
+
+  return llvm::StringSwitch<ObjCInterfaceDecl *>(Id->getName())
+    .Case("new", IFace)
+    .Case("alloc", IFace)
+    .Case("allocWithZone", IFace)
+    .Case("class", IFace)
+    .Case("superclass", Super)
+    .Default(0);
+}
+
 void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
                                         SourceLocation FNameLoc,
                                         IdentifierInfo **SelIdents,
@@ -3032,6 +3092,14 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   // Build the set of methods we can see.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
+
+  // If we're messaging an expression with type "id" or "Class", check
+  // whether we know something special about the receiver that allows
+  // us to assume a more-specific receiver type.
+  if (ReceiverType->isObjCIdType() || ReceiverType->isObjCClassType())
+    if (ObjCInterfaceDecl *IFace = GetAssumedMessageSendExprType(RecExpr))
+      ReceiverType = Context.getObjCObjectPointerType(
+                                          Context.getObjCInterfaceType(IFace));
   
   // Handle messages to Class. This really isn't a message to an instance
   // method, so we treat it the same way we would treat a message send to a
