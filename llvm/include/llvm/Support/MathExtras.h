@@ -459,14 +459,14 @@ inline int64_t abs64(int64_t x) {
 
 /// SignExtend32 - Sign extend B-bit number x to 32-bit int.
 /// Usage int32_t r = SignExtend32<5>(x);
-template <unsigned B> inline int32_t SignExtend32(int32_t x) {
-  return (x << (32 - B)) >> (32 - B);
+template <unsigned B> inline int32_t SignExtend32(uint32_t x) {
+  return int32_t(x << (32 - B)) >> (32 - B);
 }
 
 /// SignExtend64 - Sign extend B-bit number x to 64-bit int.
 /// Usage int64_t r = SignExtend64<5>(x);
-template <unsigned B> inline int64_t SignExtend64(int32_t x) {
-  return (x << (64 - B)) >> (64 - B);
+template <unsigned B> inline int64_t SignExtend64(uint64_t x) {
+  return int64_t(x << (64 - B)) >> (64 - B);
 }
 
 } // End llvm namespace
