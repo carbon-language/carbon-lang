@@ -610,34 +610,34 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
 /// AllUsesOfValueWillTrapIfNull - Return true if all users of the specified
 /// value will trap if the value is dynamically null.  PHIs keeps track of any 
 /// phi nodes we've seen to avoid reprocessing them.
-static bool AllUsesOfValueWillTrapIfNull(Value *V,
-                                         SmallPtrSet<PHINode*, 8> &PHIs) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
+static bool AllUsesOfValueWillTrapIfNull(const Value *V,
+                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
        ++UI) {
-    User *U = *UI;
+    const User *U = *UI;
 
     if (isa<LoadInst>(U)) {
       // Will trap.
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+    } else if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == V) {
         //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Storing the value.
       }
-    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+    } else if (const CallInst *CI = dyn_cast<CallInst>(U)) {
       if (CI->getCalledValue() != V) {
         //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
+    } else if (const InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       if (II->getCalledValue() != V) {
         //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(U)) {
+    } else if (const BitCastInst *CI = dyn_cast<BitCastInst>(U)) {
       if (!AllUsesOfValueWillTrapIfNull(CI, PHIs)) return false;
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
+    } else if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
       if (!AllUsesOfValueWillTrapIfNull(GEPI, PHIs)) return false;
-    } else if (PHINode *PN = dyn_cast<PHINode>(U)) {
+    } else if (const PHINode *PN = dyn_cast<PHINode>(U)) {
       // If we've already seen this phi node, ignore it, it has already been
       // checked.
       if (PHIs.insert(PN) && !AllUsesOfValueWillTrapIfNull(PN, PHIs))
@@ -656,13 +656,13 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V,
 /// AllUsesOfLoadedValueWillTrapIfNull - Return true if all uses of any loads
 /// from GV will trap if the loaded value is null.  Note that this also permits
 /// comparisons of the loaded value against null, as a special case.
-static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
+static bool AllUsesOfLoadedValueWillTrapIfNull(const GlobalVariable *GV) {
+  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end();
        UI != E; ++UI) {
-    User *U = *UI;
+    const User *U = *UI;
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      SmallPtrSet<PHINode*, 8> PHIs;
+    if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
+      SmallPtrSet<const PHINode*, 8> PHIs;
       if (!AllUsesOfValueWillTrapIfNull(LI, PHIs))
         return false;
     } else if (isa<StoreInst>(U)) {
