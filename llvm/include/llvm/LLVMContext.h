@@ -50,6 +50,24 @@ public:
   /// custom metadata IDs registered in this LLVMContext.   ID #0 is not used,
   /// so it is filled in as an empty string.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
+  
+  /// setInlineAsmDiagnosticHandler - This method sets a handler that is invoked
+  /// when problems with inline asm are detected by the backend.  The first
+  /// argument is a function pointer (of type SourceMgr::DiagHandlerTy) and the
+  /// second is a context pointer that gets passed into the DiagHandler.
+  ///
+  /// LLVMContext doesn't take ownership or interpreter either of these
+  /// pointers.
+  void setInlineAsmDiagnosticHandler(void *DiagHandler, void *DiagContext = 0);
+
+  /// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
+  /// setInlineAsmDiagnosticHandler.
+  void *getInlineAsmDiagnosticHandler() const;
+
+  /// getInlineAsmDiagnosticContext - Return the diagnostic context set by
+  /// setInlineAsmDiagnosticHandler.
+  void *getInlineAsmDiagnosticContext() const;
+  
 };
 
 /// getGlobalContext - Returns a global context.  This is for LLVM clients that

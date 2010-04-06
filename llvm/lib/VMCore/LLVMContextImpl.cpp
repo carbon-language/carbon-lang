@@ -30,6 +30,9 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     Int32Ty(C, 32),
     Int64Ty(C, 64),
     AlwaysOpaqueTy(new OpaqueType(C)) {
+  InlineAsmDiagHandler = 0;
+  InlineAsmDiagContext = 0;
+      
   // Make sure the AlwaysOpaqueTy stays alive as long as the Context.
   AlwaysOpaqueTy->addRef();
   OpaqueTypes.insert(AlwaysOpaqueTy);

@@ -33,6 +33,23 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
+void LLVMContext::setInlineAsmDiagnosticHandler(void *DiagHandler, 
+                                                void *DiagContext) {
+  pImpl->InlineAsmDiagHandler = DiagHandler;
+  pImpl->InlineAsmDiagContext = DiagContext;
+}
+
+/// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
+/// setInlineAsmDiagnosticHandler.
+void *LLVMContext::getInlineAsmDiagnosticHandler() const {
+  return pImpl->InlineAsmDiagHandler;
+}
+
+/// getInlineAsmDiagnosticContext - Return the diagnostic context set by
+/// setInlineAsmDiagnosticHandler.
+void *LLVMContext::getInlineAsmDiagnosticContext() const {
+  return pImpl->InlineAsmDiagContext;
+}
 
 #ifndef NDEBUG
 /// isValidName - Return true if Name is a valid custom metadata handler name.
@@ -73,5 +90,3 @@ void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
     // MD Handlers are numbered from 1.
     Names[I->second] = I->first();
 }
-
-

@@ -115,6 +115,8 @@ public:
   
 class LLVMContextImpl {
 public:
+  void *InlineAsmDiagHandler, *InlineAsmDiagContext;
+  
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
                          DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
