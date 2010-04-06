@@ -139,12 +139,7 @@ sub GetCCArgs {
   # Strip the newline and initial whitspace
   chomp $line;  
   $line =~ s/^\s+//;
-  
-  my @items = quotewords('\s+', 1, $line);
-  for (my $i = 0 ; $ i < scalar(@items); ++$i) {
-    $items[$i] =~ s/^\"//;
-    $items[$i] =~ s/\"$//;
-  }
+  my @items = quotewords('\s+', 0, $line);
   my $cmd = shift @items;
   die "cannot find 'clang' in 'clang' command\n" if (!($cmd =~ /clang/));
   return \@items;
