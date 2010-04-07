@@ -28,7 +28,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -37,8 +36,6 @@ namespace llvm {
   /// SlotIndex & SlotIndexes classes for the public interface to this
   /// information.
   class IndexListEntry {
-  private:
-
     static const unsigned EMPTY_KEY_INDEX = ~0U & ~3U,
                           TOMBSTONE_KEY_INDEX = ~0U & ~7U;
 
@@ -66,10 +63,9 @@ namespace llvm {
   public:
 
     IndexListEntry(MachineInstr *mi, unsigned index) : mi(mi), index(index) {
-      if (index == EMPTY_KEY_INDEX || index == TOMBSTONE_KEY_INDEX) {
-        llvm_report_error("Attempt to create invalid index. "
-                          "Available indexes may have been exhausted?.");
-      }
+      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to create invalid index. "
+             "Available indexes may have been exhausted?.");
     }
 
     bool isValid() const {

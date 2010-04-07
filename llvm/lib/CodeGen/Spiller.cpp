@@ -46,7 +46,6 @@ namespace {
 /// Utility class for spillers.
 class SpillerBase : public Spiller {
 protected:
-
   MachineFunction *mf;
   LiveIntervals *lis;
   MachineFrameInfo *mfi;
@@ -160,9 +159,11 @@ protected:
 
     return added;
   }
-
 };
 
+} // end anonymous namespace
+
+namespace {
 
 /// Spills any live range using the spill-everywhere method with no attempt at
 /// folding.
@@ -178,8 +179,11 @@ public:
     // Ignore spillIs - we don't use it.
     return trivialSpillEverywhere(li);
   }
-
 };
+
+} // end anonymous namespace
+
+namespace {
 
 /// Falls back on LiveIntervals::addIntervalsForSpills.
 class StandardSpiller : public Spiller {
@@ -198,8 +202,11 @@ public:
                                    SlotIndex*) {
     return lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
   }
-
 };
+
+} // end anonymous namespace
+
+namespace {
 
 /// When a call to spill is placed this spiller will first try to break the
 /// interval up into its component values (one new interval per value).
@@ -513,15 +520,16 @@ private:
 
 };
 
-}
+} // end anonymous namespace
+
 
 llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
                                    const MachineLoopInfo *loopInfo,
                                    VirtRegMap *vrm) {
   switch (spillerOpt) {
-    case trivial: return new TrivialSpiller(mf, lis, vrm); break;
-    case standard: return new StandardSpiller(lis, loopInfo, vrm); break;
-    case splitting: return new SplittingSpiller(mf, lis, loopInfo, vrm); break;
-    default: llvm_unreachable("Unreachable!"); break;
+  default: assert(0 && "unknown spiller");
+  case trivial: return new TrivialSpiller(mf, lis, vrm);
+  case standard: return new StandardSpiller(lis, loopInfo, vrm);
+  case splitting: return new SplittingSpiller(mf, lis, loopInfo, vrm);
   }
 }
