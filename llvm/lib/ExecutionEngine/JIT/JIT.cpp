@@ -304,7 +304,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
   if (TM.addPassesToEmitMachineCode(PM, *JCE, OptLevel)) {
-    llvm_report_error("Target does not support machine code emission!");
+    report_fatal_error("Target does not support machine code emission!");
   }
   
   // Register routine for informing unwinding runtime about new EH frames
@@ -352,7 +352,7 @@ void JIT::addModule(Module *M) {
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
     if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      llvm_report_error("Target does not support machine code emission!");
+      report_fatal_error("Target does not support machine code emission!");
     }
     
     // Initialize passes.
@@ -383,7 +383,7 @@ bool JIT::removeModule(Module *M) {
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
     if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      llvm_report_error("Target does not support machine code emission!");
+      report_fatal_error("Target does not support machine code emission!");
     }
     
     // Initialize passes.
@@ -665,7 +665,7 @@ void *JIT::getPointerToFunction(Function *F) {
   // exists in this Module.
   std::string ErrorMsg;
   if (F->Materialize(&ErrorMsg)) {
-    llvm_report_error("Error reading function '" + F->getName()+
+    report_fatal_error("Error reading function '" + F->getName()+
                       "' from bitcode file: " + ErrorMsg);
   }
 
@@ -704,7 +704,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 #endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName());
     if (Ptr == 0) {
-      llvm_report_error("Could not resolve external global address: "
+      report_fatal_error("Could not resolve external global address: "
                         +GV->getName());
     }
     addGlobalMapping(GV, Ptr);
@@ -754,7 +754,7 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   // situation. It's returned in the same block of memory as code which may
   // not be writable.
   if (isGVCompilationDisabled() && !GV->isConstant()) {
-    llvm_report_error("Compilation of non-internal GlobalValue is disabled!");
+    report_fatal_error("Compilation of non-internal GlobalValue is disabled!");
   }
 
   // Some applications require globals and code to live together, so they may

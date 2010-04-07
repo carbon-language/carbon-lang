@@ -342,7 +342,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   ++stats::EvaluateFixup;
 
   if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
-    llvm_report_error("expected relocatable expression");
+    report_fatal_error("expected relocatable expression");
 
   // FIXME: How do non-scattered symbols work in ELF? I presume the linker
   // doesn't support small relocations, but then under what criteria does the
@@ -466,12 +466,12 @@ uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
 
       int64_t TargetLocation;
       if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
-        llvm_report_error("expected assembly-time absolute expression");
+        report_fatal_error("expected assembly-time absolute expression");
 
       // FIXME: We need a way to communicate this error.
       int64_t Offset = TargetLocation - FragmentOffset;
       if (Offset < 0)
-        llvm_report_error("invalid .org offset '" + Twine(TargetLocation) +
+        report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
                           "' (at offset '" + Twine(FragmentOffset) + "'");
 
       EffectiveSize = Offset;
@@ -526,7 +526,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // multiple .align directives to enforce the semantics it wants), but is
     // severe enough that we want to report it. How to handle this?
     if (Count * AF.getValueSize() != FragmentSize)
-      llvm_report_error("undefined .align directive, value size '" +
+      report_fatal_error("undefined .align directive, value size '" +
                         Twine(AF.getValueSize()) +
                         "' is not a divisor of padding size '" +
                         Twine(FragmentSize) + "'");
@@ -537,7 +537,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // If we are aligning with nops, ask that target to emit the right data.
     if (AF.getEmitNops()) {
       if (!Asm.getBackend().WriteNopData(Count, OW))
-        llvm_report_error("unable to write nop sequence of " +
+        report_fatal_error("unable to write nop sequence of " +
                           Twine(Count) + " bytes");
       break;
     }
@@ -662,7 +662,7 @@ void MCAssembler::Finish() {
   uint64_t StartOffset = OS.tell();
   llvm::OwningPtr<MCObjectWriter> Writer(getBackend().createObjectWriter(OS));
   if (!Writer)
-    llvm_report_error("unable to create object writer!");
+    report_fatal_error("unable to create object writer!");
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).

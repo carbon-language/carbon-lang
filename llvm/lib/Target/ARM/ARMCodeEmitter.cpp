@@ -559,7 +559,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
     if (MI.getOperand(0).getSymbolName()[0]) {
-      llvm_report_error("JIT does not support inline asm!");
+      report_fatal_error("JIT does not support inline asm!");
     }
     break;
   }
@@ -704,7 +704,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   const TargetInstrDesc &TID = MI.getDesc();
 
   if (TID.Opcode == ARM::BFC) {
-    llvm_report_error("ARMv6t2 JIT is not yet supported.");
+    report_fatal_error("ARMv6t2 JIT is not yet supported.");
   }
 
   // Part of binary is determined by TableGn.

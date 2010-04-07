@@ -249,7 +249,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
     << "    std::string msg;\n"
     << "    raw_string_ostream Msg(msg);\n"
     << "    Msg << \"Not supported instr: \" << MI;\n"
-    << "    llvm_report_error(Msg.str());\n"
+    << "    report_fatal_error(Msg.str());\n"
     << "  }\n"
     << "  return Value;\n"
     << "}\n\n";

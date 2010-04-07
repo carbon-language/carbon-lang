@@ -210,7 +210,7 @@ namespace {
   }
 
   void CppWriter::error(const std::string& msg) {
-    llvm_report_error(msg);
+    report_fatal_error(msg);
   }
 
   // printCFP - Print a floating point constant .. very carefully :)

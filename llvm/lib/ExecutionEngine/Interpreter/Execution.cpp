@@ -631,7 +631,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
   do {
     ECStack.pop_back();
     if (ECStack.empty())
-      llvm_report_error("Empty stack during unwind!");
+      report_fatal_error("Empty stack during unwind!");
     Inst = ECStack.back().Caller.getInstruction();
   } while (!(Inst && isa<InvokeInst>(Inst)));
 
@@ -644,7 +644,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
 }
 
 void Interpreter::visitUnreachableInst(UnreachableInst &I) {
-  llvm_report_error("Program executed an 'unreachable' instruction!");
+  report_fatal_error("Program executed an 'unreachable' instruction!");
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {

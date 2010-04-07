@@ -251,7 +251,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     std::string msg;
     raw_string_ostream Msg(msg); 
     Msg << "Too big a stack frame at " << NumBytes;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 
   //now if we need to, save the old FP and set the new
@@ -303,7 +303,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
       std::string msg;
       raw_string_ostream Msg(msg); 
       Msg << "Too big a stack frame at " << NumBytes;
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
   }
 }

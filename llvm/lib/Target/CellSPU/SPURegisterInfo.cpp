@@ -179,7 +179,7 @@ unsigned SPURegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case SPU::R126: return 126;
   case SPU::R127: return 127;
   default:
-    llvm_report_error("Unhandled reg in SPURegisterInfo::getRegisterNumbering");
+    report_fatal_error("Unhandled reg in SPURegisterInfo::getRegisterNumbering");
   }
 }
 
@@ -512,7 +512,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       std::string msg;
       raw_string_ostream Msg(msg);
       Msg << "Unhandled frame size: " << FrameSize;
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
 
     if (hasDebugInfo) {
@@ -608,7 +608,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
       std::string msg;
       raw_string_ostream Msg(msg);
       Msg << "Unhandled frame size: " << FrameSize;
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
    }
 }

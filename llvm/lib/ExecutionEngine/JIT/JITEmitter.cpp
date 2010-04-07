@@ -737,7 +737,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
     // If lazy compilation is disabled, emit a useful error message and abort.
     if (!JR->TheJIT->isCompilingLazily()) {
-      llvm_report_error("LLVM JIT requested to do lazy compilation of function '"
+      report_fatal_error("LLVM JIT requested to do lazy compilation of function '"
                         + F->getName() + "' when lazy compiles are disabled!");
     }
 
@@ -945,7 +945,7 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(
        std::string msg;
        raw_string_ostream Msg(msg);
        Msg << "ConstantExpr not handled: " << *CE;
-       llvm_report_error(Msg.str());
+       report_fatal_error(Msg.str());
     }
     }
   }
@@ -1375,7 +1375,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
     ConstPoolAddresses.push_back(CAddr);
     if (CPE.isMachineConstantPoolEntry()) {
       // FIXME: add support to lower machine constant pool values into bytes!
-      llvm_report_error("Initialize memory with machine specific constant pool"
+      report_fatal_error("Initialize memory with machine specific constant pool"
                         "entry has not been implemented!");
     }
     TheJIT->InitializeMemory(CPE.Val.ConstVal, (void*)CAddr);

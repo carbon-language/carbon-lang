@@ -751,7 +751,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   //  verifyFunction(*oldFunction);
 
   DEBUG(if (verifyFunction(*newFunction)) 
-        llvm_report_error("verifyFunction failed!"));
+        report_fatal_error("verifyFunction failed!"));
   return newFunction;
 }
 

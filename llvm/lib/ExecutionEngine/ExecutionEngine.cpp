@@ -379,27 +379,27 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   switch (NumArgs) {
   case 3:
    if (FTy->getParamType(2) != PPInt8Ty) {
-     llvm_report_error("Invalid type for third argument of main() supplied");
+     report_fatal_error("Invalid type for third argument of main() supplied");
    }
    // FALLS THROUGH
   case 2:
    if (FTy->getParamType(1) != PPInt8Ty) {
-     llvm_report_error("Invalid type for second argument of main() supplied");
+     report_fatal_error("Invalid type for second argument of main() supplied");
    }
    // FALLS THROUGH
   case 1:
    if (!FTy->getParamType(0)->isIntegerTy(32)) {
-     llvm_report_error("Invalid type for first argument of main() supplied");
+     report_fatal_error("Invalid type for first argument of main() supplied");
    }
    // FALLS THROUGH
   case 0:
    if (!FTy->getReturnType()->isIntegerTy() &&
        !FTy->getReturnType()->isVoidTy()) {
-     llvm_report_error("Invalid return type of main() supplied");
+     report_fatal_error("Invalid return type of main() supplied");
    }
    break;
   default:
-   llvm_report_error("Invalid number of arguments of main() supplied");
+   report_fatal_error("Invalid number of arguments of main() supplied");
   }
   
   ArgvArray CArgv;
@@ -771,7 +771,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "ConstantExpr not handled: " << *CE;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 
   GenericValue Result;
@@ -807,7 +807,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "ERROR: Constant unimplemented for type: " << *C->getType();
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   return Result;
 }
@@ -935,7 +935,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "Cannot load value of type " << *Ty << "!";
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 }
 
@@ -1051,7 +1051,7 @@ void ExecutionEngine::emitGlobals() {
             sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName()))
           addGlobalMapping(I, SymAddr);
         else {
-          llvm_report_error("Could not resolve external global address: "
+          report_fatal_error("Could not resolve external global address: "
                             +I->getName());
         }
       }

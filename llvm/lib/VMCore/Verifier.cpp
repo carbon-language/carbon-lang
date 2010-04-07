@@ -93,7 +93,7 @@ namespace {  // Anonymous namespace for class
       }
 
       if (Broken)
-        llvm_report_error("Broken module, no Basic Block terminator!");
+        report_fatal_error("Broken module, no Basic Block terminator!");
 
       return false;
     }

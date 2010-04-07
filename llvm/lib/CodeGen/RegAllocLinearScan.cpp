@@ -1177,7 +1177,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
         assignRegOrStackSlotAtInterval(cur);
       } else {
         assert(false && "Ran out of registers during register allocation!");
-        llvm_report_error("Ran out of registers during register allocation!");
+        report_fatal_error("Ran out of registers during register allocation!");
       }
       return;
     }

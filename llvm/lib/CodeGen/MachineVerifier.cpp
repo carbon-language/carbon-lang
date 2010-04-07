@@ -279,7 +279,7 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   if (OutFile)
     delete OutFile;
   else if (foundErrors)
-    llvm_report_error("Found "+Twine(foundErrors)+" machine code errors.");
+    report_fatal_error("Found "+Twine(foundErrors)+" machine code errors.");
 
   // Clean up.
   regsLive.clear();

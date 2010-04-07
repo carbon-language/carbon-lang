@@ -280,7 +280,7 @@ namespace {
 void SPUAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
-    llvm_report_error("printOp() does not handle immediate values");
+    report_fatal_error("printOp() does not handle immediate values");
     return;
 
   case MachineOperand::MO_MachineBasicBlock:

@@ -293,7 +293,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
   CCInfo.AnalyzeFormalArguments(Ins, CC_SystemZ);
 
   if (isVarArg)
-    llvm_report_error("Varargs not supported yet");
+    report_fatal_error("Varargs not supported yet");
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     SDValue ArgValue;

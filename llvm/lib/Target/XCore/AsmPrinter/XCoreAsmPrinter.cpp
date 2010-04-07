@@ -123,7 +123,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   switch (GV->getLinkage()) {
   case GlobalValue::AppendingLinkage:
-    llvm_report_error("AppendingLinkage is not supported by this target!");
+    report_fatal_error("AppendingLinkage is not supported by this target!");
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:

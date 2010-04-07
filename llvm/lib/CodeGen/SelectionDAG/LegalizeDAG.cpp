@@ -3082,7 +3082,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
       ExtOp   = ISD::ANY_EXTEND;
       TruncOp = ISD::TRUNCATE;
     } else {
-      llvm_report_error("Cannot promote logic operation");
+      report_fatal_error("Cannot promote logic operation");
     }
     // Promote each of the values to the new type.
     Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(0));

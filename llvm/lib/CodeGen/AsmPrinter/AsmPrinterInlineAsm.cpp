@@ -75,7 +75,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   AsmParser Parser(SrcMgr, OutContext, OutStreamer, *MAI);
   OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(Parser));
   if (!TAP)
-    llvm_report_error("Inline asm not supported by this streamer because"
+    report_fatal_error("Inline asm not supported by this streamer because"
                       " we don't have an asm parser for this target\n");
   Parser.setTargetParser(*TAP.get());
 
@@ -83,7 +83,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   int Res = Parser.Run(/*NoInitialTextSection*/ true,
                        /*NoFinalize*/ true);
   if (Res && !HasDiagHandler)
-    llvm_report_error("Error parsing inline asm\n");
+    report_fatal_error("Error parsing inline asm\n");
 }
 
 
@@ -178,7 +178,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       case '(':             // $( -> same as GCC's { character.
         ++LastEmitted;      // Consume '(' character.
         if (CurVariant != -1)
-          llvm_report_error("Nested variants found in inline asm string: '"
+          report_fatal_error("Nested variants found in inline asm string: '"
                             + std::string(AsmStr) + "'");
         CurVariant = 0;     // We're in the first variant now.
         break;
@@ -213,7 +213,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         const char *StrStart = LastEmitted;
         const char *StrEnd = strchr(StrStart, '}');
         if (StrEnd == 0)
-          llvm_report_error(Twine("Unterminated ${:foo} operand in inline asm"
+          report_fatal_error(Twine("Unterminated ${:foo} operand in inline asm"
                                   " string: '") + Twine(AsmStr) + "'");
         
         std::string Val(StrStart, StrEnd);
@@ -228,7 +228,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       
       unsigned Val;
       if (StringRef(IDStart, IDEnd-IDStart).getAsInteger(10, Val))
-        llvm_report_error("Bad $ operand number in inline asm string: '" 
+        report_fatal_error("Bad $ operand number in inline asm string: '" 
                           + std::string(AsmStr) + "'");
       LastEmitted = IDEnd;
       
@@ -240,7 +240,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         if (*LastEmitted == ':') {
           ++LastEmitted;    // Consume ':' character.
           if (*LastEmitted == 0)
-            llvm_report_error("Bad ${:} expression in inline asm string: '" +
+            report_fatal_error("Bad ${:} expression in inline asm string: '" +
                               std::string(AsmStr) + "'");
           
           Modifier[0] = *LastEmitted;
@@ -248,13 +248,13 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         }
         
         if (*LastEmitted != '}')
-          llvm_report_error("Bad ${} expression in inline asm string: '" 
+          report_fatal_error("Bad ${} expression in inline asm string: '" 
                             + std::string(AsmStr) + "'");
         ++LastEmitted;    // Consume '}' character.
       }
       
       if (Val >= NumOperands-1)
-        llvm_report_error("Invalid $ operand number in inline asm string: '" 
+        report_fatal_error("Invalid $ operand number in inline asm string: '" 
                           + std::string(AsmStr) + "'");
       
       // Okay, we finally have a value number.  Ask the target to print this
@@ -297,7 +297,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
           raw_string_ostream Msg(msg);
           Msg << "Invalid operand found in inline asm: '" << AsmStr << "'\n";
           MI->print(Msg);
-          llvm_report_error(Msg.str());
+          report_fatal_error(Msg.str());
         }
       }
       break;
@@ -343,7 +343,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
     raw_string_ostream Msg(msg);
     Msg << "Unknown special formatter '" << Code
          << "' for machine instr: " << *MI;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }    
 }
 

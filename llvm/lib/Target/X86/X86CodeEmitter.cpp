@@ -600,7 +600,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
       if (MI.getOperand(0).getSymbolName()[0])
-        llvm_report_error("JIT does not support inline asm!");
+        report_fatal_error("JIT does not support inline asm!");
       break;
     case TargetOpcode::DBG_LABEL:
     case TargetOpcode::GC_LABEL:

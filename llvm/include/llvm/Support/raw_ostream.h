@@ -96,7 +96,7 @@ public:
 
   /// clear_error - Set the flag read by has_error() to false. If the error
   /// flag is set at the time when this raw_ostream's destructor is called,
-  /// llvm_report_error is called to report the error. Use clear_error()
+  /// report_fatal_error is called to report the error. Use clear_error()
   /// after handling the error to avoid this behavior.
   void clear_error() {
     Error = false;

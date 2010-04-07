@@ -4993,7 +4993,7 @@ public:
     if (isIndirect) {
       const llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
       if (!PtrTy)
-        llvm_report_error("Indirect operand for inline asm not a pointer!");
+        report_fatal_error("Indirect operand for inline asm not a pointer!");
       OpTy = PtrTy->getElementType();
     }
 
@@ -5331,7 +5331,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
              Input.ConstraintVT.isInteger()) ||
             (OpInfo.ConstraintVT.getSizeInBits() !=
              Input.ConstraintVT.getSizeInBits())) {
-          llvm_report_error("Unsupported asm: input constraint"
+          report_fatal_error("Unsupported asm: input constraint"
                             " with a matching output constraint of incompatible"
                             " type!");
         }
@@ -5444,7 +5444,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty())
-        llvm_report_error("Couldn't allocate output reg for"
+        report_fatal_error("Couldn't allocate output reg for"
                           " constraint '" + OpInfo.ConstraintCode + "'!");
 
       // If this is an indirect operand, store through the pointer after the
@@ -5497,7 +5497,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
             InlineAsm::isRegDefEarlyClobberKind(OpFlag)) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
           if (OpInfo.isIndirect)
-            llvm_report_error("Don't know how to handle tied indirect "
+            report_fatal_error("Don't know how to handle tied indirect "
                               "register inputs yet!");
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
@@ -5540,7 +5540,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
         if (Ops.empty()) {
-          llvm_report_error("Invalid operand for inline asm"
+          report_fatal_error("Invalid operand for inline asm"
                             " constraint '" + OpInfo.ConstraintCode + "'!");
         }
 
@@ -5575,7 +5575,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty() ||
           !OpInfo.AssignedRegs.areValueTypesLegal()) {
-        llvm_report_error("Couldn't allocate input reg for"
+        report_fatal_error("Couldn't allocate input reg for"
                           " constraint '"+ OpInfo.ConstraintCode +"'!");
       }
 

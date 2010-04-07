@@ -336,10 +336,10 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
-    llvm_report_error("Cannot lower a call to a non-intrinsic function '"+
+    report_fatal_error("Cannot lower a call to a non-intrinsic function '"+
                       Callee->getName() + "'!");
   default:
-    llvm_report_error("Code generator does not support intrinsic function '"+
+    report_fatal_error("Code generator does not support intrinsic function '"+
                       Callee->getName()+"'!");
 
     // The setjmp/longjmp intrinsics should only exist in the code if it was

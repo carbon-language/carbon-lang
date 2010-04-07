@@ -198,7 +198,7 @@ namespace {
       raw_string_ostream Msg(msg);
       Msg << "SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns NULL for "
            << VT.getEVTString();
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
 #endif
 
@@ -433,13 +433,13 @@ SPUDAGToDAGISel::SelectAFormAddr(SDNode *Op, SDValue N, SDValue &Base,
   case ISD::Constant:
   case ISD::ConstantPool:
   case ISD::GlobalAddress:
-    llvm_report_error("SPU SelectAFormAddr: Constant/Pool/Global not lowered.");
+    report_fatal_error("SPU SelectAFormAddr: Constant/Pool/Global not lowered.");
     /*NOTREACHED*/
 
   case ISD::TargetConstant:
   case ISD::TargetGlobalAddress:
   case ISD::TargetJumpTable:
-    llvm_report_error("SPUSelectAFormAddr: Target Constant/Pool/Global "
+    report_fatal_error("SPUSelectAFormAddr: Target Constant/Pool/Global "
                       "not wrapped as A-form address.");
     /*NOTREACHED*/
 
@@ -725,7 +725,7 @@ SPUDAGToDAGISel::Select(SDNode *N) {
 
     switch (Op0VT.getSimpleVT().SimpleTy) {
     default:
-      llvm_report_error("CellSPU Select: Unhandled zero/any extend EVT");
+      report_fatal_error("CellSPU Select: Unhandled zero/any extend EVT");
       /*NOTREACHED*/
     case MVT::i32:
       shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
@@ -919,7 +919,7 @@ SPUDAGToDAGISel::Select(SDNode *N) {
       raw_string_ostream Msg(msg);
       Msg << "LDRESULT for unsupported type: "
            << VT.getEVTString();
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
 
     Opc = vtm->ldresult_ins;
@@ -1252,7 +1252,7 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(uint64_t Value64, EVT OpVT,
     return CurDAG->getMachineNode(SPU::ORi64_v2i64, dl, OpVT,
                                   SDValue(emitBuildVector(i64vec.getNode()), 0));
   } else {
-    llvm_report_error("SPUDAGToDAGISel::SelectI64Constant: Unhandled i64vec"
+    report_fatal_error("SPUDAGToDAGISel::SelectI64Constant: Unhandled i64vec"
                       "condition");
   }
 }

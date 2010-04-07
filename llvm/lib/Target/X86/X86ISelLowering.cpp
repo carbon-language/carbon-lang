@@ -1304,7 +1304,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
         ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasSSE1())) {
-      llvm_report_error("SSE register return with SSE disabled");
+      report_fatal_error("SSE register return with SSE disabled");
     }
 
     // If this is a call to a function that returns an fp value on the floating
@@ -6816,7 +6816,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) {
   SDValue SrcPtr = Op.getOperand(1);
   SDValue SrcSV = Op.getOperand(2);
 
-  llvm_report_error("VAArgInst is not yet implemented for x86-64!");
+  report_fatal_error("VAArgInst is not yet implemented for x86-64!");
   return SDValue();
 }
 
@@ -7233,7 +7233,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
             InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
 
         if (InRegCount > 2) {
-          llvm_report_error("Nest register in use - reduce number of inreg parameters!");
+          report_fatal_error("Nest register in use - reduce number of inreg parameters!");
         }
       }
       break;

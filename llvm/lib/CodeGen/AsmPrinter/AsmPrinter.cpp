@@ -1723,7 +1723,7 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
       return GMP;
     }
   
-  llvm_report_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
+  report_fatal_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
   return 0;
 }
 

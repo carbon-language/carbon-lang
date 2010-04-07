@@ -1354,7 +1354,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       // Otherwise, this is a memory operand.  Ask the target to select it.
       std::vector<SDValue> SelOps;
       if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps))
-        llvm_report_error("Could not match memory address.  Inline asm"
+        report_fatal_error("Could not match memory address.  Inline asm"
                           " failure!");
 
       // Add this to the output node.
@@ -2778,7 +2778,7 @@ void SelectionDAGISel::CannotYetSelect(SDNode *N) {
     else
       Msg << "unknown intrinsic #" << iid;
   }
-  llvm_report_error(Msg.str());
+  report_fatal_error(Msg.str());
 }
 
 char SelectionDAGISel::ID = 0;

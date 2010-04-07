@@ -228,7 +228,7 @@ void TargetData::init(StringRef Desc) {
 /// @note This has to exist, because this is a pass, but it should never be
 /// used.
 TargetData::TargetData() : ImmutablePass(&ID) {
-  llvm_report_error("Bad TargetData ctor used.  "
+  report_fatal_error("Bad TargetData ctor used.  "
                     "Tool did not specify a TargetData to use?");
 }
 

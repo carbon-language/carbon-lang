@@ -264,7 +264,7 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
    if (Ins.empty())
      return Chain;
    else {
-    llvm_report_error("ISRs cannot have arguments");
+    report_fatal_error("ISRs cannot have arguments");
     return SDValue();
    }
   }
@@ -289,7 +289,7 @@ MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     return LowerCCCCallTo(Chain, Callee, CallConv, isVarArg, isTailCall,
                           Outs, Ins, dl, DAG, InVals);
   case CallingConv::MSP430_INTR:
-    llvm_report_error("ISRs cannot be called directly");
+    report_fatal_error("ISRs cannot be called directly");
     return SDValue();
   }
 }
@@ -390,7 +390,7 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
 
   // ISRs cannot return any value.
   if (CallConv == CallingConv::MSP430_INTR && !Outs.empty()) {
-    llvm_report_error("ISRs cannot return any value");
+    report_fatal_error("ISRs cannot return any value");
     return SDValue();
   }
 

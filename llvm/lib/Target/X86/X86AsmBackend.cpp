@@ -111,7 +111,7 @@ void X86AsmBackend::RelaxInstruction(const MCInstFragment *IF,
     SmallString<256> Tmp;
     raw_svector_ostream OS(Tmp);
     IF->getInst().dump_pretty(OS);
-    llvm_report_error("unexpected instruction to relax: " + OS.str());
+    report_fatal_error("unexpected instruction to relax: " + OS.str());
   }
 
   Res = IF->getInst();

@@ -309,7 +309,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDNode *N) {
                                   T, CurDAG->getRegister(Alpha::F31, T),
                                   CurDAG->getRegister(Alpha::F31, T));
     } else {
-      llvm_report_error("Unhandled FP constant type");
+      report_fatal_error("Unhandled FP constant type");
     }
     break;
   }

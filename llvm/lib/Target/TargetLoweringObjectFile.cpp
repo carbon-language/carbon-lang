@@ -310,7 +310,7 @@ getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
 
   switch (Encoding & 0xF0) {
   default:
-    llvm_report_error("We do not support this DWARF encoding yet!");
+    report_fatal_error("We do not support this DWARF encoding yet!");
   case dwarf::DW_EH_PE_absptr:
     // Do nothing special
     return Res;

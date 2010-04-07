@@ -614,7 +614,7 @@ sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
   sys::MemoryBlock *LastSlabPtr = LastSlab.base() ? &LastSlab : 0;
   sys::MemoryBlock B = sys::Memory::AllocateRWX(size, LastSlabPtr, &ErrMsg);
   if (B.base() == 0) {
-    llvm_report_error("Allocation failed when allocating new memory in the"
+    report_fatal_error("Allocation failed when allocating new memory in the"
                       " JIT\n" + ErrMsg);
   }
   LastSlab = B;

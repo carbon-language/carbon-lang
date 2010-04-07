@@ -2085,7 +2085,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
               << "constraints:\n";
           MI->print(Msg, tm_);
         }
-        llvm_report_error(Msg.str());
+        report_fatal_error(Msg.str());
       }
       for (const unsigned* AS = tri_->getSubRegisters(PReg); *AS; ++AS) {
         if (!hasInterval(*AS))

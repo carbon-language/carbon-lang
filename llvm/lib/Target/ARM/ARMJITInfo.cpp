@@ -27,7 +27,7 @@
 using namespace llvm;
 
 void ARMJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  llvm_report_error("ARMJITInfo::replaceMachineCodeForFunction");
+  report_fatal_error("ARMJITInfo::replaceMachineCodeForFunction");
 }
 
 /// JITCompilerFunction - This contains the address of the JIT function used to

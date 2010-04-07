@@ -549,7 +549,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
            << "constraints:\n";
       MI->print(Msg, TM);
     }
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   for (const unsigned *SubRegs = TRI->getSubRegisters(PhysReg);
        *SubRegs; ++SubRegs) {
@@ -563,7 +563,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
            << "constraints:\n";
       MI->print(Msg, TM);
     }
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 
   return MI;

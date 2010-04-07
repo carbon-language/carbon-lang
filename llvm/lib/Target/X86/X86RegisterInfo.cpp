@@ -464,7 +464,7 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   //        variable-sized allocas.
   // FIXME: Temporary disable the error - it seems to be too conservative.
   if (0 && requiresRealignment && MFI->hasVarSizedObjects())
-    llvm_report_error(
+    report_fatal_error(
       "Stack realignment in presense of dynamic allocas is not supported");
 
   return (requiresRealignment && !MFI->hasVarSizedObjects());

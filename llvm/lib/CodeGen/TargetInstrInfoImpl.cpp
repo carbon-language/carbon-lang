@@ -40,7 +40,7 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "Don't know how to commute: " << *MI;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 
   assert(MI->getOperand(Idx1).isReg() && MI->getOperand(Idx2).isReg() &&

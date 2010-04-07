@@ -418,7 +418,7 @@ public:
         unsigned Log2Size = Log2_32(Align);
         assert((1U << Log2Size) == Align && "Invalid 'common' alignment!");
         if (Log2Size > 15)
-          llvm_report_error("invalid 'common' alignment '" +
+          report_fatal_error("invalid 'common' alignment '" +
                             Twine(Align) + "'");
         // FIXME: Keep this mask with the SymbolFlags enumeration.
         Flags = (Flags & 0xF0FF) | (Log2Size << 8);
@@ -506,23 +506,23 @@ public:
       // Neither symbol can be modified.
       if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
           Target.getSymB()->getKind() != MCSymbolRefExpr::VK_None)
-        llvm_report_error("unsupported relocation of modified symbol");
+        report_fatal_error("unsupported relocation of modified symbol");
 
       // We don't support PCrel relocations of differences. Darwin 'as' doesn't
       // implement most of these correctly.
       if (IsPCRel)
-        llvm_report_error("unsupported pc-relative relocation of difference");
+        report_fatal_error("unsupported pc-relative relocation of difference");
 
       // We don't currently support any situation where one or both of the
       // symbols would require a local relocation. This is almost certainly
       // unused and may not be possible to encode correctly.
       if (!A_Base || !B_Base)
-        llvm_report_error("unsupported local relocations in difference");
+        report_fatal_error("unsupported local relocations in difference");
 
       // Darwin 'as' doesn't emit correct relocations for this (it ends up with
       // a single SIGNED relocation); reject it for now.
       if (A_Base == B_Base)
-        llvm_report_error("unsupported relocation with identical base");
+        report_fatal_error("unsupported relocation with identical base");
 
       Value += Layout.getSymbolAddress(&A_SD) - Layout.getSymbolAddress(A_Base);
       Value -= Layout.getSymbolAddress(&B_SD) - Layout.getSymbolAddress(B_Base);
@@ -580,12 +580,12 @@ public:
             else
               Type = RIT_X86_64_GOT;
           } else if (Modifier != MCSymbolRefExpr::VK_None)
-            llvm_report_error("unsupported symbol modifier in relocation");
+            report_fatal_error("unsupported symbol modifier in relocation");
           else
             Type = RIT_X86_64_Signed;
         } else {
           if (Modifier != MCSymbolRefExpr::VK_None)
-            llvm_report_error("unsupported symbol modifier in branch "
+            report_fatal_error("unsupported symbol modifier in branch "
                               "relocation");
 
           Type = RIT_X86_64_Branch;
@@ -622,7 +622,7 @@ public:
           Type = RIT_X86_64_GOT;
           IsPCRel = 1;
         } else if (Modifier != MCSymbolRefExpr::VK_None)
-          llvm_report_error("unsupported symbol modifier in relocation");
+          report_fatal_error("unsupported symbol modifier in relocation");
         else
           Type = RIT_X86_64_Unsigned;
       }
@@ -657,7 +657,7 @@ public:
     MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
     if (!A_SD->getFragment())
-      llvm_report_error("symbol '" + A->getName() +
+      report_fatal_error("symbol '" + A->getName() +
                         "' can not be undefined in a subtraction expression");
 
     uint32_t Value = Layout.getSymbolAddress(A_SD);
@@ -667,7 +667,7 @@ public:
       MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
       if (!B_SD->getFragment())
-        llvm_report_error("symbol '" + B->getSymbol().getName() +
+        report_fatal_error("symbol '" + B->getSymbol().getName() +
                           "' can not be undefined in a subtraction expression");
 
       // Select the appropriate difference relocation type.

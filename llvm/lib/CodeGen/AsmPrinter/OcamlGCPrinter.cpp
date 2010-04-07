@@ -115,7 +115,7 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
            << "' is too large for the ocaml GC! "
            << "Frame size " << FrameSize << " >= 65536.\n";
       Msg << "(" << uintptr_t(&FI) << ")";
-      llvm_report_error(Msg.str()); // Very rude!
+      report_fatal_error(Msg.str()); // Very rude!
     }
 
     AP.OutStreamer.AddComment("live roots for " +
@@ -130,7 +130,7 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
         Msg << "Function '" << FI.getFunction().getName()
              << "' is too large for the ocaml GC! "
              << "Live root count " << LiveCount << " >= 65536.";
-        llvm_report_error(Msg.str()); // Very rude!
+        report_fatal_error(Msg.str()); // Very rude!
       }
 
       AP.OutStreamer.EmitSymbolValue(J->Label, IntPtrSize, 0);

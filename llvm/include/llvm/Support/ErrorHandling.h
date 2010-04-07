@@ -60,9 +60,9 @@ namespace llvm {
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
   /// does not return.
-  NORETURN void llvm_report_error(const char *reason);
-  NORETURN void llvm_report_error(const std::string &reason);
-  NORETURN void llvm_report_error(const Twine &reason);
+  NORETURN void report_fatal_error(const char *reason);
+  NORETURN void report_fatal_error(const std::string &reason);
+  NORETURN void report_fatal_error(const Twine &reason);
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of

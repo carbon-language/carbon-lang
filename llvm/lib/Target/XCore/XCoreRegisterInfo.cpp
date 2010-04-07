@@ -229,7 +229,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         std::string msg;
         raw_string_ostream Msg(msg);
         Msg << "eliminateFrameIndex Frame size too big: " << Offset;
-        llvm_report_error(Msg.str());
+        report_fatal_error(Msg.str());
       }
       unsigned ScratchReg = RS->scavengeRegister(XCore::GRRegsRegisterClass, II,
                                                  SPAdj);
@@ -282,7 +282,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       std::string msg;
       raw_string_ostream Msg(msg);
       Msg << "eliminateFrameIndex Frame size too big: " << Offset;
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
 
     switch (MI.getOpcode()) {
@@ -363,7 +363,7 @@ loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "loadConstant value too big " << Value;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
   BuildMI(MBB, I, dl, TII.get(Opcode), DstReg).addImm(Value);
@@ -379,7 +379,7 @@ storeToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "storeToStack offset too big " << Offset;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   int Opcode = isU6 ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
   BuildMI(MBB, I, dl, TII.get(Opcode))
@@ -397,7 +397,7 @@ loadFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "loadFromStack offset too big " << Offset;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   int Opcode = isU6 ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
   BuildMI(MBB, I, dl, TII.get(Opcode), DstReg)
@@ -428,7 +428,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "emitPrologue Frame size too big: " << FrameSize;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
   bool emitFrameMoves = needsFrameMoves(MF);
 
@@ -552,7 +552,7 @@ void XCoreRegisterInfo::emitEpilogue(MachineFunction &MF,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "emitEpilogue Frame size too big: " << FrameSize;
-    llvm_report_error(Msg.str());
+    report_fatal_error(Msg.str());
   }
 
   if (FrameSize) {

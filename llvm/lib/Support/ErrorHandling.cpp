@@ -40,15 +40,15 @@ void llvm_remove_error_handler() {
   ErrorHandler = 0;
 }
 
-void llvm_report_error(const char *reason) {
-  llvm_report_error(Twine(reason));
+void report_fatal_error(const char *reason) {
+  report_fatal_error(Twine(reason));
 }
 
-void llvm_report_error(const std::string &reason) {
-  llvm_report_error(Twine(reason));
+void report_fatal_error(const std::string &reason) {
+  report_fatal_error(Twine(reason));
 }
 
-void llvm_report_error(const Twine &reason) {
+void report_fatal_error(const Twine &reason) {
   if (!ErrorHandler) {
     errs() << "LLVM ERROR: " << reason << "\n";
   } else {
