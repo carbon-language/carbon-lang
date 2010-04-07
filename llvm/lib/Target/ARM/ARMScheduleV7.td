@@ -423,13 +423,13 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Double-register FP Multiple-Accumulate
   InstrItinData<IIC_VMACD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [9, 2, 2, 3]>,
+                               InstrStage<1, [FU_NPipe]>], [9, 3, 2, 2]>,
   //
   // Quad-register FP Multiple-Accumulate
   // Result written in N9, but that is relative to the last cycle of multicycle,
   // so we use 10 for those cases
   InstrItinData<IIC_VMACQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [10, 2, 2, 3]>,
+                               InstrStage<2, [FU_NPipe]>], [10, 3, 2, 2]>,
   //
   // Double-register Reciprical Step
   InstrItinData<IIC_VRECSD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
