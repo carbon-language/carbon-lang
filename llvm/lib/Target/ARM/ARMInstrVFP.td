@@ -306,23 +306,23 @@ def VSQRTS : ASuI<0b11101, 0b11, 0b0001, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
 //
 
 def VMOVRS : AVConv2I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
-                 IIC_VMOVSI, "vmov", "\t$dst, $src",
+                 IIC_fpMOVSI, "vmov", "\t$dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
 def VMOVSR : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
-                 IIC_VMOVIS, "vmov", "\t$dst, $src",
+                 IIC_fpMOVIS, "vmov", "\t$dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
 def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
                       (outs GPR:$wb, GPR:$dst2), (ins DPR:$src),
-                 IIC_VMOVDI, "vmov", "\t$wb, $dst2, $src",
+                 IIC_fpMOVDI, "vmov", "\t$wb, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]> {
   let Inst{7-6} = 0b00;
 }
 
 def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
                       (outs GPR:$wb, GPR:$dst2), (ins SPR:$src1, SPR:$src2),
-                 IIC_VMOVDI, "vmov", "\t$wb, $dst2, $src1, $src2",
+                 IIC_fpMOVDI, "vmov", "\t$wb, $dst2, $src1, $src2",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{7-6} = 0b00;
 }
@@ -332,14 +332,14 @@ def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
 
 def VMOVDRR : AVConv5I<0b11000100, 0b1011,
                      (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
-                IIC_VMOVID, "vmov", "\t$dst, $src1, $src2",
+                IIC_fpMOVID, "vmov", "\t$dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]> {
   let Inst{7-6} = 0b00;
 }
 
 def VMOVSRR : AVConv5I<0b11000100, 0b1010,
                      (outs SPR:$dst1, SPR:$dst2), (ins GPR:$src1, GPR:$src2),
-                IIC_VMOVID, "vmov", "\t$dst1, $dst2, $src1, $src2",
+                IIC_fpMOVID, "vmov", "\t$dst1, $dst2, $src1, $src2",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{7-6} = 0b00;
 }

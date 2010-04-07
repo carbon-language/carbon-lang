@@ -753,7 +753,34 @@ def CortexA9Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_fpSQRT64, [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<33, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<28,  [FU_NPipe]>], [32, 1]>
+                               InstrStage<28,  [FU_NPipe]>], [32, 1]>,
+
+  //
+  // Integer to Single-precision Move
+  InstrItinData<IIC_fpMOVIS,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra 1 latency cycle since wbck is 2 cycles
+                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  //
+  // Integer to Double-precision Move
+  InstrItinData<IIC_fpMOVID,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra 1 latency cycle since wbck is 2 cycles
+                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>,
+  //
+  // Single-precision to Integer Move
+  InstrItinData<IIC_fpMOVSI,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  //
+  // Double-precision to Integer Move
+  InstrItinData<IIC_fpMOVDI,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>
 ]>;
 
 
