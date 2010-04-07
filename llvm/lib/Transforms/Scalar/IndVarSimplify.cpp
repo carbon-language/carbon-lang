@@ -454,6 +454,46 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   return Changed;
 }
 
+// FIXME: It is an extremely bad idea to indvar substitute anything more
+// complex than affine induction variables.  Doing so will put expensive
+// polynomial evaluations inside of the loop, and the str reduction pass
+// currently can only reduce affine polynomials.  For now just disable
+// indvar subst on anything more complex than an affine addrec, unless
+// it can be expanded to a trivial value.
+static bool isSafe(const SCEV *S, const Loop *L) {
+  // Loop-invariant values are safe.
+  if (S->isLoopInvariant(L)) return true;
+
+  // Affine addrecs are safe. Non-affine are not, because LSR doesn't know how
+  // to transform them into efficient code.
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S))
+    return AR->isAffine();
+
+  // An add is safe it all its operands are safe.
+  if (const SCEVCommutativeExpr *Commutative = dyn_cast<SCEVCommutativeExpr>(S)) {
+    for (SCEVCommutativeExpr::op_iterator I = Commutative->op_begin(),
+         E = Commutative->op_end(); I != E; ++I)
+      if (!isSafe(*I, L)) return false;
+    return true;
+  }
+  
+  // A cast is safe if its operand is.
+  if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(S))
+    return isSafe(C->getOperand(), L);
+
+  // A udiv is safe if its operands are.
+  if (const SCEVUDivExpr *UD = dyn_cast<SCEVUDivExpr>(S))
+    return isSafe(UD->getLHS(), L) &&
+           isSafe(UD->getRHS(), L);
+
+  // SCEVUnknown is always safe.
+  if (isa<SCEVUnknown>(S))
+    return true;
+
+  // Nothing else is safe.
+  return false;
+}
+
 void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   SmallVector<WeakVH, 16> DeadInsts;
 
@@ -465,7 +505,6 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   // the need for the code evaluation methods to insert induction variables
   // of different sizes.
   for (IVUsers::iterator UI = IU->begin(), E = IU->end(); UI != E; ++UI) {
-    const SCEV *Stride = UI->getStride();
     Value *Op = UI->getOperandValToReplace();
     const Type *UseTy = Op->getType();
     Instruction *User = UI->getUser();
@@ -486,7 +525,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
     // currently can only reduce affine polynomials.  For now just disable
     // indvar subst on anything more complex than an affine addrec, unless
     // it can be expanded to a trivial value.
-    if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
+    if (!isSafe(AR, L))
       continue;
 
     // Determine the insertion point for this user. By default, insert

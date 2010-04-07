@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -iv-users | grep {\{1,+,3,+,2\}<%loop> (post-inc)}
+; RUN: opt < %s -analyze -iv-users | grep {\{1,+,3,+,2\}<%loop> (post-inc with loop %loop)}
 
 ; The value of %r is dependent on a polynomial iteration expression.
 

@@ -966,9 +966,12 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   // Determine a normalized form of this expression, which is the expression
   // before any post-inc adjustment is made.
   const SCEVAddRecExpr *Normalized = S;
-  if (L == PostIncLoop) {
-    const SCEV *Step = S->getStepRecurrence(SE);
-    Normalized = cast<SCEVAddRecExpr>(SE.getMinusSCEV(S, Step));
+  if (PostIncLoops.count(L)) {
+    PostIncLoopSet Loops;
+    Loops.insert(L);
+    Normalized =
+      cast<SCEVAddRecExpr>(TransformForPostIncUse(Normalize, S, 0, 0,
+                                                  Loops, SE, *SE.DT));
   }
 
   // Strip off any non-loop-dominating component from the addrec start.
@@ -1002,7 +1005,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
 
   // Accommodate post-inc mode, if necessary.
   Value *Result;
-  if (L != PostIncLoop)
+  if (!PostIncLoops.count(L))
     Result = PN;
   else {
     // In PostInc mode, use the post-incremented value.
@@ -1274,7 +1277,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
       // there) so that it is guaranteed to dominate any user inside the loop.
-      if (L && S->hasComputableLoopEvolution(L) && L != PostIncLoop)
+      if (L && S->hasComputableLoopEvolution(L) && !PostIncLoops.count(L))
         InsertPt = L->getHeader()->getFirstNonPHI();
       while (isInsertedInstruction(InsertPt) || isa<DbgInfoIntrinsic>(InsertPt))
         InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
@@ -1296,7 +1299,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
   Value *V = visit(S);
 
   // Remember the expanded value for this SCEV at this location.
-  if (!PostIncLoop)
+  if (PostIncLoops.empty())
     InsertedExpressions[std::make_pair(S, InsertPt)] = V;
 
   restoreInsertPoint(SaveInsertBB, SaveInsertPt);
@@ -1304,7 +1307,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
 }
 
 void SCEVExpander::rememberInstruction(Value *I) {
-  if (!PostIncLoop)
+  if (PostIncLoops.empty())
     InsertedValues.insert(I);
 
   // If we just claimed an existing instruction and that instruction had

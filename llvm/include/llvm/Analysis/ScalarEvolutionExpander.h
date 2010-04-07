@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/ScalarEvolutionNormalization.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TargetFolder.h"
 #include <set>
@@ -32,12 +33,12 @@ namespace llvm {
       InsertedExpressions;
     std::set<Value*> InsertedValues;
 
-    /// PostIncLoop - When non-null, expanded addrecs referring to the given
-    /// loop expanded in post-inc mode. For example, expanding {1,+,1}<L> in
-    /// post-inc mode returns the add instruction that adds one to the phi
-    /// for {0,+,1}<L>, as opposed to a new phi starting at 1. This is only
-    /// supported in non-canonical mode.
-    const Loop *PostIncLoop;
+    /// PostIncLoops - Addrecs referring to any of the given loops are expanded
+    /// in post-inc mode. For example, expanding {1,+,1}<L> in post-inc mode
+    /// returns the add instruction that adds one to the phi for {0,+,1}<L>,
+    /// as opposed to a new phi starting at 1. This is only supported in
+    /// non-canonical mode.
+    PostIncLoopSet PostIncLoops;
 
     /// IVIncInsertPos - When this is non-null, addrecs expanded in the
     /// loop it indicates should be inserted with increments at
@@ -62,7 +63,7 @@ namespace llvm {
   public:
     /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
     explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se), PostIncLoop(0), IVIncInsertLoop(0), CanonicalMode(true),
+      : SE(se), IVIncInsertLoop(0), CanonicalMode(true),
         Builder(se.getContext(), TargetFolder(se.TD)) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
@@ -89,14 +90,18 @@ namespace llvm {
       IVIncInsertPos = Pos;
     }
 
-    /// setPostInc - If L is non-null, enable post-inc expansion for addrecs
-    /// referring to the given loop. If L is null, disable post-inc expansion
-    /// completely. Post-inc expansion is only supported in non-canonical
+    /// setPostInc - Enable post-inc expansion for addrecs referring to the
+    /// given loops. Post-inc expansion is only supported in non-canonical
     /// mode.
-    void setPostInc(const Loop *L) {
+    void setPostInc(const PostIncLoopSet &L) {
       assert(!CanonicalMode &&
              "Post-inc expansion is not supported in CanonicalMode");
-      PostIncLoop = L;
+      PostIncLoops = L;
+    }
+
+    /// clearPostInc - Disable all post-inc expansion.
+    void clearPostInc() {
+      PostIncLoops.clear();
     }
 
     /// disableCanonicalMode - Disable the behavior of expanding expressions in
