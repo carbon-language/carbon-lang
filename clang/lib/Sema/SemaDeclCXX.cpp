@@ -5044,11 +5044,28 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
 
   bool Valid = false;
 
-  // FIXME: Check for the one valid template signature
-  // template <char...> type operator "" name();
+  // template <char...> type operator "" name() is the only valid template
+  // signature, and the only valid signature with no parameters.
+  if (FnDecl->param_size() == 0) {
+    if (FunctionTemplateDecl *TpDecl = FnDecl->getDescribedFunctionTemplate()) {
+      // Must have only one template parameter
+      TemplateParameterList *Params = TpDecl->getTemplateParameters();
+      if (Params->size() == 1) {
+        NonTypeTemplateParmDecl *PmDecl =
+          cast<NonTypeTemplateParmDecl>(Params->getParam(0));
 
-  if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
+        // The template parameter must be a char parameter pack.
+        // FIXME: This test will always fail because non-type parameter packs
+        //   have not been implemented.
+        if (PmDecl && PmDecl->isTemplateParameterPack() &&
+            Context.hasSameType(PmDecl->getType(), Context.CharTy))
+          Valid = true;
+      }
+    }
+  } else {
     // Check the first parameter
+    FunctionDecl::param_iterator Param = FnDecl->param_begin();
+
     QualType T = (*Param)->getType();
 
     // unsigned long long int, long double, and any character type are allowed
