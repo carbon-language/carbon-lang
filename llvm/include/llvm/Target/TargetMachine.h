@@ -264,10 +264,15 @@ public:
                                           bool DisableVerify = true);
   
   /// Target-Independent Code Generator Pass Configuration Options.
-  
-  /// addInstSelector - This method should add any "last minute" LLVM->LLVM
-  /// passes, then install an instruction selector pass, which converts from
-  /// LLVM code to machine instructions.
+
+  /// addPreISelPasses - This method should add any "last minute" LLVM->LLVM
+  /// passes (which are run just before instruction selector).
+  virtual bool addPreISel(PassManagerBase &, CodeGenOpt::Level) {
+    return true;
+  }
+
+  /// addInstSelector - This method should install an instruction selector pass,
+  /// which converts from LLVM code to machine instructions.
   virtual bool addInstSelector(PassManagerBase &, CodeGenOpt::Level) {
     return true;
   }

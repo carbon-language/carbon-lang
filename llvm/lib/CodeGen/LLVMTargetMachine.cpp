@@ -268,6 +268,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   PM.add(createStackProtectorPass(getTargetLowering()));
 
+  addPreISel(PM, OptLevel);
+
   if (PrintISelInput)
     PM.add(createPrintFunctionPass("\n\n"
                                    "*** Final LLVM Code input to ISel ***\n",
