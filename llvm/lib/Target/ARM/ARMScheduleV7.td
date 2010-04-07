@@ -794,6 +794,34 @@ def CortexA9Itineraries : ProcessorItineraries<[
   // Issue through integer pipeline, and execute in NEON unit.
 
   //
+  // Double-register Integer Unary
+  InstrItinData<IIC_VUNAiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2]>,
+  //
+  // Quad-register Integer Unary
+  InstrItinData<IIC_VUNAiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2]>,
+  //
+  // Double-register Integer Q-Unary
+  InstrItinData<IIC_VQUNAiD,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Quad-register Integer CountQ-Unary
+  InstrItinData<IIC_VQUNAiQ,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
   // Double-register Integer Binary
   InstrItinData<IIC_VBINiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
                                // Extra 3 latency cycle since wbck is 6 cycles
