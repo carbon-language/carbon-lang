@@ -1073,6 +1073,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  CmdArgs.push_back("-ferror-limit");
+  if (Arg *A = Args.getLastArg(options::OPT_ferror_limit_EQ))
+    CmdArgs.push_back(A->getValue(Args));
+  else
+    CmdArgs.push_back("19");
+  
   // Pass -fmessage-length=.
   CmdArgs.push_back("-fmessage-length");
   if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {

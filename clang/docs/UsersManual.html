@@ -189,6 +189,10 @@ introduces the language selection and other high level options like -c, -g, etc.
 <p><b>-pedantic-errors</b>: Error on language extensions.</p>
 <p><b>-Wsystem-headers</b>: Enable warnings from system headers.</p>
 
+<p><b>-ferror-limit=123</b>: Stop emitting diagnostics after 123 errors have
+   been produced.  The default is 20, and the error limit can be disabled with
+   -ferror-limit=0.</p>
+
 <!-- ================================================= -->
 <h4 id="cl_diag_formatting">Formatting of Diagnostics</h4>
 <!-- ================================================= -->
