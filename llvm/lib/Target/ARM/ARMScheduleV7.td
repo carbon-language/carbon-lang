@@ -551,21 +551,21 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Double-register Integer Multiply-Accumulate (.8, .16)
   InstrItinData<IIC_VMACi16D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [6, 2, 2, 3]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 2]>,
   //
   // Double-register Integer Multiply-Accumulate (.32)
   InstrItinData<IIC_VMACi32D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [7, 2, 1, 3]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
   //
   // Quad-register Integer Multiply-Accumulate (.8, .16)
   InstrItinData<IIC_VMACi16Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [7, 2, 2, 3]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 2]>,
   //
   // Quad-register Integer Multiply-Accumulate (.32)
   InstrItinData<IIC_VMACi32Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>,
                                InstrStage<2, [FU_NLSPipe], 0>,
-                               InstrStage<3, [FU_NPipe]>], [9, 2, 1, 3]>,
+                               InstrStage<3, [FU_NPipe]>], [9, 3, 2, 1]>,
   //
   // Double-register VEXT
   InstrItinData<IIC_VEXTD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
