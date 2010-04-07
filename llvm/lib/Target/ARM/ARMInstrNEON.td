@@ -2387,11 +2387,11 @@ def  VORNq    : N3VX<0, 0, 0b11, 0b0001, 1, 1, (outs QPR:$dst),
 
 //   VMVN     : Vector Bitwise NOT
 def  VMVNd    : N2VX<0b11, 0b11, 0b00, 0b00, 0b01011, 0, 0,
-                     (outs DPR:$dst), (ins DPR:$src), IIC_VSHLiD,
+                     (outs DPR:$dst), (ins DPR:$src), IIC_VSUBiD,
                      "vmvn", "$dst, $src", "",
                      [(set DPR:$dst, (v2i32 (vnot8 DPR:$src)))]>;
 def  VMVNq    : N2VX<0b11, 0b11, 0b00, 0b00, 0b01011, 1, 0,
-                     (outs QPR:$dst), (ins QPR:$src), IIC_VSHLiD,
+                     (outs QPR:$dst), (ins QPR:$src), IIC_VSUBiD,
                      "vmvn", "$dst, $src", "",
                      [(set QPR:$dst, (v4i32 (vnot16 QPR:$src)))]>;
 def : Pat<(v2i32 (vnot8 DPR:$src)), (VMVNd DPR:$src)>;
