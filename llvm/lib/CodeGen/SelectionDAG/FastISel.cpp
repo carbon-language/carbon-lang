@@ -332,6 +332,8 @@ bool FastISel::SelectCall(User *I) {
     Value *Address = DI->getAddress();
     if (!Address)
       return true;
+    if (isa<UndefValue>(Address))
+      return true;
     AllocaInst *AI = dyn_cast<AllocaInst>(Address);
     // Don't handle byval struct arguments or VLAs, for example.
     if (!AI) break;
@@ -348,7 +350,7 @@ bool FastISel::SelectCall(User *I) {
     return true;
   }
   case Intrinsic::dbg_value: {
-    // This requires target support, but right now X86 is the only Fast target.
+    // This form of DBG_VALUE is target-independent.
     DbgValueInst *DI = cast<DbgValueInst>(I);
     const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     Value *V = DI->getValue();

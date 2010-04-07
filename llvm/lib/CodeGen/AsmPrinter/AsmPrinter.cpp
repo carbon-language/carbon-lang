@@ -434,7 +434,64 @@ static void EmitKill(const MachineInstr *MI, AsmPrinter &AP) {
   AP.OutStreamer.AddBlankLine();
 }
 
+/// EmitDebugValueComment - This method handles the target-independent form
+/// of DBG_VALUE, returning true if it was able to do so.  A false return
+/// means the target will need to handle MI in EmitInstruction.
+static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
+  char buf[100];
+  std::string Str =  "\t";
+  Str += AP.MAI->getCommentString();
+  Str += "DEBUG_VALUE: ";
+  // This code handles only the 3-operand target-independent form.
+  if (MI->getNumOperands() != 3)
+    return false;
 
+  // cast away const; DIetc do not take const operands for some reason.
+  DIVariable V((MDNode*)(MI->getOperand(2).getMetadata()));
+  Str += V.getName();
+  Str += " <- ";
+
+  // Register or immediate value. Register 0 means undef.
+  if (MI->getOperand(0).isFPImm()) {
+    APFloat APF = APFloat(MI->getOperand(0).getFPImm()->getValueAPF());
+    if (MI->getOperand(0).getFPImm()->getType()->isFloatTy()) {
+      sprintf(buf, "%e", APF.convertToFloat());
+      Str += buf;
+    } else if (MI->getOperand(0).getFPImm()->getType()->isDoubleTy()) {
+      sprintf(buf, "%e", APF.convertToDouble());
+      Str += buf;
+    } else {
+      // There is no good way to print long double.  Convert a copy to
+      // double.  Ah well, it's only a comment.
+      bool ignored;
+      APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
+                  &ignored);
+      Str += "(long double) ";
+      sprintf(buf, "%e", APF.convertToDouble());
+      Str += buf;
+    }
+  } else if (MI->getOperand(0).isImm()) {
+    sprintf(buf, "%lld", MI->getOperand(0).getImm());
+    Str += buf;
+  } else if (MI->getOperand(0).isReg()) {
+    if (MI->getOperand(0).getReg() == 0) {
+      // Suppress offset, it is not meaningful here.
+      Str += "undef";
+      // NOTE: Want this comment at start of line, don't emit with AddComment.
+      AP.OutStreamer.EmitRawText(Twine(Str));
+      return true;
+    }
+    Str += AP.TM.getRegisterInfo()->getName(MI->getOperand(0).getReg());
+  } else
+    llvm_unreachable("Unknown operand type");
+
+  Str += '+';
+  sprintf(buf, "%lld", MI->getOperand(1).getImm());
+  Str += buf;
+  // NOTE: Want this comment at start of line, don't emit with AddComment.
+  AP.OutStreamer.EmitRawText(Twine(Str));
+  return true;
+}
 
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
@@ -472,6 +529,12 @@ void AsmPrinter::EmitFunctionBody() {
         break;
       case TargetOpcode::INLINEASM:
         EmitInlineAsm(II);
+        break;
+      case TargetOpcode::DBG_VALUE:
+        if (isVerbose()) {
+          if (!EmitDebugValueComment(II, *this))
+            EmitInstruction(II);
+        }
         break;
       case TargetOpcode::IMPLICIT_DEF:
         if (isVerbose()) EmitImplicitDef(II, *this);
@@ -1236,7 +1299,7 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   
   if (CFP->getType()->isX86_FP80Ty()) {
     // all long double variants are printed as hex
-    // api needed to prevent premature destruction
+    // API needed to prevent premature destruction
     APInt API = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = API.getRawData();
     if (AP.isVerbose()) {
@@ -1266,8 +1329,8 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   
   assert(CFP->getType()->isPPC_FP128Ty() &&
          "Floating point constant type not handled");
-  // All long double variants are printed as hex api needed to prevent
-  // premature destruction.
+  // All long double variants are printed as hex
+  // API needed to prevent premature destruction.
   APInt API = CFP->getValueAPF().bitcastToAPInt();
   const uint64_t *p = API.getRawData();
   if (AP.TM.getTargetData()->isBigEndian()) {
