@@ -327,3 +327,15 @@ namespace test13 {
     (void) d->x;
   }
 }
+
+// Destructors for temporaries.
+namespace test14 {
+  class A {
+  private: ~A(); // expected-note {{declared private here}}
+  };
+  A foo();
+
+  void test() {
+    foo(); // expected-error {{temporary of type 'test14::A' has private destructor}}
+  }
+}

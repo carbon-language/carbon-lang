@@ -2450,8 +2450,12 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
                                             RD->getDestructor(Context));
   ExprTemporaries.push_back(Temp);
   if (CXXDestructorDecl *Destructor =
-        const_cast<CXXDestructorDecl*>(RD->getDestructor(Context)))
+        const_cast<CXXDestructorDecl*>(RD->getDestructor(Context))) {
     MarkDeclarationReferenced(E->getExprLoc(), Destructor);
+    CheckDestructorAccess(E->getExprLoc(), Destructor,
+                          PDiag(diag::err_access_dtor_temp)
+                            << E->getType());
+  }
   // FIXME: Add the temporary to the temporaries vector.
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }

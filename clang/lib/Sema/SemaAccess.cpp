@@ -168,7 +168,7 @@ struct AccessTarget : public Sema::AccessedEntity {
     }
 
   private:
-    friend class AccessTarget;
+    friend struct AccessTarget;
     explicit SavedInstanceContext(AccessTarget &Target)
       : Target(Target), Has(Target.HasInstanceContext) {}
     AccessTarget &Target;
