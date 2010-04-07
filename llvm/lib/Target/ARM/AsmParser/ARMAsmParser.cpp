@@ -812,8 +812,11 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
   return false;
 }
 
+extern "C" void LLVMInitializeARMAsmLexer();
+
 /// Force static initialization.
 extern "C" void LLVMInitializeARMAsmParser() {
   RegisterAsmParser<ARMAsmParser> X(TheARMTarget);
   RegisterAsmParser<ARMAsmParser> Y(TheThumbTarget);
+  LLVMInitializeARMAsmLexer();
 }
