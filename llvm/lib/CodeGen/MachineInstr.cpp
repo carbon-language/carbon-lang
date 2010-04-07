@@ -192,6 +192,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return getBlockAddress() == Other.getBlockAddress();
   case MachineOperand::MO_MCSymbol:
     return getMCSymbol() == Other.getMCSymbol();
+  case MachineOperand::MO_Metadata:
+    return getMetadata() == Other.getMetadata();
   }
 }
 

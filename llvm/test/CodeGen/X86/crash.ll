@@ -92,3 +92,19 @@ foo:
 }
 
 
+; Crash commoning identical asms.
+define void @test6(i1 %C) nounwind optsize ssp {
+entry:
+  br i1 %C, label %do.body55, label %do.body92
+
+do.body55:                                        ; preds = %if.else36
+  call void asm sideeffect "foo", "~{dirflag},~{fpsr},~{flags}"() nounwind, !srcloc !0
+  ret void
+
+do.body92:                                        ; preds = %if.then66
+  call void asm sideeffect "foo", "~{dirflag},~{fpsr},~{flags}"() nounwind, !srcloc !1
+  ret void
+}
+
+!0 = metadata !{i32 633550}                       
+!1 = metadata !{i32 634261}                       
