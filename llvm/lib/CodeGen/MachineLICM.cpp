@@ -295,7 +295,7 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
 
       // If MI is a store to a stack slot, remember the slot. An instruction
       // loads from this slot cannot be a LICM candidate.
-      if (SkipCheck && TII->isStoreToStackSlot(MI, FI))
+      if (!SkipCheck && TII->isStoreToStackSlot(MI, FI))
         StoredFIs.insert(FI);
     }
 
