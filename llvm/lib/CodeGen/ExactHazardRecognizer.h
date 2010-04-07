@@ -70,7 +70,8 @@ namespace llvm {
     // Itinerary data for the target.
     const InstrItineraryData &ItinData;
 
-    ScoreBoard Scoreboard;
+    ScoreBoard ReservedScoreboard;
+    ScoreBoard RequiredScoreboard;
 
   public:
     ExactHazardRecognizer(const InstrItineraryData &ItinData);

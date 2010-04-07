@@ -45,14 +45,16 @@ ExactHazardRecognizer(const InstrItineraryData &LItinData) :
     }
   }
 
-  Scoreboard.reset(ScoreboardDepth);
+  ReservedScoreboard.reset(ScoreboardDepth);
+  RequiredScoreboard.reset(ScoreboardDepth);
 
   DEBUG(dbgs() << "Using exact hazard recognizer: ScoreboardDepth = " 
                << ScoreboardDepth << '\n');
 }
 
 void ExactHazardRecognizer::Reset() {
-  Scoreboard.reset();
+  RequiredScoreboard.reset();
+  ReservedScoreboard.reset();
 }
 
 void ExactHazardRecognizer::ScoreBoard::dump() const {
@@ -86,10 +88,23 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
     // stage is occupied. FIXME it would be more accurate to find the
     // same unit free in all the cycles.
     for (unsigned int i = 0; i < IS->getCycles(); ++i) {
-      assert(((cycle + i) < Scoreboard.getDepth()) &&
+      assert(((cycle + i) < RequiredScoreboard.getDepth()) &&
              "Scoreboard depth exceeded!");
 
-      unsigned freeUnits = IS->getUnits() & ~Scoreboard[cycle + i];
+      unsigned freeUnits = IS->getUnits();
+      switch (IS->getReservationKind()) {
+      default:
+       assert(0 && "Invalid FU reservation");
+      case InstrStage::Required:
+        // Required FUs conflict with both reserved and required ones
+        freeUnits &= ~ReservedScoreboard[cycle + i];
+        // FALLTHROUGH
+      case InstrStage::Reserved:
+        // Reserved FUs can conflict only with required ones.
+        freeUnits &= ~RequiredScoreboard[cycle + i];
+        break;
+      }
+
       if (!freeUnits) {
         DEBUG(dbgs() << "*** Hazard in cycle " << (cycle + i) << ", ");
         DEBUG(dbgs() << "SU(" << SU->NodeNum << "): ");
@@ -114,16 +129,28 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-  for (const InstrStage *IS = ItinData.beginStage(idx), 
+  for (const InstrStage *IS = ItinData.beginStage(idx),
          *E = ItinData.endStage(idx); IS != E; ++IS) {
     // We must reserve one of the stage's units for every cycle the
     // stage is occupied. FIXME it would be more accurate to reserve
     // the same unit free in all the cycles.
     for (unsigned int i = 0; i < IS->getCycles(); ++i) {
-      assert(((cycle + i) < Scoreboard.getDepth()) &&
+      assert(((cycle + i) < RequiredScoreboard.getDepth()) &&
              "Scoreboard depth exceeded!");
 
-      unsigned freeUnits = IS->getUnits() & ~Scoreboard[cycle + i];
+      unsigned freeUnits = IS->getUnits();
+      switch (IS->getReservationKind()) {
+      default:
+       assert(0 && "Invalid FU reservation");
+      case InstrStage::Required:
+        // Required FUs conflict with both reserved and required ones
+        freeUnits &= ~ReservedScoreboard[cycle + i];
+        // FALLTHROUGH
+      case InstrStage::Reserved:
+        // Reserved FUs can conflict only with required ones.
+        freeUnits &= ~RequiredScoreboard[cycle + i];
+        break;
+      }
 
       // reduce to a single unit
       unsigned freeUnit = 0;
@@ -133,17 +160,21 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
       } while (freeUnits);
 
       assert(freeUnit && "No function unit available!");
-      Scoreboard[cycle + i] |= freeUnit;
+      if (IS->getReservationKind() == InstrStage::Required)
+        RequiredScoreboard[cycle + i] |= freeUnit;
+      else
+        ReservedScoreboard[cycle + i] |= freeUnit;
     }
 
     // Advance the cycle to the next stage.
     cycle += IS->getNextCycles();
   }
 
-  DEBUG(Scoreboard.dump());
+  DEBUG(ReservedScoreboard.dump());
+  DEBUG(RequiredScoreboard.dump());
 }
 
 void ExactHazardRecognizer::AdvanceCycle() {
-  Scoreboard[0] = 0;
-  Scoreboard.advance();
+  ReservedScoreboard[0] = 0; ReservedScoreboard.advance();
+  RequiredScoreboard[0] = 0; RequiredScoreboard.advance();
 }

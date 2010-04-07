@@ -216,7 +216,7 @@ void SubtargetEmitter::FormItineraryStageString(Record *ItinData,
     // Next stage
     const Record *Stage = StageList[i];
   
-    // Form string as ,{ cycles, u1 | u2 | ... | un, timeinc }
+    // Form string as ,{ cycles, u1 | u2 | ... | un, timeinc, kind }
     int Cycles = Stage->getValueAsInt("Cycles");
     ItinString += "  { " + itostr(Cycles) + ", ";
     
@@ -232,6 +232,9 @@ void SubtargetEmitter::FormItineraryStageString(Record *ItinData,
     
     int TimeInc = Stage->getValueAsInt("TimeInc");
     ItinString += ", " + itostr(TimeInc);
+
+    int Kind = Stage->getValueAsInt("Kind");
+    ItinString += ", (llvm::InstrStage::ReservationKinds)" + itostr(Kind);
 
     // Close off stage
     ItinString += " }";
@@ -278,7 +281,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
 
   // Begin stages table
   std::string StageTable = "static const llvm::InstrStage Stages[] = {\n";
-  StageTable += "  { 0, 0, 0 }, // No itinerary\n";
+  StageTable += "  { 0, 0, 0, llvm::InstrStage::Required }, // No itinerary\n";
         
   // Begin operand cycle table
   std::string OperandCycleTable = "static const unsigned OperandCycles[] = {\n";
@@ -367,7 +370,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   }
   
   // Closing stage
-  StageTable += "  { 0, 0, 0 } // End itinerary\n";
+  StageTable += "  { 0, 0, 0, llvm::InstrStage::Required } // End itinerary\n";
   StageTable += "};\n";
 
   // Closing operand cycles

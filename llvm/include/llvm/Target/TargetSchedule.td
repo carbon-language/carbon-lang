@@ -22,6 +22,13 @@
 //  
 class FuncUnit;
 
+class ReservationKind<bits<1> val> {
+  bits<1> Value = val;
+}
+
+def Required : ReservationKind<0>;
+def Reserved : ReservationKind<1>;
+
 //===----------------------------------------------------------------------===//
 // Instruction stage - These values represent a non-pipelined step in
 // the execution of an instruction.  Cycles represents the number of
@@ -36,10 +43,12 @@ class FuncUnit;
 //   InstrStage<1, [FU_x, FU_y]>     - TimeInc defaults to Cycles
 //   InstrStage<1, [FU_x, FU_y], 0>  - TimeInc explicit
 //
-class InstrStage<int cycles, list<FuncUnit> units, int timeinc = -1> {
+class InstrStage<int cycles, list<FuncUnit> units,
+                 int timeinc = -1, ReservationKind kind = Required> {
   int Cycles          = cycles;       // length of stage in machine cycles
   list<FuncUnit> Units = units;       // choice of functional units
   int TimeInc         = timeinc;      // cycles till start of next stage
+  int Kind            = kind.Value;   // kind of FU reservation
 }
 
 //===----------------------------------------------------------------------===//

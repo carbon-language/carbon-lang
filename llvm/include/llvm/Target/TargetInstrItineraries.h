@@ -47,10 +47,24 @@ namespace llvm {
 ///      indicate that the instruction requires multiple stages at the
 ///      same time.
 ///
+/// FU reservation can be of two different kinds:
+///  - FUs which instruction actually requires
+///  - FUs which instruction just reserves. Reserved unit is not available for
+///    execution of other instruction. However, several instructions can reserve
+///    the same unit several times.
+/// Such two types of units reservation is used to model instruction domain
+/// change stalls, FUs using the same resource (e.g. same register file), etc.
+
 struct InstrStage {
+  enum ReservationKinds {
+    Required = 0,
+    Reserved = 1
+  };
+
   unsigned Cycles_;  ///< Length of stage in machine cycles
   unsigned Units_;   ///< Choice of functional units
-  int NextCycles_;   ///< Number of machine cycles to next stage 
+  int NextCycles_;   ///< Number of machine cycles to next stage
+  ReservationKinds Kind_; ///< Kind of the FU reservation
 
   /// getCycles - returns the number of cycles the stage is occupied
   unsigned getCycles() const {
@@ -60,6 +74,10 @@ struct InstrStage {
   /// getUnits - returns the choice of FUs
   unsigned getUnits() const {
     return Units_;
+  }
+
+  ReservationKinds getReservationKind() const {
+    return Kind_;
   }
 
   /// getNextCycles - returns the number of cycles from the start of
