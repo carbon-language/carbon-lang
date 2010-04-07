@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -97,7 +98,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   unsigned NumDefs = 0;
   for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
        ++NumDefs)
-    assert(NumDefs != NumOperands-1 && "No asm string?");
+    assert(NumDefs != NumOperands-2 && "No asm string?");
   
   assert(MI->getOperand(NumDefs).isSymbol() && "No asm string?");
 
@@ -123,6 +124,15 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
                             MAI->getInlineAsmStart());
 
+  // Get the !srcloc metadata node if we have it, and decode the loc cookie from
+  // it.
+  unsigned LocCookie = 0;
+  if (const MDNode *SrcLoc = MI->getOperand(NumOperands-1).getMetadata()) {
+    if (SrcLoc->getNumOperands() != 0)
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
+        LocCookie = CI->getZExtValue();
+  }
+  
   // Emit the inline asm to a temporary string so we can emit it through
   // EmitInlineAsm.
   SmallString<256> StringData;
@@ -295,7 +305,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
   }
   OS << '\n' << (char)0;  // null terminate string.
-  EmitInlineAsm(OS.str(), 0/*no loc cookie*/);
+  EmitInlineAsm(OS.str(), LocCookie);
   
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.

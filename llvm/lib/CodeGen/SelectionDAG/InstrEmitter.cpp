@@ -769,6 +769,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
         break;
       }
     }
+    
+    // Get the mdnode from the asm if it exists and add it to the instruction.
+    SDValue MDV = Node->getOperand(InlineAsm::Op_MDNode);
+    const MDNode *MD = cast<MDNodeSDNode>(MDV)->getMD();
+    MI->addOperand(MachineOperand::CreateMetadata(MD));
+    
     MBB->insert(InsertPos, MI);
     break;
   }
