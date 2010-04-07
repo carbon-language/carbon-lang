@@ -596,7 +596,11 @@ void Filter::recurse() {
 
   bit_value_t BitValueArray[BIT_WIDTH];
   // Starts by inheriting our parent filter chooser's filter bit values.
-  memcpy(BitValueArray, Owner->FilterBitValues, sizeof(BitValueArray));
+  bit_value_t *BitVals = Owner->FilterBitValues;
+  for (unsigned i = 0; i < BIT_WIDTH; ++i)
+    BitValueArray[i] = BitVals[i];
+  // FIXME: memcpy() is optmized out with self-hosting llvm-gcc (-O1 and -O2).
+  //memcpy(BitValueArray, Owner->FilterBitValues, sizeof(BitValueArray));
 
   unsigned bitIndex;
 
@@ -623,7 +627,7 @@ void Filter::recurse() {
     assert(FilterChooserMap.size() == 1);
     return;
   }
-        
+
   // Otherwise, create sub choosers.
   for (mapIterator = FilteredInstructions.begin();
        mapIterator != FilteredInstructions.end();
