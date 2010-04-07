@@ -143,7 +143,8 @@ struct GlobalStatus {
 static bool SafeToDestroyConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) return false;
 
-  for (Value::const_use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
+  for (Value::const_use_iterator UI = C->use_begin(), E = C->use_end(); UI != E;
+       ++UI)
     if (const Constant *CU = dyn_cast<Constant>(*UI)) {
       if (!SafeToDestroyConstant(CU)) return false;
     } else
@@ -158,7 +159,8 @@ static bool SafeToDestroyConstant(const Constant *C) {
 ///
 static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
                           SmallPtrSet<const PHINode*, 16> &PHIUsers) {
-  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
+       ++UI)
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
       GS.HasNonInstructionUser = true;
 
@@ -185,7 +187,8 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
         // value, not an aggregate), keep more specific information about
         // stores.
         if (GS.StoredType != GlobalStatus::isStored) {
-          if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
+          if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(
+                                                           SI->getOperand(1))) {
             Value *StoredVal = SI->getOperand(0);
             if (StoredVal == GV->getInitializer()) {
               if (GS.StoredType < GlobalStatus::isInitializerStored)
@@ -1038,11 +1041,12 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
 static bool LoadUsesSimpleEnoughForHeapSRA(const Value *V,
-                              SmallPtrSet<const PHINode*, 32> &LoadUsingPHIs,
-                              SmallPtrSet<const PHINode*, 32> &LoadUsingPHIsPerLoad) {
+                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIs,
+                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIsPerLoad) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
-  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
+       ++UI) {
     const Instruction *User = cast<Instruction>(*UI);
     
     // Comparison against null is ok.
@@ -1093,8 +1097,8 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(const GlobalVariable *GV,
                                                     Instruction *StoredVal) {
   SmallPtrSet<const PHINode*, 32> LoadUsingPHIs;
   SmallPtrSet<const PHINode*, 32> LoadUsingPHIsPerLoad;
-  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
-       ++UI)
+  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end();
+       UI != E; ++UI)
     if (const LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs,
                                           LoadUsingPHIsPerLoad))
@@ -1107,8 +1111,8 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(const GlobalVariable *GV,
   // that all inputs the to the PHI nodes are in the same equivalence sets. 
   // Check to verify that all operands of the PHIs are either PHIS that can be
   // transformed, loads from GV, or MI itself.
-  for (SmallPtrSet<const PHINode*, 32>::const_iterator I = LoadUsingPHIs.begin(),
-       E = LoadUsingPHIs.end(); I != E; ++I) {
+  for (SmallPtrSet<const PHINode*, 32>::const_iterator I = LoadUsingPHIs.begin()
+       , E = LoadUsingPHIs.end(); I != E; ++I) {
     const PHINode *PN = *I;
     for (unsigned op = 0, e = PN->getNumIncomingValues(); op != e; ++op) {
       Value *InVal = PN->getIncomingValue(op);
@@ -1698,8 +1702,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
       DEBUG(dbgs() << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n");
     if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
-      DEBUG(dbgs() << "  AccessingFunction = " << GS.AccessingFunction->getName()
-                  << "\n");
+      DEBUG(dbgs() << "  AccessingFunction = "
+                   << GS.AccessingFunction->getName() << "\n");
     DEBUG(dbgs() << "  HasMultipleAccessingFunctions =  "
                  << GS.HasMultipleAccessingFunctions << "\n");
     DEBUG(dbgs() << "  HasNonInstructionUser = " 
@@ -2509,7 +2513,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
         continue;
 
       // Do not perform the transform if multiple aliases potentially target the
-      // aliasee.  This check also ensures that it is safe to replace the section
+      // aliasee. This check also ensures that it is safe to replace the section
       // and other attributes of the aliasee with those of the alias.
       if (!hasOneUse)
         continue;
