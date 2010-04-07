@@ -524,6 +524,7 @@ static bool DisassembleThumb1LdPC(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::tGPRRegClassID &&
          (OpInfo[1].RegClass == 0 &&
@@ -621,6 +622,7 @@ static bool DisassembleThumb1LdStSP(MCInst &MI, unsigned Opcode, uint32_t insn,
          && "Invalid opcode");
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::tGPRRegClassID &&
@@ -648,6 +650,7 @@ static bool DisassembleThumb1AddPCi(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(Opcode == ARM::tADDrPCi && "Invalid opcode");
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::tGPRRegClassID &&
          (OpInfo[1].RegClass == 0 &&
@@ -672,6 +675,7 @@ static bool DisassembleThumb1AddSPi(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(Opcode == ARM::tADDrSPi && "Invalid opcode");
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::tGPRRegClassID &&
@@ -891,6 +895,8 @@ static bool DisassembleThumb1CondBr(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
+
   assert(NumOps == 3 && OpInfo[0].RegClass == 0 &&
          OpInfo[1].isPredicate() && OpInfo[2].RegClass == ARM::CCRRegClassID
          && "Exactly 3 operands expected");
@@ -915,6 +921,8 @@ static bool DisassembleThumb1Br(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
+
   assert(NumOps == 1 && OpInfo[0].RegClass == 0 && "1 imm operand expected");
 
   unsigned Imm11 = getT1Imm11(insn);
@@ -1147,6 +1155,8 @@ static bool DisassembleThumb2LdStEx(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
+
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
@@ -1201,6 +1211,7 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 4
          && OpInfo[0].RegClass == ARM::GPRRegClassID
@@ -1768,6 +1779,7 @@ static bool DisassembleThumb2Ldpci(MCInst &MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 2 &&
          OpInfo[0].RegClass == ARM::GPRRegClassID &&
@@ -2174,8 +2186,10 @@ static bool DisassembleThumbFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   unsigned bits15_11 = slice(HalfWord, 15, 11);
 
   // A6.1 Thumb instruction set encoding
-  assert((bits15_11 == 0x1D || bits15_11 == 0x1E || bits15_11 == 0x1F) &&
-         "Bits [15:11] of first halfword of a Thumb2 instruction out of range");
+  if (!(bits15_11 == 0x1D || bits15_11 == 0x1E || bits15_11 == 0x1F)) {
+    assert("Bits[15:11] first halfword of Thumb2 instruction is out of range");
+    return false;
+  }
 
   // A6.3 32-bit Thumb instruction encoding
   
