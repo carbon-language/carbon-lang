@@ -820,7 +820,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("i128mem",             TYPE_M128)
   TYPE("i64i32imm_pcrel",     TYPE_REL64)
   TYPE("i32imm_pcrel",        TYPE_REL32)
-  TYPE("SSECC",               TYPE_IMM8)
+  TYPE("SSECC",               TYPE_IMM3)
   TYPE("brtarget",            TYPE_RELv)
   TYPE("brtarget8",           TYPE_REL8)
   TYPE("f80mem",              TYPE_M80FP)

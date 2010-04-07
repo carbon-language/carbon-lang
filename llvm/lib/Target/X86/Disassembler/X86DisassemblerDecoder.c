@@ -1277,6 +1277,9 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_IB:
       if (readImmediate(insn, 1))
         return -1;
+      if (insn->spec->operands[index].type == TYPE_IMM3 &&
+          insn->immediates[insn->numImmediatesConsumed - 1] > 7)
+        return -1;
       break;
     case ENCODING_IW:
       if (readImmediate(insn, 2))

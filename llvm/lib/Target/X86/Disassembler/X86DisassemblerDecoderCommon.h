@@ -236,6 +236,7 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_IMM16,      "2-byte")                                        \
   ENUM_ENTRY(TYPE_IMM32,      "4-byte")                                        \
   ENUM_ENTRY(TYPE_IMM64,      "8-byte")                                        \
+  ENUM_ENTRY(TYPE_IMM3,       "1-byte immediate operand between 0 and 7")      \
   ENUM_ENTRY(TYPE_RM8,        "1-byte register or memory operand")             \
   ENUM_ENTRY(TYPE_RM16,       "2-byte")                                        \
   ENUM_ENTRY(TYPE_RM32,       "4-byte")                                        \
