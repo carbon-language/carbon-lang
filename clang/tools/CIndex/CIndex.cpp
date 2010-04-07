@@ -814,8 +814,9 @@ bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
     return true;
 
   for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
-    if (Visit(MakeCXCursor(TL.getArg(I), TU)))
-      return true;
+    if (Decl *D = TL.getArg(I))
+      if (Visit(MakeCXCursor(D, TU)))
+        return true;
 
   return false;
 }
