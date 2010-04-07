@@ -167,10 +167,9 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         break;
       case '(':             // $( -> same as GCC's { character.
         ++LastEmitted;      // Consume '(' character.
-        if (CurVariant != -1) {
+        if (CurVariant != -1)
           llvm_report_error("Nested variants found in inline asm string: '"
                             + std::string(AsmStr) + "'");
-        }
         CurVariant = 0;     // We're in the first variant now.
         break;
       case '|':
@@ -273,7 +272,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
             OS << *MI->getOperand(OpNo).getMBB()->getSymbol();
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
-            if ((OpFlags & 7) == 4) {
+            if (InlineAsm::isMemKind(OpFlags)) {
               Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
                                                 Modifier[0] ? Modifier : 0,
                                                 OS);
