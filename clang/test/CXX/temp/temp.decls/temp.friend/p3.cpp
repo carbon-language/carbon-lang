@@ -8,6 +8,5 @@ class B {
   template <class T> friend class A;
   template <class T> friend class Undeclared;
   
-  // FIXME: Diagnostic below could be (and was) better.
-  template <class T> friend typename A<T>::Member; // expected-error {{classes or functions}}
+  template <class T> friend typename A<T>::Member; // expected-warning {{non-class type 'typename A<T>::Member' cannot be a friend}}
 };

@@ -382,11 +382,13 @@ def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
 def err_unexpected_friend : Error<
   "friends can only be classes or functions">;
-def err_enum_friend : Error<
-  "enum types cannot be friends">;
+def ext_enum_friend : ExtWarn<
+  "enumeration type %0 cannot be a friend">;
+def ext_nonclass_type_friend : ExtWarn<
+  "non-class type %0 cannot be a friend">;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
-def err_unelaborated_friend_type : Error<
+def ext_unelaborated_friend_type : ExtWarn<
   "must specify '%select{struct|union|class|enum}0' to befriend %1">;
 def err_qualified_friend_not_found : Error<
   "no function named %0 with type %1 was found in the specified scope">;

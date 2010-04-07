@@ -13,7 +13,7 @@ class A1 {
   friend union A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
 
   friend enum A; // expected-error {{ISO C++ forbids forward references to 'enum' types}} \
-                 // expected-error {{enum types cannot be friends}}
+                 // expected-warning {{cannot be a friend}}
 };
 
 template <class T> struct B { // expected-note {{previous use is here}}

@@ -5328,39 +5328,48 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
   QualType T = TSInfo->getType();
   SourceRange TypeRange = TSInfo->getTypeLoc().getSourceRange();
   
-  // C++03 [class.friend]p2:
-  //   An elaborated-type-specifier shall be used in a friend declaration
-  //   for a class.*
-  //
-  //   * The class-key of the elaborated-type-specifier is required.
-  if (!getLangOptions().CPlusPlus0x && !T->isElaboratedTypeSpecifier()) {
-    // If we evaluated the type to a record type, suggest putting
-    // a tag in front.
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      RecordDecl *RD = RT->getDecl();
-      
-      std::string InsertionText = std::string(" ") + RD->getKindName();
-      
-      Diag(FriendLoc, diag::err_unelaborated_friend_type)
-        << (unsigned) RD->getTagKind()
+  if (!getLangOptions().CPlusPlus0x) {
+    // C++03 [class.friend]p2:
+    //   An elaborated-type-specifier shall be used in a friend declaration
+    //   for a class.*
+    //
+    //   * The class-key of the elaborated-type-specifier is required.
+    if (!ActiveTemplateInstantiations.empty()) {
+      // Do not complain about the form of friend template types during
+      // template instantiation; we will already have complained when the
+      // template was declared.
+    } else if (!T->isElaboratedTypeSpecifier()) {
+      // If we evaluated the type to a record type, suggest putting
+      // a tag in front.
+      if (const RecordType *RT = T->getAs<RecordType>()) {
+        RecordDecl *RD = RT->getDecl();
+        
+        std::string InsertionText = std::string(" ") + RD->getKindName();
+        
+        Diag(TypeRange.getBegin(), diag::ext_unelaborated_friend_type)
+          << (unsigned) RD->getTagKind()
+          << T
+          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(FriendLoc),
+                                        InsertionText);
+      } else {
+        Diag(FriendLoc, diag::ext_nonclass_type_friend)
+          << T
+          << SourceRange(FriendLoc, TypeRange.getEnd());
+      }
+    } else if (T->getAs<EnumType>()) {
+      Diag(FriendLoc, diag::ext_enum_friend)
         << T
-        << SourceRange(FriendLoc)
-        << FixItHint::CreateInsertion(TypeRange.getBegin(),
-                                      InsertionText);
-      return 0; 
-    } else {
-      Diag(FriendLoc, diag::err_unexpected_friend)
         << SourceRange(FriendLoc, TypeRange.getEnd());
-      return 0;
     }
   }
   
-  // Enum types cannot be friends.
-  if (T->getAs<EnumType>()) {
-    Diag(FriendLoc, diag::err_enum_friend)
-      << SourceRange(FriendLoc, TypeRange.getEnd());
-    return 0;
-  }  
+  // C++0x [class.friend]p3:
+  //   If the type specifier in a friend declaration designates a (possibly
+  //   cv-qualified) class type, that class is declared as a friend; otherwise, 
+  //   the friend declaration is ignored.
+  
+  // FIXME: C++0x has some syntactic restrictions on friend type declarations
+  // in [class.friend]p3 that we do not implement.
   
   return FriendDecl::Create(Context, CurContext, FriendLoc, TSInfo, FriendLoc);
 }
@@ -5421,13 +5430,6 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
     return DeclPtrTy();
   }
   
-  // Enum templates cannot be friends.
-  if (TempParams.size() && T->getAs<EnumType>()) {
-    Diag(DS.getTypeSpecTypeLoc(), diag::err_enum_friend)
-    << SourceRange(DS.getFriendSpecLoc());
-    return DeclPtrTy();
-  }
-
   // C++98 [class.friend]p1: A friend of a class is a function
   //   or class that is not a member of the class . . .
   // This is fixed in DR77, which just barely didn't make the C++03

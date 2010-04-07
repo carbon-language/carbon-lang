@@ -476,47 +476,44 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
-  FriendDecl::FriendUnion FU;
-
   // Handle friend type expressions by simply substituting template
-  // parameters into the pattern type.
+  // parameters into the pattern type and checking the result.
   if (TypeSourceInfo *Ty = D->getFriendType()) {
     TypeSourceInfo *InstTy = 
       SemaRef.SubstType(Ty, TemplateArgs,
                         D->getLocation(), DeclarationName());
-    if (!InstTy) return 0;
-
-    // This assertion is valid because the source type was necessarily
-    // an elaborated-type-specifier with a record tag.
-    assert(getLangOptions().CPlusPlus0x || InstTy->getType()->isRecordType());
-
-    FU = InstTy;
-
-  // Handle everything else by appropriate substitution.
-  } else {
-    NamedDecl *ND = D->getFriendDecl();
-    assert(ND && "friend decl must be a decl or a type!");
-
-    // FIXME: We have a problem here, because the nested call to Visit(ND)
-    // will inject the thing that the friend references into the current
-    // owner, which is wrong.
-    Decl *NewND;
-
-    // Hack to make this work almost well pending a rewrite.
-    if (D->wasSpecialization()) {
-      // Totally egregious hack to work around PR5866
+    if (!InstTy) 
       return 0;
-    } else {
-      NewND = Visit(ND);
-    }
-    if (!NewND) return 0;
 
-    FU = cast<NamedDecl>(NewND);
+    FriendDecl *FD = SemaRef.CheckFriendTypeDecl(D->getFriendLoc(), InstTy);
+    if (!FD)
+      return 0;
+    
+    FD->setAccess(AS_public);
+    Owner->addDecl(FD);
+    return FD;
+  } 
+  
+  NamedDecl *ND = D->getFriendDecl();
+  assert(ND && "friend decl must be a decl or a type!");
+
+  // FIXME: We have a problem here, because the nested call to Visit(ND)
+  // will inject the thing that the friend references into the current
+  // owner, which is wrong.
+  Decl *NewND;
+
+  // Hack to make this work almost well pending a rewrite.
+  if (D->wasSpecialization()) {
+    // Totally egregious hack to work around PR5866
+    return 0;
+  } else {
+    NewND = Visit(ND);
   }
+  if (!NewND) return 0;
 
   FriendDecl *FD =
-    FriendDecl::Create(SemaRef.Context, Owner, D->getLocation(), FU,
-                       D->getFriendLoc());
+    FriendDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
+                       cast<NamedDecl>(NewND), D->getFriendLoc());
   FD->setAccess(AS_public);
   Owner->addDecl(FD);
   return FD;

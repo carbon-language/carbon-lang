@@ -4,7 +4,7 @@ struct B0;
 
 class A {
   friend class B {}; // expected-error {{cannot define a type in a friend declaration}}
-  friend int; // expected-error {{friends can only be classes or functions}}
-  friend B0; // expected-error {{must specify 'struct' to befriend}}
+  friend int; // expected-warning {{non-class type 'int' cannot be a friend}}
+  friend B0; // expected-warning {{must specify 'struct' to befriend}}
   friend class C; // okay
 };
