@@ -466,7 +466,7 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   OS << '\t' << AP.MAI->getCommentString() << "DEBUG_VALUE: ";
 
   // cast away const; DIetc do not take const operands for some reason.
-  DIVariable V((MDNode*)(MI->getOperand(2).getMetadata()));
+  DIVariable V(const_cast<MDNode*>(MI->getOperand(2).getMetadata()));
   OS << V.getName() << " <- ";
 
   // Register or immediate value. Register 0 means undef.
@@ -486,7 +486,8 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     }
   } else if (MI->getOperand(0).isImm()) {
     OS << MI->getOperand(0).getImm();
-  } else if (MI->getOperand(0).isReg()) {
+  } else {
+    assert(MI->getOperand(0).isReg() && "Unknown operand type");
     if (MI->getOperand(0).getReg() == 0) {
       // Suppress offset, it is not meaningful here.
       OS << "undef";
@@ -495,9 +496,8 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       return true;
     }
     OS << AP.TM.getRegisterInfo()->getName(MI->getOperand(0).getReg());
-  } else
-    llvm_unreachable("Unknown operand type");
-
+  }
+  
   OS << '+' << MI->getOperand(1).getImm();
   // NOTE: Want this comment at start of line, don't emit with AddComment.
   AP.OutStreamer.EmitRawText(OS.str());
