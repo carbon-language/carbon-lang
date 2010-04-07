@@ -93,6 +93,7 @@ foo:
 
 
 ; Crash commoning identical asms.
+; PR6803
 define void @test6(i1 %C) nounwind optsize ssp {
 entry:
   br i1 %C, label %do.body55, label %do.body92
