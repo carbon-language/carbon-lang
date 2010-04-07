@@ -90,15 +90,15 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
 /// EmitStrNCpy - Emit a call to the strncpy function to the builder, for the
 /// specified pointer arguments.
 Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
-                         IRBuilder<> &B, const TargetData *TD) {
+                         IRBuilder<> &B, const TargetData *TD, StringRef Name) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   const Type *I8Ptr = B.getInt8PtrTy();
-  Value *StrNCpy = M->getOrInsertFunction("strncpy", AttrListPtr::get(AWI, 2),
-                                         I8Ptr, I8Ptr, I8Ptr,
-                                         Len->getType(), NULL);
+  Value *StrNCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
+                                          I8Ptr, I8Ptr, I8Ptr,
+                                          Len->getType(), NULL);
   CallInst *CI = B.CreateCall3(StrNCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Len, "strncpy");
   if (const Function *F = dyn_cast<Function>(StrNCpy->stripPointerCasts()))
@@ -432,10 +432,10 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     return false;
   }
 
-  if (Name == "__strncpy_chk") {
+  if (Name == "__strncpy_chk" || Name == "__stpncpy_chk") {
     if (isFoldable(4, 3, false)) {
       Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
-                               CI->getOperand(3), B, TD);
+                               CI->getOperand(3), B, TD, Name.substr(2, 7));
       replaceCall(Ret);
       return true;
     }
