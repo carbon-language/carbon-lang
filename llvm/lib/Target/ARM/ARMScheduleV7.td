@@ -629,417 +629,424 @@ def CortexA9Itineraries : ProcessorItineraries<[
   // Issue through integer pipeline, and execute in NEON unit.
 
   // FP Special Register to Integer Register File Move
-  InstrItinData<IIC_fpSTAT , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                              InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                              InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                              InstrStage<1,  [FU_NPipe]>]>,
+  InstrItinData<IIC_fpSTAT , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                              InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                              InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                              InstrStage<1, [FU_NPipe]>]>,
   //
   // Single-precision FP Unary
-  InstrItinData<IIC_fpUNA32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               // Extra 1 latency cycle since wbck is 2 cycles
-                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  InstrItinData<IIC_fpUNA32 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra latency cycles since wbck is 2 cycles
+                               InstrStage<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision FP Unary
-  InstrItinData<IIC_fpUNA64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               // Extra 1 latency cycle since wbck is 2 cycles
-                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  InstrItinData<IIC_fpUNA64 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra latency cycles since wbck is 2 cycles
+                               InstrStage<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
 
   //
   // Single-precision FP Compare
-  InstrItinData<IIC_fpCMP32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               // Extra 3 latency cycle since wbck is 4 cycles
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  InstrItinData<IIC_fpCMP32 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra latency cycles since wbck is 4 cycles
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision FP Compare
-  InstrItinData<IIC_fpCMP64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               // Extra 3 latency cycle since wbck is 4 cycles
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  InstrItinData<IIC_fpCMP64 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               // Extra latency cycles since wbck is 4 cycles
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Single to Double FP Convert
-  InstrItinData<IIC_fpCVTSD , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
+  InstrItinData<IIC_fpCVTSD , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Double to Single FP Convert
-  InstrItinData<IIC_fpCVTDS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
+  InstrItinData<IIC_fpCVTDS , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1]>,
 
   //
   // Single to Half FP Convert
-  InstrItinData<IIC_fpCVTSH , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
+  InstrItinData<IIC_fpCVTSH , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Half to Single FP Convert
-  InstrItinData<IIC_fpCVTHS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [2, 1]>,
+  InstrItinData<IIC_fpCVTHS , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 1]>,
 
   //
   // Single-Precision FP to Integer Convert
-  InstrItinData<IIC_fpCVTSI , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
+  InstrItinData<IIC_fpCVTSI , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Double-Precision FP to Integer Convert
-  InstrItinData<IIC_fpCVTDI , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
+  InstrItinData<IIC_fpCVTDI , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Integer to Single-Precision FP Convert
-  InstrItinData<IIC_fpCVTIS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
+  InstrItinData<IIC_fpCVTIS , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Integer to Double-Precision FP Convert
-  InstrItinData<IIC_fpCVTID , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
+  InstrItinData<IIC_fpCVTID , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Single-precision FP ALU
-  InstrItinData<IIC_fpALU32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1, 1]>,
+  InstrItinData<IIC_fpALU32 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
   //
   // Double-precision FP ALU
-  InstrItinData<IIC_fpALU64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [4, 1, 1]>,
+  InstrItinData<IIC_fpALU64 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
   //
   // Single-precision FP Multiply
-  InstrItinData<IIC_fpMUL32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<6, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [5, 1, 1]>,
+  InstrItinData<IIC_fpMUL32 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<6, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 1, 1]>,
   //
   // Double-precision FP Multiply
-  InstrItinData<IIC_fpMUL64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<7, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2,  [FU_NPipe]>], [6, 1, 1]>,
+  InstrItinData<IIC_fpMUL64 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<7, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 1, 1]>,
   //
   // Single-precision FP MAC
-  InstrItinData<IIC_fpMAC32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<9, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [8, 0, 1, 1]>,
+  InstrItinData<IIC_fpMAC32 , [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<9, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [8, 0, 1, 1]>,
   //
   // Double-precision FP MAC
-  InstrItinData<IIC_fpMAC64 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<10, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2,   [FU_NPipe]>], [9, 0, 1, 1]>,
+  InstrItinData<IIC_fpMAC64 , [InstrStage<1,  [FU_DRegsVFP], 0, Required>,
+                               InstrStage<10, [FU_DRegsN],  0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2,  [FU_NPipe]>], [9, 0, 1, 1]>,
   //
   // Single-precision FP DIV
-  InstrItinData<IIC_fpDIV32 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<16, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<10,  [FU_NPipe]>], [15, 1, 1]>,
+  InstrItinData<IIC_fpDIV32 , [InstrStage<1,  [FU_DRegsVFP], 0, Required>,
+                               InstrStage<16, [FU_DRegsN],  0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<10, [FU_NPipe]>], [15, 1, 1]>,
   //
   // Double-precision FP DIV
-  InstrItinData<IIC_fpDIV64 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<26, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<20,  [FU_NPipe]>], [25, 1, 1]>,
+  InstrItinData<IIC_fpDIV64 , [InstrStage<1,  [FU_DRegsVFP], 0, Required>,
+                               InstrStage<26, [FU_DRegsN],  0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<20, [FU_NPipe]>], [25, 1, 1]>,
   //
   // Single-precision FP SQRT
-  InstrItinData<IIC_fpSQRT32, [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<18, [FU_DRegsN],   0, Reserved>,
+  InstrItinData<IIC_fpSQRT32, [InstrStage<1,  [FU_DRegsVFP], 0, Required>,
+                               InstrStage<18, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<13,  [FU_NPipe]>], [17, 1]>,
   //
   // Double-precision FP SQRT
-  InstrItinData<IIC_fpSQRT64, [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<33, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<28,  [FU_NPipe]>], [32, 1]>,
+  InstrItinData<IIC_fpSQRT64, [InstrStage<1,  [FU_DRegsVFP], 0, Required>,
+                               InstrStage<33, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<28, [FU_NPipe]>], [32, 1]>,
 
   //
   // Integer to Single-precision Move
-  InstrItinData<IIC_fpMOVIS,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpMOVIS,  [InstrStage<1, [FU_DRegsVFP], 0, Required>,
                                // Extra 1 latency cycle since wbck is 2 cycles
-                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+                               InstrStage<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Integer to Double-precision Move
-  InstrItinData<IIC_fpMOVID,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpMOVID,  [InstrStage<1, [FU_DRegsVFP], 0, Required>,
                                // Extra 1 latency cycle since wbck is 2 cycles
-                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>,
+                               InstrStage<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1, 1]>,
   //
   // Single-precision to Integer Move
-  InstrItinData<IIC_fpMOVSI,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
+  InstrItinData<IIC_fpMOVSI,  [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision to Integer Move
-  InstrItinData<IIC_fpMOVDI,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>,
+  InstrItinData<IIC_fpMOVDI,  [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1, 1]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
 
   //
   // Double-register Integer Unary
-  InstrItinData<IIC_VUNAiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VUNAiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2]>,
   //
   // Quad-register Integer Unary
-  InstrItinData<IIC_VUNAiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VUNAiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2]>,
   //
   // Double-register Integer Q-Unary
-  InstrItinData<IIC_VQUNAiD,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VQUNAiD,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Quad-register Integer CountQ-Unary
-  InstrItinData<IIC_VQUNAiQ,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VQUNAiQ,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1]>,
   //
   // Double-register Integer Binary
-  InstrItinData<IIC_VBINiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBINiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
   //
   // Quad-register Integer Binary
-  InstrItinData<IIC_VBINiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBINiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
   //
   // Double-register Integer Subtract
-  InstrItinData<IIC_VSUBiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSUBiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
   //
   // Quad-register Integer Subtract
-  InstrItinData<IIC_VSUBiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
   //
   // Double-register Integer Shift
-  InstrItinData<IIC_VSHLiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSHLiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
   //
   // Quad-register Integer Shift
-  InstrItinData<IIC_VSHLiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSHLiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
   //
   // Double-register Integer Shift (4 cycle)
-  InstrItinData<IIC_VSHLi4D,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSHLi4D,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
   //
   // Quad-register Integer Shift (4 cycle)
-  InstrItinData<IIC_VSHLi4Q,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSHLi4Q,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
   //
   // Double-register Integer Binary (4 cycle)
-  InstrItinData<IIC_VBINi4D,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBINi4D,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2, 2]>,
   //
   // Quad-register Integer Binary (4 cycle)
-  InstrItinData<IIC_VBINi4Q,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBINi4Q,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2, 2]>,
   //
   // Double-register Integer Subtract (4 cycle)
-  InstrItinData<IIC_VSUBiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSUBiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2, 1]>,
   //
   // Quad-register Integer Subtract (4 cycle)
-  InstrItinData<IIC_VSUBiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 2, 1]>,
 
   //
   // Double-register Integer Count
-  InstrItinData<IIC_VCNTiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VCNTiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
   //
   // Quad-register Integer Count
   // Result written in N3, but that is relative to the last cycle of multicycle,
   // so we use 4 for those cases
-  InstrItinData<IIC_VCNTiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VCNTiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [4, 2, 2]>,
   //
   // Double-register Absolute Difference and Accumulate
-  InstrItinData<IIC_VABAD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VABAD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 3, 2, 1]>,
   //
   // Quad-register Absolute Difference and Accumulate
-  InstrItinData<IIC_VABAQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VABAQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>,
   //
   // Double-register Integer Pair Add Long
-  InstrItinData<IIC_VPALiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VPALiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 3, 1]>,
   //
   // Quad-register Integer Pair Add Long
-  InstrItinData<IIC_VPALiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VPALiQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 3, 1]>,
 
   //
   // Double-register Integer Multiply (.8, .16)
-  InstrItinData<IIC_VMULi16D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMULi16D, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 2, 2]>,
   //
   // Quad-register Integer Multiply (.8, .16)
-  InstrItinData<IIC_VMULi16Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMULi16Q, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [7, 2, 2]>,
 
   //
   // Double-register Integer Multiply (.32)
-  InstrItinData<IIC_VMULi32D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMULi32D, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [7, 2, 1]>,
   //
   // Quad-register Integer Multiply (.32)
-  InstrItinData<IIC_VMULi32Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 9 cycles
-                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMULi32Q, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<10, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<4, [FU_NPipe]>], [9, 2, 1]>,
   //
   // Double-register Integer Multiply-Accumulate (.8, .16)
-  InstrItinData<IIC_VMACi16D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACi16D, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 3, 2, 2]>,
   //
   // Double-register Integer Multiply-Accumulate (.32)
-  InstrItinData<IIC_VMACi32D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACi32D, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
   //
   // Quad-register Integer Multiply-Accumulate (.8, .16)
-  InstrItinData<IIC_VMACi16Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACi16Q, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [7, 3, 2, 2]>,
   //
   // Quad-register Integer Multiply-Accumulate (.32)
-  InstrItinData<IIC_VMACi32Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 9 cycles
-                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACi32Q, [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<10, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<4, [FU_NPipe]>], [9, 3, 2, 1]>,
   //
+  // Move Immediate
+  InstrItinData<IIC_VMOVImm,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3]>,
+  //
   // Double-register FP Unary
-  InstrItinData<IIC_VUNAD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VUNAD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [5, 2]>,
   //
   // Quad-register FP Unary
   // Result written in N5, but that is relative to the last cycle of multicycle,
   // so we use 6 for those cases
-  InstrItinData<IIC_VUNAQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VUNAQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 2]>,
   //
   // Double-register FP Binary
   // FIXME: We're using this itin for many instructions and [2, 2] here is too
   // optimistic.
-  InstrItinData<IIC_VBIND,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBIND,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [5, 2, 2]>,
   //
@@ -1048,123 +1055,123 @@ def CortexA9Itineraries : ProcessorItineraries<[
   // so we use 6 for those cases
   // FIXME: We're using this itin for many instructions and [2, 2] here is too
   // optimistic.
-  InstrItinData<IIC_VBINQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VBINQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
   //
   // Double-register FP Multiple-Accumulate
-  InstrItinData<IIC_VMACD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>,
   //
   // Quad-register FP Multiple-Accumulate
   // Result written in N9, but that is relative to the last cycle of multicycle,
   // so we use 10 for those cases
-  InstrItinData<IIC_VMACQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 9 cycles
-                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VMACQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<10, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<4, [FU_NPipe]>], [8, 4, 2, 1]>,
   //
   // Double-register Reciprical Step
-  InstrItinData<IIC_VRECSD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VRECSD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
   //
   // Quad-register Reciprical Step
-  InstrItinData<IIC_VRECSQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 9 cycles
-                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VRECSQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<10, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<4, [FU_NPipe]>], [8, 2, 2]>,
   //
   // Double-register Permute
-  InstrItinData<IIC_VPERMD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 6 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VPERMD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [2, 2, 1, 1]>,
   //
   // Quad-register Permute
   // Result written in N2, but that is relative to the last cycle of multicycle,
   // so we use 3 for those cases
-  InstrItinData<IIC_VPERMQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VPERMQ,   [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 3, 1, 1]>,
   //
   // Quad-register Permute (3 cycle issue)
   // Result written in N2, but that is relative to the last cycle of multicycle,
   // so we use 4 for those cases
-  InstrItinData<IIC_VPERMQ3,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<9, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VPERMQ3,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<9, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<3, [FU_NLSPipe]>], [4, 4, 1, 1]>,
 
   //
   // Double-register VEXT
-  InstrItinData<IIC_VEXTD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VEXTD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [2, 1, 1]>,
   //
   // Quad-register VEXT
-  InstrItinData<IIC_VEXTQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 9 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VEXTQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 1, 1]>,
   //
   // VTB
-  InstrItinData<IIC_VTB1,     [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTB1,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 2, 1]>,
-  InstrItinData<IIC_VTB2,     [InstrStage2<2, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTB2,     [InstrStage<2, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 2, 2, 1]>,
-  InstrItinData<IIC_VTB3,     [InstrStage2<2, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<9, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTB3,     [InstrStage<2, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<9, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<3, [FU_NPipe]>], [4, 2, 2, 3, 1]>,
-  InstrItinData<IIC_VTB4,     [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<9, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTB4,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<9, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<3, [FU_NPipe]>], [4, 2, 2, 3, 3, 1]>,
   //
   // VTBX
-  InstrItinData<IIC_VTBX1,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTBX1,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 1, 2, 1]>,
-  InstrItinData<IIC_VTBX2,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 7 cycles
-                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTBX2,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [3, 1, 2, 2, 1]>,
-  InstrItinData<IIC_VTBX3,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<9, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTBX3,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<9, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<3, [FU_NPipe]>], [4, 1, 2, 2, 3, 1]>,
-  InstrItinData<IIC_VTBX4,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
-                               // Extra 3 latency cycle since wbck is 8 cycles
-                               InstrStage2<9, [FU_DRegsVFP], 0, Reserved>,
+  InstrItinData<IIC_VTBX4,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 8 cycles
+                               InstrStage<9, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;
