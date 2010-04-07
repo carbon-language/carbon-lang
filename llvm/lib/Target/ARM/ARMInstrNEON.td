@@ -1621,12 +1621,13 @@ multiclass N3VNInt_HSD<bit op24, bit op23, bits<4> op11_8, bit op4,
 
 // First with only element sizes of 16 and 32 bits:
 multiclass N3VLInt_HS<bit op24, bit op23, bits<4> op11_8, bit op4,
-                      InstrItinClass itin, string OpcodeStr, string Dt,
+                      InstrItinClass itin16, InstrItinClass itin32,
+                      string OpcodeStr, string Dt,
                       Intrinsic IntOp, bit Commutable = 0> {
-  def v4i32 : N3VLInt<op24, op23, 0b01, op11_8, op4, itin, 
+  def v4i32 : N3VLInt<op24, op23, 0b01, op11_8, op4, itin16, 
                       OpcodeStr, !strconcat(Dt, "16"),
                       v4i32, v4i16, IntOp, Commutable>;
-  def v2i64 : N3VLInt<op24, op23, 0b10, op11_8, op4, itin,
+  def v2i64 : N3VLInt<op24, op23, 0b10, op11_8, op4, itin32,
                       OpcodeStr, !strconcat(Dt, "32"),
                       v2i64, v2i32, IntOp, Commutable>;
 }
@@ -1642,11 +1643,12 @@ multiclass N3VLIntSL_HS<bit op24, bits<4> op11_8,
 
 // ....then also with element size of 8 bits:
 multiclass N3VLInt_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
-                       InstrItinClass itin, string OpcodeStr, string Dt,
+                       InstrItinClass itin16, InstrItinClass itin32,
+                       string OpcodeStr, string Dt,
                        Intrinsic IntOp, bit Commutable = 0>
-  : N3VLInt_HS<op24, op23, op11_8, op4, itin, OpcodeStr, Dt,
+  : N3VLInt_HS<op24, op23, op11_8, op4, itin16, itin32, OpcodeStr, Dt,
                IntOp, Commutable> {
-  def v8i16 : N3VLInt<op24, op23, 0b00, op11_8, op4, itin, 
+  def v8i16 : N3VLInt<op24, op23, 0b00, op11_8, op4, itin16,
                       OpcodeStr, !strconcat(Dt, "8"),
                       v8i16, v8i8, IntOp, Commutable>;
 }
@@ -2004,10 +2006,10 @@ def  VADDfd   : N3VD<0, 0, 0b00, 0b1101, 0, IIC_VBIND, "vadd", "f32",
 def  VADDfq   : N3VQ<0, 0, 0b00, 0b1101, 0, IIC_VBINQ, "vadd", "f32",
                      v4f32, v4f32, fadd, 1>;
 //   VADDL    : Vector Add Long (Q = D + D)
-defm VADDLs   : N3VLInt_QHS<0,1,0b0000,0, IIC_VSHLiD, "vaddl", "s",
-                            int_arm_neon_vaddls, 1>;
-defm VADDLu   : N3VLInt_QHS<1,1,0b0000,0, IIC_VSHLiD, "vaddl", "u",
-                            int_arm_neon_vaddlu, 1>;
+defm VADDLs   : N3VLInt_QHS<0,1,0b0000,0, IIC_VSHLiD, IIC_VSHLiD,
+                            "vaddl", "s", int_arm_neon_vaddls, 1>;
+defm VADDLu   : N3VLInt_QHS<1,1,0b0000,0, IIC_VSHLiD, IIC_VSHLiD,
+                            "vaddl", "u", int_arm_neon_vaddlu, 1>;
 //   VADDW    : Vector Add Wide (Q = Q + D)
 defm VADDWs   : N3VWInt_QHS<0,1,0b0001,0, "vaddw", "s", int_arm_neon_vaddws, 0>;
 defm VADDWu   : N3VWInt_QHS<1,1,0b0001,0, "vaddw", "u", int_arm_neon_vaddwu, 0>;
@@ -2121,10 +2123,10 @@ def : Pat<(v4i32 (int_arm_neon_vqrdmulh (v4i32 QPR:$src1),
                                   (SubReg_i32_lane imm:$lane)))>;
 
 //   VMULL    : Vector Multiply Long (integer and polynomial) (Q = D * D)
-defm VMULLs   : N3VLInt_QHS<0,1,0b1100,0, IIC_VMULi16D, "vmull", "s",
-                            int_arm_neon_vmulls, 1>;
-defm VMULLu   : N3VLInt_QHS<1,1,0b1100,0, IIC_VMULi16D, "vmull", "u",
-                            int_arm_neon_vmullu, 1>;
+defm VMULLs   : N3VLInt_QHS<0,1,0b1100,0, IIC_VMULi16D, IIC_VMULi32D,
+                            "vmull", "s", int_arm_neon_vmulls, 1>;
+defm VMULLu   : N3VLInt_QHS<1,1,0b1100,0, IIC_VMULi16D, IIC_VMULi32D,
+                            "vmull", "u", int_arm_neon_vmullu, 1>;
 def  VMULLp   : N3VLInt<0, 1, 0b00, 0b1110, 0, IIC_VMULi16D, "vmull", "p8",
                         v8i16, v8i8, int_arm_neon_vmullp, 1>;
 defm VMULLsls : N3VLIntSL_HS<0, 0b1010, IIC_VMULi16D, "vmull", "s",
@@ -2133,10 +2135,10 @@ defm VMULLslu : N3VLIntSL_HS<1, 0b1010, IIC_VMULi16D, "vmull", "u",
                              int_arm_neon_vmullu>;
 
 //   VQDMULL  : Vector Saturating Doubling Multiply Long (Q = D * D)
-defm VQDMULL  : N3VLInt_HS<0,1,0b1101,0, IIC_VMULi16D, "vqdmull", "s",
-                           int_arm_neon_vqdmull, 1>;
-defm VQDMULLsl: N3VLIntSL_HS<0, 0b1011, IIC_VMULi16D, "vqdmull", "s",
-                             int_arm_neon_vqdmull>;
+defm VQDMULL  : N3VLInt_HS<0,1,0b1101,0, IIC_VMULi16D, IIC_VMULi32D,
+                           "vqdmull", "s", int_arm_neon_vqdmull, 1>;
+defm VQDMULLsl: N3VLIntSL_HS<0, 0b1011, IIC_VMULi16D,
+                             "vqdmull", "s", int_arm_neon_vqdmull>;
 
 // Vector Multiply-Accumulate and Multiply-Subtract Operations.
 
@@ -2255,10 +2257,10 @@ def  VSUBfd   : N3VD<0, 0, 0b10, 0b1101, 0, IIC_VBIND, "vsub", "f32",
 def  VSUBfq   : N3VQ<0, 0, 0b10, 0b1101, 0, IIC_VBINQ, "vsub", "f32",
                      v4f32, v4f32, fsub, 0>;
 //   VSUBL    : Vector Subtract Long (Q = D - D)
-defm VSUBLs   : N3VLInt_QHS<0,1,0b0010,0, IIC_VSHLiD, "vsubl", "s",
-                            int_arm_neon_vsubls, 1>;
-defm VSUBLu   : N3VLInt_QHS<1,1,0b0010,0, IIC_VSHLiD, "vsubl", "u",
-                            int_arm_neon_vsublu, 1>;
+defm VSUBLs   : N3VLInt_QHS<0,1,0b0010,0, IIC_VSHLiD, IIC_VSHLiD,
+                            "vsubl", "s", int_arm_neon_vsubls, 1>;
+defm VSUBLu   : N3VLInt_QHS<1,1,0b0010,0, IIC_VSHLiD, IIC_VSHLiD,
+                            "vsubl", "u", int_arm_neon_vsublu, 1>;
 //   VSUBW    : Vector Subtract Wide (Q = Q - D)
 defm VSUBWs   : N3VWInt_QHS<0,1,0b0011,0, "vsubw", "s", int_arm_neon_vsubws, 0>;
 defm VSUBWu   : N3VWInt_QHS<1,1,0b0011,0, "vsubw", "u", int_arm_neon_vsubwu, 0>;
@@ -2465,9 +2467,9 @@ def  VABDfq   : N3VQInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBINQ,
                         "vabd", "f32", v4f32, v4f32, int_arm_neon_vabds, 0>;
 
 //   VABDL    : Vector Absolute Difference Long (Q = | D - D |)
-defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VSUBi4Q,
+defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VSUBi4Q, IIC_VSUBi4Q,
                             "vabdl", "s", int_arm_neon_vabdls, 0>;
-defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VSUBi4Q,
+defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VSUBi4Q, IIC_VSUBi4Q,
                              "vabdl", "u", int_arm_neon_vabdlu, 0>;
 
 //   VABA     : Vector Absolute Difference and Accumulate
