@@ -25,7 +25,7 @@ namespace llvm {
   typedef void (*llvm_error_handler_t)(void *user_data,
                                        const std::string& reason);
 
-  /// llvm_instal_error_handler - Installs a new error handler to be used
+  /// llvm_install_error_handler - Installs a new error handler to be used
   /// whenever a serious (non-recoverable) error is encountered by LLVM.
   ///
   /// If you are using llvm_start_multithreaded, you should register the handler
