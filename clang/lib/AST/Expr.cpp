@@ -837,19 +837,22 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
   case BinaryOperatorClass: {
     const BinaryOperator *BO = cast<BinaryOperator>(this);
-    // Consider comma to have side effects if the LHS or RHS does.
-    if (BO->getOpcode() == BinaryOperator::Comma) {
-      // ((foo = <blah>), 0) is an idiom for hiding the result (and
-      // lvalue-ness) of an assignment written in a macro.
-      if (IntegerLiteral *IE =
-            dyn_cast<IntegerLiteral>(BO->getRHS()->IgnoreParens()))
-        if (IE->getValue() == 0)
-          return false;
-
-      return (BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
-              BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+    switch (BO->getOpcode()) {
+      default:
+        break;
+      // Consider ',', '||', '&&' to have side effects if the LHS or RHS does.
+      case BinaryOperator::Comma:
+        // ((foo = <blah>), 0) is an idiom for hiding the result (and
+        // lvalue-ness) of an assignment written in a macro.
+        if (IntegerLiteral *IE =
+              dyn_cast<IntegerLiteral>(BO->getRHS()->IgnoreParens()))
+          if (IE->getValue() == 0)
+            return false;
+      case BinaryOperator::LAnd:
+      case BinaryOperator::LOr:
+        return (BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
+                BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
     }
-
     if (BO->isAssignmentOp())
       return false;
     Loc = BO->getOperatorLoc();
