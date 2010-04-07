@@ -522,6 +522,15 @@ def CortexA8Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_VPALiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
   //
+  // Double-register Absolute Difference and Accumulate
+  InstrItinData<IIC_VABAD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 1]>,
+  //
+  // Quad-register Absolute Difference and Accumulate
+  InstrItinData<IIC_VABAQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>,
+
+  //
   // Double-register Integer Multiply (.8, .16)
   InstrItinData<IIC_VMULi16D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 2, 2]>,
@@ -883,7 +892,38 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                // Extra 3 latency cycle since wbck is 6 cycles
                                InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 2, 1]>
+                               InstrStage<1, [FU_NPipe]>], [4, 2, 1]>,
+
+  //
+  // Double-register Integer Count
+  InstrItinData<IIC_VCNTiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
+  //
+  // Quad-register Integer Count
+  // Result written in N3, but that is relative to the last cycle of multicycle,
+  // so we use 4 for those cases
+  InstrItinData<IIC_VCNTiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [4, 2, 2]>,
+  //
+  // Double-register Absolute Difference and Accumulate
+  InstrItinData<IIC_VABAD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 1]>,
+  //
+  // Quad-register Absolute Difference and Accumulate
+  InstrItinData<IIC_VABAQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>
 ]>;
 
 
