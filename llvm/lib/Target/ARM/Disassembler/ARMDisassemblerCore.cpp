@@ -694,6 +694,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return DisassembleCoprocessor(MI, Opcode, insn, NumOps, NumOpsAdded);
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
 
   // MRS and MRSsys take one GPR reg Rd.
   if (Opcode == ARM::MRS || Opcode == ARM::MRSsys) {
@@ -794,6 +795,8 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
+
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
@@ -1127,11 +1130,14 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   unsigned short NumDefs = TID.getNumDefs();
   bool isPrePost = isPrePostLdSt(TID.TSFlags);
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
+
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
 
-  assert(((!isStore && NumDefs > 0) || (isStore && (NumDefs == 0 || isPrePost)))
+  assert(((!isStore && TID.getNumDefs() > 0) ||
+          (isStore && (TID.getNumDefs() == 0 || isPrePost)))
          && "Invalid arguments");
 
   // Operand 0 of a pre- and post-indexed store is the address base writeback.
@@ -1235,14 +1241,16 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, bool isStore) {
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
-  unsigned short NumDefs = TID.getNumDefs();
   bool isPrePost = isPrePostLdSt(TID.TSFlags);
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
+
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
 
-  assert(((!isStore && NumDefs > 0) || (isStore && (NumDefs == 0 || isPrePost)))
+  assert(((!isStore && TID.getNumDefs() > 0) ||
+          (isStore && (TID.getNumDefs() == 0 || isPrePost)))
          && "Invalid arguments");
 
   // Operand 0 of a pre- and post-indexed store is the address base writeback.
@@ -1391,6 +1399,8 @@ static bool DisassembleLdStExFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO) {
 
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  if (!OpInfo) return false;
+
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
@@ -1681,6 +1691,7 @@ static bool DisassembleVFPConv1Frm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
 
   bool SP = slice(insn, 8, 8) == 0; // A8.6.295 & A8.6.297
   bool fixed_point = slice(insn, 17, 17) == 1; // A8.6.297
@@ -2766,6 +2777,7 @@ static bool DisassembleNVTBLFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
 
   assert(NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::DPRRegClassID &&
@@ -2828,10 +2840,10 @@ static bool DisassembleNEONGetLnFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO) {
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
-  unsigned short NumDefs = TID.getNumDefs();
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
 
-  assert(NumDefs == 1 && NumOps >= 3 &&
+  assert(TID.getNumDefs() == 1 && NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::GPRRegClassID &&
          OpInfo[1].RegClass == ARM::DPRRegClassID &&
          OpInfo[2].RegClass == 0 &&
@@ -2862,10 +2874,10 @@ static bool DisassembleNEONSetLnFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO) {
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
-  unsigned short NumDefs = TID.getNumDefs();
   const TargetOperandInfo *OpInfo = TID.OpInfo;
+  if (!OpInfo) return false;
 
-  assert(NumDefs == 1 && NumOps >= 3 &&
+  assert(TID.getNumDefs() == 1 && NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::DPRRegClassID &&
          OpInfo[1].RegClass == ARM::DPRRegClassID &&
          TID.getOperandConstraint(1, TOI::TIED_TO) != -1 &&
