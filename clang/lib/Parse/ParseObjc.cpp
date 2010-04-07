@@ -787,6 +787,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                           tok::ObjCKeywordKind MethodImplKind) {
   ParsingDeclRAIIObject PD(*this);
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCMethodDecl(CurScope, mType == tok::minus, 
+                                       /*ReturnType=*/0, IDecl);
+    ConsumeToken();
+  }
+
   // Parse the return type if present.
   TypeTy *ReturnType = 0;
   ObjCDeclSpec DSRet;
@@ -797,6 +803,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   llvm::OwningPtr<AttributeList> MethodAttrs;
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
     MethodAttrs.reset(ParseGNUAttributes());
+
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCMethodDecl(CurScope, mType == tok::minus, 
+                                       ReturnType, IDecl);
+    ConsumeToken();
+  }
 
   // Now parse the selector.
   SourceLocation selLoc;

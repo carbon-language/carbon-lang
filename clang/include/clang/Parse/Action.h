@@ -2795,6 +2795,32 @@ public:
                                                    IdentifierInfo *PropertyName,
                                                   DeclPtrTy ObjCImpDecl) {
   }
+
+  /// \brief Code completion for an Objective-C method declaration or
+  /// definition, which may occur within an interface, category,
+  /// extension, protocol, or implementation thereof (where applicable).
+  ///
+  /// This code completion action is invoked after the "-" or "+" that
+  /// starts a method declaration or definition, and after the return
+  /// type such a declaration (e.g., "- (id)").
+  ///
+  /// \param S The scope in which the completion occurs.
+  ///
+  /// \param IsInstanceMethod Whether this is an instance method
+  /// (introduced with '-'); otherwise, it's a class method
+  /// (introduced with '+').
+  ///
+  /// \param ReturnType If non-NULL, the specified return type of the method
+  /// being declared or defined.
+  ///
+  /// \param IDecl The interface, category, protocol, or
+  /// implementation, or category implementation in which this method
+  /// declaration or definition occurs.
+  virtual void CodeCompleteObjCMethodDecl(Scope *S, 
+                                          bool IsInstanceMethod,
+                                          TypeTy *ReturnType,
+                                          DeclPtrTy IDecl) {
+  }
   //@}
 };
 

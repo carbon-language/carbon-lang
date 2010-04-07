@@ -4299,6 +4299,10 @@ public:
   virtual void CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
                                                   IdentifierInfo *PropertyName,
                                                       DeclPtrTy ObjCImpDecl);
+  virtual void CodeCompleteObjCMethodDecl(Scope *S, 
+                                          bool IsInstanceMethod,
+                                          TypeTy *ReturnType,
+                                          DeclPtrTy IDecl);
   //@}
   
   //===--------------------------------------------------------------------===//

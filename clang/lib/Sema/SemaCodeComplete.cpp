@@ -3411,3 +3411,224 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
   
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
+
+typedef llvm::DenseMap<Selector, ObjCMethodDecl *> KnownMethodsMap;
+
+/// \brief Find all of the methods that reside in the given container
+/// (and its superclasses, protocols, etc.) that meet the given
+/// criteria. Insert those methods into the map of known methods,
+/// indexed by selector so they can be easily found.
+static void FindImplementableMethods(ASTContext &Context,
+                                     ObjCContainerDecl *Container,
+                                     bool WantInstanceMethods,
+                                     QualType ReturnType,
+                                     bool IsInImplementation,
+                                     KnownMethodsMap &KnownMethods) {
+  if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)) {
+    // Recurse into protocols.
+    const ObjCList<ObjCProtocolDecl> &Protocols
+      = IFace->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); 
+         I != E; ++I)
+      FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
+                               IsInImplementation, KnownMethods);
+
+    // If we're not in the implementation of a class, also visit the
+    // superclass.
+    if (!IsInImplementation && IFace->getSuperClass())
+      FindImplementableMethods(Context, IFace->getSuperClass(), 
+                               WantInstanceMethods, ReturnType,
+                               IsInImplementation, KnownMethods);
+
+    // Add methods from any class extensions (but not from categories;
+    // those should go into category implementations).
+    for (ObjCCategoryDecl *Cat = IFace->getCategoryList(); Cat;
+         Cat = Cat->getNextClassCategory()) {
+      if (!Cat->IsClassExtension())
+        continue;
+
+      FindImplementableMethods(Context, Cat, WantInstanceMethods, ReturnType,
+                               IsInImplementation, KnownMethods);      
+    }
+  }
+
+  if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
+    // Recurse into protocols.
+    const ObjCList<ObjCProtocolDecl> &Protocols
+      = Category->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); 
+         I != E; ++I)
+      FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
+                               IsInImplementation, KnownMethods);
+  }
+
+  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
+    // Recurse into protocols.
+    const ObjCList<ObjCProtocolDecl> &Protocols
+      = Protocol->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); 
+         I != E; ++I)
+      FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
+                               IsInImplementation, KnownMethods);
+  }
+
+  // Add methods in this container. This operation occurs last because
+  // we want the methods from this container to override any methods
+  // we've previously seen with the same selector.
+  for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
+                                       MEnd = Container->meth_end();
+       M != MEnd; ++M) {
+    if ((*M)->isInstanceMethod() == WantInstanceMethods) {
+      if (!ReturnType.isNull() &&
+          !Context.hasSameUnqualifiedType(ReturnType, (*M)->getResultType()))
+        continue;
+
+      KnownMethods[(*M)->getSelector()] = *M;
+    }
+  }
+}
+
+void Sema::CodeCompleteObjCMethodDecl(Scope *S, 
+                                      bool IsInstanceMethod,
+                                      TypeTy *ReturnTy,
+                                      DeclPtrTy IDecl) {
+  // Determine the return type of the method we're declaring, if
+  // provided.
+  QualType ReturnType = GetTypeFromParser(ReturnTy);
+
+  // Determine where we should start searching for methods, and where we 
+  ObjCContainerDecl *SearchDecl = 0, *CurrentDecl = 0;
+  bool IsInImplementation = false;
+  if (Decl *D = IDecl.getAs<Decl>()) {
+    if (ObjCImplementationDecl *Impl = dyn_cast<ObjCImplementationDecl>(D)) {
+      SearchDecl = Impl->getClassInterface();
+      CurrentDecl = Impl;
+      IsInImplementation = true;
+    } else if (ObjCCategoryImplDecl *CatImpl 
+                                       = dyn_cast<ObjCCategoryImplDecl>(D)) {
+      SearchDecl = CatImpl->getCategoryDecl();
+      CurrentDecl = CatImpl;
+      IsInImplementation = true;
+    } else {
+      SearchDecl = dyn_cast<ObjCContainerDecl>(D);
+      CurrentDecl = SearchDecl;
+    }
+  }
+
+  if (!SearchDecl && S) {
+    if (DeclContext *DC = static_cast<DeclContext *>(S->getEntity())) {
+      SearchDecl = dyn_cast<ObjCContainerDecl>(DC);
+      CurrentDecl = SearchDecl;
+    }
+  }
+
+  if (!SearchDecl || !CurrentDecl) {
+    HandleCodeCompleteResults(this, CodeCompleter, 0, 0);
+    return;
+  }
+    
+  // Find all of the methods that we could declare/implement here.
+  KnownMethodsMap KnownMethods;
+  FindImplementableMethods(Context, SearchDecl, IsInstanceMethod, 
+                           ReturnType, IsInImplementation, KnownMethods);
+  
+  // Erase any methods that have already been declared or
+  // implemented here.
+  for (ObjCContainerDecl::method_iterator M = CurrentDecl->meth_begin(),
+                                       MEnd = CurrentDecl->meth_end();
+       M != MEnd; ++M) {
+    if ((*M)->isInstanceMethod() != IsInstanceMethod)
+      continue;
+    
+    KnownMethodsMap::iterator Pos = KnownMethods.find((*M)->getSelector());
+    if (Pos != KnownMethods.end())
+      KnownMethods.erase(Pos);
+  }
+
+  // Add declarations or definitions for each of the known methods.
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  for (KnownMethodsMap::iterator M = KnownMethods.begin(), 
+                              MEnd = KnownMethods.end();
+       M != MEnd; ++M) {
+    ObjCMethodDecl *Method = M->second;
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    
+    // If the result type was not already provided, add it to the
+    // pattern as (type).
+    if (ReturnType.isNull()) {
+      std::string TypeStr;
+      Method->getResultType().getAsStringInternal(TypeStr, Policy);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddTextChunk(TypeStr);
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    }
+
+    Selector Sel = Method->getSelector();
+
+    // Add the first part of the selector to the pattern.
+    Pattern->AddTypedTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
+
+    // Add parameters to the pattern.
+    unsigned I = 0;
+    for (ObjCMethodDecl::param_iterator P = Method->param_begin(), 
+                                     PEnd = Method->param_end();
+         P != PEnd; (void)++P, ++I) {
+      // Add the part of the selector name.
+      if (I == 0)
+        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+      else if (I < Sel.getNumArgs()) {
+        Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+        Pattern->AddTextChunk(Sel.getIdentifierInfoForSlot(1)->getName());
+        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+      } else
+        break;
+
+      // Add the parameter type.
+      std::string TypeStr;
+      (*P)->getOriginalType().getAsStringInternal(TypeStr, Policy);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddTextChunk(TypeStr);
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      
+      if (IdentifierInfo *Id = (*P)->getIdentifier())
+        Pattern->AddTextChunk(Id->getName());
+    }
+
+    if (Method->isVariadic()) {
+      if (Method->param_size() > 0)
+        Pattern->AddChunk(CodeCompletionString::CK_Comma);
+      Pattern->AddTextChunk("...");
+    }
+
+    if (IsInImplementation) {
+      // We will be defining the method here, so add a compound statement.
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+      if (!Method->getResultType()->isVoidType()) {
+        // If the result type is not void, add a return clause.
+        Pattern->AddTextChunk("return");
+        Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+        Pattern->AddPlaceholderChunk("expression");
+        Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      } else
+        Pattern->AddPlaceholderChunk("statements");
+        
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+      Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    }
+
+    Results.AddResult(Result(Pattern));
+  }
+
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}

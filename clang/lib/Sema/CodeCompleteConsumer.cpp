@@ -86,7 +86,7 @@ CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text)
     break;
 
   case CK_Colon:
-    this->Text = ": ";
+    this->Text = ":";
     break;
 
   case CK_SemiColon:
