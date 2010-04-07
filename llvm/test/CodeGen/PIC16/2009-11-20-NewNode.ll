@@ -1,6 +1,5 @@
 ; RUN: llc -march=pic16 < %s
 ; PR5558
-; XFAIL: vg_leak
 
 define i64 @_strtoll_r(i16 %base) nounwind {
 entry:
