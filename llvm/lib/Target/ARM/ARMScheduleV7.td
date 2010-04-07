@@ -320,30 +320,35 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // Issue through integer pipeline, and execute in NEON unit.
   //
   // VLD1
+  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD1,     [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
                                InstrStage<1, [FU_NLSPipe]>]>,
   //
   // VLD2
+  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD2,     [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
                                InstrStage<1, [FU_NLSPipe]>], [2, 2, 1]>,
   //
   // VLD3
+  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD3,     [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
                                InstrStage<1, [FU_NLSPipe]>], [2, 2, 2, 1]>,
   //
   // VLD4
+  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD4,     [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
                                InstrStage<1, [FU_NLSPipe]>], [2, 2, 2, 2, 1]>,
   //
   // VST
+  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VST,      [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
@@ -801,7 +806,56 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_NPipe]>], [1, 1, 1]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
-
+  // FIXME: Neon pipeline and LdSt unit are multiplexed. 
+  //        Add some syntactic sugar to model this!
+  // VLD1
+  // FIXME: We don't model this instruction properly
+  InstrItinData<IIC_VLD1,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // VLD2
+  // FIXME: We don't model this instruction properly
+  InstrItinData<IIC_VLD2,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>], [2, 2, 1]>,
+  //
+  // VLD3
+  // FIXME: We don't model this instruction properly
+  InstrItinData<IIC_VLD3,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>], [2, 2, 2, 1]>,
+  //
+  // VLD4
+  // FIXME: We don't model this instruction properly
+  InstrItinData<IIC_VLD4,     [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>], [2, 2, 2, 2, 1]>,
+  //
+  // VST
+  // FIXME: We don't model this instruction properly
+  InstrItinData<IIC_VST,      [InstrStage<1, [FU_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
   //
   // Double-register Integer Unary
   InstrItinData<IIC_VUNAiD,   [InstrStage<1, [FU_DRegsN],   0, Required>,
