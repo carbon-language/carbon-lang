@@ -71,6 +71,8 @@ def IIC_fpCMP32    : InstrItinClass;
 def IIC_fpCMP64    : InstrItinClass;
 def IIC_fpCVTSD    : InstrItinClass;
 def IIC_fpCVTDS    : InstrItinClass;
+def IIC_fpCVTSH    : InstrItinClass;
+def IIC_fpCVTHS    : InstrItinClass;
 def IIC_fpCVTIS    : InstrItinClass;
 def IIC_fpCVTID    : InstrItinClass;
 def IIC_fpCVTSI    : InstrItinClass;

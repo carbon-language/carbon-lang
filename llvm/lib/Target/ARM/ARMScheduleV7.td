@@ -651,6 +651,20 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [4, 1]>,
+
+  //
+  // Single to Half FP Convert
+  InstrItinData<IIC_fpCVTSH , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Half to Single FP Convert
+  InstrItinData<IIC_fpCVTHS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 1]>,
+
   //
   // Single-Precision FP to Integer Convert
   InstrItinData<IIC_fpCVTSI , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
