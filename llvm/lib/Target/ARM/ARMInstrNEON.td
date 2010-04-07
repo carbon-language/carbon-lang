@@ -1735,11 +1735,11 @@ multiclass N3VInt3_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
 
 // First with only element sizes of 16 and 32 bits:
 multiclass N3VLInt3_HS<bit op24, bit op23, bits<4> op11_8, bit op4,
-                       InstrItinClass itin,
+                       InstrItinClass itin16, InstrItinClass itin32,
                        string OpcodeStr, string Dt, Intrinsic IntOp> {
-  def v4i32 : N3VLInt3<op24, op23, 0b01, op11_8, op4, itin,
+  def v4i32 : N3VLInt3<op24, op23, 0b01, op11_8, op4, itin16,
                        OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16, IntOp>;
-  def v2i64 : N3VLInt3<op24, op23, 0b10, op11_8, op4, itin,
+  def v2i64 : N3VLInt3<op24, op23, 0b10, op11_8, op4, itin32,
                        OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32, IntOp>;
 }
 
@@ -1753,10 +1753,10 @@ multiclass N3VLInt3SL_HS<bit op24, bits<4> op11_8,
 
 // ....then also with element size of 8 bits:
 multiclass N3VLInt3_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
-                        InstrItinClass itin,
+                        InstrItinClass itin16, InstrItinClass itin32,
                         string OpcodeStr, string Dt, Intrinsic IntOp>
-  : N3VLInt3_HS<op24, op23, op11_8, op4, itin, OpcodeStr, Dt, IntOp> {
-  def v8i16 : N3VLInt3<op24, op23, 0b00, op11_8, op4, itin,
+  : N3VLInt3_HS<op24, op23, op11_8, op4, itin16, itin32, OpcodeStr, Dt, IntOp> {
+  def v8i16 : N3VLInt3<op24, op23, 0b00, op11_8, op4, itin16,
                        OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, IntOp>;
 }
 
@@ -2180,16 +2180,16 @@ def : Pat<(v4f32 (fadd (v4f32 QPR:$src1),
                            (SubReg_i32_lane imm:$lane)))>;
 
 //   VMLAL    : Vector Multiply Accumulate Long (Q += D * D)
-defm VMLALs   : N3VLInt3_QHS<0,1,0b1000,0, IIC_VMACi16D,
+defm VMLALs   : N3VLInt3_QHS<0,1,0b1000,0, IIC_VMACi16D, IIC_VMACi32D,
                              "vmlal", "s", int_arm_neon_vmlals>;
-defm VMLALu   : N3VLInt3_QHS<1,1,0b1000,0, IIC_VMACi16D,
+defm VMLALu   : N3VLInt3_QHS<1,1,0b1000,0, IIC_VMACi16D, IIC_VMACi32D,
                              "vmlal", "u", int_arm_neon_vmlalu>;
 
 defm VMLALsls : N3VLInt3SL_HS<0, 0b0010, "vmlal", "s", int_arm_neon_vmlals>;
 defm VMLALslu : N3VLInt3SL_HS<1, 0b0010, "vmlal", "u", int_arm_neon_vmlalu>;
 
 //   VQDMLAL  : Vector Saturating Doubling Multiply Accumulate Long (Q += D * D)
-defm VQDMLAL  : N3VLInt3_HS<0, 1, 0b1001, 0, IIC_VMACi16D,
+defm VQDMLAL  : N3VLInt3_HS<0, 1, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                             "vqdmlal", "s", int_arm_neon_vqdmlal>;
 defm VQDMLALsl: N3VLInt3SL_HS<0, 0b0011, "vqdmlal", "s", int_arm_neon_vqdmlal>;
 
@@ -2232,16 +2232,16 @@ def : Pat<(v4f32 (fsub (v4f32 QPR:$src1),
                            (SubReg_i32_lane imm:$lane)))>;
 
 //   VMLSL    : Vector Multiply Subtract Long (Q -= D * D)
-defm VMLSLs   : N3VLInt3_QHS<0,1,0b1010,0, IIC_VMACi16D,
+defm VMLSLs   : N3VLInt3_QHS<0,1,0b1010,0, IIC_VMACi16D, IIC_VMACi32D,
                              "vmlsl", "s", int_arm_neon_vmlsls>;
-defm VMLSLu   : N3VLInt3_QHS<1,1,0b1010,0, IIC_VMACi16D,
+defm VMLSLu   : N3VLInt3_QHS<1,1,0b1010,0, IIC_VMACi16D, IIC_VMACi32D,
                              "vmlsl", "u", int_arm_neon_vmlslu>;
 
 defm VMLSLsls : N3VLInt3SL_HS<0, 0b0110, "vmlsl", "s", int_arm_neon_vmlsls>;
 defm VMLSLslu : N3VLInt3SL_HS<1, 0b0110, "vmlsl", "u", int_arm_neon_vmlslu>;
 
 //   VQDMLSL  : Vector Saturating Doubling Multiply Subtract Long (Q -= D * D)
-defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, IIC_VMACi16D,
+defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, IIC_VMACi16D, IIC_VMACi32D,
                             "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
 defm VQDMLSLsl: N3VLInt3SL_HS<0, 0b111, "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
 
@@ -2477,9 +2477,9 @@ defm VABAu    : N3VInt3_QHS<1,0,0b0111,1, IIC_VABAD, IIC_VABAQ,
                             "vaba", "u", int_arm_neon_vabau>;
 
 //   VABAL    : Vector Absolute Difference and Accumulate Long (Q += | D - D |)
-defm VABALs   : N3VLInt3_QHS<0,1,0b0101,0, IIC_VABAD,
+defm VABALs   : N3VLInt3_QHS<0,1,0b0101,0, IIC_VABAD, IIC_VABAD,
                              "vabal", "s", int_arm_neon_vabals>;
-defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, IIC_VABAD,
+defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, IIC_VABAD, IIC_VABAD,
                              "vabal", "u", int_arm_neon_vabalu>;
 
 // Vector Maximum and Minimum.
