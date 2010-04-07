@@ -27,9 +27,18 @@ namespace clang {
   class Preprocessor;
   class Declarator;
   struct TemplateIdAnnotation;
-  
+
 /// CXXScopeSpec - Represents a C++ nested-name-specifier or a global scope
-/// specifier.
+/// specifier.  These can be in 3 states:
+///   1) Not present, identified by isEmpty()
+///   2) Present, identified by isNotEmpty()
+///      2.a) Valid, idenified by isValid()
+///      2.b) Invalid, identified by isInvalid().
+///
+/// isSet() is deprecated because it mostly corresponded to "valid" but was
+/// often used as if it meant "present".
+///
+/// The actual scope is described by getScopeRep().
 class CXXScopeSpec {
   SourceRange Range;
   void *ScopeRep;
@@ -47,13 +56,18 @@ public:
   ActionBase::CXXScopeTy *getScopeRep() const { return ScopeRep; }
   void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
 
+  /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }
+  /// A scope specifier is present, but may be valid or invalid.
   bool isNotEmpty() const { return !isEmpty(); }
 
-  /// isInvalid - An error occured during parsing of the scope specifier.
+  /// An error occured during parsing of the scope specifier.
   bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
+  /// A scope specifier is present, and it refers to a real scope.
+  bool isValid() const { return isNotEmpty() && ScopeRep != 0; }
 
-  /// isSet - A scope specifier was resolved to a valid C++ scope.
+  /// Deprecated.  Some call sites intend isNotEmpty() while others intend
+  /// isValid().
   bool isSet() const { return ScopeRep != 0; }
 
   void clear() {
