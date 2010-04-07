@@ -5326,6 +5326,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     // error.
     if (OpInfo.hasMatchingInput()) {
       SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
+      
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
@@ -5539,10 +5540,9 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         std::vector<SDValue> Ops;
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
-        if (Ops.empty()) {
+        if (Ops.empty())
           report_fatal_error("Invalid operand for inline asm"
                             " constraint '" + OpInfo.ConstraintCode + "'!");
-        }
 
         // Add information to the INLINEASM node to know about this input.
         unsigned ResOpType =
@@ -5574,10 +5574,9 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty() ||
-          !OpInfo.AssignedRegs.areValueTypesLegal()) {
+          !OpInfo.AssignedRegs.areValueTypesLegal())
         report_fatal_error("Couldn't allocate input reg for"
                           " constraint '"+ OpInfo.ConstraintCode +"'!");
-      }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
                                         Chain, &Flag);

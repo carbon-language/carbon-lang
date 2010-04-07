@@ -1355,7 +1355,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       std::vector<SDValue> SelOps;
       if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps))
         report_fatal_error("Could not match memory address.  Inline asm"
-                          " failure!");
+                           " failure!");
 
       // Add this to the output node.
       unsigned NewFlags =
