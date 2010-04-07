@@ -682,13 +682,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIsqrt:
   case Builtin::BIsqrtf:
   case Builtin::BIsqrtl: {
-    // Rewrite sqrt to intrinsic if allowed.
-    if (!FD->hasAttr<ConstAttr>())
-      break;
-    Value *Arg0 = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *ArgType = Arg0->getType();
-    Value *F = CGM.getIntrinsic(Intrinsic::sqrt, &ArgType, 1);
-    return RValue::get(Builder.CreateCall(F, Arg0, "tmp"));
+    // TODO: there is currently no set of optimizer flags
+    // sufficient for us to rewrite sqrt to @llvm.sqrt.
+    // -fmath-errno=0 is not good enough; we need finiteness.
+    // We could probably precondition the call with an ult
+    // against 0, but is that worth the complexity?
+    break;
   }
 
   case Builtin::BIpow:

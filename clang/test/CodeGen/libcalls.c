@@ -1,22 +1,52 @@
-// RUN: %clang_cc1 -fmath-errno -emit-llvm -o %t %s -triple i386-unknown-unknown
-// RUN: grep "declare " %t | count 6
-// RUN: grep "declare " %t | grep "@llvm." | count 1
-// RUN: %clang_cc1 -emit-llvm -o %t %s -triple i386-unknown-unknown
-// RUN: grep "declare " %t | count 6
-// RUN: grep "declare " %t | grep -v "@llvm." | count 0
+// RUN: %clang_cc1 -fmath-errno -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix YES %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix NO %s
 
-// IRgen only pays attention to const; it should always call llvm for
-// this.
-float sqrtf(float) __attribute__((const));
-
+// CHECK-YES: define void @test_sqrt
+// CHECK-NO: define void @test_sqrt
 void test_sqrt(float a0, double a1, long double a2) {
+  // Following llvm-gcc's lead, we never emit these as intrinsics;
+  // no-math-errno isn't good enough.  We could probably use intrinsics
+  // with appropriate guards if it proves worthwhile.
+
+  // CHECK-YES: call float @sqrtf
+  // CHECK-NO: call float @sqrtf
   float l0 = sqrtf(a0);
+
+  // CHECK-YES: call double @sqrt
+  // CHECK-NO: call double @sqrt
   double l1 = sqrt(a1);
+
+  // CHECK-YES: call x86_fp80 @sqrtl
+  // CHECK-NO: call x86_fp80 @sqrtl
   long double l2 = sqrtl(a2);
 }
 
+// CHECK-YES: declare float @sqrtf(float)
+// CHECK-YES: declare double @sqrt(double)
+// CHECK-YES: declare x86_fp80 @sqrtl(x86_fp80)
+// CHECK-NO: declare float @sqrtf(float) readnone
+// CHECK-NO: declare double @sqrt(double) readnone
+// CHECK-NO: declare x86_fp80 @sqrtl(x86_fp80) readnone
+
+// CHECK-YES: define void @test_pow
+// CHECK-NO: define void @test_pow
 void test_pow(float a0, double a1, long double a2) {
+  // CHECK-YES: call float @powf
+  // CHECK-NO: call float @llvm.pow.f32
   float l0 = powf(a0, a0);
+
+  // CHECK-YES: call double @pow
+  // CHECK-NO: call double @llvm.pow.f64
   double l1 = pow(a1, a1);
+
+  // CHECK-YES: call x86_fp80 @powl
+  // CHECK-NO: call x86_fp80 @llvm.pow.f80
   long double l2 = powl(a2, a2);
 }
+
+// CHECK-YES: declare float @powf(float, float)
+// CHECK-YES: declare double @pow(double, double)
+// CHECK-YES: declare x86_fp80 @powl(x86_fp80, x86_fp80)
+// CHECK-NO: declare float @llvm.pow.f32(float, float) nounwind readonly
+// CHECK-NO: declare double @llvm.pow.f64(double, double) nounwind readonly
+// CHECK-NO: declare x86_fp80 @llvm.pow.f80(x86_fp80, x86_fp80) nounwind readonly
