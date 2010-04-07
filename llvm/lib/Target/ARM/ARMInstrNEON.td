@@ -2257,17 +2257,17 @@ defm VSUBWs   : N3VWInt_QHS<0,1,0b0011,0, "vsubw", "s", int_arm_neon_vsubws, 0>;
 defm VSUBWu   : N3VWInt_QHS<1,1,0b0011,0, "vsubw", "u", int_arm_neon_vsubwu, 0>;
 //   VHSUB    : Vector Halving Subtract
 defm VHSUBs   : N3VInt_QHS<0, 0, 0b0010, 0, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vhsub", "s", int_arm_neon_vhsubs, 0>;
 defm VHSUBu   : N3VInt_QHS<1, 0, 0b0010, 0, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vhsub", "u", int_arm_neon_vhsubu, 0>;
 //   VQSUB    : Vector Saturing Subtract
 defm VQSUBs   : N3VInt_QHSD<0, 0, 0b0010, 1, N3RegFrm,
-                            IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                             "vqsub", "s", int_arm_neon_vqsubs, 0>;
 defm VQSUBu   : N3VInt_QHSD<1, 0, 0b0010, 1, N3RegFrm,
-                            IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                             "vqsub", "u", int_arm_neon_vqsubu, 0>;
 //   VSUBHN   : Vector Subtract and Narrow Returning High Half (D = Q - Q)
 defm VSUBHN   : N3VNInt_HSD<0,1,0b0110,0, "vsubhn", "i",
@@ -2279,8 +2279,8 @@ defm VRSUBHN  : N3VNInt_HSD<1,1,0b0110,0, "vrsubhn", "i",
 // Vector Comparisons.
 
 //   VCEQ     : Vector Compare Equal
-defm VCEQ     : N3V_QHS<1, 0, 0b1000, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
-                        IIC_VBINi4Q, "vceq", "i", NEONvceq, 1>;
+defm VCEQ     : N3V_QHS<1, 0, 0b1000, 1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                        IIC_VSUBi4Q, "vceq", "i", NEONvceq, 1>;
 def  VCEQfd   : N3VD<0,0,0b00,0b1110,0, IIC_VBIND, "vceq", "f32", v2i32, v2f32,
                      NEONvceq, 1>;
 def  VCEQfq   : N3VQ<0,0,0b00,0b1110,0, IIC_VBINQ, "vceq", "f32", v4i32, v4f32,
@@ -2290,10 +2290,10 @@ defm VCEQz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00010, 0, "vceq", "i",
                            "$dst, $src, #0">;
 
 //   VCGE     : Vector Compare Greater Than or Equal
-defm VCGEs    : N3V_QHS<0, 0, 0b0011, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
-                        IIC_VBINi4Q, "vcge", "s", NEONvcge, 0>;
-defm VCGEu    : N3V_QHS<1, 0, 0b0011, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, 
-                        IIC_VBINi4Q, "vcge", "u", NEONvcgeu, 0>;
+defm VCGEs    : N3V_QHS<0, 0, 0b0011, 1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                        IIC_VSUBi4Q, "vcge", "s", NEONvcge, 0>;
+defm VCGEu    : N3V_QHS<1, 0, 0b0011, 1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, 
+                        IIC_VSUBi4Q, "vcge", "u", NEONvcgeu, 0>;
 def  VCGEfd   : N3VD<1,0,0b00,0b1110,0, IIC_VBIND, "vcge", "f32", v2i32, v2f32,
                      NEONvcge, 0>;
 def  VCGEfq   : N3VQ<1,0,0b00,0b1110,0, IIC_VBINQ, "vcge", "f32", v4i32, v4f32,
@@ -2306,10 +2306,10 @@ defm VCLEz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00011, 0, "vcle", "s",
                             "$dst, $src, #0">;
 
 //   VCGT     : Vector Compare Greater Than
-defm VCGTs    : N3V_QHS<0, 0, 0b0011, 0, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, 
-                        IIC_VBINi4Q, "vcgt", "s", NEONvcgt, 0>;
-defm VCGTu    : N3V_QHS<1, 0, 0b0011, 0, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, 
-                        IIC_VBINi4Q, "vcgt", "u", NEONvcgtu, 0>;
+defm VCGTs    : N3V_QHS<0, 0, 0b0011, 0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                        IIC_VSUBi4Q, "vcgt", "s", NEONvcgt, 0>;
+defm VCGTu    : N3V_QHS<1, 0, 0b0011, 0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                        IIC_VSUBi4Q, "vcgt", "u", NEONvcgtu, 0>;
 def  VCGTfd   : N3VD<1,0,0b10,0b1110,0, IIC_VBIND, "vcgt", "f32", v2i32, v2f32,
                      NEONvcgt, 0>;
 def  VCGTfq   : N3VQ<1,0,0b10,0b1110,0, IIC_VBINQ, "vcgt", "f32", v4i32, v4f32,
@@ -2446,11 +2446,19 @@ def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
 // Vector Absolute Differences.
 
 //   VABD     : Vector Absolute Difference
+<<<<<<< HEAD
 defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, N3RegFrm,
                             IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
                            "vabd", "s", int_arm_neon_vabds, 0>;
 defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, N3RegFrm,
                             IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+=======
+defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, IIC_VSUBi4D, IIC_VSUBi4D,
+                           IIC_VSUBi4Q, IIC_VSUBi4Q,
+                           "vabd", "s", int_arm_neon_vabds, 0>;
+defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, IIC_VSUBi4D, IIC_VSUBi4D,
+                           IIC_VSUBi4Q, IIC_VSUBi4Q,
+>>>>>>> VHADD differs from VHSUB at least on A9 - the former reads both operands in the
                            "vabd", "u", int_arm_neon_vabdu, 0>;
 def  VABDfd   : N3VDInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBIND,
                         "vabd", "f32", v2f32, v2f32, int_arm_neon_vabds, 0>;
@@ -2458,9 +2466,9 @@ def  VABDfq   : N3VQInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBINQ,
                         "vabd", "f32", v4f32, v4f32, int_arm_neon_vabds, 0>;
 
 //   VABDL    : Vector Absolute Difference Long (Q = | D - D |)
-defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VBINi4Q,
+defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VSUBi4Q,
                             "vabdl", "s", int_arm_neon_vabdls, 0>;
-defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VBINi4Q,
+defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VSUBi4Q,
                              "vabdl", "u", int_arm_neon_vabdlu, 0>;
 
 //   VABA     : Vector Absolute Difference and Accumulate
@@ -2474,6 +2482,7 @@ defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, "vabal", "u", int_arm_neon_vabalu>;
 // Vector Maximum and Minimum.
 
 //   VMAX     : Vector Maximum
+<<<<<<< HEAD
 defm VMAXs    : N3VInt_QHS<0, 0, 0b0110, 0, N3RegFrm,
                            IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
                            "vmax", "s", int_arm_neon_vmaxs, 1>;
@@ -2496,6 +2505,26 @@ def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND, "vmin",
                         "f32", v2f32, v2f32, int_arm_neon_vmins, 1>;
 def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ, "vmin",
                         "f32", v4f32, v4f32, int_arm_neon_vmins, 1>;
+=======
+defm VMAXs    : N3VInt_QHS<0,0,0b0110,0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                           IIC_VSUBi4Q, "vmax", "s", int_arm_neon_vmaxs, 1>;
+defm VMAXu    : N3VInt_QHS<1,0,0b0110,0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                           IIC_VSUBi4Q, "vmax", "u", int_arm_neon_vmaxu, 1>;
+def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, IIC_VBIND, "vmax", "f32",
+                        v2f32, v2f32, int_arm_neon_vmaxs, 1>;
+def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, IIC_VBINQ, "vmax", "f32",
+                        v4f32, v4f32, int_arm_neon_vmaxs, 1>;
+
+//   VMIN     : Vector Minimum
+defm VMINs    : N3VInt_QHS<0,0,0b0110,1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                           IIC_VSUBi4Q, "vmin", "s", int_arm_neon_vmins, 1>;
+defm VMINu    : N3VInt_QHS<1,0,0b0110,1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
+                           IIC_VSUBi4Q, "vmin", "u", int_arm_neon_vminu, 1>;
+def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, IIC_VBIND, "vmin", "f32",
+                        v2f32, v2f32, int_arm_neon_vmins, 1>;
+def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, IIC_VBINQ, "vmin", "f32",
+                        v4f32, v4f32, int_arm_neon_vmins, 1>;
+>>>>>>> VHADD differs from VHSUB at least on A9 - the former reads both operands in the
 
 // Vector Pairwise Operations.
 

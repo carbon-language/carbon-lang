@@ -133,6 +133,8 @@ def IIC_VSUBiD     : InstrItinClass;
 def IIC_VSUBiQ     : InstrItinClass;
 def IIC_VBINi4D    : InstrItinClass;
 def IIC_VBINi4Q    : InstrItinClass;
+def IIC_VSUBi4D    : InstrItinClass;
+def IIC_VSUBi4Q    : InstrItinClass;
 def IIC_VSHLiD     : InstrItinClass;
 def IIC_VSHLiQ     : InstrItinClass;
 def IIC_VSHLi4D    : InstrItinClass;
