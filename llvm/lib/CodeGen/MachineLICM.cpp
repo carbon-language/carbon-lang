@@ -247,6 +247,8 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
     if (!CurLoop->contains(BB))
       continue;
     // Conservatively treat live-in's as an external def.
+    // FIXME: That means a reload that's reused into a fallthrough block
+    // will not be LICM'ed.
     for (MachineBasicBlock::const_livein_iterator I = BB->livein_begin(),
            E = BB->livein_end(); I != E; ++I) {
       unsigned Reg = *I;
@@ -282,7 +284,8 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
         }
       }
 
-      // FIXME: Only consider reloads for now.
+      // FIXME: Only consider reloads for now. We should be able to handle
+      // remat which does not have register operands.
       bool SkipCheck = false;
       int FI;
       if (SeenDef && !RuledOut) {
