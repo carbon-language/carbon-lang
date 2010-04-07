@@ -1,16 +1,4 @@
-; RUN: llc -O0 -march=ppc32 -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=sparc -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=x86 -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=x86-64 -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=arm -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=thumb -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=alpha -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=cellspu -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=mblaze -asm-verbose < %s | FileCheck %s
 ; RUN: llc -O0 -march=mips -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=msp430 -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=systemz -asm-verbose < %s | FileCheck %s
-; RUN: llc -O0 -march=xcore -asm-verbose < %s | FileCheck %s
 ; Check that DEBUG_VALUE comments come through on a variety of targets.
 
 %tart.reflect.ComplexType = type { double, double }
