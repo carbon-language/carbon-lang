@@ -804,6 +804,60 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage<2, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [1, 1, 1]>,
+  //
+  // Single-precision FP Load
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpLoad32, [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // Double-precision FP Load
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpLoad64, [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // FP Load Multiple
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpLoadm,  [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // Single-precision FP Store
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStore32,[InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // Double-precision FP Store
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStore64,[InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
+  //
+  // FP Store Multiple
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStorem, [InstrStage<1, [FU_DRegsVFP], 0, Required>,
+                               InstrStage<2, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NPipe]>]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
   // FIXME: Neon pipeline and LdSt unit are multiplexed. 
