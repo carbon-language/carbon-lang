@@ -7,21 +7,21 @@
 @end
 
 @interface bar
--(void) my_method:(foo) my_param; // expected-error {{Objective-C interface type 'foo' cannot be passed by value}}
-- (foo)cccccc:(long)ddddd;  // expected-error {{Objective-C interface type 'foo' cannot be returned by value}}
+-(void) my_method:(foo) my_param; // expected-error {{Objective-C interface type 'foo' cannot be passed by value; did you forget * in 'foo'}}
+- (foo)cccccc:(long)ddddd;  // expected-error {{Objective-C interface type 'foo' cannot be returned by value; did you forget * in 'foo'}}
 @end
 
 @implementation bar
--(void) my_method:(foo) my_param  // expected-error {{Objective-C interface type 'foo' cannot be passed by value}}
+-(void) my_method:(foo) my_param  // expected-error {{Objective-C interface type 'foo' cannot be passed by value; did you forget * in 'foo'}}
 {
 }
-- (foo)cccccc:(long)ddddd // expected-error {{Objective-C interface type 'foo' cannot be returned by value}}
+- (foo)cccccc:(long)ddddd // expected-error {{Objective-C interface type 'foo' cannot be returned by value; did you forget * in 'foo'}}
 {
 }
 @end
 
-void somefunc(foo x) {} // expected-error {{Objective-C interface type 'foo' cannot be passed by value}}
-foo somefunc2() {} // expected-error {{Objective-C interface type 'foo' cannot be returned by value}}
+void somefunc(foo x) {} // expected-error {{Objective-C interface type 'foo' cannot be passed by value; did you forget * in 'foo'}}
+foo somefunc2() {} // expected-error {{Objective-C interface type 'foo' cannot be returned by value; did you forget * in 'foo'}}
 
 // rdar://6780761
 void f0(foo *a0) {

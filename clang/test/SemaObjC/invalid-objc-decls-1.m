@@ -27,8 +27,8 @@ struct whatever {
 }
 @end
 
-Super foo( // expected-error{{interface interface type 'Super' cannot be returned by value}}
-          Super parm1) { // expected-error{{interface interface type 'Super' cannot be passed by value}}
+Super foo( // expected-error{{interface interface type 'Super' cannot be returned by value; did you forget * in 'Super'}}
+          Super parm1) { // expected-error{{interface interface type 'Super' cannot be passed by value; did you forget * in 'Super'}}
 	Super p1; // expected-error{{interface type cannot be statically allocated}}
 	return p1;
 }

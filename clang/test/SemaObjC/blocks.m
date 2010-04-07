@@ -39,10 +39,10 @@ void foo7(id (^x)(int)) {
 @end
 
 void foo8() {
-  void *P = ^(itf x) {};  // expected-error {{Objective-C interface type 'itf' cannot be passed by value}}
-  P = ^itf(int x) {};     // expected-error {{Objective-C interface type 'itf' cannot be returned by value}}
-  P = ^itf() {};          // expected-error {{Objective-C interface type 'itf' cannot be returned by value}}
-  P = ^itf{};             // expected-error {{Objective-C interface type 'itf' cannot be returned by value}}
+  void *P = ^(itf x) {};  // expected-error {{Objective-C interface type 'itf' cannot be passed by value; did you forget * in 'itf'}}
+  P = ^itf(int x) {};     // expected-error {{Objective-C interface type 'itf' cannot be returned by value; did you forget * in 'itf'}}
+  P = ^itf() {};          // expected-error {{Objective-C interface type 'itf' cannot be returned by value; did you forget * in 'itf'}}
+  P = ^itf{};             // expected-error {{Objective-C interface type 'itf' cannot be returned by value; did you forget * in 'itf'}}
 }
 
 

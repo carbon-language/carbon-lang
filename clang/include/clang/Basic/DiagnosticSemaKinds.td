@@ -215,7 +215,8 @@ def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;
 def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<
-  "interface type %1 cannot be %select{returned|passed}0 by value">;
+  "interface type %1 cannot be %select{returned|passed}0 by value"
+  "; did you forget * in %1">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
 def warn_pragma_pack_invalid_alignment : Warning<
   "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
