@@ -600,7 +600,8 @@ def CortexA9Itineraries : ProcessorItineraries<[
   //
   // Every VFP instruction:
   //  - Acquires DRegsVFP resource for 1 cycle
-  //  - Reserves DRegsN resource for the whole duration.
+  //  - Reserves DRegsN resource for the whole duration (including time to
+  //    register file writeback!).
   // Every NEON instruction does the same but with FUs swapped.
   //
   // Since the reserved FU cannot be acquired this models precisly "cross-domain"
@@ -612,39 +613,43 @@ def CortexA9Itineraries : ProcessorItineraries<[
   // FP Special Register to Integer Register File Move
   InstrItinData<IIC_fpSTAT , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                              InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                              InstrStage<1, [FU_NPipe]>]>,
+                              InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                              InstrStage<1,  [FU_NPipe]>]>,
   //
   // Single-precision FP Unary
   InstrItinData<IIC_fpUNA32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+                               // Extra 1 latency cycle since wbck is 2 cycles
+                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision FP Unary
   InstrItinData<IIC_fpUNA64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+                               // Extra 1 latency cycle since wbck is 2 cycles
+                               InstrStage2<3, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
 
   //
   // Single-precision FP Compare
   InstrItinData<IIC_fpCMP32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+                               // Extra 3 latency cycle since wbck is 4 cycles
+                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision FP Compare
   InstrItinData<IIC_fpCMP64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
-                               InstrStage2<2, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+                               // Extra 3 latency cycle since wbck is 4 cycles
+                               InstrStage2<5, [FU_DRegsN],   0, Reserved>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [1, 1]>,
   //
   // Single to Double FP Convert
   InstrItinData<IIC_fpCVTSD , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
   //
   // Double to Single FP Convert
   InstrItinData<IIC_fpCVTDS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
@@ -662,93 +667,93 @@ def CortexA9Itineraries : ProcessorItineraries<[
   // Half to Single FP Convert
   InstrItinData<IIC_fpCVTHS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<3, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [2, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [2, 1]>,
 
   //
   // Single-Precision FP to Integer Convert
   InstrItinData<IIC_fpCVTSI , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
   //
   // Double-Precision FP to Integer Convert
   InstrItinData<IIC_fpCVTDI , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
   //
   // Integer to Single-Precision FP Convert
   InstrItinData<IIC_fpCVTIS , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
   //
   // Integer to Double-Precision FP Convert
   InstrItinData<IIC_fpCVTID , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1]>,
   //
   // Single-precision FP ALU
   InstrItinData<IIC_fpALU32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1, 1]>,
   //
   // Double-precision FP ALU
   InstrItinData<IIC_fpALU64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<5, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [4, 1, 1]>,
   //
   // Single-precision FP Multiply
   InstrItinData<IIC_fpMUL32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<6, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [5, 1, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [5, 1, 1]>,
   //
   // Double-precision FP Multiply
   InstrItinData<IIC_fpMUL64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<7, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [6, 1, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2,  [FU_NPipe]>], [6, 1, 1]>,
   //
   // Single-precision FP MAC
   InstrItinData<IIC_fpMAC32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<9, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [8, 0, 1, 1]>,
+                               InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1,  [FU_NPipe]>], [8, 0, 1, 1]>,
   //
   // Double-precision FP MAC
-  InstrItinData<IIC_fpMAC64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpMAC64 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<10, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [9, 0, 1, 1]>,
+                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2,   [FU_NPipe]>], [9, 0, 1, 1]>,
   //
   // Single-precision FP DIV
-  InstrItinData<IIC_fpDIV32 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpDIV32 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<16, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<10, [FU_NPipe]>], [15, 1, 1]>,
+                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<10,  [FU_NPipe]>], [15, 1, 1]>,
   //
   // Double-precision FP DIV
-  InstrItinData<IIC_fpDIV64 , [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpDIV64 , [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<26, [FU_DRegsN],  0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<20, [FU_NPipe]>], [25, 1, 1]>,
+                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<20,  [FU_NPipe]>], [25, 1, 1]>,
   //
   // Single-precision FP SQRT
-  InstrItinData<IIC_fpSQRT32, [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpSQRT32, [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<18, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<13, [FU_NPipe]>], [17, 1]>,
+                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<13,  [FU_NPipe]>], [17, 1]>,
   //
   // Double-precision FP SQRT
-  InstrItinData<IIC_fpSQRT64, [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpSQRT64, [InstrStage2<1,  [FU_DRegsVFP], 0, Required>,
                                InstrStage2<33, [FU_DRegsN],   0, Reserved>,
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<28, [FU_NPipe]>], [32, 1]>
+                               InstrStage<1,   [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<28,  [FU_NPipe]>], [32, 1]>
 ]>;
 
 
