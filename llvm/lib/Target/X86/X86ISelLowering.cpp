@@ -3440,7 +3440,7 @@ unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp, int NumElems,
 /// FIXME: split into pslldqi, psrldqi, palignr variants.
 static bool isVectorShift(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
                           bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
-  int NumElems = SVOp->getValueType(0).getVectorNumElements();
+  unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
 
   isLeft = true;
   unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems, true, DAG);
@@ -3452,11 +3452,12 @@ static bool isVectorShift(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
   }
   bool SeenV1 = false;
   bool SeenV2 = false;
-  for (int i = NumZeros; i < NumElems; ++i) {
-    int Val = isLeft ? (i - NumZeros) : i;
-    int Idx = SVOp->getMaskElt(isLeft ? i : (i - NumZeros));
-    if (Idx < 0)
+  for (unsigned i = NumZeros; i < NumElems; ++i) {
+    unsigned Val = isLeft ? (i - NumZeros) : i;
+    int Idx_ = SVOp->getMaskElt(isLeft ? i : (i - NumZeros));
+    if (Idx_ < 0)
       continue;
+    unsigned Idx = (unsigned) Idx_;
     if (Idx < NumElems)
       SeenV1 = true;
     else {
