@@ -2446,19 +2446,11 @@ def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
 // Vector Absolute Differences.
 
 //   VABD     : Vector Absolute Difference
-<<<<<<< HEAD
 defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, N3RegFrm,
-                            IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vabd", "s", int_arm_neon_vabds, 0>;
 defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, N3RegFrm,
-                            IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
-=======
-defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, IIC_VSUBi4D, IIC_VSUBi4D,
-                           IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vabd", "s", int_arm_neon_vabds, 0>;
-defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, IIC_VSUBi4D, IIC_VSUBi4D,
-                           IIC_VSUBi4Q, IIC_VSUBi4Q,
->>>>>>> VHADD differs from VHSUB at least on A9 - the former reads both operands in the
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vabd", "u", int_arm_neon_vabdu, 0>;
 def  VABDfd   : N3VDInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBIND,
                         "vabd", "f32", v2f32, v2f32, int_arm_neon_vabds, 0>;
@@ -2551,6 +2543,7 @@ defm VPADALu  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b01101, 0, "vpadal", "u",
                               int_arm_neon_vpadalu>;
 
 //   VPMAX    : Vector Pairwise Maximum
+<<<<<<< HEAD
 def  VPMAXs8  : N3VDInt<0, 0, 0b00, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
                         "s8", v8i8, v8i8, int_arm_neon_vpmaxs, 0>;
 def  VPMAXs16 : N3VDInt<0, 0, 0b01, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
@@ -2581,6 +2574,38 @@ def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
                         "u32", v2i32, v2i32, int_arm_neon_vpminu, 0>;
 def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINi4D, "vpmin",
                         "f32", v2f32, v2f32, int_arm_neon_vpmins, 0>;
+=======
+def  VPMAXs8  : N3VDInt<0, 0, 0b00, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s8",
+                        v8i8, v8i8, int_arm_neon_vpmaxs, 0>;
+def  VPMAXs16 : N3VDInt<0, 0, 0b01, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s16",
+                        v4i16, v4i16, int_arm_neon_vpmaxs, 0>;
+def  VPMAXs32 : N3VDInt<0, 0, 0b10, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s32",
+                        v2i32, v2i32, int_arm_neon_vpmaxs, 0>;
+def  VPMAXu8  : N3VDInt<1, 0, 0b00, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u8",
+                        v8i8, v8i8, int_arm_neon_vpmaxu, 0>;
+def  VPMAXu16 : N3VDInt<1, 0, 0b01, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u16",
+                        v4i16, v4i16, int_arm_neon_vpmaxu, 0>;
+def  VPMAXu32 : N3VDInt<1, 0, 0b10, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u32",
+                        v2i32, v2i32, int_arm_neon_vpmaxu, 0>;
+def  VPMAXf   : N3VDInt<1, 0, 0b00, 0b1111, 0, IIC_VSUBi4D, "vpmax", "f32",
+                        v2f32, v2f32, int_arm_neon_vpmaxs, 0>;
+
+//   VPMIN    : Vector Pairwise Minimum
+def  VPMINs8  : N3VDInt<0, 0, 0b00, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s8",
+                        v8i8, v8i8, int_arm_neon_vpmins, 0>;
+def  VPMINs16 : N3VDInt<0, 0, 0b01, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s16",
+                        v4i16, v4i16, int_arm_neon_vpmins, 0>;
+def  VPMINs32 : N3VDInt<0, 0, 0b10, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s32",
+                        v2i32, v2i32, int_arm_neon_vpmins, 0>;
+def  VPMINu8  : N3VDInt<1, 0, 0b00, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u8",
+                        v8i8, v8i8, int_arm_neon_vpminu, 0>;
+def  VPMINu16 : N3VDInt<1, 0, 0b01, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u16",
+                        v4i16, v4i16, int_arm_neon_vpminu, 0>;
+def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u32",
+                        v2i32, v2i32, int_arm_neon_vpminu, 0>;
+def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, IIC_VSUBi4D, "vpmin", "f32",
+                        v2f32, v2f32, int_arm_neon_vpmins, 0>;
+>>>>>>> VP{MAX, MIN} are of IIC_VSUBi4D itin class as well.
 
 // Vector Reciprocal and Reciprocal Square Root Estimate and Step.
 
