@@ -7311,9 +7311,14 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   // (e.g. (void)sizeof()) constitute a use for warning purposes (-Wunused-variables and
   // -Wunused-parameters)
   if (isa<ParmVarDecl>(D) ||
-      (isa<VarDecl>(D) && D->getDeclContext()->isFunctionOrMethod()))
+      (isa<VarDecl>(D) && D->getDeclContext()->isFunctionOrMethod())) {
     D->setUsed(true);
-
+    return;
+  }
+  
+  if (!isa<VarDecl>(D) && !isa<FunctionDecl>(D))
+    return;
+  
   // Do not mark anything as "used" within a dependent context; wait for
   // an instantiation.
   if (CurContext->isDependentContext())

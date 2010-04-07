@@ -843,6 +843,10 @@ public:
   /// ParmVarDecl pointers.
   template<typename InputIterator>
   void DiagnoseUnusedParameters(InputIterator Param, InputIterator ParamEnd) {
+    if (Diags.getDiagnosticLevel(diag::warn_unused_parameter) == 
+          Diagnostic::Ignored)
+      return;
+    
     for (; Param != ParamEnd; ++Param) {
       if (!(*Param)->isUsed() && (*Param)->getDeclName() &&
           !(*Param)->template hasAttr<UnusedAttr>())
