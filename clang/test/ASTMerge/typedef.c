@@ -4,4 +4,4 @@
 
 // CHECK: typedef2.c:4:10: error: external variable 'x2' declared with incompatible types in different translation units ('Typedef2' (aka 'double') vs. 'Typedef2' (aka 'int'))
 // CHECK: typedef1.c:4:10: note: declared here with type 'Typedef2' (aka 'int')
-// CHECK: 2 diagnostics
+// CHECK: 1 error

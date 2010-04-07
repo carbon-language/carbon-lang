@@ -211,8 +211,8 @@ private:
   /// diagnostic that they follow.
   Diagnostic::Level LastDiagLevel;
 
-  unsigned NumDiagnostics;    // Number of diagnostics reported
-  unsigned NumErrors;         // Number of diagnostics that are errors
+  unsigned NumWarnings;       // Number of warnings reported
+  unsigned NumErrors;         // Number of errors reported
 
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
@@ -338,7 +338,7 @@ public:
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
   unsigned getNumErrors() const { return NumErrors; }
-  unsigned getNumDiagnostics() const { return NumDiagnostics; }
+  unsigned getNumWarnings() const { return NumWarnings; }
 
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
   /// and level.  If this is the first request for this diagnosic, it is

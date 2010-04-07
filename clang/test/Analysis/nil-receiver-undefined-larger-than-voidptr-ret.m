@@ -77,6 +77,6 @@ int marker(void) { // control reaches end of non-void function
 // CHECK-darwin8: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
 // CHECK-darwin8: control reaches end of non-void function
-// CHECK-darwin8: 5 diagnostics generated
+// CHECK-darwin8: 5 warnings generated
 // CHECK-darwin9: control reaches end of non-void function
-// CHECK-darwin9: 1 diagnostic generated
+// CHECK-darwin9: 1 warning generated

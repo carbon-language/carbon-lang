@@ -6,4 +6,4 @@
 // CHECK: category1.m:16:1: note: instance method 'method2' also declared here
 // CHECK: category2.m:26:1: error: instance method 'method3' has incompatible result types in different translation units ('float' vs. 'int')
 // CHECK: category1.m:24:1: note: instance method 'method3' also declared here
-// CHECK: 4 diagnostics generated.
+// CHECK: 2 errors generated.

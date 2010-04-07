@@ -9,4 +9,4 @@
 // CHECK: var1.h:1:8: note: declared here with type 'double'
 // CHECK: error: external variable 'xarray3' declared with incompatible types in different translation units ('int [17]' vs. 'int [18]')
 // CHECK: var1.c:7:5: note: declared here with type 'int [18]'
-// CHECK: 6 diagnostics
+// CHECK: 3 errors

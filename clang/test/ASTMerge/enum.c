@@ -22,4 +22,4 @@
 // CHECK: enum1.c:30:6: note: no corresponding enumerator here
 // CHECK: enum2.c:34:3: error: external variable 'x5' declared with incompatible types in different translation units ('enum E5' vs. 'enum E5')
 // CHECK: enum1.c:34:3: note: declared here with type 'enum E5'
-// CHECK: 20 diagnostics generated
+// CHECK: 4 warnings and 4 errors generated

@@ -513,11 +513,19 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
     }
   }
 
-  if (getDiagnosticOpts().ShowCarets)
-    if (unsigned NumDiagnostics = getDiagnostics().getNumDiagnostics())
-      OS << NumDiagnostics << " diagnostic"
-         << (NumDiagnostics == 1 ? "" : "s")
-         << " generated.\n";
+  if (getDiagnosticOpts().ShowCarets) {
+    unsigned NumWarnings = getDiagnostics().getNumWarnings();
+    unsigned NumErrors = getDiagnostics().getNumErrors();
+    
+    if (NumWarnings)
+      OS << NumWarnings << " warning" << (NumWarnings == 1 ? "" : "s");
+    if (NumWarnings && NumErrors)
+      OS << " and ";
+    if (NumErrors)
+      OS << NumErrors << " error" << (NumErrors == 1 ? "" : "s");
+    if (NumWarnings || NumErrors)
+      OS << " generated.\n";
+  }
 
   if (getFrontendOpts().ShowStats) {
     getFileManager().PrintStats();

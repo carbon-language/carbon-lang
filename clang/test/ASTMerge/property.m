@@ -6,4 +6,4 @@
 // CHECK: property1.m:10:28: note: declared here with type 'float'
 // CHECK: property2.m:12:26: error: instance method 'Prop1' has incompatible result types in different translation units ('int' vs. 'float')
 // CHECK: property1.m:10:28: note: instance method 'Prop1' also declared here
-// CHECK: 4 diagnostics generated.
+// CHECK: 2 errors generated.

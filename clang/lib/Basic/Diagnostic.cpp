@@ -223,8 +223,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
 
   ErrorOccurred = false;
   FatalErrorOccurred = false;
-  NumDiagnostics = 0;
   
+  NumWarnings = 0;
   NumErrors = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
@@ -555,7 +555,10 @@ bool Diagnostic::ProcessDiag() {
 
   // Finally, report it.
   Client->HandleDiagnostic(DiagLevel, Info);
-  if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
+  if (Client->IncludeInDiagnosticCounts()) {
+    if (DiagLevel == Diagnostic::Warning)
+      ++NumWarnings;
+  }
 
   CurDiagID = ~0U;
 

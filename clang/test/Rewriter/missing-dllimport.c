@@ -12,8 +12,8 @@ inline int __cdecl foo() { return 0; }
 void bar() { return 1; }
 
 // CHECK-NEG: warning: void function 'bar' should not return a value
-// CHECK-NEG: 1 diagnostic generated
+// CHECK-NEG: 1 warning generated
 // CHECK-POS: warning: 'foo' redeclared without dllimport attribute: previous dllimport ignored
 // CHECK-POS: warning: void function 'bar' should not return a value
-// CHECK-POS: 2 diagnostics generated
+// CHECK-POS: 2 warnings generated
 

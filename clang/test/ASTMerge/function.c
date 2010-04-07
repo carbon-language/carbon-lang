@@ -6,4 +6,4 @@
 // CHECK: function1.c:2:6: note: declared here with type 'void (int, float)'
 // CHECK: function2.c:5:6: error: external function 'f3' declared with incompatible types in different translation units ('void (int)' vs. 'void (void)')
 // CHECK: function1.c:4:6: note: declared here with type 'void (void)'
-// CHECK: 4 diagnostics generated
+// CHECK: 2 errors generated

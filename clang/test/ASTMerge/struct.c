@@ -39,4 +39,4 @@
 // CHECK: struct2.c:53:43: note: field 'Deeper' has type 'struct DeeperError *' here
 // CHECK: struct2.c:54:3: error: external variable 'xDeep' declared with incompatible types in different translation units ('struct DeepError' vs. 'struct DeepError')
 // CHECK: struct1.c:57:3: note: declared here with type 'struct DeepError'
-// CHECK: 37 diagnostics
+// CHECK: 8 warnings and 7 errors generated

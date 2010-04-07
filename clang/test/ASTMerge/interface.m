@@ -15,5 +15,5 @@
 // CHECK: interface1.m:46:1: note: class method 'bar:' also declared here
 // CHECK: interface2.m:57:20: error: instance method 'bar:' has a parameter with a different types in different translation units ('double' vs. 'float')
 // CHECK: interface1.m:58:19: note: declared here with type 'float'
-// CHECK: 13 diagnostics generated
+// CHECK: 6 errors generated
 
