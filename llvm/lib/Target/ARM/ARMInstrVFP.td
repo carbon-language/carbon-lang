@@ -678,7 +678,7 @@ def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, "vmsr",
 // Materialize FP immediates. VFP3 only.
 let isReMaterializable = 1 in {
 def FCONSTD : VFPAI<(outs DPR:$dst), (ins vfp_f64imm:$imm),
-                    VFPMiscFrm, IIC_VMOVImm,
+                    VFPMiscFrm, IIC_fpUNA64,
                     "vmov", ".f64\t$dst, $imm",
                     [(set DPR:$dst, vfp_f64imm:$imm)]>, Requires<[HasVFP3]> {
   let Inst{27-23} = 0b11101;
@@ -689,7 +689,7 @@ def FCONSTD : VFPAI<(outs DPR:$dst), (ins vfp_f64imm:$imm),
 }
 
 def FCONSTS : VFPAI<(outs SPR:$dst), (ins vfp_f32imm:$imm),
-                    VFPMiscFrm, IIC_VMOVImm,
+                    VFPMiscFrm, IIC_fpUNA32,
                     "vmov", ".f32\t$dst, $imm",
                     [(set SPR:$dst, vfp_f32imm:$imm)]>, Requires<[HasVFP3]> {
   let Inst{27-23} = 0b11101;
