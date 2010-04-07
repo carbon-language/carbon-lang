@@ -2530,6 +2530,8 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
 
+  FriendDecl *CheckFriendTypeDecl(SourceLocation FriendLoc, 
+                                  TypeSourceInfo *TSInfo);
   DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                                 MultiTemplateParamsArg TemplateParams);
   DeclPtrTy ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,

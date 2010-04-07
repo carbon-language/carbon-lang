@@ -5318,6 +5318,53 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   return DeclPtrTy::make(Decl);
 }
 
+/// \brief Perform semantic analysis of the given friend type declaration.
+///
+/// \returns A friend declaration that.
+FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc, 
+                                      TypeSourceInfo *TSInfo) {
+  assert(TSInfo && "NULL TypeSourceInfo for friend type declaration");
+  
+  QualType T = TSInfo->getType();
+  SourceRange TypeRange = TSInfo->getTypeLoc().getSourceRange();
+  
+  // C++03 [class.friend]p2:
+  //   An elaborated-type-specifier shall be used in a friend declaration
+  //   for a class.*
+  //
+  //   * The class-key of the elaborated-type-specifier is required.
+  if (!getLangOptions().CPlusPlus0x && !T->isElaboratedTypeSpecifier()) {
+    // If we evaluated the type to a record type, suggest putting
+    // a tag in front.
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      RecordDecl *RD = RT->getDecl();
+      
+      std::string InsertionText = std::string(" ") + RD->getKindName();
+      
+      Diag(FriendLoc, diag::err_unelaborated_friend_type)
+        << (unsigned) RD->getTagKind()
+        << T
+        << SourceRange(FriendLoc)
+        << FixItHint::CreateInsertion(TypeRange.getBegin(),
+                                      InsertionText);
+      return 0; 
+    } else {
+      Diag(FriendLoc, diag::err_unexpected_friend)
+        << SourceRange(FriendLoc, TypeRange.getEnd());
+      return 0;
+    }
+  }
+  
+  // Enum types cannot be friends.
+  if (T->getAs<EnumType>()) {
+    Diag(FriendLoc, diag::err_enum_friend)
+      << SourceRange(FriendLoc, TypeRange.getEnd());
+    return 0;
+  }  
+  
+  return FriendDecl::Create(Context, CurContext, FriendLoc, TSInfo, FriendLoc);
+}
+
 /// Handle a friend type declaration.  This works in tandem with
 /// ActOnTag.
 ///
@@ -5351,6 +5398,9 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   if (TheDeclarator.isInvalidType())
     return DeclPtrTy();
 
+  if (!TSI)
+    TSI = Context.getTrivialTypeSourceInfo(T, DS.getSourceRange().getBegin());
+  
   // This is definitely an error in C++98.  It's probably meant to
   // be forbidden in C++0x, too, but the specification is just
   // poorly written.
@@ -5370,38 +5420,11 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
       << DS.getSourceRange();
     return DeclPtrTy();
   }
-
-  // C++ [class.friend]p2:
-  //   An elaborated-type-specifier shall be used in a friend declaration
-  //   for a class.*
-  //   * The class-key of the elaborated-type-specifier is required.
-  // This is one of the rare places in Clang where it's legitimate to
-  // ask about the "spelling" of the type.
-  if (!getLangOptions().CPlusPlus0x && !T->isElaboratedTypeSpecifier()) {
-    // If we evaluated the type to a record type, suggest putting
-    // a tag in front.
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      RecordDecl *RD = RT->getDecl();
-
-      std::string InsertionText = std::string(" ") + RD->getKindName();
-
-      Diag(DS.getTypeSpecTypeLoc(), diag::err_unelaborated_friend_type)
-        << (unsigned) RD->getTagKind()
-        << T
-        << SourceRange(DS.getFriendSpecLoc())
-        << FixItHint::CreateInsertion(DS.getTypeSpecTypeLoc(), InsertionText);
-      return DeclPtrTy();
-    }else {
-      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
-          << DS.getSourceRange();
-      return DeclPtrTy();
-    }
-  }
-
-  // Enum types cannot be friends.
-  if (T->getAs<EnumType>()) {
+  
+  // Enum templates cannot be friends.
+  if (TempParams.size() && T->getAs<EnumType>()) {
     Diag(DS.getTypeSpecTypeLoc(), diag::err_enum_friend)
-      << SourceRange(DS.getFriendSpecLoc());
+    << SourceRange(DS.getFriendSpecLoc());
     return DeclPtrTy();
   }
 
@@ -5417,15 +5440,18 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   // friend a member of an arbitrary specialization of your template).
 
   Decl *D;
-  if (TempParams.size())
+  if (unsigned NumTempParamLists = TempParams.size())
     D = FriendTemplateDecl::Create(Context, CurContext, Loc,
-                                   TempParams.size(),
+                                   NumTempParamLists,
                                  (TemplateParameterList**) TempParams.release(),
                                    TSI,
                                    DS.getFriendSpecLoc());
   else
-    D = FriendDecl::Create(Context, CurContext, Loc, TSI,
-                           DS.getFriendSpecLoc());
+    D = CheckFriendTypeDecl(DS.getFriendSpecLoc(), TSI);
+  
+  if (!D)
+    return DeclPtrTy();
+  
   D->setAccess(AS_public);
   CurContext->addDecl(D);
 
