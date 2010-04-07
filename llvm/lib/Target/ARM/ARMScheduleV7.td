@@ -866,6 +866,27 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
   //
+  // Quad-register Integer Shift
+  InstrItinData<IIC_VSHLiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
+  //
+  // Double-register Integer Shift (4 cycle)
+  InstrItinData<IIC_VSHLi4D,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+  //
+  // Quad-register Integer Shift (4 cycle)
+  InstrItinData<IIC_VSHLi4Q,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+  //
   // Double-register Integer Binary (4 cycle)
   InstrItinData<IIC_VBINi4D,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
                                // Extra 3 latency cycle since wbck is 6 cycles
