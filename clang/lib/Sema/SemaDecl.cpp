@@ -70,7 +70,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
     if (ObjectType->isRecordType())
       LookupCtx = computeDeclContext(ObjectType);
-  } else if (SS && SS->isSet()) {
+  } else if (SS && SS->isNotEmpty()) {
     LookupCtx = computeDeclContext(*SS, false);
 
     if (!LookupCtx) {

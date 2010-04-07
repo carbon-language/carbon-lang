@@ -16,7 +16,7 @@ namespace PR6161 {
               // expected-error{{expected class name}} \
   // expected-note{{attempt to specialize declaration here}}
   {
-    static locale::id id; // expected-error{{use of undeclared identifier}} FIXME: expected-error {{unknown type name}}
+    static locale::id id; // expected-error{{use of undeclared identifier}}
   };
   numpunct<char>::~numpunct(); // expected-error{{template specialization requires 'template<>'}} \
   // expected-error{{specialization of member 'PR6161::numpunct<char>::~numpunct' does not specialize an instantiated member}}

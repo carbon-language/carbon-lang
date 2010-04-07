@@ -2427,7 +2427,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     CXXScopeSpec SS;
     ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true); // ignore fail
 
-    if (SS.isSet()) {
+    if (SS.isNotEmpty()) {
       if (Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
         D.getCXXScopeSpec() = SS;

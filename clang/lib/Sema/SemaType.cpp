@@ -1253,8 +1253,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       }
       // The scope spec must refer to a class, or be dependent.
       QualType ClsType;
-      if (isDependentScopeSpecifier(DeclType.Mem.Scope())
-            || dyn_cast_or_null<CXXRecordDecl>(
+      if (DeclType.Mem.Scope().isInvalid()) {
+        // Avoid emitting extra errors if we already errored on the scope.
+        D.setInvalidType(true);
+      } else if (isDependentScopeSpecifier(DeclType.Mem.Scope())
+                 || dyn_cast_or_null<CXXRecordDecl>(
                                    computeDeclContext(DeclType.Mem.Scope()))) {
         NestedNameSpecifier *NNS
           = (NestedNameSpecifier *)DeclType.Mem.Scope().getScopeRep();

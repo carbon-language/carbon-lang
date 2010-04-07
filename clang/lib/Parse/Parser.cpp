@@ -1046,7 +1046,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   CXXScopeSpec SS;
   if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
     return true;
-  if (!SS.isSet())
+  if (SS.isEmpty())
     return false;
 
   // Push the current token back into the token stream (or revert it if it is
