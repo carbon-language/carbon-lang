@@ -1018,6 +1018,72 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<4, [FU_NPipe]>], [9, 3, 2, 1]>,
   //
+  // Double-register FP Unary
+  InstrItinData<IIC_VUNAD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 2]>,
+  //
+  // Quad-register FP Unary
+  // Result written in N5, but that is relative to the last cycle of multicycle,
+  // so we use 6 for those cases
+  InstrItinData<IIC_VUNAQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 2]>,
+  //
+  // Double-register FP Binary
+  // FIXME: We're using this itin for many instructions and [2, 2] here is too
+  // optimistic.
+  InstrItinData<IIC_VBIND,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 2, 2]>,
+  //
+  // Quad-register FP Binary
+  // Result written in N5, but that is relative to the last cycle of multicycle,
+  // so we use 6 for those cases
+  // FIXME: We're using this itin for many instructions and [2, 2] here is too
+  // optimistic.
+  InstrItinData<IIC_VBINQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 8 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
+  //
+  // Double-register FP Multiple-Accumulate
+  InstrItinData<IIC_VMACD,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>,
+  //
+  // Quad-register FP Multiple-Accumulate
+  // Result written in N9, but that is relative to the last cycle of multicycle,
+  // so we use 10 for those cases
+  InstrItinData<IIC_VMACQ,    [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 9 cycles
+                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe]>], [8, 4, 2, 1]>,
+  //
+  // Double-register Reciprical Step
+  InstrItinData<IIC_VRECSD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
+  //
+  // Quad-register Reciprical Step
+  InstrItinData<IIC_VRECSQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 9 cycles
+                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe]>], [8, 2, 2]>,
+  //
   // Double-register Permute
   InstrItinData<IIC_VPERMD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
                                // Extra 3 latency cycle since wbck is 6 cycles
