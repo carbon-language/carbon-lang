@@ -35,6 +35,10 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
                                   const DiagnosticOptions &Opts) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
   Diags.setIgnoreAllWarnings(Opts.IgnoreWarnings);
+  
+  // Handle -ferror-limit
+  if (Opts.ErrorLimit)
+    Diags.setErrorLimit(Opts.ErrorLimit);
 
   // If -pedantic or -pedantic-errors was specified, then we want to map all
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd

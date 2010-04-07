@@ -232,6 +232,10 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fdiagnostics-binary");
   if (Opts.ShowOptionNames)
     Res.push_back("-fdiagnostics-show-option");
+  if (Opts.ErrorLimit) {
+    Res.push_back("-ferror-limit");
+    Res.push_back(llvm::utostr(Opts.ErrorLimit));
+  }
   if (Opts.TabStop != DiagnosticOptions::DefaultTabStop) {
     Res.push_back("-ftabstop");
     Res.push_back(llvm::utostr(Opts.TabStop));
@@ -830,6 +834,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.BinaryOutput = Args.hasArg(OPT_fdiagnostics_binary);
+  Opts.ErrorLimit = getLastArgIntValue(Args, OPT_ferror_limit, 0, Diags);
   Opts.TabStop = getLastArgIntValue(Args, OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
   if (Opts.TabStop == 0 || Opts.TabStop > DiagnosticOptions::MaxTabStop) {
