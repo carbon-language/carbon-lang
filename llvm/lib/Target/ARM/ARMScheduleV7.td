@@ -780,7 +780,59 @@ def CortexA9Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_fpMOVDI,  [InstrStage2<1, [FU_DRegsVFP], 0, Required>,
                                InstrStage2<2, [FU_DRegsN],   0, Reserved>,
                                InstrStage<1,  [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>
+                               InstrStage<1,  [FU_NPipe]>], [1, 1, 1]>,
+  // NEON
+  // Issue through integer pipeline, and execute in NEON unit.
+
+  //
+  // Double-register Integer Binary
+  InstrItinData<IIC_VBINiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
+  //
+  // Quad-register Integer Binary
+  InstrItinData<IIC_VBINiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
+  //
+  // Double-register Integer Subtract
+  InstrItinData<IIC_VSUBiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
+  //
+  // Quad-register Integer Subtract
+  InstrItinData<IIC_VSUBiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
+  //
+  // Double-register Integer Shift
+  InstrItinData<IIC_VSHLiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
+  //
+  // Double-register Integer Binary (4 cycle)
+  InstrItinData<IIC_VBINi4D,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2, 2]>,
+  //
+  // Quad-register Integer Binary (4 cycle)
+  InstrItinData<IIC_VBINi4Q,  [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2, 2]>
 ]>;
 
 
