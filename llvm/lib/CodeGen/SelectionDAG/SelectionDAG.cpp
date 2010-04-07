@@ -1356,6 +1356,23 @@ SDValue SelectionDAG::getSrcValue(const Value *V) {
   return SDValue(N, 0);
 }
 
+/// getMDNode - Return an MDNodeSDNode which holds an MDNode.
+SDValue SelectionDAG::getMDNode(const MDNode *MD) {
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::MDNODE_SDNODE, getVTList(MVT::Other), 0, 0);
+  ID.AddPointer(MD);
+  
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDValue(E, 0);
+  
+  SDNode *N = new (NodeAllocator) MDNodeSDNode(MD);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
+
 /// getShiftAmountOperand - Return the specified value casted to
 /// the target's desired shift amount type.
 SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
@@ -5559,6 +5576,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
+  case ISD::MDNODE_SDNODE: return "MDNode";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::AssertSext:    return "AssertSext";
@@ -5925,6 +5943,11 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
       OS << "<" << M->getValue() << ">";
+    else
+      OS << "<null>";
+  } else if (const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(this)) {
+    if (MD->getMD())
+      OS << "<" << MD->getMD() << ">";
     else
       OS << "<null>";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {

@@ -499,9 +499,16 @@ namespace ISD {
     // return values: a chain and a flag result.  The inputs are as follows:
     //   Operand #0   : Input chain.
     //   Operand #1   : a ExternalSymbolSDNode with a pointer to the asm string.
-    //   Operand #2n+2: A RegisterNode.
-    //   Operand #2n+3: A TargetConstant, indicating if the reg is a use/def
+    //   Operand #2   : a MDNodeSDNode with the !srcloc metadata.
+    //   After this, it is followed by a list of operands with this format:
+    //     ConstantSDNode: Flags that encode whether it is a mem or not, the
+    //                     of operands that follow, etc.  See InlineAsm.h.
+    //     ... however many operands ...
     //   Operand #last: Optional, an incoming flag.
+    //
+    // The variable width operands are required to represent target addressing
+    // modes as a single "operand", even though they may have multiple
+    // SDOperands.
     INLINEASM,
 
     // EH_LABEL - Represents a label in mid basic block used to track
@@ -542,6 +549,10 @@ namespace ISD {
     // SRCVALUE - This is a node type that holds a Value* that is used to
     // make reference to a value in the LLVM IR.
     SRCVALUE,
+    
+    // MDNODE_SDNODE - This is a node that holdes an MDNode*, which is used to
+    // reference metadata in the IR.
+    MDNODE_SDNODE,
 
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
@@ -2051,6 +2062,21 @@ public:
   static bool classof(const SrcValueSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::SRCVALUE;
+  }
+};
+  
+class MDNodeSDNode : public SDNode {
+  const MDNode *MD;
+  friend class SelectionDAG;
+  explicit MDNodeSDNode(const MDNode *md)
+  : SDNode(ISD::MDNODE_SDNODE, DebugLoc(), getSDVTList(MVT::Other)), MD(md) {}
+public:
+  
+  const MDNode *getMD() const { return MD; }
+  
+  static bool classof(const MDNodeSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MDNODE_SDNODE;
   }
 };
 

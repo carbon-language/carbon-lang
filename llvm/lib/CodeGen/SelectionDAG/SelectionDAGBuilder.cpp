@@ -168,7 +168,7 @@ namespace {
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker, matching input operand index
     /// (if applicable), and includes the number of values added into it.
-    void AddInlineAsmOperands(unsigned Code,
+    void AddInlineAsmOperands(unsigned Kind,
                               bool HasMatching, unsigned MatchingIdx,
                               SelectionDAG &DAG,
                               std::vector<SDValue> &Ops) const;
@@ -4871,14 +4871,13 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
 /// AddInlineAsmOperands - Add this value to the specified inlineasm node
 /// operand list.  This adds the code marker and includes the number of
 /// values added into it.
-void RegsForValue::AddInlineAsmOperands(unsigned Code,
-                                        bool HasMatching,unsigned MatchingIdx,
+void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
+                                        unsigned MatchingIdx,
                                         SelectionDAG &DAG,
                                         std::vector<SDValue> &Ops) const {
-  assert(Regs.size() < (1 << 13) && "Too many inline asm outputs!");
-  unsigned Flag = Code | (Regs.size() << 3);
+  unsigned Flag = InlineAsm::getFlagWord(Code, Regs.size());
   if (HasMatching)
-    Flag |= 0x80000000 | (MatchingIdx << 16);
+    Flag = InlineAsm::getFlagWordForMatchingOp(Flag, MatchingIdx);
   SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
   Ops.push_back(Res);
 
@@ -5409,6 +5408,11 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
           DAG.getTargetExternalSymbol(IA->getAsmString().c_str(),
                                       TLI.getPointerTy()));
 
+  // If we have a !srcloc metadata node associated with it, we want to attach
+  // this to the ultimately generated inline asm machineinstr.  To do this, we
+  // pass in the third operand as this (potentially null) inline asm MDNode.
+  const MDNode *SrcLoc = CS.getInstruction()->getMetadata("srcloc");
+  AsmNodeOperands.push_back(DAG.getMDNode(SrcLoc));
 
   // Loop over all of the inputs, copying the operand values into the
   // appropriate registers and processing the output regs.
@@ -5428,8 +5432,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         assert(OpInfo.isIndirect && "Memory output must be indirect operand");
 
         // Add information to the INLINEASM node to know about this output.
-        unsigned ResOpType = 4/*MEM*/ | (1<<3);
-        AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
+        unsigned OpFlags = InlineAsm::getFlagWord(InlineAsm::Kind_Mem, 1);
+        AsmNodeOperands.push_back(DAG.getTargetConstant(OpFlags,
                                                         TLI.getPointerTy()));
         AsmNodeOperands.push_back(OpInfo.CallOperand);
         break;
@@ -5439,10 +5443,9 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
-      if (OpInfo.AssignedRegs.Regs.empty()) {
+      if (OpInfo.AssignedRegs.Regs.empty())
         llvm_report_error("Couldn't allocate output reg for"
                           " constraint '" + OpInfo.ConstraintCode + "'!");
-      }
 
       // If this is an indirect operand, store through the pointer after the
       // asm.
@@ -5459,8 +5462,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Add information to the INLINEASM node to know that this register is
       // set.
       OpInfo.AssignedRegs.AddInlineAsmOperands(OpInfo.isEarlyClobber ?
-                                               6 /* EARLYCLOBBER REGDEF */ :
-                                               2 /* REGDEF */ ,
+                                           InlineAsm::Kind_RegDefEarlyClobber :
+                                               InlineAsm::Kind_RegDef,
                                                false,
                                                0,
                                                DAG,
@@ -5477,27 +5480,25 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
         // Scan until we find the definition we already emitted of this operand.
         // When we find it, create a RegsForValue operand.
-        unsigned CurOp = 2;  // The first operand.
+        unsigned CurOp = InlineAsm::Op_FirstOperand;
         for (; OperandNo; --OperandNo) {
           // Advance to the next operand.
           unsigned OpFlag =
             cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
-          assert(((OpFlag & 7) == 2 /*REGDEF*/ ||
-                  (OpFlag & 7) == 6 /*EARLYCLOBBER REGDEF*/ ||
-                  (OpFlag & 7) == 4 /*MEM*/) &&
-                 "Skipped past definitions?");
+          assert((InlineAsm::isRegDefKind(OpFlag) ||
+                  InlineAsm::isRegDefEarlyClobberKind(OpFlag) ||
+                  InlineAsm::isMemKind(OpFlag)) && "Skipped past definitions?");
           CurOp += InlineAsm::getNumOperandRegisters(OpFlag)+1;
         }
 
         unsigned OpFlag =
           cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
-        if ((OpFlag & 7) == 2 /*REGDEF*/
-            || (OpFlag & 7) == 6 /* EARLYCLOBBER REGDEF */) {
+        if (InlineAsm::isRegDefKind(OpFlag) ||
+            InlineAsm::isRegDefEarlyClobberKind(OpFlag)) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
-          if (OpInfo.isIndirect) {
+          if (OpInfo.isIndirect)
             llvm_report_error("Don't know how to handle tied indirect "
                               "register inputs yet!");
-          }
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
           MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
@@ -5512,22 +5513,23 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
           // Use the produced MatchedRegs object to
           MatchedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
                                     Chain, &Flag);
-          MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/,
+          MatchedRegs.AddInlineAsmOperands(InlineAsm::Kind_RegUse,
                                            true, OpInfo.getMatchedOperand(),
                                            DAG, AsmNodeOperands);
           break;
-        } else {
-          assert(((OpFlag & 7) == 4) && "Unknown matching constraint!");
-          assert((InlineAsm::getNumOperandRegisters(OpFlag)) == 1 &&
-                 "Unexpected number of operands");
-          // Add information to the INLINEASM node to know about this input.
-          // See InlineAsm.h isUseOperandTiedToDef.
-          OpFlag |= 0x80000000 | (OpInfo.getMatchedOperand() << 16);
-          AsmNodeOperands.push_back(DAG.getTargetConstant(OpFlag,
-                                                          TLI.getPointerTy()));
-          AsmNodeOperands.push_back(AsmNodeOperands[CurOp+1]);
-          break;
         }
+        
+        assert(InlineAsm::isMemKind(OpFlag) && "Unknown matching constraint!");
+        assert(InlineAsm::getNumOperandRegisters(OpFlag) == 1 &&
+               "Unexpected number of operands");
+        // Add information to the INLINEASM node to know about this input.
+        // See InlineAsm.h isUseOperandTiedToDef.
+        OpFlag = InlineAsm::getFlagWordForMatchingOp(OpFlag,
+                                                    OpInfo.getMatchedOperand());
+        AsmNodeOperands.push_back(DAG.getTargetConstant(OpFlag,
+                                                        TLI.getPointerTy()));
+        AsmNodeOperands.push_back(AsmNodeOperands[CurOp+1]);
+        break;
       }
 
       if (OpInfo.ConstraintType == TargetLowering::C_Other) {
@@ -5543,18 +5545,21 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         }
 
         // Add information to the INLINEASM node to know about this input.
-        unsigned ResOpType = 3 /*IMM*/ | (Ops.size() << 3);
+        unsigned ResOpType =
+          InlineAsm::getFlagWord(InlineAsm::Kind_Imm, Ops.size());
         AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
                                                         TLI.getPointerTy()));
         AsmNodeOperands.insert(AsmNodeOperands.end(), Ops.begin(), Ops.end());
         break;
-      } else if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
+      }
+      
+      if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
         assert(OpInfo.isIndirect && "Operand must be indirect to be a mem!");
         assert(InOperandVal.getValueType() == TLI.getPointerTy() &&
                "Memory operands expect pointer values");
 
         // Add information to the INLINEASM node to know about this input.
-        unsigned ResOpType = 4/*MEM*/ | (1<<3);
+        unsigned ResOpType = InlineAsm::getFlagWord(InlineAsm::Kind_Mem, 1);
         AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
                                                         TLI.getPointerTy()));
         AsmNodeOperands.push_back(InOperandVal);
@@ -5577,7 +5582,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
                                         Chain, &Flag);
 
-      OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/, false, 0,
+      OpInfo.AssignedRegs.AddInlineAsmOperands(InlineAsm::Kind_RegUse, false, 0,
                                                DAG, AsmNodeOperands);
       break;
     }
@@ -5585,7 +5590,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Add the clobbered value to the operand list, so that the register
       // allocator is aware that the physreg got clobbered.
       if (!OpInfo.AssignedRegs.Regs.empty())
-        OpInfo.AssignedRegs.AddInlineAsmOperands(6 /* EARLYCLOBBER REGDEF */,
+        OpInfo.AssignedRegs.AddInlineAsmOperands(
+                                            InlineAsm::Kind_RegDefEarlyClobber,
                                                  false, 0, DAG,
                                                  AsmNodeOperands);
       break;
@@ -5593,7 +5599,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     }
   }
 
-  // Finish up input operands.
+  // Finish up input operands.  Set the input chain and add the flag last.
   AsmNodeOperands[0] = Chain;
   if (Flag.getNode()) AsmNodeOperands.push_back(Flag);
 

@@ -731,12 +731,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
                                TII->get(TargetOpcode::INLINEASM));
 
     // Add the asm string as an external symbol operand.
-    const char *AsmStr =
-      cast<ExternalSymbolSDNode>(Node->getOperand(1))->getSymbol();
+    SDValue AsmStrV = Node->getOperand(InlineAsm::Op_AsmString);
+    const char *AsmStr = cast<ExternalSymbolSDNode>(AsmStrV)->getSymbol();
     MI->addOperand(MachineOperand::CreateES(AsmStr));
       
     // Add all of the operand registers to the instruction.
-    for (unsigned i = 2; i != NumOps;) {
+    for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
       unsigned Flags =
         cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
       unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
@@ -744,24 +744,24 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       MI->addOperand(MachineOperand::CreateImm(Flags));
       ++i;  // Skip the ID value.
         
-      switch (Flags & 7) {
+      switch (InlineAsm::getKind(Flags)) {
       default: llvm_unreachable("Bad flags!");
-      case 2:   // Def of register.
+        case InlineAsm::Kind_RegDef:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, true));
         }
         break;
-      case 6:   // Def of earlyclobber register.
+      case InlineAsm::Kind_RegDefEarlyClobber:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, true, false, false, 
                                                    false, false, true));
         }
         break;
-      case 1:  // Use of register.
-      case 3:  // Immediate.
-      case 4:  // Addressing mode.
+      case InlineAsm::Kind_RegUse:  // Use of register.
+      case InlineAsm::Kind_Imm:  // Immediate.
+      case InlineAsm::Kind_Mem:  // Addressing mode.
         // The addressing mode has been selected, just add all of the
         // operands to the machine instruction.
         for (; NumVals; --NumVals, ++i)

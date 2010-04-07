@@ -1333,16 +1333,17 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   std::vector<SDValue> InOps;
   std::swap(InOps, Ops);
 
-  Ops.push_back(InOps[0]);  // input chain.
-  Ops.push_back(InOps[1]);  // input asm string.
+  Ops.push_back(InOps[InlineAsm::Op_InputChain]); // 0
+  Ops.push_back(InOps[InlineAsm::Op_AsmString]);  // 1
+  Ops.push_back(InOps[InlineAsm::Op_MDNode]);     // 2, !srcloc
 
-  unsigned i = 2, e = InOps.size();
+  unsigned i = InlineAsm::Op_FirstOperand, e = InOps.size();
   if (InOps[e-1].getValueType() == MVT::Flag)
     --e;  // Don't process a flag operand if it is here.
 
   while (i != e) {
     unsigned Flags = cast<ConstantSDNode>(InOps[i])->getZExtValue();
-    if ((Flags & 7) != 4 /*MEM*/) {
+    if (!InlineAsm::isMemKind(Flags)) {
       // Just skip over this operand, copying the operands verbatim.
       Ops.insert(Ops.end(), InOps.begin()+i,
                  InOps.begin()+i+InlineAsm::getNumOperandRegisters(Flags) + 1);
@@ -1352,14 +1353,14 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
              "Memory operand with multiple values?");
       // Otherwise, this is a memory operand.  Ask the target to select it.
       std::vector<SDValue> SelOps;
-      if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps)) {
+      if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps))
         llvm_report_error("Could not match memory address.  Inline asm"
                           " failure!");
-      }
 
       // Add this to the output node.
-      Ops.push_back(CurDAG->getTargetConstant(4/*MEM*/ | (SelOps.size()<< 3),
-                                              MVT::i32));
+      unsigned NewFlags =
+        InlineAsm::getFlagWord(InlineAsm::Kind_Mem, SelOps.size());
+      Ops.push_back(CurDAG->getTargetConstant(NewFlags, MVT::i32));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
       i += 2;
     }
@@ -2045,6 +2046,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   //case ISD::VALUETYPE:
   //case ISD::CONDCODE:
   case ISD::HANDLENODE:
+  case ISD::MDNODE_SDNODE:
   case ISD::TargetConstant:
   case ISD::TargetConstantFP:
   case ISD::TargetConstantPool:

@@ -650,6 +650,9 @@ public:
   /// getSrcValue - Construct a node to track a Value* through the backend.
   SDValue getSrcValue(const Value *v);
 
+  /// getMDNode - Return an MDNodeSDNode which holds an MDNode.
+  SDValue getMDNode(const MDNode *MD);
+  
   /// getShiftAmountOperand - Return the specified value casted to
   /// the target's desired shift amount type.
   SDValue getShiftAmountOperand(SDValue Op);
