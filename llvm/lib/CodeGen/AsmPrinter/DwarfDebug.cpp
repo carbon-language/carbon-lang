@@ -315,8 +315,13 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
-      
-  beginModule(M);
+
+  if (TimePassesIsEnabled) {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+      beginModule(M);
+  } else {
+      beginModule(M);
+  }
 }
 DwarfDebug::~DwarfDebug() {
   for (unsigned j = 0, M = DIEBlocks.size(); j < M; ++j)
@@ -1844,8 +1849,6 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
@@ -1908,7 +1911,6 @@ void DwarfDebug::beginModule(Module *M) {
 /// endModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfDebug::endModule() {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
   if (!ModuleCU) return;
 
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
@@ -2307,8 +2309,6 @@ bool DwarfDebug::extractScopeInformation() {
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-
   if (!MMI->hasDebugInfo()) return;
   if (!extractScopeInformation()) return;
   
@@ -2341,8 +2341,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 /// endFunction - Gather and emit post-function debug information.
 ///
 void DwarfDebug::endFunction(const MachineFunction *MF) {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-
   if (!MMI->hasDebugInfo() || DbgScopeMap.empty()) return;
 
   if (CurrentFnDbgScope) {
@@ -2389,8 +2387,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
 MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-
   StringRef Dir;
   StringRef Fn;
 

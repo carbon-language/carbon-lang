@@ -1,4 +1,3 @@
-//===-- AsmPrinter.cpp - Common AsmPrinter code ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -42,7 +41,14 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/Timer.h"
 using namespace llvm;
+
+namespace {
+  const char *DWARFGroupName = "DWARF Emission";
+  const char *DbgTimerName = "DWARF Debug Writer";
+  const char *EHTimerName = "DWARF Exception Writer";
+} // end anonymous namespace
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
@@ -347,8 +353,22 @@ void AsmPrinter::EmitFunctionHeader() {
   }
   
   // Emit pre-function debug and/or EH information.
-  if (DE) DE->BeginFunction(MF);
-  if (DD) DD->beginFunction(MF);
+  if (DE) {
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(EHTimerName, DWARFGroupName);
+      DE->BeginFunction(MF);
+    } else {
+      DE->BeginFunction(MF);
+    }
+  }
+  if (DD) {
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+      DD->beginFunction(MF);
+    } else {
+      DD->beginFunction(MF);
+    }
+  }
 }
 
 /// EmitFunctionEntryLabel - Emit the label that is the entrypoint for the
@@ -507,8 +527,14 @@ void AsmPrinter::EmitFunctionBody() {
       
       ++EmittedInsts;
       
-      if (ShouldPrintDebugScopes)
-        DD->beginScope(II);
+      if (ShouldPrintDebugScopes) {
+	if (TimePassesIsEnabled) {
+	  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+	  DD->beginScope(II);
+	} else {
+	  DD->beginScope(II);
+	}
+      }
       
       if (isVerbose())
         EmitComments(*II, OutStreamer.GetCommentOS());
@@ -539,8 +565,14 @@ void AsmPrinter::EmitFunctionBody() {
         break;
       }
       
-      if (ShouldPrintDebugScopes)
-        DD->endScope(II);
+      if (ShouldPrintDebugScopes) {
+	if (TimePassesIsEnabled) {
+	  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+	  DD->endScope(II);
+	} else {
+	  DD->endScope(II);
+	}
+      }
     }
   }
   
@@ -569,8 +601,22 @@ void AsmPrinter::EmitFunctionBody() {
   }
   
   // Emit post-function debug information.
-  if (DD) DD->endFunction(MF);
-  if (DE) DE->EndFunction();
+  if (DD) {
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+      DD->endFunction(MF);
+    } else {
+      DD->endFunction(MF);
+    }
+  }
+  if (DE) {
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(EHTimerName, DWARFGroupName);
+      DE->EndFunction();
+    } else {
+      DE->EndFunction();
+    }
+  }
   MMI->EndFunction();
   
   // Print out jump tables referenced by the function.
@@ -588,11 +634,21 @@ bool AsmPrinter::doFinalization(Module &M) {
   
   // Finalize debug and EH information.
   if (DE) {
-    DE->EndModule();
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(EHTimerName, DWARFGroupName);
+      DE->EndModule();
+    } else {
+      DE->EndModule();
+    }
     delete DE; DE = 0;
   }
   if (DD) {
-    DD->endModule();
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+      DD->endModule();
+    } else {
+      DD->endModule();
+    }
     delete DD; DD = 0;
   }
   

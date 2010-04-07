@@ -33,16 +33,10 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
-
-namespace {
-  const char *DWARFGroupName = "DWARF Emission";
-  const char *EHTimerName = "DWARF Exception Writer";
-} // end anonymous namespace
 
 DwarfException::DwarfException(AsmPrinter *A)
   : Asm(A), MMI(Asm->MMI), shouldEmitTable(false), shouldEmitMoves(false),
@@ -896,8 +890,6 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
-  NamedRegionTimer T(EHTimerName, DWARFGroupName);
-
   if (Asm->MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
 
@@ -917,7 +909,6 @@ void DwarfException::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(const MachineFunction *MF) {
-  NamedRegionTimer T(EHTimerName, DWARFGroupName);
   shouldEmitTable = shouldEmitMoves = false;
 
   // If any landing pads survive, we need an EH table.
@@ -939,7 +930,6 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void DwarfException::EndFunction() {
-  NamedRegionTimer T(EHTimerName, DWARFGroupName);
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
