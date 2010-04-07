@@ -282,3 +282,8 @@ int test5(unsigned int x) {
     && (x >= 0)  // expected-warning {{comparison of unsigned expression >= 0 is always true}}
     && (0 <= x); // expected-warning {{comparison of 0 <= unsigned expression is always true}}
 }
+
+int test6(unsigned i, unsigned power) {
+  unsigned x = (i < (1 << power) ? i : 0);
+  return x != 3 ? 1 << power : i;
+}

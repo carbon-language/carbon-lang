@@ -1885,6 +1885,17 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
 
     // Left shift gets black-listed based on a judgement call.
     case BinaryOperator::Shl:
+      // ...except that we want to treat '1 << (blah)' as logically
+      // positive.  It's an important idiom.
+      if (IntegerLiteral *I
+            = dyn_cast<IntegerLiteral>(BO->getLHS()->IgnoreParenCasts())) {
+        if (I->getValue() == 1) {
+          IntRange R = IntRange::forType(C, E->getType());
+          return IntRange(R.Width, /*NonNegative*/ true);
+        }
+      }
+      // fallthrough
+
     case BinaryOperator::ShlAssign:
       return IntRange::forType(C, E->getType());
 
