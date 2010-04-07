@@ -2474,61 +2474,48 @@ defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, "vabal", "u", int_arm_neon_vabalu>;
 // Vector Maximum and Minimum.
 
 //   VMAX     : Vector Maximum
-<<<<<<< HEAD
 defm VMAXs    : N3VInt_QHS<0, 0, 0b0110, 0, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vmax", "s", int_arm_neon_vmaxs, 1>;
 defm VMAXu    : N3VInt_QHS<1, 0, 0b0110, 0, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
                            "vmax", "u", int_arm_neon_vmaxu, 1>;
-def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBIND, "vmax",
-                        "f32", v2f32, v2f32, int_arm_neon_vmaxs, 1>;
-def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ, "vmax",
-                        "f32", v4f32, v4f32, int_arm_neon_vmaxs, 1>;
-
-//   VMIN     : Vector Minimum
-defm VMINs    : N3VInt_QHS<0, 0, 0b0110, 1, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
-                           "vmin", "s", int_arm_neon_vmins, 1>;
-defm VMINu    : N3VInt_QHS<1, 0, 0b0110, 1, N3RegFrm,
-                           IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, IIC_VBINi4Q,
-                           "vmin", "u", int_arm_neon_vminu, 1>;
-def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND, "vmin",
-                        "f32", v2f32, v2f32, int_arm_neon_vmins, 1>;
-def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ, "vmin",
-                        "f32", v4f32, v4f32, int_arm_neon_vmins, 1>;
-=======
-defm VMAXs    : N3VInt_QHS<0,0,0b0110,0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
-                           IIC_VSUBi4Q, "vmax", "s", int_arm_neon_vmaxs, 1>;
-defm VMAXu    : N3VInt_QHS<1,0,0b0110,0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
-                           IIC_VSUBi4Q, "vmax", "u", int_arm_neon_vmaxu, 1>;
-def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, IIC_VBIND, "vmax", "f32",
+def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBIND,
+                        "vmax", "f32",
                         v2f32, v2f32, int_arm_neon_vmaxs, 1>;
-def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, IIC_VBINQ, "vmax", "f32",
+def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ,
+                        "vmax", "f32",
                         v4f32, v4f32, int_arm_neon_vmaxs, 1>;
 
 //   VMIN     : Vector Minimum
-defm VMINs    : N3VInt_QHS<0,0,0b0110,1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
-                           IIC_VSUBi4Q, "vmin", "s", int_arm_neon_vmins, 1>;
-defm VMINu    : N3VInt_QHS<1,0,0b0110,1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
-                           IIC_VSUBi4Q, "vmin", "u", int_arm_neon_vminu, 1>;
-def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, IIC_VBIND, "vmin", "f32",
+defm VMINs    : N3VInt_QHS<0, 0, 0b0110, 1, N3RegFrm,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
+                           "vmin", "s", int_arm_neon_vmins, 1>;
+defm VMINu    : N3VInt_QHS<1, 0, 0b0110, 1, N3RegFrm,
+                           IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
+                           "vmin", "u", int_arm_neon_vminu, 1>;
+def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND,
+                        "vmin", "f32",
                         v2f32, v2f32, int_arm_neon_vmins, 1>;
-def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, IIC_VBINQ, "vmin", "f32",
+def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ,
+                        "vmin", "f32",
                         v4f32, v4f32, int_arm_neon_vmins, 1>;
->>>>>>> VHADD differs from VHSUB at least on A9 - the former reads both operands in the
 
 // Vector Pairwise Operations.
 
 //   VPADD    : Vector Pairwise Add
-def  VPADDi8  : N3VDInt<0, 0, 0b00, 0b1011, 1, N3RegFrm, IIC_VBINiD, "vpadd",
-                        "i8", v8i8, v8i8, int_arm_neon_vpadd, 0>;
-def  VPADDi16 : N3VDInt<0, 0, 0b01, 0b1011, 1, N3RegFrm, IIC_VBINiD, "vpadd",
-                        "i16", v4i16, v4i16, int_arm_neon_vpadd, 0>;
-def  VPADDi32 : N3VDInt<0, 0, 0b10, 0b1011, 1, N3RegFrm, IIC_VBINiD, "vpadd",
-                        "i32", v2i32, v2i32, int_arm_neon_vpadd, 0>;
-def  VPADDf   : N3VDInt<1, 0, 0b00, 0b1101, 0, N3RegFrm, IIC_VBIND, "vpadd",
-                        "f32", v2f32, v2f32, int_arm_neon_vpadd, 0>;
+def  VPADDi8  : N3VDInt<0, 0, 0b00, 0b1011, 1, N3RegFrm, IIC_VSHLiD,
+                        "vpadd", "i8",
+                        v8i8, v8i8, int_arm_neon_vpadd, 0>;
+def  VPADDi16 : N3VDInt<0, 0, 0b01, 0b1011, 1, N3RegFrm, IIC_VSHLiD,
+                        "vpadd", "i16",
+                        v4i16, v4i16, int_arm_neon_vpadd, 0>;
+def  VPADDi32 : N3VDInt<0, 0, 0b10, 0b1011, 1, N3RegFrm, IIC_VSHLiD,
+                        "vpadd", "i32",
+                        v2i32, v2i32, int_arm_neon_vpadd, 0>;
+def  VPADDf   : N3VDInt<1, 0, 0b00, 0b1101, 0, N3RegFrm, IIC_VSHLD,
+                        "vpadd", "f32",
+                        v2f32, v2f32, int_arm_neon_vpadd, 0>;
 
 //   VPADDL   : Vector Pairwise Add Long
 defm VPADDLs  : N2VPLInt_QHS<0b11, 0b11, 0b00, 0b00100, 0, "vpaddl", "s",
@@ -2543,69 +2530,36 @@ defm VPADALu  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b01101, 0, "vpadal", "u",
                               int_arm_neon_vpadalu>;
 
 //   VPMAX    : Vector Pairwise Maximum
-<<<<<<< HEAD
-def  VPMAXs8  : N3VDInt<0, 0, 0b00, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXs8  : N3VDInt<0, 0, 0b00, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "s8", v8i8, v8i8, int_arm_neon_vpmaxs, 0>;
-def  VPMAXs16 : N3VDInt<0, 0, 0b01, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXs16 : N3VDInt<0, 0, 0b01, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "s16", v4i16, v4i16, int_arm_neon_vpmaxs, 0>;
-def  VPMAXs32 : N3VDInt<0, 0, 0b10, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXs32 : N3VDInt<0, 0, 0b10, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "s32", v2i32, v2i32, int_arm_neon_vpmaxs, 0>;
-def  VPMAXu8  : N3VDInt<1, 0, 0b00, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXu8  : N3VDInt<1, 0, 0b00, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "u8", v8i8, v8i8, int_arm_neon_vpmaxu, 0>;
-def  VPMAXu16 : N3VDInt<1, 0, 0b01, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXu16 : N3VDInt<1, 0, 0b01, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "u16", v4i16, v4i16, int_arm_neon_vpmaxu, 0>;
-def  VPMAXu32 : N3VDInt<1, 0, 0b10, 0b1010, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXu32 : N3VDInt<1, 0, 0b10, 0b1010, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "u32", v2i32, v2i32, int_arm_neon_vpmaxu, 0>;
-def  VPMAXf   : N3VDInt<1, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINi4D, "vpmax",
+def  VPMAXf   : N3VDInt<1, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VSUBi4D, "vpmax",
                         "f32", v2f32, v2f32, int_arm_neon_vpmaxs, 0>;
 
 //   VPMIN    : Vector Pairwise Minimum
-def  VPMINs8  : N3VDInt<0, 0, 0b00, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINs8  : N3VDInt<0, 0, 0b00, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "s8", v8i8, v8i8, int_arm_neon_vpmins, 0>;
-def  VPMINs16 : N3VDInt<0, 0, 0b01, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINs16 : N3VDInt<0, 0, 0b01, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "s16", v4i16, v4i16, int_arm_neon_vpmins, 0>;
-def  VPMINs32 : N3VDInt<0, 0, 0b10, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINs32 : N3VDInt<0, 0, 0b10, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "s32", v2i32, v2i32, int_arm_neon_vpmins, 0>;
-def  VPMINu8  : N3VDInt<1, 0, 0b00, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINu8  : N3VDInt<1, 0, 0b00, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "u8", v8i8, v8i8, int_arm_neon_vpminu, 0>;
-def  VPMINu16 : N3VDInt<1, 0, 0b01, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINu16 : N3VDInt<1, 0, 0b01, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "u16", v4i16, v4i16, int_arm_neon_vpminu, 0>;
-def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "u32", v2i32, v2i32, int_arm_neon_vpminu, 0>;
-def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINi4D, "vpmin",
+def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VSUBi4D, "vpmin",
                         "f32", v2f32, v2f32, int_arm_neon_vpmins, 0>;
-=======
-def  VPMAXs8  : N3VDInt<0, 0, 0b00, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s8",
-                        v8i8, v8i8, int_arm_neon_vpmaxs, 0>;
-def  VPMAXs16 : N3VDInt<0, 0, 0b01, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s16",
-                        v4i16, v4i16, int_arm_neon_vpmaxs, 0>;
-def  VPMAXs32 : N3VDInt<0, 0, 0b10, 0b1010, 0, IIC_VSUBi4D, "vpmax", "s32",
-                        v2i32, v2i32, int_arm_neon_vpmaxs, 0>;
-def  VPMAXu8  : N3VDInt<1, 0, 0b00, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u8",
-                        v8i8, v8i8, int_arm_neon_vpmaxu, 0>;
-def  VPMAXu16 : N3VDInt<1, 0, 0b01, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u16",
-                        v4i16, v4i16, int_arm_neon_vpmaxu, 0>;
-def  VPMAXu32 : N3VDInt<1, 0, 0b10, 0b1010, 0, IIC_VSUBi4D, "vpmax", "u32",
-                        v2i32, v2i32, int_arm_neon_vpmaxu, 0>;
-def  VPMAXf   : N3VDInt<1, 0, 0b00, 0b1111, 0, IIC_VSUBi4D, "vpmax", "f32",
-                        v2f32, v2f32, int_arm_neon_vpmaxs, 0>;
-
-//   VPMIN    : Vector Pairwise Minimum
-def  VPMINs8  : N3VDInt<0, 0, 0b00, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s8",
-                        v8i8, v8i8, int_arm_neon_vpmins, 0>;
-def  VPMINs16 : N3VDInt<0, 0, 0b01, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s16",
-                        v4i16, v4i16, int_arm_neon_vpmins, 0>;
-def  VPMINs32 : N3VDInt<0, 0, 0b10, 0b1010, 1, IIC_VSUBi4D, "vpmin", "s32",
-                        v2i32, v2i32, int_arm_neon_vpmins, 0>;
-def  VPMINu8  : N3VDInt<1, 0, 0b00, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u8",
-                        v8i8, v8i8, int_arm_neon_vpminu, 0>;
-def  VPMINu16 : N3VDInt<1, 0, 0b01, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u16",
-                        v4i16, v4i16, int_arm_neon_vpminu, 0>;
-def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, IIC_VSUBi4D, "vpmin", "u32",
-                        v2i32, v2i32, int_arm_neon_vpminu, 0>;
-def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, IIC_VSUBi4D, "vpmin", "f32",
-                        v2f32, v2f32, int_arm_neon_vpmins, 0>;
->>>>>>> VP{MAX, MIN} are of IIC_VSUBi4D itin class as well.
 
 // Vector Reciprocal and Reciprocal Square Root Estimate and Step.
 
