@@ -976,3 +976,11 @@ void rdar7817800_qux(void*);
 }
 @end
 
+// PR 6036 - This test case triggered a crash inside StoreManager::CastRegion because the size
+// of 'unsigned long (*)[0]' is 0.
+struct pr6036_a { int pr6036_b; };
+struct pr6036_c;
+void u132monitk (struct pr6036_c *pr6036_d) {
+  (void) ((struct pr6036_a *) (unsigned long (*)[0]) ((char *) pr6036_d - 1))->pr6036_b; // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption}}
+}
+
