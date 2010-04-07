@@ -2414,17 +2414,6 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
   return Label;
 }
 
-/// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
-/// timed. Look up the source id with the given directory and source file
-/// names. If none currently exists, create a new id and insert it in the
-/// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
-/// well.
-unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
-                                         const std::string &FileName) {
-  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-  return GetOrCreateSourceID(DirName.c_str(), FileName.c_str());
-}
-
 //===----------------------------------------------------------------------===//
 // Emit Methods
 //===----------------------------------------------------------------------===//
