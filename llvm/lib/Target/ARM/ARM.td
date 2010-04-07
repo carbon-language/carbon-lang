@@ -124,7 +124,8 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
                  FeatureNEONForFP]>;
-def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : Processor<"cortex-a9",        CortexA9Itineraries,
+                [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

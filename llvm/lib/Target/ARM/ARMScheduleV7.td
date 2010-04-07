@@ -585,3 +585,103 @@ def CortexA8Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_NPipe], 0>,
                                InstrStage<2, [FU_NLSPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;
+
+//
+// Ad-hoc scheduling information derived from pretty vague "Cortex-A9 Technical
+// Reference Manual".
+//
+// Dual issue pipeline represented by FU_Pipe0 | FU_Pipe1
+//
+def CortexA9Itineraries : ProcessorItineraries<[
+
+  // VFP
+  // Issue through integer pipeline, and execute in NEON unit.
+  //
+
+  // FP Special Register to Integer Register File Move
+  InstrItinData<IIC_fpSTAT , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                              InstrStage<1, [FU_NPipe]>]>,
+  //
+  // Single-precision FP Unary
+  InstrItinData<IIC_fpUNA32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+  //
+  // Double-precision FP Unary
+  InstrItinData<IIC_fpUNA64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+
+  //
+  // Single-precision FP Compare
+  InstrItinData<IIC_fpCMP32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+  //
+  // Double-precision FP Compare
+  InstrItinData<IIC_fpCMP64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
+  //
+  // Single to Double FP Convert
+  InstrItinData<IIC_fpCVTSD , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Double to Single FP Convert
+  InstrItinData<IIC_fpCVTDS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Single-Precision FP to Integer Convert
+  InstrItinData<IIC_fpCVTSI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Double-Precision FP to Integer Convert
+  InstrItinData<IIC_fpCVTDI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Integer to Single-Precision FP Convert
+  InstrItinData<IIC_fpCVTIS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Integer to Double-Precision FP Convert
+  InstrItinData<IIC_fpCVTID , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Single-precision FP ALU
+  InstrItinData<IIC_fpALU32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+  //
+  // Double-precision FP ALU
+  InstrItinData<IIC_fpALU64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+  //
+  // Single-precision FP Multiply
+  InstrItinData<IIC_fpMUL32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 1, 1]>,
+  //
+  // Double-precision FP Multiply
+  InstrItinData<IIC_fpMUL64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 1, 1]>,
+  //
+  // Single-precision FP MAC
+  InstrItinData<IIC_fpMAC32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [8, 0, 1, 1]>,
+  //
+  // Double-precision FP MAC
+  InstrItinData<IIC_fpMAC64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [9, 0, 1, 1]>,
+  //
+  // Single-precision FP DIV
+  InstrItinData<IIC_fpDIV32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<10, [FU_NPipe]>], [15, 1, 1]>,
+  //
+  // Double-precision FP DIV
+  InstrItinData<IIC_fpDIV64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<20, [FU_NPipe]>], [25, 1, 1]>,
+  //
+  // Single-precision FP SQRT
+  InstrItinData<IIC_fpSQRT32, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<13, [FU_NPipe]>], [17, 1]>,
+  //
+  // Double-precision FP SQRT
+  InstrItinData<IIC_fpSQRT64, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<28, [FU_NPipe]>], [32, 1]>
+]>;
+
+
