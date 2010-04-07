@@ -5051,10 +5051,8 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     // Check the first parameter
     QualType T = (*Param)->getType();
 
-    // unsigned long long int and long double are allowed, but only
-    // alone.
-    // We also allow any character type; their omission seems to be a bug
-    // in n3000
+    // unsigned long long int, long double, and any character type are allowed
+    // as the only parameters.
     if (Context.hasSameType(T, Context.UnsignedLongLongTy) ||
         Context.hasSameType(T, Context.LongDoubleTy) ||
         Context.hasSameType(T, Context.CharTy) ||
@@ -5066,7 +5064,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
       goto FinishedParams;
     }
 
-    // Otherwise it must be a pointer to const; let's strip those.
+    // Otherwise it must be a pointer to const; let's strip those qualifiers.
     const PointerType *PT = T->getAs<PointerType>();
     if (!PT)
       goto FinishedParams;
