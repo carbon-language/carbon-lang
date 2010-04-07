@@ -2364,7 +2364,7 @@ public:
   virtual child_iterator child_end();
 };
 
-/// VAArgExpr, used for the builtin function __builtin_va_start.
+/// VAArgExpr, used for the builtin function __builtin_va_arg.
 class VAArgExpr : public Expr {
   Stmt *Val;
   SourceLocation BuiltinLoc, RParenLoc;
@@ -2375,7 +2375,7 @@ public:
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
 
-  /// \brief Create an empty __builtin_va_start expression.
+  /// \brief Create an empty __builtin_va_arg expression.
   explicit VAArgExpr(EmptyShell Empty) : Expr(VAArgExprClass, Empty) { }
 
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
