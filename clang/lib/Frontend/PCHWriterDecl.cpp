@@ -608,7 +608,7 @@ void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
   if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
 
   if (!W.Code)
-    llvm::llvm_report_error(llvm::StringRef("unexpected declaration kind '") +
+    llvm::report_fatal_error(llvm::StringRef("unexpected declaration kind '") +
                             D->getDeclKindName() + "'");
   Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
 

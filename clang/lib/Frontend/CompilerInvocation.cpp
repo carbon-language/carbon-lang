@@ -393,7 +393,7 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
   for (unsigned i = 0, e = Opts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = Opts.UserEntries[i];
     if (E.IsFramework && (E.Group != frontend::Angled || !E.IsUserSupplied))
-      llvm::llvm_report_error("Invalid option set!");
+      llvm::report_fatal_error("Invalid option set!");
     if (E.IsUserSupplied) {
       if (E.Group == frontend::After) {
         Res.push_back("-idirafter");
@@ -407,7 +407,7 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
       }
     } else {
       if (E.Group != frontend::Angled && E.Group != frontend::System)
-        llvm::llvm_report_error("Invalid option set!");
+        llvm::report_fatal_error("Invalid option set!");
       Res.push_back(E.Group == frontend::Angled ? "-iwithprefixbefore" :
                     "-iwithprefix");
     }
@@ -416,23 +416,23 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
 
   if (!Opts.EnvIncPath.empty()) {
     // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::llvm_report_error("Not yet implemented!");
+    llvm::report_fatal_error("Not yet implemented!");
   }
   if (!Opts.CEnvIncPath.empty()) {
     // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::llvm_report_error("Not yet implemented!");
+    llvm::report_fatal_error("Not yet implemented!");
   }
   if (!Opts.ObjCEnvIncPath.empty()) {
     // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::llvm_report_error("Not yet implemented!");
+    llvm::report_fatal_error("Not yet implemented!");
   }
   if (!Opts.CXXEnvIncPath.empty()) {
     // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::llvm_report_error("Not yet implemented!");
+    llvm::report_fatal_error("Not yet implemented!");
   }
   if (!Opts.ObjCXXEnvIncPath.empty()) {
     // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::llvm_report_error("Not yet implemented!");
+    llvm::report_fatal_error("Not yet implemented!");
   }
   if (!Opts.ResourceDir.empty()) {
     Res.push_back("-resource-dir");
@@ -610,7 +610,7 @@ static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
 static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
                                          std::vector<std::string> &Res) {
   if (!Opts.ShowCPP && !Opts.ShowMacros)
-    llvm::llvm_report_error("Invalid option combination!");
+    llvm::report_fatal_error("Invalid option combination!");
 
   if (Opts.ShowCPP && Opts.ShowMacros)
     Res.push_back("-dD");

@@ -22,7 +22,7 @@ const LangStandard &LangStandard::getLangStandardForKind(Kind K) {
   default:
     llvm_unreachable("Invalid language kind!");
   case lang_unspecified:
-    llvm::llvm_report_error("getLangStandardForKind() on unspecified kind");
+    llvm::report_fatal_error("getLangStandardForKind() on unspecified kind");
 #define LANGSTANDARD(id, name, desc, features) \
     case lang_##id: return Lang_##id;
 #include "clang/Frontend/LangStandards.def"
