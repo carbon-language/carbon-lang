@@ -2060,7 +2060,7 @@ unsigned CastInst::isEliminableCastPair(
   // FPEXT         <       FloatPt      n/a        FloatPt      n/a   
   // PTRTOINT     n/a      Pointer      n/a        Integral   Unsigned
   // INTTOPTR     n/a      Integral   Unsigned     Pointer      n/a
-  // BITCONVERT    =       FirstClass   n/a       FirstClass    n/a   
+  // BITCAST       =       FirstClass   n/a       FirstClass    n/a   
   //
   // NOTE: some transforms are safe, but we consider them to be non-profitable.
   // For example, we could merge "fptoui double to i32" + "zext i32 to i64",

@@ -1323,7 +1323,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
 
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(Src)) {
     // Okay, we have (bitcast (shuffle ..)).  Check to see if this is
-    // a bitconvert to a vector with the same # elts.
+    // a bitcast to a vector with the same # elts.
     if (SVI->hasOneUse() && DestTy->isVectorTy() && 
         cast<VectorType>(DestTy)->getNumElements() ==
               SVI->getType()->getNumElements() &&
