@@ -23,7 +23,7 @@
 class FuncUnit;
 
 class ReservationKind<bits<1> val> {
-  bits<1> Value = val;
+  int Value = val;
 }
 
 def Required : ReservationKind<0>;
@@ -43,13 +43,18 @@ def Reserved : ReservationKind<1>;
 //   InstrStage<1, [FU_x, FU_y]>     - TimeInc defaults to Cycles
 //   InstrStage<1, [FU_x, FU_y], 0>  - TimeInc explicit
 //
-class InstrStage<int cycles, list<FuncUnit> units,
-                 int timeinc = -1, ReservationKind kind = Required> {
+
+class InstrStage2<int cycles, list<FuncUnit> units,
+                  int timeinc, ReservationKind kind> {
   int Cycles          = cycles;       // length of stage in machine cycles
   list<FuncUnit> Units = units;       // choice of functional units
   int TimeInc         = timeinc;      // cycles till start of next stage
   int Kind            = kind.Value;   // kind of FU reservation
 }
+
+class InstrStage<int cycles, list<FuncUnit> units,
+                 int timeinc = -1>
+  : InstrStage2<cycles, units, timeinc, Required>;
 
 //===----------------------------------------------------------------------===//
 // Instruction itinerary - An itinerary represents a sequential series of steps
@@ -71,10 +76,10 @@ def NoItinerary : InstrItinClass;
 // Instruction itinerary data - These values provide a runtime map of an 
 // instruction itinerary class (name) to its itinerary data.
 //
-class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
+class InstrItinData<InstrItinClass Class, list<InstrStage2> stages,
                     list<int> operandcycles = []> {
   InstrItinClass TheClass = Class;
-  list<InstrStage> Stages = stages;
+  list<InstrStage2> Stages = stages;
   list<int> OperandCycles = operandcycles;
 }
 

@@ -17,6 +17,8 @@ def FU_LdSt0   : FuncUnit; // pipeline 0 load/store
 def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
 def FU_NPipe   : FuncUnit; // NEON ALU/MUL pipe
 def FU_NLSPipe : FuncUnit; // NEON LS pipe
+def FU_DRegsVFP: FuncUnit; // FP register set, VFP side
+def FU_DRegsN  : FuncUnit; // FP register set, NEON side
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for ARM
