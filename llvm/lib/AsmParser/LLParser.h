@@ -74,7 +74,7 @@ namespace llvm {
   public:
     typedef LLLexer::LocTy LocTy;
   private:
-    LLVMContext& Context;
+    LLVMContext &Context;
     LLLexer Lex;
     Module *M;
     

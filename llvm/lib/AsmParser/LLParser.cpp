@@ -2933,6 +2933,8 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
     default: assert(0 && "Unknown ParseInstruction result!");
     case InstError: return true;
     case InstNormal:
+      BB->getInstList().push_back(Inst);
+
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
@@ -2940,14 +2942,14 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
           return true;
       break;
     case InstExtraComma:
+      BB->getInstList().push_back(Inst);
+
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
       if (ParseInstructionMetadata(Inst))
         return true;
       break;        
     }
-
-    BB->getInstList().push_back(Inst);
 
     // Set the name on the instruction.
     if (PFS.SetInstName(NameID, NameStr, NameLoc, Inst)) return true;
