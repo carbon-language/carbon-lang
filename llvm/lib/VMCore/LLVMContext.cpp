@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/SourceMgr.h"
 #include "LLVMContextImpl.h"
 using namespace llvm;
 
@@ -32,6 +33,10 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   assert(DbgID == MD_dbg && "dbg kind id drifted"); (void)DbgID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
+
+//===----------------------------------------------------------------------===//
+// Recoverable Backend Errors
+//===----------------------------------------------------------------------===//
 
 void LLVMContext::setInlineAsmDiagnosticHandler(void *DiagHandler, 
                                                 void *DiagContext) {
@@ -50,6 +55,39 @@ void *LLVMContext::getInlineAsmDiagnosticHandler() const {
 void *LLVMContext::getInlineAsmDiagnosticContext() const {
   return pImpl->InlineAsmDiagContext;
 }
+
+void LLVMContext::emitError(StringRef ErrorStr) {
+  emitError(0U, ErrorStr);
+}
+
+void LLVMContext::emitError(const Instruction *I, StringRef ErrorStr) {
+  unsigned LocCookie = 0;
+  if (const MDNode *SrcLoc = I->getMetadata("srcloc")) {
+    if (SrcLoc->getNumOperands() != 0)
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
+        LocCookie = CI->getZExtValue();
+  }
+  return emitError(LocCookie, ErrorStr);
+}
+
+void LLVMContext::emitError(unsigned LocCookie, StringRef ErrorStr) {
+  // If there is no error handler installed, just print the error and exit.
+  if (pImpl->InlineAsmDiagHandler == 0) {
+    errs() << "error: " << ErrorStr << "\n";
+    exit(1);
+  }
+  
+  // If we do have an error handler, we can report the error and keep going.
+  SMDiagnostic Diag("", "error: " + ErrorStr.str());
+  
+  ((SourceMgr::DiagHandlerTy)(intptr_t)pImpl->InlineAsmDiagHandler)
+      (Diag, pImpl->InlineAsmDiagContext, LocCookie);
+  
+}
+
+//===----------------------------------------------------------------------===//
+// Metadata Kind Uniquing
+//===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
 /// isValidName - Return true if Name is a valid custom metadata handler name.

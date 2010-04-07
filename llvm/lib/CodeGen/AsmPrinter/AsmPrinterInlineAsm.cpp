@@ -295,9 +295,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         if (Error) {
           std::string msg;
           raw_string_ostream Msg(msg);
-          Msg << "Invalid operand found in inline asm: '" << AsmStr << "'\n";
-          MI->print(Msg);
-          report_fatal_error(Msg.str());
+          Msg << "invalid operand in inline asm: '" << AsmStr << "'";
+          MMI->getModule()->getContext().emitError(LocCookie, Msg.str());
         }
       }
       break;
