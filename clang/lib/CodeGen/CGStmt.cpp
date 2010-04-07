@@ -1044,9 +1044,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         // Use ptrtoint as appropriate so that we can do our extension.
         if (isa<llvm::PointerType>(Arg->getType()))
           Arg = Builder.CreatePtrToInt(Arg,
-                                      llvm::IntegerType::get(VMContext, LLVMPointerWidth));
+                           llvm::IntegerType::get(VMContext, LLVMPointerWidth));
         unsigned OutputSize = (unsigned)getContext().getTypeSize(OutputTy);
-        Arg = Builder.CreateZExt(Arg, llvm::IntegerType::get(VMContext, OutputSize));
+        Arg = Builder.CreateZExt(Arg,
+                                 llvm::IntegerType::get(VMContext, OutputSize));
       }
     }
 
@@ -1102,6 +1103,12 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::CallInst *Result = Builder.CreateCall(IA, Args.begin(), Args.end());
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 
+  // Slap the source location of the inline asm into a !srcloc metadata on the
+  // call.
+  unsigned LocID = S.getAsmString()->getLocStart().getRawEncoding();
+  llvm::Value *LocIDC =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), LocID);
+  Result->setMetadata("srcloc", llvm::MDNode::get(VMContext, &LocIDC, 1));
 
   // Extract all of the register value results from the asm.
   std::vector<llvm::Value*> RegResults;
