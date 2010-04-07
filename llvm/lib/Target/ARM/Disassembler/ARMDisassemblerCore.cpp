@@ -1127,7 +1127,6 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, bool isStore) {
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
-  unsigned short NumDefs = TID.getNumDefs();
   bool isPrePost = isPrePostLdSt(TID.TSFlags);
   const TargetOperandInfo *OpInfo = TID.OpInfo;
   if (!OpInfo) return false;
