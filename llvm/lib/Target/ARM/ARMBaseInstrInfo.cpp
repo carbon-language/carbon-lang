@@ -467,6 +467,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case TargetOpcode::KILL:
     case TargetOpcode::DBG_LABEL:
     case TargetOpcode::EH_LABEL:
+    case TargetOpcode::DBG_VALUE:
       return 0;
     }
     break;

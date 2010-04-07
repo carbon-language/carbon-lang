@@ -365,6 +365,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
+    case TargetOpcode::DBG_VALUE:
       return 0;
     case TargetOpcode::INLINEASM: {
       const MachineFunction *MF = MI->getParent()->getParent();

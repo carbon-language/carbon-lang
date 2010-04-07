@@ -3406,6 +3406,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     }
     case TargetOpcode::DBG_LABEL:
     case TargetOpcode::EH_LABEL:
+    case TargetOpcode::DBG_VALUE:
       break;
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
