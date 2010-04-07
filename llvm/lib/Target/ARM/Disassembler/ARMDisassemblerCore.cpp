@@ -1986,7 +1986,7 @@ static bool DisassembleVFPMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 // D = Inst{22}, Vd = Inst{15-12}
 static unsigned decodeNEONRd(uint32_t insn) {
   return ((insn >> ARMII::NEON_D_BitShift) & 1) << 4
-    | (insn >> ARMII::NEON_RegRdShift) & ARMII::NEONRegMask;
+    | ((insn >> ARMII::NEON_RegRdShift) & ARMII::NEONRegMask);
 }
 
 // Extract/Decode NEON N/Vn:
@@ -1997,7 +1997,7 @@ static unsigned decodeNEONRd(uint32_t insn) {
 // N = Inst{7}, Vn = Inst{19-16}
 static unsigned decodeNEONRn(uint32_t insn) {
   return ((insn >> ARMII::NEON_N_BitShift) & 1) << 4
-    | (insn >> ARMII::NEON_RegRnShift) & ARMII::NEONRegMask;
+    | ((insn >> ARMII::NEON_RegRnShift) & ARMII::NEONRegMask);
 }
 
 // Extract/Decode NEON M/Vm:
@@ -2008,7 +2008,7 @@ static unsigned decodeNEONRn(uint32_t insn) {
 // M = Inst{5}, Vm = Inst{3-0}
 static unsigned decodeNEONRm(uint32_t insn) {
   return ((insn >> ARMII::NEON_M_BitShift) & 1) << 4
-    | (insn >> ARMII::NEON_RegRmShift) & ARMII::NEONRegMask;
+    | ((insn >> ARMII::NEON_RegRmShift) & ARMII::NEONRegMask);
 }
 
 namespace {
