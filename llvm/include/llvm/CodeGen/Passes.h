@@ -170,7 +170,7 @@ namespace llvm {
 
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   /// 
-  FunctionPass *createMachineLICMPass();
+  FunctionPass *createMachineLICMPass(bool PreRegAlloc = true);
 
   /// createMachineSinkingPass - This pass performs sinking on machine
   /// instructions.

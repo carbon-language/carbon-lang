@@ -66,6 +66,9 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
+static cl::opt<bool> PostRAMachineLICM("postra-machine-licm", cl::Hidden,
+    cl::desc("Enable post-regalloc Machine LICM"));
+
 static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
@@ -343,6 +346,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // kill markers.
     PM.add(createStackSlotColoringPass(false));
     printAndVerify(PM, "After StackSlotColoring");
+
+    // Run post-ra machine LICM to hoist reloads / remats.
+    if (PostRAMachineLICM)
+      PM.add(createMachineLICMPass(false));
   }
 
   // Run post-ra passes.
