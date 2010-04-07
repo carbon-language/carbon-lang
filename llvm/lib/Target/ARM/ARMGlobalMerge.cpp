@@ -30,8 +30,7 @@ namespace {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
     const TargetLowering *TLI;
-
-    std::vector<GlobalVariable*> InternalGlobals;
+    bool doMerge(std::vector<GlobalVariable*> &Globals, Module &M, bool) const;
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
@@ -72,41 +71,30 @@ char ARMGlobalMerge::ID = 0;
 
 #define MAX_OFFSET 4095
 
-bool ARMGlobalMerge::doInitialization(Module& M) {
+bool ARMGlobalMerge::doMerge(std::vector<GlobalVariable*> &Globals,
+                             Module &M, bool isConst) const {
   const TargetData *TD = TLI->getTargetData();
 
-  for (Module::global_iterator I = M.global_begin(),
-         E = M.global_end(); I != E; ++I) {
-    // FIXME: Can we just grab all 'local' vars here?
-    // Won't we break some semantics?
-    if (I->hasInternalLinkage() &&
-        TD->getTypeAllocSize(I->getType()) < MAX_OFFSET)
-      InternalGlobals.push_back(I);
-  }
-
   // FIXME: Find better heuristics
-  std::stable_sort(InternalGlobals.begin(), InternalGlobals.end(),
-                   GlobalCmp(TD));
+  std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(TD));
 
   const Type *Int32Ty = Type::getInt32Ty(M.getContext());
 
-  for (size_t i = 0, e = InternalGlobals.size(); i != e; ) {
+  for (size_t i = 0, e = Globals.size(); i != e; ) {
     size_t j = 0;
     uint64_t MergedSize = 0;
     std::vector<const Type*> Tys;
     std::vector<Constant*> Inits;
     for (j = i; MergedSize < MAX_OFFSET && j != e; ++j) {
-      const Type* Ty =
-        cast<PointerType>(InternalGlobals[j]->getType())->getElementType();
+      const Type* Ty = Globals[j]->getType()->getElementType();
       Tys.push_back(Ty);
-      Inits.push_back(InternalGlobals[j]->getInitializer());
+      Inits.push_back(Globals[j]->getInitializer());
       MergedSize += TD->getTypeAllocSize(Ty);
     }
 
     StructType* MergedTy = StructType::get(M.getContext(), Tys);
     Constant* MergedInit = ConstantStruct::get(MergedTy, Inits);
-    // FIXME: Should we handle constants and 'normal' globals separately?
-    GlobalVariable* MergedGV = new GlobalVariable(M, MergedTy, false,
+    GlobalVariable* MergedGV = new GlobalVariable(M, MergedTy, isConst,
                                                   GlobalValue::InternalLinkage,
                                                   MergedInit, "merged");
     for (size_t k = i; k < j; ++k) {
@@ -118,12 +106,38 @@ bool ARMGlobalMerge::doInitialization(Module& M) {
         ConstantExpr::getInBoundsGetElementPtr(MergedGV,
                                                &Idx[0], Idx.size());
 
-      InternalGlobals[k]->replaceAllUsesWith(GEP);
+      Globals[k]->replaceAllUsesWith(GEP);
+      Globals[k]->eraseFromParent();
     }
     i = j;
   }
 
   return true;
+}
+
+
+bool ARMGlobalMerge::doInitialization(Module& M) {
+  std::vector<GlobalVariable*> Globals, ConstGlobals;
+  bool Changed = false;
+  const TargetData *TD = TLI->getTargetData();
+
+  // Grab all non-const globals.
+  for (Module::global_iterator I = M.global_begin(),
+         E = M.global_end(); I != E; ++I) {
+    // Ignore fancy-aligned globals for now.
+    if (I->hasLocalLinkage() && I->getAlignment() == 0 &&
+        TD->getTypeAllocSize(I->getType()) < MAX_OFFSET) {
+      if (I->isConstant())
+        ConstGlobals.push_back(I);
+      else
+        Globals.push_back(I);
+    }
+  }
+
+  Changed |= doMerge(Globals, M, false);
+  Changed |= doMerge(ConstGlobals, M, true);
+
+  return Changed;
 }
 
 bool ARMGlobalMerge::runOnFunction(Function& F) {
