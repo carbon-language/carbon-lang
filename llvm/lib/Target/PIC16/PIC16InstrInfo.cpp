@@ -78,7 +78,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   const Function *Func = MBB.getParent()->getFunction();
   const std::string FuncName = Func->getName();
 
-  const char *tmpName = createESName(PAN::getTempdataLabel(FuncName));
+  const char *tmpName = ESNames::createESName(PAN::getTempdataLabel(FuncName));
 
   // On the order of operands here: think "movwf SrcReg, tmp_slot, offset".
   if (RC == PIC16::GPRRegisterClass) {
@@ -120,7 +120,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   const Function *Func = MBB.getParent()->getFunction();
   const std::string FuncName = Func->getName();
 
-  const char *tmpName = createESName(PAN::getTempdataLabel(FuncName));
+  const char *tmpName = ESNames::createESName(PAN::getTempdataLabel(FuncName));
 
   // On the order of operands here: think "movf FrameIndex, W".
   if (RC == PIC16::GPRRegisterClass) {

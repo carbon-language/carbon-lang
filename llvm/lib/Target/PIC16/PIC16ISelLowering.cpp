@@ -116,7 +116,7 @@ static const char *getIntrinsicName(unsigned opcode) {
   std::string Fullname = prefix + tagname + Basename; 
 
   // The name has to live through program life.
-  return createESName(Fullname);
+  return ESNames::createESName(Fullname);
 }
 
 // getStdLibCallName - Get the name for the standard library function.
@@ -139,7 +139,7 @@ static const char *getStdLibCallName(unsigned opcode) {
   std::string LibCallName = prefix + BaseName;
 
   // The name has to live through program life.
-  return createESName(LibCallName);
+  return ESNames::createESName(LibCallName);
 }
 
 // PIC16TargetLowering Constructor.
@@ -737,7 +737,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   unsigned FIndex = FR->getIndex();
   const char *tmpName;
   if (FIndex < ReservedFrameCount) {
-    tmpName = createESName(PAN::getFrameLabel(Name));
+    tmpName = ESNames::createESName(PAN::getFrameLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = 0;
     for (unsigned i=0; i<FIndex ; ++i) {
@@ -745,7 +745,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
     }
   } else {
    // FrameIndex has been made for some temporary storage 
-    tmpName = createESName(PAN::getTempdataLabel(Name));
+    tmpName = ESNames::createESName(PAN::getTempdataLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
   }
@@ -1077,7 +1077,7 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
   // Put the value on stack.
   // Get a stack slot index and convert to es.
   int FI = MF.getFrameInfo()->CreateStackObject(1, 1, false);
-  const char *tmpName = createESName(PAN::getTempdataLabel(FuncName));
+  const char *tmpName = ESNames::createESName(PAN::getTempdataLabel(FuncName));
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Store the value to ES.
@@ -1275,7 +1275,7 @@ PIC16TargetLowering::LowerReturn(SDValue Chain,
   const Function *F = MF.getFunction();
   std::string FuncName = F->getName();
 
-  const char *tmpName = createESName(PAN::getFrameLabel(FuncName));
+  const char *tmpName = ESNames::createESName(PAN::getFrameLabel(FuncName));
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   SDValue BS = DAG.getConstant(1, MVT::i8);
   SDValue RetVal;
@@ -1419,11 +1419,11 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
        }
 
        // Label for argument passing
-       const char *argFrame = createESName(PAN::getArgsLabel(Name));
+       const char *argFrame = ESNames::createESName(PAN::getArgsLabel(Name));
        ArgLabel = DAG.getTargetExternalSymbol(argFrame, MVT::i8);
 
        // Label for reading return value
-       const char *retName = createESName(PAN::getRetvalLabel(Name));
+       const char *retName = ESNames::createESName(PAN::getRetvalLabel(Name));
        RetLabel = DAG.getTargetExternalSymbol(retName, MVT::i8);
     } else {
        // if indirect call
@@ -1683,7 +1683,7 @@ PIC16TargetLowering::LowerFormalArguments(SDValue Chain,
   InitReservedFrameCount(F);
 
   // Create the <fname>.args external symbol.
-  const char *tmpName = createESName(PAN::getArgsLabel(FuncName));
+  const char *tmpName = ESNames::createESName(PAN::getArgsLabel(FuncName));
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Load arg values from the label + offset.

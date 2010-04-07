@@ -21,6 +21,7 @@
 #include <sstream>
 #include <cstring>
 #include <string>
+#include <vector>
 
 namespace llvm {
   class PIC16TargetMachine;
@@ -52,17 +53,34 @@ namespace PIC16CC {
       UDATA_SHR
     };
 
+  class ESNames {
+    std::vector<char*> stk;
+    ESNames() {}
+    public:
+    ~ESNames() {
+      std::vector<char*>::iterator it = stk.end();
+      it--;
+      while(stk.end() != stk.begin())
+        {
+        char* p = *it;
+        delete [] p;
+        it--;
+        stk.pop_back();
+        }
+    }
 
-  // External symbol names require memory to live till the program end.
-  // So we have to allocate it and keep.
-  // FIXME: Don't leak the allocated strings.
-  inline static const char *createESName (const std::string &name) {
-    char *tmpName = new char[name.size() + 1];
-    memcpy(tmpName, name.c_str(), name.size() + 1);
-    return tmpName;
-  }
+    // External symbol names require memory to live till the program end.
+    // So we have to allocate it and keep. Push all such allocations into a 
+    // vector so that they get freed up on termination.
+    inline static const char *createESName (const std::string &name) {
+      static ESNames esn;
+      char *tmpName = new char[name.size() + 1];
+      memcpy(tmpName, name.c_str(), name.size() + 1);
+      esn.stk.push_back(tmpName);
+      return tmpName;
+    }
 
-
+ };
 
   inline static const char *PIC16CondCodeToString(PIC16CC::CondCodes CC) {
     switch (CC) {
