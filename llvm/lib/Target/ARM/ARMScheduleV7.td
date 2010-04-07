@@ -516,11 +516,11 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Double-register Integer Pair Add Long
   InstrItinData<IIC_VPALiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 1]>,
   //
   // Quad-register Integer Pair Add Long
   InstrItinData<IIC_VPALiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 1]>,
   //
   // Double-register Absolute Difference and Accumulate
   InstrItinData<IIC_VABAD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -923,7 +923,21 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                // Extra 3 latency cycle since wbck is 6 cycles
                                InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 2, 1]>,
+  //
+  // Double-register Integer Pair Add Long
+  InstrItinData<IIC_VPALiD,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 1]>,
+  //
+  // Quad-register Integer Pair Add Long
+  InstrItinData<IIC_VPALiQ,   [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 1]>
 ]>;
 
 
