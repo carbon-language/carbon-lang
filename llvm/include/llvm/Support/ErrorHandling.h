@@ -1,4 +1,4 @@
-//===- llvm/Support/ErrorHandling.h - Callbacks for errors ------*- C++ -*-===//
+//===- llvm/Support/ErrorHandling.h - Fatal error handling ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines an API used to indicate error conditions.
-// Callbacks can be registered for these errors through this API.
+// This file defines an API used to indicate fatal error conditions.  Non-fatal
+// errors (most of them) should be handled through LLVMContext.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,10 +22,10 @@ namespace llvm {
   class Twine;
 
   /// An error handler callback.
-  typedef void (*llvm_error_handler_t)(void *user_data,
-                                       const std::string& reason);
+  typedef void (*fatal_error_handler_t)(void *user_data,
+                                        const std::string& reason);
 
-  /// llvm_install_error_handler - Installs a new error handler to be used
+  /// install_fatal_error_handler - Installs a new error handler to be used
   /// whenever a serious (non-recoverable) error is encountered by LLVM.
   ///
   /// If you are using llvm_start_multithreaded, you should register the handler
@@ -44,13 +44,13 @@ namespace llvm {
   ///
   /// \param user_data - An argument which will be passed to the install error
   /// handler.
-  void llvm_install_error_handler(llvm_error_handler_t handler,
-                                  void *user_data = 0);
+  void install_fatal_error_handler(fatal_error_handler_t handler,
+                                   void *user_data = 0);
 
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
   /// llvm_stop_multithreaded().
-  void llvm_remove_error_handler();
+  void remove_fatal_error_handler();
 
   /// Reports a serious error, calling any installed error handler. These
   /// functions are intended to be used for error conditions which are outside
