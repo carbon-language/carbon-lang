@@ -223,6 +223,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
 
   ErrorOccurred = false;
   FatalErrorOccurred = false;
+  MaxErrorsEmitted = 0;
   
   NumWarnings = 0;
   NumErrors = 0;
@@ -551,6 +552,12 @@ bool Diagnostic::ProcessDiag() {
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
     ++NumErrors;
+    
+    // If we've emitted a lot of errors, emit a fatal error after it to stop a
+    // flood of bogus errors.
+    if (MaxErrorsEmitted && NumErrors >= MaxErrorsEmitted &&
+        DiagLevel == Diagnostic::Error)
+      SetDelayedDiagnostic(diag::fatal_too_many_errors);
   }
 
   // Finally, report it.

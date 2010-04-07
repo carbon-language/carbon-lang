@@ -188,6 +188,7 @@ private:
   bool ErrorsAsFatal;            // Treat errors like fatal errors.
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
+  unsigned MaxErrorsEmitted;     // Cap of # errors emitted, 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
 
@@ -270,6 +271,10 @@ public:
 
   void setClient(DiagnosticClient* client) { Client = client; }
 
+  /// setMaxErrorsEmitted - Specify a limit for the number of errors we should
+  /// emit before giving up.  Zero disables the limit.
+  void setMaxErrorsEmitted(unsigned Limit) { MaxErrorsEmitted = Limit; }
+  
   /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
   /// ignored.  If this and WarningsAsErrors are both set, then this one wins.
   void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }
