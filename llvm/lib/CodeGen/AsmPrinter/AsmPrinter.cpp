@@ -438,58 +438,50 @@ static void EmitKill(const MachineInstr *MI, AsmPrinter &AP) {
 /// of DBG_VALUE, returning true if it was able to do so.  A false return
 /// means the target will need to handle MI in EmitInstruction.
 static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
-  char buf[100];
-  std::string Str =  "\t";
-  Str += AP.MAI->getCommentString();
-  Str += "DEBUG_VALUE: ";
   // This code handles only the 3-operand target-independent form.
   if (MI->getNumOperands() != 3)
     return false;
 
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  OS << '\t' << AP.MAI->getCommentString() << "DEBUG_VALUE: ";
+
   // cast away const; DIetc do not take const operands for some reason.
   DIVariable V((MDNode*)(MI->getOperand(2).getMetadata()));
-  Str += V.getName();
-  Str += " <- ";
+  OS << V.getName() << " <- ";
 
   // Register or immediate value. Register 0 means undef.
   if (MI->getOperand(0).isFPImm()) {
     APFloat APF = APFloat(MI->getOperand(0).getFPImm()->getValueAPF());
     if (MI->getOperand(0).getFPImm()->getType()->isFloatTy()) {
-      sprintf(buf, "%e", APF.convertToFloat());
-      Str += buf;
+      OS << (double)APF.convertToFloat();
     } else if (MI->getOperand(0).getFPImm()->getType()->isDoubleTy()) {
-      sprintf(buf, "%e", APF.convertToDouble());
-      Str += buf;
+      OS << APF.convertToDouble();
     } else {
       // There is no good way to print long double.  Convert a copy to
       // double.  Ah well, it's only a comment.
       bool ignored;
       APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                   &ignored);
-      Str += "(long double) ";
-      sprintf(buf, "%e", APF.convertToDouble());
-      Str += buf;
+      OS << "(long double) " << APF.convertToDouble();
     }
   } else if (MI->getOperand(0).isImm()) {
-    sprintf(buf, "%lld", MI->getOperand(0).getImm());
-    Str += buf;
+    OS << MI->getOperand(0).getImm();
   } else if (MI->getOperand(0).isReg()) {
     if (MI->getOperand(0).getReg() == 0) {
       // Suppress offset, it is not meaningful here.
-      Str += "undef";
+      OS << "undef";
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      AP.OutStreamer.EmitRawText(Twine(Str));
+      AP.OutStreamer.EmitRawText(OS.str());
       return true;
     }
-    Str += AP.TM.getRegisterInfo()->getName(MI->getOperand(0).getReg());
+    OS << AP.TM.getRegisterInfo()->getName(MI->getOperand(0).getReg());
   } else
     llvm_unreachable("Unknown operand type");
 
-  Str += '+';
-  sprintf(buf, "%lld", MI->getOperand(1).getImm());
-  Str += buf;
+  OS << '+' << MI->getOperand(1).getImm();
   // NOTE: Want this comment at start of line, don't emit with AddComment.
-  AP.OutStreamer.EmitRawText(Twine(Str));
+  AP.OutStreamer.EmitRawText(OS.str());
   return true;
 }
 
