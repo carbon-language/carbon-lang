@@ -937,7 +937,65 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                // Extra 3 latency cycle since wbck is 6 cycles
                                InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [6, 3, 1]>
+                               InstrStage<2, [FU_NPipe]>], [6, 3, 1]>,
+
+  //
+  // Double-register Integer Multiply (.8, .16)
+  InstrItinData<IIC_VMULi16D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 2, 2]>,
+  //
+  // Quad-register Integer Multiply (.8, .16)
+  InstrItinData<IIC_VMULi16Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 2]>,
+
+  //
+  // Double-register Integer Multiply (.32)
+  InstrItinData<IIC_VMULi32D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 1]>,
+  //
+  // Quad-register Integer Multiply (.32)
+  InstrItinData<IIC_VMULi32Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 9 cycles
+                               InstrStage2<10, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe]>], [9, 2, 1]>,
+  //
+  // Double-register Integer Multiply-Accumulate (.8, .16)
+  InstrItinData<IIC_VMACi16D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 6 cycles
+                               InstrStage2<7, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 2]>,
+  //
+  // Double-register Integer Multiply-Accumulate (.32)
+  InstrItinData<IIC_VMACi32D, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
+  //
+  // Quad-register Integer Multiply-Accumulate (.8, .16)
+  InstrItinData<IIC_VMACi16Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 7 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 2]>,
+  //
+  // Quad-register Integer Multiply-Accumulate (.32)
+  InstrItinData<IIC_VMACi32Q, [InstrStage2<1, [FU_DRegsN],   0, Required>,
+                               // Extra 3 latency cycle since wbck is 9 cycles
+                               InstrStage2<8, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe]>], [9, 3, 2, 1]>
 ]>;
 
 
