@@ -182,7 +182,7 @@ public:
   /// store to a stack slot, return true along with the FrameIndex of
   /// the loaded stack slot and the machine mem operand containing the
   /// reference.  If not, return false.  Unlike isStoreToStackSlot,
-  /// this returns true for any instructions that loads from the
+  /// this returns true for any instructions that stores to the
   /// stack.  This is just a hint, as some cases may be missed.
   virtual bool hasStoreToStackSlot(const MachineInstr *MI,
                                    const MachineMemOperand *&MMO,
