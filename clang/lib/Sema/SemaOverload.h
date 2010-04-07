@@ -34,7 +34,7 @@ namespace clang {
     OR_Success,             ///< Overload resolution succeeded.
     OR_No_Viable_Function,  ///< No viable function found.
     OR_Ambiguous,           ///< Ambiguous candidates found.
-    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
+    OR_Deleted              ///< Succeeded, but refers to a deleted function.
   };
     
   /// ImplicitConversionKind - The kind of implicit conversion used to
