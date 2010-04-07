@@ -39,6 +39,11 @@
 #include "llvm/System/Path.h"
 using namespace llvm;
 
+namespace {
+  const char *DWARFGroupName = "DWARF Emission";
+  const char *DbgTimerName = "DWARF Debug Writer";
+} // end anonymous namespace
+
 //===----------------------------------------------------------------------===//
 
 /// Configuration values for initial hash set sizes (log2).
@@ -305,22 +310,17 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), 
-    CurrentFnDbgScope(0), DebugTimer(0) {
+    CurrentFnDbgScope(0) {
   NextStringPoolNumber = 0;
       
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
-      
-  if (TimePassesIsEnabled)
-    DebugTimer = new Timer("Dwarf Debug Writer");
       
   beginModule(M);
 }
 DwarfDebug::~DwarfDebug() {
   for (unsigned j = 0, M = DIEBlocks.size(); j < M; ++j)
     DIEBlocks[j]->~DIEBlock();
-
-  delete DebugTimer;
 }
 
 MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
@@ -1844,7 +1844,7 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
-  TimeRegion Timer(DebugTimer);
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
 
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
@@ -1908,10 +1908,8 @@ void DwarfDebug::beginModule(Module *M) {
 /// endModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfDebug::endModule() {
-  if (!ModuleCU)
-    return;
-
-  TimeRegion Timer(DebugTimer);
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+  if (!ModuleCU) return;
 
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
@@ -2309,11 +2307,10 @@ bool DwarfDebug::extractScopeInformation() {
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+
   if (!MMI->hasDebugInfo()) return;
-  
-  TimeRegion Timer(DebugTimer);
-  if (!extractScopeInformation())
-    return;
+  if (!extractScopeInformation()) return;
   
   collectVariableInfo();
 
@@ -2344,10 +2341,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 /// endFunction - Gather and emit post-function debug information.
 ///
 void DwarfDebug::endFunction(const MachineFunction *MF) {
-  if (!MMI->hasDebugInfo() ||
-      DbgScopeMap.empty()) return;
-  
-  TimeRegion Timer(DebugTimer);
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
+
+  if (!MMI->hasDebugInfo() || DbgScopeMap.empty()) return;
 
   if (CurrentFnDbgScope) {
     // Define end label for subprogram.
@@ -2393,7 +2389,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
 MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
-  TimeRegion Timer(DebugTimer);
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
 
   StringRef Dir;
   StringRef Fn;
@@ -2429,7 +2425,7 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
 /// well.
 unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
                                          const std::string &FileName) {
-  TimeRegion Timer(DebugTimer);
+  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
   return GetOrCreateSourceID(DirName.c_str(), FileName.c_str());
 }
 

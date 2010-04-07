@@ -28,7 +28,6 @@ class MachineFunction;
 class MCAsmInfo;
 class MCExpr;
 class MCSymbol;
-class Timer;
 class Function;
 class AsmPrinter;
 
@@ -81,9 +80,6 @@ class DwarfException {
   /// shouldEmitFrameModule - Per-module flag to indicate if frame moves
   /// should be emitted.
   bool shouldEmitMovesModule;
-
-  /// ExceptionTimer - Timer for the Dwarf exception writer.
-  Timer *ExceptionTimer;
 
   /// EmitCIE - Emit a Common Information Entry (CIE). This holds information
   /// that is shared among many Frame Description Entries.  There is at least

@@ -39,17 +39,16 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
+namespace {
+  const char *DWARFGroupName = "DWARF Emission";
+  const char *EHTimerName = "DWARF Exception Writer";
+} // end anonymous namespace
+
 DwarfException::DwarfException(AsmPrinter *A)
   : Asm(A), MMI(Asm->MMI), shouldEmitTable(false), shouldEmitMoves(false),
-    shouldEmitTableModule(false), shouldEmitMovesModule(false),
-    ExceptionTimer(0) {
-  if (TimePassesIsEnabled)
-    ExceptionTimer = new Timer("DWARF Exception Writer");
-}
+    shouldEmitTableModule(false), shouldEmitMovesModule(false) {}
 
-DwarfException::~DwarfException() {
-  delete ExceptionTimer;
-}
+DwarfException::~DwarfException() {}
 
 /// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
 /// is shared among many Frame Description Entries.  There is at least one CIE
@@ -897,13 +896,13 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
+  NamedRegionTimer T(EHTimerName, DWARFGroupName);
+
   if (Asm->MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
 
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
     return;
-
-  TimeRegion Timer(ExceptionTimer);
 
   const std::vector<Function *> Personalities = MMI->getPersonalities();
 
@@ -918,7 +917,7 @@ void DwarfException::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(const MachineFunction *MF) {
-  TimeRegion Timer(ExceptionTimer);
+  NamedRegionTimer T(EHTimerName, DWARFGroupName);
   shouldEmitTable = shouldEmitMoves = false;
 
   // If any landing pads survive, we need an EH table.
@@ -940,9 +939,9 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void DwarfException::EndFunction() {
+  NamedRegionTimer T(EHTimerName, DWARFGroupName);
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
-  TimeRegion Timer(ExceptionTimer);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
                                                 Asm->getFunctionNumber()));
 

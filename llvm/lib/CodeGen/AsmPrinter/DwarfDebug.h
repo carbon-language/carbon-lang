@@ -33,7 +33,6 @@ class MachineFrameInfo;
 class MachineLocation;
 class MachineModuleInfo;
 class MCAsmInfo;
-class Timer;
 class DIEAbbrev;
 class DIE;
 class DIEBlock;
@@ -208,9 +207,6 @@ class DwarfDebug {
   /// label location to indicate scope boundries in dwarf debug info.
   DebugLoc PrevInstLoc;
 
-  /// DebugTimer - Timer for the Dwarf debug writer.
-  Timer *DebugTimer;
-  
   struct FunctionDebugFrameInfo {
     unsigned Number;
     std::vector<MachineMove> Moves;
