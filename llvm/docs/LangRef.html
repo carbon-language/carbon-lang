@@ -5890,7 +5890,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.memcpy</tt> on any
-   integer bit width. Not all targets support all bit widths however.</p>
+   integer bit width and for different address spaces. Not all targets support
+   all bit widths however.</p>
 
 <pre>
   declare void @llvm.memcpy.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
@@ -5938,7 +5939,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.memmove on any integer bit
-   width. Not all targets support all bit widths however.</p>
+   width and for different address space. Not all targets support all bit
+   widths however.</p>
 
 <pre>
   declare void @llvm.memmove.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
@@ -5988,7 +5990,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.memset on any integer bit
-   width. Not all targets support all bit widths however.</p>
+   width and for different address spaces. Not all targets support all bit
+   widths however.</p>
 
 <pre>
   declare void @llvm.memset.i8(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
