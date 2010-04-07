@@ -1025,6 +1025,58 @@ def CortexA9Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3]>,
   //
+  // Double-register Permute Move
+  InstrItinData<IIC_VMOVD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<3, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 1]>,
+  //
+  // Quad-register Permute Move
+  // Result written in N2, but that is relative to the last cycle of multicycle,
+  // so we use 3 for those cases
+  InstrItinData<IIC_VMOVQ,    [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<4, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [3, 1]>,
+  //
+  // Integer to Single-precision Move
+  InstrItinData<IIC_VMOVIS ,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<3, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 1]>,
+  //
+  // Integer to Double-precision Move
+  InstrItinData<IIC_VMOVID ,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<3, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 1, 1]>,
+  //
+  // Single-precision to Integer Move
+  InstrItinData<IIC_VMOVSI ,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<3, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 1]>,
+  //
+  // Double-precision to Integer Move
+  InstrItinData<IIC_VMOVDI ,  [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<3, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [2, 2, 1]>,
+  //
+  // Integer to Lane Move
+  InstrItinData<IIC_VMOVISL , [InstrStage<1, [FU_DRegsN],   0, Required>,
+  // FIXME: all latencies are arbitrary, no information is available
+                               InstrStage<4, [FU_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [3, 1, 1]>,
+
+  //
   // Double-register FP Unary
   InstrItinData<IIC_VUNAD,    [InstrStage<1, [FU_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
