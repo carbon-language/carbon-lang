@@ -1,3 +1,4 @@
+//===-- AsmPrinter.cpp - Common AsmPrinter code ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -44,11 +45,9 @@
 #include "llvm/Support/Timer.h"
 using namespace llvm;
 
-namespace {
-  const char *DWARFGroupName = "DWARF Emission";
-  const char *DbgTimerName = "DWARF Debug Writer";
-  const char *EHTimerName = "DWARF Exception Writer";
-} // end anonymous namespace
+static const char *DWARFGroupName = "DWARF Emission";
+static const char *DbgTimerName = "DWARF Debug Writer";
+static const char *EHTimerName = "DWARF Exception Writer";
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
