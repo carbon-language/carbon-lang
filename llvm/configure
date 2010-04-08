@@ -14,7 +14,7 @@
 ## M4sh Initialization.  ##
 ## --------------------- ##
 
-# Be Bourne compatible
+# Be Bourne compatible.
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
   emulate sh
   NULLCMD=:
