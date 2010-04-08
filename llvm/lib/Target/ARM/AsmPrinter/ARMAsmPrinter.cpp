@@ -1136,15 +1136,15 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFMacho.getConstTextCoalSection());
       if (RelocM == Reloc::DynamicNoPIC) {
         const MCSection *sect =
-          TLOFMacho.getMachOSection("__TEXT", "__symbol_stub4",
-                                    MCSectionMachO::S_SYMBOL_STUBS,
-                                    12, SectionKind::getText());
+          OutContext.getMachOSection("__TEXT", "__symbol_stub4",
+                                     MCSectionMachO::S_SYMBOL_STUBS,
+                                     12, SectionKind::getText());
         OutStreamer.SwitchSection(sect);
       } else {
         const MCSection *sect =
-          TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub4",
-                                    MCSectionMachO::S_SYMBOL_STUBS,
-                                    16, SectionKind::getText());
+          OutContext.getMachOSection("__TEXT", "__picsymbolstub4",
+                                     MCSectionMachO::S_SYMBOL_STUBS,
+                                     16, SectionKind::getText());
         OutStreamer.SwitchSection(sect);
       }
     }

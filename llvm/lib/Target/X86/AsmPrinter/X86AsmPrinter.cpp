@@ -474,9 +474,6 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
-    TargetLoweringObjectFileMachO &TLOFMacho = 
-      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-    
     MachineModuleInfoMachO &MMIMacho =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
     
@@ -486,11 +483,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     Stubs = MMIMacho.GetFnStubList();
     if (!Stubs.empty()) {
       const MCSection *TheSection = 
-        TLOFMacho.getMachOSection("__IMPORT", "__jump_table",
-                                  MCSectionMachO::S_SYMBOL_STUBS |
-                                  MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
-                                  MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                  5, SectionKind::getMetadata());
+        OutContext.getMachOSection("__IMPORT", "__jump_table",
+                                   MCSectionMachO::S_SYMBOL_STUBS |
+                                   MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
+                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                   5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
@@ -512,9 +509,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     Stubs = MMIMacho.GetGVStubList();
     if (!Stubs.empty()) {
       const MCSection *TheSection = 
-        TLOFMacho.getMachOSection("__IMPORT", "__pointers",
-                                  MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
-                                  SectionKind::getMetadata());
+        OutContext.getMachOSection("__IMPORT", "__pointers",
+                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                                   SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {

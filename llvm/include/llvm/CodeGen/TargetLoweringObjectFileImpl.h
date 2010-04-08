@@ -127,20 +127,6 @@ public:
   virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
                                           Mangler *) const;
 
-  /// getMachOSection - Return the MCSection for the specified mach-o section.
-  /// This requires the operands to be valid.
-  const MCSectionMachO *getMachOSection(StringRef Segment,
-                                        StringRef Section,
-                                        unsigned TypeAndAttributes,
-                                        SectionKind K) const {
-    return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
-  }
-  const MCSectionMachO *getMachOSection(StringRef Segment,
-                                        StringRef Section,
-                                        unsigned TypeAndAttributes,
-                                        unsigned Reserved2,
-                                        SectionKind K) const;
-
   /// getTextCoalSection - Return the "__TEXT,__textcoal_nt" section we put weak
   /// text symbols into.
   const MCSection *getTextCoalSection() const {

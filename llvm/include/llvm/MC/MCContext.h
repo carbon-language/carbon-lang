@@ -80,11 +80,19 @@ namespace llvm {
     /// @name Section Managment
     /// @{
 
+    /// getMachOSection - Return the MCSection for the specified mach-o section.
+    /// This requires the operands to be valid.
     const MCSectionMachO *getMachOSection(StringRef Segment,
                                           StringRef Section,
                                           unsigned TypeAndAttributes,
                                           unsigned Reserved2,
                                           SectionKind K);
+    const MCSectionMachO *getMachOSection(StringRef Segment,
+                                          StringRef Section,
+                                          unsigned TypeAndAttributes,
+                                          SectionKind K) {
+      return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
+    }
     
     /// @}
 
