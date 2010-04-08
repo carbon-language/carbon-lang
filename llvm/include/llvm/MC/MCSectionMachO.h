@@ -34,29 +34,7 @@ class MCSectionMachO : public MCSection {
   unsigned Reserved2;
   
   MCSectionMachO(StringRef Segment, StringRef Section,
-                 unsigned TAA, unsigned reserved2, SectionKind K)
-    : MCSection(K), TypeAndAttributes(TAA), Reserved2(reserved2) {
-    assert(Segment.size() <= 16 && Section.size() <= 16 &&
-           "Segment or section string too long");
-    for (unsigned i = 0; i != 16; ++i) {
-      if (i < Segment.size())
-        SegmentName[i] = Segment[i];
-      else
-        SegmentName[i] = 0;
-      
-      if (i < Section.size())
-        SectionName[i] = Section[i];
-      else
-        SectionName[i] = 0;
-    }        
-  }
-  
-  static MCSectionMachO *Create(StringRef Segment,
-                                StringRef Section,
-                                unsigned TypeAndAttributes,
-                                unsigned Reserved2,
-                                SectionKind K, MCContext &Ctx);
-  
+                 unsigned TAA, unsigned reserved2, SectionKind K);  
   friend class MCContext;
 public:
   

@@ -50,7 +50,7 @@ namespace llvm {
     /// objects.
     BumpPtrAllocator Allocator;
     
-    void *MachOUniquingMap;
+    void *MachOUniquingMap, *ELFUniquingMap;
   public:
     explicit MCContext(const MCAsmInfo &MAI);
     ~MCContext();
@@ -93,6 +93,10 @@ namespace llvm {
                                           SectionKind K) {
       return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
     }
+    
+    const MCSection *getELFSection(StringRef Section, unsigned Type,
+                                   unsigned Flags, SectionKind Kind,
+                                   bool IsExplicit);
     
     /// @}
 

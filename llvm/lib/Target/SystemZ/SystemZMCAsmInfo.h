@@ -22,7 +22,7 @@ namespace llvm {
 
   struct SystemZMCAsmInfo : public MCAsmInfo {
     explicit SystemZMCAsmInfo(const Target &T, const StringRef &TT);
-    virtual MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
+    virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
   };
   
 } // namespace llvm

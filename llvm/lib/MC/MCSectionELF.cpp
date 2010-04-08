@@ -14,11 +14,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-MCSectionELF *MCSectionELF::
-Create(StringRef Section, unsigned Type, unsigned Flags,
-       SectionKind K, bool isExplicit, MCContext &Ctx) {
-  return new (Ctx) MCSectionELF(Section, Type, Flags, K, isExplicit);
-}
+MCSectionELF::~MCSectionELF() {} // anchor.
 
 // ShouldOmitSectionDirective - Decides whether a '.section' directive
 // should be printed before the section name
@@ -62,59 +58,63 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
       OS << ",#write";
     if (Flags & MCSectionELF::SHF_TLS)
       OS << ",#tls";
-  } else {
-    OS << ",\"";
-    if (Flags & MCSectionELF::SHF_ALLOC)
-      OS << 'a';
-    if (Flags & MCSectionELF::SHF_EXECINSTR)
-      OS << 'x';
-    if (Flags & MCSectionELF::SHF_WRITE)
-      OS << 'w';
-    if (Flags & MCSectionELF::SHF_MERGE)
-      OS << 'M';
-    if (Flags & MCSectionELF::SHF_STRINGS)
-      OS << 'S';
-    if (Flags & MCSectionELF::SHF_TLS)
-      OS << 'T';
-    
-    // If there are target-specific flags, print them.
-    if (Flags & ~MCSectionELF::TARGET_INDEP_SHF)
-      PrintTargetSpecificSectionFlags(MAI, OS);
-    
-    OS << '"';
+    OS << '\n';
+    return;
+  }
+  
+  OS << ",\"";
+  if (Flags & MCSectionELF::SHF_ALLOC)
+    OS << 'a';
+  if (Flags & MCSectionELF::SHF_EXECINSTR)
+    OS << 'x';
+  if (Flags & MCSectionELF::SHF_WRITE)
+    OS << 'w';
+  if (Flags & MCSectionELF::SHF_MERGE)
+    OS << 'M';
+  if (Flags & MCSectionELF::SHF_STRINGS)
+    OS << 'S';
+  if (Flags & MCSectionELF::SHF_TLS)
+    OS << 'T';
+  
+  // If there are target-specific flags, print them.
+  if (Flags & MCSectionELF::XCORE_SHF_CP_SECTION)
+    OS << 'c';
+  if (Flags & MCSectionELF::XCORE_SHF_DP_SECTION)
+    OS << 'd';
+  
+  OS << '"';
 
-    if (ShouldPrintSectionType(Type)) {
-      OS << ',';
-   
-      // If comment string is '@', e.g. as on ARM - use '%' instead
-      if (MAI.getCommentString()[0] == '@')
-        OS << '%';
-      else
-        OS << '@';
-    
-      if (Type == MCSectionELF::SHT_INIT_ARRAY)
-        OS << "init_array";
-      else if (Type == MCSectionELF::SHT_FINI_ARRAY)
-        OS << "fini_array";
-      else if (Type == MCSectionELF::SHT_PREINIT_ARRAY)
-        OS << "preinit_array";
-      else if (Type == MCSectionELF::SHT_NOBITS)
-        OS << "nobits";
-      else if (Type == MCSectionELF::SHT_PROGBITS)
-        OS << "progbits";
-    
-      if (getKind().isMergeable1ByteCString()) {
-        OS << ",1";
-      } else if (getKind().isMergeable2ByteCString()) {
-        OS << ",2";
-      } else if (getKind().isMergeable4ByteCString() || 
-                 getKind().isMergeableConst4()) {
-        OS << ",4";
-      } else if (getKind().isMergeableConst8()) {
-        OS << ",8";
-      } else if (getKind().isMergeableConst16()) {
-        OS << ",16";
-      }
+  if (ShouldPrintSectionType(Type)) {
+    OS << ',';
+ 
+    // If comment string is '@', e.g. as on ARM - use '%' instead
+    if (MAI.getCommentString()[0] == '@')
+      OS << '%';
+    else
+      OS << '@';
+  
+    if (Type == MCSectionELF::SHT_INIT_ARRAY)
+      OS << "init_array";
+    else if (Type == MCSectionELF::SHT_FINI_ARRAY)
+      OS << "fini_array";
+    else if (Type == MCSectionELF::SHT_PREINIT_ARRAY)
+      OS << "preinit_array";
+    else if (Type == MCSectionELF::SHT_NOBITS)
+      OS << "nobits";
+    else if (Type == MCSectionELF::SHT_PROGBITS)
+      OS << "progbits";
+  
+    if (getKind().isMergeable1ByteCString()) {
+      OS << ",1";
+    } else if (getKind().isMergeable2ByteCString()) {
+      OS << ",2";
+    } else if (getKind().isMergeable4ByteCString() || 
+               getKind().isMergeableConst4()) {
+      OS << ",4";
+    } else if (getKind().isMergeableConst8()) {
+      OS << ",8";
+    } else if (getKind().isMergeableConst16()) {
+      OS << ",16";
     }
   }
   

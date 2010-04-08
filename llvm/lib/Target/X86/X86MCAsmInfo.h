@@ -27,7 +27,7 @@ namespace llvm {
 
   struct X86ELFMCAsmInfo : public MCAsmInfo {
     explicit X86ELFMCAsmInfo(const Triple &Triple);
-    virtual MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
+    virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
   };
 
   struct X86MCAsmInfoCOFF : public MCAsmInfoCOFF {

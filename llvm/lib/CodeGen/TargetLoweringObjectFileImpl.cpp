@@ -38,34 +38,16 @@ using namespace dwarf;
 //===----------------------------------------------------------------------===//
 //                                  ELF
 //===----------------------------------------------------------------------===//
-typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
-
-TargetLoweringObjectFileELF::~TargetLoweringObjectFileELF() {
-  // If we have the section uniquing map, free it.
-  delete (ELFUniqueMapTy*)UniquingMap;
-}
 
 const MCSection *TargetLoweringObjectFileELF::
 getELFSection(StringRef Section, unsigned Type, unsigned Flags,
               SectionKind Kind, bool IsExplicit) const {
-  if (UniquingMap == 0)
-    UniquingMap = new ELFUniqueMapTy();
-  ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)UniquingMap;
+  return getContext().getELFSection(Section, Type, Flags, Kind, IsExplicit);
 
-  // Do the lookup, if we have a hit, return it.
-  StringMapEntry<const MCSectionELF*> &Entry = Map.GetOrCreateValue(Section);
-  if (Entry.getValue()) return Entry.getValue();
-
-  MCSectionELF *Result = MCSectionELF::Create(Entry.getKey(), Type, Flags, Kind,
-                                              IsExplicit, getContext());
-  Entry.setValue(Result);
-  return Result;
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
-  if (UniquingMap != 0)
-    ((ELFUniqueMapTy*)UniquingMap)->clear();
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
   BSSSection =

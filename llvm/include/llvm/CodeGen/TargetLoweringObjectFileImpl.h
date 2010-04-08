@@ -33,7 +33,6 @@ namespace llvm {
 
 
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
-  mutable void *UniquingMap;
 protected:
   /// TLSDataSection - Section directive for Thread Local data.
   ///
@@ -58,8 +57,8 @@ protected:
                                  unsigned Flags, SectionKind Kind,
                                  bool IsExplicit = false) const;
 public:
-  TargetLoweringObjectFileELF() : UniquingMap(0) {}
-  ~TargetLoweringObjectFileELF();
+  TargetLoweringObjectFileELF() {}
+  ~TargetLoweringObjectFileELF() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 

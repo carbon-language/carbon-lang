@@ -64,14 +64,22 @@ ENTRY(0 /*FIXME*/,           S_ATTR_LOC_RELOC)
   { AttrFlagEnd, 0, 0 }
 };
 
-
-MCSectionMachO *MCSectionMachO::
-Create(StringRef Segment, StringRef Section,
-       unsigned TypeAndAttributes, unsigned Reserved2,
-       SectionKind K, MCContext &Ctx) {
-  // S_SYMBOL_STUBS must be set for Reserved2 to be non-zero.
-  return new (Ctx) MCSectionMachO(Segment, Section, TypeAndAttributes,
-                                  Reserved2, K);
+MCSectionMachO::MCSectionMachO(StringRef Segment, StringRef Section,
+                               unsigned TAA, unsigned reserved2, SectionKind K)
+  : MCSection(K), TypeAndAttributes(TAA), Reserved2(reserved2) {
+  assert(Segment.size() <= 16 && Section.size() <= 16 &&
+         "Segment or section string too long");
+  for (unsigned i = 0; i != 16; ++i) {
+    if (i < Segment.size())
+      SegmentName[i] = Segment[i];
+    else
+      SegmentName[i] = 0;
+    
+    if (i < Section.size())
+      SectionName[i] = Section[i];
+    else
+      SectionName[i] = 0;
+  }        
 }
 
 void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
