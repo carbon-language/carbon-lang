@@ -23,6 +23,7 @@
 #include "llvm/Analysis/PointerTracking.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/Lint.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
@@ -137,6 +138,7 @@ namespace {
       (void) llvm::createGEPSplitterPass();
       (void) llvm::createSCCVNPass();
       (void) llvm::createABCDPass();
+      (void) llvm::createLintPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
