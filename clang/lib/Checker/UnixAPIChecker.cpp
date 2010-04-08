@@ -15,8 +15,12 @@
 #include "GRExprEngineInternalChecks.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/BugReporter/BugType.h"
+#include "clang/Analysis/Support/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <fcntl.h>
+
+#include "clang/Basic/TargetInfo.h"
+
 
 using namespace clang;
 
@@ -57,6 +61,9 @@ static inline void LazyInitialize(BugType *&BT, const char *name) {
 //===----------------------------------------------------------------------===//
 
 static void CheckOpen(CheckerContext &C, const CallExpr *CE, BugType *&BT) {
+  if (C.getASTContext().Target.getTriple().getVendor() != llvm::Triple::Apple)
+    return;
+  
   LazyInitialize(BT, "Improper use of 'open'");
 
   // Look at the 'oflags' argument for the O_CREAT flag.
