@@ -28,6 +28,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
@@ -5497,9 +5498,14 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         if (InlineAsm::isRegDefKind(OpFlag) ||
             InlineAsm::isRegDefEarlyClobberKind(OpFlag)) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
-          if (OpInfo.isIndirect)
-            report_fatal_error("Don't know how to handle tied indirect "
-                              "register inputs yet!");
+          if (OpInfo.isIndirect) {
+            // This happens on gcc/testsuite/gcc.dg/pr8788-1.c
+            LLVMContext &Ctx = CurMBB->getParent()->getFunction()->getContext();
+            Ctx.emitError(CS.getInstruction(),  "inline asm not supported yet:"
+                          " don't know how to handle tied "
+                          "indirect register inputs");
+          }
+          
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
           MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
