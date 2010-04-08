@@ -4065,7 +4065,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   if (I != ConstantEvolutionLoopExitValue.end())
     return I->second;
 
-  if (BEs.ugt(APInt(BEs.getBitWidth(),MaxBruteForceIterations)))
+  if (BEs.ugt(MaxBruteForceIterations))
     return ConstantEvolutionLoopExitValue[PN] = 0;  // Not going to evaluate it.
 
   Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];

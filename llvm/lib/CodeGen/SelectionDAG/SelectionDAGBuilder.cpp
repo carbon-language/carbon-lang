@@ -1614,7 +1614,7 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
        I!=E; ++I)
     TSize += I->size();
 
-  if (!areJTsAllowed(TLI) || TSize.ult(APInt(First.getBitWidth(), 4)))
+  if (!areJTsAllowed(TLI) || TSize.ult(4))
     return false;
 
   APInt Range = ComputeRange(First, Last);
@@ -1868,7 +1868,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
                << "Low bound: " << minValue << '\n'
                << "High bound: " << maxValue << '\n');
 
-  if (cmpRange.uge(APInt(cmpRange.getBitWidth(), IntPtrBits)) ||
+  if (cmpRange.uge(IntPtrBits) ||
       (!(Dests.size() == 1 && numCmps >= 3) &&
        !(Dests.size() == 2 && numCmps >= 5) &&
        !(Dests.size() >= 3 && numCmps >= 6)))
@@ -1880,8 +1880,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
   // Optimize the case where all the case values fit in a
   // word without having to subtract minValue. In this case,
   // we can optimize away the subtraction.
-  if (minValue.isNonNegative() &&
-      maxValue.slt(APInt(maxValue.getBitWidth(), IntPtrBits))) {
+  if (minValue.isNonNegative() && maxValue.slt(IntPtrBits)) {
     cmpRange = maxValue;
   } else {
     lowBound = minValue;

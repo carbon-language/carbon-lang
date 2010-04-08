@@ -1325,7 +1325,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
         if (RHSV == 0 && isa<ConstantInt>(BO->getOperand(1)) &&BO->hasOneUse()){
           const APInt &V = cast<ConstantInt>(BO->getOperand(1))->getValue();
-          if (V.sgt(APInt(V.getBitWidth(), 1)) && V.isPowerOf2()) {
+          if (V.sgt(1) && V.isPowerOf2()) {
             Value *NewRem =
               Builder->CreateURem(BO->getOperand(0), BO->getOperand(1),
                                   BO->getName());

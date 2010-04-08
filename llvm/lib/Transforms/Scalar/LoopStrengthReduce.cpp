@@ -2447,7 +2447,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
           if (C->getValue()->getValue().isNegative() !=
                 (NewF.AM.BaseOffs < 0) &&
               (C->getValue()->getValue().abs() * APInt(BitWidth, F.AM.Scale))
-                .ule(APInt(BitWidth, NewF.AM.BaseOffs).abs()))
+                .ule(abs64(NewF.AM.BaseOffs)))
             continue;
 
         // OK, looks good.
@@ -2475,7 +2475,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
               if (C->getValue()->getValue().isNegative() !=
                     (NewF.AM.BaseOffs < 0) &&
                   C->getValue()->getValue().abs()
-                    .ule(APInt(BitWidth, NewF.AM.BaseOffs).abs()))
+                    .ule(abs64(NewF.AM.BaseOffs)))
                 goto skip_formula;
 
           // Ok, looks good.

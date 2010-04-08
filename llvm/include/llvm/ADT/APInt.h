@@ -870,11 +870,27 @@ public:
   /// @brief Unsigned less than comparison
   bool ult(const APInt& RHS) const;
 
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the less-than relationship.
+  /// @returns true if *this < RHS when considered unsigned.
+  /// @brief Unsigned less than comparison
+  bool ult(uint64_t RHS) const {
+    return ult(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as signed quantities and compares them for
   /// validity of the less-than relationship.
   /// @returns true if *this < RHS when both are considered signed.
   /// @brief Signed less than comparison
   bool slt(const APInt& RHS) const;
+
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the less-than relationship.
+  /// @returns true if *this < RHS when considered signed.
+  /// @brief Signed less than comparison
+  bool slt(uint64_t RHS) const {
+    return slt(APInt(getBitWidth(), RHS));
+  }
 
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// validity of the less-or-equal relationship.
@@ -882,6 +898,14 @@ public:
   /// @brief Unsigned less or equal comparison
   bool ule(const APInt& RHS) const {
     return ult(RHS) || eq(RHS);
+  }
+
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the less-or-equal relationship.
+  /// @returns true if *this <= RHS when considered unsigned.
+  /// @brief Unsigned less or equal comparison
+  bool ule(uint64_t RHS) const {
+    return ule(APInt(getBitWidth(), RHS));
   }
 
   /// Regards both *this and RHS as signed quantities and compares them for
@@ -892,12 +916,28 @@ public:
     return slt(RHS) || eq(RHS);
   }
 
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the less-or-equal relationship.
+  /// @returns true if *this <= RHS when considered signed.
+  /// @brief Signed less or equal comparison
+  bool sle(uint64_t RHS) const {
+    return sle(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// the validity of the greater-than relationship.
   /// @returns true if *this > RHS when both are considered unsigned.
   /// @brief Unsigned greather than comparison
   bool ugt(const APInt& RHS) const {
     return !ult(RHS) && !eq(RHS);
+  }
+
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the greater-than relationship.
+  /// @returns true if *this > RHS when considered unsigned.
+  /// @brief Unsigned greater than comparison
+  bool ugt(uint64_t RHS) const {
+    return ugt(APInt(getBitWidth(), RHS));
   }
 
   /// Regards both *this and RHS as signed quantities and compares them for
@@ -908,6 +948,14 @@ public:
     return !slt(RHS) && !eq(RHS);
   }
 
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the greater-than relationship.
+  /// @returns true if *this > RHS when considered signed.
+  /// @brief Signed greater than comparison
+  bool sgt(uint64_t RHS) const {
+    return sgt(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// validity of the greater-or-equal relationship.
   /// @returns true if *this >= RHS when both are considered unsigned.
@@ -916,12 +964,28 @@ public:
     return !ult(RHS);
   }
 
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the greater-or-equal relationship.
+  /// @returns true if *this >= RHS when considered unsigned.
+  /// @brief Unsigned greater or equal comparison
+  bool uge(uint64_t RHS) const {
+    return uge(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as signed quantities and compares them for
   /// validity of the greater-or-equal relationship.
   /// @returns true if *this >= RHS when both are considered signed.
   /// @brief Signed greather or equal comparison
   bool sge(const APInt& RHS) const {
     return !slt(RHS);
+  }
+
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the greater-or-equal relationship.
+  /// @returns true if *this >= RHS when considered signed.
+  /// @brief Signed greater or equal comparison
+  bool sge(uint64_t RHS) const {
+    return sge(APInt(getBitWidth(), RHS));
   }
 
   /// This operation tests if there are any pairs of corresponding bits
