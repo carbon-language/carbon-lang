@@ -24,7 +24,6 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -440,138 +439,26 @@ ASTConsumer *clang::CreateDeclContextPrinter() {
 /// RecordLayoutDumper - C++ Record Layout Dumping.
 namespace {
 class RecordLayoutDumper : public ASTConsumer {
-  llvm::raw_ostream& Out;
-  
-  void PrintOffset(uint64_t Offset, unsigned IndentLevel) {
-    Out << llvm::format("%4d | ", Offset);
-    for (unsigned I = 0; I < IndentLevel * 2; ++I) Out << ' ';
-  }
-  
-  void DumpRecordLayoutOffsets(const CXXRecordDecl *RD, ASTContext &C,
-                               uint64_t Offset,
-                               unsigned IndentLevel, const char* Description,
-                               bool IncludeVirtualBases) {
-    const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
-
-    PrintOffset(Offset, IndentLevel);
-    Out << C.getTypeDeclType((CXXRecordDecl *)RD).getAsString();
-    if (Description)
-      Out << ' ' << Description;
-    if (RD->isEmpty())
-      Out << " (empty)";
-    Out << '\n';
-    
-    IndentLevel++;
-    
-    const CXXRecordDecl *PrimaryBase = Info.getPrimaryBase();
-    
-    // Vtable pointer.
-    if (RD->isDynamicClass() && !PrimaryBase) {
-      PrintOffset(Offset, IndentLevel);
-      Out << '(' << RD->getNameAsString() << " vtable pointer)\n";
-    }
-    // Dump (non-virtual) bases
-    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-      assert(!I->getType()->isDependentType() &&
-             "Cannot layout class with dependent bases.");
-      if (I->isVirtual())
-        continue;
-      
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-      
-      uint64_t BaseOffset = Offset + Info.getBaseClassOffset(Base) / 8;
-      
-      DumpRecordLayoutOffsets(Base, C, BaseOffset, IndentLevel, 
-                              Base == PrimaryBase ? "(primary base)" : "(base)",
-                              /*IncludeVirtualBases=*/false);
-    }
-    
-    // Dump fields.
-    uint64_t FieldNo = 0;
-    for (CXXRecordDecl::field_iterator I = RD->field_begin(),
-         E = RD->field_end(); I != E; ++I, ++FieldNo) {      
-      const FieldDecl *Field = *I;
-      uint64_t FieldOffset = Offset + Info.getFieldOffset(FieldNo) / 8;
-      
-      if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
-        if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-          DumpRecordLayoutOffsets(D, C, FieldOffset, IndentLevel, 
-                                  Field->getNameAsCString(),
-                                  /*IncludeVirtualBases=*/true);
-          continue;
-        }
-      }
-      
-      PrintOffset(FieldOffset, IndentLevel);
-      Out << Field->getType().getAsString() << ' ';
-      Out << Field->getNameAsString() << '\n';
-    }
-    
-    if (!IncludeVirtualBases)
-      return;
-    
-    // Dump virtual bases.
-    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
-         E = RD->vbases_end(); I != E; ++I) {
-      assert(I->isVirtual() && "Found non-virtual class!");
-      const CXXRecordDecl *VBase =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-      
-      uint64_t VBaseOffset = Offset + Info.getVBaseClassOffset(VBase) / 8;
-      DumpRecordLayoutOffsets(VBase, C, VBaseOffset, IndentLevel, 
-                              VBase == PrimaryBase ? 
-                              "(primary virtual base)" : "(virtual base)",
-                              /*IncludeVirtualBases=*/false);
-    }
-  }
-  
-  // FIXME: Maybe this could be useful in ASTContext.cpp.
-  void DumpRecordLayout(const CXXRecordDecl *RD, ASTContext &C) {
-    const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
-    
-    DumpRecordLayoutOffsets(RD, C, 0, 0, 0, 
-                            /*IncludeVirtualBases=*/true);
-    Out << "  sizeof=" << Info.getSize() / 8;
-    Out << ", dsize=" << Info.getDataSize() / 8;
-    Out << ", align=" << Info.getAlignment() / 8 << '\n';
-    Out << "  nvsize=" << Info.getNonVirtualSize() / 8;
-    Out << ", nvalign=" << Info.getNonVirtualAlign() / 8 << '\n';
-    Out << '\n';
-  }
-  
 public:
-  RecordLayoutDumper() : Out(llvm::errs()) {}
-  
+  RecordLayoutDumper() {}
+
   void HandleTranslationUnit(ASTContext &C) {
-    for (ASTContext::type_iterator I = C.types_begin(), E = C.types_end(); 
+    for (ASTContext::type_iterator I = C.types_begin(), E = C.types_end();
          I != E; ++I) {
       const RecordType *RT = dyn_cast<RecordType>(*I);
       if (!RT)
         continue;
-      
+
       const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-      if (!RD)
-        continue;
-      
-      if (RD->isImplicit())
+      if (!RD || RD->isImplicit() || RD->isDependentType() ||
+          RD->isInvalidDecl() || !RD->getDefinition())
         continue;
 
-      if (RD->isDependentType())
-        continue;
-      
-      if (RD->isInvalidDecl())
-        continue;
-      
-      if (!RD->getDefinition())
-        continue;
-      
       // FIXME: Do we really need to hard code this?
       if (RD->getQualifiedNameAsString() == "__va_list_tag")
         continue;
-      
-      DumpRecordLayout(RD, C);
+
+      C.DumpRecordLayout(RD, llvm::errs());
    }
   }
 };

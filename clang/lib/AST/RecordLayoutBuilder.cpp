@@ -15,15 +15,16 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
-#include <llvm/ADT/SmallSet.h>
-#include <llvm/Support/MathExtras.h>
+#include "llvm/Support/Format.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), Packed(false), UnfilledBitsInLastByte(0),
-  MaxFieldAlignment(0), DataSize(0), IsUnion(false), NonVirtualSize(0), 
-  NonVirtualAlignment(8), FirstNearlyEmptyVBase(0) { }
+    MaxFieldAlignment(0), DataSize(0), IsUnion(false), NonVirtualSize(0),
+    NonVirtualAlignment(8), FirstNearlyEmptyVBase(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
@@ -38,22 +39,22 @@ bool ASTRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
 }
 
 void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
-  const ASTRecordLayout::PrimaryBaseInfo &BaseInfo = 
+  const ASTRecordLayout::PrimaryBaseInfo &BaseInfo =
     Ctx.getASTRecordLayout(RD).getPrimaryBaseInfo();
-  
+
   // If the record has a primary base class that is virtual, add it to the set
   // of primary bases.
   if (BaseInfo.isVirtual())
     IndirectPrimaryBases.insert(BaseInfo.getBase());
-  
+
   // Now traverse all bases and find primary bases for them.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
+         e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    
+
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
     if (Base->getNumVBases())
@@ -64,10 +65,10 @@ void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
 void
 ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+         E = RD->bases_end(); I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
-    
+
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
@@ -80,12 +81,12 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
                                                        /*IsVirtual=*/true);
         return;
       }
-      
+
       // Is this the first nearly empty virtual base?
       if (!FirstNearlyEmptyVBase)
         FirstNearlyEmptyVBase = Base;
     }
-    
+
     SelectPrimaryVBase(Base);
     if (PrimaryBase.getBase())
       return;
@@ -97,11 +98,11 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   // If the class isn't dynamic, it won't have a primary base.
   if (!RD->isDynamicClass())
     return;
-  
+
   // Compute all the primary virtual bases for all of our direct and
   // indirect bases, and record all their primary virtual base classes.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
+         e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
            "Cannot lay out class with dependent bases.");
     const CXXRecordDecl *Base =
@@ -109,15 +110,15 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
     IdentifyPrimaryBases(Base);
   }
 
-  // If the record has a dynamic base class, attempt to choose a primary base 
-  // class. It is the first (in direct base class order) non-virtual dynamic 
+  // If the record has a dynamic base class, attempt to choose a primary base
+  // class. It is the first (in direct base class order) non-virtual dynamic
   // base class, if one exists.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
+         e = RD->bases_end(); i != e; ++i) {
     // Ignore virtual bases.
     if (i->isVirtual())
       continue;
-    
+
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
 
@@ -139,17 +140,17 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   // Otherwise, it is the first nearly empty virtual base that is not an
   // indirect primary virtual base class, if one exists.
   if (FirstNearlyEmptyVBase) {
-    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase, 
+    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase,
                                                    /*IsVirtual=*/true);
     return;
   }
-  
+
   // Otherwise there is no primary base class.
   assert(!PrimaryBase.getBase() && "Should not get here with a primary base!");
 
   // Allocate the virtual table pointer at offset zero.
   assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
-           
+
   // Update the size.
   Size += Ctx.Target.getPointerWidth(0);
   DataSize = Size;
@@ -162,7 +163,7 @@ void
 ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
   // First, determine the primary base class.
   DeterminePrimaryBase(RD);
-  
+
   // If we have a primary base class, lay it out.
   if (const CXXRecordDecl *Base = PrimaryBase.getBase()) {
     if (PrimaryBase.isVirtual()) {
@@ -173,10 +174,10 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     } else
       LayoutNonVirtualBase(Base);
   }
-  
+
   // Now lay out the non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+         E = RD->bases_end(); I != E; ++I) {
 
     // Ignore virtual bases.
     if (I->isVirtual())
@@ -197,16 +198,16 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
 void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
   // Layout the base.
   uint64_t Offset = LayoutBase(RD);
-  
+
   // Add its base class offset.
   if (!Bases.insert(std::make_pair(RD, Offset)).second)
     assert(false && "Added same base offset more than once!");
 }
 
-void 
+void
 ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
-                                        uint64_t Offset,
-                                        const CXXRecordDecl *MostDerivedClass) {
+                                           uint64_t Offset,
+                                           const CXXRecordDecl *MostDerivedClass) {
   const CXXRecordDecl *PrimaryBase;
 
   if (MostDerivedClass == RD)
@@ -220,14 +221,14 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
          E = RD->bases_end(); I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
-    
+
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
       bool IndirectPrimaryBase = IndirectPrimaryBases.count(Base);
-      
-      // We only want to visit this virtual base if it's either a primary base, 
+
+      // We only want to visit this virtual base if it's either a primary base,
       // or not an indirect primary base.
       if (Base == PrimaryBase || !IndirectPrimaryBase) {
         // Only lay things out once.
@@ -235,7 +236,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
           continue;
 
         if (Base == PrimaryBase) {
-          assert(IndirectPrimaryBase && 
+          assert(IndirectPrimaryBase &&
                  "Base is supposed to be an indirect primary base!");
 
           // We only want to add a vbase offset if this primary base is not the
@@ -244,14 +245,14 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
               !this->PrimaryBase.isVirtual()) {
             if (!VBases.insert(std::make_pair(Base, Offset)).second)
               assert(false && "Added same vbase offset more than once!");
-          } 
+          }
         } else {
           // We actually do want to lay out this base.
           LayoutVirtualBase(Base);
         }
       }
     }
-    
+
     if (!Base->getNumVBases()) {
       // This base isn't interesting since it doesn't have any virtual bases.
       continue;
@@ -272,7 +273,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
       const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
       BaseOffset = Offset + Layout.getBaseClassOffset(Base);
     }
-    
+
     LayoutVirtualBases(Base, BaseOffset, MostDerivedClass);
   }
 }
@@ -298,17 +299,17 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
 
     return 0;
   }
-  
+
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
-  
+
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
-  
+
   // Try to place the base.
   while (true) {
     if (canPlaceRecordAtOffset(RD, Offset))
       break;
-    
+
     Offset += BaseAlign;
   }
 
@@ -327,44 +328,44 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   return Offset;
 }
 
-bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD, 
+bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
                                                     uint64_t Offset) const {
   // Look for an empty class with the same type at the same offset.
-  for (EmptyClassOffsetsTy::const_iterator I = 
-        EmptyClassOffsets.lower_bound(Offset), 
-       E = EmptyClassOffsets.upper_bound(Offset); I != E; ++I) {
-    
+  for (EmptyClassOffsetsTy::const_iterator I =
+         EmptyClassOffsets.lower_bound(Offset),
+         E = EmptyClassOffsets.upper_bound(Offset); I != E; ++I) {
+
     if (I->second == RD)
       return false;
   }
-  
+
   const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
 
   // Check bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+         E = RD->bases_end(); I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
     if (I->isVirtual())
       continue;
-    
+
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
-    
+
     if (!canPlaceRecordAtOffset(Base, Offset + BaseClassOffset))
       return false;
   }
-  
+
   // Check fields.
   unsigned FieldNo = 0;
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end(); 
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
-    
+
     uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
-    
+
     if (!canPlaceFieldAtOffset(FD, Offset + FieldOffset))
       return false;
   }
@@ -373,14 +374,14 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
   return true;
 }
 
-bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD, 
+bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
                                                    uint64_t Offset) const {
   QualType T = FD->getType();
   if (const RecordType *RT = T->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
       return canPlaceRecordAtOffset(RD, Offset);
   }
-  
+
   if (const ConstantArrayType *AT = Ctx.getAsConstantArrayType(T)) {
     QualType ElemTy = Ctx.getBaseElementType(AT);
     const RecordType *RT = ElemTy->getAs<RecordType>();
@@ -389,7 +390,7 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
     const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
     if (!RD)
       return true;
-    
+
     const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
 
     uint64_t NumElements = Ctx.getConstantArrayElementCount(AT);
@@ -397,11 +398,11 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
     for (uint64_t I = 0; I != NumElements; ++I) {
       if (!canPlaceRecordAtOffset(RD, ElementOffset))
         return false;
-      
+
       ElementOffset += Info.getSize();
     }
   }
-  
+
   return true;
 }
 
@@ -409,39 +410,39 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
                                                      uint64_t Offset) {
   if (RD->isEmpty())
     EmptyClassOffsets.insert(std::make_pair(Offset, RD));
-  
+
   const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
 
   // Update bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+         E = RD->bases_end(); I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
     if (I->isVirtual())
       continue;
-    
+
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-    
+
     uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
     UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset);
   }
-  
+
   // Update fields.
   unsigned FieldNo = 0;
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end(); 
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
-    
+
     uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
     UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
   }
-  
+
   // FIXME: Update virtual bases.
 }
 
 void
-ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD, 
+ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
                                                 uint64_t Offset) {
   QualType T = FD->getType();
 
@@ -451,7 +452,7 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
       return;
     }
   }
-  
+
   if (const ConstantArrayType *AT = Ctx.getAsConstantArrayType(T)) {
     QualType ElemTy = Ctx.getBaseElementType(AT);
     const RecordType *RT = ElemTy->getAs<RecordType>();
@@ -460,7 +461,7 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
     const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
     if (!RD)
       return;
-    
+
     const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
 
     uint64_t NumElements = Ctx.getConstantArrayElementCount(AT);
@@ -541,7 +542,7 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
   for (RecordDecl::field_iterator Field = D->field_begin(),
-       FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
+         FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
     LayoutField(*Field);
 }
 
@@ -549,11 +550,11 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t FieldOffset = IsUnion ? 0 : (DataSize - UnfilledBitsInLastByte);
   uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Ctx).getZExtValue();
-  
+
   std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
-  
+
   if (FieldPacked)
     FieldAlign = 1;
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
@@ -562,33 +563,33 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // The maximum field alignment overrides the aligned attribute.
   if (MaxFieldAlignment)
     FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
-  
+
   // Check if we need to add padding to give the field the correct
   // alignment.
   if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
     FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
-  
+
   // Padding members don't affect overall alignment
   if (!D->getIdentifier())
     FieldAlign = 1;
-  
+
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
-  
+
   // Update DataSize to include the last byte containing (part of) the bitfield.
   if (IsUnion) {
     // FIXME: I think FieldSize should be TypeSize here.
     DataSize = std::max(DataSize, FieldSize);
   } else {
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
-    
+
     DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
     UnfilledBitsInLastByte = DataSize - NewSizeInBits;
   }
-  
+
   // Update the size.
   Size = std::max(Size, DataSize);
-  
+
   // Remember max struct/class alignment.
   UpdateAlignment(FieldAlign);
 }
@@ -606,7 +607,7 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   uint64_t FieldOffset = IsUnion ? 0 : DataSize;
   uint64_t FieldSize;
   unsigned FieldAlign;
-  
+
   if (D->getType()->isIncompleteArrayType()) {
     // This is a flexible array member; we can't directly
     // query getTypeInfo about these, so we figure it out here.
@@ -636,20 +637,20 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
   // Round up the current record size to the field's alignment boundary.
   FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
-  
+
   if (!IsUnion) {
     while (true) {
       // Check if we can place the field at this offset.
       if (canPlaceFieldAtOffset(D, FieldOffset))
         break;
-      
+
       // We couldn't place the field at the offset. Try again at a new offset.
       FieldOffset += FieldAlign;
     }
-    
+
     UpdateEmptyClassOffsets(D, FieldOffset);
   }
-  
+
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
 
@@ -745,13 +746,13 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   if (RD->isInAnonymousNamespace())
     return 0;
 
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
-       E = RD->method_end(); I != E; ++I) {
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+         E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
-    
+
     if (!MD->isVirtual())
       continue;
-    
+
     if (MD->isPure())
       continue;
 
@@ -759,17 +760,122 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
     // they don't have a body until they're defined.
     if (MD->isImplicit())
       continue;
-    
+
     if (MD->isInlineSpecified())
       continue;
 
     if (MD->hasInlineBody())
       continue;
-    
+
     // We found it.
     return MD;
   }
-  
+
   return 0;
 }
 
+static void PrintOffset(llvm::raw_ostream &OS,
+                        uint64_t Offset, unsigned IndentLevel) {
+  OS << llvm::format("%4d | ", Offset);
+  OS.indent(IndentLevel * 2);
+}
+
+static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
+                                const CXXRecordDecl *RD, ASTContext &C,
+                                uint64_t Offset,
+                                unsigned IndentLevel,
+                                const char* Description,
+                                bool IncludeVirtualBases) {
+  const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
+
+  PrintOffset(OS, Offset, IndentLevel);
+  OS << C.getTypeDeclType((CXXRecordDecl *)RD).getAsString();
+  if (Description)
+    OS << ' ' << Description;
+  if (RD->isEmpty())
+    OS << " (empty)";
+  OS << '\n';
+
+  IndentLevel++;
+
+  const CXXRecordDecl *PrimaryBase = Info.getPrimaryBase();
+
+  // Vtable pointer.
+  if (RD->isDynamicClass() && !PrimaryBase) {
+    PrintOffset(OS, Offset, IndentLevel);
+    OS << '(' << RD->getNameAsString() << " vtable pointer)\n";
+  }
+  // Dump (non-virtual) bases
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+    assert(!I->getType()->isDependentType() &&
+           "Cannot layout class with dependent bases.");
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t BaseOffset = Offset + Info.getBaseClassOffset(Base) / 8;
+
+    DumpCXXRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
+                        Base == PrimaryBase ? "(primary base)" : "(base)",
+                        /*IncludeVirtualBases=*/false);
+  }
+
+  // Dump fields.
+  uint64_t FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(),
+         E = RD->field_end(); I != E; ++I, ++FieldNo) {
+    const FieldDecl *Field = *I;
+    uint64_t FieldOffset = Offset + Info.getFieldOffset(FieldNo) / 8;
+
+    if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
+      if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+        DumpCXXRecordLayout(OS, D, C, FieldOffset, IndentLevel,
+                            Field->getNameAsCString(),
+                            /*IncludeVirtualBases=*/true);
+        continue;
+      }
+    }
+
+    PrintOffset(OS, FieldOffset, IndentLevel);
+    OS << Field->getType().getAsString() << ' ';
+    OS << Field->getNameAsString() << '\n';
+  }
+
+  if (!IncludeVirtualBases)
+    return;
+
+  // Dump virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+         E = RD->vbases_end(); I != E; ++I) {
+    assert(I->isVirtual() && "Found non-virtual class!");
+    const CXXRecordDecl *VBase =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t VBaseOffset = Offset + Info.getVBaseClassOffset(VBase) / 8;
+    DumpCXXRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
+                        VBase == PrimaryBase ?
+                        "(primary virtual base)" : "(virtual base)",
+                        /*IncludeVirtualBases=*/false);
+  }
+}
+
+void ASTContext::DumpRecordLayout(const RecordDecl *RD,
+                                  llvm::raw_ostream &OS) {
+  const ASTRecordLayout &Info = getASTRecordLayout(RD);
+
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
+    DumpCXXRecordLayout(OS, CXXRD, *this, 0, 0, 0,
+                        /*IncludeVirtualBases=*/true);
+  else
+    OS << getTypeDeclType((RecordDecl *)RD).getAsString();
+
+  OS << "  sizeof=" << Info.getSize() / 8;
+  OS << ", dsize=" << Info.getDataSize() / 8;
+  OS << ", align=" << Info.getAlignment() / 8 << '\n';
+  OS << "  nvsize=" << Info.getNonVirtualSize() / 8;
+  OS << ", nvalign=" << Info.getNonVirtualAlign() / 8 << '\n';
+  OS << '\n';
+}

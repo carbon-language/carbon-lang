@@ -34,6 +34,7 @@
 
 namespace llvm {
   struct fltSemantics;
+  class raw_ostream;
 }
 
 namespace clang {
@@ -936,6 +937,8 @@ public:
   /// getASTObjCInterfaceLayout - Get or compute information about the
   /// layout of the specified Objective-C interface.
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
+
+  void DumpRecordLayout(const RecordDecl *RD, llvm::raw_ostream &OS);
 
   /// getASTObjCImplementationLayout - Get or compute information about
   /// the layout of the specified Objective-C implementation. This may
