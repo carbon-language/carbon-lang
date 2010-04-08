@@ -179,20 +179,23 @@ class DwarfDebug {
   SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
 
   typedef SmallVector<DbgScope *, 2> ScopeVector;
-  typedef DenseMap<const MachineInstr *, ScopeVector>
-    InsnToDbgScopeMapTy;
 
-  /// DbgScopeBeginMap - Maps instruction with a list of DbgScopes it starts.
-  InsnToDbgScopeMapTy DbgScopeBeginMap;
-
-  /// DbgScopeEndMap - Maps instruction with a list DbgScopes it ends.
-  InsnToDbgScopeMapTy DbgScopeEndMap;
+  SmallPtrSet<const MachineInstr *, 8> InsnsBeginScopeSet;
+  SmallPtrSet<const MachineInstr *, 8> InsnsEndScopeSet;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
   typedef std::pair<MCSymbol*, DIE *> InlineInfoLabels;
   DenseMap<MDNode*, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
+
+  /// InsnBeforeLabelMap - Maps instruction with label emitted before 
+  /// instruction.
+  DenseMap<const MachineInstr *, MCSymbol *> InsnBeforeLabelMap;
+
+  /// InsnAfterLabelMap - Maps instruction with label emitted after
+  /// instruction.
+  DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
 
   /// CompileUnitOffsets - A vector of the offsets of the compile units. This is
   /// used when calculating the "origin" of a concrete instance of an inlined
