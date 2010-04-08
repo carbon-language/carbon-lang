@@ -323,8 +323,7 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
 
 void clang::sema::
 AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
-                                     const Decl *D, QualType BlockTy,
-                                     const bool analyzeStaticInline) {
+                                     const Decl *D, QualType BlockTy) {
 
   assert(BlockTy.isNull() || isa<BlockDecl>(D));
 
@@ -348,17 +347,6 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     // we'll do the analysis at instantiation time.
     if (FD->isDependentContext())
       return;
-
-    // Only analyze 'static inline' functions when explicitly asked.
-    if (!analyzeStaticInline && FD->isInlineSpecified() &&
-        FD->getStorageClass() == FunctionDecl::Static) {
-      FD = FD->getCanonicalDecl();
-      VisitFlag &visitFlag = VisitedFD[FD];
-      if (visitFlag == Pending)
-        visitFlag = Visited;
-      else
-        return;
-    }
   }
 
   const Stmt *Body = D->getBody();
@@ -367,7 +355,6 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
   // explosion for destrutors that can result and the compile time hit.
   AnalysisContext AC(D, false);
-  bool performedCheck = false;
 
   // Warning: check missing 'return'
   if (P.enableCheckFallThrough) {
@@ -375,53 +362,9 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
                          : CheckFallThroughDiagnostics::MakeForFunction());
     CheckFallThroughForBody(S, D, Body, BlockTy, CD, AC);
-    performedCheck = true;
   }
 
   // Warning: check for unreachable code
-  if (P.enableCheckUnreachable) {
+  if (P.enableCheckUnreachable)
     CheckUnreachable(S, AC);
-    performedCheck = true;
-  }
-
-  // If this block or function calls a 'static inline' function,
-  // we should analyze those functions as well.
-  if (performedCheck) {
-    // The CFG should already be constructed, so this should not
-    // incur any extra cost.  We might not have a CFG, however, for
-    // invalid code.
-    if (const CFG *cfg = AC.getCFG()) {
-      // All CallExprs are block-level expressions in the CFG.  This means
-      // that walking the basic blocks in the CFG is more efficient
-      // than walking the entire AST to find all calls.
-      for (CFG::const_iterator I=cfg->begin(), E=cfg->end(); I!=E; ++I) {
-        const CFGBlock *B = *I;
-        for (CFGBlock::const_iterator BI=B->begin(), BE=B->end(); BI!=BE; ++BI)
-          if (const CallExpr *CE = dyn_cast<CallExpr>(*BI))
-            if (const DeclRefExpr *DR =
-                dyn_cast<DeclRefExpr>(CE->getCallee()->IgnoreParenCasts()))
-              if (const FunctionDecl *calleeD =
-                  dyn_cast<FunctionDecl>(DR->getDecl())) {
-                calleeD = calleeD->getCanonicalDecl();
-                if (calleeD->isInlineSpecified() &&
-                    calleeD->getStorageClass() == FunctionDecl::Static) {
-                  // Have we analyzed this static inline function before?
-                  VisitFlag &visitFlag = VisitedFD[calleeD];
-                  if (visitFlag == NotVisited) {
-                    // Mark the callee visited prior to analyzing it
-                    // so we terminate in case of recursion.
-                    if (calleeD->getBody()) {
-                      visitFlag = Visited;
-                      IssueWarnings(DefaultPolicy, calleeD, QualType(), true);
-                    }
-                    else {
-                      // Delay warnings until we encounter the definition.
-                      visitFlag = Pending;
-                    }
-                  }
-                }
-              }
-      }
-    }
-  }
 }

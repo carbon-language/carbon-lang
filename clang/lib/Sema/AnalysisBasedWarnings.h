@@ -47,9 +47,7 @@ public:
 
   Policy getDefaultPolicy() { return DefaultPolicy; }
 
-  void IssueWarnings(Policy P, const Decl *D, QualType BlockTy = QualType(),
-                     const bool analyzeStaticInline = false);
-
+  void IssueWarnings(Policy P, const Decl *D, QualType BlockTy = QualType());
 };
 
 }} // end namespace clang::sema
