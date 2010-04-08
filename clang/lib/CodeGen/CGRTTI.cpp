@@ -791,35 +791,6 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty) {
   return RTTIBuilder(*this).BuildTypeInfo(Ty);
 }
 
-// Try to find the magic class __cxxabiv1::__fundamental_type_info. If
-// exists and has a destructor, we will emit the typeinfo for the fundamental
-// types. This is the same behaviour as GCC.
-static CXXRecordDecl *FindMagicClass(ASTContext &AC) {
-  const IdentifierInfo &NamespaceII = AC.Idents.get("__cxxabiv1");
-  DeclarationName NamespaceDN = AC.DeclarationNames.getIdentifier(&NamespaceII);
-  TranslationUnitDecl *TUD = AC.getTranslationUnitDecl();
-  DeclContext::lookup_result NamespaceLookup = TUD->lookup(NamespaceDN);
-  if (NamespaceLookup.first == NamespaceLookup.second)
-    return NULL;
-  const NamespaceDecl *Namespace =
-    dyn_cast<NamespaceDecl>(*NamespaceLookup.first);
-  if (!Namespace)
-    return NULL;
-
-  const IdentifierInfo &ClassII = AC.Idents.get("__fundamental_type_info");
-  DeclarationName ClassDN =  AC.DeclarationNames.getIdentifier(&ClassII);
-  DeclContext::lookup_const_result ClassLookup =  Namespace->lookup(ClassDN);
-  if (ClassLookup.first == ClassLookup.second)
-    return NULL;
-  CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(*ClassLookup.first);
-
-  if (Class->hasDefinition() && Class->isDynamicClass() &&
-      Class->getDestructor(AC))
-    return Class;
-
-  return NULL;
-}
-
 void CodeGenModule::EmitFundamentalRTTIDescriptor(QualType Type) {
   QualType PointerType = Context.getPointerType(Type);
   QualType PointerTypeConst = Context.getPointerType(Type.withConst());
@@ -829,12 +800,6 @@ void CodeGenModule::EmitFundamentalRTTIDescriptor(QualType Type) {
 }
 
 void CodeGenModule::EmitFundamentalRTTIDescriptors() {
-  CXXRecordDecl *RD = FindMagicClass(getContext());
-  if (!RD)
-    return;
-
-  getVTables().GenerateClassData(getVtableLinkage(RD), RD);
-
   QualType FundamentalTypes[] = { Context.VoidTy, Context.Char32Ty,
                                   Context.Char16Ty, Context.UnsignedLongLongTy,
                                   Context.LongLongTy, Context.WCharTy,

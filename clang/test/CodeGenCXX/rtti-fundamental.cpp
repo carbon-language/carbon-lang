@@ -8,8 +8,10 @@ std::type_info foo() {
 
 namespace __cxxabiv1 {
   struct __fundamental_type_info {
-    virtual ~__fundamental_type_info() {}
+    virtual ~__fundamental_type_info();
   };
+
+  __fundamental_type_info::~__fundamental_type_info() { }
 }
 
 // CHECK: @_ZTIv = weak_odr constant

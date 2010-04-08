@@ -78,7 +78,6 @@ void CodeGenModule::createObjCRuntime() {
 }
 
 void CodeGenModule::Release() {
-  EmitFundamentalRTTIDescriptors();
   EmitDeferred();
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();
