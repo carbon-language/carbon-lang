@@ -225,7 +225,7 @@ void test33() {
 
 // Test that 'static inline' functions are only analyzed for CFG-based warnings
 // when they are used.
-static inline int si_has_missing_return() {} // no-warning
+static inline int si_has_missing_return() {} // expected-warning{{control reaches end of non-void function}}
 static inline int si_has_missing_return_2() {}; // expected-warning{{control reaches end of non-void function}}
 static inline int si_forward();
 static inline int si_has_missing_return_3(int x) {
