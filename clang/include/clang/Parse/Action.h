@@ -2306,7 +2306,7 @@ public:
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.
     ObjCArgInfo *ArgInfo,      // ArgInfo: Has 'Sel.getNumArgs()' entries.
-    llvm::SmallVectorImpl<Declarator> &Cdecls, // c-style args
+    DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *MethodAttrList, // optional
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required
     tok::ObjCKeywordKind impKind,

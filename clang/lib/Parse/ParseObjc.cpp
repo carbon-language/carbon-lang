@@ -823,7 +823,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     return DeclPtrTy();
   }
 
-  llvm::SmallVector<Declarator, 8> CargNames;
+  llvm::SmallVector<DeclaratorChunk::ParamInfo, 8> CParamInfo;
   if (Tok.isNot(tok::colon)) {
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
@@ -834,7 +834,9 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     DeclPtrTy Result
          = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, CargNames, MethodAttrs.get(),
+                                          0, 
+                                          CParamInfo.data(), CParamInfo.size(),
+                                          MethodAttrs.get(),
                                           MethodImplKind);
     PD.complete(Result);
     return Result;
@@ -897,7 +899,13 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     // Parse the declarator.
     Declarator ParmDecl(DS, Declarator::PrototypeContext);
     ParseDeclarator(ParmDecl);
-    CargNames.push_back(ParmDecl);
+    IdentifierInfo *ParmII = ParmDecl.getIdentifier();
+    DeclPtrTy Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
+    CParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
+                                                    ParmDecl.getIdentifierLoc(), 
+                                                    Param,
+                                                   0));
+
   }
 
   // FIXME: Add support for optional parmameter list...
@@ -913,7 +921,8 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   DeclPtrTy Result
        = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel,
-                                        &ArgInfos[0], CargNames,
+                                        &ArgInfos[0], 
+                                        CParamInfo.data(), CParamInfo.size(),
                                         MethodAttrs.get(),
                                         MethodImplKind, isVariadic);
   PD.complete(Result);

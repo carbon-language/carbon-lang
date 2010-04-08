@@ -182,7 +182,15 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   ReturnType = Method->getResultType();
 
   unsigned NumNamedArgs = Sel.getNumArgs();
-  assert(NumArgs >= NumNamedArgs && "Too few arguments for selector!");
+  // Method might have more arguments than selector indicates. This is due
+  // to addition of c-style arguments in method.
+  if (Method->param_size() > Sel.getNumArgs())
+    NumNamedArgs = Method->param_size();
+  // FIXME. This need be cleaned up.
+  if (NumArgs < NumNamedArgs) {
+    Diag(lbrac, diag::err_typecheck_call_too_few_args) << 2;
+    return false;
+  }
 
   bool IsError = false;
   for (unsigned i = 0; i < NumNamedArgs; i++) {

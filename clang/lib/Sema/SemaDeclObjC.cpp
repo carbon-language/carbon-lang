@@ -1495,7 +1495,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjCArgInfo *ArgInfo,
-    llvm::SmallVectorImpl<Declarator> &Cdecls,
+    DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
   Decl *ClassDecl = classDecl.getAs<Decl>();
@@ -1568,7 +1568,26 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
 
-  ObjCMethod->setMethodParams(Context, Params.data(), Sel.getNumArgs());
+  for (unsigned i = 0, e = CNumArgs; i != e; ++i) {
+    ParmVarDecl *Param = CParamInfo[i].Param.getAs<ParmVarDecl>();
+    QualType ArgType = Param->getType();
+    if (ArgType.isNull())
+      ArgType = Context.getObjCIdType();
+    else
+      // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
+      ArgType = adjustParameterType(ArgType);
+    if (ArgType->isObjCInterfaceType()) {
+      Diag(Param->getLocation(),
+           diag::err_object_cannot_be_passed_returned_by_value)
+      << 1 << ArgType;
+      Param->setInvalidDecl();
+    }
+    Param->setDeclContext(ObjCMethod);
+    IdResolver.RemoveDecl(Param);
+    Params.push_back(Param);
+  }
+  
+  ObjCMethod->setMethodParams(Context, Params.data(), Params.size());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
   const ObjCMethodDecl *PrevMethod = 0;
