@@ -1,5 +1,5 @@
-// RUN: %clang -fblocks -fsyntax-only -Wunused-parameter %s 2>&1 | FileCheck %s
-// RUN: %clang -fblocks -fsyntax-only -Wunused %s 2>&1 | FileCheck -check-prefix=CHECK-unused %s
+// RUN: %clang_cc1 -fblocks -fsyntax-only -Wunused-parameter %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fblocks -fsyntax-only -Wunused %s 2>&1 | FileCheck -check-prefix=CHECK-unused %s
 
 int f0(int x,
        int y,
