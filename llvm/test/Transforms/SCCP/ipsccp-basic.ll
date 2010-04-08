@@ -188,7 +188,7 @@ define void @test8b(i32* %P) {
     %X = call {} @test8a(i32 5, i32* %P)
     ret void
 ; CHECK: define void @test8b
-; CHECK-NEXT: call { } @test8a
+; CHECK-NEXT: call {} @test8a
 ; CHECK-NEXT: ret void
 }
 

@@ -227,13 +227,15 @@ void TypePrinting::CalcTypeName(const Type *Ty,
     const StructType *STy = cast<StructType>(Ty);
     if (STy->isPacked())
       OS << '<';
-    OS << "{ ";
+    OS << '{';
     for (StructType::element_iterator I = STy->element_begin(),
          E = STy->element_end(); I != E; ++I) {
-      CalcTypeName(*I, TypeStack, OS);
-      if (next(I) != STy->element_end())
-        OS << ',';
       OS << ' ';
+      CalcTypeName(*I, TypeStack, OS);
+      if (next(I) == STy->element_end())
+        OS << ' ';
+      else
+        OS << ',';
     }
     OS << '}';
     if (STy->isPacked())
@@ -242,13 +244,15 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   }
   case Type::UnionTyID: {
     const UnionType *UTy = cast<UnionType>(Ty);
-    OS << "union { ";
+    OS << "union {";
     for (StructType::element_iterator I = UTy->element_begin(),
          E = UTy->element_end(); I != E; ++I) {
-      CalcTypeName(*I, TypeStack, OS);
-      if (next(I) != UTy->element_end())
-        OS << ',';
       OS << ' ';
+      CalcTypeName(*I, TypeStack, OS);
+      if (next(I) == UTy->element_end())
+        OS << ' ';
+      else
+        OS << ',';
     }
     OS << '}';
     break;
