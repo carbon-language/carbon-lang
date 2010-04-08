@@ -275,6 +275,24 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
     }
   }
 
+  if (getLangOptions().CPlusPlus) {
+    // See if II is a class template that the user forgot to pass arguments to.
+    UnqualifiedId Name;
+    Name.setIdentifier(&II, IILoc);
+    CXXScopeSpec EmptySS;
+    TemplateTy TemplateResult;
+    if (isTemplateName(S, SS ? *SS : EmptySS, Name, 0, true, TemplateResult)
+        == TNK_Type_template) {
+      TemplateName TplName = TemplateResult.getAsVal<TemplateName>();
+      Diag(IILoc, diag::err_template_missing_args) << TplName;
+      if (TemplateDecl *TplDecl = TplName.getAsTemplateDecl()) {
+        Diag(TplDecl->getLocation(), diag::note_template_decl_here)
+          << TplDecl->getTemplateParameters()->getSourceRange();
+      }
+      return true;
+    }
+  }
+
   // FIXME: Should we move the logic that tries to recover from a missing tag
   // (struct, union, enum) from Parser::ParseImplicitInt here, instead?
   
