@@ -11,6 +11,7 @@
 #include "MBlazeSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -22,14 +23,14 @@ Initialize(MCContext &Ctx, const TargetMachine &TM) {
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
   SmallDataSection =
-    getELFSection(".sdata", MCSectionELF::SHT_PROGBITS,
-                  MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
-                  SectionKind::getDataRel());
+    getContext().getELFSection(".sdata", MCSectionELF::SHT_PROGBITS,
+                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                               SectionKind::getDataRel());
 
   SmallBSSSection =
-    getELFSection(".sbss", MCSectionELF::SHT_NOBITS,
-                  MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
-                  SectionKind::getBSS());
+    getContext().getELFSection(".sbss", MCSectionELF::SHT_NOBITS,
+                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                               SectionKind::getBSS());
 
 }
 

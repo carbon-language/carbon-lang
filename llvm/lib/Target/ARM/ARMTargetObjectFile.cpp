@@ -9,6 +9,7 @@
 
 #include "ARMTargetObjectFile.h"
 #include "ARMSubtarget.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
@@ -25,12 +26,14 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
 
   if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {
     StaticCtorSection =
-      getELFSection(".init_array", MCSectionELF::SHT_INIT_ARRAY,
-                    MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
-                    SectionKind::getDataRel());
+      getContext().getELFSection(".init_array", MCSectionELF::SHT_INIT_ARRAY,
+                                 MCSectionELF::SHF_WRITE |
+                                 MCSectionELF::SHF_ALLOC,
+                                 SectionKind::getDataRel());
     StaticDtorSection =
-      getELFSection(".fini_array", MCSectionELF::SHT_FINI_ARRAY,
-                    MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
-                    SectionKind::getDataRel());
+      getContext().getELFSection(".fini_array", MCSectionELF::SHT_FINI_ARRAY,
+                                 MCSectionELF::SHF_WRITE |
+                                 MCSectionELF::SHF_ALLOC,
+                                 SectionKind::getDataRel());
   }
 }

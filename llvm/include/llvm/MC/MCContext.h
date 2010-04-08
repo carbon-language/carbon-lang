@@ -96,7 +96,7 @@ namespace llvm {
     
     const MCSection *getELFSection(StringRef Section, unsigned Type,
                                    unsigned Flags, SectionKind Kind,
-                                   bool IsExplicit);
+                                   bool IsExplicit = false);
     
     /// @}
 

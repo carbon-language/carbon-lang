@@ -51,11 +51,6 @@ protected:
   const MCSection *MergeableConst4Section;
   const MCSection *MergeableConst8Section;
   const MCSection *MergeableConst16Section;
-
-protected:
-  const MCSection *getELFSection(StringRef Section, unsigned Type,
-                                 unsigned Flags, SectionKind Kind,
-                                 bool IsExplicit = false) const;
 public:
   TargetLoweringObjectFileELF() {}
   ~TargetLoweringObjectFileELF() {}
