@@ -635,7 +635,7 @@ void Filter::recurse() {
 
     // Marks all the segment positions with either BIT_TRUE or BIT_FALSE.
     for (bitIndex = 0; bitIndex < NumBits; bitIndex++) {
-      if (mapIterator->first & (1 << bitIndex))
+      if (mapIterator->first & (1ULL << bitIndex))
         BitValueArray[StartBit + bitIndex] = BIT_TRUE;
       else
         BitValueArray[StartBit + bitIndex] = BIT_FALSE;
@@ -857,7 +857,7 @@ bool FilterChooser::fieldFromInsn(uint64_t &Field, insn_t &Insn,
       return false;
 
     if (Insn[StartBit + i] == BIT_TRUE)
-      Field = Field | (1 << i);
+      Field = Field | (1ULL << i);
   }
 
   return true;

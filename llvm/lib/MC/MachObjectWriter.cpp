@@ -477,7 +477,7 @@ public:
       // actual expression addend without the PCrel bias. However, instructions
       // with data following the relocation are not accomodated for (see comment
       // below regarding SIGNED{1,2,4}), so it isn't exactly that either.
-      Value += 1 << Log2Size;
+      Value += 1LL << Log2Size;
     }
 
     if (Target.isAbsolute()) { // constant
@@ -605,7 +605,7 @@ public:
         // well based on the actual encoded instruction (the additional bias),
         // but instead appear to just look at the final offset.
         if (IsRIPRel) {
-          switch (-(Target.getConstant() + (1 << Log2Size))) {
+          switch (-(Target.getConstant() + (1LL << Log2Size))) {
           case 1: Type = RIT_X86_64_Signed1; break;
           case 2: Type = RIT_X86_64_Signed2; break;
           case 4: Type = RIT_X86_64_Signed4; break;
