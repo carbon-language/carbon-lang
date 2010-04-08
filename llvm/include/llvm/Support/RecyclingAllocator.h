@@ -63,4 +63,11 @@ inline void *operator new(size_t,
   return Allocator.Allocate();
 }
 
+template<class AllocatorType, class T, size_t Size, size_t Align>
+inline void operator delete(void *E,
+                            llvm::RecyclingAllocator<AllocatorType,
+                                                     T, Size, Align> &A) {
+  A.Deallocate(E);
+}
+
 #endif

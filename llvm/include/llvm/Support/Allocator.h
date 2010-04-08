@@ -236,4 +236,6 @@ inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
                                            offsetof(S, x)));
 }
 
+inline void operator delete(void *, llvm::BumpPtrAllocator &) {}
+
 #endif // LLVM_SUPPORT_ALLOCATOR_H
