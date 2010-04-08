@@ -21,7 +21,7 @@
 #include "CGBlocks.h"
 #include "CGCall.h"
 #include "CGCXX.h"
-#include "CGVtable.h"
+#include "CGVTables.h"
 #include "CodeGenTypes.h"
 #include "GlobalDecl.h"
 #include "Mangle.h"

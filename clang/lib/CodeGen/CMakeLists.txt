@@ -23,7 +23,7 @@ add_clang_library(clangCodeGen
   CGRTTI.cpp
   CGStmt.cpp
   CGTemporaries.cpp
-  CGVtable.cpp
+  CGVTables.cpp
   CGVTT.cpp
   CodeGenFunction.cpp
   CodeGenModule.cpp

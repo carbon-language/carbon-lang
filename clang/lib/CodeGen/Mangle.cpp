@@ -25,7 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "CGVtable.h"
+#include "CGVTables.h"
 
 #define MANGLE_CHECKER 0
 

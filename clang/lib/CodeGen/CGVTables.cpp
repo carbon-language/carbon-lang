@@ -1,4 +1,4 @@
-//===--- CGVtable.cpp - Emit LLVM Code for C++ vtables --------------------===//
+//===--- CGVtables.cpp - Emit LLVM Code for C++ vtables -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
