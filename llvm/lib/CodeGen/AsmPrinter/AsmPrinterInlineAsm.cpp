@@ -127,10 +127,15 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // Get the !srcloc metadata node if we have it, and decode the loc cookie from
   // it.
   unsigned LocCookie = 0;
-  if (const MDNode *SrcLoc = MI->getOperand(NumOperands-1).getMetadata()) {
-    if (SrcLoc->getNumOperands() != 0)
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
-        LocCookie = CI->getZExtValue();
+  for (unsigned i = MI->getNumOperands(); i != 0; --i) {
+    if (MI->getOperand(i-1).isMetadata())
+      if (const MDNode *SrcLoc = MI->getOperand(i-1).getMetadata())
+        if (SrcLoc->getNumOperands() != 0)
+          if (const ConstantInt *CI =
+              dyn_cast<ConstantInt>(SrcLoc->getOperand(0))) {
+            LocCookie = CI->getZExtValue();
+            break;
+          }
   }
   
   // Emit the inline asm to a temporary string so we can emit it through
