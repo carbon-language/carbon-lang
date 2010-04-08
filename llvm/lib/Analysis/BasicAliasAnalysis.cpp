@@ -655,6 +655,11 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
                                const Value *V2, unsigned V2Size) {
+  // If either of the memory references is empty, it doesn't matter what the
+  // pointer values are.
+  if (V1Size == 0 || V2Size == 0)
+    return NoAlias;
+
   // Strip off any casts if they exist.
   V1 = V1->stripPointerCasts();
   V2 = V2->stripPointerCasts();
