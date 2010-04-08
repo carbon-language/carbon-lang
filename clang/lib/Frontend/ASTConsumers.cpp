@@ -436,38 +436,6 @@ ASTConsumer *clang::CreateDeclContextPrinter() {
 }
 
 //===----------------------------------------------------------------------===//
-/// RecordLayoutDumper - C++ Record Layout Dumping.
-namespace {
-class RecordLayoutDumper : public ASTConsumer {
-public:
-  RecordLayoutDumper() {}
-
-  void HandleTranslationUnit(ASTContext &C) {
-    for (ASTContext::type_iterator I = C.types_begin(), E = C.types_end();
-         I != E; ++I) {
-      const RecordType *RT = dyn_cast<RecordType>(*I);
-      if (!RT)
-        continue;
-
-      const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-      if (!RD || RD->isImplicit() || RD->isDependentType() ||
-          RD->isInvalidDecl() || !RD->getDefinition())
-        continue;
-
-      // FIXME: Do we really need to hard code this?
-      if (RD->getQualifiedNameAsString() == "__va_list_tag")
-        continue;
-
-      C.DumpRecordLayout(RD, llvm::errs());
-   }
-  }
-};
-} // end anonymous namespace
-ASTConsumer *clang::CreateRecordLayoutDumper() {
-  return new RecordLayoutDumper();
-}
-
-//===----------------------------------------------------------------------===//
 /// InheritanceViewer - C++ Inheritance Visualization
 
 namespace {

@@ -283,7 +283,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::ASTPrintXML:            return "-ast-print-xml";
   case frontend::ASTView:                return "-ast-view";
   case frontend::DumpRawTokens:          return "-dump-raw-tokens";
-  case frontend::DumpRecordLayouts:      return "-dump-record-layouts";
   case frontend::DumpTokens:             return "-dump-tokens";
   case frontend::EmitAssembly:           return "-S";
   case frontend::EmitBC:                 return "-emit-llvm-bc";
@@ -865,8 +864,6 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
       Opts.ProgramAction = frontend::ASTView; break;
     case OPT_dump_raw_tokens:
       Opts.ProgramAction = frontend::DumpRawTokens; break;
-    case OPT_dump_record_layouts:
-      Opts.ProgramAction = frontend::DumpRecordLayouts; break;
     case OPT_dump_tokens:
       Opts.ProgramAction = frontend::DumpTokens; break;
     case OPT_S:
@@ -1208,6 +1205,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
   Opts.Static = Args.hasArg(OPT_static_define);
+  Opts.DumpRecordLayouts = Args.hasArg(OPT_dump_record_layouts);
   Opts.DumpVtableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);
   Opts.OptimizeSize = 0;
 

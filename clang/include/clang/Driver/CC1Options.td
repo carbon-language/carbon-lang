@@ -285,8 +285,6 @@ def ast_view : Flag<"-ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
 def print_decl_contexts : Flag<"-print-decl-contexts">,
   HelpText<"Print DeclContexts and their Decls">;
-def dump_record_layouts : Flag<"-dump-record-layouts">,
-  HelpText<"Dump record layout information">;
 def emit_pth : Flag<"-emit-pth">,
   HelpText<"Generate pre-tokenized header file">;
 def emit_pch : Flag<"-emit-pch">,
@@ -316,6 +314,9 @@ def print_stats : Flag<"-print-stats">,
   HelpText<"Print performance metrics and statistics">;
 def ftime_report : Flag<"-ftime-report">,
   HelpText<"Print the amount of time each phase of compilation takes">;
+
+def dump_record_layouts : Flag<"-dump-record-layouts">,
+  HelpText<"Dump record layout information">;
 
 //===----------------------------------------------------------------------===//
 // Language Options

@@ -24,7 +24,6 @@ namespace frontend {
     ASTPrintXML,            ///< Parse ASTs and print them in XML.
     ASTView,                ///< Parse ASTs and view them in Graphviz.
     DumpRawTokens,          ///< Dump out raw tokens.
-    DumpRecordLayouts,      ///< Dump record layout information.
     DumpTokens,             ///< Dump out preprocessed tokens.
     EmitAssembly,           ///< Emit a .s file.
     EmitBC,                 ///< Emit a .bc file.

@@ -57,10 +57,6 @@ ASTConsumer *CreateASTViewer();
 // to stderr; this is intended for debugging.
 ASTConsumer *CreateDeclContextPrinter();
 
-// RecordLayout dumper: prints out the record layout information for all records
-// in the translation unit; this is intended for debugging.
-ASTConsumer *CreateRecordLayoutDumper();
-
 // ObjC rewriter: attempts tp rewrite ObjC constructs into pure C code.
 // This is considered experimental, and only works with Apple's ObjC runtime.
 ASTConsumer *CreateObjCRewriter(const std::string &InFile,

@@ -64,7 +64,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case ASTPrintXML:            return new ASTPrintXMLAction();
   case ASTView:                return new ASTViewAction();
   case DumpRawTokens:          return new DumpRawTokensAction();
-  case DumpRecordLayouts:      return new DumpRecordAction();
   case DumpTokens:             return new DumpTokensAction();
   case EmitAssembly:           return new EmitAssemblyAction();
   case EmitBC:                 return new EmitBCAction();

@@ -74,11 +74,6 @@ ASTConsumer *DeclContextPrintAction::CreateASTConsumer(CompilerInstance &CI,
   return CreateDeclContextPrinter();
 }
 
-ASTConsumer *DumpRecordAction::CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef InFile) {
-  return CreateRecordLayoutDumper();
-}
-
 ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
                                                   llvm::StringRef InFile) {
   const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
