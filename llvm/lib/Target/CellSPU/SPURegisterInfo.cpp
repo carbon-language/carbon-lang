@@ -509,10 +509,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Unhandled frame size: " << FrameSize;
-      report_fatal_error(Msg.str());
+      report_fatal_error("Unhandled frame size: " + Twine(FrameSize));
     }
 
     if (hasDebugInfo) {
@@ -605,10 +602,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Unhandled frame size: " << FrameSize;
-      report_fatal_error(Msg.str());
+      report_fatal_error("Unhandled frame size: " + Twine(FrameSize));
     }
    }
 }

@@ -572,10 +572,8 @@ CstExprResTy ELFWriter::ResolveConstantExpr(const Constant *CV) {
   }
   }
 
-  std::string msg(CE->getOpcodeName());
-  raw_string_ostream ErrorMsg(msg);
-  ErrorMsg << ": Unsupported ConstantExpr type";
-  report_fatal_error(ErrorMsg.str());
+  report_fatal_error(CE->getOpcodeName() +
+                     StringRef(": Unsupported ConstantExpr type"));
 
   return std::make_pair(CV, 0); // silence warning
 }

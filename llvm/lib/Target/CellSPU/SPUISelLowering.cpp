@@ -71,11 +71,8 @@ namespace {
 
 #ifndef NDEBUG
     if (retval == 0) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "getValueTypeMapEntry returns NULL for "
-           << VT.getEVTString();
-      report_fatal_error(Msg.str());
+      report_fatal_error("getValueTypeMapEntry returns NULL for " +
+                         Twine(VT.getEVTString()));
     }
 #endif
 
@@ -714,12 +711,9 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case ISD::POST_DEC:
   case ISD::LAST_INDEXED_MODE:
     {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
-            "UNINDEXED\n";
-      Msg << (unsigned) LN->getAddressingMode();
-      report_fatal_error(Msg.str());
+      report_fatal_error("LowerLOAD: Got a LoadSDNode with an addr mode other "
+                         "than UNINDEXED\n" +
+                         Twine((unsigned)LN->getAddressingMode()));
       /*NOTREACHED*/
     }
   }
@@ -884,12 +878,9 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case ISD::POST_DEC:
   case ISD::LAST_INDEXED_MODE:
     {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
-            "UNINDEXED\n";
-      Msg << (unsigned) SN->getAddressingMode();
-      report_fatal_error(Msg.str());
+      report_fatal_error("LowerLOAD: Got a LoadSDNode with an addr mode other "
+                         "than UNINDEXED\n" +
+                         Twine((unsigned)SN->getAddressingMode()));
       /*NOTREACHED*/
     }
   }
@@ -1038,13 +1029,9 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       const TargetRegisterClass *ArgRegClass;
 
       switch (ObjectVT.getSimpleVT().SimpleTy) {
-      default: {
-        std::string msg;
-        raw_string_ostream Msg(msg);
-        Msg << "LowerFormalArguments Unhandled argument type: "
-             << ObjectVT.getEVTString();
-        report_fatal_error(Msg.str());
-      }
+      default:
+        report_fatal_error("LowerFormalArguments Unhandled argument type: " +
+                           Twine(ObjectVT.getEVTString()));
       case MVT::i8:
         ArgRegClass = &SPU::R8CRegClass;
         break;
@@ -1581,14 +1568,10 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   uint64_t SplatBits = APSplatBits.getZExtValue();
 
   switch (VT.getSimpleVT().SimpleTy) {
-  default: {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "CellSPU: Unhandled VT in LowerBUILD_VECTOR, VT = "
-         << VT.getEVTString();
-    report_fatal_error(Msg.str());
+  default:
+    report_fatal_error("CellSPU: Unhandled VT in LowerBUILD_VECTOR, VT = " +
+                       Twine(VT.getEVTString()));
     /*NOTREACHED*/
-  }
   case MVT::v4f32: {
     uint32_t Value32 = uint32_t(SplatBits);
     assert(SplatBitSize == 32

@@ -194,11 +194,8 @@ namespace {
 
 #ifndef NDEBUG
     if (retval == 0) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns NULL for "
-           << VT.getEVTString();
-      report_fatal_error(Msg.str());
+      report_fatal_error("SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns"
+                         "NULL for " + Twine(VT.getEVTString()));
     }
 #endif
 
@@ -915,11 +912,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     const valtype_map_s *vtm = getValueTypeMapEntry(VT);
 
     if (vtm->ldresult_ins == 0) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "LDRESULT for unsupported type: "
-           << VT.getEVTString();
-      report_fatal_error(Msg.str());
+      report_fatal_error("LDRESULT for unsupported type: " +
+                         Twine(VT.getEVTString()));
     }
 
     Opc = vtm->ldresult_ins;

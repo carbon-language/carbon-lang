@@ -109,13 +109,11 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
 
     uint64_t FrameSize = FI.getFrameSize();
     if (FrameSize >= 1<<16) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Function '" << FI.getFunction().getName()
-           << "' is too large for the ocaml GC! "
-           << "Frame size " << FrameSize << " >= 65536.\n";
-      Msg << "(" << uintptr_t(&FI) << ")";
-      report_fatal_error(Msg.str()); // Very rude!
+      // Very rude!
+      report_fatal_error("Function '" + FI.getFunction().getName() +
+                         "' is too large for the ocaml GC! "
+                         "Frame size " + Twine(FrameSize) + ">= 65536.\n"
+                         "(" + Twine(uintptr_t(&FI)) + ")");
     }
 
     AP.OutStreamer.AddComment("live roots for " +
@@ -125,12 +123,10 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
     for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
       size_t LiveCount = FI.live_size(J);
       if (LiveCount >= 1<<16) {
-        std::string msg;
-        raw_string_ostream Msg(msg);
-        Msg << "Function '" << FI.getFunction().getName()
-             << "' is too large for the ocaml GC! "
-             << "Live root count " << LiveCount << " >= 65536.";
-        report_fatal_error(Msg.str()); // Very rude!
+        // Very rude!
+        report_fatal_error("Function '" + FI.getFunction().getName() +
+                           "' is too large for the ocaml GC! "
+                           "Live root count "+Twine(LiveCount)+" >= 65536.");
       }
 
       AP.OutStreamer.EmitSymbolValue(J->Label, IntPtrSize, 0);

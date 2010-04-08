@@ -76,7 +76,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(Parser));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
-                      " we don't have an asm parser for this target\n");
+                       " we don't have an asm parser for this target\n");
   Parser.setTargetParser(*TAP.get());
 
   // Don't implicitly switch to the text section before the asm.
@@ -178,8 +178,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       case '(':             // $( -> same as GCC's { character.
         ++LastEmitted;      // Consume '(' character.
         if (CurVariant != -1)
-          report_fatal_error("Nested variants found in inline asm string: '"
-                            + std::string(AsmStr) + "'");
+          report_fatal_error("Nested variants found in inline asm string: '" +
+                             Twine(AsmStr) + "'");
         CurVariant = 0;     // We're in the first variant now.
         break;
       case '|':
@@ -213,8 +213,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
         const char *StrStart = LastEmitted;
         const char *StrEnd = strchr(StrStart, '}');
         if (StrEnd == 0)
-          report_fatal_error(Twine("Unterminated ${:foo} operand in inline asm"
-                                  " string: '") + Twine(AsmStr) + "'");
+          report_fatal_error("Unterminated ${:foo} operand in inline asm"
+                             " string: '" + Twine(AsmStr) + "'");
         
         std::string Val(StrStart, StrEnd);
         PrintSpecial(MI, OS, Val.c_str());
@@ -228,8 +228,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       
       unsigned Val;
       if (StringRef(IDStart, IDEnd-IDStart).getAsInteger(10, Val))
-        report_fatal_error("Bad $ operand number in inline asm string: '" 
-                          + std::string(AsmStr) + "'");
+        report_fatal_error("Bad $ operand number in inline asm string: '" +
+                           Twine(AsmStr) + "'");
       LastEmitted = IDEnd;
       
       char Modifier[2] = { 0, 0 };
@@ -241,21 +241,21 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
           ++LastEmitted;    // Consume ':' character.
           if (*LastEmitted == 0)
             report_fatal_error("Bad ${:} expression in inline asm string: '" +
-                              std::string(AsmStr) + "'");
+                               Twine(AsmStr) + "'");
           
           Modifier[0] = *LastEmitted;
           ++LastEmitted;    // Consume modifier character.
         }
         
         if (*LastEmitted != '}')
-          report_fatal_error("Bad ${} expression in inline asm string: '" 
-                            + std::string(AsmStr) + "'");
+          report_fatal_error("Bad ${} expression in inline asm string: '" +
+                             Twine(AsmStr) + "'");
         ++LastEmitted;    // Consume '}' character.
       }
       
       if (Val >= NumOperands-1)
-        report_fatal_error("Invalid $ operand number in inline asm string: '" 
-                          + std::string(AsmStr) + "'");
+        report_fatal_error("Invalid $ operand number in inline asm string: '" +
+                           Twine(AsmStr) + "'");
       
       // Okay, we finally have a value number.  Ask the target to print this
       // operand!

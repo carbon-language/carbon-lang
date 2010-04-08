@@ -5334,8 +5334,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
             (OpInfo.ConstraintVT.getSizeInBits() !=
              Input.ConstraintVT.getSizeInBits())) {
           report_fatal_error("Unsupported asm: input constraint"
-                            " with a matching output constraint of incompatible"
-                            " type!");
+                             " with a matching output constraint of"
+                             " incompatible type!");
         }
         Input.ConstraintVT = OpInfo.ConstraintVT;
       }
@@ -5446,8 +5446,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty())
-        report_fatal_error("Couldn't allocate output reg for"
-                          " constraint '" + OpInfo.ConstraintCode + "'!");
+        report_fatal_error("Couldn't allocate output reg for constraint '" +
+                           Twine(OpInfo.ConstraintCode) + "'!");
 
       // If this is an indirect operand, store through the pointer after the
       // asm.
@@ -5547,8 +5547,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
         if (Ops.empty())
-          report_fatal_error("Invalid operand for inline asm"
-                            " constraint '" + OpInfo.ConstraintCode + "'!");
+          report_fatal_error("Invalid operand for inline asm constraint '" +
+                             Twine(OpInfo.ConstraintCode) + "'!");
 
         // Add information to the INLINEASM node to know about this input.
         unsigned ResOpType =
@@ -5581,8 +5581,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty() ||
           !OpInfo.AssignedRegs.areValueTypesLegal())
-        report_fatal_error("Couldn't allocate input reg for"
-                          " constraint '"+ OpInfo.ConstraintCode +"'!");
+        report_fatal_error("Couldn't allocate input reg for constraint '" +
+                           Twine(OpInfo.ConstraintCode) + "'!");
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
                                         Chain, &Flag);
