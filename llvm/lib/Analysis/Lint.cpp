@@ -63,6 +63,9 @@ namespace {
     void visitReturnInst(ReturnInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
+    void visitLShr(BinaryOperator &I);
+    void visitAShr(BinaryOperator &I);
+    void visitShl(BinaryOperator &I);
     void visitSDiv(BinaryOperator &I);
     void visitUDiv(BinaryOperator &I);
     void visitSRem(BinaryOperator &I);
@@ -70,6 +73,8 @@ namespace {
     void visitAllocaInst(AllocaInst &I);
     void visitVAArgInst(VAArgInst &I);
     void visitIndirectBrInst(IndirectBrInst &I);
+    void visitExtractElementInst(ExtractElementInst &I);
+    void visitInsertElementInst(InsertElementInst &I);
 
   public:
     Module *Mod;
@@ -295,6 +300,27 @@ void Lint::visitStoreInst(StoreInst &I) {
                   I.getOperand(0)->getType());
 }
 
+void Lint::visitLShr(BinaryOperator &I) {
+  if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+    Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
+            "Shift count out of range", &I);
+}
+
+void Lint::visitAShr(BinaryOperator &I) {
+  if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+    Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
+            "Shift count out of range", &I);
+}
+
+void Lint::visitShl(BinaryOperator &I) {
+  if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+    Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
+            "Shift count out of range", &I);
+}
+
 static bool isZero(Value *V, TargetData *TD) {
   unsigned BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
   APInt Mask = APInt::getAllOnesValue(BitWidth),
@@ -332,6 +358,20 @@ void Lint::visitVAArgInst(VAArgInst &I) {
 
 void Lint::visitIndirectBrInst(IndirectBrInst &I) {
   visitMemoryReference(I, I.getAddress(), 0, 0);
+}
+
+void Lint::visitExtractElementInst(ExtractElementInst &I) {
+  if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(I.getIndexOperand()->stripPointerCasts()))
+    Assert1(CI->getValue().ult(I.getVectorOperandType()->getNumElements()),
+            "extractelement index out of range", &I);
+}
+
+void Lint::visitInsertElementInst(InsertElementInst &I) {
+  if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(I.getOperand(2)->stripPointerCasts()))
+    Assert1(CI->getValue().ult(I.getType()->getNumElements()),
+            "insertelement index out of range", &I);
 }
 
 //===----------------------------------------------------------------------===//

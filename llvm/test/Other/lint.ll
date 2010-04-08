@@ -10,6 +10,10 @@ define i32 @foo() noreturn {
   store i32 0, i32* null
 ; CHECK: Null pointer dereference
   %t = load i32* null
+; CHECK: Undef pointer dereference
+  store i32 0, i32* undef
+; CHECK: Undef pointer dereference
+  %u = load i32* undef
 ; CHECK: Memory reference address is misaligned
   %x = inttoptr i32 1 to i32*
   load i32* %x, align 4
@@ -21,6 +25,16 @@ define i32 @foo() noreturn {
   %sr = srem i32 2, 0
 ; CHECK: Division by zero
   %ur = urem i32 2, 0
+; CHECK: extractelement index out of range
+  %ee = extractelement <4 x i32> zeroinitializer, i32 4
+; CHECK: insertelement index out of range
+  %ie = insertelement <4 x i32> zeroinitializer, i32 0, i32 4
+; CHECK: Shift count out of range
+  %r = lshr i32 0, 32
+; CHECK: Shift count out of range
+  %q = ashr i32 0, 32
+; CHECK: Shift count out of range
+  %l = shl i32 0, 32
   br label %next
 
 next:
