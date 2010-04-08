@@ -2231,13 +2231,6 @@ def warn_value_always_zero : Warning<
 def err_typecheck_convert_incompatible : Error<
   "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
   " %1, expected %0">;
-def err_typecheck_convert_ambiguous : Error<
-  "ambiguity in initializing value of type %0 with initializer of type %1">;
-def err_cannot_initialize_decl_noname : Error<
-  "cannot initialize a value of type %0 with an %select{rvalue|lvalue}1 "
-  "of type %2">;
-def err_cannot_initialize_decl : Error<
-  "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2">;
 def warn_incompatible_qualified_id : Warning<
   "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
   " %1, expected %0">;
@@ -2271,11 +2264,19 @@ def err_int_to_block_pointer : Error<
   "invalid conversion "
   "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
   " integer %1, expected block pointer %0">;
-def err_typecheck_comparison_of_distinct_blocks : Error<
-  "comparison of distinct block types (%0 and %1)">;
 def err_typecheck_convert_incompatible_block_pointer : Error<
   "incompatible block pointer types "
   "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
+  
+def err_typecheck_convert_ambiguous : Error<
+  "ambiguity in initializing value of type %0 with initializer of type %1">;
+def err_cannot_initialize_decl_noname : Error<
+  "cannot initialize a value of type %0 with an %select{rvalue|lvalue}1 "
+  "of type %2">;
+def err_cannot_initialize_decl : Error<
+  "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2">;
+def err_typecheck_comparison_of_distinct_blocks : Error<
+  "comparison of distinct block types (%0 and %1)">;
 
 def err_typecheck_array_not_modifiable_lvalue : Error<
   "array type %0 is not assignable">;
