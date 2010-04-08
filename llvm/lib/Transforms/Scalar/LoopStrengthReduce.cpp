@@ -262,11 +262,15 @@ void Formula::InitialMatch(const SCEV *S, Loop *L,
   SmallVector<const SCEV *, 4> Bad;
   DoInitialMatch(S, L, Good, Bad, SE, DT);
   if (!Good.empty()) {
-    BaseRegs.push_back(SE.getAddExpr(Good));
+    const SCEV *Sum = SE.getAddExpr(Good);
+    if (!Sum->isZero())
+      BaseRegs.push_back(Sum);
     AM.HasBaseReg = true;
   }
   if (!Bad.empty()) {
-    BaseRegs.push_back(SE.getAddExpr(Bad));
+    const SCEV *Sum = SE.getAddExpr(Bad);
+    if (!Sum->isZero())
+      BaseRegs.push_back(Sum);
     AM.HasBaseReg = true;
   }
 }
