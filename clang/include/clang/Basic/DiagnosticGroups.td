@@ -156,12 +156,14 @@ def Extra : DiagGroup<"extra", [
   ]>;
 
 def Most : DiagGroup<"most", [
+    CharSubscript,
     Comment,
     Format,
     Implicit,
     MismatchedTags,
     MissingBraces,
     MultiChar,
+    Reorder,
     ReturnType,
     Switch,
     Trigraphs,
@@ -170,9 +172,7 @@ def Most : DiagGroup<"most", [
     UnusedValue,
     UnusedVariable,
     VectorConversions,
-    VolatileRegisterVar,
-    Reorder,
-    CharSubscript
+    VolatileRegisterVar
  ]>;
 
 // -Wall is -Wmost -Wparentheses
