@@ -1663,11 +1663,25 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
   const TemplateArgument &Arg = AL.getArgument();
 
   // Check template type parameter.
-  if (Arg.getKind() != TemplateArgument::Type) {
+  switch(Arg.getKind()) {
+  case TemplateArgument::Type:
     // C++ [temp.arg.type]p1:
     //   A template-argument for a template-parameter which is a
     //   type shall be a type-id.
+    break;
+  case TemplateArgument::Template: {
+    // We have a template type parameter but the template argument
+    // is a template without any arguments.
+    SourceRange SR = AL.getSourceRange();
+    TemplateName Name = Arg.getAsTemplate();
+    Diag(SR.getBegin(), diag::err_template_missing_args)
+      << Name << SR;
+    if (TemplateDecl *Decl = Name.getAsTemplateDecl())
+      Diag(Decl->getLocation(), diag::note_template_decl_here);
 
+    return true;
+  }
+  default: {
     // We have a template type parameter but the template argument
     // is not a type.
     SourceRange SR = AL.getSourceRange();
@@ -1675,6 +1689,7 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
     Diag(Param->getLocation(), diag::note_template_param_here);
 
     return true;
+  }
   }
 
   if (CheckTemplateArgument(Param, AL.getTypeSourceInfo()))

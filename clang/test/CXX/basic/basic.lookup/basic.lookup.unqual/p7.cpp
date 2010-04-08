@@ -32,6 +32,6 @@ namespace test1 {
 // Test that we don't find the injected class name when parsing base
 // specifiers.
 namespace test2 {
-  template <class T> struct bar {}; // expected-note {{template parameter is declared here}}
-  template <class T> struct foo : bar<foo> {}; // expected-error {{template argument for template type parameter must be a type}}
+  template <class T> struct bar {};
+  template <class T> struct foo : bar<foo> {}; // expected-error {{use of class template foo requires template arguments}} expected-note {{template is declared here}}
 }

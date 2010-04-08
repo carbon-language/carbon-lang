@@ -1184,6 +1184,8 @@ def err_template_decl_ref : Error<
   "cannot refer to class template %0 without a template argument list">;
 
 // C++ Template Argument Lists
+def err_template_missing_args : Error<
+  "use of class template %0 requires template arguments">;
 def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "
   "%select{class template|function template|template template parameter"

@@ -15,9 +15,11 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
+using namespace llvm;
 
 TemplateDecl *TemplateName::getAsTemplateDecl() const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
@@ -62,6 +64,18 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
     else
       OS << "operator " << getOperatorSpelling(DTN->getOperator());
   }
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           TemplateName N) {
+  std::string NameStr;
+  raw_string_ostream OS(NameStr);
+  LangOptions LO;
+  LO.CPlusPlus = true;
+  LO.Bool = true;
+  N.print(OS, PrintingPolicy(LO));
+  OS.flush();
+  return DB << NameStr;
 }
 
 void TemplateName::dump() const {
