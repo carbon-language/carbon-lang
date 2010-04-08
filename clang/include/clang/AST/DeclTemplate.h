@@ -412,7 +412,7 @@ class DependentFunctionTemplateSpecializationInfo {
 
   const TemplateArgumentLoc *getTemplateArgs() const {
     return reinterpret_cast<const TemplateArgumentLoc*>(
-             getTemplates()[getNumTemplates()]);
+             &getTemplates()[getNumTemplates()]);
   }
 
 public:
