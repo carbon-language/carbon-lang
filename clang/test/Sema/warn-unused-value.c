@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused-value %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
 
 int i = 0;
 int j = 0;

@@ -169,8 +169,7 @@ def Most : DiagGroup<"most", [
     Trigraphs,
     Uninitialized,
     UnknownPragmas,
-    UnusedValue,
-    UnusedVariable,
+    Unused,
     VectorConversions,
     VolatileRegisterVar
  ]>;

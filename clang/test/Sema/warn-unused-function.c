@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -Wunused-function -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
 
 void foo() {}
 static void f2() {} 
