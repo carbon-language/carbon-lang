@@ -468,6 +468,33 @@ void BackendConsumer::EmitAssembly() {
   }
 }
 
+/// ConvertBackendLocation - Convert a location in a temporary llvm::SourceMgr
+/// buffer to be a valid FullSourceLoc.
+static FullSourceLoc ConvertBackendLocation(const llvm::SMDiagnostic &D,
+                                            SourceManager &CSM) {
+  // Get both the clang and llvm source managers.  The location is relative to
+  // a memory buffer that the LLVM Source Manager is handling, we need to add
+  // a copy to the Clang source manager. 
+  const llvm::SourceMgr &LSM = *D.getSourceMgr();
+  
+  // We need to copy the underlying LLVM memory buffer because llvm::SourceMgr
+  // already owns its one and clang::SourceManager wants to own its one.
+  const MemoryBuffer *LBuf =
+  LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
+  
+  // Create the copy and transfer ownership to clang::SourceManager.
+  llvm::MemoryBuffer *CBuf =
+  llvm::MemoryBuffer::getMemBufferCopy(LBuf->getBuffer(),
+                                       LBuf->getBufferIdentifier());
+  FileID FID = CSM.createFileIDForMemBuffer(CBuf);
+  
+  // Translate the offset into the file.
+  unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();
+  SourceLocation NewLoc = 
+  CSM.getLocForStartOfFile(FID).getFileLocWithOffset(Offset);
+  return FullSourceLoc(NewLoc, CSM);
+}
+
 
 /// InlineAsmDiagHandler2 - This function is invoked when the backend hits an
 /// error parsing inline asm.  The SMDiagnostic indicates the error relative to
@@ -485,30 +512,8 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   // There are two cases: the SMDiagnostic could have a inline asm source
   // location or it might not.  If it does, translate the location.
   FullSourceLoc Loc;
-  if (D.getLoc() != SMLoc()) {
-    // Get both the clang and llvm source managers.  The location is relative to
-    // a memory buffer that the LLVM Source Manager is handling, we need to add
-    // a copy to the Clang source manager. 
-    SourceManager &CSM = Context->getSourceManager();
-    const llvm::SourceMgr &LSM = *D.getSourceMgr();
-    
-    // We need to copy the underlying LLVM memory buffer because llvm::SourceMgr
-    // already owns its one and clang::SourceManager wants to own its one.
-    const MemoryBuffer *LBuf =
-      LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
-
-    // Create the copy and transfer ownership to clang::SourceManager.
-    llvm::MemoryBuffer *CBuf =
-    llvm::MemoryBuffer::getMemBufferCopy(LBuf->getBuffer(),
-                                         LBuf->getBufferIdentifier());
-    FileID FID = CSM.createFileIDForMemBuffer(CBuf);
-    
-    // Translate the offset into the file.
-    unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();
-    SourceLocation NewLoc = 
-      CSM.getLocForStartOfFile(FID).getFileLocWithOffset(Offset);
-    Loc = FullSourceLoc(NewLoc, CSM);
-  }
+  if (D.getLoc() != SMLoc())
+    Loc = ConvertBackendLocation(D, Context->getSourceManager());
   Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
   
   // This could be a problem with no clang-level source location information.
