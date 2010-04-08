@@ -2744,7 +2744,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
             // delete them later.
             DoDelete = false;
         }
-        if (MI->registerDefIsDead(DstReg)) {
+        if (MI->allDefsAreDead()) {
           LiveInterval &li = li_->getInterval(DstReg);
           if (!ShortenDeadCopySrcLiveRange(li, MI))
             ShortenDeadCopyLiveRange(li, MI);

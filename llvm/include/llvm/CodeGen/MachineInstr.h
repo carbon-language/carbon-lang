@@ -357,6 +357,10 @@ public:
   /// return 0.
   unsigned isConstantValuePHI() const;
 
+  /// allDefsAreDead - Return true if all the defs of this instruction are dead.
+  ///
+  bool allDefsAreDead() const;
+
   //
   // Debugging support
   //

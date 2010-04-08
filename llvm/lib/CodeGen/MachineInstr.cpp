@@ -1125,6 +1125,19 @@ unsigned MachineInstr::isConstantValuePHI() const {
   return Reg;
 }
 
+/// allDefsAreDead - Return true if all the defs of this instruction are dead.
+///
+bool MachineInstr::allDefsAreDead() const {
+  for (unsigned i = 0, e = getNumOperands(); i < e; ++i) {
+    const MachineOperand &MO = getOperand(i);
+    if (!MO.isReg() || MO.isUse())
+      continue;
+    if (!MO.isDead())
+      return false;
+  }
+  return true;
+}
+
 void MachineInstr::dump() const {
   dbgs() << "  " << *this;
 }
