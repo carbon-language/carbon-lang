@@ -108,6 +108,11 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
   }
 }
 
+static inline bool isInterestingPointer(Value *V) {
+  return V->getType()->isPointerTy()
+      && !isa<ConstantPointerNull>(V);
+}
+
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
@@ -115,21 +120,31 @@ bool AAEval::runOnFunction(Function &F) {
   SetVector<CallSite> CallSites;
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
-    if (I->getType()->isPointerTy())    // Add all pointer arguments
+    if (I->getType()->isPointerTy())    // Add all pointer arguments.
       Pointers.insert(I);
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-    if (I->getType()->isPointerTy()) // Add all pointer instructions
+    if (I->getType()->isPointerTy()) // Add all pointer instructions.
       Pointers.insert(&*I);
     Instruction &Inst = *I;
-    User::op_iterator OI = Inst.op_begin();
     CallSite CS = CallSite::get(&Inst);
-    if (CS.getInstruction() &&
-        isa<Function>(CS.getCalledValue()))
-      ++OI;  // Skip actual functions for direct function calls.
-    for (; OI != Inst.op_end(); ++OI)
-      if ((*OI)->getType()->isPointerTy() && !isa<ConstantPointerNull>(*OI))
-        Pointers.insert(*OI);
+    if (CS) {
+      Value *Callee = CS.getCalledValue();
+      // Skip actual functions for direct function calls.
+      if (!isa<Function>(Callee) && isInterestingPointer(Callee))
+        Pointers.insert(Callee);
+      // Consider formals.
+      for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+           AI != AE; ++AI)
+        if (isInterestingPointer(*AI))
+          Pointers.insert(*AI);
+    } else {
+      // Consider all operands.
+      for (Instruction::op_iterator OI = Inst.op_begin(), OE = Inst.op_end();
+           OI != OE; ++OI)
+        if (isInterestingPointer(*OI))
+          Pointers.insert(*OI);
+    }
 
     if (CS.getInstruction()) CallSites.insert(CS);
   }
