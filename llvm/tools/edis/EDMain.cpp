@@ -29,8 +29,7 @@ int EDGetDisassembler(EDDisassemblerRef *disassembler,
   if (ret) {
     *disassembler = ret;
     return 0;
-  }
-  else {
+  } else {
     return -1;
   }
 }
@@ -39,7 +38,7 @@ int EDGetRegisterName(const char** regName,
                       EDDisassemblerRef disassembler,
                       unsigned regID) {
   const char* name = disassembler->nameWithRegisterID(regID);
-  if(!name)
+  if (!name)
     return -1;
   *regName = name;
   return 0;
@@ -63,10 +62,10 @@ unsigned int EDCreateInsts(EDInstRef *insts,
                            void *arg) {
   unsigned int index;
   
-  for (index = 0; index < count; index++) {
+  for (index = 0; index < count; ++index) {
     EDInst *inst = disassembler->createInst(byteReader, address, arg);
     
-    if(!inst)
+    if (!inst)
       return index;
     
     insts[index] = inst;
@@ -134,42 +133,42 @@ int EDOperandIndexForToken(EDTokenRef token) {
 }
 
 int EDTokenIsWhitespace(EDTokenRef token) {
-  if(token->type() == EDToken::kTokenWhitespace)
+  if (token->type() == EDToken::kTokenWhitespace)
     return 1;
   else
     return 0;
 }
 
 int EDTokenIsPunctuation(EDTokenRef token) {
-  if(token->type() == EDToken::kTokenPunctuation)
+  if (token->type() == EDToken::kTokenPunctuation)
     return 1;
   else
     return 0;
 }
 
 int EDTokenIsOpcode(EDTokenRef token) {
-  if(token->type() == EDToken::kTokenOpcode)
+  if (token->type() == EDToken::kTokenOpcode)
     return 1;
   else
     return 0;
 }
 
 int EDTokenIsLiteral(EDTokenRef token) {
-  if(token->type() == EDToken::kTokenLiteral)
+  if (token->type() == EDToken::kTokenLiteral)
     return 1;
   else
     return 0;
 }
 
 int EDTokenIsRegister(EDTokenRef token) {
-  if(token->type() == EDToken::kTokenRegister)
+  if (token->type() == EDToken::kTokenRegister)
     return 1;
   else
     return 0;
 }
 
 int EDTokenIsNegativeLiteral(EDTokenRef token) {
-  if(token->type() != EDToken::kTokenLiteral)
+  if (token->type() != EDToken::kTokenLiteral)
     return -1;
   
   return token->literalSign();
@@ -177,7 +176,7 @@ int EDTokenIsNegativeLiteral(EDTokenRef token) {
 
 int EDLiteralTokenAbsoluteValue(uint64_t *value,
                                 EDTokenRef token) {
-  if(token->type() != EDToken::kTokenLiteral)
+  if (token->type() != EDToken::kTokenLiteral)
     return -1;
   
   return token->literalAbsoluteValue(*value);
@@ -185,7 +184,7 @@ int EDLiteralTokenAbsoluteValue(uint64_t *value,
 
 int EDRegisterTokenValue(unsigned *registerID,
                          EDTokenRef token) {
-  if(token->type() != EDToken::kTokenRegister)
+  if (token->type() != EDToken::kTokenRegister)
     return -1;
   
   return token->registerID(*registerID);
@@ -215,7 +214,7 @@ int EDOperandIsMemory(EDOperandRef operand) {
 
 int EDRegisterOperandValue(unsigned *value, 
                            EDOperandRef operand) {
-  if(!operand->isRegister())
+  if (!operand->isRegister())
     return -1;
   *value = operand->regVal();
   return 0;
@@ -223,7 +222,7 @@ int EDRegisterOperandValue(unsigned *value,
 
 int EDImmediateOperandValue(uint64_t *value,
                            EDOperandRef operand) {
-  if(!operand->isImmediate())
+  if (!operand->isImmediate())
     return -1;
   *value = operand->immediateVal();
   return 0;

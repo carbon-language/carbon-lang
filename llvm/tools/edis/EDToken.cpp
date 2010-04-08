@@ -68,20 +68,20 @@ int EDToken::operandID() const {
 }
 
 int EDToken::literalSign() const {
-  if(Type != kTokenLiteral)
+  if (Type != kTokenLiteral)
     return -1;
   return (LiteralSign ? 1 : 0);
 }
 
 int EDToken::literalAbsoluteValue(uint64_t &value) const {
-  if(Type != kTokenLiteral)
+  if (Type != kTokenLiteral)
     return -1;
   value = LiteralAbsoluteValue;
   return 0;
 }
 
 int EDToken::registerID(unsigned &registerID) const {
-  if(Type != kTokenRegister)
+  if (Type != kTokenRegister)
     return -1;
   registerID = RegisterID;
   return 0;
@@ -94,7 +94,7 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
   SmallVector<MCParsedAsmOperand*, 5> parsedOperands;
   SmallVector<AsmToken, 10> asmTokens;
   
-  if(disassembler.parseInst(parsedOperands, asmTokens, str))
+  if (disassembler.parseInst(parsedOperands, asmTokens, str))
     return -1;
   
   SmallVectorImpl<MCParsedAsmOperand*>::iterator operandIterator;
@@ -115,7 +115,7 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
     
     const char *tokenPointer = tokenLoc.getPointer();
     
-    if(tokenPointer > wsPointer) {
+    if (tokenPointer > wsPointer) {
       unsigned long wsLength = tokenPointer - wsPointer;
       
       EDToken *whitespaceToken = new EDToken(StringRef(wsPointer, wsLength),
@@ -164,7 +164,7 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
         
       int64_t intVal = tokenIterator->getIntVal();
       
-      if(intVal < 0)  
+      if (intVal < 0)  
         token->makeLiteral(true, -intVal);
       else
         token->makeLiteral(false, intVal);
@@ -182,14 +182,14 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
     }
     }
     
-    if(operandIterator != parsedOperands.end() &&
+    if (operandIterator != parsedOperands.end() &&
        tokenLoc.getPointer() >= 
        (*operandIterator)->getStartLoc().getPointer()) {
       /// operandIndex == 0 means the operand is the instruction (which the
       /// AsmParser treats as an operand but edis does not).  We therefore skip
       /// operandIndex == 0 and subtract 1 from all other operand indices.
       
-      if(operandIndex > 0)
+      if (operandIndex > 0)
         token->setOperandID(operandOrder[operandIndex - 1]);
     }
     
@@ -200,7 +200,7 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
 }
 
 int EDToken::getString(const char*& buf) {
-  if(PermStr.length() == 0) {
+  if (PermStr.length() == 0) {
     PermStr = Str.str();
   }
   buf = PermStr.c_str();

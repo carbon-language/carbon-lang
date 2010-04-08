@@ -113,13 +113,13 @@ struct EDDisassembler {
   // Per-object members //
   ////////////////////////
   
-  /// True only if the object has been fully and successfully initialized
+  /// True only if the object has been successfully initialized
   bool Valid;
+  /// True if the disassembler can provide semantic information
+  bool HasSemantics;
   
-  /// The string that stores disassembler errors from the backend
-  std::string ErrorString;
-  /// The stream that wraps the ErrorString
-  llvm::raw_string_ostream ErrorStream;
+  /// The stream to write errors to
+  llvm::raw_ostream &ErrorStream;
 
   /// The architecture/syntax pair for the current architecture
   CPUKey Key;
@@ -178,6 +178,12 @@ struct EDDisassembler {
   /// valid - reports whether there was a failure in the constructor.
   bool valid() {
     return Valid;
+  }
+  
+  /// hasSemantics - reports whether the disassembler can provide operands and
+  ///   tokens.
+  bool hasSemantics() {
+    return HasSemantics;
   }
   
   ~EDDisassembler();
