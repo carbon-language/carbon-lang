@@ -48,10 +48,6 @@ private:
   // Location of the 'friend' specifier.
   SourceLocation FriendLoc;
 
-  // FIXME: Hack to keep track of whether this was a friend function
-  // template specialization.
-  bool WasSpecialization;
-
   friend class CXXRecordDecl::friend_iterator;
   friend class CXXRecordDecl;
 
@@ -60,8 +56,7 @@ private:
     : Decl(Decl::Friend, DC, L),
       Friend(Friend),
       NextFriend(0),
-      FriendLoc(FriendL),
-      WasSpecialization(false) {
+      FriendLoc(FriendL) {
   }
 
 public:
@@ -87,9 +82,6 @@ public:
   SourceLocation getFriendLoc() const {
     return FriendLoc;
   }
-
-  bool wasSpecialization() const { return WasSpecialization; }
-  void setSpecialization(bool WS) { WasSpecialization = WS; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

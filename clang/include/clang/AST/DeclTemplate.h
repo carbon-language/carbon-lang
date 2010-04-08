@@ -376,6 +376,81 @@ public:
     PointOfInstantiation = POI;
   }
 };
+
+/// \brief Provides information about a dependent function-template
+/// specialization declaration.  Since explicit function template
+/// specialization and instantiation declarations can only appear in
+/// namespace scope, and you can only specialize a member of a
+/// fully-specialized class, the only way to get one of these is in
+/// a friend declaration like the following:
+///
+///   template <class T> void foo(T);
+///   template <class T> class A {
+///     friend void foo<>(T);
+///   };
+class DependentFunctionTemplateSpecializationInfo {
+  union {
+    // Force sizeof to be a multiple of sizeof(void*) so that the
+    // trailing data is aligned.
+    void *Aligner; 
+
+    struct {
+      /// The number of potential template candidates.
+      unsigned NumTemplates;
+
+      /// The number of template arguments.
+      unsigned NumArgs;      
+    } d;
+  };
+
+  /// The locations of the left and right angle brackets.
+  SourceRange AngleLocs;
+
+  FunctionTemplateDecl * const *getTemplates() const {
+    return reinterpret_cast<FunctionTemplateDecl*const*>(this+1);
+  }
+
+  const TemplateArgumentLoc *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgumentLoc*>(
+             getTemplates()[getNumTemplates()]);
+  }
+
+public:
+  DependentFunctionTemplateSpecializationInfo(
+                                 const UnresolvedSetImpl &Templates,
+                                 const TemplateArgumentListInfo &TemplateArgs);
+
+  /// \brief Returns the number of function templates that this might
+  /// be a specialization of.
+  unsigned getNumTemplates() const {
+    return d.NumTemplates;
+  }
+
+  /// \brief Returns the i'th template candidate.
+  FunctionTemplateDecl *getTemplate(unsigned I) const {
+    assert(I < getNumTemplates() && "template index out of range");
+    return getTemplates()[I];
+  }
+
+  /// \brief Returns the number of explicit template arguments that were given.
+  unsigned getNumTemplateArgs() const {
+    return d.NumArgs;
+  }
+
+  /// \brief Returns the nth template argument.
+  const TemplateArgumentLoc &getTemplateArg(unsigned I) const {
+    assert(I < getNumTemplateArgs() && "template arg index out of range");
+    return getTemplateArgs()[I];
+  }
+
+  SourceLocation getLAngleLoc() const {
+    return AngleLocs.getBegin();
+  }
+
+  SourceLocation getRAngleLoc() const {
+    return AngleLocs.getEnd();
+  }
+};
   
 /// Declaration of a template function.
 class FunctionTemplateDecl : public TemplateDecl {

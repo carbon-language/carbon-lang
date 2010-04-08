@@ -31,7 +31,9 @@ class StringLiteral;
 class TemplateArgumentList;
 class MemberSpecializationInfo;
 class FunctionTemplateSpecializationInfo;
+class DependentFunctionTemplateSpecializationInfo;
 class TypeLoc;
+class UnresolvedSetImpl;
 
 /// \brief A container of type source information.
 ///
@@ -1037,9 +1039,10 @@ private:
   /// FunctionTemplateSpecializationInfo, which contains information about
   /// the template being specialized and the template arguments involved in
   /// that specialization.
-  llvm::PointerUnion3<FunctionTemplateDecl *, 
+  llvm::PointerUnion4<FunctionTemplateDecl *, 
                       MemberSpecializationInfo *,
-                      FunctionTemplateSpecializationInfo *>
+                      FunctionTemplateSpecializationInfo *,
+                      DependentFunctionTemplateSpecializationInfo *>
     TemplateOrSpecialization;
 
 protected:
@@ -1364,6 +1367,18 @@ public:
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos,
                     TemplateSpecializationKind TSK = TSK_ImplicitInstantiation);
+
+  /// \brief Specifies that this function declaration is actually a
+  /// dependent function template specialization.
+  void setDependentTemplateSpecialization(ASTContext &Context,
+                             const UnresolvedSetImpl &Templates,
+                      const TemplateArgumentListInfo &TemplateArgs);
+
+  DependentFunctionTemplateSpecializationInfo *
+  getDependentSpecializationInfo() const {
+    return TemplateOrSpecialization.
+             dyn_cast<DependentFunctionTemplateSpecializationInfo*>();
+  }
 
   /// \brief Determine what kind of template instantiation this function
   /// represents.

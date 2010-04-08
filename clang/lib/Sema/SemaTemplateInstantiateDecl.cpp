@@ -497,18 +497,11 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
   NamedDecl *ND = D->getFriendDecl();
   assert(ND && "friend decl must be a decl or a type!");
 
-  // FIXME: We have a problem here, because the nested call to Visit(ND)
-  // will inject the thing that the friend references into the current
-  // owner, which is wrong.
-  Decl *NewND;
-
-  // Hack to make this work almost well pending a rewrite.
-  if (D->wasSpecialization()) {
-    // Totally egregious hack to work around PR5866
-    return 0;
-  } else {
-    NewND = Visit(ND);
-  }
+  // All of the Visit implementations for the various potential friend
+  // declarations have to be carefully written to work for friend
+  // objects, with the most important detail being that the target
+  // decl should almost certainly not be placed in Owner.
+  Decl *NewND = Visit(ND);
   if (!NewND) return 0;
 
   FriendDecl *FD =
@@ -1024,11 +1017,47 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
+  bool isExplicitSpecialization = false;
     
   LookupResult Previous(SemaRef, Function->getDeclName(), SourceLocation(),
                         Sema::LookupOrdinaryName, Sema::ForRedeclaration);
 
-  if (TemplateParams || !FunctionTemplate) {
+  if (DependentFunctionTemplateSpecializationInfo *Info
+        = D->getDependentSpecializationInfo()) {
+    assert(isFriend && "non-friend has dependent specialization info?");
+
+    // This needs to be set now for future sanity.
+    Function->setObjectOfFriendDecl(/*HasPrevious*/ true);
+
+    // Instantiate the explicit template arguments.
+    TemplateArgumentListInfo ExplicitArgs(Info->getLAngleLoc(),
+                                          Info->getRAngleLoc());
+    for (unsigned I = 0, E = Info->getNumTemplateArgs(); I != E; ++I) {
+      TemplateArgumentLoc Loc;
+      if (SemaRef.Subst(Info->getTemplateArg(I), Loc, TemplateArgs))
+        return 0;
+
+      ExplicitArgs.addArgument(Loc);
+    }
+
+    // Map the candidate templates to their instantiations.
+    for (unsigned I = 0, E = Info->getNumTemplates(); I != E; ++I) {
+      Decl *Temp = SemaRef.FindInstantiatedDecl(D->getLocation(),
+                                                Info->getTemplate(I),
+                                                TemplateArgs);
+      if (!Temp) return 0;
+
+      Previous.addDecl(cast<FunctionTemplateDecl>(Temp));
+    }
+
+    if (SemaRef.CheckFunctionTemplateSpecialization(Function,
+                                                    &ExplicitArgs,
+                                                    Previous))
+      Function->setInvalidDecl();
+                                          
+    isExplicitSpecialization = true;
+
+  } else if (TemplateParams || !FunctionTemplate) {
     // Look only into the namespace where the friend would be declared to 
     // find a previous declaration. This is the innermost enclosing namespace, 
     // as described in ActOnFriendFunctionDecl.
@@ -1043,7 +1072,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   }
   
   SemaRef.CheckFunctionDeclaration(/*Scope*/ 0, Function, Previous,
-                                   false, Redeclaration,
+                                   isExplicitSpecialization, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   // If the original function was part of a friend declaration,

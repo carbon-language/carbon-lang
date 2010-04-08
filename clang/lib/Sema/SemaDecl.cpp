@@ -2935,7 +2935,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // This is a function template specialization.
       isFunctionTemplateSpecialization = true;
 
-      // C++0x [temp.expl.spec]p20 forbids "template<> void foo(int);".
+      // C++0x [temp.expl.spec]p20 forbids "template<> friend void foo(int);".
       if (isFriend && isFunctionTemplateSpecialization) {
         // We want to remove the "template<>", found here.
         SourceRange RemoveRange = TemplateParams->getSourceRange();
@@ -3139,23 +3139,38 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // "friend void foo<>(int);" is an implicit specialization decl.
       isFunctionTemplateSpecialization = true;
     }
+  } else if (isFriend && isFunctionTemplateSpecialization) {
+    // This combination is only possible in a recovery case;  the user
+    // wrote something like:
+    //   template <> friend void foo(int);
+    // which we're recovering from as if the user had written:
+    //   friend void foo<>(int);
+    // Go ahead and fake up a template id.
+    HasExplicitTemplateArgs = true;
+    TemplateArgs.setLAngleLoc(D.getIdentifierLoc());
+    TemplateArgs.setRAngleLoc(D.getIdentifierLoc());
   }
 
-  if (isFunctionTemplateSpecialization) {
-    if (isFriend && NewFD->getType()->isDependentType()) {
-      // FIXME: When we see a friend of a function template
-      // specialization with a dependent type, we can't match it now;
-      // for now, we just drop it, until we have a reasonable way to
-      // represent the parsed-but-not-matched friend function template
-      // specialization in the AST.
-      return 0;
-    } else if (CheckFunctionTemplateSpecialization(NewFD,
-                                   (HasExplicitTemplateArgs ? &TemplateArgs : 0),
-                                                 Previous))
+  // If it's a friend (and only if it's a friend), it's possible
+  // that either the specialized function type or the specialized
+  // template is dependent, and therefore matching will fail.  In
+  // this case, don't check the specialization yet.
+  if (isFunctionTemplateSpecialization && isFriend &&
+      (NewFD->getType()->isDependentType() || DC->isDependentContext())) {
+    assert(HasExplicitTemplateArgs &&
+           "friend function specialization without template args");
+    if (CheckDependentFunctionTemplateSpecialization(NewFD, TemplateArgs,
+                                                     Previous))
       NewFD->setInvalidDecl();
-  } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&
-             CheckMemberSpecialization(NewFD, Previous))
-    NewFD->setInvalidDecl();
+  } else if (isFunctionTemplateSpecialization) {
+    if (CheckFunctionTemplateSpecialization(NewFD,
+                               (HasExplicitTemplateArgs ? &TemplateArgs : 0),
+                                            Previous))
+      NewFD->setInvalidDecl();
+  } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD)) {
+    if (CheckMemberSpecialization(NewFD, Previous))
+      NewFD->setInvalidDecl();
+  }
     
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!

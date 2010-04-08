@@ -2839,6 +2839,10 @@ public:
                                          SourceLocation PrevPointOfInstantiation,
                                          bool &SuppressNew);
     
+  bool CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
+                    const TemplateArgumentListInfo &ExplicitTemplateArgs,
+                                                    LookupResult &Previous);
+                                                    
   bool CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            LookupResult &Previous);

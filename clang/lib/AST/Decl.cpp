@@ -1309,6 +1309,40 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
   }
 }
 
+void
+FunctionDecl::setDependentTemplateSpecialization(ASTContext &Context,
+                                    const UnresolvedSetImpl &Templates,
+                             const TemplateArgumentListInfo &TemplateArgs) {
+  assert(TemplateOrSpecialization.isNull());
+  size_t Size = sizeof(DependentFunctionTemplateSpecializationInfo);
+  Size += Templates.size() * sizeof(FunctionTemplateDecl*);
+  Size += TemplateArgs.size();
+  void *Buffer = Context.Allocate(Size);
+  DependentFunctionTemplateSpecializationInfo *Info =
+    new (Buffer) DependentFunctionTemplateSpecializationInfo(Templates,
+                                                             TemplateArgs);
+  TemplateOrSpecialization = Info;
+}
+
+DependentFunctionTemplateSpecializationInfo::
+DependentFunctionTemplateSpecializationInfo(const UnresolvedSetImpl &Ts,
+                                      const TemplateArgumentListInfo &TArgs)
+  : AngleLocs(TArgs.getLAngleLoc(), TArgs.getRAngleLoc()) {
+
+  d.NumTemplates = Ts.size();
+  d.NumArgs = TArgs.size();
+
+  FunctionTemplateDecl **TsArray =
+    const_cast<FunctionTemplateDecl**>(getTemplates());
+  for (unsigned I = 0, E = Ts.size(); I != E; ++I)
+    TsArray[I] = cast<FunctionTemplateDecl>(Ts[I]->getUnderlyingDecl());
+
+  TemplateArgumentLoc *ArgsArray =
+    const_cast<TemplateArgumentLoc*>(getTemplateArgs());
+  for (unsigned I = 0, E = TArgs.size(); I != E; ++I)
+    new (&ArgsArray[I]) TemplateArgumentLoc(TArgs[I]);
+}
+
 TemplateSpecializationKind FunctionDecl::getTemplateSpecializationKind() const {
   // For a function template specialization, query the specialization
   // information object.

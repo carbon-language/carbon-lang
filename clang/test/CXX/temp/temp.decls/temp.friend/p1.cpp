@@ -216,3 +216,25 @@ namespace test9 {
 
   template class A<int>; // expected-note {{in instantiation}}
 }
+
+namespace test10 {
+  template <class T> class A;
+  template <class T> A<T> bar(const T*, const A<T>&);
+  template <class T> class A {
+  private:
+    void foo(); // expected-note {{declared private here}}
+    friend A bar<>(const T*, const A<T>&);
+  };
+
+  template <class T> A<T> bar(const T *l, const A<T> &r) {
+    A<T> l1;
+    l1.foo();
+
+    A<char> l2;
+    l2.foo(); // expected-error {{'foo' is a private member of 'test10::A<char>'}}
+
+    return l1;
+  }
+
+  template A<int> bar<int>(const int *, const A<int> &); // expected-note {{in instantiation}}
+}

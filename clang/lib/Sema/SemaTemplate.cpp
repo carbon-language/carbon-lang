@@ -4083,6 +4083,42 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   return false;
 }
 
+/// \brief Perform semantic analysis for the given dependent function
+/// template specialization.  The only possible way to get a dependent
+/// function template specialization is with a friend declaration,
+/// like so:
+///
+///   template <class T> void foo(T);
+///   template <class T> class A {
+///     friend void foo<>(T);
+///   };
+///
+/// There really isn't any useful analysis we can do here, so we
+/// just store the information.
+bool
+Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
+                   const TemplateArgumentListInfo &ExplicitTemplateArgs,
+                                                   LookupResult &Previous) {
+  // Remove anything from Previous that isn't a function template in
+  // the correct context.
+  DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
+  LookupResult::Filter F = Previous.makeFilter();
+  while (F.hasNext()) {
+    NamedDecl *D = F.next()->getUnderlyingDecl();
+    if (!isa<FunctionTemplateDecl>(D) ||
+        !FDLookupContext->Equals(D->getDeclContext()->getLookupContext()))
+      F.erase();
+  }
+  F.done();
+
+  // Should this be diagnosed here?
+  if (Previous.empty()) return true;
+
+  FD->setDependentTemplateSpecialization(Context, Previous.asUnresolvedSet(),
+                                         ExplicitTemplateArgs);
+  return false;
+}
+
 /// \brief Perform semantic analysis for the given function template 
 /// specialization.
 ///
