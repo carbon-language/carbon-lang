@@ -41,7 +41,7 @@ def err_expected_colon_after_setter_name : Error<
   "must end with ':'">;
 
 // Parse && Sema
-def err_no_declarators : Error<"declaration does not declare anything">;
+def ext_no_declarators : ExtWarn<"declaration does not declare anything">;
 def err_param_redefinition : Error<"redefinition of parameter %0">;
 def err_invalid_storage_class_in_func_decl : Error<
   "invalid storage class specifier in function declarator">;

@@ -50,12 +50,12 @@ struct Redecl {
   void zz(); // expected-error{{duplicate member 'zz'}} 
 };
 
-union { // expected-error{{declaration does not declare anything}}
+union { // expected-warning{{declaration does not declare anything}}
   int int_val;
   float float_val;
 };
 
-static union { // expected-error{{declaration does not declare anything}}
+static union { // expected-warning{{declaration does not declare anything}}
   int int_val2;
   float float_val2;
 };
@@ -66,7 +66,7 @@ void f() {
 }
 
 void g() {
-  union { // expected-error{{declaration does not declare anything}}
+  union { // expected-warning{{declaration does not declare anything}}
     int i;
     float f2;
   };
@@ -78,7 +78,7 @@ void g() {
 struct s0 { union { int f0; }; };
 
 // <rdar://problem/6481130>
-typedef struct { }; // expected-error{{declaration does not declare anything}}
+typedef struct { }; // expected-warning{{declaration does not declare anything}}
 
 // PR3675
 struct s1 {
@@ -89,7 +89,7 @@ struct s1 {
 };
 
 // PR3680
-struct {}; // expected-error{{declaration does not declare anything}}
+struct {}; // expected-warning{{declaration does not declare anything}}
 
 struct s2 {
   union {

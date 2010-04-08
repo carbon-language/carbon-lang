@@ -103,7 +103,7 @@ void ogfn()
 
   // PR3020: This used to crash due to double ownership of C4.
   struct C4;
-  C4; // expected-error {{declaration does not declare anything}}
+  C4; // expected-warning {{declaration does not declare anything}}
 }
 
 struct C4 {

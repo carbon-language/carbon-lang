@@ -1459,7 +1459,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
           Record->getDeclContext()->isRecord())
         return BuildAnonymousStructOrUnion(S, DS, Record);
 
-      Diag(DS.getSourceRange().getBegin(), diag::err_no_declarators)
+      Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
         << DS.getSourceRange();
     }
 
@@ -1481,9 +1481,8 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       return DeclPtrTy::make(Tag);
     }
 
-    Diag(DS.getSourceRange().getBegin(), diag::err_no_declarators)
+    Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
       << DS.getSourceRange();
-    return DeclPtrTy();
   }
 
   return DeclPtrTy::make(Tag);
