@@ -6003,7 +6003,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
-  DeclAccessPair FoundDecl;
+  DeclAccessPair FoundDecl = DeclAccessPair::make(0, AS_public);
   NestedNameSpecifier *Qualifier = 0;
   if (isa<MemberExpr>(NakedMemExpr)) {
     MemExpr = cast<MemberExpr>(NakedMemExpr);
