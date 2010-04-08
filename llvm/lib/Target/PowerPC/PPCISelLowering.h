@@ -355,12 +355,14 @@ namespace llvm {
     /// probably because the source does not need to be loaded. If
     /// 'NonScalarIntSafe' is true, that means it's safe to return a
     /// non-scalar-integer type, e.g. empty string source, constant, or loaded
-    /// from memory. It returns EVT::Other if SelectionDAG should be responsible
-    /// for determining it.
+    /// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
+    /// constant so it does not need to be loaded.
+    /// It returns EVT::Other if SelectionDAG should be responsible for
+    /// determining the type.
     virtual EVT
-    getOptimalMemOpType(uint64_t Size,
-                        unsigned DstAlign, unsigned SrcAlign,
-                        bool NonScalarIntSafe, SelectionDAG &DAG) const;
+    getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
+                        bool NonScalarIntSafe, bool MemcpyStrSrc,
+                        SelectionDAG &DAG) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;

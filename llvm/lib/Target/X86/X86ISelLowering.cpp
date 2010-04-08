@@ -1067,18 +1067,22 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 }
 
 /// getOptimalMemOpType - Returns the target specific optimal type for load
-/// and store operations as a result of memset, memcpy, and memmove lowering.
-/// If DstAlign is zero that means it's safe to destination alignment can
-/// satisfy any constraint. Similarly if SrcAlign is zero it means there
-/// isn't a need to check it against alignment requirement, probably because
-/// the source does not need to be loaded. If 'NonScalarIntSafe' is true, that
-/// means it's safe to return a non-scalar-integer type, e.g. constant string
-/// source or loaded from memory. It returns EVT::Other if SelectionDAG should
-/// be responsible for determining it.
+/// and store operations as a result of memset, memcpy, and memmove
+/// lowering. If DstAlign is zero that means it's safe to destination
+/// alignment can satisfy any constraint. Similarly if SrcAlign is zero it
+/// means there isn't a need to check it against alignment requirement,
+/// probably because the source does not need to be loaded. If
+/// 'NonScalarIntSafe' is true, that means it's safe to return a
+/// non-scalar-integer type, e.g. empty string source, constant, or loaded
+/// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
+/// constant so it does not need to be loaded.
+/// It returns EVT::Other if SelectionDAG should be responsible for
+/// determining the type.
 EVT
 X86TargetLowering::getOptimalMemOpType(uint64_t Size,
                                        unsigned DstAlign, unsigned SrcAlign,
                                        bool NonScalarIntSafe,
+                                       bool MemcpyStrSrc,
                                        SelectionDAG &DAG) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
@@ -1095,11 +1099,14 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         return MVT::v4i32;
       if (Subtarget->hasSSE1())
         return MVT::v4f32;
-    } else if (Size >= 8 &&
+    } else if (!MemcpyStrSrc && Size >= 8 &&
                !Subtarget->is64Bit() &&
                Subtarget->getStackAlignment() >= 8 &&
-               Subtarget->hasSSE2())
+               Subtarget->hasSSE2()) {
+      // Do not use f64 to lower memcpy if source is string constant. It's
+      // better to use i32 to avoid the loads.
       return MVT::f64;
+    }
   }
   if (Subtarget->is64Bit() && Size >= 8)
     return MVT::i64;
@@ -6721,7 +6728,7 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI :
-                                                             X86::EDI,
+                                                              X86::EDI,
                             Dst, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RSI :

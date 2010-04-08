@@ -3210,6 +3210,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                      unsigned Limit, uint64_t Size,
                                      unsigned DstAlign, unsigned SrcAlign,
                                      bool NonScalarIntSafe,
+                                     bool MemcpyStrSrc,
                                      SelectionDAG &DAG,
                                      const TargetLowering &TLI) {
   assert((SrcAlign == 0 || SrcAlign >= DstAlign) &&
@@ -3218,9 +3219,11 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // the value, i.e. memset or memcpy from constant string. Otherwise, it's
   // the inferred alignment of the source. 'DstAlign', on the other hand, is the
   // specified alignment of the memory operation. If it is zero, that means
-  // it's possible to change the alignment of the destination.
+  // it's possible to change the alignment of the destination. 'MemcpyStrSrc'
+  // indicates whether the memcpy source is constant so it does not need to be
+  // loaded.
   EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign,
-                                   NonScalarIntSafe, DAG);
+                                   NonScalarIntSafe, MemcpyStrSrc, DAG);
 
   if (VT == MVT::Other) {
     if (DstAlign >= TLI.getTargetData()->getPointerPrefAlignment() ||
@@ -3286,9 +3289,6 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   // below a certain threshold.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   std::vector<EVT> MemOps;
-  uint64_t Limit = -1ULL;
-  if (!AlwaysInline)
-    Limit = TLI.getMaxStoresPerMemcpy();
   bool DstAlignCanChange = false;
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
@@ -3300,9 +3300,13 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   std::string Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
+  uint64_t Limit = -1ULL;
+  if (!AlwaysInline)
+    Limit = TLI.getMaxStoresPerMemcpy();
   if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
-                                (isZeroStr ? 0 : SrcAlign), true, DAG, TLI))
+                                (isZeroStr ? 0 : SrcAlign),
+                                true, CopyFromStr, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
@@ -3390,7 +3394,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
   if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
-                                SrcAlign, true, DAG, TLI))
+                                SrcAlign, true, false, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
@@ -3462,7 +3466,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     isa<ConstantSDNode>(Src) && cast<ConstantSDNode>(Src)->isNullValue();
   if (!FindOptimalMemOpLowering(MemOps, TLI.getMaxStoresPerMemset(),
                                 Size, (DstAlignCanChange ? 0 : Align), 0,
-                                NonScalarIntSafe, DAG, TLI))
+                                NonScalarIntSafe, false, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {
