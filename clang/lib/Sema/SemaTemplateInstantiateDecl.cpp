@@ -753,7 +753,13 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                                 D->getIdentifier(), InstParams, RecordInst,
                                 PrevClassTemplate);
   RecordInst->setDescribedClassTemplate(Inst);
+
   if (isFriend) {
+    if (PrevClassTemplate)
+      Inst->setAccess(PrevClassTemplate->getAccess());
+    else
+      Inst->setAccess(D->getAccess());
+
     Inst->setObjectOfFriendDecl(PrevClassTemplate != 0);
     // TODO: do we want to track the instantiation progeny of this
     // friend target decl?
@@ -765,14 +771,13 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   // Trigger creation of the type for the instantiation.
   SemaRef.Context.getInjectedClassNameType(RecordInst,
                   Inst->getInjectedClassNameSpecialization(SemaRef.Context));
-  
+
   // Finish handling of friends.
   if (isFriend) {
     DC->makeDeclVisibleInContext(Inst, /*Recoverable*/ false);
     return Inst;
   }
   
-  Inst->setAccess(D->getAccess());
   Owner->addDecl(Inst);
   
   // First, we sort the partial specializations by location, so 

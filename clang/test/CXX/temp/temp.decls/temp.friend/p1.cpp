@@ -238,3 +238,16 @@ namespace test10 {
 
   template A<int> bar<int>(const int *, const A<int> &); // expected-note {{in instantiation}}
 }
+
+// PR6752: this shouldn't crash.
+namespace test11 {
+  struct Foo {
+    template<class A>
+    struct IteratorImpl {
+      template<class T> friend class IteratorImpl;
+    };
+  };
+
+  template struct Foo::IteratorImpl<int>;
+  template struct Foo::IteratorImpl<long>;  
+}
