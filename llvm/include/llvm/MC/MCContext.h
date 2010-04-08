@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCCONTEXT_H
 #define LLVM_MC_MCCONTEXT_H
 
+#include "llvm/MC/SectionKind.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
@@ -21,6 +22,7 @@ namespace llvm {
   class MCSymbol;
   class StringRef;
   class Twine;
+  class MCSectionMachO;
 
   /// MCContext - Context object for machine code objects.  This class owns all
   /// of the sections that it creates.
@@ -47,6 +49,8 @@ namespace llvm {
     /// We use a bump pointer allocator to avoid the need to track all allocated
     /// objects.
     BumpPtrAllocator Allocator;
+    
+    void *MachOUniquingMap;
   public:
     explicit MCContext(const MCAsmInfo &MAI);
     ~MCContext();
@@ -71,6 +75,17 @@ namespace llvm {
     /// LookupSymbol - Get the symbol for \p Name, or null.
     MCSymbol *LookupSymbol(StringRef Name) const;
 
+    /// @}
+    
+    /// @name Section Managment
+    /// @{
+
+    const MCSectionMachO *getMachOSection(StringRef Segment,
+                                          StringRef Section,
+                                          unsigned TypeAndAttributes,
+                                          unsigned Reserved2,
+                                          SectionKind K);
+    
     /// @}
 
     void *Allocate(unsigned Size, unsigned Align = 8) {

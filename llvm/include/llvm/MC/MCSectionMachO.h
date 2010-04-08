@@ -50,13 +50,15 @@ class MCSectionMachO : public MCSection {
         SectionName[i] = 0;
     }        
   }
-public:
   
   static MCSectionMachO *Create(StringRef Segment,
                                 StringRef Section,
                                 unsigned TypeAndAttributes,
                                 unsigned Reserved2,
                                 SectionKind K, MCContext &Ctx);
+  
+  friend class MCContext;
+public:
   
   /// These are the section type and attributes fields.  A MachO section can
   /// have only one Type, but can have any of the attributes specified.

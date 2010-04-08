@@ -90,8 +90,6 @@ public:
 
 
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
-  mutable void *UniquingMap;
-
   const MCSection *CStringSection;
   const MCSection *UStringSection;
   const MCSection *TextCoalSection;
@@ -108,8 +106,8 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *LazySymbolPointerSection;
   const MCSection *NonLazySymbolPointerSection;
 public:
-  TargetLoweringObjectFileMachO() : UniquingMap(0) {}
-  ~TargetLoweringObjectFileMachO();
+  TargetLoweringObjectFileMachO() {}
+  ~TargetLoweringObjectFileMachO() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 

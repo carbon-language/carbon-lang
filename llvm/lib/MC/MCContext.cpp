@@ -9,19 +9,30 @@
 
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
+typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
+
+
 MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0) {
+  MachOUniquingMap = 0;
 }
 
 MCContext::~MCContext() {
-  // NOTE: The sections are all allocated out of a bump pointer allocator,
+  // NOTE: The symbols are all allocated out of a bump pointer allocator,
   // we don't need to free them here.
+  
+  // If we have the MachO uniquing map, free it.
+  delete (MachOUniqueMapTy*)MachOUniquingMap;
 }
+
+//===----------------------------------------------------------------------===//
+// Symbol Manipulation
+//===----------------------------------------------------------------------===//
 
 MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
   assert(!Name.empty() && "Normal symbols cannot be unnamed!");
@@ -54,4 +65,37 @@ MCSymbol *MCContext::CreateTempSymbol() {
 
 MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
   return Symbols.lookup(Name);
+}
+
+//===----------------------------------------------------------------------===//
+// Section Management
+//===----------------------------------------------------------------------===//
+
+const MCSectionMachO *MCContext::
+getMachOSection(StringRef Segment, StringRef Section,
+                unsigned TypeAndAttributes,
+                unsigned Reserved2, SectionKind Kind) {
+  
+  // We unique sections by their segment/section pair.  The returned section
+  // may not have the same flags as the requested section, if so this should be
+  // diagnosed by the client as an error.
+  
+  // Create the map if it doesn't already exist.
+  if (MachOUniquingMap == 0)
+    MachOUniquingMap = new MachOUniqueMapTy();
+  MachOUniqueMapTy &Map = *(MachOUniqueMapTy*)MachOUniquingMap;
+  
+  // Form the name to look up.
+  SmallString<64> Name;
+  Name += Segment;
+  Name.push_back(',');
+  Name += Section;
+  
+  // Do the lookup, if we have a hit, return it.
+  const MCSectionMachO *&Entry = Map[Name.str()];
+  if (Entry) return Entry;
+  
+  // Otherwise, return a new section.
+  return Entry = MCSectionMachO::Create(Segment, Section, TypeAndAttributes,
+                                        Reserved2, Kind, *this);
 }

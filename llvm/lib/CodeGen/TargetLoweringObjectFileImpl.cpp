@@ -426,40 +426,14 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
-typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
-
-TargetLoweringObjectFileMachO::~TargetLoweringObjectFileMachO() {
-  // If we have the MachO uniquing map, free it.
-  delete (MachOUniqueMapTy*)UniquingMap;
-}
-
 
 const MCSectionMachO *TargetLoweringObjectFileMachO::
 getMachOSection(StringRef Segment, StringRef Section,
                 unsigned TypeAndAttributes,
                 unsigned Reserved2, SectionKind Kind) const {
-  // We unique sections by their segment/section pair.  The returned section
-  // may not have the same flags as the requested section, if so this should be
-  // diagnosed by the client as an error.
-
-  // Create the map if it doesn't already exist.
-  if (UniquingMap == 0)
-    UniquingMap = new MachOUniqueMapTy();
-  MachOUniqueMapTy &Map = *(MachOUniqueMapTy*)UniquingMap;
-
-  // Form the name to look up.
-  SmallString<64> Name;
-  Name += Segment;
-  Name.push_back(',');
-  Name += Section;
-
-  // Do the lookup, if we have a hit, return it.
-  const MCSectionMachO *&Entry = Map[Name.str()];
-  if (Entry) return Entry;
-
-  // Otherwise, return a new section.
-  return Entry = MCSectionMachO::Create(Segment, Section, TypeAndAttributes,
-                                        Reserved2, Kind, getContext());
+  
+  return getContext().getMachOSection(Segment, Section, TypeAndAttributes,
+                                      Reserved2, Kind);
 }
 
 
@@ -473,8 +447,6 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
   
-  if (UniquingMap != 0)
-    ((MachOUniqueMapTy*)UniquingMap)->clear();
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
   TextSection // .text
@@ -806,7 +778,7 @@ const MCSection *TargetLoweringObjectFileCOFF::
 getCOFFSection(StringRef Name, bool isDirective, SectionKind Kind) const {
   // Create the map if it doesn't already exist.
   if (UniquingMap == 0)
-    UniquingMap = new MachOUniqueMapTy();
+    UniquingMap = new COFFUniqueMapTy();
   COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)UniquingMap;
 
   // Do the lookup, if we have a hit, return it.

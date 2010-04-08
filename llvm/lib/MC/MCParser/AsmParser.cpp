@@ -30,16 +30,10 @@ using namespace llvm;
 
 enum { DEFAULT_ADDRSPACE = 0 };
 
-// Mach-O section uniquing.
-//
-// FIXME: Figure out where this should live, it should be shared by
-// TargetLoweringObjectFile.
-typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
-
 AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
                      const MCAsmInfo &_MAI) 
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
-    CurBuffer(0), SectionUniquingMap(0) {
+    CurBuffer(0) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
   
   // Debugging directives.
@@ -51,39 +45,6 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
 
 
 AsmParser::~AsmParser() {
-  // If we have the MachO uniquing map, free it.
-  delete (MachOUniqueMapTy*)SectionUniquingMap;
-}
-
-const MCSection *AsmParser::getMachOSection(const StringRef &Segment,
-                                            const StringRef &Section,
-                                            unsigned TypeAndAttributes,
-                                            unsigned Reserved2,
-                                            SectionKind Kind) const {
-  // We unique sections by their segment/section pair.  The returned section
-  // may not have the same flags as the requested section, if so this should be
-  // diagnosed by the client as an error.
-  
-  // Create the map if it doesn't already exist.
-  if (SectionUniquingMap == 0)
-    SectionUniquingMap = new MachOUniqueMapTy();
-  MachOUniqueMapTy &Map = *(MachOUniqueMapTy*)SectionUniquingMap;
-  
-  // Form the name to look up.
-  SmallString<64> Name;
-  Name += Segment;
-  Name.push_back(',');
-  Name += Section;
-
-  // Do the lookup, if we have a hit, return it.
-  const MCSectionMachO *&Entry = Map[Name.str()];
-
-  // FIXME: This should validate the type and attributes.
-  if (Entry) return Entry;
-
-  // Otherwise, return a new section.
-  return Entry = MCSectionMachO::Create(Segment, Section, TypeAndAttributes,
-                                        Reserved2, Kind, Ctx);
 }
 
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
@@ -143,7 +104,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   //
   // FIXME: Target hook & command line option for initial section.
   if (!NoInitialTextSection)
-    Out.SwitchSection(getMachOSection("__TEXT", "__text",
+    Out.SwitchSection(Ctx.getMachOSection("__TEXT", "__text",
                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                       0, SectionKind::getText()));
 
@@ -919,9 +880,9 @@ bool AsmParser::ParseDirectiveDarwinSection() {
   
   // FIXME: Arch specific.
   bool isText = Segment == "__TEXT";  // FIXME: Hack.
-  Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
-                                    isText ? SectionKind::getText()
-                                           : SectionKind::getDataRel()));
+  Out.SwitchSection(Ctx.getMachOSection(Segment, Section, TAA, StubSize,
+                                        isText ? SectionKind::getText()
+                                               : SectionKind::getDataRel()));
   return false;
 }
 
@@ -936,9 +897,9 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   
   // FIXME: Arch specific.
   bool isText = StringRef(Segment) == "__TEXT";  // FIXME: Hack.
-  Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
-                                    isText ? SectionKind::getText()
-                                    : SectionKind::getDataRel()));
+  Out.SwitchSection(Ctx.getMachOSection(Segment, Section, TAA, StubSize,
+                                        isText ? SectionKind::getText()
+                                               : SectionKind::getDataRel()));
 
   // Set the implicit alignment, if any.
   //
@@ -1374,9 +1335,9 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   // '.lcomm' is equivalent to '.zerofill'.
   // Create the Symbol as a common or local common with Size and Pow2Alignment
   if (IsLocal) {
-    Out.EmitZerofill(getMachOSection("__DATA", "__bss",
-                                     MCSectionMachO::S_ZEROFILL, 0,
-                                     SectionKind::getBSS()),
+    Out.EmitZerofill(Ctx.getMachOSection("__DATA", "__bss",
+                                         MCSectionMachO::S_ZEROFILL, 0,
+                                         SectionKind::getBSS()),
                      Sym, Size, 1 << Pow2Alignment);
     return false;
   }
@@ -1410,9 +1371,9 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // the section but with no symbol.
   if (Lexer.is(AsmToken::EndOfStatement)) {
     // Create the zerofill section but no symbol
-    Out.EmitZerofill(getMachOSection(Segment, Section,
-                                     MCSectionMachO::S_ZEROFILL, 0,
-                                     SectionKind::getBSS()));
+    Out.EmitZerofill(Ctx.getMachOSection(Segment, Section,
+                                         MCSectionMachO::S_ZEROFILL, 0,
+                                         SectionKind::getBSS()));
     return false;
   }
 
@@ -1468,9 +1429,9 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // Create the zerofill Symbol with Size and Pow2Alignment
   //
   // FIXME: Arch specific.
-  Out.EmitZerofill(getMachOSection(Segment, Section,
-                                 MCSectionMachO::S_ZEROFILL, 0,
-                                 SectionKind::getBSS()),
+  Out.EmitZerofill(Ctx.getMachOSection(Segment, Section,
+                                       MCSectionMachO::S_ZEROFILL, 0,
+                                       SectionKind::getBSS()),
                    Sym, Size, 1 << Pow2Alignment);
 
   return false;

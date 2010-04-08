@@ -50,10 +50,6 @@ private:
   AsmCond TheCondState;
   std::vector<AsmCond> TheCondStack;
 
-  // FIXME: Figure out where this should leave, the code is a copy of that which
-  // is also used by TargetLoweringObjectFile.
-  mutable void *SectionUniquingMap;
-
   /// DirectiveMap - This is a table handlers for directives.  Each handler is
   /// invoked after the directive identifier is read and is responsible for
   /// parsing and validating the rest of the directive.  The handler is passed
@@ -96,13 +92,6 @@ public:
 
 private:
   MCSymbol *CreateSymbol(StringRef Name);
-
-  // FIXME: See comment on SectionUniquingMap.
-  const MCSection *getMachOSection(const StringRef &Segment,
-                                   const StringRef &Section,
-                                   unsigned TypeAndAttributes,
-                                   unsigned Reserved2,
-                                   SectionKind Kind) const;
 
   bool ParseStatement();
 
