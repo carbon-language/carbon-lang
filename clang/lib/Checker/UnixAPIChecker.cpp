@@ -24,6 +24,7 @@ namespace {
 class UnixAPIChecker : public CheckerVisitor<UnixAPIChecker> {
   enum SubChecks {
     OpenFn = 0,
+    PthreadOnceFn = 1,
     NumChecks
   };
 
@@ -110,6 +111,49 @@ static void CheckOpen(CheckerContext &C, const CallExpr *CE, BugType *&BT) {
 }
 
 //===----------------------------------------------------------------------===//
+// pthread_once
+//===----------------------------------------------------------------------===//
+
+static void CheckPthreadOnce(CheckerContext &C, const CallExpr *CE,
+                             BugType *&BT) {
+
+  // This is similar to 'CheckDispatchOnce' in the MacOSXAPIChecker.
+  // They can possibly be refactored.
+
+  LazyInitialize(BT, "Improper use of 'pthread_once'");
+
+  if (CE->getNumArgs() < 1)
+    return;
+
+  // Check if the first argument is stack allocated.  If so, issue a warning
+  // because that's likely to be bad news.
+  const GRState *state = C.getState();
+  const MemRegion *R = state->getSVal(CE->getArg(0)).getAsRegion();
+  if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
+    return;
+
+  ExplodedNode *N = C.GenerateSink(state);
+  if (!N)
+    return;
+
+  llvm::SmallString<256> S;
+  llvm::raw_svector_ostream os(S);
+  os << "Call to 'pthread_once' uses";
+  if (const VarRegion *VR = dyn_cast<VarRegion>(R))
+    os << " the local variable '" << VR->getDecl()->getName() << '\'';
+  else
+    os << " stack allocated memory";
+  os << " for the \"control\" value.  Using such transient memory for "
+  "the control value is potentially dangerous.";
+  if (isa<VarRegion>(R) && isa<StackLocalsSpaceRegion>(R->getMemorySpace()))
+    os << "  Perhaps you intended to declare the variable as 'static'?";
+
+  EnhancedBugReport *report = new EnhancedBugReport(*BT, os.str(), N);
+  report->addRange(CE->getArg(0)->getSourceRange());
+  C.EmitReport(report);
+}
+
+//===----------------------------------------------------------------------===//
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
@@ -147,6 +191,7 @@ void UnixAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   const SubCheck &SC =
     llvm::StringSwitch<SubCheck>(FI->getName())
       .Case("open", SubCheck(CheckOpen, BTypes[OpenFn]))
+      .Case("pthread_once", SubCheck(CheckPthreadOnce, BTypes[PthreadOnceFn]))
       .Default(SubCheck());
 
   SC.run(C, CE);
