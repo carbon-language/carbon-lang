@@ -274,8 +274,8 @@ namespace {
     
     // isInlineAsm - Check if the instruction is a call to an inline asm chunk
     static bool isInlineAsm(const Instruction& I) {
-      if (isa<CallInst>(&I) && isa<InlineAsm>(I.getCalledValue()))
-        return true;
+      if (const CallInst *CI = dyn_cast<CallInst>(&I))
+        return isa<InlineAsm>(CI->getCalledValue());
       return false;
     }
     
