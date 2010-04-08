@@ -2820,6 +2820,22 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     else
       Inputs.push_back(IVIncInsertPos);
   }
+  // The expansion must also be dominated by the increment positions of any
+  // loops it for which it is using post-inc mode.
+  for (PostIncLoopSet::const_iterator I = LF.PostIncLoops.begin(),
+       E = LF.PostIncLoops.end(); I != E; ++I) {
+    const Loop *PIL = *I;
+    if (PIL == L) continue;
+
+    SmallVector<BasicBlock *, 4> ExitingBlocks;
+    PIL->getExitingBlocks(ExitingBlocks);
+    if (!ExitingBlocks.empty()) {
+      BasicBlock *BB = ExitingBlocks[0];
+      for (unsigned i = 1, e = ExitingBlocks.size(); i != e; ++i)
+        BB = DT.findNearestCommonDominator(BB, ExitingBlocks[i]);
+      Inputs.push_back(BB->getTerminator());
+    }
+  }
 
   // Then, climb up the immediate dominator tree as far as we can go while
   // still being dominated by the input positions.

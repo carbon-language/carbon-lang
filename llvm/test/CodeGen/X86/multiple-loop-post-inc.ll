@@ -275,3 +275,30 @@ bb14:                                             ; preds = %bb12, %bb11
 return:                                           ; preds = %entry
   ret void
 }
+
+; Codegen shouldn't crash on this testcase.
+
+define void @bar(i32 %a, i32 %b) nounwind {
+entry:                           ; preds = %bb1, %entry, %for.end204
+  br label %outer
+
+outer:                                     ; preds = %bb1, %entry
+  %i6 = phi i32 [ %storemerge171, %bb1 ], [ %a, %entry ] ; <i32> [#uses=2]
+  %storemerge171 = add i32 %i6, 1      ; <i32> [#uses=1]
+  br label %inner
+
+inner:                                       ; preds = %bb0, %if.end275
+  %i8 = phi i32 [ %a, %outer ], [ %indvar.next159, %bb0 ] ; <i32> [#uses=2]
+  %t338 = load i32* undef                     ; <i32> [#uses=1]
+  %t191 = mul i32 %i8, %t338        ; <i32> [#uses=1]
+  %t179 = add i32 %i6, %t191        ; <i32> [#uses=1]
+  br label %bb0
+
+bb0:                                     ; preds = %for.body332
+  %indvar.next159 = add i32 %i8, 1     ; <i32> [#uses=1]
+  br i1 undef, label %bb1, label %inner
+
+bb1:                                     ; preds = %bb0, %outer
+  %midx.4 = phi i32 [ %t179, %bb0 ] ; <i32> [#uses=0]
+  br label %outer
+}
