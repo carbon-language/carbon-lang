@@ -526,10 +526,9 @@ private:
     return Lines.size();
   }
   
-  /// populateDbgScopeInverseMaps() - Populate DbgScopeBeginMap and
-  /// DbgScopeEndMap. This maps are used to indentify debug scope started
-  /// and ended by an instruction.
-  void populateDbgScopeInverseMaps();
+  /// identifyScopeMarkers() - Indentify instructions that are marking
+  /// beginning of or end of a scope.
+  void identifyScopeMarkers();
 
   /// extractScopeInformation - Scan machine instructions in this function
   /// and collect DbgScopes. Return true, if atleast one scope was found.

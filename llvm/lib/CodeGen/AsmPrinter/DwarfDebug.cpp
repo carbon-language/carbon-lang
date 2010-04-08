@@ -2241,15 +2241,14 @@ bool DwarfDebug::extractScopeInformation() {
 
   CurrentFnDbgScope->fixInstructionMarkers(MIIndexMap);
 
-  populateDbgScopeInverseMaps();
+  identifyScopeMarkers();
 
   return !DbgScopeMap.empty();
 }
 
-/// populateDbgScopeInverseMaps() - Populate DbgScopeBeginMap and
-/// DbgScopeEndMap. This maps are used to indentify debug scope started
-/// and ended by an instruction.
-void DwarfDebug::populateDbgScopeInverseMaps() {
+/// identifyScopeMarkers() - Indentify instructions that are marking
+/// beginning of or end of a scope.
+void DwarfDebug::identifyScopeMarkers() {
 
   // Each scope has first instruction and last instruction to mark beginning
   // and end of a scope respectively. Create an inverse map that list scopes
