@@ -1,4 +1,4 @@
-//===-- llvm/Analysis/Verifier.h - Module Verifier --------------*- C++ -*-===//
+//===-- llvm/Analysis/Verifier.h - LLVM IR Verifier -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
