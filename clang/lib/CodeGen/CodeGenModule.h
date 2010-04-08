@@ -94,7 +94,8 @@ class CodeGenModule : public BlockModule {
 
   /// VTables - Holds information about C++ vtables.
   CodeGenVTables VTables;
-  
+  friend class CodeGenVTables;
+
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
 
