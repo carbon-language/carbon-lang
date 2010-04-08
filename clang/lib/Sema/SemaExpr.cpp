@@ -895,7 +895,7 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
 /// Diagnose an empty lookup.
 ///
 /// \return false if new lookup candidates were found
-bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
+bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
                                LookupResult &R) {
   DeclarationName Name = R.getLookupName();
 
@@ -1001,7 +1001,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
 }
 
 Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
-                                               const CXXScopeSpec &SS,
+                                               CXXScopeSpec &SS,
                                                UnqualifiedId &Id,
                                                bool HasTrailingLParen,
                                                bool isAddressOfOperand) {
@@ -1200,7 +1200,7 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
 /// There's a large number of things which don't need to be done along
 /// this path.
 Sema::OwningExprResult
-Sema::BuildQualifiedDeclarationNameExpr(const CXXScopeSpec &SS,
+Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                         DeclarationName Name,
                                         SourceLocation NameLoc) {
   DeclContext *DC;
@@ -2549,7 +2549,7 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
 static bool
 LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                          SourceRange BaseRange, const RecordType *RTy,
-                         SourceLocation OpLoc, const CXXScopeSpec &SS) {
+                         SourceLocation OpLoc, CXXScopeSpec &SS) {
   RecordDecl *RDecl = RTy->getDecl();
   if (SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
                               SemaRef.PDiag(diag::err_typecheck_incomplete_tag)
@@ -2606,7 +2606,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
 Sema::OwningExprResult
 Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
                                SourceLocation OpLoc, bool IsArrow,
-                               const CXXScopeSpec &SS,
+                               CXXScopeSpec &SS,
                                NamedDecl *FirstQualifierInScope,
                                DeclarationName Name, SourceLocation NameLoc,
                                const TemplateArgumentListInfo *TemplateArgs) {
@@ -2841,7 +2841,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
 Sema::OwningExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                        bool &IsArrow, SourceLocation OpLoc,
-                       const CXXScopeSpec &SS,
+                       CXXScopeSpec &SS,
                        DeclPtrTy ObjCImpDecl) {
   assert(BaseExpr && "no base expression");
 
@@ -3279,7 +3279,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
                                                    SourceLocation OpLoc,
                                                    tok::TokenKind OpKind,
-                                                   const CXXScopeSpec &SS,
+                                                   CXXScopeSpec &SS,
                                                    UnqualifiedId &Id,
                                                    DeclPtrTy ObjCImpDecl,
                                                    bool HasTrailingLParen) {

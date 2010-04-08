@@ -2583,20 +2583,18 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
   if (getLang().CPlusPlus && D.mayHaveIdentifier()) {
     // ParseDeclaratorInternal might already have parsed the scope.
-    bool afterCXXScope = D.getCXXScopeSpec().isSet();
-    if (!afterCXXScope) {
+    if (D.getCXXScopeSpec().isEmpty()) {
       ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
                                      true);
-      afterCXXScope = D.getCXXScopeSpec().isSet();
     }
 
-    if (afterCXXScope) {
+    if (D.getCXXScopeSpec().isValid()) {
       if (Actions.ShouldEnterDeclaratorScope(CurScope, D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
         DeclScopeObj.EnterDeclaratorScope();
-    } 
-    
+    }
+
     if (Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||
         Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
       // We found something that indicates the start of an unqualified-id.
@@ -2612,7 +2610,10 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
                              /*AllowDestructorName=*/true, 
                              AllowConstructorName,
                              /*ObjectType=*/0,
-                             D.getName())) {
+                             D.getName()) ||
+          // Once we're past the identifier, if the scope was bad, mark the
+          // whole declarator bad.
+          D.getCXXScopeSpec().isInvalid()) {
         D.SetIdentifier(0, Tok.getLocation());
         D.setInvalidType(true);
       } else {

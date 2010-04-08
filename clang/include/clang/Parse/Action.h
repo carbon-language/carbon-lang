@@ -205,7 +205,7 @@ public:
   /// \returns the type referred to by this identifier, or NULL if the type
   /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, const CXXScopeSpec *SS = 0,
+                              Scope *S, CXXScopeSpec *SS = 0,
                               bool isClassName = false,
                               TypeTy *ObjectType = 0) = 0;
 
@@ -243,7 +243,7 @@ public:
   virtual bool DiagnoseUnknownTypeName(const IdentifierInfo &II, 
                                        SourceLocation IILoc,
                                        Scope *S,
-                                       const CXXScopeSpec *SS,
+                                       CXXScopeSpec *SS,
                                        TypeTy *&SuggestedType) {
     return false;
   }
@@ -281,7 +281,7 @@ public:
   ///
   /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
@@ -329,7 +329,7 @@ public:
   /// This actual is used in the parsing of pseudo-destructor names to 
   /// distinguish a nested-name-specifier and a "type-name ::" when we
   /// see the token sequence "X :: ~".
-  virtual bool isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+  virtual bool isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
                                             SourceLocation IdLoc,
                                             IdentifierInfo &II,
                                             TypeTy *ObjectType) {
@@ -371,7 +371,7 @@ public:
   ///
   /// \returns a CXXScopeTy* object representing the C++ scope.
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
-                                                  const CXXScopeSpec &SS,
+                                                  CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
@@ -387,7 +387,7 @@ public:
   ///
   /// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
   virtual bool IsInvalidUnlessNestedName(Scope *S,
-                                         const CXXScopeSpec &SS,
+                                         CXXScopeSpec &SS,
                                          IdentifierInfo &II,
                                          TypeTy *ObjectType,
                                          bool EnteringContext) {
@@ -428,7 +428,7 @@ public:
   /// ActOnCXXExitDeclaratorScope is called.
   /// The 'SS' should be a non-empty valid CXXScopeSpec.
   /// \returns true if an error occurred, false otherwise.
-  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, CXXScopeSpec &SS) {
     return false;
   }
 
@@ -655,7 +655,7 @@ public:
   ///
   /// \returns the declaration to which this tag refers.
   virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             SourceLocation KWLoc, CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
@@ -1049,7 +1049,7 @@ public:
   /// id-expression or identifier was an ampersand ('&'), indicating that 
   /// we will be taking the address of this expression.
   virtual OwningExprResult ActOnIdExpression(Scope *S,
-                                             const CXXScopeSpec &SS,
+                                             CXXScopeSpec &SS,
                                              UnqualifiedId &Name,
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand) {
@@ -1127,7 +1127,7 @@ public:
   virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
                                                  SourceLocation OpLoc,
                                                  tok::TokenKind OpKind,
-                                                 const CXXScopeSpec &SS,
+                                                 CXXScopeSpec &SS,
                                                  UnqualifiedId &Member,
                                                  DeclPtrTy ObjCImpDecl,
                                                  bool HasTrailingLParen) {
@@ -1315,7 +1315,7 @@ public:
   virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
                                         SourceLocation NamespcLoc,
-                                        const CXXScopeSpec &SS,
+                                        CXXScopeSpec &SS,
                                         SourceLocation IdentLoc,
                                         IdentifierInfo *NamespcName,
                                         AttributeList *AttrList);
@@ -1326,7 +1326,7 @@ public:
                                            SourceLocation NamespaceLoc,
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
-                                           const CXXScopeSpec &SS,
+                                           CXXScopeSpec &SS,
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident) {
     return DeclPtrTy();
@@ -1372,7 +1372,7 @@ public:
                                           AccessSpecifier AS,
                                           bool HasUsingKeyword,
                                           SourceLocation UsingLoc,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           AttributeList *AttrList,
                                           bool IsTypeName,
@@ -1501,7 +1501,7 @@ public:
   /// \returns the type being destructed.
   virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
                                     IdentifierInfo &II, SourceLocation NameLoc,
-                                    Scope *S, const CXXScopeSpec &SS,
+                                    Scope *S, CXXScopeSpec &SS,
                                     TypeTy *ObjectType,
                                     bool EnteringContext) {
     return getTypeName(II, NameLoc, S, &SS, false, ObjectType);
@@ -1683,7 +1683,7 @@ public:
   virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,
-                                                     const CXXScopeSpec &SS,
+                                                     CXXScopeSpec &SS,
                                                   UnqualifiedId &FirstTypeName,
                                                      SourceLocation CCLoc,
                                                      SourceLocation TildeLoc,
@@ -1729,7 +1729,7 @@ public:
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorDecl,
                                             Scope *S,
-                                            const CXXScopeSpec &SS,
+                                            CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
                                             TypeTy *TemplateTypeTy,
                                             SourceLocation IdLoc,
@@ -1939,7 +1939,7 @@ public:
   /// \param EnteringContext whether we are entering the context of this
   /// template.
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                                const CXXScopeSpec &SS,
+                                                CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 TypeTy *ObjectType,
                                                 bool EnteringContext) {
@@ -1995,7 +1995,7 @@ public:
   virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc,
-                                   const CXXScopeSpec &SS,
+                                   CXXScopeSpec &SS,
                                    TemplateTy Template,
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
@@ -2133,7 +2133,7 @@ public:
                              SourceLocation TemplateLoc,
                              unsigned TagSpec,
                              SourceLocation KWLoc,
-                             const CXXScopeSpec &SS,
+                             CXXScopeSpec &SS,
                              IdentifierInfo *Name,
                              SourceLocation NameLoc,
                              AttributeList *Attr) {
@@ -2581,7 +2581,7 @@ public:
   ///
   /// \parame EnteringContext whether we're entering the context of this
   /// scope specifier.
-  virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
+  virtual void CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
                                        bool EnteringContext) { }
   
   /// \brief Code completion for a C++ "using" declaration or directive.
@@ -2863,7 +2863,7 @@ public:
   /// \returns the type referred to by this identifier, or NULL if the type
   /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, const CXXScopeSpec *SS,
+                              Scope *S, CXXScopeSpec *SS,
                               bool isClassName = false,
                               TypeTy *ObjectType = 0);
 
@@ -2873,7 +2873,7 @@ public:
                                   const CXXScopeSpec *SS);
 
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,

@@ -61,7 +61,7 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
 /// If name lookup results in an ambiguity, this routine will complain
 /// and then return NULL.
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                                Scope *S, const CXXScopeSpec *SS,
+                                Scope *S, CXXScopeSpec *SS,
                                 bool isClassName,
                                 TypeTy *ObjectTypePtr) {
   // Determine where we will perform name lookup.
@@ -236,7 +236,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
 bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
                                    SourceLocation IILoc,
                                    Scope *S,
-                                   const CXXScopeSpec *SS,
+                                   CXXScopeSpec *SS,
                                    TypeTy *&SuggestedType) {
   // We don't have anything to suggest (yet).
   SuggestedType = 0;
@@ -4707,7 +4707,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
 /// reference/declaration/definition of a tag.
 Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                               SourceLocation KWLoc, const CXXScopeSpec &SS,
+                               SourceLocation KWLoc, CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
                                MultiTemplateParamsArg TemplateParameterLists,

@@ -465,7 +465,7 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 ///         simple-template-id
 ///
 Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
-                                          const CXXScopeSpec *SS) {
+                                          CXXScopeSpec *SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId

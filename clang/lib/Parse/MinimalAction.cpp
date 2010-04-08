@@ -30,7 +30,7 @@ Action::~Action() {}
 Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
                                               SourceLocation UsingLoc,
                                               SourceLocation NamespcLoc,
-                                              const CXXScopeSpec &SS,
+                                              CXXScopeSpec &SS,
                                               SourceLocation IdentLoc,
                                               IdentifierInfo *NamespcName,
                                               AttributeList *AttrList) {
@@ -47,7 +47,7 @@ Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                                 AccessSpecifier AS,
                                                 bool HasUsingKeyword,
                                                 SourceLocation UsingLoc,
-                                                const CXXScopeSpec &SS,
+                                                CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 AttributeList *AttrList,
                                                 bool IsTypeName,
@@ -144,7 +144,7 @@ void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 /// FIXME: Use the passed CXXScopeSpec for accurate C++ type checking.
 Action::TypeTy *
 MinimalAction::getTypeName(IdentifierInfo &II, SourceLocation Loc,
-                           Scope *S, const CXXScopeSpec *SS,
+                           Scope *S, CXXScopeSpec *SS,
                            bool isClassName, TypeTy *ObjectType) {
   if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
     if (TI->isTypeName)
@@ -161,7 +161,7 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
 
 TemplateNameKind
 MinimalAction::isTemplateName(Scope *S,
-                              const CXXScopeSpec &SS,
+                              CXXScopeSpec &SS,
                               UnqualifiedId &Name,
                               TypeTy *ObjectType,
                               bool EnteringScope,

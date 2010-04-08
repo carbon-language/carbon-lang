@@ -1291,7 +1291,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
 /// context of the scope-specifier SS (if present).
 ///
 /// @returns True if any decls were found (but possibly ambiguous)
-bool Sema::LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+bool Sema::LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
                             bool AllowBuiltinCreation, bool EnteringContext) {
   if (SS && SS->isInvalid()) {
     // When the scope specifier is invalid, don't even look for
@@ -2500,7 +2500,7 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
 /// \returns true if the typo was corrected, in which case the \p Res
 /// structure will contain the results of name lookup for the
 /// corrected name. Otherwise, returns false.
-bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
+bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
                        DeclContext *MemberContext, bool EnteringContext,
                        const ObjCObjectPointerType *OPT) {
   if (Diags.hasFatalErrorOccurred())

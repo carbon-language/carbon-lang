@@ -230,7 +230,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
 /// that is currently being defined. Or, if we have a type that names
 /// a class template specialization that is not a complete type, we
 /// will attempt to instantiate that class template.
-bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
+bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return false;
 
@@ -247,10 +247,13 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
       return false;
 
     // The type must be complete.
-    return RequireCompleteType(SS.getRange().getBegin(),
-                               Context.getTypeDeclType(Tag),
-                               PDiag(diag::err_incomplete_nested_name_spec)
-                                 << SS.getRange());
+    if (RequireCompleteType(SS.getRange().getBegin(),
+                            Context.getTypeDeclType(Tag),
+                            PDiag(diag::err_incomplete_nested_name_spec)
+                            << SS.getRange())) {
+      SS.setScopeRep(0);  // Mark the ScopeSpec invalid.
+      return true;
+    }
   }
 
   return false;
@@ -322,7 +325,7 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
   return 0;
 }
 
-bool Sema::isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+bool Sema::isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
                                         SourceLocation IdLoc,
                                         IdentifierInfo &II,
                                         TypeTy *ObjectTypePtr) {
@@ -384,7 +387,7 @@ bool Sema::isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
 /// scope if it *knows* that the result is correct.  It should not return in a
 /// dependent context, for example.
 Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
-                                                    const CXXScopeSpec &SS,
+                                                    CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
@@ -593,7 +596,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
 /// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
 /// Returns a CXXScopeTy* object representing the C++ scope.
 Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
-                                                    const CXXScopeSpec &SS,
+                                                    CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
@@ -611,7 +614,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 /// conservatively correct to always return false from this method.
 ///
 /// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
-bool Sema::IsInvalidUnlessNestedName(Scope *S, const CXXScopeSpec &SS,
+bool Sema::IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
                                      IdentifierInfo &II, TypeTy *ObjectType,
                                      bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, SourceLocation(), SourceLocation(),
@@ -676,7 +679,7 @@ bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// looked up in the declarator-id's scope, until the declarator is parsed and
 /// ActOnCXXExitDeclaratorScope is called.
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
-bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
 
   if (SS.isInvalid()) return true;

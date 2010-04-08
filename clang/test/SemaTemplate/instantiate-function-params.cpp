@@ -29,8 +29,7 @@ template < typename TT > struct ForwardIterator                              : I
   typedef instantiate< & requirement_<void(*)(usage_requirements<ForwardIterator> x)>::failed> boost_concept_check2; // expected-note 2 {{in instantiation}}
 
 };
-typedef instantiate< &requirement_<void(*)(ForwardIterator<char*> x)>::failed> boost_concept_checkX; // expected-error{{no member named}} \
-// expected-note 6{{in instantiation}}
+typedef instantiate< &requirement_<void(*)(ForwardIterator<char*> x)>::failed> boost_concept_checkX;// expected-note 6{{in instantiation}}
 
 template<typename T> struct X0 { };
 template<typename R, typename A1> struct X0<R(A1 param)> { };

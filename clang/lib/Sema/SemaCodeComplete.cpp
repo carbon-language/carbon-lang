@@ -2266,7 +2266,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
                                              Results.size());
 }
 
-void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
+void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
                                    bool EnteringContext) {
   if (!SS.getScopeRep() || !CodeCompleter)
     return;

@@ -1354,7 +1354,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
   TypeResult ParseClassName(SourceLocation &EndLocation,
-                            const CXXScopeSpec *SS = 0);
+                            CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
                            DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),

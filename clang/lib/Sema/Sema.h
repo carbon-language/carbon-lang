@@ -758,14 +758,14 @@ public:
   DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr);
 
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, const CXXScopeSpec *SS,
+                              Scope *S, CXXScopeSpec *SS,
                               bool isClassName = false,
                               TypeTy *ObjectType = 0);
   virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
   virtual bool DiagnoseUnknownTypeName(const IdentifierInfo &II, 
                                        SourceLocation IILoc,
                                        Scope *S,
-                                       const CXXScopeSpec *SS,
+                                       CXXScopeSpec *SS,
                                        TypeTy *&SuggestedType);
   
   virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
@@ -877,7 +877,7 @@ public:
                                     const IdentifierInfo &Name);
 
   virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             SourceLocation KWLoc, CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
@@ -1407,7 +1407,7 @@ public:
                   bool AllowBuiltinCreation = false);
   bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
                            bool InUnqualifiedLookup = false);
-  bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+  bool LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
                         bool AllowBuiltinCreation = false,
                         bool EnteringContext = false);
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
@@ -1425,7 +1425,7 @@ public:
   void LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer);
 
-  bool CorrectTypo(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+  bool CorrectTypo(LookupResult &R, Scope *S, CXXScopeSpec *SS,
                    DeclContext *MemberContext = 0,
                    bool EnteringContext = false,
                    const ObjCObjectPointerType *OPT = 0);
@@ -1719,12 +1719,12 @@ public:
   virtual SourceRange getExprRange(ExprTy *E) const;
 
   virtual OwningExprResult ActOnIdExpression(Scope *S,
-                                             const CXXScopeSpec &SS,
+                                             CXXScopeSpec &SS,
                                              UnqualifiedId &Name,
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand);
 
-  bool DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS, LookupResult &R);
+  bool DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R);
 
   OwningExprResult LookupInObjCMethod(LookupResult &R,
                                       Scope *S,
@@ -1758,7 +1758,7 @@ public:
                                   const LookupResult &R,
                                   bool HasTrailingLParen);
 
-  OwningExprResult BuildQualifiedDeclarationNameExpr(const CXXScopeSpec &SS,
+  OwningExprResult BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                                      DeclarationName Name,
                                                      SourceLocation NameLoc);
   OwningExprResult BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
@@ -1828,7 +1828,7 @@ public:
                                             QualType BaseType,
                                             SourceLocation OpLoc,
                                             bool IsArrow,
-                                            const CXXScopeSpec &SS,
+                                            CXXScopeSpec &SS,
                                             NamedDecl *FirstQualifierInScope,
                                             DeclarationName Name,
                                             SourceLocation NameLoc,
@@ -1844,7 +1844,7 @@ public:
 
   OwningExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
                                     bool &IsArrow, SourceLocation OpLoc,
-                                    const CXXScopeSpec &SS,
+                                    CXXScopeSpec &SS,
                                     DeclPtrTy ObjCImpDecl);
 
   bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,
@@ -1864,7 +1864,7 @@ public:
   virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
                                                  SourceLocation OpLoc,
                                                  tok::TokenKind OpKind,
-                                                 const CXXScopeSpec &SS,
+                                                 CXXScopeSpec &SS,
                                                  UnqualifiedId &Member,
                                                  DeclPtrTy ObjCImpDecl,
                                                  bool HasTrailingLParen);
@@ -2008,7 +2008,7 @@ public:
   virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
                                         SourceLocation NamespcLoc,
-                                        const CXXScopeSpec &SS,
+                                        CXXScopeSpec &SS,
                                         SourceLocation IdentLoc,
                                         IdentifierInfo *NamespcName,
                                         AttributeList *AttrList);
@@ -2019,7 +2019,7 @@ public:
                                            SourceLocation NamespaceLoc,
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
-                                           const CXXScopeSpec &SS,
+                                           CXXScopeSpec &SS,
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
@@ -2040,7 +2040,7 @@ public:
 
   NamedDecl *BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                    SourceLocation UsingLoc,
-                                   const CXXScopeSpec &SS,
+                                   CXXScopeSpec &SS,
                                    SourceLocation IdentLoc,
                                    DeclarationName Name,
                                    AttributeList *AttrList,
@@ -2052,7 +2052,7 @@ public:
                                           AccessSpecifier AS,
                                           bool HasUsingKeyword,
                                           SourceLocation UsingLoc,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           AttributeList *AttrList,
                                           bool IsTypeName,
@@ -2153,7 +2153,7 @@ public:
     
   virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
                                     IdentifierInfo &II, SourceLocation NameLoc,
-                                    Scope *S, const CXXScopeSpec &SS,
+                                    Scope *S, CXXScopeSpec &SS,
                                     TypeTy *ObjectType,
                                     bool EnteringContext);
 
@@ -2287,7 +2287,7 @@ public:
   virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,
-                                                     const CXXScopeSpec &SS,
+                                                     CXXScopeSpec &SS,
                                                    UnqualifiedId &FirstTypeName,
                                                      SourceLocation CCLoc,
                                                      SourceLocation TildeLoc,
@@ -2303,7 +2303,8 @@ public:
   
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
-  bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
+  // Marks SS invalid if it represents an incomplete type.
+  bool RequireCompleteDeclContext(CXXScopeSpec &SS);
 
   DeclContext *computeDeclContext(QualType T);
   DeclContext *computeDeclContext(const CXXScopeSpec &SS,
@@ -2320,13 +2321,13 @@ public:
   bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
-  virtual bool isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+  virtual bool isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
                                             SourceLocation IdLoc,
                                             IdentifierInfo &II,
                                             TypeTy *ObjectType);
   
   CXXScopeTy *BuildCXXNestedNameSpecifier(Scope *S,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           SourceLocation IdLoc,
                                           SourceLocation CCLoc,
                                           IdentifierInfo &II,
@@ -2336,7 +2337,7 @@ public:
                                           bool ErrorRecoveryLookup);
 
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
-                                                  const CXXScopeSpec &SS,
+                                                  CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
@@ -2344,7 +2345,7 @@ public:
                                                   bool EnteringContext);
 
   virtual bool IsInvalidUnlessNestedName(Scope *S,
-                                         const CXXScopeSpec &SS,
+                                         CXXScopeSpec &SS,
                                          IdentifierInfo &II,
                                          TypeTy *ObjectType,
                                          bool EnteringContext);
@@ -2371,7 +2372,7 @@ public:
   /// looked up in the declarator-id's scope, until the declarator is parsed and
   /// ActOnCXXExitDeclaratorScope is called.
   /// The 'SS' should be a non-empty valid CXXScopeSpec.
-  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
+  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, CXXScopeSpec &SS);
 
   /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
   /// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same
@@ -2452,7 +2453,7 @@ public:
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorD,
                                             Scope *S,
-                                            const CXXScopeSpec &SS,
+                                            CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
                                             TypeTy *TemplateTypeTy,
                                             SourceLocation IdLoc,
@@ -2690,11 +2691,11 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
-  void LookupTemplateName(LookupResult &R, Scope *S, const CXXScopeSpec &SS,
+  void LookupTemplateName(LookupResult &R, Scope *S, CXXScopeSpec &SS,
                           QualType ObjectType, bool EnteringContext);
 
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const CXXScopeSpec &SS,
+                                          CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
@@ -2767,7 +2768,7 @@ public:
                                           bool &IsExplicitSpecialization);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                                SourceLocation KWLoc, const CXXScopeSpec &SS,
+                                SourceLocation KWLoc, CXXScopeSpec &SS,
                                 IdentifierInfo *Name, SourceLocation NameLoc,
                                 AttributeList *Attr,
                                 TemplateParameterList *TemplateParams,
@@ -2795,13 +2796,13 @@ public:
                                        LookupResult &R,
                                        bool RequiresADL,
                                const TemplateArgumentListInfo &TemplateArgs);
-  OwningExprResult BuildQualifiedTemplateIdExpr(const CXXScopeSpec &SS,
+  OwningExprResult BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
                                                 DeclarationName Name,
                                                 SourceLocation NameLoc,
                                const TemplateArgumentListInfo &TemplateArgs);
 
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                                const CXXScopeSpec &SS,
+                                                CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 TypeTy *ObjectType,
                                                 bool EnteringContext);
@@ -2814,7 +2815,7 @@ public:
   virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc,
-                                   const CXXScopeSpec &SS,
+                                   CXXScopeSpec &SS,
                                    TemplateTy Template,
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
@@ -2868,7 +2869,7 @@ public:
                              SourceLocation TemplateLoc,
                              unsigned TagSpec,
                              SourceLocation KWLoc,
-                             const CXXScopeSpec &SS,
+                             CXXScopeSpec &SS,
                              IdentifierInfo *Name,
                              SourceLocation NameLoc,
                              AttributeList *Attr);
@@ -4265,7 +4266,7 @@ public:
   virtual void CodeCompleteCase(Scope *S);
   virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
                                 ExprTy **Args, unsigned NumArgs);
-  virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
+  virtual void CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
                                        bool EnteringContext);
   virtual void CodeCompleteUsing(Scope *S);
   virtual void CodeCompleteUsingDirective(Scope *S);

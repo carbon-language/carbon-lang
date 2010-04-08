@@ -197,7 +197,7 @@ namespace {
     }
 
     virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                               SourceLocation KWLoc, const CXXScopeSpec &SS,
+                               SourceLocation KWLoc, CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
                                MultiTemplateParamsArg TemplateParameterLists,

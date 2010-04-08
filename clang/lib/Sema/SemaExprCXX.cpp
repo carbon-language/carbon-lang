@@ -29,7 +29,7 @@ using namespace clang;
 Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
                                         IdentifierInfo &II, 
                                         SourceLocation NameLoc,
-                                        Scope *S, const CXXScopeSpec &SS,
+                                        Scope *S, CXXScopeSpec &SS,
                                         TypeTy *ObjectTypePtr,
                                         bool EnteringContext) {
   // Determine where to perform name lookup.
@@ -2705,7 +2705,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
 Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
-                                                       const CXXScopeSpec &SS,
+                                                       CXXScopeSpec &SS,
                                                   UnqualifiedId &FirstTypeName,
                                                        SourceLocation CCLoc,
                                                        SourceLocation TildeLoc,

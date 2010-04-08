@@ -76,7 +76,7 @@ static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
 }
 
 TemplateNameKind Sema::isTemplateName(Scope *S,
-                                      const CXXScopeSpec &SS,
+                                      CXXScopeSpec &SS,
                                       UnqualifiedId &Name,
                                       TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
@@ -169,7 +169,7 @@ bool Sema::DiagnoseUnknownTemplateName(const IdentifierInfo &II,
 }
 
 void Sema::LookupTemplateName(LookupResult &Found,
-                              Scope *S, const CXXScopeSpec &SS,
+                              Scope *S, CXXScopeSpec &SS,
                               QualType ObjectType,
                               bool EnteringContext) {
   // Determine where to perform name lookup
@@ -705,7 +705,7 @@ static void SetNestedNameSpecifier(TagDecl *T, const CXXScopeSpec &SS) {
 
 Sema::DeclResult
 Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                         SourceLocation KWLoc, const CXXScopeSpec &SS,
+                         SourceLocation KWLoc, CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
                          TemplateParameterList *TemplateParams,
@@ -1545,7 +1545,7 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
 
 // We actually only call this from template instantiation.
 Sema::OwningExprResult
-Sema::BuildQualifiedTemplateIdExpr(const CXXScopeSpec &SS,
+Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
                                    DeclarationName Name,
                                    SourceLocation NameLoc,
                              const TemplateArgumentListInfo &TemplateArgs) {
@@ -1586,7 +1586,7 @@ Sema::BuildQualifiedTemplateIdExpr(const CXXScopeSpec &SS,
 /// of the "template" keyword, and "apply" is the \p Name.
 Sema::TemplateTy
 Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                 const CXXScopeSpec &SS,
+                                 CXXScopeSpec &SS,
                                  UnqualifiedId &Name,
                                  TypeTy *ObjectType,
                                  bool EnteringContext) {
@@ -3482,7 +3482,7 @@ Sema::DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        TagUseKind TUK,
                                        SourceLocation KWLoc,
-                                       const CXXScopeSpec &SS,
+                                       CXXScopeSpec &SS,
                                        TemplateTy TemplateD,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
@@ -4663,7 +4663,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation TemplateLoc,
                                  unsigned TagSpec,
                                  SourceLocation KWLoc,
-                                 const CXXScopeSpec &SS,
+                                 CXXScopeSpec &SS,
                                  IdentifierInfo *Name,
                                  SourceLocation NameLoc,
                                  AttributeList *Attr) {
