@@ -5894,14 +5894,10 @@ LLVM</a>.</p>
    all bit widths however.</p>
 
 <pre>
-  declare void @llvm.memcpy.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                               i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memcpy.i16(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i16 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memcpy.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i32 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memcpy.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i64 &lt;len&gt;, i32 &lt;align&gt;)
+  declare void @llvm.memcpy.p0i8.p0i8.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+                                          i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
+  declare void @llvm.memcpy.p0i8.p0i8.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+                                          i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -5909,19 +5905,26 @@ LLVM</a>.</p>
    source location to the destination location.</p>
 
 <p>Note that, unlike the standard libc function, the <tt>llvm.memcpy.*</tt>
-   intrinsics do not return a value, and takes an extra alignment argument.</p>
+   intrinsics do not return a value, takes extra alignment/isvolatile arguments
+   and the pointers can be in specified address spaces.</p>
 
 <h5>Arguments:</h5>
+
 <p>The first argument is a pointer to the destination, the second is a pointer
    to the source.  The third argument is an integer argument specifying the
-   number of bytes to copy, and the fourth argument is the alignment of the
-   source and destination locations.</p>
+   number of bytes to copy, the fourth argument is the alignment of the
+   source and destination locations, and the fifth is a boolean indicating a
+   volatile access.</p>
 
 <p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that both the source and destination pointers are
    aligned to that boundary.</p>
 
+<p>Volatile accesses should not be deleted if dead, but the access behavior is
+   not very cleanly specified and it is unwise to depend on it.</p>
+
 <h5>Semantics:</h5>
+
 <p>The '<tt>llvm.memcpy.*</tt>' intrinsics copy a block of memory from the
    source location to the destination location, which are not allowed to
    overlap.  It copies "len" bytes of memory over.  If the argument is known to
@@ -5943,14 +5946,10 @@ LLVM</a>.</p>
    widths however.</p>
 
 <pre>
-  declare void @llvm.memmove.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memmove.i16(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                 i16 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memmove.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                 i32 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memmove.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                 i64 &lt;len&gt;, i32 &lt;align&gt;)
+  declare void @llvm.memmove.p0i8.p0i8.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+                                           i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
+  declare void @llvm.memmove.p0i8.p0i8.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+                                           i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -5960,19 +5959,26 @@ LLVM</a>.</p>
    overlap.</p>
 
 <p>Note that, unlike the standard libc function, the <tt>llvm.memmove.*</tt>
-   intrinsics do not return a value, and takes an extra alignment argument.</p>
+   intrinsics do not return a value, takes extra alignment/isvolatile arguments
+   and the pointers can be in specified address spaces.</p>
 
 <h5>Arguments:</h5>
+
 <p>The first argument is a pointer to the destination, the second is a pointer
    to the source.  The third argument is an integer argument specifying the
-   number of bytes to copy, and the fourth argument is the alignment of the
-   source and destination locations.</p>
+   number of bytes to copy, the fourth argument is the alignment of the
+   source and destination locations, and the fifth is a boolean indicating a
+   volatile access.</p>
 
 <p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that the source and destination pointers are
    aligned to that boundary.</p>
 
+<p>Volatile accesses should not be deleted if dead, but the access behavior is
+   not very cleanly specified and it is unwise to depend on it.</p>
+
 <h5>Semantics:</h5>
+
 <p>The '<tt>llvm.memmove.*</tt>' intrinsics copy a block of memory from the
    source location to the destination location, which may overlap.  It copies
    "len" bytes of memory over.  If the argument is known to be aligned to some
@@ -5994,14 +6000,10 @@ LLVM</a>.</p>
    widths however.</p>
 
 <pre>
-  declare void @llvm.memset.i8(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                               i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memset.i16(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                                i16 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memset.i32(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                                i32 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memset.i64(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                                i64 &lt;len&gt;, i32 &lt;align&gt;)
+  declare void @llvm.memset.p0i8.i32(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
+                                     i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lgt;isvolatile&gt;)
+  declare void @llvm.memset.p0i8.i64(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
+                                     i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lgt;isvolatile&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -6009,7 +6011,8 @@ LLVM</a>.</p>
    particular byte value.</p>
 
 <p>Note that, unlike the standard libc function, the <tt>llvm.memset</tt>
-   intrinsic does not return a value, and takes an extra alignment argument.</p>
+   intrinsic does not return a value, takes extra alignment/volatile arguments,
+   and the destination can be in an arbitrary address space.</p>
 
 <h5>Arguments:</h5>
 <p>The first argument is a pointer to the destination to fill, the second is the
@@ -6020,6 +6023,9 @@ LLVM</a>.</p>
 <p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that the destination pointer is aligned to that
    boundary.</p>
+
+<p>Volatile accesses should not be deleted if dead, but the access behavior is
+   not very cleanly specified and it is unwise to depend on it.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.memset.*</tt>' intrinsics fill "len" bytes of memory starting
