@@ -21,11 +21,14 @@ namespace CodeGen {
 
 class CGBitFieldInfo {
 public:
-  CGBitFieldInfo(unsigned FieldNo, unsigned Start, unsigned Size,
-                 bool IsSigned)
-    : FieldNo(FieldNo), Start(Start), Size(Size), IsSigned(IsSigned) {}
+  CGBitFieldInfo(const llvm::Type *FieldTy, unsigned FieldNo,
+                 unsigned Start, unsigned Size, bool IsSigned)
+    : FieldTy(FieldTy), FieldNo(FieldNo),
+      Start(Start), Size(Size), IsSigned(IsSigned) {}
 
+  const llvm::Type *FieldTy;
   unsigned FieldNo;
+
   unsigned Start;
   unsigned Size;
   bool IsSigned : 1;

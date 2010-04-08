@@ -126,8 +126,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // objects.
   unsigned FieldNo = 0; // This value is unused.
   CGBitFieldInfo *Info =
-    new (CGF.CGM.getContext()) CGBitFieldInfo(FieldNo, BitOffset, BitFieldSize,
-                                              IvarTy->isSignedIntegerType());
+    new (CGF.CGM.getContext()) CGBitFieldInfo(
+      LTy, FieldNo, BitOffset, BitFieldSize, IvarTy->isSignedIntegerType());
 
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.

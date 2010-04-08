@@ -603,12 +603,27 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   return EmitLoadOfKVCRefLValue(LV, ExprType);
 }
 
+static llvm::Value *getBitFieldAddr(LValue LV, CGBuilderTy &Builder) {
+  const CGBitFieldInfo &Info = LV.getBitFieldInfo();
+
+  llvm::Value *BaseValue = LV.getBitFieldBaseAddr();
+  const llvm::PointerType *BaseTy =
+    cast<llvm::PointerType>(BaseValue->getType());
+
+  // Cast to the type of the access we will perform.
+  llvm::Value *V = Builder.CreateBitCast(
+    BaseValue, llvm::PointerType::get(Info.FieldTy, BaseTy->getAddressSpace()));
+
+  // Offset by the access index.
+  return Builder.CreateConstGEP1_32(V, Info.FieldNo);
+}
+
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
                                                  QualType ExprType) {
   const CGBitFieldInfo &Info = LV.getBitFieldInfo();
   unsigned StartBit = Info.Start;
   unsigned BitfieldSize = Info.Size;
-  llvm::Value *Ptr = LV.getBitFieldAddr();
+  llvm::Value *Ptr = getBitFieldAddr(LV, Builder);
 
   const llvm::Type *EltTy =
     cast<llvm::PointerType>(Ptr->getType())->getElementType();
@@ -785,7 +800,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   const CGBitFieldInfo &Info = Dst.getBitFieldInfo();
   unsigned StartBit = Info.Start;
   unsigned BitfieldSize = Info.Size;
-  llvm::Value *Ptr = Dst.getBitFieldAddr();
+  llvm::Value *Ptr = getBitFieldAddr(Dst, Builder);
 
   const llvm::Type *EltTy =
     cast<llvm::PointerType>(Ptr->getType())->getElementType();
@@ -1474,19 +1489,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
-
-  // FIXME: CodeGenTypes should expose a method to get the appropriate type for
-  // FieldTy (the appropriate type is ABI-dependent).
-  const llvm::Type *FieldTy =
-    CGM.getTypes().ConvertTypeForMem(Field->getType());
-  const llvm::PointerType *BaseTy =
-  cast<llvm::PointerType>(BaseValue->getType());
-  unsigned AS = BaseTy->getAddressSpace();
-  BaseValue = Builder.CreateBitCast(BaseValue,
-                                    llvm::PointerType::get(FieldTy, AS));
-  llvm::Value *V = Builder.CreateConstGEP1_32(BaseValue, Info.FieldNo);
-
-  return LValue::MakeBitfield(V, Info,
+  return LValue::MakeBitfield(BaseValue, Info,
                              Field->getType().getCVRQualifiers()|CVRQualifiers);
 }
 

@@ -220,7 +220,7 @@ public:
   }
 
   // bitfield lvalue
-  llvm::Value *getBitFieldAddr() const {
+  llvm::Value *getBitFieldBaseAddr() const {
     assert(isBitField());
     return V;
   }
@@ -269,11 +269,17 @@ public:
     return R;
   }
 
-  static LValue MakeBitfield(llvm::Value *V, const CGBitFieldInfo &Info,
+  /// \brief Create a new object to represent a bit-field access.
+  ///
+  /// \param BaseValue - The base address of the structure containing the
+  /// bit-field.
+  /// \param Info - The information describing how to perform the bit-field
+  /// access.
+  static LValue MakeBitfield(llvm::Value *BaseValue, const CGBitFieldInfo &Info,
                              unsigned CVR) {
     LValue R;
     R.LVType = BitField;
-    R.V = V;
+    R.V = BaseValue;
     R.BitFieldInfo = &Info;
     R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;

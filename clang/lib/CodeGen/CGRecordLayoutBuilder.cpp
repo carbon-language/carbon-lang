@@ -180,7 +180,7 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
   bool IsSigned = D->getType()->isSignedIntegerType();
   LLVMBitFields.push_back(LLVMBitFieldInfo(
-                            D, CGBitFieldInfo(FieldOffset / TypeSizeInBits,
+                            D, CGBitFieldInfo(Ty, FieldOffset / TypeSizeInBits,
                                               FieldOffset % TypeSizeInBits,
                                               FieldSize, IsSigned)));
 
@@ -270,6 +270,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
     assert(Layout.getFieldOffset(FieldNo) == 0 &&
           "Union field offset did not start at the beginning of record!");
+    const llvm::Type *FieldTy =
+      Types.ConvertTypeForMemRecursive(Field->getType());
 
     if (Field->isBitField()) {
       uint64_t FieldSize =
@@ -282,7 +284,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
       // Add the bit field info.
       bool IsSigned = Field->getType()->isSignedIntegerType();
       LLVMBitFields.push_back(LLVMBitFieldInfo(
-                                *Field, CGBitFieldInfo(0, 0, FieldSize,
+                                *Field, CGBitFieldInfo(FieldTy, 0, 0, FieldSize,
                                                        IsSigned)));
     } else {
       LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
@@ -290,8 +292,6 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
 
     HasOnlyZeroSizedBitFields = false;
 
-    const llvm::Type *FieldTy =
-      Types.ConvertTypeForMemRecursive(Field->getType());
     unsigned FieldAlign = Types.getTargetData().getABITypeAlignment(FieldTy);
     uint64_t FieldSize = Types.getTargetData().getTypeAllocSize(FieldTy);
 
