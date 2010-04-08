@@ -259,6 +259,10 @@ void USRGenerator::GenObjCProtocol(llvm::StringRef prot) {
 // API hooks.
 //===----------------------------------------------------------------------===//
 
+static inline llvm::StringRef extractUSRSuffix(llvm::StringRef s) {
+  return s.startswith("c:") ? s.substr(2) : "";
+}
+
 extern "C" {
 
 CXString clang_getCursorUSR(CXCursor C) {
@@ -276,12 +280,6 @@ CXString clang_getCursorUSR(CXCursor C) {
   return createCXString(SUG.str(), true);
 }
 
-static inline llvm::StringRef extractUSRSuffix(llvm::StringRef s) {
-  if (!(s.size() >= 2 && s[0] == 'c' && s[1] == ':'))
-    return "";
-  return s.substr(2);
-}
-  
 CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
   StringUSRGenerator SUG;
   SUG << extractUSRSuffix(clang_getCString(classUSR));
