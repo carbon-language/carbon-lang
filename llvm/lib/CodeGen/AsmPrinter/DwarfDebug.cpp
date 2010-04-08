@@ -1920,11 +1920,6 @@ void DwarfDebug::endModule() {
     addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
 
-  // Insert top level DIEs.
-  for (SmallVector<DIE *, 4>::iterator TI = TopLevelDIEsVector.begin(),
-         TE = TopLevelDIEsVector.end(); TI != TE; ++TI)
-    ModuleCU->getCUDie()->addChild(*TI);
-
   for (DenseMap<DIE *, MDNode *>::iterator CI = ContainingTypeMap.begin(),
          CE = ContainingTypeMap.end(); CI != CE; ++CI) {
     DIE *SPDie = CI->first;

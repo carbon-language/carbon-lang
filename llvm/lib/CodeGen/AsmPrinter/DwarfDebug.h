@@ -178,10 +178,6 @@ class DwarfDebug {
   /// AbstractSubprogramDIEs - Collection of abstruct subprogram DIEs.
   SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
 
-  /// TopLevelDIEs - Collection of top level DIEs. 
-  SmallPtrSet<DIE *, 4> TopLevelDIEs;
-  SmallVector<DIE *, 4> TopLevelDIEsVector;
-
   typedef SmallVector<DbgScope *, 2> ScopeVector;
   typedef DenseMap<const MachineInstr *, ScopeVector>
     InsnToDbgScopeMapTy;
