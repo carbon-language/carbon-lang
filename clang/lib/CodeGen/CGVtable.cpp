@@ -2544,6 +2544,9 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
 
 uint64_t
 CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
+  assert(AddressPoints.count(std::make_pair(RD, Base)) &&
+         "Did not find address point!");
+
   uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
   assert(AddressPoint && "Address point must not be zero!");
 
