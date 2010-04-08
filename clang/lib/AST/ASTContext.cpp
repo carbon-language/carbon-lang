@@ -3192,7 +3192,7 @@ std::string charUnitsToString(const CharUnits &CU) {
   return llvm::itostr(CU.getQuantity());
 }
 
-/// getObjCEncodingForBlockDecl - Return the encoded type for this method
+/// getObjCEncodingForBlockDecl - Return the encoded type for this block
 /// declaration.
 void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr, 
                                              std::string& S) {
@@ -3207,7 +3207,7 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
   SourceLocation Loc;
   CharUnits PtrSize = getTypeSizeInChars(VoidPtrTy);
   CharUnits ParmOffset = PtrSize;
-  for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
+  for (BlockDecl::param_const_iterator PI = Decl->param_begin(),
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
