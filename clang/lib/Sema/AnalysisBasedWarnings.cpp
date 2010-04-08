@@ -74,7 +74,6 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
 
   // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
-  llvm::SmallVector<CFGBlock*, 20> workq;
   llvm::BitVector live(cfg->getNumBlockIDs());
   unsigned count = reachable_code::ScanReachableFromBlock(cfg->getEntry(),
                                                           live);
