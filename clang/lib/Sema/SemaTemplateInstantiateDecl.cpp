@@ -688,19 +688,52 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
       return 0;
     }
 
+    bool AdoptedPreviousTemplateParams = false;
     if (PrevClassTemplate) {
+      bool Complain = true;
+
+      // HACK: libstdc++ 4.2.1 contains an ill-formed friend class
+      // template for struct std::tr1::__detail::_Map_base, where the
+      // template parameters of the friend declaration don't match the
+      // template parameters of the original declaration. In this one
+      // case, we don't complain about the ill-formed friend
+      // declaration.
+      if (isFriend && Pattern->getIdentifier() && 
+          Pattern->getIdentifier()->isStr("_Map_base") &&
+          DC->isNamespace() &&
+          cast<NamespaceDecl>(DC)->getIdentifier() &&
+          cast<NamespaceDecl>(DC)->getIdentifier()->isStr("__detail")) {
+        DeclContext *DCParent = DC->getParent();
+        if (DCParent->isNamespace() &&
+            cast<NamespaceDecl>(DCParent)->getIdentifier() &&
+            cast<NamespaceDecl>(DCParent)->getIdentifier()->isStr("tr1")) {
+          DeclContext *DCParent2 = DCParent->getParent();
+          if (DCParent2->isNamespace() &&
+              cast<NamespaceDecl>(DCParent2)->getIdentifier() &&
+              cast<NamespaceDecl>(DCParent2)->getIdentifier()->isStr("std") &&
+              DCParent2->getParent()->isTranslationUnit())
+            Complain = false;
+        }
+      }
+
       TemplateParameterList *PrevParams
         = PrevClassTemplate->getTemplateParameters();
 
       // Make sure the parameter lists match.
       if (!SemaRef.TemplateParameterListsAreEqual(InstParams, PrevParams,
-                                                  /*Complain=*/true,
-                                                  Sema::TPL_TemplateMatch))
-        return 0;
+                                                  Complain, 
+                                                  Sema::TPL_TemplateMatch)) {
+        if (Complain)
+          return 0;
+
+        AdoptedPreviousTemplateParams = true;
+        InstParams = PrevParams;
+      }
 
       // Do some additional validation, then merge default arguments
       // from the existing declarations.
-      if (SemaRef.CheckTemplateParameterList(InstParams, PrevParams,
+      if (!AdoptedPreviousTemplateParams &&
+          SemaRef.CheckTemplateParameterList(InstParams, PrevParams,
                                              Sema::TPC_ClassTemplate))
         return 0;
     }
