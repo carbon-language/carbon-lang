@@ -138,7 +138,8 @@ def Conversion : DiagGroup<"conversion",
 
 def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
-                        UnusedParameter, UnusedValue, UnusedVariable]>;
+                        // UnusedParameter, (matches GCC's behavior)
+                        UnusedValue, UnusedVariable]>;
 
 // Format settings.
 def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength, NonNull]>;
