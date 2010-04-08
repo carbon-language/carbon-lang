@@ -665,8 +665,7 @@ static void ARMPopulateOperands(
   unsigned int numOperands = inst.OperandList.size();
   
   if (numOperands > MAX_OPERANDS) {
-    fprintf(stderr, "numOperands == %llu > %llu\n", 
-            (uint64_t)numOperands, (uint64_t)MAX_OPERANDS);
+    errs() << "numOperands == " << numOperands << " > " << MAX_OPERANDS << '\n';
     llvm_unreachable("Too many operands");
   }
   
@@ -676,9 +675,9 @@ static void ARMPopulateOperands(
     Record &rec = *operandInfo.Rec;
     
     if (ARMFlagFromOpName(operandTypes[index], rec.getName())) {
-      errs() << "Operand type: " << rec.getName().c_str() << "\n";
-      errs() << "Operand name: " << operandInfo.Name.c_str() << "\n";
-      errs() << "Instruction mame: " << inst.TheDef->getName().c_str() << "\n";
+      errs() << "Operand type: " << rec.getName() << '\n';
+      errs() << "Operand name: " << operandInfo.Name << '\n';
+      errs() << "Instruction mame: " << inst.TheDef->getName() << '\n';
       llvm_unreachable("Unhandled type");
     }
   }
