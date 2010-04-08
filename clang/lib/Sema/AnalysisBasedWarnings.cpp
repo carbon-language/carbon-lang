@@ -25,7 +25,6 @@
 #include "clang/Analysis/Analyses/ReachableCode.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/Casting.h"
-#include <queue>
 
 using namespace clang;
 
@@ -75,7 +74,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
 
   // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
-  std::queue<CFGBlock*> workq;
+  llvm::SmallVector<CFGBlock*, 20> workq;
   llvm::BitVector live(cfg->getNumBlockIDs());
   unsigned count = reachable_code::ScanReachableFromBlock(cfg->getEntry(),
                                                           live);
