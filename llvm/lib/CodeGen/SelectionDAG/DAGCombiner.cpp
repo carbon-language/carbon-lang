@@ -5552,7 +5552,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
         InVec = InVec.getOperand(0);
       if (ISD::isNormalLoad(InVec.getNode())) {
         LN0 = cast<LoadSDNode>(InVec);
-        Elt = (Idx < (int)NumElems) ? Idx : Idx - NumElems;
+        Elt = (Idx < (int)NumElems) ? Idx : Idx - (int)NumElems;
       }
     }
 
