@@ -16,6 +16,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_OPTIONAL
 #define LLVM_CLANG_ANALYSIS_OPTIONAL
 
+#include <cassert>
+
 namespace clang {
 
 template<typename T>
