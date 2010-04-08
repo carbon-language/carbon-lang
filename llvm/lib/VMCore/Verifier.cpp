@@ -1933,7 +1933,9 @@ FunctionPass *llvm::createVerifierPass(VerifierFailureAction action) {
 }
 
 
-// verifyFunction - Create
+/// verifyFunction - Check a function for errors, printing messages on stderr.
+/// Return true if the function is corrupt.
+///
 bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isDeclaration() && "Cannot verify external functions");
