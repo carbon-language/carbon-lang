@@ -212,6 +212,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setSynthesized(Record[Idx++]);
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  MD->setNumSelectorArgs(unsigned(Record[Idx++]));
   MD->setResultType(Reader.GetType(Record[Idx++]));
   MD->setResultTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
   MD->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

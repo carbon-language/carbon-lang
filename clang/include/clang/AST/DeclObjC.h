@@ -136,6 +136,9 @@ private:
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
 
+  // Number of args separated by ':' in a method declaration.
+  unsigned NumSelectorArgs;
+
   // Result type of this method.
   QualType MethodDeclType;
   
@@ -167,13 +170,15 @@ private:
                  bool isInstance = true,
                  bool isVariadic = false,
                  bool isSynthesized = false,
-                 ImplementationControl impControl = None)
+                 ImplementationControl impControl = None,
+                 unsigned numSelectorArgs = 0)
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    MethodDeclType(T), ResultTInfo(ResultTInfo),
+    NumSelectorArgs(numSelectorArgs), MethodDeclType(T), 
+    ResultTInfo(ResultTInfo),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   virtual ~ObjCMethodDecl() {}
@@ -197,7 +202,8 @@ public:
                                 bool isInstance = true,
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
-                                ImplementationControl impControl = None);
+                                ImplementationControl impControl = None,
+                                unsigned numSelectorArgs = 0);
 
   virtual ObjCMethodDecl *getCanonicalDecl();
   const ObjCMethodDecl *getCanonicalDecl() const {
@@ -209,6 +215,11 @@ public:
   }
   void setObjCDeclQualifier(ObjCDeclQualifier QV) { objcDeclQualifier = QV; }
 
+  unsigned getNumSelectorArgs() const { return NumSelectorArgs; }
+  void setNumSelectorArgs(unsigned numSelectorArgs) { 
+    NumSelectorArgs = numSelectorArgs; 
+  }
+  
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
@@ -235,6 +246,11 @@ public:
   typedef ObjCList<ParmVarDecl>::iterator param_iterator;
   param_iterator param_begin() const { return ParamInfo.begin(); }
   param_iterator param_end() const { return ParamInfo.end(); }
+  // This method returns and of the parameters which are part of the selector
+  // name mangling requirements.
+  param_iterator sel_param_end() const { 
+    return ParamInfo.begin() + NumSelectorArgs; 
+  }
 
   void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num) {
     ParamInfo.set(List, Num, C);

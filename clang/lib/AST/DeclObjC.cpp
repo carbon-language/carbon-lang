@@ -330,11 +330,13 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        bool isInstance,
                                        bool isVariadic,
                                        bool isSynthesized,
-                                       ImplementationControl impControl) {
+                                       ImplementationControl impControl,
+                                       unsigned numSelectorArgs) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
                                 SelInfo, T, ResultTInfo, contextDecl,
                                 isInstance,
-                                isVariadic, isSynthesized, impControl);
+                                isVariadic, isSynthesized, impControl,
+                                numSelectorArgs);
 }
 
 void ObjCMethodDecl::Destroy(ASTContext &C) {

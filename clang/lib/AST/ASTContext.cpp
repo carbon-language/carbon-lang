@@ -3258,7 +3258,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // their size.
   CharUnits ParmOffset = 2 * PtrSize;
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
-       E = Decl->param_end(); PI != E; ++PI) {
+       E = Decl->sel_param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
     assert (sz.isPositive() && 
@@ -3272,7 +3272,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // Argument types.
   ParmOffset = 2 * PtrSize;
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
-       E = Decl->param_end(); PI != E; ++PI) {
+       E = Decl->sel_param_end(); PI != E; ++PI) {
     ParmVarDecl *PVDecl = *PI;
     QualType PType = PVDecl->getOriginalType();
     if (const ArrayType *AT =
