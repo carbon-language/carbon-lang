@@ -124,6 +124,7 @@ def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
 def HasV6T2   : Predicate<"Subtarget->hasV6T2Ops()">;
 def NoV6T2    : Predicate<"!Subtarget->hasV6T2Ops()">;
 def HasV7     : Predicate<"Subtarget->hasV7Ops()">;
+def NoVFP     : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2   : Predicate<"Subtarget->hasVFP2()">;
 def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
 def HasNEON   : Predicate<"Subtarget->hasNEON()">;
@@ -2533,7 +2534,23 @@ let Defs =
                                "mov\tr0, #0\n\t"
                                "add\tpc, pc, #0\n\t"
                                "mov\tr0, #1 @ eh_setjmp end", "",
-                         [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>;
+                         [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
+                           Requires<[IsARM, HasVFP2]>;
+}
+
+let Defs =
+  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR ] in {
+  def Int_eh_sjlj_setjmp_nofp : XI<(outs), (ins GPR:$src, GPR:$val),
+                                   AddrModeNone, SizeSpecial, IndexModeNone,
+                                   Pseudo, NoItinerary,
+                                   "str\tsp, [$src, #+8] @ eh_setjmp begin\n\t"
+                                   "add\t$val, pc, #8\n\t"
+                                   "str\t$val, [$src, #+4]\n\t"
+                                   "mov\tr0, #0\n\t"
+                                   "add\tpc, pc, #0\n\t"
+                                   "mov\tr0, #1 @ eh_setjmp end", "",
+                         [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
+                                Requires<[IsARM, NoVFP]>;
 }
 
 //===----------------------------------------------------------------------===//

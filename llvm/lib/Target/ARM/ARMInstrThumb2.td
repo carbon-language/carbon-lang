@@ -2386,9 +2386,25 @@ let Defs =
                                "\tb\t1f\n"
                                "\tmovs\tr0, #1\t@ end eh.setjmp\n"
                                "1:", "",
-                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, tGPR:$val))]>;
+                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, tGPR:$val))]>,
+                             Requires<[IsThumb2, HasVFP2]>;
 }
 
+let Defs =
+  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR ] in {
+  def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins GPR:$src, tGPR:$val),
+                               AddrModeNone, SizeSpecial, NoItinerary,
+                               "str\t$val, [$src, #8]\t@ begin eh.setjmp\n"
+                               "\tmov\t$val, pc\n"
+                               "\tadds\t$val, #9\n"
+                               "\tstr\t$val, [$src, #4]\n"
+                               "\tmovs\tr0, #0\n"
+                               "\tb\t1f\n"
+                               "\tmovs\tr0, #1\t@ end eh.setjmp\n"
+                               "1:", "",
+                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, tGPR:$val))]>,
+                                  Requires<[IsThumb2, NoVFP]>;
+}
 
 
 //===----------------------------------------------------------------------===//

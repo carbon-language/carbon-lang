@@ -1672,6 +1672,8 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
 
     // Ignore pseudo instructions.
     if (Name == "tInt_eh_sjlj_setjmp" || Name == "t2Int_eh_sjlj_setjmp" ||
+        Name == "tInt_eh_sjlj_setjmp_nofp" ||
+        Name == "t2Int_eh_sjlj_setjmp_nofp" ||
         Name == "t2MOVi32imm" || Name == "tBX" || Name == "tBXr9")
       return false;
 
