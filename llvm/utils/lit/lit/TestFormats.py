@@ -129,14 +129,20 @@ class OneCommandPerFileTest:
             self.command = [command]
         else:
             self.command = list(command)
-        self.dir = str(dir)
+        if dir is not None:
+            dir = str(dir)
+        self.dir = dir
         self.recursive = bool(recursive)
         self.pattern = re.compile(pattern)
         self.useTempInput = useTempInput
 
     def getTestsInDirectory(self, testSuite, path_in_suite,
                             litConfig, localConfig):
-        for dirname,subdirs,filenames in os.walk(self.dir):
+        dir = self.dir
+        if dir is None:
+            dir = testSuite.getSourcePath(path_in_suite)
+
+        for dirname,subdirs,filenames in os.walk(dir):
             if not self.recursive:
                 subdirs[:] = []
 
@@ -151,7 +157,7 @@ class OneCommandPerFileTest:
                     continue
 
                 path = os.path.join(dirname,filename)
-                suffix = path[len(self.dir):]
+                suffix = path[len(dir):]
                 if suffix.startswith(os.sep):
                     suffix = suffix[1:]
                 test = Test.Test(testSuite,
