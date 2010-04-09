@@ -66,7 +66,7 @@ int_ptr_ptr ipp = &int_value_ptr;
 // TYPE_TYPEOF_EXPR
 typeof_17 *t17 = &int_value;
 struct S { int x, y; };
-typeof_17 t17_2 = (struct S){1, 2}; // expected-error{{incompatible type initializing}}
+typeof_17 t17_2 = (struct S){1, 2}; // expected-error{{initializing 'typeof_17' (aka 'int') from an expression of incompatible type 'struct S'}}
 
 // TYPE_TYPEOF
 int_ptr_ptr2 ipp2 = &int_value_ptr;

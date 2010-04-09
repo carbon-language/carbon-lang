@@ -12,30 +12,30 @@ void test1() {
   v2f v4;
   v4ss v5;
   
-  v1 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v2s'}}
-  v1 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2s'}}
-  v1 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v2s'}}
-  v1 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2s'}}
+  v1 = v2; // expected-warning {{incompatible vector types assigning to 'v2s' from 'v2u'}}
+  v1 = v3; // expected-error {{assigning to 'v2s' from incompatible type 'v1s'}}
+  v1 = v4; // expected-warning {{incompatible vector types assigning to 'v2s' from 'v2f'}}
+  v1 = v5; // expected-warning {{incompatible vector types assigning to 'v2s' from 'v4ss'}}
   
-  v2 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v2u'}}
-  v2 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2u'}}
-  v2 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v2u'}}
-  v2 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2u'}}
+  v2 = v1; // expected-warning {{incompatible vector types assigning to 'v2u' from 'v2s'}}
+  v2 = v3; // expected-error {{assigning to 'v2u' from incompatible type 'v1s'}}
+  v2 = v4; // expected-warning {{incompatible vector types assigning to 'v2u' from 'v2f'}}
+  v2 = v5; // expected-warning {{incompatible vector types assigning to 'v2u' from 'v4ss'}}
   
-  v3 = v1; // expected-error {{incompatible type assigning 'v2s', expected 'v1s'}}
-  v3 = v2; // expected-error {{incompatible type assigning 'v2u', expected 'v1s'}}
-  v3 = v4; // expected-error {{incompatible type assigning 'v2f', expected 'v1s'}}
-  v3 = v5; // expected-error {{incompatible type assigning 'v4ss', expected 'v1s'}}
+  v3 = v1; // expected-error {{assigning to 'v1s' from incompatible type 'v2s'}}
+  v3 = v2; // expected-error {{assigning to 'v1s' from incompatible type 'v2u'}}
+  v3 = v4; // expected-error {{assigning to 'v1s' from incompatible type 'v2f'}}
+  v3 = v5; // expected-error {{assigning to 'v1s' from incompatible type 'v4ss'}}
   
-  v4 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v2f'}}
-  v4 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v2f'}}
-  v4 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2f'}}
-  v4 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2f'}}
+  v4 = v1; // expected-warning {{incompatible vector types assigning to 'v2f' from 'v2s'}}
+  v4 = v2; // expected-warning {{incompatible vector types assigning to 'v2f' from 'v2u'}}
+  v4 = v3; // expected-error {{assigning to 'v2f' from incompatible type 'v1s'}}
+  v4 = v5; // expected-warning {{incompatible vector types assigning to 'v2f' from 'v4ss'}}
   
-  v5 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v4ss'}}
-  v5 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v4ss'}}
-  v5 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v4ss'}}
-  v5 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v4ss'}}
+  v5 = v1; // expected-warning {{incompatible vector types assigning to 'v4ss' from 'v2s'}}
+  v5 = v2; // expected-warning {{incompatible vector types assigning to 'v4ss' from 'v2u'}}
+  v5 = v3; // expected-error {{assigning to 'v4ss' from incompatible type 'v1s'}}
+  v5 = v4; // expected-warning {{incompatible vector types assigning to 'v4ss' from 'v2f'}}
 }
 
 // PR2263
@@ -49,5 +49,5 @@ longlongvec;
 
 void test3a(longlongvec *);
 void test3(const unsigned *src) {
-  test3a(src);  // expected-warning {{incompatible pointer types passing 'unsigned int const *', expected 'longlongvec *'}}
+  test3a(src);  // expected-warning {{incompatible pointer types passing 'unsigned int const *' to parameter of type 'longlongvec *'}}
 }

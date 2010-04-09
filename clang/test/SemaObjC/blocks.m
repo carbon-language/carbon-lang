@@ -23,7 +23,7 @@ void foo4(id (^objectCreationBlock)(int)) {
 
 void bar5(id(^)(void));
 void foo5(id (^objectCreationBlock)(int)) {
-    return bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(int)', expected 'id (^)(void)'}}
+    return bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(int)' to parameter of type 'id (^)(void)'}}
 }
 
 void bar6(id(^)(int));

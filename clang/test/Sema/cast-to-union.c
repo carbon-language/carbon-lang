@@ -10,7 +10,7 @@ void test(int x) {
 
 union u w = (union u)2; // expected-warning {{C99 forbids casts to union type}}
 union u ww = (union u)1.0; // expected-error{{cast to union type from type 'double' not present in union}}
-union u x = 7; // expected-error{{incompatible type initializing 'int', expected 'union u'}}
+union u x = 7; // expected-error{{initializing 'union u' from an expression of incompatible type 'int'}}
 int i;
 union u zz = (union u)i; // expected-error{{initializer element is not a compile-time constant}}  expected-warning {{C99 forbids casts to union type}}
 

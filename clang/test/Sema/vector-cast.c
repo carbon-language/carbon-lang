@@ -33,6 +33,6 @@ type 't1' and integer type 'short' of different size}}
 void f2(t2 X);
 
 void f3(t3 Y) {
-  f2(Y);  // expected-warning {{incompatible vector types passing 't3', expected 't2'}}
+  f2(Y);  // expected-warning {{incompatible vector types passing 't3' to parameter of type 't2'}}
 }
 

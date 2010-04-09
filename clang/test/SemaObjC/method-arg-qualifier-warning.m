@@ -12,8 +12,8 @@ static NSString * const Identifier3 =   @"Identifier3";
 
 int main () {
         
-    [@"Identifier1" isEqualToString:Identifier1]; // expected-warning {{sending 'NSString const *' discards qualifiers, expected 'NSString *'}}
-    [@"Identifier2" isEqualToString:Identifier2]; // expected-warning {{sending 'NSString const *' discards qualifiers, expected 'NSString *'}}
+    [@"Identifier1" isEqualToString:Identifier1]; // expected-warning {{sending 'NSString const *' to parameter of type 'NSString *' discards qualifiers}}
+    [@"Identifier2" isEqualToString:Identifier2]; // expected-warning {{sending 'NSString const *' to parameter of type 'NSString *' discards qualifiers}}
     [@"Identifier3" isEqualToString:Identifier3];
     return 0;
 }

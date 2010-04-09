@@ -2229,44 +2229,81 @@ def warn_value_always_zero : Warning<
 // In most of these diagnostics the %2 is a value from the
 // Sema::AssignmentAction enumeration
 def err_typecheck_convert_incompatible : Error<
-  "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from incompatible type|to parameter of incompatible type|"
+  "from a function with incompatible result type|to incompatible type|"
+  "from an expression of incompatible type|to parameter of incompatible type|"
+  "to incompatible type}2 %1">;
 def warn_incompatible_qualified_id : Warning<
-  "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from incompatible type|to parameter of incompatible type|"
+  "from a function with incompatible result type|to incompatible type|"
+  "from an expression of incompatible type|to parameter of incompatible type|"
+  "to incompatible type}2 %1">;
 def ext_typecheck_convert_pointer_int : ExtWarn<
   "incompatible pointer to integer conversion "
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">;
 def ext_typecheck_convert_int_pointer : ExtWarn<
   "incompatible integer to pointer conversion "
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">;
 def ext_typecheck_convert_pointer_void_func : Extension<
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " %1 converts between void* and function pointer, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1 "
+  "converts between void pointer and function pointer">;
 def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
- "pointer types point to integer types with different sign "
- "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">,
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1 "
+  "converts between pointers to integer types with different sign">,
   InGroup<DiagGroup<"pointer-sign">>;
 def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "incompatible pointer types "
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " %1 discards qualifiers, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1 discards "
+  "qualifiers">;
 def ext_nested_pointer_qualifier_mismatch : ExtWarn<
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2,"
-  " %0 and %1 have different qualifiers in nested pointer types">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1 discards "
+  "qualifiers in nested pointer types">;
 def warn_incompatible_vectors : Warning<
-  "incompatible vector types %select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " %1, expected %0">,
+  "incompatible vector types "
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">,
   InGroup<VectorConversions>, DefaultIgnore;
 def err_int_to_block_pointer : Error<
-  "invalid conversion "
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
-  " integer %1, expected block pointer %0">;
+  "invalid block pointer conversion "
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">;
 def err_typecheck_convert_incompatible_block_pointer : Error<
   "incompatible block pointer types "
-  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
+  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
+  " %0 "
+  "%select{from|to parameter of type|from a function with result type|to type|"
+  "from an expression of type|to parameter of type|to type}2 %1">;
   
 def err_typecheck_convert_ambiguous : Error<
   "ambiguity in initializing value of type %0 with initializer of type %1">;

@@ -4,7 +4,7 @@ typedef void (^CL)(void);
 
 CL foo() {
   short y;
-  short (^add1)(void) = ^{ return y+1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
+  short (^add1)(void) = ^{ return y+1; }; // expected-error {{incompatible block pointer types initializing 'short (^)(void)' from an expression of type 'int (^)(void)'}}
 
   CL X = ^{
     if (2)
@@ -26,7 +26,7 @@ CL foo() {
       return (char*)0;
   };
 
-  double (^A)(void) = ^ { // expected-error {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
+  double (^A)(void) = ^ { // expected-error {{incompatible block pointer types initializing 'double (^)(void)' from an expression of type 'float (^)(void)'}}
     if (1)
       return (float)1.0;
     else
@@ -38,10 +38,10 @@ CL foo() {
     if (3)
       return "";
     else
-      return 2; // expected-warning {{incompatible integer to pointer conversion returning 'int', expected 'char *'}}
+      return 2; // expected-warning {{incompatible integer to pointer conversion returning 'int' from a function with result type 'char *'}}
   };
 
-  return ^{ return 1; }; // expected-error {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}}
+  return ^{ return 1; }; // expected-error {{incompatible block pointer types returning 'int (^)(void)' from a function with result type 'CL' (aka 'void (^)(void)')}}
 }
 
 typedef int (^CL2)(void);
@@ -78,8 +78,8 @@ static int funk(char *s) {
 }
 void next();
 void foo4() {
-  int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
-  int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}
+  int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(char const *)' from an expression of type 'int (^)(char *)'}}
+  int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (*)(char const *)' from an expression of type 'int (char *)'}}
   
   int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; }; // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
   // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
@@ -109,7 +109,7 @@ void foo6() {
 
 void foo7()
 {
- const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'int (^)(void)', expected 'int const (^)(void)'}}
+ const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'int const (^)(void)' from an expression of type 'int (^)(void)'}}
  const int (^CC) (void)  = ^const int{ const int i = 1; return i; }; // OK
 
   int i;

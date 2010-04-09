@@ -35,7 +35,7 @@ static void test()
   struct xx { int a; } x, y;
   
   c = __builtin_choose_expr(a+3-7, b, x); // expected-error{{'__builtin_choose_expr' requires a constant expression}}
-  c = __builtin_choose_expr(0, b, x); // expected-error{{incompatible type assigning 'struct xx', expected 'int'}}
+  c = __builtin_choose_expr(0, b, x); // expected-error{{assigning to 'int' from incompatible type 'struct xx'}}
   c = __builtin_choose_expr(5+3-7, b, x);
   y = __builtin_choose_expr(4+3-7, b, x);
 

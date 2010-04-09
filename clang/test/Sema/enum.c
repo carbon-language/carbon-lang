@@ -91,8 +91,7 @@ static enum e1 badfunc(struct s1 *q) {
 typedef enum {
   an_enumerator = 20
 } an_enum;
-// FIXME: why is this only a warning?
-char * s = (an_enum) an_enumerator; // expected-warning {{incompatible integer to pointer conversion initializing 'an_enum', expected 'char *'}}
+char * s = (an_enum) an_enumerator; // expected-warning {{incompatible integer to pointer conversion initializing 'char *' from an expression of type 'an_enum'}}
 
 // PR4515
 enum PR4515 {PR4515a=1u,PR4515b=(PR4515a-2)/2};

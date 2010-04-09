@@ -7201,7 +7201,27 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   }
 
-  Diag(Loc, DiagKind) << DstType << SrcType << Action
+  QualType FirstType, SecondType;
+  switch (Action) {
+  case AA_Assigning:
+  case AA_Initializing:
+    // The destination type comes first.
+    FirstType = DstType;
+    SecondType = SrcType;
+    break;
+      
+  case AA_Returning:
+  case AA_Passing:
+  case AA_Converting:
+  case AA_Sending:
+  case AA_Casting:
+    // The source type comes first.
+    FirstType = SrcType;
+    SecondType = DstType;
+    break;
+  }
+  
+  Diag(Loc, DiagKind) << FirstType << SecondType << Action
     << SrcExpr->getSourceRange() << Hint;
   return isInvalid;
 }

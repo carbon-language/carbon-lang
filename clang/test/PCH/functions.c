@@ -15,7 +15,7 @@ float *test_f1(int val, double x, double y) {
 }
 
 void test_g0(int *x, float * y) {
-  g0(y); // expected-warning{{incompatible pointer types passing 'float *', expected 'int *'}}
+  g0(y); // expected-warning{{incompatible pointer types passing 'float *' to parameter of type 'int *'}}
   g0(x); 
 }
 

@@ -144,7 +144,7 @@ void foo(long (^comp)()) {
 
 void (^test15f)(void);
 void test15() {
-  foo(^{ return LESS; }); // expected-error {{incompatible block pointer types passing 'int (^)(void)', expected 'long (^)()'}}
+  foo(^{ return LESS; }); // expected-error {{incompatible block pointer types passing 'int (^)(void)' to parameter of type 'long (^)()'}}
 }
 
 __block int test16i;  // expected-error {{__block attribute not allowed, only allowed on local variables}}

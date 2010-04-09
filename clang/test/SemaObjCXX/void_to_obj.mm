@@ -7,5 +7,5 @@ void func() {
   XX *obj;
   void *vv;
 
-  obj = vv; // expected-error{{incompatible type assigning 'void *', expected 'XX *'}}
+  obj = vv; // expected-error{{assigning to 'XX *' from incompatible type 'void *'}}
 }

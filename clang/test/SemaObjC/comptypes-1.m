@@ -34,25 +34,25 @@ int main()
   /* Assigning to a 'MyClass *' variable should always generate a
      warning, unless done from an 'id'.  */
   obj_c = obj;    /* Ok */
-  obj_c = obj_cp; // // expected-warning {{incompatible pointer types assigning 'MyOtherClass *', expected 'MyClass *'}}
-  obj_c = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'MyClass *'}}
+  obj_c = obj_cp; // // expected-warning {{incompatible pointer types assigning to 'MyClass *' from 'MyOtherClass *'}}
+  obj_c = obj_C;  // expected-warning {{incompatible pointer types assigning to 'MyClass *' from 'Class'}}
 
   /* Assigning to an 'id<MyProtocol>' variable should generate a
      warning if done from a 'MyClass *' (which doesn't implement
      MyProtocol), but not from an 'id' or from a 'MyOtherClass *'
      (which implements MyProtocol).  */
   obj_p = obj;    /* Ok */
-  obj_p = obj_c;  // expected-warning {{incompatible type assigning 'MyClass *', expected 'id<MyProtocol>'}}
+  obj_p = obj_c;  // expected-warning {{ assigning to 'id<MyProtocol>' from incompatible type 'MyClass *'}}
   obj_p = obj_cp; /* Ok  */
-  obj_p = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'id<MyProtocol>'}}
+  obj_p = obj_C;  // expected-warning {{incompatible pointer types assigning to 'id<MyProtocol>' from 'Class'}}
 
   /* Assigning to a 'MyOtherClass *' variable should always generate
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since
      MyOtherClass implements MyProtocol).  */
   obj_cp = obj;    /* Ok */
-  obj_cp = obj_c;  // expected-warning {{incompatible pointer types assigning 'MyClass *', expected 'MyOtherClass *'}}
+  obj_cp = obj_c;  // expected-warning {{incompatible pointer types assigning to 'MyOtherClass *' from 'MyClass *'}}
   obj_cp = obj_p;  /* Ok */
-  obj_cp = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'MyOtherClass *'}}
+  obj_cp = obj_C;  // expected-warning {{incompatible pointer types assigning to 'MyOtherClass *' from 'Class'}}
 
   /* Any comparison involving an 'id' must be without warnings.  */
   if (obj == obj_p) foo() ;  /* Ok  */ /*Bogus warning here in 2.95.4*/

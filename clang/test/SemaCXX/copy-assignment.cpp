@@ -94,6 +94,6 @@ void test() {
 
   int i;
   i = convertibleToInt;
-  i = a; // expected-error{{incompatible type assigning 'A', expected 'int'}}
+  i = a; // expected-error{{assigning to 'int' from incompatible type 'A'}}
 }
 

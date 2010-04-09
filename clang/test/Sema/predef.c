@@ -6,7 +6,7 @@ void abcdefghi12(void) {
 }
 
 char *X = __func__; // expected-warning {{predefined identifier is only valid}} \
-                       expected-warning {{initializing 'char const [1]' discards qualifiers, expected 'char *'}}
+                       expected-warning {{initializing 'char *' from an expression of type 'char const [1]' discards qualifiers}}
 
 void a() {
   __func__[0] = 'a';  // expected-error {{variable is not assignable}}

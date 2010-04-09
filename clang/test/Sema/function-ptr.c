@@ -3,9 +3,9 @@ typedef int unary_int_func(int arg);
 unary_int_func *func;
 
 unary_int_func *set_func(void *p) {
- func = p; // expected-warning {{converts between void* and function pointer}}
- p = func; // expected-warning {{converts between void* and function pointer}}
+ func = p; // expected-warning {{converts between void pointer and function pointer}}
+ p = func; // expected-warning {{converts between void pointer and function pointer}}
 
- return p; // expected-warning {{converts between void* and function pointer}}
+ return p; // expected-warning {{converts between void pointer and function pointer}}
 }
 

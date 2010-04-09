@@ -10,7 +10,7 @@ int b(int c) {return 1;}
 int foo();
 int foo() {
   int eli(int (int)); // expected-error {{conflicting types for 'eli'}}
-  eli(b); // expected-error{{incompatible type passing}}
+  eli(b); // expected-error{{passing 'int (int)' to parameter of incompatible type 'float'}}
   return 0;
 }
 

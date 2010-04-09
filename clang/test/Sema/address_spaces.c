@@ -37,6 +37,6 @@ struct _st {
 __attribute__((address_space(256))) void * * const base = 0;
 void * get_0(void) {
   return base[0];  // expected-error {{illegal implicit cast between two pointers with different address spaces}} \
-                      expected-warning {{returning 'void __attribute__((address_space(256))) *' discards qualifiers, expected 'void *'}}
+                      expected-warning {{returning 'void __attribute__((address_space(256))) *' from a function with result type 'void *' discards qualifiers}}
 }
 

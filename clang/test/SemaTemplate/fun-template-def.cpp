@@ -42,7 +42,7 @@ T f1(T t1, U u1, int i1)
   dummy d1 = sizeof(t1); // expected-error {{no viable conversion}}
   dummy d2 = offsetof(T, foo); // expected-error {{no viable conversion}}
   dummy d3 = __alignof(u1); // expected-error {{no viable conversion}}
-  i1 = typeid(t1); // expected-error {{incompatible type assigning}}
+  i1 = typeid(t1); // expected-error {{assigning to 'int' from incompatible type 'std::type_info const'}}
 
   return u1;
 }

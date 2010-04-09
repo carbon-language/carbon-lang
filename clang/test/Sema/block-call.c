@@ -13,7 +13,7 @@ int main() {
   int (^IFP) () = PFR; // OK
 
 
-  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}
+  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int const (^)()' from an expression of type 'int (^)()'}}
 
   const int (^CICC) () = CIC;
 
@@ -21,7 +21,7 @@ int main() {
 
   int * const (^IPCC1) () = IPCC;
 
-  int * (^IPCC2) () = IPCC;       // expected-error {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
+  int * (^IPCC2) () = IPCC;       // expected-error {{incompatible block pointer types initializing 'int *(^)()' from an expression of type 'int *const (^)()'}}
 
   int (^IPCC3) (const int) = PFR;
 
@@ -29,14 +29,14 @@ int main() {
 
   int (^IPCC5) (int, char (^CArg) (double)) = IPCC4;
 
-  int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-error {{incompatible block pointer types initializing 'int (^)(int, char (^)(double))', expected 'int (^)(int, char (^)(float))'}}
+  int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-error {{incompatible block pointer types initializing 'int (^)(int, char (^)(float))' from an expression of type 'int (^)(int, char (^)(double))'}}
 
   IPCC2 = 0;
-  IPCC2 = 1; // expected-error {{invalid conversion assigning integer 'int', expected block pointer 'int *(^)()'}}
+  IPCC2 = 1; // expected-error {{invalid block pointer conversion assigning to 'int *(^)()' from 'int'}}
   int (^x)() = 0;
-  int (^y)() = 3;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
+  int (^y)() = 3;   // expected-error {{invalid block pointer conversion initializing 'int (^)()' from an expression of type 'int'}}
   int a = 1;
-  int (^z)() = a+4;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
+  int (^z)() = a+4;   // expected-error {{invalid block pointer conversion initializing 'int (^)()' from an expression of type 'int'}}
 }
 
 int blah() {

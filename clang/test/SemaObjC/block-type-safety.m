@@ -29,14 +29,14 @@ void r2 (id<NSObject> (^f) (void)) {
 }
 
 void test1() {
-    f2(^(Sub *o) { });    // expected-error {{incompatible block pointer types passing 'void (^)(Sub *)', expected 'void (^)(Super *)'}}
+    f2(^(Sub *o) { });    // expected-error {{incompatible block pointer types passing}}
     f3(^(Super *o) { });  // OK, block taking Super* may be called with a Sub*
 
     r0(^Super* () { return 0; });  // OK
     r0(^Sub* () { return 0; });    // OK, variable of type Super* gets return value of type Sub*
     r0(^id () { return 0; });
 
-    r1(^Super* () { return 0; });  // expected-error {{incompatible block pointer types passing 'Super *(^)(void)', expected 'Sub *(^)()'}}
+    r1(^Super* () { return 0; });  // expected-error {{incompatible block pointer types passing}}
     r1(^Sub* () { return 0; });    // OK
     r1(^id () { return 0; }); 
      
@@ -97,10 +97,10 @@ void test2(void)
 @protocol P, P2;
 void f4(void (^f)(id<P> x)) {
     NSArray<P2> *b;
-    f(b);	// expected-warning {{incompatible type passing 'NSArray<P2> *', expected 'id<P>'}}
+    f(b);	// expected-warning {{passing 'NSArray<P2> *' to parameter of incompatible type 'id<P>'}}
 }
 
 void test3() {
-  f4(^(NSArray<P2>* a) { });  // expected-error {{incompatible block pointer types passing 'void (^)(NSArray<P2> *)', expected 'void (^)(id<P>)'}}
+  f4(^(NSArray<P2>* a) { });  // expected-error {{incompatible block pointer types passing 'void (^)(NSArray<P2> *)' to parameter of type 'void (^)(id<P>)'}}
 }
 

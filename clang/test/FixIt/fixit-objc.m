@@ -27,7 +27,7 @@ void h(id a);
 void f(Test *t) {
   NSString *a = "Foo";
   id b = "Foo";
-  A* c = "Foo"; // expected-warning {{incompatible pointer types initializing 'char [4]', expected 'A *'}}
+  A* c = "Foo"; // expected-warning {{incompatible pointer types initializing 'A *' from an expression of type 'char [4]'}}
   g("Foo");
   h("Foo");
   h(("Foo"));

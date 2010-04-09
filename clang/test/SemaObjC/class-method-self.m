@@ -18,9 +18,9 @@ typedef struct objc_class *Class;
 static XX *obj;
 
 + (void)classMethod {
-  [obj addObserver:self];     // expected-warning {{incompatible pointer types sending 'Class', expected 'XX *'}}
+  [obj addObserver:self];     // expected-warning {{incompatible pointer types sending 'Class' to parameter of type 'XX *'}}
   Class whatever;
-  [obj addObserver:whatever]; // expected-warning {{incompatible pointer types sending 'Class', expected 'XX *'}} 
+  [obj addObserver:whatever]; // expected-warning {{incompatible pointer types sending 'Class' to parameter of type 'XX *'}}
 }
 @end
 

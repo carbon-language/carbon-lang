@@ -38,7 +38,7 @@ void f() {
   int G::*pdig = pdi1; // expected-error {{conversion from pointer to member of class 'A' to pointer to member of class 'G' via virtual base 'D' is not allowed}}
 
   // Conversion to member of base.
-  pdi1 = pdid; // expected-error {{incompatible type assigning 'int D::*', expected 'int A::*'}}
+  pdi1 = pdid; // expected-error {{assigning to 'int A::*' from incompatible type 'int D::*'}}
   
   // Comparisons
   int (A::*pf2)(int, int);

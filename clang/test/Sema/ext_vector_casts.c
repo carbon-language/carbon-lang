@@ -25,7 +25,7 @@ static void test() {
     ivec4 = (int4)vec4_3;
     
     i = (int)ivec4; // expected-error {{invalid conversion between vector type 'int4' and integer type 'int' of different size}}
-    i = ivec4; // expected-error {{incompatible type assigning 'int4', expected 'int'}}
+    i = ivec4; // expected-error {{assigning to 'int' from incompatible type 'int4'}}
     
     ivec4 = (int4)ptr; // expected-error {{invalid conversion between vector type 'int4' and scalar type 'int *'}}
     

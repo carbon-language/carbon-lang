@@ -62,8 +62,8 @@ int f4(int *p) {
 
 int f4_b() {
   short array[2];
-  uintptr_t x = array; // expected-warning{{incompatible pointer to integer conversion initializing}}
-  short *p = x; // expected-warning{{incompatible integer to pointer conversion initializing}}
+  uintptr_t x = array; // expected-warning{{incompatible pointer to integer conversion}}
+  short *p = x; // expected-warning{{incompatible integer to pointer conversion}}
   
   // The following branch should be infeasible.
   if (!(p = &array[0])) {

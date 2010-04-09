@@ -26,21 +26,21 @@ int main()
   id<MyProtocolAB> obj_ab = nil;
   id<MyProtocolAC> obj_ac = nil;
 
-  obj_a = obj_b;  // expected-warning {{incompatible type assigning 'id<MyProtocolB>', expected 'id<MyProtocolA>'}}
+  obj_a = obj_b;  // expected-warning {{assigning to 'id<MyProtocolA>' from incompatible type 'id<MyProtocolB>'}}
   obj_a = obj_ab; /* Ok */
   obj_a = obj_ac; /* Ok */
   
-  obj_b = obj_a;  // expected-warning {{incompatible type assigning 'id<MyProtocolA>', expected 'id<MyProtocolB>'}}
+  obj_b = obj_a;  // expected-warning {{assigning to 'id<MyProtocolB>' from incompatible type 'id<MyProtocolA>'}}
   obj_b = obj_ab; /* Ok */
-  obj_b = obj_ac; // expected-warning {{incompatible type assigning 'id<MyProtocolAC>', expected 'id<MyProtocolB>'}}
+  obj_b = obj_ac; // expected-warning {{assigning to 'id<MyProtocolB>' from incompatible type 'id<MyProtocolAC>'}}
   
-  obj_ab = obj_a;  // expected-warning {{incompatible type assigning 'id<MyProtocolA>', expected 'id<MyProtocolAB>'}}
-  obj_ab = obj_b;  // expected-warning {{incompatible type assigning 'id<MyProtocolB>', expected 'id<MyProtocolAB>'}}
-  obj_ab = obj_ac; // expected-warning {{incompatible type assigning 'id<MyProtocolAC>', expected 'id<MyProtocolAB>'}}
+  obj_ab = obj_a;  // expected-warning {{assigning to 'id<MyProtocolAB>' from incompatible type 'id<MyProtocolA>'}}
+  obj_ab = obj_b;  // expected-warning {{assigning to 'id<MyProtocolAB>' from incompatible type 'id<MyProtocolB>'}}
+  obj_ab = obj_ac; // expected-warning {{assigning to 'id<MyProtocolAB>' from incompatible type 'id<MyProtocolAC>'}}
   
-  obj_ac = obj_a;  // expected-warning {{incompatible type assigning 'id<MyProtocolA>', expected 'id<MyProtocolAC>'}}
-  obj_ac = obj_b;  // expected-warning {{incompatible type assigning 'id<MyProtocolB>', expected 'id<MyProtocolAC>'}}
-  obj_ac = obj_ab; // expected-warning {{incompatible type assigning 'id<MyProtocolAB>', expected 'id<MyProtocolAC>'}}
+  obj_ac = obj_a;  // expected-warning {{assigning to 'id<MyProtocolAC>' from incompatible type 'id<MyProtocolA>'}}
+  obj_ac = obj_b;  // expected-warning {{assigning to 'id<MyProtocolAC>' from incompatible type 'id<MyProtocolB>'}}
+  obj_ac = obj_ab; // expected-warning {{assigning to 'id<MyProtocolAC>' from incompatible type 'id<MyProtocolAB>'}}
 
   if (obj_a == obj_b) foo (); // expected-warning {{comparison of distinct pointer types ('id<MyProtocolA>' and 'id<MyProtocolB>')}}
   if (obj_b == obj_a) foo (); // expected-warning {{comparison of distinct pointer types ('id<MyProtocolB>' and 'id<MyProtocolA>')}}
