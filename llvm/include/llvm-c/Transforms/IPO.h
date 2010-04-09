@@ -54,6 +54,12 @@ void LLVMAddLowerSetJmpPass(LLVMPassManagerRef PM);
 /** See llvm::createPruneEHPass function. */
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 
+/** See llvm::createIPSCCPPass function. */
+void LLVMAddIPSCCPPass(LLVMPassManagerRef PM);
+
+/** See llvm::createInternalizePass function. */
+void LLVMAddInternalizePass(LLVMPassManagerRef, unsigned AllButMain);
+
 // FIXME: Remove in LLVM 3.0.
 void LLVMAddRaiseAllocationsPass(LLVMPassManagerRef PM);
 
