@@ -179,24 +179,24 @@ private:
 
 /// ImmutableCallSite - establish a view to a call site for examination
 class ImmutableCallSite : public CallSiteBase<> {
-  typedef CallSiteBase<> _Base;
+  typedef CallSiteBase<> Base;
 public:
-  ImmutableCallSite(const Value* V) : _Base(V) {}
-  ImmutableCallSite(const CallInst *CI) : _Base(CI) {}
-  ImmutableCallSite(const InvokeInst *II) : _Base(II) {}
-  ImmutableCallSite(const Instruction *II) : _Base(II) {}
+  ImmutableCallSite(const Value* V) : Base(V) {}
+  ImmutableCallSite(const CallInst *CI) : Base(CI) {}
+  ImmutableCallSite(const InvokeInst *II) : Base(II) {}
+  ImmutableCallSite(const Instruction *II) : Base(II) {}
 };
 
 class CallSite : public CallSiteBase<Function, Value, User, Instruction,
                                      CallInst, InvokeInst, User::op_iterator> {
   typedef CallSiteBase<Function, Value, User, Instruction,
-                       CallInst, InvokeInst, User::op_iterator> _Base;
+                       CallInst, InvokeInst, User::op_iterator> Base;
 public:
   CallSite() {}
-  CallSite(_Base B) : _Base(B) {}
-  CallSite(CallInst *CI) : _Base(CI) {}
-  CallSite(InvokeInst *II) : _Base(II) {}
-  CallSite(Instruction *II) : _Base(II) {}
+  CallSite(Base B) : Base(B) {}
+  CallSite(CallInst *CI) : Base(CI) {}
+  CallSite(InvokeInst *II) : Base(II) {}
+  CallSite(Instruction *II) : Base(II) {}
 
   bool operator==(const CallSite &CS) const { return I == CS.I; }
   bool operator!=(const CallSite &CS) const { return I != CS.I; }
@@ -207,7 +207,7 @@ public:
   /// NOT a call site.
   ///
   static CallSite get(Value *V) {
-    return _Base::get(V);
+    return Base::get(V);
   }
 
   /// getCallingConv/setCallingConv - get or set the calling convention of the
