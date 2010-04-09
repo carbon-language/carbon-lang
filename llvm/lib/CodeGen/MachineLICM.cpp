@@ -197,10 +197,6 @@ static bool LoopIsOuterMostWithPreheader(MachineLoop *CurLoop) {
   return true;
 }
 
-/// Hoist expressions out of the specified loop. Note, alias info for inner loop
-/// is not preserved so it is not a good idea to run LICM multiple times on one
-/// loop.
-///
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   if (PreRegAlloc)
     DEBUG(dbgs() << "******** Pre-regalloc Machine LICM ********\n");
