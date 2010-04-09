@@ -3638,6 +3638,11 @@ public:
                      const MultiLevelTemplateArgumentList &TemplateArgs,
                      SourceLocation Loc, DeclarationName Entity);
 
+  TypeSourceInfo *SubstFunctionDeclType(TypeSourceInfo *T,
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                                        SourceLocation Loc,
+                                        DeclarationName Entity);
+
   OwningExprResult SubstExpr(Expr *E,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
 

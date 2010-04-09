@@ -1826,9 +1826,10 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   TypeSourceInfo *OldTInfo = D->getTypeSourceInfo();
   assert(OldTInfo && "substituting function without type source info");
   assert(Params.empty() && "parameter vector is non-empty at start");
-  TypeSourceInfo *NewTInfo = SemaRef.SubstType(OldTInfo, TemplateArgs,
-                                               D->getTypeSpecStartLoc(),
-                                               D->getDeclName());
+  TypeSourceInfo *NewTInfo
+    = SemaRef.SubstFunctionDeclType(OldTInfo, TemplateArgs,
+                                    D->getTypeSpecStartLoc(),
+                                    D->getDeclName());
   if (!NewTInfo)
     return 0;
 

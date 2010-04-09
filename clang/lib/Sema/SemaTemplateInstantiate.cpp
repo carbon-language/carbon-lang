@@ -959,6 +959,56 @@ QualType Sema::SubstType(QualType T,
   return Instantiator.TransformType(T);
 }
 
+static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
+  if (T->getType()->isDependentType())
+    return true;
+
+  TypeLoc TL = T->getTypeLoc();
+  if (!isa<FunctionProtoTypeLoc>(TL))
+    return false;
+
+  FunctionProtoTypeLoc FP = cast<FunctionProtoTypeLoc>(TL);
+  for (unsigned I = 0, E = FP.getNumArgs(); I != E; ++I) {
+    ParmVarDecl *P = FP.getArg(I);
+
+    // TODO: currently we always rebuild expressions.  When we
+    // properly get lazier about this, we should use the same
+    // logic to avoid rebuilding prototypes here.
+    if (P->hasInit())
+      return true;
+  }
+
+  return false;
+}
+
+/// A form of SubstType intended specifically for instantiating the
+/// type of a FunctionDecl.  Its purpose is solely to force the
+/// instantiation of default-argument expressions.
+TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
+                                const MultiLevelTemplateArgumentList &Args,
+                                SourceLocation Loc,
+                                DeclarationName Entity) {
+  assert(!ActiveTemplateInstantiations.empty() &&
+         "Cannot perform an instantiation without some context on the "
+         "instantiation stack");
+  
+  if (!NeedsInstantiationAsFunctionType(T))
+    return T;
+
+  TemplateInstantiator Instantiator(*this, Args, Loc, Entity);
+
+  TypeLocBuilder TLB;
+
+  TypeLoc TL = T->getTypeLoc();
+  TLB.reserve(TL.getFullDataSize());
+
+  QualType Result = Instantiator.TransformType(TLB, TL, QualType());
+  if (Result.isNull())
+    return 0;
+
+  return TLB.getTypeSourceInfo(Context, Result);
+}
+
 /// \brief Perform substitution on the base class specifiers of the
 /// given class template specialization.
 ///
