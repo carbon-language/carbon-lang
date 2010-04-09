@@ -910,8 +910,14 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    if ((off_t)Record[4] != File->getSize() ||
-        (time_t)Record[5] != File->getModificationTime()) {
+    if ((off_t)Record[4] != File->getSize()
+#if !defined(LLVM_ON_WIN32)
+        // In our regression testing, the Windows file system seems to
+        // have inconsistent modification times that sometimes
+        // erroneously trigger this error-handling path.
+        || (time_t)Record[5] != File->getModificationTime()
+#endif
+        ) {
       Diag(diag::err_fe_pch_file_modified)
         << Filename;
       return Failure;
