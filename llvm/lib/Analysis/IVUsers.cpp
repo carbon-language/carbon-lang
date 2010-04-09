@@ -73,8 +73,8 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L) {
   // An addrec is interesting if it's affine or if it has an interesting start.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Keep things simple. Don't touch loop-variant strides.
-    if (AR->getLoop() == L && (AR->isAffine() || !L->contains(I)))
-        return true;
+    if (AR->getLoop() == L)
+      return AR->isAffine() || !L->contains(I);
     // Otherwise recurse to see if the start value is interesting.
     return isInteresting(AR->getStart(), I, L);
   }
