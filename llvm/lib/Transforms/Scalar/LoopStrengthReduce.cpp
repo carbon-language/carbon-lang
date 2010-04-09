@@ -1236,6 +1236,10 @@ public:
                     DenseSet<const SCEV *> &VisitedRegs) const;
   void Solve(SmallVectorImpl<const Formula *> &Solution) const;
 
+  BasicBlock::iterator AdjustInputPositionForExpand(BasicBlock::iterator IP,
+                                                    const LSRFixup &LF,
+                                                    const LSRUse &LU) const;
+
   Value *Expand(const LSRFixup &LF,
                 const Formula &F,
                 BasicBlock::iterator IP,
@@ -2801,14 +2805,13 @@ static BasicBlock *getImmediateDominator(BasicBlock *BB, DominatorTree &DT) {
   return Node->getBlock();
 }
 
-Value *LSRInstance::Expand(const LSRFixup &LF,
-                           const Formula &F,
-                           BasicBlock::iterator IP,
-                           SCEVExpander &Rewriter,
-                           SmallVectorImpl<WeakVH> &DeadInsts) const {
-  const LSRUse &LU = Uses[LF.LUIdx];
-
-  // Then, collect some instructions which must be dominated by the
+/// AdjustInputPositionForExpand - Determine an input position which will be
+/// dominated by the operands and which will dominate the result.
+BasicBlock::iterator
+LSRInstance::AdjustInputPositionForExpand(BasicBlock::iterator IP,
+                                          const LSRFixup &LF,
+                                          const LSRUse &LU) const {
+  // Collect some instructions which must be dominated by the
   // expanding replacement. These must be dominated by any operands that
   // will be required in the expansion.
   SmallVector<Instruction *, 4> Inputs;
@@ -2867,8 +2870,26 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     else
       IP = Tentative;
   }
+
+  // Don't insert instructions before PHI nodes.
   while (isa<PHINode>(IP)) ++IP;
+
+  // Ignore debug intrinsics.
   while (isa<DbgInfoIntrinsic>(IP)) ++IP;
+
+  return IP;
+}
+
+Value *LSRInstance::Expand(const LSRFixup &LF,
+                           const Formula &F,
+                           BasicBlock::iterator IP,
+                           SCEVExpander &Rewriter,
+                           SmallVectorImpl<WeakVH> &DeadInsts) const {
+  const LSRUse &LU = Uses[LF.LUIdx];
+
+  // Determine an input position which will be dominated by the operands and
+  // which will dominate the result.
+  IP = AdjustInputPositionForExpand(IP, LF, LU);
 
   // Inform the Rewriter if we have a post-increment use, so that it can
   // perform an advantageous expansion.
