@@ -326,8 +326,8 @@ def fno_builtin : Flag<"-fno-builtin">,
   HelpText<"Disable implicit builtin knowledge of functions">;
 def faltivec : Flag<"-faltivec">,
   HelpText<"Enable AltiVec vector initializer syntax">;
-def faccess_control : Flag<"-faccess-control">,
-  HelpText<"Enable C++ access control">;
+def fno_access_control : Flag<"-fno_access-control">,
+  HelpText<"Disable C++ access control">;
 def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">,
   HelpText<"Don't assume that C++'s global operator new can't alias any pointer">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
