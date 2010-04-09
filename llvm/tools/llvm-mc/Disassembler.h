@@ -27,6 +27,9 @@ public:
   static int disassemble(const Target &target, 
                          const std::string &tripleString,
                          MemoryBuffer &buffer);
+  
+  static int disassembleEnhanced(const std::string &tripleString,
+                                 MemoryBuffer &buffer);
 };
   
 } // namespace llvm
