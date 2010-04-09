@@ -2342,6 +2342,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Clear debug info
   CurrentFnDbgScope = NULL;
   DeleteContainerSeconds(DbgScopeMap);
+  InsnsBeginScopeSet.clear();
+  InsnsEndScopeSet.clear();
   DbgValueStartMap.clear();
   ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
