@@ -411,10 +411,9 @@ void MachineInstr::addImplicitDefUseOperands() {
       addOperand(MachineOperand::CreateReg(*ImpUses, false, true));
 }
 
-/// MachineInstr ctor - This constructor create a MachineInstr and add the
-/// implicit operands. It reserves space for number of operands specified by
-/// TargetInstrDesc or the numOperands if it is not zero. (for
-/// instructions with variable number of operands).
+/// MachineInstr ctor - This constructor creates a MachineInstr and adds the
+/// implicit operands. It reserves space for the number of operands specified by
+/// the TargetInstrDesc.
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
@@ -452,7 +451,6 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
 /// MachineInstr ctor - Work exactly the same as the ctor two above, except
 /// that the MachineInstr is created and added to the end of the specified 
 /// basic block.
-///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
