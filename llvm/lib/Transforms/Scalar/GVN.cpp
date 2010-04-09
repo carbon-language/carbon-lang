@@ -1333,8 +1333,8 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   return V;
 }
 
-static bool isLifetimeStart(Instruction *Inst) {
-  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst))
+static bool isLifetimeStart(const Instruction *Inst) {
+  if (const IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst))
     return II->getIntrinsicID() == Intrinsic::lifetime_start;
   return false;
 }
