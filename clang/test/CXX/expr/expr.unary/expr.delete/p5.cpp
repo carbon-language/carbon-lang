@@ -11,7 +11,7 @@ class T0 { ~T0(); };
 
 // The trivial case, inside a template instantiation.
 template<typename T>
-class T1_A { T *x; ~T1_A() { delete x; } }; // expected-warning {{deleting pointer to incomplete type}}
+struct T1_A { T *x; ~T1_A() { delete x; } }; // expected-warning {{deleting pointer to incomplete type}}
 class T1_B; // expected-note {{forward declaration}}
 void f0() { T1_A<T1_B> x; } // expected-note {{in instantiation of member function}}
 

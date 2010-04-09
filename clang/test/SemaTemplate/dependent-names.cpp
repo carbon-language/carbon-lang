@@ -18,15 +18,18 @@ template<class T> class R : Q<T> {T current;};
 
 namespace test0 {
   template <class T> class Base {
+  public:
     void instance_foo();
     static void static_foo();
     class Inner {
+    public:
       void instance_foo();
       static void static_foo();
     };
   };
 
   template <class T> class Derived1 : Base<T> {
+  public:
     void test0() {
       Base<T>::static_foo();
       Base<T>::instance_foo();
@@ -49,6 +52,7 @@ namespace test0 {
   };
 
   template <class T> class Derived2 : Base<T>::Inner {
+  public:
     void test0() {
       Base<T>::static_foo();
       Base<T>::instance_foo(); // expected-error {{call to non-static member function without an object argument}}

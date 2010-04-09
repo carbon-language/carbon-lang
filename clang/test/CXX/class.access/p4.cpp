@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++0x [class.access]p4:
 

@@ -21,6 +21,7 @@ namespace test1 {
 
 namespace test2 {
   class Impl {
+  public:
     int foo();
   };
   template <class T> class Magic : public Impl {

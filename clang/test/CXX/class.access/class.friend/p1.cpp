@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++'0x [class.friend] p1:
 //   A friend of a class is a function or class that is given permission to use

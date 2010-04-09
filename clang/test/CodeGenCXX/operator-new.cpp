@@ -6,6 +6,7 @@
 
 class teste {
   int A;
+public:
   teste() : A(2) {}
 };
 

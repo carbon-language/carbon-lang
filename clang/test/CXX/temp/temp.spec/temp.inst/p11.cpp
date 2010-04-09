@@ -5,7 +5,7 @@ namespace test0 {
   template<typename T> unsigned f0() {
     return T::MaxSize; // expected-error {{'int' cannot be used prior to '::'}}
   };
-  template<typename T> class A {
+  template<typename T> struct A {
     void Allocate(unsigned Alignment
                     = f0<T>()) // expected-note {{in instantiation}}
     {}

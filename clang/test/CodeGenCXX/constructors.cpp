@@ -12,7 +12,7 @@ struct ValueClass {
 
 
 /* Test basic functionality. */
-class A {
+struct A {
   A(struct Undeclared &);
   A(ValueClass);
   Member mem;

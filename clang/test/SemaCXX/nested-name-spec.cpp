@@ -194,7 +194,7 @@ somens::a a3 = a2; // expected-error {{no viable conversion}}
 // typedefs and using declarations.
 namespace test1 {
   namespace ns {
-    class Counter { static int count; };
+    class Counter { public: static int count; };
     typedef Counter counter;
   }
   using ns::counter;

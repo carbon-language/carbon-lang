@@ -40,6 +40,7 @@ namespace test1 {
 namespace test2 {
   template<typename T1>
   class C {
+  public:
     virtual ~C();
     void zedbar(double) {
     }

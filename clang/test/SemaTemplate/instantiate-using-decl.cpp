@@ -38,7 +38,7 @@ namespace test1 {
     using Base2::Visit;
   };
 
-  class Knot : JoinVisitor<Knot> {
+  class Knot : public JoinVisitor<Knot> {
   };
 
   void test() {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // We have to avoid ADL for this test.
 

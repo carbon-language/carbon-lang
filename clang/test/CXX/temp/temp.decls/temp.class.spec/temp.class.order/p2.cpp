@@ -1,13 +1,13 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-template<int I, int J, class T> class X { 
+template<int I, int J, class T> struct X { 
   static const int value = 0;
 };
 
-template<int I, int J> class X<I, J, int> { 
+template<int I, int J> struct X<I, J, int> { 
   static const int value = 1;
 };
 
-template<int I> class X<I, I, int> { 
+template<int I> struct X<I, I, int> { 
   static const int value = 2;
 };
 

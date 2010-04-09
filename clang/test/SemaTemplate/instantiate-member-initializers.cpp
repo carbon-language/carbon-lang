@@ -21,6 +21,7 @@ B<int> b0; // expected-note {{in instantiation of member function 'B<int>::B' re
 
 template <class T> struct AA { AA(int); };
 template <class T> class BB : public AA<T> {
+public:
   BB() : AA<T>(1) {}
 };
 BB<int> x;

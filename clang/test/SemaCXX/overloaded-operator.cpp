@@ -88,6 +88,7 @@ enum pr5244_bar
 
 class pr5244_baz
 {
+public:
     pr5244_bar quux;
 };
 

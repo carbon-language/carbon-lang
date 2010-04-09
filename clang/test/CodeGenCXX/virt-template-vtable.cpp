@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 template<class T> class A {
+public:
   A() {}
   virtual void a() {}
 };

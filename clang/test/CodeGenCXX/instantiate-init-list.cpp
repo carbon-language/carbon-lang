@@ -5,7 +5,7 @@ struct F {
 };
 void G();
 template<class T> class A {
-  A();
+public: A();
 };
 template<class T> A<T>::A() {
   static F f = { G };

@@ -524,9 +524,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.ObjCGCBitmapPrint)
     Res.push_back("-print-ivar-layout");
-  // FIXME: Don't forget to update when the default changes!
-  if (Opts.AccessControl)
-    Res.push_back("-faccess-control");
+  if (!Opts.AccessControl)
+    Res.push_back("-fno-access-control");
   if (!Opts.CharIsSigned)
     Res.push_back("-fno-signed-char");
   if (Opts.ShortWChar)
@@ -1188,7 +1187,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.NoBuiltin = Args.hasArg(OPT_fno_builtin) || Opts.Freestanding;
   Opts.AssumeSaneOperatorNew = !Args.hasArg(OPT_fno_assume_sane_operator_new);
   Opts.HeinousExtensions = Args.hasArg(OPT_fheinous_gnu_extensions);
-  Opts.AccessControl = Args.hasArg(OPT_faccess_control);
+  Opts.AccessControl = !Args.hasArg(OPT_fno_access_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
   Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99,

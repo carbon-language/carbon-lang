@@ -10,7 +10,7 @@ void f() {
 }
 
 class Y { 
-  explicit Y(float);
+public: explicit Y(float);
 };
 
 class X { // expected-note{{candidate constructor (the implicit copy constructor)}}

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -emit-llvm-only -verify
 
 class x {
-int operator=(int);
+public: int operator=(int);
 };
 void a() {
   x a;

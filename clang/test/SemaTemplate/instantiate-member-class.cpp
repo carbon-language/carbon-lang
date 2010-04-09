@@ -40,9 +40,9 @@ X<void>::D::E e2; // expected-note{{in instantiation of member class 'X<void>::D
 // Redeclarations.
 namespace test1 {
   template <typename T> struct Registry {
-    class node;
+    struct node;
     static node *Head;
-    class node {
+    struct node {
       node(int v) { Head = this; }
     };
   };
@@ -64,6 +64,7 @@ namespace test2 {
   template <typename T> class B {
     class Foo;
     class Foo {
+    public:
       typedef int X;
     };
     typename Foo::X x;

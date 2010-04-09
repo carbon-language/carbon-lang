@@ -182,6 +182,7 @@ void f(X8 *x8) {
 }
 
 class X9 {
+public:
   static void operator delete(void*, int); // expected-note {{'operator delete' declared here}}
   static void operator delete(void*, float); // expected-note {{'operator delete' declared here}}
 };
@@ -216,6 +217,7 @@ static void* f(void* g)
 }
 
 class X14 {
+public:
   static void operator delete(void*, const size_t);
 };
 

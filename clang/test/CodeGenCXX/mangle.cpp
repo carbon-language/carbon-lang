@@ -450,7 +450,7 @@ namespace test7 {
 // CHECK: define weak_odr void @_ZN5test81AILZNS_1B5valueEEE3incEv
 namespace test8 {
   template <int &counter> class A { void inc() { counter++; } };
-  class B { static int value; };
+  class B { public: static int value; };
   template class A<B::value>;
 }
 // CHECK: declare void @_ZN5test91fIiNS_3barEEEvRKNT0_3baz1XE

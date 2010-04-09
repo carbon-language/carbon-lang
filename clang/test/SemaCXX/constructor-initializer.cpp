@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -Wreorder -fsyntax-only -verify %s
 class A { 
   int m;
+public:
    A() : A::m(17) { } // expected-error {{member initializer 'm' does not name a non-static data member or base class}}
    A(int);
 };
@@ -125,7 +126,7 @@ struct Q {
 
 // A silly class used to demonstrate field-is-uninitialized in constructors with
 // multiple params.
-class TwoInOne { TwoInOne(TwoInOne a, TwoInOne b) {} };
+class TwoInOne { public: TwoInOne(TwoInOne a, TwoInOne b) {} };
 class InitializeUsingSelfTest {
   bool A;
   char* B;

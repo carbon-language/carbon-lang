@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -faccess-control -verify %s
+// RUN: %clang_cc1 -verify %s
 
 namespace test0 {
   struct A {
