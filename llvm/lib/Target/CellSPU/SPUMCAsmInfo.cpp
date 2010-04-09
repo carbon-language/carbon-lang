@@ -18,7 +18,6 @@ SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = "\t.quad\t";
   AlignmentIsInBytes = false;
-  HasLCOMMDirective = true;
       
   PCSymbol = ".";
   CommentString = "#";
