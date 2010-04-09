@@ -252,8 +252,10 @@ public:
     return ParamInfo.begin() + NumSelectorArgs; 
   }
 
-  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num) {
+  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num,
+                       unsigned numSelectorArgs) {
     ParamInfo.set(List, Num, C);
+    NumSelectorArgs = numSelectorArgs; 
   }
 
   // Iterator access to parameter types.

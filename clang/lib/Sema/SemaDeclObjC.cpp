@@ -1587,8 +1587,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
   
-  ObjCMethod->setMethodParams(Context, Params.data(), Params.size());
-  ObjCMethod->setNumSelectorArgs(Sel.getNumArgs());
+  ObjCMethod->setMethodParams(Context, Params.data(), Params.size(),
+                              Sel.getNumArgs());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
   const ObjCMethodDecl *PrevMethod = 0;

@@ -221,7 +221,8 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  MD->setMethodParams(*Reader.getContext(), Params.data(), NumParams);
+  MD->setMethodParams(*Reader.getContext(), Params.data(), NumParams,
+                      NumParams);
 }
 
 void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {

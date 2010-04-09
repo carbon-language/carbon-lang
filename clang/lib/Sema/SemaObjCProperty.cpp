@@ -954,7 +954,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   /*TInfo=*/0,
                                                   VarDecl::None,
                                                   0);
-      SetterMethod->setMethodParams(Context, &Argument, 1);
+      SetterMethod->setMethodParams(Context, &Argument, 1, 1);
       CD->addDecl(SetterMethod);
     } else
       // A user declared setter will be synthesize when @synthesize of
