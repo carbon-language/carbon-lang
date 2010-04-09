@@ -98,6 +98,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       // Since this ObjCInterfaceDecl was created by a forward declaration,
       // we now add it to the DeclContext since it wasn't added before
       // (see ActOnForwardClassDeclaration).
+      IDecl->setLexicalDeclContext(CurContext);
       CurContext->addDecl(IDecl);
       
       if (AttrList)
