@@ -33,6 +33,7 @@ EDInst::EDInst(llvm::MCInst *inst,
   BranchTarget(-1),
   MoveSource(-1),
   MoveTarget(-1) {
+  OperandOrder = ThisInstInfo->operandOrders[Disassembler.llvmSyntaxVariant()];
 }
 
 EDInst::~EDInst() {
@@ -60,8 +61,6 @@ int EDInst::stringify() {
   
   if (Disassembler.printInst(String, *Inst))
     return StringifyResult.setResult(-1);
-
-  OperandOrder = ThisInstInfo->operandOrders[Disassembler.llvmSyntaxVariant()];
   
   return StringifyResult.setResult(0);
 }

@@ -171,9 +171,9 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   const char *triple = infoMap->String;
   
-  int syntaxVariant = getLLVMSyntaxVariant(key.Arch, key.Syntax);
+  LLVMSyntaxVariant = getLLVMSyntaxVariant(key.Arch, key.Syntax);
   
-  if (syntaxVariant < 0)
+  if (LLVMSyntaxVariant < 0)
     return;
   
   std::string tripleString(triple);
@@ -210,7 +210,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
-  InstPrinter.reset(Tgt->createMCInstPrinter(syntaxVariant, *AsmInfo));
+  InstPrinter.reset(Tgt->createMCInstPrinter(LLVMSyntaxVariant, *AsmInfo));
   
   if (!InstPrinter)
     return;
