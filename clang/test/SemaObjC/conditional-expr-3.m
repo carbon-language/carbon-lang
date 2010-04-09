@@ -27,11 +27,11 @@ void f1(id x, A *a) {
 }
 
 void f2(id<P1> x) {
-  id<P0> l = x; // expected-warning {{initializing 'id<P0>' from an expression of incompatible type 'id<P1>'}}
+  id<P0> l = x; // expected-warning {{initializing 'id<P0>' with an expression of incompatible type 'id<P1>'}}
 }
 
 void f3(A *a) {
-  id<P1> l = a; // expected-warning {{ initializing 'id<P1>' from an expression of incompatible type 'A *'}}
+  id<P1> l = a; // expected-warning {{ initializing 'id<P1>' with an expression of incompatible type 'A *'}}
 }
 
 void f4(int cond, id x, A *a) {

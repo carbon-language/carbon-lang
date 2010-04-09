@@ -101,4 +101,4 @@ struct s2 {
 typedef struct {
   int x;
 } a_struct;
-int tmp = (a_struct) { .x = 0 }; // expected-error {{initializing 'int' from an expression of incompatible type 'a_struct'}}
+int tmp = (a_struct) { .x = 0 }; // expected-error {{initializing 'int' with an expression of incompatible type 'a_struct'}}

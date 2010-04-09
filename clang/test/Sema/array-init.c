@@ -9,7 +9,7 @@ int ary2[] = { x, y, z }; // expected-error{{initializer element is not a compil
 
 extern int fileScopeExtern[3] = { 1, 3, 5 }; // expected-warning{{'extern' variable has an initializer}}
 
-static long ary3[] = { 1, "abc", 3, 4 }; // expected-warning{{incompatible pointer to integer conversion initializing 'long' from an expression of type 'char [4]'}}
+static long ary3[] = { 1, "abc", 3, 4 }; // expected-warning{{incompatible pointer to integer conversion initializing 'long' with an expression of type 'char [4]'}}
 
 void func() {
   int x = 1;
@@ -44,11 +44,11 @@ void func() {
     int a,b,c;
   } z = { 1 };
 
-  struct threeElements *p = 7; // expected-warning{{incompatible integer to pointer conversion initializing 'struct threeElements *' from an expression of type 'int'}}
+  struct threeElements *p = 7; // expected-warning{{incompatible integer to pointer conversion initializing 'struct threeElements *' with an expression of type 'int'}}
   
   extern int blockScopeExtern[3] = { 1, 3, 5 }; // expected-error{{'extern' variable cannot have an initializer}}
   
-  static long x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible pointer to integer conversion initializing 'long' from an expression of type 'char [4]'}}
+  static long x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible pointer to integer conversion initializing 'long' with an expression of type 'char [4]'}}
 }
 
 void test() {
@@ -155,10 +155,10 @@ void charArrays() {
   char c[] = { "Hello" };
   int l[sizeof(c) == 6 ? 1 : -1];
   
-  int i[] = { "Hello "}; // expected-warning{{incompatible pointer to integer conversion initializing 'int' from an expression of type 'char [7]'}}
+  int i[] = { "Hello "}; // expected-warning{{incompatible pointer to integer conversion initializing 'int' with an expression of type 'char [7]'}}
   char c2[] = { "Hello", "Good bye" }; //expected-warning{{excess elements in char array initializer}}
 
-  int i2[1] = { "Hello" }; //expected-warning{{incompatible pointer to integer conversion initializing 'int' from an expression of type 'char [6]'}}
+  int i2[1] = { "Hello" }; //expected-warning{{incompatible pointer to integer conversion initializing 'int' with an expression of type 'char [6]'}}
   char c3[5] = { "Hello" };
   char c4[4] = { "Hello" }; //expected-warning{{initializer-string for char array is too long}}
 
@@ -191,12 +191,12 @@ void autoStructTest() {
 struct s1 {char a; char b;} t1;
 struct s2 {struct s1 c;} t2 = { t1 };
 // The following is a less than great diagnostic (though it's on par with EDG).
-struct s1 t3[] = {t1, t1, "abc", 0}; //expected-warning{{incompatible pointer to integer conversion initializing 'char' from an expression of type 'char [4]'}}
+struct s1 t3[] = {t1, t1, "abc", 0}; //expected-warning{{incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [4]'}}
 int t4[sizeof t3 == 6 ? 1 : -1];
 }
 struct foo { int z; } w;
 int bar (void) { 
-  struct foo z = { w }; //expected-error{{initializing 'int' from an expression of incompatible type 'struct foo'}}
+  struct foo z = { w }; //expected-error{{initializing 'int' with an expression of incompatible type 'struct foo'}}
   return z.z; 
 } 
 struct s3 {void (*a)(void);} t5 = {autoStructTest};
