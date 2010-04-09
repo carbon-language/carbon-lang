@@ -1947,9 +1947,17 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
           continue;
         // Ignore uses which are part of other SCEV expressions, to avoid
         // analyzing them multiple times.
-        if (SE.isSCEVable(UserInst->getType()) &&
-            !isa<SCEVUnknown>(SE.getSCEV(const_cast<Instruction *>(UserInst))))
-          continue;
+        if (SE.isSCEVable(UserInst->getType())) {
+          const SCEV *UserS = SE.getSCEV(const_cast<Instruction *>(UserInst));
+          // If the user is a no-op, look through to its uses.
+          if (!isa<SCEVUnknown>(UserS))
+            continue;
+          if (UserS == U) {
+            Worklist.push_back(
+              SE.getUnknown(const_cast<Instruction *>(UserInst)));
+            continue;
+          }
+        }
         // Ignore icmp instructions which are already being analyzed.
         if (const ICmpInst *ICI = dyn_cast<ICmpInst>(UserInst)) {
           unsigned OtherIdx = !UI.getOperandNo();
