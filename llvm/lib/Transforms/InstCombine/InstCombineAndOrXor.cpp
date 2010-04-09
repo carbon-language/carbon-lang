@@ -1735,16 +1735,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   
   
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    if (RHS->isOne() && Op0->hasOneUse()) {
+    if (RHS->isOne() && Op0->hasOneUse())
       // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
-      if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
-        return new ICmpInst(ICI->getInversePredicate(),
-                            ICI->getOperand(0), ICI->getOperand(1));
-
-      if (FCmpInst *FCI = dyn_cast<FCmpInst>(Op0))
-        return new FCmpInst(FCI->getInversePredicate(),
-                            FCI->getOperand(0), FCI->getOperand(1));
-    }
+      if (CmpInst *CI = dyn_cast<CmpInst>(Op0))
+        return CmpInst::Create(CI->getOpcode(),
+                               CI->getInversePredicate(),
+                               CI->getOperand(0), CI->getOperand(1));
 
     // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
     if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
