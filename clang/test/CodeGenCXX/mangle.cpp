@@ -468,3 +468,12 @@ namespace test9 {
     f<int, bar>( 0);
   }
 }
+
+// <rdar://problem/7825453>
+namespace test10 {
+  template <char P1> struct S {};
+  template <char P2> void f(struct S<false ? 'a' : P2> ) {}
+
+  // CHECK: define weak_odr void @_ZN6test101fILc3EEEvNS_1SIXquLb0ELc97ET_EEE(
+  template void f<(char) 3>(struct S<3>);
+}

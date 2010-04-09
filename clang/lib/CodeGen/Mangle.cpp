@@ -1488,6 +1488,19 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::CharacterLiteralClass:
+    Out << "L";
+    mangleType(E->getType());
+    Out << cast<CharacterLiteral>(E)->getValue();
+    Out << 'E';
+    break;
+
+  case Expr::CXXBoolLiteralExprClass:
+    Out << "Lb";
+    Out << (cast<CXXBoolLiteralExpr>(E)->getValue() ? '1' : '0');
+    Out << 'E';
+    break;
+
   case Expr::IntegerLiteralClass:
     mangleIntegerLiteral(E->getType(),
                          llvm::APSInt(cast<IntegerLiteral>(E)->getValue()));
