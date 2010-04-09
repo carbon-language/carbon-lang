@@ -1076,6 +1076,9 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     if (!TyD) {
       if (R.isAmbiguous()) return true;
 
+      // We don't want access-control diagnostics here.
+      R.suppressDiagnostics();
+
       if (SS.isSet() && isDependentScopeSpecifier(SS)) {
         bool NotUnknownSpecialization = false;
         DeclContext *DC = computeDeclContext(SS, false);
