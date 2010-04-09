@@ -119,7 +119,7 @@ void DominanceFrontier::verifyAnalysis() const {
   assert(!compare(OtherDF) && "Invalid DominanceFrontier info!");
 }
 
-// NewBB is split and now it has one successor. Update dominace frontier to
+// NewBB is split and now it has one successor. Update dominance frontier to
 // reflect this change.
 void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
   assert(NewBB->getTerminator()->getNumSuccessors() == 1
@@ -129,7 +129,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
   SmallVector<BasicBlock*, 8> PredBlocks;
   for (pred_iterator PI = pred_begin(NewBB), PE = pred_end(NewBB);
        PI != PE; ++PI)
-      PredBlocks.push_back(*PI);  
+    PredBlocks.push_back(*PI);  
 
   if (PredBlocks.empty())
     // If NewBB does not have any predecessors then it is a entry block.
