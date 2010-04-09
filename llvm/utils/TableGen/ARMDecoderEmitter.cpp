@@ -1344,23 +1344,8 @@ void FilterChooser::doFilter() {
     return;
 
   // If we come to here, the instruction decoding has failed.
-  // Print out the instructions in the conflict set...
+  // Set the BestIndex to -1 to indicate so.
   BestIndex = -1;
-
-  DEBUG({
-      errs() << "Conflict:\n";
-
-      dumpStack(errs(), "\t\t");
-
-      for (unsigned i = 0; i < Num; i++) {
-        const std::string &Name = nameWithID(Opcodes[i]);
-
-        errs() << '\t' << Name << " ";
-        dumpBits(errs(),
-                 getBitsField(*AllInstructions[Opcodes[i]]->TheDef, "Inst"));
-        errs() << '\n';
-      }
-    });
 }
 
 // Emits code to decode our share of instructions.  Returns true if the
@@ -1465,7 +1450,9 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
 
     // Otherwise, it does not belong to the known conflict sets.
   }
-  // We don't know how to decode these instructions!  Dump the conflict set!
+
+  // We don't know how to decode these instructions!  Return 0 and dump the
+  // conflict set!
   o.indent(Indentation) << "return 0;" << " // Conflict set: ";
   for (int i = 0, N = Opcodes.size(); i < N; ++i) {
     o << nameWithID(Opcodes[i]);
@@ -1474,6 +1461,21 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
     else
       o << '\n';
   }
+
+  // Print out useful conflict information for postmortem analysis.
+  errs() << "Decoding Conflict:\n";
+
+  dumpStack(errs(), "\t\t");
+
+  for (unsigned i = 0; i < Opcodes.size(); i++) {
+    const std::string &Name = nameWithID(Opcodes[i]);
+
+    errs() << '\t' << Name << " ";
+    dumpBits(errs(),
+             getBitsField(*AllInstructions[Opcodes[i]]->TheDef, "Inst"));
+    errs() << '\n';
+  }
+
   return true;
 }
 
