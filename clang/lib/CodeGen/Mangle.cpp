@@ -1279,9 +1279,23 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
   //                ::= L <type <value float> E      # floating literal
   //                ::= L <mangled-name> E           # external name
   switch (E->getStmtClass()) {
-  default:
+  case Expr::NoStmtClass:
+#define EXPR(Type, Base)
+#define STMT(Type, Base) \
+  case Expr::Type##Class:
+#include "clang/AST/StmtNodes.def"
     llvm_unreachable("unexpected statement kind");
     break;
+
+  default: {
+    // As bad as this diagnostic is, it's better than crashing.
+    Diagnostic &Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+                                     "cannot yet mangle expression type %0");
+    Diags.Report(FullSourceLoc(), DiagID)
+      << E->getStmtClassName();
+    break;
+  }
 
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);

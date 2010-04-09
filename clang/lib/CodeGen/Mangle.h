@@ -68,16 +68,20 @@ private:
 /// calls to the C++ name mangler.
 class MangleContext {
   ASTContext &Context;
+  Diagnostic &Diags;
 
   llvm::DenseMap<const TagDecl *, uint64_t> AnonStructIds;
   unsigned Discriminator;
   llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
   
 public:
-  explicit MangleContext(ASTContext &Context)
-    : Context(Context) { }
+  explicit MangleContext(ASTContext &Context,
+                         Diagnostic &Diags)
+    : Context(Context), Diags(Diags) { }
 
   ASTContext &getASTContext() const { return Context; }
+
+  Diagnostic &getDiags() const { return Diags; }
 
   uint64_t getAnonymousStructId(const TagDecl *TD) {
     std::pair<llvm::DenseMap<const TagDecl *,
