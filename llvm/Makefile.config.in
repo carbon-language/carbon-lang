@@ -321,6 +321,12 @@ CXX_INCLUDE_ARCH := @CXX_INCLUDE_ARCH@
 CXX_INCLUDE_32BIT_DIR = @CXX_INCLUDE_32BIT_DIR@
 CXX_INCLUDE_64BIT_DIR = @CXX_INCLUDE_64BIT_DIR@
 
+# TARGET_HAS_DYNAMIC_LIBS - This is set if the target supports dynamic linking
+# .dylib or .so files.
+ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW Minix))
+TARGET_HAS_DYNAMIC_LIBS := 1
+endif
+
 # When ENABLE_LLVMC_DYNAMIC is enabled, LLVMC will link libCompilerDriver
 # dynamically. This is needed to make dynamic plugins work on some targets
 # (Windows).
