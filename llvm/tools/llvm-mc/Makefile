@@ -20,6 +20,5 @@ NO_INSTALL = 1
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) MCParser MC support
-USEDLIBS := EnhancedDisassembly.a
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
