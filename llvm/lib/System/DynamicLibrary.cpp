@@ -44,6 +44,7 @@ void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
 
 #else
 
+#if HAVE_DLFCN_H
 #include <dlfcn.h>
 using namespace llvm;
 using namespace llvm::sys;
@@ -68,6 +69,17 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
   OpenedHandles->push_back(H);
   return false;
 }
+#else
+
+using namespace llvm;
+using namespace llvm::sys;
+
+bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
+                                            std::string *ErrMsg) {
+  if (ErrMsg) *ErrMsg = "dlopen() not supported on this platform";
+  return true;
+}
+#endif
 
 namespace llvm {
 void *SearchForAddressOfSpecialSymbol(const char* symbolName);
@@ -84,6 +96,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
       return I->second;
   }
 
+#if HAVE_DLFCN_H
   // Now search the libraries.
   if (OpenedHandles) {
     for (std::vector<void *>::iterator I = OpenedHandles->begin(),
@@ -95,6 +108,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
       }
     }
   }
+#endif
 
   if (void *Result = llvm::SearchForAddressOfSpecialSymbol(symbolName))
     return Result;

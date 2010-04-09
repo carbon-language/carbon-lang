@@ -20,7 +20,7 @@ ifeq ($(ARCH), Sparc)
 PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
 endif
 
-ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
+ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW Minix))
 PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
 endif
 
