@@ -434,19 +434,21 @@ static bool FindAllMemoryUses(Instruction *I,
   // Loop over all the uses, recursively processing them.
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+    User *U = *UI;
+
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       MemoryUses.push_back(std::make_pair(LI, UI.getOperandNo()));
       continue;
     }
     
-    if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       unsigned opNo = UI.getOperandNo();
       if (opNo == 0) return true; // Storing addr, not into addr.
       MemoryUses.push_back(std::make_pair(SI, opNo));
       continue;
     }
     
-    if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+    if (CallInst *CI = dyn_cast<CallInst>(U)) {
       InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
       if (IA == 0) return true;
       
@@ -456,7 +458,7 @@ static bool FindAllMemoryUses(Instruction *I,
       continue;
     }
     
-    if (FindAllMemoryUses(cast<Instruction>(*UI), MemoryUses, ConsideredInsts,
+    if (FindAllMemoryUses(cast<Instruction>(U), MemoryUses, ConsideredInsts,
                           TLI))
       return true;
   }
