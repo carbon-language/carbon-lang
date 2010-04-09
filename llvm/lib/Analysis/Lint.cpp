@@ -47,22 +47,26 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 namespace {
   class Lint : public FunctionPass, public InstVisitor<Lint> {
     friend class InstVisitor<Lint>;
 
+    void visitFunction(Function &F);
+
     void visitCallSite(CallSite CS);
     void visitMemoryReference(Instruction &I, Value *Ptr, unsigned Align,
                               const Type *Ty);
 
-    void visitInstruction(Instruction &I);
     void visitCallInst(CallInst &I);
     void visitInvokeInst(InvokeInst &I);
     void visitReturnInst(ReturnInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
+    void visitXor(BinaryOperator &I);
+    void visitSub(BinaryOperator &I);
     void visitLShr(BinaryOperator &I);
     void visitAShr(BinaryOperator &I);
     void visitShl(BinaryOperator &I);
@@ -75,6 +79,7 @@ namespace {
     void visitIndirectBrInst(IndirectBrInst &I);
     void visitExtractElementInst(ExtractElementInst &I);
     void visitInsertElementInst(InsertElementInst &I);
+    void visitUnreachableInst(UnreachableInst &I);
 
   public:
     Module *Mod;
@@ -170,7 +175,11 @@ bool Lint::runOnFunction(Function &F) {
   return false;
 }
 
-void Lint::visitInstruction(Instruction &I) {
+void Lint::visitFunction(Function &F) {
+  // This isn't undefined behavior, it's just a little unusual, and it's a
+  // fairly common mistake to neglect to name a function.
+  Assert1(F.hasName() || F.hasLocalLinkage(),
+          "Unusual: Unnamed function with non-local linkage", &F);
 }
 
 void Lint::visitCallSite(CallSite CS) {
@@ -182,7 +191,8 @@ void Lint::visitCallSite(CallSite CS) {
 
   if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
     Assert1(CS.getCallingConv() == F->getCallingConv(),
-            "Caller and callee calling convention differ", &I);
+            "Undefined behavior: Caller and callee calling convention differ",
+            &I);
 
     const FunctionType *FT = F->getFunctionType();
     unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
@@ -190,7 +200,8 @@ void Lint::visitCallSite(CallSite CS) {
     Assert1(FT->isVarArg() ?
               FT->getNumParams() <= NumActualArgs :
               FT->getNumParams() == NumActualArgs,
-            "Call argument count mismatches callee argument count", &I);
+            "Undefined behavior: Call argument count mismatches callee "
+            "argument count", &I);
       
     // TODO: Check argument types (in case the callee was casted)
 
@@ -214,6 +225,9 @@ void Lint::visitCallSite(CallSite CS) {
       visitMemoryReference(I, MCI->getSource(), MCI->getAlignment(), 0);
       visitMemoryReference(I, MCI->getDest(), MCI->getAlignment(), 0);
 
+      // Check that the memcpy arguments don't overlap. The AliasAnalysis API
+      // isn't expressive enough for what we really want to do. Known partial
+      // overlap is not distinguished from the case where nothing is known.
       unsigned Size = 0;
       if (const ConstantInt *Len =
             dyn_cast<ConstantInt>(MCI->getLength()->stripPointerCasts()))
@@ -221,7 +235,7 @@ void Lint::visitCallSite(CallSite CS) {
           Size = Len->getValue().getZExtValue();
       Assert1(AA->alias(MCI->getSource(), Size, MCI->getDest(), Size) !=
               AliasAnalysis::MustAlias,
-              "memcpy source and destination overlap", &I);
+              "Undefined behavior: memcpy source and destination overlap", &I);
       break;
     }
     case Intrinsic::memmove: {
@@ -237,6 +251,10 @@ void Lint::visitCallSite(CallSite CS) {
     }
 
     case Intrinsic::vastart:
+      Assert1(I.getParent()->getParent()->isVarArg(),
+              "Undefined behavior: va_start called in a non-varargs function",
+              &I);
+
       visitMemoryReference(I, CS.getArgument(0), 0, 0);
       break;
     case Intrinsic::vacopy:
@@ -264,7 +282,8 @@ void Lint::visitInvokeInst(InvokeInst &I) {
 void Lint::visitReturnInst(ReturnInst &I) {
   Function *F = I.getParent()->getParent();
   Assert1(!F->doesNotReturn(),
-          "Return statement in function with noreturn attribute", &I);
+          "Unusual: Return statement in function with noreturn attribute",
+          &I);
 }
 
 // TODO: Add a length argument and check that the reference is in bounds
@@ -272,10 +291,11 @@ void Lint::visitReturnInst(ReturnInst &I) {
 //       memory or jumping to suspicious writeable memory
 void Lint::visitMemoryReference(Instruction &I,
                                 Value *Ptr, unsigned Align, const Type *Ty) {
-  Assert1(!isa<ConstantPointerNull>(Ptr->getUnderlyingObject()),
-          "Null pointer dereference", &I);
-  Assert1(!isa<UndefValue>(Ptr->getUnderlyingObject()),
-          "Undef pointer dereference", &I);
+  Value *UnderlyingObject = Ptr->getUnderlyingObject();
+  Assert1(!isa<ConstantPointerNull>(UnderlyingObject),
+          "Undefined behavior: Null pointer dereference", &I);
+  Assert1(!isa<UndefValue>(UnderlyingObject),
+          "Undefined behavior: Undef pointer dereference", &I);
 
   if (TD) {
     if (Align == 0 && Ty) Align = TD->getABITypeAlignment(Ty);
@@ -286,7 +306,7 @@ void Lint::visitMemoryReference(Instruction &I,
                    KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
       ComputeMaskedBits(Ptr, Mask, KnownZero, KnownOne, TD);
       Assert1(!(KnownOne & APInt::getLowBitsSet(BitWidth, Log2_32(Align))),
-              "Memory reference address is misaligned", &I);
+              "Undefined behavior: Memory reference address is misaligned", &I);
     }
   }
 }
@@ -300,28 +320,43 @@ void Lint::visitStoreInst(StoreInst &I) {
                   I.getOperand(0)->getType());
 }
 
+void Lint::visitXor(BinaryOperator &I) {
+  Assert1(!isa<UndefValue>(I.getOperand(0)) ||
+          !isa<UndefValue>(I.getOperand(1)),
+          "Undefined result: xor(undef, undef)", &I);
+}
+
+void Lint::visitSub(BinaryOperator &I) {
+  Assert1(!isa<UndefValue>(I.getOperand(0)) ||
+          !isa<UndefValue>(I.getOperand(1)),
+          "Undefined result: sub(undef, undef)", &I);
+}
+
 void Lint::visitLShr(BinaryOperator &I) {
   if (ConstantInt *CI =
         dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
-            "Shift count out of range", &I);
+            "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitAShr(BinaryOperator &I) {
   if (ConstantInt *CI =
         dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
-            "Shift count out of range", &I);
+            "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitShl(BinaryOperator &I) {
   if (ConstantInt *CI =
         dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
-            "Shift count out of range", &I);
+            "Undefined result: Shift count out of range", &I);
 }
 
 static bool isZero(Value *V, TargetData *TD) {
+  // Assume undef could be zero.
+  if (isa<UndefValue>(V)) return true;
+
   unsigned BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
   APInt Mask = APInt::getAllOnesValue(BitWidth),
                KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
@@ -330,26 +365,30 @@ static bool isZero(Value *V, TargetData *TD) {
 }
 
 void Lint::visitSDiv(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD), "Division by zero", &I);
+  Assert1(!isZero(I.getOperand(1), TD),
+          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitUDiv(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD), "Division by zero", &I);
+  Assert1(!isZero(I.getOperand(1), TD),
+          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitSRem(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD), "Division by zero", &I);
+  Assert1(!isZero(I.getOperand(1), TD),
+          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitURem(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD), "Division by zero", &I);
+  Assert1(!isZero(I.getOperand(1), TD),
+          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitAllocaInst(AllocaInst &I) {
   if (isa<ConstantInt>(I.getArraySize()))
     // This isn't undefined behavior, it's just an obvious pessimization.
     Assert1(&I.getParent()->getParent()->getEntryBlock() == I.getParent(),
-            "Static alloca outside of entry block", &I);
+            "Pessimization: Static alloca outside of entry block", &I);
 }
 
 void Lint::visitVAArgInst(VAArgInst &I) {
@@ -364,14 +403,22 @@ void Lint::visitExtractElementInst(ExtractElementInst &I) {
   if (ConstantInt *CI =
         dyn_cast<ConstantInt>(I.getIndexOperand()->stripPointerCasts()))
     Assert1(CI->getValue().ult(I.getVectorOperandType()->getNumElements()),
-            "extractelement index out of range", &I);
+            "Undefined result: extractelement index out of range", &I);
 }
 
 void Lint::visitInsertElementInst(InsertElementInst &I) {
   if (ConstantInt *CI =
         dyn_cast<ConstantInt>(I.getOperand(2)->stripPointerCasts()))
     Assert1(CI->getValue().ult(I.getType()->getNumElements()),
-            "insertelement index out of range", &I);
+            "Undefined result: insertelement index out of range", &I);
+}
+
+void Lint::visitUnreachableInst(UnreachableInst &I) {
+  // This isn't undefined behavior, it's merely suspicious.
+  Assert1(&I == I.getParent()->begin() ||
+          prior(BasicBlock::iterator(&I))->mayHaveSideEffects(),
+          "Unusual: unreachable immediately preceded by instruction without "
+          "side effects", &I);
 }
 
 //===----------------------------------------------------------------------===//

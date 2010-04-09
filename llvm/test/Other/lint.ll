@@ -35,6 +35,10 @@ define i32 @foo() noreturn {
   %q = ashr i32 0, 32
 ; CHECK: Shift count out of range
   %l = shl i32 0, 32
+; CHECK: xor(undef, undef)
+  %xx = xor i32 undef, undef
+; CHECK: sub(undef, undef)
+  %xs = sub i32 undef, undef
   br label %next
 
 next:
@@ -42,4 +46,21 @@ next:
   %a = alloca i32
 ; CHECK: Return statement in function with noreturn attribute
   ret i32 0
+
+foo:
+  %z = add i32 0, 0
+; CHECK: unreachable immediately preceded by instruction without side effects
+  unreachable
+}
+
+; CHECK: Unnamed function with non-local linkage
+define void @0() nounwind {
+  ret void
+}
+
+; CHECK: va_start called in a non-varargs function
+declare void @llvm.va_start(i8*)
+define void @not_vararg(i8* %p) nounwind {
+  call void @llvm.va_start(i8* %p)
+  ret void
 }
