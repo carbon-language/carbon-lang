@@ -1,4 +1,4 @@
-//===- circulat_raw_ostream.cpp - Implement the circular_raw_ostream class -===//
+//===- circular_raw_ostream.cpp - Implement circular_raw_ostream ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,9 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/circular_raw_ostream.h"
-
 #include <algorithm>
-
 using namespace llvm;
 
 void circular_raw_ostream::write_impl(const char *Ptr, size_t Size) {
@@ -25,7 +23,8 @@ void circular_raw_ostream::write_impl(const char *Ptr, size_t Size) {
 
   // Write into the buffer, wrapping if necessary.
   while (Size != 0) {
-    unsigned Bytes = std::min(Size, BufferSize - (Cur - BufferArray));
+    unsigned Bytes =
+      std::min(unsigned(Size), unsigned(BufferSize - (Cur - BufferArray)));
     memcpy(Cur, Ptr, Bytes);
     Size -= Bytes;
     Cur += Bytes;
@@ -37,11 +36,10 @@ void circular_raw_ostream::write_impl(const char *Ptr, size_t Size) {
   }    
 }
 
-void circular_raw_ostream::flushBufferWithBanner(void) {
+void circular_raw_ostream::flushBufferWithBanner() {
   if (BufferSize != 0) {
     // Write out the buffer
-    int num = std::strlen(Banner); 
-    TheStream->write(Banner, num);
+    TheStream->write(Banner, std::strlen(Banner));
     flushBuffer();
   }
 }
