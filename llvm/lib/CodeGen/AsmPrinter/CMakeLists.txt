@@ -7,3 +7,5 @@ add_llvm_library(LLVMAsmPrinter
   DwarfException.cpp
   OcamlGCPrinter.cpp
   )
+
+target_link_libraries (LLVMAsmPrinter LLVMMCParser)
