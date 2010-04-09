@@ -14,22 +14,22 @@
 // parameters are created lazily.
 //
 //===----------------------------------------------------------------------===//
-#include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Analysis/AnalysisContext.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Support/Optional.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
-
-#include "llvm/ADT/ImmutableMap.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/Checker/PathSensitive/GRStateTrait.h"
+#include "clang/Checker/PathSensitive/MemRegion.h"
 #include "llvm/ADT/ImmutableList.h"
+#include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using llvm::Optional;
 
 //===----------------------------------------------------------------------===//
 // Representation of binding keys.

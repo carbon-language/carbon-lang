@@ -13,14 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
-#include "clang/Analysis/Support/Optional.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <fcntl.h>
 
 using namespace clang;
+using llvm::Optional;
 
 namespace {
 class UnixAPIChecker : public CheckerVisitor<UnixAPIChecker> {
