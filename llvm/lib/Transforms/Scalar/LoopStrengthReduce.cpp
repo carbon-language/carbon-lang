@@ -1157,6 +1157,7 @@ class LSRInstance {
   IVUsers &IU;
   ScalarEvolution &SE;
   DominatorTree &DT;
+  LoopInfo &LI;
   const TargetLowering *const TLI;
   Loop *const L;
   bool Changed;
@@ -1236,9 +1237,12 @@ public:
                     DenseSet<const SCEV *> &VisitedRegs) const;
   void Solve(SmallVectorImpl<const Formula *> &Solution) const;
 
-  BasicBlock::iterator AdjustInputPositionForExpand(BasicBlock::iterator IP,
-                                                    const LSRFixup &LF,
-                                                    const LSRUse &LU) const;
+  BasicBlock::iterator
+    HoistInsertPosition(BasicBlock::iterator IP,
+                        const SmallVectorImpl<Instruction *> &Inputs) const;
+  BasicBlock::iterator AdjustInsertPositionForExpand(BasicBlock::iterator IP,
+                                                     const LSRFixup &LF,
+                                                     const LSRUse &LU) const;
 
   Value *Expand(const LSRFixup &LF,
                 const Formula &F,
@@ -2813,12 +2817,64 @@ static BasicBlock *getImmediateDominator(BasicBlock *BB, DominatorTree &DT) {
   return Node->getBlock();
 }
 
-/// AdjustInputPositionForExpand - Determine an input position which will be
+/// HoistInsertPosition - Helper for AdjustInsertPositionForExpand. Climb up
+/// the dominator tree far as we can go while still being dominated by the
+/// input positions. This helps canonicalize the insert position, which
+/// encourages sharing.
+BasicBlock::iterator
+LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
+                                 const SmallVectorImpl<Instruction *> &Inputs)
+                                                                         const {
+  for (;;) {
+    const Loop *IPLoop = LI.getLoopFor(IP->getParent());
+    unsigned IPLoopDepth = IPLoop ? IPLoop->getLoopDepth() : 0;
+
+    BasicBlock *IDom;
+    for (BasicBlock *Rung = IP->getParent(); ; Rung = IDom) {
+      IDom = getImmediateDominator(Rung, DT);
+      if (!IDom) return IP;
+
+      // Don't climb into a loop though.
+      const Loop *IDomLoop = LI.getLoopFor(IDom);
+      unsigned IDomDepth = IDomLoop ? IDomLoop->getLoopDepth() : 0;
+      if (IDomDepth <= IPLoopDepth &&
+          (IDomDepth != IPLoopDepth || IDomLoop == IPLoop))
+        break;
+    }
+
+    bool AllDominate = true;
+    Instruction *BetterPos = 0;
+    Instruction *Tentative = IDom->getTerminator();
+    for (SmallVectorImpl<Instruction *>::const_iterator I = Inputs.begin(),
+         E = Inputs.end(); I != E; ++I) {
+      Instruction *Inst = *I;
+      if (Inst == Tentative || !DT.dominates(Inst, Tentative)) {
+        AllDominate = false;
+        break;
+      }
+      // Attempt to find an insert position in the middle of the block,
+      // instead of at the end, so that it can be used for other expansions.
+      if (IDom == Inst->getParent() &&
+          (!BetterPos || DT.dominates(BetterPos, Inst)))
+        BetterPos = next(BasicBlock::iterator(Inst));
+    }
+    if (!AllDominate)
+      break;
+    if (BetterPos)
+      IP = BetterPos;
+    else
+      IP = Tentative;
+  }
+
+  return IP;
+}
+
+/// AdjustInsertPositionForExpand - Determine an input position which will be
 /// dominated by the operands and which will dominate the result.
 BasicBlock::iterator
-LSRInstance::AdjustInputPositionForExpand(BasicBlock::iterator IP,
-                                          const LSRFixup &LF,
-                                          const LSRUse &LU) const {
+LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
+                                           const LSRFixup &LF,
+                                           const LSRUse &LU) const {
   // Collect some instructions which must be dominated by the
   // expanding replacement. These must be dominated by any operands that
   // will be required in the expansion.
@@ -2842,6 +2898,7 @@ LSRInstance::AdjustInputPositionForExpand(BasicBlock::iterator IP,
     const Loop *PIL = *I;
     if (PIL == L) continue;
 
+    // Be dominated by the loop exit.
     SmallVector<BasicBlock *, 4> ExitingBlocks;
     PIL->getExitingBlocks(ExitingBlocks);
     if (!ExitingBlocks.empty()) {
@@ -2850,34 +2907,15 @@ LSRInstance::AdjustInputPositionForExpand(BasicBlock::iterator IP,
         BB = DT.findNearestCommonDominator(BB, ExitingBlocks[i]);
       Inputs.push_back(BB->getTerminator());
     }
+
+    // Be dominated by the loop latch, if it's unique.
+    if (BasicBlock *Latch = PIL->getLoopLatch())
+      Inputs.push_back(prior(BasicBlock::iterator(Latch->getTerminator())));
   }
 
   // Then, climb up the immediate dominator tree as far as we can go while
   // still being dominated by the input positions.
-  for (;;) {
-    bool AllDominate = true;
-    Instruction *BetterPos = 0;
-    BasicBlock *IDom = getImmediateDominator(IP->getParent(), DT);
-    if (!IDom) break;
-    Instruction *Tentative = IDom->getTerminator();
-    for (SmallVectorImpl<Instruction *>::const_iterator I = Inputs.begin(),
-         E = Inputs.end(); I != E; ++I) {
-      Instruction *Inst = *I;
-      if (Inst == Tentative || !DT.dominates(Inst, Tentative)) {
-        AllDominate = false;
-        break;
-      }
-      if (IDom == Inst->getParent() &&
-          (!BetterPos || DT.dominates(BetterPos, Inst)))
-        BetterPos = next(BasicBlock::iterator(Inst));
-    }
-    if (!AllDominate)
-      break;
-    if (BetterPos)
-      IP = BetterPos;
-    else
-      IP = Tentative;
-  }
+  IP = HoistInsertPosition(IP, Inputs);
 
   // Don't insert instructions before PHI nodes.
   while (isa<PHINode>(IP)) ++IP;
@@ -2897,7 +2935,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 
   // Determine an input position which will be dominated by the operands and
   // which will dominate the result.
-  IP = AdjustInputPositionForExpand(IP, LF, LU);
+  IP = AdjustInsertPositionForExpand(IP, LF, LU);
 
   // Inform the Rewriter if we have a post-increment use, so that it can
   // perform an advantageous expansion.
@@ -3175,6 +3213,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   : IU(P->getAnalysis<IVUsers>()),
     SE(P->getAnalysis<ScalarEvolution>()),
     DT(P->getAnalysis<DominatorTree>()),
+    LI(P->getAnalysis<LoopInfo>()),
     TLI(tli), L(l), Changed(false), IVIncInsertPos(0) {
 
   // If LoopSimplify form is not available, stay out of trouble.
@@ -3331,9 +3370,10 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   // We split critical edges, so we change the CFG.  However, we do update
   // many analyses if they are around.
   AU.addPreservedID(LoopSimplifyID);
-  AU.addPreserved<LoopInfo>();
   AU.addPreserved("domfrontier");
 
+  AU.addRequired<LoopInfo>();
+  AU.addPreserved<LoopInfo>();
   AU.addRequiredID(LoopSimplifyID);
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();

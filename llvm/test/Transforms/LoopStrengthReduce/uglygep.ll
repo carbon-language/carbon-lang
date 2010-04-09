@@ -35,3 +35,33 @@ bb14:                                             ; preds = %bb14, %bb10
   store i8 undef, i8* %t9
   br label %bb14
 }
+
+define fastcc void @TransformLine() nounwind {
+bb:
+  br label %loop0
+
+loop0:                                            ; preds = %loop0, %bb
+  %i0 = phi i32 [ %i0.next, %loop0 ], [ 0, %bb ]  ; <i32> [#uses=2]
+  %i0.next = add i32 %i0, 1                       ; <i32> [#uses=1]
+  br i1 false, label %loop0, label %bb0
+
+bb0:                                              ; preds = %loop0
+  br label %loop1
+
+loop1:                                            ; preds = %bb5, %bb0
+  %i1 = phi i32 [ 0, %bb0 ], [ %i1.next, %bb5 ]   ; <i32> [#uses=4]
+  %t0 = add i32 %i0, %i1                          ; <i32> [#uses=1]
+  br i1 false, label %bb2, label %bb6
+
+bb2:                                              ; preds = %loop1
+  br i1 true, label %bb6, label %bb5
+
+bb5:                                              ; preds = %bb2
+  %i1.next = add i32 %i1, 1                       ; <i32> [#uses=1]
+  br i1 true, label %bb6, label %loop1
+
+bb6:                                              ; preds = %bb5, %bb2, %loop1
+  %p8 = phi i32 [ %t0, %bb5 ], [ undef, %loop1 ], [ undef, %bb2 ] ; <i32> [#uses=0]
+  %p9 = phi i32 [ undef, %bb5 ], [ %i1, %loop1 ], [ %i1, %bb2 ] ; <i32> [#uses=0]
+  unreachable
+}
