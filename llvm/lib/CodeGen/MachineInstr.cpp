@@ -417,12 +417,8 @@ void MachineInstr::addImplicitDefUseOperands() {
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
-  if (!NoImp && TID->getImplicitDefs())
-    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
-      NumImplicitOps++;
-  if (!NoImp && TID->getImplicitUses())
-    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
-      NumImplicitOps++;
+  if (!NoImp)
+    NumImplicitOps = TID->getNumImplicitDefs() + TID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   if (!NoImp)
     addImplicitDefUseOperands();
@@ -435,12 +431,8 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
                            bool NoImp)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0), MemRefs(0), MemRefsEnd(0),
     Parent(0), debugLoc(dl) {
-  if (!NoImp && TID->getImplicitDefs())
-    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
-      NumImplicitOps++;
-  if (!NoImp && TID->getImplicitUses())
-    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
-      NumImplicitOps++;
+  if (!NoImp)
+    NumImplicitOps = TID->getNumImplicitDefs() + TID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   if (!NoImp)
     addImplicitDefUseOperands();
@@ -455,12 +447,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  if (TID->ImplicitDefs)
-    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
-      NumImplicitOps++;
-  if (TID->ImplicitUses)
-    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
-      NumImplicitOps++;
+  NumImplicitOps = TID->getNumImplicitDefs() + TID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
@@ -475,12 +462,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
   : TID(&tid), NumImplicitOps(0), AsmPrinterFlags(0), MemRefs(0), MemRefsEnd(0),
     Parent(0), debugLoc(dl) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  if (TID->ImplicitDefs)
-    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
-      NumImplicitOps++;
-  if (TID->ImplicitUses)
-    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
-      NumImplicitOps++;
+  NumImplicitOps = TID->getNumImplicitDefs() + TID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
