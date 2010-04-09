@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 template<typename T> void f0(T); // expected-note{{here}}
 template void f0(int); // expected-error{{explicit instantiation of undefined function template}}
@@ -16,20 +16,20 @@ template void X0<int>::f1(); // expected-error{{explicit instantiation of undefi
 
 template int X0<int>::value; // expected-error{{explicit instantiation of undefined static data member}}
 
-template<> void f0(long);
-template void f0(long); // okay
+template<> void f0(long); // expected-note{{previous template specialization is here}}
+template void f0(long); // expected-warning{{explicit instantiation of 'f0<long>' that occurs after an explicit specialization will be ignored}}
 
-template<> void X0<long>::f1();
-template void X0<long>::f1();
+template<> void X0<long>::f1(); // expected-note{{previous template specialization is here}}
+template void X0<long>::f1(); // expected-warning{{explicit instantiation of 'f1' that occurs after an explicit specialization will be ignored}}
 
-template<> struct X0<long>::Inner;
-template struct X0<long>::Inner;
+template<> struct X0<long>::Inner; // expected-note{{previous template specialization is here}}
+template struct X0<long>::Inner; // expected-warning{{explicit instantiation of 'Inner' that occurs after an explicit specialization will be ignored}}
 
-template<> long X0<long>::value;
-template long X0<long>::value;
+template<> long X0<long>::value; // expected-note{{previous template specialization is here}}
+template long X0<long>::value; // expected-warning{{explicit instantiation of 'value' that occurs after an explicit specialization will be ignored}}
 
-template<> struct X0<double>;
-template struct X0<double>;
+template<> struct X0<double>; // expected-note{{previous template specialization is here}}
+template struct X0<double>; // expected-warning{{explicit instantiation of 'X0<double>' that occurs after an explicit specialization will be ignored}}
 
 // PR 6458
 namespace test0 {

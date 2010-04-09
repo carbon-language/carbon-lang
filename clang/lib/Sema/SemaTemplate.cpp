@@ -4047,7 +4047,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   instantiation has no effect.
       //
       // In C++98/03 mode, we only give an extension warning here, because it 
-      // is not not harmful to try to explicitly instantiate something that
+      // is not harmful to try to explicitly instantiate something that
       // has been explicitly specialized.
       if (!getLangOptions().CPlusPlus0x) {
         Diag(NewLoc, diag::ext_explicit_instantiation_after_specialization)
@@ -4204,6 +4204,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 
   // Ignore access information;  it doesn't figure into redeclaration checking.
   FunctionDecl *Specialization = cast<FunctionDecl>(*Result);
+  Specialization->setLocation(FD->getLocation());
   
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of .

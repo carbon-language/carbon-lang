@@ -1381,6 +1381,10 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         MemberSpecializationInfo *MSInfo 
           = Function->getMemberSpecializationInfo();
         assert(MSInfo && "No member specialization information?");
+        if (MSInfo->getTemplateSpecializationKind()
+                                                 == TSK_ExplicitSpecialization)
+          continue;
+        
         if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                    Function, 
                                         MSInfo->getTemplateSpecializationKind(),
@@ -1413,6 +1417,10 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (Var->isStaticDataMember()) {
         MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
         assert(MSInfo && "No member specialization information?");
+        if (MSInfo->getTemplateSpecializationKind()
+                                                 == TSK_ExplicitSpecialization)
+          continue;
+        
         if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                    Var, 
                                         MSInfo->getTemplateSpecializationKind(),
@@ -1444,6 +1452,11 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       
       MemberSpecializationInfo *MSInfo = Record->getMemberSpecializationInfo();
       assert(MSInfo && "No member specialization information?");
+      
+      if (MSInfo->getTemplateSpecializationKind()
+                                                == TSK_ExplicitSpecialization)
+        continue;
+      
       if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                  Record, 
                                         MSInfo->getTemplateSpecializationKind(),
