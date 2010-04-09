@@ -1550,6 +1550,16 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
   const StringRef Name = Def.getName();
   uint8_t Form = getByteField(Def, "Form");
 
+  BitsInit &Bits = getBitsField(Def, "Inst");
+
+  // If all the bit positions are not specified; do not decode this instruction.
+  // We are bound to fail!  For proper disassembly, the well-known encoding bits
+  // of the instruction must be fully specified.
+  //
+  // This also removes pseudo instructions from considerations of disassembly,
+  // which is a better design and less fragile than the name matchings.
+  if (Bits.allInComplete()) return false;
+
   if (TN == TARGET_ARM) {
     // FIXME: what about Int_MemBarrierV6 and Int_SyncBarrierV6?
     if ((Name != "Int_MemBarrierV7" && Name != "Int_SyncBarrierV7") &&
@@ -1670,13 +1680,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     if (!thumbInstruction(Form))
       return false;
 
-    // Ignore pseudo instructions.
-    if (Name == "tInt_eh_sjlj_setjmp" || Name == "t2Int_eh_sjlj_setjmp" ||
-        Name == "tInt_eh_sjlj_setjmp_nofp" ||
-        Name == "t2Int_eh_sjlj_setjmp_nofp" ||
-        Name == "t2MOVi32imm" || Name == "tBX" || Name == "tBXr9")
-      return false;
-
     // On Darwin R9 is call-clobbered.  Ignore the non-Darwin counterparts.
     if (Name == "tBL" || Name == "tBLXi" || Name == "tBLXr")
       return false;
@@ -1741,8 +1744,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
   }
 
   DEBUG({
-      BitsInit &Bits = getBitsField(Def, "Inst");
-
       errs() << " ";
 
       // Dumps the instruction encoding bits.

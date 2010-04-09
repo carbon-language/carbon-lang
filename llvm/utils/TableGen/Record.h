@@ -609,6 +609,11 @@ public:
       if (!getBit(i)->isComplete()) return false;
     return true;
   }
+  bool allInComplete() const {
+    for (unsigned i = 0; i != getNumBits(); ++i)
+      if (getBit(i)->isComplete()) return false;
+    return true;
+  }
   virtual std::string getAsString() const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
