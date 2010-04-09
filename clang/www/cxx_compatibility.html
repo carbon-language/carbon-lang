@@ -25,6 +25,7 @@
 <li><a href="#init_static_const">Initialization of non-integral static const data members within a class definition</a></li>
 <li><a href="#dep_lookup">Unqualified lookup in templates</a></li>
 <li><a href="#dep_lookup_bases">Unqualified lookup into dependent bases of class templates</a></li>
+<li><a href="#bad_templates">Templates with no valid instantiations</a></li>
 <li><a href="#default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</a></li>
 </ul>
 
@@ -201,6 +202,53 @@ Alternatively, you can tell the compiler exactly where to look:
 This works whether the methods are static or not, but be careful:
 if <tt>DoThis</tt> is virtual, calling it this way will bypass virtual
 dispatch!
+
+<!-- ======================================================================= -->
+<h2 id="bad_templates">Templates with no valid instantiations</h2>
+<!-- ======================================================================= -->
+
+The following code contains a typo: the programmer
+meant <tt>init()</tt> but wrote <tt>innit()</tt> instead.
+
+<pre>
+  template &lt;class T&gt; class Processor {
+    ...
+    void init();
+    ...
+  };
+  ...
+  template &lt;class T&gt; void process() {
+    Processor&lt;T&gt; processor;
+    processor.innit();       // <-- should be 'init()'
+    ...
+  }
+</pre>
+
+Unfortunately, we can't flag this mistake as soon as we see it: inside
+a template, we're not allowed to make assumptions about "dependent
+types" like <tt>Processor&lt;T&gt;</tt>.  Suppose that later on in
+this file the programmer adds an explicit specialization
+of <tt>Processor</tt>, like so:
+
+<pre>
+  template &lt;&gt; class Processor&lt;char*&gt; {
+    void innit();
+  };
+</pre>
+
+Now the program will work &mdash; as long as the programmer only ever
+instantiates <tt>process()</tt> with <tt>T = char*</tt>!  This is why
+it's hard, and sometimes impossible, to diagnose mistakes in a
+template definition before it's instantiated.
+
+<p>The standard says that a template with no valid instantiations is
+ill-formed.  Clang tries to do as much checking as possible at
+definition-time instead of instantiation-time: not only does this
+produce clearer diagnostics, but it also substantially improves
+compile times when using pre-compiled headers.  The downside to this
+philosophy is that Clang sometimes fails to process files because they
+contain broken templates that are no longer used.  The solution is
+simple: since the code is unused, just remove it.
 
 <!-- ======================================================================= -->
 <h2 id="default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</h2>
