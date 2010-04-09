@@ -705,7 +705,8 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
       Sum = expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, Sum);
     } else if (const PointerType *PTy = dyn_cast<PointerType>(Op->getType())) {
       // The running sum is an integer, and there's a pointer at this level.
-      // Try to form a getelementptr.
+      // Try to form a getelementptr. Use a SCEVUnknown so that we don't
+      // re-analyze the instructions that we just emitted.
       SmallVector<const SCEV *, 4> NewOps;
       NewOps.push_back(SE.getUnknown(Sum));
       for (++I; I != E && I->first == CurLoop; ++I)
