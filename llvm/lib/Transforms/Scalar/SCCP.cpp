@@ -317,7 +317,10 @@ private:
   void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (!IV.markConstant(C)) return;
     DEBUG(dbgs() << "markConstant: " << *C << ": " << *V << '\n');
-    InstWorkList.push_back(V);
+    if (IV.isOverdefined())
+      OverdefinedInstWorkList.push_back(V);
+    else
+      InstWorkList.push_back(V);
   }
   
   void markConstant(Value *V, Constant *C) {
@@ -327,9 +330,13 @@ private:
 
   void markForcedConstant(Value *V, Constant *C) {
     assert(!V->getType()->isStructTy() && "Should use other method");
-    ValueState[V].markForcedConstant(C);
+    LatticeVal &IV = ValueState[V];
+    IV.markForcedConstant(C);
     DEBUG(dbgs() << "markForcedConstant: " << *C << ": " << *V << '\n');
-    InstWorkList.push_back(V);
+    if (IV.isOverdefined())
+      OverdefinedInstWorkList.push_back(V);
+    else
+      InstWorkList.push_back(V);
   }
   
   
