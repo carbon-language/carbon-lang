@@ -31,12 +31,12 @@ using namespace llvm;
 // If DebugDiv > 0 then only break antidep with (ID % DebugDiv) == DebugMod
 static cl::opt<int>
 DebugDiv("agg-antidep-debugdiv",
-                      cl::desc("Debug control for aggressive anti-dep breaker"),
-                      cl::init(0), cl::Hidden);
+         cl::desc("Debug control for aggressive anti-dep breaker"),
+         cl::init(0), cl::Hidden);
 static cl::opt<int>
 DebugMod("agg-antidep-debugmod",
-                      cl::desc("Debug control for aggressive anti-dep breaker"),
-                      cl::init(0), cl::Hidden);
+         cl::desc("Debug control for aggressive anti-dep breaker"),
+         cl::init(0), cl::Hidden);
 
 AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
                                                MachineBasicBlock *BB) :
@@ -210,7 +210,7 @@ void AggressiveAntiDepBreaker::FinishBlock() {
 }
 
 void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
-                                     unsigned InsertPosIndex) {
+                                       unsigned InsertPosIndex) {
   assert(Count < InsertPosIndex && "Instruction index out of expected range!");
 
   std::set<unsigned> PassthruRegs;
@@ -244,7 +244,7 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
 }
 
 bool AggressiveAntiDepBreaker::IsImplicitDefUse(MachineInstr *MI,
-                                            MachineOperand& MO)
+                                                MachineOperand& MO)
 {
   if (!MO.isReg() || !MO.isImplicit())
     return false;
@@ -359,8 +359,7 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
 
 void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
                                                   unsigned Count,
-                                              std::set<unsigned>& PassthruRegs)
-{
+                                             std::set<unsigned>& PassthruRegs) {
   unsigned *DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
@@ -439,7 +438,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
 }
 
 void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
-                                           unsigned Count) {
+                                               unsigned Count) {
   DEBUG(dbgs() << "\tUse Groups:");
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
