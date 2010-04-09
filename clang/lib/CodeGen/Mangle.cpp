@@ -1488,6 +1488,18 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::CXXBindReferenceExprClass:
+    mangleExpression(cast<CXXBindReferenceExpr>(E)->getSubExpr());
+    break;
+
+  case Expr::CXXBindTemporaryExprClass:
+    mangleExpression(cast<CXXBindTemporaryExpr>(E)->getSubExpr());
+    break;
+
+  case Expr::CXXExprWithTemporariesClass:
+    mangleExpression(cast<CXXExprWithTemporaries>(E)->getSubExpr());
+    break;
+
   case Expr::FloatingLiteralClass: {
     const FloatingLiteral *FL = cast<FloatingLiteral>(E);
     Out << "L";
