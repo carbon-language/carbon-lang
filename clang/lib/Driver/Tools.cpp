@@ -1152,10 +1152,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fblocks");
   }
 
-  // -fno-access-control is default (for now).
+  // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
                    options::OPT_faccess_control,
-                   true))
+                   false))
     CmdArgs.push_back("-fno-access-control");
 
   // -fexceptions=0 is default.
