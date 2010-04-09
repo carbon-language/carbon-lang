@@ -91,15 +91,14 @@ private:
   // over time, the non-DebugLoc versions should be phased out and eventually
   // removed.
 
-  /// MachineInstr ctor - This constructor create a MachineInstr and add the
-  /// implicit operands.  It reserves space for number of operands specified by
-  /// TargetInstrDesc.  The version with a DebugLoc should be preferred.
+  /// MachineInstr ctor - This constructor creates a MachineInstr and adds the
+  /// implicit operands.  It reserves space for the number of operands specified
+  /// by the TargetInstrDesc.  The version with a DebugLoc should be preferred.
   explicit MachineInstr(const TargetInstrDesc &TID, bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.  The version with a DebugLoc should be preferred.
-  ///
   MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &TID);
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
@@ -111,7 +110,6 @@ private:
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
-  ///
   MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl, 
                const TargetInstrDesc &TID);
 
