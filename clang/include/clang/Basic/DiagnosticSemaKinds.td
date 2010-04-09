@@ -2718,7 +2718,7 @@ def warn_selfcomparison : Warning<
   "self-comparison always results in a constant value">;
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
-  "unspecified (use strcmp instead)">;
+  "unspecified (use strncmp instead)">;
 
 
 

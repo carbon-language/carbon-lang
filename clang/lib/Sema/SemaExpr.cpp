@@ -5402,11 +5402,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       DiagRuntimeBehavior(Loc,
         PDiag(diag::warn_stringcompare)
           << isa<ObjCEncodeExpr>(literalStringStripped)
-          << literalString->getSourceRange()
-          << FixItHint::CreateReplacement(SourceRange(Loc), ", ")
-          << FixItHint::CreateInsertion(lex->getLocStart(), "strcmp(")
-          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(rex->getLocEnd()),
-                                        resultComparison));
+          << literalString->getSourceRange());
     }
   }
 

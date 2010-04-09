@@ -31,9 +31,3 @@ void f1(x, y)
 
 int i0 = { 17 };
 
-int f2(const char *my_string) {
-  // FIXME: terminal output isn't so good when "my_string" is shorter
-// CHECK: return strcmp(my_string , "foo") == 0;
-  return my_string == "foo";
-}
-
