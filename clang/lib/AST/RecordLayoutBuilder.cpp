@@ -263,8 +263,12 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
     uint64_t BaseOffset;
 
     if (I->isVirtual()) {
+      // If we don't know this vbase yet, don't visit it. It will be visited
+      // later.
+      if (!VBases.count(Base))
+        continue;
+  
       // We want the vbase offset from the class we're currently laying out.
-      assert(VBases.count(Base) && "Did not find virtual base!");
       BaseOffset = VBases[Base];
     } else if (RD == MostDerivedClass) {
       // We want the base offset from the class we're currently laying out.

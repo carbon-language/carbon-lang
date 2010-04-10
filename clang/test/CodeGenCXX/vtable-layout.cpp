@@ -1364,3 +1364,26 @@ struct D : virtual C {
 void D::f() { }
 
 }
+
+namespace Test32 {
+
+// Check that we correctly lay out the virtual bases of 'Test32::D'.
+
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A { };
+struct C : A, virtual B { };
+struct D : virtual B { };
+
+// CHECK:      Virtual base offset offsets for 'Test32::E' (3 entries).
+// CHECK-NEXT:    Test32::A | -32
+// CHECK-NEXT:    Test32::B | -24
+// CHECK-NEXT:    Test32::D | -40
+struct E : C, virtual D {
+  virtual void f();
+};
+void E::f() { }
+
+}
