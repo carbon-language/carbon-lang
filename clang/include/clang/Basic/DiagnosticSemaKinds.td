@@ -2140,6 +2140,8 @@ def err_qualified_catch_declarator : Error<
 def err_early_catch_all : Error<"catch-all handler must come last">;
 def err_bad_memptr_rhs : Error<
   "right hand operand to %0 has non pointer-to-member type %1">;
+def err_memptr_rhs_to_incomplete : Error<
+  "cannot dereference pointer into incomplete class type %0">;
 def err_bad_memptr_lhs : Error<
   "left hand operand to %0 must be a %select{|pointer to }1class "
   "compatible with the right hand operand, but is %2">;

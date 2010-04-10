@@ -88,7 +88,7 @@ void g() {
   void (HasMembers::*pmd)() = &HasMembers::d;
 }
 
-struct Incomplete;
+struct Incomplete; // expected-note {{forward declaration}}
 
 void h() {
   HasMembers hm, *phm = &hm;
@@ -123,7 +123,7 @@ void h() {
 
   Incomplete *inc;
   int Incomplete::*pii = 0;
-  (void)(inc->*pii); // okay
+  (void)(inc->*pii); // expected-error {{pointer into incomplete}}
 }
 
 struct OverloadsPtrMem

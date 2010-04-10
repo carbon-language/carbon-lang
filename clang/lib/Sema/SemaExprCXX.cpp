@@ -1847,6 +1847,9 @@ QualType Sema::CheckPointerToMemberOperands(
 
   QualType Class(MemPtr->getClass(), 0);
 
+  if (RequireCompleteType(Loc, Class, diag::err_memptr_rhs_to_incomplete))
+    return QualType();
+
   // C++ 5.5p2
   //   [...] to its first operand, which shall be of class T or of a class of
   //   which T is an unambiguous and accessible base class. [p3: a pointer to
