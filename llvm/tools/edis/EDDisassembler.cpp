@@ -39,8 +39,13 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSelect.h"
 
+#ifdef EDIS_X86
 #include "../../lib/Target/X86/X86GenEDInfo.inc"
+#endif
+
+#ifdef EDIS_ARM
 #include "../../lib/Target/ARM/ARMGenEDInfo.inc"
+#endif
 
 using namespace llvm;
 
@@ -54,10 +59,14 @@ struct InfoMap {
 };
 
 static struct InfoMap infomap[] = {
+#ifdef EDIS_X86
   { Triple::x86,          "i386-unknown-unknown",   instInfoX86 },
   { Triple::x86_64,       "x86_64-unknown-unknown", instInfoX86 },
+#endif
+#ifdef EDIS_ARM
   { Triple::arm,          "arm-unknown-unknown",    instInfoARM },
   { Triple::thumb,        "thumb-unknown-unknown",  instInfoARM },
+#endif
   { Triple::InvalidArch,  NULL,                     NULL        }
 };
 
@@ -119,8 +128,12 @@ void EDDisassembler::initialize() {
   
   sInitialized = true;
   
+#ifdef EDIS_X86
   BRINGUP_TARGET(X86)
+#endif
+#ifdef EDIS_ARM
   BRINGUP_TARGET(ARM)
+#endif
 }
 
 #undef BRINGUP_TARGET
@@ -295,6 +308,7 @@ void EDDisassembler::initMaps(const TargetRegisterInfo &registerInfo) {
   switch (Key.Arch) {
   default:
     break;
+#ifdef EDIS_X86
   case Triple::x86:
   case Triple::x86_64:
     stackPointers.insert(registerIDWithName("SP"));
@@ -305,12 +319,15 @@ void EDDisassembler::initMaps(const TargetRegisterInfo &registerInfo) {
     programCounters.insert(registerIDWithName("EIP"));
     programCounters.insert(registerIDWithName("RIP"));
     break;
+#endif
+#ifdef EDIS_ARM
   case Triple::arm:
   case Triple::thumb:
     stackPointers.insert(registerIDWithName("SP"));
     
     programCounters.insert(registerIDWithName("PC"));
     break;  
+#endif
   }
 }
 

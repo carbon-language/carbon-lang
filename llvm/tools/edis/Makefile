@@ -45,6 +45,19 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
+EDIS_DEFINES = 
+
+ifneq (,$(findstring X86,$(TARGETS_TO_BUILD)))
+	EDIS_DEFINES := $(EDIS_DEFINES) -DEDIS_X86
+endif
+
+ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
+	EDIS_DEFINES := $(EDIS_DEFINES) -DEDIS_ARM
+endif
+
+CXXFLAGS := $(CXXFLAGS) 
+#$(EDIS_DEFINES)
+
 EDInfo.inc:	$(TBLGEN)
 	$(Echo) "Building semantic information header"
 	$(Verb) $(TableGen) -o $(call SYSPATH, $@) -gen-enhanced-disassembly-header /dev/null
