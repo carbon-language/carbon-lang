@@ -1203,11 +1203,11 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
   llvm::SmallVector<llvm::Value*, 4> ArgList;
 
   for (llvm::Value::use_iterator UI = OldFn->use_begin(), E = OldFn->use_end();
-       UI != E; ) {
+       UI != E; ++UI) {
     // TODO: Do invokes ever occur in C code?  If so, we should handle them too.
-    unsigned OpNo = UI.getOperandNo();
-    llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*UI++);
-    if (!CI || OpNo != 0) continue;
+    llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*UI);
+    llvm::CallSite CS(CI);
+    if (!CI || !CS.isCallee(UI)) continue;
 
     // If the return types don't match exactly, and if the call isn't dead, then
     // we can't transform this call.
@@ -1221,8 +1221,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     bool DontTransform = false;
     for (llvm::Function::arg_iterator AI = NewFn->arg_begin(),
          E = NewFn->arg_end(); AI != E; ++AI, ++ArgNo) {
-      if (CI->getNumOperands()-1 == ArgNo ||
-          CI->getOperand(ArgNo+1)->getType() != AI->getType()) {
+      if (CS.arg_size() == ArgNo ||
+          CS.getArgument(ArgNo)->getType() != AI->getType()) {
         DontTransform = true;
         break;
       }
@@ -1232,7 +1232,6 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
-    llvm::CallSite CS(CI);
     ArgList.append(CS.arg_begin(), CS.arg_begin() + ArgNo);
     llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList.begin(),
                                                      ArgList.end(), "", CI);
