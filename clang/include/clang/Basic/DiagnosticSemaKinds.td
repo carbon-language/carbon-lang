@@ -2471,14 +2471,10 @@ def err_mem_init_not_member_or_class : Error<
   "member initializer %0 does not name a non-static data member or base "
   "class">;
 
-def warn_field_initialized : Warning<
-  "member '%0' will be initialized after">,
+def warn_initializer_out_of_order : Warning<
+  "%select{field|base class}0 %1 will be initialized after "
+  "%select{field|base}2 %3">,
   InGroup<Reorder>, DefaultIgnore;
-def warn_base_initialized : Warning<
-  "base class %0 will be initialized after">,
-  InGroup<Reorder>, DefaultIgnore;
-def note_fieldorbase_initialized_here : Note<
-  "%select{field|base}0 %1">;
 
 def err_base_init_does_not_name_class : Error<
   "constructor initializer %0 does not name a class">;

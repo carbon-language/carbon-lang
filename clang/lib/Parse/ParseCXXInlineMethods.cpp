@@ -217,12 +217,17 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
              "ParseFunctionTryBlock left tokens in the token stream!");
       continue;
     }
-    if (Tok.is(tok::colon))
+    if (Tok.is(tok::colon)) {
       ParseConstructorInitializer(LM.D);
-    else
+
+      // Error recovery.
+      if (!Tok.is(tok::l_brace)) {
+        Actions.ActOnFinishFunctionBody(LM.D, Action::StmtArg(Actions));
+        continue;
+      }
+    } else
       Actions.ActOnDefaultCtorInitializers(LM.D);
 
-    // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??
     ParseFunctionStatementBody(LM.D);
     assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
                                                            Tok.getLocation()) &&

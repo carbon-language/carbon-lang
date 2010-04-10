@@ -6,12 +6,13 @@ struct BB1 {};
 
 class complex : public BB, BB1 { 
 public: 
-  complex() : s2(1),  // expected-warning {{member 's2' will be initialized after}}
-              s1(1) , // expected-note {{field s1}} 
-              s3(3),  // expected-warning {{member 's3' will be initialized after}} 
-              BB1(),   // expected-note {{base 'BB1'}}  \
-                      // expected-warning {{base class 'BB1' will be initialized after}}
-              BB() {}  // expected-note {{base 'BB'}}
+  complex()
+    : s2(1), // expected-warning {{field 's2' will be initialized after field 's1'}}
+      s1(1),
+      s3(3), // expected-warning {{field 's3' will be initialized after base 'BB1'}} 
+      BB1(), // expected-warning {{base class 'BB1' will be initialized after base 'BB'}}
+      BB()
+  {}
   int s1;
   int s2;
   int s3;
@@ -44,14 +45,12 @@ struct C : public A, public B, private virtual V {
 
 
 struct D : public A, public B { 
-  D()  : A(), V() {   } // expected-warning {{base class 'A' will be initialized after}} \
-                        // expected-note {{base 'V'}}
+  D()  : A(), V() {   } // expected-warning {{base class 'A' will be initialized after base 'V'}}
 };
 
 
 struct E : public A, public B, private virtual V { 
-  E()  : A(), V() {  } // expected-warning {{base class 'A' will be initialized after}} \
-                       // expected-note {{base 'V'}}
+  E()  : A(), V() {  } // expected-warning {{base class 'A' will be initialized after base 'V'}}
 };
 
 
@@ -64,13 +63,11 @@ struct B1 {
 };
 
 struct F : public A1, public B1, private virtual V { 
-  F()  : A1(), V() {  } // expected-warning {{base class 'A1' will be initialized after}} \
-                        // expected-note {{base 'V'}}
+  F()  : A1(), V() {  } // expected-warning {{base class 'A1' will be initialized after base 'V'}}
 };
 
 struct X : public virtual A, virtual V, public virtual B {
-  X(): A(), V(), B() {} // expected-warning {{base class 'A' will be initialized after}} \
-                        // expected-note {{base 'V'}}
+  X(): A(), V(), B() {} // expected-warning {{base class 'A' will be initialized after base 'V'}}
 };
 
 class Anon {
@@ -80,8 +77,8 @@ class Anon {
 class Anon2 {
   int c; union {int a,b;}; int d;
   Anon2() : c(2),
-            d(10), // expected-warning {{member 'd' will be initialized after}}
-            b(1) {} // expected-note {{field b}}
+            d(10), // expected-warning {{field 'd' will be initialized after field 'b'}}
+            b(1) {}
 };
 class Anon3 {
   union {int a,b;};
@@ -95,7 +92,19 @@ struct S2: virtual S1 { };
 struct S3 { };
 
 struct S4: virtual S3, S2 {
-  S4() : S2(), // expected-warning {{base class 'T1::S2' will be initialized after}}
-    S3() { }; // expected-note {{base 'T1::S3'}}
+  S4() : S2(), // expected-warning {{base class 'T1::S2' will be initialized after base 'T1::S3'}}
+    S3() { };
 };
+}
+
+namespace test2 {
+  struct Foo { Foo(); };
+  class A {
+    template <class T> A(T *t) :
+      y(),  // expected-warning {{field 'y' will be initialized after field 'x'}}
+      x()
+    {}
+    Foo x;
+    Foo y;
+  };
 }

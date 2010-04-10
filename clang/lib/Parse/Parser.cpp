@@ -668,9 +668,15 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
   // If we have a colon, then we're probably parsing a C++
   // ctor-initializer.
-  if (Tok.is(tok::colon))
+  if (Tok.is(tok::colon)) {
     ParseConstructorInitializer(Res);
-  else
+
+    // Recover from error.
+    if (!Tok.is(tok::l_brace)) {
+      Actions.ActOnFinishFunctionBody(Res, Action::StmtArg(Actions));
+      return Res;
+    }
+  } else
     Actions.ActOnDefaultCtorInitializers(Res);
 
   return ParseFunctionStatementBody(Res);

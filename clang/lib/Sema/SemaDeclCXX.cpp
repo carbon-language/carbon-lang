@@ -1433,7 +1433,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
                                   unsigned NumInitializers,
                                   bool AnyErrors) {
-  if (Constructor->isDependentContext()) {
+  if (Constructor->getDeclContext()->isDependentContext()) {
     // Just store the initializers as written, they will be checked during
     // instantiation.
     if (NumInitializers > 0) {
@@ -1672,86 +1672,85 @@ static void *GetKeyForMember(ASTContext &Context,
 static void
 DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
                                   const CXXConstructorDecl *Constructor,
-                                  CXXBaseOrMemberInitializer **MemInits,
-                                  unsigned NumMemInits) {
-  if (Constructor->isDependentContext())
+                                  CXXBaseOrMemberInitializer **Inits,
+                                  unsigned NumInits) {
+  if (Constructor->getDeclContext()->isDependentContext())
     return;
 
-  if (SemaRef.Diags.getDiagnosticLevel(diag::warn_base_initialized) ==
-      Diagnostic::Ignored &&
-      SemaRef.Diags.getDiagnosticLevel(diag::warn_field_initialized) ==
-      Diagnostic::Ignored)
+  if (SemaRef.Diags.getDiagnosticLevel(diag::warn_initializer_out_of_order)
+        == Diagnostic::Ignored)
     return;
   
-  // Also issue warning if order of ctor-initializer list does not match order
-  // of 1) base class declarations and 2) order of non-static data members.
-  llvm::SmallVector<const void*, 32> AllBaseOrMembers;
+  // Build the list of bases and members in the order that they'll
+  // actually be initialized.  The explicit initializers should be in
+  // this same order but may be missing things.
+  llvm::SmallVector<const void*, 32> IdealInitKeys;
 
   const CXXRecordDecl *ClassDecl = Constructor->getParent();
 
-  // Push virtual bases before others.
+  // 1. Virtual bases.
   for (CXXRecordDecl::base_class_const_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase)
-    AllBaseOrMembers.push_back(GetKeyForBase(SemaRef.Context,
-                                             VBase->getType()));
+    IdealInitKeys.push_back(GetKeyForBase(SemaRef.Context, VBase->getType()));
 
+  // 2. Non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
-    // Virtuals are alread in the virtual base list and are constructed
-    // first.
     if (Base->isVirtual())
       continue;
-    AllBaseOrMembers.push_back(GetKeyForBase(SemaRef.Context,
-                                             Base->getType()));
+    IdealInitKeys.push_back(GetKeyForBase(SemaRef.Context, Base->getType()));
   }
 
+  // 3. Direct fields.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field)
-    AllBaseOrMembers.push_back(GetKeyForTopLevelField(*Field));
+    IdealInitKeys.push_back(GetKeyForTopLevelField(*Field));
 
-  int Last = AllBaseOrMembers.size();
-  int curIndex = 0;
-  CXXBaseOrMemberInitializer *PrevMember = 0;
-  for (unsigned i = 0; i < NumMemInits; i++) {
-    CXXBaseOrMemberInitializer *Member = MemInits[i];
-    void *MemberInCtorList = GetKeyForMember(SemaRef.Context, Member, true);
+  unsigned NumIdealInits = IdealInitKeys.size();
+  unsigned IdealIndex = 0;
 
-    for (; curIndex < Last; curIndex++)
-      if (MemberInCtorList == AllBaseOrMembers[curIndex])
+  CXXBaseOrMemberInitializer *PrevInit = 0;
+  for (unsigned InitIndex = 0; InitIndex != NumInits; ++InitIndex) {
+    CXXBaseOrMemberInitializer *Init = Inits[InitIndex];
+    void *InitKey = GetKeyForMember(SemaRef.Context, Init, true);
+
+    // Scan forward to try to find this initializer in the idealized
+    // initializers list.
+    for (; IdealIndex != NumIdealInits; ++IdealIndex)
+      if (InitKey == IdealInitKeys[IdealIndex])
         break;
-    if (curIndex == Last) {
-      assert(PrevMember && "Member not in member list?!");
-      // Initializer as specified in ctor-initializer list is out of order.
-      // Issue a warning diagnostic.
-      if (PrevMember->isBaseInitializer()) {
-        // Diagnostics is for an initialized base class.
-        Type *BaseClass = PrevMember->getBaseClass();
-        SemaRef.Diag(PrevMember->getSourceLocation(),
-                     diag::warn_base_initialized)
-          << QualType(BaseClass, 0);
-      } else {
-        FieldDecl *Field = PrevMember->getMember();
-        SemaRef.Diag(PrevMember->getSourceLocation(),
-                     diag::warn_field_initialized)
-          << Field->getNameAsString();
-      }
-      // Also the note!
-      if (FieldDecl *Field = Member->getMember())
-        SemaRef.Diag(Member->getSourceLocation(),
-                     diag::note_fieldorbase_initialized_here) << 0
-          << Field->getNameAsString();
-      else {
-        Type *BaseClass = Member->getBaseClass();
-        SemaRef.Diag(Member->getSourceLocation(),
-             diag::note_fieldorbase_initialized_here) << 1
-          << QualType(BaseClass, 0);
-      }
-      for (curIndex = 0; curIndex < Last; curIndex++)
-        if (MemberInCtorList == AllBaseOrMembers[curIndex])
+
+    // If we didn't find this initializer, it must be because we
+    // scanned past it on a previous iteration.  That can only
+    // happen if we're out of order;  emit a warning.
+    if (IdealIndex == NumIdealInits) {
+      assert(PrevInit && "initializer not found in initializer list");
+
+      Sema::SemaDiagnosticBuilder D =
+        SemaRef.Diag(PrevInit->getSourceLocation(),
+                     diag::warn_initializer_out_of_order);
+
+      if (PrevInit->isMemberInitializer())
+        D << 0 << PrevInit->getMember()->getDeclName();
+      else
+        D << 1 << PrevInit->getBaseClassInfo()->getType();
+      
+      if (Init->isMemberInitializer())
+        D << 0 << Init->getMember()->getDeclName();
+      else
+        D << 1 << Init->getBaseClassInfo()->getType();
+
+      // Move back to the initializer's location in the ideal list.
+      for (IdealIndex = 0; IdealIndex != NumIdealInits; ++IdealIndex)
+        if (InitKey == IdealInitKeys[IdealIndex])
           break;
+
+      assert(IdealIndex != NumIdealInits &&
+             "initializer not found in initializer list");
     }
-    PrevMember = Member;
+
+    PrevInit = Init;
   }
 }
 
