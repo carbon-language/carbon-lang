@@ -322,9 +322,8 @@ bool LLParser::ParseUnnamedType() {
       return true;
   }
 
-  assert(Lex.getKind() == lltok::kw_type);
   LocTy TypeLoc = Lex.getLoc();
-  Lex.Lex(); // eat kw_type
+  if (ParseToken(lltok::kw_type, "expected 'type' after '='")) return true;
 
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty)) return true;
