@@ -315,7 +315,7 @@ def print_stats : Flag<"-print-stats">,
 def ftime_report : Flag<"-ftime-report">,
   HelpText<"Print the amount of time each phase of compilation takes">;
 
-def dump_record_layouts : Flag<"-dump-record-layouts">,
+def fdump_record_layouts : Flag<"-fdump-record-layouts">,
   HelpText<"Dump record layout information">;
 
 //===----------------------------------------------------------------------===//

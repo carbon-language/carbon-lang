@@ -1204,7 +1204,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
   Opts.Static = Args.hasArg(OPT_static_define);
-  Opts.DumpRecordLayouts = Args.hasArg(OPT_dump_record_layouts);
+  Opts.DumpRecordLayouts = Args.hasArg(OPT_fdump_record_layouts);
   Opts.DumpVtableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);
   Opts.OptimizeSize = 0;
 
