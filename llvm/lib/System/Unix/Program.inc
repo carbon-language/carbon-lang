@@ -239,7 +239,9 @@ Program::Wait(unsigned secondsToWait,
   // fact of having a handler at all causes the wait below to return with EINTR,
   // unlike if we used SIG_IGN.
   if (secondsToWait) {
+#ifndef __HAIKU__
     Act.sa_sigaction = 0;
+#endif
     Act.sa_handler = TimeOutHandler;
     sigemptyset(&Act.sa_mask);
     Act.sa_flags = 0;
