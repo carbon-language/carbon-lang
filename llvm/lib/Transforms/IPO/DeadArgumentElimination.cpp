@@ -694,18 +694,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   AttrListPtr NewPAL = AttrListPtr::get(AttributesVec.begin(),
                                         AttributesVec.end());
 
-  // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
-  // have zero fixed arguments.
-  //
-  // Note that we apply this hack for a vararg fuction that does not have any
-  // arguments anymore, but did have them before (so don't bother fixing
-  // functions that were already broken wrt CWriter).
-  bool ExtraArgHack = false;
-  if (Params.empty() && FTy->isVarArg() && FTy->getNumParams() != 0) {
-    ExtraArgHack = true;
-    Params.push_back(Type::getInt32Ty(F->getContext()));
-  }
-
   // Create the new function type based on the recomputed parameters.
   FunctionType *NFTy = FunctionType::get(NRetTy, Params, FTy->isVarArg());
 
@@ -754,9 +742,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         if (Attributes Attrs = CallPAL.getParamAttributes(i + 1))
           AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
       }
-
-    if (ExtraArgHack)
-      Args.push_back(UndefValue::get(Type::getInt32Ty(F->getContext())));
 
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {

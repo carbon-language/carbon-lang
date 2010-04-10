@@ -473,8 +473,9 @@ void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
     PrintedType = true;
   }
   if (FTy->isVarArg()) {
-    if (PrintedType)
-      FunctionInnards << ", ...";
+    if (!PrintedType)
+      FunctionInnards << " int"; //dummy argument for empty vararg functs
+    FunctionInnards << ", ...";
   } else if (!PrintedType) {
     FunctionInnards << "void";
   }
@@ -568,8 +569,9 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
       ++Idx;
     }
     if (FTy->isVarArg()) {
-      if (FTy->getNumParams())
-        FunctionInnards << ", ...";
+      if (!FTy->getNumParams())
+        FunctionInnards << " int"; //dummy argument for empty vaarg functs
+      FunctionInnards << ", ...";
     } else if (!FTy->getNumParams()) {
       FunctionInnards << "void";
     }
@@ -2237,12 +2239,16 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     }
   }
 
+  if (!PrintedArg && FT->isVarArg()) {
+    FunctionInnards << "int vararg_dummy_arg";
+    PrintedArg = true;
+  }
+
   // Finish printing arguments... if this is a vararg function, print the ...,
   // unless there are no known types, in which case, we just emit ().
   //
   if (FT->isVarArg() && PrintedArg) {
-    if (PrintedArg) FunctionInnards << ", ";
-    FunctionInnards << "...";  // Output varargs portion of signature!
+    FunctionInnards << ",...";  // Output varargs portion of signature!
   } else if (!FT->isVarArg() && !PrintedArg) {
     FunctionInnards << "void"; // ret() -> ret(void) in C.
   }
@@ -2928,6 +2934,12 @@ void CWriter::visitCallInst(CallInst &I) {
 
   Out << '(';
 
+  bool PrintedArg = false;
+  if(FTy->isVarArg() && !FTy->getNumParams()) {
+    Out << "0 /*dummy arg*/";
+    PrintedArg = true;
+  }
+
   unsigned NumDeclaredParams = FTy->getNumParams();
 
   CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
@@ -2937,7 +2949,7 @@ void CWriter::visitCallInst(CallInst &I) {
     ++ArgNo;
   }
       
-  bool PrintedArg = false;
+
   for (; AI != AE; ++AI, ++ArgNo) {
     if (PrintedArg) Out << ", ";
     if (ArgNo < NumDeclaredParams &&
@@ -2987,15 +2999,10 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     writeOperand(I.getOperand(1));
     Out << ", ";
     // Output the last argument to the enclosing function.
-    if (I.getParent()->getParent()->arg_empty()) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "The C backend does not currently support zero "
-           << "argument varargs functions, such as '"
-           << I.getParent()->getParent()->getName() << "'!";
-      report_fatal_error(Msg.str());
-    }
-    writeOperand(--I.getParent()->getParent()->arg_end());
+    if (I.getParent()->getParent()->arg_empty())
+      Out << "vararg_dummy_arg";
+    else
+      writeOperand(--I.getParent()->getParent()->arg_end());
     Out << ')';
     return true;
   case Intrinsic::vaend:
