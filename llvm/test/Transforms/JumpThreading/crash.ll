@@ -324,3 +324,20 @@ A:                                             ; preds = %entry
   call void undef(i64 ptrtoint (i8* blockaddress(@test11, %A) to i64)) nounwind
   unreachable
 }
+
+; PR6743
+define void @test12() nounwind ssp {
+entry:
+  br label %lbl_51
+
+lbl_51:                                           ; preds = %if.then, %entry
+  %tmp3 = phi i1 [ false, %if.then ], [ undef, %entry ] ; <i1> [#uses=2]
+  br i1 %tmp3, label %if.end12, label %if.then
+
+if.then:                                          ; preds = %lbl_51
+  br i1 %tmp3, label %lbl_51, label %if.end12
+
+if.end12:                                         ; preds = %if.then, %lbl_51
+  ret void
+}
+
