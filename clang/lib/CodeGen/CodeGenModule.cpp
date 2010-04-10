@@ -35,6 +35,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 using namespace CodeGen;
@@ -1231,7 +1232,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
-    ArgList.append(CI->op_begin()+1, CI->op_begin()+1+ArgNo);
+    llvm::CallSite CS(CI);
+    ArgList.append(CS.arg_begin(), CS.arg_begin() + ArgNo);
     llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList.begin(),
                                                      ArgList.end(), "", CI);
     ArgList.clear();
