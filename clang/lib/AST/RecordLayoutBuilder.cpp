@@ -504,6 +504,31 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   FinishLayout();
+  
+#ifndef NDEBUG
+  if (RD) {
+    // Check that we have base offsets for all bases.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+      if (I->isVirtual())
+        continue;
+      
+      const CXXRecordDecl *BaseDecl =
+        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      
+      assert(Bases.count(BaseDecl) && "Did not find base offset!");
+    }
+    
+    // And all virtual bases.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+         E = RD->vbases_end(); I != E; ++I) {
+      const CXXRecordDecl *BaseDecl =
+        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      
+      assert(VBases.count(BaseDecl) && "Did not find base offset!");
+    }
+  }
+#endif
 }
 
 // FIXME. Impl is no longer needed.
