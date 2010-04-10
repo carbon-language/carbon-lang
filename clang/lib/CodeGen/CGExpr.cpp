@@ -240,18 +240,15 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   if (!CatchUndefined)
     return;
 
-  const llvm::IntegerType *Size_tTy
+  const llvm::Type *Size_tTy
     = llvm::IntegerType::get(VMContext, LLVMPointerWidth);
   Address = Builder.CreateBitCast(Address, PtrToInt8Ty);
 
-  const llvm::Type *ResType[] = {
-    Size_tTy
-  };
-  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, ResType, 1);
-  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
-    CGM.getTypes().ConvertType(CGM.getContext().IntTy));
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &Size_tTy, 1);
+  const llvm::IntegerType *Int1Ty = llvm::IntegerType::get(VMContext, 1);
+
   // In time, people may want to control this and use a 1 here.
-  llvm::Value *Arg = llvm::ConstantInt::get(IntTy, 0);
+  llvm::Value *Arg = llvm::ConstantInt::get(Int1Ty, 0);
   llvm::Value *C = Builder.CreateCall2(F, Address, Arg);
   llvm::BasicBlock *Cont = createBasicBlock();
   llvm::BasicBlock *Check = createBasicBlock();
