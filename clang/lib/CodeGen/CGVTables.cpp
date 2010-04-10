@@ -1361,24 +1361,23 @@ void VTableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
   ThunksVector.push_back(Thunk);
 }
 
-/// OverridesMethodInBases - Checks whether whether this virtual member 
-/// function overrides a member function in any of the given bases.
-/// Returns the overridden member function, or null if none was found.
-static const CXXMethodDecl * 
-OverridesMethodInBases(const CXXMethodDecl *MD,
-                       VTableBuilder::PrimaryBasesSetVectorTy &Bases) {
+typedef llvm::SmallPtrSet<const CXXMethodDecl *, 8> OverriddenMethodsSetTy;
+
+/// ComputeAllOverriddenMethods - Given a method decl, will return a set of all
+/// the overridden methods that the function decl overrides.
+static void 
+ComputeAllOverriddenMethods(const CXXMethodDecl *MD,
+                            OverriddenMethodsSetTy& OverriddenMethods) {
+  assert(MD->isVirtual() && "Method is not virtual!");
+
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
-    const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
-    assert(OverriddenMD->isCanonicalDecl() &&
-           "Should have the canonical decl of the overridden RD!");
     
-    if (Bases.count(OverriddenRD))
-      return OverriddenMD;
+    OverriddenMethods.insert(OverriddenMD);
+    
+    ComputeAllOverriddenMethods(OverriddenMD, OverriddenMethods);
   }
-      
-  return 0;
 }
 
 void VTableBuilder::ComputeThisAdjustments() {
@@ -1616,7 +1615,7 @@ VTableBuilder::AddMethod(const CXXMethodDecl *MD,
 /// struct C : B { virtual void f(); }
 ///
 /// OverridesIndirectMethodInBase will return true if given C::f as the method 
-/// and { A } as the set of  bases.
+/// and { A } as the set of bases.
 static bool
 OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
                                VTableBuilder::PrimaryBasesSetVectorTy &Bases) {
@@ -1706,14 +1705,17 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
 static const CXXMethodDecl * 
 FindNearestOverriddenMethod(const CXXMethodDecl *MD,
                             VTableBuilder::PrimaryBasesSetVectorTy &Bases) {
+  OverriddenMethodsSetTy OverriddenMethods;
+  ComputeAllOverriddenMethods(MD, OverriddenMethods);
+  
   for (int I = Bases.size(), E = 0; I != E; --I) {
     const CXXRecordDecl *PrimaryBase = Bases[I - 1];
 
     // Now check the overriden methods.
-    for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
-         E = MD->end_overridden_methods(); I != E; ++I) {
+    for (OverriddenMethodsSetTy::const_iterator I = OverriddenMethods.begin(),
+         E = OverriddenMethods.end(); I != E; ++I) {
       const CXXMethodDecl *OverriddenMD = *I;
-
+      
       // We found our overridden method.
       if (OverriddenMD->getParent() == PrimaryBase)
         return OverriddenMD;
@@ -2418,7 +2420,7 @@ void CodeGenVTables::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
 
     // Check if this method overrides a method in the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
-          OverridesMethodInBases(MD, PrimaryBases)) {
+          FindNearestOverriddenMethod(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
       if (ComputeReturnAdjustmentBaseOffset(CGM.getContext(), MD, 

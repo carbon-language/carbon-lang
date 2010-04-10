@@ -1326,3 +1326,41 @@ struct F : E {
 void F::f() { }
 
 }
+
+namespace Test31 {
+
+// Test that we don't add D::f twice to the primary vtable.
+struct A {
+  int a;
+};
+
+struct B {
+  virtual void f();
+};
+
+struct C : A, virtual B {
+  virtual void f();
+};
+
+// CHECK:      Vtable for 'Test31::D' (11 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | offset_to_top (0)
+// CHECK-NEXT:    4 | Test31::D RTTI
+// CHECK-NEXT:        -- (Test31::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test31::D, 0) vtable address --
+// CHECK-NEXT:    5 | void Test31::D::f()
+// CHECK-NEXT:    6 | vbase_offset (-8)
+// CHECK-NEXT:    7 | vcall_offset (-8)
+// CHECK-NEXT:    8 | offset_to_top (-8)
+// CHECK-NEXT:    9 | Test31::D RTTI
+// CHECK-NEXT:        -- (Test31::C, 8) vtable address --
+// CHECK-NEXT:   10 | void Test31::D::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+struct D : virtual C {
+  virtual void f();
+};
+void D::f() { }
+
+}
