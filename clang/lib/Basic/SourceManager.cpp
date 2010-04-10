@@ -98,24 +98,26 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
           << Entry->getName() << ErrorStr;
 
       Buffer.setInt(true);
-    } else if (FileInfo.st_size != Entry->getSize()
+
+    // FIXME: This conditionalization is horrible, but we see spurious failures
+    // in the test suite due to this warning and no one has had time to hunt it
+    // down. So for now, we just don't emit this diagnostic on Win32, and hope
+    // nothing bad happens.
+    //
+    // PR6812.
 #if !defined(LLVM_ON_WIN32)
-               // In our regression testing, the Windows file system
-               // seems to have inconsistent modification times that
-               // sometimes erroneously trigger this error-handling
-               // path.
-               || FileInfo.st_mtime != Entry->getModificationTime()
-#endif
-               ) {
+    } else if (FileInfo.st_size != Entry->getSize() ||
+               FileInfo.st_mtime != Entry->getModificationTime()) {
       // Check that the file's size and modification time are the same
       // as in the file entry (which may have come from a stat cache).
       if (Diag.isDiagnosticInFlight())
-        Diag.SetDelayedDiagnostic(diag::err_file_modified, 
+        Diag.SetDelayedDiagnostic(diag::err_file_modified,
                                   Entry->getName());
-      else 
+      else
         Diag.Report(diag::err_file_modified) << Entry->getName();
 
       Buffer.setInt(true);
+#endif
     }
   }
   
