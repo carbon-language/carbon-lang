@@ -73,8 +73,9 @@ class U {
   union { int a; char* p; };
   union { int b; double d; };
 
-  U() :  a(1), p(0), d(1.0)  {} // expected-error {{multiple initializations given for non-static member 'p'}} \
-                        // expected-note {{previous initialization is here}}
+  U() :  a(1), // expected-note {{previous initialization is here}}
+         p(0), // expected-error {{initializing multiple members of anonymous union}}
+         d(1.0)  {}
 };
 
 struct V {};

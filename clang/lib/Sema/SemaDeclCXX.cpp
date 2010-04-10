@@ -1660,11 +1660,20 @@ static void *GetKeyForMember(ASTContext &Context,
   if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
     Field = Member->getAnonUnionMember();
   
-  // If the field is a member of an anonymous union, we use record decl of the
-  // union as the key.
+  // If the field is a member of an anonymous struct or union, our key
+  // is the anonymous record decl that's a direct child of the class.
   RecordDecl *RD = Field->getParent();
-  if (RD->isAnonymousStructOrUnion() && RD->isUnion())
+  if (RD->isAnonymousStructOrUnion()) {
+    while (true) {
+      RecordDecl *Parent = cast<RecordDecl>(RD->getDeclContext());
+      if (Parent->isAnonymousStructOrUnion())
+        RD = Parent;
+      else
+        break;
+    }
+      
     return static_cast<void *>(RD);
+  }
 
   return static_cast<void *>(Field);
 }
@@ -1754,6 +1763,71 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   }
 }
 
+namespace {
+bool CheckRedundantInit(Sema &S,
+                        CXXBaseOrMemberInitializer *Init,
+                        CXXBaseOrMemberInitializer *&PrevInit) {
+  if (!PrevInit) {
+    PrevInit = Init;
+    return false;
+  }
+
+  if (FieldDecl *Field = Init->getMember())
+    S.Diag(Init->getSourceLocation(),
+           diag::err_multiple_mem_initialization)
+      << Field->getDeclName()
+      << Init->getSourceRange();
+  else {
+    Type *BaseClass = Init->getBaseClass();
+    assert(BaseClass && "neither field nor base");
+    S.Diag(Init->getSourceLocation(),
+           diag::err_multiple_base_initialization)
+      << QualType(BaseClass, 0)
+      << Init->getSourceRange();
+  }
+  S.Diag(PrevInit->getSourceLocation(), diag::note_previous_initializer)
+    << 0 << PrevInit->getSourceRange();
+
+  return true;
+}
+
+typedef std::pair<NamedDecl *, CXXBaseOrMemberInitializer *> UnionEntry;
+typedef llvm::DenseMap<RecordDecl*, UnionEntry> RedundantUnionMap;
+
+bool CheckRedundantUnionInit(Sema &S,
+                             CXXBaseOrMemberInitializer *Init,
+                             RedundantUnionMap &Unions) {
+  FieldDecl *Field = Init->getMember();
+  RecordDecl *Parent = Field->getParent();
+  if (!Parent->isAnonymousStructOrUnion())
+    return false;
+
+  NamedDecl *Child = Field;
+  do {
+    if (Parent->isUnion()) {
+      UnionEntry &En = Unions[Parent];
+      if (En.first && En.first != Child) {
+        S.Diag(Init->getSourceLocation(),
+               diag::err_multiple_mem_union_initialization)
+          << Field->getDeclName()
+          << Init->getSourceRange();
+        S.Diag(En.second->getSourceLocation(), diag::note_previous_initializer)
+          << 0 << En.second->getSourceRange();
+        return true;
+      } else if (!En.first) {
+        En.first = Child;
+        En.second = Init;
+      }
+    }
+
+    Child = Parent;
+    Parent = cast<RecordDecl>(Parent->getDeclContext());
+  } while (Parent->isAnonymousStructOrUnion());
+
+  return false;
+}
+}
+
 /// ActOnMemInitializers - Handle the member initializers for a constructor.
 void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                 SourceLocation ColonLoc,
@@ -1774,34 +1848,29 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   
   CXXBaseOrMemberInitializer **MemInits =
     reinterpret_cast<CXXBaseOrMemberInitializer **>(meminits);
-  
+
+  // Mapping for the duplicate initializers check.
+  // For member initializers, this is keyed with a FieldDecl*.
+  // For base initializers, this is keyed with a Type*.
   llvm::DenseMap<void*, CXXBaseOrMemberInitializer *> Members;
+
+  // Mapping for the inconsistent anonymous-union initializers check.
+  RedundantUnionMap MemberUnions;
+
   bool HadError = false;
   for (unsigned i = 0; i < NumMemInits; i++) {
-    CXXBaseOrMemberInitializer *Member = MemInits[i];
+    CXXBaseOrMemberInitializer *Init = MemInits[i];
 
-    void *KeyToMember = GetKeyForMember(Context, Member);
-    CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
-    if (!PrevMember) {
-      PrevMember = Member;
-      continue;
+    if (Init->isMemberInitializer()) {
+      FieldDecl *Field = Init->getMember();
+      if (CheckRedundantInit(*this, Init, Members[Field]) ||
+          CheckRedundantUnionInit(*this, Init, MemberUnions))
+        HadError = true;
+    } else {
+      void *Key = GetKeyForBase(Context, QualType(Init->getBaseClass(), 0));
+      if (CheckRedundantInit(*this, Init, Members[Key]))
+        HadError = true;
     }
-    if (FieldDecl *Field = Member->getMember())
-      Diag(Member->getSourceLocation(),
-           diag::error_multiple_mem_initialization)
-        << Field->getNameAsString()
-        << Member->getSourceRange();
-    else {
-      Type *BaseClass = Member->getBaseClass();
-      assert(BaseClass && "ActOnMemInitializers - neither field or base");
-      Diag(Member->getSourceLocation(),
-           diag::error_multiple_base_initialization)
-        << QualType(BaseClass, 0)
-        << Member->getSourceRange();
-    }
-    Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
-      << 0;
-    HadError = true;
   }
 
   if (HadError)

@@ -2461,10 +2461,11 @@ def err_overload_incorrect_fntype : Error<
 def err_only_constructors_take_base_inits : Error<
   "only constructors take base initializers">;
 
-def error_multiple_mem_initialization : Error <
-  "multiple initializations given for non-static member '%0'">;
-
-def error_multiple_base_initialization : Error <
+def err_multiple_mem_initialization : Error <
+  "multiple initializations given for non-static member %0">;
+def err_multiple_mem_union_initialization : Error <
+  "initializing multiple members of anonymous union">;
+def err_multiple_base_initialization : Error <
   "multiple initializations given for base %0">;
 
 def err_mem_init_not_member_or_class : Error<

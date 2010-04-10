@@ -51,3 +51,26 @@ namespace Test3 {
       t(2) { } // expected-error {{multiple initializations given for non-static member 't'}}
   };
 }
+
+namespace test4 {
+  class A {
+    union {
+      struct {
+        int a;
+        int b;
+      };
+
+      int c;
+
+      union {
+        int d;
+        int e;
+      };
+    };
+
+    A(char _) : a(0), b(0) {}
+    A(short _) : a(0), c(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
+    A(int _) : d(0), e(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
+    A(long _) : a(0), d(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
+  };
+}

@@ -108,3 +108,15 @@ namespace test2 {
     Foo y;
   };
 }
+
+// PR6575: this should not crash
+namespace test3 {
+  struct MyClass {
+    MyClass() : m_int(0) {}
+    union {
+      struct {
+        int m_int;
+      };
+    };
+  };
+}
