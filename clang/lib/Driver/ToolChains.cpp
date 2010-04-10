@@ -225,10 +225,17 @@ void DarwinGCC::AddLinkSearchPathArgs(const ArgList &Args,
     CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
                                          "/x86_64"));
   }
+  
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + getDriver().Dir + "/../lib/gcc/" +
+                                       ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + getDriver().Dir + "/../lib/gcc"));
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
   // Intentionally duplicated for (temporary) gcc bug compatibility.
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + getDriver().Dir + "/../lib/" +
+                                       ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + getDriver().Dir + "/../lib"));
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
                                        "/../../../" + ToolChainDir));
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
