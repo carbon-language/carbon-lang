@@ -1305,7 +1305,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     mangleCalledExpression(CE->getCallee(), CE->getNumArgs());
     for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
       mangleExpression(CE->getArg(I));
-    Out << "E";
+    Out << 'E';
     break;
   }
 
@@ -1349,9 +1349,9 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
     Out << "cv";
     mangleType(CE->getType());
-    if (N != 1) Out << "_";
+    if (N != 1) Out << '_';
     for (unsigned I = 0; I != N; ++I) mangleExpression(CE->getArg(I));
-    if (N != 1) Out << "E";
+    if (N != 1) Out << 'E';
     break;
   }
 
@@ -1362,21 +1362,21 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
     Out << "cv";
     mangleType(CE->getType());
-    if (N != 1) Out << "_";
+    if (N != 1) Out << '_';
     for (unsigned I = 0; I != N; ++I) mangleExpression(CE->getArg(I));
-    if (N != 1) Out << "E";
+    if (N != 1) Out << 'E';
     break;
   }
 
   case Expr::SizeOfAlignOfExprClass: {
     const SizeOfAlignOfExpr *SAE = cast<SizeOfAlignOfExpr>(E);
-    if (SAE->isSizeOf()) Out << "s";
-    else Out << "a";
+    if (SAE->isSizeOf()) Out << 's';
+    else Out << 'a';
     if (SAE->isArgumentType()) {
-      Out << "t";
+      Out << 't';
       mangleType(SAE->getArgumentType());
     } else {
-      Out << "z";
+      Out << 'z';
       mangleExpression(SAE->getArgumentExpr());
     }
     break;
@@ -1504,7 +1504,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
   case Expr::FloatingLiteralClass: {
     const FloatingLiteral *FL = cast<FloatingLiteral>(E);
-    Out << "L";
+    Out << 'L';
     mangleType(FL->getType());
 
     // TODO: avoid this copy with careful stream management.
@@ -1512,12 +1512,12 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     FL->getValue().bitcastToAPInt().toString(Buffer, 16, false);
     Out.write(Buffer.data(), Buffer.size());
 
-    Out << "E";
+    Out << 'E';
     break;
   }
 
   case Expr::CharacterLiteralClass:
-    Out << "L";
+    Out << 'L';
     mangleType(E->getType());
     Out << cast<CharacterLiteral>(E)->getValue();
     Out << 'E';
@@ -1579,20 +1579,20 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
 void CXXNameMangler::mangleTemplateArgs(const TemplateParameterList &PL,
                                         const TemplateArgumentList &AL) {
   // <template-args> ::= I <template-arg>+ E
-  Out << "I";
+  Out << 'I';
   for (unsigned i = 0, e = AL.size(); i != e; ++i)
     mangleTemplateArg(PL.getParam(i), AL[i]);
-  Out << "E";
+  Out << 'E';
 }
 
 void CXXNameMangler::mangleTemplateArgs(const TemplateParameterList &PL,
                                         const TemplateArgument *TemplateArgs,
                                         unsigned NumTemplateArgs) {
   // <template-args> ::= I <template-arg>+ E
-  Out << "I";
+  Out << 'I';
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
     mangleTemplateArg(PL.getParam(i), TemplateArgs[i]);
-  Out << "E";
+  Out << 'E';
 }
 
 void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
@@ -1688,8 +1688,7 @@ bool CXXNameMangler::mangleSubstitution(QualType T) {
 }
 
 bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
-  llvm::DenseMap<uintptr_t, unsigned>::iterator I =
-    Substitutions.find(Ptr);
+  llvm::DenseMap<uintptr_t, unsigned>::iterator I = Substitutions.find(Ptr);
   if (I == Substitutions.end())
     return false;
 
@@ -1701,9 +1700,8 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
 
     // <seq-id> is encoded in base-36, using digits and upper case letters.
     char Buffer[10];
-    char *BufferPtr = Buffer + 9;
+    char *BufferPtr = llvm::array_endof(Buffer);
 
-    *BufferPtr = 0;
     if (SeqID == 0) *--BufferPtr = '0';
 
     while (SeqID) {
@@ -1715,7 +1713,9 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
       SeqID /= 36;
     }
 
-    Out << 'S' << BufferPtr << '_';
+    Out << 'S'
+        << llvm::StringRef(BufferPtr, llvm::array_endof(Buffer)-BufferPtr)
+        << '_';
   }
 
   return true;
@@ -1990,7 +1990,7 @@ void MangleContext::mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
   Mangler.getStream() << "_ZTC";
   Mangler.mangleName(RD);
   Mangler.getStream() << Offset;
-  Mangler.getStream() << "_";
+  Mangler.getStream() << '_';
   Mangler.mangleName(Type);
 }
 
