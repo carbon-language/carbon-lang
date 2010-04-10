@@ -1303,3 +1303,26 @@ struct B : virtual A {
 V2 *B::f() { return 0; }
 
 }
+
+namespace Test30 {
+
+// Test that we don't assert when generating a vtable for F.
+struct A { };
+
+struct B : virtual A {
+ int i;
+};
+
+struct C {
+ virtual void f();
+};
+
+struct D : virtual C, B { };
+struct E : virtual D { };
+
+struct F : E {
+ virtual void f();
+};
+void F::f() { }
+
+}

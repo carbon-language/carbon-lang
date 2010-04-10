@@ -170,6 +170,9 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       // We have a virtual primary base, insert it as an indirect primary base.
       IndirectPrimaryBases.insert(Base);
 
+      assert(!VisitedVirtualBases.count(Base) && "vbase already visited!");
+      VisitedVirtualBases.insert(Base);
+      
       LayoutVirtualBase(Base);
     } else
       LayoutNonVirtualBase(Base);
@@ -209,12 +212,23 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
                                            uint64_t Offset,
                                            const CXXRecordDecl *MostDerivedClass) {
   const CXXRecordDecl *PrimaryBase;
+  bool PrimaryBaseIsVirtual;
 
-  if (MostDerivedClass == RD)
+  if (MostDerivedClass == RD) {
     PrimaryBase = this->PrimaryBase.getBase();
-  else {
+    PrimaryBaseIsVirtual = this->PrimaryBase.isVirtual();
+  } else {
     const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
     PrimaryBase = Layout.getPrimaryBase();
+    PrimaryBaseIsVirtual = Layout.getPrimaryBaseWasVirtual();
+  }
+
+  // Check the primary base first.
+  if (PrimaryBase && PrimaryBaseIsVirtual && 
+      VisitedVirtualBases.insert(PrimaryBase)) {
+    assert(!VBases.count(PrimaryBase) && "vbase offset already exists!");
+    
+    VBases.insert(std::make_pair(PrimaryBase, Offset));
   }
 
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -226,28 +240,15 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
-      bool IndirectPrimaryBase = IndirectPrimaryBases.count(Base);
+      if (PrimaryBase != Base || !PrimaryBaseIsVirtual) {
+        bool IndirectPrimaryBase = IndirectPrimaryBases.count(Base);
 
-      // We only want to visit this virtual base if it's either a primary base,
-      // or not an indirect primary base.
-      if (Base == PrimaryBase || !IndirectPrimaryBase) {
-        // Only lay things out once.
-        if (!VisitedVirtualBases.insert(Base))
-          continue;
-
-        if (Base == PrimaryBase) {
-          assert(IndirectPrimaryBase &&
-                 "Base is supposed to be an indirect primary base!");
-
-          // We only want to add a vbase offset if this primary base is not the
-          // primary base of the most derived class.
-          if (PrimaryBase != this->PrimaryBase.getBase() ||
-              !this->PrimaryBase.isVirtual()) {
-            if (!VBases.insert(std::make_pair(Base, Offset)).second)
-              assert(false && "Added same vbase offset more than once!");
-          }
-        } else {
-          // We actually do want to lay out this base.
+        // Only lay out the virtual base if it's not an indirect primary base.
+        if (!IndirectPrimaryBase) {
+          // Only visit virtual bases once.
+          if (!VisitedVirtualBases.insert(Base))
+            continue;
+          
           LayoutVirtualBase(Base);
         }
       }
