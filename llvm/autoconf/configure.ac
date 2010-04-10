@@ -728,8 +728,8 @@ AC_MSG_CHECKING([optimization flags])
 case "$withval" in
   default)
     case "$llvm_cv_os_type" in
-    MingW) optimize_option=-O3 ;;
-    *)     optimize_option=-O2 ;;
+    MingW) optimize_option=-O2 ;;
+    *)     optimize_option=-O3 ;;
     esac ;;
   *) optimize_option="$withval" ;;
 esac
