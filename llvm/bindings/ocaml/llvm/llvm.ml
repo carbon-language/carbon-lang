@@ -90,13 +90,13 @@ module Attribute = struct
   | Optsize
   | Ssp
   | Sspreq
-  | Alignment
+  | Alignment of int
   | Nocapture
   | Noredzone
   | Noimplicitfloat
   | Naked
   | Inlinehint
-  | Stackalignment
+  | Stackalignment of int
 end
 
 module Icmp = struct
@@ -170,6 +170,8 @@ external delete_type_name : string -> llmodule -> unit
 external type_by_name : llmodule -> string -> lltype option
                       = "llvm_type_by_name"
 external dump_module : llmodule -> unit = "llvm_dump_module"
+external set_module_inline_asm : llmodule -> string -> unit
+                               = "llvm_set_module_inline_asm"
 
 (*===-- Types -------------------------------------------------------------===*)
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
@@ -548,10 +550,42 @@ let rec fold_right_function_range f i e init =
 let fold_right_functions f m init =
   fold_right_function_range f (function_end m) (At_start m) init
 
-external add_function_attr : llvalue -> Attribute.t -> unit
-                           = "llvm_add_function_attr"
-external remove_function_attr : llvalue -> Attribute.t -> unit
-                              = "llvm_remove_function_attr"
+external llvm_add_function_attr : llvalue -> int -> unit
+                                = "llvm_add_function_attr"
+external llvm_remove_function_attr : llvalue -> int -> unit
+                                   = "llvm_remove_function_attr"
+
+let pack_attr (attr:Attribute.t) : int =
+  match attr with
+      Attribute.Zext              -> 1 lsl 0
+    | Attribute.Sext              -> 1 lsl 1
+    | Attribute.Noreturn          -> 1 lsl 2
+    | Attribute.Inreg             -> 1 lsl 3
+    | Attribute.Structret         -> 1 lsl 4
+    | Attribute.Nounwind          -> 1 lsl 5
+    | Attribute.Noalias           -> 1 lsl 6
+    | Attribute.Byval             -> 1 lsl 7
+    | Attribute.Nest              -> 1 lsl 8
+    | Attribute.Readnone          -> 1 lsl 9
+    | Attribute.Readonly          -> 1 lsl 10
+    | Attribute.Noinline          -> 1 lsl 11
+    | Attribute.Alwaysinline      -> 1 lsl 12
+    | Attribute.Optsize           -> 1 lsl 13
+    | Attribute.Ssp               -> 1 lsl 14
+    | Attribute.Sspreq            -> 1 lsl 15
+    | Attribute.Alignment n       -> n lsl 16
+    | Attribute.Nocapture         -> 1 lsl 21
+    | Attribute.Noredzone         -> 1 lsl 22
+    | Attribute.Noimplicitfloat   -> 1 lsl 23
+    | Attribute.Naked             -> 1 lsl 24
+    | Attribute.Inlinehint        -> 1 lsl 25
+    | Attribute.Stackalignment n  -> n lsl 26
+
+let add_function_attr llval attr =
+  llvm_add_function_attr llval (pack_attr attr)
+
+let remove_function_attr llval attr =
+  llvm_remove_function_attr llval (pack_attr attr)
 
 (*--... Operations on params ...............................................--*)
 external params : llvalue -> llvalue array = "llvm_params"
@@ -602,10 +636,17 @@ let rec fold_right_param_range f init i e =
 let fold_right_params f fn init =
   fold_right_param_range f init (param_end fn) (At_start fn)
 
-external add_param_attr : llvalue -> Attribute.t -> unit
-                        = "llvm_add_param_attr"
-external remove_param_attr : llvalue -> Attribute.t -> unit
-                           = "llvm_remove_param_attr"
+external llvm_add_param_attr : llvalue -> int -> unit
+                                = "llvm_add_param_attr"
+external llvm_remove_param_attr : llvalue -> int -> unit
+                                = "llvm_remove_param_attr"
+
+let add_param_attr llval attr =
+  llvm_add_param_attr llval (pack_attr attr)
+
+let remove_param_attr llval attr =
+  llvm_remove_param_attr llval (pack_attr attr)
+
 external set_param_alignment : llvalue -> int -> unit
                              = "llvm_set_param_alignment"
 
@@ -727,10 +768,17 @@ external instruction_call_conv: llvalue -> int
                               = "llvm_instruction_call_conv"
 external set_instruction_call_conv: int -> llvalue -> unit
                                   = "llvm_set_instruction_call_conv"
-external add_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
-                                    = "llvm_add_instruction_param_attr"
-external remove_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
-                                       = "llvm_remove_instruction_param_attr"
+
+external llvm_add_instruction_param_attr : llvalue -> int -> int -> unit
+                                         = "llvm_add_instruction_param_attr"
+external llvm_remove_instruction_param_attr : llvalue -> int -> int -> unit
+                                         = "llvm_remove_instruction_param_attr"
+
+let add_instruction_param_attr llval i attr =
+  llvm_add_instruction_param_attr llval i (pack_attr attr)
+
+let remove_instruction_param_attr llval i attr =
+  llvm_remove_instruction_param_attr llval i (pack_attr attr)
 
 (*--... Operations on call instructions (only) .............................--*)
 external is_tail_call : llvalue -> bool = "llvm_is_tail_call"

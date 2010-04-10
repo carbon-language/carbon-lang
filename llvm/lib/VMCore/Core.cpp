@@ -119,6 +119,11 @@ void LLVMDumpModule(LLVMModuleRef M) {
   unwrap(M)->dump();
 }
 
+/*--.. Operations on inline assembler ......................................--*/
+void LLVMSetModuleInlineAsm(LLVMModuleRef M, const char *Asm) {
+  unwrap(M)->setModuleInlineAsm(StringRef(Asm));
+}
+
 
 /*===-- Operations on types -----------------------------------------------===*/
 
