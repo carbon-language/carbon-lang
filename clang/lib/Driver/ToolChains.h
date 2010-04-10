@@ -176,6 +176,8 @@ public:
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
 
+  virtual bool SupportsObjCGC() const;
+
   virtual bool UseDwarfDebugFlags() const;
 
   virtual bool UseSjLjExceptions() const;

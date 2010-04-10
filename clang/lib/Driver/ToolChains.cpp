@@ -663,6 +663,11 @@ const char *Darwin::GetForcedPicModel() const {
   return 0;
 }
 
+bool Darwin::SupportsObjCGC() const {
+  // Garbage collection is supported everywhere except on iPhone OS.
+  return !isTargetIPhoneOS();
+}
+
 /// Generic_GCC - A tool chain using the 'gcc' command to perform
 /// all subcommands; this relies on gcc translating the majority of
 /// command line options.

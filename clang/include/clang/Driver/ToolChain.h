@@ -120,6 +120,9 @@ public:
   /// particular PIC mode.
   virtual const char *GetForcedPicModel() const = 0;
 
+  /// Does this tool chain support Objective-C garbage collection.
+  virtual bool SupportsObjCGC() const { return false; }
+
   /// UseDwarfDebugFlags - Embed the compile options to clang into the Dwarf
   /// compile unit information.
   virtual bool UseDwarfDebugFlags() const { return false; }
