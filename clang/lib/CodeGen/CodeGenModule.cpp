@@ -1203,11 +1203,12 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
   llvm::SmallVector<llvm::Value*, 4> ArgList;
 
   for (llvm::Value::use_iterator UI = OldFn->use_begin(), E = OldFn->use_end();
-       UI != E; ++UI) {
+       UI != E; ) {
     // TODO: Do invokes ever occur in C code?  If so, we should handle them too.
-    llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*UI);
+    llvm::Value::use_iterator I = UI++; // Increment before the CI is erased.
+    llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*I);
     llvm::CallSite CS(CI);
-    if (!CI || !CS.isCallee(UI)) continue;
+    if (!CI || !CS.isCallee(I)) continue;
 
     // If the return types don't match exactly, and if the call isn't dead, then
     // we can't transform this call.
