@@ -1473,11 +1473,6 @@ ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
           VTables.getVirtualBaseOffsetOffset(Offset.DerivedClass,
                                              Offset.VirtualBase);
       }
-
-      // FIXME: Once the assert in getVirtualBaseOffsetOffset is back again,
-      // we can get rid of this assert.
-      assert(Adjustment.VBaseOffsetOffset != 0 && 
-             "Invalid vbase offset offset!");
     }
 
     Adjustment.NonVirtual = Offset.NonVirtualOffset;
@@ -2532,13 +2527,6 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   }
   
   I = VirtualBaseClassOffsetOffsets.find(ClassPair);
-  
-  // FIXME: The assertion below assertion currently fails with the old vtable 
-  /// layout code if there is a non-virtual thunk adjustment in a vtable.
-  // Once the new layout is in place, this return should be removed.
-  if (I == VirtualBaseClassOffsetOffsets.end())
-    return 0;
-  
   assert(I != VirtualBaseClassOffsetOffsets.end() && "Did not find index!");
   
   return I->second;
