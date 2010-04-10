@@ -57,7 +57,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
     //
     outs() << "Running selected passes on program to test for crash: ";
     for(int i = 0, e = PassesToRun.size(); i != e; i++) {
-      outs() << "-" << PassesToRun[i]->getPassArgument( )<< " ";
+      outs() << "-" << PassesToRun[i]->getPassArgument() << " ";
     }
     
     std::string Filename;

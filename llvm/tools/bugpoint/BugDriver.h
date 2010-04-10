@@ -178,8 +178,7 @@ public:
   std::string executeProgram(std::string RequestedOutputFilename = "",
                              std::string Bitcode = "",
                              const std::string &SharedObjects = "",
-                             AbstractInterpreter *AI = 0,
-                             bool *ProgramExitedNonzero = 0);
+                             AbstractInterpreter *AI = 0);
 
   /// executeProgramSafely - Used to create reference output with the "safe"
   /// backend, if reference output is not provided.  If there is a problem with

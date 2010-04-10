@@ -312,8 +312,7 @@ void BugDriver::compileProgram(Module *M) {
 std::string BugDriver::executeProgram(std::string OutputFile,
                                       std::string BitcodeFile,
                                       const std::string &SharedObj,
-                                      AbstractInterpreter *AI,
-                                      bool *ProgramExitedNonzero) {
+                                      AbstractInterpreter *AI) {
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
   bool CreatedBitcode = false;
@@ -337,7 +336,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   }
 
   // Remove the temporary bitcode file when we are done.
-  sys::Path BitcodePath (BitcodeFile);
+  sys::Path BitcodePath(BitcodeFile);
   FileRemover BitcodeFileRemover(BitcodePath, CreatedBitcode && !SaveTemps);
 
   if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output";
@@ -379,9 +378,6 @@ std::string BugDriver::executeProgram(std::string OutputFile,
     outFile.close();
   }
 
-  if (ProgramExitedNonzero != 0)
-    *ProgramExitedNonzero = (RetVal != 0);
-
   // Return the filename we captured the output to.
   return OutputFile;
 }
@@ -390,9 +386,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 /// backend, if reference output is not provided.
 ///
 std::string BugDriver::executeProgramSafely(std::string OutputFile) {
-  bool ProgramExitedNonzero;
-  std::string outFN = executeProgram(OutputFile, "", "", SafeInterpreter,
-                                     &ProgramExitedNonzero);
+  std::string outFN = executeProgram(OutputFile, "", "", SafeInterpreter);
   return outFN;
 }
 
@@ -449,11 +443,8 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
 bool BugDriver::diffProgram(const std::string &BitcodeFile,
                             const std::string &SharedObject,
                             bool RemoveBitcode) {
-  bool ProgramExitedNonzero;
-
   // Execute the program, generating an output file...
-  sys::Path Output(executeProgram("", BitcodeFile, SharedObject, 0,
-                                      &ProgramExitedNonzero));
+  sys::Path Output(executeProgram("", BitcodeFile, SharedObject, 0));
 
   std::string Error;
   bool FilesDifferent = false;
