@@ -1292,8 +1292,10 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
                                      "cannot yet mangle expression type %0");
-    Diags.Report(FullSourceLoc(), DiagID)
-      << E->getStmtClassName();
+    Diags.Report(FullSourceLoc(E->getExprLoc(),
+                               getASTContext().getSourceManager()),
+                 DiagID)
+      << E->getStmtClassName() << E->getSourceRange();
     break;
   }
 
