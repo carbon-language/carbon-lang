@@ -1226,6 +1226,23 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 Haiku target
+class HaikuX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  HaikuX86_32TargetInfo(const std::string& triple)
+    : X86_32TargetInfo(triple) {
+    SizeType = UnsignedLong;
+  }                                       	
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__INTEL__");
+    Builder.defineMacro("__HAIKU__");
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
 public:
@@ -2351,6 +2368,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new MinGWX86_32TargetInfo(T);
     case llvm::Triple::Win32:
       return new VisualStudioWindowsX86_32TargetInfo(T);
+    case llvm::Triple::Haiku:
+      return new HaikuX86_32TargetInfo(T);
     default:
       return new X86_32TargetInfo(T);
     }

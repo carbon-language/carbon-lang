@@ -619,6 +619,11 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
         CPUName = "core2";
       else if (getToolChain().getArchName() == "i386")
         CPUName = "yonah";
+    } else if (getToolChain().getOS().startswith("haiku"))  {
+      if (getToolChain().getArchName() == "x86_64")
+        CPUName = "x86-64";
+      else if (getToolChain().getArchName() == "i386")
+        CPUName = "i586";
     } else {
       if (getToolChain().getArchName() == "x86_64")
         CPUName = "x86-64";

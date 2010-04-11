@@ -429,6 +429,49 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
       }
     }
     break;
+  case llvm::Triple::Haiku:
+    AddPath("/boot/common/include", System, true, false, false);
+    AddPath("/boot/develop/headers/os", System, true, false, false);
+    AddPath("/boot/develop/headers/os/app", System, true, false, false);
+    AddPath("/boot/develop/headers/os/arch", System, true, false, false);
+    AddPath("/boot/develop/headers/os/device", System, true, false, false);
+    AddPath("/boot/develop/headers/os/drivers", System, true, false, false);
+    AddPath("/boot/develop/headers/os/game", System, true, false, false); 
+    AddPath("/boot/develop/headers/os/interface", System, true, false, false);
+    AddPath("/boot/develop/headers/os/kernel", System, true, false, false);
+    AddPath("/boot/develop/headers/os/locale", System, true, false, false);
+    AddPath("/boot/develop/headers/os/mail", System, true, false, false);
+    AddPath("/boot/develop/headers/os/media", System, true, false, false);
+    AddPath("/boot/develop/headers/os/midi", System, true, false, false);
+    AddPath("/boot/develop/headers/os/midi2", System, true, false, false);
+    AddPath("/boot/develop/headers/os/net", System, true, false, false);
+    AddPath("/boot/develop/headers/os/storage", System, true, false, false);
+    AddPath("/boot/develop/headers/os/support", System, true, false, false);
+    AddPath("/boot/develop/headers/os/translation",
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/add-ons/graphics", 
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/add-ons/input_server", 
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/add-ons/screen_saver", 
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/add-ons/tracker", 
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/be_apps/Deskbar",
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/be_apps/NetPositive",
+      System, true, false, false);
+    AddPath("/boot/develop/headers/os/be_apps/Tracker",
+      System, true, false, false);
+    AddPath("/boot/develop/headers/cpp", System, true, false, false);
+    AddPath("/boot/develop/headers/cpp/i586-pc-haiku", 
+      System, true, false, false);
+    AddPath("/boot/develop/headers/3rdparty", System, true, false, false);
+    AddPath("/boot/develop/headers/bsd", System, true, false, false);
+    AddPath("/boot/develop/headers/glibc", System, true, false, false);
+    AddPath("/boot/develop/headers/posix", System, true, false, false);
+    AddPath("/boot/develop/headers",  System, true, false, false);
+  	break;
   case llvm::Triple::MinGW64:
   case llvm::Triple::MinGW32:
     AddPath("c:/mingw/include", System, true, false, false);
