@@ -636,7 +636,7 @@ namespace llvm {
     ///
     bool isKnownNonZero(const SCEV *S);
 
-    /// isKnownNonZero - Test if the given expression is known to satisfy
+    /// isKnownPredicate - Test if the given expression is known to satisfy
     /// the condition described by Pred, LHS, and RHS.
     ///
     bool isKnownPredicate(ICmpInst::Predicate Pred,
