@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o /dev/null %s
+// RUN: %clang_cc1 -fcatch-undefined-behavior -emit-llvm-only %s
 
 // PR6805
 void foo() {
