@@ -3845,6 +3845,13 @@ public:
   ObjCMethodDecl *LookupPrivateInstanceMethod(Selector Sel,
                                               ObjCInterfaceDecl *ClassDecl);
 
+  Action::OwningExprResult
+  HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
+                            Expr *&BaseExpr, bool &IsArrow,
+                            DeclarationName MemberName,
+                            SourceLocation MemberLoc, SourceLocation OpLoc,
+                            CXXScopeSpec &SS, DeclPtrTy ObjCImpDecl);
+  
   virtual OwningExprResult ActOnClassPropertyRefExpr(
     IdentifierInfo &receiverName,
     IdentifierInfo &propertyName,

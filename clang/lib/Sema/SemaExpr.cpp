@@ -3140,105 +3140,12 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   }
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
   // pointer to a (potentially qualified) interface type.
-  const ObjCObjectPointerType *OPT;
-  if (!IsArrow && (OPT = BaseType->getAsObjCInterfacePointerType())) {
-    const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
-    ObjCInterfaceDecl *IFace = IFaceT->getDecl();
-    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-
-    // Search for a declared property first.
-    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
-      // Check whether we can reference this property.
-      if (DiagnoseUseOfDecl(PD, MemberLoc))
-        return ExprError();
-      QualType ResTy = PD->getType();
-      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-      ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
-      if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))
-        ResTy = Getter->getResultType();
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
-                                                     MemberLoc, BaseExpr));
-    }
-    // Check protocols on qualified interfaces.
-    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-         E = OPT->qual_end(); I != E; ++I)
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
-        // Check whether we can reference this property.
-        if (DiagnoseUseOfDecl(PD, MemberLoc))
-          return ExprError();
-
-        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                       MemberLoc, BaseExpr));
-      }
-    // If that failed, look for an "implicit" property by seeing if the nullary
-    // selector is implemented.
-
-    // FIXME: The logic for looking up nullary and unary selectors should be
-    // shared with the code in ActOnInstanceMessage.
-
-    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
-
-    // If this reference is in an @implementation, check for 'private' methods.
-    if (!Getter)
-      Getter = IFace->lookupPrivateInstanceMethod(Sel);
-
-    // Look through local category implementations associated with the class.
-    if (!Getter)
-      Getter = IFace->getCategoryInstanceMethod(Sel);
-    if (Getter) {
-      // Check if we can reference this property.
-      if (DiagnoseUseOfDecl(Getter, MemberLoc))
-        return ExprError();
-    }
-    // If we found a getter then this may be a valid dot-reference, we
-    // will look for the matching setter, in case it is needed.
-    Selector SetterSel =
-      SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                         PP.getSelectorTable(), Member);
-    ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
-    if (!Setter) {
-      // If this reference is in an @implementation, also check for 'private'
-      // methods.
-      Setter = IFace->lookupPrivateInstanceMethod(SetterSel);
-    }
-    // Look through local category implementations associated with the class.
-    if (!Setter)
-      Setter = IFace->getCategoryInstanceMethod(SetterSel);
-
-    if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
-      return ExprError();
-
-    if (Getter) {
-      QualType PType;
-      PType = Getter->getResultType();
-      return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                      Setter, MemberLoc, BaseExpr));
-    }
-
-    // Attempt to correct for typos in property names.
-    LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
-                     LookupOrdinaryName);
-    if (CorrectTypo(Res, 0, 0, IFace, false, OPT) &&
-        Res.getAsSingle<ObjCPropertyDecl>()) {
-      Diag(R.getNameLoc(), diag::err_property_not_found_suggest)
-        << MemberName << BaseType << Res.getLookupName()
-        << FixItHint::CreateReplacement(R.getNameLoc(),
-                                        Res.getLookupName().getAsString());
-      ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
-      Diag(Property->getLocation(), diag::note_previous_decl)
-        << Property->getDeclName();
-
-      return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS,
-                              ObjCImpDecl);
-    }
-    Diag(MemberLoc, diag::err_property_not_found)
-      << MemberName << BaseType;
-    if (Setter && !Getter)
-      Diag(Setter->getLocation(), diag::note_getter_unavailable)
-        << MemberName << BaseExpr->getSourceRange();
-    return ExprError();
-  }
+  if (!IsArrow)
+    if (const ObjCObjectPointerType *OPT =
+          BaseType->getAsObjCInterfacePointerType())
+      return HandleExprPropertyRefExpr(OPT, BaseExpr, IsArrow,
+                                       MemberName, MemberLoc,
+                                       OpLoc, SS, ObjCImpDecl);
 
   // Handle the following exceptional case (*Obj).isa.
   if (!IsArrow &&
