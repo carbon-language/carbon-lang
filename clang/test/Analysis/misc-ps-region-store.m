@@ -984,3 +984,13 @@ void u132monitk (struct pr6036_c *pr6036_d) {
   (void) ((struct pr6036_a *) (unsigned long (*)[0]) ((char *) pr6036_d - 1))->pr6036_b; // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption}}
 }
 
+// <rdar://problem/7813989> - ?-expressions used as a base of a member expression should be treated as an lvalue
+typedef struct rdar7813989_NestedVal { int w; } rdar7813989_NestedVal;
+typedef struct rdar7813989_Val { rdar7813989_NestedVal nv; } rdar7813989_Val;
+
+int rdar7813989(int x, rdar7813989_Val *a, rdar7813989_Val *b) {
+  // This previously crashed with an assertion failure.
+  int z = (x ? a->nv : b->nv).w;
+  return z + 1;
+}
+
