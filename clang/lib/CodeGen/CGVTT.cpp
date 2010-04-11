@@ -179,13 +179,14 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
     // The vtable is a construction vtable, look in the construction vtable
     // address points.
     AddressPoint = AddressPoints.lookup(Base);
+    assert(AddressPoint != 0 && "Did not find ctor vtable address point!");
   } else {
     // Just get the address point for the regular vtable.
     AddressPoint = CGM.getVTables().getAddressPoint(Base, VTableClass);
+    assert(AddressPoint != 0 && "Did not find vtable address point!");
   }
 
   if (!AddressPoint) AddressPoint = 0;
-  assert(AddressPoint != 0 && "Did not find an address point!");
   
   llvm::Value *Idxs[] = {
     llvm::ConstantInt::get(llvm::Type::getInt64Ty(CGM.getLLVMContext()), 0),
