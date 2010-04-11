@@ -763,7 +763,11 @@ enum CXCursorKind {
   /** \brief An expression that sends a message to an Objective-C
    object or class. */
   CXCursor_ObjCMessageExpr               = 104,
-  CXCursor_LastExpr                      = 104,
+
+  /** \brief An expression that represents a block literal. */
+  CXCursor_BlockExpr                     = 105,
+
+  CXCursor_LastExpr                      = 105,
 
   /* Statements */
   CXCursor_FirstStmt                     = 200,

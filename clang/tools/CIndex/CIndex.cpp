@@ -242,6 +242,7 @@ public:
 
   // Declaration visitors
   bool VisitAttributes(Decl *D);
+  bool VisitBlockDecl(BlockDecl *B);
   bool VisitDeclContext(DeclContext *DC);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
@@ -297,10 +298,11 @@ public:
   bool VisitForStmt(ForStmt *S);
 
   // Expression visitors
-  bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
-  bool VisitExplicitCastExpr(ExplicitCastExpr *E);
+  bool VisitBlockExpr(BlockExpr *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCMessageExpr(ObjCMessageExpr *E);
+  bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
 };
 
 } // end anonymous namespace
@@ -482,6 +484,15 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 
   // Nothing to visit at the moment.
   return false;
+}
+
+bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
+  for (BlockDecl::param_iterator I=B->param_begin(), E=B->param_end(); I!=E;++I)
+    if (Decl *D = *I)
+      if (Visit(D))
+        return true;
+
+  return Visit(MakeCXCursor(B->getBody(), StmtParent, TU));
 }
 
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
@@ -922,6 +933,10 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
     return true;
 
   return false;
+}
+
+bool CursorVisitor::VisitBlockExpr(BlockExpr *B) {
+  return Visit(B->getBlockDecl());
 }
 
 bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
@@ -1552,6 +1567,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("TypeRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
+  case CXCursor_BlockExpr:
+      return createCXString("BlockExpr");
   case CXCursor_DeclRefExpr:
       return createCXString("DeclRefExpr");
   case CXCursor_MemberRefExpr:
