@@ -982,30 +982,17 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
   // Handle the primary base first.
-  if (PrimaryBase) {
-    uint64_t PrimaryBaseOffset;
-    
+  // We only want to add vcall offsets if the base is non-virtual; a virtual
+  // primary base will have its vcall and vbase offsets emitted already.
+  if (PrimaryBase && !Layout.getPrimaryBaseWasVirtual()) {
     // Get the base offset of the primary base.
-    if (Layout.getPrimaryBaseWasVirtual()) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary vbase should have a zero offset!");
-      
-      const ASTRecordLayout &MostDerivedClassLayout =
-        Context.getASTRecordLayout(MostDerivedClass);
-      
-      PrimaryBaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
-    } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary base should have a zero offset!");
+    assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+           "Primary base should have a zero offset!");
 
-      PrimaryBaseOffset = Base.getBaseOffset();
-    }
-    
-    AddVCallOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
+    AddVCallOffsets(BaseSubobject(PrimaryBase, Base.getBaseOffset()),
                     VBaseOffset);
   }
-
+  
   // Add the vcall offsets.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {

@@ -1387,3 +1387,71 @@ struct E : C, virtual D {
 void E::f() { }
 
 }
+
+namespace Test33 {
+
+// Test that we don't emit too many vcall offsets in 'Test32::F'.
+
+struct A {
+  virtual void a();
+};
+
+struct B {
+  virtual void b();
+};
+
+struct C : virtual A, virtual B {
+  virtual void c();
+};
+
+struct D : virtual C { };
+
+struct E : A, D { 
+  virtual void e();
+};
+
+// CHECK:      Vtable for 'Test33::F' (30 entries).
+// CHECK-NEXT:    0 | vbase_offset (24)
+// CHECK-NEXT:    1 | vbase_offset (16)
+// CHECK-NEXT:    2 | vbase_offset (16)
+// CHECK-NEXT:    3 | vbase_offset (8)
+// CHECK-NEXT:    4 | offset_to_top (0)
+// CHECK-NEXT:    5 | Test33::F RTTI
+// CHECK-NEXT:        -- (Test33::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test33::F, 0) vtable address --
+// CHECK-NEXT:    6 | void Test33::A::a()
+// CHECK-NEXT:    7 | void Test33::F::f()
+// CHECK-NEXT:    8 | vcall_offset (0)
+// CHECK-NEXT:    9 | vcall_offset (0)
+// CHECK-NEXT:   10 | vbase_offset (16)
+// CHECK-NEXT:   11 | vbase_offset (8)
+// CHECK-NEXT:   12 | vbase_offset (8)
+// CHECK-NEXT:   13 | offset_to_top (-8)
+// CHECK-NEXT:   14 | Test33::F RTTI
+// CHECK-NEXT:        -- (Test33::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test33::E, 8) vtable address --
+// CHECK-NEXT:   15 | void Test33::A::a()
+// CHECK-NEXT:   16 | void Test33::E::e()
+// CHECK-NEXT:   17 | vbase_offset (0)
+// CHECK-NEXT:   18 | vcall_offset (0)
+// CHECK-NEXT:   19 | vbase_offset (8)
+// CHECK-NEXT:   20 | vbase_offset (0)
+// CHECK-NEXT:   21 | vcall_offset (0)
+// CHECK-NEXT:   22 | offset_to_top (-16)
+// CHECK-NEXT:   23 | Test33::F RTTI
+// CHECK-NEXT:        -- (Test33::A, 16) vtable address --
+// CHECK-NEXT:        -- (Test33::C, 16) vtable address --
+// CHECK-NEXT:        -- (Test33::D, 16) vtable address --
+// CHECK-NEXT:   24 | void Test33::A::a()
+// CHECK-NEXT:   25 | void Test33::C::c()
+// CHECK-NEXT:   26 | vcall_offset (0)
+// CHECK-NEXT:   27 | offset_to_top (-24)
+// CHECK-NEXT:   28 | Test33::F RTTI
+// CHECK-NEXT:        -- (Test33::B, 24) vtable address --
+// CHECK-NEXT:   29 | void Test33::B::b()
+struct F : virtual E, A {
+  virtual void f();
+};
+void F::f() { }
+
+}
