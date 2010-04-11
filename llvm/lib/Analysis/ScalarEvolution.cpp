@@ -2922,8 +2922,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
       if (const SCEVConstant *C = dyn_cast<SCEVConstant>(AddRec->getStart()))
         if (!C->isZero())
           ConservativeResult =
-            ConstantRange(C->getValue()->getValue(),
-                          APInt(getTypeSizeInBits(C->getType()), 0));
+            ConstantRange(C->getValue()->getValue(), APInt(BitWidth, 0));
 
     // TODO: non-affine addrec
     if (AddRec->isAffine()) {
