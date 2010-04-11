@@ -4651,10 +4651,35 @@ bool ScalarEvolution::isKnownNonZero(const SCEV *S) {
 
 bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
                                        const SCEV *LHS, const SCEV *RHS) {
+  // If LHS or RHS is an addrec, check to see if the condition is true in
+  // every iteration of the loop.
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
+    if (isLoopEntryGuardedByCond(
+          AR->getLoop(), Pred, AR->getStart(), RHS) &&
+        isLoopBackedgeGuardedByCond(
+          AR->getLoop(), Pred,
+          getAddExpr(AR, AR->getStepRecurrence(*this)), RHS))
+      return true;
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS))
+    if (isLoopEntryGuardedByCond(
+          AR->getLoop(), Pred, LHS, AR->getStart()) &&
+        isLoopBackedgeGuardedByCond(
+          AR->getLoop(), Pred,
+          LHS, getAddExpr(AR, AR->getStepRecurrence(*this))))
+      return true;
 
+  // Otherwise see what can be done with known constant ranges.
+  return isKnownPredicateWithRanges(Pred, LHS, RHS);
+}
+
+bool
+ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
+                                            const SCEV *LHS, const SCEV *RHS) {
   if (HasSameValue(LHS, RHS))
     return ICmpInst::isTrueWhenEqual(Pred);
 
+  // This code is split out from isKnownPredicate because it is called from
+  // within isLoopEntryGuardedByCond.
   switch (Pred) {
   default:
     llvm_unreachable("Unexpected ICmpInst::Predicate value!");
@@ -5026,26 +5051,26 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
     break;
   case ICmpInst::ICMP_SLT:
   case ICmpInst::ICMP_SLE:
-    if (isKnownPredicate(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_SGE, RHS, FoundRHS))
+    if (isKnownPredicateWithRanges(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
+        isKnownPredicateWithRanges(ICmpInst::ICMP_SGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_SGT:
   case ICmpInst::ICMP_SGE:
-    if (isKnownPredicate(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_SLE, RHS, FoundRHS))
+    if (isKnownPredicateWithRanges(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
+        isKnownPredicateWithRanges(ICmpInst::ICMP_SLE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_ULE:
-    if (isKnownPredicate(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_UGE, RHS, FoundRHS))
+    if (isKnownPredicateWithRanges(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
+        isKnownPredicateWithRanges(ICmpInst::ICMP_UGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_UGE:
-    if (isKnownPredicate(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_ULE, RHS, FoundRHS))
+    if (isKnownPredicateWithRanges(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
+        isKnownPredicateWithRanges(ICmpInst::ICMP_ULE, RHS, FoundRHS))
       return true;
     break;
   }
