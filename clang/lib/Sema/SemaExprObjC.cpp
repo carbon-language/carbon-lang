@@ -294,11 +294,8 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
 /// objective C interface.  This is a property reference expression.
 Action::OwningExprResult Sema::
 HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
-                          Expr *&BaseExpr, bool &IsArrow,
-                          DeclarationName MemberName,
-                          SourceLocation MemberLoc, SourceLocation OpLoc,
-                          CXXScopeSpec &SS, DeclPtrTy ObjCImpDecl) {
-  assert(!IsArrow && "Should only be called with '.' expressions");
+                          Expr *BaseExpr, DeclarationName MemberName,
+                          SourceLocation MemberLoc) {
   const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
   ObjCInterfaceDecl *IFace = IFaceT->getDecl();
   IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
@@ -377,23 +374,22 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   LookupResult Res(*this, MemberName, MemberLoc, LookupOrdinaryName);
   if (CorrectTypo(Res, 0, 0, IFace, false, OPT) &&
       Res.getAsSingle<ObjCPropertyDecl>()) {
+    DeclarationName TypoResult = Res.getLookupName();
     Diag(MemberLoc, diag::err_property_not_found_suggest)
-      << MemberName << QualType(OPT, 0) << Res.getLookupName()
-      << FixItHint::CreateReplacement(MemberLoc,
-                                      Res.getLookupName().getAsString());
+      << MemberName << QualType(OPT, 0) << TypoResult
+      << FixItHint::CreateReplacement(MemberLoc, TypoResult.getAsString());
     ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
     Diag(Property->getLocation(), diag::note_previous_decl)
       << Property->getDeclName();
-
-    return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS, ObjCImpDecl);
+    return HandleExprPropertyRefExpr(OPT, BaseExpr, TypoResult, MemberLoc);
   }
+  
   Diag(MemberLoc, diag::err_property_not_found)
     << MemberName << QualType(OPT, 0);
   if (Setter && !Getter)
     Diag(Setter->getLocation(), diag::note_getter_unavailable)
       << MemberName << BaseExpr->getSourceRange();
   return ExprError();
-
 }
 
 

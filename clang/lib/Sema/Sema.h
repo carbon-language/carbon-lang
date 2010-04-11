@@ -3847,10 +3847,9 @@ public:
 
   Action::OwningExprResult
   HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
-                            Expr *&BaseExpr, bool &IsArrow,
+                            Expr *BaseExpr,
                             DeclarationName MemberName,
-                            SourceLocation MemberLoc, SourceLocation OpLoc,
-                            CXXScopeSpec &SS, DeclPtrTy ObjCImpDecl);
+                            SourceLocation MemberLoc);
   
   virtual OwningExprResult ActOnClassPropertyRefExpr(
     IdentifierInfo &receiverName,

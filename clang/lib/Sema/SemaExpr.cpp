@@ -3143,9 +3143,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   if (!IsArrow)
     if (const ObjCObjectPointerType *OPT =
           BaseType->getAsObjCInterfacePointerType())
-      return HandleExprPropertyRefExpr(OPT, BaseExpr, IsArrow,
-                                       MemberName, MemberLoc,
-                                       OpLoc, SS, ObjCImpDecl);
+      return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc);
 
   // Handle the following exceptional case (*Obj).isa.
   if (!IsArrow &&
