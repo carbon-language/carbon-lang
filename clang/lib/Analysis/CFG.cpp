@@ -108,16 +108,15 @@ private:
   CFGBlock *VisitBinaryOperator(BinaryOperator *B, AddStmtChoice asc);
   CFGBlock *VisitBlockExpr(BlockExpr* E, AddStmtChoice asc);
   CFGBlock *VisitBreakStmt(BreakStmt *B);
+  CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
+  CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
+  CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
   CFGBlock *VisitCallExpr(CallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCaseStmt(CaseStmt *C);
   CFGBlock *VisitChooseExpr(ChooseExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCompoundStmt(CompoundStmt *C);
-  CFGBlock *VisitConditionalOperator(ConditionalOperator *C,
-                                     AddStmtChoice asc);
+  CFGBlock *VisitConditionalOperator(ConditionalOperator *C, AddStmtChoice asc);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
-  CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
-  CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
-  CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
   CFGBlock *VisitDeclSubExpr(Decl* D);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);
