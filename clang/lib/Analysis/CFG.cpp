@@ -46,7 +46,7 @@ public:
   AddStmtChoice(Kind kind) : k(kind) {}
 
   bool alwaysAdd() const { return (unsigned)k & 0x1; }
-  bool asLValue() const { return k >= AlwaysAddAsLValue; }
+  bool asLValue() const { return k >= AsLValueNotAlwaysAdd; }
 
 private:
   Kind k;
