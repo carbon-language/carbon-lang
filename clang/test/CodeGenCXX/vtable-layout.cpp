@@ -1455,3 +1455,59 @@ struct F : virtual E, A {
 void F::f() { }
 
 }
+
+namespace Test34 {
+
+// Test that we lay out the construction vtable for 'Test34::E' in 'Test34:::F' correctly.
+
+struct A {
+  virtual void a();
+};
+struct B : virtual A { };
+
+struct C : B, A {
+  virtual void c();
+};
+
+struct D : A, C { };
+
+struct E : virtual D {
+  virtual void e();
+};
+
+// CHECK:      Construction vtable for ('Test34::E', 0) in 'Test34::F' (22 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | offset_to_top (0)
+// CHECK-NEXT:    4 | Test34::E RTTI
+// CHECK-NEXT:        -- (Test34::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test34::E, 0) vtable address --
+// CHECK-NEXT:    5 | void Test34::A::a()
+// CHECK-NEXT:    6 | void Test34::E::e()
+// CHECK-NEXT:    7 | vcall_offset (8)
+// CHECK-NEXT:    8 | vcall_offset (0)
+// CHECK-NEXT:    9 | vbase_offset (-8)
+// CHECK-NEXT:   10 | offset_to_top (-8)
+// CHECK-NEXT:   11 | Test34::E RTTI
+// CHECK-NEXT:        -- (Test34::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test34::D, 8) vtable address --
+// CHECK-NEXT:   12 | void Test34::A::a()
+// CHECK-NEXT:   13 | vbase_offset (-16)
+// CHECK-NEXT:   14 | vcall_offset (-16)
+// CHECK-NEXT:   15 | offset_to_top (-16)
+// CHECK-NEXT:   16 | Test34::E RTTI
+// CHECK-NEXT:        -- (Test34::B, 16) vtable address --
+// CHECK-NEXT:        -- (Test34::C, 16) vtable address --
+// CHECK-NEXT:   17 | [unused] void Test34::A::a()
+// CHECK-NEXT:   18 | void Test34::C::c()
+// CHECK-NEXT:   19 | offset_to_top (-24)
+// CHECK-NEXT:   20 | Test34::E RTTI
+// CHECK-NEXT:        -- (Test34::A, 24) vtable address --
+// CHECK-NEXT:   21 | void Test34::A::a()
+struct F : E {
+  virtual void f();
+};
+void F::f() { }
+
+}

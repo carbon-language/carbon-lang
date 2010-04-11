@@ -1247,9 +1247,13 @@ private:
   /// LayoutPrimaryAndSecondaryVTables - Layout the primary vtable for the
   /// given base subobject, as well as all its secondary vtables.
   ///
+  /// \param BaseIsMorallyVirtual whether the base subobject is a virtual base
+  /// or a direct or indirect base of a virtual base.
+  ///
   /// \param BaseIsVirtualInLayoutClass - Whether the base subobject is virtual
   /// in the layout class. 
   void LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
+                                        bool BaseIsMorallyVirtual,
                                         bool BaseIsVirtualInLayoutClass,
                                         uint64_t OffsetInLayoutClass);
   
@@ -1839,6 +1843,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
 
 void VTableBuilder::LayoutVTable() {
   LayoutPrimaryAndSecondaryVTables(BaseSubobject(MostDerivedClass, 0),
+                                   /*BaseIsMorallyVirtual=*/false,
                                    MostDerivedClassIsVirtual,
                                    MostDerivedClassOffset);
   
@@ -1854,6 +1859,7 @@ void VTableBuilder::LayoutVTable() {
   
 void
 VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
+                                                bool BaseIsMorallyVirtual,
                                                 bool BaseIsVirtualInLayoutClass,
                                                 uint64_t OffsetInLayoutClass) {
   assert(Base.getBase()->isDynamicClass() && "class does not have a vtable!");
@@ -1924,10 +1930,6 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
     RD = PrimaryBase;
   }
 
-  bool BaseIsMorallyVirtual = BaseIsVirtualInLayoutClass;
-  if (isBuildingConstructorVTable() && Base.getBase() == MostDerivedClass)
-    BaseIsMorallyVirtual = false;
-  
   // Layout secondary vtables.
   LayoutSecondaryVTables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
 }
@@ -1983,6 +1985,7 @@ void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
 
     // Layout the primary vtable (and any secondary vtables) for this base.
     LayoutPrimaryAndSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
+                                     BaseIsMorallyVirtual,
                                      /*BaseIsVirtualInLayoutClass=*/false,
                                      BaseOffsetInLayoutClass);
   }
@@ -2073,7 +2076,8 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
         LayoutClassLayout.getVBaseClassOffset(BaseDecl);
 
       LayoutPrimaryAndSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
-                                       /*BaseIsVirtual=*/true,
+                                       /*BaseIsMorallyVirtual=*/true,
+                                       /*BaseIsVirtualInLayoutClass=*/true,
                                        BaseOffsetInLayoutClass);
     }
     
