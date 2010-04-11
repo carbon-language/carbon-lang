@@ -955,7 +955,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
           const SCEV *N = getConstant(APInt::getMinValue(BitWidth) -
                                       getUnsignedRange(Step).getUnsignedMax());
           if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_ULT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_ULT, Start, N) &&
+              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_ULT, Start, N) &&
                isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_ULT,
                                            AR->getPostIncExpr(*this), N)))
             // Return the expression with the addrec on the outside.
@@ -966,7 +966,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
           const SCEV *N = getConstant(APInt::getMaxValue(BitWidth) -
                                       getSignedRange(Step).getSignedMin());
           if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT, AR, N) &&
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_UGT, Start, N) ||
+              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_UGT, Start, N) ||
                isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT,
                                            AR->getPostIncExpr(*this), N)))
             // Return the expression with the addrec on the outside.
@@ -1090,7 +1090,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
           const SCEV *N = getConstant(APInt::getSignedMinValue(BitWidth) -
                                       getSignedRange(Step).getSignedMax());
           if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SLT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_SLT, Start, N) &&
+              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_SLT, Start, N) &&
                isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SLT,
                                            AR->getPostIncExpr(*this), N)))
             // Return the expression with the addrec on the outside.
@@ -1101,7 +1101,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
           const SCEV *N = getConstant(APInt::getSignedMaxValue(BitWidth) -
                                       getSignedRange(Step).getSignedMin());
           if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SGT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_SGT, Start, N) &&
+              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_SGT, Start, N) &&
                isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SGT,
                                            AR->getPostIncExpr(*this), N)))
             // Return the expression with the addrec on the outside.
@@ -4751,13 +4751,13 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
                        LoopContinuePredicate->getSuccessor(0) != L->getHeader());
 }
 
-/// isLoopGuardedByCond - Test whether entry to the loop is protected
+/// isLoopEntryGuardedByCond - Test whether entry to the loop is protected
 /// by a conditional between LHS and RHS.  This is used to help avoid max
 /// expressions in loop trip counts, and to eliminate casts.
 bool
-ScalarEvolution::isLoopGuardedByCond(const Loop *L,
-                                     ICmpInst::Predicate Pred,
-                                     const SCEV *LHS, const SCEV *RHS) {
+ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
+                                          ICmpInst::Predicate Pred,
+                                          const SCEV *LHS, const SCEV *RHS) {
   // Interpret a null as meaning no loop, where there is obviously no guard
   // (interprocedural conditions notwithstanding).
   if (!L) return false;
@@ -5154,10 +5154,10 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // only know that it will execute (max(m,n)-n)/s times. In both cases,
     // the division must round up.
     const SCEV *End = RHS;
-    if (!isLoopGuardedByCond(L,
-                             isSigned ? ICmpInst::ICMP_SLT :
-                                        ICmpInst::ICMP_ULT,
-                             getMinusSCEV(Start, Step), RHS))
+    if (!isLoopEntryGuardedByCond(L,
+                                  isSigned ? ICmpInst::ICMP_SLT :
+                                             ICmpInst::ICMP_ULT,
+                                  getMinusSCEV(Start, Step), RHS))
       End = isSigned ? getSMaxExpr(RHS, Start)
                      : getUMaxExpr(RHS, Start);
 

@@ -147,7 +147,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
       SE->getAddExpr(BackedgeTakenCount,
                      SE->getIntegerSCEV(1, BackedgeTakenCount->getType()));
     if ((isa<SCEVConstant>(N) && !N->isZero()) ||
-        SE->isLoopGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
+        SE->isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
       // No overflow. Cast the sum.
       RHS = SE->getTruncateOrZeroExtend(N, IndVar->getType());
     } else {

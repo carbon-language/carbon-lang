@@ -554,11 +554,11 @@ namespace llvm {
     /// getSCEVAtScope(getSCEV(V), L).
     const SCEV *getSCEVAtScope(Value *V, const Loop *L);
 
-    /// isLoopGuardedByCond - Test whether entry to the loop is protected by
-    /// a conditional between LHS and RHS.  This is used to help avoid max
+    /// isLoopEntryGuardedByCond - Test whether entry to the loop is protected
+    /// by a conditional between LHS and RHS.  This is used to help avoid max
     /// expressions in loop trip counts, and to eliminate casts.
-    bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
-                             const SCEV *LHS, const SCEV *RHS);
+    bool isLoopEntryGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
+                                  const SCEV *LHS, const SCEV *RHS);
 
     /// isLoopBackedgeGuardedByCond - Test whether the backedge of the loop is
     /// protected by a conditional between LHS and RHS.  This is used to
