@@ -2689,7 +2689,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
             // If StartVal = j.start - j.stride, we can use StartVal as the
             // initial step of the addrec evolution.
             if (StartVal == getMinusSCEV(AddRec->getOperand(0),
-                                            AddRec->getOperand(1))) {
+                                         AddRec->getOperand(1))) {
               const SCEV *PHISCEV =
                  getAddRecExpr(StartVal, AddRec->getOperand(1), L);
 
