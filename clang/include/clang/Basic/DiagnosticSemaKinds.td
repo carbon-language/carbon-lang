@@ -2012,7 +2012,7 @@ def error_no_super_class : Error<
 def err_invalid_receiver_to_message : Error<
   "invalid receiver to message expression">;
 def err_invalid_receiver_to_message_super : Error<
-  "'super' not valid when not in a method">;
+  "'super' is only valid in a method body">;
 def warn_bad_receiver_type : Warning<
   "receiver type %0 is not 'id' or interface pointer, consider "
   "casting it to 'id'">;

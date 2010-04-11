@@ -37,7 +37,7 @@ void f0(int super) {
                 expected-warning {{method '-m' not found (return type defaults to 'id')}}
 }
 void f1(int puper) {
-  [super m]; // expected-error{{'super' not valid when not in a method}}
+  [super m]; // expected-error{{'super' is only valid in a method body}}
 }
 
 // radar 7400691
