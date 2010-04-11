@@ -1142,17 +1142,17 @@ private:
     /// method.
     const uint64_t BaseOffsetInLayoutClass;
     
-    /// VtableIndex - The index in the vtable that this method has.
+    /// VTableIndex - The index in the vtable that this method has.
     /// (For destructors, this is the index of the complete destructor).
-    const uint64_t VtableIndex;
+    const uint64_t VTableIndex;
     
     MethodInfo(uint64_t BaseOffset, uint64_t BaseOffsetInLayoutClass, 
-               uint64_t VtableIndex)
+               uint64_t VTableIndex)
       : BaseOffset(BaseOffset), 
       BaseOffsetInLayoutClass(BaseOffsetInLayoutClass),
-      VtableIndex(VtableIndex) { }
+      VTableIndex(VTableIndex) { }
     
-    MethodInfo() : BaseOffset(0), BaseOffsetInLayoutClass(0), VtableIndex(0) { }
+    MethodInfo() : BaseOffset(0), BaseOffsetInLayoutClass(0), VTableIndex(0) { }
   };
   
   typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
@@ -1161,11 +1161,11 @@ private:
   /// currently building.
   MethodInfoMapTy MethodInfoMap;
   
-  typedef llvm::DenseMap<uint64_t, ThunkInfo> VtableThunksMapTy;
+  typedef llvm::DenseMap<uint64_t, ThunkInfo> VTableThunksMapTy;
   
   /// VTableThunks - The thunks by vtable index in the vtable currently being 
   /// built.
-  VtableThunksMapTy VTableThunks;
+  VTableThunksMapTy VTableThunks;
 
   typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
@@ -1240,25 +1240,25 @@ private:
                   uint64_t FirstBaseOffsetInLayoutClass,
                   PrimaryBasesSetVectorTy &PrimaryBases);
 
-  // LayoutVtable - Layout the vtable for the given base class, including its
+  // LayoutVTable - Layout the vtable for the given base class, including its
   // secondary vtables and any vtables for virtual bases.
-  void LayoutVtable();
+  void LayoutVTable();
 
-  /// LayoutPrimaryAndSecondaryVtables - Layout the primary vtable for the
+  /// LayoutPrimaryAndSecondaryVTables - Layout the primary vtable for the
   /// given base subobject, as well as all its secondary vtables.
   ///
   /// \param BaseIsVirtualInLayoutClass - Whether the base subobject is virtual
   /// in the layout class. 
-  void LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
+  void LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
                                         bool BaseIsVirtualInLayoutClass,
                                         uint64_t OffsetInLayoutClass);
   
-  /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
+  /// LayoutSecondaryVTables - Layout the secondary vtables for the given base
   /// subobject.
   ///
   /// \param BaseIsMorallyVirtual whether the base subobject is a virtual base
   /// or a direct or indirect base of a virtual base.
-  void LayoutSecondaryVtables(BaseSubobject Base, bool BaseIsMorallyVirtual,
+  void LayoutSecondaryVTables(BaseSubobject Base, bool BaseIsMorallyVirtual,
                               uint64_t OffsetInLayoutClass);
 
   /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
@@ -1267,14 +1267,14 @@ private:
                                     uint64_t OffsetInLayoutClass,
                                     VisitedVirtualBasesSetTy &VBases);
 
-  /// LayoutVtablesForVirtualBases - Layout vtables for all virtual bases of the
+  /// LayoutVTablesForVirtualBases - Layout vtables for all virtual bases of the
   /// given base (excluding any primary bases).
-  void LayoutVtablesForVirtualBases(const CXXRecordDecl *RD, 
+  void LayoutVTablesForVirtualBases(const CXXRecordDecl *RD, 
                                     VisitedVirtualBasesSetTy &VBases);
 
-  /// isBuildingConstructionVtable - Return whether this vtable builder is
+  /// isBuildingConstructionVTable - Return whether this vtable builder is
   /// building a construction vtable.
-  bool isBuildingConstructorVtable() const { 
+  bool isBuildingConstructorVTable() const { 
     return MostDerivedClass != LayoutClass;
   }
 
@@ -1288,7 +1288,7 @@ public:
     LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
     Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
 
-    LayoutVtable();
+    LayoutVTable();
   }
 
   ThunksMapTy::const_iterator thunks_begin() const {
@@ -1325,11 +1325,11 @@ public:
     return AddressPoints.end();
   }
 
-  VtableThunksMapTy::const_iterator vtable_thunks_begin() const {
+  VTableThunksMapTy::const_iterator vtable_thunks_begin() const {
     return VTableThunks.begin();
   }
 
-  VtableThunksMapTy::const_iterator vtable_thunks_end() const {
+  VTableThunksMapTy::const_iterator vtable_thunks_end() const {
     return VTableThunks.end();
   }
 
@@ -1338,7 +1338,7 @@ public:
 };
 
 void VTableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
-  assert(!isBuildingConstructorVtable() && 
+  assert(!isBuildingConstructorVTable() && 
          "Can't add thunks for construction vtable");
 
   llvm::SmallVector<ThunkInfo, 1> &ThunksVector = Thunks[MD];
@@ -1379,8 +1379,8 @@ void VTableBuilder::ComputeThisAdjustments() {
     const MethodInfo &MethodInfo = I->second;
 
     // Ignore adjustments for unused function pointers.
-    uint64_t VtableIndex = MethodInfo.VtableIndex;
-    if (Components[VtableIndex].getKind() == 
+    uint64_t VTableIndex = MethodInfo.VTableIndex;
+    if (Components[VTableIndex].getKind() == 
         VTableComponent::CK_UnusedFunctionPointer)
       continue;
     
@@ -1396,7 +1396,7 @@ void VTableBuilder::ComputeThisAdjustments() {
       // While the thunk itself might be needed by vtables in subclasses or
       // in construction vtables, there doesn't seem to be a reason for using
       // the thunk in this vtable. Still, we do so to match gcc.
-      if (VTableThunks.lookup(VtableIndex).Return.isEmpty())
+      if (VTableThunks.lookup(VTableIndex).Return.isEmpty())
         continue;
     }
 
@@ -1407,23 +1407,23 @@ void VTableBuilder::ComputeThisAdjustments() {
       continue;
 
     // Add it.
-    VTableThunks[VtableIndex].This = ThisAdjustment;
+    VTableThunks[VTableIndex].This = ThisAdjustment;
 
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
-      VTableThunks[VtableIndex + 1].This = ThisAdjustment;
+      VTableThunks[VTableIndex + 1].This = ThisAdjustment;
     }
   }
 
   /// Clear the method info map.
   MethodInfoMap.clear();
   
-  if (isBuildingConstructorVtable()) {
+  if (isBuildingConstructorVTable()) {
     // We don't need to store thunk information for construction vtables.
     return;
   }
 
-  for (VtableThunksMapTy::const_iterator I = VTableThunks.begin(),
+  for (VTableThunksMapTy::const_iterator I = VTableThunks.begin(),
        E = VTableThunks.end(); I != E; ++I) {
     const VTableComponent &Component = Components[I->first];
     const ThunkInfo &Thunk = I->second;
@@ -1779,7 +1779,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         
         MethodInfo MethodInfo(Base.getBaseOffset(), 
                               BaseOffsetInLayoutClass,
-                              OverriddenMethodInfo.VtableIndex);
+                              OverriddenMethodInfo.VTableIndex);
 
         assert(!MethodInfoMap.count(MD) &&
                "Should not have method info for this method yet!");
@@ -1791,7 +1791,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         // or indirect base class of a virtual base class, we need to emit a
         // thunk if we ever have a class hierarchy where the base class is not
         // a primary base in the complete object.
-        if (!isBuildingConstructorVtable() && OverriddenMD != MD) {
+        if (!isBuildingConstructorVTable() && OverriddenMD != MD) {
           // Compute the this adjustment.
           ThisAdjustment ThisAdjustment =
             ComputeThisAdjustment(OverriddenMD, BaseOffsetInLayoutClass,
@@ -1837,8 +1837,8 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
   }
 }
 
-void VTableBuilder::LayoutVtable() {
-  LayoutPrimaryAndSecondaryVtables(BaseSubobject(MostDerivedClass, 0),
+void VTableBuilder::LayoutVTable() {
+  LayoutPrimaryAndSecondaryVTables(BaseSubobject(MostDerivedClass, 0),
                                    MostDerivedClassIsVirtual,
                                    MostDerivedClassOffset);
   
@@ -1849,11 +1849,11 @@ void VTableBuilder::LayoutVtable() {
                                VBases);
   VBases.clear();
   
-  LayoutVtablesForVirtualBases(MostDerivedClass, VBases);
+  LayoutVTablesForVirtualBases(MostDerivedClass, VBases);
 }
   
 void
-VTableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
+VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
                                                 bool BaseIsVirtualInLayoutClass,
                                                 uint64_t OffsetInLayoutClass) {
   assert(Base.getBase()->isDynamicClass() && "class does not have a vtable!");
@@ -1925,14 +1925,14 @@ VTableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
   }
 
   bool BaseIsMorallyVirtual = BaseIsVirtualInLayoutClass;
-  if (isBuildingConstructorVtable() && Base.getBase() == MostDerivedClass)
+  if (isBuildingConstructorVTable() && Base.getBase() == MostDerivedClass)
     BaseIsMorallyVirtual = false;
   
   // Layout secondary vtables.
-  LayoutSecondaryVtables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
+  LayoutSecondaryVTables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
 }
 
-void VTableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
+void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
                                            bool BaseIsMorallyVirtual,
                                            uint64_t OffsetInLayoutClass) {
   // Itanium C++ ABI 2.5.2:
@@ -1957,7 +1957,7 @@ void VTableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
     if (!BaseDecl->isDynamicClass())
       continue;
 
-    if (isBuildingConstructorVtable()) {
+    if (isBuildingConstructorVTable()) {
       // Itanium C++ ABI 2.6.4:
       //   Some of the base class subobjects may not need construction virtual
       //   tables, which will therefore not be present in the construction
@@ -1976,13 +1976,13 @@ void VTableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
     // Don't emit a secondary vtable for a primary base. We might however want 
     // to emit secondary vtables for other bases of this base.
     if (BaseDecl == PrimaryBase) {
-      LayoutSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+      LayoutSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
                              BaseIsMorallyVirtual, BaseOffsetInLayoutClass);
       continue;
     }
 
     // Layout the primary vtable (and any secondary vtables) for this base.
-    LayoutPrimaryAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+    LayoutPrimaryAndSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
                                      /*BaseIsVirtualInLayoutClass=*/false,
                                      BaseOffsetInLayoutClass);
   }
@@ -2001,7 +2001,7 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
     if (Layout.getPrimaryBaseWasVirtual()) {
       bool IsPrimaryVirtualBase = true;
 
-      if (isBuildingConstructorVtable()) {
+      if (isBuildingConstructorVTable()) {
         // Check if the base is actually a primary base in the class we use for
         // layout.
         const ASTRecordLayout &LayoutClassLayout =
@@ -2047,7 +2047,7 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
 }
 
 void
-VTableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD, 
+VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD, 
                                             VisitedVirtualBasesSetTy &VBases) {
   // Itanium C++ ABI 2.5.2:
   //   Then come the virtual base virtual tables, also in inheritance graph
@@ -2072,7 +2072,7 @@ VTableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
       uint64_t BaseOffsetInLayoutClass = 
         LayoutClassLayout.getVBaseClassOffset(BaseDecl);
 
-      LayoutPrimaryAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+      LayoutPrimaryAndSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
                                        /*BaseIsVirtual=*/true,
                                        BaseOffsetInLayoutClass);
     }
@@ -2080,14 +2080,14 @@ VTableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
     // We only need to check the base for virtual base vtables if it actually
     // has virtual bases.
     if (BaseDecl->getNumVBases())
-      LayoutVtablesForVirtualBases(BaseDecl, VBases);
+      LayoutVTablesForVirtualBases(BaseDecl, VBases);
   }
 }
 
 /// dumpLayout - Dump the vtable layout.
 void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
-  if (isBuildingConstructorVtable()) {
+  if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
     Out << MostDerivedClass->getQualifiedNameAsString() << "', ";
     // FIXME: Don't use / 8 .
@@ -2267,7 +2267,7 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
   Out << '\n';
   
-  if (isBuildingConstructorVtable())
+  if (isBuildingConstructorVTable())
     return;
   
   if (MostDerivedClass->getNumVBases()) {
