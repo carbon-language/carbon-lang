@@ -281,8 +281,18 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
 extern "C" {
 
 CXString clang_getCursorUSR(CXCursor C) {
-  if (clang_isDeclaration(clang_getCursorKind(C)))
+  const CXCursorKind &K = clang_getCursorKind(C);
+
+  if (clang_isDeclaration(K))
       return getDeclCursorUSR(C);
+
+  if (K == CXCursor_MacroDefinition) {
+    StringUSRGenerator SUG;
+    SUG << "macro@"
+        << cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
+    return createCXString(SUG.str(), true);
+  }
+
   return createCXString("");
 }
 
