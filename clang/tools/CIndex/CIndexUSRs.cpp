@@ -263,21 +263,27 @@ static inline llvm::StringRef extractUSRSuffix(llvm::StringRef s) {
   return s.startswith("c:") ? s.substr(2) : "";
 }
 
-extern "C" {
-
-CXString clang_getCursorUSR(CXCursor C) {
+static CXString getDeclCursorUSR(const CXCursor &C) {
   Decl *D = cxcursor::getCursorDecl(C);
   if (!D)
     return createCXString(NULL);
 
   StringUSRGenerator SUG;
-  SUG->Visit(static_cast<Decl*>(D));
+  SUG->Visit(D);
 
   if (SUG->ignoreResults())
     return createCXString("");
 
-  // Return a copy of the string that must be disposed by the caller.
+    // Return a copy of the string that must be disposed by the caller.
   return createCXString(SUG.str(), true);
+}
+
+extern "C" {
+
+CXString clang_getCursorUSR(CXCursor C) {
+  if (clang_isDeclaration(clang_getCursorKind(C)))
+      return getDeclCursorUSR(C);
+  return createCXString("");
 }
 
 CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
