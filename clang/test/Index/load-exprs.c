@@ -52,4 +52,4 @@ int test_blocks(int x) {
 // CHECK: load-exprs.c:16:10: DeclRefExpr=z:13:17 Extent=[16:10 - 16:11]
 // CHECK: load-exprs.c:17:10: DeclRefExpr= Extent=[17:10 - 17:11]
 // CHECK: load-exprs.c:20:10: DeclRefExpr=y:11:15 Extent=[20:10 - 20:11]
-// CHECK: load-exprs.c:11:3: macro instantiation=__block:13:9 Extent=[11:3 - 11:10]
+
