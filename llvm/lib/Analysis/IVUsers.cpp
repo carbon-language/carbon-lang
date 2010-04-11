@@ -82,7 +82,6 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
 
   // Get the symbolic expression for this instruction.
   const SCEV *ISE = SE->getSCEV(I);
-  if (isa<SCEVCouldNotCompute>(ISE)) return false;
 
   // If we've come to an uninteresting expression, stop the traversal and
   // call this a user.
