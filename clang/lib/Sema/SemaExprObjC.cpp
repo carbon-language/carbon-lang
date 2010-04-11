@@ -650,7 +650,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                Sel, SourceRange(lbrac,rbrac));
           if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
             Diag(lbrac, diag::warn_maynot_respond)
-              << OCIType->getInterfaceDecl()->getIdentifier()->getName() << Sel;
+              << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
         }
       }
     }

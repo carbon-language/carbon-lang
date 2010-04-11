@@ -40,7 +40,7 @@
 id foo(void) {
   Object *obj;
   id obj2 = obj;
-  [obj setWindow:nil]; // expected-warning {{Object may not respond to 'setWindow:'}}
+  [obj setWindow:nil]; // expected-warning {{'Object' may not respond to 'setWindow:'}}
 
   return obj;
 }
