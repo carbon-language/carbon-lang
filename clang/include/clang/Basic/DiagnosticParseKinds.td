@@ -190,7 +190,9 @@ def err_objc_missing_end : Error<"missing @end">;
 def warn_objc_protocol_qualifier_missing_id : Warning<
   "protocol qualifiers without 'id' is archaic">;
 def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;
-
+def err_illegal_super_cast : Error<
+  "cannot cast 'super' (it isn't an expression)">;
+  
 def err_objc_illegal_visibility_spec : Error<
   "illegal visibility specification">;
 def err_objc_illegal_interface_qual : Error<"illegal interface qualifier">;

@@ -637,11 +637,9 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     IdentifierInfo &II = *Tok.getIdentifierInfo();
     SourceLocation ILoc = ConsumeToken();
     
-    // Support 'Class.property' notation.  We don't use
-    // isTokObjCMessageIdentifierReceiver(), since it allows 'super' (which is
-    // inappropriate here).
+    // Support 'Class.property' and 'super.property' notation.
     if (getLang().ObjC1 && Tok.is(tok::period) &&
-        Actions.getTypeName(II, ILoc, CurScope)) {
+        (Actions.getTypeName(II, ILoc, CurScope) || II.isStr("super"))) {
       SourceLocation DotLoc = ConsumeToken();
       
       if (Tok.isNot(tok::identifier)) {
@@ -1440,6 +1438,15 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
         // Note that this doesn't parse the subsequent cast-expression, it just
         // returns the parsed type to the callee.
         return OwningExprResult(Actions);
+      }
+      
+      
+      // Reject the cast of super idiom in ObjC.
+      if (Tok.is(tok::identifier) && getLang().ObjC1 &&
+          Tok.getIdentifierInfo()->isStr("super")) {
+        Diag(Tok.getLocation(), diag::err_illegal_super_cast)
+          << SourceRange(OpenLoc, RParenLoc);
+        return ExprError();
       }
 
       // Parse the cast-expression that follows it next.

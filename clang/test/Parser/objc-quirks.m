@@ -8,3 +8,21 @@ int @"s" = 5;  // expected-error {{prefix attribute must be}}
 @interface A
 }; // expected-error {{missing @end}} expected-error {{expected external declaration}}
 
+
+
+
+// PR6811
+// 'super' isn't an expression, it is a magic context-sensitive keyword.
+@interface A2 {
+  id isa;
+}
+- (void)a;
+@end
+
+@interface B2 : A2 @end
+@implementation B2
+- (void)a
+{
+  [(super) a];  // expected-error {{use of undeclared identifier 'super'}}
+}
+@end

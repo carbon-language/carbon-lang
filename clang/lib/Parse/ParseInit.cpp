@@ -124,23 +124,27 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //
     SourceLocation StartLoc = ConsumeBracket();
 
-    // If Objective-C is enabled and this is a typename or other identifier
-    // receiver, parse this as a message send expression.
-    if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
-      // If we have exactly one array designator, this used the GNU
-      // 'designation: array-designator' extension, otherwise there should be no
-      // designators at all!
-      if (Desig.getNumDesignators() == 1 &&
-          (Desig.getDesignator(0).isArrayDesignator() ||
-           Desig.getDesignator(0).isArrayRangeDesignator()))
-        Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
-      else if (Desig.getNumDesignators() > 0)
-        Diag(Tok, diag::err_expected_equal_designator);
+    // If Objective-C is enabled and this is a typename (class message send) or
+    // 'super', parse this as a message send expression.
+    if (getLang().ObjC1 && Tok.is(tok::identifier)) {
+      IdentifierInfo *II = Tok.getIdentifierInfo();
 
-      IdentifierInfo *Name = Tok.getIdentifierInfo();
-      SourceLocation NameLoc = ConsumeToken();
-      return ParseAssignmentExprWithObjCMessageExprStart(
-                       StartLoc, NameLoc, Name, ExprArg(Actions));
+      if (II == Ident_super || Actions.getTypeName(*II, Tok.getLocation(),
+                                                   CurScope)) {
+        // If we have exactly one array designator, this used the GNU
+        // 'designation: array-designator' extension, otherwise there should be no
+        // designators at all!
+        if (Desig.getNumDesignators() == 1 &&
+            (Desig.getDesignator(0).isArrayDesignator() ||
+             Desig.getDesignator(0).isArrayRangeDesignator()))
+          Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
+        else if (Desig.getNumDesignators() > 0)
+          Diag(Tok, diag::err_expected_equal_designator);
+
+        SourceLocation NameLoc = ConsumeToken();
+        return ParseAssignmentExprWithObjCMessageExprStart(
+                                       StartLoc, NameLoc, II, ExprArg(Actions));
+      }
     }
 
     // Note that we parse this as an assignment expression, not a constant

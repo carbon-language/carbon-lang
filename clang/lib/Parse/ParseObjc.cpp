@@ -1709,6 +1709,7 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     '[' objc-receiver objc-message-args ']'
 ///
 ///   objc-receiver:
+///     'super'
 ///     expression
 ///     class-name
 ///     type-name
@@ -1716,16 +1717,22 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.is(tok::l_square) && "'[' expected");
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
-  // Parse receiver
-  if (isTokObjCMessageIdentifierReceiver()) {
-    IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
-    if (ReceiverName != Ident_super || GetLookAheadToken(1).isNot(tok::period)) {
+  if (Tok.is(tok::identifier)) {
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+
+    // If this is '[' 'super', then this is a magic superclass message.
+    // We parse '[' 'super' '.' 'foo'  as an expression?
+    // FIXME: Not in ParseInit.cpp?
+    if ((II == Ident_super && GetLookAheadToken(1).isNot(tok::period)) ||
+        // Check to see if this is a typename.  If so, it is a class message.
+        Actions.getTypeName(*II, Tok.getLocation(), CurScope)) {
       SourceLocation NameLoc = ConsumeToken();
-      return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
+      return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, II,
                                             ExprArg(Actions));
     }
   }
-
+  
+  // Otherwise, an arbitrary expression can be the receiver of a send.
   OwningExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);

@@ -16,7 +16,7 @@
 @implementation B
 
 - (void)instanceMethod {
-  [super iMethod]; // expected-warning{{method '-iMethod' not found (return type defaults to 'id')}}
+  [super iMethod]; // expected-warning{{'A' may not respond to 'iMethod')}}
 }
 
 + classMethod {
@@ -37,12 +37,15 @@ void f0(int super) {
                 expected-warning {{method '-m' not found (return type defaults to 'id')}}
 }
 void f1(int puper) {
-  [super m]; // expected-error{{use of undeclared identifier 'super'}}
+  [super m]; // expected-error{{'super' not valid when not in a method}}
 }
 
 // radar 7400691
 typedef Foo super;
 
+typedef Foo FooTD;
+
 void test() {
+  [FooTD cMethod];
   [super cMethod];
 }

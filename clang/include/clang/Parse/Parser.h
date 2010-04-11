@@ -998,18 +998,6 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
-
-  bool isTokObjCMessageIdentifierReceiver() const {
-    if (!Tok.is(tok::identifier))
-      return false;
-
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    if (Actions.getTypeName(*II, Tok.getLocation(), CurScope))
-      return true;
-
-    return II == Ident_super;
-  }
-
   OwningExprResult ParseObjCAtExpression(SourceLocation AtLocation);
   OwningExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
   OwningExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);

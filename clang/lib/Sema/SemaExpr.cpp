@@ -1233,10 +1233,11 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
 /// Returns a null sentinel to indicate trivial success.
 Sema::OwningExprResult
 Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
-                         IdentifierInfo *II,
-                         bool AllowBuiltinCreation) {
+                         IdentifierInfo *II, bool AllowBuiltinCreation) {
   SourceLocation Loc = Lookup.getNameLoc();
 
+  // FIXME: Stop re-evaluating "getCurMethodDecl".
+  
   // There are two cases to handle here.  1) scoped lookup could have failed,
   // in which case we should look for an ivar.  2) scoped lookup could have
   // found a decl, but that decl is outside the current instance method (i.e.
@@ -1304,17 +1305,6 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
     }
   }
 
-  // Needed to implement property "super.method" notation.
-  if (Lookup.empty() && II->isStr("super")) {
-    QualType T;
-
-    if (getCurMethodDecl()->isInstanceMethod())
-      T = Context.getObjCObjectPointerType(Context.getObjCInterfaceType(
-                                    getCurMethodDecl()->getClassInterface()));
-    else
-      T = Context.getObjCClassType();
-    return Owned(new (Context) ObjCSuperExpr(Loc, T));
-  }
   if (Lookup.empty() && II && AllowBuiltinCreation) {
     // FIXME. Consolidate this with similar code in LookupName.
     if (unsigned BuiltinID = II->getBuiltinID()) {
@@ -3138,6 +3128,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
                        << MemberName << BaseType);
   }
+  
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
   // pointer to a (potentially qualified) interface type.
   if (!IsArrow)
@@ -3849,9 +3840,6 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
     return CheckVectorCast(TyR, castType, castExpr->getType(), Kind);
   if (castExpr->getType()->isVectorType())
     return CheckVectorCast(TyR, castExpr->getType(), castType, Kind);
-
-  if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr))
-    return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
 
   if (isa<ObjCSelectorExpr>(castExpr))
     return Diag(castExpr->getLocStart(), diag::err_cast_selector_expr);

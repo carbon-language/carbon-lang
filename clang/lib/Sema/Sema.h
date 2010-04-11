@@ -3845,17 +3845,17 @@ public:
   ObjCMethodDecl *LookupPrivateInstanceMethod(Selector Sel,
                                               ObjCInterfaceDecl *ClassDecl);
 
-  Action::OwningExprResult
+  OwningExprResult
   HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                             Expr *BaseExpr,
                             DeclarationName MemberName,
                             SourceLocation MemberLoc);
   
-  virtual OwningExprResult ActOnClassPropertyRefExpr(
-    IdentifierInfo &receiverName,
-    IdentifierInfo &propertyName,
-    SourceLocation &receiverNameLoc,
-    SourceLocation &propertyNameLoc);
+  virtual OwningExprResult
+  ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
+                            IdentifierInfo &propertyName,
+                            SourceLocation receiverNameLoc,
+                            SourceLocation propertyNameLoc);
 
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions

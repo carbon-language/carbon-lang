@@ -2336,11 +2336,11 @@ public:
     return DeclPtrTy();
   }
 
-  virtual OwningExprResult ActOnClassPropertyRefExpr(
-    IdentifierInfo &receiverName,
-    IdentifierInfo &propertyName,
-    SourceLocation &receiverNameLoc,
-    SourceLocation &propertyNameLoc) {
+  virtual OwningExprResult
+  ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
+                            IdentifierInfo &propertyName,
+                            SourceLocation receiverNameLoc,
+                            SourceLocation propertyNameLoc) {
     return ExprEmpty();
   }
 

@@ -2011,6 +2011,8 @@ def error_no_super_class : Error<
   "no super class declared in @interface for %0">;
 def err_invalid_receiver_to_message : Error<
   "invalid receiver to message expression">;
+def err_invalid_receiver_to_message_super : Error<
+  "'super' not valid when not in a method">;
 def warn_bad_receiver_type : Warning<
   "receiver type %0 is not 'id' or interface pointer, consider "
   "casting it to 'id'">;
@@ -2027,8 +2029,6 @@ def err_catch_param_not_objc_type : Error<
   "@catch parameter is not a pointer to an interface type">;
 def err_illegal_qualifiers_on_catch_parm : Error<
   "illegal qualifiers on @catch parameter">;
-def err_illegal_super_cast : Error<
-  "cannot cast 'super' (it isn't an expression)">;
 def warn_setter_getter_impl_required : Warning<
   "property %0 requires method %1 to be defined - "
   "use @synthesize, @dynamic or provide a method implementation">;

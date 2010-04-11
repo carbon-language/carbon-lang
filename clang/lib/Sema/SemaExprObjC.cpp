@@ -394,20 +394,42 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
 
 
-Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
-  IdentifierInfo &receiverName,
-  IdentifierInfo &propertyName,
-  SourceLocation &receiverNameLoc,
-  SourceLocation &propertyNameLoc) {
+Action::OwningExprResult Sema::
+ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
+                          IdentifierInfo &propertyName,
+                          SourceLocation receiverNameLoc,
+                          SourceLocation propertyNameLoc) {
 
   IdentifierInfo *receiverNamePtr = &receiverName;
   ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(receiverNamePtr);
-  if (!IFace) {
-    Diag(receiverNameLoc, diag::err_expected_ident_or_lparen);
-    return ExprError();
-  }
-  // Search for a declared property first.
+  if (IFace == 0) {
+    // If the "receiver" is 'super' in a method, handle it as an expression-like
+    // property reference.
+    if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
+      if (receiverNamePtr->isStr("super")) {
+        if (CurMethod->isInstanceMethod()) {
+          QualType T = 
+            Context.getObjCInterfaceType(CurMethod->getClassInterface());
+          T = Context.getObjCObjectPointerType(T);
+          Expr *SuperExpr = new (Context) ObjCSuperExpr(receiverNameLoc, T);
+        
+          return HandleExprPropertyRefExpr(T->getAsObjCInterfacePointerType(),
+                                           SuperExpr, &propertyName,
+                                           propertyNameLoc);
+        }
 
+        // Otherwise, if this is a class method, try dispatching to our
+        // superclass.
+        IFace = CurMethod->getClassInterface()->getSuperClass();
+      }
+    
+    if (IFace == 0) {
+      Diag(receiverNameLoc, diag::err_expected_ident_or_lparen);
+      return ExprError();
+    }
+  }
+
+  // Search for a declared property first.
   Selector Sel = PP.getSelectorTable().getNullarySelector(&propertyName);
   ObjCMethodDecl *Getter = IFace->lookupClassMethod(Sel);
 
@@ -468,12 +490,11 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
-Sema::ExprResult Sema::ActOnClassMessage(
-  Scope *S,
-  IdentifierInfo *receiverName, Selector Sel,
-  SourceLocation lbrac, SourceLocation receiverLoc,
-  SourceLocation selectorLoc, SourceLocation rbrac,
-  ExprTy **Args, unsigned NumArgs) {
+Sema::ExprResult Sema::
+ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
+                  SourceLocation lbrac, SourceLocation receiverLoc,
+                  SourceLocation selectorLoc, SourceLocation rbrac,
+                  ExprTy **Args, unsigned NumArgs) {
   assert(receiverName && "missing receiver class name");
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
@@ -481,16 +502,16 @@ Sema::ExprResult Sema::ActOnClassMessage(
   bool isSuper = false;
 
   if (receiverName->isStr("super")) {
-    if (getCurMethodDecl()) {
+    if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
       isSuper = true;
-      ObjCInterfaceDecl *OID = getCurMethodDecl()->getClassInterface();
+      ObjCInterfaceDecl *OID = CurMethod->getClassInterface();
       if (!OID)
         return Diag(lbrac, diag::error_no_super_class_message)
-                      << getCurMethodDecl()->getDeclName();
+                      << CurMethod->getDeclName();
       ClassDecl = OID->getSuperClass();
       if (!ClassDecl)
         return Diag(lbrac, diag::error_no_super_class) << OID->getDeclName();
-      if (getCurMethodDecl()->isInstanceMethod()) {
+      if (CurMethod->isInstanceMethod()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
         superTy = Context.getObjCObjectPointerType(superTy);
         ExprResult ReceiverExpr = new (Context) ObjCSuperExpr(SourceLocation(),
@@ -504,6 +525,11 @@ Sema::ExprResult Sema::ActOnClassMessage(
     } else {
       // 'super' has been used outside a method context. If a variable named
       // 'super' has been declared, redirect. If not, produce a diagnostic.
+      
+      // FIXME:
+      // FIXME: This should be handled in the parser!
+      // FIXME:
+      
       NamedDecl *SuperDecl
         = LookupSingleName(S, receiverName, LookupOrdinaryName);
       ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
@@ -514,17 +540,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac,
                                     selectorLoc, rbrac, Args, NumArgs);
       }
-      else if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(SuperDecl)) {
-        const ObjCInterfaceType *OCIT;
-        OCIT = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>();
-        if (!OCIT) {
-          Diag(receiverLoc, diag::err_invalid_receiver_to_message);
-          return true;
-        }
-        ClassDecl = OCIT->getDecl();
-      }
-      else      
-        return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
+      ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
     }
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
@@ -548,7 +564,11 @@ Sema::ExprResult Sema::ActOnClassMessage(
         ClassDecl = OCIT->getDecl();
 
     if (!ClassDecl) {
-      Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+      // Give a better error message for invalid use of super.
+      if (receiverName->isStr("super"))
+        Diag(receiverLoc, diag::err_invalid_receiver_to_message_super);
+      else
+        Diag(receiverLoc, diag::err_invalid_receiver_to_message);
       return true;
     }
   }
@@ -616,6 +636,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   QualType ReceiverCType =
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
 
+#if 0
   // Handle messages to 'super'.
   if (isa<ObjCSuperExpr>(RExpr)) {
     ObjCMethodDecl *Method = 0;
@@ -643,6 +664,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                          Method, lbrac, rbrac,
                                          ArgExprs, NumArgs);
   }
+#endif
 
   // Handle messages to id.
   if (ReceiverCType->isObjCIdType() || ReceiverCType->isBlockPointerType() ||
