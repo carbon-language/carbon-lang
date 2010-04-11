@@ -27,7 +27,7 @@
 #ifndef LLVM_ANALYSIS_POINTERTRACKING_H
 #define LLVM_ANALYSIS_POINTERTRACKING_H
 
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
