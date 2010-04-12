@@ -2819,6 +2819,17 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
     Candidate.FinalConversion = ICS.Standard;
+      
+    // C++ [over.ics.user]p3:
+    //   If the user-defined conversion is specified by a specialization of a
+    //   conversion function template, the second standard conversion sequence 
+    //   shall have exact match rank.
+    if (Conversion->getPrimaryTemplate() &&
+        GetConversionRank(ICS.Standard.Second) != ICR_Exact_Match) {
+      Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_final_conversion_not_exact;
+    }
+      
     break;
 
   case ImplicitConversionSequence::BadConversion:
@@ -4628,6 +4639,7 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   case ovl_fail_trivial_conversion:
   case ovl_fail_bad_final_conversion:
+  case ovl_fail_final_conversion_not_exact:
     return S.NoteOverloadCandidate(Fn);
 
   case ovl_fail_bad_conversion: {
