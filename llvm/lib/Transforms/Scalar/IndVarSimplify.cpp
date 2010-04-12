@@ -97,7 +97,6 @@ namespace {
 
   private:
 
-    void EliminateIVComparisons();
     void RewriteNonIntegerIVs(Loop *L);
 
     ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
@@ -337,40 +336,6 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
     SE->forgetLoop(L);
 }
 
-void IndVarSimplify::EliminateIVComparisons() {
-  // Look for ICmp users.
-  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E;) {
-    IVStrideUse &UI = *I++;
-    ICmpInst *ICmp = dyn_cast<ICmpInst>(UI.getUser());
-    if (!ICmp) continue;
-
-    bool Swapped = UI.getOperandValToReplace() == ICmp->getOperand(1);
-    ICmpInst::Predicate Pred = ICmp->getPredicate();
-    if (Swapped) Pred = ICmpInst::getSwappedPredicate(Pred);
-
-    // Get the SCEVs for the ICmp operands.
-    const SCEV *S = IU->getReplacementExpr(UI);
-    const SCEV *X = SE->getSCEV(ICmp->getOperand(!Swapped));
-
-    // Simplify unnecessary loops away.
-    const Loop *ICmpLoop = LI->getLoopFor(ICmp->getParent());
-    S = SE->getSCEVAtScope(S, ICmpLoop);
-    X = SE->getSCEVAtScope(X, ICmpLoop);
-
-    // If the condition is always true or always false, replace it with
-    // a constant value.
-    if (SE->isKnownPredicate(Pred, S, X))
-      ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
-    else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X))
-      ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
-    else
-      continue;
-
-    DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
-    ICmp->eraseFromParent();
-  }
-}
-
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
@@ -396,9 +361,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     RewriteLoopExitValues(L, Rewriter);
-
-  // Simplify ICmp IV users.
-  EliminateIVComparisons();
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
