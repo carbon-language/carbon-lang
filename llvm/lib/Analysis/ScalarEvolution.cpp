@@ -2597,14 +2597,29 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
 /// a loop header, making it a potential recurrence, or it doesn't.
 ///
 const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
-  if (PN->getNumIncomingValues() == 2)  // The loops have been canonicalized.
-    if (const Loop *L = LI->getLoopFor(PN->getParent()))
-      if (L->getHeader() == PN->getParent()) {
-        // If it lives in the loop header, it has two incoming values, one
-        // from outside the loop, and one from inside.
-        unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
-        unsigned BackEdge     = IncomingEdge^1;
-
+  if (const Loop *L = LI->getLoopFor(PN->getParent()))
+    if (L->getHeader() == PN->getParent()) {
+      // The loop may have multiple entrances or multiple exits; we can analyze
+      // this phi as an addrec if it has a unique entry value and a unique
+      // backedge value.
+      Value *BEValueV = 0, *StartValueV = 0;
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        Value *V = PN->getIncomingValue(i);
+        if (L->contains(PN->getIncomingBlock(i))) {
+          if (!BEValueV) {
+            BEValueV = V;
+          } else if (BEValueV != V) {
+            BEValueV = 0;
+            break;
+          }
+        } else if (!StartValueV) {
+          StartValueV = V;
+        } else if (StartValueV != V) {
+          StartValueV = 0;
+          break;
+        }
+      }
+      if (BEValueV && StartValueV) {
         // While we are analyzing this PHI node, handle its value symbolically.
         const SCEV *SymbolicName = getUnknown(PN);
         assert(Scalars.find(PN) == Scalars.end() &&
@@ -2613,7 +2628,6 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 
         // Using this symbolic name for the PHI, analyze the value coming around
         // the back-edge.
-        Value *BEValueV = PN->getIncomingValue(BackEdge);
         const SCEV *BEValue = getSCEV(BEValueV);
 
         // NOTE: If BEValue is loop invariant, we know that the PHI node just
@@ -2657,8 +2671,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   HasNSW = true;
               }
 
-              const SCEV *StartVal =
-                getSCEV(PN->getIncomingValue(IncomingEdge));
+              const SCEV *StartVal = getSCEV(StartValueV);
               const SCEV *PHISCEV =
                 getAddRecExpr(StartVal, Accum, L, HasNUW, HasNSW);
 
@@ -2684,7 +2697,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
           // Because the other in-value of i (0) fits the evolution of BEValue
           // i really is an addrec evolution.
           if (AddRec->getLoop() == L && AddRec->isAffine()) {
-            const SCEV *StartVal = getSCEV(PN->getIncomingValue(IncomingEdge));
+            const SCEV *StartVal = getSCEV(StartValueV);
 
             // If StartVal = j.start - j.stride, we can use StartVal as the
             // initial step of the addrec evolution.
@@ -2702,9 +2715,8 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
             }
           }
         }
-
-        return SymbolicName;
       }
+    }
 
   // If the PHI has a single incoming value, follow that value, unless the
   // PHI's incoming blocks are in a different loop, in which case doing so
