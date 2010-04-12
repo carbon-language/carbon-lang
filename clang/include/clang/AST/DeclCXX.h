@@ -1057,6 +1057,10 @@ class CXXBaseOrMemberInitializer {
   /// and AnonUnionMember holds field decl for au_i1.
   FieldDecl *AnonUnionMember;
 
+  /// IsVirtual - If the initializer is a base initializer, this keeps track
+  /// of whether the base is virtual or not.
+  bool IsVirtual;
+  
   /// LParenLoc - Location of the left paren of the ctor-initializer.
   SourceLocation LParenLoc;
 
@@ -1067,7 +1071,7 @@ public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit
   CXXBaseOrMemberInitializer(ASTContext &Context,
-                             TypeSourceInfo *TInfo,
+                             TypeSourceInfo *TInfo, bool IsVirtual,
                              SourceLocation L, 
                              Expr *Init,
                              SourceLocation R);
@@ -1100,7 +1104,14 @@ public:
   /// Otherwise, returns NULL.
   const Type *getBaseClass() const;
   Type *getBaseClass();
-  
+
+  /// Returns whether the base is virtual or not.
+  bool isBaseVirtual() const {
+    assert(isBaseInitializer() && "Must call this on base initializer!");
+    
+    return IsVirtual;
+  }
+
   /// \brief Returns the declarator information for a base class initializer.
   TypeSourceInfo *getBaseClassInfo() const {
     return BaseOrMember.dyn_cast<TypeSourceInfo *>();

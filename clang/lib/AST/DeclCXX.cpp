@@ -686,9 +686,9 @@ bool CXXMethodDecl::hasInlineBody() const {
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
-                           TypeSourceInfo *TInfo, 
+                           TypeSourceInfo *TInfo, bool IsVirtual,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0),
+  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0), IsVirtual(IsVirtual),
     LParenLoc(L), RParenLoc(R) 
 {
 }

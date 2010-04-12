@@ -1337,6 +1337,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                           ExprTemporaries.end());
 
     return new (Context) CXXBaseOrMemberInitializer(Context, BaseTInfo, 
+                                                    /*IsVirtual=*/false,
                                                     LParenLoc, 
                                                     BaseInit.takeAs<Expr>(),
                                                     RParenLoc);
@@ -1417,12 +1418,14 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                           RParenLoc));
     return new (Context) CXXBaseOrMemberInitializer(Context, BaseTInfo,
+                                                    BaseSpec->isVirtual(),
                                                     LParenLoc, 
                                                     Init.takeAs<Expr>(),
                                                     RParenLoc);
   }
 
   return new (Context) CXXBaseOrMemberInitializer(Context, BaseTInfo,
+                                                  BaseSpec->isVirtual(),
                                                   LParenLoc, 
                                                   BaseInit.takeAs<Expr>(),
                                                   RParenLoc);
@@ -1494,6 +1497,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         new (Context) CXXBaseOrMemberInitializer(Context,
                            Context.getTrivialTypeSourceInfo(VBase->getType(), 
                                                             SourceLocation()),
+                                                 /*IsVirtual=*/true,
                                                  SourceLocation(),
                                                  BaseInit.takeAs<Expr>(),
                                                  SourceLocation());
@@ -1528,6 +1532,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         new (Context) CXXBaseOrMemberInitializer(Context,
                            Context.getTrivialTypeSourceInfo(Base->getType(), 
                                                             SourceLocation()),
+                                                 /*IsVirtual=*/false,
                                                  SourceLocation(),
                                                  BaseInit.takeAs<Expr>(),
                                                  SourceLocation());

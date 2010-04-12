@@ -782,15 +782,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   CXXRecordDecl *BaseClassDecl =
     cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
 
-  // FIXME: This method of determining whether a base is virtual is ridiculous;
-  // it should be part of BaseInit.
-  bool isBaseVirtual = false;
-  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
-       E = ClassDecl->vbases_end(); I != E; ++I)
-    if (I->getType()->getAs<RecordType>()->getDecl() == BaseClassDecl) {
-      isBaseVirtual = true;
-      break;
-    }
+  bool isBaseVirtual = BaseInit->isBaseVirtual();
 
   // The base constructor doesn't construct virtual bases.
   if (CtorType == Ctor_Base && isBaseVirtual)
@@ -975,8 +967,6 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   const CXXRecordDecl *ClassDecl = CD->getParent();
 
   llvm::SmallVector<CXXBaseOrMemberInitializer *, 8> MemberInitializers;
-  
-  // FIXME: Add vbase initialization
   
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
