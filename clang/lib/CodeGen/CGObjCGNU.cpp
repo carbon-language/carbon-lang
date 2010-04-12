@@ -170,6 +170,7 @@ public:
   virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Function *GetPropertyGetFunction();
   virtual llvm::Function *GetPropertySetFunction();
+  virtual llvm::Function *GetCopyStructFunction();
   virtual llvm::Constant *EnumerationMutationFunction();
 
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
@@ -1684,6 +1685,11 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
     llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Params, false);
   return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
                                                         "objc_setProperty"));
+}
+
+// FIXME. Implement this.
+llvm::Function *CGObjCGNU::GetCopyStructFunction() {
+  return 0;
 }
 
 llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {

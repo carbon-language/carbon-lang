@@ -329,6 +329,24 @@ public:
     return CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
   }
 
+  
+  llvm::Constant *getCopyStructFn() {
+    CodeGen::CodeGenTypes &Types = CGM.getTypes();
+    ASTContext &Ctx = CGM.getContext();
+    // void objc_copyStruct (void *, const void *, size_t, bool, bool)
+    llvm::SmallVector<CanQualType,5> Params;
+    Params.push_back(Ctx.VoidPtrTy);
+    Params.push_back(Ctx.VoidPtrTy);
+    Params.push_back(Ctx.LongTy);
+    Params.push_back(Ctx.BoolTy);
+    Params.push_back(Ctx.BoolTy);
+    const llvm::FunctionType *FTy =
+      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
+                                                  FunctionType::ExtInfo()),
+                            false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_copyStruct");
+  }
+  
   llvm::Constant *getEnumerationMutationFn() {
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
@@ -1134,6 +1152,7 @@ public:
 
   virtual llvm::Constant *GetPropertyGetFunction();
   virtual llvm::Constant *GetPropertySetFunction();
+  virtual llvm::Constant *GetCopyStructFunction();
   virtual llvm::Constant *EnumerationMutationFunction();
 
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
@@ -1366,6 +1385,11 @@ public:
   virtual llvm::Constant *GetPropertySetFunction() {
     return ObjCTypes.getSetPropertyFn();
   }
+  
+  virtual llvm::Constant *GetCopyStructFunction() {
+    return ObjCTypes.getCopyStructFn();
+  }
+  
   virtual llvm::Constant *EnumerationMutationFunction() {
     return ObjCTypes.getEnumerationMutationFn();
   }
@@ -2428,6 +2452,10 @@ llvm::Constant *CGObjCMac::GetPropertyGetFunction() {
 
 llvm::Constant *CGObjCMac::GetPropertySetFunction() {
   return ObjCTypes.getSetPropertyFn();
+}
+
+llvm::Constant *CGObjCMac::GetCopyStructFunction() {
+  return ObjCTypes.getCopyStructFn();
 }
 
 llvm::Constant *CGObjCMac::EnumerationMutationFunction() {
