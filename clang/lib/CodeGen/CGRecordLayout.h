@@ -13,12 +13,15 @@
 #include "llvm/ADT/DenseMap.h"
 #include "clang/AST/Decl.h"
 namespace llvm {
+  class raw_ostream;
   class Type;
 }
 
 namespace clang {
 namespace CodeGen {
 
+/// Helper object for describing how to generate the code for access to a
+/// bit-field.
 class CGBitFieldInfo {
 public:
   CGBitFieldInfo(const llvm::Type *FieldTy, unsigned FieldNo,
@@ -32,6 +35,9 @@ public:
   unsigned Start;
   unsigned Size;
   bool IsSigned : 1;
+
+  void print(llvm::raw_ostream &OS) const;
+  void dump() const;
 };
 
 /// CGRecordLayout - This class handles struct and union layout info while
@@ -90,6 +96,9 @@ public:
     assert(it != BitFields.end()  && "Unable to find bitfield info");
     return it->second;
   }
+
+  void print(llvm::raw_ostream &OS) const;
+  void dump() const;
 };
 
 }  // end namespace CodeGen

@@ -18,8 +18,9 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "CodeGenTypes.h"
-#include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Type.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -496,5 +497,41 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i)
     RL->BitFields.insert(Builder.LLVMBitFields[i]);
 
+  if (getContext().getLangOptions().DumpRecordLayouts)
+    RL->dump();
+
   return RL;
+}
+
+void CGRecordLayout::print(llvm::raw_ostream &OS) const {
+  OS << "<CGRecordLayout\n";
+  OS << "  LLVMType:" << *LLVMType << "\n";
+  OS << "  ContainsPointerToDataMember:" << ContainsPointerToDataMember << "\n";
+  OS << "  BitFields:[\n";
+  for (llvm::DenseMap<const FieldDecl*, CGBitFieldInfo>::const_iterator
+         it = BitFields.begin(), ie = BitFields.end();
+       it != ie; ++it) {
+    OS << "    ";
+    it->second.print(OS);
+    OS << "\n";
+  }
+  OS << "]>\n";
+}
+
+void CGRecordLayout::dump() const {
+  print(llvm::errs());
+}
+
+void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
+  OS << "<CGBitFieldInfo";
+  OS << " FieldTy:" << *FieldTy;
+  OS << " FieldNo:" << FieldNo;
+  OS << " Start:" << Start;
+  OS << " Size:" << Size;
+  OS << " IsSigned:" << IsSigned;
+  OS << ">";
+}
+
+void CGBitFieldInfo::dump() const {
+  print(llvm::errs());
 }
