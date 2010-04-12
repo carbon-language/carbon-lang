@@ -499,6 +499,7 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   ObjCInterfaceDecl *ClassDecl = 0;
+  bool isSuper = false;
 
   // Special case a message to super, which can be either a class message or an
   // instance message, depending on what CurMethodDecl is.
@@ -523,6 +524,7 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
       
       // Otherwise, if this is a class method, try dispatching to our
       // superclass, which is in ClassDecl.
+      isSuper = true;
     }
   }
   
@@ -583,6 +585,14 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
 
   returnType = returnType.getNonReferenceType();
 
+  // FIXME: need to do a better job handling 'super' usage within a class.  For
+  // now, we simply pass the "super" identifier through (which isn't consistent
+  // with instance methods.
+  if (isSuper)
+    return new (Context) ObjCMessageExpr(Context, receiverName, receiverLoc,
+                                         Sel, returnType, Method, lbrac, rbrac,
+                                         ArgExprs, NumArgs);
+  
   // If we have the ObjCInterfaceDecl* for the class that is receiving the
   // message, use that to construct the ObjCMessageExpr.  Otherwise pass on the
   // IdentifierInfo* for the class.
