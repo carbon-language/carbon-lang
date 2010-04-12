@@ -16,6 +16,7 @@
 #define BUGPOINT_LIST_REDUCER_H
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
@@ -29,7 +30,8 @@ struct ListReducer {
   enum TestResult {
     NoFailure,         // No failure of the predicate was detected
     KeepSuffix,        // The suffix alone satisfies the predicate
-    KeepPrefix         // The prefix alone satisfies the predicate
+    KeepPrefix,        // The prefix alone satisfies the predicate
+    InternalError      // Encountered an error trying to run the predicate
   };
 
   virtual ~ListReducer() {}
@@ -40,16 +42,17 @@ struct ListReducer {
   // the prefix anyway, it can.
   //
   virtual TestResult doTest(std::vector<ElTy> &Prefix,
-                            std::vector<ElTy> &Kept) = 0;
+                            std::vector<ElTy> &Kept,
+                            std::string &Error) = 0;
 
   // reduceList - This function attempts to reduce the length of the specified
   // list while still maintaining the "test" property.  This is the core of the
   // "work" that bugpoint does.
   //
-  bool reduceList(std::vector<ElTy> &TheList) {
+  bool reduceList(std::vector<ElTy> &TheList, std::string &Error) {
     std::vector<ElTy> empty;
     std::srand(0x6e5ea738); // Seed the random number generator
-    switch (doTest(TheList, empty)) {
+    switch (doTest(TheList, empty, Error)) {
     case KeepPrefix:
       if (TheList.size() == 1) // we are done, it's the base case and it fails
         return true;
@@ -58,11 +61,15 @@ struct ListReducer {
 
     case KeepSuffix:
       // cannot be reached!
-      errs() << "bugpoint ListReducer internal error: selected empty set.\n";
-      abort();
+      llvm_unreachable("bugpoint ListReducer internal error: "
+                       "selected empty set.");
 
     case NoFailure:
       return false; // there is no failure with the full set of passes/funcs!
+
+    case InternalError:
+      assert(!Error.empty());
+      return true;
     }
 
     // Maximal number of allowed splitting iterations,
@@ -90,7 +97,7 @@ Backjump:
         std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
         errs() << "\n\n*** Testing shuffled set...\n\n";
         // Check that random shuffle doesn't loose the bug
-        if (doTest(ShuffledList, empty) == KeepPrefix) {
+        if (doTest(ShuffledList, empty, Error) == KeepPrefix) {
           // If the bug is still here, use the shuffled list.
           TheList.swap(ShuffledList);
           MidTop = TheList.size();
@@ -109,7 +116,7 @@ Backjump:
       std::vector<ElTy> Prefix(TheList.begin(), TheList.begin()+Mid);
       std::vector<ElTy> Suffix(TheList.begin()+Mid, TheList.end());
 
-      switch (doTest(Prefix, Suffix)) {
+      switch (doTest(Prefix, Suffix, Error)) {
       case KeepSuffix:
         // The property still holds.  We can just drop the prefix elements, and
         // shorten the list to the "kept" elements.
@@ -133,7 +140,10 @@ Backjump:
         MidTop = Mid;
         NumOfIterationsWithoutProgress++;
         break;
+      case InternalError:
+        return true;  // Error was set by doTest.
       }
+      assert(Error.empty() && "doTest did not return InternalError for error");
     }
 
     // Probability of backjumping from the trimming loop back to the binary
@@ -167,12 +177,14 @@ Backjump:
           std::vector<ElTy> TestList(TheList);
           TestList.erase(TestList.begin()+i);
 
-          if (doTest(EmptyList, TestList) == KeepSuffix) {
+          if (doTest(EmptyList, TestList, Error) == KeepSuffix) {
             // We can trim down the list!
             TheList.swap(TestList);
             --i;  // Don't skip an element of the list
             Changed = true;
           }
+	  if (!Error.empty())
+	    return true;
         }
         // This can take a long time if left uncontrolled.  For now, don't
         // iterate.

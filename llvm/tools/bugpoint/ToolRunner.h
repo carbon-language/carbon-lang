@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Path.h"
 #include <exception>
@@ -31,19 +32,6 @@ extern Triple TargetTriple;
 
 class CBE;
 class LLC;
-
-/// ToolExecutionError - An instance of this class is thrown by the
-/// AbstractInterpreter instances if there is an error running a tool (e.g., LLC
-/// crashes) which prevents execution of the program.
-///
-class ToolExecutionError : std::exception {
-  std::string Message;
-public:
-  explicit ToolExecutionError(const std::string &M) : Message(M) {}
-  virtual ~ToolExecutionError() throw();
-  virtual const char* what() const throw() { return Message.c_str(); }
-};
-
 
 //===---------------------------------------------------------------------===//
 // GCC abstraction
@@ -75,6 +63,7 @@ public:
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
+		     std::string *Error = 0,
                      const std::vector<std::string> &GCCArgs =
                          std::vector<std::string>(), 
                      unsigned Timeout = 0,
@@ -85,7 +74,8 @@ public:
   ///
   int MakeSharedObject(const std::string &InputFile, FileType fileType,
                        std::string &OutputFile,
-                       const std::vector<std::string> &ArgsForGCC);
+                       const std::vector<std::string> &ArgsForGCC,
+                       std::string &Error);
 };
 
 
@@ -118,26 +108,29 @@ public:
 
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
-  /// the code generator.  If the code generator fails, an exception should be
-  /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bitcode) {}
+  /// the code generator.  It returns false if the code generator fails.
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error) {}
 
   /// OutputCode - Compile the specified program from bitcode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
-  /// fails, an exception should be thrown, otherwise, this function returns the
-  /// type of code emitted.
+  /// fails, it sets Error, otherwise, this function returns the type of code
+  /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile) {
-    throw std::string("OutputCode not supported by this AbstractInterpreter!");
+                                   sys::Path &OutFile, std::string &Error) {
+    Error = "OutputCode not supported by this AbstractInterpreter!";
+    return GCC::AsmFile;
   }
-  
+
   /// ExecuteProgram - Run the specified bitcode file, emitting output to the
-  /// specified filename.  This returns the exit code of the program.
+  /// specified filename.  This sets RetVal to the exit code of the program or
+  /// returns false if a problem was encountered that prevented execution of
+  /// the program.
   ///
   virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             std::string *Error,
                              const std::vector<std::string> &GCCArgs =
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
@@ -164,14 +157,14 @@ public:
 
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
-  /// the code generator.  If the code generator fails, an exception should be
-  /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bitcode);
+  /// the code generator.  Returns false if the code generator fails.
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error);
 
   virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             std::string *Error,
                              const std::vector<std::string> &GCCArgs =
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
@@ -181,10 +174,10 @@ public:
 
   /// OutputCode - Compile the specified program from bitcode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
-  /// fails, an exception should be thrown, otherwise, this function returns the
-  /// type of code emitted.
+  /// fails, it sets Error, otherwise, this function returns the type of code
+  /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile);
+                                   sys::Path &OutFile, std::string &Error);
 };
 
 
@@ -212,14 +205,14 @@ public:
 
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
-  /// the code generator.  If the code generator fails, an exception should be
-  /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bitcode);
+  /// the code generator.  Returns false if the code generator fails.
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error);
 
   virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             std::string *Error,
                              const std::vector<std::string> &GCCArgs =
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
@@ -227,9 +220,12 @@ public:
                              unsigned Timeout = 0,
                              unsigned MemoryLimit = 0);
 
+  /// OutputCode - Compile the specified program from bitcode to code
+  /// understood by the GCC driver (either C or asm).  If the code generator
+  /// fails, it sets Error, otherwise, this function returns the type of code
+  /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile);
-  
+                                   sys::Path &OutFile, std::string &Error);
 };
 
 } // End llvm namespace

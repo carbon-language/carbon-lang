@@ -149,23 +149,11 @@ int main(int argc, char **argv) {
   // avoid filling up the disk, we prevent it
   sys::Process::PreventCoreFiles();
 
-  try {
-    return D.run();
-  } catch (ToolExecutionError &TEE) {
-    errs() << "Tool execution error: " << TEE.what() << '\n';
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-  } catch (const std::bad_alloc&) {
-    errs() << "Oh no, a bugpoint process ran out of memory!\n"
-              "To increase the allocation limits for bugpoint child\n"
-              "processes, use the -mlimit option.\n";
-  } catch (const std::exception &e) {
-    errs() << "Whoops, a std::exception leaked out of bugpoint: "
-           << e.what() << "\n"
-           << "This is a bug in bugpoint!\n";
-  } catch (...) {
-    errs() << "Whoops, an exception leaked out of bugpoint.  "
-           << "This is a bug in bugpoint!\n";
+  std::string Error;
+  bool Failure = D.run(Error);
+  if (!Error.empty()) {
+    errs() << Error;
+    return 1;
   }
-  return 1;
+  return Failure;
 }

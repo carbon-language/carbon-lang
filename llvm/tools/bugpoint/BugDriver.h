@@ -88,7 +88,7 @@ public:
   /// variables are set up from command line arguments. The \p as_child argument
   /// indicates whether the driver is to run in parent mode or child mode.
   ///
-  bool run();
+  bool run(std::string &ErrMsg);
 
   /// debugOptimizerCrash - This method is called when some optimizer pass
   /// crashes on input.  It attempts to prune down the testcase to something
@@ -99,12 +99,12 @@ public:
   /// debugCodeGeneratorCrash - This method is called when the code generator
   /// crashes on an input.  It attempts to reduce the input as much as possible
   /// while still causing the code generator to crash.
-  bool debugCodeGeneratorCrash();
+  bool debugCodeGeneratorCrash(std::string &Error);
 
   /// debugMiscompilation - This method is used when the passes selected are not
   /// crashing, but the generated output is semantically different from the
   /// input.
-  bool debugMiscompilation();
+  void debugMiscompilation(std::string *Error);
 
   /// debugPassMiscompilation - This method is called when the specified pass
   /// miscompiles Program as input.  It tries to reduce the testcase to
@@ -118,12 +118,13 @@ public:
   /// compileSharedObject - This method creates a SharedObject from a given
   /// BitcodeFile for debugging a code generator.
   ///
-  std::string compileSharedObject(const std::string &BitcodeFile);
+  std::string compileSharedObject(const std::string &BitcodeFile,
+                                  std::string &Error);
 
   /// debugCodeGenerator - This method narrows down a module to a function or
   /// set of functions, using the CBE as a ``safe'' code generator for other
   /// functions that are not under consideration.
-  bool debugCodeGenerator();
+  bool debugCodeGenerator(std::string *Error);
 
   /// isExecutingJIT - Returns true if bugpoint is currently testing the JIT
   ///
@@ -164,27 +165,29 @@ public:
   /// the specified one as the current program.
   void setNewProgram(Module *M);
 
-  /// compileProgram - Try to compile the specified module, throwing an
-  /// exception if an error occurs, or returning normally if not.  This is used
-  /// for code generation crash testing.
+  /// compileProgram - Try to compile the specified module, returning false and
+  /// setting Error if an error occurs.  This is used for code generation
+  /// crash testing.
   ///
-  void compileProgram(Module *M);
+  void compileProgram(Module *M, std::string *Error);
 
   /// executeProgram - This method runs "Program", capturing the output of the
-  /// program to a file, returning the filename of the file.  A recommended
-  /// filename may be optionally specified.  If there is a problem with the code
-  /// generator (e.g., llc crashes), this will throw an exception.
+  /// program to a file.  The recommended filename will be filled in with the
+  /// name of the file with the captured output.  If there is a problem with
+  /// the code generator (e.g., llc crashes), this will throw an exception.
   ///
-  std::string executeProgram(std::string RequestedOutputFilename = "",
-                             std::string Bitcode = "",
-                             const std::string &SharedObjects = "",
-                             AbstractInterpreter *AI = 0);
+  std::string executeProgram(std::string OutputFilename,
+                             std::string Bitcode,
+                             const std::string &SharedObjects,
+                             AbstractInterpreter *AI,
+                             std::string *Error);
 
   /// executeProgramSafely - Used to create reference output with the "safe"
   /// backend, if reference output is not provided.  If there is a problem with
-  /// the code generator (e.g., llc crashes), this will throw an exception.
+  /// the code generator (e.g., llc crashes), this will return false and set
+  /// Error.
   ///
-  std::string executeProgramSafely(std::string OutputFile = "");
+  std::string executeProgramSafely(std::string OutputFile, std::string *Error);
 
   /// createReferenceFile - calls compileProgram and then records the output
   /// into ReferenceOutputFile. Returns true if reference file created, false 
@@ -196,13 +199,14 @@ public:
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output
-  /// is different, true is returned.  If there is a problem with the code
-  /// generator (e.g., llc crashes), this will throw an exception.
+  /// is different, 1 is returned.  If there is a problem with the code
+  /// generator (e.g., llc crashes), this will return -1 and set Error.
   ///
   bool diffProgram(const std::string &BitcodeFile = "",
                    const std::string &SharedObj = "",
-                   bool RemoveBitcode = false);
-                   
+                   bool RemoveBitcode = false,
+                   std::string *Error = 0);
+
   /// EmitProgressBitcode - This function is used to output the current Program
   /// to a file named "bugpoint-ID.bc".
   ///
@@ -266,7 +270,8 @@ public:
   /// If the passes did not compile correctly, output the command required to 
   /// recreate the failure. This returns true if a compiler error is found.
   ///
-  bool runManyPasses(const std::vector<const PassInfo*> &AllPasses);
+  bool runManyPasses(const std::vector<const PassInfo*> &AllPasses,
+		     std::string &ErrMsg);
 
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bitcode file.  If an error occurs, true is returned.

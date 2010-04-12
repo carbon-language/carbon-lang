@@ -53,13 +53,15 @@ namespace llvm {
     // passes.  If we return true, we update the current module of bugpoint.
     //
     virtual TestResult doTest(std::vector<const PassInfo*> &Removed,
-                              std::vector<const PassInfo*> &Kept);
+                              std::vector<const PassInfo*> &Kept,
+                              std::string &Error);
   };
 }
 
 ReducePassList::TestResult
 ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
-                       std::vector<const PassInfo*> &Suffix) {
+                       std::vector<const PassInfo*> &Suffix,
+                       std::string &Error) {
   sys::Path PrefixOutput;
   Module *OrigProgram = 0;
   if (!Prefix.empty()) {
@@ -107,27 +109,26 @@ namespace {
     bool (*TestFn)(BugDriver &, Module *);
   public:
     ReduceCrashingGlobalVariables(BugDriver &bd,
-                                  bool (*testFn)(BugDriver&, Module*))
+                                  bool (*testFn)(BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
-    virtual TestResult doTest(std::vector<GlobalVariable*>& Prefix,
-                              std::vector<GlobalVariable*>& Kept) {
+    virtual TestResult doTest(std::vector<GlobalVariable*> &Prefix,
+                              std::vector<GlobalVariable*> &Kept,
+                              std::string &Error) {
       if (!Kept.empty() && TestGlobalVariables(Kept))
         return KeepSuffix;
-
       if (!Prefix.empty() && TestGlobalVariables(Prefix))
         return KeepPrefix;
-
       return NoFailure;
     }
 
-    bool TestGlobalVariables(std::vector<GlobalVariable*>& GVs);
+    bool TestGlobalVariables(std::vector<GlobalVariable*> &GVs);
   };
 }
 
 bool
 ReduceCrashingGlobalVariables::TestGlobalVariables(
-                              std::vector<GlobalVariable*>& GVs) {
+                              std::vector<GlobalVariable*> &GVs) {
   // Clone the program to try hacking it apart...
   DenseMap<const Value*, Value*> ValueMap;
   Module *M = CloneModule(BD.getProgram(), ValueMap);
@@ -182,7 +183,8 @@ namespace llvm {
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<Function*> &Prefix,
-                              std::vector<Function*> &Kept) {
+                              std::vector<Function*> &Kept,
+                              std::string &Error) {
       if (!Kept.empty() && TestFuncs(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestFuncs(Prefix))
@@ -253,7 +255,8 @@ namespace {
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<const BasicBlock*> &Prefix,
-                              std::vector<const BasicBlock*> &Kept) {
+                              std::vector<const BasicBlock*> &Kept,
+                              std::string &Error) {
       if (!Kept.empty() && TestBlocks(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestBlocks(Prefix))
@@ -355,7 +358,8 @@ namespace {
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<const Instruction*> &Prefix,
-                              std::vector<const Instruction*> &Kept) {
+                              std::vector<const Instruction*> &Kept,
+                              std::string &Error) {
       if (!Kept.empty() && TestInsts(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestInsts(Prefix))
@@ -421,7 +425,8 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
 /// DebugACrash - Given a predicate that determines whether a component crashes
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
-static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
+static bool DebugACrash(BugDriver &BD, bool (*TestFn)(BugDriver &, Module *),
+                        std::string &Error) {
   // See if we can get away with nuking some of the global variable initializers
   // in the program...
   if (!NoGlobalRM &&
@@ -464,7 +469,9 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
                     << "variables in the testcase\n";
 
           unsigned OldSize = GVs.size();
-          ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs);
+          ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs, Error);
+          if (!Error.empty())
+            return true;
 
           if (GVs.size() < OldSize)
             BD.EmitProgressBitcode("reduced-global-variables");
@@ -485,7 +492,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       "in the testcase\n";
 
     unsigned OldSize = Functions.size();
-    ReduceCrashingFunctions(BD, TestFn).reduceList(Functions);
+    ReduceCrashingFunctions(BD, TestFn).reduceList(Functions, Error);
 
     if (Functions.size() < OldSize)
       BD.EmitProgressBitcode("reduced-function");
@@ -503,7 +510,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       for (Function::const_iterator FI = I->begin(), E = I->end(); FI !=E; ++FI)
         Blocks.push_back(FI);
     unsigned OldSize = Blocks.size();
-    ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks);
+    ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks, Error);
     if (Blocks.size() < OldSize)
       BD.EmitProgressBitcode("reduced-blocks");
   }
@@ -521,7 +528,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
           if (!isa<TerminatorInst>(I))
             Insts.push_back(I);
 
-    ReduceCrashingInstructions(BD, TestFn).reduceList(Insts);
+    ReduceCrashingInstructions(BD, TestFn).reduceList(Insts, Error);
   }
 
   // FIXME: This should use the list reducer to converge faster by deleting
@@ -614,9 +621,11 @@ static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {
 bool BugDriver::debugOptimizerCrash(const std::string &ID) {
   outs() << "\n*** Debugging optimizer crash!\n";
 
+  std::string Error;
   // Reduce the list of passes which causes the optimizer to crash...
   if (!BugpointIsInterrupted)
-    ReducePassList(*this).reduceList(PassesToRun);
+    ReducePassList(*this).reduceList(PassesToRun, Error);
+  assert(Error.empty());
 
   outs() << "\n*** Found crashing pass"
          << (PassesToRun.size() == 1 ? ": " : "es: ")
@@ -624,25 +633,27 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
 
   EmitProgressBitcode(ID);
 
-  return DebugACrash(*this, TestForOptimizerCrash);
+  bool Success = DebugACrash(*this, TestForOptimizerCrash, Error);
+  assert(Error.empty());
+  return Success;
 }
 
 static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
-  try {
-    BD.compileProgram(M);
-    errs() << '\n';
-    return false;
-  } catch (ToolExecutionError &) {
+  std::string Error;
+  BD.compileProgram(M, &Error);
+  if (!Error.empty()) {
     errs() << "<crash>\n";
     return true;  // Tool is still crashing.
   }
+  errs() << '\n';
+  return false;
 }
 
 /// debugCodeGeneratorCrash - This method is called when the code generator
 /// crashes on an input.  It attempts to reduce the input as much as possible
 /// while still causing the code generator to crash.
-bool BugDriver::debugCodeGeneratorCrash() {
+bool BugDriver::debugCodeGeneratorCrash(std::string &Error) {
   errs() << "*** Debugging code generator crash!\n";
 
-  return DebugACrash(*this, TestForCodeGenCrash);
+  return DebugACrash(*this, TestForCodeGenCrash, Error);
 }
