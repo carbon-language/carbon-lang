@@ -1874,9 +1874,10 @@ LexNextToken:
           if (PP->isCurrentLexer(this)) {
             // Start a new token. If this is a #include or something, the PP may
             // want us starting at the beginning of the line again.  If so, set
-            // the StartOfLine flag.
+            // the StartOfLine flag and clear LeadingSpace.
             if (IsAtStartOfLine) {
               Result.setFlag(Token::StartOfLine);
+              Result.clearFlag(Token::LeadingSpace);
               IsAtStartOfLine = false;
             }
             goto LexNextToken;   // GCC isn't tail call eliminating.
@@ -2024,9 +2025,10 @@ LexNextToken:
         if (PP->isCurrentLexer(this)) {
           // Start a new token.  If this is a #include or something, the PP may
           // want us starting at the beginning of the line again.  If so, set
-          // the StartOfLine flag.
+          // the StartOfLine flag and clear LeadingSpace.
           if (IsAtStartOfLine) {
             Result.setFlag(Token::StartOfLine);
+            Result.clearFlag(Token::LeadingSpace);
             IsAtStartOfLine = false;
           }
           goto LexNextToken;   // GCC isn't tail call eliminating.
