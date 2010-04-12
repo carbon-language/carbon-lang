@@ -498,18 +498,18 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
   assert(receiverName && "missing receiver class name");
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
-  ObjCInterfaceDecl* ClassDecl = 0;
-  bool isSuper = false;
+  ObjCInterfaceDecl *ClassDecl = 0;
 
+  // Special case a message to super, which can be either a class message or an
+  // instance message, depending on what CurMethodDecl is.
   if (receiverName->isStr("super")) {
     if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
-      isSuper = true;
       ObjCInterfaceDecl *OID = CurMethod->getClassInterface();
       if (!OID)
         return Diag(lbrac, diag::error_no_super_class_message)
                       << CurMethod->getDeclName();
       ClassDecl = OID->getSuperClass();
-      if (!ClassDecl)
+      if (ClassDecl == 0)
         return Diag(lbrac, diag::error_no_super_class) << OID->getDeclName();
       if (CurMethod->isInstanceMethod()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
@@ -520,29 +520,13 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
         return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac,
                                     selectorLoc, rbrac, Args, NumArgs);
       }
-      // We are sending a message to 'super' within a class method. Do nothing,
-      // the receiver will pass through as 'super' (how convenient:-).
-    } else {
-      // 'super' has been used outside a method context. If a variable named
-      // 'super' has been declared, redirect. If not, produce a diagnostic.
       
-      // FIXME:
-      // FIXME: This should be handled in the parser!
-      // FIXME:
-      
-      NamedDecl *SuperDecl
-        = LookupSingleName(S, receiverName, LookupOrdinaryName);
-      ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
-      if (VD) {
-        ExprResult ReceiverExpr = new (Context) DeclRefExpr(VD, VD->getType(),
-                                                            receiverLoc);
-        // We are really in an instance method, redirect.
-        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac,
-                                    selectorLoc, rbrac, Args, NumArgs);
-      }
-      ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
+      // Otherwise, if this is a class method, try dispatching to our
+      // superclass, which is in ClassDecl.
     }
-  } else
+  }
+  
+  if (ClassDecl == 0)
     ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
 
   // The following code allows for the following GCC-ism:
@@ -602,17 +586,9 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
   // If we have the ObjCInterfaceDecl* for the class that is receiving the
   // message, use that to construct the ObjCMessageExpr.  Otherwise pass on the
   // IdentifierInfo* for the class.
-  // FIXME: need to do a better job handling 'super' usage within a class.  For
-  // now, we simply pass the "super" identifier through (which isn't consistent
-  // with instance methods.
-  if (isSuper)
-    return new (Context) ObjCMessageExpr(Context, receiverName, receiverLoc,
-                                         Sel, returnType, Method, lbrac, rbrac, 
-                                         ArgExprs, NumArgs);
-  else
-    return new (Context) ObjCMessageExpr(Context, ClassDecl, receiverLoc,
-                                         Sel, returnType, Method, lbrac, rbrac, 
-                                         ArgExprs, NumArgs);
+  return new (Context) ObjCMessageExpr(Context, ClassDecl, receiverLoc,
+                                       Sel, returnType, Method, lbrac, rbrac, 
+                                       ArgExprs, NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.

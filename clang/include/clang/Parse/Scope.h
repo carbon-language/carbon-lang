@@ -52,8 +52,8 @@ public:
 
     /// BlockScope - This is a scope that corresponds to a block object.
     /// Blocks serve as top-level scopes for some objects like labels, they
-    /// also prevent things like break and continue.  BlockScopes have the
-    /// other flags set as well.
+    /// also prevent things like break and continue.  BlockScopes always have
+    /// the FnScope, BreakScope, ContinueScope, and DeclScope flags set as well.
     BlockScope = 0x40,
 
     /// TemplateParamScope - This is a scope that corresponds to the
@@ -68,7 +68,11 @@ public:
 
     /// AtCatchScope - This is a scope that corresponds to the Objective-C
     /// @catch statement.
-    AtCatchScope = 0x200
+    AtCatchScope = 0x200,
+    
+    /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
+    /// It always has FnScope and DeclScope set as well.
+    ObjCMethodScope = 0x400
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -81,7 +85,7 @@ private:
 
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
-  unsigned Flags : 10;
+  unsigned Flags : 11;
 
   /// WithinElse - Whether this scope is part of the "else" branch in
   /// its parent ControlScope.
@@ -230,6 +234,23 @@ public:
     if (const Scope *FnS = getFnParent()) {
       assert(FnS->getParent() && "TUScope not created?");
       return FnS->getParent()->isClassScope();
+    }
+    return false;
+  }
+  
+  /// isInObjcMethodScope - Return true if this scope is, or is contained in, an
+  /// Objective-C method body.  Note that this method is not constant time.
+  bool isInObjcMethodScope() const {
+    for (const Scope *S = this; S; S = S->getParent()) {
+      // If this scope is an objc method scope, then we succeed.
+      if (S->getFlags() & ObjCMethodScope)
+        return true;
+      
+      // If we've scanned up the scope chain and find out that we're in some
+      // other body scope (e.g. a block), we fail even if it is ultimately
+      // contained in an ObjC method body.
+      if (S->getFlags() & FnScope)
+        return false;
     }
     return false;
   }
