@@ -134,6 +134,24 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter) {
+  // Special case: If the backedge-taken count is a UDiv, it's very likely a
+  // UDiv that ScalarEvolution produced in order to compute a precise
+  // expression, rather than a UDiv from the user's code. If we can't find a
+  // UDiv in the code with some simple searching, assume the former and forego
+  // rewriting the loop.
+  if (isa<SCEVUDivExpr>(BackedgeTakenCount)) {
+    ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
+    if (!OrigCond) return 0;
+    const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
+    R = SE->getMinusSCEV(R, SE->getIntegerSCEV(1, R->getType()));
+    if (R != BackedgeTakenCount) {
+      const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
+      L = SE->getMinusSCEV(L, SE->getIntegerSCEV(1, L->getType()));
+      if (L != BackedgeTakenCount)
+        return 0;
+    }
+  }
+
   // If the exiting block is not the same as the backedge block, we must compare
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
