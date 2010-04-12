@@ -1235,8 +1235,7 @@ Sema::OwningExprResult
 Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                          IdentifierInfo *II, bool AllowBuiltinCreation) {
   SourceLocation Loc = Lookup.getNameLoc();
-
-  // FIXME: Stop re-evaluating "getCurMethodDecl".
+  ObjCMethodDecl *CurMethod = getCurMethodDecl();
   
   // There are two cases to handle here.  1) scoped lookup could have failed,
   // in which case we should look for an ivar.  2) scoped lookup could have
@@ -1247,7 +1246,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
   // If we're in a class method, we don't normally want to look for
   // ivars.  But if we don't find anything else, and there's an
   // ivar, that's an error.
-  bool IsClassMethod = getCurMethodDecl()->isClassMethod();
+  bool IsClassMethod = CurMethod->isClassMethod();
 
   bool LookForIvars;
   if (Lookup.empty())
@@ -1259,7 +1258,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                     Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod());
   ObjCInterfaceDecl *IFace = 0;
   if (LookForIvars) {
-    IFace = getCurMethodDecl()->getClassInterface();
+    IFace = CurMethod->getClassInterface();
     ObjCInterfaceDecl *ClassDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
       // Diagnose using an ivar in a class method.
@@ -1294,9 +1293,9 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
                                    SelfExpr.takeAs<Expr>(), true, true));
     }
-  } else if (getCurMethodDecl()->isInstanceMethod()) {
+  } else if (CurMethod->isInstanceMethod()) {
     // We should warn if a local variable hides an ivar.
-    ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
+    ObjCInterfaceDecl *IFace = CurMethod->getClassInterface();
     ObjCInterfaceDecl *ClassDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
       if (IV->getAccessControl() != ObjCIvarDecl::Private ||
