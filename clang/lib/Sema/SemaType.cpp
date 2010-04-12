@@ -950,8 +950,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     // "void" instead. 
     T = Context.VoidTy;
       
-    // FIXME: Keep track of source location information within the constructor
-    // or destructor name.
     if (TInfo)
       ReturnTypeInfo = Context.getTrivialTypeSourceInfo(T, 
                                                     D.getName().StartLocation);
@@ -960,7 +958,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   case UnqualifiedId::IK_ConversionFunctionId:
     // The result type of a conversion function is the type that it
     // converts to.
-    // FIXME: Keep track of the location of the 'operator' keyword?
     T = GetTypeFromParser(D.getName().ConversionFunctionId, 
                           TInfo? &ReturnTypeInfo : 0);
     break;
