@@ -4118,55 +4118,23 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     }
   }
 
-  // Parameters can not be abstract class types.
-  // For record types, this is done by the AbstractClassUsageDiagnoser once
-  // the class has been completely parsed.
-  if (!CurContext->isRecord() &&
-      RequireNonAbstractType(D.getIdentifierLoc(), parmDeclType,
-                             diag::err_abstract_type_in_decl,
-                             AbstractParamType))
-    D.setInvalidType(true);
-
-  QualType T = adjustParameterType(parmDeclType);
-
   // Temporarily put parameter variables in the translation unit, not
   // the enclosing context.  This prevents them from accidentally
   // looking like class members in C++.
-  DeclContext *DC = Context.getTranslationUnitDecl();
-
-  ParmVarDecl *New
-    = ParmVarDecl::Create(Context, DC, D.getIdentifierLoc(), II,
-                          T, TInfo, StorageClass, 0);
+  ParmVarDecl *New = CheckParameter(Context.getTranslationUnitDecl(),
+                                    TInfo, parmDeclType, II, 
+                                    D.getIdentifierLoc(), StorageClass);
 
   if (D.isInvalidType())
-    New->setInvalidDecl();
-
-  // Parameter declarators cannot be interface types. All ObjC objects are
-  // passed by reference.
-  if (T->isObjCInterfaceType()) {
-    Diag(D.getIdentifierLoc(),
-         diag::err_object_cannot_be_passed_returned_by_value) << 1 << T;
-    New->setInvalidDecl();
-  }
-
+    New->setInvalidDecl();  
+  
   // Parameter declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_param_declarator)
       << D.getCXXScopeSpec().getRange();
     New->setInvalidDecl();
   }
-  
-  // ISO/IEC TR 18037 S6.7.3: "The type of an object with automatic storage 
-  // duration shall not be qualified by an address-space qualifier."
-  // Since all parameters have automatic store duration, they can not have
-  // an address space.
-  if (T.getAddressSpace() != 0) {
-    Diag(D.getIdentifierLoc(),  
-         diag::err_arg_with_address_space);
-    New->setInvalidDecl();
-  }   
-  
-  
+
   // Add the parameter declaration into this scope.
   S->AddDecl(DeclPtrTy::make(New));
   if (II)
@@ -4178,6 +4146,43 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
   }
   return DeclPtrTy::make(New);
+}
+
+ParmVarDecl *Sema::CheckParameter(DeclContext *DC, 
+                                  TypeSourceInfo *TSInfo, QualType T,
+                                  IdentifierInfo *Name,
+                                  SourceLocation NameLoc,
+                                  VarDecl::StorageClass StorageClass) {
+  ParmVarDecl *New = ParmVarDecl::Create(Context, DC, NameLoc, Name,
+                                         adjustParameterType(T), TSInfo, 
+                                         StorageClass, 0);
+
+  // Parameters can not be abstract class types.
+  // For record types, this is done by the AbstractClassUsageDiagnoser once
+  // the class has been completely parsed.
+  if (!CurContext->isRecord() &&
+      RequireNonAbstractType(NameLoc, T, diag::err_abstract_type_in_decl,
+                             AbstractParamType))
+    New->setInvalidDecl();
+
+  // Parameter declarators cannot be interface types. All ObjC objects are
+  // passed by reference.
+  if (T->isObjCInterfaceType()) {
+    Diag(NameLoc,
+         diag::err_object_cannot_be_passed_returned_by_value) << 1 << T;
+    New->setInvalidDecl();
+  }
+
+  // ISO/IEC TR 18037 S6.7.3: "The type of an object with automatic storage 
+  // duration shall not be qualified by an address-space qualifier."
+  // Since all parameters have automatic store duration, they can not have
+  // an address space.
+  if (T.getAddressSpace() != 0) {
+    Diag(NameLoc, diag::err_arg_with_address_space);
+    New->setInvalidDecl();
+  }   
+
+  return New;
 }
 
 void Sema::ActOnObjCCatchParam(DeclPtrTy D) {

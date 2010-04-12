@@ -805,6 +805,11 @@ public:
                                 bool &OverloadableAttrRequired);
   void CheckMain(FunctionDecl *FD);
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D);
+  ParmVarDecl *CheckParameter(DeclContext *DC, 
+                              TypeSourceInfo *TSInfo, QualType T,
+                              IdentifierInfo *Name,
+                              SourceLocation NameLoc,
+                              VarDecl::StorageClass StorageClass);
   virtual void ActOnObjCCatchParam(DeclPtrTy D);
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,
@@ -3642,7 +3647,8 @@ public:
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                         SourceLocation Loc,
                                         DeclarationName Entity);
-
+  ParmVarDecl *SubstParmVarDecl(ParmVarDecl *D, 
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
   OwningExprResult SubstExpr(Expr *E,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
 
@@ -3709,8 +3715,6 @@ public:
                           const MultiLevelTemplateArgumentList &TemplateArgs);
   DeclContext *FindInstantiatedContext(SourceLocation Loc, DeclContext *DC,
                           const MultiLevelTemplateArgumentList &TemplateArgs);
-
-  bool CheckInstantiatedParams(llvm::SmallVectorImpl<ParmVarDecl *> &Params);
 
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

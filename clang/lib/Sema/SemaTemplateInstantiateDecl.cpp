@@ -1343,41 +1343,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  QualType T;
-  TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI) {
-    DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
-                           D->getDeclName());
-    if (DI) T = DI->getType();
-  } else {
-    T = SemaRef.SubstType(D->getType(), TemplateArgs, D->getLocation(),
-                          D->getDeclName());
-    DI = 0;
-  }
-
-  if (T.isNull())
-    return 0;
-
-  T = SemaRef.adjustParameterType(T);
-
-  // Allocate the parameter
-  ParmVarDecl *Param
-    = ParmVarDecl::Create(SemaRef.Context,
-                          SemaRef.Context.getTranslationUnitDecl(),
-                          D->getLocation(),
-                          D->getIdentifier(), T, DI, D->getStorageClass(), 0);
-
-  // Mark the default argument as being uninstantiated.
-  if (D->hasUninstantiatedDefaultArg())
-    Param->setUninstantiatedDefaultArg(D->getUninstantiatedDefaultArg());
-  else if (Expr *Arg = D->getDefaultArg())
-    Param->setUninstantiatedDefaultArg(Arg);
-  
-  // Note: we don't try to instantiate function parameters until after
-  // we've instantiated the function's type. Therefore, we don't have
-  // to check for 'void' parameter types here.
-  SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
-  return Param;
+  return SemaRef.SubstParmVarDecl(D, TemplateArgs);
 }
 
 Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
@@ -1797,29 +1763,6 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   return false;
 }
 
-bool
-Sema::CheckInstantiatedParams(llvm::SmallVectorImpl<ParmVarDecl*> &Params) {
-  bool Invalid = false;
-  for (unsigned i = 0, i_end = Params.size(); i != i_end; ++i)
-    if (ParmVarDecl *PInst = Params[i]) {
-      if (PInst->isInvalidDecl())
-        Invalid = true;
-      else if (PInst->getType()->isVoidType()) {
-        Diag(PInst->getLocation(), diag::err_param_with_void_type);
-        PInst->setInvalidDecl();
-        Invalid = true;
-      }
-      else if (RequireNonAbstractType(PInst->getLocation(),
-                                      PInst->getType(),
-                                      diag::err_abstract_type_in_decl,
-                                      Sema::AbstractParamType)) {
-        PInst->setInvalidDecl();
-        Invalid = true;
-      }
-    }
-  return Invalid;
-}
-
 TypeSourceInfo*
 TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
                               llvm::SmallVectorImpl<ParmVarDecl *> &Params) {
@@ -1833,13 +1776,26 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   if (!NewTInfo)
     return 0;
 
-  // Get parameters from the new type info.
-  TypeLoc NewTL = NewTInfo->getTypeLoc();
-  FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
-  assert(NewProtoLoc && "Missing prototype?");
-  for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i)
-    Params.push_back(NewProtoLoc->getArg(i));
-
+  if (NewTInfo != OldTInfo) {
+    // Get parameters from the new type info.
+    TypeLoc NewTL = NewTInfo->getTypeLoc();
+    FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
+    assert(NewProtoLoc && "Missing prototype?");
+    for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i)
+      Params.push_back(NewProtoLoc->getArg(i));
+  } else {
+    // The function type itself was not dependent and therefore no
+    // substitution occurred. However, we still need to instantiate
+    // the function parameters themselves.
+    TypeLoc OldTL = OldTInfo->getTypeLoc();
+    FunctionProtoTypeLoc *OldProtoLoc = cast<FunctionProtoTypeLoc>(&OldTL);
+    for (unsigned i = 0, i_end = OldProtoLoc->getNumArgs(); i != i_end; ++i) {
+      ParmVarDecl *Parm = VisitParmVarDecl(OldProtoLoc->getArg(i));
+      if (!Parm)
+        return 0;
+      Params.push_back(Parm);
+    }
+  }
   return NewTInfo;
 }
 

@@ -807,47 +807,12 @@ TemplateInstantiator::TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
         TransformFunctionTypeParams(TL, PTypes, PVars))
     return true;
 
-  // Check instantiated parameters.
-  if (SemaRef.CheckInstantiatedParams(PVars))
-    return true;
-
   return false;
 }
 
 ParmVarDecl *
 TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
-  TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
-  TypeSourceInfo *NewDI = getDerived().TransformType(OldDI);
-  if (!NewDI)
-    return 0;
-
-  // TODO: do we have to clone this decl if the types match and
-  // there's no default argument?
-
-  ParmVarDecl *NewParm
-    = ParmVarDecl::Create(SemaRef.Context,
-                          OldParm->getDeclContext(),
-                          OldParm->getLocation(),
-                          OldParm->getIdentifier(),
-                          NewDI->getType(),
-                          NewDI,
-                          OldParm->getStorageClass(),
-                          /* DefArg */ NULL);
-
-  // Maybe adjust new parameter type.
-  NewParm->setType(SemaRef.adjustParameterType(NewParm->getType()));
-
-  // Mark the (new) default argument as uninstantiated (if any).
-  if (OldParm->hasUninstantiatedDefaultArg()) {
-    Expr *Arg = OldParm->getUninstantiatedDefaultArg();
-    NewParm->setUninstantiatedDefaultArg(Arg);
-  } else if (Expr *Arg = OldParm->getDefaultArg())
-    NewParm->setUninstantiatedDefaultArg(Arg);
-
-  NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
-
-  SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
-  return NewParm;
+  return SemaRef.SubstParmVarDecl(OldParm, TemplateArgs);
 }
 
 QualType
@@ -1007,6 +972,40 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
     return 0;
 
   return TLB.getTypeSourceInfo(Context, Result);
+}
+
+ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 
+                          const MultiLevelTemplateArgumentList &TemplateArgs) {
+  TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
+  TypeSourceInfo *NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(),
+                                    OldParm->getDeclName());
+  if (!NewDI)
+    return 0;
+
+  if (NewDI->getType()->isVoidType()) {
+    Diag(OldParm->getLocation(), diag::err_param_with_void_type);
+    return 0;
+  }
+
+  ParmVarDecl *NewParm = CheckParameter(Context.getTranslationUnitDecl(),
+                                        NewDI, NewDI->getType(),
+                                        OldParm->getIdentifier(),
+                                        OldParm->getLocation(),
+                                        OldParm->getStorageClass());
+  if (!NewParm)
+    return 0;
+                                                
+  // Mark the (new) default argument as uninstantiated (if any).
+  if (OldParm->hasUninstantiatedDefaultArg()) {
+    Expr *Arg = OldParm->getUninstantiatedDefaultArg();
+    NewParm->setUninstantiatedDefaultArg(Arg);
+  } else if (Expr *Arg = OldParm->getDefaultArg())
+    NewParm->setUninstantiatedDefaultArg(Arg);
+
+  NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
+
+  CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
+  return NewParm;  
 }
 
 /// \brief Perform substitution on the base class specifiers of the
