@@ -4076,8 +4076,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
         if (Op.getOpcode() == ISD::UNDEF) continue;
         EltIsUndef = false;
 
-        NewBits |= (APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).
-                    zextOrTrunc(SrcBitSize).zext(DstBitSize));
+        NewBits |= APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).
+                   zextOrTrunc(SrcBitSize).zext(DstBitSize);
       }
 
       if (EltIsUndef)

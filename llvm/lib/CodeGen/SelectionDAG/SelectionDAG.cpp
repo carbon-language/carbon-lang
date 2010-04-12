@@ -6354,8 +6354,8 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
     if (OpVal.getOpcode() == ISD::UNDEF)
       SplatUndef |= APInt::getBitsSet(sz, BitPos, BitPos + EltBitSize);
     else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal))
-      SplatValue |= (APInt(CN->getAPIntValue()).zextOrTrunc(EltBitSize).
-                     zextOrTrunc(sz) << BitPos);
+      SplatValue |= APInt(CN->getAPIntValue()).zextOrTrunc(EltBitSize).
+                    zextOrTrunc(sz) << BitPos;
     else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal))
       SplatValue |= CN->getValueAPF().bitcastToAPInt().zextOrTrunc(sz) <<BitPos;
      else
