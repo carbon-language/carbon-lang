@@ -406,6 +406,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     RewriteLoopExitValues(L, Rewriter);
 
+  // Simplify ICmp IV users.
+  EliminateIVComparisons();
+
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
   const Type *LargestType = 0;
@@ -471,19 +474,10 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       ExitingBlock) {
     assert(NeedCannIV &&
            "LinearFunctionTestReplace requires a canonical induction variable");
-
     // Can't rewrite non-branch yet.
-    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
-      // Eliminate comparisons which are always true or always false, due to
-      // the known backedge-taken count. This may include comparisons which
-      // are currently controlling (part of) the loop exit, so we can only do
-      // it when we know we're going to insert our own loop exit code.
-      EliminateIVComparisons();
-
-      // Insert new loop exit code.
+    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator()))
       NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
                                           ExitingBlock, BI, Rewriter);
-    }
   }
 
   // Rewrite IV-derived expressions. Clears the rewriter cache.
