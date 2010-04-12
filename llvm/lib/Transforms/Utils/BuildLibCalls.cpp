@@ -373,15 +373,29 @@ void llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
 SimplifyFortifiedLibCalls::~SimplifyFortifiedLibCalls() { }
 
 bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
+  // We really need TargetData for later.
+  if (!TD) return false;
+  
   this->CI = CI;
-  StringRef Name = CI->getCalledFunction()->getName();
+  Function *Callee = CI->getCalledFunction();
+  StringRef Name = Callee->getName();
+  const FunctionType *FT = Callee->getFunctionType();
   BasicBlock *BB = CI->getParent();
-  IRBuilder<> B(CI->getParent()->getContext());
+  LLVMContext &Context = CI->getParent()->getContext();
+  IRBuilder<> B(Context);
 
   // Set the builder to the instruction after the call.
   B.SetInsertPoint(BB, CI);
 
   if (Name == "__memcpy_chk") {
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
+      return false;
+    
     if (isFoldable(4, 3, false)) {
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
                  1, false, B, TD);
@@ -397,6 +411,14 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   }
 
   if (Name == "__memmove_chk") {
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
+      return false;
+    
     if (isFoldable(4, 3, false)) {
       EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
                   1, false, B, TD);
@@ -407,6 +429,14 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   }
 
   if (Name == "__memset_chk") {
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() ||
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
+      return false;
+    
     if (isFoldable(4, 3, false)) {
       Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
                                    false);
@@ -418,6 +448,15 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   }
 
   if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 3 ||
+        FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
+        FT->getParamType(2) != TD->getIntPtrType(Context))
+      return 0;
+    
+    
     // If a) we don't have any length information, or b) we know this will
     // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
     // st[rp]cpy_chk call which may fail at runtime if the size is too long.
@@ -433,6 +472,13 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   }
 
   if (Name == "__strncpy_chk" || Name == "__stpncpy_chk") {
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
+        !FT->getParamType(2)->isIntegerTy() ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
+    
     if (isFoldable(4, 3, false)) {
       Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
                                CI->getOperand(3), B, TD, Name.substr(2, 7));

@@ -111,10 +111,10 @@ define i32 @test4() nounwind ssp {
 entry:
   %0 = alloca %struct.data, align 8
   %1 = bitcast %struct.data* %0 to i8*
-  %2 = call i64 @llvm.objectsize.i64(i8* %1, i1 false) nounwind
+  %2 = call i32 @llvm.objectsize.i32(i8* %1, i1 false) nounwind
 ; CHECK-NOT: @llvm.objectsize
-; CHECK: @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 1824, i32 8, i1 false)
-  %3 = call i8* @__memset_chk(i8* %1, i32 0, i64 1824, i64 %2) nounwind
+; CHECK: @llvm.memset.p0i8.i32(i8* %1, i8 0, i32 1824, i32 8, i1 false)
+  %3 = call i8* @__memset_chk(i8* %1, i32 0, i32 1824, i32 %2) nounwind
   ret i32 0
 }
 
@@ -150,5 +150,3 @@ declare i8* @__memset_chk(i8*, i32, i64, i64) nounwind
 declare noalias i8* @malloc(i32) nounwind
 
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
-
-declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
