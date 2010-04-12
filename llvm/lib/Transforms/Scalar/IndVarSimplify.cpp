@@ -338,9 +338,11 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 }
 
 void IndVarSimplify::EliminateIVComparisons() {
+  SmallVector<WeakVH, 16> DeadInsts;
+
   // Look for ICmp users.
-  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E;) {
-    IVStrideUse &UI = *I++;
+  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
+    IVStrideUse &UI = *I;
     ICmpInst *ICmp = dyn_cast<ICmpInst>(UI.getUser());
     if (!ICmp) continue;
 
@@ -367,8 +369,15 @@ void IndVarSimplify::EliminateIVComparisons() {
       continue;
 
     DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
-    ICmp->eraseFromParent();
+    DeadInsts.push_back(ICmp);
   }
+
+  // Now that we're done iterating through lists, clean up any instructions
+  // which are now dead.
+  while (!DeadInsts.empty())
+    if (Instruction *Inst =
+          dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
+      RecursivelyDeleteTriviallyDeadInstructions(Inst);
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
