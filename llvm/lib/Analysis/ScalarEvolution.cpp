@@ -1237,7 +1237,7 @@ CollectAddOperandsWithScales(DenseMap<const SCEV *, APInt> &M,
       }
     } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
       // Pull a buried constant out to the outside.
-      if (Scale != 1 || AccumulatedConstant != 0 || C->isZero())
+      if (Scale != 1 || AccumulatedConstant != 0 || C->getValue()->isZero())
         Interesting = true;
       AccumulatedConstant += Scale * C->getValue()->getValue();
     } else {
@@ -1308,13 +1308,13 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     }
 
     // If we are left with a constant zero being added, strip it off.
-    if (cast<SCEVConstant>(Ops[0])->getValue()->isZero()) {
+    if (LHSC->getValue()->isZero()) {
       Ops.erase(Ops.begin());
       --Idx;
     }
-  }
 
-  if (Ops.size() == 1) return Ops[0];
+    if (Ops.size() == 1) return Ops[0];
+  }
 
   // Okay, check to see if the same value occurs in the operand list twice.  If
   // so, merge them together into an multiply expression.  Since we sorted the
@@ -1534,8 +1534,9 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     // they are loop invariant w.r.t. the recurrence.
     SmallVector<const SCEV *, 8> LIOps;
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
+    const Loop *AddRecLoop = AddRec->getLoop();
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (Ops[i]->isLoopInvariant(AddRec->getLoop())) {
+      if (Ops[i]->isLoopInvariant(AddRecLoop)) {
         LIOps.push_back(Ops[i]);
         Ops.erase(Ops.begin()+i);
         --i; --e;
@@ -1552,7 +1553,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
 
       // It's tempting to propagate NUW/NSW flags here, but nuw/nsw addition
       // is not associative so this isn't necessarily safe.
-      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop());
+      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRecLoop);
 
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
@@ -1573,7 +1574,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);++OtherIdx)
       if (OtherIdx != Idx) {
         const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
-        if (AddRec->getLoop() == OtherAddRec->getLoop()) {
+        if (AddRecLoop == OtherAddRec->getLoop()) {
           // Other + {A,+,B} + {C,+,D}  -->  Other + {A+C,+,B+D}
           SmallVector<const SCEV *, 4> NewOps(AddRec->op_begin(),
                                               AddRec->op_end());
@@ -1585,7 +1586,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             }
             NewOps[i] = getAddExpr(NewOps[i], OtherAddRec->getOperand(i));
           }
-          const SCEV *NewAddRec = getAddRecExpr(NewOps, AddRec->getLoop());
+          const SCEV *NewAddRec = getAddRecExpr(NewOps, AddRecLoop);
 
           if (Ops.size() == 2) return NewAddRec;
 
@@ -1843,7 +1844,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                               // X udiv 1 --> x
-    if (RHSC->isZero())
+    if (RHSC->getValue()->isZero())
       return getIntegerSCEV(0, LHS->getType()); // value is undefined
 
     // Determine if the division can be folded into the operands of
@@ -2946,7 +2947,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     // initial value.
     if (AddRec->hasNoUnsignedWrap())
       if (const SCEVConstant *C = dyn_cast<SCEVConstant>(AddRec->getStart()))
-        if (!C->isZero())
+        if (!C->getValue()->isZero())
           ConservativeResult =
             ConstantRange(C->getValue()->getValue(), APInt(BitWidth, 0));
 
