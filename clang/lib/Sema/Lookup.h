@@ -343,6 +343,11 @@ public:
     } else {
       ResultKind = Found;
       resolveKind();
+      
+      if (Paths && (ResultKind != Ambiguous)) {
+        deletePaths(Paths);
+        Paths = 0;
+      }
     }
   }
 

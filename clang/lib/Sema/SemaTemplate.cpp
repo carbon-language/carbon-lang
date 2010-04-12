@@ -63,14 +63,34 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
 }
 
 static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
+  // The set of class templates we've already seen.
+  llvm::SmallPtrSet<ClassTemplateDecl *, 8> ClassTemplates;
   LookupResult::Filter filter = R.makeFilter();
   while (filter.hasNext()) {
     NamedDecl *Orig = filter.next();
     NamedDecl *Repl = isAcceptableTemplateName(C, Orig->getUnderlyingDecl());
     if (!Repl)
       filter.erase();
-    else if (Repl != Orig)
+    else if (Repl != Orig) {
+
+      // C++ [temp.local]p3:
+      //   A lookup that finds an injected-class-name (10.2) can result in an 
+      //   ambiguity in certain cases (for example, if it is found in more than
+      //   one base class). If all of the injected-class-names that are found 
+      //   refer to specializations of the same class template, and if the name 
+      //   is followed by a template-argument-list, the reference refers to the 
+      //   class template itself and not a specialization thereof, and is not 
+      //   ambiguous.
+      //
+      // FIXME: Will we eventually have to do the same for alias templates?
+      if (ClassTemplateDecl *ClassTmpl = dyn_cast<ClassTemplateDecl>(Repl))
+        if (!ClassTemplates.insert(ClassTmpl)) {
+          filter.erase();
+          continue;
+        }
+          
       filter.replace(Repl);
+    }
   }
   filter.done();
 }
@@ -109,7 +129,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                  LookupOrdinaryName);
   R.suppressDiagnostics();
   LookupTemplateName(R, S, SS, ObjectType, EnteringContext);
-  if (R.empty())
+  if (R.empty() || R.isAmbiguous())
     return TNK_Non_template;
 
   TemplateName Template;
@@ -227,10 +247,6 @@ void Sema::LookupTemplateName(LookupResult &Found,
     LookupName(Found, S);
   }
 
-  // FIXME: Cope with ambiguous name-lookup results.
-  assert(!Found.isAmbiguous() &&
-         "Cannot handle template name-lookup ambiguities");
-
   if (Found.empty() && !isDependent) {
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
@@ -271,8 +287,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
                             LookupOrdinaryName);
     LookupName(FoundOuter, S);
     FilterAcceptableTemplateNames(Context, FoundOuter);
-    // FIXME: Handle ambiguities in this lookup better
-
+    
     if (FoundOuter.empty()) {
       //   - if the name is not found, the name found in the class of the
       //     object expression is used, otherwise

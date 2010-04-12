@@ -2454,7 +2454,8 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
     }
   }
 
-  assert(BaseType->isDependentType() || Name.isDependentName());
+  assert(BaseType->isDependentType() || Name.isDependentName() || 
+         isDependentScopeSpecifier(SS));
 
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
   // must have pointer type, and the accessed type is the pointee.
@@ -3200,7 +3201,8 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
 
   Expr *Base = BaseArg.takeAs<Expr>();
   OwningExprResult Result(*this);
-  if (Base->getType()->isDependentType() || Name.isDependentName()) {
+  if (Base->getType()->isDependentType() || Name.isDependentName() ||
+      isDependentScopeSpecifier(SS)) {
     Result = ActOnDependentMemberExpr(ExprArg(*this, Base), Base->getType(),
                                       IsArrow, OpLoc,
                                       SS, FirstQualifierInScope,
