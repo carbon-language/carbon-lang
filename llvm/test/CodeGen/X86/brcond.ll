@@ -93,8 +93,9 @@ entry:
   br i1 %3, label %bb2, label %bb1
 
 ; CHECK:      jne
-; CHECK-NOT:  jmp
 ; CHECK-NEXT: jnp
+; CHECK-NOT:  jmp
+; CHECK-NEXT: LBB1_1
 
 bb1:                                              ; preds = %entry
   %4 = fadd double %2, -1.000000e+00              ; <double> [#uses=1]
