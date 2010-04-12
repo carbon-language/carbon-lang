@@ -52,3 +52,7 @@ int foo42(void) {
 void __attribute__((noreturn)) d0(void), __attribute__((noreturn)) d1(void);
 
 void d2(void) __attribute__((noreturn)), d3(void) __attribute__((noreturn));
+
+
+// PR6287
+void __attribute__((returns_twice)) returns_twice_test();
