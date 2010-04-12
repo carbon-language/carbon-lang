@@ -95,7 +95,7 @@ entry:
 ; CHECK:      jne
 ; CHECK-NEXT: jnp
 ; CHECK-NOT:  jmp
-; CHECK-NEXT: LBB1_1
+; CHECK-NEXT: LBB
 
 bb1:                                              ; preds = %entry
   %4 = fadd double %2, -1.000000e+00              ; <double> [#uses=1]
