@@ -34,7 +34,11 @@ void takevoidptr(void*);
   [super cMethod]; // expected-warning{{method '+cMethod' not found (return type defaults to 'id')}}
   
   id X[] = { [ super superClassMethod] };
-  id Y[] = { [ super.superClassMethod iMethod] };
+  id Y[] = {
+    [ super.superClassMethod iMethod],
+    super.superClassMethod,
+    (id)super.superClassMethod  // not a cast of super: rdar://7853261
+  };
   return 0;
 }
 @end

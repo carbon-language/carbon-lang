@@ -1444,7 +1444,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
           Tok.getIdentifierInfo() == Ident_super && 
-          CurScope->isInObjcMethodScope()) {
+          CurScope->isInObjcMethodScope() &&
+          GetLookAheadToken(1).isNot(tok::period)) {
         Diag(Tok.getLocation(), diag::err_illegal_super_cast)
           << SourceRange(OpenLoc, RParenLoc);
         return ExprError();
