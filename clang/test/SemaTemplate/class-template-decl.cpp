@@ -51,3 +51,8 @@ void f() {
 }
 
 template<typename T> class X1 { } var; // expected-error{{declared as a template}}
+
+namespace M {
+}
+
+template<typename T> class M::C3 { }; // expected-error{{out-of-line definition of 'C3' does not match any declaration in namespace 'M'}}

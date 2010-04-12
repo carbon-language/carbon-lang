@@ -19,17 +19,17 @@ namespace PR6376 {
   template<typename T>
   struct X {
     template<typename Y>
-    struct Y { };
+    struct Y1 { }; //
   };
 
   template<>
   struct X<float> {
     template<typename Y>
-    struct Y { };
+    struct Y1 { };
   };
 
   template<typename T, typename U>
-  struct Z : public X<T>::template Y<U> { };
+  struct Z : public X<T>::template Y1<U> { };
 
   Z<float, int> z0;
 }

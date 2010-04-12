@@ -4948,8 +4948,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
 
   if (!Previous.empty()) {
-    assert(Previous.isSingleResult());
-    NamedDecl *PrevDecl = Previous.getFoundDecl();
+    NamedDecl *PrevDecl = (*Previous.begin())->getUnderlyingDecl();
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or

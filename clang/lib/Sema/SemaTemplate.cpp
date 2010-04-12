@@ -748,10 +748,12 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     LookupName(Previous, S);
   }
 
-  assert(!Previous.isAmbiguous() && "Ambiguity in class template redecl?");
+  if (Previous.isAmbiguous())
+    return true;
+  
   NamedDecl *PrevDecl = 0;
   if (Previous.begin() != Previous.end())
-    PrevDecl = *Previous.begin();
+    PrevDecl = (*Previous.begin())->getUnderlyingDecl();
 
   // If there is a previous declaration with the same name, check
   // whether this is a valid redeclaration.
@@ -804,7 +806,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     }
   } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
     PrevDecl = PrevClassTemplate = 0;
-
+  
   if (PrevClassTemplate) {
     // Ensure that the template parameter lists are compatible.
     if (!TemplateParameterListsAreEqual(TemplateParams,
@@ -861,9 +863,15 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                  TPC_ClassTemplate))
     Invalid = true;
 
-  // FIXME: If we had a scope specifier, we better have a previous template
-  // declaration!
-
+  if (SS.isSet()) {
+    // If the name of the template was qualified, we must be defining the 
+    // template out-of-line.
+    if (!SS.isInvalid() && !Invalid && !PrevClassTemplate &&
+        !(TUK == TUK_Friend && CurContext->isDependentContext()))
+      Diag(NameLoc, diag::err_member_def_does_not_match)
+        << Name << SemanticContext << SS.getRange();
+  } 
+  
   CXXRecordDecl *NewClass =
     CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name, KWLoc,
                           PrevClassTemplate?

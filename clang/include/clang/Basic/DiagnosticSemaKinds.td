@@ -2200,6 +2200,8 @@ def err_typecheck_deleted_function : Error<
   "conversion function from %0 to %1 invokes a deleted function">;
   
 def err_expected_class_or_namespace : Error<"expected a class or namespace">;
+def err_missing_qualified_for_redecl : Error<
+  "must qualify the name %0 to declare %q1 in this scope">;
 def err_invalid_declarator_scope : Error<
   "definition or redeclaration of %0 not in a namespace enclosing %1">;
 def err_invalid_declarator_global_scope : Error<
