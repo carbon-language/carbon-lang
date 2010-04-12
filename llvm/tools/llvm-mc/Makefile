@@ -22,3 +22,6 @@ include $(LEVEL)/Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) MCParser MC support
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
+
+# Using LIBS instead of USEDLIBS to force static linking
+LIBS += $(LLVMLibDir)/libEnhancedDisassembly.a

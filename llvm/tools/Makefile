@@ -36,6 +36,8 @@ include $(LEVEL)/Makefile.config
 ifeq ($(ENABLE_PIC),1)
   # No support for dynamic libraries on windows targets.
   ifneq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
+    # libEnhancedDisassembly must be built ahead of llvm-mc
+    # because llvm-mc links against libEnhancedDisassembly
     DIRS += edis
 
     # gold only builds if binutils is around.  It requires "lto" to build before

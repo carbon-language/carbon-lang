@@ -97,7 +97,8 @@ NoInitialTextSection("n", cl::desc(
 enum ActionType {
   AC_AsLex,
   AC_Assemble,
-  AC_Disassemble
+  AC_Disassemble,
+  AC_EDisassemble
 };
 
 static cl::opt<ActionType>
@@ -109,6 +110,8 @@ Action(cl::desc("Action to perform:"),
                              "Assemble a .s file (default)"),
                   clEnumValN(AC_Disassemble, "disassemble",
                              "Disassemble strings of hex bytes"),
+                  clEnumValN(AC_EDisassemble, "edis",
+                             "Enhanced disassembly of strings of hex bytes"),
                   clEnumValEnd));
 
 static const Target *GetTarget(const char *ProgName) {
@@ -325,7 +328,7 @@ static int AssembleInput(const char *ProgName) {
   return Res;
 }
 
-static int DisassembleInput(const char *ProgName) {
+static int DisassembleInput(const char *ProgName, bool Enhanced) {
   const Target *TheTarget = GetTarget(ProgName);
   if (!TheTarget)
     return 0;
@@ -344,7 +347,10 @@ static int DisassembleInput(const char *ProgName) {
     return 1;
   }
   
-  return Disassembler::disassemble(*TheTarget, TripleName, *Buffer);
+  if (Enhanced)
+    return Disassembler::disassembleEnhanced(TripleName, *Buffer);
+  else
+    return Disassembler::disassemble(*TheTarget, TripleName, *Buffer);
 }
 
 
@@ -371,7 +377,9 @@ int main(int argc, char **argv) {
   case AC_Assemble:
     return AssembleInput(argv[0]);
   case AC_Disassemble:
-    return DisassembleInput(argv[0]);
+    return DisassembleInput(argv[0], false);
+  case AC_EDisassemble:
+    return DisassembleInput(argv[0], true);
   }
   
   return 0;
