@@ -225,7 +225,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
                        const MCAsmInfo *MAI) {
   // Break it up into two parts that make up a shifter immediate.
-  V = ARM_AM::getSOImmVal(V);
+  V = ARM_AM::getSOImmValOneOrNoRotate(V);
   assert(V != -1 && "Not a valid so_imm value!");
   
   unsigned Imm = ARM_AM::getSOImmValImm(V);

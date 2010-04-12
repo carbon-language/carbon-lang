@@ -193,6 +193,43 @@ namespace ARM_AM {
     return rotl32(Arg, RotAmt) | ((RotAmt>>1) << 8);
   }
 
+  /// getSOImmValOneRotate - Try to handle Imm with an immediate shifter
+  /// operand, computing the rotate amount to use.  If this immediate value
+  /// cannot be handled with a single shifter-op, return 0.
+  static unsigned getSOImmValOneRotate(unsigned Imm) {
+    // A5.2.4 Constants with multiple encodings
+    // The lowest unsigned value of rotation wins!
+    for (unsigned R = 1; R <= 15; ++R)
+      if ((Imm & rotr32(~255U, 2*R)) == 0)
+        return 2*R;
+
+    // Failed to find a suitable rotate amount.
+    return 0;
+  }
+
+  /// getSOImmValOneOrNoRotate - Given a 32-bit immediate, if it is something
+  /// that can fit into a shifter_operand immediate operand, return the 12-bit
+  /// encoding for it.  If not, return -1.  This is different from getSOImmVal()
+  /// in that getSOImmVal() is used during codegen, for example,
+  /// rewriteARMFrameIndex() where return value of -1 is not considered fatal.
+  ///
+  /// The current consumer of this API is printSOImm() within ARMInstPrinter.cpp
+  /// where return value of -1 indicates that the Arg is not a valid so_imm val!
+  static inline int getSOImmValOneOrNoRotate(unsigned Arg) {
+    // 8-bit (or less) immediates are trivially shifter_operands with a rotate
+    // of zero.
+    if ((Arg & ~255U) == 0) return Arg;
+
+    unsigned RotAmt = getSOImmValOneRotate(Arg);
+
+    // If this cannot be handled with a single shifter_op, bail out.
+    if (rotr32(~255U, RotAmt) & Arg)
+      return -1;
+
+    // Encode this correctly.
+    return rotl32(Arg, RotAmt) | ((RotAmt>>1) << 8);
+  }
+
   /// isSOImmTwoPartVal - Return true if the specified value can be obtained by
   /// or'ing together two SOImmVal's.
   static inline bool isSOImmTwoPartVal(unsigned V) {
