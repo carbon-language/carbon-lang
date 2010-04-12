@@ -246,12 +246,6 @@ public:
       // If this scope is an objc method scope, then we succeed.
       if (S->getFlags() & ObjCMethodScope)
         return true;
-      
-      // If we've scanned up the scope chain and find out that we're in some
-      // other body scope (e.g. a block), we fail even if it is ultimately
-      // contained in an ObjC method body.
-      if (S->getFlags() & FnScope)
-        return false;
     }
     return false;
   }

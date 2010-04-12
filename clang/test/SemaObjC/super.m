@@ -1,4 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+
+void takevoidptr(void*);
+
 
 @interface Foo
 - iMethod;
@@ -7,6 +10,7 @@
 
 @interface A
 + superClassMethod;
+- (void)instanceMethod;
 @end
 
 @interface B : A
@@ -18,6 +22,12 @@
 
 - (void)instanceMethod {
   [super iMethod]; // expected-warning{{'A' may not respond to 'iMethod')}}
+  
+  // Use of super in a block is ok and does codegen to the right thing.
+  // rdar://7852959
+  takevoidptr(^{
+    [super instanceMethod];
+  });
 }
 
 + classMethod {
@@ -71,3 +81,5 @@ int test3() {
   id X[] = { [ super superClassMethod] };
   return 0;
 }
+
+
