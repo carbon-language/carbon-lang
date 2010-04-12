@@ -11,24 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/PartialDiagnostic.h"
-
-#include "clang/Lex/LexDiagnostic.h"
-#include "clang/Parse/ParseDiagnostic.h"
 #include "clang/AST/ASTDiagnostic.h"
-#include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Analysis/AnalysisDiagnostic.h"
-#include "clang/Driver/DriverDiagnostic.h"
-
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+
 #include <vector>
 #include <map>
 #include <cstring>
@@ -1036,8 +1036,15 @@ static void WriteSourceLocation(llvm::raw_ostream &OS,
 
   Location = SM->getInstantiationLoc(Location);
   std::pair<FileID, unsigned> Decomposed = SM->getDecomposedLoc(Location);
-  
-  WriteString(OS, SM->getFileEntryForID(Decomposed.first)->getName());
+
+  const FileEntry *FE = SM->getFileEntryForID(Decomposed.first);
+  if (FE)
+    WriteString(OS, FE->getName());
+  else {
+    // Fallback to using the buffer name when there is no entry.
+    WriteString(OS, SM->getBuffer(Decomposed.first)->getBufferIdentifier());
+  }
+
   WriteUnsigned(OS, SM->getLineNumber(Decomposed.first, Decomposed.second));
   WriteUnsigned(OS, SM->getColumnNumber(Decomposed.first, Decomposed.second));
 }
