@@ -391,6 +391,8 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
     if (PhysRegDefs[Candidates[i].Def] == 1)
       HoistPostRA(Candidates[i].MI, Candidates[i].Def);
   }
+
+  delete[] PhysRegDefs;
 }
 
 /// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the
