@@ -32,7 +32,7 @@ ifeq ($(HOST_OS),Darwin)
                          -Wl,-dead_strip
 
     ifdef EDIS_VERSION
-        LLVMLibsOptions    := -Wl,-current_version -Wl,$(EDIS_VERSION) \
+        LLVMLibsOptions    := $(LLVMLibsOptions) -Wl,-current_version -Wl,$(EDIS_VERSION) \
                               -Wl,-compatibility_version -Wl,1
     endif
 
