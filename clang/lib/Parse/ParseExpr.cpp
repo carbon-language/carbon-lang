@@ -641,7 +641,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     if (getLang().ObjC1 && Tok.is(tok::period) &&
         (Actions.getTypeName(II, ILoc, CurScope) ||
          // Allow the base to be 'super' if in an objc-method.
-         (II.isStr("super") && CurScope->isInObjcMethodScope()))) {
+         (&II == Ident_super && CurScope->isInObjcMethodScope()))) {
       SourceLocation DotLoc = ConsumeToken();
       
       if (Tok.isNot(tok::identifier)) {
@@ -1442,10 +1442,9 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
         return OwningExprResult(Actions);
       }
       
-      
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
-          Tok.getIdentifierInfo()->isStr("super")) {
+          Tok.getIdentifierInfo() == Ident_super) {
         Diag(Tok.getLocation(), diag::err_illegal_super_cast)
           << SourceRange(OpenLoc, RParenLoc);
         return ExprError();
