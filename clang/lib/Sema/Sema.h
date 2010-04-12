@@ -2511,14 +2511,14 @@ public:
   /// Returns false if no work was done.
   bool ProcessPendingClassesWithUnmarkedVirtualMembers();
   
-  void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
+  void AddImplicitlyDeclaredMembersToClass(Scope *S, CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits,
                                     bool AnyErrors);
 
-  void CheckCompletedCXXClass(CXXRecordDecl *Record);
+  void CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record);
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclPtrTy TagDecl,
                                                  SourceLocation LBrac,

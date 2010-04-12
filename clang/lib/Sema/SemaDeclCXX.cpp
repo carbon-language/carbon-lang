@@ -2136,12 +2136,12 @@ namespace {
 /// \brief Perform semantic checks on a class definition that has been
 /// completing, introducing implicitly-declared members, checking for
 /// abstract types, etc.
-void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
+void Sema::CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record) {
   if (!Record || Record->isInvalidDecl())
     return;
 
   if (!Record->isDependentType())
-    AddImplicitlyDeclaredMembersToClass(Record);
+    AddImplicitlyDeclaredMembersToClass(S, Record);
   
   if (Record->isInvalidDecl())
     return;
@@ -2233,7 +2233,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
               (DeclPtrTy*)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, AttrList);
 
-  CheckCompletedCXXClass(
+  CheckCompletedCXXClass(S, 
                       dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));
 }
 
@@ -2242,7 +2242,10 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 /// constructor, or destructor, to the given C++ class (C++
 /// [special]p1).  This routine can only be executed just before the
 /// definition of the class is complete.
-void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
+///
+/// The scope, if provided, is the class scope.
+void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S, 
+                                               CXXRecordDecl *ClassDecl) {
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
 
@@ -2273,7 +2276,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     DefaultCon->setAccess(AS_public);
     DefaultCon->setImplicit();
     DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
-    ClassDecl->addDecl(DefaultCon);
+    if (S)
+      PushOnScopeChains(DefaultCon, S, true);
+    else
+      ClassDecl->addDecl(DefaultCon);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
@@ -2356,7 +2362,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  ArgType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
     CopyConstructor->setParams(&FromParam, 1);
-    ClassDecl->addDecl(CopyConstructor);
+    if (S)
+      PushOnScopeChains(CopyConstructor, S, true);
+    else
+      ClassDecl->addDecl(CopyConstructor);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
@@ -2446,7 +2455,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.
-    ClassDecl->addDecl(CopyAssignment);
+    if (S)
+      PushOnScopeChains(CopyAssignment, S, true);
+    else
+      ClassDecl->addDecl(CopyAssignment);
     AddOverriddenMethods(ClassDecl, CopyAssignment);
   }
 
@@ -2470,7 +2482,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     Destructor->setAccess(AS_public);
     Destructor->setImplicit();
     Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
-    ClassDecl->addDecl(Destructor);
+    if (S)
+      PushOnScopeChains(Destructor, S, true);
+    else
+      ClassDecl->addDecl(Destructor);
 
     // This could be uniqued if it ever proves significant.
     Destructor->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(Ty));
