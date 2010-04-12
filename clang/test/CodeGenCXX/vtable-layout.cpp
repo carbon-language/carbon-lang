@@ -1458,7 +1458,7 @@ void F::f() { }
 
 namespace Test34 {
 
-// Test that we lay out the construction vtable for 'Test34::E' in 'Test34:::F' correctly.
+// Test that we lay out the construction vtable for 'Test34::E' in 'Test34::F' correctly.
 
 struct A {
   virtual void a();
