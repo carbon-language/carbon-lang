@@ -909,7 +909,7 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
   }
   std::string SharedObject = BD.compileSharedObject(SafeModuleBC.str(), Error);
   if (!Error.empty())
-    return -1;
+    return false;
   delete Safe;
 
   // Run the code generator on the `Test' code, loading the shared library.
