@@ -1,13 +1,18 @@
 ; RUN: llc < %s -relocation-model=pic -mtriple=i386-linux-gnu -asm-verbose=false | not grep -F .text
-; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | not grep lea
-; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | grep add | count 2
+; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | FileCheck %s
 ; RUN: llc < %s                       -mtriple=x86_64-apple-darwin | not grep 'lJTI'
 ; rdar://6971437
+; rdar://7738756
 
 declare void @_Z3bari(i32)
 
 define linkonce void @_Z3fooILi1EEvi(i32 %Y) nounwind {
 entry:
+; CHECK:       L1$pb
+; CHECK-NOT:   leal
+; CHECK:       Ltmp0 = LJTI1_0-L1$pb
+; CHECK-NEXT:  addl Ltmp0(%eax,%ecx,4)
+; CHECK-NEXT:  jmpl *%eax
 	%Y_addr = alloca i32		; <i32*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %Y, i32* %Y_addr
