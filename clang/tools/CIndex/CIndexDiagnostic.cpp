@@ -14,6 +14,7 @@
 #include "CIndexer.h"
 #include "CXSourceLocation.h"
 
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"

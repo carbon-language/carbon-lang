@@ -16,13 +16,9 @@
 #define LLVM_CLANG_CINDEXER_H
 
 #include "clang-c/Index.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/Path.h"
 #include <vector>
-
-using namespace clang;
 
 namespace clang {
 namespace cxstring {

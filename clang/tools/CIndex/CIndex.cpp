@@ -22,8 +22,12 @@
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
@@ -35,7 +39,6 @@
 using namespace clang;
 using namespace clang::cxcursor;
 using namespace clang::cxstring;
-using namespace idx;
 
 //===----------------------------------------------------------------------===//
 // Crash Reporting.

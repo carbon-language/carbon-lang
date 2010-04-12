@@ -15,8 +15,10 @@
 #include "CIndexer.h"
 #include "CXSourceLocation.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+using namespace clang;
 
 extern "C" {
 void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,

@@ -14,6 +14,9 @@
 
 #include "CIndexer.h"
 #include "CIndexDiagnostic.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/ADT/StringExtras.h"
