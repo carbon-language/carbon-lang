@@ -922,7 +922,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
-
+  TypeSourceInfo *ReturnTypeInfo = 0;
+  
   llvm::SmallVector<DelayedAttribute,4> FnAttrsFromDeclSpec;
 
   switch (D.getName().getKind()) {
@@ -948,12 +949,20 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     // Constructors and destructors don't have return types. Use
     // "void" instead. 
     T = Context.VoidTy;
+      
+    // FIXME: Keep track of source location information within the constructor
+    // or destructor name.
+    if (TInfo)
+      ReturnTypeInfo = Context.getTrivialTypeSourceInfo(T, 
+                                                    D.getName().StartLocation);
     break;
 
   case UnqualifiedId::IK_ConversionFunctionId:
     // The result type of a conversion function is the type that it
     // converts to.
-    T = GetTypeFromParser(D.getName().ConversionFunctionId);
+    // FIXME: Keep track of the location of the 'operator' keyword?
+    T = GetTypeFromParser(D.getName().ConversionFunctionId, 
+                          TInfo? &ReturnTypeInfo : 0);
     break;
   }
   
@@ -1356,7 +1365,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     if (D.isInvalidType())
       *TInfo = 0;
     else
-      *TInfo = GetTypeSourceInfoForDeclarator(D, T);
+      *TInfo = GetTypeSourceInfoForDeclarator(D, T, ReturnTypeInfo);
   }
 
   return T;
@@ -1541,8 +1550,14 @@ namespace {
 /// \brief Create and instantiate a TypeSourceInfo with type source information.
 ///
 /// \param T QualType referring to the type as written in source code.
+///
+/// \param ReturnTypeInfo For declarators whose return type does not show
+/// up in the normal place in the declaration specifiers (such as a C++
+/// conversion function), this pointer will refer to a type source information
+/// for that return type.
 TypeSourceInfo *
-Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T) {
+Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
+                                     TypeSourceInfo *ReturnTypeInfo) {
   TypeSourceInfo *TInfo = Context.CreateTypeSourceInfo(T);
   UnqualTypeLoc CurrTL = TInfo->getTypeLoc().getUnqualifiedLoc();
 
@@ -1552,7 +1567,18 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T) {
   }
   
   TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
-
+  
+  // We have source information for the return type that was not in the
+  // declaration specifiers; copy that information into the current type
+  // location so that it will be retained. This occurs, for example, with 
+  // a C++ conversion function, where the return type occurs within the
+  // declarator-id rather than in the declaration specifiers.
+  if (ReturnTypeInfo && D.getDeclSpec().getTypeSpecType() == TST_unspecified) {
+    TypeLoc TL = ReturnTypeInfo->getTypeLoc();
+    assert(TL.getFullDataSize() == CurrTL.getFullDataSize());
+    memcpy(CurrTL.getOpaqueData(), TL.getOpaqueData(), TL.getFullDataSize());
+  }
+      
   return TInfo;
 }
 

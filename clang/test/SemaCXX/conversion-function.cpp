@@ -131,3 +131,37 @@ private:
 A1 f() {
   return "Hello"; // expected-error{{invokes deleted copy constructor}}
 }
+
+namespace source_locations {
+  template<typename T>
+  struct sneaky_int {
+    typedef int type;
+  };
+
+  template<typename T, typename U>
+  struct A { };
+
+  template<typename T>
+  struct A<T, T> : A<T, int> { };
+
+  struct E {
+    template<typename T>
+    operator A<T, typename sneaky_int<T>::type>&() const; // expected-note{{candidate function}}
+  };
+
+  void f() {
+    A<float, float> &af = E(); // expected-error{{no viable conversion}}
+    A<float, int> &af2 = E();
+    const A<float, int> &caf2 = E();
+  }
+
+  // Check 
+  template<typename T>
+  struct E2 {
+    operator T
+    * // expected-error{{pointer to a reference}}
+    () const;
+  };
+
+  E2<int&> e2i; // expected-note{{in instantiation}}
+}

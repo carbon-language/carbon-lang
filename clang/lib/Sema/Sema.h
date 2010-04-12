@@ -704,7 +704,8 @@ public:
   QualType GetTypeForDeclarator(Declarator &D, Scope *S,
                                 TypeSourceInfo **TInfo = 0,
                                 TagDecl **OwnedDecl = 0);
-  TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T);
+  TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
+                                               TypeSourceInfo *ReturnTypeInfo);
   /// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
   QualType CreateLocInfoType(QualType T, TypeSourceInfo *TInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
