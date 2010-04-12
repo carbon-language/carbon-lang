@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
-
+// XFAIL: *
 // RUN: grep '@"OBJC_CLASS_$_A" = global' %t
 // RUN: grep '@"OBJC_CLASS_$_B" = external global' %t
 // RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_const", align 8' %t
