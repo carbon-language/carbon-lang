@@ -1723,7 +1723,6 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 
     // If this is '[' 'super', then this is a magic superclass message.
     // We parse '[' 'super' '.' 'foo'  as an expression?
-    // FIXME: Not in ParseInit.cpp?
     if ((II == Ident_super && GetLookAheadToken(1).isNot(tok::period) &&
          CurScope->isInObjcMethodScope()) ||
         // Check to see if this is a typename.  If so, it is a class message.

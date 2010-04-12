@@ -14,6 +14,7 @@
 #include "clang/Parse/Designator.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Scope.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -125,12 +126,16 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     SourceLocation StartLoc = ConsumeBracket();
 
     // If Objective-C is enabled and this is a typename (class message send) or
-    // 'super', parse this as a message send expression.
+    // send to 'super', parse this as a message send expression.
     if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
 
-      if (II == Ident_super || Actions.getTypeName(*II, Tok.getLocation(),
-                                                   CurScope)) {
+      // Three cases. This is a message send to a type: [type foo]
+      // This is a message send to super:  [super foo]
+      // This is a message sent to an expr:  [super.bar foo]
+      if (Actions.getTypeName(*II, Tok.getLocation(), CurScope) ||
+          (II == Ident_super && GetLookAheadToken(1).isNot(tok::period) &&
+           CurScope->isInObjcMethodScope())) {
         // If we have exactly one array designator, this used the GNU
         // 'designation: array-designator' extension, otherwise there should be no
         // designators at all!

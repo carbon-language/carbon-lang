@@ -6,6 +6,7 @@
 @end
 
 @interface A
++ superClassMethod;
 @end
 
 @interface B : A
@@ -21,6 +22,9 @@
 
 + classMethod {
   [super cMethod]; // expected-warning{{method '+cMethod' not found (return type defaults to 'id')}}
+  
+  id X[] = { [ super superClassMethod] };
+  id Y[] = { [ super.superClassMethod iMethod] };
   return 0;
 }
 @end
@@ -63,5 +67,7 @@ int test3() {
   id super = 0;
   [(B*)super instanceMethod];
   int *s1 = (int*)super;
+  
+  id X[] = { [ super superClassMethod] };
   return 0;
 }
