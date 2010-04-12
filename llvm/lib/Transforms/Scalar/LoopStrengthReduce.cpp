@@ -2907,10 +2907,6 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
         BB = DT.findNearestCommonDominator(BB, ExitingBlocks[i]);
       Inputs.push_back(BB->getTerminator());
     }
-
-    // Be dominated by the loop latch, if it's unique.
-    if (BasicBlock *Latch = PIL->getLoopLatch())
-      Inputs.push_back(prior(BasicBlock::iterator(Latch->getTerminator())));
   }
 
   // Then, climb up the immediate dominator tree as far as we can go while
