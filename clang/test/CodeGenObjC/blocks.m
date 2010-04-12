@@ -29,7 +29,7 @@ void foo(T *P) {
 @interface B : A @end
 @implementation B
 -(void) im1 {
-  ^(void) { [super im0]; }();
+  ^(void) { [self im0]; }();
 }
 @end
 
