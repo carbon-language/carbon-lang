@@ -97,6 +97,7 @@ namespace {
 
   private:
 
+    void EliminateIVComparisons();
     void RewriteNonIntegerIVs(Loop *L);
 
     ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
@@ -336,6 +337,40 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
     SE->forgetLoop(L);
 }
 
+void IndVarSimplify::EliminateIVComparisons() {
+  // Look for ICmp users.
+  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E;) {
+    IVStrideUse &UI = *I++;
+    ICmpInst *ICmp = dyn_cast<ICmpInst>(UI.getUser());
+    if (!ICmp) continue;
+
+    bool Swapped = UI.getOperandValToReplace() == ICmp->getOperand(1);
+    ICmpInst::Predicate Pred = ICmp->getPredicate();
+    if (Swapped) Pred = ICmpInst::getSwappedPredicate(Pred);
+
+    // Get the SCEVs for the ICmp operands.
+    const SCEV *S = IU->getReplacementExpr(UI);
+    const SCEV *X = SE->getSCEV(ICmp->getOperand(!Swapped));
+
+    // Simplify unnecessary loops away.
+    const Loop *ICmpLoop = LI->getLoopFor(ICmp->getParent());
+    S = SE->getSCEVAtScope(S, ICmpLoop);
+    X = SE->getSCEVAtScope(X, ICmpLoop);
+
+    // If the condition is always true or always false, replace it with
+    // a constant value.
+    if (SE->isKnownPredicate(Pred, S, X))
+      ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
+    else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X))
+      ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
+    else
+      continue;
+
+    DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
+    ICmp->eraseFromParent();
+  }
+}
+
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
@@ -427,10 +462,19 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       ExitingBlock) {
     assert(NeedCannIV &&
            "LinearFunctionTestReplace requires a canonical induction variable");
+
     // Can't rewrite non-branch yet.
-    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator()))
+    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
+      // Eliminate comparisons which are always true or always false, due to
+      // the known backedge-taken count. This may include comparisons which
+      // are currently controlling (part of) the loop exit, so we can only do
+      // it when we know we're going to insert our own loop exit code.
+      EliminateIVComparisons();
+
+      // Insert new loop exit code.
       NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
                                           ExitingBlock, BI, Rewriter);
+    }
   }
 
   // Rewrite IV-derived expressions. Clears the rewriter cache.
