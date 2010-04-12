@@ -58,3 +58,10 @@ int test2() {
   struct SomeStruct super = { 0 };
   return super.X;
 }
+
+int test3() {
+  id super = 0;
+  [(B*)super instanceMethod];
+  int *s1 = (int*)super;
+  return 0;
+}

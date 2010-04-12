@@ -1436,15 +1436,15 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
       CastTy = Ty.get();
 
-      if (stopIfCastExpr) {
-        // Note that this doesn't parse the subsequent cast-expression, it just
-        // returns the parsed type to the callee.
+      // Note that this doesn't parse the subsequent cast-expression, it just
+      // returns the parsed type to the callee.
+      if (stopIfCastExpr)
         return OwningExprResult(Actions);
-      }
       
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
-          Tok.getIdentifierInfo() == Ident_super) {
+          Tok.getIdentifierInfo() == Ident_super && 
+          CurScope->isInObjcMethodScope()) {
         Diag(Tok.getLocation(), diag::err_illegal_super_cast)
           << SourceRange(OpenLoc, RParenLoc);
         return ExprError();
