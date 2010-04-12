@@ -104,7 +104,6 @@ private:
   void AppendTailPadding(uint64_t RecordSize);
 
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
-  uint64_t getTypeSizeInBytes(const llvm::Type *Ty) const;
 
   /// CheckForPointerToDataMember - Check if the given type contains a pointer
   /// to data member.
@@ -146,6 +145,20 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   LayoutFields(D);
 }
 
+static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
+                                          const FieldDecl *FD,
+                                          uint64_t FieldOffset,
+                                          uint64_t FieldSize) {
+  const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
+  uint64_t TypeSizeInBits = Types.getTargetData().getTypeAllocSize(Ty) * 8;
+
+  bool IsSigned = FD->getType()->isSignedIntegerType();
+  CGBitFieldInfo BFI(Ty, FieldOffset / TypeSizeInBits,
+                     FieldOffset % TypeSizeInBits, FieldSize, IsSigned);
+
+  return BFI;
+}
+
 void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
                                            uint64_t FieldOffset) {
   uint64_t FieldSize =
@@ -176,14 +189,9 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
     assert(NumBytesToAppend && "No bytes to append!");
   }
 
-  const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
-  uint64_t TypeSizeInBits = getTypeSizeInBytes(Ty) * 8;
-
-  bool IsSigned = D->getType()->isSignedIntegerType();
-  LLVMBitFields.push_back(LLVMBitFieldInfo(
-                            D, CGBitFieldInfo(Ty, FieldOffset / TypeSizeInBits,
-                                              FieldOffset % TypeSizeInBits,
-                                              FieldSize, IsSigned)));
+  // Add the bit field info.
+  LLVMBitFields.push_back(
+    LLVMBitFieldInfo(D, ComputeBitFieldInfo(Types, D, FieldOffset, FieldSize)));
 
   AppendBytes(NumBytesToAppend);
 
@@ -283,10 +291,9 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
         continue;
 
       // Add the bit field info.
-      bool IsSigned = Field->getType()->isSignedIntegerType();
-      LLVMBitFields.push_back(LLVMBitFieldInfo(
-                                *Field, CGBitFieldInfo(FieldTy, 0, 0, FieldSize,
-                                                       IsSigned)));
+      LLVMBitFields.push_back(
+        LLVMBitFieldInfo(*Field, ComputeBitFieldInfo(Types, *Field,
+                                                     0, FieldSize)));
     } else {
       LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
     }
@@ -389,7 +396,7 @@ void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes,
   AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct,
                                    getTypeAlignment(FieldTy));
 
-  uint64_t FieldSizeInBytes = getTypeSizeInBytes(FieldTy);
+  uint64_t FieldSizeInBytes = Types.getTargetData().getTypeAllocSize(FieldTy);
 
   FieldTypes.push_back(FieldTy);
 
@@ -438,10 +445,6 @@ unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
     return 1;
 
   return Types.getTargetData().getABITypeAlignment(Ty);
-}
-
-uint64_t CGRecordLayoutBuilder::getTypeSizeInBytes(const llvm::Type *Ty) const {
-  return Types.getTargetData().getTypeAllocSize(Ty);
 }
 
 void CGRecordLayoutBuilder::CheckForPointerToDataMember(QualType T) {
