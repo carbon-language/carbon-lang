@@ -639,7 +639,9 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     
     // Support 'Class.property' and 'super.property' notation.
     if (getLang().ObjC1 && Tok.is(tok::period) &&
-        (Actions.getTypeName(II, ILoc, CurScope) || II.isStr("super"))) {
+        (Actions.getTypeName(II, ILoc, CurScope) ||
+         // Allow the base to be 'super' if in an objc-method.
+         (II.isStr("super") && CurScope->isInObjcMethodScope()))) {
       SourceLocation DotLoc = ConsumeToken();
       
       if (Tok.isNot(tok::identifier)) {

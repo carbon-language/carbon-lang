@@ -49,3 +49,12 @@ void test() {
   [FooTD cMethod];
   [super cMethod];
 }
+
+struct SomeStruct {
+  int X;
+};
+
+int test2() {
+  struct SomeStruct super = { 0 };
+  return super.X;
+}
