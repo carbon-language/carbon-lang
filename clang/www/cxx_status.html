@@ -34,34 +34,9 @@
     <li><a href="#cxx0x">C++0x Status</a></li>
   </ul>
   
-<p>Clang currently implements nearly all of the ISO C++ 1998 standard
-(including the defects addressed in the ISO C++ 2003 standard), with
-the few notable exceptions listed below. However, the implementation
-of Clang C++ is still quite immature, with many remaining bugs that
-are likely to cause compiler crashes, erroneous errors and warnings,
-and miscompiled code. The <a href="http://llvm.org/bugs/">LLVM bug
-tracker</a> contains a Clang C++ component that tracks known Clang C++
-bugs.</p>
+<p>Clang currently implements nearly all of the ISO C++ 1998 standard (including the defects addressed in the ISO C++ 2003 standard). However, the implementation of Clang C++ is still quite immature, with many remaining bugs that are likely to cause compiler crashes, erroneous errors and warnings, and miscompiled code. The <a href="http://llvm.org/bugs/">LLVM bug tracker</a> contains a Clang C++ component that tracks known Clang C++ bugs.</p>
 
-<p>Clang is currently missing implementations of the following C++98/03 features and common extensions:</p>
-  <ul>
-    
-    <li>Access control: Clang does not perform access-control checking
-    at this time, so it will fail to diagnose invalid accesses. Work
-    is underway to implement this feature.</li>
-
-    <li>Friends and friend templates: Clang parses friends and friend
-    templates for the most part, but they are not used in access
-    control and there are a number of problems with friend templates
-    and friends within class templates.</li>
-
-    <li>GNU <a href="http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Strong-Using.html">strong using</a> extension.</li>
-
-    <li>Qualified member accesses that disambiguate the base class in a diamond-shaped inheritance hierarchy.</li>
-    
-  </ul>
-  
-  <h2 id="projects">Projects Building with Clang</h2>
+ <h2 id="projects">Projects Building with Clang</h2>
 
   <p>Clang is now capable of compiling some language C++ projects, or
 large pieces of such projects. The following table describes various
