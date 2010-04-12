@@ -401,7 +401,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   APInt ResultVal = APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1]);
   for (unsigned i = 1; i != BytesLoaded; ++i) {
     ResultVal <<= 8;
-    ResultVal |= APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1-i]);
+    ResultVal |= RawBytes[BytesLoaded-1-i];
   }
 
   return ConstantInt::get(IntType->getContext(), ResultVal);
