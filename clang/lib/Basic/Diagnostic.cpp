@@ -287,11 +287,18 @@ bool Diagnostic::isBuiltinNote(unsigned DiagID) {
 }
 
 /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
-/// ID is for an extension of some sort.
+/// ID is for an extension of some sort.  This also returns EnabledByDefault,
+/// which is set to indicate whether the diagnostic is ignored by default (in
+/// which case -pedantic enables it) or treated as a warning/error by default.
 ///
-bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID) {
-  return DiagID < diag::DIAG_UPPER_LIMIT &&
-         getBuiltinDiagClass(DiagID) == CLASS_EXTENSION;
+bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID,
+                                        bool &EnabledByDefault) {
+  if (DiagID >= diag::DIAG_UPPER_LIMIT ||
+      getBuiltinDiagClass(DiagID) != CLASS_EXTENSION)
+    return false;
+  
+  EnabledByDefault = StaticDiagInfo[DiagID].Mapping != diag::MAP_IGNORE;
+  return true;
 }
 
 

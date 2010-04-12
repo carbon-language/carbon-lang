@@ -796,8 +796,13 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       OutStr += " [-W";
       OutStr += Opt;
       OutStr += ']';
-    } else if (Diagnostic::isBuiltinExtensionDiag(Info.getID())) {
-      OutStr += " [-pedantic]";
+    } else {
+      // If the diagnostic is an extension diagnostic and not enabled by default
+      // then it must have been turned on with -pedantic.
+      bool EnabledByDefault;
+      if (Diagnostic::isBuiltinExtensionDiag(Info.getID(), EnabledByDefault) &&
+          !EnabledByDefault)
+        OutStr += " [-pedantic]";
     }
   }
 

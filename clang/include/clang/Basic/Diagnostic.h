@@ -388,7 +388,18 @@ public:
   /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
   /// ID is for an extension of some sort.
   ///
-  static bool isBuiltinExtensionDiag(unsigned DiagID);
+  static bool isBuiltinExtensionDiag(unsigned DiagID) {
+    bool ignored;
+    return isBuiltinExtensionDiag(DiagID, ignored);
+  }
+  
+  /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
+  /// ID is for an extension of some sort.  This also returns EnabledByDefault,
+  /// which is set to indicate whether the diagnostic is ignored by default (in
+  /// which case -pedantic enables it) or treated as a warning/error by default.
+  ///
+  static bool isBuiltinExtensionDiag(unsigned DiagID, bool &EnabledByDefault);
+  
 
   /// getWarningOptionForDiag - Return the lowest-level warning option that
   /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
@@ -478,7 +489,7 @@ private:
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
-  unsigned getDiagnosticMappingInfo(diag::kind Diag) const {
+  diag::Mapping getDiagnosticMappingInfo(diag::kind Diag) const {
     const DiagMappings &currentMappings = DiagMappingsStack.back();
     return (diag::Mapping)((currentMappings[Diag/2] >> (Diag & 1)*4) & 15);
   }
