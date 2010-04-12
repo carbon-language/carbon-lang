@@ -936,9 +936,24 @@ enum CXLinkageKind {
 };
 
 /**
- * \brief Determine the linkage of the entity referred to be a given cursor.
+ * \brief Determine the linkage of the entity referred to by a given cursor.
  */
 CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
+
+/**
+ * \brief Describe the "language" of the entity referred to by a cursor.
+ */
+CINDEX_LINKAGE enum CXLanguageKind {
+  CXLanguage_C,
+  CXLanguage_ObjC,
+  CXLanguage_CPlusPlus,
+  CXLanguage_Invalid
+};
+
+/**
+ * \brief Determine the "language" of the entity referred to by a given cursor.
+ */
+CINDEX_LINKAGE enum CXLanguageKind clang_getCursorLanguage(CXCursor cursor);
 
 /**
  * @}

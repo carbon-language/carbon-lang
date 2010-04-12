@@ -2465,6 +2465,69 @@ CXLinkageKind clang_getCursorLinkage(CXCursor cursor) {
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
+// Operations for querying language of a cursor.
+//===----------------------------------------------------------------------===//
+
+static CXLanguageKind getDeclLanguage(const Decl *D) {
+  switch (D->getKind()) {
+    default:
+      break;
+    case Decl::ImplicitParam:
+    case Decl::ObjCAtDefsField:
+    case Decl::ObjCCategory:
+    case Decl::ObjCCategoryImpl:
+    case Decl::ObjCClass:
+    case Decl::ObjCCompatibleAlias:
+    case Decl::ObjCContainer:
+    case Decl::ObjCForwardProtocol:
+    case Decl::ObjCImplementation:
+    case Decl::ObjCInterface:
+    case Decl::ObjCIvar:
+    case Decl::ObjCMethod:
+    case Decl::ObjCProperty:
+    case Decl::ObjCPropertyImpl:
+    case Decl::ObjCProtocol:
+      return CXLanguage_ObjC;
+    case Decl::CXXConstructor:
+    case Decl::CXXConversion:
+    case Decl::CXXDestructor:
+    case Decl::CXXMethod:
+    case Decl::CXXRecord:
+    case Decl::ClassTemplate:
+    case Decl::ClassTemplatePartialSpecialization:
+    case Decl::ClassTemplateSpecialization:
+    case Decl::Friend:
+    case Decl::FriendTemplate:
+    case Decl::FunctionTemplate:
+    case Decl::LinkageSpec:
+    case Decl::Namespace:
+    case Decl::NamespaceAlias:
+    case Decl::NonTypeTemplateParm:
+    case Decl::StaticAssert:
+    case Decl::Template:
+    case Decl::TemplateTemplateParm:
+    case Decl::TemplateTypeParm:
+    case Decl::UnresolvedUsingTypename:
+    case Decl::UnresolvedUsingValue:
+    case Decl::Using:
+    case Decl::UsingDirective:
+    case Decl::UsingShadow:
+      return CXLanguage_CPlusPlus;
+  }
+
+  return CXLanguage_C;
+}
+
+extern "C" {
+CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
+  if (clang_isDeclaration(cursor.kind))
+    return getDeclLanguage(cxcursor::getCursorDecl(cursor));
+
+  return CXLanguage_Invalid;
+}
+} // end: extern "C"
+
+//===----------------------------------------------------------------------===//
 // CXString Operations.
 //===----------------------------------------------------------------------===//
 
