@@ -323,7 +323,7 @@ CXX_INCLUDE_64BIT_DIR = @CXX_INCLUDE_64BIT_DIR@
 
 # TARGET_HAS_DYNAMIC_LIBS - This is set if the target supports dynamic linking
 # .dylib or .so files.
-ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW Minix))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW Minix))
 TARGET_HAS_DYNAMIC_LIBS := 1
 endif
 
