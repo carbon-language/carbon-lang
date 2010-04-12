@@ -105,6 +105,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("overloadable", AT_overloadable)
     .Case("address_space", AT_address_space)
     .Case("always_inline", AT_always_inline)
+    .Case("returns_twice", IgnoredAttribute)
     .Case("vec_type_hint", IgnoredAttribute)
     .Case("objc_exception", AT_objc_exception)
     .Case("ext_vector_type", AT_ext_vector_type)
