@@ -609,7 +609,9 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  *
  * \param unsaved_files the files that have not yet been saved to disk
  * but may be required for code completion, including the contents of
- * those files.
+ * those files.  The contents and name of these files (as specified by
+ * CXUnsavedFile) are copied when necessary, so the client only needs to
+ * guarantee their validity until the call to this function returns.
  *
  * \param diag_callback callback function that will receive any diagnostics
  * emitted while processing this source file. If NULL, diagnostics will be
@@ -1701,7 +1703,9 @@ typedef struct {
  *
  * \param unsaved_files the files that have not yet been saved to disk
  * but may be required for code completion, including the contents of
- * those files.
+ * those files.  The contents and name of these files (as specified by
+ * CXUnsavedFile) are copied when necessary, so the client only needs to
+ * guarantee their validity until the call to this function returns.
  *
  * \param complete_filename the name of the source file where code completion
  * should be performed. In many cases, this name will be the same as the
