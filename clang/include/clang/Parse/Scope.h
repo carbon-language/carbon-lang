@@ -72,7 +72,11 @@ public:
     
     /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
     /// It always has FnScope and DeclScope set as well.
-    ObjCMethodScope = 0x400
+    ObjCMethodScope = 0x400,
+    
+    /// ElseScope - This scoep corresponds to an 'else' scope of an if/then/else
+    /// statement.
+    ElseScope = 0x800
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -81,15 +85,11 @@ private:
 
   /// Depth - This is the depth of this scope.  The translation-unit scope has
   /// depth 0.
-  unsigned Depth : 16;
+  unsigned short Depth;
 
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
-  unsigned Flags : 11;
-
-  /// WithinElse - Whether this scope is part of the "else" branch in
-  /// its parent ControlScope.
-  bool WithinElse : 1;
+  unsigned short Flags;
 
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
@@ -144,6 +144,7 @@ public:
   /// getFlags - Return the flags for this scope.
   ///
   unsigned getFlags() const { return Flags; }
+  void setFlags(unsigned F) { Flags = F; }
 
   /// isBlockScope - Return true if this scope does not correspond to a
   /// closure.
@@ -272,12 +273,6 @@ public:
     return getFlags() & Scope::AtCatchScope;
   }
 
-  /// isWithinElse - Whether we are within the "else" of the
-  /// ControlParent (if any).
-  bool isWithinElse() const { return WithinElse; }
-
-  void setWithinElse(bool WE) { WithinElse = WE; }
-
   typedef UsingDirectivesTy::iterator udir_iterator;
   typedef UsingDirectivesTy::const_iterator const_udir_iterator;
 
@@ -307,7 +302,6 @@ public:
     AnyParent = Parent;
     Depth = AnyParent ? AnyParent->Depth+1 : 0;
     Flags = ScopeFlags;
-    WithinElse = false;
     
     if (AnyParent) {
       FnParent       = AnyParent->FnParent;

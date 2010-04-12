@@ -643,6 +643,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 
   if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
+    ElseStmtLoc = Tok.getLocation();
 
     // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
     // there is no compound stmt.  C90 does not have this clause.  We only do
@@ -656,12 +657,14 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
     ParseScope InnerScope(this, Scope::DeclScope,
                           C99orCXX && Tok.isNot(tok::l_brace));
 
-    bool WithinElse = CurScope->isWithinElse();
-    CurScope->setWithinElse(true);
-    ElseStmtLoc = Tok.getLocation();
+    // Regardless of whether or not InnerScope actually pushed a scope, set the
+    // ElseScope flag for the innermost scope so we can diagnose use of the if
+    // condition variable in C++.
+    unsigned OldFlags = CurScope->getFlags();
+    CurScope->setFlags(OldFlags | Scope::ElseScope);
     ElseStmt = ParseStatement();
-    CurScope->setWithinElse(WithinElse);
-
+    CurScope->setFlags(OldFlags);
+    
     // Pop the 'else' scope if needed.
     InnerScope.Exit();
   }

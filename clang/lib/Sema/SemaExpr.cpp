@@ -1105,16 +1105,15 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // Warn about constructs like:
     //   if (void *X = foo()) { ... } else { X }.
     // In the else block, the pointer is always false.
-
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;
       while (CheckS && CheckS->getControlParent()) {
-        if (CheckS->isWithinElse() &&
+        if ((CheckS->getFlags() & Scope::ElseScope) &&
             CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
           ExprError(Diag(NameLoc, diag::warn_value_always_zero)
             << Var->getDeclName()
-            << (Var->getType()->isPointerType()? 2 :
-                Var->getType()->isBooleanType()? 1 : 0));
+            << (Var->getType()->isPointerType() ? 2 :
+                Var->getType()->isBooleanType() ? 1 : 0));
           break;
         }
 
