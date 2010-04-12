@@ -2254,6 +2254,13 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
 }
 
 const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
+  // If we have TargetData, we can bypass creating a target-independent
+  // constant expression and then folding it back into a ConstantInt.
+  // This is just a compile-time optimization.
+  if (TD)
+    return getConstant(TD->getIntPtrType(getContext()),
+                       TD->getTypeAllocSize(AllocTy));
+
   Constant *C = ConstantExpr::getSizeOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     C = ConstantFoldConstantExpression(CE, TD);
@@ -2271,6 +2278,13 @@ const SCEV *ScalarEvolution::getAlignOfExpr(const Type *AllocTy) {
 
 const SCEV *ScalarEvolution::getOffsetOfExpr(const StructType *STy,
                                              unsigned FieldNo) {
+  // If we have TargetData, we can bypass creating a target-independent
+  // constant expression and then folding it back into a ConstantInt.
+  // This is just a compile-time optimization.
+  if (TD)
+    return getConstant(TD->getIntPtrType(getContext()),
+                       TD->getStructLayout(STy)->getElementOffset(FieldNo));
+
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     C = ConstantFoldConstantExpression(CE, TD);
