@@ -18,13 +18,13 @@ OPTIONAL_PARALLEL_DIRS := clang
 
 # libEnhancedDisassembly must be built ahead of llvm-mc
 # because llvm-mc links against libEnhancedDisassembly
-DIRS := llvm-config edis
+DIRS := llvm-config edis llvm-mc
 PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli llvm-extract \
                  bugpoint llvm-bcanalyzer llvm-stub \
-                 llvm-mc llvmc
+                 llvmc
 
 # Let users override the set of tools to build from the command line.
 ifdef ONLY_TOOLS
