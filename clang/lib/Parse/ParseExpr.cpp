@@ -336,7 +336,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       }
 
       if (Tok.isNot(tok::colon)) {
-        Diag(Tok, diag::err_expected_colon);
+        Diag(Tok, diag::err_expected_colon)
+          << FixItHint::CreateInsertion(Tok.getLocation(), ": ");
         Diag(OpToken, diag::note_matching) << "?";
         return ExprError();
       }

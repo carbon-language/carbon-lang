@@ -31,3 +31,8 @@ void f1(x, y)
 
 int i0 = { 17 };
 
+int test_cond(int y) {
+// CHECK: int x = y ? 1 : 2;
+  int x = y ? 1 2;
+  return x;
+}
