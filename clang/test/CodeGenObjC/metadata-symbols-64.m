@@ -1,12 +1,11 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
-// XFAIL: *
 // RUN: grep '@"OBJC_CLASS_$_A" = global' %t
 // RUN: grep '@"OBJC_CLASS_$_B" = external global' %t
 // RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t
-// RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2
+// RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 1
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .* section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t
 // RUN: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .* section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t
