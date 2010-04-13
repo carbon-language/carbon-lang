@@ -1613,10 +1613,8 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
 
   SDValue ArgValue2;
   if (NextVA.isMemLoc()) {
-    unsigned ArgSize = NextVA.getLocVT().getSizeInBits()/8;
     MachineFrameInfo *MFI = MF.getFrameInfo();
-    int FI = MFI->CreateFixedObject(ArgSize, NextVA.getLocMemOffset(),
-                                    true, false);
+    int FI = MFI->CreateFixedObject(4, NextVA.getLocMemOffset(), true, false);
 
     // Create load node to retrieve arguments from the stack.
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -1665,14 +1663,22 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       if (VA.needsCustom()) {
         // f64 and vector types are split up into multiple registers or
         // combinations of registers and stack slots.
-        RegVT = MVT::i32;
-
         if (VA.getLocVT() == MVT::v2f64) {
           SDValue ArgValue1 = GetF64FormalArgument(VA, ArgLocs[++i],
                                                    Chain, DAG, dl);
           VA = ArgLocs[++i]; // skip ahead to next loc
-          SDValue ArgValue2 = GetF64FormalArgument(VA, ArgLocs[++i],
-                                                   Chain, DAG, dl);
+          SDValue ArgValue2;
+          if (VA.isMemLoc()) {
+            int FI = MFI->CreateFixedObject(8, VA.getLocMemOffset(),
+                                            true, false);
+            SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+            ArgValue2 = DAG.getLoad(MVT::f64, dl, Chain, FIN,
+                                    PseudoSourceValue::getFixedStack(FI), 0,
+                                    false, false, 0);
+          } else {
+            ArgValue2 = GetF64FormalArgument(VA, ArgLocs[++i],
+                                             Chain, DAG, dl);
+          }
           ArgValue = DAG.getNode(ISD::UNDEF, dl, MVT::v2f64);
           ArgValue = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64,
                                  ArgValue, ArgValue1, DAG.getIntPtrConstant(0));
