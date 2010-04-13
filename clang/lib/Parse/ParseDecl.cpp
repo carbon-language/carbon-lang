@@ -904,7 +904,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // reinforced by the NAD status of core issue 635. 
         TemplateIdAnnotation *TemplateId
           = static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue());
-        if (DSContext == DSC_top_level && TemplateId->Name &&
+        if ((DSContext == DSC_top_level ||
+             (DSContext == DSC_class && DS.isFriendSpecified())) &&
+            TemplateId->Name &&
             Actions.isCurrentClassName(*TemplateId->Name, CurScope, &SS)) {
           if (isConstructorDeclarator()) {
             // The user meant this to be an out-of-line constructor
@@ -949,7 +951,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // If we're in a context where the identifier could be a class name,
       // check whether this is a constructor declaration.
-      if (DSContext == DSC_top_level &&
+      if ((DSContext == DSC_top_level ||
+           (DSContext == DSC_class && DS.isFriendSpecified())) &&
           Actions.isCurrentClassName(*Next.getIdentifierInfo(), CurScope, 
                                      &SS)) {
         if (isConstructorDeclarator())
@@ -2599,12 +2602,17 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
       // We found something that indicates the start of an unqualified-id.
       // Parse that unqualified-id.
-      bool AllowConstructorName
-        = ((D.getCXXScopeSpec().isSet() && 
-            D.getContext() == Declarator::FileContext) ||
-           (!D.getCXXScopeSpec().isSet() &&
-            D.getContext() == Declarator::MemberContext)) &&
-        !D.getDeclSpec().hasTypeSpecifier();
+      bool AllowConstructorName;
+      if (D.getDeclSpec().hasTypeSpecifier())
+        AllowConstructorName = false;
+      else if (D.getCXXScopeSpec().isSet())
+        AllowConstructorName =
+          (D.getContext() == Declarator::FileContext ||
+           (D.getContext() == Declarator::MemberContext &&
+            D.getDeclSpec().isFriendSpecified()));
+      else
+        AllowConstructorName = (D.getContext() == Declarator::MemberContext);
+
       if (ParseUnqualifiedId(D.getCXXScopeSpec(), 
                              /*EnteringContext=*/true, 
                              /*AllowDestructorName=*/true, 

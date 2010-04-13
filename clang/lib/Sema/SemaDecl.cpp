@@ -3188,6 +3188,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (CheckMemberSpecialization(NewFD, Previous))
       NewFD->setInvalidDecl();
   }
+
+  // Make sure this is set before checking the function declaration.
+  // We'll override the visibility type later.
+  if (isFriend) NewFD->setObjectOfFriendDecl(false);
     
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
@@ -3199,7 +3203,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
          "previous declaration set still overloaded");
 
   if (isFriend && Redeclaration) {
-    AccessSpecifier Access = NewFD->getPreviousDeclaration()->getAccess();
+    AccessSpecifier Access = AS_public;
+    if (!NewFD->isInvalidDecl())
+      Access = NewFD->getPreviousDeclaration()->getAccess();
+
     if (FunctionTemplate) {
       FunctionTemplate->setObjectOfFriendDecl(true);
       FunctionTemplate->setAccess(Access);
