@@ -276,8 +276,23 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // but for now we just punt.
   // FIXME: Split critical edges if not backedges.
   if (SuccToSinkTo->pred_size() > 1) {
-    DEBUG(dbgs() << " *** PUNTING: Critical edge found\n");
-    return false;
+    // We cannot sink a load across a critical edge - there may be stores in
+    // other code paths.
+    bool store = true;
+    if (!MI->isSafeToMove(TII, AA, store)) {
+      DEBUG(dbgs() << " *** PUNTING: Wont sink load along critical edge.\n");
+      return false;
+    }
+
+    // We don't want to sink across a critical edge if we don't dominate the
+    // successor. We could be introducing calculations to new code paths.
+    if (!DT->dominates(ParentBlock, SuccToSinkTo)) {
+      DEBUG(dbgs() << " *** PUNTING: Critical edge found\n");
+      return false;
+    }
+
+    // Otherwise we are OK with sinking along a critical edge.
+    DEBUG(dbgs() << "Sinking along critical edge.\n");
   }
   
   // Determine where to insert into.  Skip phi nodes.
