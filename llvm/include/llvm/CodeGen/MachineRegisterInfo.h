@@ -258,18 +258,8 @@ public:
   liveout_iterator liveout_end()   const { return LiveOuts.end(); }
   bool             liveout_empty() const { return LiveOuts.empty(); }
 
-  bool isLiveIn(unsigned Reg) const {
-    for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
-      if (I->first == Reg || I->second == Reg)
-        return true;
-    return false;
-  }
-  bool isLiveOut(unsigned Reg) const {
-    for (liveout_iterator I = liveout_begin(), E = liveout_end(); I != E; ++I)
-      if (*I == Reg)
-        return true;
-    return false;
-  }
+  bool isLiveIn(unsigned Reg) const;
+  bool isLiveOut(unsigned Reg) const;
 
 private:
   void HandleVRegListReallocation();

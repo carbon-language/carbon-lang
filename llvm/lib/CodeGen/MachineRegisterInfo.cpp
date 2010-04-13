@@ -130,6 +130,20 @@ bool MachineRegisterInfo::hasOneNonDBGUse(unsigned RegNo) const {
   return ++UI == use_nodbg_end();
 }
 
+bool MachineRegisterInfo::isLiveIn(unsigned Reg) const {
+  for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
+    if (I->first == Reg || I->second == Reg)
+      return true;
+  return false;
+}
+
+bool MachineRegisterInfo::isLiveOut(unsigned Reg) const {
+  for (liveout_iterator I = liveout_begin(), E = liveout_end(); I != E; ++I)
+    if (*I == Reg)
+      return true;
+  return false;
+}
+
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {
   for (use_iterator I = use_begin(Reg), E = use_end(); I != E; ++I)
