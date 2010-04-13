@@ -406,3 +406,18 @@ namespace PR6483 {
     f1(x1); // expected-error{{no matching function for call}}
   }  
 }
+
+namespace PR6078 {
+  struct A { // expected-note{{candidate is the implicit copy constructor}}
+    A(short); // expected-note{{candidate constructor}}
+    A(long); // expected-note{{candidate constructor}}
+  };
+  struct S {
+    typedef void ft(A);
+    operator ft*();
+  };
+
+  void f() {
+    S()(0); // expected-error{{conversion from 'int' to 'PR6078::A' is ambiguous}}
+  }
+}

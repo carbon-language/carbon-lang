@@ -6293,7 +6293,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       
     return ActOnCallExpr(S, ExprArg(*this, CE), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
-                         CommaLocs, RParenLoc).release();
+                         CommaLocs, RParenLoc).result();
   }
 
   CheckMemberOperatorAccess(LParenLoc, Object, 0, Best->FoundDecl);
@@ -6397,7 +6397,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   if (CheckFunctionCall(Method, TheCall.get()))
     return true;
 
-  return MaybeBindToTemporary(TheCall.release()).release();
+  return MaybeBindToTemporary(TheCall.release()).result();
 }
 
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
