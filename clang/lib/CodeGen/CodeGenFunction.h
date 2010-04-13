@@ -480,6 +480,7 @@ public:
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
   bool IndirectObjCSetterArg(const CGFunctionInfo &FI);
+  bool IvarTypeWithAggrGCObjects(QualType Ty);
 
   //===--------------------------------------------------------------------===//
   //                                  Block Bits

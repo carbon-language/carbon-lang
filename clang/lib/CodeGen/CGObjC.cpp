@@ -148,19 +148,21 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
   ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
+  bool IsAtomic =
+    !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
   // FIXME: This is rather murky, we create this here since they will not have
   // been created by Sema for us.
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD, IMP->getClassInterface());
-
+  
   // Determine if we should use an objc_getProperty call for
   // this. Non-atomic properties are directly evaluated.
   // atomic 'copy' and 'retain' properties are also directly
   // evaluated in gc-only mode.
   if (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
-      !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
+      IsAtomic &&
       (PD->getSetterKind() == ObjCPropertyDecl::Copy ||
        PD->getSetterKind() == ObjCPropertyDecl::Retain)) {
     llvm::Value *GetPropertyFn =
@@ -208,7 +210,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       StoreComplexToAddr(Pair, ReturnValue, LV.isVolatileQualified());
     }
     else if (hasAggregateLLVMType(Ivar->getType())) {
-      if (!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)
+      bool IsStrong = false;
+      if ((IsAtomic || (IsStrong = IvarTypeWithAggrGCObjects(Ivar->getType())))
           && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
           && CGM.getObjCRuntime().GetCopyStructFunction()) {
         llvm::Value *GetCopyStructFn =
@@ -232,12 +235,15 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
         // FIXME. Implement when Atomic is false; But when struct has
         // gc'able data member!
         llvm::Value *isAtomic =
-          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
+        llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
+                               IsAtomic ? 1 : 0);
         Args.push_back(std::make_pair(RValue::get(isAtomic), 
                                       getContext().BoolTy));
-        llvm::Value *False =
-          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
-        Args.push_back(std::make_pair(RValue::get(False), getContext().BoolTy));
+        llvm::Value *hasStrong =
+          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
+                                 IsStrong ? 1 : 0);
+        Args.push_back(std::make_pair(RValue::get(hasStrong), 
+                                      getContext().BoolTy));
         EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
                                        FunctionType::ExtInfo()),
                  GetCopyStructFn, ReturnValueSlot(), Args);
@@ -394,6 +400,14 @@ bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
   const ABIArgInfo &AI = it->info;
   // FIXME. Is this sufficient check?
   return (AI.getKind() == ABIArgInfo::Indirect);
+}
+
+bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
+  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
+    return false;
+  if (const RecordType *FDTTy = Ty.getTypePtr()->getAs<RecordType>())
+    return FDTTy->getDecl()->hasObjectMember();
+  return false;
 }
 
 llvm::Value *CodeGenFunction::LoadObjCSelf() {
