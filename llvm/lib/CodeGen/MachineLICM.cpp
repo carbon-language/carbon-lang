@@ -101,10 +101,10 @@ namespace {
     /// CandidateInfo - Keep track of information about hoisting candidates.
     struct CandidateInfo {
       MachineInstr *MI;
-      int           FI;
       unsigned      Def;
-      CandidateInfo(MachineInstr *mi, int fi, unsigned def)
-        : MI(mi), FI(fi), Def(def) {}
+      int           FI;
+      CandidateInfo(MachineInstr *mi, unsigned def, int fi)
+        : MI(mi), Def(def), FI(fi) {}
     };
 
     /// HoistRegionPostRA - Walk the specified region of the CFG and hoist loop
@@ -126,6 +126,11 @@ namespace {
     /// from MBB to LoopHeader (inclusive).
     void AddToLiveIns(unsigned Reg,
                       MachineBasicBlock *MBB, MachineBasicBlock *LoopHeader);    
+
+    /// IsLICMCandidate - Returns true if the instruction may be a suitable
+    /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
+    /// not safe to hoist it.
+    bool IsLICMCandidate(MachineInstr &I);
 
     /// IsLoopInvariantInst - Returns true if the instruction is loop
     /// invariant. I.e., all virtual register operands are defined outside of
@@ -271,6 +276,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
                             SmallSet<int, 32> &StoredFIs,
                             SmallVector<CandidateInfo, 32> &Candidates) {
   bool RuledOut = false;
+  bool HasRegFIUse = false;
   unsigned Def = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -281,6 +287,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
           MFI->isSpillSlotObjectIndex(FI) &&
           InstructionStoresToFI(MI, FI))
         StoredFIs.insert(FI);
+      HasRegFIUse = true;
       continue;
     }
 
@@ -292,8 +299,10 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
     assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
            "Not expecting virtual register!");
 
-    if (!MO.isDef())
+    if (!MO.isDef()) {
+      HasRegFIUse = true;
       continue;
+    }
 
     if (MO.isImplicit()) {
       ++PhysRegDefs[Reg];
@@ -325,13 +334,15 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
         RuledOut = true;
   }
 
-  // FIXME: Only consider reloads for now. We should be able to handle
-  // remats which does not have register operands.
+  // Only consider reloads for now and remats which do not have register
+  // operands. FIXME: Consider unfold load folding instructions.
   if (Def && !RuledOut) {
-    int FI;
-    if (TII->isLoadFromStackSlot(MI, FI) &&
-        MFI->isSpillSlotObjectIndex(FI))
-      Candidates.push_back(CandidateInfo(MI, FI, Def));
+    int FI = INT_MIN;
+    // FIXME: Also hoist instructions if all source operands are live in
+    // to the loop.
+    if ((!HasRegFIUse && IsLICMCandidate(*MI)) ||
+        (TII->isLoadFromStackSlot(MI, FI) && MFI->isSpillSlotObjectIndex(FI)))
+      Candidates.push_back(CandidateInfo(MI, Def, FI));
   }
 }
 
@@ -385,7 +396,8 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
   // 2. If the candidate is a load from stack slot (always true for now),
   //    check if the slot is stored anywhere in the loop.
   for (unsigned i = 0, e = Candidates.size(); i != e; ++i) {
-    if (StoredFIs.count(Candidates[i].FI))
+    if (Candidates[i].FI != INT_MIN &&
+        StoredFIs.count(Candidates[i].FI))
       continue;
 
     if (PhysRegDefs[Candidates[i].Def] == 1)
@@ -470,12 +482,10 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
     HoistRegion(Children[I]);
 }
 
-/// IsLoopInvariantInst - Returns true if the instruction is loop
-/// invariant. I.e., all virtual register operands are defined outside of the
-/// loop, physical registers aren't accessed explicitly, and there are no side
-/// effects that aren't captured by the operands or other flags.
-/// 
-bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
+/// IsLICMCandidate - Returns true if the instruction may be a suitable
+/// candidate for LICM. e.g. If the instruction is a call, then it's obviously
+/// not safe to hoist it.
+bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   const TargetInstrDesc &TID = I.getDesc();
   
   // Ignore stuff that we obviously can't hoist.
@@ -493,6 +503,17 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       // This is a trivial form of alias analysis.
       return false;
   }
+  return true;
+}
+
+/// IsLoopInvariantInst - Returns true if the instruction is loop
+/// invariant. I.e., all virtual register operands are defined outside of the
+/// loop, physical registers aren't accessed explicitly, and there are no side
+/// effects that aren't captured by the operands or other flags.
+/// 
+bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
+  if (!IsLICMCandidate(I))
+    return false;
 
   // The instruction is loop invariant if all of its operands are.
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
