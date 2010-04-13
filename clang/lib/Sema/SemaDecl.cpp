@@ -4930,14 +4930,6 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       //   class or function, the friend class or function is a member of
       //   the innermost enclosing namespace.
       SearchDC = SearchDC->getEnclosingNamespaceContext();
-
-      // Look up through our scopes until we find one with an entity which
-      // matches our declaration context.
-      while (S->getEntity() &&
-             ((DeclContext *)S->getEntity())->getPrimaryContext() != SearchDC) {
-        S = S->getParent();
-        assert(S && "No enclosing scope matching the enclosing namespace.");
-      }
     }
 
     // In C++, look for a shadow friend decl.

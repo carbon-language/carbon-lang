@@ -192,3 +192,22 @@ namespace test4 {
     return a == b; // expected-note {{requested here}}
   }
 }
+
+
+// PR6174
+namespace test5 {
+  namespace ns {
+    class A;
+  }
+
+  class ns::A {
+  private: int x;
+    friend class B;
+  };
+
+  namespace ns {
+    class B {
+      int test(A *p) { return p->x; }
+    };
+  }
+}
