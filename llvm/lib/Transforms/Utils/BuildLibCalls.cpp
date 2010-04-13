@@ -478,6 +478,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
         FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
         !FT->getParamType(2)->isIntegerTy() ||
         FT->getParamType(3) != TD->getIntPtrType(Context))
+      return false;
     
     if (isFoldable(4, 3, false)) {
       Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
