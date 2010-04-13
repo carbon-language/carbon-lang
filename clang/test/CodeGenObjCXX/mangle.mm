@@ -2,6 +2,7 @@
 
 // CHECK: @"_ZZ11+[A shared]E1a" = internal global
 // CHECK: @"_ZZ11-[A(Foo) f]E1a" = internal global
+// CHECK: v56@0:8i16i20i24i28i32i36i40i44^i48
 
 @interface A
 @end
@@ -30,3 +31,14 @@
   return 0;
 }
 @end
+
+// PR6468
+@interface Test
+- (void) process: (int)r3 :(int)r4 :(int)r5 :(int)r6 :(int)r7 :(int)r8 :(int)r9 :(int)r10 :(int &)i;
+@end
+
+@implementation Test
+- (void) process: (int)r3 :(int)r4 :(int)r5 :(int)r6 :(int)r7 :(int)r8 :(int)r9 :(int)r10 :(int &)i {
+}
+@end
+

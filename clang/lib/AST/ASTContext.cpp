@@ -3494,13 +3494,18 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
+  // encoding for pointer or r3eference types.
+  QualType PointeeTy;
   if (const PointerType *PT = T->getAs<PointerType>()) {
     if (PT->isObjCSelType()) {
       S += ':';
       return;
     }
-    QualType PointeeTy = PT->getPointeeType();
-    
+    PointeeTy = PT->getPointeeType();
+  }
+  else if (const ReferenceType *RT = T->getAs<ReferenceType>())
+    PointeeTy = RT->getPointeeType();
+  if (!PointeeTy.isNull()) {
     bool isReadOnly = false;
     // For historical/compatibility reasons, the read-only qualifier of the
     // pointee gets emitted _before_ the '^'.  The read-only qualifier of
@@ -3559,7 +3564,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                NULL);
     return;
   }
-
+  
   if (const ArrayType *AT =
       // Ignore type qualifiers etc.
         dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
