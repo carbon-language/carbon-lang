@@ -232,11 +232,9 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
           llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), Size);
         Args.push_back(std::make_pair(RValue::get(SizeVal),
                                       getContext().LongTy));
-        // FIXME. Implement when Atomic is false; But when struct has
-        // gc'able data member!
         llvm::Value *isAtomic =
-        llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
-                               IsAtomic ? 1 : 0);
+          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
+                                 IsAtomic ? 1 : 0);
         Args.push_back(std::make_pair(RValue::get(isAtomic), 
                                       getContext().BoolTy));
         llvm::Value *hasStrong =
