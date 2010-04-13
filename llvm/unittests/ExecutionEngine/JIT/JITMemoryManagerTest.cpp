@@ -239,8 +239,8 @@ TEST(JITMemoryManagerTest, TestManyGlobals) {
   size_t Size = 128;
   int Iters = (SlabSize / Size) + 1;
 
-  // We should start with one slab.
-  EXPECT_EQ(1U, MemMgr->GetNumDataSlabs());
+  // We should start with no slabs.
+  EXPECT_EQ(0U, MemMgr->GetNumDataSlabs());
 
   // After allocating a bunch of globals, we should have two.
   for (int I = 0; I < Iters; ++I)
@@ -262,8 +262,8 @@ TEST(JITMemoryManagerTest, TestManyStubs) {
   size_t Size = 128;
   int Iters = (SlabSize / Size) + 1;
 
-  // We should start with one slab.
-  EXPECT_EQ(1U, MemMgr->GetNumStubSlabs());
+  // We should start with no slabs.
+  EXPECT_EQ(0U, MemMgr->GetNumDataSlabs());
 
   // After allocating a bunch of stubs, we should have two.
   for (int I = 0; I < Iters; ++I)
