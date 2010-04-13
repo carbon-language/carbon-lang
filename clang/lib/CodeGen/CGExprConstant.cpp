@@ -50,10 +50,10 @@ private:
     LLVMStructAlignment(1) { }
 
   bool AppendField(const FieldDecl *Field, uint64_t FieldOffset,
-                   const Expr *InitExpr);
+                   llvm::Constant *InitExpr);
 
   bool AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
-                      const Expr *InitExpr);
+                      llvm::Constant *InitExpr);
 
   void AppendPadding(uint64_t NumBytes);
 
@@ -74,18 +74,18 @@ private:
 };
 
 bool ConstStructBuilder::
-AppendField(const FieldDecl *Field, uint64_t FieldOffset, const Expr *InitExpr){
+AppendField(const FieldDecl *Field, uint64_t FieldOffset,
+            llvm::Constant *InitCst) {
   uint64_t FieldOffsetInBytes = FieldOffset / 8;
 
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes
          && "Field offset mismatch!");
 
   // Emit the field.
-  llvm::Constant *C = CGM.EmitConstantExpr(InitExpr, Field->getType(), CGF);
-  if (!C)
+  if (!InitCst)
     return false;
 
-  unsigned FieldAlignment = getAlignment(C);
+  unsigned FieldAlignment = getAlignment(InitCst);
 
   // Round up the field offset to the alignment of the field type.
   uint64_t AlignedNextFieldOffsetInBytes =
@@ -111,8 +111,9 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset, const Expr *InitExpr){
   }
 
   // Add the field.
-  Elements.push_back(C);
-  NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
+  Elements.push_back(InitCst);
+  NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes +
+                             getSizeInBytes(InitCst);
   
   if (Packed)
     assert(LLVMStructAlignment == 1 && "Packed struct not byte-aligned!");
@@ -124,11 +125,8 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset, const Expr *InitExpr){
 
 bool ConstStructBuilder::
   AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
-                 const Expr *InitExpr) {
-  llvm::ConstantInt *CI =
-    cast_or_null<llvm::ConstantInt>(CGM.EmitConstantExpr(InitExpr,
-                                                         Field->getType(),
-                                                         CGF));
+                 llvm::Constant *InitCst) {
+  llvm::ConstantInt *CI = cast_or_null<llvm::ConstantInt>(InitCst);
   // FIXME: Can this ever happen?
   if (!CI)
     return false;
@@ -323,26 +321,34 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   unsigned FieldNo = 0;
   unsigned ElementNo = 0;
   for (RecordDecl::field_iterator Field = RD->field_begin(),
-       FieldEnd = RD->field_end();
-       ElementNo < ILE->getNumInits() && Field != FieldEnd;
-       ++Field, ++FieldNo) {
+       FieldEnd = RD->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
+    
+    // If this is a union, skip all the fields that aren't being initialized.
     if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
       continue;
 
-    if (Field->isBitField()) {
-      if (!Field->getIdentifier())
-        continue;
+    // Don't emit anonymous bitfields, they just affect layout.
+    if (Field->isBitField() && !Field->getIdentifier())
+      continue;
 
-      if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
-                          ILE->getInit(ElementNo)))
+    // Get the initializer.  A struct can include fields without initializers,
+    // we just use explicit null values for them.
+    llvm::Constant *EltInit;
+    if (ElementNo < ILE->getNumInits())
+      EltInit = CGM.EmitConstantExpr(ILE->getInit(ElementNo++),
+                                     Field->getType(), CGF);
+    else
+      EltInit = CGM.EmitNullConstant(Field->getType());
+    
+    if (!Field->isBitField()) {
+      // Handle non-bitfield members.
+      if (!AppendField(*Field, Layout.getFieldOffset(FieldNo), EltInit))
         return false;
     } else {
-      if (!AppendField(*Field, Layout.getFieldOffset(FieldNo),
-                       ILE->getInit(ElementNo)))
+      // Otherwise we have a bitfield.
+      if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo), EltInit))
         return false;
     }
-
-    ElementNo++;
   }
 
   uint64_t LayoutSizeInBytes = Layout.getSize() / 8;
