@@ -1698,14 +1698,14 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
             return getAddExpr(NewOps);
         }
     }
+
+    if (Ops.size() == 1)
+      return Ops[0];
   }
 
   // Skip over the add expression until we get to a multiply.
   while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scMulExpr)
     ++Idx;
-
-  if (Ops.size() == 1)
-    return Ops[0];
 
   // If there are mul operands inline them all into this expression.
   if (Idx < Ops.size()) {
@@ -2091,9 +2091,9 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
       // maximum-int.
       return Ops[0];
     }
-  }
 
-  if (Ops.size() == 1) return Ops[0];
+    if (Ops.size() == 1) return Ops[0];
+  }
 
   // Find the first SMax
   while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scSMaxExpr)
@@ -2190,9 +2190,9 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
       // maximum-int.
       return Ops[0];
     }
-  }
 
-  if (Ops.size() == 1) return Ops[0];
+    if (Ops.size() == 1) return Ops[0];
+  }
 
   // Find the first UMax
   while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scUMaxExpr)
