@@ -97,6 +97,8 @@ def analyzer_viz_egraph_graphviz : Flag<"-analyzer-viz-egraph-graphviz">,
   HelpText<"Display exploded graph using GraphViz">;
 def analyzer_viz_egraph_ubigraph : Flag<"-analyzer-viz-egraph-ubigraph">,
   HelpText<"Display exploded graph using Ubigraph">;
+def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
+  HelpText<"The maximum number of nodes the analyzer can generate">;
 
 //===----------------------------------------------------------------------===//
 // CodeGen Options

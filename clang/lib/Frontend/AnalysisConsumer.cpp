@@ -176,6 +176,7 @@ public:
     Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
                                   PP.getLangOptions(), PD,
                                   CreateStoreMgr, CreateConstraintMgr,
+                                  Opts.MaxNodes,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
                                   Opts.PurgeDead, Opts.EagerlyAssume,
                                   Opts.TrimGraph));
@@ -358,7 +359,7 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getStackFrame(D));
+  Eng.ExecuteWorkList(mgr.getStackFrame(D), mgr.getMaxNodes());
 
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
