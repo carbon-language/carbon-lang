@@ -129,6 +129,17 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
     new (CGF.CGM.getContext()) CGBitFieldInfo(
       LTy, FieldNo, BitOffset, BitFieldSize, IvarTy->isSignedIntegerType());
 
+  // We always construct a single, possibly unaligned, access for this case.
+  Info->setNumComponents(1);
+  CGBitFieldInfo::AccessInfo &AI = Info->getComponent(0);
+  AI.FieldIndex = 0;
+  AI.FieldByteOffset = 0;
+  AI.FieldBitStart = BitOffset;
+  AI.AccessWidth = CGF.CGM.getContext().getTypeSize(IvarTy);
+  AI.AccessAlignment = 0;
+  AI.TargetBitOffset = 0;
+  AI.TargetBitWidth = BitFieldSize;
+
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.
   return LValue::MakeBitfield(V, *Info, Quals.getCVRQualifiers());

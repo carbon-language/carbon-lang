@@ -150,11 +150,44 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
                                           uint64_t FieldOffset,
                                           uint64_t FieldSize) {
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
-  uint64_t TypeSizeInBits = Types.getTargetData().getTypeAllocSize(Ty) * 8;
+  uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
+  uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
 
   bool IsSigned = FD->getType()->isSignedIntegerType();
   CGBitFieldInfo BFI(Ty, FieldOffset / TypeSizeInBits,
                      FieldOffset % TypeSizeInBits, FieldSize, IsSigned);
+
+  // The current policy is to always access the bit-field using the source type
+  // of the bit-field. With the C bit-field rules, this implies that we always
+  // use either one or two accesses, and two accesses can only occur with a
+  // packed structure when the bit-field straddles an alignment boundary.
+  unsigned LowBits = std::min(FieldSize, TypeSizeInBits - BFI.Start);
+  bool NeedsHighAccess = LowBits != FieldSize;
+  BFI.setNumComponents(1 + NeedsHighAccess);
+
+  // FIXME: This access policy is probably wrong on big-endian systems.
+  CGBitFieldInfo::AccessInfo &LowAccess = BFI.getComponent(0);
+  LowAccess.FieldIndex = 0;
+  LowAccess.FieldByteOffset =
+    TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
+  LowAccess.FieldBitStart = BFI.Start;
+  LowAccess.AccessWidth = TypeSizeInBits;
+  // FIXME: This might be wrong!
+  LowAccess.AccessAlignment = 0;
+  LowAccess.TargetBitOffset = 0;
+  LowAccess.TargetBitWidth = LowBits;
+
+  if (NeedsHighAccess) {
+    CGBitFieldInfo::AccessInfo &HighAccess = BFI.getComponent(1);
+    HighAccess.FieldIndex = 0;
+    HighAccess.FieldByteOffset = LowAccess.FieldByteOffset + TypeSizeInBytes;
+    HighAccess.FieldBitStart = 0;
+    HighAccess.AccessWidth = TypeSizeInBits;
+    // FIXME: This might be wrong!
+    HighAccess.AccessAlignment = 0;
+    HighAccess.TargetBitOffset = LowBits;
+    HighAccess.TargetBitWidth = FieldSize - LowBits;
+  }
 
   return BFI;
 }
@@ -500,8 +533,13 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i)
     RL->BitFields.insert(Builder.LLVMBitFields[i]);
 
-  if (getContext().getLangOptions().DumpRecordLayouts)
+  if (getContext().getLangOptions().DumpRecordLayouts) {
+    llvm::errs() << "\n*** Dumping Record Layout\n";
+    llvm::errs() << "Record: ";
+    D->dump();
+    llvm::errs() << "\nLayout: ";
     RL->dump();
+  }
 
   return RL;
 }
@@ -514,7 +552,7 @@ void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   for (llvm::DenseMap<const FieldDecl*, CGBitFieldInfo>::const_iterator
          it = BitFields.begin(), ie = BitFields.end();
        it != ie; ++it) {
-    OS << "    ";
+    OS.indent(4);
     it->second.print(OS);
     OS << "\n";
   }
@@ -531,8 +569,30 @@ void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
   OS << " FieldNo:" << FieldNo;
   OS << " Start:" << Start;
   OS << " Size:" << Size;
-  OS << " IsSigned:" << IsSigned;
-  OS << ">";
+  OS << " IsSigned:" << IsSigned << "\n";
+
+  OS.indent(4 + strlen("<CGBitFieldInfo"));
+  OS << " NumComponents:" << getNumComponents();
+  OS << " Components: [";
+  if (getNumComponents()) {
+    OS << "\n";
+    for (unsigned i = 0, e = getNumComponents(); i != e; ++i) {
+      const AccessInfo &AI = getComponent(i);
+      OS.indent(8);
+      OS << "<AccessInfo"
+         << " FieldIndex:" << AI.FieldIndex
+         << " FieldByteOffset:" << AI.FieldByteOffset
+         << " FieldBitStart:" << AI.FieldBitStart
+         << " AccessWidth:" << AI.AccessWidth << "\n";
+      OS.indent(8 + strlen("<AccessInfo"));
+      OS << " AccessAlignment:" << AI.AccessAlignment
+         << " TargetBitOffset:" << AI.TargetBitOffset
+         << " TargetBitWidth:" << AI.TargetBitWidth
+         << ">\n";
+    }
+    OS.indent(4);
+  }
+  OS << "]>";
 }
 
 void CGBitFieldInfo::dump() const {

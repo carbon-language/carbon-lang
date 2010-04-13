@@ -20,9 +20,73 @@ namespace llvm {
 namespace clang {
 namespace CodeGen {
 
-/// Helper object for describing how to generate the code for access to a
+/// \brief Helper object for describing how to generate the code for access to a
 /// bit-field.
+///
+/// This structure is intended to describe the "policy" of how the bit-field
+/// should be accessed, which may be target, language, or ABI dependent.
 class CGBitFieldInfo {
+public:
+  /// Descriptor for a single component of a bit-field access. The entire
+  /// bit-field is constituted of a bitwise OR of all of the individual
+  /// components.
+  ///
+  /// Each component describes an accessed value, which is how the component
+  /// should be transferred to/from memory, and a target placement, which is how
+  /// that component fits into the constituted bit-field. The pseudo-IR for a
+  /// load is:
+  ///
+  ///   %0 = gep %base, 0, FieldIndex
+  ///   %1 = gep (i8*) %0, FieldByteOffset
+  ///   %2 = (i(AccessWidth) *) %1
+  ///   %3 = load %2, align AccessAlignment
+  ///   %4 = shr %3, FieldBitStart
+  ///
+  /// and the composed bit-field is formed as the boolean OR of all accesses,
+  /// masked to TargetBitWidth bits and shifted to TargetBitOffset.
+  struct AccessInfo {
+    /// Offset of the field to load in the LLVM structure, if any.
+    unsigned FieldIndex;
+
+    /// Byte offset from the field address, if any. This should generally be
+    /// unused as the cleanest IR comes from having a well-constructed LLVM type
+    /// with proper GEP instructions, but sometimes its use is required, for
+    /// example if an access is intended to straddle an LLVM field boundary.
+    unsigned FieldByteOffset;
+
+    /// Bit offset in the accessed value to use. The width is implied by \see
+    /// TargetBitWidth.
+    unsigned FieldBitStart;
+
+    /// Bit width of the memory access to perform.
+    unsigned AccessWidth;
+
+    /// The alignment of the memory access, or 0 if the default alignment should
+    /// be used.
+    //
+    // FIXME: Remove use of 0 to encode default, instead have IRgen do the right
+    // thing when it generates the code, if avoiding align directives is
+    // desired.
+    unsigned AccessAlignment;
+
+    /// Offset for the target value.
+    unsigned TargetBitOffset;
+
+    /// Number of bits in the access that are destined for the bit-field.
+    unsigned TargetBitWidth;
+  };
+
+private:
+  /// The number of access components to use.
+  unsigned NumComponents;
+
+  /// The components to use to access the bit-field. We may need up to three
+  /// separate components to support up to i64 bit-field access (4 + 2 + 1 byte
+  /// accesses).
+  //
+  // FIXME: De-hardcode this, just allocate following the struct.
+  AccessInfo Components[3];
+
 public:
   CGBitFieldInfo(const llvm::Type *FieldTy, unsigned FieldNo,
                  unsigned Start, unsigned Size, bool IsSigned)
@@ -35,6 +99,24 @@ public:
   unsigned Start;
   unsigned Size;
   bool IsSigned : 1;
+
+public:
+  bool isSigned() const { return IsSigned; }
+
+  unsigned getNumComponents() const { return NumComponents; }
+  void setNumComponents(unsigned Value) {
+    assert(Value < 4 && "Invalid number of components!");
+    NumComponents = Value;
+  }
+
+  const AccessInfo &getComponent(unsigned Index) const {
+    assert(Index < getNumComponents() && "Invalid access!");
+    return Components[Index];
+  }
+  AccessInfo &getComponent(unsigned Index) {
+    assert(Index < getNumComponents() && "Invalid access!");
+    return Components[Index];
+  }
 
   void print(llvm::raw_ostream &OS) const;
   void dump() const;
