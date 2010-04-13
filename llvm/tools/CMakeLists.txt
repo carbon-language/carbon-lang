@@ -31,6 +31,7 @@ add_subdirectory(llvm-extract)
 add_subdirectory(bugpoint)
 add_subdirectory(llvm-bcanalyzer)
 add_subdirectory(llvm-stub)
+add_subdirectory(edis)
 add_subdirectory(llvmc)
 
 if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/clang/CMakeLists.txt )
