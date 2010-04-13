@@ -749,6 +749,11 @@ void CodeGenFunction::EmitCleanupBlock() {
     return;
   }
 
+  //  Scrub debug location info.
+  for (llvm::BasicBlock::iterator LBI = Info.CleanupBlock->begin(),
+         LBE = Info.CleanupBlock->end(); LBI != LBE; ++LBI)
+    Builder.SetInstDebugLocation(LBI);
+
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
   if (CurBB && !CurBB->getTerminator() &&
       Info.CleanupBlock->getNumUses() == 0) {

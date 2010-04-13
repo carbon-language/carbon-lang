@@ -160,7 +160,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     EmitStmt(*I);
 
   if (DI) {
-    DI->setLocation(S.getLBracLoc());
+    DI->setLocation(S.getRBracLoc());
     DI->EmitRegionEnd(CurFn, Builder);
   }
 
