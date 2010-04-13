@@ -23,9 +23,7 @@ namespace llvm {
 BumpPtrAllocator::BumpPtrAllocator(size_t size, size_t threshold,
                                    SlabAllocator &allocator)
     : SlabSize(size), SizeThreshold(threshold), Allocator(allocator),
-      CurSlab(0), BytesAllocated(0) {
-  StartNewSlab();
-}
+      CurSlab(0), BytesAllocated(0) { }
 
 BumpPtrAllocator::~BumpPtrAllocator() {
   DeallocateSlabs(CurSlab);
@@ -72,6 +70,8 @@ void BumpPtrAllocator::DeallocateSlabs(MemSlab *Slab) {
 /// Reset - Deallocate all but the current slab and reset the current pointer
 /// to the beginning of it, freeing all memory allocated so far.
 void BumpPtrAllocator::Reset() {
+  if (!CurSlab) // Start a new slab if we didn't allocate one already.
+    StartNewSlab();
   DeallocateSlabs(CurSlab->NextPtr);
   CurSlab->NextPtr = 0;
   CurPtr = (char*)(CurSlab + 1);
@@ -81,6 +81,9 @@ void BumpPtrAllocator::Reset() {
 /// Allocate - Allocate space at the specified alignment.
 ///
 void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
+  if (!CurSlab) // Start a new slab if we haven't allocated one already.
+    StartNewSlab();
+
   // Keep track of how many bytes we've allocated.
   BytesAllocated += Size;
 
