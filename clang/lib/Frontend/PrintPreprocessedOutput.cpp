@@ -118,7 +118,11 @@ public:
 
 
   bool HandleFirstTokOnLine(Token &Tok);
-  bool MoveToLine(SourceLocation Loc);
+  bool MoveToLine(SourceLocation Loc) {
+    return MoveToLine(PP.getSourceManager().getPresumedLoc(Loc).getLine());
+  }
+  bool MoveToLine(unsigned LineNo);
+
   bool AvoidConcat(const Token &PrevTok, const Token &Tok) {
     return ConcatInfo.AvoidConcat(PrevTok, Tok);
   }
@@ -166,9 +170,7 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
 /// object.  We can do this by emitting some number of \n's, or be emitting a
 /// #line directive.  This returns false if already at the specified line, true
 /// if some newlines were emitted.
-bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
-  unsigned LineNo = PP.getSourceManager().getInstantiationLineNumber(Loc);
-
+bool PrintPPOutputPPCallbacks::MoveToLine(unsigned LineNo) {
   if (DisableLineMarkers) {
     if (LineNo == CurLine) return false;
 
@@ -212,26 +214,28 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
+  
+  PresumedLoc UserLoc = SourceMgr.getPresumedLoc(Loc);
+  unsigned NewLine = UserLoc.getLine()+1;
+  
   if (Reason == PPCallbacks::EnterFile) {
     SourceLocation IncludeLoc = SourceMgr.getPresumedLoc(Loc).getIncludeLoc();
     if (IncludeLoc.isValid())
       MoveToLine(IncludeLoc);
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
-    MoveToLine(Loc);
+    MoveToLine(NewLine);
 
     // TODO GCC emits the # directive for this directive on the line AFTER the
     // directive and emits a bunch of spaces that aren't needed.  Emulate this
     // strange behavior.
   }
-
-  Loc = SourceMgr.getInstantiationLoc(Loc);
-  // FIXME: Should use presumed line #!
-  CurLine = SourceMgr.getInstantiationLineNumber(Loc);
+  
+  CurLine = NewLine;
 
   if (DisableLineMarkers) return;
 
   CurFilename.clear();
-  CurFilename += SourceMgr.getPresumedLoc(Loc).getFilename();
+  CurFilename += UserLoc.getFilename();
   Lexer::Stringify(CurFilename);
   FileType = NewFileType;
 
