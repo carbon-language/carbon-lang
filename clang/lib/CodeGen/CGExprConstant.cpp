@@ -27,359 +27,381 @@
 using namespace clang;
 using namespace CodeGen;
 
-namespace  {
+//===----------------------------------------------------------------------===//
+//                            ConstStructBuilder
+//===----------------------------------------------------------------------===//
+
+namespace {
 class ConstStructBuilder {
   CodeGenModule &CGM;
   CodeGenFunction *CGF;
 
   bool Packed;
-
   unsigned NextFieldOffsetInBytes;
-
   unsigned LLVMStructAlignment;
-  
   std::vector<llvm::Constant *> Elements;
-
+public:
+  static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
+                                     InitListExpr *ILE);
+  
+private:  
   ConstStructBuilder(CodeGenModule &CGM, CodeGenFunction *CGF)
     : CGM(CGM), CGF(CGF), Packed(false), NextFieldOffsetInBytes(0),
     LLVMStructAlignment(1) { }
 
   bool AppendField(const FieldDecl *Field, uint64_t FieldOffset,
-                   const Expr *InitExpr) {
-    uint64_t FieldOffsetInBytes = FieldOffset / 8;
-
-    assert(NextFieldOffsetInBytes <= FieldOffsetInBytes
-           && "Field offset mismatch!");
-
-    // Emit the field.
-    llvm::Constant *C = CGM.EmitConstantExpr(InitExpr, Field->getType(), CGF);
-    if (!C)
-      return false;
-
-    unsigned FieldAlignment = getAlignment(C);
-
-    // Round up the field offset to the alignment of the field type.
-    uint64_t AlignedNextFieldOffsetInBytes =
-      llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
-
-    if (AlignedNextFieldOffsetInBytes > FieldOffsetInBytes) {
-      assert(!Packed && "Alignment is wrong even with a packed struct!");
-
-      // Convert the struct to a packed struct.
-      ConvertStructToPacked();
-      
-      AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
-    }
-
-    if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
-      // We need to append padding.
-      AppendPadding(FieldOffsetInBytes - NextFieldOffsetInBytes);
-
-      assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
-             "Did not add enough padding!");
-
-      AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
-    }
-
-    // Add the field.
-    Elements.push_back(C);
-    NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
-    
-    if (Packed)
-      assert(LLVMStructAlignment == 1 && "Packed struct not byte-aligned!");
-    else
-      LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
-
-    return true;
-  }
+                   const Expr *InitExpr);
 
   bool AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
-                      const Expr *InitExpr) {
-    llvm::ConstantInt *CI =
-      cast_or_null<llvm::ConstantInt>(CGM.EmitConstantExpr(InitExpr,
-                                                           Field->getType(),
-                                                           CGF));
-    // FIXME: Can this ever happen?
-    if (!CI)
-      return false;
+                      const Expr *InitExpr);
 
-    if (FieldOffset > NextFieldOffsetInBytes * 8) {
-      // We need to add padding.
-      uint64_t NumBytes =
-        llvm::RoundUpToAlignment(FieldOffset -
-                                 NextFieldOffsetInBytes * 8, 8) / 8;
+  void AppendPadding(uint64_t NumBytes);
 
-      AppendPadding(NumBytes);
-    }
+  void AppendTailPadding(uint64_t RecordSize);
 
-    uint64_t FieldSize =
-      Field->getBitWidth()->EvaluateAsInt(CGM.getContext()).getZExtValue();
-
-    llvm::APInt FieldValue = CI->getValue();
-
-    // Promote the size of FieldValue if necessary
-    // FIXME: This should never occur, but currently it can because initializer
-    // constants are cast to bool, and because clang is not enforcing bitfield
-    // width limits.
-    if (FieldSize > FieldValue.getBitWidth())
-      FieldValue.zext(FieldSize);
-
-    // Truncate the size of FieldValue to the bit field size.
-    if (FieldSize < FieldValue.getBitWidth())
-      FieldValue.trunc(FieldSize);
-
-    if (FieldOffset < NextFieldOffsetInBytes * 8) {
-      // Either part of the field or the entire field can go into the previous
-      // byte.
-      assert(!Elements.empty() && "Elements can't be empty!");
-
-      unsigned BitsInPreviousByte =
-        NextFieldOffsetInBytes * 8 - FieldOffset;
-
-      bool FitsCompletelyInPreviousByte =
-        BitsInPreviousByte >= FieldValue.getBitWidth();
-
-      llvm::APInt Tmp = FieldValue;
-
-      if (!FitsCompletelyInPreviousByte) {
-        unsigned NewFieldWidth = FieldSize - BitsInPreviousByte;
-
-        if (CGM.getTargetData().isBigEndian()) {
-          Tmp = Tmp.lshr(NewFieldWidth);
-          Tmp.trunc(BitsInPreviousByte);
-
-          // We want the remaining high bits.
-          FieldValue.trunc(NewFieldWidth);
-        } else {
-          Tmp.trunc(BitsInPreviousByte);
-
-          // We want the remaining low bits.
-          FieldValue = FieldValue.lshr(BitsInPreviousByte);
-          FieldValue.trunc(NewFieldWidth);
-        }
-      }
-
-      Tmp.zext(8);
-      if (CGM.getTargetData().isBigEndian()) {
-        if (FitsCompletelyInPreviousByte)
-          Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
-      } else {
-        Tmp = Tmp.shl(8 - BitsInPreviousByte);
-      }
-
-      // Or in the bits that go into the previous byte.
-      if (llvm::ConstantInt *Val = dyn_cast<llvm::ConstantInt>(Elements.back()))
-        Tmp |= Val->getValue();
-      else
-        assert(isa<llvm::UndefValue>(Elements.back()));
-
-      Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
-
-      if (FitsCompletelyInPreviousByte)
-        return true;
-    }
-
-    while (FieldValue.getBitWidth() > 8) {
-      llvm::APInt Tmp;
-
-      if (CGM.getTargetData().isBigEndian()) {
-        // We want the high bits.
-        Tmp = FieldValue;
-        Tmp = Tmp.lshr(Tmp.getBitWidth() - 8);
-        Tmp.trunc(8);
-      } else {
-        // We want the low bits.
-        Tmp = FieldValue;
-        Tmp.trunc(8);
-
-        FieldValue = FieldValue.lshr(8);
-      }
-
-      Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
-      NextFieldOffsetInBytes++;
-
-      FieldValue.trunc(FieldValue.getBitWidth() - 8);
-    }
-
-    assert(FieldValue.getBitWidth() > 0 &&
-           "Should have at least one bit left!");
-    assert(FieldValue.getBitWidth() <= 8 &&
-           "Should not have more than a byte left!");
-
-    if (FieldValue.getBitWidth() < 8) {
-      if (CGM.getTargetData().isBigEndian()) {
-        unsigned BitWidth = FieldValue.getBitWidth();
-
-        FieldValue.zext(8);
-        FieldValue = FieldValue << (8 - BitWidth);
-      } else
-        FieldValue.zext(8);
-    }
-
-    // Append the last element.
-    Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(),
-                                              FieldValue));
-    NextFieldOffsetInBytes++;
-    return true;
-  }
-
-  void AppendPadding(uint64_t NumBytes) {
-    if (!NumBytes)
-      return;
-
-    const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
-    if (NumBytes > 1)
-      Ty = llvm::ArrayType::get(Ty, NumBytes);
-
-    llvm::Constant *C = llvm::Constant::getNullValue(Ty);
-    Elements.push_back(C);
-    assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
-
-    NextFieldOffsetInBytes += getSizeInBytes(C);
-  }
-
-  void AppendTailPadding(uint64_t RecordSize) {
-    assert(RecordSize % 8 == 0 && "Invalid record size!");
-
-    uint64_t RecordSizeInBytes = RecordSize / 8;
-    assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
-
-    unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
-    AppendPadding(NumPadBytes);
-  }
-
-  void ConvertStructToPacked() {
-    std::vector<llvm::Constant *> PackedElements;
-    uint64_t ElementOffsetInBytes = 0;
-
-    for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-      llvm::Constant *C = Elements[i];
-
-      unsigned ElementAlign =
-        CGM.getTargetData().getABITypeAlignment(C->getType());
-      uint64_t AlignedElementOffsetInBytes =
-        llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
-
-      if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
-        // We need some padding.
-        uint64_t NumBytes =
-          AlignedElementOffsetInBytes - ElementOffsetInBytes;
-
-        const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
-        if (NumBytes > 1)
-          Ty = llvm::ArrayType::get(Ty, NumBytes);
-
-        llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
-        PackedElements.push_back(Padding);
-        ElementOffsetInBytes += getSizeInBytes(Padding);
-      }
-
-      PackedElements.push_back(C);
-      ElementOffsetInBytes += getSizeInBytes(C);
-    }
-
-    assert(ElementOffsetInBytes == NextFieldOffsetInBytes &&
-           "Packing the struct changed its size!");
-
-    Elements = PackedElements;
-    LLVMStructAlignment = 1;
-    Packed = true;
-  }
+  void ConvertStructToPacked();
                               
-  bool Build(InitListExpr *ILE) {
-    RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
-    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-
-    unsigned FieldNo = 0;
-    unsigned ElementNo = 0;
-    for (RecordDecl::field_iterator Field = RD->field_begin(),
-         FieldEnd = RD->field_end();
-         ElementNo < ILE->getNumInits() && Field != FieldEnd;
-         ++Field, ++FieldNo) {
-      if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
-        continue;
-
-      if (Field->isBitField()) {
-        if (!Field->getIdentifier())
-          continue;
-
-        if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
-                            ILE->getInit(ElementNo)))
-          return false;
-      } else {
-        if (!AppendField(*Field, Layout.getFieldOffset(FieldNo),
-                         ILE->getInit(ElementNo)))
-          return false;
-      }
-
-      ElementNo++;
-    }
-
-    uint64_t LayoutSizeInBytes = Layout.getSize() / 8;
-
-    if (NextFieldOffsetInBytes > LayoutSizeInBytes) {
-      // If the struct is bigger than the size of the record type,
-      // we must have a flexible array member at the end.
-      assert(RD->hasFlexibleArrayMember() &&
-             "Must have flexible array member if struct is bigger than type!");
-      
-      // No tail padding is necessary.
-      return true;
-    }
-
-    uint64_t LLVMSizeInBytes = llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
-                                                        LLVMStructAlignment);
-
-    // Check if we need to convert the struct to a packed struct.
-    if (NextFieldOffsetInBytes <= LayoutSizeInBytes && 
-        LLVMSizeInBytes > LayoutSizeInBytes) {
-      assert(!Packed && "Size mismatch!");
-      
-      ConvertStructToPacked();
-      assert(NextFieldOffsetInBytes == LayoutSizeInBytes &&
-             "Converting to packed did not help!");
-    }
-
-    // Append tail padding if necessary.
-    AppendTailPadding(Layout.getSize());
-
-    assert(Layout.getSize() / 8 == NextFieldOffsetInBytes &&
-           "Tail padding mismatch!");
-
-    return true;
-  }
+  bool Build(InitListExpr *ILE);
 
   unsigned getAlignment(const llvm::Constant *C) const {
-    if (Packed)
-      return 1;
-
+    if (Packed)  return 1;
     return CGM.getTargetData().getABITypeAlignment(C->getType());
   }
 
   uint64_t getSizeInBytes(const llvm::Constant *C) const {
     return CGM.getTargetData().getTypeAllocSize(C->getType());
   }
-
-public:
-  static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
-                                     InitListExpr *ILE) {
-    ConstStructBuilder Builder(CGM, CGF);
-
-    if (!Builder.Build(ILE))
-      return 0;
-
-    llvm::Constant *Result =
-      llvm::ConstantStruct::get(CGM.getLLVMContext(),
-                                Builder.Elements, Builder.Packed);
-
-    assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
-                                    Builder.getAlignment(Result)) ==
-           Builder.getSizeInBytes(Result) && "Size mismatch!");
-
-    return Result;
-  }
 };
 
+bool ConstStructBuilder::
+AppendField(const FieldDecl *Field, uint64_t FieldOffset, const Expr *InitExpr){
+  uint64_t FieldOffsetInBytes = FieldOffset / 8;
+
+  assert(NextFieldOffsetInBytes <= FieldOffsetInBytes
+         && "Field offset mismatch!");
+
+  // Emit the field.
+  llvm::Constant *C = CGM.EmitConstantExpr(InitExpr, Field->getType(), CGF);
+  if (!C)
+    return false;
+
+  unsigned FieldAlignment = getAlignment(C);
+
+  // Round up the field offset to the alignment of the field type.
+  uint64_t AlignedNextFieldOffsetInBytes =
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
+
+  if (AlignedNextFieldOffsetInBytes > FieldOffsetInBytes) {
+    assert(!Packed && "Alignment is wrong even with a packed struct!");
+
+    // Convert the struct to a packed struct.
+    ConvertStructToPacked();
+    
+    AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
+  }
+
+  if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
+    // We need to append padding.
+    AppendPadding(FieldOffsetInBytes - NextFieldOffsetInBytes);
+
+    assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
+           "Did not add enough padding!");
+
+    AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
+  }
+
+  // Add the field.
+  Elements.push_back(C);
+  NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
+  
+  if (Packed)
+    assert(LLVMStructAlignment == 1 && "Packed struct not byte-aligned!");
+  else
+    LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
+
+  return true;
+}
+
+bool ConstStructBuilder::
+  AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
+                 const Expr *InitExpr) {
+  llvm::ConstantInt *CI =
+    cast_or_null<llvm::ConstantInt>(CGM.EmitConstantExpr(InitExpr,
+                                                         Field->getType(),
+                                                         CGF));
+  // FIXME: Can this ever happen?
+  if (!CI)
+    return false;
+
+  if (FieldOffset > NextFieldOffsetInBytes * 8) {
+    // We need to add padding.
+    uint64_t NumBytes =
+      llvm::RoundUpToAlignment(FieldOffset -
+                               NextFieldOffsetInBytes * 8, 8) / 8;
+
+    AppendPadding(NumBytes);
+  }
+
+  uint64_t FieldSize =
+    Field->getBitWidth()->EvaluateAsInt(CGM.getContext()).getZExtValue();
+
+  llvm::APInt FieldValue = CI->getValue();
+
+  // Promote the size of FieldValue if necessary
+  // FIXME: This should never occur, but currently it can because initializer
+  // constants are cast to bool, and because clang is not enforcing bitfield
+  // width limits.
+  if (FieldSize > FieldValue.getBitWidth())
+    FieldValue.zext(FieldSize);
+
+  // Truncate the size of FieldValue to the bit field size.
+  if (FieldSize < FieldValue.getBitWidth())
+    FieldValue.trunc(FieldSize);
+
+  if (FieldOffset < NextFieldOffsetInBytes * 8) {
+    // Either part of the field or the entire field can go into the previous
+    // byte.
+    assert(!Elements.empty() && "Elements can't be empty!");
+
+    unsigned BitsInPreviousByte =
+      NextFieldOffsetInBytes * 8 - FieldOffset;
+
+    bool FitsCompletelyInPreviousByte =
+      BitsInPreviousByte >= FieldValue.getBitWidth();
+
+    llvm::APInt Tmp = FieldValue;
+
+    if (!FitsCompletelyInPreviousByte) {
+      unsigned NewFieldWidth = FieldSize - BitsInPreviousByte;
+
+      if (CGM.getTargetData().isBigEndian()) {
+        Tmp = Tmp.lshr(NewFieldWidth);
+        Tmp.trunc(BitsInPreviousByte);
+
+        // We want the remaining high bits.
+        FieldValue.trunc(NewFieldWidth);
+      } else {
+        Tmp.trunc(BitsInPreviousByte);
+
+        // We want the remaining low bits.
+        FieldValue = FieldValue.lshr(BitsInPreviousByte);
+        FieldValue.trunc(NewFieldWidth);
+      }
+    }
+
+    Tmp.zext(8);
+    if (CGM.getTargetData().isBigEndian()) {
+      if (FitsCompletelyInPreviousByte)
+        Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
+    } else {
+      Tmp = Tmp.shl(8 - BitsInPreviousByte);
+    }
+
+    // Or in the bits that go into the previous byte.
+    if (llvm::ConstantInt *Val = dyn_cast<llvm::ConstantInt>(Elements.back()))
+      Tmp |= Val->getValue();
+    else
+      assert(isa<llvm::UndefValue>(Elements.back()));
+
+    Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
+
+    if (FitsCompletelyInPreviousByte)
+      return true;
+  }
+
+  while (FieldValue.getBitWidth() > 8) {
+    llvm::APInt Tmp;
+
+    if (CGM.getTargetData().isBigEndian()) {
+      // We want the high bits.
+      Tmp = FieldValue;
+      Tmp = Tmp.lshr(Tmp.getBitWidth() - 8);
+      Tmp.trunc(8);
+    } else {
+      // We want the low bits.
+      Tmp = FieldValue;
+      Tmp.trunc(8);
+
+      FieldValue = FieldValue.lshr(8);
+    }
+
+    Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
+    NextFieldOffsetInBytes++;
+
+    FieldValue.trunc(FieldValue.getBitWidth() - 8);
+  }
+
+  assert(FieldValue.getBitWidth() > 0 &&
+         "Should have at least one bit left!");
+  assert(FieldValue.getBitWidth() <= 8 &&
+         "Should not have more than a byte left!");
+
+  if (FieldValue.getBitWidth() < 8) {
+    if (CGM.getTargetData().isBigEndian()) {
+      unsigned BitWidth = FieldValue.getBitWidth();
+
+      FieldValue.zext(8);
+      FieldValue = FieldValue << (8 - BitWidth);
+    } else
+      FieldValue.zext(8);
+  }
+
+  // Append the last element.
+  Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(),
+                                            FieldValue));
+  NextFieldOffsetInBytes++;
+  return true;
+}
+
+void ConstStructBuilder::AppendPadding(uint64_t NumBytes) {
+  if (!NumBytes)
+    return;
+
+  const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+  if (NumBytes > 1)
+    Ty = llvm::ArrayType::get(Ty, NumBytes);
+
+  llvm::Constant *C = llvm::Constant::getNullValue(Ty);
+  Elements.push_back(C);
+  assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
+
+  NextFieldOffsetInBytes += getSizeInBytes(C);
+}
+
+void ConstStructBuilder::AppendTailPadding(uint64_t RecordSize) {
+  assert(RecordSize % 8 == 0 && "Invalid record size!");
+
+  uint64_t RecordSizeInBytes = RecordSize / 8;
+  assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
+
+  unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
+  AppendPadding(NumPadBytes);
+}
+
+void ConstStructBuilder::ConvertStructToPacked() {
+  std::vector<llvm::Constant *> PackedElements;
+  uint64_t ElementOffsetInBytes = 0;
+
+  for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
+    llvm::Constant *C = Elements[i];
+
+    unsigned ElementAlign =
+      CGM.getTargetData().getABITypeAlignment(C->getType());
+    uint64_t AlignedElementOffsetInBytes =
+      llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
+
+    if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
+      // We need some padding.
+      uint64_t NumBytes =
+        AlignedElementOffsetInBytes - ElementOffsetInBytes;
+
+      const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+      if (NumBytes > 1)
+        Ty = llvm::ArrayType::get(Ty, NumBytes);
+
+      llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
+      PackedElements.push_back(Padding);
+      ElementOffsetInBytes += getSizeInBytes(Padding);
+    }
+
+    PackedElements.push_back(C);
+    ElementOffsetInBytes += getSizeInBytes(C);
+  }
+
+  assert(ElementOffsetInBytes == NextFieldOffsetInBytes &&
+         "Packing the struct changed its size!");
+
+  Elements = PackedElements;
+  LLVMStructAlignment = 1;
+  Packed = true;
+}
+                            
+bool ConstStructBuilder::Build(InitListExpr *ILE) {
+  RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
+  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+
+  unsigned FieldNo = 0;
+  unsigned ElementNo = 0;
+  for (RecordDecl::field_iterator Field = RD->field_begin(),
+       FieldEnd = RD->field_end();
+       ElementNo < ILE->getNumInits() && Field != FieldEnd;
+       ++Field, ++FieldNo) {
+    if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
+      continue;
+
+    if (Field->isBitField()) {
+      if (!Field->getIdentifier())
+        continue;
+
+      if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
+                          ILE->getInit(ElementNo)))
+        return false;
+    } else {
+      if (!AppendField(*Field, Layout.getFieldOffset(FieldNo),
+                       ILE->getInit(ElementNo)))
+        return false;
+    }
+
+    ElementNo++;
+  }
+
+  uint64_t LayoutSizeInBytes = Layout.getSize() / 8;
+
+  if (NextFieldOffsetInBytes > LayoutSizeInBytes) {
+    // If the struct is bigger than the size of the record type,
+    // we must have a flexible array member at the end.
+    assert(RD->hasFlexibleArrayMember() &&
+           "Must have flexible array member if struct is bigger than type!");
+    
+    // No tail padding is necessary.
+    return true;
+  }
+
+  uint64_t LLVMSizeInBytes = llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
+                                                      LLVMStructAlignment);
+
+  // Check if we need to convert the struct to a packed struct.
+  if (NextFieldOffsetInBytes <= LayoutSizeInBytes && 
+      LLVMSizeInBytes > LayoutSizeInBytes) {
+    assert(!Packed && "Size mismatch!");
+    
+    ConvertStructToPacked();
+    assert(NextFieldOffsetInBytes == LayoutSizeInBytes &&
+           "Converting to packed did not help!");
+  }
+
+  // Append tail padding if necessary.
+  AppendTailPadding(Layout.getSize());
+
+  assert(Layout.getSize() / 8 == NextFieldOffsetInBytes &&
+         "Tail padding mismatch!");
+
+  return true;
+}
+  
+llvm::Constant *ConstStructBuilder::
+  BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF, InitListExpr *ILE) {
+  ConstStructBuilder Builder(CGM, CGF);
+  
+  if (!Builder.Build(ILE))
+    return 0;
+  
+  llvm::Constant *Result =
+  llvm::ConstantStruct::get(CGM.getLLVMContext(),
+                            Builder.Elements, Builder.Packed);
+  
+  assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
+                                  Builder.getAlignment(Result)) ==
+         Builder.getSizeInBytes(Result) && "Size mismatch!");
+  
+  return Result;
+}
+
+  
+//===----------------------------------------------------------------------===//
+//                             ConstExprEmitter
+//===----------------------------------------------------------------------===//
+  
 class ConstExprEmitter :
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
