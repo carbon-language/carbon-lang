@@ -700,7 +700,11 @@ enum CXCursorKind {
   CXCursor_ObjCCategoryImplDecl          = 19,
   /** \brief A typedef */
   CXCursor_TypedefDecl                   = 20,
-  CXCursor_LastDecl                      = 20,
+
+  /** \brief A C++ class method. */
+  CXCursor_CXXMethod                     = 21,
+
+  CXCursor_LastDecl                      = 21,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */

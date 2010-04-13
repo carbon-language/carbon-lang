@@ -1558,6 +1558,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("ObjCImplementationDecl");
   case CXCursor_ObjCCategoryImplDecl:
       return createCXString("ObjCCategoryImplDecl");
+  case CXCursor_CXXMethod:
+      return createCXString("CXXMethod");
   case CXCursor_UnexposedDecl:
       return createCXString("UnexposedDecl");
   case CXCursor_ObjCSuperClassRef:
