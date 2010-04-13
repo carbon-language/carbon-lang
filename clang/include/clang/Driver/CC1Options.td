@@ -123,6 +123,10 @@ def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">,
   HelpText<"Do not emit code to make initialization of local statics thread safe">;
 def fdump_vtable_layouts : Flag<"-fdump-vtable-layouts">,
   HelpText<"Dump the layouts of all vtables that will be emitted in a translation unit">;
+def ffunction_sections : Flag<"-ffunction-sections">,
+  HelpText<"Place each function in its own section (ELF Only)">;
+def fdata_sections : Flag<"-fdata-sections">,
+  HelpText<"Place each data in its own section (ELF Only)">;
 def masm_verbose : Flag<"-masm-verbose">,
   HelpText<"Generate verbose assembly output">;
 def mcode_model : Separate<"-mcode-model">,

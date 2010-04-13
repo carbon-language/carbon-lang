@@ -261,6 +261,9 @@ bool BackendConsumer::AddEmitPasses() {
 
   TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
 
+  TargetMachine::setFunctionSections(CodeGenOpts.FunctionSections);
+  TargetMachine::setDataSections    (CodeGenOpts.DataSections);
+
   // FIXME: Parse this earlier.
   if (CodeGenOpts.RelocationModel == "static") {
     TargetMachine::setRelocationModel(llvm::Reloc::Static);

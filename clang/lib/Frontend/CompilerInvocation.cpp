@@ -148,6 +148,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   // VerifyModule is only derived.
   // Inlining is only derived.
 
+  if (Opts.DataSections)
+    Res.push_back("-fdata-sections");
+  if (Opts.FunctionSections)
+    Res.push_back("-ffunction-sections");
   if (Opts.AsmVerbose)
     Res.push_back("-masm-verbose");
   if (!Opts.CodeModel.empty()) {
@@ -802,6 +806,9 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
+
+  Opts.FunctionSections = Args.hasArg(OPT_ffunction_sections);
+  Opts.DataSections = Args.hasArg(OPT_fdata_sections);
 
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
