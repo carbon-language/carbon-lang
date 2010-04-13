@@ -165,3 +165,14 @@ namespace source_locations {
 
   E2<int&> e2i; // expected-note{{in instantiation}}
 }
+
+namespace crazy_declarators {
+  struct A {
+    (&operator bool())(); // expected-error {{must use a typedef to declare a conversion to 'bool (&)()'}}
+
+    // FIXME: This diagnostic is misleading (the correct spelling
+    // would be 'operator int*'), but it's a corner case of a
+    // rarely-used syntax extension.
+    *operator int();  // expected-error {{must use a typedef to declare a conversion to 'int *'}}
+  };
+}

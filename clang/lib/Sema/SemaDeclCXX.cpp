@@ -2828,6 +2828,9 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     D.setInvalidType();
     SC = FunctionDecl::None;
   }
+
+  QualType ConvType = GetTypeFromParser(D.getName().ConversionFunctionId);
+
   if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Conversion functions don't have return types, but the parser will
     // happily parse something like:
@@ -2840,27 +2843,35 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_conv_function_return_type)
       << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
       << SourceRange(D.getIdentifierLoc());
+    D.setInvalidType();
   }
 
+  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
+
   // Make sure we don't have any parameters.
-  if (R->getAs<FunctionProtoType>()->getNumArgs() > 0) {
+  if (Proto->getNumArgs() > 0) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
     D.getTypeObject(0).Fun.freeArgs();
     D.setInvalidType();
-  }
-
-  // Make sure the conversion function isn't variadic.
-  if (R->getAs<FunctionProtoType>()->isVariadic() && !D.isInvalidType()) {
+  } else if (Proto->isVariadic()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);
     D.setInvalidType();
+  }
+
+  // Diagnose "&operator bool()" and other such nonsense.  This
+  // is actually a gcc extension which we don't support.
+  if (Proto->getResultType() != ConvType) {
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_with_complex_decl)
+      << Proto->getResultType();
+    D.setInvalidType();
+    ConvType = Proto->getResultType();
   }
 
   // C++ [class.conv.fct]p4:
   //   The conversion-type-id shall not represent a function type nor
   //   an array type.
-  QualType ConvType = GetTypeFromParser(D.getName().ConversionFunctionId);
   if (ConvType->isArrayType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_to_array);
     ConvType = Context.getPointerType(ConvType);
@@ -2874,14 +2885,15 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // Rebuild the function type "R" without any parameters (in case any
   // of the errors above fired) and with the conversion type as the
   // return type.
-  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
-  R = Context.getFunctionType(ConvType, 0, 0, false,
-                              Proto->getTypeQuals(),
-                              Proto->hasExceptionSpec(),
-                              Proto->hasAnyExceptionSpec(),
-                              Proto->getNumExceptions(),
-                              Proto->exception_begin(),
-                              Proto->getExtInfo());
+  if (D.isInvalidType()) {
+    R = Context.getFunctionType(ConvType, 0, 0, false,
+                                Proto->getTypeQuals(),
+                                Proto->hasExceptionSpec(),
+                                Proto->hasAnyExceptionSpec(),
+                                Proto->getNumExceptions(),
+                                Proto->exception_begin(),
+                                Proto->getExtInfo());
+  }
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)
