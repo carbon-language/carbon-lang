@@ -276,7 +276,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
                             SmallSet<int, 32> &StoredFIs,
                             SmallVector<CandidateInfo, 32> &Candidates) {
   bool RuledOut = false;
-  bool HasRegFIUse = false;
+  bool HasNonInvariantUse = false;
   unsigned Def = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -287,7 +287,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
           MFI->isSpillSlotObjectIndex(FI) &&
           InstructionStoresToFI(MI, FI))
         StoredFIs.insert(FI);
-      HasRegFIUse = true;
+      HasNonInvariantUse = true;
       continue;
     }
 
@@ -300,7 +300,10 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
            "Not expecting virtual register!");
 
     if (!MO.isDef()) {
-      HasRegFIUse = true;
+      if (PhysRegDefs[Reg])
+        // If it's using a non-loop-invariant register, then it's obviously not
+        // safe to hoist.
+        HasNonInvariantUse = true;
       continue;
     }
 
@@ -338,9 +341,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
   // operands. FIXME: Consider unfold load folding instructions.
   if (Def && !RuledOut) {
     int FI = INT_MIN;
-    // FIXME: Also hoist instructions if all source operands are live in
-    // to the loop.
-    if ((!HasRegFIUse && IsLICMCandidate(*MI)) ||
+    if ((!HasNonInvariantUse && IsLICMCandidate(*MI)) ||
         (TII->isLoadFromStackSlot(MI, FI) && MFI->isSpillSlotObjectIndex(FI)))
       Candidates.push_back(CandidateInfo(MI, Def, FI));
   }
@@ -400,8 +401,23 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
         StoredFIs.count(Candidates[i].FI))
       continue;
 
-    if (PhysRegDefs[Candidates[i].Def] == 1)
-      HoistPostRA(Candidates[i].MI, Candidates[i].Def);
+    if (PhysRegDefs[Candidates[i].Def] == 1) {
+      bool Safe = true;
+      MachineInstr *MI = Candidates[i].MI;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg() || MO.isDef())
+          continue;
+        if (PhysRegDefs[MO.getReg()]) {
+          // If it's using a non-loop-invariant register, then it's obviously
+          // not safe to hoist.
+          Safe = false;
+          break;
+        }
+      }
+      if (Safe)
+        HoistPostRA(MI, Candidates[i].Def);
+    }
   }
 
   delete[] PhysRegDefs;
