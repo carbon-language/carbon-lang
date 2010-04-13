@@ -688,24 +688,24 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
   // Defer code generation when possible if this is a static definition, inline
   // function etc.  These we only want to emit if they are used.
-  if (MayDeferGeneration(Global)) {
-    // If the value has already been used, add it directly to the
-    // DeferredDeclsToEmit list.
-    MangleBuffer MangledName;
-    getMangledName(MangledName, GD);
-    if (GetGlobalValue(MangledName))
-      DeferredDeclsToEmit.push_back(GD);
-    else {
-      // Otherwise, remember that we saw a deferred decl with this name.  The
-      // first use of the mangled name will cause it to move into
-      // DeferredDeclsToEmit.
-      DeferredDecls[MangledName] = GD;
-    }
+  if (!MayDeferGeneration(Global)) {
+    // Emit the definition if it can't be deferred.
+    EmitGlobalDefinition(GD);
     return;
   }
-
-  // Otherwise emit the definition.
-  EmitGlobalDefinition(GD);
+  
+  // If the value has already been used, add it directly to the
+  // DeferredDeclsToEmit list.
+  MangleBuffer MangledName;
+  getMangledName(MangledName, GD);
+  if (GetGlobalValue(MangledName))
+    DeferredDeclsToEmit.push_back(GD);
+  else {
+    // Otherwise, remember that we saw a deferred decl with this name.  The
+    // first use of the mangled name will cause it to move into
+    // DeferredDeclsToEmit.
+    DeferredDecls[MangledName] = GD;
+  }
 }
 
 void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
@@ -718,17 +718,19 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   if (isa<CXXMethodDecl>(D))
     getVTables().EmitVTableRelatedData(GD);
 
+  if (isa<FunctionDecl>(D))
+    return EmitGlobalFunctionDefinition(GD);
+  
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    return EmitGlobalVarDefinition(VD);
+  
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
-    EmitCXXConstructor(CD, GD.getCtorType());
-  else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
-    EmitCXXDestructor(DD, GD.getDtorType());
-  else if (isa<FunctionDecl>(D))
-    EmitGlobalFunctionDefinition(GD);
-  else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-    EmitGlobalVarDefinition(VD);
-  else {
-    assert(0 && "Invalid argument to EmitGlobalDefinition()");
-  }
+    return EmitCXXConstructor(CD, GD.getCtorType());
+  
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
+    return EmitCXXDestructor(DD, GD.getDtorType());
+  
+  assert(0 && "Invalid argument to EmitGlobalDefinition()");
 }
 
 /// GetOrCreateLLVMFunction - If the specified mangled name is not in the
