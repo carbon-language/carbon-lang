@@ -78,6 +78,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
+  SourceManager &SM;
   TokenConcatenation ConcatInfo;
 public:
   llvm::raw_ostream &OS;
@@ -94,7 +95,8 @@ private:
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os,
                            bool lineMarkers, bool defines)
-     : PP(pp), ConcatInfo(PP), OS(os), DisableLineMarkers(lineMarkers),
+     : PP(pp), SM(PP.getSourceManager()),
+       ConcatInfo(PP), OS(os), DisableLineMarkers(lineMarkers),
        DumpDefines(defines) {
     CurLine = 0;
     CurFilename += "<uninit>";
@@ -119,7 +121,7 @@ public:
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc) {
-    return MoveToLine(PP.getSourceManager().getPresumedLoc(Loc).getLine());
+    return MoveToLine(SM.getPresumedLoc(Loc).getLine());
   }
   bool MoveToLine(unsigned LineNo);
 
@@ -213,7 +215,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                        SrcMgr::CharacteristicKind NewFileType) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
-  SourceManager &SourceMgr = PP.getSourceManager();
+  SourceManager &SourceMgr = SM;
   
   PresumedLoc UserLoc = SourceMgr.getPresumedLoc(Loc);
   unsigned NewLine = UserLoc.getLine()+1;
@@ -322,8 +324,7 @@ bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
 
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
-  const SourceManager &SourceMgr = PP.getSourceManager();
-  unsigned ColNo = SourceMgr.getInstantiationColumnNumber(Tok.getLocation());
+  unsigned ColNo = SM.getInstantiationColumnNumber(Tok.getLocation());
 
   // This hack prevents stuff like:
   // #define HASH #
