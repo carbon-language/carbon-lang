@@ -142,7 +142,9 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
     return -1;
   }
   
-  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(0, *AsmInfo));
+  int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
+  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(AsmPrinterVariant,
+                                                    *AsmInfo));
   if (!IP) {
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;
