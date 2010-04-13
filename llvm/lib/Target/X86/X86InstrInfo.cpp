@@ -1684,7 +1684,6 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // Start from the bottom of the block and work up, examining the
   // terminator instructions.
   MachineBasicBlock::iterator I = MBB.end();
-  MachineBasicBlock::iterator UnCondBrIter = MBB.end();
   while (I != MBB.begin()) {
     --I;
     if (I->isDebugValue())
@@ -1702,8 +1701,6 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // Handle unconditional branches.
     if (I->getOpcode() == X86::JMP_4) {
-      UnCondBrIter = I;
-
       if (!AllowModify) {
         TBB = I->getOperand(0).getMBB();
         continue;
@@ -1721,11 +1718,10 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
         TBB = 0;
         I->eraseFromParent();
         I = MBB.end();
-        UnCondBrIter = MBB.end();
         continue;
       }
 
-      // TBB is used to indicate the unconditional destination.
+      // TBB is used to indicate the unconditinal destination.
       TBB = I->getOperand(0).getMBB();
       continue;
     }
@@ -1737,48 +1733,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // Working from the bottom, handle the first conditional branch.
     if (Cond.empty()) {
-      MachineBasicBlock *TargetBB = I->getOperand(0).getMBB();
-      if (AllowModify && UnCondBrIter != MBB.end() &&
-          MBB.isLayoutSuccessor(TargetBB)) {
-        // If we can modify the code and it ends in something like:
-        //
-        //     jCC L1
-        //     jmp L2
-        //   L1:
-        //     ...
-        //   L2:
-        //
-        // Then we can change this to:
-        //
-        //     jnCC L2
-        //   L1:
-        //     ...
-        //   L2:
-        //
-        // Which is a bit more efficient.
-        // We conditionally jump to the fall-through block.
-        BranchCode = GetOppositeBranchCondition(BranchCode);
-        unsigned JNCC = GetCondBranchFromCond(BranchCode);
-        MachineBasicBlock::iterator OldInst = I;
-        --I;
-
-        BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(JNCC))
-          .addMBB(UnCondBrIter->getOperand(0).getMBB());
-        BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(X86::JMP_4))
-          .addMBB(TargetBB);
-        MBB.addSuccessor(TargetBB);
-
-        OldInst->eraseFromParent();
-        UnCondBrIter->eraseFromParent();
-
-        // Restart the analysis.
-        UnCondBrIter = MBB.end();
-        I = MBB.end();
-        continue;
-      }
-
       FBB = TBB;
-      TBB = TargetBB;
       TBB = I->getOperand(0).getMBB();
       Cond.push_back(MachineOperand::CreateImm(BranchCode));
       continue;
