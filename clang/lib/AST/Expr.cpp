@@ -722,10 +722,11 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
   return OverOps[Opc];
 }
 
-InitListExpr::InitListExpr(SourceLocation lbraceloc,
+InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
   : Expr(InitListExprClass, QualType(), false, false),
+    InitExprs(C, numInits),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
     UnionFieldInit(0), HadArrayRangeDesignator(false) 
 {      
@@ -736,24 +737,24 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
       ValueDependent = true;
   }
       
-  InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
+  InitExprs.insert(C, InitExprs.end(), initExprs, initExprs+numInits);
 }
 
-void InitListExpr::reserveInits(unsigned NumInits) {
+void InitListExpr::reserveInits(ASTContext &C, unsigned NumInits) {
   if (NumInits > InitExprs.size())
-    InitExprs.reserve(NumInits);
+    InitExprs.reserve(C, NumInits);
 }
 
-void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
+void InitListExpr::resizeInits(ASTContext &C, unsigned NumInits) {
   for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
        Idx < LastIdx; ++Idx)
-    InitExprs[Idx]->Destroy(Context);
-  InitExprs.resize(NumInits, 0);
+    InitExprs[Idx]->Destroy(C);
+  InitExprs.resize(C, NumInits, 0);
 }
 
-Expr *InitListExpr::updateInit(unsigned Init, Expr *expr) {
+Expr *InitListExpr::updateInit(ASTContext &C, unsigned Init, Expr *expr) {
   if (Init >= InitExprs.size()) {
-    InitExprs.insert(InitExprs.end(), Init - InitExprs.size() + 1, 0);
+    InitExprs.insert(C, InitExprs.end(), Init - InitExprs.size() + 1, 0);
     InitExprs.back() = expr;
     return 0;
   }

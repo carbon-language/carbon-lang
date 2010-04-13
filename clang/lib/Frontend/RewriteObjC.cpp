@@ -2754,9 +2754,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                             CastExpr::CK_Unknown, SuperRep);
       } else {
         // (struct objc_super) { <exprs from above> }
-        InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
-                                             &InitExprs[0], InitExprs.size(),
-                                             SourceLocation());
+        InitListExpr *ILE =
+          new (Context) InitListExpr(*Context, SourceLocation(),
+                                     &InitExprs[0], InitExprs.size(),
+                                     SourceLocation());
         TypeSourceInfo *superTInfo
           = Context->getTrivialTypeSourceInfo(superType);
         SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,
@@ -2853,9 +2854,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                  CastExpr::CK_Unknown, SuperRep);
       } else {
         // (struct objc_super) { <exprs from above> }
-        InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
-                                             &InitExprs[0], InitExprs.size(),
-                                             SourceLocation());
+        InitListExpr *ILE =
+          new (Context) InitListExpr(*Context, SourceLocation(),
+                                     &InitExprs[0], InitExprs.size(),
+                                     SourceLocation());
         TypeSourceInfo *superTInfo
           = Context->getTrivialTypeSourceInfo(superType);
         SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,

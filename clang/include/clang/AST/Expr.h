@@ -18,6 +18,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclAccessPair.h"
+#include "clang/AST/ASTVector.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
@@ -2440,7 +2441,8 @@ public:
 /// serves as its syntactic form.
 class InitListExpr : public Expr {
   // FIXME: Eliminate this vector in favor of ASTContext allocation
-  std::vector<Stmt *> InitExprs;
+  typedef ASTVector<Stmt *> InitExprsTy;
+  InitExprsTy InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
 
   /// Contains the initializer list that describes the syntactic form
@@ -2456,11 +2458,13 @@ class InitListExpr : public Expr {
   bool HadArrayRangeDesignator;
 
 public:
-  InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
+  InitListExpr(ASTContext &C, SourceLocation lbraceloc,
+               Expr **initexprs, unsigned numinits,
                SourceLocation rbraceloc);
 
   /// \brief Build an empty initializer list.
-  explicit InitListExpr(EmptyShell Empty) : Expr(InitListExprClass, Empty) { }
+  explicit InitListExpr(ASTContext &C, EmptyShell Empty)
+    : Expr(InitListExprClass, Empty), InitExprs(C) { }
 
   unsigned getNumInits() const { return InitExprs.size(); }
 
@@ -2480,7 +2484,7 @@ public:
   }
 
   /// \brief Reserve space for some number of initializers.
-  void reserveInits(unsigned NumInits);
+  void reserveInits(ASTContext &C, unsigned NumInits);
 
   /// @brief Specify the number of initializers
   ///
@@ -2497,7 +2501,7 @@ public:
   /// When @p Init is out of range for this initializer list, the
   /// initializer list will be extended with NULL expressions to
   /// accomodate the new entry.
-  Expr *updateInit(unsigned Init, Expr *expr);
+  Expr *updateInit(ASTContext &C, unsigned Init, Expr *expr);
 
   /// \brief If this initializes a union, specifies which field in the
   /// union to initialize.
@@ -2543,8 +2547,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  typedef std::vector<Stmt *>::iterator iterator;
-  typedef std::vector<Stmt *>::reverse_iterator reverse_iterator;
+  typedef InitExprsTy::iterator iterator;
+  typedef InitExprsTy::reverse_iterator reverse_iterator;
 
   iterator begin() { return InitExprs.begin(); }
   iterator end() { return InitExprs.end(); }

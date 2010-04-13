@@ -281,7 +281,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
       // extend the initializer list to include the constructor
       // call and make a note that we'll need to take another pass
       // through the initializer list.
-      ILE->updateInit(Init, MemberInit.takeAs<Expr>());
+      ILE->updateInit(SemaRef.Context, Init, MemberInit.takeAs<Expr>());
       RequiresSecondPass = true;
     }
   } else if (InitListExpr *InnerILE
@@ -391,7 +391,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         // extend the initializer list to include the constructor
         // call and make a note that we'll need to take another pass
         // through the initializer list.
-        ILE->updateInit(Init, ElementInit.takeAs<Expr>());
+        ILE->updateInit(SemaRef.Context, Init, ElementInit.takeAs<Expr>());
         RequiresSecondPass = true;
       }
     } else if (InitListExpr *InnerILE
@@ -1702,7 +1702,8 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
   }
 
   InitListExpr *Result
-    = new (SemaRef.Context) InitListExpr(InitRange.getBegin(), 0, 0,
+    = new (SemaRef.Context) InitListExpr(SemaRef.Context,
+                                         InitRange.getBegin(), 0, 0,
                                          InitRange.getEnd());
 
   Result->setType(CurrentObjectType.getNonReferenceType());
@@ -1740,12 +1741,12 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
   if (NumElements < NumInits)
     NumElements = IList->getNumInits();
 
-  Result->reserveInits(NumElements);
+  Result->reserveInits(SemaRef.Context, NumElements);
 
   // Link this new initializer list into the structured initializer
   // lists.
   if (StructuredList)
-    StructuredList->updateInit(StructuredIndex, Result);
+    StructuredList->updateInit(SemaRef.Context, StructuredIndex, Result);
   else {
     Result->setSyntacticForm(IList);
     SyntacticToSemantic[IList] = Result;
@@ -1763,7 +1764,8 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
   if (!StructuredList)
     return;
 
-  if (Expr *PrevInit = StructuredList->updateInit(StructuredIndex, expr)) {
+  if (Expr *PrevInit = StructuredList->updateInit(SemaRef.Context,
+                                                  StructuredIndex, expr)) {
     // This initializer overwrites a previous initializer. Warn.
     SemaRef.Diag(expr->getSourceRange().getBegin(),
                   diag::warn_initializer_overrides)
