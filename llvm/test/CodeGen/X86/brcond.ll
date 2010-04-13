@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -mcpu=core2 | FileCheck %s
 ; rdar://7475489
 
 define i32 @test1(i32 %a, i32 %b) nounwind ssp {
