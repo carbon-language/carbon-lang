@@ -2393,6 +2393,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                                   D.getCXXScopeSpec(),
                         (TemplateParameterList**)TemplateParamLists.get(),
                                                    TemplateParamLists.size(),
+                                                  /*never a friend*/ false,
                                                   isExplicitSpecialization)) {
     if (TemplateParams->size() > 0) {
       // There is no such thing as a variable template.
@@ -2943,6 +2944,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                   D.getCXXScopeSpec(),
                            (TemplateParameterList**)TemplateParamLists.get(),
                                                   TemplateParamLists.size(),
+                                                  isFriend,
                                                   isExplicitSpecialization)) {
     if (TemplateParams->size() > 0) {
       // This is a function template
@@ -3041,10 +3043,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (FunctionTemplate) {
       FunctionTemplate->setObjectOfFriendDecl(false);
       FunctionTemplate->setAccess(AS_public);
-    } else {
-      NewFD->setObjectOfFriendDecl(false);
     }
-
+    NewFD->setObjectOfFriendDecl(false);
     NewFD->setAccess(AS_public);
   }
 
@@ -3198,10 +3198,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD->setInvalidDecl();
   }
 
-  // Make sure this is set before checking the function declaration.
-  // We'll override the visibility type later.
-  if (isFriend) NewFD->setObjectOfFriendDecl(false);
-    
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
   CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
@@ -4766,6 +4762,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size(),
+                                                    TUK == TUK_Friend,
                                                     isExplicitSpecialization)) {
       if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may

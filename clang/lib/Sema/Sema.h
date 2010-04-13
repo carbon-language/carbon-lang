@@ -2771,6 +2771,7 @@ public:
                                           const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
                                           unsigned NumParamLists,
+                                          bool IsFriend,
                                           bool &IsExplicitSpecialization);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,

@@ -1229,6 +1229,10 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
 ///
 /// \param NumParamLists the number of template parameter lists in ParamLists.
 ///
+/// \param IsFriend Whether to apply the slightly different rules for
+/// matching template parameters to scope specifiers in friend
+/// declarations.
+///
 /// \param IsExplicitSpecialization will be set true if the entity being
 /// declared is an explicit specialization, false otherwise.
 ///
@@ -1243,6 +1247,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                               const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
                                               unsigned NumParamLists,
+                                              bool IsFriend,
                                               bool &IsExplicitSpecialization) {
   IsExplicitSpecialization = false;
   
@@ -1308,6 +1313,13 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     if (Idx >= NumParamLists) {
       // We have a template-id without a corresponding template parameter
       // list.
+
+      // ...which is fine if this is a friend declaration.
+      if (IsFriend) {
+        IsExplicitSpecialization = true;
+        break;
+      }
+
       if (DependentTemplateId) {
         // FIXME: the location information here isn't great.
         Diag(SS.getRange().getBegin(),
@@ -3538,6 +3550,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     = MatchTemplateParametersToScopeSpecifier(TemplateNameLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size(),
+                                              TUK == TUK_Friend,
                                               isExplicitSpecialization);
   if (TemplateParams && TemplateParams->size() > 0) {
     isPartialSpecialization = true;
@@ -4302,7 +4315,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 bool 
 Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   assert(!isa<TemplateDecl>(Member) && "Only for non-template members");
-         
+
   // Try to find the member we are instantiating.
   NamedDecl *Instantiation = 0;
   NamedDecl *InstantiatedFrom = 0;
@@ -4346,6 +4359,25 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     // There is no previous declaration that matches. Since member
     // specializations are always out-of-line, the caller will complain about
     // this mismatch later.
+    return false;
+  }
+
+  // If this is a friend, just bail out here before we start turning
+  // things into explicit specializations.
+  if (Member->getFriendObjectKind() != Decl::FOK_None) {
+    // Preserve instantiation information.
+    if (InstantiatedFrom && isa<CXXMethodDecl>(Member)) {
+      cast<CXXMethodDecl>(Member)->setInstantiationOfMemberFunction(
+                                      cast<CXXMethodDecl>(InstantiatedFrom),
+        cast<CXXMethodDecl>(Instantiation)->getTemplateSpecializationKind());
+    } else if (InstantiatedFrom && isa<CXXRecordDecl>(Member)) {
+      cast<CXXRecordDecl>(Member)->setInstantiationOfMemberClass(
+                                      cast<CXXRecordDecl>(InstantiatedFrom),
+        cast<CXXRecordDecl>(Instantiation)->getTemplateSpecializationKind());
+    }
+
+    Previous.clear();
+    Previous.addDecl(Instantiation);
     return false;
   }
   

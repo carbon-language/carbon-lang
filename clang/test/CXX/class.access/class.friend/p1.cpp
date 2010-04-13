@@ -222,3 +222,37 @@ namespace test6 {
     friend A &A::operator=(const A&);
   };
 }
+
+namespace test7 {
+  template <class T> struct X {
+    X();
+    ~X();
+    void foo();
+    void bar();
+  };
+
+  class A {
+    friend void X<int>::foo();
+    friend X<int>::X();
+    friend X<int>::X(const X&);
+
+  private:
+    A(); // expected-note 2 {{declared private here}}
+  };
+
+  template<> void X<int>::foo() {
+    A a;
+  }
+
+  template<> void X<int>::bar() {
+    A a; // expected-error {{calling a private constructor}}
+  }
+
+  template<> X<int>::X() {
+    A a;
+  }
+
+  template<> X<int>::~X() {
+    A a; // expected-error {{calling a private constructor}}
+  }
+}
