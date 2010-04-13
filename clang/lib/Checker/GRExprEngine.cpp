@@ -583,6 +583,8 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   }
 
   switch (S->getStmtClass()) {
+    default:
+      llvm_unreachable("Unhandled stmt class");
     // C++ stuff we don't support yet.
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXBoolLiteralExprClass:
@@ -611,7 +613,16 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
     }
 
-    default:
+    case Stmt::AddrLabelExprClass:
+    case Stmt::IntegerLiteralClass:
+    case Stmt::CharacterLiteralClass:
+    case Stmt::FloatingLiteralClass:
+    case Stmt::ImplicitValueInitExprClass:
+    case Stmt::ObjCSuperExprClass:
+    case Stmt::ObjCStringLiteralClass:
+    case Stmt::ObjCSelectorExprClass:
+    case Stmt::ObjCImplicitSetterGetterRefExprClass:
+    case Stmt::PredefinedExprClass:
       // Cases we intentionally have "default" handle:
       //   AddrLabelExpr, IntegerLiteral, CharacterLiteral
 
