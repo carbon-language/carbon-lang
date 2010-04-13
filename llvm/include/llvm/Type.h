@@ -406,6 +406,7 @@ public:
   static const Type *getX86_FP80Ty(LLVMContext &C);
   static const Type *getFP128Ty(LLVMContext &C);
   static const Type *getPPC_FP128Ty(LLVMContext &C);
+  static const IntegerType *getIntNTy(LLVMContext &C, unsigned N);
   static const IntegerType *getInt1Ty(LLVMContext &C);
   static const IntegerType *getInt8Ty(LLVMContext &C);
   static const IntegerType *getInt16Ty(LLVMContext &C);
@@ -421,6 +422,8 @@ public:
   static const PointerType *getX86_FP80PtrTy(LLVMContext &C, unsigned AS = 0);
   static const PointerType *getFP128PtrTy(LLVMContext &C, unsigned AS = 0);
   static const PointerType *getPPC_FP128PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getIntNPtrTy(LLVMContext &C, unsigned N,
+                                         unsigned AS = 0);
   static const PointerType *getInt1PtrTy(LLVMContext &C, unsigned AS = 0);
   static const PointerType *getInt8PtrTy(LLVMContext &C, unsigned AS = 0);
   static const PointerType *getInt16PtrTy(LLVMContext &C, unsigned AS = 0);

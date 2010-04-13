@@ -380,6 +380,10 @@ const Type *Type::getPPC_FP128Ty(LLVMContext &C) {
   return &C.pImpl->PPC_FP128Ty;
 }
 
+const IntegerType *Type::getIntNTy(LLVMContext &C, unsigned N) {
+  return IntegerType::get(C, N);
+}
+
 const IntegerType *Type::getInt1Ty(LLVMContext &C) {
   return &C.pImpl->Int1Ty;
 }
@@ -418,6 +422,10 @@ const PointerType *Type::getFP128PtrTy(LLVMContext &C, unsigned AS) {
 
 const PointerType *Type::getPPC_FP128PtrTy(LLVMContext &C, unsigned AS) {
   return getPPC_FP128Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getIntNPtrTy(LLVMContext &C, unsigned N, unsigned AS) {
+  return getIntNTy(C, N)->getPointerTo(AS);
 }
 
 const PointerType *Type::getInt1PtrTy(LLVMContext &C, unsigned AS) {
