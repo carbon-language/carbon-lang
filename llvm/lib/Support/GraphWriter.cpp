@@ -166,7 +166,8 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
      errs() << "Error viewing graph " << Filename.str() << ": "
             << ErrMsg << "\n";
   } else {
-#ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns
+// Dotty spawns another app and doesn't wait until it returns
+#if defined (__MINGW32__) || defined (_WINDOWS)
     return;
 #endif
     Filename.eraseFromDisk();
