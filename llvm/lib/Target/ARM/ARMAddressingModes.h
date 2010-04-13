@@ -151,10 +151,10 @@ namespace ARM_AM {
     if ((rotr32(Imm, RotAmt) & ~255U) == 0)
       return (32-RotAmt)&31;  // HW rotates right, not left.
 
-    // For values like 0xF000000F, we should ignore the low 7 bits, then
+    // For values like 0xF000000F, we should ignore the low 6 bits, then
     // retry the hunt.
-    if (Imm & 127U) {
-      unsigned TZ2 = CountTrailingZeros_32(Imm & ~127U);
+    if (Imm & 63U) {
+      unsigned TZ2 = CountTrailingZeros_32(Imm & ~63U);
       unsigned RotAmt2 = TZ2 & ~1;
       if ((rotr32(Imm, RotAmt2) & ~255U) == 0)
         return (32-RotAmt2)&31;  // HW rotates right, not left.
