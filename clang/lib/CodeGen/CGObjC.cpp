@@ -208,7 +208,42 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       StoreComplexToAddr(Pair, ReturnValue, LV.isVolatileQualified());
     }
     else if (hasAggregateLLVMType(Ivar->getType())) {
-      EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
+      if (!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)
+          && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
+          && CGM.getObjCRuntime().GetCopyStructFunction()) {
+        llvm::Value *GetCopyStructFn =
+          CGM.getObjCRuntime().GetCopyStructFunction();
+        CodeGenTypes &Types = CGM.getTypes();
+        // objc_copyStruct (ReturnValue, &structIvar, 
+        //                  sizeof (Type of Ivar), isAtomic, false);
+        CallArgList Args;
+        RValue RV = RValue::get(Builder.CreateBitCast(ReturnValue,
+                                    Types.ConvertType(getContext().VoidPtrTy)));
+        Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+        RV = RValue::get(Builder.CreateBitCast(LV.getAddress(),
+                                    Types.ConvertType(getContext().VoidPtrTy)));
+        Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+        // sizeof (Type of Ivar)
+        uint64_t Size =  getContext().getTypeSize(Ivar->getType()) / 8;
+        llvm::Value *SizeVal =
+          llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), Size);
+        Args.push_back(std::make_pair(RValue::get(SizeVal),
+                                      getContext().LongTy));
+        // FIXME. Implement when Atomic is false; But when struct has
+        // gc'able data member!
+        llvm::Value *isAtomic =
+          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
+        Args.push_back(std::make_pair(RValue::get(isAtomic), 
+                                      getContext().BoolTy));
+        llvm::Value *False =
+          llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
+        Args.push_back(std::make_pair(RValue::get(False), getContext().BoolTy));
+        EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
+                                       FunctionType::ExtInfo()),
+                 GetCopyStructFn, ReturnValueSlot(), Args);
+      }
+      else
+        EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     } else {
       CodeGenTypes &Types = CGM.getTypes();
       RValue RV = EmitLoadOfLValue(LV, Ivar->getType());
@@ -289,6 +324,41 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                    FunctionType::ExtInfo()),
              SetPropertyFn,
              ReturnValueSlot(), Args);
+  } else if (IsAtomic && hasAggregateLLVMType(Ivar->getType()) &&
+             !Ivar->getType()->isAnyComplexType() &&
+             IndirectObjCSetterArg(*CurFnInfo)
+             && CGM.getObjCRuntime().GetCopyStructFunction()) {
+    // objc_copyStruct (&structIvar, &Arg, 
+    //                  sizeof (struct something), true, false);
+    llvm::Value *GetCopyStructFn =
+      CGM.getObjCRuntime().GetCopyStructFunction();
+    CodeGenTypes &Types = CGM.getTypes();
+    CallArgList Args;
+    LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
+    RValue RV = RValue::get(Builder.CreateBitCast(LV.getAddress(),
+                                    Types.ConvertType(getContext().VoidPtrTy)));
+    Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+    llvm::Value *Arg = LocalDeclMap[*OMD->param_begin()];
+    llvm::Value *ArgAsPtrTy =
+      Builder.CreateBitCast(Arg,
+                            Types.ConvertType(getContext().VoidPtrTy));
+    RV = RValue::get(ArgAsPtrTy);
+    Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+    // sizeof (Type of Ivar)
+    uint64_t Size =  getContext().getTypeSize(Ivar->getType()) / 8;
+    llvm::Value *SizeVal =
+      llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), Size);
+    Args.push_back(std::make_pair(RValue::get(SizeVal),
+                                  getContext().LongTy));
+    llvm::Value *True =
+      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
+    Args.push_back(std::make_pair(RValue::get(True), getContext().BoolTy));
+    llvm::Value *False =
+      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
+    Args.push_back(std::make_pair(RValue::get(False), getContext().BoolTy));
+    EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
+                                   FunctionType::ExtInfo()),
+             GetCopyStructFn, ReturnValueSlot(), Args);
   } else {
     // FIXME: Find a clean way to avoid AST node creation.
     SourceLocation Loc = PD->getLocation();
@@ -316,6 +386,14 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   }
 
   FinishFunction();
+}
+
+bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
+  CGFunctionInfo::const_arg_iterator it = FI.arg_begin();
+  it++; it++;
+  const ABIArgInfo &AI = it->info;
+  // FIXME. Is this sufficient check?
+  return (AI.getKind() == ABIArgInfo::Indirect);
 }
 
 llvm::Value *CodeGenFunction::LoadObjCSelf() {

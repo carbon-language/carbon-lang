@@ -479,6 +479,7 @@ public:
   /// for the given property.
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
+  bool IndirectObjCSetterArg(const CGFunctionInfo &FI);
 
   //===--------------------------------------------------------------------===//
   //                                  Block Bits
