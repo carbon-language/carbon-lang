@@ -70,8 +70,8 @@ void BumpPtrAllocator::DeallocateSlabs(MemSlab *Slab) {
 /// Reset - Deallocate all but the current slab and reset the current pointer
 /// to the beginning of it, freeing all memory allocated so far.
 void BumpPtrAllocator::Reset() {
-  if (!CurSlab) // Start a new slab if we didn't allocate one already.
-    StartNewSlab();
+  if (!CurSlab)
+    return;
   DeallocateSlabs(CurSlab->NextPtr);
   CurSlab->NextPtr = 0;
   CurPtr = (char*)(CurSlab + 1);
