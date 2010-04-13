@@ -300,7 +300,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
            "Not expecting virtual register!");
 
     if (!MO.isDef()) {
-      if (PhysRegDefs[Reg])
+      if (Reg && PhysRegDefs[Reg])
         // If it's using a non-loop-invariant register, then it's obviously not
         // safe to hoist.
         HasNonInvariantUse = true;
@@ -406,7 +406,7 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
       MachineInstr *MI = Candidates[i].MI;
       for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
         const MachineOperand &MO = MI->getOperand(j);
-        if (!MO.isReg() || MO.isDef())
+        if (!MO.isReg() || MO.isDef() || !MO.getReg())
           continue;
         if (PhysRegDefs[MO.getReg()]) {
           // If it's using a non-loop-invariant register, then it's obviously
@@ -502,6 +502,9 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
 /// not safe to hoist it.
 bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
+  if (I.isImplicitDef())
+    return false;
+
   const TargetInstrDesc &TID = I.getDesc();
   
   // Ignore stuff that we obviously can't hoist.
@@ -620,9 +623,6 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
 bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
-  if (MI.isImplicitDef())
-    return false;
-
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
