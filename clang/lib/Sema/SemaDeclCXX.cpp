@@ -4577,14 +4577,16 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     }
   }
 
-  //       -- has a class type (i.e., T2 is a class type) and can be
-  //          implicitly converted to an lvalue of type "cv3 T3,"
-  //          where "cv1 T1" is reference-compatible with "cv3 T3"
-  //          92) (this conversion is selected by enumerating the
-  //          applicable conversion functions (13.3.1.6) and choosing
-  //          the best one through overload resolution (13.3)),
+  //       -- has a class type (i.e., T2 is a class type), where T1 is
+  //          not reference-related to T2, and can be implicitly
+  //          converted to an lvalue of type "cv3 T3," where "cv1 T1"
+  //          is reference-compatible with "cv3 T3" 92) (this
+  //          conversion is selected by enumerating the applicable
+  //          conversion functions (13.3.1.6) and choosing the best
+  //          one through overload resolution (13.3)),
   if (!isRValRef && !SuppressUserConversions && T2->isRecordType() &&
-      !RequireCompleteType(DeclLoc, T2, 0)) {
+      !RequireCompleteType(DeclLoc, T2, 0) && 
+      RefRelationship == Ref_Incompatible) {
     CXXRecordDecl *T2RecordDecl
       = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 

@@ -22,3 +22,19 @@ namespace PR6264 {
     T bar = S();
   }
 }
+
+namespace PR6066 {
+  struct B { };
+  struct A : B {
+    operator B*();
+    operator B&(); // expected-warning{{conversion function converting 'PR6066::A' to its base class 'PR6066::B' will never be used}}
+  };
+
+  void f(B&); // no rvalues accepted
+  void f(B*);
+
+  int g() {
+    f(A()); // calls f(B*)
+    return 0;
+  }
+}
