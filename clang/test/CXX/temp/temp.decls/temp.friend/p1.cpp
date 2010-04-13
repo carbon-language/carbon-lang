@@ -251,3 +251,28 @@ namespace test11 {
   template struct Foo::IteratorImpl<int>;
   template struct Foo::IteratorImpl<long>;  
 }
+
+// PR6827
+namespace test12 {
+  template <typename T> class Foo;
+  template <typename T> Foo<T> foo(T* t){ return Foo<T>(t, true); }
+
+  template <typename T> class Foo {
+  public:
+    Foo(T*);
+    friend Foo<T> foo<T>(T*);
+  private:
+    Foo(T*, bool); // expected-note {{declared private here}}
+  };
+
+  // Should work.
+  int globalInt;
+  Foo<int> f = foo(&globalInt);
+
+  // Shouldn't work.
+  long globalLong;
+  template <> Foo<long> foo(long *t) {
+    Foo<int> s(&globalInt, false); // expected-error {{calling a private constructor}}
+    return Foo<long>(t, true);
+  }
+}
