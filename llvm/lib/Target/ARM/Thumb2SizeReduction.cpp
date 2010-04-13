@@ -656,15 +656,8 @@ static bool UpdateCPSRUse(MachineInstr &MI, bool LiveCPSR) {
 bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
-  bool LiveCPSR = false;
   // Yes, CPSR could be livein.
-  for (MachineBasicBlock::const_livein_iterator I = MBB.livein_begin(),
-         E = MBB.livein_end(); I != E; ++I) {
-    if (*I == ARM::CPSR) {
-      LiveCPSR = true;
-      break;
-    }
-  }
+  bool LiveCPSR = MBB.isLiveIn(ARM::CPSR);
 
   MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
   MachineBasicBlock::iterator NextMII;
