@@ -1058,10 +1058,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     }
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
-    const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
+    CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
     if (OldMethod && NewMethod) {
-      if (!NewMethod->getFriendObjectKind() &&
-          NewMethod->getLexicalDeclContext()->isRecord()) {
+      // Preserve triviality.
+      NewMethod->setTrivial(OldMethod->isTrivial());
+
+      bool isFriend = NewMethod->getFriendObjectKind();
+
+      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord()) {
         //    -- Member function declarations with the same name and the
         //       same parameter types cannot be overloaded if any of them
         //       is a static member function declaration.
@@ -1087,14 +1091,19 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
         Diag(New->getLocation(), NewDiag);
         Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-      } else {
-        if (OldMethod->isImplicit()) {
+
+      // Complain if this is an explicit declaration of a special
+      // member that was initially declared implicitly.
+      //
+      // As an exception, it's okay to befriend such methods in order
+      // to permit the implicit constructor/destructor/operator calls.
+      } else if (OldMethod->isImplicit()) {
+        if (isFriend) {
+          NewMethod->setImplicit();
+        } else {
           Diag(NewMethod->getLocation(),
                diag::err_definition_of_implicitly_declared_member) 
-          << New << getSpecialMember(Context, OldMethod);
-        
-          Diag(OldMethod->getLocation(),
-               diag::note_previous_implicit_declaration);
+            << New << getSpecialMember(Context, OldMethod);
           return true;
         }
       }

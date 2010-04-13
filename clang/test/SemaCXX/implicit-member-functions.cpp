@@ -1,15 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-struct A { }; // expected-note {{previous implicit declaration is here}}
+struct A { };
 A::A() { } // expected-error {{definition of implicitly declared constructor}}
 
-struct B { }; // expected-note {{previous implicit declaration is here}}
+struct B { };
 B::B(const B&) { } // expected-error {{definition of implicitly declared copy constructor}}
 
-struct C { }; // expected-note {{previous implicit declaration is here}}
+struct C { };
 C& C::operator=(const C&) { return *this; } // expected-error {{definition of implicitly declared copy assignment operator}}
 
-struct D { }; // expected-note {{previous implicit declaration is here}}
+struct D { };
 D::~D() { } // expected-error {{definition of implicitly declared destructor}}
 
 // Make sure that the special member functions are introduced for

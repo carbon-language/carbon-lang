@@ -211,3 +211,14 @@ namespace test5 {
     };
   }
 }
+
+// PR6207
+namespace test6 {
+  struct A {};
+
+  struct B {
+    friend A::A();
+    friend A::~A();
+    friend A &A::operator=(const A&);
+  };
+}

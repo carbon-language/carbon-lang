@@ -2682,8 +2682,12 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     }
   }
 
-  // Notify the class that we've added a constructor.
-  ClassDecl->addedConstructor(Context, Constructor);
+  // Notify the class that we've added a constructor.  In principle we
+  // don't need to do this for out-of-line declarations; in practice
+  // we only instantiate the most recent declaration of a method, so
+  // we have to call this for everything but friends.
+  if (!Constructor->getFriendObjectKind())
+    ClassDecl->addedConstructor(Context, Constructor);
 }
 
 /// CheckDestructor - Checks a fully-formed destructor for well-formedness, 
