@@ -901,9 +901,7 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   } else if (!(S.LangOpts.ObjCNonFragileABI && isa<ObjCInterfaceDecl>(D))) {
     if (S.Context.Target.getTriple().getOS() != llvm::Triple::Darwin ||
-        !isa<ObjCInterfaceDecl>(D) ||
-        S.Context.Target.getTriple().getDarwinMajorNumber() <= 10) {
-        
+        !isa<ObjCInterfaceDecl>(D)) {
         S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
         << Attr.getName() << 2 /*variable and function*/;
       return;
