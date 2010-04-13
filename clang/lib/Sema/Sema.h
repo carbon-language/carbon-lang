@@ -4182,14 +4182,6 @@ public:
                                                       QualType T1, QualType T2,
                                                       bool& DerivedToBase);
 
-  bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType declType,
-                          SourceLocation DeclLoc,
-                          bool SuppressUserConversions,
-                          bool AllowExplicit,
-                          bool ForceRValue,
-                          ImplicitConversionSequence *ICS = 0,
-                          bool IgnoreBaseAccess = false);
-
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
