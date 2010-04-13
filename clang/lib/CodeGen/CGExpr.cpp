@@ -618,63 +618,73 @@ static llvm::Value *getBitFieldAddr(LValue LV, CGBuilderTy &Builder) {
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
                                                  QualType ExprType) {
   const CGBitFieldInfo &Info = LV.getBitFieldInfo();
-  unsigned StartBit = Info.Start;
-  unsigned BitfieldSize = Info.Size;
-  llvm::Value *Ptr = getBitFieldAddr(LV, Builder);
 
-  const llvm::Type *EltTy =
-    cast<llvm::PointerType>(Ptr->getType())->getElementType();
-  unsigned EltTySize = CGM.getTargetData().getTypeSizeInBits(EltTy);
+  // Get the output type.
+  const llvm::Type *ResLTy = ConvertType(ExprType);
+  unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
 
-  // In some cases the bitfield may straddle two memory locations.  Currently we
-  // load the entire bitfield, then do the magic to sign-extend it if
-  // necessary. This results in somewhat more code than necessary for the common
-  // case (one load), since two shifts accomplish both the masking and sign
-  // extension.
-  unsigned LowBits = std::min(BitfieldSize, EltTySize - StartBit);
-  llvm::Value *Val = Builder.CreateLoad(Ptr, LV.isVolatileQualified(), "tmp");
+  // Compute the result as an OR of all of the individual component accesses.
+  llvm::Value *Res = 0;
+  for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
+    const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
 
-  // Shift to proper location.
-  if (StartBit)
-    Val = Builder.CreateLShr(Val, StartBit, "bf.lo");
+    // Get the field pointer.
+    llvm::Value *Ptr = LV.getBitFieldBaseAddr();
 
-  // Mask off unused bits.
-  llvm::Constant *LowMask = llvm::ConstantInt::get(VMContext,
-                                llvm::APInt::getLowBitsSet(EltTySize, LowBits));
-  Val = Builder.CreateAnd(Val, LowMask, "bf.lo.cleared");
+    // Only offset by the field index if used, so that incoming values are not
+    // required to be structures.
+    if (AI.FieldIndex)
+      Ptr = Builder.CreateStructGEP(Ptr, AI.FieldIndex, "bf.field");
 
-  // Fetch the high bits if necessary.
-  if (LowBits < BitfieldSize) {
-    unsigned HighBits = BitfieldSize - LowBits;
-    llvm::Value *HighPtr = Builder.CreateGEP(Ptr, llvm::ConstantInt::get(
-                            llvm::Type::getInt32Ty(VMContext), 1), "bf.ptr.hi");
-    llvm::Value *HighVal = Builder.CreateLoad(HighPtr,
-                                              LV.isVolatileQualified(),
-                                              "tmp");
+    // Offset by the byte offset, if used.
+    if (AI.FieldByteOffset) {
+      const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
+      Ptr = Builder.CreateBitCast(Ptr, i8PTy);
+      Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset,"bf.field.offs");
+    }
 
-    // Mask off unused bits.
-    llvm::Constant *HighMask = llvm::ConstantInt::get(VMContext,
-                               llvm::APInt::getLowBitsSet(EltTySize, HighBits));
-    HighVal = Builder.CreateAnd(HighVal, HighMask, "bf.lo.cleared");
+    // Cast to the access type.
+    const llvm::Type *PTy = llvm::Type::getIntNPtrTy(VMContext, AI.AccessWidth,
+                                                    ExprType.getAddressSpace());
+    Ptr = Builder.CreateBitCast(Ptr, PTy);
 
-    // Shift to proper location and or in to bitfield value.
-    HighVal = Builder.CreateShl(HighVal, LowBits);
-    Val = Builder.CreateOr(Val, HighVal, "bf.val");
+    // Perform the load.
+    llvm::LoadInst *Load = Builder.CreateLoad(Ptr, LV.isVolatileQualified());
+    if (AI.AccessAlignment)
+      Load->setAlignment(AI.AccessAlignment);
+
+    // Shift out unused low bits and mask out unused high bits.
+    llvm::Value *Val = Load;
+    if (AI.FieldBitStart)
+      Val = Builder.CreateAShr(Load, AI.FieldBitStart);
+    Val = Builder.CreateAnd(Val, llvm::APInt::getLowBitsSet(AI.AccessWidth,
+                                                            AI.TargetBitWidth),
+                            "bf.clear");
+
+    // Extend or truncate to the target size.
+    if (AI.AccessWidth < ResSizeInBits)
+      Val = Builder.CreateZExt(Val, ResLTy);
+    else if (AI.AccessWidth > ResSizeInBits)
+      Val = Builder.CreateTrunc(Val, ResLTy);
+
+    // Shift into place, and OR into the result.
+    if (AI.TargetBitOffset)
+      Val = Builder.CreateShl(Val, AI.TargetBitOffset);
+    Res = Res ? Builder.CreateOr(Res, Val) : Val;
   }
 
-  // Sign extend if necessary.
-  if (Info.IsSigned) {
-    llvm::Value *ExtraBits = llvm::ConstantInt::get(EltTy,
-                                                    EltTySize - BitfieldSize);
-    Val = Builder.CreateAShr(Builder.CreateShl(Val, ExtraBits),
-                             ExtraBits, "bf.val.sext");
+  // If the bit-field is signed, perform the sign-extension.
+  //
+  // FIXME: This can easily be folded into the load of the high bits, which
+  // could also eliminate the mask of high bits in some situations.
+  if (Info.isSigned()) {
+    unsigned ExtraBits = ResSizeInBits - Info.Size;
+    if (ExtraBits)
+      Res = Builder.CreateAShr(Builder.CreateShl(Res, ExtraBits),
+                               ExtraBits, "bf.val.sext");
   }
 
-  // The bitfield type and the normal type differ when the storage sizes differ
-  // (currently just _Bool).
-  Val = Builder.CreateIntCast(Val, ConvertType(ExprType), false, "tmp");
-
-  return RValue::get(Val);
+  return RValue::get(Res);
 }
 
 RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
