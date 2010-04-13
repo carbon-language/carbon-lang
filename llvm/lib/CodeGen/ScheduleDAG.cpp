@@ -29,7 +29,6 @@ ScheduleDAG::ScheduleDAG(MachineFunction &mf)
     TRI(TM.getRegisterInfo()),
     TLI(TM.getTargetLowering()),
     MF(mf), MRI(mf.getRegInfo()),
-    ConstPool(MF.getConstantPool()),
     EntrySU(), ExitSU() {
 }
 

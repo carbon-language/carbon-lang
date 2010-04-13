@@ -459,7 +459,6 @@ namespace llvm {
     const TargetLowering *TLI;            // Target lowering info
     MachineFunction &MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
-    MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
     std::vector<SUnit> SUnits;            // The scheduling units.
