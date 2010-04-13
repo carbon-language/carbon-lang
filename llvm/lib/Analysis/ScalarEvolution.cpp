@@ -2117,7 +2117,13 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   // so, delete one.  Since we sorted the list, these values are required to
   // be adjacent.
   for (unsigned i = 0, e = Ops.size()-1; i != e; ++i)
-    if (Ops[i] == Ops[i+1]) {      //  X smax Y smax Y  -->  X smax Y
+    //  X smax Y smax Y  -->  X smax Y
+    //  X smax Y         -->  X, if X is always greater than Y
+    if (Ops[i] == Ops[i+1] ||
+        isKnownPredicate(ICmpInst::ICMP_SGE, Ops[i], Ops[i+1])) {
+      Ops.erase(Ops.begin()+i+1, Ops.begin()+i+2);
+      --i; --e;
+    } else if (isKnownPredicate(ICmpInst::ICMP_SLE, Ops[i], Ops[i+1])) {
       Ops.erase(Ops.begin()+i, Ops.begin()+i+1);
       --i; --e;
     }
@@ -2216,7 +2222,13 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   // so, delete one.  Since we sorted the list, these values are required to
   // be adjacent.
   for (unsigned i = 0, e = Ops.size()-1; i != e; ++i)
-    if (Ops[i] == Ops[i+1]) {      //  X umax Y umax Y  -->  X umax Y
+    //  X umax Y umax Y  -->  X umax Y
+    //  X umax Y         -->  X, if X is always greater than Y
+    if (Ops[i] == Ops[i+1] ||
+        isKnownPredicate(ICmpInst::ICMP_UGE, Ops[i], Ops[i+1])) {
+      Ops.erase(Ops.begin()+i+1, Ops.begin()+i+2);
+      --i; --e;
+    } else if (isKnownPredicate(ICmpInst::ICMP_ULE, Ops[i], Ops[i+1])) {
       Ops.erase(Ops.begin()+i, Ops.begin()+i+1);
       --i; --e;
     }
