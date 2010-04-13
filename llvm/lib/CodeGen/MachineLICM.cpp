@@ -404,8 +404,8 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
     if (PhysRegDefs[Candidates[i].Def] == 1) {
       bool Safe = true;
       MachineInstr *MI = Candidates[i].MI;
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
+      for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
+        const MachineOperand &MO = MI->getOperand(j);
         if (!MO.isReg() || MO.isDef())
           continue;
         if (PhysRegDefs[MO.getReg()]) {
