@@ -67,3 +67,42 @@ return:                                           ; preds = %entry
 ; CHECK-NEXT:	orl	8(%esp), %eax
 ; CHECK-NEXT:	je	LBB3_2
 }
+
+; <rdar://problem/7598384>:
+;
+;    jCC  L1
+;    jmp  L2
+; L1:
+;   ...
+; L2:
+;   ...
+;
+; to:
+; 
+;    jnCC L2
+; L1:
+;   ...
+; L2:
+;   ...
+define float @test4(float %x, float %y) nounwind readnone optsize ssp {
+entry:
+  %0 = fpext float %x to double                   ; <double> [#uses=1]
+  %1 = fpext float %y to double                   ; <double> [#uses=1]
+  %2 = fmul double %0, %1                         ; <double> [#uses=3]
+  %3 = fcmp oeq double %2, 0.000000e+00           ; <i1> [#uses=1]
+  br i1 %3, label %bb2, label %bb1
+
+; CHECK:      jne
+; CHECK-NEXT: jnp
+; CHECK-NOT:  jmp
+; CHECK:      LBB
+
+bb1:                                              ; preds = %entry
+  %4 = fadd double %2, -1.000000e+00              ; <double> [#uses=1]
+  br label %bb2
+
+bb2:                                              ; preds = %entry, %bb1
+  %.0.in = phi double [ %4, %bb1 ], [ %2, %entry ] ; <double> [#uses=1]
+  %.0 = fptrunc double %.0.in to float            ; <float> [#uses=1]
+  ret float %.0
+}
