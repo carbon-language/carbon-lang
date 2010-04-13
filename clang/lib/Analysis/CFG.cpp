@@ -111,6 +111,7 @@ private:
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
+  CFGBlock *VisitCXXMemberCallExpr(CXXMemberCallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCallExpr(CallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCaseStmt(CaseStmt *C);
   CFGBlock *VisitChooseExpr(ChooseExpr *C, AddStmtChoice asc);
@@ -373,6 +374,9 @@ tryAgain:
 
     case Stmt::CXXCatchStmtClass:
       return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
+
+    case Stmt::CXXMemberCallExprClass:
+      return VisitCXXMemberCallExpr(cast<CXXMemberCallExpr>(S), asc);
 
     case Stmt::CXXThrowExprClass:
       return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
@@ -1711,6 +1715,15 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   Block = NULL;
 
   return CatchBlock;
+}
+
+CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C, 
+                                             AddStmtChoice asc) {
+  AddStmtChoice asc2 = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue 
+                                      : AddStmtChoice::AlwaysAdd;
+  autoCreateBlock();
+  AppendStmt(Block, C, asc2);
+  return VisitChildren(C);
 }
 
 CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
