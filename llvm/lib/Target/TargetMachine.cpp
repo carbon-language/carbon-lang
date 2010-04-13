@@ -197,7 +197,14 @@ EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
   cl::desc("Use strong PHI elimination."),
   cl::location(StrongPHIElim),
   cl::init(false));
-
+static cl::opt<bool>
+DataSections("fdata-sections",
+  cl::desc("Emit data into separate sections"),
+  cl::init(false));
+static cl::opt<bool>
+FunctionSections("ffunction-sections",
+  cl::desc("Emit functions into separate sections"),
+  cl::init(false));
 //---------------------------------------------------------------------------
 // TargetMachine Class
 //
@@ -242,6 +249,22 @@ bool TargetMachine::getAsmVerbosityDefault() {
 
 void TargetMachine::setAsmVerbosityDefault(bool V) {
   AsmVerbosityDefault = V;
+}
+
+bool TargetMachine::getFunctionSections() {
+  return FunctionSections;
+}
+
+bool TargetMachine::getDataSections() {
+  return DataSections;
+}
+
+void TargetMachine::setFunctionSections(bool V) {
+  FunctionSections = V;
+}
+
+void TargetMachine::setDataSections(bool V) {
+  DataSections = V;
 }
 
 namespace llvm {

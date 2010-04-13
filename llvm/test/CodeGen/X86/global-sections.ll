@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
 ; RUN: llc < %s -mtriple=i386-apple-darwin9.7 | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -fdata-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
 
 
 ; int G1;
@@ -31,6 +32,12 @@
 ; DARWIN: .globl _G3
 ; DARWIN: _G3:
 ; DARWIN:     .long _G1
+
+; LINUX:   .section        .rodata,"a",@progbits
+; LINUX:   .globl  G3
+
+; LINUX-SECTIONS: .section        .rodata.G3,"a",@progbits
+; LINUX-SECTIONS: .globl  G3
 
 
 ; _Complex long long const G4 = 34;
@@ -96,6 +103,9 @@
 ; LINUX:	.globl G7
 ; LINUX: G7:
 ; LINUX:	.asciz	"abcdefghi"
+
+; LINUX-SECTIONS: .section        .rodata.G7,"aMS",@progbits,1
+; LINUX-SECTIONS:	.globl G7
 
 
 @G8 = constant [4 x i16] [ i16 1, i16 2, i16 3, i16 0 ]

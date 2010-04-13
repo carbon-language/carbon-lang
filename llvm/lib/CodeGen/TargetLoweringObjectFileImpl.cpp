@@ -279,14 +279,48 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
   return ".gnu.linkonce.d.rel.ro.";
 }
 
+/// getSectionPrefixForGlobal - Return the section prefix name used by options
+/// FunctionsSections and DataSections.
+static const char *getSectionPrefixForGlobal(SectionKind Kind) {
+  if (Kind.isText())                 return ".text.";
+  if (Kind.isReadOnly())             return ".rodata.";
+
+  if (Kind.isThreadData())           return ".tdata.";
+  if (Kind.isThreadBSS())            return ".tbss.";
+
+  if (Kind.isDataNoRel())            return ".data.";
+  if (Kind.isDataRelLocal())         return ".data.rel.local.";
+  if (Kind.isDataRel())              return ".data.rel.";
+  if (Kind.isReadOnlyWithRelLocal()) return ".data.rel.ro.local.";
+
+  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
+  return ".data.rel.ro.";
+}
+
+
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
+  // If we have -ffunction-section or -fdata-section then we should emit the
+  // global value to a uniqued section specifically for it.
+  bool EmitUniquedSection;
+  if (Kind.isText())
+    EmitUniquedSection = TM.getFunctionSections();
+  else 
+    EmitUniquedSection = TM.getDataSections();
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker() && !Kind.isCommon() && !Kind.isBSS()) {
-    const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
+  if ((GV->isWeakForLinker() || EmitUniquedSection) &&
+      !Kind.isCommon() && !Kind.isBSS()) {
+    const char *Prefix;
+    if (GV->isWeakForLinker())
+      Prefix = getSectionPrefixForUniqueGlobal(Kind);
+    else {
+      assert(EmitUniquedSection);
+      Prefix = getSectionPrefixForGlobal(Kind);
+    }
+
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
     MCSymbol *Sym = Mang->getSymbol(GV);
     Name.append(Sym->getName().begin(), Sym->getName().end());
