@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=X86-32
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=X86-64
 
 ; MachineLICM should be able to hoist loop invariant reload out of the loop.
 ; rdar://7233099
@@ -13,8 +14,8 @@
 @.str19 = external constant [7 x i8], align 1     ; <[7 x i8]*> [#uses=1]
 @.str24 = external constant [4 x i8], align 1     ; <[4 x i8]*> [#uses=1]
 
-define i32 @main(i32 %c, i8** nocapture %v) nounwind ssp {
-; CHECK: main:
+define i32 @t1(i32 %c, i8** nocapture %v) nounwind ssp {
+; X86-32: t1:
 entry:
   br i1 undef, label %bb, label %bb3
 
@@ -67,10 +68,10 @@ bb26.preheader:                                   ; preds = %imix_test.exit
 
 bb23:                                             ; preds = %imix_test.exit
   unreachable
-; CHECK: %bb26.preheader.bb28_crit_edge
-; CHECK: movl -16(%ebp),
-; CHECK-NEXT: .align 4
-; CHECK-NEXT: %bb28
+; X86-32: %bb26.preheader.bb28_crit_edge
+; X86-32: movl -16(%ebp),
+; X86-32-NEXT: .align 4
+; X86-32-NEXT: %bb28
 
 bb28:                                             ; preds = %bb28, %bb26.preheader
   %counter.035 = phi i32 [ %3, %bb28 ], [ 0, %bb26.preheader ] ; <i32> [#uses=2]
@@ -138,3 +139,48 @@ declare void @rewind(%struct.FILE* nocapture) nounwind
 declare i32 @feof(%struct.FILE* nocapture) nounwind
 
 declare i32 @strcmp(i8* nocapture, i8* nocapture) nounwind readonly
+
+@map_4_to_16 = external constant [16 x i16], align 32 ; <[16 x i16]*> [#uses=2]
+
+define void @t2(i8* nocapture %bufp, i8* nocapture %data, i32 %dsize) nounwind ssp {
+; X86-64: t2:
+entry:
+  br i1 undef, label %return, label %bb.nph
+
+bb.nph:                                           ; preds = %entry
+; X86-64: movq _map_4_to_16@GOTPCREL(%rip)
+; X86-64: movq _map_4_to_16@GOTPCREL(%rip)
+; X86-64: .align 4
+  %tmp5 = zext i32 undef to i64                   ; <i64> [#uses=1]
+  %tmp6 = add i64 %tmp5, 1                        ; <i64> [#uses=1]
+  %tmp11 = shl i64 undef, 1                       ; <i64> [#uses=1]
+  %tmp14 = mul i64 undef, 3                       ; <i64> [#uses=1]
+  br label %bb
+
+bb:                                               ; preds = %bb, %bb.nph
+  %tmp9 = mul i64 undef, undef                    ; <i64> [#uses=2]
+  %tmp12 = add i64 %tmp11, %tmp9                  ; <i64> [#uses=1]
+  %scevgep13 = getelementptr i8* %bufp, i64 %tmp12 ; <i8*> [#uses=1]
+  %tmp15 = add i64 %tmp14, %tmp9                  ; <i64> [#uses=1]
+  %scevgep16 = getelementptr i8* %bufp, i64 %tmp15 ; <i8*> [#uses=1]
+  %0 = load i8* undef, align 1                    ; <i8> [#uses=1]
+  %1 = zext i8 %0 to i32                          ; <i32> [#uses=1]
+  %2 = getelementptr inbounds [16 x i16]* @map_4_to_16, i64 0, i64 0 ; <i16*> [#uses=1]
+  %3 = load i16* %2, align 2                      ; <i16> [#uses=1]
+  %4 = trunc i16 %3 to i8                         ; <i8> [#uses=1]
+  store i8 %4, i8* undef, align 1
+  %5 = and i32 %1, 15                             ; <i32> [#uses=1]
+  %6 = zext i32 %5 to i64                         ; <i64> [#uses=1]
+  %7 = getelementptr inbounds [16 x i16]* @map_4_to_16, i64 0, i64 %6 ; <i16*> [#uses=1]
+  %8 = load i16* %7, align 2                      ; <i16> [#uses=2]
+  %9 = lshr i16 %8, 8                             ; <i16> [#uses=1]
+  %10 = trunc i16 %9 to i8                        ; <i8> [#uses=1]
+  store i8 %10, i8* %scevgep13, align 1
+  %11 = trunc i16 %8 to i8                        ; <i8> [#uses=1]
+  store i8 %11, i8* %scevgep16, align 1
+  %exitcond = icmp eq i64 undef, %tmp6            ; <i1> [#uses=1]
+  br i1 %exitcond, label %return, label %bb
+
+return:                                           ; preds = %bb, %entry
+  ret void
+}
