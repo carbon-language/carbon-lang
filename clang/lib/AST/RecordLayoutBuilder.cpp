@@ -900,7 +900,7 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
     DumpCXXRecordLayout(OS, CXXRD, *this, 0, 0, 0,
                         /*IncludeVirtualBases=*/true);
   else
-    OS << getTypeDeclType((RecordDecl *)RD).getAsString();
+    OS << getTypeDeclType(RD).getAsString();
 
   OS << "  sizeof=" << Info.getSize() / 8;
   OS << ", dsize=" << Info.getDataSize() / 8;
