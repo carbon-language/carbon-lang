@@ -1612,7 +1612,8 @@ void DwarfDebug::addPubTypes(DISubprogram SP) {
     if (!ATy.isValid())
       continue;
     DICompositeType CATy = getDICompositeType(ATy);
-    if (DIDescriptor(CATy.getNode()).Verify() && !CATy.getName().empty()) {
+    if (DIDescriptor(CATy.getNode()).Verify() && !CATy.getName().empty()
+        && !CATy.isForwardDecl()) {
       if (DIEEntry *Entry = ModuleCU->getDIEEntry(CATy.getNode()))
         ModuleCU->addGlobalType(CATy.getName(), Entry->getEntry());
     }
@@ -1804,7 +1805,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
 
   DIType GTy = DI_GV.getType();
-  if (GTy.isCompositeType() && !GTy.getName().empty()) {
+  if (GTy.isCompositeType() && !GTy.getName().empty()
+      && !GTy.isForwardDecl()) {
     DIEEntry *Entry = ModuleCU->getDIEEntry(GTy.getNode());
     assert(Entry && "Missing global type!");
     ModuleCU->addGlobalType(GTy.getName(), Entry->getEntry());
