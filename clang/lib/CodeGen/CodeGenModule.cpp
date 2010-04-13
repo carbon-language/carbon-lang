@@ -718,17 +718,17 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   if (isa<CXXMethodDecl>(D))
     getVTables().EmitVTableRelatedData(GD);
 
-  if (isa<FunctionDecl>(D))
-    return EmitGlobalFunctionDefinition(GD);
-  
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-    return EmitGlobalVarDefinition(VD);
-  
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     return EmitCXXConstructor(CD, GD.getCtorType());
   
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
     return EmitCXXDestructor(DD, GD.getDtorType());
+
+  if (isa<FunctionDecl>(D))
+    return EmitGlobalFunctionDefinition(GD);
+  
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    return EmitGlobalVarDefinition(VD);
   
   assert(0 && "Invalid argument to EmitGlobalDefinition()");
 }
