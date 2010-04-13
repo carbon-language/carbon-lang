@@ -151,22 +151,13 @@ namespace ARM_AM {
     if ((rotr32(Imm, RotAmt) & ~255U) == 0)
       return (32-RotAmt)&31;  // HW rotates right, not left.
 
-    // For values like 0xF000000F, we should skip the first run of ones, then
+    // For values like 0xF000000F, we should ignore the low 7 bits, then
     // retry the hunt.
-    if (Imm & 1) {
-      unsigned TrailingOnes = CountTrailingZeros_32(~Imm);
-      if (TrailingOnes != 32) {  // Avoid overflow on 0xFFFFFFFF
-        // Restart the search for a high-order bit after the initial seconds of
-        // ones.
-        unsigned TZ2 = CountTrailingZeros_32(Imm & ~((1 << TrailingOnes)-1));
-
-        // Rotate amount must be even.
-        unsigned RotAmt2 = TZ2 & ~1;
-
-        // If this fits, use it.
-        if (RotAmt2 != 32 && (rotr32(Imm, RotAmt2) & ~255U) == 0)
-          return (32-RotAmt2)&31;  // HW rotates right, not left.
-      }
+    if (Imm & 127U) {
+      unsigned TZ2 = CountTrailingZeros_32(Imm & ~127U);
+      unsigned RotAmt2 = TZ2 & ~1;
+      if ((rotr32(Imm, RotAmt2) & ~255U) == 0)
+        return (32-RotAmt2)&31;  // HW rotates right, not left.
     }
 
     // Otherwise, we have no way to cover this span of bits with a single
@@ -184,43 +175,6 @@ namespace ARM_AM {
     if ((Arg & ~255U) == 0) return Arg;
 
     unsigned RotAmt = getSOImmValRotate(Arg);
-
-    // If this cannot be handled with a single shifter_op, bail out.
-    if (rotr32(~255U, RotAmt) & Arg)
-      return -1;
-
-    // Encode this correctly.
-    return rotl32(Arg, RotAmt) | ((RotAmt>>1) << 8);
-  }
-
-  /// getSOImmValOneRotate - Try to handle Imm with an immediate shifter
-  /// operand, computing the rotate amount to use.  If this immediate value
-  /// cannot be handled with a single shifter-op, return 0.
-  static unsigned getSOImmValOneRotate(unsigned Imm) {
-    // A5.2.4 Constants with multiple encodings
-    // The lowest unsigned value of rotation wins!
-    for (unsigned R = 1; R <= 15; ++R)
-      if ((Imm & rotr32(~255U, 2*R)) == 0)
-        return 2*R;
-
-    // Failed to find a suitable rotate amount.
-    return 0;
-  }
-
-  /// getSOImmValOneOrNoRotate - Given a 32-bit immediate, if it is something
-  /// that can fit into a shifter_operand immediate operand, return the 12-bit
-  /// encoding for it.  If not, return -1.  This is different from getSOImmVal()
-  /// in that getSOImmVal() is used during codegen, for example,
-  /// rewriteARMFrameIndex() where return value of -1 is not considered fatal.
-  ///
-  /// The current consumer of this API is printSOImm() within ARMInstPrinter.cpp
-  /// where return value of -1 indicates that the Arg is not a valid so_imm val!
-  static inline int getSOImmValOneOrNoRotate(unsigned Arg) {
-    // 8-bit (or less) immediates are trivially shifter_operands with a rotate
-    // of zero.
-    if ((Arg & ~255U) == 0) return Arg;
-
-    unsigned RotAmt = getSOImmValOneRotate(Arg);
 
     // If this cannot be handled with a single shifter_op, bail out.
     if (rotr32(~255U, RotAmt) & Arg)
