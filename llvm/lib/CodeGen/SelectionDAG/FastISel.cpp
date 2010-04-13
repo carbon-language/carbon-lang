@@ -94,9 +94,11 @@ unsigned FastISel::getRegForValue(Value *V) {
     Reg =
       getRegForValue(Constant::getNullValue(TD.getIntPtrType(V->getContext())));
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
+    // Try to emit the constant directly.
     Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
     if (!Reg) {
+      // Try to emit the constant by using an integer constant with a cast.
       const APFloat &Flt = CF->getValueAPF();
       EVT IntVT = TLI.getPointerTy();
 
@@ -320,6 +322,7 @@ bool FastISel::SelectCall(User *I) {
   Function *F = cast<CallInst>(I)->getCalledFunction();
   if (!F) return false;
 
+  // Handle selected intrinsic function calls.
   unsigned IID = F->getIntrinsicID();
   switch (IID) {
   default: break;
@@ -440,6 +443,8 @@ bool FastISel::SelectCall(User *I) {
     break;
   }
   }
+
+  // An arbitrary call. Bail.
   return false;
 }
 
