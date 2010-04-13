@@ -176,6 +176,7 @@ class linked_ptr {
   // Sole ownership by this linked_ptr object is required.
   T* release() {
     bool last = link_.depart();
+    (void) last;
     assert(last);
     T* v = value_;
     value_ = NULL;

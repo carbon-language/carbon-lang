@@ -189,6 +189,8 @@ public:
   unsigned verify() const {
     unsigned HL = getLeft() ? getLeft()->verify() : 0;
     unsigned HR = getRight() ? getRight()->verify() : 0;
+    (void) HL;
+    (void) HR;
 
     assert(getHeight() == ( HL > HR ? HL : HR ) + 1
             && "Height calculation wrong");
