@@ -48,6 +48,8 @@ template <typename T> class SmallVectorImpl;
 class SourceMgr;
 class Target;
 class TargetRegisterInfo;
+
+struct EDInstInfo;
 }
 
 /// EDDisassembler - Encapsulates a disassembler for a single architecture and
@@ -143,7 +145,7 @@ struct EDDisassembler {
   llvm::sys::Mutex PrinterMutex;
   /// The array of instruction information provided by the TableGen backend for
   ///   the target architecture
-  const InstInfo *InstInfos;
+  const llvm::EDInstInfo *InstInfos;
   /// The target-specific lexer for use in tokenizing strings, in
   ///   target-independent and target-specific portions
   llvm::OwningPtr<llvm::AsmLexer> GenericAsmLexer;

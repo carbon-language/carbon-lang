@@ -23,6 +23,10 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+  struct EDInstInfo;
+}
+
 /// CachedResult - Encapsulates the result of a function along with the validity
 ///   of that result, so that slow functions don't need to run twice
 struct CachedResult {
@@ -54,7 +58,7 @@ struct EDInst {
   /// The containing MCInst
   llvm::MCInst *Inst;
   /// The instruction information provided by TableGen for this instruction
-  const InstInfo *ThisInstInfo;
+  const llvm::EDInstInfo *ThisInstInfo;
   /// The number of bytes for the machine code representation of the instruction
   uint64_t ByteSize;
   
@@ -95,7 +99,7 @@ struct EDInst {
   EDInst(llvm::MCInst *inst,
          uint64_t byteSize,
          EDDisassembler &disassembler,
-         const InstInfo *instInfo);
+         const llvm::EDInstInfo *instInfo);
   ~EDInst();
   
   /// byteSize - returns the number of bytes consumed by the machine code

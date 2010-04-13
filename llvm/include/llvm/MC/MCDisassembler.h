@@ -16,6 +16,8 @@ namespace llvm {
 class MCInst;
 class MemoryObject;
 class raw_ostream;
+  
+struct EDInstInfo;
 
 /// MCDisassembler - Superclass for all disassemblers.  Consumes a memory region
 ///   and provides an array of assembly instructions.
@@ -43,7 +45,15 @@ public:
                                        const MemoryObject &region,
                                        uint64_t address,
                                        raw_ostream &vStream) const = 0;
-};  
+
+  /// getEDInfo - Returns the enhanced insturction information corresponding to
+  ///   the disassembler.
+  ///
+  /// @return         - An array of instruction information, with one entry for
+  ///                   each MCInst opcode this disassembler returns.
+  ///                   NULL if there is no info for this target.
+  virtual EDInstInfo   *getEDInfo() const { return NULL; }
+};
 
 } // namespace llvm
 

@@ -18,6 +18,7 @@
 #include "EDOperand.h"
 #include "EDToken.h"
 
+#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
 
 using namespace llvm;
@@ -25,7 +26,7 @@ using namespace llvm;
 EDInst::EDInst(llvm::MCInst *inst,
                uint64_t byteSize, 
                EDDisassembler &disassembler,
-               const InstInfo *info) :
+               const llvm::EDInstInfo *info) :
   Disassembler(disassembler),
   Inst(inst),
   ThisInstInfo(info),

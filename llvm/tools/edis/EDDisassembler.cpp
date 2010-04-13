@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -39,47 +40,34 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSelect.h"
 
-#ifdef EDIS_X86
-#include "../../lib/Target/X86/X86GenEDInfo.inc"
-#endif
-
-#ifdef EDIS_ARM
-#include "../../lib/Target/ARM/ARMGenEDInfo.inc"
-#endif
-
 using namespace llvm;
 
 bool EDDisassembler::sInitialized = false;
 EDDisassembler::DisassemblerMap_t EDDisassembler::sDisassemblers;
 
-struct InfoMap {
+struct TripleMap {
   Triple::ArchType Arch;
   const char *String;
-  const InstInfo *Info;
 };
 
-static struct InfoMap infomap[] = {
-#ifdef EDIS_X86
-  { Triple::x86,          "i386-unknown-unknown",   instInfoX86 },
-  { Triple::x86_64,       "x86_64-unknown-unknown", instInfoX86 },
-#endif
-#ifdef EDIS_ARM
-  { Triple::arm,          "arm-unknown-unknown",    instInfoARM },
-  { Triple::thumb,        "thumb-unknown-unknown",  instInfoARM },
-#endif
-  { Triple::InvalidArch,  NULL,                     NULL        }
+static struct TripleMap triplemap[] = {
+  { Triple::x86,          "i386-unknown-unknown"    },
+  { Triple::x86_64,       "x86_64-unknown-unknown"  },
+  { Triple::arm,          "arm-unknown-unknown"     },
+  { Triple::thumb,        "thumb-unknown-unknown"   },
+  { Triple::InvalidArch,  NULL,                     }
 };
 
-/// infoFromArch - Returns the InfoMap corresponding to a given architecture,
+/// infoFromArch - Returns the TripleMap corresponding to a given architecture,
 ///   or NULL if there is an error
 ///
 /// @arg arch - The Triple::ArchType for the desired architecture
-static const InfoMap *infoFromArch(Triple::ArchType arch) {
+static const char *tripleFromArch(Triple::ArchType arch) {
   unsigned int infoIndex;
   
-  for (infoIndex = 0; infomap[infoIndex].String != NULL; ++infoIndex) {
-    if (arch == infomap[infoIndex].Arch)
-      return &infomap[infoIndex];
+  for (infoIndex = 0; triplemap[infoIndex].String != NULL; ++infoIndex) {
+    if (arch == triplemap[infoIndex].Arch)
+      return triplemap[infoIndex].String;
   }
   
   return NULL;
@@ -115,25 +103,17 @@ static int getLLVMSyntaxVariant(Triple::ArchType arch,
   }
 }
 
-#define BRINGUP_TARGET(tgt)           \
-  LLVMInitialize##tgt##TargetInfo();  \
-  LLVMInitialize##tgt##Target();      \
-  LLVMInitialize##tgt##AsmPrinter();  \
-  LLVMInitialize##tgt##AsmParser();   \
-  LLVMInitialize##tgt##Disassembler();
-
 void EDDisassembler::initialize() {
   if (sInitialized)
     return;
   
   sInitialized = true;
   
-#ifdef EDIS_X86
-  BRINGUP_TARGET(X86)
-#endif
-#ifdef EDIS_ARM
-  BRINGUP_TARGET(ARM)
-#endif
+  InitializeAllTargetInfos();
+  InitializeAllTargets();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+  InitializeAllDisassemblers();
 }
 
 #undef BRINGUP_TARGET
@@ -175,14 +155,10 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   HasSemantics(false), 
   ErrorStream(nulls()), 
   Key(key) {
-  const InfoMap *infoMap = infoFromArch(key.Arch);
-  
-  if (!infoMap)
-    return;
+  const char *triple = tripleFromArch(key.Arch);
     
-  InstInfos = infoMap->Info;
-  
-  const char *triple = infoMap->String;
+  if (!triple)
+    return;
   
   LLVMSyntaxVariant = getLLVMSyntaxVariant(key.Arch, key.Syntax);
   
@@ -220,6 +196,8 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   if (!Disassembler)
     return;
+    
+  InstInfos = Disassembler->getEDInfo();
   
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
@@ -231,8 +209,6 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   GenericAsmLexer.reset(new AsmLexer(*AsmInfo));
   SpecificAsmLexer.reset(Tgt->createAsmLexer(*AsmInfo));
   SpecificAsmLexer->InstallLexer(*GenericAsmLexer);
-                          
-  InstInfos = infoMap->Info;
   
   initMaps(*targetMachine->getRegisterInfo());
     
@@ -285,7 +261,7 @@ EDInst *EDDisassembler::createInst(EDByteReaderCallback byteReader,
     delete inst;
     return NULL;
   } else {
-    const InstInfo *thisInstInfo;
+    const llvm::EDInstInfo *thisInstInfo;
 
     thisInstInfo = &InstInfos[inst->getOpcode()];
     
@@ -308,7 +284,6 @@ void EDDisassembler::initMaps(const TargetRegisterInfo &registerInfo) {
   switch (Key.Arch) {
   default:
     break;
-#ifdef EDIS_X86
   case Triple::x86:
   case Triple::x86_64:
     stackPointers.insert(registerIDWithName("SP"));
@@ -319,15 +294,12 @@ void EDDisassembler::initMaps(const TargetRegisterInfo &registerInfo) {
     programCounters.insert(registerIDWithName("EIP"));
     programCounters.insert(registerIDWithName("RIP"));
     break;
-#endif
-#ifdef EDIS_ARM
   case Triple::arm:
   case Triple::thumb:
     stackPointers.insert(registerIDWithName("SP"));
     
     programCounters.insert(registerIDWithName("PC"));
     break;  
-#endif
   }
 }
 

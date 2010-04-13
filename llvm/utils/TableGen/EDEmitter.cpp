@@ -19,6 +19,7 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 
+#include "llvm/MC/EDInstInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -26,9 +27,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#define MAX_OPERANDS 13
-#define MAX_SYNTAXES 2
 
 using namespace llvm;
 
@@ -376,7 +374,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
 /// @operandFlags - A reference the array of operand flag objects
 /// @inst         - The instruction to use as a source of information
 static void X86PopulateOperands(
-  LiteralConstantEmitter *(&operandTypes)[MAX_OPERANDS],
+  LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   if (!inst.TheDef->isSubClassOf("X86Inst"))
     return;
@@ -406,7 +404,7 @@ static void X86PopulateOperands(
 /// @opName       - The name of the operand
 /// @flag         - The name of the flag to add
 static inline void decorate1(
-  FlagsConstantEmitter *(&operandFlags)[MAX_OPERANDS],
+  FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst,
   const char *opName,
   const char *opFlag) {
@@ -458,7 +456,7 @@ static inline void decorate1(
 /// @arg inst         - A reference to the original instruction
 static void X86ExtractSemantics(
   LiteralConstantEmitter &instType,
-  FlagsConstantEmitter *(&operandFlags)[MAX_OPERANDS],
+  FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   const std::string &name = inst.TheDef->getName();
     
@@ -655,7 +653,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
 /// @operandFlags - A reference the array of operand flag objects
 /// @inst         - The instruction to use as a source of information
 static void ARMPopulateOperands(
-  LiteralConstantEmitter *(&operandTypes)[MAX_OPERANDS],
+  LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   if (!inst.TheDef->isSubClassOf("InstARM") &&
       !inst.TheDef->isSubClassOf("InstThumb"))
@@ -664,8 +662,9 @@ static void ARMPopulateOperands(
   unsigned int index;
   unsigned int numOperands = inst.OperandList.size();
   
-  if (numOperands > MAX_OPERANDS) {
-    errs() << "numOperands == " << numOperands << " > " << MAX_OPERANDS << '\n';
+  if (numOperands > EDIS_MAX_OPERANDS) {
+    errs() << "numOperands == " << numOperands << " > " << 
+      EDIS_MAX_OPERANDS << '\n';
     llvm_unreachable("Too many operands");
   }
   
@@ -698,8 +697,8 @@ static void ARMPopulateOperands(
 /// @arg inst         - A reference to the original instruction
 static void ARMExtractSemantics(
   LiteralConstantEmitter &instType,
-  LiteralConstantEmitter *(&operandTypes)[MAX_OPERANDS],
-  FlagsConstantEmitter *(&operandFlags)[MAX_OPERANDS],
+  LiteralConstantEmitter *(&operandTypes)[EDIS_MAX_OPERANDS],
+  FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   const std::string &name = inst.TheDef->getName();
   
@@ -759,15 +758,15 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
     CompoundConstantEmitter *operandTypeArray = new CompoundConstantEmitter;
     infoStruct->addEntry(operandTypeArray);
     
-    LiteralConstantEmitter *operandTypes[MAX_OPERANDS];
+    LiteralConstantEmitter *operandTypes[EDIS_MAX_OPERANDS];
                          
     CompoundConstantEmitter *operandFlagArray = new CompoundConstantEmitter;
     infoStruct->addEntry(operandFlagArray);
         
-    FlagsConstantEmitter *operandFlags[MAX_OPERANDS];
+    FlagsConstantEmitter *operandFlags[EDIS_MAX_OPERANDS];
     
     for (unsigned operandIndex = 0; 
-         operandIndex < MAX_OPERANDS; 
+         operandIndex < EDIS_MAX_OPERANDS; 
          ++operandIndex) {
       operandTypes[operandIndex] = new LiteralConstantEmitter;
       operandTypeArray->addEntry(operandTypes[operandIndex]);
@@ -793,9 +792,11 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
     
     infoStruct->addEntry(operandOrderArray);
     
-    for (unsigned syntaxIndex = 0; syntaxIndex < MAX_SYNTAXES; ++syntaxIndex) {
+    for (unsigned syntaxIndex = 0; 
+         syntaxIndex < EDIS_MAX_SYNTAXES; 
+         ++syntaxIndex) {
       CompoundConstantEmitter *operandOrder = 
-        new CompoundConstantEmitter(MAX_OPERANDS);
+        new CompoundConstantEmitter(EDIS_MAX_OPERANDS);
       
       operandOrderArray->addEntry(operandOrder);
       
@@ -808,33 +809,7 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
   }
 }
 
-void EDEmitter::run(raw_ostream &o) {
-  unsigned int i = 0;
-  
-  CompoundConstantEmitter infoArray;
-  CodeGenTarget target;
-  
-  populateInstInfo(infoArray, target);
-  
-  o << "InstInfo instInfo" << target.getName().c_str() << "[] = ";
-  infoArray.emit(o, i);
-  o << ";" << "\n";
-}
-
-void EDEmitter::runHeader(raw_ostream &o) {
-  EmitSourceFileHeader("Enhanced Disassembly Info Header", o);
-  
-  o << "#ifndef EDInfo_" << "\n";
-  o << "#define EDInfo_" << "\n";
-  o << "\n";
-  o << "#include <inttypes.h>" << "\n";
-  o << "\n";
-  o << "#define MAX_OPERANDS " << format("%d", MAX_OPERANDS) << "\n";
-  o << "#define MAX_SYNTAXES " << format("%d", MAX_SYNTAXES) << "\n";
-  o << "\n";
-  
-  unsigned int i = 0;
-  
+static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   EnumEmitter operandTypes("OperandTypes");
   operandTypes.addEntry("kOperandTypeNone");
   operandTypes.addEntry("kOperandTypeImmediate");
@@ -872,7 +847,6 @@ void EDEmitter::runHeader(raw_ostream &o) {
   operandTypes.addEntry("kOperandTypeThumb2AddrModeSoReg");
   operandTypes.addEntry("kOperandTypeThumb2AddrModeImm8s4");
   operandTypes.addEntry("kOperandTypeThumb2AddrModeImm8s4Offset");
-  
   operandTypes.emit(o, i);
   
   o << "\n";
@@ -895,14 +869,42 @@ void EDEmitter::runHeader(raw_ostream &o) {
   instructionTypes.emit(o, i);
   
   o << "\n";
+}
+
+void EDEmitter::run(raw_ostream &o) {
+  unsigned int i = 0;
   
-  StructEmitter instInfo("InstInfo");
-  instInfo.addMember("uint8_t", "instructionType");
-  instInfo.addMember("uint8_t", "numOperands");
-  instInfo.addMember("uint8_t", "operandTypes[MAX_OPERANDS]");
-  instInfo.addMember("uint8_t", "operandFlags[MAX_OPERANDS]");
-  instInfo.addMember("const char", "operandOrders[MAX_SYNTAXES][MAX_OPERANDS]");
-  instInfo.emit(o, i);
+  CompoundConstantEmitter infoArray;
+  CodeGenTarget target;
+  
+  populateInstInfo(infoArray, target);
+  
+  emitCommonEnums(o, i);
+  
+  o << "namespace {\n";
+  
+  o << "llvm::EDInstInfo instInfo" << target.getName().c_str() << "[] = ";
+  infoArray.emit(o, i);
+  o << ";" << "\n";
+  
+  o << "}\n";
+}
+
+void EDEmitter::runHeader(raw_ostream &o) {
+  EmitSourceFileHeader("Enhanced Disassembly Info Header", o);
+  
+  o << "#ifndef EDInfo_" << "\n";
+  o << "#define EDInfo_" << "\n";
+  o << "\n";
+  o << "#include <inttypes.h>" << "\n";
+  o << "\n";
+  o << "#define EDIS_MAX_OPERANDS " << format("%d", EDIS_MAX_OPERANDS) << "\n";
+  o << "#define EDIS_MAX_SYNTAXES " << format("%d", EDIS_MAX_SYNTAXES) << "\n";
+  o << "\n";
+  
+  unsigned int i = 0;
+  
+  emitCommonEnums(o, i);
   
   o << "\n";
   o << "#endif" << "\n";

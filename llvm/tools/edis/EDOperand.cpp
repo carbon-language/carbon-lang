@@ -17,6 +17,7 @@
 #include "EDInst.h"
 #include "EDOperand.h"
 
+#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
 
 using namespace llvm;

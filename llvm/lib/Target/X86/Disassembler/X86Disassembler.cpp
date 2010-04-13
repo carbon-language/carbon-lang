@@ -17,6 +17,7 @@
 #include "X86Disassembler.h"
 #include "X86DisassemblerDecoder.h"
 
+#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
@@ -26,6 +27,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "X86GenRegisterNames.inc"
+#include "X86GenEDInfo.inc"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;
@@ -67,6 +69,10 @@ X86GenericDisassembler::X86GenericDisassembler(DisassemblerMode mode) :
 }
 
 X86GenericDisassembler::~X86GenericDisassembler() {
+}
+
+EDInstInfo *X86GenericDisassembler::getEDInfo() const {
+  return instInfoX86;
 }
 
 /// regionReader - a callback function that wraps the readByte method from
