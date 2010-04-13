@@ -531,7 +531,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
     // Mark live-in registers as live-in.
     SmallVector<unsigned, 4> Defs;
-    for (MachineBasicBlock::const_livein_iterator II = MBB->livein_begin(),
+    for (MachineBasicBlock::livein_iterator II = MBB->livein_begin(),
            EE = MBB->livein_end(); II != EE; ++II) {
       assert(TargetRegisterInfo::isPhysicalRegister(*II) &&
              "Cannot have a live-in virtual register!");

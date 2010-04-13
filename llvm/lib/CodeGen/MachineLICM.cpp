@@ -360,7 +360,7 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
     // Conservatively treat live-in's as an external def.
     // FIXME: That means a reload that're reused in successor block(s) will not
     // be LICM'ed.
-    for (MachineBasicBlock::const_livein_iterator I = BB->livein_begin(),
+    for (MachineBasicBlock::livein_iterator I = BB->livein_begin(),
            E = BB->livein_end(); I != E; ++I) {
       unsigned Reg = *I;
       ++PhysRegDefs[Reg];

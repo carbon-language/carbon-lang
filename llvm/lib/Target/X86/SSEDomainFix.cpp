@@ -270,7 +270,7 @@ bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
 
 void SSEDomainFixPass::enterBasicBlock() {
   // Try to coalesce live-out registers from predecessors.
-  for (MachineBasicBlock::const_livein_iterator i = MBB->livein_begin(),
+  for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
          e = MBB->livein_end(); i != e; ++i) {
     int rx = RegIndex(*i);
     if (rx < 0) continue;

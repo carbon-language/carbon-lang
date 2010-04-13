@@ -668,7 +668,7 @@ void LiveIntervals::computeIntervals() {
     DEBUG(dbgs() << MBB->getName() << ":\n");
 
     // Create intervals for live-ins to this BB first.
-    for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
+    for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
            LE = MBB->livein_end(); LI != LE; ++LI) {
       handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
       // Multiple live-ins can alias the same register.

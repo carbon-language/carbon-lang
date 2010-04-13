@@ -201,12 +201,9 @@ public:
 
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.
-  typedef std::vector<unsigned>::iterator       livein_iterator;
-  typedef std::vector<unsigned>::const_iterator const_livein_iterator;
-  livein_iterator       livein_begin()       { return LiveIns.begin(); }
-  const_livein_iterator livein_begin() const { return LiveIns.begin(); }
-  livein_iterator       livein_end()         { return LiveIns.end(); }
-  const_livein_iterator livein_end()   const { return LiveIns.end(); }
+  typedef std::vector<unsigned>::const_iterator livein_iterator;
+  livein_iterator livein_begin() const { return LiveIns.begin(); }
+  livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
 
   /// getAlignment - Return alignment of the basic block.
