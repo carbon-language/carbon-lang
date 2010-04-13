@@ -326,12 +326,6 @@ FunctionPass *createGEPSplitterPass();
 
 //===----------------------------------------------------------------------===//
 //
-// SCCVN - Aggressively eliminate redundant scalar values
-//
-FunctionPass *createSCCVNPass();
-
-//===----------------------------------------------------------------------===//
-//
 // ABCD - Elimination of Array Bounds Checks on Demand
 //
 FunctionPass *createABCDPass();

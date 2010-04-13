@@ -136,7 +136,6 @@ namespace {
       (void) llvm::createSSIPass();
       (void) llvm::createSSIEverythingPass();
       (void) llvm::createGEPSplitterPass();
-      (void) llvm::createSCCVNPass();
       (void) llvm::createABCDPass();
       (void) llvm::createLintPass();
 
