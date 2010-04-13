@@ -640,7 +640,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
   if (LangOpts.Microsoft) {
     Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
     Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
+    Preamble += "#ifndef KEEP_ATTRIBUTES\n";  // We use this for clang tests.
     Preamble += "#define __attribute__(X)\n";
+    Preamble += "#endif\n";
     Preamble += "#define __weak\n";
   }
   else {
