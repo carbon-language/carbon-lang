@@ -584,12 +584,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   switch (S->getStmtClass()) {
     // C++ stuff we don't support yet.
-    case Stmt::CXXNamedCastExprClass:
-    case Stmt::CXXStaticCastExprClass:
-    case Stmt::CXXDynamicCastExprClass:
-    case Stmt::CXXReinterpretCastExprClass:
-    case Stmt::CXXConstCastExprClass:
-    case Stmt::CXXFunctionalCastExprClass:
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
@@ -720,7 +714,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
 
     case Stmt::ImplicitCastExprClass:
-    case Stmt::CStyleCastExprClass: {
+    case Stmt::CStyleCastExprClass:
+    case Stmt::CXXStaticCastExprClass:
+    case Stmt::CXXDynamicCastExprClass:
+    case Stmt::CXXReinterpretCastExprClass:
+    case Stmt::CXXConstCastExprClass:
+    case Stmt::CXXFunctionalCastExprClass: {
       CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst, false);
       break;
