@@ -203,6 +203,13 @@ public:
     return Visit(E->getSubExpr());
   }
   bool VisitUnaryOperator(UnaryOperator *E) { return Visit(E->getSubExpr()); }
+    
+  // Has side effects if any element does.
+  bool VisitInitListExpr(InitListExpr *E) {
+    for (unsigned i = 0, e = E->getNumInits(); i != e; ++i)
+      if (Visit(E->getInit(i))) return true;
+    return false;
+  }
 };
 
 } // end anonymous namespace
