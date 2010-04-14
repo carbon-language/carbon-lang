@@ -6001,7 +6001,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
 
   // Finally, if the target has anything special to do, allow it to do so.
   // FIXME: this should insert code into the DAG!
-  EmitFunctionEntryCode(F, SDB->DAG.getMachineFunction());
+  EmitFunctionEntryCode();
 }
 
 /// Handle PHI nodes in successor blocks.  Emit code into the SelectionDAG to

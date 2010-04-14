@@ -183,7 +183,7 @@ namespace {
       return "X86 DAG->DAG Instruction Selection";
     }
 
-    virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
+    virtual void EmitFunctionEntryCode();
 
     virtual bool IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const;
 
@@ -546,11 +546,11 @@ void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
             TII->get(X86::CALLpcrel32)).addExternalSymbol("__main");
 }
 
-void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
+void X86DAGToDAGISel::EmitFunctionEntryCode() {
   // If this is main, emit special code for main.
-  MachineBasicBlock *BB = MF.begin();
-  if (Fn.hasExternalLinkage() && Fn.getName() == "main")
-    EmitSpecialCodeForMain(BB, MF.getFrameInfo());
+  if (const Function *Fn = MF->getFunction())
+    if (Fn->hasExternalLinkage() && Fn->getName() == "main")
+      EmitSpecialCodeForMain(MF->begin(), MF->getFrameInfo());
 }
 
 

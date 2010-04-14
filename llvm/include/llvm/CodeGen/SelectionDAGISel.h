@@ -62,7 +62,7 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
-  virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
+  virtual void EmitFunctionEntryCode() {}
   
   /// PreprocessISelDAG - This hook allows targets to hack on the graph before
   /// instruction selection starts.
