@@ -3257,6 +3257,9 @@ ARMBasicMCBuilder::ARMBasicMCBuilder(unsigned opc, ARMFormat format,
 /// are responsible for freeing up of the allocated memory.  Cacheing can be
 /// performed by the API clients to improve performance.
 ARMBasicMCBuilder *llvm::CreateMCBuilder(unsigned Opcode, ARMFormat Format) {
+  // For "Unknown format", fail by returning a NULL pointer.
+  if ((unsigned)Format >= (array_lengthof(FuncPtrs) - 1))
+    return 0;
 
   return new ARMBasicMCBuilder(Opcode, Format,
                                ARMInsts[Opcode].getNumOperands());

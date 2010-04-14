@@ -171,23 +171,32 @@ typedef ARMBasicMCBuilder *BO;
 typedef bool (*DisassembleFP)(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO Builder);
 
+/// CreateMCBuilder - Return an ARMBasicMCBuilder that can build up the MC
+/// infrastructure of an MCInst given the Opcode and Format of the instr.
+/// Return NULL if it fails to create/return a proper builder.  API clients
+/// are responsible for freeing up of the allocated memory.  Cacheing can be
+/// performed by the API clients to improve performance.
+extern ARMBasicMCBuilder *CreateMCBuilder(unsigned Opcode, ARMFormat Format);
+
 /// ARMBasicMCBuilder - ARMBasicMCBuilder represents an ARM MCInst builder that
 /// knows how to build up the MCOperand list.
 class ARMBasicMCBuilder {
+  friend ARMBasicMCBuilder *CreateMCBuilder(unsigned Opcode, ARMFormat Format);
   unsigned Opcode;
   ARMFormat Format;
   unsigned short NumOps;
   DisassembleFP Disasm;
   Session *SP;
 
+private:
+  /// Opcode, Format, and NumOperands make up an ARM Basic MCBuilder.
+  ARMBasicMCBuilder(unsigned opc, ARMFormat format, unsigned short num);
+
 public:
   ARMBasicMCBuilder(ARMBasicMCBuilder &B)
     : Opcode(B.Opcode), Format(B.Format), NumOps(B.NumOps), Disasm(B.Disasm),
       SP(B.SP)
   {}
-
-  /// Opcode, Format, and NumOperands make up an ARM Basic MCBuilder.
-  ARMBasicMCBuilder(unsigned opc, ARMFormat format, unsigned short num);
 
   virtual ~ARMBasicMCBuilder() {}
 
@@ -235,13 +244,6 @@ private:
     return slice(SP->ITState, 7, 4);
   }
 };
-
-/// CreateMCBuilder - Return an ARMBasicMCBuilder that can build up the MC
-/// infrastructure of an MCInst given the Opcode and Format of the instr.
-/// Return NULL if it fails to create/return a proper builder.  API clients
-/// are responsible for freeing up of the allocated memory.  Cacheing can be
-/// performed by the API clients to improve performance.
-extern ARMBasicMCBuilder *CreateMCBuilder(unsigned Opcode, ARMFormat Format);
 
 } // namespace llvm
 
