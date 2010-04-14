@@ -677,36 +677,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   QualType ReceiverCType =
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
 
-#if 0
-  // Handle messages to 'super'.
-  if (isa<ObjCSuperExpr>(RExpr)) {
-    ObjCMethodDecl *Method = 0;
-    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
-      // If we have an interface in scope, check 'super' methods.
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass()) {
-          Method = SuperDecl->lookupInstanceMethod(Sel);
-
-          if (!Method)
-            // If we have implementations in scope, check "private" methods.
-            Method = LookupPrivateInstanceMethod(Sel, SuperDecl);
-        }
-    }
-
-    if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
-      return true;
-
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
-                                  lbrac, rbrac, returnType))
-      return true;
-
-    returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
-                                         Method, lbrac, rbrac,
-                                         ArgExprs, NumArgs);
-  }
-#endif
-
   // Handle messages to id.
   if (ReceiverCType->isObjCIdType() || ReceiverCType->isBlockPointerType() ||
       Context.isObjCNSObjectType(RExpr->getType())) {
