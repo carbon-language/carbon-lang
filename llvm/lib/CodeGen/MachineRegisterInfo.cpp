@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
@@ -142,6 +144,110 @@ bool MachineRegisterInfo::isLiveOut(unsigned Reg) const {
     if (*I == Reg)
       return true;
   return false;
+}
+
+static cl::opt<bool>
+SchedLiveInCopies("schedule-livein-copies", cl::Hidden,
+                  cl::desc("Schedule copies of livein registers"),
+                  cl::init(false));
+
+/// EmitLiveInCopy - Emit a copy for a live in physical register. If the
+/// physical register has only a single copy use, then coalesced the copy
+/// if possible.
+static void EmitLiveInCopy(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator &InsertPos,
+                           unsigned VirtReg, unsigned PhysReg,
+                           const TargetRegisterClass *RC,
+                           DenseMap<MachineInstr*, unsigned> &CopyRegMap,
+                           const MachineRegisterInfo &MRI,
+                           const TargetRegisterInfo &TRI,
+                           const TargetInstrInfo &TII) {
+  unsigned NumUses = 0;
+  MachineInstr *UseMI = NULL;
+  for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(VirtReg),
+         UE = MRI.use_end(); UI != UE; ++UI) {
+    UseMI = &*UI;
+    if (++NumUses > 1)
+      break;
+  }
+
+  // If the number of uses is not one, or the use is not a move instruction,
+  // don't coalesce. Also, only coalesce away a virtual register to virtual
+  // register copy.
+  bool Coalesced = false;
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+  if (NumUses == 1 &&
+      TII.isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+      TargetRegisterInfo::isVirtualRegister(DstReg)) {
+    VirtReg = DstReg;
+    Coalesced = true;
+  }
+
+  // Now find an ideal location to insert the copy.
+  MachineBasicBlock::iterator Pos = InsertPos;
+  while (Pos != MBB->begin()) {
+    MachineInstr *PrevMI = prior(Pos);
+    DenseMap<MachineInstr*, unsigned>::iterator RI = CopyRegMap.find(PrevMI);
+    // copyRegToReg might emit multiple instructions to do a copy.
+    unsigned CopyDstReg = (RI == CopyRegMap.end()) ? 0 : RI->second;
+    if (CopyDstReg && !TRI.regsOverlap(CopyDstReg, PhysReg))
+      // This is what the BB looks like right now:
+      // r1024 = mov r0
+      // ...
+      // r1    = mov r1024
+      //
+      // We want to insert "r1025 = mov r1". Inserting this copy below the
+      // move to r1024 makes it impossible for that move to be coalesced.
+      //
+      // r1025 = mov r1
+      // r1024 = mov r0
+      // ...
+      // r1    = mov 1024
+      // r2    = mov 1025
+      break; // Woot! Found a good location.
+    --Pos;
+  }
+
+  bool Emitted = TII.copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
+  assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+  (void) Emitted;
+
+  CopyRegMap.insert(std::make_pair(prior(Pos), VirtReg));
+  if (Coalesced) {
+    if (&*InsertPos == UseMI) ++InsertPos;
+    MBB->erase(UseMI);
+  }
+}
+
+/// EmitLiveInCopies - Emit copies to initialize livein virtual registers
+/// into the given entry block.
+void
+MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
+                                      const TargetRegisterInfo &TRI,
+                                      const TargetInstrInfo &TII) {
+  if (SchedLiveInCopies) {
+    // Emit the copies at a heuristically-determined location in the block.
+    DenseMap<MachineInstr*, unsigned> CopyRegMap;
+    MachineBasicBlock::iterator InsertPos = EntryMBB->begin();
+    for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
+           E = livein_end(); LI != E; ++LI)
+      if (LI->second) {
+        const TargetRegisterClass *RC = getRegClass(LI->second);
+        EmitLiveInCopy(EntryMBB, InsertPos, LI->second, LI->first,
+                       RC, CopyRegMap, *this, TRI, TII);
+      }
+  } else {
+    // Emit the copies into the top of the block.
+    for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
+           E = livein_end(); LI != E; ++LI)
+      if (LI->second) {
+        const TargetRegisterClass *RC = getRegClass(LI->second);
+        bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
+                                        LI->second, LI->first, RC, RC);
+        assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+        (void) Emitted;
+      }
+  }
 }
 
 #ifndef NDEBUG

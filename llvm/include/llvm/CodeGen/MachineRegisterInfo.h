@@ -261,6 +261,12 @@ public:
   bool isLiveIn(unsigned Reg) const;
   bool isLiveOut(unsigned Reg) const;
 
+  /// EmitLiveInCopies - Emit copies to initialize livein virtual registers
+  /// into the given entry block.
+  void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
+                        const TargetRegisterInfo &TRI,
+                        const TargetInstrInfo &TII);
+
 private:
   void HandleVRegListReallocation();
   
