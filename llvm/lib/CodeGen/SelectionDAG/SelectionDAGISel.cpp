@@ -260,13 +260,11 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
     SetDebugLoc(I, SDB, 0, MF);
 
-    if (!isa<TerminatorInst>(I)) {
+    // Visit the instruction. Terminators are handled below.
+    if (!isa<TerminatorInst>(I))
       SDB->visit(*I);
 
-      // Set the current debug location back to "unknown" so that it doesn't
-      // spuriously apply to subsequent instructions.
-      ResetDebugLoc(SDB, 0);
-    }
+    ResetDebugLoc(SDB, 0);
   }
 
   if (!SDB->HasTailCall) {
