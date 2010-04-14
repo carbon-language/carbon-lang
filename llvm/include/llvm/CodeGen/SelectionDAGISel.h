@@ -17,7 +17,6 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
-#include "llvm/Constant.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
