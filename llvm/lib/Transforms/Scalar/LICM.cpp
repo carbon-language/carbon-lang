@@ -683,16 +683,18 @@ void LICM::PromoteValuesInLoop() {
       // to LI as we are loading or storing.  Since we know that the value is
       // stored in this loop, this will always succeed.
       for (Value::use_iterator UI = Ptr->use_begin(), E = Ptr->use_end();
-           UI != E; ++UI)
-        if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+           UI != E; ++UI) {
+        User *U = *UI;
+        if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
           LoadValue = LI;
           break;
-        } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
           if (SI->getOperand(1) == Ptr) {
             LoadValue = SI->getOperand(0);
             break;
           }
         }
+      }
       assert(LoadValue && "No store through the pointer found!");
       PointerValueNumbers.push_back(LoadValue);  // Remember this for later.
     }
