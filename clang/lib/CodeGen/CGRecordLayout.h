@@ -101,7 +101,15 @@ public:
   bool IsSigned : 1;
 
 public:
+  /// \brief Check whether this bit-field access is (i.e., should be sign
+  /// extended on loads).
   bool isSigned() const { return IsSigned; }
+
+  /// \brief Get the size of the bit-field, in bits.
+  unsigned getSize() const { return Size; }
+
+  /// @name Component Access
+  /// @{
 
   unsigned getNumComponents() const { return NumComponents; }
   void setNumComponents(unsigned Value) {
@@ -117,6 +125,8 @@ public:
     assert(Index < getNumComponents() && "Invalid access!");
     return Components[Index];
   }
+
+  /// @}
 
   void print(llvm::raw_ostream &OS) const;
   void dump() const;
