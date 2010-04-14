@@ -1462,6 +1462,9 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                const Type *AllocTy,
                                                Module::global_iterator &GVI,
                                                TargetData *TD) {
+  if (!TD)
+    return false;
+          
   // If this is a malloc of an abstract type, don't touch it.
   if (!AllocTy->isSized())
     return false;
@@ -1480,66 +1483,66 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // malloc to be stored into the specified global, loaded setcc'd, and
   // GEP'd.  These are all things we could transform to using the global
   // for.
-  {
-    SmallPtrSet<const PHINode*, 8> PHIs;
-    if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV, PHIs))
-      return false;
-  }  
+  SmallPtrSet<const PHINode*, 8> PHIs;
+  if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV, PHIs))
+    return false;
 
   // If we have a global that is only initialized with a fixed size malloc,
   // transform the program to use global memory instead of malloc'd memory.
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
   // We cannot optimize the malloc if we cannot determine malloc array size.
-  if (Value *NElems = getMallocArraySize(CI, TD, true)) {
-    if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
-      // Restrict this transformation to only working on small allocations
-      // (2048 bytes currently), as we don't want to introduce a 16M global or
-      // something.
-      if (TD && 
-          NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
-        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, TD);
-        return true;
-      }
-  
-    // If the allocation is an array of structures, consider transforming this
-    // into multiple malloc'd arrays, one for each field.  This is basically
-    // SRoA for malloc'd memory.
+  Value *NElems = getMallocArraySize(CI, TD, true);
+  if (!NElems)
+    return false;
 
-    // If this is an allocation of a fixed size array of structs, analyze as a
-    // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
-    if (NElems == ConstantInt::get(CI->getOperand(1)->getType(), 1))
-      if (const ArrayType *AT = dyn_cast<ArrayType>(AllocTy))
-        AllocTy = AT->getElementType();
-  
-    if (const StructType *AllocSTy = dyn_cast<StructType>(AllocTy)) {
-      // This the structure has an unreasonable number of fields, leave it
-      // alone.
-      if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
-          AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, CI)) {
-
-        // If this is a fixed size array, transform the Malloc to be an alloc of
-        // structs.  malloc [100 x struct],1 -> malloc struct, 100
-        if (const ArrayType *AT =
-                              dyn_cast<ArrayType>(getMallocAllocatedType(CI))) {
-          const Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
-          unsigned TypeSize = TD->getStructLayout(AllocSTy)->getSizeInBytes();
-          Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
-          Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
-          Instruction *Malloc = CallInst::CreateMalloc(CI, IntPtrTy, AllocSTy,
-                                                       AllocSize, NumElements,
-                                                       CI->getName());
-          Instruction *Cast = new BitCastInst(Malloc, CI->getType(), "tmp", CI);
-          CI->replaceAllUsesWith(Cast);
-          CI->eraseFromParent();
-          CI = dyn_cast<BitCastInst>(Malloc) ?
-               extractMallocCallFromBitCast(Malloc) : cast<CallInst>(Malloc);
-        }
-      
-        GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true),TD);
-        return true;
-      }
+  if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
+    // Restrict this transformation to only working on small allocations
+    // (2048 bytes currently), as we don't want to introduce a 16M global or
+    // something.
+    if (NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
+      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, TD);
+      return true;
     }
+  
+  // If the allocation is an array of structures, consider transforming this
+  // into multiple malloc'd arrays, one for each field.  This is basically
+  // SRoA for malloc'd memory.
+
+  // If this is an allocation of a fixed size array of structs, analyze as a
+  // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
+  if (NElems == ConstantInt::get(CI->getOperand(1)->getType(), 1))
+    if (const ArrayType *AT = dyn_cast<ArrayType>(AllocTy))
+      AllocTy = AT->getElementType();
+  
+  const StructType *AllocSTy = dyn_cast<StructType>(AllocTy);
+  if (!AllocSTy)
+    return false;
+
+  // This the structure has an unreasonable number of fields, leave it
+  // alone.
+  if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
+      AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, CI)) {
+
+    // If this is a fixed size array, transform the Malloc to be an alloc of
+    // structs.  malloc [100 x struct],1 -> malloc struct, 100
+    if (const ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI))) {
+      const Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
+      unsigned TypeSize = TD->getStructLayout(AllocSTy)->getSizeInBytes();
+      Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
+      Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
+      Instruction *Malloc = CallInst::CreateMalloc(CI, IntPtrTy, AllocSTy,
+                                                   AllocSize, NumElements,
+                                                   CI->getName());
+      Instruction *Cast = new BitCastInst(Malloc, CI->getType(), "tmp", CI);
+      CI->replaceAllUsesWith(Cast);
+      CI->eraseFromParent();
+      CI = dyn_cast<BitCastInst>(Malloc) ?
+        extractMallocCallFromBitCast(Malloc) : cast<CallInst>(Malloc);
+    }
+      
+    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true),TD);
+    return true;
   }
   
   return false;
