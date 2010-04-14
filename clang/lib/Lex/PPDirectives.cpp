@@ -716,7 +716,8 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
 
   if (Callbacks)
-    Callbacks->FileChanged(DigitTok.getLocation(), PPCallbacks::RenameFile,
+    Callbacks->FileChanged(CurPPLexer->getSourceLocation(),
+                           PPCallbacks::RenameFile,
                            SrcMgr::C_User);
 }
 
@@ -865,7 +866,7 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
     else if (IsSystemHeader)
       FileKind = SrcMgr::C_System;
 
-    Callbacks->FileChanged(DigitTok.getLocation(), Reason, FileKind);
+    Callbacks->FileChanged(CurPPLexer->getSourceLocation(), Reason, FileKind);
   }
 }
 

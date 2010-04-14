@@ -219,7 +219,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   SourceManager &SourceMgr = SM;
   
   PresumedLoc UserLoc = SourceMgr.getPresumedLoc(Loc);
-  unsigned NewLine = UserLoc.getLine()+1;
+  unsigned NewLine = UserLoc.getLine();
   
   if (Reason == PPCallbacks::EnterFile) {
     SourceLocation IncludeLoc = SourceMgr.getPresumedLoc(Loc).getIncludeLoc();

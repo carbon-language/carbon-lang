@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -E %s 2>&1 | FileCheck %s -strict-whitespace
 // PR6101
 int a;
-// CHECK: # 2 "{{.*}}line-directive-output.c"
+// CHECK: # 1 "{{.*}}line-directive-output.c"
 // CHECK: int a;
 
 // CHECK-NEXT: # 50 "{{.*}}line-directive-output.c"
