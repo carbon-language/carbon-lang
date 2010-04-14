@@ -2450,7 +2450,6 @@ void DwarfDebug::computeSizeAndOffsets() {
     sizeof(int8_t);   // Pointer Size (in bytes)
 
   computeSizeAndOffset(ModuleCU->getCUDie(), Offset, true);
-  CompileUnitOffsets[ModuleCU] = 0;
 }
 
 /// EmitSectionSym - Switch to the specified MCSection and emit an assembler

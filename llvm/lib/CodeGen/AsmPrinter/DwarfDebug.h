@@ -193,11 +193,6 @@ class DwarfDebug {
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
 
-  /// CompileUnitOffsets - A vector of the offsets of the compile units. This is
-  /// used when calculating the "origin" of a concrete instance of an inlined
-  /// function.
-  DenseMap<CompileUnit *, unsigned> CompileUnitOffsets;
-
   /// Previous instruction's location information. This is used to determine
   /// label location to indicate scope boundries in dwarf debug info.
   DebugLoc PrevInstLoc;
