@@ -18,7 +18,97 @@
 // The format of this database matches clang/Basic/Builtins.def.
 
 // This is just a placeholder, the types and attributes are wrong.
-BUILTIN(__builtin_altivec_abs_v4sf  , "ii"   , "nc")
+BUILTIN(__builtin_altivec_abs_v16qi, "V16UcV16Sc", "")
+BUILTIN(__builtin_altivec_abs_v8hi, "V8UsV8Ss", "")
+BUILTIN(__builtin_altivec_abs_v4si, "V4UiV4Si", "")
+
+BUILTIN(__builtin_altivec_abss_v16qi, "V16UcV16Sc", "")
+BUILTIN(__builtin_altivec_abss_v8hi, "V8UsV8Ss", "")
+BUILTIN(__builtin_altivec_abss_v4si, "V4UiV4Si", "")
+
+BUILTIN(__builtin_altivec_vaddcuw, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_vaddsbs, "V16ScV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vaddubs, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vaddshs, "V8SsV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vadduhs, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vaddsws, "V4SiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vadduws, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_vsubsbs, "V16ScV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vsububs, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vsubshs, "V8SsV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vsubuhs, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vsubsws, "V4SiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vsubuws, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_vavgsb, "V16ScV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vavgub, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vavgsh, "V8SsV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vavguh, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vavgsw, "V4SiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vavguw, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_stvx, "vV4iiv*", "")
+BUILTIN(__builtin_altivec_stvxl, "vV4iiv*", "")
+BUILTIN(__builtin_altivec_stvebx, "vV16civ*", "")
+BUILTIN(__builtin_altivec_stvehx, "vV8siv*", "")
+BUILTIN(__builtin_altivec_stvewx, "vV4iiv*", "")
+
+BUILTIN(__builtin_altivec_vcmpbfp, "V4iV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpgefp, "V4iV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpequb, "V16cV16cV16c", "")
+BUILTIN(__builtin_altivec_vcmpequh, "V8sV8sV8s", "")
+BUILTIN(__builtin_altivec_vcmpequw, "V4iV4iV4i", "")
+BUILTIN(__builtin_altivec_vcmpeqfp, "V4iV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpgtsb, "V16cV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vcmpgtub, "V16cV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vcmpgtsh, "V8sV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vcmpgtuh, "V8sV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vcmpgtsw, "V4iV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vcmpgtuw, "V4iV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vcmpgtfp, "V4iV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vmaxsb, "V16ScV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vmaxub, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vmaxsh, "V8SsV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vmaxuh, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vmaxsw, "V4SiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vmaxuw, "V4UiV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vmaxfp, "V4fV4fV4f", "")
+
+BUILTIN(__builtin_altivec_mfvscr, "V8Us", "")
+
+BUILTIN(__builtin_altivec_vminsb, "V16ScV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vminub, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vminsh, "V8SsV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vminuh, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vminsw, "V4SiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vminuw, "V4UiV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vminfp, "V4fV4fV4f", "")
+
+BUILTIN(__builtin_altivec_mtvscr, "vV4i", "")
+
+BUILTIN(__builtin_altivec_vcmpbfp_p, "iiV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpgefp_p, "iiV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpequb_p, "iiV16cV16c", "")
+BUILTIN(__builtin_altivec_vcmpequh_p, "iiV8sV8s", "")
+BUILTIN(__builtin_altivec_vcmpequw_p, "iiV4iV4i", "")
+BUILTIN(__builtin_altivec_vcmpeqfp_p, "iiV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcmpgtsb_p, "iiV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vcmpgtub_p, "iiV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vcmpgtsh_p, "iiV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vcmpgtuh_p, "iiV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vcmpgtsw_p, "iiV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vcmpgtuw_p, "iiV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vcmpgtfp_p, "iiV4fV4f", "")
+
 // FIXME: Obviously incomplete.
 
 #undef BUILTIN

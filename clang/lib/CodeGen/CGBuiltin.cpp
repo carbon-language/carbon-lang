@@ -1024,5 +1024,49 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
 Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
+  llvm::SmallVector<Value*, 4> Ops;
+
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++)
+    Ops.push_back(EmitScalarExpr(E->getArg(i)));
+
+  Intrinsic::ID ID = Intrinsic::not_intrinsic;
+
+  switch (BuiltinID) {
+  default: return 0;
+
+  // vec_st
+  case PPC::BI__builtin_altivec_stvx:
+  case PPC::BI__builtin_altivec_stvxl:
+  case PPC::BI__builtin_altivec_stvebx:
+  case PPC::BI__builtin_altivec_stvehx:
+  case PPC::BI__builtin_altivec_stvewx:
+  {
+    Ops[2] = Builder.CreateBitCast(Ops[2], llvm::Type::getInt8PtrTy(VMContext));
+    Ops[1] = !isa<Constant>(Ops[1]) || !cast<Constant>(Ops[1])->isNullValue()
+           ? Builder.CreateGEP(Ops[2], Ops[1], "tmp") : Ops[2];
+    Ops.pop_back();
+
+    switch (BuiltinID) {
+    default: assert(0 && "Unsupported vavg intrinsic!");
+    case PPC::BI__builtin_altivec_stvx:
+      ID = Intrinsic::ppc_altivec_stvx;
+      break;
+    case PPC::BI__builtin_altivec_stvxl:
+      ID = Intrinsic::ppc_altivec_stvxl;
+      break;
+    case PPC::BI__builtin_altivec_stvebx:
+      ID = Intrinsic::ppc_altivec_stvebx;
+      break;
+    case PPC::BI__builtin_altivec_stvehx:
+      ID = Intrinsic::ppc_altivec_stvehx;
+      break;
+    case PPC::BI__builtin_altivec_stvewx:
+      ID = Intrinsic::ppc_altivec_stvewx;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), "");
+  }
+  }
   return 0;
 }

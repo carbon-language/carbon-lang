@@ -1278,6 +1278,10 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
       Opts.Includes.push_back(it->getValue(Args));
   }
 
+  // Include 'altivec.h' if -faltivec option present
+  if (Args.hasArg(OPT_faltivec))
+    Opts.Includes.push_back("altivec.h");
+
   for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
          ie = Args.filtered_end(); it != ie; ++it) {
     std::pair<llvm::StringRef,llvm::StringRef> Split =
