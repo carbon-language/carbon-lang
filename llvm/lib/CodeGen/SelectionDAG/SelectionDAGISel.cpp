@@ -332,11 +332,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   FuncInfo->set(Fn, *MF, EnableFastISel);
   SDB->init(GFI, *AA);
 
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
-      // Mark landing pad.
-      FuncInfo->MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
-
   SelectAllBasicBlocks(Fn, *MF, TII);
 
   // If the first basic block in the function has live ins that need to be

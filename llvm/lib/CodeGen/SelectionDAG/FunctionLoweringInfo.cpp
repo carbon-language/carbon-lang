@@ -232,6 +232,11 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
       }
     }
   }
+
+  // Mark landing pad blocks.
+  for (BB = Fn->begin(); BB != EB; ++BB)
+    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
+      MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 }
 
 /// clear - Clear out all the function-specific state. This returns this
