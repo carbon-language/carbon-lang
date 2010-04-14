@@ -216,14 +216,14 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SelectAllBasicBlocks(Fn, *MF, TII);
 
+  // Release function-specific state. SDB and CurDAG are already cleared
+  // at this point.
+  FuncInfo->clear();
+
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
   RegInfo->EmitLiveInCopies(MF->begin(), TRI, TII);
-
-  // Release function-specific state. SDB and CurDAG are already cleared
-  // at this point.
-  FuncInfo->clear();
 
   return true;
 }
