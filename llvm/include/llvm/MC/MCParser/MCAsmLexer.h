@@ -42,7 +42,7 @@ public:
     Plus, Minus, Tilde,
     Slash,    // '/'
     LParen, RParen, LBrac, RBrac, LCurly, RCurly,
-    Star, Comma, Dollar, Equal, EqualEqual,
+    Star, Dot, Comma, Dollar, Equal, EqualEqual,
     
     Pipe, PipePipe, Caret, 
     Amp, AmpAmp, Exclaim, ExclaimEqual, Percent, Hash,

@@ -209,6 +209,7 @@ MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
 ///  primaryexpr ::= (parenexpr
 ///  primaryexpr ::= symbol
 ///  primaryexpr ::= number
+///  primaryexpr ::= '.'
 ///  primaryexpr ::= ~,+,- primaryexpr
 bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   switch (Lexer.getKind()) {
@@ -253,6 +254,17 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     EndLoc = Lexer.getLoc();
     Lex(); // Eat token.
     return false;
+  case AsmToken::Dot: {
+    // This is a '.' reference, which references the current PC.  Emit a
+    // temporary label to the streamer and refer to it.
+    MCSymbol *Sym = Ctx.CreateTempSymbol();
+    Out.EmitLabel(Sym);
+    Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
+    EndLoc = Lexer.getLoc();
+    Lex(); // Eat identifier.
+    return false;
+  }
+      
   case AsmToken::LParen:
     Lex(); // Eat the '('.
     return ParseParenExpr(Res, EndLoc);

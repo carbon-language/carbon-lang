@@ -61,3 +61,14 @@ n:
         
         
         movw	$8, (42)+66(%eax)
+
+// "." support:
+_f0:
+L0:
+        jmp L1
+        .long . - L0
+L1:
+        jmp A
+        .long . - L1
+
+        .zerofill __DATA,_bss,A,0
