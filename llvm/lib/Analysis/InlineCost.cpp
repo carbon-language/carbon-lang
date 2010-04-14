@@ -24,28 +24,29 @@ using namespace llvm;
 unsigned InlineCostAnalyzer::FunctionInfo::
 CountCodeReductionForConstant(Value *V) {
   unsigned Reduction = 0;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (isa<BranchInst>(*UI) || isa<SwitchInst>(*UI)) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    User *U = *UI;
+    if (isa<BranchInst>(U) || isa<SwitchInst>(U)) {
       // We will be able to eliminate all but one of the successors.
-      const TerminatorInst &TI = cast<TerminatorInst>(**UI);
+      const TerminatorInst &TI = cast<TerminatorInst>(*U);
       const unsigned NumSucc = TI.getNumSuccessors();
       unsigned Instrs = 0;
       for (unsigned I = 0; I != NumSucc; ++I)
         Instrs += Metrics.NumBBInsts[TI.getSuccessor(I)];
       // We don't know which blocks will be eliminated, so use the average size.
       Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
-    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
       // Turning an indirect call into a direct call is a BIG win
       if (CI->getCalledValue() == V)
         Reduction += InlineConstants::IndirectCallBonus;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       // Turning an indirect call into a direct call is a BIG win
       if (II->getCalledValue() == V)
         Reduction += InlineConstants::IndirectCallBonus;
     } else {
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
-      Instruction &Inst = cast<Instruction>(**UI);
+      Instruction &Inst = cast<Instruction>(*U);
 
       // We can't constant propagate instructions which have effects or
       // read memory.
@@ -74,7 +75,7 @@ CountCodeReductionForConstant(Value *V) {
         Reduction += CountCodeReductionForConstant(&Inst);
       }
     }
-
+  }
   return Reduction;
 }
 
