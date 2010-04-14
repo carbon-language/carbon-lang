@@ -156,7 +156,7 @@ public:
 
   /// getCaller - Return the caller function for this call site
   ///
-  Function *getCaller() const { return (*this)->getParent()->getParent(); }
+  FunTy *getCaller() const { return (*this)->getParent()->getParent(); }
 
 private:
   /// Returns the operand number of the first argument
