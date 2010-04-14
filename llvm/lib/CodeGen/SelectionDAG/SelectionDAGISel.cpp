@@ -193,26 +193,21 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
-  Function &Fn = *mf.getFunction();
-
   // Do some sanity-checking on the command-line options.
   assert((!EnableFastISelVerbose || EnableFastISel) &&
          "-fast-isel-verbose requires -fast-isel");
   assert((!EnableFastISelAbort || EnableFastISel) &&
          "-fast-isel-abort requires -fast-isel");
 
-  // Get alias analysis for load/store combining.
-  AA = &getAnalysis<AliasAnalysis>();
-
-  MF = &mf;
+  Function &Fn = *mf.getFunction();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
-  if (Fn.hasGC())
-    GFI = &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn);
-  else
-    GFI = 0;
+  MF = &mf;
   RegInfo = &MF->getRegInfo();
+  AA = &getAnalysis<AliasAnalysis>();
+  GFI = Fn.hasGC() ? &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn) : 0;
+
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
 
   CurDAG->init(*MF);
