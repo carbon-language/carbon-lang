@@ -15,6 +15,7 @@
 
 #include "ARMDisassemblerCore.h"
 #include "ARMAddressingModes.h"
+#include "llvm/Support/raw_ostream.h"
 
 /// ARMGenInstrInfo.inc - ARMGenInstrInfo.inc contains the static const
 /// TargetInstrDesc ARMInsts[] definition and the TargetOperandInfo[]'s
@@ -885,14 +886,19 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   return false;
 }
 
-static inline uint32_t getBFCInvMask(uint32_t insn) {
+static inline bool getBFCInvMask(uint32_t insn, uint32_t &mask) {
   uint32_t lsb = slice(insn, 11, 7);
   uint32_t msb = slice(insn, 20, 16);
   uint32_t Val = 0;
-  assert(lsb <= msb && "Encoding error: lsb > msb");
+  if (lsb > msb) {
+    errs() << "Encoding error: lsb > msb\n";
+    return false;
+  }
+
   for (uint32_t i = lsb; i <= msb; ++i)
     Val |= (1 << i);
-  return ~Val;
+  mask = ~Val;
+  return true;
 }
 
 static inline bool SaturateOpcode(unsigned Opcode) {
@@ -982,7 +988,11 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateReg(Opcode == ARM::BFC ? 0
                                        : getRegisterEnum(ARM::GPRRegClassID,
                                                          decodeRm(insn))));
-    MI.addOperand(MCOperand::CreateImm(getBFCInvMask(insn)));
+    uint32_t mask = 0;
+    if (!getBFCInvMask(insn, mask))
+      return false;
+
+    MI.addOperand(MCOperand::CreateImm(mask));
     OpIdx += 2;
     return true;
   }
