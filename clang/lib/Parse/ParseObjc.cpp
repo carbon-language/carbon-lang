@@ -1426,8 +1426,12 @@ Parser::DeclPtrTy Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
       break;
     ConsumeToken(); // consume ','
   }
-  if (Tok.isNot(tok::semi))
+  if (Tok.isNot(tok::semi)) {
     Diag(Tok, diag::err_expected_semi_after) << "@dynamic";
+    SkipUntil(tok::semi);
+  }
+  else
+    ConsumeToken(); // consume ';'
   return DeclPtrTy();
 }
 
