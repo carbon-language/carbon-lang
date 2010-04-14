@@ -41,7 +41,7 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
 public:
   typedef typename super::pointer pointer;
 
-  inline PredIterator(Ptr *bb) : It(bb->use_begin()) {
+  explicit inline PredIterator(Ptr *bb) : It(bb->use_begin()) {
     advancePastNonTerminators();
   }
   inline PredIterator(Ptr *bb, bool) : It(bb->use_end()) {}
@@ -101,7 +101,7 @@ public:
   typedef typename super::pointer pointer;
   // TODO: This can be random access iterator, only operator[] missing.
 
-  inline SuccIterator(Term_ T) : Term(T), idx(0) {         // begin iterator
+  explicit inline SuccIterator(Term_ T) : Term(T), idx(0) {// begin iterator
     assert(T && "getTerminator returned null!");
   }
   inline SuccIterator(Term_ T, bool)                       // end iterator
