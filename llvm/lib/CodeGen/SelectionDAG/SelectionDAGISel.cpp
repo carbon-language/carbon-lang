@@ -180,10 +180,6 @@ SelectionDAGISel::~SelectionDAGISel() {
   delete FuncInfo;
 }
 
-unsigned SelectionDAGISel::MakeReg(EVT VT) {
-  return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
-}
-
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addPreserved<AliasAnalysis>();

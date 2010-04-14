@@ -62,8 +62,6 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
-  unsigned MakeReg(EVT VT);
-
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   
   /// PreprocessISelDAG - This hook allows targets to hack on the graph before
