@@ -30,89 +30,12 @@ using namespace llvm;
 //                            CallSite Class
 //===----------------------------------------------------------------------===//
 
-#define CALLSITE_DELEGATE_GETTER(METHOD) \
-  Instruction *II = getInstruction();    \
-  return isCall()                        \
-    ? cast<CallInst>(II)->METHOD         \
-    : cast<InvokeInst>(II)->METHOD
-
-#define CALLSITE_DELEGATE_SETTER(METHOD) \
-  Instruction *II = getInstruction();    \
-  if (isCall())                          \
-    cast<CallInst>(II)->METHOD;          \
-  else                                   \
-    cast<InvokeInst>(II)->METHOD
-
-CallingConv::ID CallSite::getCallingConv() const {
-  CALLSITE_DELEGATE_GETTER(getCallingConv());
-}
-void CallSite::setCallingConv(CallingConv::ID CC) {
-  CALLSITE_DELEGATE_SETTER(setCallingConv(CC));
-}
-const AttrListPtr &CallSite::getAttributes() const {
-  CALLSITE_DELEGATE_GETTER(getAttributes());
-}
-void CallSite::setAttributes(const AttrListPtr &PAL) {
-  CALLSITE_DELEGATE_SETTER(setAttributes(PAL));
-}
-bool CallSite::paramHasAttr(uint16_t i, Attributes attr) const {
-  CALLSITE_DELEGATE_GETTER(paramHasAttr(i, attr));
-}
-uint16_t CallSite::getParamAlignment(uint16_t i) const {
-  CALLSITE_DELEGATE_GETTER(getParamAlignment(i));
-}
-
-/// @brief Return true if the call should not be inlined.
-bool CallSite::isNoInline() const {
-  CALLSITE_DELEGATE_GETTER(isNoInline());
-}
-
-void CallSite::setIsNoInline(bool Value) {
-  CALLSITE_DELEGATE_GETTER(setIsNoInline(Value));
-}
-
-
-bool CallSite::doesNotAccessMemory() const {
-  CALLSITE_DELEGATE_GETTER(doesNotAccessMemory());
-}
-void CallSite::setDoesNotAccessMemory(bool doesNotAccessMemory) {
-  CALLSITE_DELEGATE_SETTER(setDoesNotAccessMemory(doesNotAccessMemory));
-}
-bool CallSite::onlyReadsMemory() const {
-  CALLSITE_DELEGATE_GETTER(onlyReadsMemory());
-}
-void CallSite::setOnlyReadsMemory(bool onlyReadsMemory) {
-  CALLSITE_DELEGATE_SETTER(setOnlyReadsMemory(onlyReadsMemory));
-}
-bool CallSite::doesNotReturn() const {
- CALLSITE_DELEGATE_GETTER(doesNotReturn());
-}
-void CallSite::setDoesNotReturn(bool doesNotReturn) {
-  CALLSITE_DELEGATE_SETTER(setDoesNotReturn(doesNotReturn));
-}
-bool CallSite::doesNotThrow() const {
-  CALLSITE_DELEGATE_GETTER(doesNotThrow());
-}
-void CallSite::setDoesNotThrow(bool doesNotThrow) {
-  CALLSITE_DELEGATE_SETTER(setDoesNotThrow(doesNotThrow));
-}
-
-bool CallSite::hasArgument(const Value *Arg) const {
-  for (arg_iterator AI = this->arg_begin(), E = this->arg_end(); AI != E; ++AI)
-    if (AI->get() == Arg)
-      return true;
-  return false;
-}
-
 User::op_iterator CallSite::getCallee() const {
   Instruction *II(getInstruction());
   return isCall()
     ? cast<CallInst>(II)->op_begin()
     : cast<InvokeInst>(II)->op_end() - 3; // Skip BB, BB, Function
 }
-
-#undef CALLSITE_DELEGATE_GETTER
-#undef CALLSITE_DELEGATE_SETTER
 
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
