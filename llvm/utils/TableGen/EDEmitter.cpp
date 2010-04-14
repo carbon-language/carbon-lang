@@ -896,8 +896,6 @@ void EDEmitter::runHeader(raw_ostream &o) {
   o << "#ifndef EDInfo_" << "\n";
   o << "#define EDInfo_" << "\n";
   o << "\n";
-  o << "#include <inttypes.h>" << "\n";
-  o << "\n";
   o << "#define EDIS_MAX_OPERANDS " << format("%d", EDIS_MAX_OPERANDS) << "\n";
   o << "#define EDIS_MAX_SYNTAXES " << format("%d", EDIS_MAX_SYNTAXES) << "\n";
   o << "\n";
