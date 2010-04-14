@@ -80,7 +80,6 @@ class ZExtInst;
 //===----------------------------------------------------------------------===//
 /// SelectionDAGBuilder - This is the common target-independent lowering
 /// implementation that is parameterized by a TargetLowering object.
-/// Also, targets can overload any lowering method.
 ///
 class SelectionDAGBuilder {
   MachineBasicBlock *CurMBB;
