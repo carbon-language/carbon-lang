@@ -276,3 +276,20 @@ namespace test12 {
     return Foo<long>(t, true);
   }
 }
+
+// PR6514
+namespace test13 {
+  template <int N, template <int> class Temp>
+  class Role : public Temp<N> {
+    friend class Temp<N>;
+    int x;
+  };
+
+  template <int N> class Foo {
+    void foo(Role<N, test13::Foo> &role) {
+      (void) role.x;
+    }
+  };
+
+  template class Foo<0>;
+}

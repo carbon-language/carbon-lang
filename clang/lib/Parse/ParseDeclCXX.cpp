@@ -780,9 +780,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   Action::DeclResult TagOrTempResult = true; // invalid
   Action::TypeResult TypeResult = true; // invalid
 
-  // FIXME: When TUK == TUK_Reference and we have a template-id, we need
-  // to turn that template-id into a type.
-
   bool Owned = false;
   if (TemplateId) {
     // Explicit specialization, class template partial specialization,
@@ -806,7 +803,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                              TemplateArgsPtr,
                                              TemplateId->RAngleLoc,
                                              AttrList);
-    } else if (TUK == Action::TUK_Reference) {
+
+    // Friend template-ids are treated as references unless
+    // they have template headers, in which case they're ill-formed
+    // (FIXME: "template <class T> friend class A<T>::B<int>;").
+    // We diagnose this error in ActOnClassTemplateSpecialization.
+    } else if (TUK == Action::TUK_Reference ||
+               (TUK == Action::TUK_Friend &&
+                TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
       TypeResult
         = Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
                                       TemplateId->TemplateNameLoc,
