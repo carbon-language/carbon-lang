@@ -29,16 +29,17 @@ template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
 class PredIterator : public std::iterator<std::forward_iterator_tag,
                                           _Ptr, ptrdiff_t> {
   typedef std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> super;
-  _USE_iterator It;
-public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
-  typedef typename super::pointer pointer;
+  _USE_iterator It;
 
   inline void advancePastNonTerminators() {
     // Loop to ignore non terminator uses (for example PHI nodes)...
     while (!It.atEnd() && !isa<TerminatorInst>(*It))
       ++It;
   }
+
+public:
+  typedef typename super::pointer pointer;
 
   inline PredIterator(_Ptr *bb) : It(bb->use_begin()) {
     advancePastNonTerminators();
