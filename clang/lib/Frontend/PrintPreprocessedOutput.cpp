@@ -125,8 +125,9 @@ public:
   }
   bool MoveToLine(unsigned LineNo);
 
-  bool AvoidConcat(const Token &PrevTok, const Token &Tok) {
-    return ConcatInfo.AvoidConcat(PrevTok, Tok);
+  bool AvoidConcat(const Token &PrevPrevTok, const Token &PrevTok, 
+                   const Token &Tok) {
+    return ConcatInfo.AvoidConcat(PrevPrevTok, PrevTok, Tok);
   }
   void WriteLineInfo(unsigned LineNo, const char *Extra=0, unsigned ExtraLen=0);
 
@@ -396,6 +397,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                                     PrintPPOutputPPCallbacks *Callbacks,
                                     llvm::raw_ostream &OS) {
   char Buffer[256];
+  Token PrevPrevTok;
   Token PrevTok;
   while (1) {
 
@@ -407,7 +409,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                // useful to look at and no concatenation could happen anyway.
                (Callbacks->hasEmittedTokensOnThisLine() &&
                 // Don't print "-" next to "-", it would form "--".
-                Callbacks->AvoidConcat(PrevTok, Tok))) {
+                Callbacks->AvoidConcat(PrevPrevTok, PrevTok, Tok))) {
       OS << ' ';
     }
 
@@ -438,6 +440,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
 
     if (Tok.is(tok::eof)) break;
 
+    PrevPrevTok = PrevTok;
     PrevTok = Tok;
     PP.Lex(Tok);
   }

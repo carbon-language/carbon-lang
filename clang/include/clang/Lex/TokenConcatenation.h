@@ -58,7 +58,9 @@ namespace clang {
   public:
     TokenConcatenation(Preprocessor &PP);
 
-    bool AvoidConcat(const Token &PrevTok, const Token &Tok) const;
+    bool AvoidConcat(const Token &PrevPrevTok, 
+                     const Token &PrevTok, 
+                     const Token &Tok) const;
 
   private:
     /// StartsWithL - Return true if the spelling of this token starts with 'L'.

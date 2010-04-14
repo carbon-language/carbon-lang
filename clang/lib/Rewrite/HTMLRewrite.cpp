@@ -533,6 +533,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
     std::string Expansion = EscapeText(TmpPP.getSpelling(Tok));
     unsigned LineLen = Expansion.size();
 
+    Token PrevPrevTok;
     Token PrevTok = Tok;
     // Okay, eat this token, getting the next one.
     TmpPP.Lex(Tok);
@@ -553,13 +554,14 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
       // If the tokens were already space separated, or if they must be to avoid
       // them being implicitly pasted, add a space between them.
       if (Tok.hasLeadingSpace() ||
-          ConcatInfo.AvoidConcat(PrevTok, Tok))
+          ConcatInfo.AvoidConcat(PrevPrevTok, PrevTok, Tok))
         Expansion += ' ';
 
       // Escape any special characters in the token text.
       Expansion += EscapeText(TmpPP.getSpelling(Tok));
       LineLen += Expansion.size();
 
+      PrevPrevTok = PrevTok;
       PrevTok = Tok;
       TmpPP.Lex(Tok);
     }
