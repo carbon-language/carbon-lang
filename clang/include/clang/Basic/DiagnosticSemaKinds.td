@@ -1122,9 +1122,13 @@ def err_member_call_without_object : Error<
   "call to non-static member function without an object argument">;
 
 // C++ Address of Overloaded Function
+def err_addr_ovl_no_viable : Error<
+  "address of overloaded function %0 does not match required type %1">;
 def err_addr_ovl_ambiguous : Error<
   "address of overloaded function %0 is ambiguous">;
-
+def err_addr_ovl_not_func_ptrref : Error<
+  "address of overloaded function %0 cannot be converted to type %1">;
+  
 // C++ Template Declarations
 def err_template_param_shadow : Error<
   "declaration of %0 shadows template parameter">;
@@ -1239,9 +1243,6 @@ def err_template_arg_no_ref_bind : Error<
 def err_template_arg_ref_bind_ignores_quals : Error<
   "reference binding of non-type template parameter of type %0 to template "
   "argument of type %1 ignores qualifiers">;
-def err_template_arg_unresolved_overloaded_function : Error<
-  "overloaded function cannot be resolved to a non-type template parameter of "
-  "type %0">;
 def err_template_arg_not_decl_ref : Error<
   "non-type template argument does not refer to any declaration">;
 def err_template_arg_not_object_or_func_form : Error<

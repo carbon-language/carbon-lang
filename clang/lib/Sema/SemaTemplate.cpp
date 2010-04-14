@@ -2368,14 +2368,8 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     DRE = dyn_cast<DeclRefExpr>(Arg);
 
   if (!DRE) {
-    if (S.Context.hasSameUnqualifiedType(ArgType, S.Context.OverloadTy)) {
-      S.Diag(Arg->getLocStart(), 
-             diag::err_template_arg_unresolved_overloaded_function)
-        << ParamType << Arg->getSourceRange();
-    } else {
-      S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
-        << Arg->getSourceRange();
-    }
+    S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
+      << Arg->getSourceRange();
     S.Diag(Param->getLocation(), diag::note_template_param_here);
     return true;
   }
@@ -2848,16 +2842,19 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
        ParamType->getAs<MemberPointerType>()->getPointeeType()
          ->isFunctionType())) {
 
-    if (FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Arg, ParamType, 
-                                                              true,
-                                                              FoundResult)) {
-      if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+    if (Arg->getType() == Context.OverloadTy) {
+      if (FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Arg, ParamType, 
+                                                                true,
+                                                                FoundResult)) {
+        if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+          return true;
+
+        Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
+        ArgType = Arg->getType();
+      } else
         return true;
-
-      Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
-      ArgType = Arg->getType();
     }
-
+        
     if (!ParamType->isMemberPointerType())
       return CheckTemplateArgumentAddressOfObjectOrFunction(*this, Param,
                                                             ParamType, 
@@ -2902,17 +2899,20 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     assert(ParamRefType->getPointeeType()->isObjectType() &&
            "Only object references allowed here");
 
-    if (FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Arg, 
-                                               ParamRefType->getPointeeType(), 
-                                                              true,
-                                                              FoundResult)) {
-      if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+    if (Arg->getType() == Context.OverloadTy) {
+      if (FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Arg, 
+                                                 ParamRefType->getPointeeType(), 
+                                                                true,
+                                                                FoundResult)) {
+        if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+          return true;
+
+        Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
+        ArgType = Arg->getType();
+      } else
         return true;
-
-      Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
-      ArgType = Arg->getType();
     }
-
+    
     return CheckTemplateArgumentAddressOfObjectOrFunction(*this, Param, 
                                                           ParamType,
                                                           Arg, Converted);

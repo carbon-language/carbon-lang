@@ -809,15 +809,17 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
 
   bool WasOverloadedFunction = false;
   DeclAccessPair FoundOverload;
-  if (FunctionDecl *Fn
-        = Self.ResolveAddressOfOverloadedFunction(SrcExpr, DestType, false,
-                                                  FoundOverload)) {
-    CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
-    SrcType = Self.Context.getMemberPointerType(Fn->getType(),
-                    Self.Context.getTypeDeclType(M->getParent()).getTypePtr());
-    WasOverloadedFunction = true;
+  if (SrcExpr->getType() == Self.Context.OverloadTy) {
+    if (FunctionDecl *Fn
+          = Self.ResolveAddressOfOverloadedFunction(SrcExpr, DestType, false,
+                                                    FoundOverload)) {
+      CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
+      SrcType = Self.Context.getMemberPointerType(Fn->getType(),
+                      Self.Context.getTypeDeclType(M->getParent()).getTypePtr());
+      WasOverloadedFunction = true;
+    }
   }
-
+  
   const MemberPointerType *SrcMemPtr = SrcType->getAs<MemberPointerType>();
   if (!SrcMemPtr) {
     msg = diag::err_bad_static_cast_member_pointer_nonmp;

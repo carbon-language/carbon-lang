@@ -613,31 +613,36 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // type "pointer to T." The result is a pointer to the
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
-  } else if (FunctionDecl *Fn
-               = ResolveAddressOfOverloadedFunction(From, ToType, false,
-                                                    AccessPair)) {
-    // Address of overloaded function (C++ [over.over]).
-    SCS.First = ICK_Function_To_Pointer;
+  } else if (From->getType() == Context.OverloadTy) {
+    if (FunctionDecl *Fn
+          = ResolveAddressOfOverloadedFunction(From, ToType, false, 
+                                               AccessPair)) {
+      // Address of overloaded function (C++ [over.over]).
+      SCS.First = ICK_Function_To_Pointer;
 
-    // We were able to resolve the address of the overloaded function,
-    // so we can convert to the type of that function.
-    FromType = Fn->getType();
-    if (ToType->isLValueReferenceType())
-      FromType = Context.getLValueReferenceType(FromType);
-    else if (ToType->isRValueReferenceType())
-      FromType = Context.getRValueReferenceType(FromType);
-    else if (ToType->isMemberPointerType()) {
-      // Resolve address only succeeds if both sides are member pointers,
-      // but it doesn't have to be the same class. See DR 247.
-      // Note that this means that the type of &Derived::fn can be
-      // Ret (Base::*)(Args) if the fn overload actually found is from the
-      // base class, even if it was brought into the derived class via a
-      // using declaration. The standard isn't clear on this issue at all.
-      CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
-      FromType = Context.getMemberPointerType(FromType,
-                    Context.getTypeDeclType(M->getParent()).getTypePtr());
-    } else
-      FromType = Context.getPointerType(FromType);
+      // We were able to resolve the address of the overloaded function,
+      // so we can convert to the type of that function.
+      FromType = Fn->getType();
+      if (ToType->isLValueReferenceType())
+        FromType = Context.getLValueReferenceType(FromType);
+      else if (ToType->isRValueReferenceType())
+        FromType = Context.getRValueReferenceType(FromType);
+      else if (ToType->isMemberPointerType()) {
+        // Resolve address only succeeds if both sides are member pointers,
+        // but it doesn't have to be the same class. See DR 247.
+        // Note that this means that the type of &Derived::fn can be
+        // Ret (Base::*)(Args) if the fn overload actually found is from the
+        // base class, even if it was brought into the derived class via a
+        // using declaration. The standard isn't clear on this issue at all.
+        CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
+        FromType = Context.getMemberPointerType(FromType,
+                      Context.getTypeDeclType(M->getParent()).getTypePtr());
+      } else {
+        FromType = Context.getPointerType(FromType);
+      }
+    } else {
+      return false;
+    }
   } else {
     // We don't require any conversions for the first step.
     SCS.First = ICK_Identity;
@@ -5295,15 +5300,6 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     IsMember = true;
   }
 
-  // We only look at pointers or references to functions.
-  FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
-  if (!FunctionType->isFunctionType())
-    return 0;
-
-  // Find the actual overloaded function declaration.
-  if (From->getType() != Context.OverloadTy)
-    return 0;
-
   // C++ [over.over]p1:
   //   [...] [Note: any redundant set of parentheses surrounding the
   //   overloaded function name is ignored (5.1). ]
@@ -5316,6 +5312,18 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     OvlExpr->getExplicitTemplateArgs().copyInto(ETABuffer);
     ExplicitTemplateArgs = &ETABuffer;
   }
+  
+  // We expect a pointer or reference to function, or a function pointer.
+  FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
+  if (!FunctionType->isFunctionType()) {
+    if (Complain)
+      Diag(From->getLocStart(), diag::err_addr_ovl_not_func_ptrref)
+        << OvlExpr->getName() << ToType;
+    
+    return 0;
+  }
+
+  assert(From->getType() == Context.OverloadTy);
 
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
@@ -5397,9 +5405,19 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   // If there were 0 or 1 matches, we're done.
-  if (Matches.empty())
+  if (Matches.empty()) {
+    if (Complain) {
+      Diag(From->getLocStart(), diag::err_addr_ovl_no_viable)
+        << OvlExpr->getName() << FunctionType;
+      for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+                                 E = OvlExpr->decls_end(); 
+           I != E; ++I)
+        if (FunctionDecl *F = dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()))
+          NoteOverloadCandidate(F);
+    }
+    
     return 0;
-  else if (Matches.size() == 1) {
+  } else if (Matches.size() == 1) {
     FunctionDecl *Result = Matches[0].second;
     FoundResult = Matches[0].first;
     MarkDeclarationReferenced(From->getLocStart(), Result);
