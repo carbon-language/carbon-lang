@@ -948,10 +948,10 @@ CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
  * \brief Describe the "language" of the entity referred to by a cursor.
  */
 CINDEX_LINKAGE enum CXLanguageKind {
+  CXLanguage_Invalid = 0,
   CXLanguage_C,
   CXLanguage_ObjC,
-  CXLanguage_CPlusPlus,
-  CXLanguage_Invalid
+  CXLanguage_CPlusPlus
 };
 
 /**
