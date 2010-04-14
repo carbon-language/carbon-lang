@@ -26,6 +26,20 @@ ActionBase::~ActionBase() {}
 ///  Out-of-line virtual destructor to provide home for Action class.
 Action::~Action() {}
 
+Action::ObjCMessageKind Action::getObjCMessageKind(Scope *S,
+                                                   IdentifierInfo *&Name,
+                                                   SourceLocation NameLoc,
+                                                   bool IsSuper,
+                                                   bool HasTrailingDot) {
+  if (IsSuper && !HasTrailingDot && S->isInObjcMethodScope())
+    return ObjCSuperMessage;
+      
+  if (getTypeName(*Name, NameLoc, S))
+    return ObjCClassMessage;
+      
+  return ObjCInstanceMessage;
+}
+
 // Defined out-of-line here because of dependecy on AttributeList
 Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
                                               SourceLocation UsingLoc,

@@ -1719,17 +1719,18 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
   if (Tok.is(tok::identifier)) {
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-
-    // If this is '[' 'super', then this is a magic superclass message.
-    // We parse '[' 'super' '.' 'foo'  as an expression?
-    if ((II == Ident_super && GetLookAheadToken(1).isNot(tok::period) &&
-         CurScope->isInObjcMethodScope()) ||
-        // Check to see if this is a typename.  If so, it is a class message.
-        Actions.getTypeName(*II, Tok.getLocation(), CurScope)) {
-      SourceLocation NameLoc = ConsumeToken();
-      return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, II,
+    IdentifierInfo *Name = Tok.getIdentifierInfo();
+    SourceLocation NameLoc = Tok.getLocation();
+    switch (Actions.getObjCMessageKind(CurScope, Name, NameLoc,
+                                       Name == Ident_super,
+                                       NextToken().is(tok::period))) {
+    case Action::ObjCSuperMessage:
+    case Action::ObjCClassMessage:
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), Name,
                                             ExprArg(Actions));
+        
+    case Action::ObjCInstanceMessage:
+      break;
     }
   }
   

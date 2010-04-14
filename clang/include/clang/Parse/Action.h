@@ -2344,6 +2344,52 @@ public:
     return ExprEmpty();
   }
 
+  /// \brief Describes the kind of message expression indicated by a message
+  /// send that starts with an identifier.
+  enum ObjCMessageKind {
+    /// \brief The message is sent to 'super'.
+    ObjCSuperMessage,
+    /// \brief The message is an instance message.
+    ObjCInstanceMessage,
+    /// \brief The message is a class message, and the identifier is a type
+    /// name.
+    ObjCClassMessage
+  };
+  
+  /// \brief Determine the kind of Objective-C message send that we will be
+  /// performing based on the identifier given.
+  ///
+  /// This action determines how a message send that starts with [
+  /// identifier (followed by another identifier) will be parsed,
+  /// e.g., as a class message, instance message, super message. The
+  /// result depends on the meaning of the given identifier. If the
+  /// identifier is unknown, the action should indicate that the
+  /// message is an instance message.
+  ///
+  /// By default, this routine applies syntactic disambiguation and uses
+  /// \c getTypeName() to determine whether the identifier refers to a type.
+  /// However, \c Action subclasses may override this routine to improve
+  /// error recovery.
+  ///
+  /// \param S The scope in which the message send occurs.
+  ///
+  /// \param Name The identifier following the '['. This identifier
+  /// may be modified by the action, if, for example, typo-correction
+  /// finds a different class name.
+  ///
+  /// \param NameLoc The location of the identifier.
+  ///
+  /// \param IsSuper Whether the name is the pseudo-keyword "super".
+  ///
+  /// \param HasTrailingDot Whether the name is followed by a period.
+  /// 
+  /// \returns The kind of message send.
+  virtual ObjCMessageKind getObjCMessageKind(Scope *S,
+                                             IdentifierInfo *&Name,
+                                             SourceLocation NameLoc,
+                                             bool IsSuper,
+                                             bool HasTrailingDot);
+  
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from NumArgs.
