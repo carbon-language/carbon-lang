@@ -15,8 +15,9 @@
 #define LLVM_CODEGEN_FASTISEL_H
 
 #include "llvm/ADT/DenseMap.h"
+#ifndef NDEBUG
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
+#endif
 
 namespace llvm {
 

@@ -23,7 +23,7 @@
 #include "llvm/ADT/SmallSet.h"
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include <vector>
 
 namespace llvm {
