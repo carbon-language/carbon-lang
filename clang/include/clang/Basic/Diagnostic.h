@@ -214,7 +214,8 @@ private:
 
   unsigned NumWarnings;       // Number of warnings reported
   unsigned NumErrors;         // Number of errors reported
-
+  unsigned NumErrorsSuppressed; // Number of errors suppressed
+  
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
 
@@ -343,6 +344,7 @@ public:
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
   unsigned getNumErrors() const { return NumErrors; }
+  unsigned getNumErrorsSuppressed() const { return NumErrorsSuppressed; }
   unsigned getNumWarnings() const { return NumWarnings; }
 
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message

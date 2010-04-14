@@ -515,7 +515,8 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
 
   if (getDiagnosticOpts().ShowCarets) {
     unsigned NumWarnings = getDiagnostics().getNumWarnings();
-    unsigned NumErrors = getDiagnostics().getNumErrors();
+    unsigned NumErrors = getDiagnostics().getNumErrors() - 
+                               getDiagnostics().getNumErrorsSuppressed();
     
     if (NumWarnings)
       OS << NumWarnings << " warning" << (NumWarnings == 1 ? "" : "s");

@@ -227,6 +227,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   
   NumWarnings = 0;
   NumErrors = 0;
+  NumErrorsSuppressed = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
   LastDiagLevel = Ignored;
@@ -537,8 +538,14 @@ bool Diagnostic::ProcessDiag() {
 
   // If a fatal error has already been emitted, silence all subsequent
   // diagnostics.
-  if (FatalErrorOccurred)
+  if (FatalErrorOccurred) {
+    if (DiagLevel >= Diagnostic::Error) {
+      ++NumErrors;
+      ++NumErrorsSuppressed;
+    }
+    
     return false;
+  }
 
   // If the client doesn't care about this message, don't issue it.  If this is
   // a note and the last real diagnostic was ignored, ignore it too.
