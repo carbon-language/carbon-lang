@@ -30,7 +30,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -38,9 +37,8 @@
 #include <set>
 using namespace llvm;
 
-STATISTIC(NumArgumentsEliminated , "Number of unread args removed");
-STATISTIC(NumRetValsEliminated   , "Number of unused return values removed");
-STATISTIC(NumParametersEliminated, "Number of parameters replaced with undef");
+STATISTIC(NumArgumentsEliminated, "Number of unread args removed");
+STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");
 
 namespace {
   /// DAE - The dead argument elimination pass.
@@ -142,7 +140,6 @@ namespace {
     void MarkLive(const Function &F);
     void PropagateLiveness(const RetOrArg &RA);
     bool RemoveDeadStuffFromFunction(Function *F);
-    bool RemoveDeadParamsFromCallersOf(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
   };
 }
@@ -400,9 +397,7 @@ DAE::Liveness DAE::SurveyUses(const Value *V, UseVector &MaybeLiveUses) {
 // map.
 //
 // We consider arguments of non-internal functions to be intrinsically alive as
-// well as arguments to functions which have their "address taken". Externally
-// visible functions are assumed to only have their return values intrinsically
-// alive, permitting removal of parameters to unused arguments in callers.
+// well as arguments to functions which have their "address taken".
 //
 void DAE::SurveyFunction(const Function &F) {
   unsigned RetCount = NumRetVals(&F);
@@ -425,14 +420,7 @@ void DAE::SurveyFunction(const Function &F) {
         return;
       }
 
-  if (F.hasExternalLinkage() && !F.isDeclaration()) {
-    DEBUG(dbgs() << "DAE - Intrinsically live return from " << F.getName()
-                 << "\n");
-    // Mark the return values alive.
-    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
-      MarkLive(CreateRet(&F, i));
-  } else if (!F.hasLocalLinkage() &&
-             (!ShouldHackArguments() || F.isIntrinsic())) {
+  if (!F.hasLocalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
     MarkLive(F);
     return;
   }
@@ -544,14 +532,14 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
 /// values (according to Uses) live as well.
 void DAE::MarkLive(const Function &F) {
   DEBUG(dbgs() << "DAE - Intrinsically live fn: " << F.getName() << "\n");
-  // Mark the function as live.
-  LiveFunctions.insert(&F);
-  // Mark all arguments as live.
-  for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
-    PropagateLiveness(CreateArg(&F, i));
-  // Mark all return values as live.
-  for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
-    PropagateLiveness(CreateRet(&F, i));
+    // Mark the function as live.
+    LiveFunctions.insert(&F);
+    // Mark all arguments as live.
+    for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
+      PropagateLiveness(CreateArg(&F, i));
+    // Mark all return values as live.
+    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+      PropagateLiveness(CreateRet(&F, i));
 }
 
 /// MarkLive - Mark the given return value or argument as live. Additionally,
@@ -865,7 +853,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
         Value *RetVal;
 
-        if (NFTy->getReturnType()->isVoidTy()) {
+        if (NFTy->getReturnType() == Type::getVoidTy(F->getContext())) {
           RetVal = 0;
         } else {
           assert (RetTy->isStructTy());
@@ -971,10 +959,7 @@ bool DAE::runOnModule(Module &M) {
     // Increment now, because the function will probably get removed (ie.
     // replaced by a new one).
     Function *F = I++;
-    if (F->hasExternalLinkage() && !F->isDeclaration())
-      Changed |= RemoveDeadParamsFromCallersOf(F);
-    else
-      Changed |= RemoveDeadStuffFromFunction(F);
+    Changed |= RemoveDeadStuffFromFunction(F);
   }
   return Changed;
 }

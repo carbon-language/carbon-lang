@@ -1,4 +1,5 @@
 ; RUN: opt -deadargelim -S %s | FileCheck %s
+; XFAIL: *
 
 define void @test(i32) {
   ret void
