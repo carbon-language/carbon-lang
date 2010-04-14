@@ -57,13 +57,6 @@ public:
   /// allocated to hold a pointer to the hidden sret parameter.
   unsigned DemoteRegister;
 
-  explicit FunctionLoweringInfo(TargetLowering &TLI);
-
-  /// set - Initialize this FunctionLoweringInfo with the given Function
-  /// and its associated MachineFunction.
-  ///
-  void set(Function &Fn, MachineFunction &MF, bool EnableFastISel);
-
   /// MBBMap - A mapping from LLVM basic blocks to their machine code entry.
   DenseMap<const BasicBlock*, MachineBasicBlock *> MBBMap;
 
@@ -82,6 +75,28 @@ public:
   SmallSet<Instruction*, 8> CatchInfoFound;
 #endif
 
+  struct LiveOutInfo {
+    unsigned NumSignBits;
+    APInt KnownOne, KnownZero;
+    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
+  };
+  
+  /// LiveOutRegInfo - Information about live out vregs, indexed by their
+  /// register number offset by 'FirstVirtualRegister'.
+  std::vector<LiveOutInfo> LiveOutRegInfo;
+
+  explicit FunctionLoweringInfo(TargetLowering &TLI);
+
+  /// set - Initialize this FunctionLoweringInfo with the given Function
+  /// and its associated MachineFunction.
+  ///
+  void set(Function &Fn, MachineFunction &MF, bool EnableFastISel);
+
+  /// clear - Clear out all the function-specific state. This returns this
+  /// FunctionLoweringInfo to an empty state, ready to be used for a
+  /// different function.
+  void clear();
+
   unsigned MakeReg(EVT VT);
   
   /// isExportedInst - Return true if the specified value is an instruction
@@ -97,21 +112,6 @@ public:
     assert(R == 0 && "Already initialized this value register!");
     return R = CreateRegForValue(V);
   }
-  
-  struct LiveOutInfo {
-    unsigned NumSignBits;
-    APInt KnownOne, KnownZero;
-    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
-  };
-  
-  /// LiveOutRegInfo - Information about live out vregs, indexed by their
-  /// register number offset by 'FirstVirtualRegister'.
-  std::vector<LiveOutInfo> LiveOutRegInfo;
-
-  /// clear - Clear out all the function-specific state. This returns this
-  /// FunctionLoweringInfo to an empty state, ready to be used for a
-  /// different function.
-  void clear();
 };
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
