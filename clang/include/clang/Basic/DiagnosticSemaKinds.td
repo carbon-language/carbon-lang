@@ -1781,6 +1781,8 @@ def warn_precedence_bitwise_rel : Warning<
   InGroup<Parentheses>;
 def note_precedence_bitwise_first : Note<
   "place parentheses around the %0 expression to evaluate it first">;
+def note_precedence_bitwise_silence : Note<
+  "place parentheses around the %0 expression to silence this warning">;
   
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
@@ -2227,6 +2229,8 @@ def warn_condition_is_idiomatic_assignment : Warning<"using the result "
   InGroup<DiagGroup<"idiomatic-parentheses">>, DefaultIgnore;
 def note_condition_assign_to_comparison : Note<
   "use '==' to turn this assignment into an equality comparison">;
+def note_condition_assign_silence : Note<
+  "place parentheses around the assignment to silence this warning">;
 
 def warn_value_always_zero : Warning<
   "%0 is always %select{zero|false|NULL}1 in this context">;

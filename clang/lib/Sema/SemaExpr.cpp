@@ -6268,33 +6268,37 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 /// ParenRange in parentheses.
 static void SuggestParentheses(Sema &Self, SourceLocation Loc,
                                const PartialDiagnostic &PD,
-                               SourceRange ParenRange,
-                               const PartialDiagnostic &SecondPD,
+                               const PartialDiagnostic &FirstNote,
+                               SourceRange FirstParenRange,
+                               const PartialDiagnostic &SecondNote,
                                SourceRange SecondParenRange) {
-  SourceLocation EndLoc = Self.PP.getLocForEndOfToken(ParenRange.getEnd());
-  if (!ParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
-    // We can't display the parentheses, so just dig the
-    // warning/error and return.
-    Self.Diag(Loc, PD);
+  Self.Diag(Loc, PD);
+
+  if (!FirstNote.getDiagID())
+    return;
+
+  SourceLocation EndLoc = Self.PP.getLocForEndOfToken(FirstParenRange.getEnd());
+  if (!FirstParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
+    // We can't display the parentheses, so just return.
     return;
   }
 
-  Self.Diag(Loc, PD)
-    << FixItHint::CreateInsertion(ParenRange.getBegin(), "(")
+  Self.Diag(Loc, FirstNote)
+    << FixItHint::CreateInsertion(FirstParenRange.getBegin(), "(")
     << FixItHint::CreateInsertion(EndLoc, ")");
 
-  if (!SecondPD.getDiagID())
+  if (!SecondNote.getDiagID())
     return;
 
   EndLoc = Self.PP.getLocForEndOfToken(SecondParenRange.getEnd());
   if (!SecondParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
     // We can't display the parentheses, so just dig the
     // warning/error and return.
-    Self.Diag(Loc, SecondPD);
+    Self.Diag(Loc, SecondNote);
     return;
   }
 
-  Self.Diag(Loc, SecondPD)
+  Self.Diag(Loc, SecondNote)
     << FixItHint::CreateInsertion(SecondParenRange.getBegin(), "(")
     << FixItHint::CreateInsertion(EndLoc, ")");
 }
@@ -6328,19 +6332,23 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
       Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(lhs->getLocStart(), OpLoc)
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
-      lhs->getSourceRange(),
       Self.PDiag(diag::note_precedence_bitwise_first)
           << BinOp::getOpcodeStr(Opc),
-      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
+      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()),
+      Self.PDiag(diag::note_precedence_bitwise_silence)
+          << BinOp::getOpcodeStr(lhsopc),
+                       lhs->getSourceRange());
   else if (BinOp::isComparisonOp(rhsopc))
     SuggestParentheses(Self, OpLoc,
       Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(OpLoc, rhs->getLocEnd())
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
-      rhs->getSourceRange(),
       Self.PDiag(diag::note_precedence_bitwise_first)
         << BinOp::getOpcodeStr(Opc),
-      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
+      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()),
+      Self.PDiag(diag::note_precedence_bitwise_silence)
+        << BinOp::getOpcodeStr(rhsopc),
+                       rhs->getSourceRange());
 }
 
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
@@ -7434,12 +7442,12 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   SourceLocation Open = E->getSourceRange().getBegin();
   SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
 
-  Diag(Loc, diagnostic)
-    << E->getSourceRange()
-    << FixItHint::CreateInsertion(Open, "(")
-    << FixItHint::CreateInsertion(Close, ")");
+  Diag(Loc, diagnostic) << E->getSourceRange();
   Diag(Loc, diag::note_condition_assign_to_comparison)
     << FixItHint::CreateReplacement(Loc, "==");
+  Diag(Loc, diag::note_condition_assign_silence)
+    << FixItHint::CreateInsertion(Open, "(")
+    << FixItHint::CreateInsertion(Close, ")");
 }
 
 bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
