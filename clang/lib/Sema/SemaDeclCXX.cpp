@@ -1099,7 +1099,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 
       // If no results were found, try to correct typos.
       if (R.empty() && BaseType.isNull() &&
-          CorrectTypo(R, S, &SS, ClassDecl) && R.isSingleResult()) {
+          CorrectTypo(R, S, &SS, ClassDecl, 0, CTC_NoKeywords) && 
+          R.isSingleResult()) {
         if (FieldDecl *Member = R.getAsSingle<FieldDecl>()) {
           if (Member->getDeclContext()->getLookupContext()->Equals(ClassDecl)) {
             // We have found a non-static data member with a similar

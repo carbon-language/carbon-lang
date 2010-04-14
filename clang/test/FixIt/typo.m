@@ -87,3 +87,18 @@ void test2(Collide *a) {
 
 @interface IPv6 <Network_Socket> // expected-error{{cannot find protocol declaration for 'Network_Socket'; did you mean 'NetworkSocket'?}}
 @end
+
+@interface Super
+- (int)method;
+@end
+
+@interface Sub : Super
+- (int)method;
+@end
+
+@implementation Sub
+- (int)method {
+  return [supper method]; // expected-error{{unknown receiver 'supper'; did you mean 'super'?}}
+}
+  
+@end

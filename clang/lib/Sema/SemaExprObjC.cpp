@@ -372,7 +372,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
   // Attempt to correct for typos in property names.
   LookupResult Res(*this, MemberName, MemberLoc, LookupOrdinaryName);
-  if (CorrectTypo(Res, 0, 0, IFace, false, OPT) &&
+  if (CorrectTypo(Res, 0, 0, IFace, false, CTC_NoKeywords, OPT) &&
       Res.getAsSingle<ObjCPropertyDecl>()) {
     DeclarationName TypoResult = Res.getLookupName();
     Diag(MemberLoc, diag::err_property_not_found_suggest)
@@ -523,18 +523,37 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   }
   }
 
-  if (CorrectTypo(Result, S, 0) && Result.isSingleResult()) {
-    NamedDecl *ND = Result.getFoundDecl();
-    if (isa<ObjCInterfaceDecl>(ND)) {
-      Diag(NameLoc, diag::err_unknown_receiver_suggest)
-        << Name << Result.getLookupName()
-        << FixItHint::CreateReplacement(SourceRange(NameLoc),
-                                        ND->getNameAsString());
-      Diag(ND->getLocation(), diag::note_previous_decl)
-        << ND->getDeclName();
+  // Determine our typo-correction context.
+  CorrectTypoContext CTC = CTC_Expression;
+  if (ObjCMethodDecl *Method = getCurMethodDecl())
+    if (Method->getClassInterface() &&
+        Method->getClassInterface()->getSuperClass())
+      CTC = CTC_ObjCMessageReceiver;
+      
+  if (DeclarationName Corrected = CorrectTypo(Result, S, 0, 0, false, CTC)) {
+    if (Result.isSingleResult()) {
+      // If we found a declaration, correct when it refers to an Objective-C
+      // class.
+      NamedDecl *ND = Result.getFoundDecl();
+      if (isa<ObjCInterfaceDecl>(ND)) {
+        Diag(NameLoc, diag::err_unknown_receiver_suggest)
+          << Name << Result.getLookupName()
+          << FixItHint::CreateReplacement(SourceRange(NameLoc),
+                                          ND->getNameAsString());
+        Diag(ND->getLocation(), diag::note_previous_decl)
+          << Corrected;
 
-      Name = ND->getIdentifier();
-      return ObjCClassMessage;
+        Name = ND->getIdentifier();
+        return ObjCClassMessage;
+      }
+    } else if (Result.empty() && Corrected.getAsIdentifierInfo() &&
+               Corrected.getAsIdentifierInfo()->isStr("super")) {
+      // If we've found the keyword "super", this is a send to super.
+      Diag(NameLoc, diag::err_unknown_receiver_suggest)
+        << Name << Corrected
+        << FixItHint::CreateReplacement(SourceRange(NameLoc), "super");
+      Name = Corrected.getAsIdentifierInfo();
+      return ObjCSuperMessage;
     }
   }
   

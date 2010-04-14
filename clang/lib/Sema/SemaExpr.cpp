@@ -946,43 +946,55 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
   }
 
   // We didn't find anything, so try to correct for a typo.
-  if (S && CorrectTypo(R, S, &SS)) {
-    if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
+  DeclarationName Corrected;
+  if (S && (Corrected = CorrectTypo(R, S, &SS))) {
+    if (!R.empty()) {
+      if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
+        if (SS.isEmpty())
+          Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
+            << FixItHint::CreateReplacement(R.getNameLoc(),
+                                            R.getLookupName().getAsString());
+        else
+          Diag(R.getNameLoc(), diag::err_no_member_suggest)
+            << Name << computeDeclContext(SS, false) << R.getLookupName()
+            << SS.getRange()
+            << FixItHint::CreateReplacement(R.getNameLoc(),
+                                            R.getLookupName().getAsString());
+        if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
+          Diag(ND->getLocation(), diag::note_previous_decl)
+            << ND->getDeclName();
+
+        // Tell the callee to try to recover.
+        return false;
+      }
+    
+      if (isa<TypeDecl>(*R.begin()) || isa<ObjCInterfaceDecl>(*R.begin())) {
+        // FIXME: If we ended up with a typo for a type name or
+        // Objective-C class name, we're in trouble because the parser
+        // is in the wrong place to recover. Suggest the typo
+        // correction, but don't make it a fix-it since we're not going
+        // to recover well anyway.
+        if (SS.isEmpty())
+          Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName();
+        else
+          Diag(R.getNameLoc(), diag::err_no_member_suggest)
+            << Name << computeDeclContext(SS, false) << R.getLookupName()
+            << SS.getRange();
+
+        // Don't try to recover; it won't work.
+        return true;
+      }
+    } else {
+      // FIXME: We found a keyword. Suggest it, but don't provide a fix-it 
+      // because we aren't able to recover.
       if (SS.isEmpty())
-        Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
-          << FixItHint::CreateReplacement(R.getNameLoc(),
-                                          R.getLookupName().getAsString());
+        Diag(R.getNameLoc(), diagnostic_suggest) << Name << Corrected;
       else
         Diag(R.getNameLoc(), diag::err_no_member_suggest)
-          << Name << computeDeclContext(SS, false) << R.getLookupName()
-          << SS.getRange()
-          << FixItHint::CreateReplacement(R.getNameLoc(),
-                                          R.getLookupName().getAsString());
-      if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
-        Diag(ND->getLocation(), diag::note_previous_decl)
-          << ND->getDeclName();
-
-      // Tell the callee to try to recover.
-      return false;
-    }
-
-    if (isa<TypeDecl>(*R.begin()) || isa<ObjCInterfaceDecl>(*R.begin())) {
-      // FIXME: If we ended up with a typo for a type name or
-      // Objective-C class name, we're in trouble because the parser
-      // is in the wrong place to recover. Suggest the typo
-      // correction, but don't make it a fix-it since we're not going
-      // to recover well anyway.
-      if (SS.isEmpty())
-        Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName();
-      else
-        Diag(R.getNameLoc(), diag::err_no_member_suggest)
-          << Name << computeDeclContext(SS, false) << R.getLookupName()
-          << SS.getRange();
-
-      // Don't try to recover; it won't work.
+        << Name << computeDeclContext(SS, false) << Corrected
+        << SS.getRange();
       return true;
     }
-
     R.clear();
   }
 
@@ -2575,7 +2587,8 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  if (SemaRef.CorrectTypo(R, 0, &SS, DC) &&
+  if (SemaRef.CorrectTypo(R, 0, &SS, DC, false, Sema::CTC_MemberLookup) && 
+      !R.empty() &&
       (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
       << Name << DC << R.getLookupName() << SS.getRange()
@@ -3032,7 +3045,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         // Attempt to correct for typos in ivar names.
         LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
                          LookupMemberName);
-        if (CorrectTypo(Res, 0, 0, IDecl) &&
+        if (CorrectTypo(Res, 0, 0, IDecl, false, CTC_MemberLookup) &&
             (IV = Res.getAsSingle<ObjCIvarDecl>())) {
           Diag(R.getNameLoc(),
                diag::err_typecheck_member_reference_ivar_suggest)

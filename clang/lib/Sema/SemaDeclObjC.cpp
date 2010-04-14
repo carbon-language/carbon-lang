@@ -120,7 +120,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     if (!PrevDecl) {
       // Try to correct for a typo in the superclass name.
       LookupResult R(*this, SuperName, SuperLoc, LookupOrdinaryName);
-      if (CorrectTypo(R, TUScope, 0) &&
+      if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
           (PrevDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
         Diag(SuperLoc, diag::err_undef_superclass_suggest)
           << SuperName << ClassName << PrevDecl->getDeclName();
@@ -317,7 +317,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
     if (!PDecl) {
       LookupResult R(*this, ProtocolId[i].first, ProtocolId[i].second,
                      LookupObjCProtocolName);
-      if (CorrectTypo(R, TUScope, 0) &&
+      if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
           (PDecl = R.getAsSingle<ObjCProtocolDecl>())) {
         Diag(ProtocolId[i].second, diag::err_undeclared_protocol_suggest)
           << ProtocolId[i].first << R.getLookupName();
@@ -554,7 +554,7 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     // We did not find anything with the name ClassName; try to correct for 
     // typos in the class name.
     LookupResult R(*this, ClassName, ClassLoc, LookupOrdinaryName);
-    if (CorrectTypo(R, TUScope, 0) &&
+    if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
       // Suggest the (potentially) correct interface name. However, put the
       // fix-it hint itself in a separate note, since changing the name in 

@@ -246,32 +246,36 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   LookupResult Lookup(*this, &II, IILoc, LookupOrdinaryName, 
                       NotForRedeclaration);
 
-  // FIXME: It would be nice if we could correct for typos in built-in
-  // names, such as "itn" for "int".
+  if (DeclarationName Corrected = CorrectTypo(Lookup, S, SS, 0, 0, CTC_Type)) {
+    if (NamedDecl *Result = Lookup.getAsSingle<NamedDecl>()) {
+      if ((isa<TypeDecl>(Result) || isa<ObjCInterfaceDecl>(Result)) &&
+          !Result->isInvalidDecl()) {
+        // We found a similarly-named type or interface; suggest that.
+        if (!SS || !SS->isSet())
+          Diag(IILoc, diag::err_unknown_typename_suggest)
+            << &II << Lookup.getLookupName()
+            << FixItHint::CreateReplacement(SourceRange(IILoc),
+                                            Result->getNameAsString());
+        else if (DeclContext *DC = computeDeclContext(*SS, false))
+          Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
+            << &II << DC << Lookup.getLookupName() << SS->getRange()
+            << FixItHint::CreateReplacement(SourceRange(IILoc),
+                                            Result->getNameAsString());
+        else
+          llvm_unreachable("could not have corrected a typo here");
 
-  if (CorrectTypo(Lookup, S, SS) && Lookup.isSingleResult()) {
-    NamedDecl *Result = Lookup.getAsSingle<NamedDecl>();
-    if ((isa<TypeDecl>(Result) || isa<ObjCInterfaceDecl>(Result)) &&
-        !Result->isInvalidDecl()) {
-      // We found a similarly-named type or interface; suggest that.
-      if (!SS || !SS->isSet())
-        Diag(IILoc, diag::err_unknown_typename_suggest)
-          << &II << Lookup.getLookupName()
-          << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                          Result->getNameAsString());
-      else if (DeclContext *DC = computeDeclContext(*SS, false))
-        Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
-          << &II << DC << Lookup.getLookupName() << SS->getRange()
-          << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                          Result->getNameAsString());
-      else
-        llvm_unreachable("could not have corrected a typo here");
-
-      Diag(Result->getLocation(), diag::note_previous_decl)
-        << Result->getDeclName();
-      
-      SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS);
-      return true;
+        Diag(Result->getLocation(), diag::note_previous_decl)
+          << Result->getDeclName();
+        
+        SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS);
+        return true;
+      }
+    } else if (Lookup.empty()) {
+      // We corrected to a keyword.
+      // FIXME: Actually recover with the keyword we suggest, and emit a fix-it.
+      Diag(IILoc, diag::err_unknown_typename_suggest)
+        << &II << Corrected;
+      return true;      
     }
   }
 
@@ -605,7 +609,7 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
     // Perform typo correction at the given location, but only if we
     // find an Objective-C class name.
     LookupResult R(*this, Id, RecoverLoc, LookupOrdinaryName);
-    if (CorrectTypo(R, TUScope, 0) &&
+    if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
       Diag(RecoverLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 

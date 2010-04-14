@@ -1354,7 +1354,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         // was a typo for another field name.
         LookupResult R(SemaRef, FieldName, D->getFieldLoc(), 
                        Sema::LookupMemberName);
-        if (SemaRef.CorrectTypo(R, /*Scope=*/0, /*SS=*/0, RT->getDecl()) &&
+        if (SemaRef.CorrectTypo(R, /*Scope=*/0, /*SS=*/0, RT->getDecl(), false,
+                                Sema::CTC_NoKeywords) && 
             (ReplacementField = R.getAsSingle<FieldDecl>()) &&
             ReplacementField->getDeclContext()->getLookupContext()
                                                       ->Equals(RT->getDecl())) {

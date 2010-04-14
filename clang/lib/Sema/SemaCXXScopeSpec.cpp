@@ -483,7 +483,8 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // We haven't found anything, and we're not recovering from a
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
-    if (CorrectTypo(Found, S, &SS, LookupCtx, EnteringContext) &&
+    if (CorrectTypo(Found, S, &SS, LookupCtx, EnteringContext,  
+                    CTC_NoKeywords) &&
         Found.isSingleResult() &&
         isAcceptableNestedNameSpecifier(Found.getAsSingle<NamedDecl>())) {
       if (LookupCtx)

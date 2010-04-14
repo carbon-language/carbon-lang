@@ -250,7 +250,8 @@ void Sema::LookupTemplateName(LookupResult &Found,
   if (Found.empty() && !isDependent) {
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
-    if (CorrectTypo(Found, S, &SS, LookupCtx)) {
+    if (DeclarationName Corrected = CorrectTypo(Found, S, &SS, LookupCtx, 
+                                                 false, CTC_CXXCasts)) {
       FilterAcceptableTemplateNames(Context, Found);
       if (!Found.empty() && isa<TemplateDecl>(*Found.begin())) {
         if (LookupCtx)
