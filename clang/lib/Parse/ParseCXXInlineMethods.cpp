@@ -29,12 +29,14 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
          "Current token not a '{', ':' or 'try'!");
 
   Action::MultiTemplateParamsArg TemplateParams(Actions,
-                                                TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
-                                                TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
+          TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
+          TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
+
   DeclPtrTy FnD;
   if (D.getDeclSpec().isFriendSpecified())
     // FIXME: Friend templates
-    FnD = Actions.ActOnFriendFunctionDecl(CurScope, D, true, move(TemplateParams));
+    FnD = Actions.ActOnFriendFunctionDecl(CurScope, D, true,
+                                          move(TemplateParams));
   else // FIXME: pass template information through
     FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D,
                                            move(TemplateParams), 0, 0,
@@ -98,7 +100,8 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   // The current scope is still active if we're the top-level class.
   // Otherwise we'll need to push and enter a new scope.
   bool HasClassScope = !Class.TopLevelClass;
-  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope, HasClassScope);
+  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
+                        HasClassScope);
   if (HasClassScope)
     Actions.ActOnStartDelayedMemberDeclarations(CurScope, Class.TagOrTemplate);
 
