@@ -25,7 +25,7 @@ namespace llvm {
 // BasicBlock pred_iterator definition
 //===----------------------------------------------------------------------===//
 
-template <class Ptr,  class USE_iterator> // Predecessor Iterator
+template <class Ptr, class USE_iterator> // Predecessor Iterator
 class PredIterator : public std::iterator<std::forward_iterator_tag,
                                           Ptr, ptrdiff_t> {
   typedef std::iterator<std::forward_iterator_tag, Ptr, ptrdiff_t> super;
@@ -33,7 +33,7 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
   USE_iterator It;
 
   inline void advancePastNonTerminators() {
-    // Loop to ignore non terminator uses (for example PHI nodes)...
+    // Loop to ignore non terminator uses (for example PHI nodes).
     while (!It.atEnd() && !isa<TerminatorInst>(*It))
       ++It;
   }
@@ -194,7 +194,7 @@ public:
 
   /// Get the source BB of this iterator.
   inline BB_ *getSource() {
-      return Term->getParent();
+    return Term->getParent();
   }
 };
 
