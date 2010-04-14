@@ -314,6 +314,7 @@ BUILTIN(__builtin_setjmp, "iv**", "")
 BUILTIN(__builtin_longjmp, "vv**i", "r")
 BUILTIN(__builtin_unwind_init, "v", "")
 BUILTIN(__builtin_eh_return_data_regno, "ii", "nc")
+BUILTIN(__builtin_vsprintf, "ic*cC*a", "nFP:1:")
 BUILTIN(__builtin_vsnprintf, "ic*zcC*a", "nFP:2:")
 
 // GCC exception builtins
