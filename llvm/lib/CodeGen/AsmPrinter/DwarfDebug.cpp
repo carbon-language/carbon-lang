@@ -2351,6 +2351,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
   AbstractVariables.clear();
+  InsnBeforeLabelMap.clear();
+  InsnAfterLabelMap.clear();
   Lines.clear();
 }
 
