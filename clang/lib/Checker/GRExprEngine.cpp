@@ -587,7 +587,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       llvm_unreachable("Unhandled stmt class");
     // C++ stuff we don't support yet.
     case Stmt::CXXTypeidExprClass:
-    case Stmt::CXXBoolLiteralExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXThrowExprClass:
     case Stmt::CXXDefaultArgExprClass:
@@ -616,6 +615,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::AddrLabelExprClass:
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
+    case Stmt::CXXBoolLiteralExprClass:
     case Stmt::FloatingLiteralClass:
     case Stmt::ImplicitValueInitExprClass:
     case Stmt::ObjCSuperExprClass:
@@ -945,6 +945,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
 
     // In C++, binding an rvalue to a reference requires to create an object.
+    case Stmt::CXXBoolLiteralExprClass:
     case Stmt::IntegerLiteralClass:
       CreateCXXTemporaryObject(Ex, Pred, Dst);
       return;

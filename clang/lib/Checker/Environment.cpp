@@ -37,6 +37,13 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
         return ValMgr.makeIntVal(C->getValue(), C->getType());
       }
 
+      case Stmt::CXXBoolLiteralExprClass: {
+        const SVal *X = ExprBindings.lookup(E);
+        if (X) 
+          return *X;
+        else 
+          return ValMgr.makeIntVal(cast<CXXBoolLiteralExpr>(E));
+      }
       case Stmt::IntegerLiteralClass: {
         // In C++, this expression may have been bound to a temporary object.
         SVal const *X = ExprBindings.lookup(E);
