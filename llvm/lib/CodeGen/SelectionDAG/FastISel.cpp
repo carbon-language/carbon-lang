@@ -116,9 +116,9 @@ unsigned FastISel::getRegForValue(Value *V) {
           Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       }
     }
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (!SelectOperator(CE, CE->getOpcode())) return 0;
-    Reg = LocalValueMap[CE];
+  } else if (Operator *Op = dyn_cast<Operator>(V)) {
+    if (!SelectOperator(Op, Op->getOpcode())) return 0;
+    Reg = LocalValueMap[Op];
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, DL, TII.get(TargetOpcode::IMPLICIT_DEF), Reg);
