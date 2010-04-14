@@ -1719,10 +1719,10 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
 
 CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C, 
                                              AddStmtChoice asc) {
-  AddStmtChoice asc2 = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue 
-                                      : AddStmtChoice::AlwaysAdd;
+  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue 
+                                         : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
-  AppendStmt(Block, C, asc2);
+  AppendStmt(Block, C, AddStmtChoice(K));
   return VisitChildren(C);
 }
 
