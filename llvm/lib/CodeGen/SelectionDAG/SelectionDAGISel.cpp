@@ -221,11 +221,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // emitting the code for the block.
   RegInfo->EmitLiveInCopies(MF->begin(), TRI, TII);
 
-#ifndef NDEBUG
-  assert(FuncInfo->CatchInfoFound.size() == FuncInfo->CatchInfoLost.size() &&
-         "Not all catch info was assigned to a landing pad!");
-#endif
-
   // Release function-specific state. SDB and CurDAG are already cleared
   // at this point.
   FuncInfo->clear();
