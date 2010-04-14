@@ -15,12 +15,15 @@
 #ifndef FUNCTIONLOWERINGINFO_H
 #define FUNCTIONLOWERINGINFO_H
 
+#include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #ifndef NDEBUG
 #include "llvm/ADT/SmallSet.h"
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <vector>
 
 namespace llvm {
@@ -145,6 +148,22 @@ void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 /// CopyCatchInfo - Copy catch information from DestBB to SrcBB.
 void CopyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
                    MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
+
+/// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
+/// processed uses a memory 'm' constraint.
+bool hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
+                               const TargetLowering &TLI);
+
+/// getFCmpCondCode - Return the ISD condition code corresponding to
+/// the given LLVM IR floating-point condition code.  This includes
+/// consideration of global floating-point math flags.
+///
+ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred);
+
+/// getICmpCondCode - Return the ISD condition code corresponding to
+/// the given LLVM IR integer condition code.
+///
+ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 
 } // end namespace llvm
 
