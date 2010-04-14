@@ -122,7 +122,8 @@ namespace llvm {
   /// StopAtNul is set to true (the default), the returned string is truncated
   /// by a nul character in the global.  If StopAtNul is false, the nul
   /// character is included in the result string.
-  bool GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset = 0,
+  bool GetConstantStringInfo(const Value *V, std::string &Str,
+                             uint64_t Offset = 0,
                              bool StopAtNul = true);
                         
   /// GetStringLength - If we can compute the length of the string pointed to by
