@@ -25,12 +25,12 @@ namespace llvm {
 // BasicBlock pred_iterator definition
 //===----------------------------------------------------------------------===//
 
-template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
+template <class Ptr,  class USE_iterator> // Predecessor Iterator
 class PredIterator : public std::iterator<std::forward_iterator_tag,
-                                          _Ptr, ptrdiff_t> {
-  typedef std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> super;
-  typedef PredIterator<_Ptr,_USE_iterator> _Self;
-  _USE_iterator It;
+                                          Ptr, ptrdiff_t> {
+  typedef std::iterator<std::forward_iterator_tag, Ptr, ptrdiff_t> super;
+  typedef PredIterator<Ptr, USE_iterator> Self;
+  USE_iterator It;
 
   inline void advancePastNonTerminators() {
     // Loop to ignore non terminator uses (for example PHI nodes)...
@@ -41,13 +41,13 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
 public:
   typedef typename super::pointer pointer;
 
-  inline PredIterator(_Ptr *bb) : It(bb->use_begin()) {
+  inline PredIterator(Ptr *bb) : It(bb->use_begin()) {
     advancePastNonTerminators();
   }
-  inline PredIterator(_Ptr *bb, bool) : It(bb->use_end()) {}
+  inline PredIterator(Ptr *bb, bool) : It(bb->use_end()) {}
 
-  inline bool operator==(const _Self& x) const { return It == x.It; }
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  inline bool operator==(const Self& x) const { return It == x.It; }
+  inline bool operator!=(const Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const {
     assert(!It.atEnd() && "pred_iterator out of range!");
@@ -55,14 +55,14 @@ public:
   }
   inline pointer *operator->() const { return &(operator*()); }
 
-  inline _Self& operator++() {   // Preincrement
+  inline Self& operator++() {   // Preincrement
     assert(!It.atEnd() && "pred_iterator out of range!");
     ++It; advancePastNonTerminators();
     return *this;
   }
 
-  inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
+  inline Self operator++(int) { // Postincrement
+    Self tmp = *this; ++*this; return tmp;
   }
 };
 
@@ -91,7 +91,7 @@ class SuccIterator : public std::iterator<std::bidirectional_iterator_tag,
   const Term_ Term;
   unsigned idx;
   typedef std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> super;
-  typedef SuccIterator<Term_, BB_> _Self;
+  typedef SuccIterator<Term_, BB_> Self;
 
   inline bool index_is_valid(int idx) {
     return idx >= 0 && (unsigned) idx < Term->getNumSuccessors();
@@ -109,7 +109,7 @@ public:
     assert(T && "getTerminator returned null!");
   }
 
-  inline const _Self &operator=(const _Self &I) {
+  inline const Self &operator=(const Self &I) {
     assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
     idx = I.idx;
     return *this;
@@ -119,64 +119,64 @@ public:
   /// operate on terminator instructions directly.
   unsigned getSuccessorIndex() const { return idx; }
 
-  inline bool operator==(const _Self& x) const { return idx == x.idx; }
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  inline bool operator==(const Self& x) const { return idx == x.idx; }
+  inline bool operator!=(const Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const { return Term->getSuccessor(idx); }
   inline pointer operator->() const { return operator*(); }
 
-  inline _Self& operator++() { ++idx; return *this; } // Preincrement
+  inline Self& operator++() { ++idx; return *this; } // Preincrement
 
-  inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
+  inline Self operator++(int) { // Postincrement
+    Self tmp = *this; ++*this; return tmp;
   }
 
-  inline _Self& operator--() { --idx; return *this; }  // Predecrement
-  inline _Self operator--(int) { // Postdecrement
-    _Self tmp = *this; --*this; return tmp;
+  inline Self& operator--() { --idx; return *this; }  // Predecrement
+  inline Self operator--(int) { // Postdecrement
+    Self tmp = *this; --*this; return tmp;
   }
 
-  inline bool operator<(const _Self& x) const {
+  inline bool operator<(const Self& x) const {
     assert(Term == x.Term && "Cannot compare iterators of different blocks!");
     return idx < x.idx;
   }
 
-  inline bool operator<=(const _Self& x) const {
+  inline bool operator<=(const Self& x) const {
     assert(Term == x.Term && "Cannot compare iterators of different blocks!");
     return idx <= x.idx;
   }
-  inline bool operator>=(const _Self& x) const {
+  inline bool operator>=(const Self& x) const {
     assert(Term == x.Term && "Cannot compare iterators of different blocks!");
     return idx >= x.idx;
   }
 
-  inline bool operator>(const _Self& x) const {
+  inline bool operator>(const Self& x) const {
     assert(Term == x.Term && "Cannot compare iterators of different blocks!");
     return idx > x.idx;
   }
 
-  inline _Self& operator+=(int Right) {
+  inline Self& operator+=(int Right) {
     unsigned new_idx = idx + Right;
     assert(index_is_valid(new_idx) && "Iterator index out of bound");
     idx = new_idx;
     return *this;
   }
 
-  inline _Self operator+(int Right) {
-    _Self tmp = *this;
+  inline Self operator+(int Right) {
+    Self tmp = *this;
     tmp += Right;
     return tmp;
   }
 
-  inline _Self& operator-=(int Right) {
+  inline Self& operator-=(int Right) {
     return operator+=(-Right);
   }
 
-  inline _Self operator-(int Right) {
+  inline Self operator-(int Right) {
     return operator+(-Right);
   }
 
-  inline int operator-(const _Self& x) {
+  inline int operator-(const Self& x) {
     assert(Term == x.Term && "Cannot work on iterators of different blocks!");
     int distance = idx - x.idx;
     return distance;
@@ -187,7 +187,7 @@ public:
   // be modified are not available.
   //
   // inline pointer operator[](int offset) {
-  //  _Self tmp = *this;
+  //  Self tmp = *this;
   //  tmp += offset;
   //  return tmp.operator*();
   // }
