@@ -1,6 +1,5 @@
 set(LLVM_LINK_COMPONENTS asmparser instrumentation scalaropts ipo
   linker bitreader bitwriter)
-set(LLVM_REQUIRES_EH 1)
 
 add_llvm_tool(bugpoint
   BugDriver.cpp
