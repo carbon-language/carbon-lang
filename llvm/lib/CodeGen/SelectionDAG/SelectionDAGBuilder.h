@@ -310,7 +310,7 @@ public:
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);
 
-  /// clear - Clear out the curret SelectionDAG and the associated
+  /// clear - Clear out the current SelectionDAG and the associated
   /// state and prepare this SelectionDAGBuilder object to be used
   /// for a new block. This doesn't clear out information about
   /// additional blocks that are needed to complete switch lowering
