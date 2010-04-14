@@ -894,43 +894,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   return true;
 }
 
-bool DAE::RemoveDeadParamsFromCallersOf(Function *F) {
-  // Don't modify fully live functions
-  if (LiveFunctions.count(F))
-    return false;
-
-  // Make a list of the dead arguments.
-  SmallVector<int, 10> ArgDead;
-  unsigned i = 0;
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
-       I != E; ++I, ++i) {
-    RetOrArg Arg = CreateArg(F, i);
-    if (!LiveValues.count(Arg))
-      ArgDead.push_back(i);
-  }
-  if (ArgDead.empty())
-    return false;
-
-  bool MadeChange = false;
-  for (Function::use_iterator I = F->use_begin(), E = F->use_end();
-       I != E; ++I) {
-    CallSite CS = CallSite::get(*I);
-    if (CS.getInstruction() && CS.isCallee(I)) {
-      for (unsigned i = 0, e = ArgDead.size(); i != e; ++i) {
-        Value *A = CS.getArgument(ArgDead[i]);
-        if (!isa<UndefValue>(A)) {
-          ++NumParametersEliminated;
-          MadeChange = true;
-          CS.setArgument(ArgDead[i], UndefValue::get(A->getType()));
-          RecursivelyDeleteTriviallyDeadInstructions(A);
-        }
-      }
-    }
-  }
-
-  return MadeChange;
-}
-
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
 
