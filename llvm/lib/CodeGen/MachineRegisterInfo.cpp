@@ -248,6 +248,11 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
         (void) Emitted;
       }
   }
+
+  // Add function live-ins to entry block live-in set.
+  for (MachineRegisterInfo::livein_iterator I = livein_begin(),
+       E = livein_end(); I != E; ++I)
+    EntryMBB->addLiveIn(I->first);
 }
 
 #ifndef NDEBUG

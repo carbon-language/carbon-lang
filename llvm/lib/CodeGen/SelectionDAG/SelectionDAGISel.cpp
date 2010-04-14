@@ -221,11 +221,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // emitting the code for the block.
   RegInfo->EmitLiveInCopies(MF->begin(), TRI, TII);
 
-  // Add function live-ins to entry block live-in set.
-  for (MachineRegisterInfo::livein_iterator I = RegInfo->livein_begin(),
-         E = RegInfo->livein_end(); I != E; ++I)
-    MF->begin()->addLiveIn(I->first);
-
 #ifndef NDEBUG
   assert(FuncInfo->CatchInfoFound.size() == FuncInfo->CatchInfoLost.size() &&
          "Not all catch info was assigned to a landing pad!");
