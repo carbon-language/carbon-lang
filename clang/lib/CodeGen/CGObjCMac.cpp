@@ -3171,19 +3171,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     FieldDecl *Field = RecFields[i];
     uint64_t FieldOffset;
     if (RD) {
-      const CGRecordLayout &RL =
-        CGM.getTypes().getCGRecordLayout(Field->getParent());
-      if (Field->isBitField()) {
-        const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
-
-        const llvm::Type *Ty =
-          CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
-        uint64_t TypeSize =
-          CGM.getTypes().getTargetData().getTypeAllocSize(Ty);
-        FieldOffset = Info.FieldNo * TypeSize;
-      } else
-        FieldOffset =
-          Layout->getElementOffset(RL.getLLVMFieldNo(Field));
+      // Note that 'i' here is actually the field index inside RD of Field,
+      // although this dependency is hidden.
+      const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
+      FieldOffset = RL.getFieldOffset(i) / 8;
     } else
       FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 
