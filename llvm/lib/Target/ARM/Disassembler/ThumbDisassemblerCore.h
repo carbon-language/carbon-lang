@@ -1552,7 +1552,10 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
             Opcode == ARM::t2BFI) && "Invalid opcode");
     MI.addOperand(MCOperand::CreateImm(getLsb(insn)));
     if (Opcode == ARM::t2BFI) {
-      assert(getMsb(insn) >= getLsb(insn) && "Encoding error");
+      if (getMsb(insn) < getLsb(insn)) {
+        errs() << "Encoding error: msb < lsb\n";
+        return false;
+      }
       MI.addOperand(MCOperand::CreateImm(getMsb(insn) - getLsb(insn) + 1));
     } else
       MI.addOperand(MCOperand::CreateImm(getWidthMinus1(insn) + 1));

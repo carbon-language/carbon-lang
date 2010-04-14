@@ -892,8 +892,8 @@ static inline bool getBFCInvMask(uint32_t insn, uint32_t &mask) {
   uint32_t lsb = slice(insn, 11, 7);
   uint32_t msb = slice(insn, 20, 16);
   uint32_t Val = 0;
-  if (lsb > msb) {
-    errs() << "Encoding error: lsb > msb\n";
+  if (msb < lsb) {
+    errs() << "Encoding error: msb < lsb\n";
     return false;
   }
 
