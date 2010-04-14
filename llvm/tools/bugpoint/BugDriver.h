@@ -17,11 +17,8 @@
 #define BUGDRIVER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/CommandLine.h"
 #include <vector>
 #include <string>
-
-extern llvm::cl::opt<bool> StripDebug;
 
 namespace llvm {
 
