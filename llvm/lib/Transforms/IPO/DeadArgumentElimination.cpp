@@ -931,7 +931,7 @@ bool DAE::RemoveDeadParamsFromCallersOf(Function *F) {
       for (unsigned i = 0, e = ArgDead.size(); i != e; ++i) {
         Value *A = CS.getArgument(ArgDead[i]);
         if (!isa<UndefValue>(A)) {
-	  ++NumParametersEliminated;
+          ++NumParametersEliminated;
           MadeChange = true;
           CS.setArgument(ArgDead[i], UndefValue::get(A->getType()));
           RecursivelyDeleteTriviallyDeadInstructions(A);
