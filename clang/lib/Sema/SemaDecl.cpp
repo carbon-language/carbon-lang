@@ -3098,6 +3098,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         assert(Param->getDeclContext() != NewFD && "Was set before ?");
         Param->setDeclContext(NewFD);
         Params.push_back(Param);
+
+        if (Param->isInvalidDecl())
+          NewFD->setInvalidDecl();
       }
     }
 

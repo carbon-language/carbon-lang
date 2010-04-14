@@ -117,3 +117,13 @@ struct X3 {
 
 
 template struct X3<double>;
+
+// Don't try to instantiate this, it's invalid.
+namespace test1 {
+  template <class T> class A {};
+  template <class T> class B {
+    void foo(A<test1::Undeclared> &a) // expected-error {{no member named 'Undeclared' in namespace 'test1'}}
+    {}
+  };
+  template class B<int>;
+}
