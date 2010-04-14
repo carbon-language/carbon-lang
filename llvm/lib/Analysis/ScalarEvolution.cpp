@@ -4634,6 +4634,8 @@ ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
 
 /// getLoopPredecessor - If the given loop's header has exactly one unique
 /// predecessor outside the loop, return it. Otherwise return null.
+/// This is less strict that the loop "preheader" concept, which requires
+/// the predecessor to have only one single successor.
 ///
 BasicBlock *ScalarEvolution::getLoopPredecessor(const Loop *L) {
   BasicBlock *Header = L->getHeader();
