@@ -74,8 +74,8 @@ public:
   DenseMap<const AllocaInst*, int> StaticAllocaMap;
 
 #ifndef NDEBUG
-  SmallSet<Instruction*, 8> CatchInfoLost;
-  SmallSet<Instruction*, 8> CatchInfoFound;
+  SmallSet<const Instruction *, 8> CatchInfoLost;
+  SmallSet<const Instruction *, 8> CatchInfoFound;
 #endif
 
   struct LiveOutInfo {
@@ -143,10 +143,11 @@ GlobalVariable *ExtractTypeInfo(Value *V);
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
 /// call, and add them to the specified machine basic block.
-void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI, MachineBasicBlock *MBB);
+void AddCatchInfo(const CallInst &I,
+                  MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 
 /// CopyCatchInfo - Copy catch information from DestBB to SrcBB.
-void CopyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
+void CopyCatchInfo(const BasicBlock *SrcBB, const BasicBlock *DestBB,
                    MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
 
 /// hasInlineAsmMemConstraint - Return true if the inline asm instruction being

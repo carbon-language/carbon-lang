@@ -699,6 +699,50 @@ void SelectionDAGISel::DoInstructionSelection() {
   PostprocessISelDAG();
 }
 
+/// PrepareEHLandingPad - Emit an EH_LABEL, set up live-in registers, and
+/// do other setup for EH landing-pad blocks.
+void SelectionDAGISel::PrepareEHLandingPad(MachineBasicBlock *BB) {
+  // Add a label to mark the beginning of the landing pad.  Deletion of the
+  // landing pad can thus be detected via the MachineModuleInfo.
+  MCSymbol *Label = MF->getMMI().addLandingPad(BB);
+
+  const TargetInstrDesc &II =
+    TLI.getTargetMachine().getInstrInfo()->get(TargetOpcode::EH_LABEL);
+  BuildMI(BB, SDB->getCurDebugLoc(), II).addSym(Label);
+
+  // Mark exception register as live in.
+  unsigned Reg = TLI.getExceptionAddressRegister();
+  if (Reg) BB->addLiveIn(Reg);
+
+  // Mark exception selector register as live in.
+  Reg = TLI.getExceptionSelectorRegister();
+  if (Reg) BB->addLiveIn(Reg);
+
+  // FIXME: Hack around an exception handling flaw (PR1508): the personality
+  // function and list of typeids logically belong to the invoke (or, if you
+  // like, the basic block containing the invoke), and need to be associated
+  // with it in the dwarf exception handling tables.  Currently however the
+  // information is provided by an intrinsic (eh.selector) that can be moved
+  // to unexpected places by the optimizers: if the unwind edge is critical,
+  // then breaking it can result in the intrinsics being in the successor of
+  // the landing pad, not the landing pad itself.  This results
+  // in exceptions not being caught because no typeids are associated with
+  // the invoke.  This may not be the only way things can go wrong, but it
+  // is the only way we try to work around for the moment.
+  const BasicBlock *LLVMBB = BB->getBasicBlock();
+  const BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
+
+  if (Br && Br->isUnconditional()) { // Critical edge?
+    BasicBlock::const_iterator I, E;
+    for (I = LLVMBB->begin(), E = --LLVMBB->end(); I != E; ++I)
+      if (isa<EHSelectorInst>(I))
+        break;
+
+    if (I == E)
+      // No catch info found - try to extract some from the successor.
+      CopyCatchInfo(Br->getSuccessor(0), LLVMBB, &MF->getMMI(), *FuncInfo);
+  }
+}
 
 void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
                                             MachineFunction &MF,
@@ -742,47 +786,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       }
     }
 
-    if (BB->isLandingPad()) {
-      // Add a label to mark the beginning of the landing pad.  Deletion of the
-      // landing pad can thus be detected via the MachineModuleInfo.
-      MCSymbol *Label = MF.getMMI().addLandingPad(BB);
-
-      const TargetInstrDesc &II = TII.get(TargetOpcode::EH_LABEL);
-      BuildMI(BB, SDB->getCurDebugLoc(), II).addSym(Label);
-
-      // Mark exception register as live in.
-      unsigned Reg = TLI.getExceptionAddressRegister();
-      if (Reg) BB->addLiveIn(Reg);
-
-      // Mark exception selector register as live in.
-      Reg = TLI.getExceptionSelectorRegister();
-      if (Reg) BB->addLiveIn(Reg);
-
-      // FIXME: Hack around an exception handling flaw (PR1508): the personality
-      // function and list of typeids logically belong to the invoke (or, if you
-      // like, the basic block containing the invoke), and need to be associated
-      // with it in the dwarf exception handling tables.  Currently however the
-      // information is provided by an intrinsic (eh.selector) that can be moved
-      // to unexpected places by the optimizers: if the unwind edge is critical,
-      // then breaking it can result in the intrinsics being in the successor of
-      // the landing pad, not the landing pad itself.  This results
-      // in exceptions not being caught because no typeids are associated with
-      // the invoke.  This may not be the only way things can go wrong, but it
-      // is the only way we try to work around for the moment.
-      BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
-
-      if (Br && Br->isUnconditional()) { // Critical edge?
-        BasicBlock::iterator I, E;
-        for (I = LLVMBB->begin(), E = --LLVMBB->end(); I != E; ++I)
-          if (isa<EHSelectorInst>(I))
-            break;
-
-        if (I == E)
-          // No catch info found - try to extract some from the successor.
-          CopyCatchInfo(Br->getSuccessor(0), LLVMBB, &MF.getMMI(), *FuncInfo);
-      }
-    }
-
+    // Setup an EH landing-pad block.
+    if (BB->isLandingPad())
+      PrepareEHLandingPad(BB);
+    
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS && !SuppressFastISel) {
       // Emit code for any incoming arguments. This must happen before

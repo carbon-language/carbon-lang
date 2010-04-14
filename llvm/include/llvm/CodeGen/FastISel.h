@@ -47,7 +47,7 @@ protected:
   DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
   DenseMap<const AllocaInst *, int> &StaticAllocaMap;
 #ifndef NDEBUG
-  SmallSet<Instruction*, 8> &CatchInfoLost;
+  SmallSet<const Instruction *, 8> &CatchInfoLost;
 #endif
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
@@ -118,7 +118,7 @@ protected:
            DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
            DenseMap<const AllocaInst *, int> &am
 #ifndef NDEBUG
-           , SmallSet<Instruction*, 8> &cil
+           , SmallSet<const Instruction *, 8> &cil
 #endif
            );
 

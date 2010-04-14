@@ -278,6 +278,7 @@ private:
   SDNode *MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTs,
                     const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
   
+  void PrepareEHLandingPad(MachineBasicBlock *BB);
   void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
                             const TargetInstrInfo &TII);
   void FinishBasicBlock();

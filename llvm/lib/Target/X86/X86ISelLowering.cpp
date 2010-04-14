@@ -2410,7 +2410,7 @@ X86TargetLowering::createFastISel(MachineFunction &mf,
                             DenseMap<const BasicBlock*, MachineBasicBlock*> &bm,
                             DenseMap<const AllocaInst *, int> &am
 #ifndef NDEBUG
-                          , SmallSet<Instruction*, 8> &cil
+                          , SmallSet<const Instruction *, 8> &cil
 #endif
                                   ) {
   return X86::createFastISel(mf, vm, bm, am

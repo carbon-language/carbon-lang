@@ -305,10 +305,10 @@ GlobalVariable *llvm::ExtractTypeInfo(Value *V) {
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
 /// call, and add them to the specified machine basic block.
-void llvm::AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
+void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
                         MachineBasicBlock *MBB) {
   // Inform the MachineModuleInfo of the personality for this landing pad.
-  ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(2));
+  const ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(2));
   assert(CE->getOpcode() == Instruction::BitCast &&
          isa<Function>(CE->getOperand(0)) &&
          "Personality should be a function");
@@ -320,7 +320,7 @@ void llvm::AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   unsigned N = I.getNumOperands();
 
   for (unsigned i = N - 1; i > 2; --i) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
       unsigned FilterLength = CI->getZExtValue();
       unsigned FirstCatch = i + FilterLength + !FilterLength;
       assert (FirstCatch <= N && "Invalid filter length");
@@ -357,10 +357,11 @@ void llvm::AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
-void llvm::CopyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
+void llvm::CopyCatchInfo(const BasicBlock *SrcBB, const BasicBlock *DestBB,
                          MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
-  for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
-    if (EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
+  for (BasicBlock::const_iterator I = SrcBB->begin(), E = --SrcBB->end();
+       I != E; ++I)
+    if (const EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
       // Apply the catch info to DestBB.
       AddCatchInfo(*EHSel, MMI, FLI.MBBMap[DestBB]);
 #ifndef NDEBUG

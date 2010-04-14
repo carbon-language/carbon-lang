@@ -58,7 +58,7 @@ public:
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                        DenseMap<const AllocaInst *, int> &am
 #ifndef NDEBUG
-                       , SmallSet<Instruction*, 8> &cil
+                       , SmallSet<const Instruction *, 8> &cil
 #endif
                        )
     : FastISel(mf, vm, bm, am
@@ -1755,7 +1755,7 @@ namespace llvm {
                         DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                         DenseMap<const AllocaInst *, int> &am
 #ifndef NDEBUG
-                        , SmallSet<Instruction*, 8> &cil
+                        , SmallSet<const Instruction *, 8> &cil
 #endif
                         ) {
     return new X86FastISel(mf, vm, bm, am

@@ -581,7 +581,7 @@ namespace llvm {
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                    DenseMap<const AllocaInst *, int> &
 #ifndef NDEBUG
-                   , SmallSet<Instruction*, 8> &
+                   , SmallSet<const Instruction *, 8> &
 #endif
                    );
 
@@ -821,7 +821,7 @@ namespace llvm {
                            DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                            DenseMap<const AllocaInst *, int> &
 #ifndef NDEBUG
-                           , SmallSet<Instruction*, 8> &
+                           , SmallSet<const Instruction*, 8> &
 #endif
                            );
   }
