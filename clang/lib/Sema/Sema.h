@@ -1271,7 +1271,7 @@ public:
                                    OverloadCandidateSet &CandidateSet,
                                    bool PartialOverloading = false);
     
-  OwningExprResult BuildOverloadedCallExpr(Expr *Fn,
+  OwningExprResult BuildOverloadedCallExpr(Scope *S, Expr *Fn,
                                            UnresolvedLookupExpr *ULE,
                                            SourceLocation LParenLoc,
                                            Expr **Args, unsigned NumArgs,

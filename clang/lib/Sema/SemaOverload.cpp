@@ -5639,7 +5639,7 @@ static Sema::OwningExprResult Destroy(Sema &SemaRef, Expr *Fn,
 ///
 /// Returns true if new candidates were found.
 static Sema::OwningExprResult
-BuildRecoveryCallExpr(Sema &SemaRef, Expr *Fn,
+BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       UnresolvedLookupExpr *ULE,
                       SourceLocation LParenLoc,
                       Expr **Args, unsigned NumArgs,
@@ -5661,7 +5661,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
-  if (SemaRef.DiagnoseEmptyLookup(/*Scope=*/0, SS, R))
+  if (SemaRef.DiagnoseEmptyLookup(S, SS, R))
     return Destroy(SemaRef, Fn, Args, NumArgs);
 
   assert(!R.empty() && "lookup results empty despite recovery");
@@ -5697,7 +5697,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Expr *Fn,
 /// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
 Sema::OwningExprResult
-Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
+Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                               SourceLocation LParenLoc,
                               Expr **Args, unsigned NumArgs,
                               SourceLocation *CommaLocs,
@@ -5730,7 +5730,7 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
   // AddRecoveryCallCandidates diagnoses the error itself, so we just
   // bailout out if it fails.
   if (CandidateSet.empty())
-    return BuildRecoveryCallExpr(*this, Fn, ULE, LParenLoc, Args, NumArgs,
+    return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
                                  CommaLocs, RParenLoc);
 
   OverloadCandidateSet::iterator Best;

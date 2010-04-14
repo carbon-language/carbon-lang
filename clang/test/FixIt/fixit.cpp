@@ -40,3 +40,12 @@ class B : public A {
 
 void f() throw();
 void f(); // expected-warning{{missing exception specification}}
+
+namespace rdar7853795 {
+  struct A {
+    bool getNumComponents() const; // expected-note{{declared here}}
+    void dump() const { 
+      getNumComponenets(); // expected-error{{use of undeclared identifier 'getNumComponenets'; did you mean 'getNumComponents'?}}
+    }
+  };
+}

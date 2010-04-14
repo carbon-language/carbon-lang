@@ -3558,7 +3558,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   Expr *NakedFn = Fn->IgnoreParens();
   if (isa<UnresolvedLookupExpr>(NakedFn)) {
     UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(NakedFn);
-    return BuildOverloadedCallExpr(Fn, ULE, LParenLoc, Args, NumArgs,
+    return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, Args, NumArgs,
                                    CommaLocs, RParenLoc);
   }
 
