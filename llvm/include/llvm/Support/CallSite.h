@@ -175,6 +175,14 @@ private:
     else
       return getInstruction()->op_end() - 3; // Skip BB, BB, Function
   }
+
+  /// getType - Return the type of the instruction that generated this call site
+  ///
+  const Type *getType() const { return (*this)->getType(); }
+
+  /// getCaller - Return the caller function for this call site
+  ///
+  Function *getCaller() const { return (*this)->getParent()->getParent(); }
 };
 
 /// ImmutableCallSite - establish a view to a call site for examination
@@ -245,14 +253,6 @@ public:
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const;
   void setDoesNotThrow(bool doesNotThrow = true);
-
-  /// getType - Return the type of the instruction that generated this call site
-  ///
-  const Type *getType() const { return (*this)->getType(); }
-
-  /// getCaller - Return the caller function for this call site
-  ///
-  Function *getCaller() const { return (*this)->getParent()->getParent(); }
 
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
