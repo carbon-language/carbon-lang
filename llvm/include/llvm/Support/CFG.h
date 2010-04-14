@@ -91,8 +91,13 @@ class SuccIterator : public std::iterator<std::bidirectional_iterator_tag,
   const Term_ Term;
   unsigned idx;
   typedef std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> super;
-public:
   typedef SuccIterator<Term_, BB_> _Self;
+
+  inline bool index_is_valid(int idx) {
+    return idx >= 0 && (unsigned) idx < Term->getNumSuccessors();
+  }
+
+public:
   typedef typename super::pointer pointer;
   // TODO: This can be random access iterator, only operator[] missing.
 
@@ -108,10 +113,6 @@ public:
     assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
     idx = I.idx;
     return *this;
-  }
-
-  inline bool index_is_valid (int idx) {
-    return idx >= 0 && (unsigned) idx < Term->getNumSuccessors();
   }
 
   /// getSuccessorIndex - This is used to interface between code that wants to
