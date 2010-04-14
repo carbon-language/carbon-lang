@@ -455,6 +455,33 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
+ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, Stmt* S, 
+                                          ExplodedNode* Pred, const GRState* St,
+                                          ProgramPoint::Kind K) {
+  const GRState* PredState = GetState(Pred);
+
+  // If the state hasn't changed, don't generate a new node.
+  if (!BuildSinks && St == PredState && Auditor == 0) {
+    Dst.Add(Pred);
+    return NULL;
+  }
+
+  ExplodedNode* N = generateNode(S, St, Pred, K);
+
+  if (N) {
+    if (BuildSinks)
+      N->markAsSink();
+    else {
+      if (Auditor && Auditor->Audit(N, Mgr))
+        N->markAsSink();
+      
+      Dst.Add(N);
+    }
+  }
+  
+  return N;
+}
+
 static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
                                     const LocationContext *LC, const void *tag){
   switch (K) {

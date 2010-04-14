@@ -239,31 +239,7 @@ public:
   }
 
   ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred,
-                         const GRState* St, ProgramPoint::Kind K) {
-
-    const GRState* PredState = GetState(Pred);
-
-    // If the state hasn't changed, don't generate a new node.
-    if (!BuildSinks && St == PredState && Auditor == 0) {
-      Dst.Add(Pred);
-      return NULL;
-    }
-
-    ExplodedNode* N = generateNode(S, St, Pred, K);
-
-    if (N) {
-      if (BuildSinks)
-        N->markAsSink();
-      else {
-        if (Auditor && Auditor->Audit(N, Mgr))
-          N->markAsSink();
-
-        Dst.Add(N);
-      }
-    }
-
-    return N;
-  }
+                         const GRState* St, ProgramPoint::Kind K);
 
   ExplodedNode* MakeSinkNode(ExplodedNodeSet& Dst, Stmt* S,
                        ExplodedNode* Pred, const GRState* St) {
@@ -273,7 +249,6 @@ public:
     BuildSinks = Tmp;
     return N;
   }
-
 };
 
 class GRBranchNodeBuilder {
