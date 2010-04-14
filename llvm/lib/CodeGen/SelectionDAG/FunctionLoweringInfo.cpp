@@ -196,7 +196,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
-  for (BB = Fn->begin(), EB = Fn->end(); BB != EB; ++BB) {
+  for (BB = Fn->begin(); BB != EB; ++BB) {
     MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);
     MBBMap[BB] = MBB;
     MF->push_back(MBB);
