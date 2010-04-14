@@ -18,6 +18,7 @@
 #ifndef NDEBUG
 #include "llvm/ADT/SmallSet.h"
 #endif
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 
