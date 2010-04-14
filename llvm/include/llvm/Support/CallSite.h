@@ -150,6 +150,14 @@ public:
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
   
+  /// getType - Return the type of the instruction that generated this call site
+  ///
+  const Type *getType() const { return (*this)->getType(); }
+
+  /// getCaller - Return the caller function for this call site
+  ///
+  Function *getCaller() const { return (*this)->getParent()->getParent(); }
+
 private:
   /// Returns the operand number of the first argument
   unsigned getArgumentOffset() const {
@@ -175,14 +183,6 @@ private:
     else
       return getInstruction()->op_end() - 3; // Skip BB, BB, Function
   }
-
-  /// getType - Return the type of the instruction that generated this call site
-  ///
-  const Type *getType() const { return (*this)->getType(); }
-
-  /// getCaller - Return the caller function for this call site
-  ///
-  Function *getCaller() const { return (*this)->getParent()->getParent(); }
 };
 
 /// ImmutableCallSite - establish a view to a call site for examination
