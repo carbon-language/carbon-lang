@@ -9,6 +9,7 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMCore
 BUILD_ARCHIVE = 1
+REQUIRES_RTTI = 1
 
 BUILT_SOURCES = $(PROJ_OBJ_ROOT)/include/llvm/Intrinsics.gen
 
