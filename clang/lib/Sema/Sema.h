@@ -1431,10 +1431,10 @@ public:
   void LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer);
 
-  bool CorrectTypo(LookupResult &R, Scope *S, CXXScopeSpec *SS,
-                   DeclContext *MemberContext = 0,
-                   bool EnteringContext = false,
-                   const ObjCObjectPointerType *OPT = 0);
+  DeclarationName CorrectTypo(LookupResult &R, Scope *S, CXXScopeSpec *SS,
+                              DeclContext *MemberContext = 0,
+                              bool EnteringContext = false,
+                              const ObjCObjectPointerType *OPT = 0);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,

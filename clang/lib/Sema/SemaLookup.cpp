@@ -2497,37 +2497,38 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
 /// \param OPT when non-NULL, the search for visible declarations will
 /// also walk the protocols in the qualified interfaces of \p OPT.
 ///
-/// \returns true if the typo was corrected, in which case the \p Res
-/// structure will contain the results of name lookup for the
-/// corrected name. Otherwise, returns false.
-bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
+/// \returns the corrected name if the typo was corrected, otherwise returns an
+/// empty \c DeclarationName. When a typo was corrected, the result structure
+/// may contain the results of name lookup for the correct name or it may be
+/// empty.
+DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
                        DeclContext *MemberContext, bool EnteringContext,
                        const ObjCObjectPointerType *OPT) {
   if (Diags.hasFatalErrorOccurred())
-    return false;
+    return DeclarationName();
 
   // Provide a stop gap for files that are just seriously broken.  Trying
   // to correct all typos can turn into a HUGE performance penalty, causing
   // some files to take minutes to get rejected by the parser.
   // FIXME: Is this the right solution?
   if (TyposCorrected == 20)
-    return false;
+    return DeclarationName();
   ++TyposCorrected;
   
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
   if (!Typo)
-    return false;
+    return DeclarationName();
 
   // If the scope specifier itself was invalid, don't try to correct
   // typos.
   if (SS && SS->isInvalid())
-    return false;
+    return DeclarationName();
 
   // Never try to correct typos during template deduction or
   // instantiation.
   if (!ActiveTemplateInstantiations.empty())
-    return false;
+    return DeclarationName();
 
   TypoCorrectionConsumer Consumer(Typo);
   if (MemberContext) {
@@ -2543,7 +2544,7 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   } else if (SS && SS->isSet()) {
     DeclContext *DC = computeDeclContext(*SS, EnteringContext);
     if (!DC)
-      return false;
+      return DeclarationName();
     
     LookupVisibleDecls(DC, Res.getLookupKind(), Consumer);
   } else {
@@ -2551,7 +2552,7 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   }
 
   if (Consumer.empty())
-    return false;
+    return DeclarationName();
 
   // Only allow a single, closest name in the result set (it's okay to
   // have overloads of that name, though).
@@ -2566,7 +2567,7 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   ++I;
   for(TypoCorrectionConsumer::iterator IEnd = Consumer.end(); I != IEnd; ++I) {
     if (BestName != (*I)->getDeclName())
-      return false;
+      return DeclarationName();
 
     // FIXME: If there are both ivars and properties of the same name,
     // don't return both because the callee can't handle two
@@ -2581,7 +2582,7 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   // each correction.
   unsigned ED = Consumer.getBestEditDistance();
   if (ED == 0 || (BestName.getAsIdentifierInfo()->getName().size() / ED) < 3)
-    return false;
+    return DeclarationName();
 
   // Perform name lookup again with the name we chose, and declare
   // success if we found something that was not ambiguous.
@@ -2603,8 +2604,11 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
 
   if (Res.isAmbiguous()) {
     Res.suppressDiagnostics();
-    return false;
+    return DeclarationName();
   }
 
-  return Res.getResultKind() != LookupResult::NotFound;
+  if (Res.getResultKind() != LookupResult::NotFound)
+    return BestName;
+  
+  return DeclarationName();
 }
