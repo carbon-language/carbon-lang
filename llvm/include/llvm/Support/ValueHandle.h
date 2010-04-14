@@ -315,7 +315,7 @@ class TrackingVH : public ValueHandleBase {
 
 public:
   TrackingVH() : ValueHandleBase(Tracking) {}
-  TrackingVH(ValueTy *P) : ValueHandleBase(Tracking, P) {}
+  TrackingVH(ValueTy *P) : ValueHandleBase(Tracking, GetAsValue(P)) {}
   TrackingVH(const TrackingVH &RHS) : ValueHandleBase(Tracking, RHS) {}
 
   operator ValueTy*() const {
