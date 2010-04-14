@@ -279,8 +279,7 @@ private:
                     const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
   
   void PrepareEHLandingPad(MachineBasicBlock *BB);
-  void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
-                            const TargetInstrInfo &TII);
+  void SelectAllBasicBlocks(Function &Fn);
   void FinishBasicBlock();
 
   void SelectBasicBlock(BasicBlock *LLVMBB,
