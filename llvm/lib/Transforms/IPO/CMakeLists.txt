@@ -23,3 +23,5 @@ add_llvm_library(LLVMipo
   StripSymbols.cpp
   StructRetPromotion.cpp
   )
+
+target_link_libraries (LLVMipo LLVMScalarOpts LLVMInstCombine)
