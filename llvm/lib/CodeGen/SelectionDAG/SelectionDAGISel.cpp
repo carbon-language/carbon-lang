@@ -226,6 +226,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
          "Not all catch info was assigned to a landing pad!");
 #endif
 
+  // Release function-specific state. SDB and CurDAG are already cleared
+  // at this point.
   FuncInfo->clear();
 
   return true;
