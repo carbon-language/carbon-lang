@@ -4,7 +4,6 @@
 
 int main ()
 {
-  vector char vc = { -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16 };
   vector signed char vsc = { 1, -2, 3, -4, 5, -6, 7, -8, 9, -10, 11, -12, 13, -14, 15, -16 };
   vector unsigned char vuc = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
   vector short vs = { -1, 2, -3, 4, -5, 6, -7, 8 };
@@ -13,7 +12,7 @@ int main ()
   vector unsigned int vui = { 1, 2, 3, 4 };
   vector float vf = { -1.5, 2.5, -3.5, 4.5 };
 
-  vector char res_vc;
+  vector signed char res_vsc;
   vector unsigned char res_vuc;
   vector short res_vs;
   vector unsigned short res_vus;
@@ -48,7 +47,7 @@ int main ()
                                    // CHECK: @llvm.ppc.altivec.vmaxsw
 
   /*  vec_add */
-  res_vc  = vec_add(vc, vc);                    // CHECK: add nsw <16 x i8>
+  res_vsc  = vec_add(vsc, vsc);                 // CHECK: add nsw <16 x i8>
   res_vuc = vec_vaddubm(vuc, vuc);              // CHECK: add <16 x i8>
   res_vs  = __builtin_altivec_vadduhm(vs, vs);  // CHECK: add nsw <8 x i16>
   res_vus = vec_vadduhm(vus, vus);              // CHECK: add <8 x i16>
@@ -60,7 +59,7 @@ int main ()
   res_vui = vec_vaddcuw(vui, vui);              // HECK: @llvm.ppc.altivec.vaddcuw
 
   /* vec_adds */
-  res_vc  = vec_adds(vc, vc);                   // CHECK: @llvm.ppc.altivec.vaddsbs
+  res_vsc  = vec_adds(vsc, vsc);                // CHECK: @llvm.ppc.altivec.vaddsbs
   res_vuc = vec_vaddubs(vuc, vuc);              // CHECK: @llvm.ppc.altivec.vaddubs
   res_vs  = __builtin_vec_vaddshs(vs, vs);      // CHECK: @llvm.ppc.altivec.vaddshs
   res_vus = vec_vadduhs(vus, vus);              // CHECK: @llvm.ppc.altivec.vadduhs
@@ -68,7 +67,7 @@ int main ()
   res_vui = vec_vadduws(vui, vui);              // CHECK: @llvm.ppc.altivec.vadduws
 
   /* vec_sub */
-  res_vc  = vec_sub(vsc, vsc);                  // CHECK: sub nsw <16 x i8>
+  res_vsc  = vec_sub(vsc, vsc);                 // CHECK: sub nsw <16 x i8>
   res_vuc = vec_vsububm(vuc, vuc);              // CHECK: sub <16 x i8>
   res_vs  = __builtin_altivec_vsubuhm(vs, vs);  // CHECK: sub nsw <8 x i16>
   res_vus = vec_vsubuhm(vus, vus);              // CHECK: sub <8 x i16>
@@ -77,7 +76,7 @@ int main ()
   res_vf  = __builtin_vec_vsubfp(vf, vf);       // CHECK: fsub <4 x float>
 
   /* vec_subs */
-  res_vc  = vec_subs(vc, vc);                   // CHECK: @llvm.ppc.altivec.vsubsbs
+  res_vsc  = vec_subs(vsc, vsc);                // CHECK: @llvm.ppc.altivec.vsubsbs
   res_vuc = vec_vsububs(vuc, vuc);              // CHECK: @llvm.ppc.altivec.vsububs
   res_vs  = __builtin_vec_vsubshs(vs, vs);      // CHECK: @llvm.ppc.altivec.vsubshs
   res_vus = vec_vsubuhs(vus, vus);              // CHECK: @llvm.ppc.altivec.vsubuhs
@@ -85,7 +84,7 @@ int main ()
   res_vui = vec_vsubuws(vui, vui);              // CHECK: @llvm.ppc.altivec.vsubuws
 
   /* vec_avg */
-  res_vc  = vec_avg(vsc, vsc);                  // CHECK: @llvm.ppc.altivec.vavgsb
+  res_vsc  = vec_avg(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vavgsb
   res_vuc = __builtin_vec_vavgub(vuc, vuc);     // CHECK: @llvm.ppc.altivec.vavgub
   res_vs  = vec_vavgsh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vavgsh
   res_vus = __builtin_vec_vavguh(vus, vus);     // CHECK: @llvm.ppc.altivec.vavguh
@@ -94,7 +93,7 @@ int main ()
 
   /* vec_st */
   param_i = 5;
-  vec_st(vc, 0, &res_vc);                       // CHECK: @llvm.ppc.altivec.stvx
+  vec_st(vsc, 0, &res_vsc);                     // CHECK: @llvm.ppc.altivec.stvx
   __builtin_vec_st(vuc, param_i, &res_vuc);     // CHECK: @llvm.ppc.altivec.stvx
   vec_stvx(vs, 1, &res_vs);                     // CHECK: @llvm.ppc.altivec.stvx
   vec_st(vus, 1000, &res_vus);                  // CHECK: @llvm.ppc.altivec.stvx
@@ -104,7 +103,7 @@ int main ()
 
   /* vec_stl */
   param_i = 10000;
-  vec_stl(vc, param_i, &res_vc);                // CHECK: @llvm.ppc.altivec.stvxl
+  vec_stl(vsc, param_i, &res_vsc);              // CHECK: @llvm.ppc.altivec.stvxl
   __builtin_vec_stl(vuc, 1, &res_vuc);          // CHECK: @llvm.ppc.altivec.stvxl
   vec_stvxl(vs, 0, &res_vs);                    // CHECK: @llvm.ppc.altivec.stvxl
   vec_stl(vus, 0, &res_vus);                    // CHECK: @llvm.ppc.altivec.stvxl
@@ -114,7 +113,7 @@ int main ()
 
   /* vec_ste */
   param_i = 10000;
-  vec_ste(vc, param_i, &res_vc);                // CHECK: @llvm.ppc.altivec.stvebx
+  vec_ste(vsc, param_i, &res_vsc);              // CHECK: @llvm.ppc.altivec.stvebx
   vec_stvebx(vuc, 1, &res_vuc);                 // CHECK: @llvm.ppc.altivec.stvebx
   __builtin_vec_stvehx(vs, 0, &res_vs);         // CHECK: @llvm.ppc.altivec.stvehx
   vec_stvehx(vus, 0, &res_vus);                 // CHECK: @llvm.ppc.altivec.stvehx
@@ -126,7 +125,7 @@ int main ()
   res_vi = vec_vcmpbfp(vf, vf);                 // CHECK: @llvm.ppc.altivec.vcmpbfp
 
   /* vec_cmpeq */
-  res_vi = vec_cmpeq(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpequb
+  res_vi = vec_cmpeq(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb
   res_vi = __builtin_vec_cmpeq(vuc, vuc);       // CHECK: @llvm.ppc.altivec.vcmpequb
   res_vi = vec_cmpeq(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpequh
   res_vi = vec_cmpeq(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpequh
@@ -138,7 +137,7 @@ int main ()
   res_vi = __builtin_vec_cmpge(vf, vf);         // CHECK: @llvm.ppc.altivec.vcmpgefp
 
   /* vec_cmpgt */
-  res_vi = vec_cmpgt(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb
+  res_vi = vec_cmpgt(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb
   res_vi = vec_vcmpgtub(vuc, vuc);              // CHECK: @llvm.ppc.altivec.vcmpgtub
   res_vi = __builtin_vec_vcmpgtsh(vs, vs);      // CHECK: @llvm.ppc.altivec.vcmpgtsh
   res_vi = vec_cmpgt(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh
@@ -150,7 +149,7 @@ int main ()
   res_vi = __builtin_vec_cmple(vf, vf);         // CHECK: @llvm.ppc.altivec.vcmpgefp
 
   /* vec_cmplt */
-  res_vi = vec_cmplt(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb
+  res_vi = vec_cmplt(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb
   res_vi = __builtin_vec_cmplt(vuc, vuc);       // CHECK: @llvm.ppc.altivec.vcmpgtub
   res_vi = vec_cmplt(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh
   res_vi = vec_cmplt(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh
@@ -159,7 +158,7 @@ int main ()
   res_vi = vec_cmplt(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpgtfp
 
   /* vec_max */
-  res_vc  = vec_max(vc, vc);                    // CHECK: @llvm.ppc.altivec.vmaxsb
+  res_vsc  = vec_max(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vmaxsb
   res_vuc = __builtin_vec_vmaxub(vuc, vuc);     // CHECK: @llvm.ppc.altivec.vmaxub
   res_vs  = vec_vmaxsh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vmaxsh
   res_vus = vec_max(vus, vus);                  // CHECK: @llvm.ppc.altivec.vmaxuh
@@ -171,7 +170,7 @@ int main ()
   vf = vec_mfvscr();                            // CHECK: @llvm.ppc.altivec.mfvscr
 
   /* vec_min */
-  res_vc  = vec_min(vc, vc);                    // CHECK: @llvm.ppc.altivec.vminsb
+  res_vsc  = vec_min(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vminsb
   res_vuc = __builtin_vec_vminub(vuc, vuc);     // CHECK: @llvm.ppc.altivec.vminub
   res_vs  = vec_vminsh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vminsh
   res_vus = vec_min(vus, vus);                  // CHECK: @llvm.ppc.altivec.vminuh
@@ -180,16 +179,16 @@ int main ()
   res_vf  = __builtin_vec_min(vf, vf);          // CHECK: @llvm.ppc.altivec.vminfp
 
   /* vec_mtvscr */
-  vec_mtvscr(vc);                               // CHECK: @llvm.ppc.altivec.mtvscr
+  vec_mtvscr(vsc);                              // CHECK: @llvm.ppc.altivec.mtvscr
 
   /* ------------------------------ predicates -------------------------------------- */
 
-  res_i = __builtin_vec_vcmpeq_p(__CR6_EQ, vc, vui); // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
-  res_i = __builtin_vec_vcmpge_p(__CR6_EQ, vs, vi);  // CHECK: @llvm.ppc.altivec.vcmpgefp.p
-  res_i = __builtin_vec_vcmpgt_p(__CR6_EQ, vuc, vf); // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
+  res_i = __builtin_vec_vcmpeq_p(__CR6_EQ, vsc, vui); // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
+  res_i = __builtin_vec_vcmpge_p(__CR6_EQ, vs, vi);   // CHECK: @llvm.ppc.altivec.vcmpgefp.p
+  res_i = __builtin_vec_vcmpgt_p(__CR6_EQ, vuc, vf);  // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
 
   /*  vec_all_eq */
-  res_i = vec_all_eq(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpequb.p
+  res_i = vec_all_eq(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_eq(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_eq(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpequh.p
   res_i = vec_all_eq(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpequh.p
@@ -198,7 +197,7 @@ int main ()
   res_i = vec_all_eq(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
 
   /* vec_all_ge */
-  res_i = vec_all_ge(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_all_ge(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_all_ge(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_all_ge(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_all_ge(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -207,7 +206,7 @@ int main ()
   res_i = vec_all_ge(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
 
   /* vec_all_gt */
-  res_i = vec_all_gt(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_all_gt(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_all_gt(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_all_gt(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_all_gt(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -219,7 +218,7 @@ int main ()
   res_i = vec_all_in(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpbfp.p
 
   /* vec_all_le */
-  res_i = vec_all_le(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_all_le(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_all_le(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_all_le(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_all_le(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -231,7 +230,7 @@ int main ()
   res_i = vec_all_nan(vf);                      // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
 
   /*  vec_all_ne */
-  res_i = vec_all_ne(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpequb.p
+  res_i = vec_all_ne(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_ne(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_ne(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpequh.p
   res_i = vec_all_ne(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpequh.p
@@ -255,7 +254,7 @@ int main ()
   res_i = vec_all_numeric(vf);                  // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
 
   /*  vec_any_eq */
-  res_i = vec_any_eq(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpequb.p
+  res_i = vec_any_eq(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_any_eq(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_any_eq(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpequh.p
   res_i = vec_any_eq(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpequh.p
@@ -264,7 +263,7 @@ int main ()
   res_i = vec_any_eq(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
 
   /* vec_any_ge */
-  res_i = vec_any_ge(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_any_ge(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_any_ge(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_any_ge(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_any_ge(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -273,7 +272,7 @@ int main ()
   res_i = vec_any_ge(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
 
   /* vec_any_gt */
-  res_i = vec_any_gt(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_any_gt(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_any_gt(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_any_gt(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_any_gt(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -282,7 +281,7 @@ int main ()
   res_i = vec_any_gt(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
 
   /* vec_any_le */
-  res_i = vec_any_le(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_any_le(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_any_le(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_any_le(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_any_le(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -291,7 +290,7 @@ int main ()
   res_i = vec_any_le(vf, vf);                   // CHECK: @llvm.ppc.altivec.vcmpgtfp.p
 
   /* vec_any_lt */
-  res_i = vec_any_lt(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
+  res_i = vec_any_lt(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpgtsb.p
   res_i = vec_any_lt(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpgtub.p
   res_i = vec_any_lt(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpgtsh.p
   res_i = vec_any_lt(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpgtuh.p
@@ -303,7 +302,7 @@ int main ()
   res_i = vec_any_nan(vf);                      // CHECK: @llvm.ppc.altivec.vcmpeqfp.p
 
   /* vec_any_ne */
-  res_i = vec_any_ne(vc, vc);                   // CHECK: @llvm.ppc.altivec.vcmpequb.p
+  res_i = vec_any_ne(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_any_ne(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_any_ne(vs, vs);                   // CHECK: @llvm.ppc.altivec.vcmpequh.p
   res_i = vec_any_ne(vus, vus);                 // CHECK: @llvm.ppc.altivec.vcmpequh.p

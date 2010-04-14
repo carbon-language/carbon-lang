@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -triple=powerpc-apple-darwin8 -faltivec -fsyntax-only -verify %s
-// XFAIL: *
 // This is the same as the C version:
 
 __vector char vv_c;
