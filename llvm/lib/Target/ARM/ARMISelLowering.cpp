@@ -2167,6 +2167,13 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
 
 static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
   SDValue Op = N->getOperand(0);
+
+  // Do not create a VMOVDRR or VMOVRRD node if the operand type is not
+  // legal.  The legalizer won't know what to do with that.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.isTypeLegal(Op.getValueType()))
+    return SDValue();
+
   DebugLoc dl = N->getDebugLoc();
   if (N->getValueType(0) == MVT::f64) {
     // Turn i64->f64 into VMOVDRR.
@@ -3114,21 +3121,21 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
                                            SelectionDAG &DAG) {
+  SDValue Res;
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this!");
-    return;
+    break;
   case ISD::BIT_CONVERT:
-    Results.push_back(ExpandBIT_CONVERT(N, DAG));
-    return;
+    Res = ExpandBIT_CONVERT(N, DAG);
+    break;
   case ISD::SRL:
-  case ISD::SRA: {
-    SDValue Res = LowerShift(N, DAG, Subtarget);
-    if (Res.getNode())
-      Results.push_back(Res);
-    return;
+  case ISD::SRA:
+    Res = LowerShift(N, DAG, Subtarget);
+    break;
   }
-  }
+  if (Res.getNode())
+    Results.push_back(Res);
 }
 
 //===----------------------------------------------------------------------===//
