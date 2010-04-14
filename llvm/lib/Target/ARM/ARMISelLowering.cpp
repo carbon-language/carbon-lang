@@ -40,11 +40,17 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>
 using namespace llvm;
+
+static cl::opt<bool>
+EnableARMLongCalls("arm-long-calls", cl::Hidden,
+  cl::desc("Generate calls via indirect call instructions."),
+  cl::init(false));
 
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
@@ -1027,7 +1033,43 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   bool isLocalARMFunc = false;
   MachineFunction &MF = DAG.getMachineFunction();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+
+  if (EnableARMLongCalls) {
+    assert (getTargetMachine().getRelocationModel() == Reloc::Static
+            && "long-calls with non-static relocation model!");
+    // Handle a global address or an external symbol. If it's not one of
+    // those, the target's already in a register, so we don't need to do
+    // anything extra.
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+      GlobalValue *GV = G->getGlobal();
+      // Create a constant pool entry for the callee address
+      unsigned ARMPCLabelIndex = AFI->createConstPoolEntryUId();
+      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV,
+                                                           ARMPCLabelIndex,
+                                                           ARMCP::CPValue, 0);
+      // Get the address of the callee into a register
+      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
+      Callee = DAG.getLoad(getPointerTy(), dl,
+                           DAG.getEntryNode(), CPAddr,
+                           PseudoSourceValue::getConstantPool(), 0,
+                           false, false, 0);
+    } else if (ExternalSymbolSDNode *S=dyn_cast<ExternalSymbolSDNode>(Callee)) {
+      const char *Sym = S->getSymbol();
+
+      // Create a constant pool entry for the callee address
+      unsigned ARMPCLabelIndex = AFI->createConstPoolEntryUId();
+      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(*DAG.getContext(),
+                                                       Sym, ARMPCLabelIndex, 0);
+      // Get the address of the callee into a register
+      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
+      Callee = DAG.getLoad(getPointerTy(), dl,
+                           DAG.getEntryNode(), CPAddr,
+                           PseudoSourceValue::getConstantPool(), 0,
+                           false, false, 0);
+    }
+  } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     isDirect = true;
     bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
@@ -1051,7 +1093,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
                            getPointerTy(), Callee, PICLabel);
-   } else
+    } else
       Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
