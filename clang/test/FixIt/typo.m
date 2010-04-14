@@ -2,7 +2,7 @@
 // FIXME: the test below isn't testing quite what we want...
 // RUN: %clang_cc1 -fsyntax-only -fixit -o - %s | %clang_cc1 -fsyntax-only -pedantic -Werror -x objective-c -
 
-@interface NSString
+@interface NSString // expected-note{{'NSString' declared here}}
 + (int)method:(int)x;
 @end
 
@@ -57,8 +57,7 @@ void test() {
 @end
 
 void test_message_send(B* b) {
-  // FIXME: Not providing fix-its
-  [NSstring method:17]; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
+  [NSstring method:17]; // expected-error{{unknown receiver 'NSstring'; did you mean 'NSString'?}}
 }
 
 @interface Collide // expected-note{{'Collide' declared here}}

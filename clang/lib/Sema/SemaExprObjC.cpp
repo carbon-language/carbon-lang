@@ -486,6 +486,61 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
                      << &propertyName << Context.getObjCInterfaceType(IFace));
 }
 
+Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
+                                               IdentifierInfo *&Name,
+                                               SourceLocation NameLoc,
+                                               bool IsSuper,
+                                               bool HasTrailingDot) {
+  // If the identifier is "super" and there is no trailing dot, we're
+  // messaging super.
+  if (IsSuper && !HasTrailingDot && S->isInObjcMethodScope())
+    return ObjCSuperMessage;
+  
+  LookupResult Result(*this, Name, NameLoc, LookupOrdinaryName);
+  LookupName(Result, S);
+  
+  switch (Result.getResultKind()) {
+  case LookupResult::NotFound:
+    // Break out; we'll perform typo correction below.
+    break;
+
+  case LookupResult::NotFoundInCurrentInstantiation:
+  case LookupResult::FoundOverloaded:
+  case LookupResult::FoundUnresolvedValue:
+  case LookupResult::Ambiguous:
+    Result.suppressDiagnostics();
+    return ObjCInstanceMessage;
+
+  case LookupResult::Found: {
+    // We found something. If it's a type, then we have a class
+    // message. Otherwise, it's an instance message.
+    NamedDecl *ND = Result.getFoundDecl();
+    if (isa<ObjCInterfaceDecl>(ND) || isa<TypeDecl>(ND) || 
+        isa<UnresolvedUsingTypenameDecl>(ND))
+      return ObjCClassMessage;
+
+    return ObjCInstanceMessage;
+  }
+  }
+
+  if (CorrectTypo(Result, S, 0) && Result.isSingleResult()) {
+    NamedDecl *ND = Result.getFoundDecl();
+    if (isa<ObjCInterfaceDecl>(ND)) {
+      Diag(NameLoc, diag::err_unknown_receiver_suggest)
+        << Name << Result.getLookupName()
+        << FixItHint::CreateReplacement(SourceRange(NameLoc),
+                                        ND->getNameAsString());
+      Diag(ND->getLocation(), diag::note_previous_decl)
+        << ND->getDeclName();
+
+      Name = ND->getIdentifier();
+      return ObjCClassMessage;
+    }
+  }
+  
+  // Fall back: let the parser try to parse it as an instance message.
+  return ObjCInstanceMessage;
+}
 
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions

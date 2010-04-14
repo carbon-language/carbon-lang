@@ -3863,6 +3863,12 @@ public:
                             SourceLocation receiverNameLoc,
                             SourceLocation propertyNameLoc);
 
+  virtual ObjCMessageKind getObjCMessageKind(Scope *S,
+                                             IdentifierInfo *&Name,
+                                             SourceLocation NameLoc,
+                                             bool IsSuper,
+                                             bool HasTrailingDot);
+
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from NumArgs.

@@ -2017,6 +2017,8 @@ def warn_bad_receiver_type : Warning<
   "receiver type %0 is not 'id' or interface pointer, consider "
   "casting it to 'id'">;
 def err_bad_receiver_type : Error<"bad receiver type %0">;
+def err_unknown_receiver_suggest : Error<
+  "unknown receiver %0; did you mean %1?">;
 def error_objc_throw_expects_object : Error<
   "@throw requires an Objective-C object type (%0 invalid)">;
 def error_objc_synchronized_expects_object : Error<
