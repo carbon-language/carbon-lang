@@ -187,6 +187,7 @@ class ARMBasicMCBuilder {
   unsigned short NumOps;
   DisassembleFP Disasm;
   Session *SP;
+  int Err; // !=0 if the builder encounters some error condition during build.
 
 private:
   /// Opcode, Format, and NumOperands make up an ARM Basic MCBuilder.
@@ -195,13 +196,18 @@ private:
 public:
   ARMBasicMCBuilder(ARMBasicMCBuilder &B)
     : Opcode(B.Opcode), Format(B.Format), NumOps(B.NumOps), Disasm(B.Disasm),
-      SP(B.SP)
-  {}
+      SP(B.SP) {
+    Err = 0;
+  }
 
   virtual ~ARMBasicMCBuilder() {}
 
-  void setSession(Session *sp) {
+  void SetSession(Session *sp) {
     SP = sp;
+  }
+
+  void SetErr(int ErrCode) {
+    Err = ErrCode;
   }
 
   /// TryPredicateAndSBitModifier - TryPredicateAndSBitModifier tries to process

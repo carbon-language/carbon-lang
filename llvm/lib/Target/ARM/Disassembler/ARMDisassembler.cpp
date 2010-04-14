@@ -495,7 +495,7 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
     });
 
   ARMBasicMCBuilder *Builder = CreateMCBuilder(Opcode, Format);
-  Builder->setSession(const_cast<Session *>(&SO));
+  Builder->SetSession(const_cast<Session *>(&SO));
 
   if (!Builder)
     return false;
