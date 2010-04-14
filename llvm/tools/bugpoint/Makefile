@@ -12,6 +12,5 @@ TOOLNAME = bugpoint
 
 LINK_COMPONENTS := asmparser instrumentation scalaropts ipo \
                    linker bitreader bitwriter
-REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
