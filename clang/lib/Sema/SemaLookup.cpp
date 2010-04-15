@@ -1825,16 +1825,19 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 }
 
 NamedDecl *Sema::LookupSingleName(Scope *S, DeclarationName Name,
+                                  SourceLocation Loc,
                                   LookupNameKind NameKind,
                                   RedeclarationKind Redecl) {
-  LookupResult R(*this, Name, SourceLocation(), NameKind, Redecl);
+  LookupResult R(*this, Name, Loc, NameKind, Redecl);
   LookupName(R, S);
   return R.getAsSingle<NamedDecl>();
 }
 
 /// \brief Find the protocol with the given name, if any.
-ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
-  Decl *D = LookupSingleName(TUScope, II, LookupObjCProtocolName);
+ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II, 
+                                       SourceLocation IdLoc) {
+  Decl *D = LookupSingleName(TUScope, II, IdLoc,
+                             LookupObjCProtocolName);
   return cast_or_null<ObjCProtocolDecl>(D);
 }
 

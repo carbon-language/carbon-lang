@@ -1025,8 +1025,11 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Look up the function
+  // FIXME: Lookup probably isn't looking in the right place
+  // FIXME: The lookup source location should be in the attribute, not the
+  // start of the attribute.
   NamedDecl *CleanupDecl
-    = S.LookupSingleName(S.TUScope, Attr.getParameterName(),
+    = S.LookupSingleName(S.TUScope, Attr.getParameterName(), Attr.getLoc(),
                          Sema::LookupOrdinaryName);
   if (!CleanupDecl) {
     S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) <<

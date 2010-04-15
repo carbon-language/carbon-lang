@@ -148,7 +148,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCInterfaceCategory(CurScope, nameId);
+      Actions.CodeCompleteObjCInterfaceCategory(CurScope, nameId, nameLoc);
       ConsumeToken();
     }
     
@@ -211,7 +211,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
 
     // Code completion of superclass names.
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCSuperclass(CurScope, nameId);
+      Actions.CodeCompleteObjCSuperclass(CurScope, nameId, nameLoc);
       ConsumeToken();
     }
 
@@ -1229,7 +1229,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
     IdentifierInfo *categoryId = 0;
 
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCImplementationCategory(CurScope, nameId);
+      Actions.CodeCompleteObjCImplementationCategory(CurScope, nameId, nameLoc);
       ConsumeToken();
     }
     

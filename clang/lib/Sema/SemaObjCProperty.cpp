@@ -204,7 +204,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
         ObjCInterfaceDecl *IDecl = OIT->getDecl();
         if (IDecl)
           if (ObjCProtocolDecl* PNSCopying =
-              LookupProtocol(&Context.Idents.get("NSCopying")))
+              LookupProtocol(&Context.Idents.get("NSCopying"), AtLoc))
             if (IDecl->ClassImplementsProtocol(PNSCopying, true))
               Diag(AtLoc, diag::warn_implements_nscopying) << PropertyId;
       }

@@ -3018,7 +3018,7 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     NamedDecl *PrevDecl
-      = LookupSingleName(DeclRegionScope, II, LookupOrdinaryName,
+      = LookupSingleName(DeclRegionScope, II, IdentLoc, LookupOrdinaryName,
                          ForRedeclaration);
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
@@ -3842,7 +3842,8 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
 
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl
-        = LookupSingleName(S, Alias, LookupOrdinaryName, ForRedeclaration)) {
+        = LookupSingleName(S, Alias, AliasLoc, LookupOrdinaryName, 
+                           ForRedeclaration)) {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.
@@ -4935,7 +4936,8 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
 
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
-  if (NamedDecl *PrevDecl = LookupSingleName(S, II, LookupOrdinaryName)) {
+  if (NamedDecl *PrevDecl = LookupSingleName(S, II, D.getIdentifierLoc(),
+                                             LookupOrdinaryName)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
     assert(!S->isDeclScope(DeclPtrTy::make(PrevDecl)));

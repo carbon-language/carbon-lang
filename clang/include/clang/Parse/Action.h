@@ -2798,7 +2798,8 @@ public:
   ///
   /// \param ClassName the name of the class being defined.
   virtual void CodeCompleteObjCSuperclass(Scope *S, 
-                                          IdentifierInfo *ClassName) {
+                                          IdentifierInfo *ClassName,
+                                          SourceLocation ClassNameLoc) {
   }
 
   /// \brief Code completion for an Objective-C implementation, after the
@@ -2811,7 +2812,8 @@ public:
   /// This code completion action is invoked after the '(' that indicates
   /// a category name within an Objective-C interface declaration.
   virtual void CodeCompleteObjCInterfaceCategory(Scope *S, 
-                                                 IdentifierInfo *ClassName) {
+                                                 IdentifierInfo *ClassName,
+                                                 SourceLocation ClassNameLoc) {
   }
 
   /// \brief Code completion for the category name in an Objective-C category
@@ -2820,7 +2822,8 @@ public:
   /// This code completion action is invoked after the '(' that indicates
   /// the category name within an Objective-C category implementation.
   virtual void CodeCompleteObjCImplementationCategory(Scope *S, 
-                                                   IdentifierInfo *ClassName) {
+                                                      IdentifierInfo *ClassName,
+                                                  SourceLocation ClassNameLoc) {
   }
   
   /// \brief Code completion for the property names when defining an

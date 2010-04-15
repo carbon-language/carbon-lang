@@ -1406,6 +1406,7 @@ public:
   /// It is preferable to use the elaborated form and explicitly handle
   /// ambiguity and overloaded.
   NamedDecl *LookupSingleName(Scope *S, DeclarationName Name,
+                              SourceLocation Loc,
                               LookupNameKind NameKind,
                               RedeclarationKind Redecl
                                 = NotForRedeclaration);
@@ -1416,7 +1417,7 @@ public:
   bool LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
                         bool AllowBuiltinCreation = false,
                         bool EnteringContext = false);
-  ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
+  ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II, SourceLocation IdLoc);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
@@ -1468,7 +1469,8 @@ public:
   //@}
 
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *&Id,
-                                 SourceLocation RecoverLoc = SourceLocation());
+                                          SourceLocation IdLoc,
+                                          bool TypoCorrection = false);
   NamedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
                                  Scope *S, bool ForRedeclaration,
                                  SourceLocation Loc);
@@ -4338,12 +4340,15 @@ public:
   virtual void CodeCompleteObjCProtocolDecl(Scope *S);
   virtual void CodeCompleteObjCInterfaceDecl(Scope *S);
   virtual void CodeCompleteObjCSuperclass(Scope *S, 
-                                          IdentifierInfo *ClassName);
+                                          IdentifierInfo *ClassName,
+                                          SourceLocation ClassNameLoc);
   virtual void CodeCompleteObjCImplementationDecl(Scope *S);
   virtual void CodeCompleteObjCInterfaceCategory(Scope *S, 
-                                                 IdentifierInfo *ClassName);
+                                                 IdentifierInfo *ClassName,
+                                                 SourceLocation ClassNameLoc);
   virtual void CodeCompleteObjCImplementationCategory(Scope *S, 
-                                                    IdentifierInfo *ClassName);
+                                                  IdentifierInfo *ClassName,
+                                                  SourceLocation ClassNameLoc);
   virtual void CodeCompleteObjCPropertyDefinition(Scope *S, 
                                                   DeclPtrTy ObjCImpDecl);
   virtual void CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 

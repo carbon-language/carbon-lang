@@ -3181,7 +3181,8 @@ void Sema::CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
   // Tell the result set to ignore all of the protocols we have
   // already seen.
   for (unsigned I = 0; I != NumProtocols; ++I)
-    if (ObjCProtocolDecl *Protocol = LookupProtocol(Protocols[I].first))
+    if (ObjCProtocolDecl *Protocol = LookupProtocol(Protocols[I].first,
+                                                    Protocols[I].second))
       Results.Ignore(Protocol);
 
   // Add all protocols.
@@ -3245,13 +3246,14 @@ void Sema::CodeCompleteObjCInterfaceDecl(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName) { 
+void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName,
+                                      SourceLocation ClassNameLoc) { 
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   
   // Make sure that we ignore the class we're currently defining.
   NamedDecl *CurClass
-    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+    = LookupSingleName(TUScope, ClassName, ClassNameLoc, LookupOrdinaryName);
   if (CurClass && isa<ObjCInterfaceDecl>(CurClass))
     Results.Ignore(CurClass);
 
@@ -3276,7 +3278,8 @@ void Sema::CodeCompleteObjCImplementationDecl(Scope *S) {
 }
 
 void Sema::CodeCompleteObjCInterfaceCategory(Scope *S, 
-                                             IdentifierInfo *ClassName) {
+                                             IdentifierInfo *ClassName,
+                                             SourceLocation ClassNameLoc) {
   typedef CodeCompleteConsumer::Result Result;
   
   ResultBuilder Results(*this);
@@ -3285,7 +3288,7 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   // interface.
   llvm::SmallPtrSet<IdentifierInfo *, 16> CategoryNames;
   NamedDecl *CurClass
-    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+    = LookupSingleName(TUScope, ClassName, ClassNameLoc, LookupOrdinaryName);
   if (ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass))
     for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
          Category = Category->getNextClassCategory())
@@ -3306,17 +3309,18 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
 }
 
 void Sema::CodeCompleteObjCImplementationCategory(Scope *S, 
-                                                  IdentifierInfo *ClassName) {
+                                                  IdentifierInfo *ClassName,
+                                                  SourceLocation ClassNameLoc) {
   typedef CodeCompleteConsumer::Result Result;
   
   // Find the corresponding interface. If we couldn't find the interface, the
   // program itself is ill-formed. However, we'll try to be helpful still by
   // providing the list of all of the categories we know about.
   NamedDecl *CurClass
-    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+    = LookupSingleName(TUScope, ClassName, ClassNameLoc, LookupOrdinaryName);
   ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass);
   if (!Class)
-    return CodeCompleteObjCInterfaceCategory(S, ClassName);
+    return CodeCompleteObjCInterfaceCategory(S, ClassName, ClassNameLoc);
     
   ResultBuilder Results(*this);
   

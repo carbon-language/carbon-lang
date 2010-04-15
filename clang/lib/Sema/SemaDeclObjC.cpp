@@ -66,7 +66,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   assert(ClassName && "Missing class identifier");
 
   // Check for another declaration kind with the same name.
-  NamedDecl *PrevDecl = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+  NamedDecl *PrevDecl = LookupSingleName(TUScope, ClassName, ClassLoc,
+                                         LookupOrdinaryName);
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(ClassLoc, PrevDecl);
@@ -115,7 +116,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
   if (SuperName) {
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupSingleName(TUScope, SuperName, LookupOrdinaryName);
+    PrevDecl = LookupSingleName(TUScope, SuperName, SuperLoc,
+                                LookupOrdinaryName);
 
     if (!PrevDecl) {
       // Try to correct for a typo in the superclass name.
@@ -199,7 +201,8 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
                                              IdentifierInfo *ClassName,
                                              SourceLocation ClassLocation) {
   // Look for previous declaration of alias name
-  NamedDecl *ADecl = LookupSingleName(TUScope, AliasName, LookupOrdinaryName);
+  NamedDecl *ADecl = LookupSingleName(TUScope, AliasName, AliasLocation,
+                                      LookupOrdinaryName);
   if (ADecl) {
     if (isa<ObjCCompatibleAliasDecl>(ADecl))
       Diag(AliasLocation, diag::warn_previous_alias_decl);
@@ -209,13 +212,15 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
     return DeclPtrTy();
   }
   // Check for class declaration
-  NamedDecl *CDeclU = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+  NamedDecl *CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
+                                       LookupOrdinaryName);
   if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCInterfaceType()) {
       if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl()) {
         ClassName = IDecl->getIdentifier();
-        CDeclU = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+        CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
+                                  LookupOrdinaryName);
       }
     }
   }
@@ -244,7 +249,8 @@ void Sema::CheckForwardProtocolDeclarationForCircularDependency(
   for (ObjCList<ObjCProtocolDecl>::iterator I = PList.begin(),
        E = PList.end(); I != E; ++I) {
 
-    if (ObjCProtocolDecl *PDecl = LookupProtocol((*I)->getIdentifier())) {
+    if (ObjCProtocolDecl *PDecl = LookupProtocol((*I)->getIdentifier(),
+                                                 Ploc)) {
       if (PDecl->getIdentifier() == PName) {
         Diag(Ploc, diag::err_protocol_has_circular_dependency);
         Diag(PrevLoc, diag::note_previous_definition);
@@ -266,7 +272,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                   AttributeList *AttrList) {
   // FIXME: Deal with AttrList.
   assert(ProtocolName && "Missing protocol identifier");
-  ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolName);
+  ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolName, ProtocolLoc);
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl()) {
@@ -313,7 +319,8 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               unsigned NumProtocols,
                               llvm::SmallVectorImpl<DeclPtrTy> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
-    ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first);
+    ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first,
+                                             ProtocolId[i].second);
     if (!PDecl) {
       LookupResult R(*this, ProtocolId[i].first, ProtocolId[i].second,
                      LookupObjCProtocolName);
@@ -383,7 +390,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
 
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
-    ObjCProtocolDecl *PDecl = LookupProtocol(Ident);
+    ObjCProtocolDecl *PDecl = LookupProtocol(Ident, IdentList[i].second);
     if (PDecl == 0) { // Not already seen?
       PDecl = ObjCProtocolDecl::Create(Context, CurContext,
                                        IdentList[i].second, Ident);
@@ -414,7 +421,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             const SourceLocation *ProtoLocs,
                             SourceLocation EndProtoLoc) {
   ObjCCategoryDecl *CDecl = 0;
-  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
+  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc, true);
 
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl()) {
@@ -492,7 +499,7 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
                       SourceLocation AtCatImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
-  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
+  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc, true);
   ObjCCategoryDecl *CatIDecl = 0;
   if (IDecl) {
     CatIDecl = IDecl->FindCategoryDeclaration(CatName);
@@ -540,7 +547,7 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   ObjCInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl
-    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+    = LookupSingleName(TUScope, ClassName, ClassLoc, LookupOrdinaryName);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
@@ -577,7 +584,8 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   ObjCInterfaceDecl* SDecl = 0;
   if (SuperClassname) {
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupSingleName(TUScope, SuperClassname, LookupOrdinaryName);
+    PrevDecl = LookupSingleName(TUScope, SuperClassname, SuperClassLoc,
+                                LookupOrdinaryName);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind)
         << SuperClassname;
@@ -1004,7 +1012,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
     NamedDecl *PrevDecl
-      = LookupSingleName(TUScope, IdentList[i], LookupOrdinaryName);
+      = LookupSingleName(TUScope, IdentList[i], IdentLocs[i], 
+                         LookupOrdinaryName);
     if (PrevDecl && PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(AtClassLoc, PrevDecl);
@@ -1659,7 +1668,7 @@ void Sema::ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                      IdentifierInfo *ClassName,
                      llvm::SmallVectorImpl<DeclPtrTy> &Decls) {
   // Check that ClassName is a valid class
-  ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
+  ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName, DeclStart);
   if (!Class) {
     Diag(DeclStart, diag::err_undef_interface) << ClassName;
     return;

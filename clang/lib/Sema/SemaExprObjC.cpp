@@ -78,7 +78,8 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     Ty = Context.getObjCObjectPointerType(Ty);
   } else {
     IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
-    NamedDecl *IF = LookupSingleName(TUScope, NSIdent, LookupOrdinaryName);
+    NamedDecl *IF = LookupSingleName(TUScope, NSIdent, AtLocs[0],
+                                     LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
       Context.setObjCConstantStringInterface(StrIF);
       Ty = Context.getObjCConstantStringInterface();
@@ -149,7 +150,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
                                                    SourceLocation ProtoLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
-  ObjCProtocolDecl* PDecl = LookupProtocol(ProtocolId);
+  ObjCProtocolDecl* PDecl = LookupProtocol(ProtocolId, ProtoLoc);
   if (!PDecl) {
     Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId;
     return true;
@@ -401,7 +402,8 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
                           SourceLocation propertyNameLoc) {
 
   IdentifierInfo *receiverNamePtr = &receiverName;
-  ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(receiverNamePtr);
+  ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(receiverNamePtr,
+                                                  receiverNameLoc);
   if (IFace == 0) {
     // If the "receiver" is 'super' in a method, handle it as an expression-like
     // property reference.
@@ -603,7 +605,7 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
   }
   
   if (ClassDecl == 0)
-    ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
+    ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc, true);
 
   // The following code allows for the following GCC-ism:
   //
@@ -617,7 +619,8 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
   // If necessary, the following lookup could move to getObjCInterfaceDecl().
   if (!ClassDecl) {
     NamedDecl *IDecl
-      = LookupSingleName(TUScope, receiverName, LookupOrdinaryName);
+      = LookupSingleName(TUScope, receiverName, receiverLoc, 
+                         LookupOrdinaryName);
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl))
       if (const ObjCInterfaceType *OCIT
                       = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>())

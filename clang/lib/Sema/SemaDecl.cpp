@@ -588,32 +588,35 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
-/// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
-/// return 0 if one not found.
+/// \brief Look for an Objective-C class in the translation unit.
 ///
-/// \param Id the name of the Objective-C class we're looking for. If
+/// \param Id The name of the Objective-C class we're looking for. If
 /// typo-correction fixes this name, the Id will be updated
 /// to the fixed name.
 ///
-/// \param RecoverLoc if provided, this routine will attempt to
-/// recover from a typo in the name of an existing Objective-C class
-/// and, if successful, will return the lookup that results from
-/// typo-correction.
+/// \param IdLoc The location of the name in the translation unit.
+///
+/// \param TypoCorrection If true, this routine will attempt typo correction
+/// if there is no class with the given name.
+///
+/// \returns The declaration of the named Objective-C class, or NULL if the
+/// class could not be found.
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
-                                              SourceLocation RecoverLoc) {
+                                              SourceLocation IdLoc,
+                                              bool TypoCorrection) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
-  NamedDecl *IDecl = LookupSingleName(TUScope, Id, LookupOrdinaryName);
+  NamedDecl *IDecl = LookupSingleName(TUScope, Id, IdLoc, LookupOrdinaryName);
 
-  if (!IDecl && !RecoverLoc.isInvalid()) {
+  if (!IDecl && TypoCorrection) {
     // Perform typo correction at the given location, but only if we
     // find an Objective-C class name.
-    LookupResult R(*this, Id, RecoverLoc, LookupOrdinaryName);
+    LookupResult R(*this, Id, IdLoc, LookupOrdinaryName);
     if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
-      Diag(RecoverLoc, diag::err_undef_interface_suggest)
+      Diag(IdLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 
-        << FixItHint::CreateReplacement(RecoverLoc, IDecl->getNameAsString());
+        << FixItHint::CreateReplacement(IdLoc, IDecl->getNameAsString());
       Diag(IDecl->getLocation(), diag::note_previous_decl)
         << IDecl->getDeclName();
       
@@ -661,7 +664,8 @@ void Sema::InitBuiltinVaListType() {
     return;
 
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  NamedDecl *VaDecl = LookupSingleName(TUScope, VaIdent, LookupOrdinaryName);
+  NamedDecl *VaDecl = LookupSingleName(TUScope, VaIdent, SourceLocation(),
+                                       LookupOrdinaryName, ForRedeclaration);
   TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
@@ -5413,7 +5417,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
-  NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
+  NamedDecl *PrevDecl = LookupSingleName(S, II, Loc, LookupMemberName,
                                          ForRedeclaration);
 
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
@@ -5814,7 +5818,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
                                              TInfo, ac, (Expr *)BitfieldWidth);
 
   if (II) {
-    NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
+    NamedDecl *PrevDecl = LookupSingleName(S, II, Loc, LookupMemberName,
                                            ForRedeclaration);
     if (PrevDecl && isDeclInScope(PrevDecl, EnclosingContext, S)
         && !isa<TagDecl>(PrevDecl)) {
@@ -6187,7 +6191,7 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
 
   // Verify that there isn't already something declared with this name in this
   // scope.
-  NamedDecl *PrevDecl = LookupSingleName(S, Id, LookupOrdinaryName,
+  NamedDecl *PrevDecl = LookupSingleName(S, Id, IdLoc, LookupOrdinaryName,
                                          ForRedeclaration);
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
@@ -6439,7 +6443,7 @@ Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
 void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,
                              SourceLocation PragmaLoc,
                              SourceLocation NameLoc) {
-  Decl *PrevDecl = LookupSingleName(TUScope, Name, LookupOrdinaryName);
+  Decl *PrevDecl = LookupSingleName(TUScope, Name, NameLoc, LookupOrdinaryName);
 
   if (PrevDecl) {
     PrevDecl->addAttr(::new (Context) WeakAttr());
@@ -6455,7 +6459,8 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
                                 SourceLocation PragmaLoc,
                                 SourceLocation NameLoc,
                                 SourceLocation AliasNameLoc) {
-  Decl *PrevDecl = LookupSingleName(TUScope, AliasName, LookupOrdinaryName);
+  Decl *PrevDecl = LookupSingleName(TUScope, AliasName, AliasNameLoc,
+                                    LookupOrdinaryName);
   WeakInfo W = WeakInfo(Name, NameLoc);
 
   if (PrevDecl) {
