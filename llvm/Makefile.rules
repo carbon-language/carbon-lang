@@ -979,7 +979,7 @@ ifdef EXPORTED_SYMBOL_FILE
 ifeq ($(HOST_OS),Darwin)
 # Darwin convention prefixes symbols with underscores.
 NativeExportsFile := $(ObjDir)/$(EXPORTED_SYMBOL_FILE).sed
-$(NativeExportsFile): $(EXPORTED_SYMBOL_FILE)
+$(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 	$(Verb) sed -e 's/[[:<:]]/_/' < $< > $@
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
