@@ -3637,7 +3637,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   // Do not generate loads of non-round integer types since these can
   // be expensive (and would be wrong if the type is not byte sized).
   if (isa<LoadSDNode>(N0) && N0.hasOneUse() && ExtVT.isRound() &&
-      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() > EVTBits &&
+      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() >= EVTBits &&
       // Do not change the width of a volatile load.
       !cast<LoadSDNode>(N0)->isVolatile()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
