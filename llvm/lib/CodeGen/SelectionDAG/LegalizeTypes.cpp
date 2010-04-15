@@ -721,7 +721,8 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
 }
 
 void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
-  assert(Result.getValueType() == TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+  assert(Result.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
          "Invalid type for promoted integer");
   AnalyzeNewValue(Result);
 
@@ -731,7 +732,8 @@ void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
 }
 
 void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
-  assert(Result.getValueType() == TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+  assert(Result.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
          "Invalid type for softened float");
   AnalyzeNewValue(Result);
 
@@ -762,7 +764,8 @@ void DAGTypeLegalizer::GetExpandedInteger(SDValue Op, SDValue &Lo,
 
 void DAGTypeLegalizer::SetExpandedInteger(SDValue Op, SDValue Lo,
                                           SDValue Hi) {
-  assert(Lo.getValueType() == TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+  assert(Lo.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
          Hi.getValueType() == Lo.getValueType() &&
          "Invalid type for expanded integer");
   // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
@@ -788,7 +791,8 @@ void DAGTypeLegalizer::GetExpandedFloat(SDValue Op, SDValue &Lo,
 
 void DAGTypeLegalizer::SetExpandedFloat(SDValue Op, SDValue Lo,
                                         SDValue Hi) {
-  assert(Lo.getValueType() == TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+  assert(Lo.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
          Hi.getValueType() == Lo.getValueType() &&
          "Invalid type for expanded float");
   // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
@@ -832,7 +836,8 @@ void DAGTypeLegalizer::SetSplitVector(SDValue Op, SDValue Lo,
 }
 
 void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
-  assert(Result.getValueType() == TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+  assert(Result.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
          "Invalid type for widened vector");
   AnalyzeNewValue(Result);
 
@@ -940,7 +945,8 @@ void DAGTypeLegalizer::GetSplitDestVTs(EVT InVT, EVT &LoVT, EVT &HiVT) {
   } else {
     unsigned NumElements = InVT.getVectorNumElements();
     assert(!(NumElements & 1) && "Splitting vector, but not in half!");
-    LoVT = HiVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(), NumElements/2);
+    LoVT = HiVT = EVT::getVectorVT(*DAG.getContext(),
+                                   InVT.getVectorElementType(), NumElements/2);
   }
 }
 
@@ -980,7 +986,8 @@ SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
   DebugLoc dlLo = Lo.getDebugLoc();
   EVT LVT = Lo.getValueType();
   EVT HVT = Hi.getValueType();
-  EVT NVT = EVT::getIntegerVT(*DAG.getContext(), LVT.getSizeInBits() + HVT.getSizeInBits());
+  EVT NVT = EVT::getIntegerVT(*DAG.getContext(),
+                              LVT.getSizeInBits() + HVT.getSizeInBits());
 
   Lo = DAG.getNode(ISD::ZERO_EXTEND, dlLo, NVT, Lo);
   Hi = DAG.getNode(ISD::ANY_EXTEND, dlHi, NVT, Hi);
@@ -1082,7 +1089,8 @@ void DAGTypeLegalizer::SplitInteger(SDValue Op,
 /// type half the size of Op's.
 void DAGTypeLegalizer::SplitInteger(SDValue Op,
                                     SDValue &Lo, SDValue &Hi) {
-  EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(), Op.getValueType().getSizeInBits()/2);
+  EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(),
+                                 Op.getValueType().getSizeInBits()/2);
   SplitInteger(Op, HalfVT, HalfVT, Lo, Hi);
 }
 
