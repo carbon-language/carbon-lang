@@ -124,13 +124,9 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // layout object. However, this is blocked on other cleanups to the
   // Objective-C code, so for now we just live with allocating a bunch of these
   // objects.
-  CGBitFieldInfo *Info =
-    new (CGF.CGM.getContext()) CGBitFieldInfo(BitFieldSize,
-                                              IvarTy->isSignedIntegerType());
 
   // We always construct a single, possibly unaligned, access for this case.
-  Info->setNumComponents(1);
-  CGBitFieldInfo::AccessInfo &AI = Info->getComponent(0);
+  CGBitFieldInfo::AccessInfo AI;
   AI.FieldIndex = 0;
   AI.FieldByteOffset = 0;
   AI.FieldBitStart = BitOffset;
@@ -138,6 +134,10 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   AI.AccessAlignment = 0;
   AI.TargetBitOffset = 0;
   AI.TargetBitWidth = BitFieldSize;
+
+  CGBitFieldInfo *Info =
+    new (CGF.CGM.getContext()) CGBitFieldInfo(BitFieldSize, 1, &AI,
+                                              IvarTy->isSignedIntegerType());
 
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.

@@ -155,18 +155,19 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
 
   unsigned StartBit = FieldOffset % TypeSizeInBits;
   bool IsSigned = FD->getType()->isSignedIntegerType();
-  CGBitFieldInfo BFI(FieldSize, IsSigned);
 
   // The current policy is to always access the bit-field using the source type
   // of the bit-field. With the C bit-field rules, this implies that we always
   // use either one or two accesses, and two accesses can only occur with a
   // packed structure when the bit-field straddles an alignment boundary.
+  CGBitFieldInfo::AccessInfo Components[2];
+
   unsigned LowBits = std::min(FieldSize, TypeSizeInBits - StartBit);
   bool NeedsHighAccess = LowBits != FieldSize;
-  BFI.setNumComponents(1 + NeedsHighAccess);
+  unsigned NumComponents = 1 + NeedsHighAccess;
 
   // FIXME: This access policy is probably wrong on big-endian systems.
-  CGBitFieldInfo::AccessInfo &LowAccess = BFI.getComponent(0);
+  CGBitFieldInfo::AccessInfo &LowAccess = Components[0];
   LowAccess.FieldIndex = 0;
   LowAccess.FieldByteOffset =
     TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
@@ -178,7 +179,7 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   LowAccess.TargetBitWidth = LowBits;
 
   if (NeedsHighAccess) {
-    CGBitFieldInfo::AccessInfo &HighAccess = BFI.getComponent(1);
+    CGBitFieldInfo::AccessInfo &HighAccess = Components[1];
     HighAccess.FieldIndex = 0;
     HighAccess.FieldByteOffset = LowAccess.FieldByteOffset + TypeSizeInBytes;
     HighAccess.FieldBitStart = 0;
@@ -189,7 +190,7 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
     HighAccess.TargetBitWidth = FieldSize - LowBits;
   }
 
-  return BFI;
+  return CGBitFieldInfo(FieldSize, NumComponents, Components, IsSigned);
 }
 
 void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,

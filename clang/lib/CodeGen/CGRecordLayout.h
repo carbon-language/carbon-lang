@@ -94,8 +94,33 @@ private:
   bool IsSigned : 1;
 
 public:
-  CGBitFieldInfo(unsigned Size, bool IsSigned)
-    : Size(Size), IsSigned(IsSigned) {}
+  CGBitFieldInfo(unsigned Size, unsigned NumComponents, AccessInfo *_Components,
+                 bool IsSigned) : Size(Size), NumComponents(NumComponents),
+                                  IsSigned(IsSigned) {
+    assert(NumComponents <= 3 && "invalid number of components!");
+    for (unsigned i = 0; i != NumComponents; ++i)
+      Components[i] = _Components[i];
+
+    // Check some invariants.
+    unsigned AccessedSize = 0;
+    for (unsigned i = 0, e = getNumComponents(); i != e; ++i) {
+      const AccessInfo &AI = getComponent(i);
+      AccessedSize += AI.TargetBitWidth;
+
+      // We shouldn't try to load 0 bits.
+      assert(AI.TargetBitWidth > 0);
+
+      // We can't load more bits than we accessed.
+      assert(AI.FieldBitStart + AI.TargetBitWidth <= AI.AccessWidth);
+
+      // We shouldn't put any bits outside the result size.
+      assert(AI.TargetBitWidth + AI.TargetBitOffset <= Size);
+    }
+
+    // Check that the total number of target bits matches the total bit-field
+    // size.
+    assert(AccessedSize == Size && "Total size does not match accessed size!");
+  }
 
 public:
   /// \brief Check whether this bit-field access is (i.e., should be sign
@@ -109,16 +134,8 @@ public:
   /// @{
 
   unsigned getNumComponents() const { return NumComponents; }
-  void setNumComponents(unsigned Value) {
-    assert(Value < 4 && "Invalid number of components!");
-    NumComponents = Value;
-  }
 
   const AccessInfo &getComponent(unsigned Index) const {
-    assert(Index < getNumComponents() && "Invalid access!");
-    return Components[Index];
-  }
-  AccessInfo &getComponent(unsigned Index) {
     assert(Index < getNumComponents() && "Invalid access!");
     return Components[Index];
   }
