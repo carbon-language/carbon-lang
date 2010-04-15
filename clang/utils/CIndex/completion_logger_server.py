@@ -29,8 +29,10 @@ def main():
       break
     else:
       f.write(strftime("'%a, %d %b %Y %H:%M:%S' ", localtime()))
+      f.write("'{0}' ".format(addr[0]))
       f.write(data)
       f.write('\n')
+      f.flush()
 
   # Close socket
   UDPSock.close()
