@@ -5,7 +5,7 @@ struct a {
   int a : -1; // expected-error{{bit-field 'a' has negative width}}
 
   // rdar://6081627
-  int b : 33; // expected-error{{size of bit-field 'b' exceeds size of its type (32 bits)}}
+  int b : 33; // expected-error{{size of bit-field 'b' (33 bits) exceeds size of its type (32 bits)}}
 
   int c : (1 + 0.25); // expected-error{{expression is not an integer constant expression}}
   int d : (int)(1 + 0.25); 
@@ -21,7 +21,7 @@ struct a {
   int g : (_Bool)1;
   
   // PR4017  
-  char : 10;      // expected-error {{size of anonymous bit-field exceeds size of its type (8 bits)}}
+  char : 10;      // expected-error {{size of anonymous bit-field (10 bits) exceeds size of its type (8 bits)}}
   unsigned : -2;  // expected-error {{anonymous bit-field has negative width (-2)}}
   float : 12;     // expected-error {{anonymous bit-field has non-integral type 'float'}}
 };

@@ -5373,9 +5373,9 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
     if (Value.getZExtValue() > TypeSize) {
       if (FieldName)
         return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
-          << FieldName << (unsigned)TypeSize;
+          << FieldName << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;
       return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_size)
-        << (unsigned)TypeSize;
+        << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;
     }
   }
 

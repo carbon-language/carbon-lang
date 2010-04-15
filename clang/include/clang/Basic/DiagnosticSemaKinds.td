@@ -1666,9 +1666,9 @@ def err_anon_bitfield_has_negative_width : Error<
   "anonymous bit-field has negative width (%0)">;
 def err_bitfield_has_zero_width : Error<"named bit-field %0 has zero width">;
 def err_bitfield_width_exceeds_type_size : Error<
-  "size of bit-field %0 exceeds size of its type (%1 bits)">;
+  "size of bit-field %0 (%1 bits) exceeds size of its type (%2 bits)">;
 def err_anon_bitfield_width_exceeds_type_size : Error<
-  "size of anonymous bit-field exceeds size of its type (%0 bits)">;
+  "size of anonymous bit-field (%0 bits) exceeds size of its type (%1 bits)">;
 def warn_missing_braces : Warning<
   "suggest braces around initialization of subobject">,
   InGroup<DiagGroup<"missing-braces">>, DefaultIgnore;
