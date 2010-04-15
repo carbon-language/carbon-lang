@@ -1232,7 +1232,7 @@ def LDRBT : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
 }
 
 def LDRSBT : AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base,am2offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
                  "ldrsbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
