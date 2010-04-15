@@ -24,10 +24,13 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
-using namespace llvm;
 
+namespace llvm {
 extern cl::opt<bool> EnablePPC32RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
 extern cl::opt<bool> EnablePPC64RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
+}
+
+using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),

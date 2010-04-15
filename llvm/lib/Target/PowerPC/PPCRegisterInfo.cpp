@@ -43,7 +43,6 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-using namespace llvm;
 
 // FIXME This disables some code that aligns the stack to a boundary
 // bigger than the default (16 bytes on Darwin) when there is a stack local
@@ -56,14 +55,19 @@ using namespace llvm;
 #define ALIGN_STACK 0
 
 // FIXME (64-bit): Eventually enable by default.
-static cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
+namespace llvm {
+cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
                                    cl::init(false),
                                    cl::desc("Enable PPC32 register scavenger"),
                                    cl::Hidden);
-static cl::opt<bool> EnablePPC64RS("enable-ppc64-regscavenger",
+cl::opt<bool> EnablePPC64RS("enable-ppc64-regscavenger",
                                    cl::init(false),
                                    cl::desc("Enable PPC64 register scavenger"),
                                    cl::Hidden);
+}
+
+using namespace llvm;
+
 #define EnableRegisterScavenging \
   ((EnablePPC32RS && !Subtarget.isPPC64()) || \
    (EnablePPC64RS && Subtarget.isPPC64()))
