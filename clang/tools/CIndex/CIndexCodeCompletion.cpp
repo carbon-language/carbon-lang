@@ -23,6 +23,17 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
 
+#ifdef UDP_CODE_COMPLETION_LOGGER
+#include "clang/Basic/Version.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 using namespace clang;
 using namespace clang::cxstring;
 
@@ -229,6 +240,12 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           const char *complete_filename,
                                           unsigned complete_line,
                                           unsigned complete_column) {
+#ifdef UDP_CODE_COMPLETION_LOGGER
+#ifdef UDP_CODE_COMPLETION_LOGGER_PORT
+  const llvm::TimeRecord &StartTime =  llvm::TimeRecord::getCurrentTime();
+#endif
+#endif
+
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -386,6 +403,76 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   // destroyed.
   Results->TemporaryFiles.swap(TemporaryFiles);
 
+#ifdef UDP_CODE_COMPLETION_LOGGER
+#ifdef UDP_CODE_COMPLETION_LOGGER_PORT
+  const llvm::TimeRecord &EndTime =  llvm::TimeRecord::getCurrentTime();
+  llvm::SmallString<256> LogResult;
+  llvm::raw_svector_ostream os(LogResult);
+
+  // Figure out the language and whether or not it uses PCH.
+  const char *lang = 0;
+  bool usesPCH = false;
+
+  for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
+       I != E; ++I) {
+    if (*I == 0)
+      continue;
+    if (strcmp(*I, "-x") == 0) {
+      if (I + 1 != E) {
+        lang = *(++I);
+        continue;
+      }
+    }
+    else if (strcmp(*I, "-include") == 0) {
+      if (I+1 != E) {
+        const char *arg = *(++I);
+        llvm::SmallString<512> pchName;
+        {
+          llvm::raw_svector_ostream os(pchName);
+          os << arg << ".pth";
+        }
+        pchName.push_back('\0');
+        struct stat stat_results;
+        if (stat(pchName.data(), &stat_results) == 0)
+          usesPCH = true;
+        continue;
+      }
+    }
+  }
+
+  os << '\'' << (EndTime.getWallTime() - StartTime.getWallTime()) << "' "
+     << '\'' << Results->NumResults << "' "
+     << '\'' << Results->Diagnostics.size() << "' "
+     << '\'' << (lang ? lang : "<unknown>") << "' "
+     << '\'' << (usesPCH ? 1 : 0) << "' ";
+  const char *name = getlogin();
+  os << '\'' << (name ? name : "<unknown>") << "' "
+     << '\'' << getClangFullVersion() << '\'';
+
+  llvm::StringRef res = os.str();
+  if (res.size() > 0) {
+    do {
+      // Setup the UDP socket.
+      struct sockaddr_in servaddr;
+      bzero(&servaddr, sizeof(servaddr));
+      servaddr.sin_family = AF_INET;
+      servaddr.sin_port = htons(UDP_CODE_COMPLETION_LOGGER_PORT);
+      if (inet_pton(AF_INET, UDP_CODE_COMPLETION_LOGGER,
+                    &servaddr.sin_addr) <= 0)
+        break;
+
+      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (sockfd < 0)
+        break;
+
+      sendto(sockfd, res.data(), res.size(), 0,
+             (struct sockaddr *)&servaddr, sizeof(servaddr));
+      close(sockfd);
+    }
+    while (false);
+  }
+#endif
+#endif
   return Results;
 }
 
