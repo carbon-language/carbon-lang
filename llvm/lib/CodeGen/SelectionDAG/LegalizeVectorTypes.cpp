@@ -705,8 +705,9 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // Store the new element.  This may be larger than the vector element type,
   // so use a truncating store.
   SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  const Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
   unsigned Alignment =
-    TLI.getTargetData()->getPrefTypeAlignment(VecVT.getTypeForEVT(*DAG.getContext()));
+    TLI.getTargetData()->getPrefTypeAlignment(VecType);
   Store = DAG.getTruncStore(Store, dl, Elt, EltPtr, NULL, 0, EltVT,
                             false, false, 0);
 
@@ -1419,7 +1420,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_Shift(SDNode *N) {
     ShOp = GetWidenedVector(ShOp);
     ShVT = ShOp.getValueType();
   }
-  EVT ShWidenVT = EVT::getVectorVT(*DAG.getContext(), ShVT.getVectorElementType(),
+  EVT ShWidenVT = EVT::getVectorVT(*DAG.getContext(),
+                                   ShVT.getVectorElementType(),
                                    WidenVT.getVectorNumElements());
   if (ShVT != ShWidenVT)
     ShOp = ModifyToType(ShOp, ShWidenVT);
@@ -1493,7 +1495,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_BIT_CONVERT(SDNode *N) {
     unsigned NewNumElts = WidenSize / InSize;
     if (InVT.isVector()) {
       EVT InEltVT = InVT.getVectorElementType();
-      NewInVT= EVT::getVectorVT(*DAG.getContext(), InEltVT, WidenSize / InEltVT.getSizeInBits());
+      NewInVT= EVT::getVectorVT(*DAG.getContext(), InEltVT,
+                                WidenSize / InEltVT.getSizeInBits());
     } else {
       NewInVT = EVT::getVectorVT(*DAG.getContext(), InVT, NewNumElts);
     }
@@ -1617,7 +1620,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
   SDValue RndOp = N->getOperand(3);
   SDValue SatOp = N->getOperand(4);
 
-  EVT      WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  EVT      WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(),
+                                              N->getValueType(0));
   unsigned WidenNumElts = WidenVT.getVectorNumElements();
 
   EVT InVT = InOp.getValueType();
@@ -1791,7 +1795,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_SELECT(SDNode *N) {
   EVT CondVT = Cond1.getValueType();
   if (CondVT.isVector()) {
     EVT CondEltVT = CondVT.getVectorElementType();
-    EVT CondWidenVT =  EVT::getVectorVT(*DAG.getContext(), CondEltVT, WidenNumElts);
+    EVT CondWidenVT =  EVT::getVectorVT(*DAG.getContext(),
+                                        CondEltVT, WidenNumElts);
     if (getTypeAction(CondVT) == WidenVector)
       Cond1 = GetWidenedVector(Cond1);
 
@@ -1859,7 +1864,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
   SDValue InOp1 = N->getOperand(0);
   EVT InVT = InOp1.getValueType();
   assert(InVT.isVector() && "can not widen non vector type");
-  EVT WidenInVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(), WidenNumElts);
+  EVT WidenInVT = EVT::getVectorVT(*DAG.getContext(),
+                                   InVT.getVectorElementType(), WidenNumElts);
   InOp1 = GetWidenedVector(InOp1);
   SDValue InOp2 = GetWidenedVector(N->getOperand(1));
 
@@ -2124,7 +2130,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVector<SDValue, 16>& LdChain,
   // The routines chops the vector into the largest vector loads with the same
   // element type or scalar loads and then recombines it to the widen vector
   // type.
-  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), LD->getValueType(0));
+  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(),LD->getValueType(0));
   unsigned WidenWidth = WidenVT.getSizeInBits();
   EVT LdVT    = LD->getMemoryVT();
   DebugLoc dl = LD->getDebugLoc();

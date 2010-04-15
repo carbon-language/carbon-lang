@@ -109,14 +109,16 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BIT_CONVERT(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
   // Convert the inputs to integers, and build a new pair out of them.
   return DAG.getNode(ISD::BUILD_PAIR, N->getDebugLoc(),
-                     TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)),
+                     TLI.getTypeToTransformTo(*DAG.getContext(),
+                                              N->getValueType(0)),
                      BitConvertToInteger(N->getOperand(0)),
                      BitConvertToInteger(N->getOperand(1)));
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
   return DAG.getConstant(N->getValueAPF().bitcastToAPInt(),
-                         TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)));
+                         TLI.getTypeToTransformTo(*DAG.getContext(),
+                                                  N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_EXTRACT_VECTOR_ELT(SDNode *N) {
@@ -338,7 +340,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FP_EXTEND(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_FP16_TO_FP32(SDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   SDValue Op = N->getOperand(0);
-  return MakeLibCall(RTLIB::FPEXT_F16_F32, NVT, &Op, 1, false, N->getDebugLoc());
+  return MakeLibCall(RTLIB::FPEXT_F16_F32, NVT, &Op, 1, false,
+                     N->getDebugLoc());
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FP_ROUND(SDNode *N) {
@@ -489,7 +492,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_UNDEF(SDNode *N) {
-  return DAG.getUNDEF(TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)));
+  return DAG.getUNDEF(TLI.getTypeToTransformTo(*DAG.getContext(),
+                                               N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_VAARG(SDNode *N) {
@@ -531,7 +535,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
   // Sign/zero extend the argument if the libcall takes a larger type.
   SDValue Op = DAG.getNode(Signed ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, dl,
                            NVT, N->getOperand(0));
-  return MakeLibCall(LC, TLI.getTypeToTransformTo(*DAG.getContext(), RVT), &Op, 1, false, dl);
+  return MakeLibCall(LC, TLI.getTypeToTransformTo(*DAG.getContext(), RVT),
+                     &Op, 1, false, dl);
 }
 
 
@@ -1403,7 +1408,8 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
   SDValue Chain = ST->getChain();
   SDValue Ptr = ST->getBasePtr();
 
-  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), ST->getValue().getValueType());
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(),
+                                     ST->getValue().getValueType());
   assert(NVT.isByteSized() && "Expanded type not byte sized!");
   assert(ST->getMemoryVT().bitsLE(NVT) && "Float type not round?");
 

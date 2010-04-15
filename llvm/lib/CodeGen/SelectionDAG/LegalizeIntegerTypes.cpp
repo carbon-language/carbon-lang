@@ -204,7 +204,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
       std::swap(Lo, Hi);
 
     InOp = DAG.getNode(ISD::ANY_EXTEND, dl,
-                       EVT::getIntegerVT(*DAG.getContext(), NOutVT.getSizeInBits()),
+                       EVT::getIntegerVT(*DAG.getContext(),
+                                         NOutVT.getSizeInBits()),
                        JoinIntegers(Lo, Hi));
     return DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, InOp);
   }
@@ -1968,7 +1969,8 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
     SplitInteger(Res, Lo, Hi);
     unsigned ExcessBits =
       Op.getValueType().getSizeInBits() - NVT.getSizeInBits();
-    Hi = DAG.getZeroExtendInReg(Hi, dl, EVT::getIntegerVT(*DAG.getContext(), ExcessBits));
+    Hi = DAG.getZeroExtendInReg(Hi, dl,
+                                EVT::getIntegerVT(*DAG.getContext(), ExcessBits));
   }
 }
 
@@ -2269,7 +2271,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
     unsigned EBytes = ExtVT.getStoreSize();
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
-    EVT HiVT = EVT::getIntegerVT(*DAG.getContext(), ExtVT.getSizeInBits() - ExcessBits);
+    EVT HiVT = EVT::getIntegerVT(*DAG.getContext(),
+                                 ExtVT.getSizeInBits() - ExcessBits);
 
     if (ExcessBits < NVT.getSizeInBits()) {
       // Transfer high bits from the top of Lo to the bottom of Hi.

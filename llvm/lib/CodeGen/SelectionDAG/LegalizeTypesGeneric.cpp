@@ -173,8 +173,9 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   EVT NewVT = TLI.getTypeToTransformTo(*DAG.getContext(), OldVT);
 
   SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl,
-                                 EVT::getVectorVT(*DAG.getContext(), NewVT, 2*OldElts),
-                                 OldVec);
+                               EVT::getVectorVT(*DAG.getContext(),
+                                                NewVT, 2*OldElts),
+                               OldVec);
 
   // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
   SDValue Idx = N->getOperand(1);
@@ -268,7 +269,9 @@ SDValue DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
     // is no point, and it might create expansion loops).  For example, on
     // x86 this turns v1i64 = BIT_CONVERT i64 into v1i64 = BIT_CONVERT v2i32.
     EVT OVT = N->getOperand(0).getValueType();
-    EVT NVT = EVT::getVectorVT(*DAG.getContext(), TLI.getTypeToTransformTo(*DAG.getContext(), OVT), 2);
+    EVT NVT = EVT::getVectorVT(*DAG.getContext(),
+                               TLI.getTypeToTransformTo(*DAG.getContext(), OVT),
+                               2);
 
     if (isTypeLegal(NVT)) {
       SDValue Parts[2];
@@ -312,8 +315,9 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   }
 
   SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 EVT::getVectorVT(*DAG.getContext(), NewVT, NewElts.size()),
-                                 &NewElts[0], NewElts.size());
+                               EVT::getVectorVT(*DAG.getContext(),
+                                                NewVT, NewElts.size()),
+                               &NewElts[0], NewElts.size());
 
   // Convert the new vector to the old vector type.
   return DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, NewVec);
@@ -380,7 +384,8 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   DebugLoc dl = N->getDebugLoc();
 
   StoreSDNode *St = cast<StoreSDNode>(N);
-  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), St->getValue().getValueType());
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(),
+                                     St->getValue().getValueType());
   SDValue Chain = St->getChain();
   SDValue Ptr = St->getBasePtr();
   int SVOffset = St->getSrcValueOffset();
