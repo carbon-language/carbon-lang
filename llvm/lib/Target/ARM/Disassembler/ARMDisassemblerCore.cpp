@@ -3287,8 +3287,10 @@ ARMBasicMCBuilder::ARMBasicMCBuilder(unsigned opc, ARMFormat format,
 /// performed by the API clients to improve performance.
 ARMBasicMCBuilder *llvm::CreateMCBuilder(unsigned Opcode, ARMFormat Format) {
   // For "Unknown format", fail by returning a NULL pointer.
-  if ((unsigned)Format >= (array_lengthof(FuncPtrs) - 1))
+  if ((unsigned)Format >= (array_lengthof(FuncPtrs) - 1)) {
+    DEBUG(errs() << "Unknown format\n");
     return 0;
+  }
 
   return new ARMBasicMCBuilder(Opcode, Format,
                                ARMInsts[Opcode].getNumOperands());
