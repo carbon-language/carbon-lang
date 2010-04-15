@@ -25,9 +25,9 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
-  class SourceManager;
   class LangOptions;
   class Rewriter;
+  class SourceManager;
   class Stmt;
 
 /// RewriteBuffer - As code is rewritten, SourceBuffer's from the original
@@ -125,6 +125,8 @@ class Rewriter {
   const LangOptions *LangOpts;
   std::map<FileID, RewriteBuffer> RewriteBuffers;
 public:
+  typedef std::map<FileID, RewriteBuffer>::iterator buffer_iterator;
+
   explicit Rewriter(SourceManager &SM, const LangOptions &LO)
     : SourceMgr(&SM), LangOpts(&LO) {}
   explicit Rewriter() : SourceMgr(0), LangOpts(0) {}
@@ -192,6 +194,12 @@ public:
   /// could not be rewritten, or false if successful.
   bool ReplaceStmt(Stmt *From, Stmt *To);
 
+  /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
+  /// buffer, and allows you to write on it directly.  This is useful if you
+  /// want efficient low-level access to apis for scribbling on one specific
+  /// FileID's buffer.
+  RewriteBuffer &getEditBuffer(FileID FID);
+
   /// getRewriteBufferFor - Return the rewrite buffer for the specified FileID.
   /// If no modification has been made to it, return null.
   const RewriteBuffer *getRewriteBufferFor(FileID FID) const {
@@ -200,11 +208,9 @@ public:
     return I == RewriteBuffers.end() ? 0 : &I->second;
   }
 
-  /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
-  /// buffer, and allows you to write on it directly.  This is useful if you
-  /// want efficient low-level access to apis for scribbling on one specific
-  /// FileID's buffer.
-  RewriteBuffer &getEditBuffer(FileID FID);
+  // Iterators over rewrite buffers.
+  buffer_iterator buffer_begin() { return RewriteBuffers.begin(); }
+  buffer_iterator buffer_end() { return RewriteBuffers.end(); }
 
 private:
   unsigned getLocationOffsetAndFileID(SourceLocation Loc, FileID &FID) const;

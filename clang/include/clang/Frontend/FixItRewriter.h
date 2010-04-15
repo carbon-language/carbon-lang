@@ -16,8 +16,11 @@
 #define LLVM_CLANG_FRONTEND_FIX_IT_REWRITER_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Rewrite/Rewriter.h"
 #include "llvm/ADT/SmallVector.h"
+
+namespace llvm { class raw_ostream; }
 
 namespace clang {
 
@@ -25,7 +28,8 @@ class SourceManager;
 class FileEntry;
 
 /// \brief Stores a source location in the form that it shows up on
-/// the Clang command line, e.g., file:line:column.
+/// the Clang command line, e.g., file:line:column.  A line and column of zero
+/// indicates the whole file.
 ///
 /// FIXME: Would prefer to use real SourceLocations, but I don't see a
 /// good way to resolve them during parsing.
@@ -56,6 +60,8 @@ class FixItRewriter : public DiagnosticClient {
   llvm::SmallVector<RequestedSourceLocation, 4> FixItLocations;
 
 public:
+  typedef Rewriter::buffer_iterator iterator;
+
   /// \brief Initialize a new fix-it rewriter.
   FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
                 const LangOptions &LangOpts);
@@ -69,16 +75,29 @@ public:
     FixItLocations.push_back(Loc);
   }
 
-  /// \brief Write the modified source file.
+  /// \brief Check whether there are modifications for a given file.
+  bool IsModified(FileID ID) const {
+    return Rewrite.getRewriteBufferFor(ID) != NULL;
+  }
+
+  // Iteration over files with changes.
+  iterator buffer_begin() { return Rewrite.buffer_begin(); }
+  iterator buffer_end() { return Rewrite.buffer_end(); }
+
+  /// \brief Write a single modified source file.
   ///
   /// \returns true if there was an error, false otherwise.
-  bool WriteFixedFile(const std::string &InFileName,
-                      const std::string &OutFileName = std::string());
+  bool WriteFixedFile(FileID ID, llvm::raw_ostream &OS);
+
+  /// \brief Write the modified source files.
+  ///
+  /// \returns true if there was an error, false otherwise.
+  bool WriteFixedFiles();
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
-  ///  returns true) indicates whether the diagnostics handled by this
-  ///  DiagnosticClient should be included in the number of diagnostics
-  ///  reported by Diagnostic.
+  /// returns true) indicates whether the diagnostics handled by this
+  /// DiagnosticClient should be included in the number of diagnostics
+  /// reported by Diagnostic.
   virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or

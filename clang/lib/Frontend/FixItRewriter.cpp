@@ -14,6 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/FixItRewriter.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,47 +36,43 @@ FixItRewriter::~FixItRewriter() {
   Diags.setClient(Client);
 }
 
-bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
-                                   const std::string &OutFileName) {
+bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
+  const RewriteBuffer *RewriteBuf = Rewrite.getRewriteBufferFor(ID);
+  if (!RewriteBuf) return true;
+  OS << std::string(RewriteBuf->begin(), RewriteBuf->end());
+  OS.flush();
+  return false;
+}
+
+bool FixItRewriter::WriteFixedFiles() {
   if (NumFailures > 0) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
   }
 
-  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
-  llvm::raw_ostream *OutFile;
-  if (!OutFileName.empty()) {
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err,
-                                       llvm::raw_fd_ostream::F_Binary);
-    OwnedStream.reset(OutFile);
-  } else if (InFileName == "-") {
-    OutFile = &llvm::outs();
-  } else {
-    llvm::sys::Path Path(InFileName);
+  for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
+    const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
+    llvm::sys::Path Path(Entry->getName());
     std::string Suffix = Path.getSuffix();
     Path.eraseSuffix();
     Path.appendSuffix("fixit." + Suffix);
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.c_str(), Err,
-                                       llvm::raw_fd_ostream::F_Binary);
-    OwnedStream.reset(OutFile);
+    llvm::raw_fd_ostream OS(Path.c_str(), Err, llvm::raw_fd_ostream::F_Binary);
+    if (!Err.empty()) {
+      Diags.Report(clang::diag::err_fe_unable_to_open_output)
+          << Path.c_str() << Err;
+      continue;
+    }
+    RewriteBuffer &RewriteBuf = I->second;
+    OS << std::string(RewriteBuf.begin(), RewriteBuf.end());
+    OS.flush();
   }
-
-  FileID MainFileID = Rewrite.getSourceMgr().getMainFileID();
-  if (const RewriteBuffer *RewriteBuf =
-        Rewrite.getRewriteBufferFor(MainFileID)) {
-    *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
-  } else {
-    Diag(FullSourceLoc(), diag::note_fixit_main_file_unchanged);
-  }
-  OutFile->flush();
 
   return false;
 }
 
 bool FixItRewriter::IncludeInDiagnosticCounts() const {
-  return Client? Client->IncludeInDiagnosticCounts() : true;
+  return Client ? Client->IncludeInDiagnosticCounts() : true;
 }
 
 void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
@@ -85,6 +83,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   if (DiagLevel == Diagnostic::Ignored)
     return;
 
+  const SourceManager &SM = Rewrite.getSourceMgr();
   if (!FixItLocations.empty()) {
     // The user has specified the locations where we should perform
     // the various fix-it modifications.
@@ -99,15 +98,17 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     // See if the location of the error is one that matches what the
     // user requested.
     bool AcceptableLocation = false;
-    const FileEntry *File
-      = Rewrite.getSourceMgr().getFileEntryForID(
-                                            Info.getLocation().getFileID());
+    const FileEntry *File = SM.getFileEntryForID(
+                                                Info.getLocation().getFileID());
     unsigned Line = Info.getLocation().getSpellingLineNumber();
     unsigned Column = Info.getLocation().getSpellingColumnNumber();
     for (llvm::SmallVector<RequestedSourceLocation, 4>::iterator
            Loc = FixItLocations.begin(), LocEnd = FixItLocations.end();
          Loc != LocEnd; ++Loc) {
-      if (Loc->File == File && Loc->Line == Line && Loc->Column == Column) {
+      if (Loc->File == File &&
+          ((Loc->Line == 0 && Loc->Column == 0 &&
+            DiagLevel > Diagnostic::Note) ||
+           (Loc->Line == Line && Loc->Column == Column))) {
         AcceptableLocation = true;
         break;
       }
