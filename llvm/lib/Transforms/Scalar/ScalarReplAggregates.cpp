@@ -49,6 +49,8 @@ STATISTIC(NumConverted, "Number of aggregates converted to scalar");
 STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
+  struct ConvertToScalarInfo;
+  
   struct SROA : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     explicit SROA(signed T = -1) : FunctionPass(&ID) {
@@ -130,8 +132,8 @@ namespace {
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
     
-    bool CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
-                            bool &SawVec, uint64_t Offset, unsigned AllocaSize);
+    bool CanConvertToScalar(Value *V, ConvertToScalarInfo &ConvertInfo,
+                            uint64_t Offset);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertScalar_ExtractValue(Value *NV, const Type *ToType,
                                      uint64_t Offset, IRBuilder<> &Builder);
@@ -216,6 +218,29 @@ static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
   return false;
 }
 
+namespace {
+struct ConvertToScalarInfo {
+  /// AllocaSize - The size of the alloca being considered.
+  unsigned AllocaSize;
+ 
+  bool IsNotTrivial;
+  const Type *VectorTy;
+  bool HadAVector;
+
+  explicit ConvertToScalarInfo(unsigned Size) : AllocaSize(Size) {
+    IsNotTrivial = false;
+    VectorTy = 0;
+    HadAVector = false;
+  }
+  
+  bool shouldConvertToVector() const {
+    return VectorTy && VectorTy->isVectorTy() && HadAVector;
+  }
+};
+} // end anonymous namespace.
+
+
+
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
 // which runs on all of the malloc/alloca instructions in the function, removing
 // them if they are only used by getelementptr instructions.
@@ -239,6 +264,7 @@ bool SROA::performScalarRepl(Function &F) {
     // with unused elements.
     if (AI->use_empty()) {
       AI->eraseFromParent();
+      Changed = true;
       continue;
     }
 
@@ -290,11 +316,8 @@ bool SROA::performScalarRepl(Function &F) {
     // promoted itself.  If so, we don't want to transform it needlessly.  Note
     // that we can't just check based on the type: the alloca may be of an i32
     // but that has pointer arithmetic to set byte 3 of it or something.
-    bool IsNotTrivial = false;
-    const Type *VectorTy = 0;
-    bool HadAVector = false;
-    if (CanConvertToScalar(AI, IsNotTrivial, VectorTy, HadAVector, 
-                           0, unsigned(AllocaSize)) && IsNotTrivial) {
+    ConvertToScalarInfo ConvertInfo((unsigned)AllocaSize);
+    if (CanConvertToScalar(AI, ConvertInfo, 0) && ConvertInfo.IsNotTrivial) {
       AllocaInst *NewAI;
       // If we were able to find a vector type that can handle this with
       // insert/extract elements, and if there was at least one use that had
@@ -302,12 +325,13 @@ bool SROA::performScalarRepl(Function &F) {
       // random stuff that doesn't use vectors (e.g. <9 x double>) because then
       // we just get a lot of insert/extracts.  If at least one vector is
       // involved, then we probably really do have a union of vector/array.
-      if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
+      if (ConvertInfo.shouldConvertToVector()) {
         DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
-                     << *VectorTy << '\n');
+                     << *ConvertInfo.VectorTy << '\n');
         
         // Create and insert the vector alloca.
-        NewAI = new AllocaInst(VectorTy, 0, "",  AI->getParent()->begin());
+        NewAI = new AllocaInst(ConvertInfo.VectorTy, 0, "",
+                               AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       } else {
         DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
@@ -1185,45 +1209,49 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
 ///   2) A fully general blob of memory, which we turn into some (potentially
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.
-static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
-                        unsigned AllocaSize, const TargetData &TD,
-                        LLVMContext &Context) {
+static void MergeInType(const Type *In, uint64_t Offset,
+                        ConvertToScalarInfo &ConvertInfo, const TargetData &TD){
+  // Remember if we saw a vector type.
+  ConvertInfo.HadAVector |= In->isVectorTy();
+  
+  if (ConvertInfo.VectorTy && ConvertInfo.VectorTy->isVoidTy())
+    return;
+  
   // If this could be contributing to a vector, analyze it.
-  if (VecTy != Type::getVoidTy(Context)) { // either null or a vector type.
 
-    // If the In type is a vector that is the same size as the alloca, see if it
-    // matches the existing VecTy.
-    if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
-      if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
-        // If we're storing/loading a vector of the right size, allow it as a
-        // vector.  If this the first vector we see, remember the type so that
-        // we know the element size.
-        if (VecTy == 0)
-          VecTy = VInTy;
-        return;
-      }
-    } else if (In->isFloatTy() || In->isDoubleTy() ||
-               (In->isIntegerTy() && In->getPrimitiveSizeInBits() >= 8 &&
-                isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
-      // If we're accessing something that could be an element of a vector, see
-      // if the implied vector agrees with what we already have and if Offset is
-      // compatible with it.
-      unsigned EltSize = In->getPrimitiveSizeInBits()/8;
-      if (Offset % EltSize == 0 &&
-          AllocaSize % EltSize == 0 &&
-          (VecTy == 0 || 
-           cast<VectorType>(VecTy)->getElementType()
-                 ->getPrimitiveSizeInBits()/8 == EltSize)) {
-        if (VecTy == 0)
-          VecTy = VectorType::get(In, AllocaSize/EltSize);
-        return;
-      }
+  // If the In type is a vector that is the same size as the alloca, see if it
+  // matches the existing VecTy.
+  if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
+    if (VInTy->getBitWidth()/8 == ConvertInfo.AllocaSize && Offset == 0) {
+      // If we're storing/loading a vector of the right size, allow it as a
+      // vector.  If this the first vector we see, remember the type so that
+      // we know the element size.
+      if (ConvertInfo.VectorTy == 0)
+        ConvertInfo.VectorTy = VInTy;
+      return;
+    }
+  } else if (In->isFloatTy() || In->isDoubleTy() ||
+             (In->isIntegerTy() && In->getPrimitiveSizeInBits() >= 8 &&
+              isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
+    // If we're accessing something that could be an element of a vector, see
+    // if the implied vector agrees with what we already have and if Offset is
+    // compatible with it.
+    unsigned EltSize = In->getPrimitiveSizeInBits()/8;
+    if (Offset % EltSize == 0 &&
+        ConvertInfo.AllocaSize % EltSize == 0 &&
+        (ConvertInfo.VectorTy == 0 || 
+         cast<VectorType>(ConvertInfo.VectorTy)->getElementType()
+               ->getPrimitiveSizeInBits()/8 == EltSize)) {
+      if (ConvertInfo.VectorTy == 0)
+        ConvertInfo.VectorTy = VectorType::get(In,
+                                               ConvertInfo.AllocaSize/EltSize);
+      return;
     }
   }
   
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
-  VecTy = Type::getVoidTy(Context);
+  ConvertInfo.VectorTy = Type::getVoidTy(In->getContext());
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
@@ -1235,9 +1263,8 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
 ///
 /// If we see at least one access to the value that is as a vector type, set the
 /// SawVec flag.
-bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
-                              bool &SawVec, uint64_t Offset,
-                              unsigned AllocaSize) {
+bool SROA::CanConvertToScalar(Value *V, ConvertToScalarInfo &ConvertInfo,
+                              uint64_t Offset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
     
@@ -1245,26 +1272,21 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       // Don't break volatile loads.
       if (LI->isVolatile())
         return false;
-      MergeInType(LI->getType(), Offset, VecTy,
-                  AllocaSize, *TD, V->getContext());
-      SawVec |= LI->getType()->isVectorTy();
+      MergeInType(LI->getType(), Offset, ConvertInfo, *TD);
       continue;
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
-      if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
-      MergeInType(SI->getOperand(0)->getType(), Offset,
-                  VecTy, AllocaSize, *TD, V->getContext());
-      SawVec |= SI->getOperand(0)->getType()->isVectorTy();
+      if (SI->getOperand(0) == V || SI->isVolatile()) return false;
+      MergeInType(SI->getOperand(0)->getType(), Offset, ConvertInfo, *TD);
       continue;
     }
     
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
-      if (!CanConvertToScalar(BCI, IsNotTrivial, VecTy, SawVec, Offset,
-                              AllocaSize))
+      if (!CanConvertToScalar(BCI, ConvertInfo, Offset))
         return false;
-      IsNotTrivial = true;
+      ConvertInfo.IsNotTrivial = true;
       continue;
     }
 
@@ -1278,10 +1300,9 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       uint64_t GEPOffset = TD->getIndexedOffset(GEP->getPointerOperandType(),
                                                 &Indices[0], Indices.size());
       // See if all uses can be converted.
-      if (!CanConvertToScalar(GEP, IsNotTrivial, VecTy, SawVec,Offset+GEPOffset,
-                              AllocaSize))
+      if (!CanConvertToScalar(GEP, ConvertInfo, Offset+GEPOffset))
         return false;
-      IsNotTrivial = true;
+      ConvertInfo.IsNotTrivial = true;
       continue;
     }
 
@@ -1291,7 +1312,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       // Store of constant value and constant size.
       if (isa<ConstantInt>(MSI->getValue()) &&
           isa<ConstantInt>(MSI->getLength())) {
-        IsNotTrivial = true;
+        ConvertInfo.IsNotTrivial = true;
         continue;
       }
     }
@@ -1300,8 +1321,8 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
     // can handle it like a load or store of the scalar type.
     if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
       if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
-        if (Len->getZExtValue() == AllocaSize && Offset == 0) {
-          IsNotTrivial = true;
+        if (Len->getZExtValue() == ConvertInfo.AllocaSize && Offset == 0) {
+          ConvertInfo.IsNotTrivial = true;
           continue;
         }
     }
