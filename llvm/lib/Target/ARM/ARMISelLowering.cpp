@@ -384,10 +384,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // FIXME: Shouldn't need this, since no register is used, but the legalizer
   // doesn't yet know how to not do that for SjLj.
   setExceptionSelectorRegister(ARM::R0);
-  if (Subtarget->isThumb())
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
-  else
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
 
   if (!Subtarget->hasV6Ops() && !Subtarget->isThumb2()) {

@@ -7,15 +7,15 @@
 define arm_apcscc void @t() nounwind ssp {
 entry:
 ; CHECK: t:
-; CHECK: mvn r0, #7
-; CHECK: ands sp, r0
-; CHECK: mov r1, sp
-; CHECK: mov sp, r1
+; CHECK: mov r0, sp
+; CHECK: bfc r0, #0, #3
+; CHECK: subs r0, #16
+; CHECK: mov sp, r0
 ; Yes, this is stupid codegen, but it's correct.
-; CHECK: sub sp, #16
-; CHECK: mov r1, sp
-; CHECK: mov sp, r1
-; CHECK: ands sp, r0
+; CHECK: mov r0, sp
+; CHECK: bfc r0, #0, #3
+; CHECK: subs r0, #16
+; CHECK: mov sp, r0
   %size = mul i32 8, 2
   %vla_a = alloca i8, i32 %size, align 8
   %vla_b = alloca i8, i32 %size, align 8
