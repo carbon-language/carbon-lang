@@ -970,6 +970,37 @@ endif
 endif
 endif
 
+# Set up the library exports file.
+ifdef EXPORTED_SYMBOL_FILE
+
+# First, set up the native export file, which may differ from the source
+# export file.
+
+ifeq ($(HOST_OS),Darwin)
+# Darwin convention prefixes symbols with underscores.
+NativeExportsFile := $(ObjDir)/$(EXPORTED_SYMBOL_FILE).sed
+$(NativeExportsFile): $(EXPORTED_SYMBOL_FILE)
+	$(Verb) sed -e 's/[[:<:]]/_/' < $< > $@
+clean-local::
+	-$(Verb) $(RM) -f $(NativeExportsFile)
+else
+NativeExportsFile := $(EXPORTED_SYMBOL_FILE)
+endif
+
+# Now add the linker command-line options to use the native export file.
+
+ifeq ($(HOST_OS),Darwin)
+LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,$(NativeExportsFile)
+endif
+
+# This isn't really Linux-specific; it works at least on gold and bfd ld, but
+# there's no convenient way to detect it.
+ifeq ($(HOST_OS),Linux)
+LLVMLibsOptions += -Wl,-retain-symbols-file -Wl,$(NativeExportsFile)
+endif
+
+endif
+
 ###############################################################################
 # Library Build Rules: Four ways to build a library
 ###############################################################################
@@ -1059,6 +1090,10 @@ LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
 ifdef SHARED_LIBRARY
 
 all-local:: $(LibName.SO)
+
+ifdef EXPORTED_SYMBOL_FILE
+$(LibName.SO): $(NativeExportsFile)
+endif
 
 ifdef LINK_LIBS_IN_SHARED
 ifdef LOADABLE_MODULE

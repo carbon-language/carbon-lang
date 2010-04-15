@@ -10,6 +10,8 @@
 LEVEL = ../..
 LIBRARYNAME = LTO
 
+EXPORTED_SYMBOL_FILE = lto.exports
+
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
@@ -32,7 +34,6 @@ ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
                          -avoid-version \
-                         -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/lto.exports \
                          -Wl,-dead_strip \
                          -Wl,-seg1addr -Wl,0xE0000000 
 
