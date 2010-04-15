@@ -13,8 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "arm-disassembler"
+
 #include "ARMDisassemblerCore.h"
 #include "ARMAddressingModes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 /// ARMGenInstrInfo.inc - ARMGenInstrInfo.inc contains the static const
@@ -346,7 +349,7 @@ static unsigned getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister,
     }
     break;
   }
-  errs() << "Invalid (RegClassID, RawRegister) combination\n";
+  DEBUG(errs() << "Invalid (RegClassID, RawRegister) combination\n");
   // Encoding error.  Mark the builder with error code != 0.
   B->SetErr(-1);
   return 0;
@@ -893,7 +896,7 @@ static inline bool getBFCInvMask(uint32_t insn, uint32_t &mask) {
   uint32_t msb = slice(insn, 20, 16);
   uint32_t Val = 0;
   if (msb < lsb) {
-    errs() << "Encoding error: msb < lsb\n";
+    DEBUG(errs() << "Encoding error: msb < lsb\n");
     return false;
   }
 
@@ -1911,7 +1914,7 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
   // Must be either "ia" or "db" submode.
   if (SubMode != ARM_AM::ia && SubMode != ARM_AM::db) {
-    errs() << "Illegal addressing mode 5 sub-mode!\n";
+    DEBUG(errs() << "Illegal addressing mode 5 sub-mode!\n");
     return false;
   }
 
