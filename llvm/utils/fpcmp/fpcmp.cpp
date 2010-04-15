@@ -14,7 +14,7 @@
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
                                   sys::PathWithStatus(File2),
                                   AbsTolerance, RelTolerance, &ErrorMsg);
   if (!ErrorMsg.empty())
-    std::cerr << argv[0] << ": " << ErrorMsg << "\n";
+    errs() << argv[0] << ": " << ErrorMsg << "\n";
   return DF;
 }
 
