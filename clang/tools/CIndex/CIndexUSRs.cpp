@@ -28,8 +28,10 @@ namespace {
 class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::raw_ostream &Out;
   bool IgnoreResults;
+  ASTUnit *AU;
 public:
-  USRGenerator(llvm::raw_ostream &out) : Out(out), IgnoreResults(false) {}
+  USRGenerator(ASTUnit *au, llvm::raw_ostream &out)
+    : Out(out), IgnoreResults(false), AU(au) {}
 
   bool ignoreResults() const { return IgnoreResults; }
 
@@ -45,7 +47,6 @@ public:
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
-
 
   /// String generation methods used both by the visitation methods
   /// and from other clients that want to directly generate USRs.  These
@@ -79,10 +80,10 @@ private:
   llvm::raw_svector_ostream Out;
   USRGenerator UG;
 public:
-  StringUSRGenerator()
-    : Out(StrBuf), UG(Out) {
+  StringUSRGenerator(const CXCursor *C = 0)
+    : Out(StrBuf), UG(C ? cxcursor::getCursorASTUnit(*C) : 0, Out) {
     // Add the USR space prefix.
-    Out << "c:";      
+    Out << "c:";
   }
 
   llvm::StringRef str() {
@@ -269,7 +270,27 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
   if (!D)
     return createCXString(NULL);
 
-  StringUSRGenerator SUG;
+  // Check if the cursor has 'NoLinkage'.
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
+    switch (ND->getLinkage()) {
+      case ExternalLinkage:
+        // Generate USRs for all entities with external linkage.
+        break;
+      case NoLinkage:
+        // We allow enums, typedefs, and structs that have no linkage to
+        // have USRs that are anchored to the file they were defined in
+        // (e.g., the header).  This is a little gross, but in principal
+        // enums/anonymous structs/etc. defined in a common header file
+        // are referred to across multiple translation units.
+        if (isa<TagDecl>(ND))
+          break;
+        // Fall-through.
+      case InternalLinkage:
+      case UniqueExternalLinkage:
+        return createCXString("");
+    }
+
+  StringUSRGenerator SUG(&C);
   SUG->Visit(D);
 
   if (SUG->ignoreResults())
@@ -288,7 +309,7 @@ CXString clang_getCursorUSR(CXCursor C) {
       return getDeclCursorUSR(C);
 
   if (K == CXCursor_MacroDefinition) {
-    StringUSRGenerator SUG;
+    StringUSRGenerator SUG(&C);
     SUG << "macro@"
         << cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
     return createCXString(SUG.str(), true);
