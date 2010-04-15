@@ -10,7 +10,7 @@
 LEVEL = ../..
 LIBRARYNAME = LTO
 
-EXPORTED_SYMBOL_FILE = lto.exports
+EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/lto.exports
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
