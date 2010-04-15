@@ -17,6 +17,6 @@ SHARED_LIBRARY = 1
 LOADABLE_MODULE = 1
 LIBRARYNAME = profile_rt
 EXTRA_DIST = exported_symbols.lst
-EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/exported_symbols.lst
+EXPORTED_SYMBOL_FILE = exported_symbols.lst
 
 include $(LEVEL)/Makefile.common
