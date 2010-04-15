@@ -181,9 +181,10 @@ bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
   
   for (AllocaInst **I = Roots, **E = Roots + Count; I != E; ++I)
     if (!InitedRoots.count(*I)) {
-      new StoreInst(ConstantPointerNull::get(cast<PointerType>(
-                      cast<PointerType>((*I)->getType())->getElementType())),
-                    *I, IP);
+      StoreInst* SI = new StoreInst(ConstantPointerNull::get(cast<PointerType>(
+                        cast<PointerType>((*I)->getType())->getElementType())),
+                        *I);
+      SI->insertAfter(*I);
       MadeChange = true;
     }
   
