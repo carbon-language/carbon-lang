@@ -4654,21 +4654,21 @@ BasicBlock *ScalarEvolution::getLoopPredecessor(const Loop *L) {
 /// successor from which BB is reachable, or null if no such block is
 /// found.
 ///
-BasicBlock *
+std::pair<BasicBlock *, BasicBlock *>
 ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
   // If the block has a unique predecessor, then there is no path from the
   // predecessor to the block that does not go through the direct edge
   // from the predecessor to the block.
   if (BasicBlock *Pred = BB->getSinglePredecessor())
-    return Pred;
+    return std::make_pair(Pred, BB);
 
   // A loop's header is defined to be a block that dominates the loop.
   // If the header has a unique predecessor outside the loop, it must be
   // a block that has exactly one successor that can reach the loop.
   if (Loop *L = LI->getLoopFor(BB))
-    return getLoopPredecessor(L);
+    return std::make_pair(getLoopPredecessor(L), L->getHeader());
 
-  return 0;
+  return std::pair<BasicBlock *, BasicBlock *>();
 }
 
 /// HasSameValue - SCEV structural equivalence is usually sufficient for
@@ -4852,24 +4852,22 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   // (interprocedural conditions notwithstanding).
   if (!L) return false;
 
-  BasicBlock *Predecessor = getLoopPredecessor(L);
-  BasicBlock *PredecessorDest = L->getHeader();
-
   // Starting at the loop predecessor, climb up the predecessor chain, as long
   // as there are predecessors that can be found that have unique successors
   // leading to the original header.
-  for (; Predecessor;
-       PredecessorDest = Predecessor,
-       Predecessor = getPredecessorWithUniqueSuccessorForBB(Predecessor)) {
+  for (std::pair<BasicBlock *, BasicBlock *>
+         Pair(getLoopPredecessor(L), L->getHeader());
+       Pair.first;
+       Pair = getPredecessorWithUniqueSuccessorForBB(Pair.first)) {
 
     BranchInst *LoopEntryPredicate =
-      dyn_cast<BranchInst>(Predecessor->getTerminator());
+      dyn_cast<BranchInst>(Pair.first->getTerminator());
     if (!LoopEntryPredicate ||
         LoopEntryPredicate->isUnconditional())
       continue;
 
     if (isImpliedCond(LoopEntryPredicate->getCondition(), Pred, LHS, RHS,
-                      LoopEntryPredicate->getSuccessor(0) != PredecessorDest))
+                      LoopEntryPredicate->getSuccessor(0) != Pair.second))
       return true;
   }
 

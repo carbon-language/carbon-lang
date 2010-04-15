@@ -351,7 +351,8 @@ namespace llvm {
     /// (which may not be an immediate predecessor) which has exactly one
     /// successor from which BB is reachable, or null if no such block is
     /// found.
-    BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
+    std::pair<BasicBlock *, BasicBlock *>
+    getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
 
     /// isImpliedCond - Test whether the condition described by Pred, LHS,
     /// and RHS is true whenever the given Cond value evaluates to true.
