@@ -598,6 +598,7 @@ def err_covariant_return_type_class_type_more_qualified : Error<
   "return type of virtual function %0 is not covariant with the return type of "
   "the function it overrides (class type %1 is more qualified than class "
   "type %2">;
+  
 // C++ constructors
 def err_constructor_cannot_be : Error<"constructor cannot be declared '%0'">;
 def err_invalid_qualified_constructor : Error<
@@ -607,6 +608,11 @@ def err_constructor_return_type : Error<
 def err_constructor_redeclared : Error<"constructor cannot be redeclared">;
 def err_constructor_byvalue_arg : Error<
   "copy constructor must pass its first argument by reference">;
+def warn_no_constructor_for_refconst : Warning<
+  "%select{struct|union|class|enum}0 %1 does not declare any constructor to "
+  "initialize its non-modifiable members">;
+def note_refconst_member_not_initialized : Note<
+  "%select{const|reference}0 member %1 will never be initialized">;
 
 // C++ destructors
 def err_destructor_not_member : Error<

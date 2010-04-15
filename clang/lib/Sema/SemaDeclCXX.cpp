@@ -2218,6 +2218,30 @@ void Sema::CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record) {
 
   if (Record->isAbstract() && !Record->isInvalidDecl())
     (void)AbstractClassUsageDiagnoser(*this, Record);
+  
+  // If this is not an aggregate type and has no user-declared constructor,
+  // complain about any non-static data members of reference or const scalar
+  // type, since they will never get initializers.
+  if (!Record->isInvalidDecl() && !Record->isDependentType() &&
+      !Record->isAggregate() && !Record->hasUserDeclaredConstructor()) {
+    bool Complained = false;
+    for (RecordDecl::field_iterator F = Record->field_begin(), 
+                                 FEnd = Record->field_end();
+         F != FEnd; ++F) {
+      if (F->getType()->isReferenceType() ||
+          F->getType().isConstQualified() && F->getType()->isScalarType()) {
+        if (!Complained) {
+          Diag(Record->getLocation(), diag::warn_no_constructor_for_refconst)
+            << Record->getTagKind() << Record;
+          Complained = true;
+        }
+        
+        Diag(F->getLocation(), diag::note_refconst_member_not_initialized)
+          << F->getType()->isReferenceType()
+          << F->getDeclName();
+      }
+    }
+  }
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

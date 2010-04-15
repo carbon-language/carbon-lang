@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-class Base { // expected-error {{cannot define the implicit default assignment operator for 'Base', because non-static reference member 'ref' can't use default assignment operator}}
-  int &ref;  // expected-note {{declared at}}
+class Base { // expected-error {{cannot define the implicit default assignment operator for 'Base', because non-static reference member 'ref' can't use default assignment operator}} \
+  // expected-warning{{class 'Base' does not declare any constructor to initialize its non-modifiable members}}
+  int &ref;  // expected-note {{declared at}} \
+  // expected-note{{reference member 'ref' will never be initialized}}
 };
 
 class X  : Base {  // // expected-error {{cannot define the implicit default assignment operator for 'X', because non-static const member 'cint' can't use default assignment operator}}

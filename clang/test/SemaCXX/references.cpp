@@ -66,8 +66,8 @@ int& test6(int& x) {
 int& not_initialized_error; // expected-error{{declaration of reference variable 'not_initialized_error' requires an initializer}}
 extern int& not_initialized_okay;
 
-class Test6 {
-  int& okay;
+class Test6 { // expected-warning{{class 'Test6' does not declare any constructor to initialize its non-modifiable members}}
+  int& okay; // expected-note{{reference member 'okay' will never be initialized}}
 };
 
 struct C : B, A { };
