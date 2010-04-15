@@ -137,7 +137,7 @@ namespace {
                                      uint64_t Offset, IRBuilder<> &Builder);
     Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
                                      uint64_t Offset, IRBuilder<> &Builder);
-    static Instruction *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
+    static MemTransferInst *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
   };
 }
 
@@ -223,7 +223,7 @@ static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
 bool SROA::performScalarRepl(Function &F) {
   std::vector<AllocaInst*> WorkList;
 
-  // Scan the entry basic block, adding any alloca's and mallocs to the worklist
+  // Scan the entry basic block, adding allocas to the worklist.
   BasicBlock &BB = F.getEntryBlock();
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
     if (AllocaInst *A = dyn_cast<AllocaInst>(I))
@@ -251,10 +251,10 @@ bool SROA::performScalarRepl(Function &F) {
     // the constant global instead.  This is commonly produced by the CFE by
     // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
     // is only subsequently read.
-    if (Instruction *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
+    if (MemTransferInst *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
       DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
       DEBUG(dbgs() << "  memcpy = " << *TheCopy << '\n');
-      Constant *TheSrc = cast<Constant>(TheCopy->getOperand(1));
+      Constant *TheSrc = cast<Constant>(TheCopy->getSource());
       AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
       AI->eraseFromParent();
@@ -271,7 +271,10 @@ bool SROA::performScalarRepl(Function &F) {
 
     // Do not promote [0 x %struct].
     if (AllocaSize == 0) continue;
-
+    
+    // Do not promote any struct whose size is too big.
+    if (AllocaSize > SRThreshold) continue;
+    
     // If the alloca looks like a good candidate for scalar replacement, and if
     // all its users can be transformed, then split up the aggregate into its
     // separate elements.
@@ -280,9 +283,6 @@ bool SROA::performScalarRepl(Function &F) {
       Changed = true;
       continue;
     }
-
-    // Do not promote any struct whose size is too big.
-    if (AllocaSize > SRThreshold) continue;
 
     // If we can turn this aggregate value (potentially with casts) into a
     // simple scalar value that can be mem2reg'd into a register value.
@@ -1699,7 +1699,7 @@ static bool PointsToConstantGlobal(Value *V) {
 /// the uses.  If we see a memcpy/memmove that targets an unoffseted pointer to
 /// the alloca, and if the source pointer is a pointer to a constant  global, we
 /// can optimize this.
-static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
+static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
                                            bool isOffset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     User *U = cast<Instruction>(*UI);
@@ -1726,7 +1726,8 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
-    if (!isa<MemTransferInst>(U))
+    MemTransferInst *MI = dyn_cast<MemTransferInst>(U);
+    if (MI == 0)
       return false;
 
     // If we already have seen a copy, reject the second one.
@@ -1739,10 +1740,8 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     // If the memintrinsic isn't using the alloca as the dest, reject it.
     if (UI.getOperandNo() != 0) return false;
     
-    MemIntrinsic *MI = cast<MemIntrinsic>(U);
-    
     // If the source of the memcpy/move is not a constant global, reject it.
-    if (!PointsToConstantGlobal(MI->getOperand(1)))
+    if (!PointsToConstantGlobal(MI->getSource()))
       return false;
     
     // Otherwise, the transform is safe.  Remember the copy instruction.
@@ -1754,8 +1753,8 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
 /// isOnlyCopiedFromConstantGlobal - Return true if the specified alloca is only
 /// modified by a copy from a constant global.  If we can prove this, we can
 /// replace any uses of the alloca with uses of the global directly.
-Instruction *SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI) {
-  Instruction *TheCopy = 0;
+MemTransferInst *SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI) {
+  MemTransferInst *TheCopy = 0;
   if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false))
     return TheCopy;
   return 0;
