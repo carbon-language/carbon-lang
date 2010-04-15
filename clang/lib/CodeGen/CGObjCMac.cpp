@@ -124,10 +124,9 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // layout object. However, this is blocked on other cleanups to the
   // Objective-C code, so for now we just live with allocating a bunch of these
   // objects.
-  unsigned FieldNo = 0; // This value is unused.
   CGBitFieldInfo *Info =
-    new (CGF.CGM.getContext()) CGBitFieldInfo(
-      LTy, FieldNo, BitOffset, BitFieldSize, IvarTy->isSignedIntegerType());
+    new (CGF.CGM.getContext()) CGBitFieldInfo(BitFieldSize,
+                                              IvarTy->isSignedIntegerType());
 
   // We always construct a single, possibly unaligned, access for this case.
   Info->setNumComponents(1);

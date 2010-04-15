@@ -77,9 +77,6 @@ public:
   };
 
 private:
-  /// The number of access components to use.
-  unsigned NumComponents;
-
   /// The components to use to access the bit-field. We may need up to three
   /// separate components to support up to i64 bit-field access (4 + 2 + 1 byte
   /// accesses).
@@ -87,18 +84,18 @@ private:
   // FIXME: De-hardcode this, just allocate following the struct.
   AccessInfo Components[3];
 
-public:
-  CGBitFieldInfo(const llvm::Type *FieldTy, unsigned FieldNo,
-                 unsigned Start, unsigned Size, bool IsSigned)
-    : FieldTy(FieldTy), FieldNo(FieldNo),
-      Start(Start), Size(Size), IsSigned(IsSigned) {}
-
-  const llvm::Type *FieldTy;
-  unsigned FieldNo;
-
-  unsigned Start;
+  /// The total size of the bit-field, in bits.
   unsigned Size;
+
+  /// The number of access components to use.
+  unsigned NumComponents;
+
+  /// Whether the bit-field is signed.
   bool IsSigned : 1;
+
+public:
+  CGBitFieldInfo(unsigned Size, bool IsSigned)
+    : Size(Size), IsSigned(IsSigned) {}
 
 public:
   /// \brief Check whether this bit-field access is (i.e., should be sign

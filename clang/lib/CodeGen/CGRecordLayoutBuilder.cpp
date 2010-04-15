@@ -153,15 +153,15 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
   uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
 
+  unsigned StartBit = FieldOffset % TypeSizeInBits;
   bool IsSigned = FD->getType()->isSignedIntegerType();
-  CGBitFieldInfo BFI(Ty, FieldOffset / TypeSizeInBits,
-                     FieldOffset % TypeSizeInBits, FieldSize, IsSigned);
+  CGBitFieldInfo BFI(FieldSize, IsSigned);
 
   // The current policy is to always access the bit-field using the source type
   // of the bit-field. With the C bit-field rules, this implies that we always
   // use either one or two accesses, and two accesses can only occur with a
   // packed structure when the bit-field straddles an alignment boundary.
-  unsigned LowBits = std::min(FieldSize, TypeSizeInBits - BFI.Start);
+  unsigned LowBits = std::min(FieldSize, TypeSizeInBits - StartBit);
   bool NeedsHighAccess = LowBits != FieldSize;
   BFI.setNumComponents(1 + NeedsHighAccess);
 
@@ -170,7 +170,7 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   LowAccess.FieldIndex = 0;
   LowAccess.FieldByteOffset =
     TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
-  LowAccess.FieldBitStart = BFI.Start;
+  LowAccess.FieldBitStart = StartBit;
   LowAccess.AccessWidth = TypeSizeInBits;
   // FIXME: This might be wrong!
   LowAccess.AccessAlignment = 0;
@@ -565,9 +565,6 @@ void CGRecordLayout::dump() const {
 
 void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
   OS << "<CGBitFieldInfo";
-  OS << " FieldTy:" << *FieldTy;
-  OS << " FieldNo:" << FieldNo;
-  OS << " Start:" << Start;
   OS << " Size:" << Size;
   OS << " IsSigned:" << IsSigned << "\n";
 
