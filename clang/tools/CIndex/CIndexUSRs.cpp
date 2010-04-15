@@ -14,9 +14,11 @@
 #include "CIndexer.h"
 #include "CXCursor.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace clang;
 using namespace clang::cxstring;
 
@@ -47,6 +49,10 @@ public:
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
+
+  /// Generate the string component containing the location of the
+  ///  declaration.
+  void GenLoc(const Decl *D);
 
   /// String generation methods used both by the visitation methods
   /// and from other clients that want to directly generate USRs.  These
@@ -198,6 +204,7 @@ void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
 }
 
 void USRGenerator::VisitTagDecl(TagDecl *D) {
+  D = D->getCanonicalDecl();
   VisitDeclContext(D->getDeclContext());
   switch (D->getTagKind()) {
     case TagDecl::TK_struct: Out << "@S^"; break;
@@ -206,7 +213,14 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
     case TagDecl::TK_enum:   Out << "@E^"; break;
   }
 
-  // FIXME: Better support for anonymous structures and enums.
+  // Add the location of the tag decl to handle resolution across
+  // translation units.
+  if (D->getLinkage() == NoLinkage) {
+    GenLoc(D);
+    if (IgnoreResults)
+      return;
+  }
+
   const std::string &s = D->getNameAsString();
   if (s.empty()) {
     if (TypedefDecl *TD = D->getTypedefForAnonDecl())
@@ -222,7 +236,31 @@ void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
   DeclContext *DC = D->getDeclContext();
   if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
     Visit(DCN);
-  Out << "typedef@" << D->getName();
+  Out << "typedef@";
+  GenLoc(D);
+  Out << D->getName();
+}
+
+void USRGenerator::GenLoc(const Decl *D) {
+  const SourceManager &SM = AU->getSourceManager();
+  SourceLocation L = D->getLocStart();
+  if (L.isInvalid()) {
+    IgnoreResults = true;
+    return;
+  }
+  L = SM.getInstantiationLoc(L);
+  const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(L);
+  const FileEntry *FE = SM.getFileEntryForID(Decomposed.first);
+  if (FE)
+    Out << FE->getName();
+  else {
+    // This case really isn't interesting.
+    IgnoreResults = true;
+    return;
+  }
+  Out << SM.getLineNumber(Decomposed.first, Decomposed.second) << ':'
+      << SM.getColumnNumber(Decomposed.first, Decomposed.second)
+      << '^';
 }
 
 //===----------------------------------------------------------------------===//
@@ -282,7 +320,8 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
         // (e.g., the header).  This is a little gross, but in principal
         // enums/anonymous structs/etc. defined in a common header file
         // are referred to across multiple translation units.
-        if (isa<TagDecl>(ND))
+        if (isa<TagDecl>(ND) || isa<TypedefDecl>(ND) ||
+            isa<EnumConstantDecl>(ND))
           break;
         // Fall-through.
       case InternalLinkage:
