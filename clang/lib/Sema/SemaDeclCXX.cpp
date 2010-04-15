@@ -4937,7 +4937,8 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
   if (NamedDecl *PrevDecl = LookupSingleName(S, II, D.getIdentifierLoc(),
-                                             LookupOrdinaryName)) {
+                                             LookupOrdinaryName,
+                                             ForRedeclaration)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
     assert(!S->isDeclScope(DeclPtrTy::make(PrevDecl)));

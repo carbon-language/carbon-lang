@@ -1437,6 +1437,11 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
+    // If we already have a type specifier, this identifier is not a type.
+    if (DS.getTypeSpecType() != DeclSpec::TST_unspecified ||
+        DS.getTypeSpecWidth() != DeclSpec::TSW_unspecified ||
+        DS.getTypeSpecSign() != DeclSpec::TSS_unspecified)
+      return false;
     // Check for need to substitute AltiVec keyword tokens.
     if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
       break;

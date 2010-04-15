@@ -67,13 +67,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl = LookupSingleName(TUScope, ClassName, ClassLoc,
-                                         LookupOrdinaryName);
-  if (PrevDecl && PrevDecl->isTemplateParameter()) {
-    // Maybe we will complain about the shadowed template parameter.
-    DiagnoseTemplateParameterShadow(ClassLoc, PrevDecl);
-    // Just pretend that we didn't see the previous declaration.
-    PrevDecl = 0;
-  }
+                                         LookupOrdinaryName, ForRedeclaration);
 
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
@@ -202,7 +196,7 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
                                              SourceLocation ClassLocation) {
   // Look for previous declaration of alias name
   NamedDecl *ADecl = LookupSingleName(TUScope, AliasName, AliasLocation,
-                                      LookupOrdinaryName);
+                                      LookupOrdinaryName, ForRedeclaration);
   if (ADecl) {
     if (isa<ObjCCompatibleAliasDecl>(ADecl))
       Diag(AliasLocation, diag::warn_previous_alias_decl);
@@ -213,14 +207,14 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   }
   // Check for class declaration
   NamedDecl *CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
-                                       LookupOrdinaryName);
+                                       LookupOrdinaryName, ForRedeclaration);
   if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCInterfaceType()) {
       if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl()) {
         ClassName = IDecl->getIdentifier();
         CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
-                                  LookupOrdinaryName);
+                                  LookupOrdinaryName, ForRedeclaration);
       }
     }
   }
@@ -547,7 +541,8 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   ObjCInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl
-    = LookupSingleName(TUScope, ClassName, ClassLoc, LookupOrdinaryName);
+    = LookupSingleName(TUScope, ClassName, ClassLoc, LookupOrdinaryName,
+                       ForRedeclaration);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
@@ -1013,7 +1008,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     // Check for another declaration kind with the same name.
     NamedDecl *PrevDecl
       = LookupSingleName(TUScope, IdentList[i], IdentLocs[i], 
-                         LookupOrdinaryName);
+                         LookupOrdinaryName, ForRedeclaration);
     if (PrevDecl && PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(AtClassLoc, PrevDecl);

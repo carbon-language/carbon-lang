@@ -456,7 +456,8 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
 
   if (ParamName) {
     NamedDecl *PrevDecl = LookupSingleName(S, ParamName, ParamNameLoc,
-                                           LookupTagName);
+                                           LookupOrdinaryName,
+                                           ForRedeclaration);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(ParamNameLoc,
                                                            PrevDecl);
@@ -578,7 +579,8 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   IdentifierInfo *ParamName = D.getIdentifier();
   if (ParamName) {
     NamedDecl *PrevDecl = LookupSingleName(S, ParamName, D.getIdentifierLoc(),
-                                           LookupTagName);
+                                           LookupOrdinaryName,
+                                           ForRedeclaration);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
                                                            PrevDecl);

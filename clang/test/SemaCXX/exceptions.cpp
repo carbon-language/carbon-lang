@@ -107,3 +107,16 @@ public:
   }
   virtual void test () = 0; // expected-note{{pure virtual function 'test'}}
 };
+
+namespace PR6831 {
+  namespace NA { struct S; }
+  namespace NB { struct S; }
+  
+  void f() {
+    using namespace NA;
+    using namespace NB;
+    try {
+    } catch (int S) { 
+    }
+  }
+}
