@@ -110,6 +110,10 @@ public:
   /// \brief The list of AST files to merge.
   std::vector<std::string> ASTMergeFiles;
 
+  /// \brief A list of arguments to forward to LLVM's option processing; this
+  /// should only be used for debugging and experimental features.
+  std::vector<std::string> LLVMArgs;
+
 public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 1;

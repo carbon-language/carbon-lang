@@ -324,6 +324,11 @@ def ftime_report : Flag<"-ftime-report">,
 def fdump_record_layouts : Flag<"-fdump-record-layouts">,
   HelpText<"Dump record layout information">;
 
+// Generic forwarding to LLVM options. This should only be used for debugging
+// and experimental features.
+def mllvm : Separate<"-mllvm">,
+  HelpText<"Additional arguments to forward to LLVM's option processing">;
+
 //===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//

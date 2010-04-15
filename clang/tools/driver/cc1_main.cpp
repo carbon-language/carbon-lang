@@ -241,6 +241,19 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
     return 0;
   }
 
+  // Honor -mllvm.
+  //
+  // FIXME: Remove this, one day.
+  if (!Clang->getFrontendOpts().LLVMArgs.empty()) {
+    unsigned NumArgs = Clang->getFrontendOpts().LLVMArgs.size();
+    const char **Args = new const char*[NumArgs + 2];
+    Args[0] = "clang (LLVM option parsing)";
+    for (unsigned i = 0; i != NumArgs; ++i)
+      Args[i + 1] = Clang->getFrontendOpts().LLVMArgs[i].c_str();
+    Args[NumArgs + 1] = 0;
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, (char**) Args);
+  }
+
   // Create the actual diagnostics engine.
   Clang->createDiagnostics(ArgEnd - ArgBegin, const_cast<char**>(ArgBegin));
   if (!Clang->hasDiagnostics())
