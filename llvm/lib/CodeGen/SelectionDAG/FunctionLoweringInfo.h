@@ -48,7 +48,7 @@ class Value;
 class FunctionLoweringInfo {
 public:
   TargetLowering &TLI;
-  Function *Fn;
+  const Function *Fn;
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
 
@@ -93,7 +93,7 @@ public:
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.
   ///
-  void set(Function &Fn, MachineFunction &MF, bool EnableFastISel);
+  void set(const Function &Fn, MachineFunction &MF, bool EnableFastISel);
 
   /// clear - Clear out all the function-specific state. This returns this
   /// FunctionLoweringInfo to an empty state, ready to be used for a

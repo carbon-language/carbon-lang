@@ -51,7 +51,7 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
   MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }
 
-MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
+MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
                                  unsigned FunctionNum, MachineModuleInfo &mmi)
   : Fn(F), Target(TM), Ctx(mmi.getContext()), MMI(mmi) {
   if (TM.getRegisterInfo())

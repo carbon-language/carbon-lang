@@ -191,7 +191,7 @@ namespace llvm {
     ELFSection &getDtorSection();
     ELFSection &getJumpTableSection();
     ELFSection &getConstantPoolSection(MachineConstantPoolEntry &CPE);
-    ELFSection &getTextSection(Function *F);
+    ELFSection &getTextSection(const Function *F);
     ELFSection &getRelocSection(ELFSection &S);
 
     // Helpers for obtaining ELF specific info.

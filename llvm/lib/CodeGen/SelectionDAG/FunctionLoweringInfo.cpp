@@ -123,10 +123,11 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
 /// isUsedOutsideOfDefiningBlock - Return true if this instruction is used by
 /// PHI nodes or outside of the basic block that defines it, or used by a
 /// switch or atomic instruction, which may expand to multiple basic blocks.
-static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
+static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
   if (isa<PHINode>(I)) return true;
-  BasicBlock *BB = I->getParent();
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E; ++UI)
+  const BasicBlock *BB = I->getParent();
+  for (Value::const_use_iterator UI = I->use_begin(), E = I->use_end();
+        UI != E; ++UI)
     if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI))
       return true;
   return false;
@@ -135,7 +136,7 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
 /// isOnlyUsedInEntryBlock - If the specified argument is only used in the
 /// entry block, return true.  This includes arguments used by switches, since
 /// the switch may expand into multiple basic blocks.
-static bool isOnlyUsedInEntryBlock(Argument *A, bool EnableFastISel) {
+static bool isOnlyUsedInEntryBlock(const Argument *A, bool EnableFastISel) {
   // With FastISel active, we may be splitting blocks, so force creation
   // of virtual registers for all non-dead arguments.
   // Don't force virtual registers for byval arguments though, because
@@ -143,8 +144,9 @@ static bool isOnlyUsedInEntryBlock(Argument *A, bool EnableFastISel) {
   if (EnableFastISel && !A->hasByValAttr())
     return A->use_empty();
 
-  BasicBlock *Entry = A->getParent()->begin();
-  for (Value::use_iterator UI = A->use_begin(), E = A->use_end(); UI != E; ++UI)
+  const BasicBlock *Entry = A->getParent()->begin();
+  for (Value::const_use_iterator UI = A->use_begin(), E = A->use_end();
+       UI != E; ++UI)
     if (cast<Instruction>(*UI)->getParent() != Entry || isa<SwitchInst>(*UI))
       return false;  // Use not in entry block.
   return true;
@@ -154,7 +156,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli)
   : TLI(tli) {
 }
 
-void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
+void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
                                bool EnableFastISel) {
   Fn = &fn;
   MF = &mf;
@@ -162,7 +164,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
 
   // Create a vreg for each argument register that is not dead and is used
   // outside of the entry block for the function.
-  for (Function::arg_iterator AI = Fn->arg_begin(), E = Fn->arg_end();
+  for (Function::const_arg_iterator AI = Fn->arg_begin(), E = Fn->arg_end();
        AI != E; ++AI)
     if (!isOnlyUsedInEntryBlock(AI, EnableFastISel))
       InitializeRegForValue(AI);
@@ -170,10 +172,10 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
   // them.
-  Function::iterator BB = Fn->begin(), EB = Fn->end();
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      if (ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
+  Function::const_iterator BB = Fn->begin(), EB = Fn->end();
+  for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    if (const AllocaInst *AI = dyn_cast<AllocaInst>(I))
+      if (const ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         const Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
         unsigned Align =
@@ -187,7 +189,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
       }
 
   for (; BB != EB; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (!I->use_empty() && isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
@@ -209,9 +211,9 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
 
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
-    PHINode *PN;
+    const PHINode *PN;
     DebugLoc DL;
-    for (BasicBlock::iterator
+    for (BasicBlock::const_iterator
            I = BB->begin(), E = BB->end(); I != E; ++I) {
 
       PN = dyn_cast<PHINode>(I);
@@ -235,7 +237,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
 
   // Mark landing pad blocks.
   for (BB = Fn->begin(); BB != EB; ++BB)
-    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
+    if (const InvokeInst *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
       MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 }
 

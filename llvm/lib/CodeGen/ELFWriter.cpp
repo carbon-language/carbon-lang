@@ -208,7 +208,7 @@ ELFSection &ELFWriter::getDtorSection() {
 }
 
 // getTextSection - Get the text section for the specified function
-ELFSection &ELFWriter::getTextSection(Function *F) {
+ELFSection &ELFWriter::getTextSection(const Function *F) {
   const MCSectionELF *Text = 
     (const MCSectionELF *)TLOF.SectionForGlobal(F, Mang, TM);
   return getSection(Text->getSectionName(), Text->getType(), Text->getFlags());

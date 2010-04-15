@@ -195,7 +195,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   assert((!EnableFastISelAbort || EnableFastISel) &&
          "-fast-isel-abort requires -fast-isel");
 
-  Function &Fn = *mf.getFunction();
+  const Function &Fn = *mf.getFunction();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 

@@ -3610,7 +3610,7 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
     if (Val == 0)
       return DAG.getConstantFP(1.0, LHS.getValueType());
 
-    Function *F = DAG.getMachineFunction().getFunction();
+    const Function *F = DAG.getMachineFunction().getFunction();
     if (!F->hasFnAttr(Attribute::OptimizeForSize) ||
         // If optimizing for size, don't insert too many multiplies.  This
         // inserts up to 5 multiplies.

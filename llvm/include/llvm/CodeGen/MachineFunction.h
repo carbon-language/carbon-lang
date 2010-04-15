@@ -70,7 +70,7 @@ struct MachineFunctionInfo {
 };
 
 class MachineFunction {
-  Function *Fn;
+  const Function *Fn;
   const TargetMachine &Target;
   MCContext &Ctx;
   MachineModuleInfo &MMI;
@@ -124,8 +124,8 @@ class MachineFunction {
   MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
   void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
 public:
-  MachineFunction(Function *Fn, const TargetMachine &TM, unsigned FunctionNum,
-                  MachineModuleInfo &MMI);
+  MachineFunction(const Function *Fn, const TargetMachine &TM,
+                  unsigned FunctionNum, MachineModuleInfo &MMI);
   ~MachineFunction();
 
   MachineModuleInfo &getMMI() const { return MMI; }
@@ -133,7 +133,7 @@ public:
   
   /// getFunction - Return the LLVM function that this machine code represents
   ///
-  Function *getFunction() const { return Fn; }
+  const Function *getFunction() const { return Fn; }
 
   /// getFunctionNumber - Return a unique ID for the current function.
   ///
