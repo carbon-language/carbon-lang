@@ -73,10 +73,10 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     if (AI->getType() != ArgVTy) {
       Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy, 
                                                             false);
-      InitCall->setOperand(2, 
+      InitCall->setOperand(1, 
           CastInst::Create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
-      InitCall->setOperand(2, AI);
+      InitCall->setOperand(1, AI);
     }
     /* FALL THROUGH */
 
@@ -93,12 +93,12 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       }
       opcode = CastInst::getCastOpcode(AI, true,
                                        Type::getInt32Ty(Context), true);
-      InitCall->setOperand(1, 
+      InitCall->setOperand(0, 
           CastInst::Create(opcode, AI, Type::getInt32Ty(Context),
                            "argc.cast", InitCall));
     } else {
       AI->replaceAllUsesWith(InitCall);
-      InitCall->setOperand(1, AI);
+      InitCall->setOperand(0, AI);
     }
 
   case 0: break;

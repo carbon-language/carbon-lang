@@ -1423,7 +1423,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       switch (II->getIntrinsicID()) {
       case Intrinsic::bswap:
         Worklist.Add(II);
-        ICI.setOperand(0, II->getOperand(1));
+        ICI.setOperand(0, II->getOperand(0));
         ICI.setOperand(1, ConstantInt::get(II->getContext(), RHSV.byteSwap()));
         return &ICI;
       case Intrinsic::ctlz:
@@ -1431,7 +1431,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // ctz(A) == bitwidth(a)  ->  A == 0 and likewise for !=
         if (RHSV == RHS->getType()->getBitWidth()) {
           Worklist.Add(II);
-          ICI.setOperand(0, II->getOperand(1));
+          ICI.setOperand(0, II->getOperand(0));
           ICI.setOperand(1, ConstantInt::get(RHS->getType(), 0));
           return &ICI;
         }
@@ -1440,7 +1440,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // popcount(A) == 0  ->  A == 0 and likewise for !=
         if (RHS->isZero()) {
           Worklist.Add(II);
-          ICI.setOperand(0, II->getOperand(1));
+          ICI.setOperand(0, II->getOperand(0));
           ICI.setOperand(1, RHS);
           return &ICI;
         }

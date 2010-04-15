@@ -198,7 +198,7 @@ FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
     bool IsCleanUp = (NumOps == 3);
 
     if (!IsCleanUp)
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getOperand(3)))
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getOperand(2)))
         IsCleanUp = (CI->getZExtValue() == 0);
 
     if (IsCleanUp)
@@ -237,7 +237,7 @@ bool DwarfEHPrepare::CleanupSelectors() {
     if (!Sel || Sel->getParent()->getParent() != F) continue;
 
     // Index of the ".llvm.eh.catch.all.value" variable.
-    unsigned OpIdx = Sel->getNumOperands() - 1;
+    unsigned OpIdx = Sel->getNumOperands() - 2;
     GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getOperand(OpIdx));
     if (GV != EHCatchAllValue) continue;
     Sel->setOperand(OpIdx, EHCatchAllValue->getInitializer());
@@ -366,7 +366,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
             bool IsCleanUp = (NumOps == 3);
 
             if (!IsCleanUp)
-              if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(3)))
+              if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(2)))
                 IsCleanUp = (CI->getZExtValue() == 0);
 
             if (IsCleanUp)
@@ -390,8 +390,8 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 
       // Use the exception object pointer and the personality function
       // from the original selector.
-      Args.push_back(II->getOperand(1)); // Exception object pointer.
-      Args.push_back(II->getOperand(2)); // Personality function.
+      Args.push_back(II->getOperand(0)); // Exception object pointer.
+      Args.push_back(II->getOperand(1)); // Personality function.
       Args.push_back(EHCatchAllValue->getInitializer()); // Catch-all indicator.
 
       CallInst *NewSelector =
