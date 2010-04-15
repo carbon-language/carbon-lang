@@ -38,11 +38,14 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
-using namespace llvm;
 
-static cl::opt<bool>
+namespace llvm {
+cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
+}
+
+using namespace llvm;
 
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
                                                    bool *isSPVFP) {

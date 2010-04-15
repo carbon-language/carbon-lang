@@ -36,9 +36,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-using namespace llvm;
 
+namespace llvm {
 extern cl::opt<bool> ReuseFrameIndexVals;
+}
+
+using namespace llvm;
 
 Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
                                        const ARMSubtarget &sti)
