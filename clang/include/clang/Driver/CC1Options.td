@@ -415,6 +415,8 @@ def trigraphs : Flag<"-trigraphs">,
   HelpText<"Process trigraph sequences">;
 def fwritable_strings : Flag<"-fwritable-strings">,
   HelpText<"Store string literals as writable data">;
+def fno_bitfield_type_align : Flag<"-fno-bitfield-type-align">,
+  HelpText<"Ignore bit-field types when aligning structures">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options

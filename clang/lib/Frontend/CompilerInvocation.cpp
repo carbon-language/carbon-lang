@@ -526,6 +526,14 @@ static void LangOptsToArgs(const LangOptions &Opts,
   // OptimizeSize is implicit.
   if (Opts.Static)
     Res.push_back("-static-define");
+  if (Opts.DumpRecordLayouts)
+    Res.push_back("-fdump-record-layouts");
+  if (Opts.DumpVtableLayouts)
+    Res.push_back("-fdump-vtable-layouts");
+  if (Opts.NoBitFieldTypeAlign)
+    Res.push_back("-fno-bitfield-type-alignment");
+  if (Opts.SjLjExceptions)
+    Res.push_back("-fsjlj-exceptions");
   if (Opts.PICLevel) {
     Res.push_back("-pic-level");
     Res.push_back(llvm::utostr(Opts.PICLevel));
@@ -1219,6 +1227,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayouts = Args.hasArg(OPT_fdump_record_layouts);
   Opts.DumpVtableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);
+  Opts.NoBitFieldTypeAlign = Args.hasArg(OPT_fno_bitfield_type_align);
   Opts.OptimizeSize = 0;
 
   // FIXME: Eliminate this dependency.

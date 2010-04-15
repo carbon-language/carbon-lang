@@ -100,6 +100,10 @@ public:
   unsigned CatchUndefined    : 1; // Generate code to check for undefined ops.
   unsigned DumpRecordLayouts : 1; /// Dump the layout of IRgen'd records.
   unsigned DumpVtableLayouts : 1; /// Dump the layouts of emitted vtables.
+
+  // FIXME: This is just a temporary option, for testing purposes.
+  unsigned NoBitFieldTypeAlign : 1;
+
 private:
   unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
                                   // declare this enum as unsigned because MSVC
@@ -171,6 +175,7 @@ public:
     CatchUndefined = 0;
     DumpRecordLayouts = 0;
     DumpVtableLayouts = 0;
+    NoBitFieldTypeAlign = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }

@@ -142,9 +142,10 @@ bool TargetInfo::isTypeSigned(IntType T) const {
 /// Apply changes to the target information with respect to certain
 /// language options which change the target configuration.
 void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
-  if (Opts.ShortWChar) {
+  if (Opts.NoBitFieldTypeAlign)
+    UseBitFieldTypeAlignment = false;
+  if (Opts.ShortWChar)
     WCharType = UnsignedShort;
-  }
 }
 
 //===----------------------------------------------------------------------===//
