@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "int_lib.h"
+
 extern void __clear_cache(void* start, void* end);
 
 /*

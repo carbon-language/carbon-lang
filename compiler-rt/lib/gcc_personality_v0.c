@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "int_lib.h"
+
 /*
  * _Unwind_* stuff based on C++ ABI public documentation
  * http://refspecs.freestandards.org/abi-eh-1.21.html
