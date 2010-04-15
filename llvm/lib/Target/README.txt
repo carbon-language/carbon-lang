@@ -263,19 +263,6 @@ if anyone cared enough about sincos.
 
 //===---------------------------------------------------------------------===//
 
-Turn this into a single byte store with no load (the other 3 bytes are
-unmodified):
-
-define void @test(i32* %P) {
-	%tmp = load i32* %P
-        %tmp14 = or i32 %tmp, 3305111552
-        %tmp15 = and i32 %tmp14, 3321888767
-        store i32 %tmp15, i32* %P
-        ret void
-}
-
-//===---------------------------------------------------------------------===//
-
 quantum_sigma_x in 462.libquantum contains the following loop:
 
       for(i=0; i<reg->size; i++)
