@@ -44,7 +44,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   Char32Type = UnsignedInt;
   Int64Type = SignedLongLong;
   SigAtomicType = SignedInt;
-  UseBitfieldTypeAlignment = true;
+  UseBitFieldTypeAlignment = true;
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;

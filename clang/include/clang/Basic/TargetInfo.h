@@ -91,7 +91,7 @@ protected:
   /// used to (a) impact the alignment of the containing structure, and (b)
   /// ensure that the individual bit-field will not straddle an alignment
   /// boundary.
-  unsigned UseBitfieldTypeAlignment : 1;
+  unsigned UseBitFieldTypeAlignment : 1;
 
 public:
   IntType getSizeType() const { return SizeType; }
@@ -205,8 +205,8 @@ public:
     return UserLabelPrefix;
   }
 
-  bool useBitfieldTypeAlignment() const {
-    return UseBitfieldTypeAlignment;
+  bool useBitFieldTypeAlignment() const {
+    return UseBitFieldTypeAlignment;
   }
 
   /// getTypeName - Return the user string for the specified integer type enum.
