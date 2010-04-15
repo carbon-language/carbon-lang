@@ -105,3 +105,23 @@ entry:
 ; X32: movb	8(%esp), %al
 ; X32: movb	%al, 5(%{{.*}})
 }
+
+define i32 @test7(i64* nocapture %a0, i8 zeroext %a1, i32* %P2) nounwind {
+entry:
+  %OtherLoad = load i32 *%P2
+  %A = load i64* %a0, align 4
+  %B = and i64 %A, -280375465082881    ; 0xFFFF00FFFFFFFFFF
+  %C = zext i8 %a1 to i64
+  %CS = shl i64 %C, 40
+  %D = or i64 %B, %CS
+  store i64 %D, i64* %a0, align 4
+  ret i32 %OtherLoad
+; X64: test7:
+; X64: movb	%sil, 5(%rdi)
+
+
+; X32: test7:
+; X32: movb	8(%esp), %cl
+; X32: movb	%cl, 5(%{{.*}})
+}
+

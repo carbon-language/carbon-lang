@@ -5172,12 +5172,25 @@ CheckForMaskedLoad(SDValue V, SDValue Ptr, SDValue Chain) {
       !ISD::isNormalLoad(V->getOperand(0).getNode()))
     return Result;
   
-  // Check the chain and pointer.  The store should be chained directly to the
-  // load (TODO: Or through a TF node!) since it's to the same address.
+  // Check the chain and pointer.
   LoadSDNode *LD = cast<LoadSDNode>(V->getOperand(0));
-  if (LD->getBasePtr() != Ptr ||
-      V->getOperand(0).getNode() != Chain.getNode())
-    return Result;
+  if (LD->getBasePtr() != Ptr) return Result;  // Not from same pointer.
+  
+  // The store should be chained directly to the load or be an operand of a
+  // tokenfactor.
+  if (LD == Chain.getNode())
+    ; // ok.
+  else if (Chain->getOpcode() != ISD::TokenFactor)
+    return Result; // Fail.
+  else {
+    bool isOk = false;
+    for (unsigned i = 0, e = Chain->getNumOperands(); i != e; ++i)
+      if (Chain->getOperand(i).getNode() == LD) {
+        isOk = true;
+        break;
+      }
+    if (!isOk) return Result;
+  }
   
   // This only handles simple types.
   if (V.getValueType() != MVT::i16 &&
