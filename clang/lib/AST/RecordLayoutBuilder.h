@@ -112,8 +112,11 @@ class ASTRecordLayoutBuilder {
   /// LayoutNonVirtualBase - Lays out a single non-virtual base.
   void LayoutNonVirtualBase(const CXXRecordDecl *RD);
 
+  void AddPrimaryVirtualBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
+                                    const CXXRecordDecl *MostDerivedClass);
+
   /// LayoutVirtualBases - Lays out all the virtual bases.
-  void LayoutVirtualBases(const CXXRecordDecl *RD, uint64_t Offset,
+  void LayoutVirtualBases(const CXXRecordDecl *RD,
                           const CXXRecordDecl *MostDerivedClass);
 
   /// LayoutVirtualBase - Lays out a single virtual base.

@@ -1511,3 +1511,90 @@ struct F : E {
 void F::f() { }
 
 }
+
+namespace Test35 {
+
+// Test that we lay out the virtual bases of 'Test35::H' in the correct order.
+
+struct A {
+ virtual void a();
+
+ int i;
+};
+
+struct B : virtual A {
+ virtual void b();
+};
+
+struct C {
+ virtual void c();
+};
+
+struct D : C, virtual B {
+ virtual void d();
+};
+
+struct E : D {
+ virtual void e();
+
+ bool b;
+};
+
+struct F : virtual D { };
+struct G : virtual E { };
+
+// CHECK:      Vtable for 'Test35::H' (32 entries).
+// CHECK-NEXT:    0 | vbase_offset (32)
+// CHECK-NEXT:    1 | vbase_offset (0)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | vcall_offset (0)
+// CHECK-NEXT:    4 | vbase_offset (16)
+// CHECK-NEXT:    5 | vbase_offset (8)
+// CHECK-NEXT:    6 | offset_to_top (0)
+// CHECK-NEXT:    7 | Test35::H RTTI
+// CHECK-NEXT:        -- (Test35::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test35::D, 0) vtable address --
+// CHECK-NEXT:        -- (Test35::F, 0) vtable address --
+// CHECK-NEXT:        -- (Test35::H, 0) vtable address --
+// CHECK-NEXT:    8 | void Test35::C::c()
+// CHECK-NEXT:    9 | void Test35::D::d()
+// CHECK-NEXT:   10 | void Test35::H::h()
+// CHECK-NEXT:   11 | vbase_offset (0)
+// CHECK-NEXT:   12 | vbase_offset (24)
+// CHECK-NEXT:   13 | vcall_offset (0)
+// CHECK-NEXT:   14 | vbase_offset (8)
+// CHECK-NEXT:   15 | offset_to_top (-8)
+// CHECK-NEXT:   16 | Test35::H RTTI
+// CHECK-NEXT:        -- (Test35::B, 8) vtable address --
+// CHECK-NEXT:        -- (Test35::G, 8) vtable address --
+// CHECK-NEXT:   17 | void Test35::B::b()
+// CHECK-NEXT:   18 | vcall_offset (0)
+// CHECK-NEXT:   19 | offset_to_top (-16)
+// CHECK-NEXT:   20 | Test35::H RTTI
+// CHECK-NEXT:        -- (Test35::A, 16) vtable address --
+// CHECK-NEXT:   21 | void Test35::A::a()
+// CHECK-NEXT:   22 | vcall_offset (0)
+// CHECK-NEXT:   23 | vcall_offset (0)
+// CHECK-NEXT:   24 | vcall_offset (0)
+// CHECK-NEXT:   25 | vbase_offset (-16)
+// CHECK-NEXT:   26 | vbase_offset (-24)
+// CHECK-NEXT:   27 | offset_to_top (-32)
+// CHECK-NEXT:   28 | Test35::H RTTI
+// CHECK-NEXT:        -- (Test35::C, 32) vtable address --
+// CHECK-NEXT:        -- (Test35::D, 32) vtable address --
+// CHECK-NEXT:        -- (Test35::E, 32) vtable address --
+// CHECK-NEXT:   29 | void Test35::C::c()
+// CHECK-NEXT:   30 | void Test35::D::d()
+// CHECK-NEXT:   31 | void Test35::E::e()
+
+// CHECK:      Virtual base offset offsets for 'Test35::H' (4 entries).
+// CHECK-NEXT:    Test35::A | -32
+// CHECK-NEXT:    Test35::B | -24
+// CHECK-NEXT:    Test35::D | -56
+// CHECK-NEXT:    Test35::E | -64
+struct H : F, G {
+ virtual void h();
+};
+void H::h() { }
+
+}
