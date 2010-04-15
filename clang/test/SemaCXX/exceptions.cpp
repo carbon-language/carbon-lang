@@ -97,3 +97,13 @@ BadReturn::BadReturn(int) try {
     }
   }
 }
+
+// Cannot throw an abstract type.
+class foo {
+public:
+  foo() {}
+  void bar () {
+    throw *this; // expected-error{{cannot throw an object of abstract type 'foo'}}
+  }
+  virtual void test () = 0; // expected-note{{pure virtual function 'test'}}
+};

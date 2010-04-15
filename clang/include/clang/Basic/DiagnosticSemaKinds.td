@@ -402,6 +402,8 @@ def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<
   "allocation of an object of abstract type %0">;
+def err_throw_abstract_type : Error<
+  "cannot throw an object of abstract type %0">;
 
 def err_multiple_final_overriders : Error<
   "virtual function %q0 has more than one final overrider in %1">; 

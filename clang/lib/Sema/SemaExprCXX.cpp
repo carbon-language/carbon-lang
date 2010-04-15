@@ -411,6 +411,11 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
                               << E->getSourceRange()))
       return true;
 
+    if (RequireNonAbstractType(ThrowLoc, E->getType(),
+                               PDiag(diag::err_throw_abstract_type)
+                                 << E->getSourceRange()))
+      return true;
+
     // FIXME: This is just a hack to mark the copy constructor referenced.
     // This should go away when the next FIXME is fixed.
     const RecordType *RT = Ty->getAs<RecordType>();
