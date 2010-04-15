@@ -117,7 +117,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       Pointer = V->getOperand(0);
       PointerSize = AA->getTypeStoreSize(V->getType());
     } else if (isFreeCall(Inst)) {
-      Pointer = Inst->getOperand(0);
+      Pointer = Inst->getOperand(1);
       // calls to free() erase the entire structure
       PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
@@ -197,9 +197,9 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R = 
-          AA->alias(II->getOperand(2), ~0U, MemPtr, ~0U);
+          AA->alias(II->getOperand(3), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias) {
-          InvariantTag = II->getOperand(0);
+          InvariantTag = II->getOperand(1);
           continue;
         }
       
@@ -210,7 +210,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R =
-          AA->alias(II->getOperand(1), ~0U, MemPtr, ~0U);
+          AA->alias(II->getOperand(2), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
       }
@@ -366,7 +366,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemSize = AA->getTypeStoreSize(LI->getType());
     }
   } else if (isFreeCall(QueryInst)) {
-    MemPtr = QueryInst->getOperand(0);
+    MemPtr = QueryInst->getOperand(1);
     // calls to free() erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
@@ -378,12 +378,12 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     case Intrinsic::lifetime_start:
     case Intrinsic::lifetime_end:
     case Intrinsic::invariant_start:
-      MemPtr = QueryInst->getOperand(1);
-      MemSize = cast<ConstantInt>(QueryInst->getOperand(0))->getZExtValue();
-      break;
-    case Intrinsic::invariant_end:
       MemPtr = QueryInst->getOperand(2);
       MemSize = cast<ConstantInt>(QueryInst->getOperand(1))->getZExtValue();
+      break;
+    case Intrinsic::invariant_end:
+      MemPtr = QueryInst->getOperand(3);
+      MemSize = cast<ConstantInt>(QueryInst->getOperand(2))->getZExtValue();
       break;
     default:
       CallSite QueryCS = CallSite::get(QueryInst);

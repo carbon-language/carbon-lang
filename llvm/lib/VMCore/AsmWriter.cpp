@@ -1847,7 +1847,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
-    Operand = CI->getCalledValue();
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
     const Type         *RetTy = FTy->getReturnType();
@@ -1871,10 +1870,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(Operand, true);
     }
     Out << '(';
-    for (unsigned op = 0, Eop = CI->getNumOperands() - 1; op < Eop; ++op) {
-      if (op > 0)
+    for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
+      if (op > 1)
         Out << ", ";
-      writeParamOperand(CI->getOperand(op), PAL.getParamAttributes(op + 1));
+      writeParamOperand(I.getOperand(op), PAL.getParamAttributes(op));
     }
     Out << ')';
     if (PAL.getFnAttributes() != Attribute::None)
@@ -1918,10 +1917,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(Operand, true);
     }
     Out << '(';
-    for (unsigned op = 0, Eop = II->getNumOperands() - 3; op < Eop; ++op) {
+    for (unsigned op = 0, Eop = I.getNumOperands() - 3; op < Eop; ++op) {
       if (op)
         Out << ", ";
-      writeParamOperand(II->getOperand(op), PAL.getParamAttributes(op + 1));
+      writeParamOperand(I.getOperand(op), PAL.getParamAttributes(op + 1));
     }
 
     Out << ')';

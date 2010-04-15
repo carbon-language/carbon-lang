@@ -123,14 +123,14 @@ static Value *getPointerOperand(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
-    return MI->getOperand(0);
+    return MI->getOperand(1);
   
   switch (cast<IntrinsicInst>(I)->getIntrinsicID()) {
   default: assert(false && "Unexpected intrinsic!");
   case Intrinsic::init_trampoline:
-    return I->getOperand(0);
-  case Intrinsic::lifetime_end:
     return I->getOperand(1);
+  case Intrinsic::lifetime_end:
+    return I->getOperand(2);
   }
 }
 
@@ -152,7 +152,7 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
     case Intrinsic::init_trampoline:
       return -1u;
     case Intrinsic::lifetime_end:
-      Len = I->getOperand(0);
+      Len = I->getOperand(1);
       break;
     }
   }
@@ -287,7 +287,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure.
-bool DSE::handleFreeWithNonTrivialDependency(/*FIXME: Call*/Instruction *F, MemDepResult Dep) {
+bool DSE::handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
   Instruction *Dependency = Dep.getInst();
@@ -297,7 +297,7 @@ bool DSE::handleFreeWithNonTrivialDependency(/*FIXME: Call*/Instruction *F, MemD
   Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
 
   // Check for aliasing.
-  if (AA.alias(F->getOperand(0), 1, DepPointer, 1) !=
+  if (AA.alias(F->getOperand(1), 1, DepPointer, 1) !=
          AliasAnalysis::MustAlias)
     return false;
   
