@@ -1,4 +1,6 @@
 load_lib llvm.exp
 
-RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{txt}]]
+if { [llvm_supports_target ARM] } {
+  RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{txt}]]
+}
 
