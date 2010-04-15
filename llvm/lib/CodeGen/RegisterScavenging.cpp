@@ -136,6 +136,9 @@ void RegScavenger::forward() {
     ScavengeRestore = NULL;
   }
 
+  if (MI->isDebugValue())
+    return;
+
   // Find out which registers are early clobbered, killed, defined, and marked
   // def-dead in this instruction.
   BitVector EarlyClobberRegs(NumPhysRegs);
