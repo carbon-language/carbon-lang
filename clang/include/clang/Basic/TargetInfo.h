@@ -85,6 +85,14 @@ public:
 protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
+
+  /// Control whether the alignment of bit-field types is respected when laying
+  /// out structures. If true, then the alignment of the bit-field type will be
+  /// used to (a) impact the alignment of the containing structure, and (b)
+  /// ensure that the individual bit-field will not straddle an alignment
+  /// boundary.
+  unsigned UseBitfieldTypeAlignment : 1;
+
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -195,6 +203,10 @@ public:
   /// others.
   const char *getUserLabelPrefix() const {
     return UserLabelPrefix;
+  }
+
+  bool useBitfieldTypeAlignment() const {
+    return UseBitfieldTypeAlignment;
   }
 
   /// getTypeName - Return the user string for the specified integer type enum.

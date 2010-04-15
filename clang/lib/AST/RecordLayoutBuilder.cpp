@@ -585,7 +585,7 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
 
-  if (FieldPacked)
+  if (FieldPacked || !Ctx.Target.useBitfieldTypeAlignment())
     FieldAlign = 1;
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
@@ -594,12 +594,11 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   if (MaxFieldAlignment)
     FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
 
-  // Check if we need to add padding to give the field the correct
-  // alignment.
+  // Check if we need to add padding to give the field the correct alignment.
   if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
     FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
 
-  // Padding members don't affect overall alignment
+  // Padding members don't affect overall alignment.
   if (!D->getIdentifier())
     FieldAlign = 1;
 

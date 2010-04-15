@@ -20,9 +20,8 @@ using namespace clang;
 
 // TargetInfo Constructor.
 TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
-  // Set defaults.  Defaults are set for a 32-bit RISC platform,
-  // like PPC or SPARC.
-  // These should be overridden by concrete targets as needed.
+  // Set defaults.  Defaults are set for a 32-bit RISC platform, like PPC or
+  // SPARC.  These should be overridden by concrete targets as needed.
   TLSSupported = true;
   PointerWidth = PointerAlign = 32;
   IntWidth = IntAlign = 32;
@@ -45,6 +44,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   Char32Type = UnsignedInt;
   Int64Type = SignedLongLong;
   SigAtomicType = SignedInt;
+  UseBitfieldTypeAlignment = true;
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;
