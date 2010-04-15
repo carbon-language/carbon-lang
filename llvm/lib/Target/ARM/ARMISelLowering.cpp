@@ -1041,7 +1041,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // those, the target's already in a register, so we don't need to do
     // anything extra.
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-      GlobalValue *GV = G->getGlobal();
+      const GlobalValue *GV = G->getGlobal();
       // Create a constant pool entry for the callee address
       unsigned ARMPCLabelIndex = AFI->createConstPoolEntryUId();
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV,
