@@ -192,7 +192,8 @@ int main(int argc, char **argv, char * const *envp) {
   } else {
     // Otherwise, if there is a .bc suffix on the executable strip it off, it
     // might confuse the program.
-    if (InputFile.rfind(".bc") == InputFile.length() - 3)
+    if (InputFile.size() > 3 && 
+        InputFile.rfind(".bc") == InputFile.length() - 3)
       InputFile.erase(InputFile.length() - 3);
   }
 
