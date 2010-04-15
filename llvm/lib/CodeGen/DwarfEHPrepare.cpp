@@ -84,7 +84,7 @@ namespace {
     }
 
     /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still
-    /// use the ".llvm.eh.catch.all.value" call need to convert to using it's
+    /// use the ".llvm.eh.catch.all.value" call need to convert to using its
     /// initializer instead.
     bool CleanupSelectors();
 
@@ -218,7 +218,7 @@ FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes) {
 }
 
 /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
-/// the ".llvm.eh.catch.all.value" call need to convert to using it's
+/// the ".llvm.eh.catch.all.value" call need to convert to using its
 /// initializer instead.
 bool DwarfEHPrepare::CleanupSelectors() {
   if (!EHCatchAllValue) return false;
