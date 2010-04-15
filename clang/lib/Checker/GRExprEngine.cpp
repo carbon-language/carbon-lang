@@ -583,49 +583,85 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   }
 
   switch (S->getStmtClass()) {
-    default:
-      llvm_unreachable("Unhandled stmt class");
     // C++ stuff we don't support yet.
-    case Stmt::CXXTypeidExprClass:
-    case Stmt::CXXNullPtrLiteralExprClass:
-    case Stmt::CXXThrowExprClass:
-    case Stmt::CXXDefaultArgExprClass:
-    case Stmt::CXXZeroInitValueExprClass:
-    case Stmt::CXXNewExprClass:
-    case Stmt::CXXDeleteExprClass:
-    case Stmt::CXXPseudoDestructorExprClass:
-    case Stmt::UnresolvedLookupExprClass:
-    case Stmt::UnaryTypeTraitExprClass:
-    case Stmt::DependentScopeDeclRefExprClass:
-    case Stmt::CXXConstructExprClass:
+    case Stmt::CXXBindReferenceExprClass:
     case Stmt::CXXBindTemporaryExprClass:
-    case Stmt::CXXExprWithTemporariesClass:
-    case Stmt::CXXTemporaryObjectExprClass:
-    case Stmt::CXXUnresolvedConstructExprClass:
-    case Stmt::CXXDependentScopeMemberExprClass:
-    case Stmt::UnresolvedMemberExprClass:
     case Stmt::CXXCatchStmtClass:
-    case Stmt::CXXTryStmtClass: {
+    case Stmt::CXXConstructExprClass:
+    case Stmt::CXXDefaultArgExprClass:
+    case Stmt::CXXDeleteExprClass:
+    case Stmt::CXXDependentScopeMemberExprClass:
+    case Stmt::CXXExprWithTemporariesClass:
+    case Stmt::CXXNamedCastExprClass:
+    case Stmt::CXXNewExprClass:
+    case Stmt::CXXNullPtrLiteralExprClass:
+    case Stmt::CXXPseudoDestructorExprClass:
+    case Stmt::CXXTemporaryObjectExprClass:
+    case Stmt::CXXThrowExprClass:
+    case Stmt::CXXTryStmtClass:
+    case Stmt::CXXTypeidExprClass:
+    case Stmt::CXXUnresolvedConstructExprClass:
+    case Stmt::CXXZeroInitValueExprClass:
+    case Stmt::DependentScopeDeclRefExprClass:
+    case Stmt::UnaryTypeTraitExprClass:
+    case Stmt::UnresolvedLookupExprClass:
+    case Stmt::UnresolvedMemberExprClass:
+    {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       Builder->BuildSinks = true;
       MakeNode(Dst, S, Pred, GetState(Pred));
       break;
     }
 
+    // Cases that should never be evaluated simply because they shouldn't
+    // appear in the CFG.
+    case Stmt::BreakStmtClass:
+    case Stmt::CaseStmtClass:
+    case Stmt::CompoundStmtClass:
+    case Stmt::ContinueStmtClass:
+    case Stmt::DefaultStmtClass:
+    case Stmt::DoStmtClass:
+    case Stmt::GotoStmtClass:
+    case Stmt::IndirectGotoStmtClass:
+    case Stmt::LabelStmtClass:
+    case Stmt::NoStmtClass:
+    case Stmt::NullStmtClass:
+    case Stmt::SwitchCaseClass:
+      llvm_unreachable("Stmt should not be in analyzer evaluation loop");
+      break;
+
+    // Cases not handled yet; but will handle some day.
+    case Stmt::DesignatedInitExprClass:
+    case Stmt::ExtVectorElementExprClass:
+    case Stmt::GNUNullExprClass:
+    case Stmt::ImaginaryLiteralClass:
+    case Stmt::ImplicitValueInitExprClass:
+    case Stmt::ObjCAtCatchStmtClass:
+    case Stmt::ObjCAtFinallyStmtClass:
+    case Stmt::ObjCAtSynchronizedStmtClass:
+    case Stmt::ObjCAtTryStmtClass:
+    case Stmt::ObjCEncodeExprClass:
+    case Stmt::ObjCImplicitSetterGetterRefExprClass:
+    case Stmt::ObjCIsaExprClass:
+    case Stmt::ObjCPropertyRefExprClass:
+    case Stmt::ObjCProtocolExprClass:
+    case Stmt::ObjCSelectorExprClass:
+    case Stmt::ObjCStringLiteralClass:
+    case Stmt::ObjCSuperExprClass:
+    case Stmt::ParenListExprClass:
+    case Stmt::PredefinedExprClass:
+    case Stmt::ShuffleVectorExprClass:
+    case Stmt::TypesCompatibleExprClass:
+    case Stmt::VAArgExprClass:
+        // Fall through.
+
+    // Cases we intentionally don't evaluate, since they don't need
+    // to be explicitly evaluated.
     case Stmt::AddrLabelExprClass:
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::FloatingLiteralClass:
-    case Stmt::ImplicitValueInitExprClass:
-    case Stmt::ObjCSuperExprClass:
-    case Stmt::ObjCStringLiteralClass:
-    case Stmt::ObjCSelectorExprClass:
-    case Stmt::ObjCImplicitSetterGetterRefExprClass:
-    case Stmt::PredefinedExprClass:
-      // Cases we intentionally have "default" handle:
-      //   AddrLabelExpr, IntegerLiteral, CharacterLiteral
-
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
       break;
 

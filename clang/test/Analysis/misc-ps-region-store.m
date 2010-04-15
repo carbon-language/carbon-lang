@@ -994,3 +994,13 @@ int rdar7813989(int x, rdar7813989_Val *a, rdar7813989_Val *b) {
   return z + 1;
 }
 
+// PR 6844 - Don't crash on vaarg expression.
+typedef __builtin_va_list va_list;
+void map(int srcID, ...) {
+  va_list ap;
+  int i;
+  for (i = 0; i < srcID; i++) {
+    int v = __builtin_va_arg(ap, int);
+  }
+}
+
