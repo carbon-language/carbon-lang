@@ -331,7 +331,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   IRBuilder<> Builder(CI->getParent(), CI);
   LLVMContext &Context = CI->getContext();
 
-  Function *Callee = CI->getCalledFunction();
+  const Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
 
   switch (Callee->getIntrinsicID()) {

@@ -1070,7 +1070,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                            false, false, 0);
     }
   } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    GlobalValue *GV = G->getGlobal();
+    const GlobalValue *GV = G->getGlobal();
     isDirect = true;
     bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
     bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
@@ -1282,7 +1282,7 @@ SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
   unsigned ARMPCLabelIndex = 0;
   DebugLoc DL = Op.getDebugLoc();
   EVT PtrVT = getPointerTy();
-  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   SDValue CPAddr;
   if (RelocM == Reloc::Static) {
@@ -1348,7 +1348,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
 SDValue
 ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
                                         SelectionDAG &DAG) {
-  GlobalValue *GV = GA->getGlobal();
+  const GlobalValue *GV = GA->getGlobal();
   DebugLoc dl = GA->getDebugLoc();
   SDValue Offset;
   SDValue Chain = DAG.getEntryNode();
@@ -1411,7 +1411,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
                                                  SelectionDAG &DAG) {
   EVT PtrVT = getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   if (RelocM == Reloc::PIC_) {
     bool UseGOTOFF = GV->hasLocalLinkage() || GV->hasHiddenVisibility();
@@ -1454,7 +1454,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   unsigned ARMPCLabelIndex = 0;
   EVT PtrVT = getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   SDValue CPAddr;
   if (RelocM == Reloc::Static)
@@ -1850,7 +1850,7 @@ static bool isFloatingPointZero(SDValue Op) {
     if (Op.getOperand(1).getOpcode() == ARMISD::Wrapper) {
       SDValue WrapperOp = Op.getOperand(1).getOperand(0);
       if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(WrapperOp))
-        if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
+        if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
           return CFP->getValueAPF().isPosZero();
     }
   }

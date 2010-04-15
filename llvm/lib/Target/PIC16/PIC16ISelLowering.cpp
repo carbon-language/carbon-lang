@@ -1409,7 +1409,7 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (IsDirectCall) { 
        // Considering the GlobalAddressNode case here.
        if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-          GlobalValue *GV = G->getGlobal();
+          const GlobalValue *GV = G->getGlobal();
           Callee = DAG.getTargetGlobalAddress(GV, MVT::i8);
           Name = G->getGlobal()->getName();
        } else {// Considering the ExternalSymbol case here

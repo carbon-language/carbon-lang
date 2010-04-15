@@ -68,9 +68,9 @@ namespace llvm {
   struct GCRoot {
     int Num;            //< Usually a frame index.
     int StackOffset;    //< Offset from the stack pointer.
-    Constant *Metadata; //< Metadata straight from the call to llvm.gcroot.
+    const Constant *Metadata;//< Metadata straight from the call to llvm.gcroot.
     
-    GCRoot(int N, Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
+    GCRoot(int N, const Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
   };
   
   
@@ -114,7 +114,7 @@ namespace llvm {
     /// addStackRoot - Registers a root that lives on the stack. Num is the
     ///                stack object ID for the alloca (if the code generator is
     //                 using  MachineFrameInfo).
-    void addStackRoot(int Num, Constant *Metadata) {
+    void addStackRoot(int Num, const Constant *Metadata) {
       Roots.push_back(GCRoot(Num, Metadata));
     }
     

@@ -995,12 +995,13 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
       for (unsigned CurOp = 0; CurOp < NumOps; CurOp++) {
         const MachineOperand &MO = MI.getOperand(CurOp);
         if (MO.isGlobal()) {
-          GlobalValue* V = MO.getGlobal();
+          const GlobalValue* V = MO.getGlobal();
           const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V);
           if (!GV)
             continue;
           // If seen in previous function, it will have an entry here.
-          if (TheJIT->getPointerToGlobalIfAvailable(GV))
+          if (TheJIT->getPointerToGlobalIfAvailable(
+                const_cast<GlobalVariable *>(GV)))
             continue;
           // If seen earlier in this function, it will have an entry here.
           // FIXME: it should be possible to combine these tables, by

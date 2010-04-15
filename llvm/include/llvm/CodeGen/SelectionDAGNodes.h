@@ -1140,7 +1140,7 @@ public:
 };
 
 class GlobalAddressSDNode : public SDNode {
-  GlobalValue *TheGlobal;
+  const GlobalValue *TheGlobal;
   int64_t Offset;
   unsigned char TargetFlags;
   friend class SelectionDAG;
@@ -1148,7 +1148,7 @@ class GlobalAddressSDNode : public SDNode {
                       int64_t o, unsigned char TargetFlags);
 public:
 
-  GlobalValue *getGlobal() const { return TheGlobal; }
+  const GlobalValue *getGlobal() const { return TheGlobal; }
   int64_t getOffset() const { return Offset; }
   unsigned char getTargetFlags() const { return TargetFlags; }
   // Return the address space this GlobalAddress belongs to.
@@ -1203,15 +1203,15 @@ public:
 
 class ConstantPoolSDNode : public SDNode {
   union {
-    Constant *ConstVal;
+    const Constant *ConstVal;
     MachineConstantPoolValue *MachineCPVal;
   } Val;
   int Offset;  // It's a MachineConstantPoolValue if top bit is set.
   unsigned Alignment;  // Minimum alignment requirement of CP (not log2 value).
   unsigned char TargetFlags;
   friend class SelectionDAG;
-  ConstantPoolSDNode(bool isTarget, Constant *c, EVT VT, int o, unsigned Align,
-                     unsigned char TF)
+  ConstantPoolSDNode(bool isTarget, const Constant *c, EVT VT, int o,
+                     unsigned Align, unsigned char TF)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
              DebugLoc(),
              getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
@@ -1234,7 +1234,7 @@ public:
     return (int)Offset < 0;
   }
 
-  Constant *getConstVal() const {
+  const Constant *getConstVal() const {
     assert(!isMachineConstantPoolEntry() && "Wrong constantpool type");
     return Val.ConstVal;
   }
@@ -1360,16 +1360,16 @@ public:
 };
 
 class BlockAddressSDNode : public SDNode {
-  BlockAddress *BA;
+  const BlockAddress *BA;
   unsigned char TargetFlags;
   friend class SelectionDAG;
-  BlockAddressSDNode(unsigned NodeTy, EVT VT, BlockAddress *ba,
+  BlockAddressSDNode(unsigned NodeTy, EVT VT, const BlockAddress *ba,
                      unsigned char Flags)
     : SDNode(NodeTy, DebugLoc(), getSDVTList(VT)),
              BA(ba), TargetFlags(Flags) {
   }
 public:
-  BlockAddress *getBlockAddress() const { return BA; }
+  const BlockAddress *getBlockAddress() const { return BA; }
   unsigned char getTargetFlags() const { return TargetFlags; }
 
   static bool classof(const BlockAddressSDNode *) { return true; }

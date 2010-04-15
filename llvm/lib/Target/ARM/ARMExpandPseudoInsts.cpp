@@ -91,7 +91,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
           LO16 = LO16.addImm(Lo16);
           HI16 = HI16.addImm(Hi16);
         } else {
-          GlobalValue *GV = MO.getGlobal();
+          const GlobalValue *GV = MO.getGlobal();
           unsigned TF = MO.getTargetFlags();
           LO16 = LO16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_LO16);
           HI16 = HI16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_HI16);

@@ -45,9 +45,9 @@ namespace {
     } Base;
 
     int16_t Disp;
-    GlobalValue *GV;
-    Constant *CP;
-    BlockAddress *BlockAddr;
+    const GlobalValue *GV;
+    const Constant *CP;
+    const BlockAddress *BlockAddr;
     const char *ES;
     int JT;
     unsigned Align;    // CP alignment.

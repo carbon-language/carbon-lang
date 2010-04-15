@@ -630,7 +630,7 @@ MachineConstantPool::~MachineConstantPool() {
 
 /// CanShareConstantPoolEntry - Test whether the given two constants
 /// can be allocated the same constant pool entry.
-static bool CanShareConstantPoolEntry(Constant *A, Constant *B,
+static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
                                       const TargetData *TD) {
   // Handle the trivial case quickly.
   if (A == B) return true;
@@ -645,17 +645,17 @@ static bool CanShareConstantPoolEntry(Constant *A, Constant *B,
 
   // If a floating-point value and an integer value have the same encoding,
   // they can share a constant-pool entry.
-  if (ConstantFP *AFP = dyn_cast<ConstantFP>(A))
-    if (ConstantInt *BI = dyn_cast<ConstantInt>(B))
+  if (const ConstantFP *AFP = dyn_cast<ConstantFP>(A))
+    if (const ConstantInt *BI = dyn_cast<ConstantInt>(B))
       return AFP->getValueAPF().bitcastToAPInt() == BI->getValue();
-  if (ConstantFP *BFP = dyn_cast<ConstantFP>(B))
-    if (ConstantInt *AI = dyn_cast<ConstantInt>(A))
+  if (const ConstantFP *BFP = dyn_cast<ConstantFP>(B))
+    if (const ConstantInt *AI = dyn_cast<ConstantInt>(A))
       return BFP->getValueAPF().bitcastToAPInt() == AI->getValue();
 
   // Two vectors can share an entry if each pair of corresponding
   // elements could.
-  if (ConstantVector *AV = dyn_cast<ConstantVector>(A))
-    if (ConstantVector *BV = dyn_cast<ConstantVector>(B)) {
+  if (const ConstantVector *AV = dyn_cast<ConstantVector>(A))
+    if (const ConstantVector *BV = dyn_cast<ConstantVector>(B)) {
       if (AV->getType()->getNumElements() != BV->getType()->getNumElements())
         return false;
       for (unsigned i = 0, e = AV->getType()->getNumElements(); i != e; ++i)
@@ -674,7 +674,7 @@ static bool CanShareConstantPoolEntry(Constant *A, Constant *B,
 /// an existing one.  User must specify the log2 of the minimum required
 /// alignment for the object.
 ///
-unsigned MachineConstantPool::getConstantPoolIndex(Constant *C, 
+unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C, 
                                                    unsigned Alignment) {
   assert(Alignment && "Alignment must be specified!");
   if (Alignment > PoolAlignment) PoolAlignment = Alignment;

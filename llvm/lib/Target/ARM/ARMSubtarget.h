@@ -160,7 +160,7 @@ protected:
 
   /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect
   /// symbol.
-  bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) const;
+  bool GVIsIndirectSymbol(const GlobalValue *GV, Reloc::Model RelocM) const;
 };
 } // End llvm namespace
 

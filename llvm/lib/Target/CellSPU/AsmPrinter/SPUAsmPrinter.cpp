@@ -307,7 +307,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
     // External or weakly linked global variables need non-lazily-resolved
     // stubs
     if (TM.getRelocationModel() != Reloc::Static) {
-      GlobalValue *GV = MO.getGlobal();
+      const GlobalValue *GV = MO.getGlobal();
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
         O << *GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");

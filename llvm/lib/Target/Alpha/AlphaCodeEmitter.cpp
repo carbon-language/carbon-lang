@@ -192,10 +192,13 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       llvm_unreachable("unknown relocatable instruction");
     }
     if (MO.isGlobal())
-      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                                 Reloc, MO.getGlobal(), Offset,
-                                                 isa<Function>(MO.getGlobal()),
-                                                 useGOT));
+      MCE.addRelocation(MachineRelocation::getGV(
+            MCE.getCurrentPCOffset(),
+            Reloc,
+            const_cast<GlobalValue *>(MO.getGlobal()),
+            Offset,
+            isa<Function>(MO.getGlobal()),
+            useGOT));
     else if (MO.isSymbol())
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                      Reloc, MO.getSymbolName(),

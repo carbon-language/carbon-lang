@@ -150,7 +150,7 @@ namespace {
 
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the relocation stage.
-    void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+    void emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                            bool MayNeedFarStub,  bool Indirect,
                            intptr_t ACPV = 0);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
@@ -249,14 +249,16 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 
 /// emitGlobalAddress - Emit the specified address to the code stream.
 ///
-void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+void ARMCodeEmitter::emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                                        bool MayNeedFarStub, bool Indirect,
                                        intptr_t ACPV) {
   MachineRelocation MR = Indirect
     ? MachineRelocation::getIndirectSymbol(MCE.getCurrentPCOffset(), Reloc,
-                                           GV, ACPV, MayNeedFarStub)
+                                           const_cast<GlobalValue *>(GV),
+                                           ACPV, MayNeedFarStub)
     : MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                               GV, ACPV, MayNeedFarStub);
+                               const_cast<GlobalValue *>(GV), ACPV,
+                               MayNeedFarStub);
   MCE.addRelocation(MR);
 }
 
@@ -391,7 +393,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
           << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n');
 
     assert(ACPV->isGlobalValue() && "unsupported constant pool value");
-    GlobalValue *GV = ACPV->getGV();
+    const GlobalValue *GV = ACPV->getGV();
     if (GV) {
       Reloc::Model RelocM = TM.getRelocationModel();
       emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry,
@@ -403,7 +405,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     }
     emitWordLE(0);
   } else {
-    Constant *CV = MCPE.Val.ConstVal;
+    const Constant *CV = MCPE.Val.ConstVal;
 
     DEBUG({
         errs() << "  ** Constant pool #" << CPI << " @ "
@@ -415,7 +417,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
         errs() << '\n';
       });
 
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, isa<Function>(GV), false);
       emitWordLE(0);
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {

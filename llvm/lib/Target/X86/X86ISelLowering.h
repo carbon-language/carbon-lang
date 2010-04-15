@@ -475,7 +475,7 @@ namespace llvm {
                                                 unsigned Depth = 0) const;
 
     virtual bool
-    isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
+    isGAPlusOffset(SDNode *N, const GlobalValue* &GA, int64_t &Offset) const;
     
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG);
 

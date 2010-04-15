@@ -279,22 +279,23 @@ private:
                     const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
   
   void PrepareEHLandingPad(MachineBasicBlock *BB);
-  void SelectAllBasicBlocks(Function &Fn);
+  void SelectAllBasicBlocks(const Function &Fn);
   void FinishBasicBlock();
 
-  void SelectBasicBlock(BasicBlock *LLVMBB,
-                        BasicBlock::iterator Begin,
-                        BasicBlock::iterator End,
+  void SelectBasicBlock(const BasicBlock *LLVMBB,
+                        BasicBlock::const_iterator Begin,
+                        BasicBlock::const_iterator End,
                         bool &HadTailCall);
   void CodeGenAndEmitDAG();
-  void LowerArguments(BasicBlock *BB);
+  void LowerArguments(const BasicBlock *BB);
   
   void ShrinkDemandedOps();
   void ComputeLiveOutVRegInfo();
 
-  void HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB);
+  void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
 
-  bool HandlePHINodesInSuccessorBlocksFast(BasicBlock *LLVMBB, FastISel *F);
+  bool HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
+                                           FastISel *F);
 
   /// Create the scheduler. If a specific scheduler was specified
   /// via the SchedulerRegistry, use it, otherwise select the

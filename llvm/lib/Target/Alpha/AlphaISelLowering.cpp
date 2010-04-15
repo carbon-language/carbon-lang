@@ -624,7 +624,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   }
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-    Constant *C = CP->getConstVal();
+    const Constant *C = CP->getConstVal();
     SDValue CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     // FIXME there isn't really any debug info here
 
@@ -637,7 +637,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     llvm_unreachable("TLS not implemented for Alpha.");
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
-    GlobalValue *GV = GSDN->getGlobal();
+    const GlobalValue *GV = GSDN->getGlobal();
     SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
     // FIXME there isn't really any debug info here
 

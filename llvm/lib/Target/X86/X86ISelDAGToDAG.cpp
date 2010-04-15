@@ -20,7 +20,6 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CFG.h"
@@ -66,9 +65,9 @@ namespace {
     SDValue IndexReg; 
     int32_t Disp;
     SDValue Segment;
-    GlobalValue *GV;
-    Constant *CP;
-    BlockAddress *BlockAddr;
+    const GlobalValue *GV;
+    const Constant *CP;
+    const BlockAddress *BlockAddr;
     const char *ES;
     int JT;
     unsigned Align;    // CP alignment.

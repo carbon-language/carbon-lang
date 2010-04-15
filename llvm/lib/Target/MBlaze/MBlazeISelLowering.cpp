@@ -412,7 +412,7 @@ SDValue MBlazeTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
   return DAG.getNode(MBlazeISD::Wrap, dl, MVT::i32, GA);
@@ -446,7 +446,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   SDValue ResNode;
   EVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
-  Constant *C = N->getConstVal();
+  const Constant *C = N->getConstVal();
   SDValue Zero = DAG.getConstant(0, PtrVT);
   DebugLoc dl = Op.getDebugLoc();
 

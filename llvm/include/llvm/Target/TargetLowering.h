@@ -317,7 +317,7 @@ public:
   };
 
   virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
-                                  CallInst &I, unsigned Intrinsic) {
+                                  const CallInst &I, unsigned Intrinsic) {
     return false;
   }
 
@@ -864,7 +864,7 @@ public:
   /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
   /// node is a GlobalAddress + offset.
   virtual bool
-  isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
+  isGAPlusOffset(SDNode *N, const GlobalValue* &GA, int64_t &Offset) const;
 
   /// PerformDAGCombine - This method will be invoked for all target nodes and
   /// for any target-independent nodes that the target has registered with

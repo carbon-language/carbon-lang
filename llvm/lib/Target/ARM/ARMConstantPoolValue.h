@@ -36,7 +36,7 @@ namespace ARMCP {
 /// represent PC-relative displacement between the address of the load
 /// instruction and the constant being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
-  Constant *CVal;          // Constant being loaded.
+  const Constant *CVal;    // Constant being loaded.
   const char *S;           // ExtSymbol being loaded.
   unsigned LabelId;        // Label id of the load.
   ARMCP::ARMCPKind Kind;   // Kind of constant.
@@ -46,20 +46,20 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
   bool AddCurrentAddress;
 
 public:
-  ARMConstantPoolValue(Constant *cval, unsigned id,
+  ARMConstantPoolValue(const Constant *cval, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0, const char *Modifier = NULL,
                        bool AddCurrentAddress = false);
   ARMConstantPoolValue(LLVMContext &C, const char *s, unsigned id,
                        unsigned char PCAdj = 0, const char *Modifier = NULL,
                        bool AddCurrentAddress = false);
-  ARMConstantPoolValue(GlobalValue *GV, const char *Modifier);
+  ARMConstantPoolValue(const GlobalValue *GV, const char *Modifier);
   ARMConstantPoolValue();
   ~ARMConstantPoolValue();
 
-  GlobalValue *getGV() const;
+  const GlobalValue *getGV() const;
   const char *getSymbol() const { return S; }
-  BlockAddress *getBlockAddress() const;
+  const BlockAddress *getBlockAddress() const;
   const char *getModifier() const { return Modifier; }
   bool hasModifier() const { return Modifier != NULL; }
   bool mustAddCurrentAddress() const { return AddCurrentAddress; }

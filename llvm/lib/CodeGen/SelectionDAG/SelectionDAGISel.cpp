@@ -226,7 +226,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
 /// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
 /// attached with this instruction.
-static void SetDebugLoc(Instruction *I, SelectionDAGBuilder *SDB,
+static void SetDebugLoc(const Instruction *I, SelectionDAGBuilder *SDB,
                         FastISel *FastIS, MachineFunction *MF) {
   DebugLoc DL = I->getDebugLoc();
   if (DL.isUnknown()) return;
@@ -249,15 +249,16 @@ static void ResetDebugLoc(SelectionDAGBuilder *SDB, FastISel *FastIS) {
     FastIS->setCurDebugLoc(DebugLoc());
 }
 
-void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
-                                        BasicBlock::iterator Begin,
-                                        BasicBlock::iterator End,
+void SelectionDAGISel::SelectBasicBlock(const BasicBlock *LLVMBB,
+                                        BasicBlock::const_iterator Begin,
+                                        BasicBlock::const_iterator End,
                                         bool &HadTailCall) {
   SDB->setCurrentBasicBlock(BB);
 
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
-  for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
+  for (BasicBlock::const_iterator I = Begin;
+       I != End && !SDB->HasTailCall; ++I) {
     SetDebugLoc(I, SDB, 0, MF);
 
     // Visit the instruction. Terminators are handled below.
@@ -270,7 +271,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   if (!SDB->HasTailCall) {
     // Ensure that all instructions which are used outside of their defining
     // blocks are available as virtual registers.  Invoke is handled elsewhere.
-    for (BasicBlock::iterator I = Begin; I != End; ++I)
+    for (BasicBlock::const_iterator I = Begin; I != End; ++I)
       if (!isa<PHINode>(I) && !isa<InvokeInst>(I))
         SDB->CopyToExportRegsIfNeeded(I);
 
@@ -744,7 +745,7 @@ void SelectionDAGISel::PrepareEHLandingPad(MachineBasicBlock *BB) {
   }
 }
 
-void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn) {
+void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (EnableFastISel)
@@ -756,13 +757,13 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn) {
                                 );
 
   // Iterate over all basic blocks in the function.
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    BasicBlock *LLVMBB = &*I;
+  for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
+    const BasicBlock *LLVMBB = &*I;
     BB = FuncInfo->MBBMap[LLVMBB];
 
-    BasicBlock::iterator const Begin = LLVMBB->begin();
-    BasicBlock::iterator const End = LLVMBB->end();
-    BasicBlock::iterator BI = Begin;
+    BasicBlock::const_iterator const Begin = LLVMBB->begin();
+    BasicBlock::const_iterator const End = LLVMBB->end();
+    BasicBlock::const_iterator BI = Begin;
 
     // Lower any arguments needed in this block if this is the entry block.
     bool SuppressFastISel = false;
@@ -773,7 +774,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn) {
       // fast-isel in the entry block.
       if (FastIS) {
         unsigned j = 1;
-        for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
+        for (Function::const_arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
              I != E; ++I, ++j)
           if (Fn.paramHasAttr(j, Attribute::ByVal)) {
             if (EnableFastISelVerbose || EnableFastISelAbort)

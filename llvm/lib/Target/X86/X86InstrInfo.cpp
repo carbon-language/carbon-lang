@@ -2629,7 +2629,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
-    Constant *C = LoadMI->getOpcode() == X86::V_SETALLONES ?
+    const Constant *C = LoadMI->getOpcode() == X86::V_SETALLONES ?
                     Constant::getAllOnesValue(Ty) :
                     Constant::getNullValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, Alignment);

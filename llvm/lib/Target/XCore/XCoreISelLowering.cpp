@@ -220,7 +220,7 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-getGlobalAddressWrapper(SDValue GA, GlobalValue *GV, SelectionDAG &DAG)
+getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV, SelectionDAG &DAG)
 {
   // FIXME there is no actual debug info here
   DebugLoc dl = GA.getDebugLoc();
@@ -243,7 +243,7 @@ getGlobalAddressWrapper(SDValue GA, GlobalValue *GV, SelectionDAG &DAG)
 SDValue XCoreTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
 {
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
   // If it's a debug information descriptor, don't mess with it.
   if (DAG.isVerifiedDebugInfoDesc(Op))
@@ -267,7 +267,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   // FIXME there isn't really debug info here
   DebugLoc dl = Op.getDebugLoc();
   // transform to label + getid() * size
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (!GVar) {
@@ -300,7 +300,7 @@ LowerBlockAddress(SDValue Op, SelectionDAG &DAG)
 {
   DebugLoc DL = Op.getDebugLoc();
 
-  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   SDValue Result = DAG.getBlockAddress(BA, getPointerTy(), /*isTarget=*/true);
 
   return DAG.getNode(XCoreISD::PCRelativeWrapper, DL, getPointerTy(), Result);

@@ -141,7 +141,7 @@ MVT::SimpleValueType BlackfinTargetLowering::getSetCCResultType(EVT VT) const {
 SDValue BlackfinTargetLowering::LowerGlobalAddress(SDValue Op,
                                                    SelectionDAG &DAG) {
   DebugLoc DL = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
   Op = DAG.getTargetGlobalAddress(GV, MVT::i32);
   return DAG.getNode(BFISD::Wrapper, DL, MVT::i32, Op);

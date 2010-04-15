@@ -52,7 +52,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
       
   unsigned char* Result = 0;
 
-  const std::vector<Function *> Personalities = MMI->getPersonalities();
+  const std::vector<const Function *> Personalities = MMI->getPersonalities();
   EHFramePtr = EmitCommonEHFrame(Personalities[MMI->getPersonalityIndex()]);
 
   Result = EmitEHFrame(Personalities[MMI->getPersonalityIndex()], EHFramePtr,
@@ -201,7 +201,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
 
-  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
   if (PadInfos.empty()) return 0;
@@ -450,7 +450,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 
   // Emit the type ids.
   for (unsigned M = TypeInfos.size(); M; --M) {
-    GlobalVariable *GV = TypeInfos[M - 1];
+    const GlobalVariable *GV = TypeInfos[M - 1];
     
     if (GV) {
       if (TD->getPointerSize() == sizeof(int32_t))
@@ -609,7 +609,7 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
   
   FinalSize += GetExceptionTableSizeInBytes(&F);
       
-  const std::vector<Function *> Personalities = MMI->getPersonalities();
+  const std::vector<const Function *> Personalities = MMI->getPersonalities();
   FinalSize += 
     GetCommonEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()]);
 
@@ -782,7 +782,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
 
-  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
   if (PadInfos.empty()) return 0;

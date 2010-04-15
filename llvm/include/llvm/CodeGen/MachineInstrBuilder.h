@@ -104,7 +104,7 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
+  const MachineInstrBuilder &addGlobalAddress(const GlobalValue *GV,
                                               int64_t Offset = 0,
                                           unsigned char TargetFlags = 0) const {
     MI->addOperand(MachineOperand::CreateGA(GV, Offset, TargetFlags));

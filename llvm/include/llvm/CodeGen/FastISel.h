@@ -87,28 +87,28 @@ public:
   /// LLVM IR instruction, and append generated machine instructions to
   /// the current block. Return true if selection was successful.
   ///
-  bool SelectInstruction(Instruction *I);
+  bool SelectInstruction(const Instruction *I);
 
   /// SelectOperator - Do "fast" instruction selection for the given
   /// LLVM IR operator (Instruction or ConstantExpr), and append
   /// generated machine instructions to the current block. Return true
   /// if selection was successful.
   ///
-  bool SelectOperator(User *I, unsigned Opcode);
+  bool SelectOperator(const User *I, unsigned Opcode);
 
   /// getRegForValue - Create a virtual register and arrange for it to
   /// be assigned the value for the given LLVM value.
-  unsigned getRegForValue(Value *V);
+  unsigned getRegForValue(const Value *V);
 
   /// lookUpRegForValue - Look up the value to see if its value is already
   /// cached in a register. It may be defined by instructions across blocks or
   /// defined locally.
-  unsigned lookUpRegForValue(Value *V);
+  unsigned lookUpRegForValue(const Value *V);
 
   /// getRegForGEPIndex - This is a wrapper around getRegForValue that also
   /// takes care of truncating or sign-extending the given getelementptr
   /// index value.
-  unsigned getRegForGEPIndex(Value *V);
+  unsigned getRegForGEPIndex(const Value *V);
 
   virtual ~FastISel();
 
@@ -128,7 +128,7 @@ protected:
   /// fit into FastISel's framework. It returns true if it was successful.
   ///
   virtual bool
-  TargetSelectInstruction(Instruction *I) = 0;
+  TargetSelectInstruction(const Instruction *I) = 0;
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode
@@ -170,7 +170,7 @@ protected:
   virtual unsigned FastEmit_rf(MVT VT,
                                MVT RetVT,
                                unsigned Opcode,
-                               unsigned Op0, ConstantFP *FPImm);
+                               unsigned Op0, const ConstantFP *FPImm);
 
   /// FastEmit_rri - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -196,7 +196,7 @@ protected:
   /// FastEmit_rr instead.
   unsigned FastEmit_rf_(MVT VT,
                         unsigned Opcode,
-                        unsigned Op0, ConstantFP *FPImm,
+                        unsigned Op0, const ConstantFP *FPImm,
                         MVT ImmType);
   
   /// FastEmit_i - This method is called by target-independent code
@@ -213,7 +213,7 @@ protected:
   virtual unsigned FastEmit_f(MVT VT,
                               MVT RetVT,
                               unsigned Opcode,
-                              ConstantFP *FPImm);
+                              const ConstantFP *FPImm);
 
   /// FastEmitInst_ - Emit a MachineInstr with no operands and a
   /// result register in the given register class.
@@ -247,7 +247,7 @@ protected:
   ///
   unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
-                           unsigned Op0, ConstantFP *FPImm);
+                           unsigned Op0, const ConstantFP *FPImm);
 
   /// FastEmitInst_rri - Emit a MachineInstr with two register operands,
   /// an immediate, and a result register in the given register class.
@@ -277,34 +277,34 @@ protected:
   /// the CFG.
   void FastEmitBranch(MachineBasicBlock *MBB);
 
-  unsigned UpdateValueMap(Value* I, unsigned Reg);
+  unsigned UpdateValueMap(const Value* I, unsigned Reg);
 
   unsigned createResultReg(const TargetRegisterClass *RC);
   
   /// TargetMaterializeConstant - Emit a constant in a register using 
   /// target-specific logic, such as constant pool loads.
-  virtual unsigned TargetMaterializeConstant(Constant* C) {
+  virtual unsigned TargetMaterializeConstant(const Constant* C) {
     return 0;
   }
 
   /// TargetMaterializeAlloca - Emit an alloca address in a register using
   /// target-specific logic.
-  virtual unsigned TargetMaterializeAlloca(AllocaInst* C) {
+  virtual unsigned TargetMaterializeAlloca(const AllocaInst* C) {
     return 0;
   }
 
 private:
-  bool SelectBinaryOp(User *I, unsigned ISDOpcode);
+  bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
-  bool SelectFNeg(User *I);
+  bool SelectFNeg(const User *I);
 
-  bool SelectGetElementPtr(User *I);
+  bool SelectGetElementPtr(const User *I);
 
-  bool SelectCall(User *I);
+  bool SelectCall(const User *I);
 
-  bool SelectBitCast(User *I);
+  bool SelectBitCast(const User *I);
   
-  bool SelectCast(User *I, unsigned Opcode);
+  bool SelectCast(const User *I, unsigned Opcode);
 };
 
 }

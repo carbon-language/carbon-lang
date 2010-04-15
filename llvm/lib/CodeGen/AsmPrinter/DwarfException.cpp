@@ -425,7 +425,7 @@ bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
 
     if (!MO.isGlobal()) continue;
     
-    Function *F = dyn_cast<Function>(MO.getGlobal());
+    const Function *F = dyn_cast<Function>(MO.getGlobal());
     if (F == 0) continue;
 
     if (SawFunc) {
@@ -579,7 +579,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///  3. Type ID table contains references to all the C++ typeinfo for all
 ///     catches in the function.  This tables is reverse indexed base 1.
 void DwarfException::EmitExceptionTable() {
-  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
 
@@ -861,7 +861,7 @@ void DwarfException::EmitExceptionTable() {
     Asm->OutStreamer.AddComment("-- Catch TypeInfos --");
     Asm->OutStreamer.AddBlankLine();
   }
-  for (std::vector<GlobalVariable *>::const_reverse_iterator
+  for (std::vector<const GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
 
@@ -896,7 +896,7 @@ void DwarfException::EndModule() {
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
     return;
 
-  const std::vector<Function *> Personalities = MMI->getPersonalities();
+  const std::vector<const Function *> Personalities = MMI->getPersonalities();
 
   for (unsigned I = 0, E = Personalities.size(); I < E; ++I)
     EmitCIE(Personalities[I], I);

@@ -2067,7 +2067,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
-    GlobalValue *GV = G->getGlobal();
+    const GlobalValue *GV = G->getGlobal();
     if (!GV->hasDLLImportLinkage()) {
       unsigned char OpFlags = 0;
 
@@ -5149,7 +5149,7 @@ X86TargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
   unsigned char OpFlags =
     Subtarget->ClassifyBlockAddressReference();
   CodeModel::Model M = getTargetMachine().getCodeModel();
-  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   DebugLoc dl = Op.getDebugLoc();
   SDValue Result = DAG.getBlockAddress(BA, getPointerTy(),
                                        /*isTarget=*/true, OpFlags);
@@ -8882,7 +8882,8 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
 /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
 /// node is a GlobalAddress + offset.
 bool X86TargetLowering::isGAPlusOffset(SDNode *N,
-                                       GlobalValue* &GA, int64_t &Offset) const{
+                                       const GlobalValue* &GA,
+                                       int64_t &Offset) const {
   if (N->getOpcode() == X86ISD::Wrapper) {
     if (isa<GlobalAddressSDNode>(N->getOperand(0))) {
       GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
@@ -10167,7 +10168,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       return;
     }
 
-    GlobalValue *GV = GA->getGlobal();
+    const GlobalValue *GV = GA->getGlobal();
     // If we require an extra load to get this address, as in PIC mode, we
     // can't accept it.
     if (isGlobalStubReference(Subtarget->ClassifyGlobalReference(GV,

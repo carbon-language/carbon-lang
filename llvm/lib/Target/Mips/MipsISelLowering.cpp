@@ -484,7 +484,7 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
 SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
@@ -564,7 +564,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 {
   SDValue ResNode;
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
-  Constant *C = N->getConstVal();
+  const Constant *C = N->getConstVal();
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
 

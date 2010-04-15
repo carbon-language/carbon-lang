@@ -316,7 +316,7 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
 
   // Gather all the type infos for this landing pad and pass them along to
   // MachineModuleInfo.
-  std::vector<GlobalVariable *> TyInfo;
+  std::vector<const GlobalVariable *> TyInfo;
   unsigned N = I.getNumOperands();
 
   for (unsigned i = N - 1; i > 2; --i) {

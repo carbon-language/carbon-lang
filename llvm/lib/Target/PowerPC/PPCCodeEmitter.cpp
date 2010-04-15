@@ -202,7 +202,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     MachineRelocation R;
     if (MO.isGlobal()) {
       R = MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                                   MO.getGlobal(), 0,
+                                   const_cast<GlobalValue *>(MO.getGlobal()), 0,
                                    isa<Function>(MO.getGlobal()));
     } else if (MO.isSymbol()) {
       R = MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),

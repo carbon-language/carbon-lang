@@ -476,7 +476,7 @@ static bool isFloatingPointZero(SDValue Op) {
   else if (ISD::isEXTLoad(Op.getNode()) || ISD::isNON_EXTLoad(Op.getNode())) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
+      if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
         return CFP->getValueAPF().isZero();
   }
   return false;
@@ -1098,7 +1098,7 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
                                              SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-  Constant *C = CP->getConstVal();
+  const Constant *C = CP->getConstVal();
   SDValue CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
   SDValue Zero = DAG.getConstant(0, PtrVT);
   // FIXME there isn't really any debug info here
@@ -1172,7 +1172,7 @@ SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   DebugLoc DL = Op.getDebugLoc();
 
-  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   SDValue TgtBA = DAG.getBlockAddress(BA, PtrVT, /*isTarget=*/true);
   SDValue Zero = DAG.getConstant(0, PtrVT);
   SDValue Hi = DAG.getNode(PPCISD::Hi, DL, PtrVT, TgtBA, Zero);
@@ -1202,7 +1202,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
                                               SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
-  GlobalValue *GV = GSDN->getGlobal();
+  const GlobalValue *GV = GSDN->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
   SDValue Zero = DAG.getConstant(0, PtrVT);
   // FIXME there isn't really any debug info here

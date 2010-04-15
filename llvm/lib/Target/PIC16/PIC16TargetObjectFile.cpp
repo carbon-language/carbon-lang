@@ -134,7 +134,7 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
 const MCSection *
 PIC16TargetObjectFile::allocateUDATA(const GlobalVariable *GV) const {
   assert(GV->hasInitializer() && "This global doesn't need space");
-  Constant *C = GV->getInitializer();
+  const Constant *C = GV->getInitializer();
   assert(C->isNullValue() && "Unitialized globals has non-zero initializer");
 
   // Find how much space this global needs.
@@ -169,7 +169,7 @@ PIC16TargetObjectFile::allocateUDATA(const GlobalVariable *GV) const {
 const MCSection *
 PIC16TargetObjectFile::allocateIDATA(const GlobalVariable *GV) const{
   assert(GV->hasInitializer() && "This global doesn't need space");
-  Constant *C = GV->getInitializer();
+  const Constant *C = GV->getInitializer();
   assert(!C->isNullValue() && "initialized globals has zero initializer");
   assert(GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
          "can allocate initialized RAM data only");

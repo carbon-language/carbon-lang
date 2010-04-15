@@ -306,7 +306,7 @@ namespace {
         CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       }
 
-      Constant *CP = ConstantVector::get(CV);
+      const Constant *CP = ConstantVector::get(CV);
       SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
       SDValue CGPoolOffset =
@@ -454,7 +454,7 @@ SPUDAGToDAGISel::SelectAFormAddr(SDNode *Op, SDValue N, SDValue &Base,
 
       case ISD::TargetGlobalAddress: {
         GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op0);
-        GlobalValue *GV = GSDN->getGlobal();
+        const GlobalValue *GV = GSDN->getGlobal();
         if (GV->getAlignment() == 16) {
           Base = Op0;
           Index = Zero;

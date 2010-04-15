@@ -117,8 +117,8 @@ private:
       union {
         int Index;                // For MO_*Index - The index itself.
         const char *SymbolName;   // For MO_ExternalSymbol.
-        GlobalValue *GV;          // For MO_GlobalAddress.
-        BlockAddress *BA;         // For MO_BlockAddress.
+        const GlobalValue *GV;    // For MO_GlobalAddress.
+        const BlockAddress *BA;   // For MO_BlockAddress.
       } Val;
       int64_t Offset;             // An offset from the object.
     } OffsetedInfo;
@@ -315,12 +315,12 @@ public:
     return Contents.OffsetedInfo.Val.Index;
   }
   
-  GlobalValue *getGlobal() const {
+  const GlobalValue *getGlobal() const {
     assert(isGlobal() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.GV;
   }
 
-  BlockAddress *getBlockAddress() const {
+  const BlockAddress *getBlockAddress() const {
     assert(isBlockAddress() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.BA;
   }
@@ -457,7 +457,7 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateGA(GlobalValue *GV, int64_t Offset,
+  static MachineOperand CreateGA(const GlobalValue *GV, int64_t Offset,
                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_GlobalAddress);
     Op.Contents.OffsetedInfo.Val.GV = GV;
@@ -473,7 +473,7 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateBA(BlockAddress *BA,
+  static MachineOperand CreateBA(const BlockAddress *BA,
                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_BlockAddress);
     Op.Contents.OffsetedInfo.Val.BA = BA;

@@ -142,15 +142,16 @@ private:
   /// CaseRec - A struct with ctor used in lowering switches to a binary tree
   /// of conditional branches.
   struct CaseRec {
-    CaseRec(MachineBasicBlock *bb, Constant *lt, Constant *ge, CaseRange r) :
+    CaseRec(MachineBasicBlock *bb, const Constant *lt, const Constant *ge,
+            CaseRange r) :
     CaseBB(bb), LT(lt), GE(ge), Range(r) {}
 
     /// CaseBB - The MBB in which to emit the compare and branch
     MachineBasicBlock *CaseBB;
     /// LT, GE - If nonzero, we know the current case value must be less-than or
     /// greater-than-or-equal-to these Constants.
-    Constant *LT;
-    Constant *GE;
+    const Constant *LT;
+    const Constant *GE;
     /// Range - A pair of iterators representing the range of case values to be
     /// processed at this point in the binary search tree.
     CaseRange Range;
@@ -181,7 +182,8 @@ private:
   /// SelectionDAGBuilder and SDISel for the code generation of additional basic
   /// blocks needed by multi-case switch statements.
   struct CaseBlock {
-    CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
+    CaseBlock(ISD::CondCode cc, const Value *cmplhs, const Value *cmprhs,
+              const Value *cmpmiddle,
               MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
               MachineBasicBlock *me)
       : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
@@ -191,7 +193,7 @@ private:
     // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
     // Emit by default LHS op RHS. MHS is used for range comparisons:
     // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
-    Value *CmpLHS, *CmpMHS, *CmpRHS;
+    const Value *CmpLHS, *CmpMHS, *CmpRHS;
     // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
     MachineBasicBlock *TrueBB, *FalseBB;
     // ThisBB - the block into which to emit the code for the setcc and branches
@@ -213,12 +215,12 @@ private:
     MachineBasicBlock *Default;
   };
   struct JumpTableHeader {
-    JumpTableHeader(APInt F, APInt L, Value *SV, MachineBasicBlock *H,
+    JumpTableHeader(APInt F, APInt L, const Value *SV, MachineBasicBlock *H,
                     bool E = false):
       First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
     APInt First;
     APInt Last;
-    Value *SValue;
+    const Value *SValue;
     MachineBasicBlock *HeaderBB;
     bool Emitted;
   };
@@ -235,7 +237,7 @@ private:
   typedef SmallVector<BitTestCase, 3> BitTestInfo;
 
   struct BitTestBlock {
-    BitTestBlock(APInt F, APInt R, Value* SV,
+    BitTestBlock(APInt F, APInt R, const Value* SV,
                  unsigned Rg, bool E,
                  MachineBasicBlock* P, MachineBasicBlock* D,
                  const BitTestInfo& C):
@@ -243,7 +245,7 @@ private:
       Parent(P), Default(D), Cases(C) { }
     APInt First;
     APInt Range;
-    Value  *SValue;
+    const Value *SValue;
     unsigned Reg;
     bool Emitted;
     MachineBasicBlock *Parent;
@@ -280,7 +282,7 @@ public:
 
   // Emit PHI-node-operand constants only once even if used by multiple
   // PHI nodes.
-  DenseMap<Constant*, unsigned> ConstantsOut;
+  DenseMap<const Constant *, unsigned> ConstantsOut;
 
   /// FuncInfo - Information about the function as a whole.
   ///
@@ -336,16 +338,16 @@ public:
 
   unsigned getSDNodeOrder() const { return SDNodeOrder; }
 
-  void CopyValueToVirtualRegister(Value *V, unsigned Reg);
+  void CopyValueToVirtualRegister(const Value *V, unsigned Reg);
 
   /// AssignOrderingToNode - Assign an ordering to the node. The order is gotten
   /// from how the code appeared in the source. The ordering is used by the
   /// scheduler to effectively turn off scheduling.
   void AssignOrderingToNode(const SDNode *Node);
 
-  void visit(Instruction &I);
+  void visit(const Instruction &I);
 
-  void visit(unsigned Opcode, User &I);
+  void visit(unsigned Opcode, const User &I);
 
   void setCurrentBasicBlock(MachineBasicBlock *MBB) { CurMBB = MBB; }
 
@@ -361,43 +363,43 @@ public:
                             std::set<unsigned> &OutputRegs, 
                             std::set<unsigned> &InputRegs);
 
-  void FindMergedConditions(Value *Cond, MachineBasicBlock *TBB,
+  void FindMergedConditions(const Value *Cond, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB, MachineBasicBlock *CurBB,
                             unsigned Opc);
-  void EmitBranchForMergedCondition(Value *Cond, MachineBasicBlock *TBB,
+  void EmitBranchForMergedCondition(const Value *Cond, MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
                                     MachineBasicBlock *CurBB);
   bool ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases);
-  bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
-  void CopyToExportRegsIfNeeded(Value *V);
-  void ExportFromCurrentBlock(Value *V);
-  void LowerCallTo(CallSite CS, SDValue Callee, bool IsTailCall,
+  bool isExportableFromCurrentBlock(const Value *V, const BasicBlock *FromBB);
+  void CopyToExportRegsIfNeeded(const Value *V);
+  void ExportFromCurrentBlock(const Value *V);
+  void LowerCallTo(ImmutableCallSite CS, SDValue Callee, bool IsTailCall,
                    MachineBasicBlock *LandingPad = NULL);
 
 private:
   // Terminator instructions.
-  void visitRet(ReturnInst &I);
-  void visitBr(BranchInst &I);
-  void visitSwitch(SwitchInst &I);
-  void visitIndirectBr(IndirectBrInst &I);
-  void visitUnreachable(UnreachableInst &I) { /* noop */ }
+  void visitRet(const ReturnInst &I);
+  void visitBr(const BranchInst &I);
+  void visitSwitch(const SwitchInst &I);
+  void visitIndirectBr(const IndirectBrInst &I);
+  void visitUnreachable(const UnreachableInst &I) { /* noop */ }
 
   // Helpers for visitSwitch
   bool handleSmallSwitchRange(CaseRec& CR,
                               CaseRecVector& WorkList,
-                              Value* SV,
+                              const Value* SV,
                               MachineBasicBlock* Default);
   bool handleJTSwitchCase(CaseRec& CR,
                           CaseRecVector& WorkList,
-                          Value* SV,
+                          const Value* SV,
                           MachineBasicBlock* Default);
   bool handleBTSplitSwitchCase(CaseRec& CR,
                                CaseRecVector& WorkList,
-                               Value* SV,
+                               const Value* SV,
                                MachineBasicBlock* Default);
   bool handleBitTestsSwitchCase(CaseRec& CR,
                                 CaseRecVector& WorkList,
-                                Value* SV,
+                                const Value* SV,
                                 MachineBasicBlock* Default);  
 public:
   void visitSwitchCase(CaseBlock &CB);
@@ -410,87 +412,87 @@ public:
   
 private:
   // These all get lowered before this pass.
-  void visitInvoke(InvokeInst &I);
-  void visitUnwind(UnwindInst &I);
+  void visitInvoke(const InvokeInst &I);
+  void visitUnwind(const UnwindInst &I);
 
-  void visitBinary(User &I, unsigned OpCode);
-  void visitShift(User &I, unsigned Opcode);
-  void visitAdd(User &I)  { visitBinary(I, ISD::ADD); }
-  void visitFAdd(User &I) { visitBinary(I, ISD::FADD); }
-  void visitSub(User &I)  { visitBinary(I, ISD::SUB); }
-  void visitFSub(User &I);
-  void visitMul(User &I)  { visitBinary(I, ISD::MUL); }
-  void visitFMul(User &I) { visitBinary(I, ISD::FMUL); }
-  void visitURem(User &I) { visitBinary(I, ISD::UREM); }
-  void visitSRem(User &I) { visitBinary(I, ISD::SREM); }
-  void visitFRem(User &I) { visitBinary(I, ISD::FREM); }
-  void visitUDiv(User &I) { visitBinary(I, ISD::UDIV); }
-  void visitSDiv(User &I) { visitBinary(I, ISD::SDIV); }
-  void visitFDiv(User &I) { visitBinary(I, ISD::FDIV); }
-  void visitAnd (User &I) { visitBinary(I, ISD::AND); }
-  void visitOr  (User &I) { visitBinary(I, ISD::OR); }
-  void visitXor (User &I) { visitBinary(I, ISD::XOR); }
-  void visitShl (User &I) { visitShift(I, ISD::SHL); }
-  void visitLShr(User &I) { visitShift(I, ISD::SRL); }
-  void visitAShr(User &I) { visitShift(I, ISD::SRA); }
-  void visitICmp(User &I);
-  void visitFCmp(User &I);
+  void visitBinary(const User &I, unsigned OpCode);
+  void visitShift(const User &I, unsigned Opcode);
+  void visitAdd(const User &I)  { visitBinary(I, ISD::ADD); }
+  void visitFAdd(const User &I) { visitBinary(I, ISD::FADD); }
+  void visitSub(const User &I)  { visitBinary(I, ISD::SUB); }
+  void visitFSub(const User &I);
+  void visitMul(const User &I)  { visitBinary(I, ISD::MUL); }
+  void visitFMul(const User &I) { visitBinary(I, ISD::FMUL); }
+  void visitURem(const User &I) { visitBinary(I, ISD::UREM); }
+  void visitSRem(const User &I) { visitBinary(I, ISD::SREM); }
+  void visitFRem(const User &I) { visitBinary(I, ISD::FREM); }
+  void visitUDiv(const User &I) { visitBinary(I, ISD::UDIV); }
+  void visitSDiv(const User &I) { visitBinary(I, ISD::SDIV); }
+  void visitFDiv(const User &I) { visitBinary(I, ISD::FDIV); }
+  void visitAnd (const User &I) { visitBinary(I, ISD::AND); }
+  void visitOr  (const User &I) { visitBinary(I, ISD::OR); }
+  void visitXor (const User &I) { visitBinary(I, ISD::XOR); }
+  void visitShl (const User &I) { visitShift(I, ISD::SHL); }
+  void visitLShr(const User &I) { visitShift(I, ISD::SRL); }
+  void visitAShr(const User &I) { visitShift(I, ISD::SRA); }
+  void visitICmp(const User &I);
+  void visitFCmp(const User &I);
   // Visit the conversion instructions
-  void visitTrunc(User &I);
-  void visitZExt(User &I);
-  void visitSExt(User &I);
-  void visitFPTrunc(User &I);
-  void visitFPExt(User &I);
-  void visitFPToUI(User &I);
-  void visitFPToSI(User &I);
-  void visitUIToFP(User &I);
-  void visitSIToFP(User &I);
-  void visitPtrToInt(User &I);
-  void visitIntToPtr(User &I);
-  void visitBitCast(User &I);
+  void visitTrunc(const User &I);
+  void visitZExt(const User &I);
+  void visitSExt(const User &I);
+  void visitFPTrunc(const User &I);
+  void visitFPExt(const User &I);
+  void visitFPToUI(const User &I);
+  void visitFPToSI(const User &I);
+  void visitUIToFP(const User &I);
+  void visitSIToFP(const User &I);
+  void visitPtrToInt(const User &I);
+  void visitIntToPtr(const User &I);
+  void visitBitCast(const User &I);
 
-  void visitExtractElement(User &I);
-  void visitInsertElement(User &I);
-  void visitShuffleVector(User &I);
+  void visitExtractElement(const User &I);
+  void visitInsertElement(const User &I);
+  void visitShuffleVector(const User &I);
 
-  void visitExtractValue(ExtractValueInst &I);
-  void visitInsertValue(InsertValueInst &I);
+  void visitExtractValue(const ExtractValueInst &I);
+  void visitInsertValue(const InsertValueInst &I);
 
-  void visitGetElementPtr(User &I);
-  void visitSelect(User &I);
+  void visitGetElementPtr(const User &I);
+  void visitSelect(const User &I);
 
-  void visitAlloca(AllocaInst &I);
-  void visitLoad(LoadInst &I);
-  void visitStore(StoreInst &I);
-  void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
-  void visitCall(CallInst &I);
-  bool visitMemCmpCall(CallInst &I);
+  void visitAlloca(const AllocaInst &I);
+  void visitLoad(const LoadInst &I);
+  void visitStore(const StoreInst &I);
+  void visitPHI(const PHINode &I) { } // PHI nodes are handled specially.
+  void visitCall(const CallInst &I);
+  bool visitMemCmpCall(const CallInst &I);
   
-  void visitInlineAsm(CallSite CS);
-  const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
-  void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);
+  void visitInlineAsm(ImmutableCallSite CS);
+  const char *visitIntrinsicCall(const CallInst &I, unsigned Intrinsic);
+  void visitTargetIntrinsic(const CallInst &I, unsigned Intrinsic);
 
-  void visitPow(CallInst &I);
-  void visitExp2(CallInst &I);
-  void visitExp(CallInst &I);
-  void visitLog(CallInst &I);
-  void visitLog2(CallInst &I);
-  void visitLog10(CallInst &I);
+  void visitPow(const CallInst &I);
+  void visitExp2(const CallInst &I);
+  void visitExp(const CallInst &I);
+  void visitLog(const CallInst &I);
+  void visitLog2(const CallInst &I);
+  void visitLog10(const CallInst &I);
 
-  void visitVAStart(CallInst &I);
-  void visitVAArg(VAArgInst &I);
-  void visitVAEnd(CallInst &I);
-  void visitVACopy(CallInst &I);
+  void visitVAStart(const CallInst &I);
+  void visitVAArg(const VAArgInst &I);
+  void visitVAEnd(const CallInst &I);
+  void visitVACopy(const CallInst &I);
 
-  void visitUserOp1(Instruction &I) {
+  void visitUserOp1(const Instruction &I) {
     llvm_unreachable("UserOp1 should not exist at instruction selection time!");
   }
-  void visitUserOp2(Instruction &I) {
+  void visitUserOp2(const Instruction &I) {
     llvm_unreachable("UserOp2 should not exist at instruction selection time!");
   }
   
-  const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
-  const char *implVisitAluOverflow(CallInst &I, ISD::NodeType Op);
+  const char *implVisitBinaryAtomic(const CallInst& I, ISD::NodeType Op);
+  const char *implVisitAluOverflow(const CallInst &I, ISD::NodeType Op);
 };
 
 } // end namespace llvm

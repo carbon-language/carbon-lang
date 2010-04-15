@@ -1048,7 +1048,7 @@ SDValue SelectionDAG::getJumpTable(int JTI, EVT VT, bool isTarget,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getConstantPool(Constant *C, EVT VT,
+SDValue SelectionDAG::getConstantPool(const Constant *C, EVT VT,
                                       unsigned Alignment, int Offset,
                                       bool isTarget,
                                       unsigned char TargetFlags) {
@@ -1319,7 +1319,7 @@ SDValue SelectionDAG::getEHLabel(DebugLoc dl, SDValue Root, MCSymbol *Label) {
 }
 
 
-SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, EVT VT,
+SDValue SelectionDAG::getBlockAddress(const BlockAddress *BA, EVT VT,
                                       bool isTarget,
                                       unsigned char TargetFlags) {
   unsigned Opc = isTarget ? ISD::TargetBlockAddress : ISD::BlockAddress;
@@ -2270,7 +2270,7 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
   if (!GA) return false;
   if (GA->getOffset() != 0) return false;
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
   if (!GV) return false;
   return MF->getMMI().hasDebugInfo();
 }
@@ -3195,7 +3195,7 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
   if (!G)
     return false;
 
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
   if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
     return true;
 
@@ -4935,7 +4935,7 @@ SelectionDAG::getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R, uint64_t Off,
 }
 
 SDDbgValue *
-SelectionDAG::getDbgValue(MDNode *MDPtr, Value *C, uint64_t Off,
+SelectionDAG::getDbgValue(MDNode *MDPtr, const Value *C, uint64_t Off,
                           DebugLoc DL, unsigned O) {
   return new (Allocator) SDDbgValue(MDPtr, C, Off, DL, O);
 }
@@ -6169,8 +6169,8 @@ bool SelectionDAG::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
       return true;
   }
 
-  GlobalValue *GV1 = NULL;
-  GlobalValue *GV2 = NULL;
+  const GlobalValue *GV1 = NULL;
+  const GlobalValue *GV2 = NULL;
   int64_t Offset1 = 0;
   int64_t Offset2 = 0;
   bool isGA1 = TLI.isGAPlusOffset(Loc.getNode(), GV1, Offset1);
@@ -6185,14 +6185,14 @@ bool SelectionDAG::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
 /// it cannot be inferred.
 unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   // If this is a GlobalAddress + cst, return the alignment.
-  GlobalValue *GV;
+  const GlobalValue *GV;
   int64_t GVOffset = 0;
   if (TLI.isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
     // If GV has specified alignment, then use it. Otherwise, use the preferred
     // alignment.
     unsigned Align = GV->getAlignment();
     if (!Align) {
-      if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+      if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
         if (GVar->hasInitializer()) {
           const TargetData *TD = TLI.getTargetData();
           Align = TD->getPreferredAlignment(GVar);

@@ -350,10 +350,10 @@ public:
   SDValue getTargetJumpTable(int JTI, EVT VT, unsigned char TargetFlags = 0) {
     return getJumpTable(JTI, VT, true, TargetFlags);
   }
-  SDValue getConstantPool(Constant *C, EVT VT,
+  SDValue getConstantPool(const Constant *C, EVT VT,
                           unsigned Align = 0, int Offs = 0, bool isT=false,
                           unsigned char TargetFlags = 0);
-  SDValue getTargetConstantPool(Constant *C, EVT VT,
+  SDValue getTargetConstantPool(const Constant *C, EVT VT,
                                 unsigned Align = 0, int Offset = 0,
                                 unsigned char TargetFlags = 0) {
     return getConstantPool(C, VT, Align, Offset, true, TargetFlags);
@@ -377,7 +377,7 @@ public:
   SDValue getValueType(EVT);
   SDValue getRegister(unsigned Reg, EVT VT);
   SDValue getEHLabel(DebugLoc dl, SDValue Root, MCSymbol *Label);
-  SDValue getBlockAddress(BlockAddress *BA, EVT VT,
+  SDValue getBlockAddress(const BlockAddress *BA, EVT VT,
                           bool isTarget = false, unsigned char TargetFlags = 0);
 
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N) {
@@ -767,7 +767,7 @@ public:
   ///
   SDDbgValue *getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R, uint64_t Off,
                           DebugLoc DL, unsigned O);
-  SDDbgValue *getDbgValue(MDNode *MDPtr, Value *C, uint64_t Off,
+  SDDbgValue *getDbgValue(MDNode *MDPtr, const Value *C, uint64_t Off,
                           DebugLoc DL, unsigned O);
   SDDbgValue *getDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
                           DebugLoc DL, unsigned O);

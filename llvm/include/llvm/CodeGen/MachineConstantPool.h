@@ -74,7 +74,7 @@ class MachineConstantPoolEntry {
 public:
   /// The constant itself.
   union {
-    Constant *ConstVal;
+    const Constant *ConstVal;
     MachineConstantPoolValue *MachineCPVal;
   } Val;
 
@@ -82,7 +82,7 @@ public:
   /// a MachineConstantPoolValue.
   unsigned Alignment;
 
-  MachineConstantPoolEntry(Constant *V, unsigned A)
+  MachineConstantPoolEntry(const Constant *V, unsigned A)
     : Alignment(A) {
     Val.ConstVal = V;
   }
@@ -143,7 +143,7 @@ public:
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify the minimum required alignment for
   /// the object.
-  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment);
+  unsigned getConstantPoolIndex(const Constant *C, unsigned Alignment);
   unsigned getConstantPoolIndex(MachineConstantPoolValue *V,unsigned Alignment);
   
   /// isEmpty - Return true if this constant pool contains no constants.

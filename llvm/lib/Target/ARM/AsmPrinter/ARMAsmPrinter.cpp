@@ -239,7 +239,7 @@ namespace {
       } else if (ACPV->isBlockAddress()) {
         O << *GetBlockAddressSymbol(ACPV->getBlockAddress());
       } else if (ACPV->isGlobalValue()) {
-        GlobalValue *GV = ACPV->getGV();
+        const GlobalValue *GV = ACPV->getGV();
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
@@ -352,7 +352,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    GlobalValue *GV = MO.getGlobal();
+    const GlobalValue *GV = MO.getGlobal();
 
     if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
         (TF & ARMII::MO_LO16))

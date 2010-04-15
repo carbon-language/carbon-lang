@@ -200,7 +200,7 @@ namespace {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (TM.getRelocationModel() != Reloc::Static) {
         if (MO.getType() == MachineOperand::MO_GlobalAddress) {
-          GlobalValue *GV = MO.getGlobal();
+          const GlobalValue *GV = MO.getGlobal();
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
             MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
@@ -405,7 +405,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   }
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
-    GlobalValue *GV = MO.getGlobal();
+    const GlobalValue *GV = MO.getGlobal();
     MCSymbol *SymToPrint;
 
     // External or weakly linked global variables need non-lazily-resolved stubs
@@ -794,8 +794,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (MAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
     // Only referenced functions get into the Personalities list.
-    const std::vector<Function *> &Personalities = MMI->getPersonalities();
-    for (std::vector<Function *>::const_iterator I = Personalities.begin(),
+    const std::vector<const Function*> &Personalities = MMI->getPersonalities();
+    for (std::vector<const Function*>::const_iterator I = Personalities.begin(),
          E = Personalities.end(); I != E; ++I) {
       if (*I) {
         MCSymbol *NLPSym = GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");

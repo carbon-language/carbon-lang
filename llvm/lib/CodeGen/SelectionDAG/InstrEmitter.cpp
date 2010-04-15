@@ -531,10 +531,10 @@ MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
       AddOperand(&*MIB, Op, (*MIB).getNumOperands(), &II, VRBaseMap,
                  true /*IsDebug*/);
   } else if (SD->getKind() == SDDbgValue::CONST) {
-    Value *V = SD->getConst();
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    const Value *V = SD->getConst();
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       MIB.addImm(CI->getSExtValue());
-    } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
+    } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
       MIB.addFPImm(CF);
     } else {
       // Could be an Undef.  In any case insert an Undef so we can see what we

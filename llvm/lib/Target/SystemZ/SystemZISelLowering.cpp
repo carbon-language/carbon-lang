@@ -716,7 +716,7 @@ SDValue SystemZTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 SDValue SystemZTargetLowering::LowerGlobalAddress(SDValue Op,
                                                   SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
 
   bool IsPic = getTargetMachine().getRelocationModel() == Reloc::PIC_;

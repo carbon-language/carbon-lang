@@ -172,7 +172,7 @@ void PIC16Cloner::CloneAutos(Function *F) {
     VarName = I->getName().str();
     if (PAN::isLocalToFunc(FnName, VarName)) {
       // Auto variable for current function found. Clone it.
-      GlobalVariable *GV = I;
+      const GlobalVariable *GV = I;
 
       const Type *InitTy = GV->getInitializer()->getType();
       GlobalVariable *ClonedGV = 

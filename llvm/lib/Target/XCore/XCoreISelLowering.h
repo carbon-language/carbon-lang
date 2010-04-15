@@ -129,7 +129,7 @@ namespace llvm {
                             DebugLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals);
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG);
-    SDValue getGlobalAddressWrapper(SDValue GA, GlobalValue *GV,
+    SDValue getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
                                     SelectionDAG &DAG);
 
     // Lower Operand specifics

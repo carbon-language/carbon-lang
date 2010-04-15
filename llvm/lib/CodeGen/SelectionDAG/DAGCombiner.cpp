@@ -6288,7 +6288,7 @@ SDValue DAGCombiner::BuildUDIV(SDNode *N) {
 /// FindBaseOffset - Return true if base is a frame index, which is known not
 // to alias with anything but itself.  Provides base object and offset as results.
 static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
-                           GlobalValue *&GV, void *&CV) {
+                           const GlobalValue *&GV, void *&CV) {
   // Assume it is a primitive operation.
   Base = Ptr; Offset = 0; GV = 0; CV = 0;
 
@@ -6336,7 +6336,7 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
   // Gather base node and offset information.
   SDValue Base1, Base2;
   int64_t Offset1, Offset2;
-  GlobalValue *GV1, *GV2;
+  const GlobalValue *GV1, *GV2;
   void *CV1, *CV2;
   bool isFrameIndex1 = FindBaseOffset(Ptr1, Base1, Offset1, GV1, CV1);
   bool isFrameIndex2 = FindBaseOffset(Ptr2, Base2, Offset2, GV2, CV2);

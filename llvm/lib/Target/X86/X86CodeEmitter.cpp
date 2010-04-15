@@ -79,7 +79,7 @@ namespace {
 
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
-    void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+    void emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                            intptr_t Disp = 0, intptr_t PCAdj = 0,
                            bool Indirect = false);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
@@ -163,7 +163,8 @@ void Emitter<CodeEmitter>::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
 /// this is part of a "take the address of a global" instruction.
 ///
 template<class CodeEmitter>
-void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+void Emitter<CodeEmitter>::emitGlobalAddress(const GlobalValue *GV,
+                                unsigned Reloc,
                                 intptr_t Disp /* = 0 */,
                                 intptr_t PCAdj /* = 0 */,
                                 bool Indirect /* = false */) {
@@ -174,9 +175,10 @@ void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
     RelocCST = PCAdj;
   MachineRelocation MR = Indirect
     ? MachineRelocation::getIndirectSymbol(MCE.getCurrentPCOffset(), Reloc,
-                                           GV, RelocCST, false)
+                                           const_cast<GlobalValue *>(GV),
+                                           RelocCST, false)
     : MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                               GV, RelocCST, false);
+                               const_cast<GlobalValue *>(GV), RelocCST, false);
   MCE.addRelocation(MR);
   // The relocated value will be added to the displacement
   if (Reloc == X86::reloc_absolute_dword)
