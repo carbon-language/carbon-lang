@@ -2735,6 +2735,15 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
+  
+  // fold (srl (shl x, c), c) -> (and x, cst2)
+  if (N1C && N0.getOpcode() == ISD::SHL && N0.getOperand(1) == N1 &&
+      N0.getValueSizeInBits() <= 64) {
+    uint64_t ShAmt = N1C->getZExtValue()+64-N0.getValueSizeInBits();
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0.getOperand(0),
+                       DAG.getConstant(~0ULL >> ShAmt, VT));
+  }
+  
 
   // fold (srl (anyextend x), c) -> (anyextend (srl x, c))
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
