@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
-
 // C++ [expr.const]p1:
 //   In several places, C++ requires expressions that evaluate to an integral
 //   or enumeration constant: as array bounds, as case expressions, as
@@ -79,5 +78,10 @@ template <int itval, Enum etval> struct C {
 };
 
 template struct C<1, eval>;
-//template struct C<cval, ceval>;
-//template struct C<Struct::sval, Struct::seval>;
+template struct C<cval, ceval>;
+template struct C<Struct::sval, Struct::seval>;
+
+enum {
+  a = sizeof(int) == 8,
+  b = a? 8 : 4
+};

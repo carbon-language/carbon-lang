@@ -6006,7 +6006,7 @@ static bool isRepresentableIntegerValue(ASTContext &Context,
                                         llvm::APSInt &Value,
                                         QualType T) {
   assert(T->isIntegralType() && "Integral type required!");
-  unsigned BitWidth = Context.getTypeSize(T);
+  unsigned BitWidth = Context.getIntWidth(T);
   
   if (Value.isUnsigned() || Value.isNonNegative())
     return Value.getActiveBits() < BitWidth;
@@ -6139,7 +6139,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
         // value, then increment.
         EnumVal = LastEnumConst->getInitVal();
         EnumVal.setIsSigned(EltTy->isSignedIntegerType());
-        EnumVal.zextOrTrunc(Context.getTypeSize(EltTy));
+        EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
         ++EnumVal;        
         
         // If we're not in C++, diagnose the overflow of enumerator values,
@@ -6161,7 +6161,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   if (!EltTy->isDependentType()) {
     // Make the enumerator value match the signedness and size of the 
     // enumerator's type.
-    EnumVal.zextOrTrunc(Context.getTypeSize(EltTy));
+    EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
     EnumVal.setIsSigned(EltTy->isSignedIntegerType());
   }
   
