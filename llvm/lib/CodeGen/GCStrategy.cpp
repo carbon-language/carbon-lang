@@ -270,7 +270,7 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
         case Intrinsic::gcwrite:
           if (LowerWr) {
             // Replace a write barrier with a simple store.
-            Value *St = new StoreInst(CI->getOperand(1), CI->getOperand(3), CI);
+            Value *St = new StoreInst(CI->getOperand(0), CI->getOperand(2), CI);
             CI->replaceAllUsesWith(St);
             CI->eraseFromParent();
           }
@@ -278,7 +278,7 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
         case Intrinsic::gcread:
           if (LowerRd) {
             // Replace a read barrier with a simple load.
-            Value *Ld = new LoadInst(CI->getOperand(2), "", CI);
+            Value *Ld = new LoadInst(CI->getOperand(1), "", CI);
             Ld->takeName(CI);
             CI->replaceAllUsesWith(Ld);
             CI->eraseFromParent();
@@ -289,7 +289,7 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
             // Initialize the GC root, but do not delete the intrinsic. The
             // backend needs the intrinsic to flag the stack slot.
             Roots.push_back(cast<AllocaInst>(
-                              CI->getOperand(1)->stripPointerCasts()));
+                              CI->getOperand(0)->stripPointerCasts()));
           }
           break;
         default:

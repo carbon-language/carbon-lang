@@ -254,7 +254,7 @@ bool SROA::performScalarRepl(Function &F) {
     if (Instruction *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
       DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
       DEBUG(dbgs() << "  memcpy = " << *TheCopy << '\n');
-      Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
+      Constant *TheSrc = cast<Constant>(TheCopy->getOperand(1));
       AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
       AI->eraseFromParent();
@@ -404,11 +404,11 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       isSafeGEP(GEPI, AI, GEPOffset, Info);
       if (!Info.isUnsafe)
         isSafeForScalarRepl(GEPI, AI, GEPOffset, Info);
-    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length)
         isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
-                        UI.getOperandNo() == 1, Info);
+                        UI.getOperandNo() == 0, Info);
       else
         MarkUnsafe(Info);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
@@ -756,7 +756,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
   }
   
   // Process each element of the aggregate.
-  Value *TheFn = MI->getOperand(0);
+  Value *TheFn = MI->getCalledValue();
   const Type *BytePtrTy = MI->getRawDest()->getType();
   bool SROADest = MI->getRawDest() == Inst;
   
@@ -814,7 +814,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       // If the stored element is zero (common case), just store a null
       // constant.
       Constant *StoreVal;
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(1))) {
         if (CI->isZero()) {
           StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
@@ -877,7 +877,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       Value *Ops[] = {
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
-        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        ConstantInt::get(MI->getOperand(2)->getType(), EltSize), // Size
         // Align
         ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign),
         MI->getVolatileCst()
@@ -892,8 +892,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     } else {
       assert(isa<MemSetInst>(MI));
       Value *Ops[] = {
-        EltPtr, MI->getOperand(2),  // Dest, Value,
-        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        EltPtr, MI->getOperand(1),  // Dest, Value,
+        ConstantInt::get(MI->getOperand(2)->getType(), EltSize), // Size
         Zero,  // Align
         ConstantInt::get(Type::getInt1Ty(MI->getContext()), 0) // isVolatile
       };
@@ -1737,12 +1737,12 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     if (isOffset) return false;
 
     // If the memintrinsic isn't using the alloca as the dest, reject it.
-    if (UI.getOperandNo() != 1) return false;
+    if (UI.getOperandNo() != 0) return false;
     
     MemIntrinsic *MI = cast<MemIntrinsic>(U);
     
     // If the source of the memcpy/move is not a constant global, reject it.
-    if (!PointsToConstantGlobal(MI->getOperand(2)))
+    if (!PointsToConstantGlobal(MI->getOperand(1)))
       return false;
     
     // Otherwise, the transform is safe.  Remember the copy instruction.

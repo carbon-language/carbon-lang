@@ -252,7 +252,7 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
-      for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+      for (unsigned i = 0, e = CI->getNumOperands() - 1; i != e; ++i)
         if (CI->getOperand(i) == V) return true;
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is

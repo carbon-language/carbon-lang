@@ -31,7 +31,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
@@ -310,7 +309,7 @@ GlobalVariable *llvm::ExtractTypeInfo(Value *V) {
 void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
                         MachineBasicBlock *MBB) {
   // Inform the MachineModuleInfo of the personality for this landing pad.
-  const ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(2));
+  const ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(1));
   assert(CE->getOpcode() == Instruction::BitCast &&
          isa<Function>(CE->getOperand(0)) &&
          "Personality should be a function");
@@ -319,9 +318,9 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
   // Gather all the type infos for this landing pad and pass them along to
   // MachineModuleInfo.
   std::vector<const GlobalVariable *> TyInfo;
-  unsigned N = I.getNumOperands();
+  unsigned N = I.getNumOperands() - 1;
 
-  for (unsigned i = N - 1; i > 2; --i) {
+  for (unsigned i = N - 1; i > 1; --i) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
       unsigned FilterLength = CI->getZExtValue();
       unsigned FirstCatch = i + FilterLength + !FilterLength;
@@ -351,9 +350,9 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
     }
   }
 
-  if (N > 3) {
-    TyInfo.reserve(N - 3);
-    for (unsigned j = 3; j < N; ++j)
+  if (N > 2) {
+    TyInfo.reserve(N - 2);
+    for (unsigned j = 2; j < N - 1; ++j)
       TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
     MMI->addCatchTypeInfo(MBB, TyInfo);
   }
