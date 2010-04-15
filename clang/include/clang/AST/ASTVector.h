@@ -176,6 +176,10 @@ public:
   template<typename in_iter>
   void append(ASTContext &C, in_iter in_start, in_iter in_end) {
     size_type NumInputs = std::distance(in_start, in_end);
+
+    if (NumInputs == 0)
+      return;
+
     // Grow allocated space if needed.
     if (NumInputs > size_type(this->capacity_ptr()-this->end()))
       this->grow(C, this->size()+NumInputs);
