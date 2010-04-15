@@ -945,7 +945,7 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDNode *N) {
   SDValue Chain = N->getOperand(0);
   SDValue Size = N->getOperand(1);
   SDValue Align = N->getOperand(2);
-  SDValue SP = CurDAG->getRegister(ARM::SP, MVT::i32);
+  SDValue SP = CurDAG->getCopyFromReg(Chain, dl, ARM::SP, MVT::i32);
   int32_t AlignVal = cast<ConstantSDNode>(Align)->getSExtValue();
   if (AlignVal < 0)
     // We need to align the stack. Use Thumb1 tAND which is the only thumb
