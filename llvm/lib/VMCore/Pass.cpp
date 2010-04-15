@@ -318,6 +318,8 @@ static PassRegistrar *getPassRegistrar() {
   return PassRegistrarObj;
 }
 
+namespace {
+
 // FIXME: We use ManagedCleanup to erase the pass registrar on shutdown.
 // Unfortunately, passes are registered with static ctors, and having
 // llvm_shutdown clear this map prevents successful ressurection after 
@@ -330,6 +332,8 @@ void cleanupPassRegistrar(void*) {
   }
 }
 ManagedCleanup<&cleanupPassRegistrar> registrarCleanup;
+
+}
 
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
