@@ -13,6 +13,7 @@
 
 #include "LLVMContextImpl.h"
 #include <algorithm>
+using namespace llvm;
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   : TheTrueVal(0), TheFalseVal(0),

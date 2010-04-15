@@ -1881,6 +1881,7 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
   }
 }
 
+namespace {
 
 struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
@@ -1901,6 +1902,8 @@ struct MatchScope {
   /// HasChainNodesMatched - True if the ChainNodesMatched list is non-empty.
   bool HasChainNodesMatched, HasFlagResultNodesMatched;
 };
+
+}
 
 SDNode *SelectionDAGISel::
 SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,

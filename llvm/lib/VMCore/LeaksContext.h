@@ -14,7 +14,8 @@
 
 #include "llvm/Value.h"
 #include "llvm/ADT/SmallPtrSet.h"
-using namespace llvm;
+
+namespace llvm {
 
 template <class T>
 struct PrinterTrait {
@@ -87,3 +88,5 @@ private:
   const T* Cache;
   const char* Name;
 };
+
+}

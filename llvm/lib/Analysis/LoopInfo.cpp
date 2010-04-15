@@ -29,9 +29,9 @@ using namespace llvm;
 
 // Always verify loopinfo if expensive checking is enabled.
 #ifdef XDEBUG
-bool VerifyLoopInfo = true;
+static bool VerifyLoopInfo = true;
 #else
-bool VerifyLoopInfo = false;
+static bool VerifyLoopInfo = false;
 #endif
 static cl::opt<bool,true>
 VerifyLoopInfoX("verify-loop-info", cl::location(VerifyLoopInfo),

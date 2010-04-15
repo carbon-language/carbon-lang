@@ -1331,7 +1331,7 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
 
 /// isSubprogramContext - Return true if Context is either a subprogram
 /// or another context nested inside a subprogram.
-bool isSubprogramContext(MDNode *Context) {
+static bool isSubprogramContext(MDNode *Context) {
   if (!Context)
     return false;
   DIDescriptor D(Context);

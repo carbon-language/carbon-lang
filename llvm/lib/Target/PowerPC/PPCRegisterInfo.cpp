@@ -56,14 +56,14 @@ using namespace llvm;
 #define ALIGN_STACK 0
 
 // FIXME (64-bit): Eventually enable by default.
-cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
-                            cl::init(false),
-                            cl::desc("Enable PPC32 register scavenger"),
-                            cl::Hidden);
-cl::opt<bool> EnablePPC64RS("enable-ppc64-regscavenger",
-                            cl::init(false),
-                            cl::desc("Enable PPC64 register scavenger"),
-                            cl::Hidden);
+static cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
+                                   cl::init(false),
+                                   cl::desc("Enable PPC32 register scavenger"),
+                                   cl::Hidden);
+static cl::opt<bool> EnablePPC64RS("enable-ppc64-regscavenger",
+                                   cl::init(false),
+                                   cl::desc("Enable PPC64 register scavenger"),
+                                   cl::Hidden);
 #define EnableRegisterScavenging \
   ((EnablePPC32RS && !Subtarget.isPPC64()) || \
    (EnablePPC64RS && Subtarget.isPPC64()))

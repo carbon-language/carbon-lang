@@ -190,6 +190,8 @@ void TimeRecord::print(const TimeRecord &Total, raw_ostream &OS) const {
 //   NamedRegionTimer Implementation
 //===----------------------------------------------------------------------===//
 
+namespace {
+
 typedef StringMap<Timer> Name2TimerMap;
 
 class Name2PairMap {
@@ -215,6 +217,8 @@ public:
     return T;
   }
 };
+
+}
 
 static ManagedStatic<Name2TimerMap> NamedTimers;
 static ManagedStatic<Name2PairMap> NamedGroupedTimers;

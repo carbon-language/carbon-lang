@@ -30,9 +30,9 @@ using namespace llvm;
 
 // Always verify dominfo if expensive checking is enabled.
 #ifdef XDEBUG
-bool VerifyDomInfo = true;
+static bool VerifyDomInfo = true;
 #else
-bool VerifyDomInfo = false;
+static bool VerifyDomInfo = false;
 #endif
 static cl::opt<bool,true>
 VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),

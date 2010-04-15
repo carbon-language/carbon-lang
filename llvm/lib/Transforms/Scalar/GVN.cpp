@@ -1217,7 +1217,7 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
   return ConstantFoldLoadFromConstPtr(Src, &TD);
 }
 
-
+namespace {
 
 struct AvailableValueInBlock {
   /// BB - The basic block in question.
@@ -1290,6 +1290,8 @@ struct AvailableValueInBlock {
     return Res;
   }
 };
+
+}
 
 /// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
 /// construct SSA form, allowing us to eliminate LI.  This returns the value

@@ -642,6 +642,8 @@ static const Loop *GetRelevantLoop(const SCEV *S, LoopInfo &LI,
   llvm_unreachable("Unexpected SCEV type!");
 }
 
+namespace {
+
 /// LoopCompare - Compare loops by PickMostRelevantLoop.
 class LoopCompare {
   DominatorTree &DT;
@@ -667,6 +669,8 @@ public:
     return false;
   }
 };
+
+}
 
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());

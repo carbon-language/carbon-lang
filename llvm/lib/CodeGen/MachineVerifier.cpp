@@ -351,8 +351,8 @@ void MachineVerifier::visitMachineFunctionBefore() {
 }
 
 // Does iterator point to a and b as the first two elements?
-bool matchPair(MachineBasicBlock::const_succ_iterator i,
-               const MachineBasicBlock *a, const MachineBasicBlock *b) {
+static bool matchPair(MachineBasicBlock::const_succ_iterator i,
+                      const MachineBasicBlock *a, const MachineBasicBlock *b) {
   if (*i == a)
     return *++i == b;
   if (*i == b)

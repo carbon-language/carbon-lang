@@ -51,12 +51,19 @@ DebugBufferSize("debug-buffer-size",
                 cl::init(0));
 
 static std::string CurrentDebugType;
-static struct DebugOnlyOpt {
+
+namespace {
+
+struct DebugOnlyOpt {
   void operator=(const std::string &Val) const {
     DebugFlag |= !Val.empty();
     CurrentDebugType = Val;
   }
-} DebugOnlyOptLoc;
+};
+
+}
+
+static DebugOnlyOpt DebugOnlyOptLoc;
 
 static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
 DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),

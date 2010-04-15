@@ -161,7 +161,7 @@ void DisassemblerTables::emitOneID(raw_ostream &o,
 /// @param i        - The indentation level for that output stream.
 static void emitEmptyTable(raw_ostream &o, uint32_t &i)
 {
-  o.indent(i * 2) << "InstrUID modRMEmptyTable[1] = { 0 };" << "\n";
+  o.indent(i * 2) << "static InstrUID modRMEmptyTable[1] = { 0 };" << "\n";
   o << "\n";
 }
 
@@ -275,7 +275,7 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
     return;
   }
     
-  o1.indent(i1) << "InstrUID modRMTable" << thisTableNumber;
+  o1.indent(i1) << "static InstrUID modRMTable" << thisTableNumber;
     
   switch (dt) {
     default:

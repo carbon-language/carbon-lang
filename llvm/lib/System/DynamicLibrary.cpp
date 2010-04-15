@@ -24,12 +24,18 @@
 // Collection of symbol name/value pairs to be searched prior to any libraries.
 static std::map<std::string, void*> *ExplicitSymbols = 0;
 
-static struct ExplicitSymbolsDeleter {
+namespace {
+
+struct ExplicitSymbolsDeleter {
   ~ExplicitSymbolsDeleter() {
     if (ExplicitSymbols)
       delete ExplicitSymbols;
   }
-} Dummy;
+};
+
+}
+
+static ExplicitSymbolsDeleter Dummy;
 
 void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
                                           void *symbolValue) {
