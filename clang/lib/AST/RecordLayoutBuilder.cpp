@@ -609,6 +609,66 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     LayoutField(*Field);
 }
 
+void ASTRecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize, 
+                                                uint64_t TypeSize) {
+  assert(Context.getLangOptions().CPlusPlus &&
+         "Can only have wide bit-fields in C++!");
+  
+  // Itanium C++ ABI 2.4:
+  //   If sizeof(T)*8 < n, let T' be the largest integral POD type with 
+  //   sizeof(T')*8 <= n.
+  
+  QualType IntegralPODTypes[] = {
+    Context.UnsignedCharTy, Context.UnsignedShortTy, Context.UnsignedIntTy, 
+    Context.UnsignedLongTy, Context.UnsignedLongLongTy
+  };
+
+  printf("field sizes %llu type size %llu\n",
+         FieldSize, TypeSize);
+  
+  QualType Type;
+  for (unsigned I = 0, E = llvm::array_lengthof(IntegralPODTypes);
+       I != E; ++I) {
+    uint64_t Size = Context.getTypeSize(IntegralPODTypes[I]);
+    printf("going to try %s %llu\n", IntegralPODTypes[I].getAsString().c_str(),
+           Size);
+
+    if (Size > FieldSize)
+      break;
+
+    Type = IntegralPODTypes[I];
+  }
+  assert(!Type.isNull() && "Did not find a type!");
+  printf("type should be %s\n", Type.getAsString().c_str());
+  
+  unsigned TypeAlign = Context.getTypeAlign(Type);
+
+  // We're not going to use any of the unfilled bits in the last byte.
+  UnfilledBitsInLastByte = 0;
+
+  // The bitfield is allocated starting at the next offset aligned appropriately
+  // for T', with length n bits. 
+  uint64_t FieldOffset = llvm::RoundUpToAlignment(DataSize, TypeAlign);
+
+  if (IsUnion) {
+    DataSize = std::max(DataSize, FieldSize);
+  } else {
+    uint64_t NewSizeInBits = FieldOffset + FieldSize;
+    
+    DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
+    UnfilledBitsInLastByte = DataSize - NewSizeInBits;
+  }
+
+  // Place this field at the current location.
+  FieldOffsets.push_back(FieldOffset);
+
+  // Update the size.
+  Size = std::max(Size, DataSize);
+  
+  // Remember max struct/class alignment.
+  UpdateAlignment(TypeAlign);
+}
+
 void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t FieldOffset = IsUnion ? 0 : (DataSize - UnfilledBitsInLastByte);
@@ -617,6 +677,11 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
+
+  if (FieldSize > TypeSize) {
+    LayoutWideBitField(FieldSize, TypeSize);
+    return;
+  }
 
   if (FieldPacked || !Context.Target.useBitFieldTypeAlignment())
     FieldAlign = 1;

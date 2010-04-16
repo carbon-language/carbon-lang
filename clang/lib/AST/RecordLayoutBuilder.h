@@ -91,6 +91,7 @@ class ASTRecordLayoutBuilder {
 
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
+  void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize);
   void LayoutBitField(const FieldDecl *D);
 
   /// DeterminePrimaryBase - Determine the primary base of the given class.
