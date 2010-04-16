@@ -180,16 +180,8 @@ public:
     uint32_t ValueTypeActions[(MVT::MAX_ALLOWED_VALUETYPE/32)*2];
   public:
     ValueTypeActionImpl() {
-      ValueTypeActions[0] = ValueTypeActions[1] = 0;
-      ValueTypeActions[2] = ValueTypeActions[3] = 0;
+      std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
     }
-    ValueTypeActionImpl(const ValueTypeActionImpl &RHS) {
-      ValueTypeActions[0] = RHS.ValueTypeActions[0];
-      ValueTypeActions[1] = RHS.ValueTypeActions[1];
-      ValueTypeActions[2] = RHS.ValueTypeActions[2];
-      ValueTypeActions[3] = RHS.ValueTypeActions[3];
-    }
-    
     LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
       if (VT.isExtended()) {
         if (VT.isVector()) {
