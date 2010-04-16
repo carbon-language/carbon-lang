@@ -374,7 +374,7 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
     CXString USR = clang_getCursorUSR(C);
     if (!clang_getCString(USR)) {
       clang_disposeString(USR);
-      return CXChildVisit_Continue;
+      return CXChildVisit_Recurse;
     }
     printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C),
                            clang_getCString(USR));
