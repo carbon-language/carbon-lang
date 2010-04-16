@@ -1162,15 +1162,13 @@ public:
                           QualType ObjectType,
                           Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
-                          bool SuppressUserConversion = false,
-                          bool ForceRValue = false);
+                          bool SuppressUserConversion = false);
   void AddMethodCandidate(CXXMethodDecl *Method,
                           DeclAccessPair FoundDecl,
                           CXXRecordDecl *ActingContext, QualType ObjectType,
                           Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
-                          bool SuppressUserConversions = false,
-                          bool ForceRValue = false);
+                          bool SuppressUserConversions = false);
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                   DeclAccessPair FoundDecl,
                                   CXXRecordDecl *ActingContext,
@@ -1178,15 +1176,13 @@ public:
                                   QualType ObjectType,
                                   Expr **Args, unsigned NumArgs,
                                   OverloadCandidateSet& CandidateSet,
-                                  bool SuppressUserConversions = false,
-                                  bool ForceRValue = false);
+                                  bool SuppressUserConversions = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                     DeclAccessPair FoundDecl,
                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet,
-                                    bool SuppressUserConversions = false,
-                                    bool ForceRValue = false);
+                                    bool SuppressUserConversions = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               DeclAccessPair FoundDecl,
                               CXXRecordDecl *ActingContext,

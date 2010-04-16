@@ -1549,7 +1549,7 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
             AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
                                          &From, 1, CandidateSet, 
-                                         SuppressUserConversions, false);
+                                         SuppressUserConversions);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
@@ -2694,7 +2694,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       // is irrelevant.
       AddMethodCandidate(Method, FoundDecl, Method->getParent(),
                          QualType(), Args, NumArgs, CandidateSet,
-                         SuppressUserConversions, ForceRValue);
+                         SuppressUserConversions);
       return;
     }
     // We treat a constructor like a non-member function, since its object
@@ -2823,7 +2823,7 @@ void Sema::AddMethodCandidate(DeclAccessPair FoundDecl,
                               QualType ObjectType,
                               Expr **Args, unsigned NumArgs,
                               OverloadCandidateSet& CandidateSet,
-                              bool SuppressUserConversions, bool ForceRValue) {
+                              bool SuppressUserConversions) {
   NamedDecl *Decl = FoundDecl.getDecl();
   CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(Decl->getDeclContext());
 
@@ -2837,12 +2837,11 @@ void Sema::AddMethodCandidate(DeclAccessPair FoundDecl,
                                /*ExplicitArgs*/ 0,
                                ObjectType, Args, NumArgs,
                                CandidateSet,
-                               SuppressUserConversions,
-                               ForceRValue);
+                               SuppressUserConversions);
   } else {
     AddMethodCandidate(cast<CXXMethodDecl>(Decl), FoundDecl, ActingContext,
                        ObjectType, Args, NumArgs,
-                       CandidateSet, SuppressUserConversions, ForceRValue);
+                       CandidateSet, SuppressUserConversions);
   }
 }
 
@@ -2852,15 +2851,13 @@ void Sema::AddMethodCandidate(DeclAccessPair FoundDecl,
 /// @c o.f(a1,a2), @c Object will contain @c o and @c Args will contain
 /// both @c a1 and @c a2. If @p SuppressUserConversions, then don't
 /// allow user-defined conversions via constructors or conversion
-/// operators. If @p ForceRValue, treat all arguments as rvalues. This is
-/// a slightly hacky way to implement the overloading rules for elidable copy
-/// initialization in C++0x (C++0x 12.8p15).
+/// operators.
 void
 Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
                          CXXRecordDecl *ActingContext, QualType ObjectType,
                          Expr **Args, unsigned NumArgs,
                          OverloadCandidateSet& CandidateSet,
-                         bool SuppressUserConversions, bool ForceRValue) {
+                         bool SuppressUserConversions) {
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Method->getType()->getAs<FunctionType>());
   assert(Proto && "Methods without a prototype cannot be overloaded");
@@ -2934,7 +2931,8 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx + 1]
         = TryCopyInitialization(Args[ArgIdx], ParamType,
-                                SuppressUserConversions, ForceRValue,
+                                SuppressUserConversions, 
+                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
@@ -2961,8 +2959,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                  QualType ObjectType,
                                  Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
-                                 bool SuppressUserConversions,
-                                 bool ForceRValue) {
+                                 bool SuppressUserConversions) {
   if (!CandidateSet.isNewCandidate(MethodTmpl))
     return;
 
@@ -2993,7 +2990,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
          "Specialization is not a member function?");
   AddMethodCandidate(cast<CXXMethodDecl>(Specialization), FoundDecl,
                      ActingContext, ObjectType, Args, NumArgs,
-                     CandidateSet, SuppressUserConversions, ForceRValue);
+                     CandidateSet, SuppressUserConversions);
 }
 
 /// \brief Add a C++ function template specialization as a candidate
@@ -3005,8 +3002,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet,
-                                   bool SuppressUserConversions,
-                                   bool ForceRValue) {
+                                   bool SuppressUserConversions) {
   if (!CandidateSet.isNewCandidate(FunctionTemplate))
     return;
 
@@ -3043,7 +3039,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   // deduction as a candidate.
   assert(Specialization && "Missing function template specialization?");
   AddOverloadCandidate(Specialization, FoundDecl, Args, NumArgs, CandidateSet,
-                       SuppressUserConversions, ForceRValue);
+                       SuppressUserConversions);
 }
 
 /// AddConversionCandidate - Add a C++ conversion function as a
