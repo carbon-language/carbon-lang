@@ -39,3 +39,46 @@ if test "$llvm_cv_link_use_export_dynamic" = yes ; then
   fi
 ])
 
+#
+# Determine if the system can handle the -retain-symbols-file option being
+# passed to the linker.
+#
+# This macro is specific to LLVM.
+#
+AC_DEFUN([AC_LINK_RETAIN_SYMBOLS_FILE],
+[AC_CACHE_CHECK([for compiler -Wl,-retain-symbols-file option],
+                [llvm_cv_link_use_retain_symbols_file],
+[ AC_LANG_PUSH([C])
+  oldcflags="$CFLAGS"
+
+  # The following code is from the autoconf manual,
+  # "11.13: Limitations of Usual Tools".
+  # Create a temporary directory $tmp in $TMPDIR (default /tmp).
+  # Use mktemp if possible; otherwise fall back on mkdir,
+  # with $RANDOM to make collisions less likely.
+  : ${TMPDIR=/tmp}
+  {
+    tmp=`
+      (umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null
+    ` &&
+    test -n "$tmp" && test -d "$tmp"
+  } || {
+    tmp=$TMPDIR/foo$$-$RANDOM
+    (umask 077 && mkdir "$tmp")
+  } || exit $?
+
+  echo "main" > "$tmp/exports"
+
+  CFLAGS="$CFLAGS -Wl,-retain-symbols-file=$tmp/exports"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[int main() { return 0; }]])],
+    [llvm_cv_link_use_retain_symbols_file=yes],[llvm_cv_link_use_retain_symbols_file=no])
+  rm "$tmp/exports"
+  rmdir "$tmp"
+  CFLAGS="$oldcflags"
+  AC_LANG_POP([C])
+])
+if test "$llvm_cv_link_use_retain_symbols_file" = yes ; then
+  AC_SUBST(HAVE_LINK_RETAIN_SYMBOLS_FILE,1)
+  fi
+])
+

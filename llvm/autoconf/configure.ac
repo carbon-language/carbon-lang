@@ -1022,6 +1022,9 @@ AC_LINK_USE_R
 dnl Determine whether the linker supports the -export-dynamic option.
 AC_LINK_EXPORT_DYNAMIC
 
+dnl Determine whether the linker supports the -retain-symbols-file option.
+AC_LINK_RETAIN_SYMBOLS_FILE
+
 dnl Check for libtool and the library that has dlopen function (which must come
 dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
 dnl libtool).

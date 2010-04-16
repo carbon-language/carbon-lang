@@ -561,7 +561,7 @@ ifeq ($(HOST_OS),Darwin)
   # Get "4" out of 10.4 for later pieces in the makefile.
   DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
 
-  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress \
+  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined,suppress \
                     -dynamiclib
   ifneq ($(ARCH),ARM)
     SharedLinkOptions += -mmacosx-version-min=$(DARWIN_VERSION)
@@ -990,13 +990,12 @@ endif
 # Now add the linker command-line options to use the native export file.
 
 ifeq ($(HOST_OS),Darwin)
-LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,$(NativeExportsFile)
+LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
 endif
 
-# This isn't really Linux-specific; it works at least on gold and bfd ld, but
-# there's no convenient way to detect it.
-ifeq ($(HOST_OS),Linux)
-LLVMLibsOptions += -Wl,-retain-symbols-file -Wl,$(NativeExportsFile)
+# gold, bfd ld, etc.
+ifeq ($(HAVE_LINK_RETAIN_SYMBOLS_FILE),1)
+LLVMLibsOptions += -Wl,-retain-symbols-file,$(NativeExportsFile)
 endif
 
 endif
@@ -1297,7 +1296,7 @@ ifeq ($(HOST_OS),Darwin)
 
 # Tiger tools don't support this.
 ifneq ($(DARWIN_MAJVERS),4)
-LD.Flags += -Wl,-exported_symbol -Wl,_main
+LD.Flags += -Wl,-exported_symbol,_main
 endif
 endif
 
