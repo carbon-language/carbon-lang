@@ -148,9 +148,16 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
                                           std::string &FixItInsertionLine,
                                           unsigned EndOfCaretToken,
                                           unsigned Columns) {
-  if (CaretLine.size() > SourceLine.size())
-    SourceLine.resize(CaretLine.size(), ' ');
-
+  unsigned MaxSize = std::max(SourceLine.size(),
+                              std::max(CaretLine.size(), 
+                                       FixItInsertionLine.size()));
+  if (MaxSize > SourceLine.size())
+    SourceLine.resize(MaxSize, ' ');
+  if (MaxSize > CaretLine.size())
+    CaretLine.resize(MaxSize, ' ');
+  if (!FixItInsertionLine.empty() && MaxSize > FixItInsertionLine.size())
+    FixItInsertionLine.resize(MaxSize, ' ');
+    
   // Find the slice that we need to display the full caret line
   // correctly.
   unsigned CaretStart = 0, CaretEnd = CaretLine.size();
