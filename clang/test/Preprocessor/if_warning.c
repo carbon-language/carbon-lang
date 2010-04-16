@@ -19,3 +19,9 @@ extern int x;
 #else 1       // Should not warn due to C99 6.10p4
 #endif
 #endif
+
+
+// PR6852
+#if 'somesillylongthing'  // expected-warning {{character constant too long for its type}} \
+                          // expected-warning {{multi-character character constant}}
+#endif

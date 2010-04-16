@@ -654,6 +654,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
 
   unsigned NumCharsSoFar = 0;
+  bool Warned = false;
   while (begin[0] != '\'') {
     uint64_t ResultChar;
     if (begin[0] != '\\')     // If this is a normal character, consume it.
@@ -670,8 +671,10 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       } else {
         // Narrow character literals act as though their value is concatenated
         // in this implementation, but warn on overflow.
-        if (LitVal.countLeadingZeros() < 8)
+        if (LitVal.countLeadingZeros() < 8 && !Warned) {
           PP.Diag(Loc, diag::warn_char_constant_too_large);
+          Warned = true;
+        }
         LitVal <<= 8;
       }
     }
