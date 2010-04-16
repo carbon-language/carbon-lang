@@ -3789,11 +3789,9 @@ static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                           CastExpr::CastKind& Kind,
-                          CXXMethodDecl *& ConversionDecl,
                           bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle,
-                              ConversionDecl);
+    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle);
 
   DefaultFunctionArrayLvalueConversion(castExpr);
 
@@ -3953,25 +3951,12 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
                           SourceLocation RParenLoc, ExprArg Op) {
   Expr *castExpr = static_cast<Expr*>(Op.get());
 
-  CXXMethodDecl *Method = 0;
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
-                     Kind, Method))
+                     Kind))
     return ExprError();
 
-  if (Method) {
-    // FIXME: preserve type source info here
-    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, Ty->getType(),
-                                                    Kind, Method, move(Op));
-
-    if (CastArg.isInvalid())
-      return ExprError();
-
-    castExpr = CastArg.takeAs<Expr>();
-  } else {
-    Op.release();
-  }
-
+  Op.release();
   return Owned(new (Context) CStyleCastExpr(Ty->getType().getNonReferenceType(),
                                             Kind, castExpr, Ty,
                                             LParenLoc, RParenLoc));

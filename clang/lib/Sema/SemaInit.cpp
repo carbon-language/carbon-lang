@@ -2036,6 +2036,10 @@ bool InitializationSequence::isAmbiguous() const {
   return false;
 }
 
+bool InitializationSequence::isConstructorInitialization() const {
+  return !Steps.empty() && Steps.back().Kind == SK_ConstructorInitialization;
+}
+
 void InitializationSequence::AddAddressOverloadResolutionStep(
                                                       FunctionDecl *Function,
                                                       DeclAccessPair Found) {
@@ -3510,6 +3514,7 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_ConstructorInitialization: {
+      unsigned NumArgs = Args.size();
       CXXConstructorDecl *Constructor
         = cast<CXXConstructorDecl>(Step->Function.Function);
 
@@ -3523,8 +3528,9 @@ InitializationSequence::Perform(Sema &S,
                                     Loc, ConstructorArgs))
         return S.ExprError();
           
-      // Build the an expression that constructs a temporary.
+      // Build the expression that constructs a temporary.
       if (Entity.getKind() == InitializedEntity::EK_Temporary &&
+          NumArgs != 1 && // FIXME: Hack to work around cast weirdness
           (Kind.getKind() == InitializationKind::IK_Direct ||
            Kind.getKind() == InitializationKind::IK_Value)) {
         // An explicitly-constructed temporary, e.g., X(1, 2).

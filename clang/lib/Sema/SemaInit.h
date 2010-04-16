@@ -606,6 +606,10 @@ public:
   /// \brief Determine whether this initialization failed due to an ambiguity.
   bool isAmbiguous() const;
   
+  /// \brief Determine whether this initialization is direct call to a 
+  /// constructor.
+  bool isConstructorInitialization() const;
+  
   /// \brief Add a new step in the initialization that resolves the address
   /// of an overloaded function to a specific function declaration.
   ///

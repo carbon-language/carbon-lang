@@ -2161,12 +2161,6 @@ public:
   /// it simply returns the passed in expression.
   OwningExprResult MaybeBindToTemporary(Expr *E);
 
-  CXXConstructorDecl *
-  TryInitializationByConstructor(QualType ClassType,
-                                 Expr **Args, unsigned NumArgs,
-                                 SourceLocation Loc,
-                                 InitializationKind Kind);
-
   bool CompleteConstructorCall(CXXConstructorDecl *Constructor,
                                MultiExprArg ArgsPtr,
                                SourceLocation Loc,                                    
@@ -4206,7 +4200,6 @@ public:
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
                       CastExpr::CastKind &Kind,
-                      CXXMethodDecl *& ConversionDecl,
                       bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors.
@@ -4227,8 +4220,7 @@ public:
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
   bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                          CastExpr::CastKind &Kind, bool FunctionalStyle,
-                          CXXMethodDecl *&ConversionDecl);
+                          CastExpr::CastKind &Kind, bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.
   /// \param Method - May be null.

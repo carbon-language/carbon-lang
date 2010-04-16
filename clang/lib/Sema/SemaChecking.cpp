@@ -409,9 +409,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXMethodDecl *ConversionDecl = 0;
-    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind,
-                       ConversionDecl))
+    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind))
       return true;
 
     // Okay, we have something that *can* be converted to the right type.  Check

@@ -193,3 +193,22 @@ namespace N12 {
 
   void f0(int **a) { C::f0(a); }
 }
+
+namespace N13 {
+  class A{
+    A(const A&);
+
+  public:
+    ~A();
+    A(int);
+    template<typename T> A &operator<<(const T&);
+  };
+
+  template<typename T>
+  void f(T t) {
+    A(17) << t;
+  }
+
+  template void f(int);
+
+}

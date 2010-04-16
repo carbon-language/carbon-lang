@@ -504,21 +504,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXMethodDecl *Method = 0;
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, Method,
-                       /*FunctionalStyle=*/true))
+    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, /*FunctionalStyle=*/true))
       return ExprError();
 
     exprs.release();
-    if (Method) {
-      OwningExprResult CastArg 
-        = BuildCXXCastArgument(TypeRange.getBegin(), Ty.getNonReferenceType(), 
-                               Kind, Method, Owned(Exprs[0]));
-      if (CastArg.isInvalid())
-        return ExprError();
-
-      Exprs[0] = CastArg.takeAs<Expr>();
-    }
 
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
                                                      TInfo, TyBeginLoc, Kind,

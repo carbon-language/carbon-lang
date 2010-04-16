@@ -126,8 +126,12 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
       return;
     }
+  } else if (const CXXFunctionalCastExpr *FC
+                                       = dyn_cast<CXXFunctionalCastExpr>(E)) {
+    if (isa<CXXConstructExpr>(FC->getSubExpr()) ||
+        isa<CXXTemporaryObjectExpr>(FC->getSubExpr()))
+      return;
   }
-
   // Diagnose "(void*) blah" as a typo for "(void) blah".
   else if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(E)) {
     TypeSourceInfo *TI = CE->getTypeInfoAsWritten();
