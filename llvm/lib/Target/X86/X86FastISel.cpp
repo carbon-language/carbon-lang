@@ -1170,8 +1170,8 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     // Emit code inline code to store the stack guard onto the stack.
     EVT PtrTy = TLI.getPointerTy();
 
-    const Value *Op1 = I.getOperand(0); // The guard's value.
-    const AllocaInst *Slot = cast<AllocaInst>(I.getOperand(1));
+    const Value *Op1 = I.getOperand(1); // The guard's value.
+    const AllocaInst *Slot = cast<AllocaInst>(I.getOperand(2));
 
     // Grab the frame index.
     X86AddressMode AM;
@@ -1182,7 +1182,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     return true;
   }
   case Intrinsic::objectsize: {
-    ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
+    ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(2));
     const Type *Ty = I.getCalledFunction()->getReturnType();
     
     assert(CI && "Non-constant type in Intrinsic::objectsize?");
@@ -1237,8 +1237,8 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     if (!isTypeLegal(RetTy, VT))
       return false;
 
-    const Value *Op1 = I.getOperand(0);
-    const Value *Op2 = I.getOperand(1);
+    const Value *Op1 = I.getOperand(1);
+    const Value *Op2 = I.getOperand(2);
     unsigned Reg1 = getRegForValue(Op1);
     unsigned Reg2 = getRegForValue(Op2);
 
@@ -1281,7 +1281,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
 
 bool X86FastISel::X86SelectCall(const Instruction *I) {
   const CallInst *CI = cast<CallInst>(I);
-  const Value *Callee = CI->getCalledValue();
+  const Value *Callee = I->getOperand(0);
 
   // Can't handle inline asm yet.
   if (isa<InlineAsm>(Callee))

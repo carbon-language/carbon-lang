@@ -711,7 +711,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 Instruction *InstCombiner::visitFree(Instruction &FI) {
-  Value *Op = FI.getOperand(0);
+  Value *Op = FI.getOperand(1);
 
   // free undef -> unreachable.
   if (isa<UndefValue>(Op)) {
@@ -896,7 +896,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Agg)) {
     // We're extracting from an intrinsic, see if we're the only user, which
     // allows us to simplify multiple result intrinsics to simpler things that
-    // just get one value.
+    // just get one value..
     if (II->hasOneUse()) {
       // Check if we're grabbing the overflow bit or the result of a 'with
       // overflow' intrinsic.  If it's the latter we can remove the intrinsic
@@ -905,7 +905,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::uadd_with_overflow:
       case Intrinsic::sadd_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
-          Value *LHS = II->getOperand(0), *RHS = II->getOperand(1);
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
           II->replaceAllUsesWith(UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateAdd(LHS, RHS);
@@ -914,7 +914,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::usub_with_overflow:
       case Intrinsic::ssub_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
-          Value *LHS = II->getOperand(0), *RHS = II->getOperand(1);
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
           II->replaceAllUsesWith(UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateSub(LHS, RHS);
@@ -923,7 +923,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::umul_with_overflow:
       case Intrinsic::smul_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
-          Value *LHS = II->getOperand(0), *RHS = II->getOperand(1);
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
           II->replaceAllUsesWith(UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateMul(LHS, RHS);

@@ -404,7 +404,7 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
           isPowerOf2_32(BitWidth) && Log2_32(BitWidth) == Op1C->getZExtValue()){
         bool isCtPop = II->getIntrinsicID() == Intrinsic::ctpop;
         Constant *RHS = ConstantInt::getSigned(Op0->getType(), isCtPop ? -1:0);
-        Value *Cmp = Builder->CreateICmpEQ(II->getOperand(0), RHS);
+        Value *Cmp = Builder->CreateICmpEQ(II->getOperand(1), RHS);
         return new ZExtInst(Cmp, II->getType());
       }
     }

@@ -252,7 +252,7 @@ static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
     // If we are passing this argument into call as the corresponding
     // argument operand, then the argument is dynamically constant.
     // Otherwise, we cannot transform this function safely.
-    if (CI->getOperand(ArgNo) == Arg)
+    if (CI->getOperand(ArgNo+1) == Arg)
       return true;
   }
 
@@ -454,7 +454,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // required PHI nodes, add entries into the PHI node for the actual
   // parameters passed into the tail-recursive call.
   for (unsigned i = 0, e = CI->getNumOperands()-1; i != e; ++i)
-    ArgumentPHIs[i]->addIncoming(CI->getOperand(i), BB);
+    ArgumentPHIs[i]->addIncoming(CI->getOperand(i+1), BB);
 
   // If we are introducing an accumulator variable to eliminate the recursion,
   // do so now.  Note that we _know_ that no subsequent tail recursion

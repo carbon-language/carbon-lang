@@ -732,10 +732,10 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
           // the right place.
           Instruction *NewVal;
           if (InputBit > ResultBit)
-            NewVal = BinaryOperator::CreateLShr(II->getOperand(0),
+            NewVal = BinaryOperator::CreateLShr(I->getOperand(1),
                     ConstantInt::get(I->getType(), InputBit-ResultBit));
           else
-            NewVal = BinaryOperator::CreateShl(II->getOperand(0),
+            NewVal = BinaryOperator::CreateShl(I->getOperand(1),
                     ConstantInt::get(I->getType(), ResultBit-InputBit));
           NewVal->takeName(I);
           return InsertNewInstBefore(NewVal, *I);
@@ -1052,12 +1052,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     case Intrinsic::x86_sse2_mul_sd:
     case Intrinsic::x86_sse2_min_sd:
     case Intrinsic::x86_sse2_max_sd:
-      TmpV = SimplifyDemandedVectorElts(II->getOperand(0), DemandedElts,
-                                        UndefElts, Depth+1);
-      if (TmpV) { II->setOperand(0, TmpV); MadeChange = true; }
       TmpV = SimplifyDemandedVectorElts(II->getOperand(1), DemandedElts,
-                                        UndefElts2, Depth+1);
+                                        UndefElts, Depth+1);
       if (TmpV) { II->setOperand(1, TmpV); MadeChange = true; }
+      TmpV = SimplifyDemandedVectorElts(II->getOperand(2), DemandedElts,
+                                        UndefElts2, Depth+1);
+      if (TmpV) { II->setOperand(2, TmpV); MadeChange = true; }
 
       // If only the low elt is demanded and this is a scalarizable intrinsic,
       // scalarize it now.
@@ -1069,8 +1069,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
         case Intrinsic::x86_sse2_sub_sd:
         case Intrinsic::x86_sse2_mul_sd:
           // TODO: Lower MIN/MAX/ABS/etc
-          Value *LHS = II->getOperand(0);
-          Value *RHS = II->getOperand(1);
+          Value *LHS = II->getOperand(1);
+          Value *RHS = II->getOperand(2);
           // Extract the element as scalars.
           LHS = InsertNewInstBefore(ExtractElementInst::Create(LHS, 
             ConstantInt::get(Type::getInt32Ty(I->getContext()), 0U)), *II);

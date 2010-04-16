@@ -1134,23 +1134,24 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(cast<StoreInst>(I).isVolatile());
     break;
   case Instruction::Call: {
-    const CallInst &CI = cast<CallInst>(I);
-    const PointerType *PTy = cast<PointerType>(CI.getCalledValue()->getType());
+    const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
 
     Code = bitc::FUNC_CODE_INST_CALL;
 
-    Vals.push_back(VE.getAttributeID(CI.getAttributes()));
-    Vals.push_back((CI.getCallingConv() << 1) | unsigned(CI.isTailCall()));
-    PushValueAndType(CI.getCalledValue(), InstID, Vals, VE);  // Callee
+    const CallInst *CI = cast<CallInst>(&I);
+    Vals.push_back(VE.getAttributeID(CI->getAttributes()));
+    Vals.push_back((CI->getCallingConv() << 1) | unsigned(CI->isTailCall()));
+    PushValueAndType(CI->getOperand(0), InstID, Vals, VE);  // Callee
 
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i)));  // fixed param.
+      Vals.push_back(VE.getValueID(I.getOperand(i+1)));  // fixed param.
 
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
-      for (unsigned i = FTy->getNumParams(), e = I.getNumOperands()-1;
+      unsigned NumVarargs = I.getNumOperands()-1-FTy->getNumParams();
+      for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
            i != e; ++i)
         PushValueAndType(I.getOperand(i), InstID, Vals, VE);  // varargs
     }

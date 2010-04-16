@@ -33,7 +33,7 @@ using namespace llvm;
 User::op_iterator CallSite::getCallee() const {
   Instruction *II(getInstruction());
   return isCall()
-    ? cast<CallInst>(II)->op_end() - 1 // Skip Function
+    ? cast<CallInst>(II)->op_begin()
     : cast<InvokeInst>(II)->op_end() - 3; // Skip BB, BB, Function
 }
 
@@ -231,7 +231,8 @@ CallInst::~CallInst() {
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
   assert(NumOperands == NumParams+1 && "NumOperands not set up?");
-  Op<-1>() = Func;
+  Use *OL = OperandList;
+  OL[0] = Func;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -240,21 +241,20 @@ void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
   assert((NumParams == FTy->getNumParams() ||
           (FTy->isVarArg() && NumParams > FTy->getNumParams())) &&
          "Calling a function with bad signature!");
-
-  Use *OL = OperandList;
   for (unsigned i = 0; i != NumParams; ++i) {
     assert((i >= FTy->getNumParams() || 
             FTy->getParamType(i) == Params[i]->getType()) &&
            "Calling a function with a bad signature!");
-    OL[i] = Params[i];
+    OL[i+1] = Params[i];
   }
 }
 
 void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
   assert(NumOperands == 3 && "NumOperands not set up?");
-  Op<-1>() = Func;
-  Op<0>() = Actual1;
-  Op<1>() = Actual2;
+  Use *OL = OperandList;
+  OL[0] = Func;
+  OL[1] = Actual1;
+  OL[2] = Actual2;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -273,8 +273,9 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
 
 void CallInst::init(Value *Func, Value *Actual) {
   assert(NumOperands == 2 && "NumOperands not set up?");
-  Op<-1>() = Func;
-  Op<0>() = Actual;
+  Use *OL = OperandList;
+  OL[0] = Func;
+  OL[1] = Actual;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -290,7 +291,8 @@ void CallInst::init(Value *Func, Value *Actual) {
 
 void CallInst::init(Value *Func) {
   assert(NumOperands == 1 && "NumOperands not set up?");
-  Op<-1>() = Func;
+  Use *OL = OperandList;
+  OL[0] = Func;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
