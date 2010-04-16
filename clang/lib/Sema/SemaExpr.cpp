@@ -5353,7 +5353,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       // C++ [expr.eq]p1 uses the same notion for (in)equality
       // comparisons of pointers.
       bool NonStandardCompositeType = false;
-      QualType T = FindCompositePointerType(lex, rex,
+      QualType T = FindCompositePointerType(Loc, lex, rex,
                               isSFINAEContext()? 0 : &NonStandardCompositeType);
       if (T.isNull()) {
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
@@ -5426,7 +5426,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       //   that is the union of the cv-qualification signatures of the operand
       //   types.
       bool NonStandardCompositeType = false;
-      QualType T = FindCompositePointerType(lex, rex,
+      QualType T = FindCompositePointerType(Loc, lex, rex,
                               isSFINAEContext()? 0 : &NonStandardCompositeType);
       if (T.isNull()) {
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)

@@ -2197,7 +2197,7 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //      shall match the cv-qualification of either the second or the third
   //      operand. The result is of the common type.
   bool NonStandardCompositeType = false;
-  QualType Composite = FindCompositePointerType(LHS, RHS,
+  QualType Composite = FindCompositePointerType(QuestionLoc, LHS, RHS,
                               isSFINAEContext()? 0 : &NonStandardCompositeType);
   if (!Composite.isNull()) {
     if (NonStandardCompositeType)
@@ -2227,11 +2227,15 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 /// type and returns it.
 /// It does not emit diagnostics.
 ///
+/// \param Loc The location of the operator requiring these two expressions to
+/// be converted to the composite pointer type.
+///
 /// If \p NonStandardCompositeType is non-NULL, then we are permitted to find
 /// a non-standard (but still sane) composite type to which both expressions
 /// can be converted. When such a type is chosen, \c *NonStandardCompositeType
 /// will be set true.
-QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2,
+QualType Sema::FindCompositePointerType(SourceLocation Loc, 
+                                        Expr *&E1, Expr *&E2,
                                         bool *NonStandardCompositeType) {
   if (NonStandardCompositeType)
     *NonStandardCompositeType = false;
@@ -2368,44 +2372,70 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2,
     }
   }
 
-  ImplicitConversionSequence E1ToC1 =
-    TryImplicitConversion(E1, Composite1,
-                          /*SuppressUserConversions=*/false,
-                          /*AllowExplicit=*/false,
-                          /*InOverloadResolution=*/false);
-  ImplicitConversionSequence E2ToC1 =
-    TryImplicitConversion(E2, Composite1,
-                          /*SuppressUserConversions=*/false,
-                          /*AllowExplicit=*/false,
-                          /*InOverloadResolution=*/false);
+  // Try to convert to the first composite pointer type.
+  InitializedEntity Entity1
+    = InitializedEntity::InitializeTemporary(Composite1);
+  InitializationKind Kind
+    = InitializationKind::CreateCopy(Loc, SourceLocation());
+  InitializationSequence E1ToC1(*this, Entity1, Kind, &E1, 1);
+  InitializationSequence E2ToC1(*this, Entity1, Kind, &E2, 1);
 
-  bool ToC2Viable = false;
-  ImplicitConversionSequence E1ToC2, E2ToC2;
-  if (Context.getCanonicalType(Composite1) !=
-      Context.getCanonicalType(Composite2)) {
-    E1ToC2 = TryImplicitConversion(E1, Composite2,
-                                   /*SuppressUserConversions=*/false,
-                                   /*AllowExplicit=*/false,
-                                   /*InOverloadResolution=*/false);
-    E2ToC2 = TryImplicitConversion(E2, Composite2,
-                                   /*SuppressUserConversions=*/false,
-                                   /*AllowExplicit=*/false,
-                                   /*InOverloadResolution=*/false);
-    ToC2Viable = !E1ToC2.isBad() && !E2ToC2.isBad();
+  if (E1ToC1 && E2ToC1) {
+    // Conversion to Composite1 is viable.
+    if (!Context.hasSameType(Composite1, Composite2)) {
+      // Composite2 is a different type from Composite1. Check whether
+      // Composite2 is also viable.
+      InitializedEntity Entity2
+        = InitializedEntity::InitializeTemporary(Composite2);
+      InitializationSequence E1ToC2(*this, Entity2, Kind, &E1, 1);
+      InitializationSequence E2ToC2(*this, Entity2, Kind, &E2, 1);
+      if (E1ToC2 && E2ToC2) {
+        // Both Composite1 and Composite2 are viable and are different;
+        // this is an ambiguity.
+        return QualType();
+      }
+    }
+
+    // Convert E1 to Composite1
+    OwningExprResult E1Result
+      = E1ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,(void**)&E1,1));
+    if (E1Result.isInvalid())
+      return QualType();
+    E1 = E1Result.takeAs<Expr>();
+
+    // Convert E2 to Composite1
+    OwningExprResult E2Result
+      = E2ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,(void**)&E2,1));
+    if (E2Result.isInvalid())
+      return QualType();
+    E2 = E2Result.takeAs<Expr>();
+    
+    return Composite1;
   }
 
-  bool ToC1Viable = !E1ToC1.isBad() && !E2ToC1.isBad();
-  if (ToC1Viable && !ToC2Viable) {
-    if (!PerformImplicitConversion(E1, Composite1, E1ToC1, Sema::AA_Converting) &&
-        !PerformImplicitConversion(E2, Composite1, E2ToC1, Sema::AA_Converting))
-      return Composite1;
-  }
-  if (ToC2Viable && !ToC1Viable) {
-    if (!PerformImplicitConversion(E1, Composite2, E1ToC2, Sema::AA_Converting) &&
-        !PerformImplicitConversion(E2, Composite2, E2ToC2, Sema::AA_Converting))
-      return Composite2;
-  }
-  return QualType();
+  // Check whether Composite2 is viable.
+  InitializedEntity Entity2
+    = InitializedEntity::InitializeTemporary(Composite2);
+  InitializationSequence E1ToC2(*this, Entity2, Kind, &E1, 1);
+  InitializationSequence E2ToC2(*this, Entity2, Kind, &E2, 1);
+  if (!E1ToC2 || !E2ToC2)
+    return QualType();
+  
+  // Convert E1 to Composite2
+  OwningExprResult E1Result
+    = E1ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, (void**)&E1, 1));
+  if (E1Result.isInvalid())
+    return QualType();
+  E1 = E1Result.takeAs<Expr>();
+  
+  // Convert E2 to Composite2
+  OwningExprResult E2Result
+    = E2ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, (void**)&E2, 1));
+  if (E2Result.isInvalid())
+    return QualType();
+  E2 = E2Result.takeAs<Expr>();
+  
+  return Composite2;
 }
 
 Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {

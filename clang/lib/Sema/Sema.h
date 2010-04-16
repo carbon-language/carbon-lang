@@ -4134,7 +4134,7 @@ public:
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
-  QualType FindCompositePointerType(Expr *&E1, Expr *&E2,
+  QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);
 
   QualType FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
