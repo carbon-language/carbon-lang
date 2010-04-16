@@ -5549,13 +5549,13 @@ PPCTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 /// non-scalar-integer type, e.g. empty string source, constant, or loaded
 /// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
 /// constant so it does not need to be loaded.
-/// It returns EVT::Other if SelectionDAG should be responsible for
-/// determining the type.
+/// It returns EVT::Other if the type should be determined using generic
+/// target-independent logic.
 EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
                                            unsigned DstAlign, unsigned SrcAlign,
                                            bool NonScalarIntSafe,
                                            bool MemcpyStrSrc,
-                                           SelectionDAG &DAG) const {
+                                           MachineFunction &MF) const {
   if (this->PPCSubTarget.isPPC64()) {
     return MVT::i64;
   } else {

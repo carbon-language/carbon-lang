@@ -1079,18 +1079,18 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 /// non-scalar-integer type, e.g. empty string source, constant, or loaded
 /// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
 /// constant so it does not need to be loaded.
-/// It returns EVT::Other if SelectionDAG should be responsible for
-/// determining the type.
+/// It returns EVT::Other if the type should be determined using generic
+/// target-independent logic.
 EVT
 X86TargetLowering::getOptimalMemOpType(uint64_t Size,
                                        unsigned DstAlign, unsigned SrcAlign,
                                        bool NonScalarIntSafe,
                                        bool MemcpyStrSrc,
-                                       SelectionDAG &DAG) const {
+                                       MachineFunction &MF) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
-  const Function *F = DAG.getMachineFunction().getFunction();
+  const Function *F = MF.getFunction();
   if (NonScalarIntSafe &&
       !F->hasFnAttr(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
