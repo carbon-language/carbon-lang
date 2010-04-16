@@ -237,7 +237,7 @@ static void SetDebugLoc(const Instruction *I, SelectionDAGBuilder *SDB,
     FastIS->setCurDebugLoc(DL);
 
   // If the function doesn't have a default debug location yet, set
-  // it. This is kind of a hack.
+  // it. This is a total hack.
   if (MF->getDefaultDebugLoc().isUnknown())
     MF->setDefaultDebugLoc(DL);
 }
