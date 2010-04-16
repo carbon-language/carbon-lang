@@ -407,7 +407,6 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
     });
 
   ARMBasicMCBuilder *Builder = CreateMCBuilder(Opcode, Format);
-
   if (!Builder)
     return false;
 
@@ -495,10 +494,10 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
     });
 
   ARMBasicMCBuilder *Builder = CreateMCBuilder(Opcode, Format);
-  Builder->SetSession(const_cast<Session *>(&SO));
-
   if (!Builder)
     return false;
+
+  Builder->SetSession(const_cast<Session *>(&SO));
 
   if (!Builder->Build(MI, insn))
     return false;
