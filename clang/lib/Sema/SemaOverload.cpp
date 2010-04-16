@@ -2506,7 +2506,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
 /// then we treat @p From as an rvalue, even if it is an lvalue.
 static ImplicitConversionSequence
 TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
-                      bool SuppressUserConversions, bool ForceRValue,
+                      bool SuppressUserConversions, 
                       bool InOverloadResolution) {
   if (ToType->isReferenceType())
     return TryReferenceInit(S, From, ToType,
@@ -2517,7 +2517,7 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
   return S.TryImplicitConversion(From, ToType,
                                  SuppressUserConversions,
                                  /*AllowExplicit=*/false,
-                                 ForceRValue,
+                                 /*ForceRValue=*/false,
                                  InOverloadResolution);
 }
 
@@ -2760,7 +2760,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       Candidate.Conversions[ArgIdx]
         = TryCopyInitialization(*this, Args[ArgIdx], ParamType,
                                 SuppressUserConversions, 
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
@@ -2927,7 +2926,6 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
       Candidate.Conversions[ArgIdx + 1]
         = TryCopyInitialization(*this, Args[ArgIdx], ParamType,
                                 SuppressUserConversions, 
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
@@ -3123,7 +3121,6 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   ImplicitConversionSequence ICS =
     TryCopyInitialization(*this, &Call, ToType,
                           /*SuppressUserConversions=*/true,
-                          /*ForceRValue=*/false,
                           /*InOverloadResolution=*/false);
 
   switch (ICS.getKind()) {
@@ -3271,7 +3268,6 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       Candidate.Conversions[ArgIdx + 1]
         = TryCopyInitialization(*this, Args[ArgIdx], ParamType,
                                 /*SuppressUserConversions=*/false,
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
@@ -3415,7 +3411,6 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
       Candidate.Conversions[ArgIdx]
         = TryCopyInitialization(*this, Args[ArgIdx], ParamTys[ArgIdx],
                                 ArgIdx == 0 && IsAssignmentOperator,
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
     }
     if (Candidate.Conversions[ArgIdx].isBad()) {
@@ -5172,7 +5167,6 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
         = TryCopyInitialization(S, Args[ConvIdx],
                                 Cand->BuiltinTypes.ParamTypes[ConvIdx],
                                 SuppressUserConversions, 
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution*/ true);
     return;
   }
@@ -5184,7 +5178,6 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
       Cand->Conversions[ConvIdx]
         = TryCopyInitialization(S, Args[ArgIdx], Proto->getArgType(ArgIdx),
                                 SuppressUserConversions, 
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/true);
     else
       Cand->Conversions[ConvIdx].setEllipsis();
