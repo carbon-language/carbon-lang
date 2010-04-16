@@ -556,7 +556,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UNDEF(SDNode *N) {
-  return DAG.getUNDEF(TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)));
+  return DAG.getUNDEF(TLI.getTypeToTransformTo(*DAG.getContext(),
+                                               N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
