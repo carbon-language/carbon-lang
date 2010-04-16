@@ -153,8 +153,27 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
   uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
 
-  unsigned StartBit = FieldOffset % TypeSizeInBits;
   bool IsSigned = FD->getType()->isSignedIntegerType();
+
+  if (FieldSize > TypeSizeInBits) {
+    // We have a wide bit-field.
+    
+    CGBitFieldInfo::AccessInfo Component;
+
+    Component.FieldIndex = 0;
+    Component.FieldByteOffset =
+      TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
+    Component.FieldBitStart = 0;
+    Component.AccessWidth = TypeSizeInBits;
+    // FIXME: This might be wrong!
+    Component.AccessAlignment = 0;
+    Component.TargetBitOffset = 0;
+    Component.TargetBitWidth = TypeSizeInBits;
+    
+    return CGBitFieldInfo(TypeSizeInBits, 1, &Component, IsSigned);
+  }
+
+  unsigned StartBit = FieldOffset % TypeSizeInBits;
 
   // The current policy is to always access the bit-field using the source type
   // of the bit-field. With the C bit-field rules, this implies that we always
