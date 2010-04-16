@@ -1555,7 +1555,7 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
             // From->ToType conversion via an static cast (c-style, etc).
             AddOverloadCandidate(Constructor, FoundDecl,
                                  &From, 1, CandidateSet,
-                                 SuppressUserConversions, false);
+                                 SuppressUserConversions);
         }
       }
     }
@@ -2662,9 +2662,6 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
 /// conversions via constructors or conversion operators.
-/// If @p ForceRValue, treat all arguments as rvalues. This is a slightly
-/// hacky way to implement the overloading rules for elidable copy
-/// initialization in C++0x (C++0x 12.8p15).
 ///
 /// \para PartialOverloading true if we are performing "partial" overloading
 /// based on an incomplete set of function arguments. This feature is used by
@@ -2675,7 +2672,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
                            bool SuppressUserConversions,
-                           bool ForceRValue,
                            bool PartialOverloading) {
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
@@ -2765,7 +2761,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx]
         = TryCopyInitialization(Args[ArgIdx], ParamType,
-                                SuppressUserConversions, ForceRValue,
+                                SuppressUserConversions, 
+                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
@@ -4487,7 +4484,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
         continue;
       
       AddOverloadCandidate(FD, FoundDecl, Args, NumArgs, CandidateSet,
-                           false, false, PartialOverloading);
+                           false, PartialOverloading);
     } else
       AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*I),
                                    FoundDecl, ExplicitTemplateArgs,
@@ -5563,7 +5560,7 @@ static void AddOverloadedCallCandidate(Sema &S,
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(Callee)) {
     assert(!ExplicitTemplateArgs && "Explicit template arguments?");
     S.AddOverloadCandidate(Func, FoundDecl, Args, NumArgs, CandidateSet,
-                           false, false, PartialOverloading);
+                           false, PartialOverloading);
     return;
   }
 

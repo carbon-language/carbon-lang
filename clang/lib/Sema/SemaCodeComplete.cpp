@@ -2242,7 +2242,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
         // FIXME: access?
         AddOverloadCandidate(FDecl, DeclAccessPair::make(FDecl, AS_none),
                              Args, NumArgs, CandidateSet,
-                             false, false, /*PartialOverloading*/ true);
+                             false, /*PartialOverloading*/true);
     }
   }
   
