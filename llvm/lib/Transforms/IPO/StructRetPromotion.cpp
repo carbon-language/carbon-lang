@@ -48,7 +48,7 @@ namespace {
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    virtual bool runOnSCC(std::vector<CallGraphNode *> &SCC);
+    virtual bool runOnSCC(CallGraphSCC &SCC);
     static char ID; // Pass identification, replacement for typeid
     SRETPromotion() : CallGraphSCCPass(&ID) {}
 
@@ -69,12 +69,12 @@ Pass *llvm::createStructRetPromotionPass() {
   return new SRETPromotion();
 }
 
-bool SRETPromotion::runOnSCC(std::vector<CallGraphNode *> &SCC) {
+bool SRETPromotion::runOnSCC(CallGraphSCC &SCC) {
   bool Changed = false;
 
-  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-    if (CallGraphNode *NewNode = PromoteReturn(SCC[i])) {
-      SCC[i] = NewNode;
+  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I)
+    if (CallGraphNode *NewNode = PromoteReturn(*I)) {
+      SCC.ReplaceNode(*I, NewNode);
       Changed = true;
     }
 

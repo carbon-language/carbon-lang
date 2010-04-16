@@ -154,7 +154,7 @@ namespace llvm {
 
     struct CGPass : public PassTest<CallGraph, CallGraphSCCPass> {
     public:
-      virtual bool runOnSCC(std::vector<CallGraphNode*> &SCMM) {
+      virtual bool runOnSCC(CallGraphSCC &SCMM) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         run();
         return false;
