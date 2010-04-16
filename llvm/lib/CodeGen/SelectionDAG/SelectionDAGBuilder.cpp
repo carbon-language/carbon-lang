@@ -660,7 +660,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
       SDValue N1 = NodeMap[V];
-      assert(N1.getNode() && "visit didn't populate the ValueMap!");
+      assert(N1.getNode() && "visit didn't populate the NodeMap!");
       return N1;
     }
 
