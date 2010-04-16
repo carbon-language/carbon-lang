@@ -461,7 +461,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
   OverloadingResult UserDefResult
     = IsUserDefinedConversion(From, ToType, ICS.UserDefined, Conversions,
                               !SuppressUserConversions, AllowExplicit,
-                              ForceRValue, UserCast);
+                              UserCast);
 
   if (UserDefResult == OR_Success) {
     ICS.setUserDefined();
@@ -1495,8 +1495,6 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
 /// "explicit" conversion functions as well as non-explicit conversion
 /// functions (C++0x [class.conv.fct]p2).
 ///
-/// \param ForceRValue  true if the expression should be treated as an rvalue
-/// for overload resolution.
 /// \param UserCast true if looking for user defined conversion for a static
 /// cast.
 OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
@@ -1504,7 +1502,6 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                                             OverloadCandidateSet& CandidateSet,
                                                 bool AllowConversionFunctions,
                                                 bool AllowExplicit, 
-                                                bool ForceRValue,
                                                 bool UserCast) {
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
     if (RequireCompleteType(From->getLocStart(), ToType, PDiag())) {
@@ -1552,13 +1549,13 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
             AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
                                          &From, 1, CandidateSet, 
-                                         SuppressUserConversions, ForceRValue);
+                                         SuppressUserConversions, false);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
             AddOverloadCandidate(Constructor, FoundDecl,
                                  &From, 1, CandidateSet,
-                                 SuppressUserConversions, ForceRValue);
+                                 SuppressUserConversions, false);
         }
       }
     }
@@ -1677,7 +1674,7 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   OverloadCandidateSet CandidateSet(From->getExprLoc());
   OverloadingResult OvResult = 
     IsUserDefinedConversion(From, ToType, ICS.UserDefined,
-                            CandidateSet, true, false, false, false);
+                            CandidateSet, true, false, false);
   if (OvResult == OR_Ambiguous)
     Diag(From->getSourceRange().getBegin(),
          diag::err_typecheck_ambiguous_condition)

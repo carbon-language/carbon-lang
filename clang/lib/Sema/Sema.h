@@ -1092,7 +1092,7 @@ public:
                                UserDefinedConversionSequence& User,
                                OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
-                               bool AllowExplicit, bool ForceRValue,
+                               bool AllowExplicit, 
                                bool UserCast);
   bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
                                               
