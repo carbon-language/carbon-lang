@@ -103,7 +103,7 @@ static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
 
   // If malloc calls' arg can be determined to be a multiple of ElementSize,
   // return the multiple.  Otherwise, return NULL.
-  Value *MallocArg = CI->getOperand(1);
+  Value *MallocArg = CI->getOperand(0);
   Value *Multiple = NULL;
   if (ComputeMultiple(MallocArg, ElementSize, Multiple,
                       LookThroughSExt))
@@ -120,7 +120,7 @@ const CallInst *llvm::isArrayMalloc(const Value *I, const TargetData *TD) {
   Value *ArraySize = computeArraySize(CI, TD);
 
   if (ArraySize &&
-      ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
+      ArraySize != ConstantInt::get(CI->getOperand(0)->getType(), 1))
     return CI;
 
   // CI is a non-array malloc or we can't figure out that it is an array malloc.

@@ -94,7 +94,7 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
   } else if (const CallInst* CI = extractMallocCall(V)) {
     if (!isArrayMalloc(V, &TD))
       // The size is the argument to the malloc call.
-      if (const ConstantInt* C = dyn_cast<ConstantInt>(CI->getOperand(1)))
+      if (const ConstantInt* C = dyn_cast<ConstantInt>(CI->getOperand(0)))
         return (C->getZExtValue() < Size);
     return false;
   } else if (const Argument *A = dyn_cast<Argument>(V)) {
@@ -318,10 +318,10 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
     unsigned Len = ~0U;
-    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3)))
+    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(2)))
       Len = LenCI->getZExtValue();
-    Value *Dest = II->getOperand(1);
-    Value *Src = II->getOperand(2);
+    Value *Dest = II->getOperand(0);
+    Value *Src = II->getOperand(1);
     if (isNoAlias(Dest, Len, P, Size)) {
       if (isNoAlias(Src, Len, P, Size))
         return NoModRef;
@@ -332,9 +332,9 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   case Intrinsic::memset:
     // Since memset is 'accesses arguments' only, the AliasAnalysis base class
     // will handle it for the variable length case.
-    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3))) {
+    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(2))) {
       unsigned Len = LenCI->getZExtValue();
-      Value *Dest = II->getOperand(1);
+      Value *Dest = II->getOperand(0);
       if (isNoAlias(Dest, Len, P, Size))
         return NoModRef;
     }
@@ -352,7 +352,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   case Intrinsic::atomic_load_umax:
   case Intrinsic::atomic_load_umin:
     if (TD) {
-      Value *Op1 = II->getOperand(1);
+      Value *Op1 = II->getOperand(0);
       unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
       if (isNoAlias(Op1, Op1Size, P, Size))
         return NoModRef;
@@ -361,14 +361,14 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
   case Intrinsic::invariant_start: {
-    unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
-    if (isNoAlias(II->getOperand(2), PtrSize, P, Size))
+    unsigned PtrSize = cast<ConstantInt>(II->getOperand(0))->getZExtValue();
+    if (isNoAlias(II->getOperand(1), PtrSize, P, Size))
       return NoModRef;
     break;
   }
   case Intrinsic::invariant_end: {
-    unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
-    if (isNoAlias(II->getOperand(3), PtrSize, P, Size))
+    unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
+    if (isNoAlias(II->getOperand(2), PtrSize, P, Size))
       return NoModRef;
     break;
   }

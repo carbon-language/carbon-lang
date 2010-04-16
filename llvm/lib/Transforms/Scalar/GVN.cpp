@@ -271,7 +271,7 @@ Expression ValueTable::create_expression(CallInst* C) {
   e.function = C->getCalledFunction();
   e.opcode = Expression::CALL;
 
-  for (CallInst::op_iterator I = C->op_begin()+1, E = C->op_end();
+  for (CallInst::op_iterator I = C->op_begin(), E = C->op_end() - 1;
        I != E; ++I)
     e.varargs.push_back(lookup_or_add(*I));
 
@@ -452,7 +452,7 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
         return nextValueNumber++;
       }
 
-      for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+      for (unsigned i = 0, e = C->getNumOperands() - 1; i < e; ++i) {
         uint32_t c_vn = lookup_or_add(C->getOperand(i));
         uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
         if (c_vn != cd_vn) {
@@ -508,7 +508,7 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
       valueNumbering[C] = nextValueNumber;
       return nextValueNumber++;
     }
-    for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+    for (unsigned i = 0, e = C->getNumOperands() - 1; i < e; ++i) {
       uint32_t c_vn = lookup_or_add(C->getOperand(i));
       uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
       if (c_vn != cd_vn) {

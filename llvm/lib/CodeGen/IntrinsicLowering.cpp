@@ -308,21 +308,21 @@ static Value *LowerCTLZ(LLVMContext &Context, Value *V, Instruction *IP) {
 static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
                                        const char *Dname,
                                        const char *LDname) {
-  switch (CI->getOperand(1)->getType()->getTypeID()) {
+  switch (CI->getOperand(0)->getType()->getTypeID()) {
   default: llvm_unreachable("Invalid type in intrinsic");
   case Type::FloatTyID:
-    ReplaceCallWith(Fname, CI, CI->op_begin() + 1, CI->op_end(),
+    ReplaceCallWith(Fname, CI, CI->op_begin(), CI->op_end() - 1,
                   Type::getFloatTy(CI->getContext()));
     break;
   case Type::DoubleTyID:
-    ReplaceCallWith(Dname, CI, CI->op_begin() + 1, CI->op_end(),
+    ReplaceCallWith(Dname, CI, CI->op_begin(), CI->op_end() - 1,
                   Type::getDoubleTy(CI->getContext()));
     break;
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
-    ReplaceCallWith(LDname, CI, CI->op_begin() + 1, CI->op_end(),
-                  CI->getOperand(1)->getType());
+    ReplaceCallWith(LDname, CI, CI->op_begin(), CI->op_end() - 1,
+                  CI->getOperand(0)->getType());
     break;
   }
 }
@@ -347,7 +347,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // by the lowerinvoke pass.  In both cases, the right thing to do is to
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
-    Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin() + 1, CI->op_end(),
+    Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin(), CI->op_end() - 1,
                                Type::getInt32Ty(Context));
     if (!CI->getType()->isVoidTy())
       CI->replaceAllUsesWith(V);
@@ -359,7 +359,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
      break;
 
   case Intrinsic::longjmp: {
-    ReplaceCallWith("longjmp", CI, CI->op_begin() + 1, CI->op_end(),
+    ReplaceCallWith("longjmp", CI, CI->op_begin(), CI->op_end() - 1,
                     Type::getVoidTy(Context));
     break;
   }
@@ -371,20 +371,20 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::ctpop:
-    CI->replaceAllUsesWith(LowerCTPOP(Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerCTPOP(Context, CI->getOperand(0), CI));
     break;
 
   case Intrinsic::bswap:
-    CI->replaceAllUsesWith(LowerBSWAP(Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerBSWAP(Context, CI->getOperand(0), CI));
     break;
     
   case Intrinsic::ctlz:
-    CI->replaceAllUsesWith(LowerCTLZ(Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerCTLZ(Context, CI->getOperand(0), CI));
     break;
 
   case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
-    Value *Src = CI->getOperand(1);
+    Value *Src = CI->getOperand(0);
     Value *NotSrc = Builder.CreateNot(Src);
     NotSrc->setName(Src->getName() + ".not");
     Value *SrcM1 = ConstantInt::get(Src->getType(), 1);
@@ -445,37 +445,37 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     
   case Intrinsic::memcpy: {
     const IntegerType *IntPtr = TD.getIntPtrType(Context);
-    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+    Value *Size = Builder.CreateIntCast(CI->getOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
-    Ops[0] = CI->getOperand(1);
-    Ops[1] = CI->getOperand(2);
+    Ops[0] = CI->getOperand(0);
+    Ops[1] = CI->getOperand(1);
     Ops[2] = Size;
-    ReplaceCallWith("memcpy", CI, Ops, Ops+3, CI->getOperand(1)->getType());
+    ReplaceCallWith("memcpy", CI, Ops, Ops+3, CI->getOperand(0)->getType());
     break;
   }
   case Intrinsic::memmove: {
     const IntegerType *IntPtr = TD.getIntPtrType(Context);
-    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+    Value *Size = Builder.CreateIntCast(CI->getOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
-    Ops[0] = CI->getOperand(1);
-    Ops[1] = CI->getOperand(2);
+    Ops[0] = CI->getOperand(0);
+    Ops[1] = CI->getOperand(1);
     Ops[2] = Size;
-    ReplaceCallWith("memmove", CI, Ops, Ops+3, CI->getOperand(1)->getType());
+    ReplaceCallWith("memmove", CI, Ops, Ops+3, CI->getOperand(0)->getType());
     break;
   }
   case Intrinsic::memset: {
     const IntegerType *IntPtr = TD.getIntPtrType(Context);
-    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+    Value *Size = Builder.CreateIntCast(CI->getOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
-    Ops[0] = CI->getOperand(1);
+    Ops[0] = CI->getOperand(0);
     // Extend the amount to i32.
-    Ops[1] = Builder.CreateIntCast(CI->getOperand(2), Type::getInt32Ty(Context),
+    Ops[1] = Builder.CreateIntCast(CI->getOperand(1), Type::getInt32Ty(Context),
                                    /* isSigned */ false);
     Ops[2] = Size;
-    ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(1)->getType());
+    ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(0)->getType());
     break;
   }
   case Intrinsic::sqrt: {

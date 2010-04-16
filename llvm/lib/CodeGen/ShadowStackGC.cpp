@@ -158,9 +158,9 @@ namespace {
 
           // Create a new invoke instruction.
           Args.clear();
-          Args.append(CI->op_begin() + 1, CI->op_end());
+          Args.append(CI->op_begin(), CI->op_end() - 1);
 
-          InvokeInst *II = InvokeInst::Create(CI->getOperand(0),
+          InvokeInst *II = InvokeInst::Create(CI->getCalledValue(),
                                               NewBB, CleanupBB,
                                               Args.begin(), Args.end(),
                                               CI->getName(), CallBB);
@@ -194,7 +194,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   unsigned NumMeta = 0;
   SmallVector<Constant*,16> Metadata;
   for (unsigned I = 0; I != Roots.size(); ++I) {
-    Constant *C = cast<Constant>(Roots[I].first->getOperand(2));
+    Constant *C = cast<Constant>(Roots[I].first->getOperand(1));
     if (!C->isNullValue())
       NumMeta = I + 1;
     Metadata.push_back(ConstantExpr::getBitCast(C, VoidPtr));
@@ -322,16 +322,16 @@ void ShadowStackGC::CollectRoots(Function &F) {
 
   assert(Roots.empty() && "Not cleaned up?");
 
-  SmallVector<std::pair<CallInst*,AllocaInst*>,16> MetaRoots;
+  SmallVector<std::pair<CallInst*, AllocaInst*>,16> MetaRoots;
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;)
       if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++))
         if (Function *F = CI->getCalledFunction())
           if (F->getIntrinsicID() == Intrinsic::gcroot) {
-            std::pair<CallInst*,AllocaInst*> Pair = std::make_pair(
-              CI, cast<AllocaInst>(CI->getOperand(1)->stripPointerCasts()));
-            if (IsNullValue(CI->getOperand(2)))
+            std::pair<CallInst*, AllocaInst*> Pair = std::make_pair(
+              CI, cast<AllocaInst>(CI->getOperand(0)->stripPointerCasts()));
+            if (IsNullValue(CI->getOperand(1)))
               Roots.push_back(Pair);
             else
               MetaRoots.push_back(Pair);
