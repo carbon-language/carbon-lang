@@ -607,7 +607,7 @@ fast).</p>
 <div class="doc_text">
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnSCC(const std::vector&lt;CallGraphNode *&gt; &amp;SCCM) = 0;
+  <b>virtual bool</b> runOnSCC(CallGraphSCC &amp;SCC) = 0;
 </pre></div>
 
 <p>The <tt>runOnSCC</tt> method performs the interesting work of the pass, and
