@@ -148,14 +148,27 @@ FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// ConvertToScalarInfo - This struct is used by CanConvertToScalar
+/// ConvertToScalarInfo - This class implements the "Convert To Scalar"
+/// optimization, which scans the uses of an alloca and determines if it can
+/// rewrite it in terms of a single new alloca that can be mem2reg'd.
 class ConvertToScalarInfo {
   /// AllocaSize - The size of the alloca being considered.
   unsigned AllocaSize;
   const TargetData &TD;
  
+  /// IsNotTrivial - This is set to true if there is somee access to the object
+  /// which means that mem2reg can't promote it.
   bool IsNotTrivial;
+  
+  /// VectorTy - This tracks the type that we should promote the vector to if
+  /// it is possible to turn it into a vector.  This starts out null, and if it
+  /// isn't possible to turn into a vector type, it gets set to VoidTy.
   const Type *VectorTy;
+  
+  /// HadAVector - True if there is at least one vector access to the alloca.
+  /// We don't want to turn random arrays into vectors and use vector element
+  /// insert/extract, but if there are element accesses to something that is
+  /// also declared as a vector, we do want to promote to a vector.
   bool HadAVector;
 
 public:
@@ -166,33 +179,7 @@ public:
     HadAVector = false;
   }
   
-  AllocaInst *TryConvert(AllocaInst *AI) {
-    // If we can't convert this scalar, or if mem2reg can trivially do it, bail
-    // out.
-    if (!CanConvertToScalar(AI, 0) || !IsNotTrivial)
-      // FIXME: In the trivial case, just use mem2reg.
-      return 0;
-    
-    // If we were able to find a vector type that can handle this with
-    // insert/extract elements, and if there was at least one use that had
-    // a vector type, promote this to a vector.  We don't want to promote
-    // random stuff that doesn't use vectors (e.g. <9 x double>) because then
-    // we just get a lot of insert/extracts.  If at least one vector is
-    // involved, then we probably really do have a union of vector/array.
-    const Type *NewTy;
-    if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
-      DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
-                   << *VectorTy << '\n');
-      NewTy = VectorTy;  // Use the vector type.
-    } else {
-      DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
-      // Create and insert the integer alloca.
-      NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
-    }
-    AllocaInst *NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
-    ConvertUsesToScalar(AI, NewAI, 0);
-    return NewAI;
-  }
+  AllocaInst *TryConvert(AllocaInst *AI);
   
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
@@ -206,8 +193,38 @@ private:
 };
 } // end anonymous namespace.
 
-/// MergeInType - Add the 'In' type to the accumulated type (Accum) so far at
-/// the offset specified by Offset (which is specified in bytes).
+/// TryConvert - Analyze the specified alloca, and if it is safe to do so,
+/// rewrite it to be a new alloca which is mem2reg'able.  This returns the new
+/// alloca if possible or null if not.
+AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
+  // If we can't convert this scalar, or if mem2reg can trivially do it, bail
+  // out.
+  if (!CanConvertToScalar(AI, 0) || !IsNotTrivial)
+    return 0;
+  
+  // If we were able to find a vector type that can handle this with
+  // insert/extract elements, and if there was at least one use that had
+  // a vector type, promote this to a vector.  We don't want to promote
+  // random stuff that doesn't use vectors (e.g. <9 x double>) because then
+  // we just get a lot of insert/extracts.  If at least one vector is
+  // involved, then we probably really do have a union of vector/array.
+  const Type *NewTy;
+  if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
+    DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
+          << *VectorTy << '\n');
+    NewTy = VectorTy;  // Use the vector type.
+  } else {
+    DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
+    // Create and insert the integer alloca.
+    NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
+  }
+  AllocaInst *NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
+  ConvertUsesToScalar(AI, NewAI, 0);
+  return NewAI;
+}
+
+/// MergeInType - Add the 'In' type to the accumulated vector type (VectorTy)
+/// so far at the offset specified by Offset (which is specified in bytes).
 ///
 /// There are two cases we handle here:
 ///   1) A union of vector types of the same size and potentially its elements.
@@ -216,11 +233,11 @@ private:
 ///      into a <4 x float> that uses insert element.
 ///   2) A fully general blob of memory, which we turn into some (potentially
 ///      large) integer type with extract and insert operations where the loads
-///      and stores would mutate the memory.
+///      and stores would mutate the memory.  We mark this by setting VectorTy
+///      to VoidTy.
 void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
-  // Remember if we saw a vector type.
-  HadAVector |= In->isVectorTy();
-  
+  // If we already decided to turn this into a blob of integer memory, there is
+  // nothing to be done.
   if (VectorTy && VectorTy->isVoidTy())
     return;
   
@@ -229,10 +246,15 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // If the In type is a vector that is the same size as the alloca, see if it
   // matches the existing VecTy.
   if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
+    // Remember if we saw a vector type.
+    HadAVector = true;
+    
     if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
       // If we're storing/loading a vector of the right size, allow it as a
       // vector.  If this the first vector we see, remember the type so that
-      // we know the element size.
+      // we know the element size.  If this is a subsequent access, ignore it
+      // even if it is a differing type but the same size.  Worst case we can
+      // bitcast the resultant vectors.
       if (VectorTy == 0)
         VectorTy = VInTy;
       return;
@@ -288,9 +310,9 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
     }
     
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
+      IsNotTrivial = true;  // Can't be mem2reg'd.
       if (!CanConvertToScalar(BCI, Offset))
         return false;
-      IsNotTrivial = true;
       continue;
     }
 
@@ -306,7 +328,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // See if all uses can be converted.
       if (!CanConvertToScalar(GEP, Offset+GEPOffset))
         return false;
-      IsNotTrivial = true;
+      IsNotTrivial = true;  // Can't be mem2reg'd.
       continue;
     }
 
@@ -314,21 +336,22 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
     // handle it.
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
       // Store of constant value and constant size.
-      if (isa<ConstantInt>(MSI->getValue()) &&
-          isa<ConstantInt>(MSI->getLength())) {
-        IsNotTrivial = true;
-        continue;
-      }
+      if (!isa<ConstantInt>(MSI->getValue()) ||
+          !isa<ConstantInt>(MSI->getLength()))
+        return false;
+      IsNotTrivial = true;  // Can't be mem2reg'd.
+      continue;
     }
 
     // If this is a memcpy or memmove into or out of the whole allocation, we
     // can handle it like a load or store of the scalar type.
     if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
-      if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
-        if (Len->getZExtValue() == AllocaSize && Offset == 0) {
-          IsNotTrivial = true;
-          continue;
-        }
+      ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength());
+      if (Len == 0 || Len->getZExtValue() != AllocaSize || Offset != 0)
+        return false;
+      
+      IsNotTrivial = true;  // Can't be mem2reg'd.
+      continue;
     }
     
     // Otherwise, we cannot handle this!
