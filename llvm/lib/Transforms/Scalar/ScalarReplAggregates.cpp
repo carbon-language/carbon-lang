@@ -156,7 +156,7 @@ class ConvertToScalarInfo {
   unsigned AllocaSize;
   const TargetData &TD;
  
-  /// IsNotTrivial - This is set to true if there is somee access to the object
+  /// IsNotTrivial - This is set to true if there is some access to the object
   /// which means that mem2reg can't promote it.
   bool IsNotTrivial;
   
