@@ -1677,7 +1677,7 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   OverloadCandidateSet CandidateSet(From->getExprLoc());
   OverloadingResult OvResult = 
     IsUserDefinedConversion(From, ToType, ICS.UserDefined,
-                            CandidateSet, true, false, false);
+                            CandidateSet, true, false, false, false);
   if (OvResult == OR_Ambiguous)
     Diag(From->getSourceRange().getBegin(),
          diag::err_typecheck_ambiguous_condition)

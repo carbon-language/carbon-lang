@@ -1093,7 +1093,7 @@ public:
                                OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
                                bool AllowExplicit, bool ForceRValue,
-                               bool UserCast = false);
+                               bool UserCast);
   bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
                                               
 
