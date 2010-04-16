@@ -918,10 +918,10 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
 /// created for it, emit nodes to copy the value into the virtual
 /// registers.
 void SelectionDAGBuilder::CopyToExportRegsIfNeeded(const Value *V) {
-  if (!V->use_empty()) {
-    DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
-    if (VMI != FuncInfo.ValueMap.end())
-      CopyValueToVirtualRegister(V, VMI->second);
+  DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
+  if (VMI != FuncInfo.ValueMap.end()) {
+    assert(!V->use_empty() && "Unused value assigned virtual registers!");
+    CopyValueToVirtualRegister(V, VMI->second);
   }
 }
 

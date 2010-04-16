@@ -834,7 +834,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
             BI->dump();
           }
 
-          if (!BI->getType()->isVoidTy()) {
+          if (!BI->getType()->isVoidTy() && !BI->use_empty()) {
             unsigned &R = FuncInfo->ValueMap[BI];
             if (!R)
               R = FuncInfo->CreateRegForValue(BI);
