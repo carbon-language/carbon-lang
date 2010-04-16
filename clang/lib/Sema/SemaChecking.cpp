@@ -480,7 +480,8 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   if (TheCall->getNumArgs() > 2) {
     Diag(TheCall->getArg(2)->getLocStart(),
          diag::err_typecheck_call_too_many_args)
-      << 0 /*function call*/ << Fn->getSourceRange()
+      << 0 /*function call*/ << 2 << TheCall->getNumArgs()
+      << Fn->getSourceRange()
       << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
     return true;
@@ -547,7 +548,7 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   if (TheCall->getNumArgs() > 2)
     return Diag(TheCall->getArg(2)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
-      << 0 /*function call*/
+      << 0 /*function call*/ << 2 << TheCall->getNumArgs()
       << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
 
@@ -589,7 +590,7 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
   if (TheCall->getNumArgs() > NumArgs)
     return Diag(TheCall->getArg(NumArgs)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
-      << 0 /*function call*/
+      << 0 /*function call*/ << NumArgs << TheCall->getNumArgs()
       << SourceRange(TheCall->getArg(NumArgs)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
 
@@ -658,7 +659,9 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
                  << TheCall->getSourceRange());
       return ExprError(Diag(TheCall->getLocEnd(),
                             diag::err_typecheck_call_too_many_args)
-                 << 0 /*function call*/ << TheCall->getSourceRange());
+                 << 0 /*function call*/ 
+                 << numElements+2 << TheCall->getNumArgs()
+                 << TheCall->getSourceRange());
     }
   }
 
@@ -699,8 +702,10 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   unsigned NumArgs = TheCall->getNumArgs();
 
   if (NumArgs > 3)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
-             << 0 /*function call*/ << TheCall->getSourceRange();
+    return Diag(TheCall->getLocEnd(),
+             diag::err_typecheck_call_too_many_args_at_most)
+             << 0 /*function call*/ << 3 << NumArgs
+             << TheCall->getSourceRange();
 
   // Argument 0 is checked for us and the remaining arguments must be
   // constant integers.

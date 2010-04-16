@@ -3346,7 +3346,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     if (!Proto->isVariadic()) {
       Diag(Args[NumArgsInProto]->getLocStart(),
            diag::err_typecheck_call_too_many_args)
-        << Fn->getType()->isBlockPointerType() << Fn->getSourceRange()
+        << Fn->getType()->isBlockPointerType() 
+        << NumArgsInProto << NumArgs << Fn->getSourceRange()
         << SourceRange(Args[NumArgsInProto]->getLocStart(),
                        Args[NumArgs-1]->getLocEnd());
       // This deletes the extra arguments.
