@@ -52,7 +52,6 @@ namespace clang {
 
 namespace CodeGen {
   class CGRecordLayout;
-  class CodeGenTypes;
 
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
