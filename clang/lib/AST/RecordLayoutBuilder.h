@@ -26,7 +26,7 @@ namespace clang {
   class RecordDecl;
 
 class ASTRecordLayoutBuilder {
-  ASTContext &Ctx;
+  ASTContext &Context;
 
   /// Size - The current size of the record layout.
   uint64_t Size;
