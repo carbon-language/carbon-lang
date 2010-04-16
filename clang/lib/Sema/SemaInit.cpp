@@ -3494,7 +3494,7 @@ InitializationSequence::Perform(Sema &S,
         
     case SK_ConversionSequence:
         if (S.PerformImplicitConversion(CurInitExpr, Step->Type, Sema::AA_Converting, 
-                                      false, false, *Step->ICS))
+                                      false, *Step->ICS))
         return S.ExprError();
         
       CurInit.release();

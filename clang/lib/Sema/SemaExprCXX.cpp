@@ -1479,38 +1479,23 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 /// error, false otherwise. The expression From is replaced with the
 /// converted expression. Flavor is the kind of conversion we're
 /// performing, used in the error message. If @p AllowExplicit,
-/// explicit user-defined conversions are permitted. @p Elidable should be true
-/// when called for copies which may be elided (C++ 12.8p15). C++0x overload
-/// resolution works differently in that case.
+/// explicit user-defined conversions are permitted.
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                AssignmentAction Action, bool AllowExplicit,
-                                bool Elidable) {
+                                AssignmentAction Action, bool AllowExplicit) {
   ImplicitConversionSequence ICS;
-  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, 
-                                   Elidable, ICS);
+  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, ICS);
 }
 
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 AssignmentAction Action, bool AllowExplicit,
-                                bool Elidable,
                                 ImplicitConversionSequence& ICS) {
-  ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
-  if (Elidable && getLangOptions().CPlusPlus0x) {
-    ICS = TryImplicitConversion(From, ToType,
-                                /*SuppressUserConversions=*/false,
-                                AllowExplicit,
-                                /*ForceRValue=*/true,
-                                /*InOverloadResolution=*/false);
-  }
-  if (ICS.isBad()) {
-    ICS = TryImplicitConversion(From, ToType,
-                                /*SuppressUserConversions=*/false,
-                                AllowExplicit,
-                                /*ForceRValue=*/false,
-                                /*InOverloadResolution=*/false);
-  }
+  ICS = TryImplicitConversion(From, ToType,
+                              /*SuppressUserConversions=*/false,
+                              AllowExplicit,
+                              /*ForceRValue=*/false,
+                              /*InOverloadResolution=*/false);
   return PerformImplicitConversion(From, ToType, ICS, Action);
 }
 

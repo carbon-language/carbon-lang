@@ -4109,12 +4109,10 @@ public:
 
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  AssignmentAction Action,
-                                 bool AllowExplicit = false,
-                                 bool Elidable = false);
+                                 bool AllowExplicit = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  AssignmentAction Action,
                                  bool AllowExplicit,
-                                 bool Elidable,
                                  ImplicitConversionSequence& ICS);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const ImplicitConversionSequence& ICS,
