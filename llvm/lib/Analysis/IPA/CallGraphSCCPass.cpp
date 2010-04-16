@@ -417,6 +417,11 @@ void CallGraphSCC::ReplaceNode(CallGraphNode *Old, CallGraphNode *New) {
     Nodes[i] = New;
     break;
   }
+  
+  // Update the active scc_iterator so that it doesn't contain dangling
+  // pointers to the old CallGraphNode.
+  scc_iterator<CallGraph*> *CGI = (scc_iterator<CallGraph*>*)Context;
+  CGI->ReplaceNode(Old, New);
 }
 
 

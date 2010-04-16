@@ -183,6 +183,15 @@ public:
         return true;
     return false;
   }
+                           
+  /// ReplaceNode - This informs the scc_iterator that the specified Old node
+  /// has been deleted, and New is to be used in its place.
+  void ReplaceNode(NodeType *Old, NodeType *New) {
+    assert(!nodeVisitNumbers.count(New) && "New already in scc_iterator?");
+    assert(nodeVisitNumbers.count(Old) && "Old not in scc_iterator?");
+    nodeVisitNumbers[New] = nodeVisitNumbers[Old];
+    nodeVisitNumbers.erase(Old);
+  }
 };
 
 
