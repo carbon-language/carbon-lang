@@ -62,7 +62,7 @@ current one.  To see the release notes for a specific release, please see the
 
 
 <p>FIXME: llvm.org moved to new server, mention new logo, Ted and Doug new code
-   owners.</p>
+   owners, web page in llvm-www repos.</p>
 
 </div>
  
@@ -534,15 +534,29 @@ New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
 Combiner-AA improvements, why not on by default?
 Pre-regalloc tail duplication
 x86 sibcall / tailcall optimization in CCC mode.
-New LSR with full strength reduction mode
-The most awesome sext / zext optimization pass. ?
+New LSR with "full strength reduction" mode.  Description?
+Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. 
 Better code size analysis in loop unswitch, inliner code split out to a new 
   CodeMetrics class for reuse.
 The ARM backend now has good support for ARMv4 backend (tested on StrongARM
   hardware), previously only supported ARMv4T and newer.
 Half-float support in APFloat
 Indirect branch + address of label (blog post), particularly useful for interpreters.
-Many changes to the pass ordering for improved optimization effectiveness.  
+Many changes to the pass ordering for improved optimization effectiveness.
+BasicAA improved to be less dependent on "type safe" pointers, it can now look
+  through bitcasts more aggressively.
+GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html
+llvm.objectsize.
+MachineSSAUpdater.h
+PostRA scheduler for X86?
+llvm.dbg.value, not being used by default though, more in 2.8.  Many improvements to debug info
+Support for the GCC option -fno-schedule-insns
+non-temporal load/store
+libllvm2.7.so??  configure with --enable-shared 
+dbgs() and -debug-buffer-size=N
+New MicroBlaze backend. http://en.wikipedia.org/wiki/MicroBlaze
+XMM subreg modeling for extraction of the low element.
+
 
 Opt now works conservatively if no target data is set (is this fully working?)
 Target data now has notion of 'native' integer data types which optimizations can use.
@@ -556,9 +570,9 @@ X86 and XCore supports returning arbitrary return values, returning too many val
 verbose-asm now produces information about spill slots and loop nests
 
 
-Defaults to RTTI off, packagers should build with make REQUIRE_RTTI=1.
-AndersAA got removed (from 2.7 or mainline?)
-PredSimplify, LoopVR, GVNPRE got removed.
+Defaults to RTTI off (smaller code size!), packagers should build with make REQUIRE_RTTI=1.
+AndersAA got removed
+PredSimplify, LoopVR, GVNPRE, RSProfiling (random sampling profiling) got removed.
 LLVM command line tools now overwrite their output, before they would only do this with -f.
 DOUT removed, use DEBUG(errs() instead.
 Much stuff converted to use raw_ostream instead of std::ostream.
