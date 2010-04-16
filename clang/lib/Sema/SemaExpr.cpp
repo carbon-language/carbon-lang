@@ -3335,7 +3335,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   if (NumArgs < NumArgsInProto) {
     if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
       return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
-        << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
+        << Fn->getType()->isBlockPointerType() 
+        << NumArgsInProto << NumArgs << Fn->getSourceRange();
     Call->setNumArgs(Context, NumArgsInProto);
   }
 

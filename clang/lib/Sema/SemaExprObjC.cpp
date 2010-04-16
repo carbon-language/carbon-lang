@@ -190,7 +190,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     NumNamedArgs = Method->param_size();
   // FIXME. This need be cleaned up.
   if (NumArgs < NumNamedArgs) {
-    Diag(lbrac, diag::err_typecheck_call_too_few_args) << 2;
+    Diag(lbrac, diag::err_typecheck_call_too_few_args) << 2
+    << NumNamedArgs << NumArgs;
     return false;
   }
 

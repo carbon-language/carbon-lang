@@ -270,8 +270,10 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 
   // Ensure that we have at least one argument to do type inference from.
   if (TheCall->getNumArgs() < 1)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-              << 0 << TheCall->getCallee()->getSourceRange();
+    return Diag(TheCall->getLocEnd(),
+              diag::err_typecheck_call_too_few_args_at_least)
+              << 0 << 1 << TheCall->getNumArgs()
+              << TheCall->getCallee()->getSourceRange();
 
   // Inspect the first argument of the atomic builtin.  This should always be
   // a pointer type, whose element is an integral scalar or pointer type.
@@ -367,8 +369,10 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   // Now that we know how many fixed arguments we expect, first check that we
   // have at least that many.
   if (TheCall->getNumArgs() < 1+NumFixed)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-            << 0 << TheCall->getCallee()->getSourceRange();
+    return Diag(TheCall->getLocEnd(),
+            diag::err_typecheck_call_too_few_args_at_least)
+            << 0 << 1+NumFixed << TheCall->getNumArgs()
+            << TheCall->getCallee()->getSourceRange();
 
 
   // Get the decl for the concrete builtin from this, we can tell what the
@@ -483,8 +487,9 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   }
 
   if (TheCall->getNumArgs() < 2) {
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 /*function call*/;
+    return Diag(TheCall->getLocEnd(),
+      diag::err_typecheck_call_too_few_args_at_least)
+      << 0 /*function call*/ << 2 << TheCall->getNumArgs();
   }
 
   // Determine whether the current function is variadic or not.
@@ -538,7 +543,7 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
 bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 /*function call*/;
+      << 0 << 2 << TheCall->getNumArgs()/*function call*/;
   if (TheCall->getNumArgs() > 2)
     return Diag(TheCall->getArg(2)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
@@ -580,7 +585,7 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
 bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
   if (TheCall->getNumArgs() < NumArgs)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 /*function call*/;
+      << 0 << NumArgs << TheCall->getNumArgs()/*function call*/;
   if (TheCall->getNumArgs() > NumArgs)
     return Diag(TheCall->getArg(NumArgs)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
@@ -619,8 +624,9 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
 Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 3)
     return ExprError(Diag(TheCall->getLocEnd(),
-                          diag::err_typecheck_call_too_few_args)
-      << 0 /*function call*/ << TheCall->getSourceRange());
+                          diag::err_typecheck_call_too_few_args_at_least)
+      << 0 /*function call*/ << 3 << TheCall->getNumArgs()
+      << TheCall->getSourceRange());
 
   unsigned numElements = std::numeric_limits<unsigned>::max();
   if (!TheCall->getArg(0)->isTypeDependent() &&
@@ -647,7 +653,9 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       if (TheCall->getNumArgs() < numElements+2)
         return ExprError(Diag(TheCall->getLocEnd(),
                               diag::err_typecheck_call_too_few_args)
-                 << 0 /*function call*/ << TheCall->getSourceRange());
+                 << 0 /*function call*/ 
+                 << numElements+2 << TheCall->getNumArgs()
+                 << TheCall->getSourceRange());
       return ExprError(Diag(TheCall->getLocEnd(),
                             diag::err_typecheck_call_too_many_args)
                  << 0 /*function call*/ << TheCall->getSourceRange());
