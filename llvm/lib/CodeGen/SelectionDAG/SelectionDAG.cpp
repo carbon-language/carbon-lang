@@ -3223,7 +3223,8 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // indicates whether the memcpy source is constant so it does not need to be
   // loaded.
   EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign,
-                                   NonScalarIntSafe, MemcpyStrSrc, DAG);
+                                   NonScalarIntSafe, MemcpyStrSrc,
+                                   DAG.getMachineFunction());
 
   if (VT == MVT::Other) {
     if (DstAlign >= TLI.getTargetData()->getPointerPrefAlignment() ||
