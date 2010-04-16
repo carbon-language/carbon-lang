@@ -59,6 +59,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/InlineCost.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -328,15 +330,6 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (&BB->front() == Ret) // Make sure there is something before the ret...
     return false;
   
-  // If the return is in the entry block, then making this transformation would
-  // turn infinite recursion into an infinite loop.  This transformation is ok
-  // in theory, but breaks some code like:
-  //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
-  // disable this xform in this case, because the code generator will lower the
-  // call to fabs into inline code.
-  if (BB == &F->getEntryBlock())
-    return false;
-
   // Scan backwards from the return, checking to see if there is a tail call in
   // this block.  If so, set CI to it.
   CallInst *CI;
@@ -355,6 +348,25 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // the function, we cannot perform this optimization.
   if (CI->isTailCall() && CannotTailCallElimCallsMarkedTail)
     return false;
+
+  // As a special case, detect code like this:
+  //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
+  // and disable this xform in this case, because the code generator will
+  // lower the call to fabs into inline code.
+  if (BB == &F->getEntryBlock() && 
+      &BB->front() == CI && &*++BB->begin() == Ret &&
+      callIsSmall(F)) {
+    // A single-block function with just a call and a return. Check that
+    // the arguments match.
+    CallSite::arg_iterator I = CallSite(CI).arg_begin(),
+                           E = CallSite(CI).arg_end();
+    Function::arg_iterator FI = F->arg_begin(),
+                           FE = F->arg_end();
+    for (; I != E && FI != FE; ++I, ++FI)
+      if (*I != &*FI) break;
+    if (I == E && FI == FE)
+      return false;
+  }
 
   // If we are introducing accumulator recursion to eliminate associative
   // operations after the call instruction, this variable contains the initial
