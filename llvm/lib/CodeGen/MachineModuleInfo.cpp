@@ -450,10 +450,12 @@ void MachineModuleInfo::addCleanup(MachineBasicBlock *LandingPad) {
 
 /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
 /// pads.
-void MachineModuleInfo::TidyLandingPads() {
+void MachineModuleInfo::TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap) {
   for (unsigned i = 0; i != LandingPads.size(); ) {
     LandingPadInfo &LandingPad = LandingPads[i];
-    if (LandingPad.LandingPadLabel && !LandingPad.LandingPadLabel->isDefined())
+    if (LandingPad.LandingPadLabel &&
+        !LandingPad.LandingPadLabel->isDefined() &&
+        (!LPMap || (*LPMap)[LandingPad.LandingPadLabel] == 0))
       LandingPad.LandingPadLabel = 0;
 
     // Special case: we *should* emit LPs with null LP MBB. This indicates
@@ -466,7 +468,10 @@ void MachineModuleInfo::TidyLandingPads() {
     for (unsigned j = 0, e = LandingPads[i].BeginLabels.size(); j != e; ++j) {
       MCSymbol *BeginLabel = LandingPad.BeginLabels[j];
       MCSymbol *EndLabel = LandingPad.EndLabels[j];
-      if (BeginLabel->isDefined() && EndLabel->isDefined()) continue;
+      if ((BeginLabel->isDefined() ||
+           (LPMap && (*LPMap)[BeginLabel] != 0)) &&
+          (EndLabel->isDefined() ||
+           (LPMap && (*LPMap)[EndLabel] != 0))) continue;
       
       LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
       LandingPad.EndLabels.erase(LandingPad.EndLabels.begin() + j);

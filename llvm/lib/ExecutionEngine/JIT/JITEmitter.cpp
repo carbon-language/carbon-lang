@@ -23,6 +23,7 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -30,8 +31,8 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -43,7 +44,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Disassembler.h"
 #include "llvm/System/Memory.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -461,6 +461,10 @@ namespace {
 
     virtual void emitLabel(MCSymbol *Label) {
       LabelLocations[Label] = getCurrentPCValue();
+    }
+
+    virtual DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() {
+      return &LabelLocations;
     }
 
     virtual uintptr_t getLabelAddress(MCSymbol *Label) const {

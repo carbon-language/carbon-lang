@@ -199,7 +199,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   assert(MMI && "MachineModuleInfo not registered!");
 
   // Map all labels and get rid of any dead landing pads.
-  MMI->TidyLandingPads();
+  MMI->TidyLandingPads(JCE->getLabelLocations());
 
   const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
@@ -780,7 +780,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
   unsigned FinalSize = 0;
 
   // Map all labels and get rid of any dead landing pads.
-  MMI->TidyLandingPads();
+  MMI->TidyLandingPads(JCE->getLabelLocations());
 
   const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();

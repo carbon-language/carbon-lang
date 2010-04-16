@@ -21,6 +21,7 @@
 #include "llvm/System/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/ADT/DenseMap.h"
 
 using namespace std;
 
@@ -324,6 +325,10 @@ public:
   /// Specifies the MachineModuleInfo object. This is used for exception handling
   /// purposes.
   virtual void setModuleInfo(MachineModuleInfo* Info) = 0;
+
+  /// getLabelLocations - Return the label locations map of the label IDs to
+  /// their address.
+  virtual DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() { return 0; }
 };
 
 } // End llvm namespace

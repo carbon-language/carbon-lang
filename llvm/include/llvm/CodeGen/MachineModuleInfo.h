@@ -295,7 +295,7 @@ public:
 
   /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
   /// pads.
-  void TidyLandingPads();
+  void TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap = 0);
                         
   /// getLandingPads - Return a reference to the landing pad info for the
   /// current function.
