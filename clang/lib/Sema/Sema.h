@@ -1113,11 +1113,6 @@ public:
   CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                   const StandardConversionSequence& SCS2);
 
-  ImplicitConversionSequence
-  TryCopyInitialization(Expr* From, QualType ToType,
-                        bool SuppressUserConversions, bool ForceRValue,
-                        bool InOverloadResolution);
-  
   OwningExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                              SourceLocation EqualLoc,
                                              OwningExprResult Init);
