@@ -615,17 +615,16 @@ public:
   }
 
   llvm::Constant *EmitArrayInitialization(InitListExpr *ILE) {
-    std::vector<llvm::Constant*> Elts;
-    const llvm::ArrayType *AType =
-        cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     unsigned NumInitElements = ILE->getNumInits();
-    // FIXME: Check for wide strings
     // FIXME: Check for NumInitElements exactly equal to 1??
     if (NumInitElements > 0 &&
         (isa<StringLiteral>(ILE->getInit(0)) ||
-         isa<ObjCEncodeExpr>(ILE->getInit(0))) &&
-        ILE->getType()->getArrayElementTypeNoTypeQual()->isCharType())
+         isa<ObjCEncodeExpr>(ILE->getInit(0))))
       return Visit(ILE->getInit(0));
+
+    std::vector<llvm::Constant*> Elts;
+    const llvm::ArrayType *AType =
+        cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     const llvm::Type *ElemTy = AType->getElementType();
     unsigned NumElements = AType->getNumElements();
 
