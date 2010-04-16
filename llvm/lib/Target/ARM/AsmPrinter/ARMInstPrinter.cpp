@@ -379,7 +379,6 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
   }
   
   unsigned ImmOffs = ARM_AM::getAM3Offset(MO2.getImm());
-  assert(ImmOffs && "Malformed indexed load / store!");
   O << '#'
     << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO2.getImm()))
     << ImmOffs;
