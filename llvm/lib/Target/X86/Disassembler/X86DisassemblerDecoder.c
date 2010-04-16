@@ -1296,6 +1296,7 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_Iv:
       if (readImmediate(insn, insn->immediateSize))
         return -1;
+      break;
     case ENCODING_Ia:
       if (readImmediate(insn, insn->addressSize))
         return -1;
