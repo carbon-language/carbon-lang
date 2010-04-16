@@ -64,6 +64,9 @@ DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 static cl::opt<bool>
 Disable16Bit("disable-16bit", cl::Hidden,
              cl::desc("Disable use of 16-bit instructions"));
+static cl::opt<bool>
+Promote16Bit("promote-16bit", cl::Hidden,
+             cl::desc("Promote 16-bit instructions"));
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
@@ -9904,6 +9907,44 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   }
 
   return SDValue();
+}
+
+/// PerformDAGCombinePromotion - This method query the target whether it is
+/// beneficial for dag combiner to promote the specified node. If true, it
+/// should return the desired promotion type by reference.
+bool X86TargetLowering::PerformDAGCombinePromotion(SDValue Op, EVT &PVT) const {
+  if (!Promote16Bit)
+    return false;
+
+  EVT VT = Op.getValueType();
+  if (VT != MVT::i16)
+    return false;
+
+  bool Commute = true;
+  switch (Op.getOpcode()) {
+  default: return false;
+  case ISD::SUB:
+    Commute = false;
+    // fallthrough
+  case ISD::ADD:
+  case ISD::MUL:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: {
+    SDValue N0 = Op.getOperand(0);
+    SDValue N1 = Op.getOperand(1);
+    if (!Commute && isa<LoadSDNode>(N1))
+      return false;
+    // Avoid disabling potential load folding opportunities.
+    if ((isa<LoadSDNode>(N0) && N0.hasOneUse()) && !isa<ConstantSDNode>(N1))
+      return false;
+    if ((isa<LoadSDNode>(N1) && N1.hasOneUse()) && !isa<ConstantSDNode>(N0))
+      return false;
+  }
+  }
+
+  PVT = MVT::i32;
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

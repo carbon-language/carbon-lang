@@ -129,6 +129,7 @@ namespace {
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
 
+    SDValue PromoteIntBinOp(SDValue Op);
 
     /// combine - call the node-specific routine that knows how to fold each
     /// particular type of node. If that doesn't do anything, try the
@@ -633,6 +634,46 @@ bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
   return true;
 }
 
+static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG) {
+  unsigned Opc = ISD::ZERO_EXTEND;
+  if (Op.getOpcode() == ISD::Constant) {
+    // Zero extend things like i1, sign extend everything else.  It shouldn't
+    // matter in theory which one we pick, but this tends to give better code?
+    // See DAGTypeLegalizer::PromoteIntRes_Constant.
+    if (Op.getValueType().isByteSized())
+      Opc = ISD::SIGN_EXTEND;
+  }
+  return DAG.getNode(Opc, Op.getDebugLoc(), PVT, Op);
+}
+
+/// PromoteIntBinOp - Promote the specified integer binary operation if the
+/// target indicates it is beneficial. e.g. On x86, it's usually better to
+/// promote i16 operations to i32 since i16 instructions are longer.
+SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
+  if (!LegalOperations)
+    return SDValue();
+
+  EVT VT = Op.getValueType();
+  if (VT.isVector() || !VT.isInteger())
+    return SDValue();
+
+  EVT PVT = VT;
+  if (TLI.PerformDAGCombinePromotion(Op, PVT)) {
+    assert(PVT != VT && "Don't know what type to promote to!");
+
+    SDValue N0 = PromoteOperand(Op.getOperand(0), PVT, DAG);
+    AddToWorkList(N0.getNode());
+
+    SDValue N1 = PromoteOperand(Op.getOperand(1), PVT, DAG);
+    AddToWorkList(N1.getNode());
+
+    DebugLoc dl = Op.getDebugLoc();
+    return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                       DAG.getNode(Op.getOpcode(), dl, PVT, N0, N1));
+  }
+  return SDValue();
+}
+
 //===----------------------------------------------------------------------===//
 //  Main DAG Combiner implementation
 //===----------------------------------------------------------------------===//
@@ -1112,7 +1153,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                                        N0.getOperand(0).getOperand(1),
                                        N0.getOperand(1)));
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitADDC(SDNode *N) {
@@ -1250,7 +1291,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
                                  VT);
     }
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitMUL(SDNode *N) {
@@ -1343,7 +1384,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   if (RMUL.getNode() != 0)
     return RMUL;
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitSDIV(SDNode *N) {
@@ -1987,7 +2028,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     }
   }
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitOR(SDNode *N) {
@@ -2113,7 +2154,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (SDNode *Rot = MatchRotate(N0, N1, N->getDebugLoc()))
     return SDValue(Rot, 0);
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 /// MatchRotateHalf - Match "(X shl/srl V1) & V2" where V2 may not be present.
@@ -2422,7 +2463,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
-  return SDValue();
+  return PromoteIntBinOp(SDValue(N, 0));
 }
 
 /// visitShiftByConstant - Handle transforms common to the three shifts, when

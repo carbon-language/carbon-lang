@@ -452,6 +452,8 @@ namespace llvm {
     
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+    virtual bool PerformDAGCombinePromotion(SDValue Op, EVT &PVT) const;
+
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                          MachineBasicBlock *MBB,
                     DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;

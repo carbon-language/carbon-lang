@@ -880,6 +880,13 @@ public:
   /// more complex transformations.
   ///
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
+  /// PerformDAGCombinePromotion - This method query the target whether it is
+  /// beneficial for dag combiner to promote the specified node. If true, it
+  /// should return the desired promotion type by reference.
+  virtual bool PerformDAGCombinePromotion(SDValue Op, EVT &PVT) const {
+    return false;
+  }
   
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
