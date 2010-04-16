@@ -593,7 +593,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       return StmtError();
     }
 
-    if (CondTypeBeforePromotion->isBooleanType()) {
+    if (CondExpr->isKnownToHaveBooleanValue()) {
       // switch(bool_expr) {...} is often a programmer error, e.g.
       //   switch(n && mask) { ... }  // Doh - should be "n & mask".
       // One can always use an if statement instead of switch(bool_expr).

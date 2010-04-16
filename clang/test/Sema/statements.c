@@ -41,3 +41,13 @@ void test11(int bit) {
   {
   }
 }
+
+// rdar://3271964
+enum Numbers { kOne,  kTwo,  kThree,  kFour};
+int test12(enum Numbers num) {
+  switch (num == kOne) {// expected-warning {{switch condition has boolean value}}
+  default: 
+  case kThree:
+    break;
+  }
+}

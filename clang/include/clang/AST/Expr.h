@@ -199,6 +199,12 @@ public:
   /// \brief Returns whether this expression refers to a vector element.
   bool refersToVectorElement() const;
   
+  /// isKnownToHaveBooleanValue - Return true if this is an integer expression
+  /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
+  /// but also int expressions which are produced by things like comparisons in
+  /// C.
+  bool isKnownToHaveBooleanValue() const;
+  
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
@@ -304,7 +310,7 @@ public:
   ///  its subexpression.  If that subexpression is also a ParenExpr,
   ///  then this method recursively returns its subexpression, and so forth.
   ///  Otherwise, the method returns the current Expr.
-  Expr* IgnoreParens();
+  Expr *IgnoreParens();
 
   /// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
   /// or CastExprs, returning their operand.
@@ -333,7 +339,7 @@ public:
   /// temporary object.
   const Expr *getTemporaryObject() const;
 
-  const Expr* IgnoreParens() const {
+  const Expr *IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
   const Expr *IgnoreParenCasts() const {

@@ -27,6 +27,65 @@
 #include <algorithm>
 using namespace clang;
 
+/// isKnownToHaveBooleanValue - Return true if this is an integer expression
+/// that is known to return 0 or 1.  This happens for _Bool/bool expressions
+/// but also int expressions which are produced by things like comparisons in
+/// C.
+bool Expr::isKnownToHaveBooleanValue() const {
+  // If this value has _Bool type, it is obvious 0/1.
+  if (getType()->isBooleanType()) return true;
+  // If this is a non-scalar-integer type, we don't care enough to try. 
+  if (!getType()->isIntegralType()) return false;
+  
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(this))
+    return PE->getSubExpr()->isKnownToHaveBooleanValue();
+  
+  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(this)) {
+    switch (UO->getOpcode()) {
+    case UnaryOperator::Plus:
+    case UnaryOperator::Extension:
+      return UO->getSubExpr()->isKnownToHaveBooleanValue();
+    default:
+      return false;
+    }
+  }
+  
+  if (const CastExpr *CE = dyn_cast<CastExpr>(this))
+    return CE->getSubExpr()->isKnownToHaveBooleanValue();
+  
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(this)) {
+    switch (BO->getOpcode()) {
+    default: return false;
+    case BinaryOperator::LT:   // Relational operators.
+    case BinaryOperator::GT:
+    case BinaryOperator::LE:
+    case BinaryOperator::GE:
+    case BinaryOperator::EQ:   // Equality operators.
+    case BinaryOperator::NE:
+    case BinaryOperator::LAnd: // AND operator.
+    case BinaryOperator::LOr:  // Logical OR operator.
+      return true;
+        
+    case BinaryOperator::And:  // Bitwise AND operator.
+    case BinaryOperator::Xor:  // Bitwise XOR operator.
+    case BinaryOperator::Or:   // Bitwise OR operator.
+      // Handle things like (x==2)|(y==12).
+      return BO->getLHS()->isKnownToHaveBooleanValue() &&
+             BO->getRHS()->isKnownToHaveBooleanValue();
+        
+    case BinaryOperator::Comma:
+    case BinaryOperator::Assign:
+      return BO->getRHS()->isKnownToHaveBooleanValue();
+    }
+  }
+  
+  if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(this))
+    return CO->getTrueExpr()->isKnownToHaveBooleanValue() &&
+           CO->getFalseExpr()->isKnownToHaveBooleanValue();
+  
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
