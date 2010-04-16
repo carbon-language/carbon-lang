@@ -261,10 +261,11 @@ namespace llvm {
     ///
     virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
 
+    uint64_t getValue() const { return Integer; }
+
     /// SizeOf - Determine size of integer value in bytes.
     ///
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
-
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEInteger *) { return true; }

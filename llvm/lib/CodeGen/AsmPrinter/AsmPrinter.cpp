@@ -1094,6 +1094,36 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
   OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
 }
 
+/// EmitLabelOffsetDifference - Emit something like ".long Hi+Offset-Lo" 
+/// where the size in bytes of the directive is specified by Size and Hi/Lo
+/// specify the labels.  This implicitly uses .set if it is available.
+void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
+                                           const MCSymbol *Lo, unsigned Size) 
+  const {
+  
+  // Emit Hi+Offset - Lo
+  // Get the Hi+Offset expression.
+  const MCExpr *Plus =
+    MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Hi, OutContext), 
+                            MCConstantExpr::Create(Offset, OutContext),
+                            OutContext);
+  
+  // Get the Hi+Offset-Lo expression.
+  const MCExpr *Diff = 
+    MCBinaryExpr::CreateSub(Plus,
+                            MCSymbolRefExpr::Create(Lo, OutContext),
+                            OutContext);
+  
+  if (!MAI->hasSetDirective()) 
+    OutStreamer.EmitValue(Diff, 4, 0/*AddrSpace*/);
+  else {
+    // Otherwise, emit with .set (aka assignment).
+    MCSymbol *SetLabel = GetTempSymbol("set", SetCounter++);
+    OutStreamer.EmitAssignment(SetLabel, Diff);
+    OutStreamer.EmitSymbolValue(SetLabel, 4, 0/*AddrSpace*/);
+  }
+}
+    
 
 //===----------------------------------------------------------------------===//
 

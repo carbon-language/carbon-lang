@@ -196,9 +196,12 @@ class DwarfDebug {
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
 
+  SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
+
   /// Previous instruction's location information. This is used to determine
   /// label location to indicate scope boundries in dwarf debug info.
   DebugLoc PrevInstLoc;
+  MCSymbol *PrevLabel;
 
   struct FunctionDebugFrameInfo {
     unsigned Number;
@@ -214,7 +217,7 @@ class DwarfDebug {
   // the beginning of each supported dwarf section.  These are used to form
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
-  MCSymbol *DwarfStrSectionSym, *TextSectionSym;
+  MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
   
 private:
   

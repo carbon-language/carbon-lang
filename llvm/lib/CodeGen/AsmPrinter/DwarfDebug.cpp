@@ -302,7 +302,7 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), 
-    CurrentFnDbgScope(0) {
+    CurrentFnDbgScope(0), PrevLabel(NULL) {
   NextStringPoolNumber = 0;
       
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
@@ -2354,6 +2354,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   InsnBeforeLabelMap.clear();
   InsnAfterLabelMap.clear();
   Lines.clear();
+  PrevLabel = NULL;
 }
 
 /// recordSourceLine - Register a source line with debug info. Returns the
@@ -2490,7 +2491,8 @@ void DwarfDebug::EmitSectionLabels() {
   EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym = 
     EmitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
-  EmitSectionSym(Asm, TLOF.getDwarfRangesSection());
+  DwarfDebugRangeSectionSym = EmitSectionSym(Asm, TLOF.getDwarfRangesSection(),
+                                             "debug_range");
 
   TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
   EmitSectionSym(Asm, TLOF.getDataSection());
@@ -2532,6 +2534,15 @@ void DwarfDebug::emitDIE(DIE *Die) {
       DIE *Origin = E->getEntry();
       unsigned Addr = Origin->getOffset();
       Asm->EmitInt32(Addr);
+      break;
+    }
+    case dwarf::DW_AT_ranges: {
+      // DW_AT_range Value encodes offset in debug_range section.
+      DIEInteger *V = cast<DIEInteger>(Values[i]);
+      Asm->EmitLabelOffsetDifference(DwarfDebugRangeSectionSym,
+                                     V->getValue(),
+                                     DwarfDebugRangeSectionSym,
+                                     4);
       break;
     }
     default:
@@ -3055,7 +3066,16 @@ void DwarfDebug::EmitDebugARanges() {
 void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->OutStreamer.SwitchSection(
-                            Asm->getObjFileLowering().getDwarfRangesSection());
+    Asm->getObjFileLowering().getDwarfRangesSection());
+  for (SmallVector<const MCSymbol *, 8>::const_iterator I = DebugRangeSymbols.begin(),
+         E = DebugRangeSymbols.end(); I != E; ++I) {
+    if (*I) 
+      Asm->EmitLabelDifference(*I, TextSectionSym,
+                               Asm->getTargetData().getPointerSize());
+    else
+      Asm->OutStreamer.EmitIntValue(0, Asm->getTargetData().getPointerSize(), 
+                                    /*addrspace*/0);
+  }
 }
 
 /// emitDebugMacInfo - Emit visible names into a debug macinfo section.

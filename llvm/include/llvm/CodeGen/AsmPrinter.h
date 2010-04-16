@@ -333,6 +333,12 @@ namespace llvm {
     void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                              unsigned Size) const;
     
+    /// EmitLabelOffsetDifference - Emit something like ".long Hi+Offset-Lo" 
+    /// where the size in bytes of the directive is specified by Size and Hi/Lo
+    /// specify the labels.  This implicitly uses .set if it is available.
+    void EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
+                                   const MCSymbol *Lo, unsigned Size) const;
+    
     //===------------------------------------------------------------------===//
     // Dwarf Emission Helper Routines
     //===------------------------------------------------------------------===//
