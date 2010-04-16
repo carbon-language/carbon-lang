@@ -21,6 +21,7 @@ add_llvm_target(CellSPUCodeGen
   SPURegisterInfo.cpp
   SPUSubtarget.cpp
   SPUTargetMachine.cpp
+  SPUSelectionDAGInfo.cpp
   )
 
 target_link_libraries (LLVMCellSPUCodeGen LLVMSelectionDAG)

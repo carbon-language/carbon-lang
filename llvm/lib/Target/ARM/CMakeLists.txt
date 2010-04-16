@@ -37,6 +37,7 @@ add_llvm_target(ARMCodeGen
   Thumb2InstrInfo.cpp
   Thumb2RegisterInfo.cpp
   Thumb2SizeReduction.cpp
+  ARMSelectionDAGInfo.cpp
   )
 
 target_link_libraries (LLVMARMCodeGen LLVMSelectionDAG)

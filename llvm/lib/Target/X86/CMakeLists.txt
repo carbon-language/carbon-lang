@@ -34,6 +34,7 @@ set(sources
   X86TargetMachine.cpp
   X86TargetObjectFile.cpp
   X86FastISel.cpp
+  X86SelectionDAGInfo.cpp
   )
 
 if( CMAKE_CL_64 )

@@ -20,4 +20,5 @@ add_llvm_target(XCore
   XCoreSubtarget.cpp
   XCoreTargetMachine.cpp
   XCoreTargetObjectFile.cpp
+  XCoreSelectionDAGInfo.cpp
   )
