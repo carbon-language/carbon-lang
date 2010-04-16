@@ -5375,11 +5375,23 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   if (!FieldTy->isDependentType()) {
     uint64_t TypeSize = Context.getTypeSize(FieldTy);
     if (Value.getZExtValue() > TypeSize) {
+      if (!getLangOptions().CPlusPlus) {
+        if (FieldName) 
+          return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
+            << FieldName << (unsigned)Value.getZExtValue() 
+            << (unsigned)TypeSize;
+        
+        return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_size)
+          << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;
+      }
+      
       if (FieldName)
-        return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
-          << FieldName << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;
-      return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_size)
-        << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;
+        Diag(FieldLoc, diag::warn_bitfield_width_exceeds_type_size)
+          << FieldName << (unsigned)Value.getZExtValue() 
+          << (unsigned)TypeSize;
+      else
+        Diag(FieldLoc, diag::warn_anon_bitfield_width_exceeds_type_size)
+          << (unsigned)Value.getZExtValue() << (unsigned)TypeSize;        
     }
   }
 

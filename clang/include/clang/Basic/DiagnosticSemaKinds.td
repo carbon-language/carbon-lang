@@ -1669,6 +1669,15 @@ def err_bitfield_width_exceeds_type_size : Error<
   "size of bit-field %0 (%1 bits) exceeds size of its type (%2 bits)">;
 def err_anon_bitfield_width_exceeds_type_size : Error<
   "size of anonymous bit-field (%0 bits) exceeds size of its type (%1 bits)">;
+  
+// Used by C++ which allows bit-fields that are wider than the type.
+def warn_bitfield_width_exceeds_type_size: Warning<
+  "size of bit-field %0 (%1 bits) exceeds the size of its type; value will be "
+  "truncated to %2 bits">;
+def warn_anon_bitfield_width_exceeds_type_size : Warning<
+  "size of anonymous bit-field (%0 bits) exceeds size of its type; value will "
+  "be truncated to %1 bits">;
+
 def warn_missing_braces : Warning<
   "suggest braces around initialization of subobject">,
   InGroup<DiagGroup<"missing-braces">>, DefaultIgnore;
