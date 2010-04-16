@@ -294,8 +294,30 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       //   C++ translation unit.
       Builder.defineMacro("__cplusplus", "199711L");
     Builder.defineMacro("__private_extern__", "extern");
-    // Ugly hack to work with GNU libstdc++.
-    Builder.defineMacro("_GNU_SOURCE");
+
+    // Define _GNU_SOURCE on platforms where we expect to use glibc.
+    switch (TI.getTriple().getOS()) {
+    case llvm::Triple::Cygwin:
+    case llvm::Triple::MinGW64:
+    case llvm::Triple::MinGW32:
+    case llvm::Triple::Linux:
+    case llvm::Triple::Solaris:
+    case llvm::Triple::AuroraUX:
+      Builder.defineMacro("_GNU_SOURCE");
+      break;
+
+    case llvm::Triple::Darwin:
+    case llvm::Triple::DragonFly:
+    case llvm::Triple::FreeBSD:
+    case llvm::Triple::UnknownOS:
+    case llvm::Triple::Lv2:
+    case llvm::Triple::NetBSD:
+    case llvm::Triple::OpenBSD:
+    case llvm::Triple::Psp:
+    case llvm::Triple::Win32:
+    case llvm::Triple::Haiku:
+      break;
+    }
   }
 
   if (LangOpts.Microsoft) {

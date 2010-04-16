@@ -11,7 +11,6 @@
 // 
 // RUN: %clang_cc1 -x c++ -std=c++0x -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s
 //
-// CXX0X:#define _GNU_SOURCE 1
 // CXX0X:#define __DEPRECATED 1
 // CXX0X:#define __GNUG__
 // CXX0X:#define __GXX_EXPERIMENTAL_CXX0X__ 1
@@ -22,7 +21,6 @@
 // 
 // RUN: %clang_cc1 -x c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s
 // 
-// CXX98:#define _GNU_SOURCE 1
 // CXX98:#define __DEPRECATED 1
 // CXX98:#define __GNUG__
 // CXX98:#define __GXX_WEAK__ 1
@@ -58,7 +56,6 @@
 // 
 // RUN: %clang_cc1 -x c++ -std=gnu++98 -E -dM < /dev/null | FileCheck -check-prefix GXX98 %s
 //
-// GXX98:#define _GNU_SOURCE 1
 // GXX98:#define __DEPRECATED 1
 // GXX98:#define __GNUG__
 // GXX98:#define __GXX_WEAK__ 1
@@ -1028,3 +1025,6 @@
 // X86_64:#define __x86_64 1
 // X86_64:#define __x86_64__ 1
 //
+// RUN: %clang_cc1 -x c++ -triple i686-pc-linux-gnu -E -dM < /dev/null | FileCheck -check-prefix GNUSOURCE %s
+// GNUSOURCE:#define _GNU_SOURCE 1
+// 
