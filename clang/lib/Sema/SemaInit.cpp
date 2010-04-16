@@ -3486,15 +3486,18 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.Owned(CurInitExpr);
       break;
         
-    case SK_ConversionSequence:
-        if (S.PerformImplicitConversion(CurInitExpr, Step->Type, Sema::AA_Converting, 
-                                      false, *Step->ICS))
+    case SK_ConversionSequence: {
+      bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
+
+      if (S.PerformImplicitConversion(CurInitExpr, Step->Type, *Step->ICS,
+                                      Sema::AA_Converting, IgnoreBaseAccess))
         return S.ExprError();
         
       CurInit.release();
-      CurInit = S.Owned(CurInitExpr);        
+      CurInit = S.Owned(CurInitExpr);
       break;
-
+    }
+        
     case SK_ListInitialization: {
       InitListExpr *InitList = cast<InitListExpr>(CurInitExpr);
       QualType Ty = Step->Type;

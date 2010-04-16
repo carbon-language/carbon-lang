@@ -953,26 +953,24 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return TC_NotApplicable;
   }
 
-  // FIXME: To get a proper error from invalid conversions here, we need to
-  // reimplement more of this.
-  // FIXME: This does not actually perform the conversion, and thus does not
-  // check for ambiguity or access.
-  ImplicitConversionSequence ICS =
-    Self.TryImplicitConversion(SrcExpr, DestType,
-                               /*SuppressUserConversions=*/false,
-                               /*AllowExplicit=*/true,
-                               /*InOverloadResolution=*/false,
-                               /*one of user provided casts*/true);
-
-  if (ICS.isBad())
+  InitializedEntity Entity = InitializedEntity::InitializeTemporary(DestType);
+  InitializationKind InitKind
+    = InitializationKind::CreateCast(/*FIXME:*/OpRange, CStyle);
+  InitializationSequence InitSeq(Self, Entity, InitKind, &SrcExpr, 1);
+  if (InitSeq.getKind() == InitializationSequence::FailedSequence)
     return TC_NotApplicable;
 
-  // The conversion is possible, so commit to it.
+  Sema::OwningExprResult Result
+    = InitSeq.Perform(Self, Entity, InitKind, 
+                      Action::MultiExprArg(Self, (void **)&SrcExpr, 1));
   Kind = CastExpr::CK_NoOp;
-  msg = 0;
-  return Self.PerformImplicitConversion(SrcExpr, DestType, ICS, Sema::AA_Casting,
-                                        /*IgnoreBaseAccess*/CStyle) ?
-      TC_Failed : TC_Success;
+  if (Result.isInvalid()) {
+    msg = 0;
+    return TC_Failed;
+  }
+  
+  SrcExpr = Result.takeAs<Expr>();
+  return TC_Success;
 }
 
 /// TryConstCast - See if a const_cast from source to destination is allowed,
