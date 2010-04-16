@@ -2229,7 +2229,7 @@ void Sema::CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record) {
                                  FEnd = Record->field_end();
          F != FEnd; ++F) {
       if (F->getType()->isReferenceType() ||
-          F->getType().isConstQualified() && F->getType()->isScalarType()) {
+          (F->getType().isConstQualified() && F->getType()->isScalarType())) {
         if (!Complained) {
           Diag(Record->getLocation(), diag::warn_no_constructor_for_refconst)
             << Record->getTagKind() << Record;
