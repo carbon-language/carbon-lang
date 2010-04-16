@@ -504,7 +504,6 @@ void ARMAsmPrinter::printAddrMode2OffsetOperand(const MachineInstr *MI, int Op,
 
   if (!MO1.getReg()) {
     unsigned ImmOffs = ARM_AM::getAM2Offset(MO2.getImm());
-    assert(ImmOffs && "Malformed indexed load / store!");
     O << "#"
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO2.getImm()))
       << ImmOffs;
