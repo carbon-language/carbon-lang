@@ -16,13 +16,15 @@
 #define LLVM_CLANG_REWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Rewrite/RewriteRope.h"
-#include <map>
-#include <vector>
-#include <cstring>
-#include <string>
 #include "clang/Rewrite/DeltaTree.h"
+#include "clang/Rewrite/RewriteRope.h"
 #include "llvm/ADT/StringRef.h"
+#include <cstring>
+#include <map>
+#include <string>
+#include <vector>
+
+namespace llvm { class raw_ostream; }
 
 namespace clang {
   class LangOptions;
@@ -52,6 +54,8 @@ public:
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
+
+  llvm::raw_ostream &write(llvm::raw_ostream &) const;
 
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size);

@@ -39,7 +39,7 @@ FixItRewriter::~FixItRewriter() {
 bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
   const RewriteBuffer *RewriteBuf = Rewrite.getRewriteBufferFor(ID);
   if (!RewriteBuf) return true;
-  OS << std::string(RewriteBuf->begin(), RewriteBuf->end());
+  RewriteBuf->write(OS);
   OS.flush();
   return false;
 }
