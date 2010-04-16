@@ -436,14 +436,12 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {
 /// not permitted.
 /// If @p AllowExplicit, then explicit user-defined conversions are
 /// permitted.
-/// If @p ForceRValue, then overloading is performed as if From was an rvalue,
-/// no matter its actual lvalueness.
 /// If @p UserCast, the implicit conversion is being done for a user-specified
 /// cast.
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
-                            bool AllowExplicit, bool ForceRValue,
+                            bool AllowExplicit, 
                             bool InOverloadResolution,
                             bool UserCast) {
   ImplicitConversionSequence ICS;
@@ -2483,7 +2481,6 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   //   and does not constitute a conversion.
   ICS = S.TryImplicitConversion(Init, T1, SuppressUserConversions,
                                 /*AllowExplicit=*/false,
-                                /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
 
   // Of course, that's still a reference binding.
@@ -2502,8 +2499,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
 /// sequence required to pass this argument, which may be a bad
 /// conversion sequence (meaning that the argument cannot be passed to
 /// a parameter of this type). If @p SuppressUserConversions, then we
-/// do not permit any user-defined conversion sequences. If @p ForceRValue,
-/// then we treat @p From as an rvalue, even if it is an lvalue.
+/// do not permit any user-defined conversion sequences.
 static ImplicitConversionSequence
 TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
                       bool SuppressUserConversions, 
@@ -2517,7 +2513,6 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
   return S.TryImplicitConversion(From, ToType,
                                  SuppressUserConversions,
                                  /*AllowExplicit=*/false,
-                                 /*ForceRValue=*/false,
                                  InOverloadResolution);
 }
 
@@ -2638,7 +2633,6 @@ ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
                                // FIXME: Are these flags correct?
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/true,
-                               /*ForceRValue=*/false,
                                /*InOverloadResolution=*/false);
 }
 

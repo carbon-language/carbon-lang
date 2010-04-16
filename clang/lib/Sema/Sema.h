@@ -1064,7 +1064,6 @@ public:
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions,
                         bool AllowExplicit,
-                        bool ForceRValue,
                         bool InOverloadResolution,
                         bool UserCast = false);
   bool IsStandardConversion(Expr *From, QualType ToType,
