@@ -1487,6 +1487,44 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   return PerformImplicitConversion(From, ToType, ICS, Action);
 }
 
+static Sema::OwningExprResult BuildCXXCastArgument(Sema &S, 
+                                                   SourceLocation CastLoc,
+                                                   QualType Ty,
+                                                   CastExpr::CastKind Kind,
+                                                   CXXMethodDecl *Method,
+                                                   Sema::ExprArg Arg) {
+  Expr *From = Arg.takeAs<Expr>();
+  
+  switch (Kind) {
+  default: assert(0 && "Unhandled cast kind!");
+  case CastExpr::CK_ConstructorConversion: {
+    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+    
+    if (S.CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
+                                  Sema::MultiExprArg(S, (void **)&From, 1),
+                                  CastLoc, ConstructorArgs))
+      return S.ExprError();
+    
+    Sema::OwningExprResult Result = 
+    S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
+                            move_arg(ConstructorArgs));
+    if (Result.isInvalid())
+      return S.ExprError();
+    
+    return S.MaybeBindToTemporary(Result.takeAs<Expr>());
+  }
+    
+  case CastExpr::CK_UserDefinedConversion: {
+    assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
+    
+    // Create an implicit call expr that calls it.
+    // FIXME: pass the FoundDecl for the user-defined conversion here
+    CXXMemberCallExpr *CE = S.BuildCXXMemberCallExpr(From, Method, Method);
+    return S.MaybeBindToTemporary(CE);
+  }
+  }
+}    
+
 /// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType using the pre-computed implicit
 /// conversion sequence ICS. Returns true if there was an error, false
@@ -1538,7 +1576,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       }
     
       OwningExprResult CastArg 
-        = BuildCXXCastArgument(From->getLocStart(),
+        = BuildCXXCastArgument(*this,
+                               From->getLocStart(),
                                ToType.getNonReferenceType(),
                                CastKind, cast<CXXMethodDecl>(FD), 
                                Owned(From));
@@ -2849,43 +2888,6 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
                                     Exp->getLocEnd());
   return CE;
 }
-
-Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
-                                                  QualType Ty,
-                                                  CastExpr::CastKind Kind,
-                                                  CXXMethodDecl *Method,
-                                                  ExprArg Arg) {
-  Expr *From = Arg.takeAs<Expr>();
-
-  switch (Kind) {
-  default: assert(0 && "Unhandled cast kind!");
-  case CastExpr::CK_ConstructorConversion: {
-    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-    
-    if (CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
-                                MultiExprArg(*this, (void **)&From, 1),
-                                CastLoc, ConstructorArgs))
-      return ExprError();
-    
-    OwningExprResult Result = 
-      BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
-                            move_arg(ConstructorArgs));
-    if (Result.isInvalid())
-      return ExprError();
-    
-    return MaybeBindToTemporary(Result.takeAs<Expr>());
-  }
-
-  case CastExpr::CK_UserDefinedConversion: {
-    assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
-
-    // Create an implicit call expr that calls it.
-    // FIXME: pass the FoundDecl for the user-defined conversion here
-    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method, Method);
-    return MaybeBindToTemporary(CE);
-  }
-  }
-}    
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
