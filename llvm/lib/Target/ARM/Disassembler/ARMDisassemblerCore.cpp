@@ -2104,7 +2104,7 @@ static uint64_t decodeN1VImm(uint32_t insn, ElemSize esize) {
   case ESize64: {
     for (unsigned i = 0; i < 8; ++i)
       if ((Imm8 >> i) & 1)
-        Imm64 |= 0xFF << 8*i;
+        Imm64 |= 0xFFul << 8*i;
     break;
   }
   default:
@@ -2450,6 +2450,7 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
   case ARM::VMOVv1i64:
   case ARM::VMOVv2i64:
     esize = ESize64;
+    break;
   default:
     assert(0 && "Unreachable code!");
     return false;

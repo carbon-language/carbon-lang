@@ -104,10 +104,10 @@ public:
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printHex8ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {}
-  void printHex16ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {}
-  void printHex32ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {}
-  void printHex64ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {}
+  void printHex8ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printHex16ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printHex32ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printHex64ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printPCLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);  
   // FIXME: Implement.

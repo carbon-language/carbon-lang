@@ -18,6 +18,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -777,3 +778,22 @@ void ARMInstPrinter::printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum,
   O << '#' << MI->getOperand(OpNum).getImm();
 }
 
+void ARMInstPrinter::printHex8ImmOperand(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
+  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xff);
+}
+
+void ARMInstPrinter::printHex16ImmOperand(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffff);
+}
+
+void ARMInstPrinter::printHex32ImmOperand(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffffffff);
+}
+
+void ARMInstPrinter::printHex64ImmOperand(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm());
+}
