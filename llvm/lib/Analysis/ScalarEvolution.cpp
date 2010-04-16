@@ -247,11 +247,13 @@ void SCEVSignExtendExpr::print(raw_ostream &OS) const {
 }
 
 void SCEVCommutativeExpr::print(raw_ostream &OS) const {
-  assert(NumOperands > 1 && "This plus expr shouldn't exist!");
   const char *OpStr = getOperationStr();
-  OS << "(" << *Operands[0];
-  for (unsigned i = 1, e = NumOperands; i != e; ++i)
-    OS << OpStr << *Operands[i];
+  OS << "(";
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
+    OS << **I;
+    if (next(I) != E)
+      OS << OpStr;
+  }
   OS << ")";
 }
 
