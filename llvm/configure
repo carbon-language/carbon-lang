@@ -749,6 +749,7 @@ OCAMLOPT
 OCAMLDEP
 OCAMLDOC
 GAS
+HAVE_LINK_RETAIN_SYMBOLS_FILE
 INSTALL_LTDL_TRUE
 INSTALL_LTDL_FALSE
 CONVENIENCE_LTDL_TRUE
@@ -8794,6 +8795,116 @@ _ACEOF
   fi
 
 
+{ echo "$as_me:$LINENO: checking for compiler -Wl,-retain-symbols-file option" >&5
+echo $ECHO_N "checking for compiler -Wl,-retain-symbols-file option... $ECHO_C" >&6; }
+if test "${llvm_cv_link_use_retain_symbols_file+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+   ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  oldcflags="$CFLAGS"
+
+  # The following code is from the autoconf manual,
+  # "11.13: Limitations of Usual Tools".
+  # Create a temporary directory $tmp in $TMPDIR (default /tmp).
+  # Use mktemp if possible; otherwise fall back on mkdir,
+  # with $RANDOM to make collisions less likely.
+  : ${TMPDIR=/tmp}
+  {
+    tmp=`
+      (umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null
+    ` &&
+    test -n "$tmp" && test -d "$tmp"
+  } || {
+    tmp=$TMPDIR/foo$$-$RANDOM
+    (umask 077 && mkdir "$tmp")
+  } || exit $?
+
+  echo "main" > "$tmp/exports"
+
+  CFLAGS="$CFLAGS -Wl,-retain-symbols-file=$tmp/exports"
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int main() { return 0; }
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  llvm_cv_link_use_retain_symbols_file=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	llvm_cv_link_use_retain_symbols_file=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  rm "$tmp/exports"
+  rmdir "$tmp"
+  CFLAGS="$oldcflags"
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+fi
+{ echo "$as_me:$LINENO: result: $llvm_cv_link_use_retain_symbols_file" >&5
+echo "${ECHO_T}$llvm_cv_link_use_retain_symbols_file" >&6; }
+if test "$llvm_cv_link_use_retain_symbols_file" = yes ; then
+  HAVE_LINK_RETAIN_SYMBOLS_FILE=1
+
+  fi
+
+
 
 
 { echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5
@@ -11163,7 +11274,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11166 "configure"
+#line 11277 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21077,6 +21188,7 @@ OCAMLOPT!$OCAMLOPT$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
 OCAMLDOC!$OCAMLDOC$ac_delim
 GAS!$GAS$ac_delim
+HAVE_LINK_RETAIN_SYMBOLS_FILE!$HAVE_LINK_RETAIN_SYMBOLS_FILE$ac_delim
 INSTALL_LTDL_TRUE!$INSTALL_LTDL_TRUE$ac_delim
 INSTALL_LTDL_FALSE!$INSTALL_LTDL_FALSE$ac_delim
 CONVENIENCE_LTDL_TRUE!$CONVENIENCE_LTDL_TRUE$ac_delim
@@ -21120,7 +21232,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 92; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
