@@ -1259,7 +1259,6 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
   // that doesn't have anything to do with the alloca that we are promoting. For
   // memset, this Value* stays null.
   Value *OtherPtr = 0;
-  LLVMContext &Context = MI->getContext();
   unsigned MemAlignment = MI->getAlignment();
   if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) { // memmove/memcopy
     if (Inst == MTI->getRawDest())
@@ -1336,12 +1335,11 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                                    MI);
       uint64_t EltOffset;
       const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
-      if (const StructType *ST =
-            dyn_cast<StructType>(OtherPtrTy->getElementType())) {
+      const Type *OtherTy = OtherPtrTy->getElementType();
+      if (const StructType *ST = dyn_cast<StructType>(OtherTy)) {
         EltOffset = TD->getStructLayout(ST)->getElementOffset(i);
       } else {
-        const Type *EltTy =
-          cast<SequentialType>(OtherPtr->getType())->getElementType();
+        const Type *EltTy = cast<SequentialType>(OtherTy)->getElementType();
         EltOffset = TD->getTypeAllocSize(EltTy)*i;
       }
       
@@ -1393,7 +1391,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           }
           
           // Convert the integer value to the appropriate type.
-          StoreVal = ConstantInt::get(Context, TotalVal);
+          StoreVal = ConstantInt::get(CI->getContext(), TotalVal);
           if (ValTy->isPointerTy())
             StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
           else if (ValTy->isFloatingPointTy())
