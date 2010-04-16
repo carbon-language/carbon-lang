@@ -10,6 +10,8 @@
 LEVEL = ../../../..
 LIBRARYNAME = CIndex
 
+EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/CIndex.exports
+
 CPP.Flags += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 
 # Include this here so we can get the configuration of the targets
@@ -40,7 +42,6 @@ ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
                          -avoid-version \
-                         -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/CIndex.exports \
                          -Wl,-dead_strip \
                          -Wl,-seg1addr -Wl,0xE0000000 
 
