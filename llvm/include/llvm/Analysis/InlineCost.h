@@ -16,7 +16,6 @@
 
 #include <cassert>
 #include <climits>
-#include <map>
 #include <vector>
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ValueMap.h"
