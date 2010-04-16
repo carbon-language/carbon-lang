@@ -340,9 +340,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
          E = Modules.end(); I != E; ++I) {
       (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
       for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-        if (I->syms[i].resolution == LDPR_PREVAILING_DEF ||
-            (I->syms[i].def == LDPK_COMMON &&
-             I->syms[i].resolution == LDPR_RESOLVED_IR)) {
+        if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
           lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
           anySymbolsPreserved = true;
 
@@ -387,7 +385,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
     (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
     return LDPS_ERR;
   }
-  raw_fd_ostream *objFile = 
+  raw_fd_ostream *objFile =
     new raw_fd_ostream(uniqueObjPath.c_str(), ErrMsg,
                        raw_fd_ostream::F_Binary);
   if (!ErrMsg.empty()) {
