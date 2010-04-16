@@ -996,7 +996,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     break;
   }
 
-  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue Pred = getAL(CurDAG);
   SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
   if (is64BitVector) {
     unsigned Opc = DOpcodes[OpcodeIndex];
@@ -1086,7 +1086,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     break;
   }
 
-  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue Pred = getAL(CurDAG);
   SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
 
   SmallVector<SDValue, 10> Ops;
@@ -1193,7 +1193,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   case MVT::v4i32: OpcodeIndex = 1; break;
   }
 
-  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue Pred = getAL(CurDAG);
   SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
 
   SmallVector<SDValue, 10> Ops;
@@ -1475,7 +1475,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
       SDNode *ResNode;
       if (Subtarget->isThumb1Only()) {
-        SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+        SDValue Pred = getAL(CurDAG);
         SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
         SDValue Ops[] = { CPIdx, Pred, PredReg, CurDAG->getEntryNode() };
         ResNode = CurDAG->getMachineNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
@@ -1650,7 +1650,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDValue Chain = N->getOperand(0);
       SDValue AM5Opc =
         CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::ia, 4), MVT::i32);
-      SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+      SDValue Pred = getAL(CurDAG);
       SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
       SDValue Ops[] = { N->getOperand(1), AM5Opc, Pred, PredReg, Chain };
       return CurDAG->getMachineNode(ARM::VLDMQ, dl, MVT::v2f64, MVT::Other,
@@ -1666,7 +1666,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDValue Chain = N->getOperand(0);
       SDValue AM5Opc =
         CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::ia, 4), MVT::i32);
-      SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+      SDValue Pred = getAL(CurDAG);
       SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
       SDValue Ops[] = { N->getOperand(1), N->getOperand(2),
                         AM5Opc, Pred, PredReg, Chain };
@@ -1758,7 +1758,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VZIPq32; break;
     }
-    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue Pred = getAL(CurDAG);
     SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
     return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
@@ -1777,7 +1777,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VUZPq32; break;
     }
-    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue Pred = getAL(CurDAG);
     SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
     return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
@@ -1796,7 +1796,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VTRNq32; break;
     }
-    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue Pred = getAL(CurDAG);
     SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
     return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
