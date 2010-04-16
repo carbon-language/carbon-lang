@@ -372,7 +372,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
     assert(!Packed && "Size mismatch!");
     
     ConvertStructToPacked();
-    assert(NextFieldOffsetInBytes == LayoutSizeInBytes &&
+    assert(NextFieldOffsetInBytes <= LayoutSizeInBytes &&
            "Converting to packed did not help!");
   }
 

@@ -84,3 +84,8 @@ struct test7s { int a; int b; } test7[] = {
   {4},
 };
 
+// rdar://7872531
+#pragma pack(push, 2)
+struct test8s { int f0; char f1; } test8g = {};
+
+
