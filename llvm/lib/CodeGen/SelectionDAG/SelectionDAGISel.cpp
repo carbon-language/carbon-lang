@@ -256,15 +256,13 @@ void SelectionDAGISel::SelectBasicBlock(const BasicBlock *LLVMBB,
   SDB->setCurrentBasicBlock(BB);
 
   // Lower all of the non-terminator instructions. If a call is emitted
-  // as a tail call, cease emitting nodes for this block.
+  // as a tail call, cease emitting nodes for this block. Terminators
+  // are handled below.
   for (BasicBlock::const_iterator I = Begin;
-       I != End && !SDB->HasTailCall; ++I) {
+       I != End && !SDB->HasTailCall && !isa<TerminatorInst>(I);
+       ++I) {
     SetDebugLoc(I, SDB, 0, MF);
-
-    // Visit the instruction. Terminators are handled below.
-    if (!isa<TerminatorInst>(I))
-      SDB->visit(*I);
-
+    SDB->visit(*I);
     ResetDebugLoc(SDB, 0);
   }
 
