@@ -492,8 +492,6 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
   // to -C or -CC.
   PP.SetCommentRetentionState(Opts.ShowComments, Opts.ShowMacroComments);
 
-  OS->SetBufferSize(64*1024);
-
   PrintPPOutputPPCallbacks *Callbacks =
       new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
                                    Opts.ShowMacros);
