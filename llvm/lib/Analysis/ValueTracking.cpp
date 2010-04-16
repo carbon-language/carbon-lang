@@ -953,7 +953,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
     // sqrt(-0.0) = -0.0, no other negative results are possible.
     if (II->getIntrinsicID() == Intrinsic::sqrt)
-      return CannotBeNegativeZero(II->getOperand(0), Depth+1);
+      return CannotBeNegativeZero(II->getOperand(1), Depth+1);
   
   if (const CallInst *CI = dyn_cast<CallInst>(I))
     if (const Function *F = CI->getCalledFunction()) {
@@ -966,7 +966,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
         if (F->getName() == "fabsl") return true;
         if (F->getName() == "sqrt" || F->getName() == "sqrtf" ||
             F->getName() == "sqrtl")
-          return CannotBeNegativeZero(CI->getOperand(0), Depth+1);
+          return CannotBeNegativeZero(CI->getOperand(1), Depth+1);
       }
     }
   

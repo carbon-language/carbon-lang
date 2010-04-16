@@ -559,7 +559,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   // Lower all uses of llvm.objectsize.*
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
   if (II && II->getIntrinsicID() == Intrinsic::objectsize) {
-    bool Min = (cast<ConstantInt>(II->getOperand(1))->getZExtValue() == 1);
+    bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
     const Type *ReturnTy = CI->getType();
     Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);    
     CI->replaceAllUsesWith(RetVal);

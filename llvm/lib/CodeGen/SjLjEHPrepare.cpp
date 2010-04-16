@@ -305,7 +305,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (CI->getCalledFunction() == SelectorFn) {
-          if (!PersonalityFn) PersonalityFn = CI->getOperand(1);
+          if (!PersonalityFn) PersonalityFn = CI->getOperand(2);
           EH_Selectors.push_back(CI);
         } else if (CI->getCalledFunction() == ExceptionFn) {
           EH_Exceptions.push_back(CI);

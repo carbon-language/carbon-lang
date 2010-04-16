@@ -1396,7 +1396,7 @@ void Verifier::visitInstruction(Instruction &I) {
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
       // Check to make sure that the "address of" an intrinsic function is never
       // taken.
-      Assert1(!F->isIntrinsic() || (i + 1 == e && isa<CallInst>(I)),
+      Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
               "Cannot take the address of an intrinsic!", &I);
       Assert1(F->getParent() == Mod, "Referencing function in another module!",
               &I);
@@ -1479,8 +1479,7 @@ void Verifier::visitInstruction(Instruction &I) {
                 "Instruction does not dominate all uses!", Op, &I);
       }
     } else if (isa<InlineAsm>(I.getOperand(i))) {
-      Assert1((i + 1 == e && isa<CallInst>(I)) ||
-              (i + 3 == e && isa<InvokeInst>(I)),
+      Assert1((i == 0 && isa<CallInst>(I)) || (i + 3 == e && isa<InvokeInst>(I)),
               "Cannot take the address of an inline asm!", &I);
     }
   }
@@ -1615,16 +1614,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   default:
     break;
   case Intrinsic::dbg_declare: {  // llvm.dbg.declare
-    Assert1(CI.getOperand(0) && isa<MDNode>(CI.getOperand(0)),
+    Assert1(CI.getOperand(1) && isa<MDNode>(CI.getOperand(1)),
                 "invalid llvm.dbg.declare intrinsic call 1", &CI);
-    MDNode *MD = cast<MDNode>(CI.getOperand(0));
+    MDNode *MD = cast<MDNode>(CI.getOperand(1));
     Assert1(MD->getNumOperands() == 1,
                 "invalid llvm.dbg.declare intrinsic call 2", &CI);
   } break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
   case Intrinsic::memset:
-    Assert1(isa<ConstantInt>(CI.getOperand(3)),
+    Assert1(isa<ConstantInt>(CI.getOperand(4)),
             "alignment argument of memory intrinsics must be a constant int",
             &CI);
     break;
@@ -1633,10 +1632,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::gcread:
     if (ID == Intrinsic::gcroot) {
       AllocaInst *AI =
-        dyn_cast<AllocaInst>(CI.getOperand(0)->stripPointerCasts());
+        dyn_cast<AllocaInst>(CI.getOperand(1)->stripPointerCasts());
       Assert1(AI && AI->getType()->getElementType()->isPointerTy(),
               "llvm.gcroot parameter #1 must be a pointer alloca.", &CI);
-      Assert1(isa<Constant>(CI.getOperand(1)),
+      Assert1(isa<Constant>(CI.getOperand(2)),
               "llvm.gcroot parameter #2 must be a constant.", &CI);
     }
 
@@ -1644,32 +1643,32 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "Enclosing function does not use GC.", &CI);
     break;
   case Intrinsic::init_trampoline:
-    Assert1(isa<Function>(CI.getOperand(1)->stripPointerCasts()),
+    Assert1(isa<Function>(CI.getOperand(2)->stripPointerCasts()),
             "llvm.init_trampoline parameter #2 must resolve to a function.",
             &CI);
     break;
   case Intrinsic::prefetch:
-    Assert1(isa<ConstantInt>(CI.getOperand(1)) &&
-            isa<ConstantInt>(CI.getOperand(2)) &&
-            cast<ConstantInt>(CI.getOperand(1))->getZExtValue() < 2 &&
-            cast<ConstantInt>(CI.getOperand(2))->getZExtValue() < 4,
+    Assert1(isa<ConstantInt>(CI.getOperand(2)) &&
+            isa<ConstantInt>(CI.getOperand(3)) &&
+            cast<ConstantInt>(CI.getOperand(2))->getZExtValue() < 2 &&
+            cast<ConstantInt>(CI.getOperand(3))->getZExtValue() < 4,
             "invalid arguments to llvm.prefetch",
             &CI);
     break;
   case Intrinsic::stackprotector:
-    Assert1(isa<AllocaInst>(CI.getOperand(1)->stripPointerCasts()),
+    Assert1(isa<AllocaInst>(CI.getOperand(2)->stripPointerCasts()),
             "llvm.stackprotector parameter #2 must resolve to an alloca.",
             &CI);
     break;
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
   case Intrinsic::invariant_start:
-    Assert1(isa<ConstantInt>(CI.getOperand(0)),
+    Assert1(isa<ConstantInt>(CI.getOperand(1)),
             "size argument of memory use markers must be a constant integer",
             &CI);
     break;
   case Intrinsic::invariant_end:
-    Assert1(isa<ConstantInt>(CI.getOperand(1)),
+    Assert1(isa<ConstantInt>(CI.getOperand(2)),
             "llvm.invariant.end parameter #2 must be a constant integer", &CI);
     break;
   }

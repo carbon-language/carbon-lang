@@ -1031,17 +1031,17 @@ public:
   /// indirect function invocation.
   ///
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(Op<-1>());
+    return dyn_cast<Function>(Op<0>());
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this
   /// instruction.
-  const Value *getCalledValue() const { return Op<-1>(); }
-        Value *getCalledValue()       { return Op<-1>(); }
+  const Value *getCalledValue() const { return Op<0>(); }
+        Value *getCalledValue()       { return Op<0>(); }
 
   /// setCalledFunction - Set the function called.
   void setCalledFunction(Value* Fn) {
-    Op<-1>() = Fn;
+    Op<0>() = Fn;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -1071,7 +1071,7 @@ CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                unsigned(ArgEnd - ArgBegin + 1), InsertAtEnd) {
+                (unsigned)(ArgEnd - ArgBegin + 1), InsertAtEnd) {
   init(Func, ArgBegin, ArgEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
