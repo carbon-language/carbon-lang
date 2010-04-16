@@ -263,6 +263,13 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       CS.isNoInline())
     return llvm::InlineCost::getNever();
 
+  // Don't inline directly recursive calls, for now. Inlining a directly
+  // recursive call is effectively unrolling a loop, so it calls for different
+  // heuristics, which aren't implemented yet. Until then, err on the
+  // conservative side.
+  if (Callee == Caller)
+    return llvm::InlineCost::getNever();
+
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
   // be inlined.  This value may go negative.
