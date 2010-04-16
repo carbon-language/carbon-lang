@@ -188,7 +188,7 @@ struct CheckFallThroughDiagnostics {
   unsigned diag_NeverFallThroughOrReturn;
   bool funMode;
 
-  static CheckFallThroughDiagnostics MakeForFunction() {
+  static CheckFallThroughDiagnostics MakeForFunction(const Decl *Func) {
     CheckFallThroughDiagnostics D;
     D.diag_MaybeFallThrough_HasNoReturn =
       diag::warn_falloff_noreturn_function;
@@ -198,8 +198,19 @@ struct CheckFallThroughDiagnostics {
       diag::warn_falloff_noreturn_function;
     D.diag_AlwaysFallThrough_ReturnsNonVoid =
       diag::warn_falloff_nonvoid_function;
-    D.diag_NeverFallThroughOrReturn =
-      diag::warn_suggest_noreturn_function;
+
+    // Don't suggest that virtual functions be marked "noreturn", since they
+    // might be overridden by non-noreturn functions.
+    bool isVirtualMethod = false;
+    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Func))
+      isVirtualMethod = Method->isVirtual();
+    
+    if (!isVirtualMethod)
+      D.diag_NeverFallThroughOrReturn =
+        diag::warn_suggest_noreturn_function;
+    else
+      D.diag_NeverFallThroughOrReturn = 0;
+    
     D.funMode = true;
     return D;
   }
@@ -295,7 +306,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
                  CD.diag_AlwaysFallThrough_ReturnsNonVoid);
         break;
       case NeverFallThroughOrReturn:
-        if (ReturnsVoid && !HasNoReturn)
+        if (ReturnsVoid && !HasNoReturn && CD.diag_NeverFallThroughOrReturn)
           S.Diag(Compound->getLBracLoc(),
                  CD.diag_NeverFallThroughOrReturn);
         break;
@@ -360,7 +371,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (P.enableCheckFallThrough) {
     const CheckFallThroughDiagnostics &CD =
       (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
-                         : CheckFallThroughDiagnostics::MakeForFunction());
+                         : CheckFallThroughDiagnostics::MakeForFunction(D));
     CheckFallThroughForBody(S, D, Body, BlockTy, CD, AC);
   }
 

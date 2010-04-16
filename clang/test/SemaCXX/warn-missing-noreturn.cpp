@@ -22,3 +22,8 @@ struct B {
 };
 
 template void B::g<int>(int); // expected-note {{in instantiation of function template specialization 'B::g<int>' requested here}}
+
+// We don't want a warning here.
+struct X {
+  virtual void g() { f(); }
+};
