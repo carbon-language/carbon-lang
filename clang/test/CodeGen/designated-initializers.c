@@ -11,6 +11,9 @@ union { int i; float f; } u = { };
 // CHECK: @u2 = global %0 { i32 0, [4 x i8] undef }
 union { int i; double f; } u2 = { };
 
+// CHECK: @u3 = global %1 zeroinitializer
+union { double f; int i; } u3 = { };
+
 // CHECK: @b = global [2 x i32] [i32 0, i32 22]
 int b[2] = {
   [1] = 22
