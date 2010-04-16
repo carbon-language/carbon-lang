@@ -2241,7 +2241,7 @@ static ImplicitConversionSequence
 TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
                  SourceLocation DeclLoc,
                  bool SuppressUserConversions,
-                 bool AllowExplicit, bool ForceRValue) {
+                 bool AllowExplicit) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   // Most paths end in a failed conversion.
@@ -2264,8 +2264,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // Compute some basic properties of the types and the initializer.
   bool isRValRef = DeclType->isRValueReferenceType();
   bool DerivedToBase = false;
-  Expr::isLvalueResult InitLvalue = ForceRValue ? Expr::LV_InvalidExpression :
-                                                  Init->isLvalue(S.Context);
+  Expr::isLvalueResult InitLvalue = Init->isLvalue(S.Context);
   Sema::ReferenceCompareResult RefRelationship
     = S.CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
@@ -2513,8 +2512,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
     return TryReferenceInit(*this, From, ToType,
                             /*FIXME:*/From->getLocStart(),
                             SuppressUserConversions,
-                            /*AllowExplicit=*/false,
-                            ForceRValue);
+                            /*AllowExplicit=*/false);
 
   return TryImplicitConversion(From, ToType,
                                SuppressUserConversions,
@@ -5147,10 +5145,9 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
   assert(!Cand->Conversions[ConvIdx].isInitialized() &&
          "remaining conversion is initialized?");
 
-  // FIXME: these should probably be preserved from the overload
+  // FIXME: this should probably be preserved from the overload
   // operation somehow.
   bool SuppressUserConversions = false;
-  bool ForceRValue = false;
 
   const FunctionProtoType* Proto;
   unsigned ArgIdx = ConvIdx;
@@ -5174,7 +5171,8 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
       Cand->Conversions[ConvIdx]
         = S.TryCopyInitialization(Args[ConvIdx],
                                   Cand->BuiltinTypes.ParamTypes[ConvIdx],
-                                  SuppressUserConversions, ForceRValue,
+                                  SuppressUserConversions, 
+                                  /*ForceRValue=*/false,
                                   /*InOverloadResolution*/ true);
     return;
   }
@@ -5185,7 +5183,8 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
     if (ArgIdx < NumArgsInProto)
       Cand->Conversions[ConvIdx]
         = S.TryCopyInitialization(Args[ArgIdx], Proto->getArgType(ArgIdx),
-                                  SuppressUserConversions, ForceRValue,
+                                  SuppressUserConversions, 
+                                  /*ForceRValue=*/false,
                                   /*InOverloadResolution=*/true);
     else
       Cand->Conversions[ConvIdx].setEllipsis();

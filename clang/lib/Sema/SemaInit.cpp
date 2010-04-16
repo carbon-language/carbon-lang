@@ -2391,15 +2391,11 @@ static void TryReferenceInitialization(Sema &S,
     T2 = cv2T2.getUnqualifiedType();
   }
   
-  // FIXME: Rvalue references
-  bool ForceRValue = false;
-  
   // Compute some basic properties of the types and the initializer.
   bool isLValueRef = DestType->isLValueReferenceType();
   bool isRValueRef = !isLValueRef;
   bool DerivedToBase = false;
-  Expr::isLvalueResult InitLvalue = ForceRValue ? Expr::LV_InvalidExpression :
-                                    Initializer->isLvalue(S.Context);
+  Expr::isLvalueResult InitLvalue = Initializer->isLvalue(S.Context);
   Sema::ReferenceCompareResult RefRelationship
     = S.CompareReferenceRelationship(DeclLoc, cv1T1, cv2T2, DerivedToBase);
   
