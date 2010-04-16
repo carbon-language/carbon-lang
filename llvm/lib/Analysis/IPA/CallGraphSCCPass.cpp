@@ -307,17 +307,16 @@ bool CGPassManager::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   bool Changed = doInitialization(CG);
 
-  CallGraphSCC CurSCC(this);
-  
   // Walk the callgraph in bottom-up SCC order.
-  for (scc_iterator<CallGraph*> CGI = scc_begin(&CG), E = scc_end(&CG);
-       CGI != E;) {
+  scc_iterator<CallGraph*> CGI = scc_begin(&CG);
+
+  CallGraphSCC CurSCC(&CGI);
+  while (!CGI.isAtEnd()) {
     // Copy the current SCC and increment past it so that the pass can hack
     // on the SCC if it wants to without invalidating our iterator.
     std::vector<CallGraphNode*> &NodeVec = *CGI;
     CurSCC.initialize(&NodeVec[0], &NodeVec[0]+NodeVec.size());
     ++CGI;
-    
     
     // CallGraphUpToDate - Keep track of whether the callgraph is known to be
     // up-to-date or not.  The CGSSC pass manager runs two types of passes:
@@ -408,6 +407,17 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
 // CallGraphSCC Implementation
 //===----------------------------------------------------------------------===//
 
+/// ReplaceNode - This informs the SCC and the pass manager that the specified
+/// Old node has been deleted, and New is to be used in its place.
+void CallGraphSCC::ReplaceNode(CallGraphNode *Old, CallGraphNode *New) {
+  assert(Old != New && "Should not replace node with self");
+  for (unsigned i = 0; ; ++i) {
+    assert(i != Nodes.size() && "Node not in SCC");
+    if (Nodes[i] != Old) continue;
+    Nodes[i] = New;
+    break;
+  }
+}
 
 
 //===----------------------------------------------------------------------===//

@@ -93,15 +93,7 @@ public:
   
   /// ReplaceNode - This informs the SCC and the pass manager that the specified
   /// Old node has been deleted, and New is to be used in its place.
-  void ReplaceNode(CallGraphNode *Old, CallGraphNode *New) {
-    assert(Old != New && "Should not replace node with self");
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i] == Old) {
-        Nodes[i] = New;
-        return;
-      }
-    assert(0 && "Node not in SCC");
-  }
+  void ReplaceNode(CallGraphNode *Old, CallGraphNode *New);
   
   typedef std::vector<CallGraphNode*>::const_iterator iterator;
   iterator begin() const { return Nodes.begin(); }

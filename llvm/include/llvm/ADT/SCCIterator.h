@@ -138,11 +138,11 @@ public:
   typedef scc_iterator<GraphT, GT> _Self;
 
   // Provide static "constructors"...
-  static inline _Self begin(const GraphT& G) { return _Self(GT::getEntryNode(G)); }
-  static inline _Self end  (const GraphT& G) { return _Self(); }
+  static inline _Self begin(const GraphT &G){return _Self(GT::getEntryNode(G));}
+  static inline _Self end  (const GraphT &G) { return _Self(); }
 
-  // Direct loop termination test (I.fini() is more efficient than I == end())
-  inline bool fini() const {
+  // Direct loop termination test: I.isAtEnd() is more efficient than I == end()
+  inline bool isAtEnd() const {
     assert(!CurrentSCC.empty() || VisitStack.empty());
     return CurrentSCC.empty();
   }
