@@ -76,15 +76,16 @@ namespace {
     //
     std::vector<int> PhysRegsUsed;
 
-    // PhysRegsUseOrder - This contains a list of the physical registers that
-    // currently have a virtual register value in them.  This list provides an
-    // ordering of registers, imposing a reallocation order.  This list is only
-    // used if all registers are allocated and we have to spill one, in which
-    // case we spill the least recently used register.  Entries at the front of
-    // the list are the least recently used registers, entries at the back are
-    // the most recently used.
+    // InstrNum - Number of the current instruction. This is used for the
+    // PhysLastUse map.
     //
-    std::vector<unsigned> PhysRegsUseOrder;
+    unsigned InstrNum;
+
+    // PhysLastUse - Store the instruction number of the last use of each physical
+    // register. This is used to find the least recently used register. when
+    // spilling.
+    //
+    std::vector<unsigned> PhysLastUse;
 
     // Virt2LastUseMap - This maps each virtual register to its last use
     // (MachineInstr*, operand index pair).
@@ -123,28 +124,8 @@ namespace {
       return VirtRegModified[Reg - TargetRegisterInfo::FirstVirtualRegister];
     }
 
-    void AddToPhysRegsUseOrder(unsigned Reg) {
-      std::vector<unsigned>::iterator It =
-        std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), Reg);
-      if (It != PhysRegsUseOrder.end())
-        PhysRegsUseOrder.erase(It);
-      PhysRegsUseOrder.push_back(Reg);
-    }
-
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
-      if (PhysRegsUseOrder.empty() ||
-          PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
-
-      for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i) {
-        unsigned RegMatch = PhysRegsUseOrder[i-1];       // remove from middle
-        if (!areRegsEqual(Reg, RegMatch)) continue;
-        
-        PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
-        // Add it to the end of the list
-        PhysRegsUseOrder.push_back(RegMatch);
-        if (RegMatch == Reg)
-          return;    // Found an exact match, exit early
-      }
+      PhysLastUse[Reg] = InstrNum;
     }
 
   public:
@@ -279,11 +260,6 @@ int RALocal::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
 ///
 void RALocal::removePhysReg(unsigned PhysReg) {
   PhysRegsUsed[PhysReg] = -1;      // PhyReg no longer used
-
-  std::vector<unsigned>::iterator It =
-    std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
-  if (It != PhysRegsUseOrder.end())
-    PhysRegsUseOrder.erase(It);
 }
 
 
@@ -365,7 +341,7 @@ void RALocal::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
   // it holds VirtReg.
   PhysRegsUsed[PhysReg] = VirtReg;
   getVirt2PhysRegMapSlot(VirtReg) = PhysReg;
-  AddToPhysRegsUseOrder(PhysReg);   // New use of PhysReg
+  MarkPhysRegRecentlyUsed(PhysReg);   // New use of PhysReg
 }
 
 
@@ -419,58 +395,22 @@ unsigned RALocal::getReg(MachineBasicBlock &MBB, MachineInstr *I,
     // Assign the register.
     assignVirtToPhysReg(VirtReg, PhysReg);
     return PhysReg;
-  }    
-    
-  // If we didn't find an unused register, scavenge one now!
-  assert(!PhysRegsUseOrder.empty() && "No allocated registers??");
+  }
 
-  // Loop over all of the preallocated registers from the least recently used
-  // to the most recently used.  When we find one that is capable of holding
-  // our register, use it.
-  for (unsigned i = 0; PhysReg == 0; ++i) {
-    assert(i != PhysRegsUseOrder.size() &&
-           "Couldn't find a register of the appropriate class!");
-
-    unsigned R = PhysRegsUseOrder[i];
-
-    // We can only use this register if it holds a virtual register (ie, it
-    // can be spilled).  Do not use it if it is an explicitly allocated
-    // physical register!
-    assert(PhysRegsUsed[R] != -1 &&
-           "PhysReg in PhysRegsUseOrder, but is not allocated?");
-    if (PhysRegsUsed[R] && PhysRegsUsed[R] != -2) {
-      // If the current register is compatible, use it.
-      if (RC->contains(R)) {
-        PhysReg = R;
-        break;
-      }
-      
-      // If one of the registers aliased to the current register is
-      // compatible, use it.
-      for (const unsigned *AliasIt = TRI->getAliasSet(R);
-           *AliasIt; ++AliasIt) {
-        if (!RC->contains(*AliasIt)) continue;
-        
-        // If this is pinned down for some reason, don't use it.  For
-        // example, if CL is pinned, and we run across CH, don't use
-        // CH as justification for using scavenging ECX (which will
-        // fail).
-        if (PhysRegsUsed[*AliasIt] == 0) continue;
-            
-        // Make sure the register is allocatable.  Don't allocate SIL on
-        // x86-32.
-        if (PhysRegsUsed[*AliasIt] == -2) continue;
-        
-        PhysReg = *AliasIt;    // Take an aliased register
-        break;
-      }
-    }
+  // Find the least recently used register in the allocation order.
+  unsigned Oldest = 0;
+  TargetRegisterClass::iterator RI = RC->allocation_order_begin(*MF);
+  TargetRegisterClass::iterator RE = RC->allocation_order_end(*MF);
+  for (; RI != RE; ++RI) {
+    unsigned Age = InstrNum-PhysLastUse[*RI];
+    if (Age <= Oldest && PhysReg) continue;
+    PhysReg = *RI;
+    Oldest = Age;
   }
 
   assert(PhysReg && "Physical register not assigned!?!?");
 
-  // At this point PhysRegsUseOrder[i] is the least recently used register of
-  // compatible register class.  Spill it to memory and reap its remains.
+  // Spill it to memory and reap its remains.
   spillPhysReg(MBB, I, PhysReg);
 
   // Now that we know which register we need to assign this to, do it now!
@@ -638,21 +578,13 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       
       if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) continue;
       
-      const unsigned *Aliases = TRI->getAliasSet(MO.getReg());
-      if (Aliases == 0)
-        continue;
-      
-      while (*Aliases) {
-        DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
-          alias = LastUseDef.find(*Aliases);
-        
-        if (alias != LastUseDef.end() && alias->second.first != I)
-          LastUseDef[*Aliases] = std::make_pair(I, i);
-        
-        ++Aliases;
+      for (const unsigned *A = TRI->getAliasSet(MO.getReg()); *A; ++A) {
+        std::pair<MachineInstr*, unsigned> &LUD = LastUseDef[*A];
+        if (LUD.first != I)
+          LUD = std::make_pair(I, i);
       }
     }
-    
+
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = I->getOperand(i);
       // Defs others than 2-addr redefs _do_ trigger flag changes:
@@ -767,7 +699,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
 void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MII = MBB.begin();
-  
+
   DEBUG({
       const BasicBlock *LBB = MBB.getBasicBlock();
       if (LBB)
@@ -780,12 +712,11 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     unsigned Reg = *I;
     MF->getRegInfo().setPhysRegUsed(Reg);
     PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-    AddToPhysRegsUseOrder(Reg); 
+    MarkPhysRegRecentlyUsed(Reg);
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          *SubRegs; ++SubRegs) {
       if (PhysRegsUsed[*SubRegs] == -2) continue;
-      
-      AddToPhysRegsUseOrder(*SubRegs); 
+      MarkPhysRegRecentlyUsed(*SubRegs);
       PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
       MF->getRegInfo().setPhysRegUsed(*SubRegs);
     }
@@ -796,6 +727,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
+    ++InstrNum;
     const TargetInstrDesc &TID = MI->getDesc();
     DEBUG({
         dbgs() << "\nStarting RegAlloc of: " << *MI;
@@ -874,14 +806,14 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
           MF->getRegInfo().setPhysRegUsed(Reg);
           spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-          AddToPhysRegsUseOrder(Reg); 
+          MarkPhysRegRecentlyUsed(Reg);
 
           for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
                *SubRegs; ++SubRegs) {
             if (PhysRegsUsed[*SubRegs] == -2) continue;
             MF->getRegInfo().setPhysRegUsed(*SubRegs);
             PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
-            AddToPhysRegsUseOrder(*SubRegs); 
+            MarkPhysRegRecentlyUsed(*SubRegs);
           }
         }
       }
@@ -971,7 +903,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MF->getRegInfo().setPhysRegUsed(Reg);
       spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      AddToPhysRegsUseOrder(Reg); 
+      MarkPhysRegRecentlyUsed(Reg);
 
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            *SubRegs; ++SubRegs) {
@@ -979,7 +911,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         
         MF->getRegInfo().setPhysRegUsed(*SubRegs);
         PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
-        AddToPhysRegsUseOrder(*SubRegs); 
+        MarkPhysRegRecentlyUsed(*SubRegs);
       }
     }
 
@@ -990,7 +922,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned Reg = *ImplicitDefs;
         if (PhysRegsUsed[Reg] != -2) {
           spillPhysReg(MBB, MI, Reg, true);
-          AddToPhysRegsUseOrder(Reg); 
+          MarkPhysRegRecentlyUsed(Reg);
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
         MF->getRegInfo().setPhysRegUsed(Reg);
@@ -998,7 +930,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
              *SubRegs; ++SubRegs) {
           if (PhysRegsUsed[*SubRegs] == -2) continue;
           
-          AddToPhysRegsUseOrder(*SubRegs); 
+          MarkPhysRegRecentlyUsed(*SubRegs);
           PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
           MF->getRegInfo().setPhysRegUsed(*SubRegs);
         }
@@ -1123,11 +1055,6 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
   assert(AllOk && "Virtual registers still in phys regs?");
 #endif
-
-  // Clear any physical register which appear live at the end of the basic
-  // block, but which do not hold any virtual registers.  e.g., the stack
-  // pointer.
-  PhysRegsUseOrder.clear();
 }
 
 /// runOnMachineFunction - Register allocate the whole function
@@ -1140,7 +1067,9 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   TII = TM->getInstrInfo();
 
   PhysRegsUsed.assign(TRI->getNumRegs(), -1);
-  
+  InstrNum = 0;
+  PhysLastUse.assign(TRI->getNumRegs(), 0);
+
   // At various places we want to efficiently check to see whether a register
   // is allocatable.  To handle this, we mark all unallocatable registers as
   // being pinned down, permanently.
