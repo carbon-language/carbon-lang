@@ -330,8 +330,9 @@ public:
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
-    assert((isBuiltinWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
-           "Cannot map errors!");
+    assert((isBuiltinWarningOrExtension(Diag) ||
+            (Map == diag::MAP_FATAL || Map == diag::MAP_ERROR)) &&
+           "Cannot map errors into warnings!");
     setDiagnosticMappingInternal(Diag, Map, true);
   }
 
