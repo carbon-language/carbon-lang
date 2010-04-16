@@ -331,7 +331,7 @@ void cleanupPassRegistrar(void*) {
     PassRegistrarObj = 0;
   }
 }
-ManagedCleanup<&cleanupPassRegistrar> registrarCleanup;
+ManagedCleanup<&cleanupPassRegistrar> registrarCleanup ATTRIBUTE_USED;
 
 }
 
