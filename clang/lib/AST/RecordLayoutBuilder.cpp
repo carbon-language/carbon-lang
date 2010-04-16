@@ -623,15 +623,10 @@ void ASTRecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
     Context.UnsignedLongTy, Context.UnsignedLongLongTy
   };
 
-  printf("field sizes %llu type size %llu\n",
-         FieldSize, TypeSize);
-  
   QualType Type;
   for (unsigned I = 0, E = llvm::array_lengthof(IntegralPODTypes);
        I != E; ++I) {
     uint64_t Size = Context.getTypeSize(IntegralPODTypes[I]);
-    printf("going to try %s %llu\n", IntegralPODTypes[I].getAsString().c_str(),
-           Size);
 
     if (Size > FieldSize)
       break;
@@ -639,7 +634,6 @@ void ASTRecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
     Type = IntegralPODTypes[I];
   }
   assert(!Type.isNull() && "Did not find a type!");
-  printf("type should be %s\n", Type.getAsString().c_str());
   
   unsigned TypeAlign = Context.getTypeAlign(Type);
 
