@@ -113,16 +113,22 @@ SVal SimpleSValuator::EvalCastL(Loc val, QualType castTy) {
   if (castTy->isUnionType())
     return UnknownVal();
 
-  assert(castTy->isIntegerType());
-  unsigned BitWidth = ValMgr.getContext().getTypeSize(castTy);
+  if (castTy->isIntegerType()) {
+    unsigned BitWidth = ValMgr.getContext().getTypeSize(castTy);
 
-  if (!isa<loc::ConcreteInt>(val))
-    return ValMgr.makeLocAsInteger(val, BitWidth);
+    if (!isa<loc::ConcreteInt>(val))
+      return ValMgr.makeLocAsInteger(val, BitWidth);
 
-  llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
-  i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
-  i.extOrTrunc(BitWidth);
-  return ValMgr.makeIntVal(i);
+    llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
+    i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
+    i.extOrTrunc(BitWidth);
+    return ValMgr.makeIntVal(i);
+  }
+
+  // All other cases: return 'UnknownVal'.  This includes casting pointers
+  // to floats, which is probably badness it itself, but this is a good
+  // intermediate solution until we do something better.
+  return UnknownVal();
 }
 
 //===----------------------------------------------------------------------===//

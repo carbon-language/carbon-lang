@@ -1004,3 +1004,13 @@ void map(int srcID, ...) {
   }
 }
 
+// PR 6854 - crash when casting symbolic memory address to a float
+// Handle casting from a symbolic region to a 'float'.  This isn't
+// really all that intelligent, but previously this caused a crash
+// in SimpleSValuator.
+void pr6854(void * arg) {
+  void * a = arg;
+  *(void**)a = arg;
+  float f = *(float*) a;
+}
+
