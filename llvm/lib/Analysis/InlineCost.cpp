@@ -108,10 +108,10 @@ unsigned InlineCostAnalyzer::FunctionInfo::
   return Reduction;
 }
 
-// callIsSmall - If a call is likely to lower to a single target instruction, or
-// is otherwise deemed small return true.
-// TODO: Perhaps calls like memcpy, strcpy, etc?
-static bool callIsSmall(const Function *F) {
+/// callIsSmall - If a call is likely to lower to a single target instruction,
+/// or is otherwise deemed small return true.
+/// TODO: Perhaps calls like memcpy, strcpy, etc?
+bool llvm::callIsSmall(const Function *F) {
   if (!F) return false;
   
   if (F->hasLocalLinkage()) return false;

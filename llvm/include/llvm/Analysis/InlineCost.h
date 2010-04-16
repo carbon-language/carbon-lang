@@ -189,6 +189,10 @@ namespace llvm {
     /// eliminated.
     void growCachedCostInfo(Function* Caller, Function* Callee);
   };
+
+  /// callIsSmall - If a call is likely to lower to a single target instruction,
+  /// or is otherwise deemed small return true.
+  bool callIsSmall(const Function *Callee);
 }
 
 #endif
