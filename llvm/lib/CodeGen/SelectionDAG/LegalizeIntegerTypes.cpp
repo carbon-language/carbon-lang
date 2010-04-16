@@ -465,7 +465,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
   return DAG.getNode(ISD::SHL, N->getDebugLoc(),
-                     TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)),
+                TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)),
                      GetPromotedInteger(N->getOperand(0)), N->getOperand(1));
 }
 
