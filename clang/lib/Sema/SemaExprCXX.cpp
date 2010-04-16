@@ -1463,30 +1463,6 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
   return false;
 }
 
-/// PerformImplicitConversion - Perform an implicit conversion of the
-/// expression From to the type ToType. Returns true if there was an
-/// error, false otherwise. The expression From is replaced with the
-/// converted expression. Flavor is the kind of conversion we're
-/// performing, used in the error message. If @p AllowExplicit,
-/// explicit user-defined conversions are permitted.
-bool
-Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                AssignmentAction Action, bool AllowExplicit) {
-  ImplicitConversionSequence ICS;
-  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, ICS);
-}
-
-bool
-Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                AssignmentAction Action, bool AllowExplicit,
-                                ImplicitConversionSequence& ICS) {
-  ICS = TryImplicitConversion(From, ToType,
-                              /*SuppressUserConversions=*/false,
-                              AllowExplicit,
-                              /*InOverloadResolution=*/false);
-  return PerformImplicitConversion(From, ToType, ICS, Action);
-}
-
 static Sema::OwningExprResult BuildCXXCastArgument(Sema &S, 
                                                    SourceLocation CastLoc,
                                                    QualType Ty,
