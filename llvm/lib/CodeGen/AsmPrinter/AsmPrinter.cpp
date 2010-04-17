@@ -93,7 +93,7 @@ unsigned AsmPrinter::getFunctionNumber() const {
   return MF->getFunctionNumber();
 }
 
-TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
+const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
 

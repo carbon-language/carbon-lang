@@ -129,7 +129,7 @@ namespace llvm {
     unsigned getFunctionNumber() const;
     
     /// getObjFileLowering - Return information about object file lowering.
-    TargetLoweringObjectFile &getObjFileLowering() const;
+    const TargetLoweringObjectFile &getObjFileLowering() const;
 
     /// getTargetData - Return information about data layout.
     const TargetData &getTargetData() const;

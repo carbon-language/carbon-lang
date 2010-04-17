@@ -37,8 +37,8 @@ namespace llvm {
       return "PIC16 Assembly Printer";
     }
     
-    PIC16TargetObjectFile &getObjFileLowering() const {
-      return (PIC16TargetObjectFile &)AsmPrinter::getObjFileLowering();
+    const PIC16TargetObjectFile &getObjFileLowering() const {
+      return (const PIC16TargetObjectFile &)AsmPrinter::getObjFileLowering();
     }
 
     bool runOnMachineFunction(MachineFunction &F);
@@ -76,7 +76,7 @@ namespace llvm {
     }
     
   private:
-    PIC16TargetObjectFile *PTOF;
+    const PIC16TargetObjectFile *PTOF;
     PIC16DbgInfo DbgInfo;
     const PIC16MCAsmInfo *PMAI;
     std::set<std::string> LibcallDecls; // Sorted & uniqued set of extern decls.

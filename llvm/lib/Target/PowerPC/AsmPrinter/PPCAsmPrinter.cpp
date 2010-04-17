@@ -649,8 +649,8 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
-  TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
   OutStreamer.SwitchSection(TLOFMacho.getTextCoalSection());
   if (TM.getRelocationModel() == Reloc::PIC_) {
     OutStreamer.SwitchSection(
@@ -686,8 +686,8 @@ void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   bool isPPC64 = TM.getTargetData()->getPointerSizeInBits() == 64;
   
-  TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
 
   // .lazy_symbol_pointer
   const MCSection *LSPSection = TLOFMacho.getLazySymbolPointerSection();
@@ -782,8 +782,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = TM.getTargetData()->getPointerSizeInBits() == 64;
 
   // Darwin/PPC always uses mach-o.
-  TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
   MachineModuleInfoMachO &MMIMacho =
     MMI->getObjFileInfo<MachineModuleInfoMachO>();
   

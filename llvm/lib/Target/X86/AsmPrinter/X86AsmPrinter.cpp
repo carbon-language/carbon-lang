@@ -584,8 +584,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       // Necessary for dllexport support
       std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
-      TargetLoweringObjectFileCOFF &TLOFCOFF =
-        static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+      const TargetLoweringObjectFileCOFF &TLOFCOFF =
+        static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
 
       for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (I->hasDLLExportLinkage())
@@ -614,8 +614,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   }
 
   if (Subtarget->isTargetELF()) {
-    TargetLoweringObjectFileELF &TLOFELF =
-      static_cast<TargetLoweringObjectFileELF &>(getObjFileLowering());
+    const TargetLoweringObjectFileELF &TLOFELF =
+      static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
 
     MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
 

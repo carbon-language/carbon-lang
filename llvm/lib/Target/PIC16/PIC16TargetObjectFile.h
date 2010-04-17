@@ -122,7 +122,7 @@ namespace llvm {
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
     /// Return the section with the given Name. Null if not found.
-    PIC16Section *findPIC16Section(const std::string &Name);
+    PIC16Section *findPIC16Section(const std::string &Name) const;
 
     /// Override section allocations for user specified sections.
     virtual const MCSection *

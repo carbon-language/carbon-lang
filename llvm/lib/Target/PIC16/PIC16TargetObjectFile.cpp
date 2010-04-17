@@ -26,7 +26,7 @@ PIC16TargetObjectFile::~PIC16TargetObjectFile() {
 
 /// Find a pic16 section. Return null if not found. Do not create one.
 PIC16Section *PIC16TargetObjectFile::
-findPIC16Section(const std::string &Name) {
+findPIC16Section(const std::string &Name) const {
   /// Return if we have an already existing one.
   PIC16Section *Entry = SectionsByName[Name];
   if (Entry)

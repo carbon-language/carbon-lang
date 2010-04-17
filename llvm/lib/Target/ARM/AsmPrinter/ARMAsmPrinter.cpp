@@ -1127,8 +1127,9 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       // avoid out-of-range branches that are due a fundamental limitation of
       // the way symbol offsets are encoded with the current Darwin ARM
       // relocations.
-      TargetLoweringObjectFileMachO &TLOFMacho = 
-        static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+      const TargetLoweringObjectFileMachO &TLOFMacho = 
+        static_cast<const TargetLoweringObjectFileMachO &>(
+          getObjFileLowering());
       OutStreamer.SwitchSection(TLOFMacho.getTextSection());
       OutStreamer.SwitchSection(TLOFMacho.getTextCoalSection());
       OutStreamer.SwitchSection(TLOFMacho.getConstTextCoalSection());
@@ -1199,8 +1200,8 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
 void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
-    TargetLoweringObjectFileMachO &TLOFMacho =
-      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    const TargetLoweringObjectFileMachO &TLOFMacho =
+      static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
     MachineModuleInfoMachO &MMIMacho =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
