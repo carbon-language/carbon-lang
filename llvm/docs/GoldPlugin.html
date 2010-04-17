@@ -27,7 +27,7 @@
   <p>Building with link time optimization requires cooperation from the
 system linker. LTO support on Linux systems requires that you use
 the <a href="http://sourceware.org/binutils">gold linker</a> which supports
-LTO via plugins. This is the same system used by the upcoming
+LTO via plugins. This is the same mechanism used by the
 <a href="http://gcc.gnu.org/wiki/LinkTimeOptimization">GCC LTO</a>
 project.</p>
   <p>The LLVM gold plugin implements the
@@ -41,10 +41,15 @@ The same plugin can also be used by other tools such as <tt>ar</tt> and
 <div class="doc_section"><a name="build">How to build it</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
-  <p>You need to build gold with plugin support and build the LLVMgold
-plugin.</p>
+  <p>You need to have gold with plugin support and build the LLVMgold
+plugin. Check whether you have gold running <tt>/usr/bin/ld -v</tt>. It will
+report &#8220;GNU gold&#8221; or else &#8220GNU ld&#8221; if not. If you have
+gold, check for plugin support by running <tt>/usr/bin/ld -plugin</tt>. If it
+complains &#8220missing argument&#8221 then you have plugin support. If not,
+such as an &#8220;unknown option&#8221; error then you will either need to
+build gold or install a version with plugin support.</p>
 <ul>
-  <li>Build gold with plugin support:
+  <li>To build gold with plugin support:
     <pre class="doc_code">
 mkdir binutils
 cd binutils
@@ -56,9 +61,11 @@ cd build
 ../src/configure --enable-gold --enable-plugins
 make all-gold
 </pre>
-    That should leave you with binutils/build/gold/ld-new which supports the
-<tt>-plugin</tt> option.
-
+    That should leave you with <tt>binutils/build/gold/ld-new</tt> which supports the <tt>-plugin</tt> option. It also built would have
+<tt>binutils/build/binutils/ar</tt> and <tt>nm-new</tt> which support plugins
+but don't have a visible -plugin option, instead relying on the gold plugin
+being present in <tt>../lib/bfd-plugins</tt> relative to where the binaries are
+placed.
     <li>Build the LLVMgold plugin: Configure LLVM with
     <tt>--with-binutils-include=/path/to/binutils/src/include</tt> and run
     <tt>make</tt>.
@@ -72,7 +79,7 @@ make all-gold
   the plugin <tt>.so</tt> file. To find out what link command <tt>gcc</tt>
   would run in a given situation, run <tt>gcc -v <em>[...]</em></tt> and look
   for the line where it runs <tt>collect2</tt>. Replace that with
-  <tt>ld-new -plugin /path/to/LLVMgold.so</tt> to test it out. Once you're
+  <tt>ld-new -plugin /path/to/libLLVMgold.so</tt> to test it out. Once you're
   ready to switch to using gold, backup your existing <tt>/usr/bin/ld</tt>
   then replace it with <tt>ld-new</tt>.</p>
   <p>You can produce bitcode files from <tt>llvm-gcc</tt> using
@@ -83,6 +90,11 @@ make all-gold
   passes the <tt>-plugin</tt> option to ld. It will not look for an alternate
   linker, which is why you need gold to be the installed system linker in your
   path.</p>
+  <p>If you want <tt>ar</tt> and <tt>nm</tt> to work seamlessly as well, install
+  <tt>libLLVMgold.so</tt> to <tt>/usr/lib/bfd-plugins</tt>. If you built your
+  own gold, be sure to install the <tt>ar</tt> and <tt>nm-new</tt> you built to
+  <tt>/usr/bin</tt>.
+  <p>
 </div>
 
 <!-- ======================================================================= -->
@@ -141,8 +153,9 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
 <div class="doc_section"><a name="lto_autotools">Quickstart for using LTO with autotooled projects</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
-  <p><tt>gold</tt>, <tt>ar</tt> and <tt>nm</tt> all support plugins now, so everything should be
-  in place for an easy to use LTO build of autotooled projects:</p>
+  <p>Once your system <tt>ld</tt>, <tt>ar</tt> and <tt>nm</tt> all support LLVM
+  bitcode, everything is in place for an easy to use LTO build of autotooled
+  projects:</p>
   <ul>
     <li>Follow the instructions <a href="#build">on how to build libLLVMgold.so</a>.</li>
     <li>Install the newly built binutils to <tt>$PREFIX</tt></li>
@@ -194,7 +207,7 @@ as much as gold could without the plugin.</p>
   src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
   <a href="mailto:nicholas@metrix.on.ca">Nick Lewycky</a><br>
   <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
-  Last modified: $Date: 2009-01-01 23:10:51 -0800 (Thu, 01 Jan 2009) $
+  Last modified: $Date: 2010-04-16 23:58:21 -0800 (Fri, 16 Apr 2010) $
 </address>
 </body>
 </html>
