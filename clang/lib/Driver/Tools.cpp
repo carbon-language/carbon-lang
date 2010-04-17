@@ -1330,6 +1330,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
   for (arg_iterator it = Args.filtered_begin(options::OPT_mllvm),
          ie = Args.filtered_end(); it != ie; ++it) {
+    it->claim();
+
     // We translate this by hand to the -cc1 argument, since nightly test uses
     // it and developers have been trained to spell it with -mllvm.
     if (llvm::StringRef(it->getValue(Args, 0)) == "-disable-llvm-optzns")
