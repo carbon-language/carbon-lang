@@ -103,9 +103,9 @@ public:
                           const ThisAdjustment &ThisAdjustment,
                           llvm::SmallVectorImpl<char> &);
   void mangleGuardVariable(const VarDecl *D, llvm::SmallVectorImpl<char> &);
-  void mangleCXXVtable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
+  void mangleCXXVTable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
   void mangleCXXVTT(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
-  void mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
+  void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                            const CXXRecordDecl *Type,
                            llvm::SmallVectorImpl<char> &);
   void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);

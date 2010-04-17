@@ -528,7 +528,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-static-define");
   if (Opts.DumpRecordLayouts)
     Res.push_back("-fdump-record-layouts");
-  if (Opts.DumpVtableLayouts)
+  if (Opts.DumpVTableLayouts)
     Res.push_back("-fdump-vtable-layouts");
   if (Opts.NoBitFieldTypeAlign)
     Res.push_back("-fno-bitfield-type-alignment");
@@ -1226,7 +1226,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayouts = Args.hasArg(OPT_fdump_record_layouts);
-  Opts.DumpVtableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);
+  Opts.DumpVTableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);
   Opts.NoBitFieldTypeAlign = Args.hasArg(OPT_fno_bitfield_type_align);
   Opts.OptimizeSize = 0;
 

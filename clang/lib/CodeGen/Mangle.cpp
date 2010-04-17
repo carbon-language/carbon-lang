@@ -1966,7 +1966,7 @@ void MangleContext::mangleGuardVariable(const VarDecl *D,
   Mangler.mangleName(D);
 }
 
-void MangleContext::mangleCXXVtable(const CXXRecordDecl *RD,
+void MangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                     llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TV <type>  # virtual table
   CXXNameMangler Mangler(*this, Res);
@@ -1982,7 +1982,7 @@ void MangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
   Mangler.mangleName(RD);
 }
 
-void MangleContext::mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
+void MangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                         const CXXRecordDecl *Type,
                                         llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TC <type> <offset number> _ <base type>

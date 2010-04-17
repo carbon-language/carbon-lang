@@ -395,7 +395,7 @@ void CGRecordLayoutBuilder::LayoutBases(const CXXRecordDecl *RD,
       llvm::Type::getInt8PtrTy(Types.getLLVMContext());
 
     assert(NextFieldOffsetInBytes == 0 &&
-           "Vtable pointer must come first!");
+           "VTable pointer must come first!");
     AppendField(NextFieldOffsetInBytes, Int8PtrTy->getPointerTo());
   }
 }

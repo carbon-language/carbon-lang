@@ -297,15 +297,15 @@ void CodeGenModule::getMangledCXXDtorName(MangleBuffer &Name,
   getMangleContext().mangleCXXDtor(D, Type, Name.getBuffer());
 }
 
-static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VtableIndex, 
+static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex, 
                                      llvm::Value *This, const llvm::Type *Ty) {
   Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();
   
-  llvm::Value *Vtable = CGF.Builder.CreateBitCast(This, Ty);
-  Vtable = CGF.Builder.CreateLoad(Vtable);
+  llvm::Value *VTable = CGF.Builder.CreateBitCast(This, Ty);
+  VTable = CGF.Builder.CreateLoad(VTable);
   
   llvm::Value *VFuncPtr = 
-    CGF.Builder.CreateConstInBoundsGEP1_64(Vtable, VtableIndex, "vfn");
+    CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
   return CGF.Builder.CreateLoad(VFuncPtr);
 }
 
@@ -313,7 +313,7 @@ llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                   const llvm::Type *Ty) {
   MD = MD->getCanonicalDecl();
-  uint64_t VTableIndex = CGM.getVTables().getMethodVtableIndex(MD);
+  uint64_t VTableIndex = CGM.getVTables().getMethodVTableIndex(MD);
   
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
@@ -323,7 +323,7 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   llvm::Value *&This, const llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
   uint64_t VTableIndex = 
-    CGM.getVTables().getMethodVtableIndex(GlobalDecl(DD, Type));
+    CGM.getVTables().getMethodVTableIndex(GlobalDecl(DD, Type));
 
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }

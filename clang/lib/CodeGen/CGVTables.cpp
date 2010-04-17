@@ -1,4 +1,4 @@
-//===--- CGVtables.cpp - Emit LLVM Code for C++ vtables -------------------===//
+//===--- CGVTables.cpp - Emit LLVM Code for C++ vtables -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -2362,7 +2362,7 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   
 }
 
-void CodeGenVTables::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
+void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   
   // Itanium C++ ABI 2.5.2:
   //   The order of the virtual function pointers in a virtual table is the 
@@ -2419,12 +2419,12 @@ void CodeGenVTables::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
             cast<CXXDestructorDecl>(OverriddenMD);
           
           // Add both the complete and deleting entries.
-          MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = 
-            getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
-          MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = 
-            getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
+          MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] = 
+            getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
+          MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = 
+            getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
         } else {
-          MethodVtableIndices[MD] = getMethodVtableIndex(OverriddenMD);
+          MethodVTableIndices[MD] = getMethodVTableIndex(OverriddenMD);
         }
         
         // We don't need to add an entry for this method.
@@ -2441,13 +2441,13 @@ void CodeGenVTables::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
       } 
 
       // Add the complete dtor.
-      MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
+      MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
       
       // Add the deleting dtor.
-      MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
+      MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
     } else {
       // Add the entry.
-      MethodVtableIndices[MD] = CurrentIndex++;
+      MethodVTableIndices[MD] = CurrentIndex++;
     }
   }
 
@@ -2457,11 +2457,11 @@ void CodeGenVTables::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
     //   its entries come after the declared virtual function pointers.
 
     // Add the complete dtor.
-    MethodVtableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Complete)] = 
+    MethodVTableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Complete)] = 
       CurrentIndex++;
     
     // Add the deleting dtor.
-    MethodVtableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Deleting)] = 
+    MethodVTableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Deleting)] = 
       CurrentIndex++;
   }
   
@@ -2474,24 +2474,24 @@ uint64_t CodeGenVTables::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) 
   if (I != NumVirtualFunctionPointers.end())
     return I->second;
 
-  ComputeMethodVtableIndices(RD);
+  ComputeMethodVTableIndices(RD);
 
   I = NumVirtualFunctionPointers.find(RD);
   assert(I != NumVirtualFunctionPointers.end() && "Did not find entry!");
   return I->second;
 }
       
-uint64_t CodeGenVTables::getMethodVtableIndex(GlobalDecl GD) {
-  MethodVtableIndicesTy::iterator I = MethodVtableIndices.find(GD);
-  if (I != MethodVtableIndices.end())
+uint64_t CodeGenVTables::getMethodVTableIndex(GlobalDecl GD) {
+  MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
+  if (I != MethodVTableIndices.end())
     return I->second;
   
   const CXXRecordDecl *RD = cast<CXXMethodDecl>(GD.getDecl())->getParent();
 
-  ComputeMethodVtableIndices(RD);
+  ComputeMethodVTableIndices(RD);
 
-  I = MethodVtableIndices.find(GD);
-  assert(I != MethodVtableIndices.end() && "Did not find index!");
+  I = MethodVTableIndices.find(GD);
+  assert(I != MethodVTableIndices.end() && "Did not find index!");
   return I->second;
 }
 
@@ -2547,7 +2547,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
   else
     getMangleContext().mangleThunk(MD, Thunk, Name);
   
-  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
+  const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(MD);
   return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
 }
 
@@ -2730,7 +2730,7 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
   // There's already a declaration with the same name, check if it has the same
   // type or if we need to replace it.
   if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != 
-      CGM.getTypes().GetFunctionTypeForVtable(MD)) {
+      CGM.getTypes().GetFunctionTypeForVTable(MD)) {
     llvm::GlobalValue *OldThunkFn = cast<llvm::GlobalValue>(Entry);
     
     // If the types mismatch then we have to rewrite the definition.
@@ -2938,7 +2938,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
           NextVTableThunkIndex++;
         } else {
           const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
+          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(MD);
         
           Init = CGM.GetAddrOfFunction(GD, Ty);
         }
@@ -3005,7 +3005,7 @@ GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
 
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXVtable(RD, OutName);
+  CGM.getMangleContext().mangleCXXVTable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
   ComputeVTableRelatedInformation(RD);
@@ -3023,7 +3023,7 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
                                      llvm::GlobalVariable::LinkageTypes Linkage,
                                      const CXXRecordDecl *RD) {
   // Dump the vtable layout if necessary.
-  if (CGM.getLangOptions().DumpVtableLayouts) {
+  if (CGM.getLangOptions().DumpVTableLayouts) {
     VTableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
 
     Builder.dumpLayout(llvm::errs());
@@ -3053,7 +3053,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
 
   // Dump the vtable layout if necessary.
-  if (CGM.getLangOptions().DumpVtableLayouts)
+  if (CGM.getLangOptions().DumpVTableLayouts)
     Builder.dumpLayout(llvm::errs());
 
   // Add the address points.
@@ -3062,7 +3062,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 
   // Get the mangled construction vtable name.
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXCtorVtable(RD, Base.getBaseOffset() / 8, 
+  CGM.getMangleContext().mangleCXXCtorVTable(RD, Base.getBaseOffset() / 8, 
                                              Base.getBase(), OutName);
   llvm::StringRef Name = OutName.str();
 
@@ -3096,9 +3096,9 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 void 
 CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *&VTable = Vtables[RD];
+  llvm::GlobalVariable *&VTable = VTables[RD];
   if (VTable) {
-    assert(VTable->getInitializer() && "Vtable doesn't have a definition!");
+    assert(VTable->getInitializer() && "VTable doesn't have a definition!");
     return;
   }
 
@@ -3157,11 +3157,11 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
       return;
   }
 
-  if (Vtables.count(RD))
+  if (VTables.count(RD))
     return;
 
   if (RDKind == TSK_ImplicitInstantiation)
-    CGM.DeferredVtables.push_back(RD);
+    CGM.DeferredVTables.push_back(RD);
   else
-    GenerateClassData(CGM.getVtableLinkage(RD), RD);
+    GenerateClassData(CGM.getVTableLinkage(RD), RD);
 }

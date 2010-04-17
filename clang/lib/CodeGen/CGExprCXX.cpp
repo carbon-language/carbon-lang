@@ -205,20 +205,20 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   Builder.CreateCondBr(IsVirtual, FnVirtual, FnNonVirtual);
   EmitBlock(FnVirtual);
   
-  const llvm::Type *VtableTy = 
+  const llvm::Type *VTableTy = 
     FTy->getPointerTo()->getPointerTo();
 
-  llvm::Value *Vtable = Builder.CreateBitCast(This, VtableTy->getPointerTo());
-  Vtable = Builder.CreateLoad(Vtable);
+  llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy->getPointerTo());
+  VTable = Builder.CreateLoad(VTable);
   
-  Vtable = Builder.CreateBitCast(Vtable, Int8PtrTy);
-  llvm::Value *VtableOffset = 
+  VTable = Builder.CreateBitCast(VTable, Int8PtrTy);
+  llvm::Value *VTableOffset = 
     Builder.CreateSub(FnAsInt, llvm::ConstantInt::get(PtrDiffTy, 1));
   
-  Vtable = Builder.CreateGEP(Vtable, VtableOffset, "fn");
-  Vtable = Builder.CreateBitCast(Vtable, VtableTy);
+  VTable = Builder.CreateGEP(VTable, VTableOffset, "fn");
+  VTable = Builder.CreateBitCast(VTable, VTableTy);
   
-  llvm::Value *VirtualFn = Builder.CreateLoad(Vtable, "virtualfn");
+  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
   
   EmitBranch(FnEnd);
   EmitBlock(FnNonVirtual);

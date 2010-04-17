@@ -31,8 +31,8 @@ class RTTIBuilder {
   /// descriptor of the given type.
   llvm::Constant *GetAddrOfExternalRTTIDescriptor(QualType Ty);
   
-  /// BuildVtablePointer - Build the vtable pointer for the given type.
-  void BuildVtablePointer(const Type *Ty);
+  /// BuildVTablePointer - Build the vtable pointer for the given type.
+  void BuildVTablePointer(const Type *Ty);
   
   /// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
   /// inheritance, according to the Itanium C++ ABI, 2.9.5p6b.
@@ -337,7 +337,7 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     if (const RecordType *Record = dyn_cast<RecordType>(Ty)) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       if (RD->isDynamicClass())
-        return CodeGenModule::getVtableLinkage(RD);
+        return CodeGenModule::getVTableLinkage(RD);
     }
 
     return llvm::GlobalValue::WeakODRLinkage;
@@ -375,8 +375,8 @@ static bool CanUseSingleInheritance(const CXXRecordDecl *RD) {
   return true;
 }
 
-void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
-  const char *VtableName;
+void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
+  const char *VTableName;
 
   switch (Ty->getTypeClass()) {
   default: assert(0 && "Unhandled type!");
@@ -386,24 +386,24 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   case Type::Vector:
   case Type::ExtVector:
     // abi::__fundamental_type_info.
-    VtableName = "_ZTVN10__cxxabiv123__fundamental_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv123__fundamental_type_infoE";
     break;
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
     // abi::__array_type_info.
-    VtableName = "_ZTVN10__cxxabiv117__array_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv117__array_type_infoE";
     break;
 
   case Type::FunctionNoProto:
   case Type::FunctionProto:
     // abi::__function_type_info.
-    VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv120__function_type_infoE";
     break;
 
   case Type::Enum:
     // abi::__enum_type_info.
-    VtableName = "_ZTVN10__cxxabiv116__enum_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv116__enum_type_infoE";
     break;
       
   case Type::Record: {
@@ -412,13 +412,13 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     
     if (!RD->hasDefinition() || !RD->getNumBases()) {
       // abi::__class_type_info.
-      VtableName = "_ZTVN10__cxxabiv117__class_type_infoE";
+      VTableName = "_ZTVN10__cxxabiv117__class_type_infoE";
     } else if (CanUseSingleInheritance(RD)) {
       // abi::__si_class_type_info.
-      VtableName = "_ZTVN10__cxxabiv120__si_class_type_infoE";
+      VTableName = "_ZTVN10__cxxabiv120__si_class_type_infoE";
     } else {
       // abi::__vmi_class_type_info.
-      VtableName = "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
+      VTableName = "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
     }
     
     break;
@@ -426,27 +426,27 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
 
   case Type::Pointer:
     // abi::__pointer_type_info.
-    VtableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
     break;
 
   case Type::MemberPointer:
     // abi::__pointer_to_member_type_info.
-    VtableName = "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
+    VTableName = "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
     break;
   }
 
-  llvm::Constant *Vtable = 
-    CGM.getModule().getOrInsertGlobal(VtableName, Int8PtrTy);
+  llvm::Constant *VTable = 
+    CGM.getModule().getOrInsertGlobal(VTableName, Int8PtrTy);
     
   const llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 
   // The vtable address point is 2.
   llvm::Constant *Two = llvm::ConstantInt::get(PtrDiffTy, 2);
-  Vtable = llvm::ConstantExpr::getInBoundsGetElementPtr(Vtable, &Two, 1);
-  Vtable = llvm::ConstantExpr::getBitCast(Vtable, Int8PtrTy);
+  VTable = llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, &Two, 1);
+  VTable = llvm::ConstantExpr::getBitCast(VTable, Int8PtrTy);
 
-  Fields.push_back(Vtable);
+  Fields.push_back(VTable);
 }
 
 llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
@@ -469,7 +469,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(Ty);
 
   // Add the vtable pointer.
-  BuildVtablePointer(cast<Type>(Ty));
+  BuildVTablePointer(cast<Type>(Ty));
   
   // And the name.
   Fields.push_back(BuildName(Ty, DecideHidden(Ty), Linkage));

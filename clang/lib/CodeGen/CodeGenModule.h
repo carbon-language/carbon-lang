@@ -417,16 +417,16 @@ public:
   llvm::GlobalVariable::LinkageTypes
   getFunctionLinkage(const FunctionDecl *FD);
 
-  /// getVtableLinkage - Return the appropriate linkage for the vtable, VTT,
+  /// getVTableLinkage - Return the appropriate linkage for the vtable, VTT,
   /// and type information of the given class.
   static llvm::GlobalVariable::LinkageTypes 
-  getVtableLinkage(const CXXRecordDecl *RD);
+  getVTableLinkage(const CXXRecordDecl *RD);
 
   /// GetTargetTypeStoreSize - Return the store size, in character units, of
   /// the given LLVM type.
   CharUnits GetTargetTypeStoreSize(const llvm::Type *Ty) const;
 
-  std::vector<const CXXRecordDecl*> DeferredVtables;
+  std::vector<const CXXRecordDecl*> DeferredVTables;
 
 private:
   llvm::GlobalValue *GetGlobalValue(llvm::StringRef Ref);

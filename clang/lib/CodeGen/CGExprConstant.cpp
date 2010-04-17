@@ -446,7 +446,7 @@ public:
     
     // Get the function pointer (or index if this is a virtual function).
     if (MD->isVirtual()) {
-      uint64_t Index = CGM.getVTables().getMethodVtableIndex(MD);
+      uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
 
       // Itanium C++ ABI 2.3:
       //   For a non-virtual function, this field is a simple function pointer. 

@@ -5432,7 +5432,7 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   return Dcl;
 }
 
-static bool needsVtable(CXXMethodDecl *MD, ASTContext &Context) {
+static bool needsVTable(CXXMethodDecl *MD, ASTContext &Context) {
   // Ignore dependent types.
   if (MD->isDependentContext())
     return false;
@@ -5495,7 +5495,7 @@ void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
 
   // We will need to mark all of the virtual members as referenced to build the
   // vtable.
-  if (!needsVtable(MD, Context))
+  if (!needsVTable(MD, Context))
     return;
 
   TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();

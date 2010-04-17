@@ -528,7 +528,7 @@ static bool HasIncompleteReturnTypeOrArgumentTypes(const FunctionProtoType *T) {
 }
 
 const llvm::Type *
-CodeGenTypes::GetFunctionTypeForVtable(const CXXMethodDecl *MD) {
+CodeGenTypes::GetFunctionTypeForVTable(const CXXMethodDecl *MD) {
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   
   if (!HasIncompleteReturnTypeOrArgumentTypes(FPT))

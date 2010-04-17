@@ -626,7 +626,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     // It doesn't make sense to give a virtual destructor a vtable index,
     // since a single destructor has two entries in the vtable.
     if (!isa<CXXDestructorDecl>(Method))
-      VIndex = CGM.getVTables().getMethodVtableIndex(Method);
+      VIndex = CGM.getVTables().getMethodVTableIndex(Method);
     ContainingType = RecordTy;
   }
 
@@ -734,8 +734,8 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
   return VTablePtrType;
 }
 
-/// getVtableName - Get vtable name for the given Class.
-llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *RD) {
+/// getVTableName - Get vtable name for the given Class.
+llvm::StringRef CGDebugInfo::getVTableName(const CXXRecordDecl *RD) {
   // Otherwise construct gdb compatible name name.
   std::string Name = "_vptr$" + RD->getNameAsString();
 
@@ -746,10 +746,10 @@ llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *RD) {
 }
 
 
-/// CollectVtableInfo - If the C++ class has vtable info then insert appropriate
+/// CollectVTableInfo - If the C++ class has vtable info then insert appropriate
 /// debug info entry in EltTys vector.
 void CGDebugInfo::
-CollectVtableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
+CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
                   llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys) {
   const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
 
@@ -764,7 +764,7 @@ CollectVtableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
   unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
   llvm::DIType VPTR
     = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                     getVtableName(RD), Unit,
+                                     getVTableName(RD), Unit,
                                      0, Size, 0, 0, 0, 
                                      getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
@@ -832,7 +832,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
   if (CXXDecl) {
     CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
-    CollectVtableInfo(CXXDecl, Unit, EltTys);
+    CollectVTableInfo(CXXDecl, Unit, EltTys);
   }
   CollectRecordFields(RD, Unit, EltTys);
   llvm::MDNode *ContainingType = NULL;

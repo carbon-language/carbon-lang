@@ -492,11 +492,11 @@ void CodeGenModule::EmitDeferred() {
   // previously unused static decl may become used during the generation of code
   // for a static function, iterate until no  changes are made.
 
-  while (!DeferredDeclsToEmit.empty() || !DeferredVtables.empty()) {
-    if (!DeferredVtables.empty()) {
-      const CXXRecordDecl *RD = DeferredVtables.back();
-      DeferredVtables.pop_back();
-      getVTables().GenerateClassData(getVtableLinkage(RD), RD);
+  while (!DeferredDeclsToEmit.empty() || !DeferredVTables.empty()) {
+    if (!DeferredVTables.empty()) {
+      const CXXRecordDecl *RD = DeferredVTables.back();
+      DeferredVTables.pop_back();
+      getVTables().GenerateClassData(getVTableLinkage(RD), RD);
       continue;
     }
 
@@ -962,7 +962,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
 }
 
 llvm::GlobalVariable::LinkageTypes 
-CodeGenModule::getVtableLinkage(const CXXRecordDecl *RD) {
+CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
   if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
     return llvm::GlobalVariable::InternalLinkage;
 

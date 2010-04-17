@@ -112,7 +112,7 @@ class CGDebugInfo {
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
 
-  void CollectVtableInfo(const CXXRecordDecl *Decl,
+  void CollectVTableInfo(const CXXRecordDecl *Decl,
                          llvm::DIFile F,
                          llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys);
 
@@ -201,8 +201,8 @@ private:
   /// is stored on the side.
   llvm::StringRef getFunctionName(const FunctionDecl *FD);
 
-  /// getVtableName - Get vtable name for the given Class.
-  llvm::StringRef getVtableName(const CXXRecordDecl *Decl);
+  /// getVTableName - Get vtable name for the given Class.
+  llvm::StringRef getVTableName(const CXXRecordDecl *Decl);
 
 };
 } // namespace CodeGen

@@ -180,10 +180,10 @@ namespace CodeGen {
 class CodeGenVTables {
   CodeGenModule &CGM;
 
-  /// MethodVtableIndices - Contains the index (relative to the vtable address
+  /// MethodVTableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
-  typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVtableIndicesTy;
-  MethodVtableIndicesTy MethodVtableIndices;
+  typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
+  MethodVTableIndicesTy MethodVTableIndices;
 
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
@@ -195,8 +195,8 @@ class CodeGenVTables {
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
-  /// Vtables - All the vtables which have been defined.
-  llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> Vtables;
+  /// VTables - All the vtables which have been defined.
+  llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> VTables;
   
   /// NumVirtualFunctionPointers - Contains the number of virtual function 
   /// pointers in the vtable for a given record decl.
@@ -265,7 +265,7 @@ class CodeGenVTables {
   /// pointers in the vtable for a given record decl.
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
   
-  void ComputeMethodVtableIndices(const CXXRecordDecl *RD);
+  void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
                                     bool GenerateDefinition,
@@ -309,10 +309,10 @@ public:
   uint64_t getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
                                            BaseSubobject Base);
 
-  /// getMethodVtableIndex - Return the index (relative to the vtable address
+  /// getMethodVTableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
   /// stored.
-  uint64_t getMethodVtableIndex(GlobalDecl GD);
+  uint64_t getMethodVTableIndex(GlobalDecl GD);
 
   /// getVirtualBaseOffsetOffset - Return the offset in bytes (relative to the
   /// vtable address point) where the offset of the virtual base that contains 

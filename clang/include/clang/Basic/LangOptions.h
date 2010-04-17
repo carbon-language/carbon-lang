@@ -99,7 +99,7 @@ public:
                                   // elided if possible.
   unsigned CatchUndefined    : 1; // Generate code to check for undefined ops.
   unsigned DumpRecordLayouts : 1; /// Dump the layout of IRgen'd records.
-  unsigned DumpVtableLayouts : 1; /// Dump the layouts of emitted vtables.
+  unsigned DumpVTableLayouts : 1; /// Dump the layouts of emitted vtables.
 
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
@@ -174,7 +174,7 @@ public:
     ShortWChar = 0;
     CatchUndefined = 0;
     DumpRecordLayouts = 0;
-    DumpVtableLayouts = 0;
+    DumpVTableLayouts = 0;
     NoBitFieldTypeAlign = 0;
   }
 
