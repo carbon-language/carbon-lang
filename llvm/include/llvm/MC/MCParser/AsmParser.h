@@ -102,8 +102,6 @@ private:
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);
   
-  bool ParseConditionalAssemblyDirectives(StringRef Directive,
-                                          SMLoc DirectiveLoc);
   void EatToEndOfStatement();
   
   bool ParseAssignment(const StringRef &Name);
