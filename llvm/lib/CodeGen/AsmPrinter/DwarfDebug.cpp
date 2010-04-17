@@ -2068,8 +2068,9 @@ void DwarfDebug::collectVariableInfo() {
       // FIXME : Lift this restriction.
       if (MInsn->getNumOperands() != 3)
         continue;
-      DIVariable DV((MDNode*)(MInsn->getOperand(MInsn->getNumOperands()
-                                                - 1).getMetadata()));
+      DIVariable DV(
+        const_cast<MDNode *>(MInsn->getOperand(MInsn->getNumOperands() - 1)
+                               .getMetadata()));
       if (DV.getTag() == dwarf::DW_TAG_arg_variable)  {
         // FIXME Handle inlined subroutine arguments.
         DbgVariable *ArgVar = new DbgVariable(DV, MInsn, NULL);
