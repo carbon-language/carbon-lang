@@ -44,8 +44,8 @@ public:
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const PPCFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       PPCJITInfo       *getJITInfo()         { return &JITInfo; }
-  virtual       PPCTargetLowering *getTargetLowering() const { 
-   return const_cast<PPCTargetLowering*>(&TLInfo); 
+  virtual const PPCTargetLowering *getTargetLowering() const { 
+   return &TLInfo;
   }
   virtual const PPCRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();

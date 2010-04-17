@@ -792,7 +792,7 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 }
 
 // EntryNode could meaningfully have debug info if we can find it...
-SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
+SelectionDAG::SelectionDAG(const TargetLowering &tli, FunctionLoweringInfo &fli)
   : TLI(tli), FLI(fli),
     EntryNode(ISD::EntryToken, DebugLoc(), getVTList(MVT::Other)),
     Root(getEntryNode()), Ordering(0) {

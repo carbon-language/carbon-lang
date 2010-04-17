@@ -757,7 +757,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
 static void getReturnInfo(const Type* ReturnType,
                    Attributes attr, SmallVectorImpl<EVT> &OutVTs,
                    SmallVectorImpl<ISD::ArgFlagsTy> &OutFlags,
-                   TargetLowering &TLI,
+                   const TargetLowering &TLI,
                    SmallVectorImpl<uint64_t> *Offsets = 0) {
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, ReturnType, ValueVTs);
@@ -5648,7 +5648,8 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             CallingConv::ID CallConv, bool isTailCall,
                             bool isReturnValueUsed,
                             SDValue Callee,
-                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
+                            ArgListTy &Args, SelectionDAG &DAG,
+                            DebugLoc dl) const {
   // Handle all of the outgoing arguments.
   SmallVector<ISD::OutputArg, 32> Outs;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -5799,13 +5800,13 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
 void TargetLowering::LowerOperationWrapper(SDNode *N,
                                            SmallVectorImpl<SDValue> &Results,
-                                           SelectionDAG &DAG) {
+                                           SelectionDAG &DAG) const {
   SDValue Res = LowerOperation(SDValue(N, 0), DAG);
   if (Res.getNode())
     Results.push_back(Res);
 }
 
-SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
+SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   llvm_unreachable("LowerOperation not implemented for this target!");
   return SDValue();
 }

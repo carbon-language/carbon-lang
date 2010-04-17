@@ -158,7 +158,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 }
 
 SDValue XCoreTargetLowering::
-LowerOperation(SDValue Op, SelectionDAG &DAG) {
+LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) 
   {
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
@@ -187,7 +187,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
 /// type with new values built out of custom code.
 void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue>&Results,
-                                             SelectionDAG &DAG) {
+                                             SelectionDAG &DAG) const {
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this!");
@@ -210,7 +210,7 @@ getFunctionAlignment(const Function *) const {
 //===----------------------------------------------------------------------===//
 
 SDValue XCoreTargetLowering::
-LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
+LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Cond = DAG.getNode(ISD::SETCC, dl, MVT::i32, Op.getOperand(2),
@@ -220,7 +220,8 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV, SelectionDAG &DAG)
+getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
+                        SelectionDAG &DAG) const
 {
   // FIXME there is no actual debug info here
   DebugLoc dl = GA.getDebugLoc();
@@ -241,7 +242,7 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
+LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 {
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
@@ -262,7 +263,7 @@ static inline bool isZeroLengthArray(const Type *Ty) {
 }
 
 SDValue XCoreTargetLowering::
-LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
+LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 {
   // FIXME there isn't really debug info here
   DebugLoc dl = Op.getDebugLoc();
@@ -296,7 +297,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerBlockAddress(SDValue Op, SelectionDAG &DAG)
+LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
 
@@ -307,7 +308,7 @@ LowerBlockAddress(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerConstantPool(SDValue Op, SelectionDAG &DAG)
+LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
 {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   // FIXME there isn't really debug info here
@@ -329,7 +330,7 @@ unsigned XCoreTargetLowering::getJumpTableEncoding() const {
 }
 
 SDValue XCoreTargetLowering::
-LowerBR_JT(SDValue Op, SelectionDAG &DAG)
+LowerBR_JT(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Chain = Op.getOperand(0);
   SDValue Table = Op.getOperand(1);
@@ -391,7 +392,7 @@ IsWordAlignedBasePlusConstantOffset(SDValue Addr, SDValue &AlignedBase,
 }
 
 SDValue XCoreTargetLowering::
-LowerLOAD(SDValue Op, SelectionDAG &DAG)
+LowerLOAD(SDValue Op, SelectionDAG &DAG) const
 {
   LoadSDNode *LD = cast<LoadSDNode>(Op);
   assert(LD->getExtensionType() == ISD::NON_EXTLOAD &&
@@ -494,7 +495,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerSTORE(SDValue Op, SelectionDAG &DAG)
+LowerSTORE(SDValue Op, SelectionDAG &DAG) const
 {
   StoreSDNode *ST = cast<StoreSDNode>(Op);
   assert(!ST->isTruncatingStore() && "Unexpected store type");
@@ -554,7 +555,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG)
+LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const
 {
   assert(Op.getValueType() == MVT::i32 && Op.getOpcode() == ISD::SMUL_LOHI &&
          "Unexpected operand to lower!");
@@ -571,7 +572,7 @@ LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG)
+LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const
 {
   assert(Op.getValueType() == MVT::i32 && Op.getOpcode() == ISD::UMUL_LOHI &&
          "Unexpected operand to lower!");
@@ -647,7 +648,7 @@ isADDADDMUL(SDValue Op, SDValue &Mul0, SDValue &Mul1, SDValue &Addend0,
 }
 
 SDValue XCoreTargetLowering::
-TryExpandADDWithMul(SDNode *N, SelectionDAG &DAG)
+TryExpandADDWithMul(SDNode *N, SelectionDAG &DAG) const
 {
   SDValue Mul;
   SDValue Other;
@@ -707,7 +708,7 @@ TryExpandADDWithMul(SDNode *N, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
+ExpandADDSUB(SDNode *N, SelectionDAG &DAG) const
 {
   assert(N->getValueType(0) == MVT::i64 &&
          (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
@@ -747,7 +748,7 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerVAARG(SDValue Op, SelectionDAG &DAG)
+LowerVAARG(SDValue Op, SelectionDAG &DAG) const
 {
   llvm_unreachable("unimplemented");
   // FIX Arguments passed by reference need a extra dereference.
@@ -769,7 +770,7 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-LowerVASTART(SDValue Op, SelectionDAG &DAG)
+LowerVASTART(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc dl = Op.getDebugLoc();
   // vastart stores the address of the VarArgsFrameIndex slot into the
@@ -782,7 +783,8 @@ LowerVASTART(SDValue Op, SelectionDAG &DAG)
                       false, false, 0);
 }
 
-SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op,
+                                            SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   // Depths > 0 not supported yet! 
   if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
@@ -812,7 +814,7 @@ XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
-                               SmallVectorImpl<SDValue> &InVals) {
+                               SmallVectorImpl<SDValue> &InVals) const {
   // XCore target does not yet support tail call optimization.
   isTailCall = false;
 
@@ -839,7 +841,7 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &InVals) {
+                                    SmallVectorImpl<SDValue> &InVals) const {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -962,7 +964,7 @@ XCoreTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                      CallingConv::ID CallConv, bool isVarArg,
                                      const SmallVectorImpl<ISD::InputArg> &Ins,
                                      DebugLoc dl, SelectionDAG &DAG,
-                                     SmallVectorImpl<SDValue> &InVals) {
+                                     SmallVectorImpl<SDValue> &InVals) const {
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -994,7 +996,8 @@ XCoreTargetLowering::LowerFormalArguments(SDValue Chain,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                           DebugLoc dl,
                                           SelectionDAG &DAG,
-                                          SmallVectorImpl<SDValue> &InVals) {
+                                          SmallVectorImpl<SDValue> &InVals)
+                                            const {
   switch (CallConv)
   {
     default:
@@ -1018,7 +1021,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
                                          &Ins,
                                        DebugLoc dl,
                                        SelectionDAG &DAG,
-                                       SmallVectorImpl<SDValue> &InVals) {
+                                       SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -1132,7 +1135,7 @@ bool XCoreTargetLowering::
 CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
                const SmallVectorImpl<EVT> &OutTys,
                const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
-               SelectionDAG &DAG) {
+               SelectionDAG &DAG) const {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  RVLocs, *DAG.getContext());
@@ -1143,7 +1146,7 @@ SDValue
 XCoreTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
-                                 DebugLoc dl, SelectionDAG &DAG) {
+                                 DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of
   // the return value to a location

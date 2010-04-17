@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZ.h"
-#include "SystemZISelLowering.h"
 #include "SystemZTargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -85,7 +84,7 @@ namespace {
 ///
 namespace {
   class SystemZDAGToDAGISel : public SelectionDAGISel {
-    SystemZTargetLowering &Lowering;
+    const SystemZTargetLowering &Lowering;
     const SystemZSubtarget &Subtarget;
 
     void getAddressOperandsRI(const SystemZRRIAddressMode &AM,
@@ -588,7 +587,7 @@ bool SystemZDAGToDAGISel::SelectLAAddr(SDNode *Op, SDValue Addr,
 bool SystemZDAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                                  SDValue &Base, SDValue &Disp, SDValue &Index) {
   if (ISD::isNON_EXTLoad(N.getNode()) &&
-      IsLegalToFold(N, P, P))
+      IsLegalToFold(N, P, P, OptLevel))
     return SelectAddrRRI20(P, N.getOperand(1), Base, Disp, Index);
   return false;
 }

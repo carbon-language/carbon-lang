@@ -71,8 +71,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual       ARMTargetLowering *getTargetLowering() const {
-    return const_cast<ARMTargetLowering*>(&TLInfo);
+  virtual const ARMTargetLowering *getTargetLowering() const {
+    return &TLInfo;
   }
 
   virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
@@ -97,8 +97,8 @@ public:
     return &InstrInfo->getRegisterInfo();
   }
 
-  virtual ARMTargetLowering *getTargetLowering() const {
-    return const_cast<ARMTargetLowering*>(&TLInfo);
+  virtual const ARMTargetLowering *getTargetLowering() const {
+    return &TLInfo;
   }
 
   /// returns either Thumb1InstrInfo or Thumb2InstrInfo

@@ -51,8 +51,8 @@ namespace llvm {
     virtual const MBlazeRegisterInfo *getRegisterInfo() const
     { return &InstrInfo.getRegisterInfo(); }
 
-    virtual MBlazeTargetLowering   *getTargetLowering() const
-    { return const_cast<MBlazeTargetLowering*>(&TLInfo); }
+    virtual const MBlazeTargetLowering *getTargetLowering() const
+    { return &TLInfo; }
 
     const TargetIntrinsicInfo *getIntrinsicInfo() const
     { return &IntrinsicInfo; }

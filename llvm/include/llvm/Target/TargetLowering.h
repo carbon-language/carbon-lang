@@ -309,7 +309,7 @@ public:
   };
 
   virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
-                                  const CallInst &I, unsigned Intrinsic) {
+                                  const CallInst &I, unsigned Intrinsic) const {
     return false;
   }
 
@@ -1094,7 +1094,7 @@ protected:
   
 public:
 
-  virtual const TargetSubtarget *getSubtarget() {
+  virtual const TargetSubtarget *getSubtarget() const {
     assert(0 && "Not Implemented");
     return NULL;    // this is here to silence compiler errors
   }
@@ -1115,7 +1115,7 @@ public:
                          CallingConv::ID CallConv, bool isVarArg,
                          const SmallVectorImpl<ISD::InputArg> &Ins,
                          DebugLoc dl, SelectionDAG &DAG,
-                         SmallVectorImpl<SDValue> &InVals) {
+                         SmallVectorImpl<SDValue> &InVals) const {
     assert(0 && "Not Implemented");
     return SDValue();    // this is here to silence compiler errors
   }
@@ -1145,7 +1145,7 @@ public:
               bool isVarArg, bool isInreg, unsigned NumFixedArgs,
               CallingConv::ID CallConv, bool isTailCall,
               bool isReturnValueUsed, SDValue Callee, ArgListTy &Args,
-              SelectionDAG &DAG, DebugLoc dl);
+              SelectionDAG &DAG, DebugLoc dl) const;
 
   /// LowerCall - This hook must be implemented to lower calls into the
   /// the specified DAG. The outgoing arguments to the call are described
@@ -1159,7 +1159,7 @@ public:
               const SmallVectorImpl<ISD::OutputArg> &Outs,
               const SmallVectorImpl<ISD::InputArg> &Ins,
               DebugLoc dl, SelectionDAG &DAG,
-              SmallVectorImpl<SDValue> &InVals) {
+              SmallVectorImpl<SDValue> &InVals) const {
     assert(0 && "Not Implemented");
     return SDValue();    // this is here to silence compiler errors
   }
@@ -1171,11 +1171,12 @@ public:
   virtual bool CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
                const SmallVectorImpl<EVT> &OutTys,
                const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
-               SelectionDAG &DAG)
+               SelectionDAG &DAG) const
   {
     // Return true by default to get preexisting behavior.
     return true;
   }
+
   /// LowerReturn - This hook must be implemented to lower outgoing
   /// return values, described by the Outs array, into the specified
   /// DAG. The implementation should return the resulting token chain
@@ -1184,7 +1185,7 @@ public:
   virtual SDValue
     LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
-                DebugLoc dl, SelectionDAG &DAG) {
+                DebugLoc dl, SelectionDAG &DAG) const {
     assert(0 && "Not Implemented");
     return SDValue();    // this is here to silence compiler errors
   }
@@ -1209,7 +1210,7 @@ public:
                           SDValue Op3, unsigned Align, bool isVolatile,
                           bool AlwaysInline,
                           const Value *DstSV, uint64_t DstOff,
-                          const Value *SrcSV, uint64_t SrcOff) {
+                          const Value *SrcSV, uint64_t SrcOff) const {
     return SDValue();
   }
 
@@ -1225,7 +1226,7 @@ public:
                            SDValue Op1, SDValue Op2,
                            SDValue Op3, unsigned Align, bool isVolatile,
                            const Value *DstSV, uint64_t DstOff,
-                           const Value *SrcSV, uint64_t SrcOff) {
+                           const Value *SrcSV, uint64_t SrcOff) const {
     return SDValue();
   }
 
@@ -1240,7 +1241,7 @@ public:
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align, bool isVolatile,
-                          const Value *DstSV, uint64_t DstOff) {
+                          const Value *DstSV, uint64_t DstOff) const {
     return SDValue();
   }
 
@@ -1258,14 +1259,14 @@ public:
   /// The default implementation calls LowerOperation.
   virtual void LowerOperationWrapper(SDNode *N,
                                      SmallVectorImpl<SDValue> &Results,
-                                     SelectionDAG &DAG);
+                                     SelectionDAG &DAG) const;
 
   /// LowerOperation - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,
   /// and whose defined values are all legal.
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
-  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
   /// ReplaceNodeResults - This callback is invoked when a node result type is
   /// illegal for the target, and the operation was registered to use 'custom'
@@ -1277,7 +1278,7 @@ public:
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation aborts.
   virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
-                                  SelectionDAG &DAG) {
+                                  SelectionDAG &DAG) const {
     assert(0 && "ReplaceNodeResults not implemented for this target!");
   }
 
@@ -1295,7 +1296,7 @@ public:
 #ifndef NDEBUG
                  , SmallSet<const Instruction *, 8> &CatchInfoLost
 #endif
-                 ) {
+                 ) const {
     return 0;
   }
 

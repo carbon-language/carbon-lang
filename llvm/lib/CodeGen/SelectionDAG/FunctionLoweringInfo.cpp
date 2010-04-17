@@ -152,7 +152,7 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool EnableFastISel) {
   return true;
 }
 
-FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli)
+FunctionLoweringInfo::FunctionLoweringInfo(const TargetLowering &tli)
   : TLI(tli) {
 }
 

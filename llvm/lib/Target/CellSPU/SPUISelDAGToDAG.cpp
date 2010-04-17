@@ -14,7 +14,6 @@
 
 #include "SPU.h"
 #include "SPUTargetMachine.h"
-#include "SPUISelLowering.h"
 #include "SPUHazardRecognizers.h"
 #include "SPUFrameInfo.h"
 #include "SPURegisterNames.h"
@@ -239,8 +238,8 @@ namespace {
   class SPUDAGToDAGISel :
     public SelectionDAGISel
   {
-    SPUTargetMachine &TM;
-    SPUTargetLowering &SPUtli;
+    const SPUTargetMachine &TM;
+    const SPUTargetLowering &SPUtli;
     unsigned GlobalBaseReg;
 
   public:
@@ -310,8 +309,7 @@ namespace {
       SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
       SDValue CGPoolOffset =
-              SPU::LowerConstantPool(CPIdx, *CurDAG,
-                                     SPUtli.getSPUTargetMachine());
+              SPU::LowerConstantPool(CPIdx, *CurDAG, TM);
       
       HandleSDNode Dummy(CurDAG->getLoad(vecVT, dl,
                                          CurDAG->getEntryNode(), CGPoolOffset,

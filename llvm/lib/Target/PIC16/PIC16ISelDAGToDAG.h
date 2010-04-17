@@ -14,9 +14,9 @@
 #define DEBUG_TYPE "pic16-isel"
 
 #include "PIC16.h"
-#include "PIC16ISelLowering.h"
 #include "PIC16RegisterInfo.h"
 #include "PIC16TargetMachine.h"
+#include "PIC16MachineFunctionInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,19 +29,16 @@ namespace {
 class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
 
   /// TM - Keep a reference to PIC16TargetMachine.
-  PIC16TargetMachine &TM;
+  const PIC16TargetMachine &TM;
 
   /// PIC16Lowering - This object fully describes how to lower LLVM code to an
   /// PIC16-specific SelectionDAG.
-  PIC16TargetLowering &PIC16Lowering;
+  const PIC16TargetLowering &PIC16Lowering;
 
 public:
   explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
         SelectionDAGISel(tm),
-        TM(tm), PIC16Lowering(*TM.getTargetLowering()) { 
-    // Keep PIC16 specific DAGISel to use during the lowering
-    PIC16Lowering.ISel = this;
-  }
+        TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
   
   // Pass Name
   virtual const char *getPassName() const {

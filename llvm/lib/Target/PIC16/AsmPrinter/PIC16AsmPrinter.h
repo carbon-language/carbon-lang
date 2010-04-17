@@ -77,7 +77,6 @@ namespace llvm {
     
   private:
     PIC16TargetObjectFile *PTOF;
-    PIC16TargetLowering *PTLI;
     PIC16DbgInfo DbgInfo;
     const PIC16MCAsmInfo *PMAI;
     std::set<std::string> LibcallDecls; // Sorted & uniqued set of extern decls.

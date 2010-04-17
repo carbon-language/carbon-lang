@@ -47,7 +47,7 @@ class Value;
 ///
 class FunctionLoweringInfo {
 public:
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
   const Function *Fn;
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
@@ -88,7 +88,7 @@ public:
   /// register number offset by 'FirstVirtualRegister'.
   std::vector<LiveOutInfo> LiveOutRegInfo;
 
-  explicit FunctionLoweringInfo(TargetLowering &TLI);
+  explicit FunctionLoweringInfo(const TargetLowering &TLI);
 
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.

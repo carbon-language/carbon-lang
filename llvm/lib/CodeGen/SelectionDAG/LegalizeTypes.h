@@ -33,7 +33,7 @@ namespace llvm {
 /// into small values.
 ///
 class VISIBILITY_HIDDEN DAGTypeLegalizer {
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
   SelectionDAG &DAG;
 public:
   // NodeIdFlags - This pass uses the NodeId on the SDNodes to hold information

@@ -39,8 +39,8 @@ public:
   virtual const SparcRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual SparcTargetLowering* getTargetLowering() const {
-    return const_cast<SparcTargetLowering*>(&TLInfo);
+  virtual const SparcTargetLowering* getTargetLowering() const {
+    return &TLInfo;
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
 

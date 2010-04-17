@@ -43,8 +43,8 @@ namespace llvm {
     virtual const BlackfinRegisterInfo *getRegisterInfo() const {
       return &InstrInfo.getRegisterInfo();
     }
-    virtual BlackfinTargetLowering* getTargetLowering() const {
-      return const_cast<BlackfinTargetLowering*>(&TLInfo);
+    virtual const BlackfinTargetLowering* getTargetLowering() const {
+      return &TLInfo;
     }
     virtual const TargetData *getTargetData() const { return &DataLayout; }
     virtual bool addInstSelector(PassManagerBase &PM,

@@ -40,7 +40,7 @@ namespace llvm {
 class SelectionDAGISel : public MachineFunctionPass {
 public:
   const TargetMachine &TM;
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
   FunctionLoweringInfo *FuncInfo;
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
@@ -56,7 +56,7 @@ public:
                             CodeGenOpt::Level OL = CodeGenOpt::Default);
   virtual ~SelectionDAGISel();
   
-  TargetLowering &getTargetLowering() { return TLI; }
+  const TargetLowering &getTargetLowering() { return TLI; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
@@ -92,8 +92,11 @@ public:
 
   /// IsLegalToFold - Returns true if the specific operand node N of
   /// U can be folded during instruction selection that starts at Root.
-  bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
-                     bool IgnoreChains = false) const;
+  /// FIXME: This is a static member function because the PIC16 target,
+  /// which uses it during lowering.
+  static bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
+                            CodeGenOpt::Level OptLevel,
+                            bool IgnoreChains = false);
 
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.

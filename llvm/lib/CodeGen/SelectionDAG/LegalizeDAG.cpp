@@ -53,7 +53,7 @@ using namespace llvm;
 ///
 namespace {
 class SelectionDAGLegalize {
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
   SelectionDAG &DAG;
   CodeGenOpt::Level OptLevel;
 

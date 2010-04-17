@@ -117,7 +117,7 @@ void checkForCycles(const SelectionDAG *DAG);
 /// linear form.
 ///
 class SelectionDAG {
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
   MachineFunction *MF;
   FunctionLoweringInfo &FLI;
   LLVMContext *Context;
@@ -172,7 +172,7 @@ class SelectionDAG {
   SelectionDAG(const SelectionDAG&);   // Do not implement.
 
 public:
-  SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli);
+  SelectionDAG(const TargetLowering &tli, FunctionLoweringInfo &fli);
   ~SelectionDAG();
 
   /// init - Prepare this SelectionDAG to process code in the given
@@ -187,7 +187,7 @@ public:
 
   MachineFunction &getMachineFunction() const { return *MF; }
   const TargetMachine &getTarget() const;
-  TargetLowering &getTargetLoweringInfo() const { return TLI; }
+  const TargetLowering &getTargetLoweringInfo() const { return TLI; }
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   LLVMContext *getContext() const {return Context; }
 

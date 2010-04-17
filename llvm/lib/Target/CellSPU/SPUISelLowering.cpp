@@ -89,7 +89,7 @@ namespace {
 
   SDValue
   ExpandLibCall(RTLIB::Libcall LC, SDValue Op, SelectionDAG &DAG,
-                bool isSigned, SDValue &Hi, SPUTargetLowering &TLI) {
+                bool isSigned, SDValue &Hi, const SPUTargetLowering &TLI) {
     // The input chain to this libcall is the entry node of the function.
     // Legalizing the call will automatically add the previous call to the
     // dependence.
@@ -1005,7 +1005,8 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
                                         const SmallVectorImpl<ISD::InputArg>
                                           &Ins,
                                         DebugLoc dl, SelectionDAG &DAG,
-                                        SmallVectorImpl<SDValue> &InVals) {
+                                        SmallVectorImpl<SDValue> &InVals)
+                                          const {
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1136,7 +1137,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
-                             SmallVectorImpl<SDValue> &InVals) {
+                             SmallVectorImpl<SDValue> &InVals) const {
   // CellSPU target does not yet support tail call optimization.
   isTailCall = false;
 
@@ -1364,7 +1365,7 @@ SDValue
 SPUTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
-                               DebugLoc dl, SelectionDAG &DAG) {
+                               DebugLoc dl, SelectionDAG &DAG) const {
 
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
@@ -2354,7 +2355,7 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
  All conversions to i64 are expanded to a libcall.
  */
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
-                              SPUTargetLowering &TLI) {
+                              const SPUTargetLowering &TLI) {
   EVT OpVT = Op.getValueType();
   SDValue Op0 = Op.getOperand(0);
   EVT Op0VT = Op0.getValueType();
@@ -2380,7 +2381,7 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
  All conversions from i64 are expanded to a libcall.
  */
 static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
-                              SPUTargetLowering &TLI) {
+                              const SPUTargetLowering &TLI) {
   EVT OpVT = Op.getValueType();
   SDValue Op0 = Op.getOperand(0);
   EVT Op0VT = Op0.getValueType();
@@ -2656,7 +2657,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
   lowering of nodes.
  */
 SDValue
-SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
+SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
   unsigned Opc = (unsigned) Op.getOpcode();
   EVT VT = Op.getValueType();
@@ -2752,7 +2753,7 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
 void SPUTargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
-                                           SelectionDAG &DAG)
+                                           SelectionDAG &DAG) const
 {
 #if 0
   unsigned Opc = (unsigned) N->getOpcode();

@@ -49,8 +49,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual SystemZTargetLowering *getTargetLowering() const {
-    return const_cast<SystemZTargetLowering*>(&TLInfo);
+  virtual const SystemZTargetLowering *getTargetLowering() const {
+    return &TLInfo;
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

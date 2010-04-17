@@ -16,7 +16,6 @@
 #include "PPC.h"
 #include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
-#include "PPCISelLowering.h"
 #include "PPCHazardRecognizers.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -41,8 +40,8 @@ namespace {
   /// instructions for SelectionDAG operations.
   ///
   class PPCDAGToDAGISel : public SelectionDAGISel {
-    PPCTargetMachine &TM;
-    PPCTargetLowering &PPCLowering;
+    const PPCTargetMachine &TM;
+    const PPCTargetLowering &PPCLowering;
     const PPCSubtarget &PPCSubTarget;
     unsigned GlobalBaseReg;
   public:

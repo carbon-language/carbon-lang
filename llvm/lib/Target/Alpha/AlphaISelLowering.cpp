@@ -226,7 +226,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
-                               SmallVectorImpl<SDValue> &InVals) {
+                               SmallVectorImpl<SDValue> &InVals) const {
   // Alpha target does not yet support tail call optimization.
   isTailCall = false;
 
@@ -343,7 +343,7 @@ AlphaTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                      CallingConv::ID CallConv, bool isVarArg,
                                      const SmallVectorImpl<ISD::InputArg> &Ins,
                                      DebugLoc dl, SelectionDAG &DAG,
-                                     SmallVectorImpl<SDValue> &InVals) {
+                                     SmallVectorImpl<SDValue> &InVals) const {
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -386,7 +386,8 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
                                           const SmallVectorImpl<ISD::InputArg>
                                             &Ins,
                                           DebugLoc dl, SelectionDAG &DAG,
-                                          SmallVectorImpl<SDValue> &InVals) {
+                                          SmallVectorImpl<SDValue> &InVals)
+                                            const {
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -469,7 +470,7 @@ SDValue
 AlphaTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
-                                 DebugLoc dl, SelectionDAG &DAG) {
+                                 DebugLoc dl, SelectionDAG &DAG) const {
 
   SDValue Copy = DAG.getCopyToReg(Chain, dl, Alpha::R26,
                                   DAG.getNode(AlphaISD::GlobalRetAddr,
@@ -527,7 +528,8 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
 }
 
 void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
-                                     SDValue &DataPtr, SelectionDAG &DAG) {
+                                     SDValue &DataPtr,
+                                     SelectionDAG &DAG) const {
   Chain = N->getOperand(0);
   SDValue VAListP = N->getOperand(1);
   const Value *VAListS = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
@@ -558,7 +560,8 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
-SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
+SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
+                                            SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Wasn't expecting to be able to lower this!");
@@ -756,7 +759,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
 void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue>&Results,
-                                             SelectionDAG &DAG) {
+                                             SelectionDAG &DAG) const {
   DebugLoc dl = N->getDebugLoc();
   assert(N->getValueType(0) == MVT::i32 &&
          N->getOpcode() == ISD::VAARG &&

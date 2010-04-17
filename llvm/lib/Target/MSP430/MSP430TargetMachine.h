@@ -50,8 +50,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual MSP430TargetLowering *getTargetLowering() const {
-    return const_cast<MSP430TargetLowering*>(&TLInfo);
+  virtual const MSP430TargetLowering *getTargetLowering() const {
+    return &TLInfo;
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "x86-isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
-#include "X86ISelLowering.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
@@ -161,7 +160,7 @@ namespace {
   class X86DAGToDAGISel : public SelectionDAGISel {
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
-    X86TargetLowering &X86Lowering;
+    const X86TargetLowering &X86Lowering;
 
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -1184,7 +1183,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
     if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
         PatternNodeWithChain.hasOneUse() &&
         IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
-        IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
+        IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
       LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
       if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
         return false;
@@ -1201,7 +1200,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
       ISD::isNON_EXTLoad(N.getOperand(0).getOperand(0).getNode()) &&
       N.getOperand(0).getOperand(0).hasOneUse() &&
       IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
-      IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
+      IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
     // Okay, this is a zero extending load.  Fold it.
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
     if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
@@ -1308,7 +1307,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                                   SDValue &Segment) {
   if (!ISD::isNON_EXTLoad(N.getNode()) ||
       !IsProfitableToFold(N, P, P) ||
-      !IsLegalToFold(N, P, P))
+      !IsLegalToFold(N, P, P, OptLevel))
     return false;
   
   return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp, Segment);

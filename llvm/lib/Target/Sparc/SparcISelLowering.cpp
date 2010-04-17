@@ -38,7 +38,7 @@ SDValue
 SparcTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
-                                 DebugLoc dl, SelectionDAG &DAG) {
+                                 DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to locations.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -86,7 +86,8 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
                                           const SmallVectorImpl<ISD::InputArg>
                                             &Ins,
                                           DebugLoc dl, SelectionDAG &DAG,
-                                          SmallVectorImpl<SDValue> &InVals) {
+                                          SmallVectorImpl<SDValue> &InVals)
+                                            const {
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -263,7 +264,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
-                               SmallVectorImpl<SDValue> &InVals) {
+                               SmallVectorImpl<SDValue> &InVals) const {
   // Sparc target does not yet support tail call optimization.
   isTailCall = false;
 
@@ -754,7 +755,7 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
 }
 
 SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op, 
-                                                SelectionDAG &DAG) {
+                                                SelectionDAG &DAG) const {
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
@@ -775,7 +776,7 @@ SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op,
 }
 
 SDValue SparcTargetLowering::LowerConstantPool(SDValue Op,
-                                               SelectionDAG &DAG) {
+                                               SelectionDAG &DAG) const {
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
@@ -875,7 +876,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                              SparcTargetLowering &TLI) {
+                            const SparcTargetLowering &TLI) {
   MachineFunction &MF = DAG.getMachineFunction();
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
 
@@ -945,7 +946,7 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
 
 
 SDValue SparcTargetLowering::
-LowerOperation(SDValue Op, SelectionDAG &DAG) {
+LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
   // Frame & Return address.  Currently unimplemented

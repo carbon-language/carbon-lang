@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "mips-isel"
 #include "Mips.h"
-#include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsSubtarget.h"

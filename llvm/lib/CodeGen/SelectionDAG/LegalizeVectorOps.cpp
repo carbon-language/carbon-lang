@@ -34,7 +34,7 @@ using namespace llvm;
 namespace {
 class VectorLegalizer {
   SelectionDAG& DAG;
-  TargetLowering& TLI;
+  const TargetLowering &TLI;
   bool Changed; // Keep track of whether anything changed
 
   /// LegalizedNodes - For nodes that are of legal width, and that have more

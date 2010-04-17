@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCore.h"
-#include "XCoreISelLowering.h"
 #include "XCoreTargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -40,7 +39,7 @@ using namespace llvm;
 ///
 namespace {
   class XCoreDAGToDAGISel : public SelectionDAGISel {
-    XCoreTargetLowering &Lowering;
+    const XCoreTargetLowering &Lowering;
     const XCoreSubtarget &Subtarget;
 
   public:

@@ -1304,7 +1304,8 @@ bool SelectionDAGISel::IsProfitableToFold(SDValue N, SDNode *U,
 /// IsLegalToFold - Returns true if the specific operand node N of
 /// U can be folded during instruction selection that starts at Root.
 bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
-                                     bool IgnoreChains) const {
+                                     CodeGenOpt::Level OptLevel,
+                                     bool IgnoreChains) {
   if (OptLevel == CodeGenOpt::None) return false;
 
   // If Root use can somehow reach N through a path that that doesn't contain
@@ -2255,7 +2256,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (!IsProfitableToFold(N, NodeStack[NodeStack.size()-2].getNode(),
                               NodeToMatch) ||
           !IsLegalToFold(N, NodeStack[NodeStack.size()-2].getNode(),
-                         NodeToMatch, true/*We validate our own chains*/))
+                         NodeToMatch, OptLevel,
+                         true/*We validate our own chains*/))
         break;
       
       continue;
