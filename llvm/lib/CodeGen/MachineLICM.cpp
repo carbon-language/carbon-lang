@@ -109,7 +109,7 @@ namespace {
 
     /// HoistRegionPostRA - Walk the specified region of the CFG and hoist loop
     /// invariants out to the preheader.
-    void HoistRegionPostRA(MachineDomTreeNode *N);
+    void HoistRegionPostRA();
 
     /// HoistPostRA - When an instruction is found to only use loop invariant
     /// operands that is safe to hoist, this instruction is called to do the
@@ -122,10 +122,9 @@ namespace {
                    SmallSet<int, 32> &StoredFIs,
                    SmallVector<CandidateInfo, 32> &Candidates);
 
-    /// AddToLiveIns - Add 'Reg' to the livein sets of BBs in the backedge path
-    /// from MBB to LoopHeader (inclusive).
-    void AddToLiveIns(unsigned Reg,
-                      MachineBasicBlock *MBB, MachineBasicBlock *LoopHeader);    
+    /// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the
+    /// current loop.
+    void AddToLiveIns(unsigned Reg);
 
     /// IsLICMCandidate - Returns true if the instruction may be a suitable
     /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
@@ -239,12 +238,12 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     if (!CurPreheader)
       continue;
 
-    // CSEMap is initialized for loop header when the first instruction is
-    // being hoisted.
-    MachineDomTreeNode *N = DT->getNode(CurLoop->getHeader());
     if (!PreRegAlloc)
-      HoistRegionPostRA(N);
+      HoistRegionPostRA();
     else {
+      // CSEMap is initialized for loop header when the first instruction is
+      // being hoisted.
+      MachineDomTreeNode *N = DT->getNode(CurLoop->getHeader());
       HoistRegion(N);
       CSEMap.clear();
     }
@@ -349,9 +348,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
 
 /// HoistRegionPostRA - Walk the specified region of the CFG and hoist loop
 /// invariants out to the preheader.
-void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
-  assert(N != 0 && "Null dominator tree node?");
-
+void MachineLICM::HoistRegionPostRA() {
   unsigned NumRegs = TRI->getNumRegs();
   unsigned *PhysRegDefs = new unsigned[NumRegs];
   std::fill(PhysRegDefs, PhysRegDefs + NumRegs, 0);
@@ -360,15 +357,10 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
   SmallSet<int, 32> StoredFIs;
 
   // Walk the entire region, count number of defs for each register, and
-  // return potential LICM candidates.
-  SmallVector<MachineDomTreeNode*, 8> WorkList;
-  WorkList.push_back(N);
-  do {
-    N = WorkList.pop_back_val();
-    MachineBasicBlock *BB = N->getBlock();
-
-    if (!CurLoop->contains(MLI->getLoopFor(BB)))
-      continue;
+  // collect potential LICM candidates.
+  const std::vector<MachineBasicBlock*> Blocks = CurLoop->getBlocks();
+  for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
+    MachineBasicBlock *BB = Blocks[i];
     // Conservatively treat live-in's as an external def.
     // FIXME: That means a reload that're reused in successor block(s) will not
     // be LICM'ed.
@@ -385,11 +377,7 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
       MachineInstr *MI = &*MII;
       ProcessMI(MI, PhysRegDefs, StoredFIs, Candidates);
     }
-
-    const std::vector<MachineDomTreeNode*> &Children = N->getChildren();
-    for (unsigned I = 0, E = Children.size(); I != E; ++I)
-      WorkList.push_back(Children[I]);
-  } while (!WorkList.empty());
+  }
 
   // Now evaluate whether the potential candidates qualify.
   // 1. Check if the candidate defined register is defined by another
@@ -424,23 +412,11 @@ void MachineLICM::HoistRegionPostRA(MachineDomTreeNode *N) {
 }
 
 /// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the
-/// backedge path from MBB to LoopHeader.
-void MachineLICM::AddToLiveIns(unsigned Reg, MachineBasicBlock *MBB,
-                               MachineBasicBlock *LoopHeader) {
-  SmallPtrSet<MachineBasicBlock*, 4> Visited;
-  SmallVector<MachineBasicBlock*, 4> WorkList;
-  WorkList.push_back(MBB);
-  do {
-    MBB = WorkList.pop_back_val();
-    if (!Visited.insert(MBB))
-      continue;
-    MBB->addLiveIn(Reg);
-    if (MBB == LoopHeader)
-      continue;
-    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-           E = MBB->pred_end(); PI != E; ++PI)
-      WorkList.push_back(*PI);
-  } while (!WorkList.empty());
+/// current loop.
+void MachineLICM::AddToLiveIns(unsigned Reg) {
+  const std::vector<MachineBasicBlock*> Blocks = CurLoop->getBlocks();
+  for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
+    Blocks[i]->addLiveIn(Reg);
 }
 
 /// HoistPostRA - When an instruction is found to only use loop invariant
@@ -464,11 +440,10 @@ void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
   MachineBasicBlock *MBB = MI->getParent();
   CurPreheader->splice(CurPreheader->getFirstTerminator(), MBB, MI);
 
-  // Add register to livein list to BBs in the path from loop header to original
-  // BB. Note, currently it's not necessary to worry about adding it to all BB's
-  // with uses. Reload that're reused in successor block(s) are not being
-  // hoisted.
-  AddToLiveIns(Def, MBB, CurLoop->getHeader());
+  // Add register to livein list to all the BBs in the current loop since a 
+  // loop invariant must be kept live throughout the whole loop. This is
+  // important to ensure later passes do not scavenge the def register.
+  AddToLiveIns(Def);
 
   ++NumPostRAHoisted;
   Changed = true;
