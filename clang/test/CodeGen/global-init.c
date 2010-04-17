@@ -31,15 +31,6 @@ struct ManyFields {
 struct ManyFields FewInits = {1, 2};
 
 
-// PR6766
-// CHECK: @l = global %1 { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
-typedef __WCHAR_TYPE__ wchar_t;
-struct K {
-  wchar_t L[6];
-  int M;
-} l =  { { L"foo" }, 1 };
-
-
 // NOTE: tentative definitions are processed at the end of the translation unit.
 
 // This shouldn't be emitted as common because it has an explicit section.
