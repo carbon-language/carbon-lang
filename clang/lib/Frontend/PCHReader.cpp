@@ -62,6 +62,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(DollarIdents);
   PARSE_LANGOPT_BENIGN(AsmPreprocessor);
   PARSE_LANGOPT_IMPORTANT(GNUMode, diag::warn_pch_gnu_extensions);
+  PARSE_LANGOPT_IMPORTANT(GNUKeywords, diag::warn_pch_gnu_keywords);
   PARSE_LANGOPT_BENIGN(ImplicitInt);
   PARSE_LANGOPT_BENIGN(Digraphs);
   PARSE_LANGOPT_BENIGN(HexFloats);
@@ -1885,6 +1886,7 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(DollarIdents);
     PARSE_LANGOPT(AsmPreprocessor);
     PARSE_LANGOPT(GNUMode);
+    PARSE_LANGOPT(GNUKeywords);
     PARSE_LANGOPT(ImplicitInt);
     PARSE_LANGOPT(Digraphs);
     PARSE_LANGOPT(HexFloats);

@@ -78,9 +78,9 @@ namespace {
 /// identifiers because they are language keywords.  This causes the lexer to
 /// automatically map matching identifiers to specialized token codes.
 ///
-/// The C90/C99/CPP/CPP0x flags are set to 0 if the token should be
+/// The C90/C99/CPP/CPP0x flags are set to 2 if the token should be
 /// enabled in the specified langauge, set to 1 if it is an extension
-/// in the specified language, and set to 2 if disabled in the
+/// in the specified language, and set to 0 if disabled in the
 /// specified language.
 static void AddKeyword(llvm::StringRef Keyword,
                        tok::TokenKind TokenCode, unsigned Flags,
@@ -90,7 +90,7 @@ static void AddKeyword(llvm::StringRef Keyword,
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX)) AddResult = 2;
   else if (LangOpts.CPlusPlus0x && (Flags & KEYCXX0X)) AddResult = 2;
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
-  else if (LangOpts.GNUMode && (Flags & KEYGNU)) AddResult = 1;
+  else if (LangOpts.GNUKeywords && (Flags & KEYGNU)) AddResult = 1;
   else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
   else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;

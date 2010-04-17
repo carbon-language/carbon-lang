@@ -129,6 +129,9 @@ def warn_pch_extensions : Error<
 def warn_pch_gnu_extensions : Error<
     "GNU extensions were %select{disabled|enabled}0 in PCH file but are "
     "currently %select{disabled|enabled}1">;
+def warn_pch_gnu_keywords : Error<
+    "GNU keywords were %select{disabled|enabled}0 in PCH file but are "
+    "currently %select{disabled|enabled}1">;
 def warn_pch_microsoft_extensions : Error<
     "Microsoft extensions were %select{disabled|enabled}0 in PCH file but are "
     "currently %select{disabled|enabled}1">;

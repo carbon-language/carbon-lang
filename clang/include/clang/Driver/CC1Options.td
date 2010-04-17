@@ -341,6 +341,10 @@ def fno_access_control : Flag<"-fno-access-control">,
   HelpText<"Disable C++ access control">;
 def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">,
   HelpText<"Don't assume that C++'s global operator new can't alias any pointer">;
+def fgnu_keywords : Flag<"-fgnu-keywords">,
+  HelpText<"Allow GNU-extension keywords regardless of language standard">;
+def fno_gnu_keywords : Flag<"-fno-gnu-keywords">,
+  HelpText<"Disallow GNU-extension keywords regardless of language standard">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
   HelpText<"Allow '$' in identifiers">;
 def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">,

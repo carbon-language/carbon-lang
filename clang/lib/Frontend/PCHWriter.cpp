@@ -745,6 +745,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.DollarIdents);  // '$' allowed in identifiers.
   Record.push_back(LangOpts.AsmPreprocessor);  // Preprocessor in asm mode.
   Record.push_back(LangOpts.GNUMode);  // True in gnu99 mode false in c99 mode (etc)
+  Record.push_back(LangOpts.GNUKeywords);  // Allow GNU-extension keywords
   Record.push_back(LangOpts.ImplicitInt);  // C89 implicit 'int'.
   Record.push_back(LangOpts.Digraphs);  // C94, C99 and C++
   Record.push_back(LangOpts.HexFloats);  // C99 Hexadecimal float constants.

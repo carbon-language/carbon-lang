@@ -265,6 +265,10 @@ def fexceptions : Flag<"-fexceptions">, Group<f_Group>;
 def fextdirs_EQ : Joined<"-fextdirs=">, Group<f_Group>;
 def fhosted : Flag<"-fhosted">, Group<f_Group>;
 def ffreestanding : Flag<"-ffreestanding">, Group<f_Group>;
+
+def fgnu_keywords : Flag<"-fgnu-keywords">, Group<f_Group>;
+def fasm : Flag<"-fasm">, Alias<fgnu_keywords>;
+
 def fgnu_runtime : Flag<"-fgnu-runtime">, Group<f_Group>;
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def filelist : Separate<"-filelist">, Flags<[LinkerInput]>;
@@ -300,6 +304,10 @@ def fno_diagnostics_show_option : Flag<"-fno-diagnostics-show-option">, Group<f_
 def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">, Group<f_Group>;
 def fno_eliminate_unused_debug_symbols : Flag<"-fno-eliminate-unused-debug-symbols">, Group<f_Group>;
 def fno_exceptions : Flag<"-fno-exceptions">, Group<f_Group>;
+
+def fno_gnu_keywords : Flag<"-fno-gnu-keywords">, Group<f_Group>;
+def fno_asm : Flag<"-fno-asm">, Alias<fno_gnu_keywords>;
+
 def fno_inline_functions : Flag<"-fno-inline-functions">, Group<clang_ignored_f_Group>;
 def fno_inline : Flag<"-fno-inline">, Group<clang_ignored_f_Group>;
 def fno_keep_inline_functions : Flag<"-fno-keep-inline-functions">, Group<clang_ignored_f_Group>;

@@ -473,6 +473,10 @@ static void LangOptsToArgs(const LangOptions &Opts,
   //   BCPLComment, C99, CPlusPlus0x, Digraphs, GNUInline, ImplicitInt, GNUMode
   if (Opts.DollarIdents)
     Res.push_back("-fdollars-in-identifiers");
+  if (Opts.GNUMode && !Opts.GNUKeywords)
+    Res.push_back("-fno-gnu-keywords");
+  if (!Opts.GNUMode && Opts.GNUKeywords)
+    Res.push_back("-fgnu-keywords");
   if (Opts.Microsoft)
     Res.push_back("-fms-extensions");
   if (Opts.ObjCNonFragileABI)
@@ -1150,6 +1154,14 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
 
   // OpenCL and C++ both have bool, true, false keywords.
   Opts.Bool = Opts.OpenCL || Opts.CPlusPlus;
+
+  // We abuse '-f[no-]gnu-keywords' to force overriding all GNU-extension
+  // keywords. This behavior is provided by GCC's poorly named '-fasm' flag,
+  // while a subset (the non-C++ GNU keywords) is provided by GCC's
+  // '-fgnu-keywords'. Clang conflates the two for simplicity under the single
+  // name, as it doesn't seem a useful distinction.
+  Opts.GNUKeywords = Args.hasFlag(OPT_fgnu_keywords, OPT_fno_gnu_keywords,
+                                  Opts.GNUMode);
 
   if (Opts.CPlusPlus)
     Opts.CXXOperatorNames = !Args.hasArg(OPT_fno_operator_names);

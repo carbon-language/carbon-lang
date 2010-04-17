@@ -28,6 +28,7 @@ public:
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
   unsigned AsmPreprocessor   : 1;  // Preprocessor in asm mode.
   unsigned GNUMode           : 1;  // True in gnu99 mode false in c99 mode (etc)
+  unsigned GNUKeywords       : 1;  // True if GNU-only keywords are allowed
   unsigned ImplicitInt       : 1;  // C89 implicit 'int'.
   unsigned Digraphs          : 1;  // C94, C99 and C++
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
@@ -130,7 +131,7 @@ public:
 
   LangOptions() {
     Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;
-    GNUMode = ImplicitInt = Digraphs = 0;
+    GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
