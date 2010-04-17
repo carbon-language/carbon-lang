@@ -1385,7 +1385,8 @@ void DAGTypeLegalizer::ExpandIntRes_AssertSext(SDNode *N,
 
   if (NVTBits < EVTBits) {
     Hi = DAG.getNode(ISD::AssertSext, dl, NVT, Hi,
-                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(), EVTBits - NVTBits)));
+                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(),
+                                                        EVTBits - NVTBits)));
   } else {
     Lo = DAG.getNode(ISD::AssertSext, dl, NVT, Lo, DAG.getValueType(EVT));
     // The high part replicates the sign bit of Lo, make it explicit.
