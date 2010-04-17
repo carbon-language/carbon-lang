@@ -440,14 +440,16 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     }
   }
 
-  os << '\'' << (EndTime.getWallTime() - StartTime.getWallTime()) << "' "
-     << '\'' << Results->NumResults << "' "
-     << '\'' << Results->Diagnostics.size() << "' "
-     << '\'' << (lang ? lang : "<unknown>") << "' "
-     << '\'' << (usesPCH ? 1 : 0) << "' ";
+  os << "{ ";
+  os << "\"wall\": " << (EndTime.getWallTime() - StartTime.getWallTime());
+  os << ", \"numRes\": " << Results->NumResults;
+  os << ", \"diags\": " << Results->Diagnostics.size();
+  os << ", \"pch\": " << (usesPCH ? "true" : "false");
+  os << ", \"lang\": \"" << (lang ? lang : "<unknown>") << '"';
   const char *name = getlogin();
-  os << '\'' << (name ? name : "<unknown>") << "' "
-     << '\'' << getClangFullVersion() << '\'';
+  os << ", \"user\": \"" << (name ? name : "unknown") << '"';
+  os << ", \"clangVer\": \"" << getClangFullVersion() << '"';
+  os << " }";
 
   llvm::StringRef res = os.str();
   if (res.size() > 0) {
