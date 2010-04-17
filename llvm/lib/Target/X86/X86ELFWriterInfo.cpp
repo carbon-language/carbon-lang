@@ -26,7 +26,6 @@ using namespace llvm;
 
 X86ELFWriterInfo::X86ELFWriterInfo(TargetMachine &TM)
   : TargetELFWriterInfo(TM) {
-    bool is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
     EMachine = is64Bit ? EM_X86_64 : EM_386;
   }
 
