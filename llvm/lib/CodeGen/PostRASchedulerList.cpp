@@ -265,6 +265,17 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     // Initialize register live-range state for scheduling in this block.
     Scheduler.StartBlock(MBB);
 
+    // FIXME: Temporary workaround for <rdar://problem/7759363>: The post-RA
+    // scheduler has some sort of problem with DebugValue instructions that
+    // causes an assertion in LeaksContext.h to fail occasionally.  Just
+    // remove all those instructions for now.
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+         I != E; ) {
+      MachineInstr *MI = &*I++;
+      if (MI->isDebugValue())
+        MI->eraseFromParent();
+    }
+
     // Schedule each sequence of instructions not interrupted by a label
     // or anything else that effectively needs to shut down scheduling.
     MachineBasicBlock::iterator Current = MBB->end();
