@@ -2854,21 +2854,14 @@ def err_vector_incorrect_num_initializers : Error<
   "%select{too many|too few}0 elements in vector initialization (expected %1 elements, have %2)">;
 def err_altivec_empty_initializer : Error<"expected initializer">;
 
-def err_stack_const_level : Error<
-  "level argument for a stack address builtin must be constant">;
-
-def err_prefetch_invalid_arg_type : Error<
-  "argument to __builtin_prefetch must be of integer type">;
-def err_prefetch_invalid_arg_ice : Error<
-  "argument to __builtin_prefetch must be a constant integer">;
 def err_argument_invalid_range : Error<
   "argument should be a value from %0 to %1">;
 
-def err_object_size_invalid_argument : Error<
-  "argument to __builtin_object_size must be a constant integer">;
-
 def err_builtin_longjmp_invalid_val : Error<
   "argument to __builtin_longjmp must be a constant 1">;
+
+def err_constant_integer_arg_type : Error<
+  "argument %0 to %1 must be a constant integer">;
 
 def ext_mixed_decls_code : Extension<
   "ISO C90 forbids mixing declarations and code">;

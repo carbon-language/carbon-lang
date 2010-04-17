@@ -4352,7 +4352,6 @@ private:
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs);
-  bool SemaBuiltinStackAddress(CallExpr *TheCall);
 
 public:
   // Used by C++ template instantiation.
@@ -4363,7 +4362,8 @@ private:
   bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
   bool SemaBuiltinAtomicOverloaded(CallExpr *TheCall);
-  bool SemaBuiltinEHReturnDataRegNo(CallExpr *TheCall);
+  bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
+                              llvm::APSInt &Result);
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
                               unsigned firstDataArg);

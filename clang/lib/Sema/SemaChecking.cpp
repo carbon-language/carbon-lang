@@ -26,6 +26,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "clang/Basic/TargetBuiltins.h"
 #include <limits>
 using namespace clang;
 
@@ -155,14 +156,18 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       return ExprError();
     break;
   case Builtin::BI__builtin_return_address:
-  case Builtin::BI__builtin_frame_address:
-    if (SemaBuiltinStackAddress(TheCall))
+  case Builtin::BI__builtin_frame_address: {
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, 0, Result))
       return ExprError();
     break;
-  case Builtin::BI__builtin_eh_return_data_regno:
-    if (SemaBuiltinEHReturnDataRegNo(TheCall))
+  }
+  case Builtin::BI__builtin_eh_return_data_regno: {
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, 0, Result))
       return ExprError();
     break;
+  }
   case Builtin::BI__builtin_shufflevector:
     return SemaBuiltinShuffleVector(TheCall);
     // TheCall will be freed by the smart pointer here, but that's fine, since
@@ -196,6 +201,15 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinAtomicOverloaded(TheCall))
       return ExprError();
     break;
+    
+  // Target specific builtins start here.
+  case X86::BI__builtin_ia32_palignr128:
+  case X86::BI__builtin_ia32_palignr: {
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, 2, Result))
+      return ExprError();
+    break;
+  }
   }
 
   return move(TheCallResult);
@@ -606,18 +620,6 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
   return false;
 }
 
-bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
-  // The signature for these builtins is exact; the only thing we need
-  // to check is that the argument is a constant.
-  SourceLocation Loc;
-  if (!TheCall->getArg(0)->isTypeDependent() &&
-      !TheCall->getArg(0)->isValueDependent() &&
-      !TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
-    return Diag(Loc, diag::err_stack_const_level) << TheCall->getSourceRange();
-
-  return false;
-}
-
 /// SemaBuiltinShuffleVector - Handle __builtin_shufflevector.
 // This is declared to take (...), so we have to check everything.
 Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
@@ -668,11 +670,9 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
         TheCall->getArg(i)->isValueDependent())
       continue;
 
-    llvm::APSInt Result(32);
-    if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
-      return ExprError(Diag(TheCall->getLocStart(),
-                  diag::err_shufflevector_nonconstant_argument)
-                << TheCall->getArg(i)->getSourceRange());
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, i, Result))
+      return ExprError();
 
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
       return ExprError(Diag(TheCall->getLocStart(),
@@ -709,23 +709,10 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   // constant integers.
   for (unsigned i = 1; i != NumArgs; ++i) {
     Expr *Arg = TheCall->getArg(i);
-    if (Arg->isTypeDependent())
-      continue;
-
-    if (!Arg->getType()->isIntegralType())
-      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_arg_type)
-              << Arg->getSourceRange();
-
-    ImpCastExprToType(Arg, Context.IntTy, CastExpr::CK_IntegralCast);
-    TheCall->setArg(i, Arg);
-
-    if (Arg->isValueDependent())
-      continue;
-
+    
     llvm::APSInt Result;
-    if (!Arg->isIntegerConstantExpr(Result, Context))
-      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_arg_ice)
-        << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
+    if (SemaBuiltinConstantArg(TheCall, i, Result))
+      return true;
 
     // FIXME: gcc issues a warning and rewrites these to 0. These
     // seems especially odd for the third argument since the default
@@ -744,42 +731,35 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   return false;
 }
 
-/// SemaBuiltinEHReturnDataRegNo - Handle __builtin_eh_return_data_regno, the
-/// operand must be an integer constant.
-bool Sema::SemaBuiltinEHReturnDataRegNo(CallExpr *TheCall) {
-  llvm::APSInt Result;
-  if (!TheCall->getArg(0)->isIntegerConstantExpr(Result, Context))
-    return Diag(TheCall->getLocStart(), diag::err_expr_not_ice)
-      << TheCall->getArg(0)->getSourceRange();
-
+/// SemaBuiltinConstantArg - Handle a check if argument ArgNum of CallExpr
+/// TheCall is a constant expression.
+bool Sema::SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
+                                  llvm::APSInt &Result) {
+  Expr *Arg = TheCall->getArg(ArgNum);
+  DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+  FunctionDecl *FDecl = cast<FunctionDecl>(DRE->getDecl());
+  
+  if (Arg->isTypeDependent() || Arg->isValueDependent()) return false;
+  
+  if (!Arg->isIntegerConstantExpr(Result, Context))
+    return Diag(TheCall->getLocStart(), diag::err_constant_integer_arg_type)
+                << ArgNum << FDecl->getDeclName() <<  Arg->getSourceRange();
+  
   return false;
 }
-
 
 /// SemaBuiltinObjectSize - Handle __builtin_object_size(void *ptr,
 /// int type). This simply type checks that type is one of the defined
 /// constants (0-3).
 // For compatability check 0-3, llvm only handles 0 and 2.
 bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
+  llvm::APSInt Result;
+  
+  // Check constant-ness first.
+  if (SemaBuiltinConstantArg(TheCall, 1, Result))
+    return true;
+
   Expr *Arg = TheCall->getArg(1);
-  if (Arg->isTypeDependent())
-    return false;
-
-  QualType ArgType = Arg->getType();
-  const BuiltinType *BT = ArgType->getAs<BuiltinType>();
-  llvm::APSInt Result(32);
-  if (!BT || BT->getKind() != BuiltinType::Int)
-    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
-             << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
-
-  if (Arg->isValueDependent())
-    return false;
-
-  if (!Arg->isIntegerConstantExpr(Result, Context)) {
-    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
-             << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
-  }
-
   if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3) {
     return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
              << "0" << "3" << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
@@ -792,11 +772,13 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
 /// This checks that val is a constant 1.
 bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
   Expr *Arg = TheCall->getArg(1);
-  if (Arg->isTypeDependent() || Arg->isValueDependent())
-    return false;
+  llvm::APSInt Result;
 
-  llvm::APSInt Result(32);
-  if (!Arg->isIntegerConstantExpr(Result, Context) || Result != 1)
+  // TODO: This is less than ideal. Overload this to take a value.
+  if (SemaBuiltinConstantArg(TheCall, 1, Result))
+    return true;
+  
+  if (Result != 1)
     return Diag(TheCall->getLocStart(), diag::err_builtin_longjmp_invalid_val)
              << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
 

@@ -60,7 +60,7 @@ void test11(int X) {
     break;
   }
 
-  __builtin_eh_return_data_regno(X);  // expected-error {{not an integer constant expression}}
+  __builtin_eh_return_data_regno(X);  // expected-error {{argument 0 to '__builtin_eh_return_data_regno' must be a constant integer}}
 }
 
 // PR5062
