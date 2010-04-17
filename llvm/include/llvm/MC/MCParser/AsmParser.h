@@ -14,7 +14,6 @@
 #ifndef ASMPARSER_H
 #define ASMPARSER_H
 
-#include <vector>
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/AsmCond.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -22,6 +21,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/ADT/StringMap.h"
+#include <vector>
 
 namespace llvm {
 class AsmCond;

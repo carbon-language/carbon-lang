@@ -55,4 +55,6 @@
 # CHECK: call *4(%eax)
         call *4(%eax)
 
-        
+# CHECK: movl	%gs:8, %eax
+movl %gs:8, %eax
+

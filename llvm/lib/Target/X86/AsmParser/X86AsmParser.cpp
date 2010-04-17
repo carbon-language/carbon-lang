@@ -44,7 +44,7 @@ private:
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
   X86Operand *ParseOperand();
-  X86Operand *ParseMemOperand();
+  X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
@@ -368,14 +368,22 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
 X86Operand *X86ATTAsmParser::ParseOperand() {
   switch (getLexer().getKind()) {
   default:
-    return ParseMemOperand();
+    // Parse a memory operand with no segment register.
+    return ParseMemOperand(0, Parser.getTok().getLoc());
   case AsmToken::Percent: {
-    // FIXME: if a segment register, this could either be just the seg reg, or
-    // the start of a memory operand.
+    // Read the register.
     unsigned RegNo;
     SMLoc Start, End;
     if (ParseRegister(RegNo, Start, End)) return 0;
-    return X86Operand::CreateReg(RegNo, Start, End);
+    
+    // If this is a segment register followed by a ':', then this is the start
+    // of a memory reference, otherwise this is a normal register reference.
+    if (getLexer().isNot(AsmToken::Colon))
+      return X86Operand::CreateReg(RegNo, Start, End);
+    
+    
+    getParser().Lex(); // Eat the colon.
+    return ParseMemOperand(RegNo, Start);
   }
   case AsmToken::Dollar: {
     // $42 -> immediate.
@@ -389,13 +397,10 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
   }
 }
 
-/// ParseMemOperand: segment: disp(basereg, indexreg, scale)
-X86Operand *X86ATTAsmParser::ParseMemOperand() {
-  SMLoc MemStart = Parser.getTok().getLoc();
-  
-  // FIXME: If SegReg ':'  (e.g. %gs:), eat and remember.
-  unsigned SegReg = 0;
-  
+/// ParseMemOperand: segment: disp(basereg, indexreg, scale).  The '%ds:' prefix
+/// has already been parsed if present.
+X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
+ 
   // We have to disambiguate a parenthesized expression "(4+5)" from the start
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
   // only way to do this without lookahead is to eat the '(' and see what is
