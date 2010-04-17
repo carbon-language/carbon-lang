@@ -630,8 +630,8 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
       Ty = cast<SequentialType>(Ty)->getElementType();
 
       // Get the array index and the size of each array element.
-      int64_t arrayIdx = cast<ConstantInt>(Indices[CurIDX])->getSExtValue();
-      Result += arrayIdx * (int64_t)getTypeAllocSize(Ty);
+      if (int64_t arrayIdx = cast<ConstantInt>(Indices[CurIDX])->getSExtValue())
+        Result += arrayIdx * (int64_t)getTypeAllocSize(Ty);
     }
   }
 
