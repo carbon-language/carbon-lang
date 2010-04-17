@@ -843,6 +843,12 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
   return 0;
 }
 
+llvm::raw_ostream &clang::operator<<(llvm::raw_ostream &OS,
+                                     const ObjCCategoryImplDecl *CID) {
+  OS << CID->getName();
+  return OS;
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCImplementationDecl
 //===----------------------------------------------------------------------===//
@@ -853,6 +859,12 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl) {
   return new (C) ObjCImplementationDecl(DC, L, ClassInterface, SuperDecl);
+}
+
+llvm::raw_ostream &clang::operator<<(llvm::raw_ostream &OS,
+                                     const ObjCImplementationDecl *ID) {
+  OS << ID->getName();
+  return OS;
 }
 
 //===----------------------------------------------------------------------===//

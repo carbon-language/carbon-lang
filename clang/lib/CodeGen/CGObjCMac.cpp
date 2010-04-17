@@ -3565,7 +3565,7 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
      << '[' << CD->getName();
   if (const ObjCCategoryImplDecl *CID =
       dyn_cast<ObjCCategoryImplDecl>(D->getDeclContext()))
-    OS << '(' << CID->getNameAsString() << ')';
+    OS << '(' << CID << ')';
   OS << ' ' << D->getSelector().getAsString() << ']';
 }
 

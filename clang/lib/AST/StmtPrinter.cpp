@@ -474,7 +474,7 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
-  OS << Node->getDecl()->getNameAsString();
+  OS << Node->getDecl();
   if (Node->hasExplicitTemplateArgumentList())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
@@ -509,7 +509,7 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
     PrintExpr(Node->getBase());
     OS << (Node->isArrow() ? "->" : ".");
   }
-  OS << Node->getDecl()->getNameAsString();
+  OS << Node->getDecl();
 }
 
 void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
@@ -527,7 +527,7 @@ void StmtPrinter::VisitObjCImplicitSetterGetterRefExpr(
     OS << ".";
   }
   if (Node->getGetterMethod())
-    OS << Node->getGetterMethod()->getNameAsString();
+    OS << Node->getGetterMethod();
 
 }
 
@@ -695,7 +695,7 @@ bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
   } else {
     MemberExpr *ME = cast<MemberExpr>(E);
     bool IsFirst = PrintOffsetOfDesignator(ME->getBase());
-    OS << (IsFirst ? "" : ".") << ME->getMemberDecl()->getNameAsString();
+    OS << (IsFirst ? "" : ".") << ME->getMemberDecl();
     return false;
   }
 }
@@ -746,7 +746,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
 
-  OS << Node->getMemberDecl()->getNameAsString();
+  OS << Node->getMemberDecl();
 
   if (Node->hasExplicitTemplateArgumentList())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
@@ -1242,7 +1242,7 @@ void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
-  OS << "@protocol(" << Node->getProtocol()->getNameAsString() << ')';
+  OS << "@protocol(" << Node->getProtocol() << ')';
 }
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
@@ -1304,7 +1304,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
 }
 
 void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
-  OS << Node->getDecl()->getNameAsString();
+  OS << Node->getDecl();
 }
 //===----------------------------------------------------------------------===//
 // Stmt method implementations

@@ -924,7 +924,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   // Vtable pointer.
   if (RD->isDynamicClass() && !PrimaryBase) {
     PrintOffset(OS, Offset, IndentLevel);
-    OS << '(' << RD->getNameAsString() << " vtable pointer)\n";
+    OS << '(' << RD << " vtable pointer)\n";
   }
   // Dump (non-virtual) bases
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -961,8 +961,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     }
 
     PrintOffset(OS, FieldOffset, IndentLevel);
-    OS << Field->getType().getAsString() << ' ';
-    OS << Field->getNameAsString() << '\n';
+    OS << Field->getType().getAsString() << ' ' << Field << '\n';
   }
 
   if (!IncludeVirtualBases)

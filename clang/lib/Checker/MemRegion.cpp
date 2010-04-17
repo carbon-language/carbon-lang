@@ -365,11 +365,11 @@ void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << superRegion << "->" << getDecl()->getNameAsString();
+  os << superRegion << "->" << getDecl();
 }
 
 void ObjCIvarRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << "ivar{" << superRegion << ',' << getDecl()->getNameAsString() << '}';
+  os << "ivar{" << superRegion << ',' << getDecl() << '}';
 }
 
 void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
@@ -381,7 +381,7 @@ void SymbolicRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void VarRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << cast<VarDecl>(D)->getNameAsString();
+  os << cast<VarDecl>(D);
 }
 
 void RegionRawOffset::dump() const {

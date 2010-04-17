@@ -1132,6 +1132,9 @@ public:
   static bool classofKind(Kind K) { return K == ObjCCategoryImpl;}
 };
 
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                              const ObjCCategoryImplDecl *CID);
+
 /// ObjCImplementationDecl - Represents a class definition - this is where
 /// method definitions are specified. For example:
 ///
@@ -1216,6 +1219,9 @@ public:
   static bool classof(const ObjCImplementationDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCImplementation; }
 };
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                              const ObjCImplementationDecl *ID);
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is
 /// declared as @compatibility_alias alias class.

@@ -387,11 +387,11 @@ void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   llvm::SmallString<256> buf1;
   llvm::raw_svector_ostream os1(buf1);
-  os1 << "'" << FD->getNameAsString() << "' is a poor random number generator";
+  os1 << '\'' << FD << "' is a poor random number generator";
 
   llvm::SmallString<256> buf2;
   llvm::raw_svector_ostream os2(buf2);
-  os2 << "Function '" << FD->getNameAsString()
+  os2 << "Function '" << FD
       << "' is obsolete because it implements a poor random number generator."
       << "  Use 'arc4random' instead";
 
@@ -472,14 +472,12 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
   // Issue a warning.
   llvm::SmallString<256> buf1;
   llvm::raw_svector_ostream os1(buf1);
-  os1 << "Return value is not checked in call to '" << FD->getNameAsString()
-     << "'";
+  os1 << "Return value is not checked in call to '" << FD << '\'';
 
   llvm::SmallString<256> buf2;
   llvm::raw_svector_ostream os2(buf2);
-  os2 << "The return value from the call to '" << FD->getNameAsString()
-      << "' is not checked.  If an error occurs in '"
-      << FD->getNameAsString()
+  os2 << "The return value from the call to '" << FD
+      << "' is not checked.  If an error occurs in '" << FD
       << "', the following code may execute with unexpected privileges";
 
   SourceRange R = CE->getCallee()->getSourceRange();

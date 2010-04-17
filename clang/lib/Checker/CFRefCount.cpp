@@ -2081,7 +2081,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
       // Get the name of the callee (if it is available).
       SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee());
       if (const FunctionDecl* FD = X.getAsFunctionDecl())
-        os << "Call to function '" << FD->getNameAsString() <<'\'';
+        os << "Call to function '" << FD << '\'';
       else
         os << "function call";
     }

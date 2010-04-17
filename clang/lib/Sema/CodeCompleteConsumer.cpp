@@ -425,7 +425,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     OS << "COMPLETION: ";
     switch (Results[I].Kind) {
     case Result::RK_Declaration:
-      OS << Results[I].Declaration->getNameAsString() ;
+      OS << Results[I].Declaration;
       if (Results[I].Hidden)
         OS << " (Hidden)";
       if (CodeCompletionString *CCS 

@@ -226,7 +226,7 @@ void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
     else
       os << "documented in CoreFoundation/CFError.h the parameter '";
 
-    os << Param->getNameAsString() << "' may be null.";
+    os << Param << "' may be null.";
 
     BugReport *report = new BugReport(*this, os.str(), *I);
     // FIXME: Notable symbols are now part of the report.  We should

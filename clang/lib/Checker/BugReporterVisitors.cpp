@@ -144,7 +144,7 @@ public:
       if (const DeclStmt *DS = PS->getStmtAs<DeclStmt>()) {
 
         if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-          os << "Variable '" << VR->getDecl()->getNameAsString() << "' ";
+          os << "Variable '" << VR->getDecl() << "' ";
         }
         else
           return NULL;
@@ -206,7 +206,7 @@ public:
         return NULL;
 
       if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-        os << '\'' << VR->getDecl()->getNameAsString() << '\'';
+        os << '\'' << VR->getDecl() << '\'';
       }
       else
         return NULL;

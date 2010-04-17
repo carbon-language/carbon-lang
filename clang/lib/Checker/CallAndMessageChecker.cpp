@@ -154,8 +154,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
         os << "Passed-by-value struct argument contains uninitialized data";
 
         if (F.FieldChain.size() == 1)
-          os << " (e.g., field: '" << F.FieldChain[0]->getNameAsString()
-             << "')";
+          os << " (e.g., field: '" << F.FieldChain[0] << "')";
         else {
           os << " (e.g., via the field chain: '";
           bool first = true;
@@ -165,7 +164,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
               first = false;
             else
               os << '.';
-            os << (*DI)->getNameAsString();
+            os << *DI;
           }
           os << "')";
         }

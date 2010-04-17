@@ -219,7 +219,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   // nodes are where they need to be.
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
     OS << "\"typedef " << localType->getUnderlyingType().getAsString()
-       << " " << localType->getNameAsString() << "\"";
+       << ' ' << localType << '"';
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     OS << "\"";
     // Emit storage class for vardecls.
@@ -328,15 +328,14 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   case Decl::ObjCClass: OS << "ObjCClass"; break;
   }
 
-  OS << "='" << Node->getDecl()->getNameAsString()
-     << "' " << (void*)Node->getDecl();
+  OS << "='" << Node->getDecl() << "' " << (void*)Node->getDecl();
 }
 
 void StmtDumper::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
   DumpExpr(Node);
   OS << " (";
   if (!Node->requiresADL()) OS << "no ";
-  OS << "ADL) = '" << Node->getName().getAsString() << "'";
+  OS << "ADL) = '" << Node->getName() << '\'';
 
   UnresolvedLookupExpr::decls_iterator
     I = Node->decls_begin(), E = Node->decls_end();
@@ -349,7 +348,7 @@ void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
   OS << " " << Node->getDecl()->getDeclKindName()
-     << "Decl='" << Node->getDecl()->getNameAsString()
+     << "Decl='" << Node->getDecl()
      << "' " << (void*)Node->getDecl();
   if (Node->isFreeIvar())
     OS << " isFreeIvar";
@@ -408,7 +407,7 @@ void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
   OS << " " << (Node->isArrow() ? "->" : ".")
-     << Node->getMemberDecl()->getNameAsString() << " "
+     << Node->getMemberDecl() << ' '
      << (void*)Node->getMemberDecl();
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
@@ -525,14 +524,13 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
 void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
 
-  OS << " " << Node->getProtocol()->getNameAsString();
+  OS << ' ' << Node->getProtocol();
 }
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
 
-  OS << " Kind=PropertyRef Property=\""
-     << Node->getProperty()->getNameAsString() << "\"";
+  OS << " Kind=PropertyRef Property=\"" << Node->getProperty() << '"';
 }
 
 void StmtDumper::VisitObjCImplicitSetterGetterRefExpr(

@@ -226,7 +226,7 @@ void UserDefinedConversionSequence::DebugPrint() const {
     Before.DebugPrint();
     OS << " -> ";
   }
-  OS << "'" << ConversionFunction->getNameAsString() << "'";
+  OS << '\'' << ConversionFunction << '\'';
   if (After.First || After.Second || After.Third) {
     OS << " -> ";
     After.DebugPrint();

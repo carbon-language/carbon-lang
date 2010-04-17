@@ -4020,8 +4020,7 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       break;
       
     case SK_UserConversion:
-      OS << "user-defined conversion via "
-         << S->Function.Function->getNameAsString();
+      OS << "user-defined conversion via " << S->Function.Function;
       break;
       
     case SK_QualificationConversionRValue:

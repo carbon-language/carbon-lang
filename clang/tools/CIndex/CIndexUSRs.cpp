@@ -137,7 +137,7 @@ void USRGenerator::VisitFieldDecl(FieldDecl *D) {
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclContext(D->getDeclContext());
-  Out << "@F@" << D->getNameAsString();
+  Out << "@F@" << D;
 }
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
@@ -155,7 +155,7 @@ void USRGenerator::VisitNamedDecl(NamedDecl *D) {
 
 void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitDeclContext(D->getDeclContext());
-  Out << "@N@" << D->getNameAsString();
+  Out << "@N@" << D;
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -251,7 +251,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
 
   if (s.empty()) {
     if (TD)
-      Out << '@' << TD->getNameAsString();
+      Out << '@' << TD;
   }
   else
     Out << '@' << s;

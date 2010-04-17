@@ -607,7 +607,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
                   if (D) {
                     GetRawInt = false;
-                    os << D->getNameAsString();
+                    os << D;
                   }
                 }
 
