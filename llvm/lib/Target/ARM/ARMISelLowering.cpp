@@ -2204,18 +2204,25 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
 }
 
+/// ExpandBIT_CONVERT - If the target supports VFP, this function is called to
+/// expand a bit convert where either the source or destination type is i64 to
+/// use a VMOVDRR or VMOVRRD node.  This should not be done when the non-i64
+/// operand type is illegal (e.g., v2f32 for a target that doesn't support
+/// vectors), since the legalizer won't know what to do with that.
 static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  DebugLoc dl = N->getDebugLoc();
   SDValue Op = N->getOperand(0);
 
-  // Do not create a VMOVDRR or VMOVRRD node if the operand type is not
-  // legal.  The legalizer won't know what to do with that.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (!TLI.isTypeLegal(Op.getValueType()))
-    return SDValue();
+  // This function is only supposed to be called for i64 types, either as the
+  // source or destination of the bit convert.
+  EVT SrcVT = Op.getValueType();
+  EVT DstVT = N->getValueType(0);
+  assert((SrcVT == MVT::i64 || DstVT == MVT::i64) &&
+         "ExpandBIT_CONVERT called for non-i64 type");
 
-  DebugLoc dl = N->getDebugLoc();
-  if (N->getValueType(0) == MVT::f64) {
-    // Turn i64->f64 into VMOVDRR.
+  // Turn i64->f64 into VMOVDRR.
+  if (SrcVT == MVT::i64 && TLI.isTypeLegal(DstVT)) {
     SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(0, MVT::i32));
     SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
@@ -2224,11 +2231,14 @@ static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
   }
 
   // Turn f64->i64 into VMOVRRD.
-  SDValue Cvt = DAG.getNode(ARMISD::VMOVRRD, dl,
-                            DAG.getVTList(MVT::i32, MVT::i32), &Op, 1);
+  if (DstVT == MVT::i64 && TLI.isTypeLegal(SrcVT)) {
+    SDValue Cvt = DAG.getNode(ARMISD::VMOVRRD, dl,
+                              DAG.getVTList(MVT::i32, MVT::i32), &Op, 1);
+    // Merge the pieces into a single i64 value.
+    return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Cvt, Cvt.getValue(1));
+  }
 
-  // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Cvt, Cvt.getValue(1));
+  return SDValue();
 }
 
 /// getZeroVector - Returns a vector of specified type with all zero elements.
