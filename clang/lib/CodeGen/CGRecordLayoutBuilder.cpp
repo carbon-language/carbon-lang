@@ -68,6 +68,11 @@ private:
   /// NextFieldOffsetInBytes - Holds the next field offset in bytes.
   uint64_t NextFieldOffsetInBytes;
 
+  /// LayoutUnionField - Will layout a field in an union and return the type
+  /// that the field will have.
+  const llvm::Type *LayoutUnionField(const FieldDecl *Field,
+                                     const ASTRecordLayout &Layout);
+  
   /// LayoutUnion - Will layout a union RecordDecl.
   void LayoutUnion(const RecordDecl *D);
 
@@ -316,6 +321,28 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   return true;
 }
 
+const llvm::Type *
+CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
+                                        const ASTRecordLayout &Layout) {
+  if (Field->isBitField()) {
+    uint64_t FieldSize =
+      Field->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
+
+    // Ignore zero sized bit fields.
+    if (FieldSize == 0)
+      return 0;
+
+    // Add the bit field info.
+    LLVMBitFields.push_back(
+      LLVMBitFieldInfo(Field, ComputeBitFieldInfo(Types, Field, 0, FieldSize)));
+    return Types.ConvertTypeForMemRecursive(Field->getType());
+  }
+  
+  // This is a regular union field.
+  LLVMFields.push_back(LLVMFieldInfo(Field, 0));
+  return Types.ConvertTypeForMemRecursive(Field->getType());
+}
+
 void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   assert(D->isUnion() && "Can't call LayoutUnion on a non-union record!");
 
@@ -332,24 +359,10 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
     assert(Layout.getFieldOffset(FieldNo) == 0 &&
           "Union field offset did not start at the beginning of record!");
-    const llvm::Type *FieldTy =
-      Types.ConvertTypeForMemRecursive(Field->getType());
+    const llvm::Type *FieldTy = LayoutUnionField(*Field, Layout);
 
-    if (Field->isBitField()) {
-      uint64_t FieldSize =
-        Field->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
-
-      // Ignore zero sized bit fields.
-      if (FieldSize == 0)
-        continue;
-
-      // Add the bit field info.
-      LLVMBitFields.push_back(
-        LLVMBitFieldInfo(*Field, ComputeBitFieldInfo(Types, *Field,
-                                                     0, FieldSize)));
-    } else {
-      LLVMFields.push_back(LLVMFieldInfo(*Field, 0));
-    }
+    if (!FieldTy)
+      continue;
 
     HasOnlyZeroSizedBitFields = false;
 
