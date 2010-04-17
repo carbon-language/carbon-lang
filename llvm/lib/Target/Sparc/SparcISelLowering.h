@@ -41,12 +41,9 @@ namespace llvm {
   }
 
   class SparcTargetLowering : public TargetLowering {
-    int VarArgsFrameOffset;   // Frame offset to start of varargs area.
   public:
     SparcTargetLowering(TargetMachine &TM);
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
-
-    int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified
     /// in Mask are known to be either zero or one and return them in the

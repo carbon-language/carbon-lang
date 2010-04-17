@@ -31,7 +31,8 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;
 
-  /// BytesToPopOnReturn - Number of bytes function pops on return.
+  /// BytesToPopOnReturn - Number of bytes function pops on return (in addition
+  /// to the space used by the return address).
   /// Used on windows platform for stdcall & fastcall name decoration
   unsigned BytesToPopOnReturn;
 
@@ -56,6 +57,15 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// when allocating, even if there may not actually be a frame pointer used.
   bool ReserveFP;
 
+  /// VarArgsFrameIndex - FrameIndex for start of varargs area.
+  int VarArgsFrameIndex;
+  /// RegSaveFrameIndex - X86-64 vararg func register save area.
+  int RegSaveFrameIndex;
+  /// VarArgsGPOffset - X86-64 vararg func int reg offset.
+  unsigned VarArgsGPOffset;
+  /// VarArgsFPOffset - X86-64 vararg func fp reg offset.
+  unsigned VarArgsFPOffset;
+
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
@@ -63,7 +73,11 @@ public:
                              ReturnAddrIndex(0),
                              TailCallReturnAddrDelta(0),
                              SRetReturnReg(0),
-                             GlobalBaseReg(0) {}
+                             GlobalBaseReg(0),
+                             VarArgsFrameIndex(0),
+                             RegSaveFrameIndex(0),
+                             VarArgsGPOffset(0),
+                             VarArgsFPOffset(0) {}
   
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
@@ -73,7 +87,11 @@ public:
       TailCallReturnAddrDelta(0),
       SRetReturnReg(0),
       GlobalBaseReg(0),
-      ReserveFP(false) {}
+      ReserveFP(false),
+      VarArgsFrameIndex(0),
+      RegSaveFrameIndex(0),
+      VarArgsGPOffset(0),
+      VarArgsFPOffset(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -98,6 +116,18 @@ public:
 
   bool getReserveFP() const { return ReserveFP; }
   void setReserveFP(bool reserveFP) { ReserveFP = reserveFP; }
+
+  int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
+  void setVarArgsFrameIndex(int Idx) { VarArgsFrameIndex = Idx; }
+
+  int getRegSaveFrameIndex() const { return RegSaveFrameIndex; }
+  void setRegSaveFrameIndex(int Idx) { RegSaveFrameIndex = Idx; }
+
+  unsigned getVarArgsGPOffset() const { return VarArgsGPOffset; }
+  void setVarArgsGPOffset(unsigned Offset) { VarArgsGPOffset = Offset; }
+
+  unsigned getVarArgsFPOffset() const { return VarArgsFPOffset; }
+  void setVarArgsFPOffset(unsigned Offset) { VarArgsFPOffset = Offset; }
 };
 
 } // End llvm namespace

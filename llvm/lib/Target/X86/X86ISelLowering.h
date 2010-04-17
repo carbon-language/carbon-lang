@@ -374,12 +374,6 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface
   class X86TargetLowering : public TargetLowering {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-    int RegSaveFrameIndex;            // X86-64 vararg func register save area.
-    unsigned VarArgsGPOffset;         // X86-64 vararg func int reg offset.
-    unsigned VarArgsFPOffset;         // X86-64 vararg func fp reg offset.
-    int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
-
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
 
@@ -401,11 +395,6 @@ namespace llvm {
     getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
                                  unsigned JTI, MCContext &Ctx) const;
     
-    // Return the number of bytes that a function should pop when it returns (in
-    // addition to the space used by the return address).
-    //
-    unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
-
     /// getStackPtrReg - Return the stack pointer register we are using: either
     /// ESP or RSP.
     unsigned getStackPtrReg() const { return X86StackPtr; }

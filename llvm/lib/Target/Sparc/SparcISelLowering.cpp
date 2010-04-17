@@ -14,6 +14,7 @@
 
 #include "SparcISelLowering.h"
 #include "SparcTargetMachine.h"
+#include "SparcMachineFunctionInfo.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -89,6 +90,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -226,7 +228,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
   // Store remaining ArgRegs to the stack if this is a varargs function.
   if (isVarArg) {
     // Remember the vararg offset for the va_start implementation.
-    VarArgsFrameOffset = ArgOffset;
+    FuncInfo->setVarArgsFrameOffset(ArgOffset);
 
     std::vector<SDValue> OutChains;
 
@@ -874,13 +876,17 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                               SparcTargetLowering &TLI) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
+
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
   DebugLoc dl = Op.getDebugLoc();
-  SDValue Offset = DAG.getNode(ISD::ADD, dl, MVT::i32,
-                                 DAG.getRegister(SP::I6, MVT::i32),
-                                 DAG.getConstant(TLI.getVarArgsFrameOffset(),
-                                                 MVT::i32));
+  SDValue Offset =
+    DAG.getNode(ISD::ADD, dl, MVT::i32,
+                DAG.getRegister(SP::I6, MVT::i32),
+                DAG.getConstant(FuncInfo->getVarArgsFrameOffset(),
+                                MVT::i32));
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), dl, Offset, Op.getOperand(1), SV, 0,
                       false, false, 0);

@@ -15,6 +15,7 @@
 #include "SPUISelLowering.h"
 #include "SPUTargetMachine.h"
 #include "SPUFrameInfo.h"
+#include "SPUMachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -1009,6 +1010,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  SPUFunctionInfo *FuncInfo = MF.getInfo<SPUFunctionInfo>();
 
   const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
   const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
@@ -1091,9 +1093,10 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
     // Create the frame slot
 
     for (; ArgRegIdx != NumArgRegs; ++ArgRegIdx) {
-      VarArgsFrameIndex = MFI->CreateFixedObject(StackSlotSize, ArgOffset,
-                                                 true, false);
-      SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+      FuncInfo->setVarArgsFrameIndex(
+        MFI->CreateFixedObject(StackSlotSize, ArgOffset,
+                               true, false));
+      SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
       unsigned VReg = MF.addLiveIn(ArgRegs[ArgRegIdx], &SPU::R32CRegClass);
       SDValue ArgVal = DAG.getRegister(VReg, MVT::v16i8);
       SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, NULL, 0,

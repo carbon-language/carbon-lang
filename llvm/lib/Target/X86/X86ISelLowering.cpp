@@ -1204,6 +1204,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                DebugLoc dl, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
 
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
@@ -1221,7 +1223,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   SmallVector<SDValue, 6> RetOps;
   RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
   // Operand #1 = Bytes To Pop
-  RetOps.push_back(DAG.getTargetConstant(getBytesToPopOnReturn(), MVT::i16));
+  RetOps.push_back(DAG.getTargetConstant(FuncInfo->getBytesToPopOnReturn(),
+                   MVT::i16));
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
@@ -1617,7 +1620,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
     if (Is64Bit || CallConv != CallingConv::X86_FastCall) {
-      VarArgsFrameIndex = MFI->CreateFixedObject(1, StackSize, true, false);
+      FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(1, StackSize,
+                                                            true, false));
     }
     if (Is64Bit) {
       unsigned TotalNumIntRegs = 0, TotalNumXMMRegs = 0;
@@ -1665,16 +1669,17 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       // For X86-64, if there are vararg parameters that are passed via
       // registers, then we must store them to their spots on the stack so they
       // may be loaded by deferencing the result of va_next.
-      VarArgsGPOffset = NumIntRegs * 8;
-      VarArgsFPOffset = TotalNumIntRegs * 8 + NumXMMRegs * 16;
-      RegSaveFrameIndex = MFI->CreateStackObject(TotalNumIntRegs * 8 +
-                                                 TotalNumXMMRegs * 16, 16,
-                                                 false);
+      FuncInfo->setVarArgsGPOffset(NumIntRegs * 8);
+      FuncInfo->setVarArgsFPOffset(TotalNumIntRegs * 8 + NumXMMRegs * 16);
+      FuncInfo->setRegSaveFrameIndex(
+        MFI->CreateStackObject(TotalNumIntRegs * 8 + TotalNumXMMRegs * 16, 16,
+                               false));
 
       // Store the integer parameter registers.
       SmallVector<SDValue, 8> MemOps;
-      SDValue RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
-      unsigned Offset = VarArgsGPOffset;
+      SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(),
+                                        getPointerTy());
+      unsigned Offset = FuncInfo->getVarArgsGPOffset();
       for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
         SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
                                   DAG.getIntPtrConstant(Offset));
@@ -1683,7 +1688,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+                       PseudoSourceValue::getFixedStack(
+                         FuncInfo->getRegSaveFrameIndex()),
                        Offset, false, false, 0);
         MemOps.push_back(Store);
         Offset += 8;
@@ -1698,8 +1704,10 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
         SaveXMMOps.push_back(ALVal);
 
-        SaveXMMOps.push_back(DAG.getIntPtrConstant(RegSaveFrameIndex));
-        SaveXMMOps.push_back(DAG.getIntPtrConstant(VarArgsFPOffset));
+        SaveXMMOps.push_back(DAG.getIntPtrConstant(
+                               FuncInfo->getRegSaveFrameIndex()));
+        SaveXMMOps.push_back(DAG.getIntPtrConstant(
+                               FuncInfo->getVarArgsFPOffset()));
 
         for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
           unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
@@ -1720,21 +1728,21 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
   // Some CCs need callee pop.
   if (IsCalleePop(isVarArg, CallConv)) {
-    BytesToPopOnReturn  = StackSize; // Callee pops everything.
+    FuncInfo->setBytesToPopOnReturn(StackSize); // Callee pops everything.
   } else {
-    BytesToPopOnReturn  = 0; // Callee pops nothing.
+    FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
     if (!Is64Bit && !IsTailCallConvention(CallConv) && ArgsAreStructReturn(Ins))
-      BytesToPopOnReturn = 4;
+      FuncInfo->setBytesToPopOnReturn(4);
   }
 
   if (!Is64Bit) {
-    RegSaveFrameIndex = 0xAAAAAAA;   // RegSaveFrameIndex is X86-64 only.
+    // RegSaveFrameIndex is X86-64 only.
+    FuncInfo->setRegSaveFrameIndex(0xAAAAAAA);
     if (CallConv == CallingConv::X86_FastCall)
-      VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
+      // fastcc functions can't have varargs.
+      FuncInfo->setVarArgsFrameIndex(0xAAAAAAA);
   }
-
-  FuncInfo->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   return Chain;
 }
@@ -6776,13 +6784,17 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
 }
 
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   DebugLoc dl = Op.getDebugLoc();
 
   if (!Subtarget->is64Bit()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
-    SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+    SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                   getPointerTy());
     return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0,
                         false, false, 0);
   }
@@ -6796,7 +6808,8 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
   SDValue FIN = Op.getOperand(1);
   // Store gp_offset
   SDValue Store = DAG.getStore(Op.getOperand(0), dl,
-                               DAG.getConstant(VarArgsGPOffset, MVT::i32),
+                               DAG.getConstant(FuncInfo->getVarArgsGPOffset(),
+                                               MVT::i32),
                                FIN, SV, 0, false, false, 0);
   MemOps.push_back(Store);
 
@@ -6804,14 +6817,16 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
   FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(4));
   Store = DAG.getStore(Op.getOperand(0), dl,
-                       DAG.getConstant(VarArgsFPOffset, MVT::i32),
+                       DAG.getConstant(FuncInfo->getVarArgsFPOffset(),
+                                       MVT::i32),
                        FIN, SV, 0, false, false, 0);
   MemOps.push_back(Store);
 
   // Store ptr to overflow_arg_area
   FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(4));
-  SDValue OVFIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+  SDValue OVFIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                    getPointerTy());
   Store = DAG.getStore(Op.getOperand(0), dl, OVFIN, FIN, SV, 0,
                        false, false, 0);
   MemOps.push_back(Store);
@@ -6819,7 +6834,8 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
   // Store ptr to reg_save_area.
   FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(8));
-  SDValue RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
+  SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(),
+                                    getPointerTy());
   Store = DAG.getStore(Op.getOperand(0), dl, RSFIN, FIN, SV, 0,
                        false, false, 0);
   MemOps.push_back(Store);

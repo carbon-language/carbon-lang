@@ -1291,11 +1291,7 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
-                              int VarArgsFrameIndex,
-                              int VarArgsStackOffset,
-                              unsigned VarArgsNumGPR,
-                              unsigned VarArgsNumFPR,
-                              const PPCSubtarget &Subtarget) {
+                                      const PPCSubtarget &Subtarget) {
 
   llvm_unreachable("VAARG not yet implemented for the SVR4 ABI!");
   return SDValue(); // Not reached
@@ -1343,18 +1339,17 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                                        int VarArgsFrameIndex,
-                                        int VarArgsStackOffset,
-                                        unsigned VarArgsNumGPR,
-                                        unsigned VarArgsNumFPR,
                                         const PPCSubtarget &Subtarget) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+
   DebugLoc dl = Op.getDebugLoc();
 
   if (Subtarget.isDarwinABI() || Subtarget.isPPC64()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-    SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+    SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0,
                         false, false, 0);
@@ -1385,14 +1380,16 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
   // } va_list[1];
 
 
-  SDValue ArgGPR = DAG.getConstant(VarArgsNumGPR, MVT::i32);
-  SDValue ArgFPR = DAG.getConstant(VarArgsNumFPR, MVT::i32);
+  SDValue ArgGPR = DAG.getConstant(FuncInfo->getVarArgsNumGPR(), MVT::i32);
+  SDValue ArgFPR = DAG.getConstant(FuncInfo->getVarArgsNumFPR(), MVT::i32);
 
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
-  SDValue StackOffsetFI = DAG.getFrameIndex(VarArgsStackOffset, PtrVT);
-  SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+  SDValue StackOffsetFI = DAG.getFrameIndex(FuncInfo->getVarArgsStackOffset(),
+                                            PtrVT);
+  SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                 PtrVT);
 
   uint64_t FrameOffset = PtrVT.getSizeInBits()/8;
   SDValue ConstFrameOffset = DAG.getConstant(FrameOffset, PtrVT);
@@ -1575,6 +1572,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
   
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   // Potential tail calls could cause overwriting of argument stack slots.
@@ -1688,24 +1686,27 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
     };
     const unsigned NumFPArgRegs = array_lengthof(FPArgRegs);
 
-    VarArgsNumGPR = CCInfo.getFirstUnallocated(GPArgRegs, NumGPArgRegs);
-    VarArgsNumFPR = CCInfo.getFirstUnallocated(FPArgRegs, NumFPArgRegs);
+    FuncInfo->setVarArgsNumGPR(CCInfo.getFirstUnallocated(GPArgRegs,
+                                                          NumGPArgRegs));
+    FuncInfo->setVarArgsNumFPR(CCInfo.getFirstUnallocated(FPArgRegs,
+                                                          NumFPArgRegs));
 
     // Make room for NumGPArgRegs and NumFPArgRegs.
     int Depth = NumGPArgRegs * PtrVT.getSizeInBits()/8 +
                 NumFPArgRegs * EVT(MVT::f64).getSizeInBits()/8;
 
-    VarArgsStackOffset = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
-                                                CCInfo.getNextStackOffset(),
-                                                true, false);
+    FuncInfo->setVarArgsStackOffset(
+      MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
+                             CCInfo.getNextStackOffset(),
+                             true, false));
 
-    VarArgsFrameIndex = MFI->CreateStackObject(Depth, 8, false);
-    SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+    FuncInfo->setVarArgsFrameIndex(MFI->CreateStackObject(Depth, 8, false));
+    SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
     // The fixed integer arguments of a variadic function are
     // stored to the VarArgsFrameIndex on the stack.
     unsigned GPRIndex = 0;
-    for (; GPRIndex != VarArgsNumGPR; ++GPRIndex) {
+    for (; GPRIndex != FuncInfo->getVarArgsNumGPR(); ++GPRIndex) {
       SDValue Val = DAG.getRegister(GPArgRegs[GPRIndex], PtrVT);
       SDValue Store = DAG.getStore(Chain, dl, Val, FIN, NULL, 0,
                                    false, false, 0);
@@ -1736,7 +1737,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
     // The double arguments are stored to the VarArgsFrameIndex
     // on the stack.
     unsigned FPRIndex = 0;
-    for (FPRIndex = 0; FPRIndex != VarArgsNumFPR; ++FPRIndex) {
+    for (FPRIndex = 0; FPRIndex != FuncInfo->getVarArgsNumFPR(); ++FPRIndex) {
       SDValue Val = DAG.getRegister(FPArgRegs[FPRIndex], MVT::f64);
       SDValue Store = DAG.getStore(Chain, dl, Val, FIN, NULL, 0,
                                    false, false, 0);
@@ -1780,6 +1781,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   //
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -2090,9 +2092,10 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   if (isVarArg) {
     int Depth = ArgOffset;
 
-    VarArgsFrameIndex = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
-                                               Depth, true, false);
-    SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+    FuncInfo->setVarArgsFrameIndex(
+      MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
+                             Depth, true, false));
+    SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
     // If this function is vararg, store any remaining integer argument regs
     // to their spots on the stack so that they may be loaded by deferencing the
@@ -4373,12 +4376,10 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
   case ISD::VASTART:
-    return LowerVASTART(Op, DAG, VarArgsFrameIndex, VarArgsStackOffset,
-                        VarArgsNumGPR, VarArgsNumFPR, PPCSubTarget);
+    return LowerVASTART(Op, DAG, PPCSubTarget);
 
   case ISD::VAARG:
-    return LowerVAARG(Op, DAG, VarArgsFrameIndex, VarArgsStackOffset,
-                      VarArgsNumGPR, VarArgsNumFPR, PPCSubTarget);
+    return LowerVAARG(Op, DAG, PPCSubTarget);
 
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
   case ISD::DYNAMIC_STACKALLOC:

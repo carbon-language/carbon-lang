@@ -20,12 +20,20 @@ namespace llvm {
   class SparcMachineFunctionInfo : public MachineFunctionInfo {
   private:
     unsigned GlobalBaseReg;
+
+    /// VarArgsFrameOffset - Frame offset to start of varargs area.
+    int VarArgsFrameOffset;
+
   public:
-    SparcMachineFunctionInfo() : GlobalBaseReg(0) {}
-    explicit SparcMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0) {}
+    SparcMachineFunctionInfo() : GlobalBaseReg(0), VarArgsFrameOffset(0) {}
+    explicit SparcMachineFunctionInfo(MachineFunction &MF)
+      : GlobalBaseReg(0), VarArgsFrameOffset(0) {}
 
     unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
     void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
+
+    int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
+    void setVarArgsFrameOffset(int Offset) { VarArgsFrameOffset = Offset; }
   };
 }
 

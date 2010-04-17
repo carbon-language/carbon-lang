@@ -63,10 +63,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
 
   class MBlazeTargetLowering : public TargetLowering  {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-
   public:
-
     explicit MBlazeTargetLowering(MBlazeTargetMachine &TM);
 
     /// LowerOperation - Provide custom lowering hooks for some operations.

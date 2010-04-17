@@ -456,8 +456,12 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue MBlazeTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MBlazeFunctionInfo *FuncInfo = MF.getInfo<MBlazeFunctionInfo>();
+
   DebugLoc dl = Op.getDebugLoc();
-  SDValue FI = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                 getPointerTy());
 
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
@@ -705,7 +709,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
-  VarArgsFrameIndex = 0;
+  MBlazeFI->setVarArgsFrameIndex(0);
 
   // Used with vargs to acumulate store chains.
   std::vector<SDValue> OutChains;
@@ -818,8 +822,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
       // Record the frame index of the first variable argument
       // which is a value necessary to VASTART.
-      if (!VarArgsFrameIndex)
-        VarArgsFrameIndex = FI;
+      if (!MBlazeFI->getVarArgsFrameIndex())
+        MBlazeFI->setVarArgsFrameIndex(FI);
     }
   }
 

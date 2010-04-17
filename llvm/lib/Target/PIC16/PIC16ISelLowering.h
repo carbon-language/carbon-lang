@@ -168,13 +168,11 @@ namespace llvm {
     // This function returns the Tmp Offset for FrameIndex. If any TmpOffset 
     // already exists for the FI then it returns the same else it creates the 
     // new offset and returns.
-    unsigned GetTmpOffsetForFI(unsigned FI, unsigned slot_size); 
-    void ResetTmpOffsetMap() { FiTmpOffsetMap.clear(); SetTmpSize(0); }
-    void InitReservedFrameCount(const Function *F); 
-
-    // Return the size of Tmp variable 
-    unsigned GetTmpSize() { return TmpSize; }
-    void SetTmpSize(unsigned Size) { TmpSize = Size; }
+    unsigned GetTmpOffsetForFI(unsigned FI, unsigned slot_size,
+                               MachineFunction &MF); 
+    void ResetTmpOffsetMap(SelectionDAG &DAG);
+    void InitReservedFrameCount(const Function *F,
+                                SelectionDAG &DAG); 
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *) const {
@@ -247,17 +245,6 @@ namespace llvm {
     // Keep a pointer to SelectionDAGISel to access its public 
     // interface (It is required during legalization)
     SelectionDAGISel   *ISel;
-
-  private:
-    // The frameindexes generated for spill/reload are stack based.
-    // This maps maintain zero based indexes for these FIs.
-    std::map<unsigned, unsigned> FiTmpOffsetMap;
-    unsigned TmpSize;
-
-    // These are the frames for return value and argument passing 
-    // These FrameIndices will be expanded to foo.frame external symbol
-    // and all others will be expanded to foo.tmp external symbol.
-    unsigned ReservedFrameCount; 
   };
 } // namespace llvm
 

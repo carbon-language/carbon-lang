@@ -1574,13 +1574,15 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
   return Res;
 }
 
-static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                            unsigned VarArgsFrameIndex) {
+static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  ARMFunctionInfo *FuncInfo = MF.getInfo<ARMFunctionInfo>();
+
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
   DebugLoc dl = Op.getDebugLoc();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+  SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0,
                       false, false, 0);
@@ -1805,10 +1807,12 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       // to their spots on the stack so that they may be loaded by deferencing
       // the result of va_next.
       AFI->setVarArgsRegSaveSize(VARegSaveSize);
-      VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset +
-                                                 VARegSaveSize - VARegSize,
-                                                 true, false);
-      SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+      AFI->setVarArgsFrameIndex(
+        MFI->CreateFixedObject(VARegSaveSize,
+                               ArgOffset + VARegSaveSize - VARegSize,
+                               true, false));
+      SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
+                                      getPointerTy());
 
       SmallVector<SDValue, 4> MemOps;
       for (; NumGPRs < 4; ++NumGPRs) {
@@ -1820,9 +1824,10 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
         unsigned VReg = MF.addLiveIn(GPRArgRegs[NumGPRs], RC);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
-        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                                     PseudoSourceValue::getFixedStack(VarArgsFrameIndex), 0,
-                                     false, false, 0);
+        SDValue Store =
+          DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                       PseudoSourceValue::getFixedStack(AFI->getVarArgsFrameIndex()), 0,
+                       false, false, 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
                           DAG.getConstant(4, getPointerTy()));
@@ -1832,7 +1837,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                             &MemOps[0], MemOps.size());
     } else
       // This will point to the next argument passed via stack.
-      VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset, true, false);
+      AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset,
+                                                       true, false));
   }
 
   return Chain;
@@ -3136,7 +3142,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
-  case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
+  case ISD::VASTART:       return LowerVASTART(Op, DAG);
   case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);

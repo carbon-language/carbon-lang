@@ -30,7 +30,6 @@ namespace llvm {
   }
 
   class BlackfinTargetLowering : public TargetLowering {
-    int VarArgsFrameOffset;   // Frame offset to start of varargs area.
   public:
     BlackfinTargetLowering(TargetMachine &TM);
     virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
@@ -38,8 +37,6 @@ namespace llvm {
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue> &Results,
                                     SelectionDAG &DAG);
-
-    int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*>

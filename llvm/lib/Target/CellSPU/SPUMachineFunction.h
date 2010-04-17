@@ -26,14 +26,20 @@ private:
   ///
   bool UsesLR;
 
+  // VarArgsFrameIndex - FrameIndex for start of varargs area.
+  int VarArgsFrameIndex;
+
 public:
   SPUFunctionInfo(MachineFunction& MF) 
-  : UsesLR(false)
+  : UsesLR(false),
+    VarArgsFrameIndex(0)
   {}
 
   void setUsesLR(bool U) { UsesLR = U; }
   bool usesLR()          { return UsesLR; }
 
+  int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
+  void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
 };
 
 } // end of namespace llvm

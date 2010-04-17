@@ -13,6 +13,7 @@
 
 #include "AlphaISelLowering.h"
 #include "AlphaTargetMachine.h"
+#include "AlphaMachineFunctionInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -389,6 +390,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  AlphaMachineFunctionInfo *FuncInfo = MF.getInfo<AlphaMachineFunctionInfo>();
 
   unsigned args_int[] = {
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
@@ -435,14 +437,14 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // If the functions takes variable number of arguments, copy all regs to stack
   if (isVarArg) {
-    VarArgsOffset = Ins.size() * 8;
+    FuncInfo->setVarArgsOffset(Ins.size() * 8);
     std::vector<SDValue> LS;
     for (int i = 0; i < 6; ++i) {
       if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
       SDValue argt = DAG.getCopyFromReg(Chain, dl, args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i), true, false);
-      if (i == 0) VarArgsBase = FI;
+      if (i == 0) FuncInfo->setVarArgsBase(FI);
       SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
                                 false, false, 0));
@@ -725,17 +727,22 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
                              false, false, 0);
   }
   case ISD::VASTART: {
+    MachineFunction &MF = DAG.getMachineFunction();
+    AlphaMachineFunctionInfo *FuncInfo = MF.getInfo<AlphaMachineFunctionInfo>();
+
     SDValue Chain = Op.getOperand(0);
     SDValue VAListP = Op.getOperand(1);
     const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
 
     // vastart stores the address of the VarArgsBase and VarArgsOffset
-    SDValue FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
+    SDValue FR  = DAG.getFrameIndex(FuncInfo->getVarArgsBase(), MVT::i64);
     SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0,
                                false, false, 0);
     SDValue SA2 = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, MVT::i64),
+    return DAG.getTruncStore(S1, dl,
+                             DAG.getConstant(FuncInfo->getVarArgsOffset(),
+                                             MVT::i64),
                              SA2, NULL, 0, MVT::i32, false, false, 0);
   }
   case ISD::RETURNADDR:

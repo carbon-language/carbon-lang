@@ -58,6 +58,18 @@ private:
   /// how the caller's stack pointer should be calculated (epilog/dynamicalloc).
   bool HasFastCall;
 
+  /// VarArgsFrameIndex - FrameIndex for start of varargs area.
+  int VarArgsFrameIndex;
+  /// VarArgsStackOffset - StackOffset for start of stack
+  /// arguments.
+  int VarArgsStackOffset;
+  /// VarArgsNumGPR - Index of the first unused integer
+  /// register for parameter passing.
+  unsigned VarArgsNumGPR;
+  /// VarArgsNumFPR - Index of the first unused double
+  /// register for parameter passing.
+  unsigned VarArgsNumFPR;
+
 public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
@@ -66,7 +78,11 @@ public:
       LRStoreRequired(false),
       MinReservedArea(0),
       TailCallSPDelta(0),
-      HasFastCall(false) {}
+      HasFastCall(false),
+      VarArgsFrameIndex(0),
+      VarArgsStackOffset(0),
+      VarArgsNumGPR(0),
+      VarArgsNumFPR(0) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
@@ -96,6 +112,18 @@ public:
 
   void setHasFastCall() { HasFastCall = true; }
   bool hasFastCall() const { return HasFastCall;}
+
+  int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
+  void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
+
+  int getVarArgsStackOffset() const { return VarArgsStackOffset; }
+  void setVarArgsStackOffset(int Offset) { VarArgsStackOffset = Offset; }
+
+  unsigned getVarArgsNumGPR() const { return VarArgsNumGPR; }
+  void setVarArgsNumGPR(unsigned Num) { VarArgsNumGPR = Num; }
+
+  unsigned getVarArgsNumFPR() const { return VarArgsNumFPR; }
+  void setVarArgsNumFPR(unsigned Num) { VarArgsNumFPR = Num; }
 };
 
 } // end of namespace llvm

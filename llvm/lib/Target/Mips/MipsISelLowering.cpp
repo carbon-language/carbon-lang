@@ -597,8 +597,12 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *FuncInfo = MF.getInfo<MipsFunctionInfo>();
+
   DebugLoc dl = Op.getDebugLoc();
-  SDValue FI = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                 getPointerTy());
 
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
@@ -1002,7 +1006,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
-  VarArgsFrameIndex = 0;
+  MipsFI->setVarArgsFrameIndex(0);
 
   // Used with vargs to acumulate store chains.
   std::vector<SDValue> OutChains;
@@ -1143,8 +1147,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // Record the frame index of the first variable argument
       // which is a value necessary to VASTART.
-      if (!VarArgsFrameIndex)
-        VarArgsFrameIndex = FI;
+      if (!MipsFI->getVarArgsFrameIndex())
+        MipsFI->setVarArgsFrameIndex(FI);
     }
   }
 

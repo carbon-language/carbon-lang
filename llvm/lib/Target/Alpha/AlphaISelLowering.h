@@ -60,8 +60,6 @@ namespace llvm {
   }
 
   class AlphaTargetLowering : public TargetLowering {
-    int VarArgsOffset;  // What is the offset to the first vaarg
-    int VarArgsBase;    // What is the base FrameIndex
   public:
     explicit AlphaTargetLowering(TargetMachine &TM);
     

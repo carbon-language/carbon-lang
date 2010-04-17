@@ -233,14 +233,8 @@ namespace llvm {
   }
   
   class PPCTargetLowering : public TargetLowering {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-    int VarArgsStackOffset;           // StackOffset for start of stack
-                                      // arguments.
-    unsigned VarArgsNumGPR;           // Index of the first unused integer
-                                      // register for parameter passing.
-    unsigned VarArgsNumFPR;           // Index of the first unused double
-                                      // register for parameter passing.
     const PPCSubtarget &PPCSubTarget;
+
   public:
     explicit PPCTargetLowering(PPCTargetMachine &TM);
     
@@ -396,12 +390,9 @@ namespace llvm {
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                           int VarArgsFrameIndex, int VarArgsStackOffset,
-                           unsigned VarArgsNumGPR, unsigned VarArgsNumFPR,
-                           const PPCSubtarget &Subtarget);
-    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG, int VarArgsFrameIndex,
-                         int VarArgsStackOffset, unsigned VarArgsNumGPR,
-                         unsigned VarArgsNumFPR, const PPCSubtarget &Subtarget);
+                         const PPCSubtarget &Subtarget);
+    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG,
+                       const PPCSubtarget &Subtarget);
     SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
                                 const PPCSubtarget &Subtarget);
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,

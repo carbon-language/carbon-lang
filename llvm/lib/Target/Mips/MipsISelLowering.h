@@ -68,10 +68,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   
   class MipsTargetLowering : public TargetLowering  {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-
   public:
-
     explicit MipsTargetLowering(MipsTargetMachine &TM);
 
     /// LowerOperation - Provide custom lowering hooks for some operations.

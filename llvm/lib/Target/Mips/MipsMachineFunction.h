@@ -80,11 +80,15 @@ private:
   /// relocation models.
   unsigned GlobalBaseReg;
 
+  /// VarArgsFrameIndex - FrameIndex for start of varargs area.
+  int VarArgsFrameIndex;
+
 public:
   MipsFunctionInfo(MachineFunction& MF) 
   : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0), 
     FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false), 
-    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0)
+    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0),
+    VarArgsFrameIndex(0)
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -133,6 +137,9 @@ public:
 
   unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
   void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
+
+  int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
+  void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
 };
 
 } // end of namespace llvm

@@ -159,7 +159,6 @@ namespace llvm {
   //  ARMTargetLowering - ARM Implementation of the TargetLowering interface
 
   class ARMTargetLowering : public TargetLowering {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
   public:
     explicit ARMTargetLowering(TargetMachine &TM);
 

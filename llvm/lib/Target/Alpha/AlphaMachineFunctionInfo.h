@@ -30,17 +30,31 @@ class AlphaMachineFunctionInfo : public MachineFunctionInfo {
   /// the return address value.
   unsigned GlobalRetAddr;
 
+  /// VarArgsOffset - What is the offset to the first vaarg
+  int VarArgsOffset;
+  /// VarArgsBase - What is the base FrameIndex
+  int VarArgsBase;
+
 public:
-  AlphaMachineFunctionInfo() : GlobalBaseReg(0), GlobalRetAddr(0) {}
+  AlphaMachineFunctionInfo() : GlobalBaseReg(0), GlobalRetAddr(0),
+                               VarArgsOffset(0), VarArgsBase(0) {}
 
   explicit AlphaMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0),
-                                                           GlobalRetAddr(0) {}
+                                                           GlobalRetAddr(0),
+                                                           VarArgsOffset(0),
+                                                           VarArgsBase(0) {}
 
   unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
   void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 
   unsigned getGlobalRetAddr() const { return GlobalRetAddr; }
   void setGlobalRetAddr(unsigned Reg) { GlobalRetAddr = Reg; }
+
+  int getVarArgsOffset() const { return VarArgsOffset; }
+  void setVarArgsOffset(int Offset) { VarArgsOffset = Offset; }
+
+  int getVarArgsBase() const { return VarArgsBase; }
+  void setVarArgsBase(int Base) { VarArgsBase = Base; }
 };
 
 } // End llvm namespace

@@ -16,6 +16,7 @@
 #include "PIC16ISelLowering.h"
 #include "PIC16TargetObjectFile.h"
 #include "PIC16TargetMachine.h"
+#include "PIC16MachineFunctionInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Function.h"
@@ -144,7 +145,7 @@ static const char *getStdLibCallName(unsigned opcode) {
 
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
-  : TargetLowering(TM, new PIC16TargetObjectFile()), TmpSize(0) {
+  : TargetLowering(TM, new PIC16TargetObjectFile()) {
  
   Subtarget = &TM.getSubtarget<PIC16Subtarget>();
 
@@ -321,16 +322,27 @@ static SDValue getOutFlag(SDValue &Op) {
   return Flag;
 }
 // Get the TmpOffset for FrameIndex
-unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI, unsigned size) {
+unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI, unsigned size,
+                                                MachineFunction &MF) {
+  PIC16MachineFunctionInfo *FuncInfo = MF.getInfo<PIC16MachineFunctionInfo>();
+  std::map<unsigned, unsigned> &FiTmpOffsetMap = FuncInfo->getFiTmpOffsetMap();
+
   std::map<unsigned, unsigned>::iterator 
             MapIt = FiTmpOffsetMap.find(FI);
   if (MapIt != FiTmpOffsetMap.end())
       return MapIt->second;
 
   // This FI (FrameIndex) is not yet mapped, so map it
-  FiTmpOffsetMap[FI] = TmpSize; 
-  TmpSize += size;
+  FiTmpOffsetMap[FI] = FuncInfo->getTmpSize(); 
+  FuncInfo->setTmpSize(FuncInfo->getTmpSize() + size);
   return FiTmpOffsetMap[FI];
+}
+
+void PIC16TargetLowering::ResetTmpOffsetMap(SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  PIC16MachineFunctionInfo *FuncInfo = MF.getInfo<PIC16MachineFunctionInfo>();
+  FuncInfo->getFiTmpOffsetMap().clear();
+  FuncInfo->setTmpSize(0);
 }
 
 // To extract chain value from the SDValue Nodes
@@ -725,6 +737,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *Func = MF.getFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  PIC16MachineFunctionInfo *FuncInfo = MF.getInfo<PIC16MachineFunctionInfo>();
   const std::string Name = Func->getName();
 
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(Op);
@@ -736,7 +749,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   // the list and add their requested size.
   unsigned FIndex = FR->getIndex();
   const char *tmpName;
-  if (FIndex < ReservedFrameCount) {
+  if (FIndex < FuncInfo->getReservedFrameCount()) {
     tmpName = ESNames::createESName(PAN::getFrameLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = 0;
@@ -747,7 +760,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
    // FrameIndex has been made for some temporary storage 
     tmpName = ESNames::createESName(PAN::getTempdataLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
-    Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
+    Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex), MF);
   }
 
   return;
@@ -1085,14 +1098,14 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
                                DAG.getEntryNode(),
                                Op, ES, 
                                DAG.getConstant (1, MVT::i8), // Banksel.
-                               DAG.getConstant (GetTmpOffsetForFI(FI, 1), 
+                               DAG.getConstant (GetTmpOffsetForFI(FI, 1, MF), 
                                                 MVT::i8));
 
   // Load the value from ES.
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other);
   SDValue Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Store,
                              ES, DAG.getConstant (1, MVT::i8),
-                             DAG.getConstant (GetTmpOffsetForFI(FI, 1), 
+                             DAG.getConstant (GetTmpOffsetForFI(FI, 1, MF), 
                              MVT::i8));
     
   return Load.getValue(0);
@@ -1647,15 +1660,19 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
     return Op;
 }
 
-void PIC16TargetLowering::InitReservedFrameCount(const Function *F) {
+void PIC16TargetLowering::InitReservedFrameCount(const Function *F,
+                                                 SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  PIC16MachineFunctionInfo *FuncInfo = MF.getInfo<PIC16MachineFunctionInfo>();
+
   unsigned NumArgs = F->arg_size();
 
   bool isVoidFunc = (F->getReturnType()->getTypeID() == Type::VoidTyID);
 
   if (isVoidFunc)
-    ReservedFrameCount = NumArgs;
+    FuncInfo->setReservedFrameCount(NumArgs);
   else
-    ReservedFrameCount = NumArgs + 1;
+    FuncInfo->setReservedFrameCount(NumArgs + 1);
 }
 
 // LowerFormalArguments - Argument values are loaded from the
@@ -1678,9 +1695,9 @@ PIC16TargetLowering::LowerFormalArguments(SDValue Chain,
   std::string FuncName = F->getName();
 
   // Reset the map of FI and TmpOffset 
-  ResetTmpOffsetMap();
+  ResetTmpOffsetMap(DAG);
   // Initialize the ReserveFrameCount
-  InitReservedFrameCount(F);
+  InitReservedFrameCount(F, DAG);
 
   // Create the <fname>.args external symbol.
   const char *tmpName = ESNames::createESName(PAN::getArgsLabel(FuncName));
