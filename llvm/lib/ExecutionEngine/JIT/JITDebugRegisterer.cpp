@@ -80,7 +80,7 @@ std::string JITDebugRegisterer::MakeELF(const Function *F, DebugInfo &I) {
 
   // Copy the binary into the .text section.  This isn't necessary, but it's
   // useful to be able to disassemble the ELF by hand.
-  ELFSection &Text = EW.getTextSection((Function *)F);
+  ELFSection &Text = EW.getTextSection(const_cast<Function *>(F));
   Text.Addr = (uint64_t)I.FnStart;
   // TODO: We could eliminate this copy if we somehow used a pointer/size pair
   // instead of a vector.

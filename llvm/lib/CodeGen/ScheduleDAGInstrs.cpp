@@ -272,8 +272,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           // perform its own adjustments.
           const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
           if (!UnitLatencies) {
-            ComputeOperandLatency(SU, UseSU, (SDep &)dep);
-            ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
+            ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
+            ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
           }
           UseSU->addPred(dep);
         }
@@ -285,8 +285,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
               continue;
             const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
             if (!UnitLatencies) {
-              ComputeOperandLatency(SU, UseSU, (SDep &)dep);
-              ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
+              ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
+              ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
             }
             UseSU->addPred(dep);
           }

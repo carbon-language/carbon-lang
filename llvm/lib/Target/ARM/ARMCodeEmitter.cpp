@@ -64,7 +64,8 @@ namespace {
     static char ID;
   public:
     ARMCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce)
-      : MachineFunctionPass(&ID), JTI(0), II((ARMInstrInfo*)tm.getInstrInfo()),
+      : MachineFunctionPass(&ID), JTI(0),
+        II((const ARMInstrInfo *)tm.getInstrInfo()),
         TD(tm.getTargetData()), TM(tm),
     MCE(mce), MCPEs(0), MJTEs(0),
     IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
@@ -174,9 +175,9 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
-  JTI = ((ARMTargetMachine&)MF.getTarget()).getJITInfo();
-  II = ((ARMTargetMachine&)MF.getTarget()).getInstrInfo();
-  TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
+  JTI = ((ARMTargetMachine &)MF.getTarget()).getJITInfo();
+  II = ((const ARMTargetMachine &)MF.getTarget()).getInstrInfo();
+  TD = ((const ARMTargetMachine &)MF.getTarget()).getTargetData();
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = 0;

@@ -353,8 +353,8 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         const SDep& dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                                OpSU->Latency, PhysReg);
         if (!isChain && !UnitLatencies) {
-          ComputeOperandLatency(OpSU, SU, (SDep &)dep);
-          ST.adjustSchedDependency(OpSU, SU, (SDep &)dep);
+          ComputeOperandLatency(OpSU, SU, const_cast<SDep &>(dep));
+          ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
         }
 
         SU->addPred(dep);
