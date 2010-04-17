@@ -8,6 +8,26 @@ configure_file(
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
+  message(FATAL_ERROR "In-source builds are not allowed. CMake would overwrite "
+"the makefiles distributed with LLVM. Please create a directory and run cmake "
+"from there, passing the path to this source directory as the last argument. "
+"This process created the file `CMakeCache.txt' and the directory "
+"`CMakeFiles'. Please delete them.")
+endif()
+
+if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
+  file(GLOB_RECURSE
+    tablegenned_files_on_include_dir
+    "${CLANG_SOURCE_DIR}/include/clang/*.inc")
+  if( tablegenned_files_on_include_dir )
+    message(FATAL_ERROR "Apparently there is a previous in-source build, "
+"probably as the result of running `configure' and `make' on "
+"${CLANG_SOURCE_DIR}. This may cause problems. The suspicious files are:\n"
+"${tablegenned_files_on_include_dir}\nPlease clean the source directory.")
+  endif()
+endif()
+
 # Compute the Clang version from the contents of VER
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/VER CLANG_VERSION_DATA)
 string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION 
