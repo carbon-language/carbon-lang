@@ -399,7 +399,7 @@ static int GenerateNative(const std::string &OutputFilename,
 
   // Run the compiler to assembly and link together the program.
   int R = sys::Program::ExecuteAndWait(
-    gcc, &Args[0], (const char**)clean_env, 0, 0, 0, &ErrMsg);
+    gcc, &Args[0], const_cast<const char **>(clean_env), 0, 0, 0, &ErrMsg);
   delete [] clean_env;
   return R;
 }

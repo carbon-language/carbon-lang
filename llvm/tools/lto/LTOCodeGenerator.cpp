@@ -370,7 +370,7 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
     // if options were requested, set them
     if ( !_codegenOptions.empty() )
         cl::ParseCommandLineOptions(_codegenOptions.size(), 
-                                                (char**)&_codegenOptions[0]);
+                                    const_cast<char **>(&_codegenOptions[0]));
 
     // Instantiate the pass manager to organize the passes.
     PassManager passes;
