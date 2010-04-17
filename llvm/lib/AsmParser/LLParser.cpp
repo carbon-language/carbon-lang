@@ -2787,6 +2787,10 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ForwardRefVals.find(FunctionName);
     if (FRVI != ForwardRefVals.end()) {
       Fn = M->getFunction(FunctionName);
+      if (Fn->getType() != PFT)
+        return Error(FRVI->second.second, "invalid forward reference to "
+                     "function '" + FunctionName + "' with wrong type!");
+      
       ForwardRefVals.erase(FRVI);
     } else if ((Fn = M->getFunction(FunctionName))) {
       // If this function already exists in the symbol table, then it is

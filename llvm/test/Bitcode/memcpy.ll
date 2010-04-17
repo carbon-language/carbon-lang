@@ -20,4 +20,4 @@ declare void @llvm.memset.i32(i8*, i8, i32, i32)
 
 declare void @llvm.memmove.i32(i8*, i8*, i32, i32)
 
-declare void @llvm.memmove.i64(i8*, i8*, i32, i32)
+declare void @llvm.memmove.i64(i8*, i8*, i64, i32)
