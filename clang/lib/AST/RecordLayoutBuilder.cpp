@@ -640,13 +640,16 @@ void ASTRecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   // We're not going to use any of the unfilled bits in the last byte.
   UnfilledBitsInLastByte = 0;
 
-  // The bitfield is allocated starting at the next offset aligned appropriately
-  // for T', with length n bits. 
-  uint64_t FieldOffset = llvm::RoundUpToAlignment(DataSize, TypeAlign);
-
+  uint64_t FieldOffset;
+  
   if (IsUnion) {
     DataSize = std::max(DataSize, FieldSize);
+    FieldOffset = 0;
   } else {
+    // The bitfield is allocated starting at the next offset aligned appropriately
+    // for T', with length n bits. 
+    FieldOffset = llvm::RoundUpToAlignment(DataSize, TypeAlign);
+    
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
     
     DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
