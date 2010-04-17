@@ -301,7 +301,7 @@ namespace {
       std::vector<Constant*> CV;
 
       for (size_t i = 0; i < bvNode->getNumOperands(); ++i) {
-        ConstantSDNode *V = dyn_cast<ConstantSDNode > (bvNode->getOperand(i));
+        ConstantSDNode *V = cast<ConstantSDNode > (bvNode->getOperand(i));
         CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       }
 
@@ -505,7 +505,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
 
   if (Opc == ISD::FrameIndex) {
     // Stack frame index must be less than 512 (divided by 16):
-    FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N);
+    FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(N);
     int FI = int(FIN->getIndex());
     DEBUG(errs() << "SelectDFormAddr: ISD::FrameIndex = "
                << FI << "\n");
@@ -526,11 +526,11 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
       return true;
     } else if (Op1.getOpcode() == ISD::Constant
                || Op1.getOpcode() == ISD::TargetConstant) {
-      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1);
+      ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
       int32_t offset = int32_t(CN->getSExtValue());
 
       if (Op0.getOpcode() == ISD::FrameIndex) {
-        FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op0);
+        FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(Op0);
         int FI = int(FIN->getIndex());
         DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
@@ -547,11 +547,11 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
       }
     } else if (Op0.getOpcode() == ISD::Constant
                || Op0.getOpcode() == ISD::TargetConstant) {
-      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op0);
+      ConstantSDNode *CN = cast<ConstantSDNode>(Op0);
       int32_t offset = int32_t(CN->getSExtValue());
 
       if (Op1.getOpcode() == ISD::FrameIndex) {
-        FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op1);
+        FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(Op1);
         int FI = int(FIN->getIndex());
         DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
