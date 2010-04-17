@@ -5361,7 +5361,7 @@ HandleSDNode::~HandleSDNode() {
 GlobalAddressSDNode::GlobalAddressSDNode(unsigned Opc, const GlobalValue *GA,
                                          EVT VT, int64_t o, unsigned char TF)
   : SDNode(Opc, DebugLoc(), getSDVTList(VT)), Offset(o), TargetFlags(TF) {
-  TheGlobal = const_cast<GlobalValue*>(GA);
+  TheGlobal = GA;
 }
 
 MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT memvt,

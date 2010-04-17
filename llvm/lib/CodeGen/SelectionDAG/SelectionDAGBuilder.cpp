@@ -639,25 +639,25 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
   SDValue &N = NodeMap[V];
   if (N.getNode()) return N;
 
-  if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
+  if (const Constant *C = dyn_cast<Constant>(V)) {
     EVT VT = TLI.getValueType(V->getType(), true);
 
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(C))
       return N = DAG.getConstant(*CI, VT);
 
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
       return N = DAG.getGlobalAddress(GV, VT);
 
     if (isa<ConstantPointerNull>(C))
       return N = DAG.getConstant(0, TLI.getPointerTy());
 
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(C))
+    if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
       return N = DAG.getConstantFP(*CFP, VT);
 
     if (isa<UndefValue>(C) && !V->getType()->isAggregateType())
       return N = DAG.getUNDEF(VT);
 
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
       SDValue N1 = NodeMap[V];
       assert(N1.getNode() && "visit didn't populate the NodeMap!");
@@ -705,7 +705,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
                                 getCurDebugLoc());
     }
 
-    if (BlockAddress *BA = dyn_cast<BlockAddress>(C))
+    if (const BlockAddress *BA = dyn_cast<BlockAddress>(C))
       return DAG.getBlockAddress(BA, VT);
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
@@ -714,7 +714,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
     // Now that we know the number and type of the elements, get that number of
     // elements into the Ops array based on what kind of constant it is.
     SmallVector<SDValue, 16> Ops;
-    if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
+    if (const ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
       for (unsigned i = 0; i != NumElements; ++i)
         Ops.push_back(getValue(CP->getOperand(i)));
     } else {

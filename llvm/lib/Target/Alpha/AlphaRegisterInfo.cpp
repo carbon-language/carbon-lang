@@ -212,15 +212,14 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   //handle GOP offset
   BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDAHg), Alpha::R29)
-    .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
+    .addGlobalAddress(MF.getFunction())
     .addReg(Alpha::R27).addImm(++curgpdist);
   BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDAg), Alpha::R29)
-    .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
+    .addGlobalAddress(MF.getFunction())
     .addReg(Alpha::R29).addImm(curgpdist);
 
-  //evil const_cast until MO stuff setup to handle const
   BuildMI(MBB, MBBI, dl, TII.get(Alpha::ALTENT))
-    .addGlobalAddress(const_cast<Function*>(MF.getFunction()));
+    .addGlobalAddress(MF.getFunction());
 
   // Get the number of bytes to allocate from the FrameInfo
   long NumBytes = MFI->getStackSize();
