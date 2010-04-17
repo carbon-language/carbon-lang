@@ -1,4 +1,4 @@
-//===-- CellSPUSelectionDAGInfo.h - CellSPU SelectionDAG Info ---*- C++ -*-===//
+//===-- SPUSelectionDAGInfo.h - CellSPU SelectionDAG Info -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,10 +18,10 @@
 
 namespace llvm {
 
-class CellSPUSelectionDAGInfo : public TargetSelectionDAGInfo {
+class SPUSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  CellSPUSelectionDAGInfo();
-  ~CellSPUSelectionDAGInfo();
+  SPUSelectionDAGInfo();
+  ~SPUSelectionDAGInfo();
 };
 
 }

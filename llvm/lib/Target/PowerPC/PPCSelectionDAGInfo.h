@@ -1,4 +1,4 @@
-//===-- PowerPCSelectionDAGInfo.h - PowerPC SelectionDAG Info ---*- C++ -*-===//
+//===-- PPCSelectionDAGInfo.h - PowerPC SelectionDAG Info -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,10 +18,10 @@
 
 namespace llvm {
 
-class PowerPCSelectionDAGInfo : public TargetSelectionDAGInfo {
+class PPCSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  PowerPCSelectionDAGInfo();
-  ~PowerPCSelectionDAGInfo();
+  PPCSelectionDAGInfo();
+  ~PPCSelectionDAGInfo();
 };
 
 }

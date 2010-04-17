@@ -1,4 +1,4 @@
-//===-- PowerPCSelectionDAGInfo.cpp - PowerPC SelectionDAG Info -----------===//
+//===-- SPUSelectionDAGInfo.cpp - CellSPU SelectionDAG Info ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the PowerPCSelectionDAGInfo class.
+// This file implements the SPUSelectionDAGInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "powerpc-selectiondag-info"
-#include "PowerPCSelectionDAGInfo.h"
+#define DEBUG_TYPE "cellspu-selectiondag-info"
+#include "SPUSelectionDAGInfo.h"
 using namespace llvm;
 
-PowerPCSelectionDAGInfo::PowerPCSelectionDAGInfo() {
+SPUSelectionDAGInfo::SPUSelectionDAGInfo() {
 }
 
-PowerPCSelectionDAGInfo::~PowerPCSelectionDAGInfo() {
+SPUSelectionDAGInfo::~SPUSelectionDAGInfo() {
 }
