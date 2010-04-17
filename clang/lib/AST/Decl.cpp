@@ -512,12 +512,6 @@ bool NamedDecl::isCXXInstanceMember() const {
   return false;
 }
 
-llvm::raw_ostream &clang::operator<<(llvm::raw_ostream &OS,
-                                     const NamedDecl *ND) {
-  OS << ND->getNameAsString();
-  return OS;
-}
-
 //===----------------------------------------------------------------------===//
 // DeclaratorDecl Implementation
 //===----------------------------------------------------------------------===//

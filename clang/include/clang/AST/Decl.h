@@ -217,7 +217,11 @@ public:
   static bool classofKind(Kind K) { return K >= NamedFirst && K <= NamedLast; }
 };
 
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const NamedDecl *ND);
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     const NamedDecl *ND) {
+  ND->getDeclName().printName(OS);
+  return OS;
+}
 
 /// NamespaceDecl - Represent a C++ namespace.
 class NamespaceDecl : public NamedDecl, public DeclContext {
