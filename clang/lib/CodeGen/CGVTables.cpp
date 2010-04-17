@@ -1608,15 +1608,12 @@ VTableBuilder::AddMethod(const CXXMethodDecl *MD,
 static bool
 OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
                                VTableBuilder::PrimaryBasesSetVectorTy &Bases) {
+  if (Bases.count(MD->getParent()))
+    return true;
+  
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
-    const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
-    assert(OverriddenMD->isCanonicalDecl() &&
-           "Should have the canonical decl of the overridden RD!");
-    
-    if (Bases.count(OverriddenRD))
-      return true;
     
     // Check "indirect overriders".
     if (OverridesIndirectMethodInBases(OverriddenMD, Bases))

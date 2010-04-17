@@ -1598,3 +1598,42 @@ struct H : F, G {
 void H::h() { }
 
 }
+
+namespace Test36 {
+
+// Test that we don't mark B::f as unused in the vtable for D.
+
+struct A {
+ virtual void f();
+};
+
+struct B : virtual A { };
+
+struct C : virtual A {
+ virtual void f();
+};
+
+// CHECK:      Vtable for 'Test36::D' (12 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | offset_to_top (0)
+// CHECK-NEXT:    4 | Test36::D RTTI
+// CHECK-NEXT:        -- (Test36::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test36::D, 0) vtable address --
+// CHECK-NEXT:    5 | void Test36::C::f()
+// CHECK-NEXT:    6 | void Test36::D::g()
+// CHECK-NEXT:    7 | vbase_offset (0)
+// CHECK-NEXT:    8 | vcall_offset (-8)
+// CHECK-NEXT:    9 | offset_to_top (-8)
+// CHECK-NEXT:   10 | Test36::D RTTI
+// CHECK-NEXT:        -- (Test36::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test36::B, 8) vtable address --
+// CHECK-NEXT:   11 | void Test36::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+struct D : virtual B, C {
+ virtual void g();
+};
+void D::g() { }
+
+}
