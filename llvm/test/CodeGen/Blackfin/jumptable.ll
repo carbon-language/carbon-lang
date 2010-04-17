@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs | FileCheck %s
 
 ; CHECK: .section .rodata
-; CHECK: JTI1_0:
-; CHECK: .long .BB1_1
+; CHECK: JTI0_0:
+; CHECK: .long .BB0_1
 
 define i32 @oper(i32 %op, i32 %A, i32 %B) {
 entry:

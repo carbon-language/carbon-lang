@@ -44,7 +44,8 @@ bool MachineFunctionAnalysis::doInitialization(Module &M) {
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI && "MMI not around yet??");
   MMI->setModule(&M);
-  NextFnNum = 1; return false;
+  NextFnNum = 0;
+  return false;
 }
 
 

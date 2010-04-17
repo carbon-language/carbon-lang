@@ -3,7 +3,7 @@
 ; llc should share constant pool entries between this integer vector
 ; and this floating-point vector since they have the same encoding.
 
-; CHECK:  LCPI1_0(%rip), %xmm0
+; CHECK:  LCPI0_0(%rip), %xmm0
 ; CHECK:  movaps        %xmm0, (%rdi)
 ; CHECK:  movaps        %xmm0, (%rsi)
 

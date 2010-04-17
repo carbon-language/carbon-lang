@@ -110,16 +110,16 @@ altret:
 ; CHECK: dont_merge_oddly:
 ; CHECK-NOT:   ret
 ; CHECK:        ucomiss %xmm1, %xmm2
-; CHECK-NEXT:   jbe .LBB3_3
+; CHECK-NEXT:   jbe .LBB2_3
 ; CHECK-NEXT:   ucomiss %xmm0, %xmm1
-; CHECK-NEXT:   ja .LBB3_4
-; CHECK-NEXT: .LBB3_2:
+; CHECK-NEXT:   ja .LBB2_4
+; CHECK-NEXT: .LBB2_2:
 ; CHECK-NEXT:   movb $1, %al
 ; CHECK-NEXT:   ret
-; CHECK-NEXT: .LBB3_3:
+; CHECK-NEXT: .LBB2_3:
 ; CHECK-NEXT:   ucomiss %xmm0, %xmm2
-; CHECK-NEXT:   jbe .LBB3_2
-; CHECK-NEXT: .LBB3_4:
+; CHECK-NEXT:   jbe .LBB2_2
+; CHECK-NEXT: .LBB2_4:
 ; CHECK-NEXT:   xorb %al, %al
 ; CHECK-NEXT:   ret
 
@@ -153,19 +153,19 @@ bb30:
 ; an unconditional jump to complete a two-way conditional branch.
 
 ; CHECK: c_expand_expr_stmt:
-; CHECK:        jmp .LBB4_7
-; CHECK-NEXT: .LBB4_12:
+; CHECK:        jmp .LBB3_7
+; CHECK-NEXT: .LBB3_12:
 ; CHECK-NEXT:   movq 8(%rax), %rax
 ; CHECK-NEXT:   movb 16(%rax), %al
 ; CHECK-NEXT:   cmpb $16, %al
-; CHECK-NEXT:   je .LBB4_6
+; CHECK-NEXT:   je .LBB3_6
 ; CHECK-NEXT:   cmpb $23, %al
-; CHECK-NEXT:   je .LBB4_6
-; CHECK-NEXT:   jmp .LBB4_15
-; CHECK-NEXT: .LBB4_14:
+; CHECK-NEXT:   je .LBB3_6
+; CHECK-NEXT:   jmp .LBB3_15
+; CHECK-NEXT: .LBB3_14:
 ; CHECK-NEXT:   cmpb $23, %bl
-; CHECK-NEXT:   jne .LBB4_15
-; CHECK-NEXT: .LBB4_15:
+; CHECK-NEXT:   jne .LBB3_15
+; CHECK-NEXT: .LBB3_15:
 
 %0 = type { %struct.rtx_def* }
 %struct.lang_decl = type opaque
@@ -275,7 +275,7 @@ declare fastcc %union.tree_node* @default_conversion(%union.tree_node*) nounwind
 
 ; CHECK: foo:
 ; CHECK:        callq func
-; CHECK-NEXT: .LBB5_2:
+; CHECK-NEXT: .LBB4_2:
 ; CHECK-NEXT:   addq $8, %rsp
 ; CHECK-NEXT:   ret
 

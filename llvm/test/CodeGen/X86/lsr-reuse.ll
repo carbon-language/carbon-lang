@@ -260,7 +260,7 @@ return:
 ; CHECK: count_me_2:
 ; CHECK: movl    $10, %eax
 ; CHECK: align
-; CHECK: BB7_1:
+; CHECK: BB6_1:
 ; CHECK: movsd   -40(%rdi,%rax,8), %xmm0
 ; CHECK: addsd   -40(%rsi,%rax,8), %xmm0
 ; CHECK: movsd   %xmm0, -40(%rdx,%rax,8)
@@ -305,7 +305,7 @@ return:
 
 ; CHECK: full_me_1:
 ; CHECK: align
-; CHECK: BB8_1:
+; CHECK: BB7_1:
 ; CHECK: movsd   (%rdi), %xmm0
 ; CHECK: addsd   (%rsi), %xmm0
 ; CHECK: movsd   %xmm0, (%rdx)
@@ -389,7 +389,7 @@ return:
 ; rdar://7657764
 
 ; CHECK: asd:
-; CHECK: BB10_5:
+; CHECK: BB9_5:
 ; CHECK-NEXT: addl  (%r{{[^,]*}},%rdi,4), %e
 ; CHECK-NEXT: incq  %rdi
 ; CHECK-NEXT: cmpq  %rdi, %r{{[^,]*}}

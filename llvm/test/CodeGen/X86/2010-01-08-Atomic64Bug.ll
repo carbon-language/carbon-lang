@@ -10,7 +10,7 @@ entry:
 ; CHECK: movl $1
 ; CHECK: movl (%ebp), %eax
 ; CHECK: movl 4(%ebp), %edx
-; CHECK: LBB1_1:
+; CHECK: LBB0_1:
 ; CHECK-NOT: movl $1
 ; CHECK-NOT: movl $0
 ; CHECK: addl

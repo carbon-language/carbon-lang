@@ -15,7 +15,7 @@ bb.nph:                                           ; preds = %entry
   br label %bb
 
 bb:                                               ; preds = %bb, %bb.nph
-; CHECK: LBB1_2:
+; CHECK: LBB0_2:
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %bb ] ; <i64> [#uses=2]
   %tmp9 = shl i64 %indvar, 2                      ; <i64> [#uses=4]
   %tmp1016 = or i64 %tmp9, 1                      ; <i64> [#uses=1]

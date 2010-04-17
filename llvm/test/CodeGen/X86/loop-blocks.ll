@@ -7,11 +7,11 @@
 ; order to avoid a branch within the loop.
 
 ; CHECK: simple:
-;      CHECK:   jmp   .LBB1_1
+;      CHECK:   jmp   .LBB0_1
 ; CHECK-NEXT:   align
-; CHECK-NEXT: .LBB1_2:
+; CHECK-NEXT: .LBB0_2:
 ; CHECK-NEXT:   callq loop_latch
-; CHECK-NEXT: .LBB1_1:
+; CHECK-NEXT: .LBB0_1:
 ; CHECK-NEXT:   callq loop_header
 
 define void @simple() nounwind {
@@ -37,11 +37,11 @@ done:
 ; falls through into the loop, avoiding a branch within the loop.
 
 ; CHECK: slightly_more_involved:
-;      CHECK:   jmp .LBB2_1
+;      CHECK:   jmp .LBB1_1
 ; CHECK-NEXT:   align
-; CHECK-NEXT: .LBB2_4:
+; CHECK-NEXT: .LBB1_4:
 ; CHECK-NEXT:   callq bar99
-; CHECK-NEXT: .LBB2_1:
+; CHECK-NEXT: .LBB1_1:
 ; CHECK-NEXT:   callq body
 
 define void @slightly_more_involved() nounwind {
@@ -72,20 +72,20 @@ exit:
 ; fallthrough edges which should be preserved.
 
 ; CHECK: yet_more_involved:
-;      CHECK:   jmp .LBB3_1
+;      CHECK:   jmp .LBB2_1
 ; CHECK-NEXT:   align
-; CHECK-NEXT: .LBB3_4:
+; CHECK-NEXT: .LBB2_4:
 ; CHECK-NEXT:   callq bar99
 ; CHECK-NEXT:   callq get
 ; CHECK-NEXT:   cmpl $2999, %eax
-; CHECK-NEXT:   jg .LBB3_6
+; CHECK-NEXT:   jg .LBB2_6
 ; CHECK-NEXT:   callq block_a_true_func
-; CHECK-NEXT:   jmp .LBB3_7
-; CHECK-NEXT: .LBB3_6:
+; CHECK-NEXT:   jmp .LBB2_7
+; CHECK-NEXT: .LBB2_6:
 ; CHECK-NEXT:   callq block_a_false_func
-; CHECK-NEXT: .LBB3_7:
+; CHECK-NEXT: .LBB2_7:
 ; CHECK-NEXT:   callq block_a_merge_func
-; CHECK-NEXT: .LBB3_1:
+; CHECK-NEXT: .LBB2_1:
 ; CHECK-NEXT:   callq body
 
 define void @yet_more_involved() nounwind {
@@ -131,20 +131,20 @@ exit:
 ; loop.
 
 ; CHECK: cfg_islands:
-;      CHECK:   jmp     .LBB4_1
+;      CHECK:   jmp     .LBB3_1
 ; CHECK-NEXT:   align
-; CHECK-NEXT: .LBB4_7:
+; CHECK-NEXT: .LBB3_7:
 ; CHECK-NEXT:   callq   bar100
-; CHECK-NEXT:   jmp     .LBB4_1
-; CHECK-NEXT: .LBB4_8:
+; CHECK-NEXT:   jmp     .LBB3_1
+; CHECK-NEXT: .LBB3_8:
 ; CHECK-NEXT:   callq   bar101
-; CHECK-NEXT:   jmp     .LBB4_1
-; CHECK-NEXT: .LBB4_9:
+; CHECK-NEXT:   jmp     .LBB3_1
+; CHECK-NEXT: .LBB3_9:
 ; CHECK-NEXT:   callq   bar102
-; CHECK-NEXT:   jmp     .LBB4_1
-; CHECK-NEXT: .LBB4_5:
+; CHECK-NEXT:   jmp     .LBB3_1
+; CHECK-NEXT: .LBB3_5:
 ; CHECK-NEXT:   callq   loop_latch
-; CHECK-NEXT: .LBB4_1:
+; CHECK-NEXT: .LBB3_1:
 ; CHECK-NEXT:   callq   loop_header
 
 define void @cfg_islands() nounwind {

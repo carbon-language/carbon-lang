@@ -61,9 +61,9 @@ entry:
 ; Codegen should hoist and CSE these constants.
 
 ; CHECK: vv:
-; CHECK: LCPI4_0(%rip), %xmm0
-; CHECK: LCPI4_1(%rip), %xmm1
-; CHECK: LCPI4_2(%rip), %xmm2
+; CHECK: LCPI3_0(%rip), %xmm0
+; CHECK: LCPI3_1(%rip), %xmm1
+; CHECK: LCPI3_2(%rip), %xmm2
 ; CHECK: align
 ; CHECK-NOT: LCPI
 ; CHECK: ret

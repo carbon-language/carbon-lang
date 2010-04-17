@@ -16,9 +16,9 @@ define i16 @test1(float %f) nounwind {
 	%tmp69 = trunc i32 %tmp.upgrd.1 to i16		; <i16> [#uses=1]
 	ret i16 %tmp69
 ; CHECK: test1:
-; CHECK: subss	LCPI1_
-; CHECK: mulss	LCPI1_
-; CHECK: minss	LCPI1_
+; CHECK: subss	LCPI0_
+; CHECK: mulss	LCPI0_
+; CHECK: minss	LCPI0_
 }
 
 define i16 @test2(float %f) nounwind {
@@ -31,9 +31,9 @@ define i16 @test2(float %f) nounwind {
 	%tmp69 = trunc i32 %tmp to i16		; <i16> [#uses=1]
 	ret i16 %tmp69
 ; CHECK: test2:
-; CHECK: addss	LCPI2_
-; CHECK: mulss	LCPI2_
-; CHECK: minss	LCPI2_
+; CHECK: addss	LCPI1_
+; CHECK: mulss	LCPI1_
+; CHECK: minss	LCPI1_
 }
 
 declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>)

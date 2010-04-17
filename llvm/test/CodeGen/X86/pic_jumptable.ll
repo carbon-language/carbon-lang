@@ -8,9 +8,9 @@ declare void @_Z3bari(i32)
 
 define linkonce void @_Z3fooILi1EEvi(i32 %Y) nounwind {
 entry:
-; CHECK:       L1$pb
+; CHECK:       L0$pb
 ; CHECK-NOT:   leal
-; CHECK:       Ltmp0 = LJTI1_0-L1$pb
+; CHECK:       Ltmp0 = LJTI0_0-L0$pb
 ; CHECK-NEXT:  addl Ltmp0(%eax,%ecx,4)
 ; CHECK-NEXT:  jmpl *%eax
 	%Y_addr = alloca i32		; <i32*> [#uses=2]

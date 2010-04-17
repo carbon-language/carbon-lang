@@ -123,11 +123,11 @@ define float @ext_1(<4 x float> %v) nounwind {
 
 ; X32: _ext_1:
 ; X32:	  pshufd	$3, %xmm0, %xmm0
-; X32:	  addss	LCPI8_0, %xmm0
+; X32:	  addss	LCPI7_0, %xmm0
 
 ; X64: _ext_1:
 ; X64:	  pshufd	$3, %xmm0, %xmm0
-; X64:	  addss	LCPI8_0(%rip), %xmm0
+; X64:	  addss	LCPI7_0(%rip), %xmm0
 }
 define float @ext_2(<4 x float> %v) nounwind {
   %s = extractelement <4 x float> %v, i32 3

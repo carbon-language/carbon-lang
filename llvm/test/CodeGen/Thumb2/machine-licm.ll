@@ -17,22 +17,22 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
-; CHECK: ldr.n r2, LCPI1_0
+; CHECK: ldr.n r2, LCPI0_0
 ; CHECK: ldr r2, [r2]
 ; CHECK: ldr r3, [r2]
-; CHECK: LBB1_2
-; CHECK: LCPI1_0:
+; CHECK: LBB0_2
+; CHECK: LCPI0_0:
 ; CHECK-NOT: LCPI1_1:
 ; CHECK: .section
 
 ; PIC: BB#1
-; PIC: ldr.n r2, LCPI1_0
+; PIC: ldr.n r2, LCPI0_0
 ; PIC: add r2, pc
 ; PIC: ldr r2, [r2]
 ; PIC: ldr r3, [r2]
-; PIC: LBB1_2
-; PIC: LCPI1_0:
-; PIC-NOT: LCPI1_1:
+; PIC: LBB0_2
+; PIC: LCPI0_0:
+; PIC-NOT: LCPI0_1:
 ; PIC: .section
   %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb

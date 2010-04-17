@@ -19,7 +19,7 @@ entry:
   br label %bb
 
 bb:                                               ; preds = %bb, %entry
-; CHECK: LBB1_1:
+; CHECK: LBB0_1:
 ; CHECK: cmp r2, #0
 ; CHECK: sub.w r9, r2, #1
 ; CHECK: mov r2, r9

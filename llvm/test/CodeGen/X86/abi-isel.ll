@@ -72,12 +72,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo00:
-; DARWIN-32-PIC: 	call	L1$pb
-; DARWIN-32-PIC-NEXT: L1$pb:
+; DARWIN-32-PIC: 	call	L0$pb
+; DARWIN-32-PIC-NEXT: L0$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L1$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L0$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L1$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L0$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -144,12 +144,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo00:
-; DARWIN-32-PIC: 	call	L2$pb
-; DARWIN-32-PIC-NEXT: L2$pb:
+; DARWIN-32-PIC: 	call	L1$pb
+; DARWIN-32-PIC-NEXT: L1$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L2$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L1$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L2$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L1$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -208,11 +208,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo01:
-; DARWIN-32-PIC: 	call	L3$pb
-; DARWIN-32-PIC-NEXT: L3$pb:
+; DARWIN-32-PIC: 	call	L2$pb
+; DARWIN-32-PIC-NEXT: L2$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L3$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L3$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L2$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L2$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -268,11 +268,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo01:
-; DARWIN-32-PIC: 	call	L4$pb
-; DARWIN-32-PIC-NEXT: L4$pb:
+; DARWIN-32-PIC: 	call	L3$pb
+; DARWIN-32-PIC-NEXT: L3$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L4$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L4$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L3$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L3$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -342,12 +342,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo02:
-; DARWIN-32-PIC: 	call	L5$pb
-; DARWIN-32-PIC-NEXT: L5$pb:
+; DARWIN-32-PIC: 	call	L4$pb
+; DARWIN-32-PIC-NEXT: L4$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L5$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L4$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L5$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L4$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -424,12 +424,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo02:
-; DARWIN-32-PIC: 	call	L6$pb
-; DARWIN-32-PIC-NEXT: L6$pb:
+; DARWIN-32-PIC: 	call	L5$pb
+; DARWIN-32-PIC-NEXT: L5$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L6$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L5$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L6$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L5$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -497,11 +497,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo03:
-; DARWIN-32-PIC: 	call	L7$pb
-; DARWIN-32-PIC-NEXT: L7$pb:
+; DARWIN-32-PIC: 	call	L6$pb
+; DARWIN-32-PIC-NEXT: L6$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L7$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ddst-L7$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L6$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ddst-L6$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo03:
@@ -551,11 +551,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo04:
-; DARWIN-32-PIC: 	call	L8$pb
-; DARWIN-32-PIC-NEXT: L8$pb:
+; DARWIN-32-PIC: 	call	L7$pb
+; DARWIN-32-PIC-NEXT: L7$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L8$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L8$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L7$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L7$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo04:
@@ -619,11 +619,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo05:
-; DARWIN-32-PIC: 	call	L9$pb
-; DARWIN-32-PIC-NEXT: L9$pb:
+; DARWIN-32-PIC: 	call	L8$pb
+; DARWIN-32-PIC-NEXT: L8$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L9$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L9$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L8$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L8$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -682,11 +682,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo06:
-; DARWIN-32-PIC: 	call	L10$pb
-; DARWIN-32-PIC-NEXT: L10$pb:
+; DARWIN-32-PIC: 	call	L9$pb
+; DARWIN-32-PIC-NEXT: L9$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L10$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ldst-L10$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L9$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ldst-L9$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo06:
@@ -735,11 +735,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo07:
-; DARWIN-32-PIC: 	call	L11$pb
-; DARWIN-32-PIC-NEXT: L11$pb:
+; DARWIN-32-PIC: 	call	L10$pb
+; DARWIN-32-PIC-NEXT: L10$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L11$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L11$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L10$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L10$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo07:
@@ -801,11 +801,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo08:
-; DARWIN-32-PIC: 	call	L12$pb
-; DARWIN-32-PIC-NEXT: L12$pb:
+; DARWIN-32-PIC: 	call	L11$pb
+; DARWIN-32-PIC-NEXT: L11$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L12$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L12$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L11$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L11$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -868,12 +868,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux00:
-; DARWIN-32-PIC: 	call	L13$pb
-; DARWIN-32-PIC-NEXT: L13$pb:
+; DARWIN-32-PIC: 	call	L12$pb
+; DARWIN-32-PIC-NEXT: L12$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L13$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L12$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L13$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L12$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -939,12 +939,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx00:
-; DARWIN-32-PIC: 	call	L14$pb
-; DARWIN-32-PIC-NEXT: L14$pb:
+; DARWIN-32-PIC: 	call	L13$pb
+; DARWIN-32-PIC-NEXT: L13$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L14$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L13$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L14$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L13$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1005,12 +1005,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux01:
-; DARWIN-32-PIC: 	call	L15$pb
-; DARWIN-32-PIC-NEXT: L15$pb:
+; DARWIN-32-PIC: 	call	L14$pb
+; DARWIN-32-PIC-NEXT: L14$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L15$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L14$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L15$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L14$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1071,12 +1071,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx01:
-; DARWIN-32-PIC: 	call	L16$pb
-; DARWIN-32-PIC-NEXT: L16$pb:
+; DARWIN-32-PIC: 	call	L15$pb
+; DARWIN-32-PIC-NEXT: L15$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L16$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L15$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L16$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L15$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1150,12 +1150,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux02:
-; DARWIN-32-PIC: 	call	L17$pb
-; DARWIN-32-PIC-NEXT: L17$pb:
+; DARWIN-32-PIC: 	call	L16$pb
+; DARWIN-32-PIC-NEXT: L16$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L17$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L16$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L17$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L16$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -1233,12 +1233,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx02:
-; DARWIN-32-PIC: 	call	L18$pb
-; DARWIN-32-PIC-NEXT: L18$pb:
+; DARWIN-32-PIC: 	call	L17$pb
+; DARWIN-32-PIC-NEXT: L17$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L18$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L17$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L18$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L17$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -1306,11 +1306,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux03:
-; DARWIN-32-PIC: 	call	L19$pb
-; DARWIN-32-PIC-NEXT: L19$pb:
+; DARWIN-32-PIC: 	call	L18$pb
+; DARWIN-32-PIC-NEXT: L18$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L19$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L19$pb)+64(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L18$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L18$pb)+64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux03:
@@ -1361,11 +1361,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux04:
-; DARWIN-32-PIC: 	call	L20$pb
-; DARWIN-32-PIC-NEXT: L20$pb:
+; DARWIN-32-PIC: 	call	L19$pb
+; DARWIN-32-PIC-NEXT: L19$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L20$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L20$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L19$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L19$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux04:
@@ -1430,11 +1430,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux05:
-; DARWIN-32-PIC: 	call	L21$pb
-; DARWIN-32-PIC-NEXT: L21$pb:
+; DARWIN-32-PIC: 	call	L20$pb
+; DARWIN-32-PIC-NEXT: L20$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L21$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L21$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L20$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L20$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1493,11 +1493,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux06:
-; DARWIN-32-PIC: 	call	L22$pb
-; DARWIN-32-PIC-NEXT: L22$pb:
+; DARWIN-32-PIC: 	call	L21$pb
+; DARWIN-32-PIC-NEXT: L21$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L22$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L22$pb)+64(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L21$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L21$pb)+64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux06:
@@ -1546,11 +1546,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux07:
-; DARWIN-32-PIC: 	call	L23$pb
-; DARWIN-32-PIC-NEXT: L23$pb:
+; DARWIN-32-PIC: 	call	L22$pb
+; DARWIN-32-PIC-NEXT: L22$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L23$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L23$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L22$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L22$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux07:
@@ -1613,11 +1613,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux08:
-; DARWIN-32-PIC: 	call	L24$pb
-; DARWIN-32-PIC-NEXT: L24$pb:
+; DARWIN-32-PIC: 	call	L23$pb
+; DARWIN-32-PIC-NEXT: L23$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L24$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L24$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L23$pb)+64(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L23$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1686,13 +1686,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind00:
-; DARWIN-32-PIC: 	call	L25$pb
-; DARWIN-32-PIC-NEXT: L25$pb:
+; DARWIN-32-PIC: 	call	L24$pb
+; DARWIN-32-PIC-NEXT: L24$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L25$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L24$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L25$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L24$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1764,13 +1764,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd00:
-; DARWIN-32-PIC: 	call	L26$pb
-; DARWIN-32-PIC-NEXT: L26$pb:
+; DARWIN-32-PIC: 	call	L25$pb
+; DARWIN-32-PIC-NEXT: L25$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L26$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L25$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L26$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L25$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1840,13 +1840,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind01:
-; DARWIN-32-PIC: 	call	L27$pb
-; DARWIN-32-PIC-NEXT: L27$pb:
+; DARWIN-32-PIC: 	call	L26$pb
+; DARWIN-32-PIC-NEXT: L26$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
 ; DARWIN-32-PIC-NEXT: 	shll	$2, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L27$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L27$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L26$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L26$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -1916,13 +1916,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd01:
-; DARWIN-32-PIC: 	call	L28$pb
-; DARWIN-32-PIC-NEXT: L28$pb:
+; DARWIN-32-PIC: 	call	L27$pb
+; DARWIN-32-PIC-NEXT: L27$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
 ; DARWIN-32-PIC-NEXT: 	shll	$2, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L28$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L28$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L27$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L27$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2001,13 +2001,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind02:
-; DARWIN-32-PIC: 	call	L29$pb
-; DARWIN-32-PIC-NEXT: L29$pb:
+; DARWIN-32-PIC: 	call	L28$pb
+; DARWIN-32-PIC-NEXT: L28$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L29$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L28$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L29$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L28$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -2090,13 +2090,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd02:
-; DARWIN-32-PIC: 	call	L30$pb
-; DARWIN-32-PIC-NEXT: L30$pb:
+; DARWIN-32-PIC: 	call	L29$pb
+; DARWIN-32-PIC-NEXT: L29$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L30$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L29$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L30$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L29$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -2170,12 +2170,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind03:
-; DARWIN-32-PIC: 	call	L31$pb
-; DARWIN-32-PIC-NEXT: L31$pb:
+; DARWIN-32-PIC: 	call	L30$pb
+; DARWIN-32-PIC-NEXT: L30$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L31$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, _ddst-L31$pb(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L30$pb(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, _ddst-L30$pb(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind03:
@@ -2242,12 +2242,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind04:
-; DARWIN-32-PIC: 	call	L32$pb
-; DARWIN-32-PIC-NEXT: L32$pb:
+; DARWIN-32-PIC: 	call	L31$pb
+; DARWIN-32-PIC-NEXT: L31$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L32$pb(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L32$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L31$pb(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L31$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind04:
@@ -2320,12 +2320,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind05:
-; DARWIN-32-PIC: 	call	L33$pb
-; DARWIN-32-PIC-NEXT: L33$pb:
+; DARWIN-32-PIC: 	call	L32$pb
+; DARWIN-32-PIC-NEXT: L32$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L33$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L33$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L32$pb(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L32$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2395,12 +2395,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind06:
-; DARWIN-32-PIC: 	call	L34$pb
-; DARWIN-32-PIC-NEXT: L34$pb:
+; DARWIN-32-PIC: 	call	L33$pb
+; DARWIN-32-PIC-NEXT: L33$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L34$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, _ldst-L34$pb(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L33$pb(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, _ldst-L33$pb(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind06:
@@ -2466,12 +2466,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind07:
-; DARWIN-32-PIC: 	call	L35$pb
-; DARWIN-32-PIC-NEXT: L35$pb:
+; DARWIN-32-PIC: 	call	L34$pb
+; DARWIN-32-PIC-NEXT: L34$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L35$pb(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L35$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L34$pb(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L34$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind07:
@@ -2543,12 +2543,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind08:
-; DARWIN-32-PIC: 	call	L36$pb
-; DARWIN-32-PIC-NEXT: L36$pb:
+; DARWIN-32-PIC: 	call	L35$pb
+; DARWIN-32-PIC-NEXT: L35$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L36$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L36$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L35$pb(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L35$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2621,13 +2621,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off00:
-; DARWIN-32-PIC: 	call	L37$pb
-; DARWIN-32-PIC-NEXT: L37$pb:
+; DARWIN-32-PIC: 	call	L36$pb
+; DARWIN-32-PIC-NEXT: L36$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L37$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L36$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L37$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L36$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2700,13 +2700,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf00:
-; DARWIN-32-PIC: 	call	L38$pb
-; DARWIN-32-PIC-NEXT: L38$pb:
+; DARWIN-32-PIC: 	call	L37$pb
+; DARWIN-32-PIC-NEXT: L37$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L38$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L37$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L38$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L37$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2777,13 +2777,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off01:
-; DARWIN-32-PIC: 	call	L39$pb
-; DARWIN-32-PIC-NEXT: L39$pb:
+; DARWIN-32-PIC: 	call	L38$pb
+; DARWIN-32-PIC-NEXT: L38$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L39$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L38$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	leal	64(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L39$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L38$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2854,13 +2854,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf01:
-; DARWIN-32-PIC: 	call	L40$pb
-; DARWIN-32-PIC-NEXT: L40$pb:
+; DARWIN-32-PIC: 	call	L39$pb
+; DARWIN-32-PIC-NEXT: L39$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L40$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L39$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	leal	64(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L40$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L39$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -2940,13 +2940,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off02:
-; DARWIN-32-PIC: 	call	L41$pb
-; DARWIN-32-PIC-NEXT: L41$pb:
+; DARWIN-32-PIC: 	call	L40$pb
+; DARWIN-32-PIC-NEXT: L40$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L41$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L40$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L41$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L40$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -3030,13 +3030,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf02:
-; DARWIN-32-PIC: 	call	L42$pb
-; DARWIN-32-PIC-NEXT: L42$pb:
+; DARWIN-32-PIC: 	call	L41$pb
+; DARWIN-32-PIC-NEXT: L41$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L42$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L41$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L42$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L41$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -3111,12 +3111,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off03:
-; DARWIN-32-PIC: 	call	L43$pb
-; DARWIN-32-PIC-NEXT: L43$pb:
+; DARWIN-32-PIC: 	call	L42$pb
+; DARWIN-32-PIC-NEXT: L42$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L43$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L43$pb)+64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L42$pb)+64(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L42$pb)+64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off03:
@@ -3184,12 +3184,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off04:
-; DARWIN-32-PIC: 	call	L44$pb
-; DARWIN-32-PIC-NEXT: L44$pb:
+; DARWIN-32-PIC: 	call	L43$pb
+; DARWIN-32-PIC-NEXT: L43$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L44$pb)+64(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L44$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L43$pb)+64(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L43$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off04:
@@ -3263,12 +3263,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off05:
-; DARWIN-32-PIC: 	call	L45$pb
-; DARWIN-32-PIC-NEXT: L45$pb:
+; DARWIN-32-PIC: 	call	L44$pb
+; DARWIN-32-PIC-NEXT: L44$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L45$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L45$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L44$pb)+64(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L44$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -3339,12 +3339,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off06:
-; DARWIN-32-PIC: 	call	L46$pb
-; DARWIN-32-PIC-NEXT: L46$pb:
+; DARWIN-32-PIC: 	call	L45$pb
+; DARWIN-32-PIC-NEXT: L45$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L46$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L46$pb)+64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L45$pb)+64(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L45$pb)+64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off06:
@@ -3411,12 +3411,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off07:
-; DARWIN-32-PIC: 	call	L47$pb
-; DARWIN-32-PIC-NEXT: L47$pb:
+; DARWIN-32-PIC: 	call	L46$pb
+; DARWIN-32-PIC-NEXT: L46$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L47$pb)+64(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L47$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L46$pb)+64(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L46$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off07:
@@ -3489,12 +3489,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off08:
-; DARWIN-32-PIC: 	call	L48$pb
-; DARWIN-32-PIC-NEXT: L48$pb:
+; DARWIN-32-PIC: 	call	L47$pb
+; DARWIN-32-PIC-NEXT: L47$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L48$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L48$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L47$pb)+64(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L47$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -3560,12 +3560,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo00:
-; DARWIN-32-PIC: 	call	L49$pb
-; DARWIN-32-PIC-NEXT: L49$pb:
+; DARWIN-32-PIC: 	call	L48$pb
+; DARWIN-32-PIC-NEXT: L48$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L49$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L48$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	262144(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L49$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L48$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -3626,12 +3626,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo01:
-; DARWIN-32-PIC: 	call	L50$pb
-; DARWIN-32-PIC-NEXT: L50$pb:
+; DARWIN-32-PIC: 	call	L49$pb
+; DARWIN-32-PIC-NEXT: L49$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L50$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L50$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L49$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L49$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -3705,12 +3705,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo02:
-; DARWIN-32-PIC: 	call	L51$pb
-; DARWIN-32-PIC-NEXT: L51$pb:
+; DARWIN-32-PIC: 	call	L50$pb
+; DARWIN-32-PIC-NEXT: L50$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L51$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L50$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	262144(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L51$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L50$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -3778,11 +3778,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo03:
-; DARWIN-32-PIC: 	call	L52$pb
-; DARWIN-32-PIC-NEXT: L52$pb:
+; DARWIN-32-PIC: 	call	L51$pb
+; DARWIN-32-PIC-NEXT: L51$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L52$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L52$pb)+262144(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L51$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L51$pb)+262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo03:
@@ -3833,11 +3833,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo04:
-; DARWIN-32-PIC: 	call	L53$pb
-; DARWIN-32-PIC-NEXT: L53$pb:
+; DARWIN-32-PIC: 	call	L52$pb
+; DARWIN-32-PIC-NEXT: L52$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L53$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L53$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L52$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L52$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo04:
@@ -3902,11 +3902,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo05:
-; DARWIN-32-PIC: 	call	L54$pb
-; DARWIN-32-PIC-NEXT: L54$pb:
+; DARWIN-32-PIC: 	call	L53$pb
+; DARWIN-32-PIC-NEXT: L53$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L54$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L54$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L53$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L53$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -3965,11 +3965,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo06:
-; DARWIN-32-PIC: 	call	L55$pb
-; DARWIN-32-PIC-NEXT: L55$pb:
+; DARWIN-32-PIC: 	call	L54$pb
+; DARWIN-32-PIC-NEXT: L54$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L55$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L55$pb)+262144(%eax)
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L54$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L54$pb)+262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo06:
@@ -4018,11 +4018,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo07:
-; DARWIN-32-PIC: 	call	L56$pb
-; DARWIN-32-PIC-NEXT: L56$pb:
+; DARWIN-32-PIC: 	call	L55$pb
+; DARWIN-32-PIC-NEXT: L55$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L56$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L56$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L55$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L55$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo07:
@@ -4085,11 +4085,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo08:
-; DARWIN-32-PIC: 	call	L57$pb
-; DARWIN-32-PIC-NEXT: L57$pb:
+; DARWIN-32-PIC: 	call	L56$pb
+; DARWIN-32-PIC-NEXT: L56$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L57$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L57$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L56$pb)+262144(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L56$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -4159,13 +4159,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big00:
-; DARWIN-32-PIC: 	call	L58$pb
-; DARWIN-32-PIC-NEXT: L58$pb:
+; DARWIN-32-PIC: 	call	L57$pb
+; DARWIN-32-PIC-NEXT: L57$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L58$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L57$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	262144(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L58$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L57$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -4236,13 +4236,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big01:
-; DARWIN-32-PIC: 	call	L59$pb
-; DARWIN-32-PIC-NEXT: L59$pb:
+; DARWIN-32-PIC: 	call	L58$pb
+; DARWIN-32-PIC-NEXT: L58$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L59$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L58$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L59$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L58$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -4322,13 +4322,13 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big02:
-; DARWIN-32-PIC: 	call	L60$pb
-; DARWIN-32-PIC-NEXT: L60$pb:
+; DARWIN-32-PIC: 	call	L59$pb
+; DARWIN-32-PIC-NEXT: L59$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L60$pb(%eax), %edx
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L59$pb(%eax), %edx
 ; DARWIN-32-PIC-NEXT: 	movl	262144(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L60$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L59$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -4403,12 +4403,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big03:
-; DARWIN-32-PIC: 	call	L61$pb
-; DARWIN-32-PIC-NEXT: L61$pb:
+; DARWIN-32-PIC: 	call	L60$pb
+; DARWIN-32-PIC-NEXT: L60$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L61$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L61$pb)+262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L60$pb)+262144(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L60$pb)+262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big03:
@@ -4476,12 +4476,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big04:
-; DARWIN-32-PIC: 	call	L62$pb
-; DARWIN-32-PIC-NEXT: L62$pb:
+; DARWIN-32-PIC: 	call	L61$pb
+; DARWIN-32-PIC-NEXT: L61$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L62$pb)+262144(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L62$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L61$pb)+262144(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L61$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big04:
@@ -4555,12 +4555,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big05:
-; DARWIN-32-PIC: 	call	L63$pb
-; DARWIN-32-PIC-NEXT: L63$pb:
+; DARWIN-32-PIC: 	call	L62$pb
+; DARWIN-32-PIC-NEXT: L62$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L63$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L63$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L62$pb)+262144(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L62$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -4631,12 +4631,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big06:
-; DARWIN-32-PIC: 	call	L64$pb
-; DARWIN-32-PIC-NEXT: L64$pb:
+; DARWIN-32-PIC: 	call	L63$pb
+; DARWIN-32-PIC-NEXT: L63$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L64$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L64$pb)+262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L63$pb)+262144(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L63$pb)+262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big06:
@@ -4703,12 +4703,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big07:
-; DARWIN-32-PIC: 	call	L65$pb
-; DARWIN-32-PIC-NEXT: L65$pb:
+; DARWIN-32-PIC: 	call	L64$pb
+; DARWIN-32-PIC-NEXT: L64$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L65$pb)+262144(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L65$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L64$pb)+262144(%eax,%ecx,4), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L64$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big07:
@@ -4781,12 +4781,12 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big08:
-; DARWIN-32-PIC: 	call	L66$pb
-; DARWIN-32-PIC-NEXT: L66$pb:
+; DARWIN-32-PIC: 	call	L65$pb
+; DARWIN-32-PIC-NEXT: L65$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L66$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L66$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L65$pb)+262144(%eax,%ecx,4), %edx
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L65$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -4840,10 +4840,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar00:
-; DARWIN-32-PIC: 	call	L67$pb
-; DARWIN-32-PIC-NEXT: L67$pb:
+; DARWIN-32-PIC: 	call	L66$pb
+; DARWIN-32-PIC-NEXT: L66$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L67$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L66$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar00:
@@ -4887,10 +4887,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bxr00:
-; DARWIN-32-PIC: 	call	L68$pb
-; DARWIN-32-PIC-NEXT: L68$pb:
+; DARWIN-32-PIC: 	call	L67$pb
+; DARWIN-32-PIC-NEXT: L67$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L68$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L67$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxr00:
@@ -4934,10 +4934,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar01:
-; DARWIN-32-PIC: 	call	L69$pb
-; DARWIN-32-PIC-NEXT: L69$pb:
+; DARWIN-32-PIC: 	call	L68$pb
+; DARWIN-32-PIC-NEXT: L68$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L69$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L68$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar01:
@@ -4981,10 +4981,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bxr01:
-; DARWIN-32-PIC: 	call	L70$pb
-; DARWIN-32-PIC-NEXT: L70$pb:
+; DARWIN-32-PIC: 	call	L69$pb
+; DARWIN-32-PIC-NEXT: L69$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L70$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L69$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxr01:
@@ -5028,10 +5028,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar02:
-; DARWIN-32-PIC: 	call	L71$pb
-; DARWIN-32-PIC-NEXT: L71$pb:
+; DARWIN-32-PIC: 	call	L70$pb
+; DARWIN-32-PIC-NEXT: L70$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L71$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L70$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar02:
@@ -5075,10 +5075,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar03:
-; DARWIN-32-PIC: 	call	L72$pb
-; DARWIN-32-PIC-NEXT: L72$pb:
+; DARWIN-32-PIC: 	call	L71$pb
+; DARWIN-32-PIC-NEXT: L71$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L72$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L71$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar03:
@@ -5122,10 +5122,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar04:
-; DARWIN-32-PIC: 	call	L73$pb
-; DARWIN-32-PIC-NEXT: L73$pb:
+; DARWIN-32-PIC: 	call	L72$pb
+; DARWIN-32-PIC-NEXT: L72$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L73$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L72$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar04:
@@ -5169,10 +5169,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar05:
-; DARWIN-32-PIC: 	call	L74$pb
-; DARWIN-32-PIC-NEXT: L74$pb:
+; DARWIN-32-PIC: 	call	L73$pb
+; DARWIN-32-PIC-NEXT: L73$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dptr-L74$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_dptr-L73$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar05:
@@ -5216,10 +5216,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar06:
-; DARWIN-32-PIC: 	call	L75$pb
-; DARWIN-32-PIC-NEXT: L75$pb:
+; DARWIN-32-PIC: 	call	L74$pb
+; DARWIN-32-PIC-NEXT: L74$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L75$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L74$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar06:
@@ -5263,10 +5263,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar07:
-; DARWIN-32-PIC: 	call	L76$pb
-; DARWIN-32-PIC-NEXT: L76$pb:
+; DARWIN-32-PIC: 	call	L75$pb
+; DARWIN-32-PIC-NEXT: L75$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L76$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L75$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar07:
@@ -5310,10 +5310,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bar08:
-; DARWIN-32-PIC: 	call	L77$pb
-; DARWIN-32-PIC-NEXT: L77$pb:
+; DARWIN-32-PIC: 	call	L76$pb
+; DARWIN-32-PIC-NEXT: L76$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lptr-L77$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_lptr-L76$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar08:
@@ -5357,10 +5357,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har00:
-; DARWIN-32-PIC: 	call	L78$pb
-; DARWIN-32-PIC-NEXT: L78$pb:
+; DARWIN-32-PIC: 	call	L77$pb
+; DARWIN-32-PIC-NEXT: L77$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L78$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L77$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har00:
@@ -5404,10 +5404,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _hxr00:
-; DARWIN-32-PIC: 	call	L79$pb
-; DARWIN-32-PIC-NEXT: L79$pb:
+; DARWIN-32-PIC: 	call	L78$pb
+; DARWIN-32-PIC-NEXT: L78$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L79$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L78$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _hxr00:
@@ -5451,10 +5451,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har01:
-; DARWIN-32-PIC: 	call	L80$pb
-; DARWIN-32-PIC-NEXT: L80$pb:
+; DARWIN-32-PIC: 	call	L79$pb
+; DARWIN-32-PIC-NEXT: L79$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L80$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L79$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har01:
@@ -5498,10 +5498,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _hxr01:
-; DARWIN-32-PIC: 	call	L81$pb
-; DARWIN-32-PIC-NEXT: L81$pb:
+; DARWIN-32-PIC: 	call	L80$pb
+; DARWIN-32-PIC-NEXT: L80$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L81$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L80$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _hxr01:
@@ -5549,10 +5549,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har02:
-; DARWIN-32-PIC: 	call	L82$pb
-; DARWIN-32-PIC-NEXT: L82$pb:
+; DARWIN-32-PIC: 	call	L81$pb
+; DARWIN-32-PIC-NEXT: L81$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L82$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L81$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -5600,10 +5600,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har03:
-; DARWIN-32-PIC: 	call	L83$pb
-; DARWIN-32-PIC-NEXT: L83$pb:
+; DARWIN-32-PIC: 	call	L82$pb
+; DARWIN-32-PIC-NEXT: L82$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L83$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L82$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har03:
@@ -5647,10 +5647,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har04:
-; DARWIN-32-PIC: 	call	L84$pb
-; DARWIN-32-PIC-NEXT: L84$pb:
+; DARWIN-32-PIC: 	call	L83$pb
+; DARWIN-32-PIC-NEXT: L83$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L84$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L83$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har04:
@@ -5697,10 +5697,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har05:
-; DARWIN-32-PIC: 	call	L85$pb
-; DARWIN-32-PIC-NEXT: L85$pb:
+; DARWIN-32-PIC: 	call	L84$pb
+; DARWIN-32-PIC-NEXT: L84$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L85$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L84$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har05:
@@ -5744,10 +5744,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har06:
-; DARWIN-32-PIC: 	call	L86$pb
-; DARWIN-32-PIC-NEXT: L86$pb:
+; DARWIN-32-PIC: 	call	L85$pb
+; DARWIN-32-PIC-NEXT: L85$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L86$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L85$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har06:
@@ -5791,10 +5791,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har07:
-; DARWIN-32-PIC: 	call	L87$pb
-; DARWIN-32-PIC-NEXT: L87$pb:
+; DARWIN-32-PIC: 	call	L86$pb
+; DARWIN-32-PIC-NEXT: L86$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L87$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L86$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har07:
@@ -5840,10 +5840,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har08:
-; DARWIN-32-PIC: 	call	L88$pb
-; DARWIN-32-PIC-NEXT: L88$pb:
+; DARWIN-32-PIC: 	call	L87$pb
+; DARWIN-32-PIC-NEXT: L87$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L88$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L87$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har08:
@@ -5889,10 +5889,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat00:
-; DARWIN-32-PIC: 	call	L89$pb
-; DARWIN-32-PIC-NEXT: L89$pb:
+; DARWIN-32-PIC: 	call	L88$pb
+; DARWIN-32-PIC-NEXT: L88$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L89$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L88$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -5942,10 +5942,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bxt00:
-; DARWIN-32-PIC: 	call	L90$pb
-; DARWIN-32-PIC-NEXT: L90$pb:
+; DARWIN-32-PIC: 	call	L89$pb
+; DARWIN-32-PIC-NEXT: L89$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L90$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L89$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -5995,10 +5995,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat01:
-; DARWIN-32-PIC: 	call	L91$pb
-; DARWIN-32-PIC-NEXT: L91$pb:
+; DARWIN-32-PIC: 	call	L90$pb
+; DARWIN-32-PIC-NEXT: L90$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L91$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L90$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6048,10 +6048,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bxt01:
-; DARWIN-32-PIC: 	call	L92$pb
-; DARWIN-32-PIC-NEXT: L92$pb:
+; DARWIN-32-PIC: 	call	L91$pb
+; DARWIN-32-PIC-NEXT: L91$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L92$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L91$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6110,10 +6110,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat02:
-; DARWIN-32-PIC: 	call	L93$pb
-; DARWIN-32-PIC-NEXT: L93$pb:
+; DARWIN-32-PIC: 	call	L92$pb
+; DARWIN-32-PIC-NEXT: L92$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L93$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L92$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -6166,10 +6166,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat03:
-; DARWIN-32-PIC: 	call	L94$pb
-; DARWIN-32-PIC-NEXT: L94$pb:
+; DARWIN-32-PIC: 	call	L93$pb
+; DARWIN-32-PIC-NEXT: L93$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L94$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L93$pb)+64(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat03:
@@ -6214,10 +6214,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat04:
-; DARWIN-32-PIC: 	call	L95$pb
-; DARWIN-32-PIC-NEXT: L95$pb:
+; DARWIN-32-PIC: 	call	L94$pb
+; DARWIN-32-PIC-NEXT: L94$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L95$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L94$pb)+64(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat04:
@@ -6271,10 +6271,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat05:
-; DARWIN-32-PIC: 	call	L96$pb
-; DARWIN-32-PIC-NEXT: L96$pb:
+; DARWIN-32-PIC: 	call	L95$pb
+; DARWIN-32-PIC-NEXT: L95$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L96$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L95$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6322,10 +6322,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat06:
-; DARWIN-32-PIC: 	call	L97$pb
-; DARWIN-32-PIC-NEXT: L97$pb:
+; DARWIN-32-PIC: 	call	L96$pb
+; DARWIN-32-PIC-NEXT: L96$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L97$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L96$pb)+64(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat06:
@@ -6369,10 +6369,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat07:
-; DARWIN-32-PIC: 	call	L98$pb
-; DARWIN-32-PIC-NEXT: L98$pb:
+; DARWIN-32-PIC: 	call	L97$pb
+; DARWIN-32-PIC-NEXT: L97$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L98$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L97$pb)+64(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat07:
@@ -6425,10 +6425,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat08:
-; DARWIN-32-PIC: 	call	L99$pb
-; DARWIN-32-PIC-NEXT: L99$pb:
+; DARWIN-32-PIC: 	call	L98$pb
+; DARWIN-32-PIC-NEXT: L98$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L99$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L98$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6478,11 +6478,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam00:
-; DARWIN-32-PIC: 	call	L100$pb
-; DARWIN-32-PIC-NEXT: L100$pb:
+; DARWIN-32-PIC: 	call	L99$pb
+; DARWIN-32-PIC-NEXT: L99$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_src$non_lazy_ptr-L100$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_src$non_lazy_ptr-L99$pb(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam00:
@@ -6531,11 +6531,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam01:
-; DARWIN-32-PIC: 	call	L101$pb
-; DARWIN-32-PIC-NEXT: L101$pb:
+; DARWIN-32-PIC: 	call	L100$pb
+; DARWIN-32-PIC-NEXT: L100$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L101$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L100$pb(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam01:
@@ -6584,11 +6584,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bxm01:
-; DARWIN-32-PIC: 	call	L102$pb
-; DARWIN-32-PIC-NEXT: L102$pb:
+; DARWIN-32-PIC: 	call	L101$pb
+; DARWIN-32-PIC-NEXT: L101$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L102$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L101$pb(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxm01:
@@ -6646,10 +6646,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam02:
-; DARWIN-32-PIC: 	call	L103$pb
-; DARWIN-32-PIC-NEXT: L103$pb:
+; DARWIN-32-PIC: 	call	L102$pb
+; DARWIN-32-PIC-NEXT: L102$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L103$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L102$pb(%eax), %ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
 ; DARWIN-32-PIC-NEXT: 	addl	(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -6702,10 +6702,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam03:
-; DARWIN-32-PIC: 	call	L104$pb
-; DARWIN-32-PIC-NEXT: L104$pb:
+; DARWIN-32-PIC: 	call	L103$pb
+; DARWIN-32-PIC-NEXT: L103$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L104$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L103$pb)+262144(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam03:
@@ -6750,10 +6750,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam04:
-; DARWIN-32-PIC: 	call	L105$pb
-; DARWIN-32-PIC-NEXT: L105$pb:
+; DARWIN-32-PIC: 	call	L104$pb
+; DARWIN-32-PIC-NEXT: L104$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L105$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L104$pb)+262144(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam04:
@@ -6807,11 +6807,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam05:
-; DARWIN-32-PIC: 	call	L106$pb
-; DARWIN-32-PIC-NEXT: L106$pb:
+; DARWIN-32-PIC: 	call	L105$pb
+; DARWIN-32-PIC-NEXT: L105$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	_dptr-L106$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	_dptr-L105$pb(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam05:
@@ -6858,10 +6858,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam06:
-; DARWIN-32-PIC: 	call	L107$pb
-; DARWIN-32-PIC-NEXT: L107$pb:
+; DARWIN-32-PIC: 	call	L106$pb
+; DARWIN-32-PIC-NEXT: L106$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L107$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L106$pb)+262144(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam06:
@@ -6905,10 +6905,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam07:
-; DARWIN-32-PIC: 	call	L108$pb
-; DARWIN-32-PIC-NEXT: L108$pb:
+; DARWIN-32-PIC: 	call	L107$pb
+; DARWIN-32-PIC-NEXT: L107$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L108$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L107$pb)+262144(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam07:
@@ -6961,11 +6961,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam08:
-; DARWIN-32-PIC: 	call	L109$pb
-; DARWIN-32-PIC-NEXT: L109$pb:
+; DARWIN-32-PIC: 	call	L108$pb
+; DARWIN-32-PIC-NEXT: L108$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%ecx
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	_lptr-L109$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	_lptr-L108$pb(%ecx), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam08:
@@ -7021,11 +7021,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat00:
-; DARWIN-32-PIC: 	call	L110$pb
-; DARWIN-32-PIC-NEXT: L110$pb:
+; DARWIN-32-PIC: 	call	L109$pb
+; DARWIN-32-PIC-NEXT: L109$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L110$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L109$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7082,11 +7082,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxt00:
-; DARWIN-32-PIC: 	call	L111$pb
-; DARWIN-32-PIC-NEXT: L111$pb:
+; DARWIN-32-PIC: 	call	L110$pb
+; DARWIN-32-PIC-NEXT: L110$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L111$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L110$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7143,11 +7143,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat01:
-; DARWIN-32-PIC: 	call	L112$pb
-; DARWIN-32-PIC-NEXT: L112$pb:
+; DARWIN-32-PIC: 	call	L111$pb
+; DARWIN-32-PIC-NEXT: L111$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L112$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L111$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7204,11 +7204,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxt01:
-; DARWIN-32-PIC: 	call	L113$pb
-; DARWIN-32-PIC-NEXT: L113$pb:
+; DARWIN-32-PIC: 	call	L112$pb
+; DARWIN-32-PIC-NEXT: L112$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L113$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L112$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7272,10 +7272,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat02:
-; DARWIN-32-PIC: 	call	L114$pb
-; DARWIN-32-PIC-NEXT: L114$pb:
+; DARWIN-32-PIC: 	call	L113$pb
+; DARWIN-32-PIC-NEXT: L113$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L114$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L113$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
@@ -7336,11 +7336,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat03:
-; DARWIN-32-PIC: 	call	L115$pb
-; DARWIN-32-PIC-NEXT: L115$pb:
+; DARWIN-32-PIC: 	call	L114$pb
+; DARWIN-32-PIC-NEXT: L114$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L115$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L114$pb)+64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat03:
@@ -7395,11 +7395,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat04:
-; DARWIN-32-PIC: 	call	L116$pb
-; DARWIN-32-PIC-NEXT: L116$pb:
+; DARWIN-32-PIC: 	call	L115$pb
+; DARWIN-32-PIC-NEXT: L115$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L116$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L115$pb)+64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat04:
@@ -7461,11 +7461,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat05:
-; DARWIN-32-PIC: 	call	L117$pb
-; DARWIN-32-PIC-NEXT: L117$pb:
+; DARWIN-32-PIC: 	call	L116$pb
+; DARWIN-32-PIC-NEXT: L116$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L117$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L116$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7521,11 +7521,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat06:
-; DARWIN-32-PIC: 	call	L118$pb
-; DARWIN-32-PIC-NEXT: L118$pb:
+; DARWIN-32-PIC: 	call	L117$pb
+; DARWIN-32-PIC-NEXT: L117$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L118$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L117$pb)+64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat06:
@@ -7580,11 +7580,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat07:
-; DARWIN-32-PIC: 	call	L119$pb
-; DARWIN-32-PIC-NEXT: L119$pb:
+; DARWIN-32-PIC: 	call	L118$pb
+; DARWIN-32-PIC-NEXT: L118$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L119$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L118$pb)+64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat07:
@@ -7645,11 +7645,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat08:
-; DARWIN-32-PIC: 	call	L120$pb
-; DARWIN-32-PIC-NEXT: L120$pb:
+; DARWIN-32-PIC: 	call	L119$pb
+; DARWIN-32-PIC-NEXT: L119$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L120$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L119$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7706,11 +7706,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam00:
-; DARWIN-32-PIC: 	call	L121$pb
-; DARWIN-32-PIC-NEXT: L121$pb:
+; DARWIN-32-PIC: 	call	L120$pb
+; DARWIN-32-PIC-NEXT: L120$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L121$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L120$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7767,11 +7767,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxm00:
-; DARWIN-32-PIC: 	call	L122$pb
-; DARWIN-32-PIC-NEXT: L122$pb:
+; DARWIN-32-PIC: 	call	L121$pb
+; DARWIN-32-PIC-NEXT: L121$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L122$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L121$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7828,11 +7828,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam01:
-; DARWIN-32-PIC: 	call	L123$pb
-; DARWIN-32-PIC-NEXT: L123$pb:
+; DARWIN-32-PIC: 	call	L122$pb
+; DARWIN-32-PIC-NEXT: L122$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L123$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L122$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7889,11 +7889,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxm01:
-; DARWIN-32-PIC: 	call	L124$pb
-; DARWIN-32-PIC-NEXT: L124$pb:
+; DARWIN-32-PIC: 	call	L123$pb
+; DARWIN-32-PIC-NEXT: L123$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L124$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L123$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -7957,10 +7957,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam02:
-; DARWIN-32-PIC: 	call	L125$pb
-; DARWIN-32-PIC-NEXT: L125$pb:
+; DARWIN-32-PIC: 	call	L124$pb
+; DARWIN-32-PIC-NEXT: L124$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L125$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L124$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
@@ -8021,11 +8021,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam03:
-; DARWIN-32-PIC: 	call	L126$pb
-; DARWIN-32-PIC-NEXT: L126$pb:
+; DARWIN-32-PIC: 	call	L125$pb
+; DARWIN-32-PIC-NEXT: L125$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L126$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L125$pb)+262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam03:
@@ -8080,11 +8080,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam04:
-; DARWIN-32-PIC: 	call	L127$pb
-; DARWIN-32-PIC-NEXT: L127$pb:
+; DARWIN-32-PIC: 	call	L126$pb
+; DARWIN-32-PIC-NEXT: L126$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L127$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L126$pb)+262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam04:
@@ -8146,11 +8146,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam05:
-; DARWIN-32-PIC: 	call	L128$pb
-; DARWIN-32-PIC-NEXT: L128$pb:
+; DARWIN-32-PIC: 	call	L127$pb
+; DARWIN-32-PIC-NEXT: L127$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L128$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L127$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -8206,11 +8206,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam06:
-; DARWIN-32-PIC: 	call	L129$pb
-; DARWIN-32-PIC-NEXT: L129$pb:
+; DARWIN-32-PIC: 	call	L128$pb
+; DARWIN-32-PIC-NEXT: L128$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L129$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L128$pb)+262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam06:
@@ -8265,11 +8265,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam07:
-; DARWIN-32-PIC: 	call	L130$pb
-; DARWIN-32-PIC-NEXT: L130$pb:
+; DARWIN-32-PIC: 	call	L129$pb
+; DARWIN-32-PIC-NEXT: L129$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L130$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L129$pb)+262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam07:
@@ -8330,11 +8330,11 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam08:
-; DARWIN-32-PIC: 	call	L131$pb
-; DARWIN-32-PIC-NEXT: L131$pb:
+; DARWIN-32-PIC: 	call	L130$pb
+; DARWIN-32-PIC-NEXT: L130$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
 ; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L131$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L130$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -8644,10 +8644,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _address:
-; DARWIN-32-PIC: 	call	L134$pb
-; DARWIN-32-PIC-NEXT: L134$pb:
+; DARWIN-32-PIC: 	call	L133$pb
+; DARWIN-32-PIC-NEXT: L133$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_callee$non_lazy_ptr-L134$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	movl	L_callee$non_lazy_ptr-L133$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _address:
@@ -8693,10 +8693,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _laddress:
-; DARWIN-32-PIC: 	call	L135$pb
-; DARWIN-32-PIC-NEXT: L135$pb:
+; DARWIN-32-PIC: 	call	L134$pb
+; DARWIN-32-PIC-NEXT: L134$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lcallee-L135$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_lcallee-L134$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _laddress:
@@ -8740,10 +8740,10 @@ entry:
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _daddress:
-; DARWIN-32-PIC: 	call	L136$pb
-; DARWIN-32-PIC-NEXT: L136$pb:
+; DARWIN-32-PIC: 	call	L135$pb
+; DARWIN-32-PIC-NEXT: L135$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dcallee-L136$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	_dcallee-L135$pb(%eax), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _daddress:
@@ -9224,10 +9224,10 @@ entry:
 ; DARWIN-32-PIC: _icaller:
 ; DARWIN-32-PIC: 	pushl	%esi
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
-; DARWIN-32-PIC-NEXT: 	call	L143$pb
-; DARWIN-32-PIC-NEXT: L143$pb:
+; DARWIN-32-PIC-NEXT: 	call	L142$pb
+; DARWIN-32-PIC-NEXT: L142$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L143$pb(%eax), %esi
+; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L142$pb(%eax), %esi
 ; DARWIN-32-PIC-NEXT: 	call	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	call	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
@@ -9310,11 +9310,11 @@ entry:
 ; DARWIN-32-PIC: _dicaller:
 ; DARWIN-32-PIC: 	pushl	%esi
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
-; DARWIN-32-PIC-NEXT: 	call	L144$pb
-; DARWIN-32-PIC-NEXT: L144$pb:
+; DARWIN-32-PIC-NEXT: 	call	L143$pb
+; DARWIN-32-PIC-NEXT: L143$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%esi
-; DARWIN-32-PIC-NEXT: 	call	*_difunc-L144$pb(%esi)
-; DARWIN-32-PIC-NEXT: 	call	*_difunc-L144$pb(%esi)
+; DARWIN-32-PIC-NEXT: 	call	*_difunc-L143$pb(%esi)
+; DARWIN-32-PIC-NEXT: 	call	*_difunc-L143$pb(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
 ; DARWIN-32-PIC-NEXT: 	popl	%esi
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -9391,11 +9391,11 @@ entry:
 ; DARWIN-32-PIC: _licaller:
 ; DARWIN-32-PIC: 	pushl	%esi
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
-; DARWIN-32-PIC-NEXT: 	call	L145$pb
-; DARWIN-32-PIC-NEXT: L145$pb:
+; DARWIN-32-PIC-NEXT: 	call	L144$pb
+; DARWIN-32-PIC-NEXT: L144$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%esi
-; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L145$pb(%esi)
-; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L145$pb(%esi)
+; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L144$pb(%esi)
+; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L144$pb(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
 ; DARWIN-32-PIC-NEXT: 	popl	%esi
 ; DARWIN-32-PIC-NEXT: 	ret
@@ -9476,10 +9476,10 @@ entry:
 ; DARWIN-32-PIC: _itailcaller:
 ; DARWIN-32-PIC: 	pushl	%esi
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
-; DARWIN-32-PIC-NEXT: 	call	L146$pb
-; DARWIN-32-PIC-NEXT: L146$pb:
+; DARWIN-32-PIC-NEXT: 	call	L145$pb
+; DARWIN-32-PIC-NEXT: L145$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L146$pb(%eax), %esi
+; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L145$pb(%eax), %esi
 ; DARWIN-32-PIC-NEXT: 	call	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	call	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
@@ -9553,10 +9553,10 @@ entry:
 
 ; DARWIN-32-PIC: _ditailcaller:
 ; DARWIN-32-PIC: 	subl	$12, %esp
-; DARWIN-32-PIC-NEXT: 	call	L147$pb
-; DARWIN-32-PIC-NEXT: L147$pb:
+; DARWIN-32-PIC-NEXT: 	call	L146$pb
+; DARWIN-32-PIC-NEXT: L146$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	call	*_difunc-L147$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	call	*_difunc-L146$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	addl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -9619,10 +9619,10 @@ entry:
 
 ; DARWIN-32-PIC: _litailcaller:
 ; DARWIN-32-PIC: 	subl	$12, %esp
-; DARWIN-32-PIC-NEXT: 	call	L148$pb
-; DARWIN-32-PIC-NEXT: L148$pb:
+; DARWIN-32-PIC-NEXT: 	call	L147$pb
+; DARWIN-32-PIC-NEXT: L147$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L148$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	call	*_lifunc-L147$pb(%eax)
 ; DARWIN-32-PIC-NEXT: 	addl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	ret
 

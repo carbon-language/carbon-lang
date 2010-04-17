@@ -4,18 +4,18 @@
 @dst = external global i32 
 @src = external global i32 
 
-define void @test1() nounwind {
+define void @test0() nounwind {
 entry:
     store i32* @dst, i32** @ptr
     %tmp.s = load i32* @src
     store i32 %tmp.s, i32* @dst
     ret void
     
-; LINUX:    test1:
-; LINUX:	call	.L1$pb
-; LINUX-NEXT: .L1$pb:
+; LINUX:    test0:
+; LINUX:	call	.L0$pb
+; LINUX-NEXT: .L0$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L1$pb),
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L0$pb),
 ; LINUX:	movl	dst@GOT(%eax),
 ; LINUX:	movl	ptr@GOT(%eax),
 ; LINUX:	movl	src@GOT(%eax),
@@ -26,18 +26,18 @@ entry:
 @dst2 = global i32 0
 @src2 = global i32 0
 
-define void @test2() nounwind {
+define void @test1() nounwind {
 entry:
     store i32* @dst2, i32** @ptr2
     %tmp.s = load i32* @src2
     store i32 %tmp.s, i32* @dst2
     ret void
     
-; LINUX: test2:
-; LINUX:	call	.L2$pb
-; LINUX-NEXT: .L2$pb:
+; LINUX: test1:
+; LINUX:	call	.L1$pb
+; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L2$pb), %eax
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L1$pb), %eax
 ; LINUX:	movl	dst2@GOT(%eax),
 ; LINUX:	movl	ptr2@GOT(%eax),
 ; LINUX:	movl	src2@GOT(%eax),
@@ -47,17 +47,17 @@ entry:
 
 declare i8* @malloc(i32)
 
-define void @test3() nounwind {
+define void @test2() nounwind {
 entry:
     %ptr = call i8* @malloc(i32 40)
     ret void
-; LINUX: test3:
+; LINUX: test2:
 ; LINUX: 	pushl	%ebx
 ; LINUX-NEXT: 	subl	$8, %esp
-; LINUX-NEXT: 	call	.L3$pb
-; LINUX-NEXT: .L3$pb:
+; LINUX-NEXT: 	call	.L2$pb
+; LINUX-NEXT: .L2$pb:
 ; LINUX-NEXT: 	popl	%ebx
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L3$pb), %ebx
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L2$pb), %ebx
 ; LINUX: 	movl	$40, (%esp)
 ; LINUX: 	call	malloc@PLT
 ; LINUX: 	addl	$8, %esp
@@ -67,18 +67,18 @@ entry:
 
 @pfoo = external global void(...)* 
 
-define void @test4() nounwind {
+define void @test3() nounwind {
 entry:
     %tmp = call void(...)*(...)* @afoo()
     store void(...)* %tmp, void(...)** @pfoo
     %tmp1 = load void(...)** @pfoo
     call void(...)* %tmp1()
     ret void
-; LINUX: test4:
-; LINUX: 	call	.L4$pb
-; LINUX-NEXT: .L4$pb:
+; LINUX: test3:
+; LINUX: 	call	.L3$pb
+; LINUX-NEXT: .L3$pb:
 ; LINUX: 	popl
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L4$pb),
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L3$pb),
 ; LINUX: 	movl	pfoo@GOT(%esi),
 ; LINUX: 	call	afoo@PLT
 ; LINUX: 	call	*
@@ -86,14 +86,14 @@ entry:
 
 declare void(...)* @afoo(...)
 
-define void @test5() nounwind {
+define void @test4() nounwind {
 entry:
     call void(...)* @foo()
     ret void
-; LINUX: test5:
-; LINUX: call	.L5$pb
+; LINUX: test4:
+; LINUX: call	.L4$pb
 ; LINUX: popl	%ebx
-; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L5$pb), %ebx
+; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L4$pb), %ebx
 ; LINUX: call	foo@PLT
 }
 
@@ -104,18 +104,18 @@ declare void @foo(...)
 @dst6 = internal global i32 0
 @src6 = internal global i32 0
 
-define void @test6() nounwind {
+define void @test5() nounwind {
 entry:
     store i32* @dst6, i32** @ptr6
     %tmp.s = load i32* @src6
     store i32 %tmp.s, i32* @dst6
     ret void
     
-; LINUX: test6:
-; LINUX: 	call	.L6$pb
-; LINUX-NEXT: .L6$pb:
+; LINUX: test5:
+; LINUX: 	call	.L5$pb
+; LINUX-NEXT: .L5$pb:
 ; LINUX-NEXT: 	popl	%eax
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L6$pb), %eax
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L5$pb), %eax
 ; LINUX: 	leal	dst6@GOTOFF(%eax), %ecx
 ; LINUX: 	movl	%ecx, ptr6@GOTOFF(%eax)
 ; LINUX: 	movl	src6@GOTOFF(%eax), %ecx
@@ -125,24 +125,24 @@ entry:
 
 
 ;; Test constant pool references.
-define double @test7(i32 %a.u) nounwind {
+define double @test6(i32 %a.u) nounwind {
 entry:
     %tmp = icmp eq i32 %a.u,0
     %retval = select i1 %tmp, double 4.561230e+02, double 1.234560e+02
     ret double %retval
 
-; LINUX: .LCPI7_0:
+; LINUX: .LCPI6_0:
 
-; LINUX: test7:
-; LINUX:    call .L7$pb
-; LINUX: .L7$pb:
-; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb), 
-; LINUX:    fldl	.LCPI7_0@GOTOFF(
+; LINUX: test6:
+; LINUX:    call .L6$pb
+; LINUX: .L6$pb:
+; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L6$pb), 
+; LINUX:    fldl	.LCPI6_0@GOTOFF(
 }
 
 
 ;; Test jump table references.
-define void @test8(i32 %n.u) nounwind {
+define void @test7(i32 %n.u) nounwind {
 entry:
     switch i32 %n.u, label %bb12 [i32 1, label %bb i32 2, label %bb6 i32 4, label %bb7 i32 5, label %bb8 i32 6, label %bb10 i32 7, label %bb1 i32 8, label %bb3 i32 9, label %bb4 i32 10, label %bb9 i32 11, label %bb2 i32 12, label %bb5 i32 13, label %bb11 ]
 bb:
@@ -185,19 +185,19 @@ bb12:
     tail call void(...)* @foo6()
     ret void
     
-; LINUX: test8:
-; LINUX:   call	.L8$pb
-; LINUX: .L8$pb:
-; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L8$pb),
-; LINUX:   addl	.LJTI8_0@GOTOFF(
+; LINUX: test7:
+; LINUX:   call	.L7$pb
+; LINUX: .L7$pb:
+; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb),
+; LINUX:   addl	.LJTI7_0@GOTOFF(
 ; LINUX:   jmpl	*
 
-; LINUX: .LJTI8_0:
-; LINUX:   .long	 .LBB8_2@GOTOFF
-; LINUX:   .long	 .LBB8_8@GOTOFF
-; LINUX:   .long	 .LBB8_14@GOTOFF
-; LINUX:   .long	 .LBB8_9@GOTOFF
-; LINUX:   .long	 .LBB8_10@GOTOFF
+; LINUX: .LJTI7_0:
+; LINUX:   .long	 .LBB7_2@GOTOFF
+; LINUX:   .long	 .LBB7_8@GOTOFF
+; LINUX:   .long	 .LBB7_14@GOTOFF
+; LINUX:   .long	 .LBB7_9@GOTOFF
+; LINUX:   .long	 .LBB7_10@GOTOFF
 }
 
 declare void @foo1(...)

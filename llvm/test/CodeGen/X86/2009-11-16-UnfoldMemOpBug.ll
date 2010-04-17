@@ -13,7 +13,7 @@ entry:
   br label %bb1
 
 bb1:
-; CHECK: LBB1_1:
+; CHECK: LBB0_1:
 ; CHECK: movaps %xmm0, (%rsp)
   %tmp2 = phi i32 [ %tmp3, %bb1 ], [ 0, %entry ]
   call void @llvm.memcpy.i64(i8* %tmp1, i8* getelementptr inbounds ([28 x i8]* @str, i64 0, i64 0), i64 28, i32 1)

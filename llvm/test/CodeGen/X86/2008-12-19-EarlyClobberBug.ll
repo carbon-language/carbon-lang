@@ -3,7 +3,7 @@
 ; Make sure the copy after inline asm is not coalesced away.
 
 ; CHECK:         ## InlineAsm End
-; CHECK-NEXT: BB1_2:
+; CHECK-NEXT: BB0_2:
 ; CHECK-NEXT:    movl	%esi, %eax
 
 

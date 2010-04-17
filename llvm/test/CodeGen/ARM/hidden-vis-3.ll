@@ -5,9 +5,9 @@
 
 define i32 @t() nounwind readonly {
 entry:
-; CHECK: LCPI1_0:
+; CHECK: LCPI0_0:
 ; CHECK-NEXT: .long _x
-; CHECK: LCPI1_1:
+; CHECK: LCPI0_1:
 ; CHECK-NEXT: .long _y
 
 	%0 = load i32* @x, align 4		; <i32> [#uses=1]

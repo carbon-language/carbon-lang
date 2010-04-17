@@ -86,7 +86,7 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %bb
   ret void
 }
-;CHECK: L_LSDA_1:
+;CHECK: L_LSDA_0:
 
 declare arm_apcscc void @_ZdlPv(i8*) nounwind
 
