@@ -340,7 +340,7 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
 
   // Don't generate USRs for things with invalid locations.
   if (!D || D->getLocStart().isInvalid())
-    return createCXString(NULL);
+    return createCXString("");
 
   // Check if the cursor has 'NoLinkage'.
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
@@ -368,8 +368,6 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
 
   if (SUG->ignoreResults())
     return createCXString("");
-
-  assert(SUG.str().size() > 3);
 
     // Return a copy of the string that must be disposed by the caller.
   return createCXString(SUG.str(), true);
