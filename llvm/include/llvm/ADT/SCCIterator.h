@@ -66,7 +66,7 @@ class scc_iterator
   std::vector<unsigned> MinVisitNumStack;
 
   // A single "visit" within the non-recursive DFS traversal.
-  void DFSVisitOne(NodeType* N) {
+  void DFSVisitOne(NodeType *N) {
     ++visitNum;                         // Global counter for the visit order
     nodeVisitNumbers[N] = visitNum;
     SCCNodeStack.push_back(N);
@@ -83,7 +83,7 @@ class scc_iterator
       // TOS has at least one more child so continue DFS
       NodeType *childN = *VisitStack.back().second++;
       if (!nodeVisitNumbers.count(childN)) {
-        // this node has never been seen
+        // this node has never been seen.
         DFSVisitOne(childN);
         continue;
       }
@@ -187,7 +187,6 @@ public:
   /// ReplaceNode - This informs the scc_iterator that the specified Old node
   /// has been deleted, and New is to be used in its place.
   void ReplaceNode(NodeType *Old, NodeType *New) {
-    assert(!nodeVisitNumbers.count(New) && "New already in scc_iterator?");
     assert(nodeVisitNumbers.count(Old) && "Old not in scc_iterator?");
     nodeVisitNumbers[New] = nodeVisitNumbers[Old];
     nodeVisitNumbers.erase(Old);
