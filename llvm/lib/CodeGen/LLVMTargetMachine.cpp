@@ -50,6 +50,9 @@ static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
     cl::desc("Disable Stack Slot Coloring"));
 static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
     cl::desc("Disable Machine LICM"));
+static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
+    cl::Hidden,
+    cl::desc("Disable Machine LICM"));
 static cl::opt<bool> DisableMachineSink("disable-machine-sink", cl::Hidden,
     cl::desc("Disable Machine Sinking"));
 static cl::opt<bool> DisableLSR("disable-lsr", cl::Hidden,
@@ -337,15 +340,18 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   PM.add(createRegisterAllocator());
   printAndVerify(PM, "After Register Allocation");
 
-  // Perform stack slot coloring.
-  if (OptLevel != CodeGenOpt::None && !DisableSSC) {
+  // Perform stack slot coloring and post-ra machine LICM.
+  if (OptLevel != CodeGenOpt::None) {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
-    PM.add(createStackSlotColoringPass(false));
-    printAndVerify(PM, "After StackSlotColoring");
+    if (!DisableSSC)
+      PM.add(createStackSlotColoringPass(false));
 
     // Run post-ra machine LICM to hoist reloads / remats.
-    PM.add(createMachineLICMPass(false));
+    if (!DisablePostRAMachineLICM)
+      PM.add(createMachineLICMPass(false));
+
+    printAndVerify(PM, "After StackSlotColoring and postra Machine LICM");
   }
 
   // Run post-ra passes.
