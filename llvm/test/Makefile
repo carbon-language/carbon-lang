@@ -28,7 +28,7 @@ endif
 
 ifdef VERBOSE
 RUNTESTFLAGS := $(VERBOSE)
-LIT_ARGS := -v -j16
+LIT_ARGS := -v
 else
 LIT_ARGS := -s -v
 endif
