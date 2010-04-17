@@ -319,8 +319,13 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
 
     // If we haven't calculated this information yet, do so now.
-    if (CallerFI.Metrics.NumBlocks == 0)
+    if (CallerFI.Metrics.NumBlocks == 0) {
       CallerFI.analyzeFunction(Caller);
+     
+      // Recompute the CalleeFI pointer, getting Caller could have invalidated
+      // it.
+      CalleeFI = &CachedFunctionInfo[Callee];
+    }
 
     // Don't inline a callee with dynamic alloca into a caller without them.
     // Functions containing dynamic alloca's are inefficient in various ways;
@@ -426,6 +431,8 @@ InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
     return;
   }
   
+  // Since CalleeMetrics were already calculated, we know that the CallerMetrics
+  // reference isn't invalidated: both were in the DenseMap.  
   CallerMetrics.NeverInline |= CalleeMetrics.NeverInline;
   CallerMetrics.usesDynamicAlloca |= CalleeMetrics.usesDynamicAlloca;
 
