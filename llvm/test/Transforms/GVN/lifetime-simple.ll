@@ -16,5 +16,5 @@ entry:
   ret i8 %1
 }
 
-declare {}* @llvm.lifetime.start(i64 %S, i8* nocapture %P) readonly
+declare void @llvm.lifetime.start(i64 %S, i8* nocapture %P) readonly
 declare void @llvm.lifetime.end(i64 %S, i8* nocapture %P)
