@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import sys
 from socket import *
-from time import localtime, strftime
+from time import strftime
+import datetime
 
 def main():
   if len(sys.argv) < 4:
@@ -28,10 +29,12 @@ def main():
     if not data:
       break
     else:
-      f.write(strftime("'%a, %d %b %Y %H:%M:%S' ", localtime()))
-      f.write("'{0}' ".format(addr[0]))
+      f.write("{ ");
+      f.write("\"time\": \"{0}\"".format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+      f.write(", \"sender\": \"{0}\" ".format(addr[0]))
+      f.write(", data: ")
       f.write(data)
-      f.write('\n')
+      f.write(" }\n")
       f.flush()
 
   # Close socket
