@@ -165,6 +165,8 @@ namespace llvm {
       void analyzeFunction(Function *F);
     };
 
+    // The Function* for a function can be changed (by ArgumentPromotion);
+    // the ValueMap will update itself when this happens.
     ValueMap<const Function *, FunctionInfo> CachedFunctionInfo;
 
   public:
