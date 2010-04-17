@@ -1064,8 +1064,7 @@ public:
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions,
                         bool AllowExplicit,
-                        bool InOverloadResolution,
-                        bool UserCast = false);
+                        bool InOverloadResolution);
   bool IsStandardConversion(Expr *From, QualType ToType,
                             bool InOverloadResolution,
                             StandardConversionSequence& SCS);
@@ -1090,9 +1089,7 @@ public:
   OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,
                                UserDefinedConversionSequence& User,
                                OverloadCandidateSet& Conversions,
-                               bool AllowConversionFunctions,
-                               bool AllowExplicit, 
-                               bool UserCast);
+                               bool AllowExplicit);
   bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
                                               
 

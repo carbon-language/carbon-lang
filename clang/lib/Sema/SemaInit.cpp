@@ -2531,8 +2531,7 @@ static void TryReferenceInitialization(Sema &S,
   ImplicitConversionSequence ICS
     = S.TryImplicitConversion(Initializer, cv1T1,
                               /*SuppressUserConversions=*/false, AllowExplicit, 
-                              /*FIXME:InOverloadResolution=*/false,
-                              /*UserCast=*/Kind.isExplicitCast());
+                              /*FIXME:InOverloadResolution=*/false);
             
   if (ICS.isBad()) {
     // FIXME: Use the conversion function set stored in ICS to turn
@@ -2867,10 +2866,21 @@ static void TryUserDefinedConversion(Sema &S,
 
   // Add the user-defined conversion step that calls the conversion function.
   QualType ConvType = Function->getResultType().getNonReferenceType();
-  Sequence.AddUserConversionStep(Function, Best->FoundDecl, ConvType);
+  if (ConvType->getAs<RecordType>()) {
+    // If we're converting to a class type, there may be an copy if
+    // the resulting temporary object (possible to create an object of
+    // a base class type). That copy is not a separate conversion, so
+    // we just make a note of the actual destination type (possibly a
+    // base class of the type returned by the conversion function) and
+    // let the user-defined conversion step handle the conversion.
+    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType);
+    return;
+  }
 
-  // If the conversion following the call to the conversion function is 
-  // interesting, add it as a separate step.
+  Sequence.AddUserConversionStep(Function, Best->FoundDecl, ConvType);
+    
+  // If the conversion following the call to the conversion function
+  // is interesting, add it as a separate step.
   if (Best->FinalConversion.First || Best->FinalConversion.Second ||
       Best->FinalConversion.Third) {
     ImplicitConversionSequence ICS;
@@ -2891,8 +2901,7 @@ static void TryImplicitConversion(Sema &S,
     = S.TryImplicitConversion(Initializer, Entity.getType(),
                               /*SuppressUserConversions=*/true, 
                               /*AllowExplicit=*/false,
-                              /*FIXME:InOverloadResolution=*/false,
-                              /*UserCast=*/Kind.isExplicitCast());
+                              /*InOverloadResolution=*/false);
   
   if (ICS.isBad()) {
     Sequence.SetFailed(InitializationSequence::FK_ConversionFailed);
@@ -3103,10 +3112,11 @@ static Sema::OwningExprResult CopyObject(Sema &S,
                                          const InitializedEntity &Entity,
                                          const InitializationKind &Kind,
                                          Sema::OwningExprResult CurInit) {
-  // Determine which class type we're copying.
+  // Determine which class type we're copying to.
   Expr *CurInitExpr = (Expr *)CurInit.get();
   CXXRecordDecl *Class = 0; 
-  if (const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>())
+  if (const RecordType *Record
+                = Entity.getType().getNonReferenceType()->getAs<RecordType>())
     Class = cast<CXXRecordDecl>(Record->getDecl());
   if (!Class)
     return move(CurInit);
@@ -3203,16 +3213,26 @@ static Sema::OwningExprResult CopyObject(Sema &S,
     return S.ExprError();
   }
 
-  S.CheckConstructorAccess(Loc,
-                           cast<CXXConstructorDecl>(Best->Function),
+  CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
+  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+  CurInit.release(); // Ownership transferred into MultiExprArg, below.
+  
+  // Determine the arguments required to actually perform the
+  // constructor call (we might have derived-to-base conversions).
+  if (S.CompleteConstructorCall(Constructor,
+                                Sema::MultiExprArg(S, 
+                                                   (void **)&CurInitExpr,
+                                                   1),
+                                Loc, ConstructorArgs))
+    return S.ExprError();
+
+  S.CheckConstructorAccess(Loc, Constructor,
                            Best->FoundDecl.getAccess());
 
-  CurInit.release();
   return S.BuildCXXConstructExpr(Loc, Entity.getType().getNonReferenceType(),
-                                 cast<CXXConstructorDecl>(Best->Function),
+                                 Constructor,
                                  Elidable,
-                                 Sema::MultiExprArg(S, 
-                                                    (void**)&CurInitExpr, 1));
+                                 move_arg(ConstructorArgs));
 }
 
 Action::OwningExprResult 

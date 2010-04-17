@@ -60,10 +60,10 @@ struct C {
 
 void f() {
   A as1[1] = { };
-  A as2[1] = { 1 }; // expected-error {{copying array element of type 'A' invokes deleted copy constructor}}
+  A as2[1] = { 1 }; // expected-error {{copying array element of type 'A' invokes deleted constructor}}
 
   B b1 = { };
-  B b2 = { 1 }; // expected-error {{copying member subobject of type 'A' invokes deleted copy constructor}}
+  B b2 = { 1 }; // expected-error {{copying member subobject of type 'A' invokes deleted constructor}}
   
   C c1 = { 1 };
 }

@@ -381,6 +381,33 @@ namespace clang {
       assert(isInitialized() && "querying uninitialized conversion");
       return Kind(ConversionKind);
     }
+    
+    /// \brief Return a ranking of the implicit conversion sequence
+    /// kind, where smaller ranks represent better conversion
+    /// sequences.
+    ///
+    /// In particular, this routine gives user-defined conversion
+    /// sequences and ambiguous conversion sequences the same rank,
+    /// per C++ [over.best.ics]p10.
+    unsigned getKindRank() const {
+      switch (getKind()) {
+      case StandardConversion: 
+        return 0;
+
+      case UserDefinedConversion:
+      case AmbiguousConversion: 
+        return 1;
+
+      case EllipsisConversion:
+        return 2;
+
+      case BadConversion:
+        return 3;
+      }
+
+      return 3;
+    }
+
     bool isBad() const { return getKind() == BadConversion; }
     bool isStandard() const { return getKind() == StandardConversion; }
     bool isEllipsis() const { return getKind() == EllipsisConversion; }

@@ -94,3 +94,18 @@ void default_ctor_inst() {
 }
 
 template void default_ctor_inst<int>();
+
+template<typename T>
+struct X5 {
+  X5();
+  X5(const T &);
+};
+
+struct X6 {
+  template<typename T> X6(T);
+};
+
+void test_X5_X6() {
+  X5<X6> tf;
+  X5<X6> tf2(tf);
+}

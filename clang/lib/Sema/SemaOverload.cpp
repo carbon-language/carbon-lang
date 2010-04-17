@@ -436,14 +436,11 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {
 /// not permitted.
 /// If @p AllowExplicit, then explicit user-defined conversions are
 /// permitted.
-/// If @p UserCast, the implicit conversion is being done for a user-specified
-/// cast.
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
                             bool AllowExplicit, 
-                            bool InOverloadResolution,
-                            bool UserCast) {
+                            bool InOverloadResolution) {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard)) {
     ICS.setStandard();
@@ -455,11 +452,47 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     return ICS;
   }
 
+  if (SuppressUserConversions) {
+    // C++ [over.ics.user]p4:
+    //   A conversion of an expression of class type to the same class
+    //   type is given Exact Match rank, and a conversion of an
+    //   expression of class type to a base class of that type is
+    //   given Conversion rank, in spite of the fact that a copy/move
+    //   constructor (i.e., a user-defined conversion function) is
+    //   called for those cases.
+    QualType FromType = From->getType();
+    if (!ToType->getAs<RecordType>() || !FromType->getAs<RecordType>() ||
+        !(Context.hasSameUnqualifiedType(FromType, ToType) ||
+          IsDerivedFrom(FromType, ToType))) {
+      // We're not in the case above, so there is no conversion that
+      // we can perform.
+      ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
+      return ICS;
+    }
+
+    ICS.setStandard();
+    ICS.Standard.setAsIdentityConversion();
+    ICS.Standard.setFromType(FromType);
+    ICS.Standard.setAllToTypes(ToType);
+    
+    // We don't actually check at this point whether there is a valid
+    // copy/move constructor, since overloading just assumes that it
+    // exists. When we actually perform initialization, we'll find the
+    // appropriate constructor to copy the returned object, if needed.
+    ICS.Standard.CopyConstructor = 0;
+
+    // Determine whether this is considered a derived-to-base conversion.
+    if (!Context.hasSameUnqualifiedType(FromType, ToType))
+      ICS.Standard.Second = ICK_Derived_To_Base;
+
+    return ICS;
+  }
+
+  // Attempt user-defined conversion.
   OverloadCandidateSet Conversions(From->getExprLoc());
   OverloadingResult UserDefResult
     = IsUserDefinedConversion(From, ToType, ICS.UserDefined, Conversions,
-                              !SuppressUserConversions, AllowExplicit,
-                              UserCast);
+                              AllowExplicit);
 
   if (UserDefResult == OR_Success) {
     ICS.setUserDefined();
@@ -1509,45 +1542,39 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
 /// and this routine will return true. Otherwise, this routine returns
 /// false and User is unspecified.
 ///
-/// \param AllowConversionFunctions true if the conversion should
-/// consider conversion functions at all. If false, only constructors
-/// will be considered.
-///
 /// \param AllowExplicit  true if the conversion should consider C++0x
 /// "explicit" conversion functions as well as non-explicit conversion
 /// functions (C++0x [class.conv.fct]p2).
-///
-/// \param UserCast true if looking for user defined conversion for a static
-/// cast.
 OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                                           UserDefinedConversionSequence& User,
-                                            OverloadCandidateSet& CandidateSet,
-                                                bool AllowConversionFunctions,
-                                                bool AllowExplicit, 
-                                                bool UserCast) {
+                                           OverloadCandidateSet& CandidateSet,
+                                                bool AllowExplicit) {
+  // Whether we will only visit constructors.
+  bool ConstructorsOnly = false;
+
+  // If the type we are conversion to is a class type, enumerate its
+  // constructors.
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
+    // C++ [over.match.ctor]p1:
+    //   When objects of class type are direct-initialized (8.5), or
+    //   copy-initialized from an expression of the same or a
+    //   derived class type (8.5), overload resolution selects the
+    //   constructor. [...] For copy-initialization, the candidate
+    //   functions are all the converting constructors (12.3.1) of
+    //   that class. The argument list is the expression-list within
+    //   the parentheses of the initializer.
+    if (Context.hasSameUnqualifiedType(ToType, From->getType()) ||
+        (From->getType()->getAs<RecordType>() &&
+         IsDerivedFrom(From->getType(), ToType)))
+      ConstructorsOnly = true;
+
     if (RequireCompleteType(From->getLocStart(), ToType, PDiag())) {
       // We're not going to find any constructors.
     } else if (CXXRecordDecl *ToRecordDecl
                  = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
-      // C++ [over.match.ctor]p1:
-      //   When objects of class type are direct-initialized (8.5), or
-      //   copy-initialized from an expression of the same or a
-      //   derived class type (8.5), overload resolution selects the
-      //   constructor. [...] For copy-initialization, the candidate
-      //   functions are all the converting constructors (12.3.1) of
-      //   that class. The argument list is the expression-list within
-      //   the parentheses of the initializer.
-      bool SuppressUserConversions = !UserCast;
-      if (Context.hasSameUnqualifiedType(ToType, From->getType()) ||
-          IsDerivedFrom(From->getType(), ToType)) {
-        SuppressUserConversions = false;
-        AllowConversionFunctions = false;
-      }
-          
       DeclarationName ConstructorName
         = Context.DeclarationNames.getCXXConstructorName(
-                          Context.getCanonicalType(ToType).getUnqualifiedType());
+                       Context.getCanonicalType(ToType).getUnqualifiedType());
       DeclContext::lookup_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd)
              = ToRecordDecl->lookup(ConstructorName);
@@ -1571,26 +1598,25 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
             AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
                                          &From, 1, CandidateSet, 
-                                         SuppressUserConversions);
+                                 /*SuppressUserConversions=*/!ConstructorsOnly);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
             AddOverloadCandidate(Constructor, FoundDecl,
                                  &From, 1, CandidateSet,
-                                 SuppressUserConversions);
+                                 /*SuppressUserConversions=*/!ConstructorsOnly);
         }
       }
     }
   }
 
-  if (!AllowConversionFunctions) {
-    // Don't allow any conversion functions to enter the overload set.
+  // Enumerate conversion functions, if we're allowed to.
+  if (ConstructorsOnly) {
   } else if (RequireCompleteType(From->getLocStart(), From->getType(),
-                                 PDiag(0)
-                                   << From->getSourceRange())) {
+                          PDiag(0) << From->getSourceRange())) {
     // No conversion functions from incomplete types.
   } else if (const RecordType *FromRecordType
-               = From->getType()->getAs<RecordType>()) {
+                                   = From->getType()->getAs<RecordType>()) {
     if (CXXRecordDecl *FromRecordDecl
          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
       // Add all of the conversion functions as candidates.
@@ -1696,7 +1722,7 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   OverloadCandidateSet CandidateSet(From->getExprLoc());
   OverloadingResult OvResult = 
     IsUserDefinedConversion(From, ToType, ICS.UserDefined,
-                            CandidateSet, true, false, false);
+                            CandidateSet, false);
   if (OvResult == OR_Ambiguous)
     Diag(From->getSourceRange().getBegin(),
          diag::err_typecheck_ambiguous_condition)
@@ -1732,16 +1758,10 @@ Sema::CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
   //   described in 13.3.3.2, the ambiguous conversion sequence is
   //   treated as a user-defined sequence that is indistinguishable
   //   from any other user-defined conversion sequence.
-  if (ICS1.getKind() < ICS2.getKind()) {
-    if (!(ICS1.isUserDefined() && ICS2.isAmbiguous()))
-      return ImplicitConversionSequence::Better;
-  } else if (ICS2.getKind() < ICS1.getKind()) {
-    if (!(ICS2.isUserDefined() && ICS1.isAmbiguous()))
-      return ImplicitConversionSequence::Worse;
-  }
-
-  if (ICS1.isAmbiguous() || ICS2.isAmbiguous())
-    return ImplicitConversionSequence::Indistinguishable;
+  if (ICS1.getKindRank() < ICS2.getKindRank())
+    return ImplicitConversionSequence::Better;
+  else if (ICS2.getKindRank() < ICS1.getKindRank())
+    return ImplicitConversionSequence::Worse;
 
   // Two implicit conversion sequences of the same form are
   // indistinguishable conversion sequences unless one of the
@@ -2167,9 +2187,7 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
   }
   
-  if ((SCS1.ReferenceBinding || SCS1.CopyConstructor) && 
-      (SCS2.ReferenceBinding || SCS2.CopyConstructor) &&
-      SCS1.Second == ICK_Derived_To_Base) {
+  if (SCS1.Second == ICK_Derived_To_Base) {
     //   -- conversion of C to B is better than conversion of C to A,
     //   -- binding of an expression of type C to a reference of type
     //      B& is better than binding an expression of type C to a
@@ -3067,7 +3085,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                              OverloadCandidateSet& CandidateSet) {
   assert(!Conversion->getDescribedFunctionTemplate() &&
          "Conversion function templates use AddTemplateConversionCandidate");
-
+  QualType ConvType = Conversion->getConversionType().getNonReferenceType();
   if (!CandidateSet.isNewCandidate(Conversion))
     return;
 
@@ -3082,7 +3100,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
   Candidate.FinalConversion.setAsIdentityConversion();
-  Candidate.FinalConversion.setFromType(Conversion->getConversionType());
+  Candidate.FinalConversion.setFromType(ConvType);
   Candidate.FinalConversion.setAllToTypes(ToType);
 
   // Determine the implicit conversion sequence for the implicit
@@ -3115,7 +3133,6 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     return;
   }
   
-
   // To determine what the conversion from the result of calling the
   // conversion function to the type we're eventually trying to
   // convert to (ToType), we need to synthesize a call to the

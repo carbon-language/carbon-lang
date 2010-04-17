@@ -224,7 +224,7 @@ namespace PR6757 {
 
   struct Foo3 {
     Foo3();
-    Foo3(Foo3&);
+    Foo3(Foo3&); // expected-note{{would lose const qualifier}}
   };
 
   struct Bar {
@@ -236,7 +236,6 @@ namespace PR6757 {
   void f() {
     (void)(true ? Bar() : Foo1()); // okay
     (void)(true ? Bar() : Foo2()); // okay
-    // FIXME: Diagnostic below could be improved
-    (void)(true ? Bar() : Foo3()); // expected-error{{incompatible operand types ('PR6757::Bar' and 'PR6757::Foo3')}}
+    (void)(true ? Bar() : Foo3()); // expected-error{{no viable constructor copying temporary}}
   }
 }

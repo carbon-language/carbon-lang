@@ -129,7 +129,7 @@ private:
 };
 
 A1 f() {
-  return "Hello"; // expected-error{{invokes deleted copy constructor}}
+  return "Hello"; // expected-error{{invokes deleted constructor}}
 }
 
 namespace source_locations {
@@ -175,4 +175,30 @@ namespace crazy_declarators {
     // rarely-used syntax extension.
     *operator int();  // expected-error {{must use a typedef to declare a conversion to 'int *'}}
   };
+}
+
+namespace smart_ptr {
+  class Y { 
+    class YRef { };
+
+    Y(Y&);
+
+  public:
+    Y();
+    Y(YRef);
+
+    operator YRef(); // expected-note{{candidate function}}
+  };
+
+  struct X { // expected-note{{candidate constructor (the implicit copy constructor) not}}
+    explicit X(Y);
+  };
+
+  Y make_Y();
+
+  X f() {
+    X x = make_Y(); // expected-error{{no viable conversion from 'smart_ptr::Y' to 'smart_ptr::X'}}
+    X x2(make_Y());
+    return X(Y());
+  }
 }

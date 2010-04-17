@@ -67,3 +67,18 @@ void test_conversion(ConvertibleToBase ctb, ConvertibleToDerived ctd,
   Base b4(ctd);
   Base b5 = ctfd;
 }
+
+struct X1 {
+  X1(X1&); // expected-note{{candidate constructor not viable: no known conversion from 'X1' to 'X1 &' for 1st argument}}
+};
+
+struct X2 {
+  operator X1();
+};
+
+int &f(X1);
+float &f(...);
+
+void g(X2 b) {
+  int &ir = f(b); // expected-error{{no viable constructor copying parameter of type 'X1'}}
+}
