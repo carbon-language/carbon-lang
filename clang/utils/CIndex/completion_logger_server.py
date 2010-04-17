@@ -32,7 +32,7 @@ def main():
       f.write("{ ");
       f.write("\"time\": \"{0}\"".format(datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
       f.write(", \"sender\": \"{0}\" ".format(addr[0]))
-      f.write(", data: ")
+      f.write(", \"data\": ")
       f.write(data)
       f.write(" }\n")
       f.flush()
