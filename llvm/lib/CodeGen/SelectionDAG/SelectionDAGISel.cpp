@@ -355,7 +355,7 @@ void SelectionDAGISel::ShrinkDemandedOps() {
     InWorklist.insert(I);
   }
 
-  TargetLowering::TargetLoweringOpt TLO(*CurDAG, true);
+  TargetLowering::TargetLoweringOpt TLO(*CurDAG, true, true, true);
   while (!Worklist.empty()) {
     SDNode *N = Worklist.pop_back_val();
     InWorklist.erase(N);

@@ -767,12 +767,19 @@ public:
   /// that want to combine 
   struct TargetLoweringOpt {
     SelectionDAG &DAG;
+    bool LegalTys;
+    bool LegalOps;
     bool ShrinkOps;
     SDValue Old;
     SDValue New;
 
-    explicit TargetLoweringOpt(SelectionDAG &InDAG, bool Shrink = false) :
-      DAG(InDAG), ShrinkOps(Shrink) {}
+    explicit TargetLoweringOpt(SelectionDAG &InDAG,
+                               bool LT, bool LO,
+                               bool Shrink = false) :
+      DAG(InDAG), LegalTys(LT), LegalOps(LO), ShrinkOps(Shrink) {}
+
+    bool LegalTypes() const { return LegalTys; }
+    bool LegalOperations() const { return LegalOps; }
     
     bool CombineTo(SDValue O, SDValue N) { 
       Old = O; 
@@ -873,10 +880,19 @@ public:
   ///
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
-  /// PerformDAGCombinePromotion - This method query the target whether it is
+  /// isTypeDesirableForOp - Return true if the target has native support for
+  /// the specified value type and it is 'desirable' to use the type for the
+  /// given node type. e.g. On x86 i16 is legal, but undesirable since i16
+  /// instruction encodings are longer and some i16 instructions are slow.
+  virtual bool isTypeDesirableForOp(unsigned Opc, EVT VT) const {
+    // By default, assume all legal types are desirable.
+    return isTypeLegal(VT);
+  }
+
+  /// IsDesirableToPromoteOp - This method query the target whether it is
   /// beneficial for dag combiner to promote the specified node. If true, it
   /// should return the desired promotion type by reference.
-  virtual bool PerformDAGCombinePromotion(SDValue Op, EVT &PVT) const {
+  virtual bool IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     return false;
   }
   

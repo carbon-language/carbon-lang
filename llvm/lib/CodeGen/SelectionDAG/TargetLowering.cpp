@@ -1279,8 +1279,9 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // variable.  The low bit of the shift cannot be an input sign bit unless
     // the shift amount is >= the size of the datatype, which is undefined.
     if (DemandedMask == 1)
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, Op.getValueType(),
-                                               Op.getOperand(0), Op.getOperand(1)));
+      return TLO.CombineTo(Op,
+                           TLO.DAG.getNode(ISD::SRL, dl, Op.getValueType(),
+                                           Op.getOperand(0), Op.getOperand(1)));
 
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       EVT VT = Op.getValueType();
@@ -1465,23 +1466,29 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       case ISD::SRL:
         // Shrink SRL by a constant if none of the high bits shifted in are
         // demanded.
-        if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1))){
-          APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
-                                                 OperandBitWidth - BitWidth);
-          HighBits = HighBits.lshr(ShAmt->getZExtValue());
-          HighBits.trunc(BitWidth);
-          
-          if (ShAmt->getZExtValue() < BitWidth && !(HighBits & NewMask)) {
-            // None of the shifted in bits are needed.  Add a truncate of the
-            // shift input, then shift it.
-            SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, dl,
-                                                 Op.getValueType(), 
-                                                 In.getOperand(0));
-            return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl,
-                                                     Op.getValueType(),
-                                                     NewTrunc, 
-                                                     In.getOperand(1)));
-          }
+        if (TLO.LegalTypes() &&
+            !isTypeDesirableForOp(ISD::SRL, Op.getValueType()))
+          // Do not turn (vt1 truncate (vt2 srl)) into (vt1 srl) if vt1 is
+          // undesirable.
+          break;
+        ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1));
+        if (!ShAmt)
+          break;
+        APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
+                                               OperandBitWidth - BitWidth);
+        HighBits = HighBits.lshr(ShAmt->getZExtValue());
+        HighBits.trunc(BitWidth);
+
+        if (ShAmt->getZExtValue() < BitWidth && !(HighBits & NewMask)) {
+          // None of the shifted in bits are needed.  Add a truncate of the
+          // shift input, then shift it.
+          SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, dl,
+                                             Op.getValueType(), 
+                                             In.getOperand(0));
+          return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl,
+                                                   Op.getValueType(),
+                                                   NewTrunc, 
+                                                   In.getOperand(1)));
         }
         break;
       }

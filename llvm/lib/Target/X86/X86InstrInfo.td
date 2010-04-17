@@ -4717,6 +4717,8 @@ def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C16r)>;
 def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C32r)>;
+def : Pat<(i32 (anyext (i16 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C32r)>;
 
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 let AddedComplexity = 5 in { // Try this before the selecting to OR
