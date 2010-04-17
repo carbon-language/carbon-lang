@@ -161,21 +161,16 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   bool IsSigned = FD->getType()->isSignedIntegerType();
 
   if (FieldSize > TypeSizeInBits) {
-    // We have a wide bit-field.
-    
-    CGBitFieldInfo::AccessInfo Component;
-
-    Component.FieldIndex = 0;
-    Component.FieldByteOffset =
-      TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
-    Component.FieldBitStart = 0;
-    Component.AccessWidth = TypeSizeInBits;
-    // FIXME: This might be wrong!
-    Component.AccessAlignment = 0;
-    Component.TargetBitOffset = 0;
-    Component.TargetBitWidth = TypeSizeInBits;
-    
-    return CGBitFieldInfo(TypeSizeInBits, 1, &Component, IsSigned);
+    // We have a wide bit-field. The extra bits are only used for padding, so
+    // if we have a bitfield of type T, with size N:
+    //
+    // T t : N;
+    //
+    // We can just assume that it's:
+    //
+    // T t : sizeof(T);
+    //
+    FieldSize = TypeSizeInBits;
   }
 
   unsigned StartBit = FieldOffset % TypeSizeInBits;
