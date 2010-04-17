@@ -145,7 +145,7 @@ entry:
   ret void
 }
 
-declare i8* @__memset_chk(i8*, i32, i64, i64) nounwind
+declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
 
 declare noalias i8* @malloc(i32) nounwind
 

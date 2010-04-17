@@ -47,4 +47,4 @@ if.end54:		; preds = %if.end54, %if.else
 
 declare void @bcopy(i8* nocapture) nounwind
 
-declare void @bcopy_4038(i8*, i32) nounwind
+declare void @bcopy_4038(i8*, i8*, i32) nounwind
