@@ -2878,6 +2878,7 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
+let ImmT = NoImm in {  // None of these have i8 immediate fields.
 defm PHADDW      : SS3I_binop_rm_int_16<0x01, "phaddw",
                                         int_x86_ssse3_phadd_w,
                                         int_x86_ssse3_phadd_w_128>;
@@ -2902,6 +2903,7 @@ defm PMADDUBSW   : SS3I_binop_rm_int_8 <0x04, "pmaddubsw",
 defm PMULHRSW    : SS3I_binop_rm_int_16<0x0B, "pmulhrsw",
                                         int_x86_ssse3_pmul_hr_sw,
                                         int_x86_ssse3_pmul_hr_sw_128, 1>;
+                                        
 defm PSHUFB      : SS3I_binop_rm_int_8 <0x00, "pshufb",
                                         int_x86_ssse3_pshuf_b,
                                         int_x86_ssse3_pshuf_b_128>;
@@ -2914,6 +2916,7 @@ defm PSIGNW      : SS3I_binop_rm_int_16<0x09, "psignw",
 defm PSIGND      : SS3I_binop_rm_int_32<0x0A, "psignd",
                                         int_x86_ssse3_psign_d,
                                         int_x86_ssse3_psign_d_128>;
+}
 
 // palignr patterns.
 let Constraints = "$src1 = $dst" in {
