@@ -205,3 +205,19 @@ unsigned long long test_5() {
   res ^= g5.f0 ^ g5.f1 ^ g5.f2;
   return res;
 }
+
+struct A {
+  _Bool b : 2;
+};
+
+// CHECK-OPT: define zeroext i1 @test_6()
+// CHECK-OPT: ret i1 true
+// CHECK-OPT: }
+_Bool test_6() {
+  struct A a;
+  
+  a.b = (_Bool)0;
+  
+  return (a.b = !a.b);
+}
+

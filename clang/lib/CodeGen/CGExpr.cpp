@@ -792,11 +792,15 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   const CGBitFieldInfo &Info = Dst.getBitFieldInfo();
 
   // Get the output type.
-  const llvm::Type *ResLTy = ConvertType(Ty);
+  const llvm::Type *ResLTy = ConvertTypeForMem(Ty);
   unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
 
   // Get the source value, truncated to the width of the bit-field.
   llvm::Value *SrcVal = Src.getScalarVal();
+
+  if (Ty->isBooleanType())
+    SrcVal = Builder.CreateIntCast(SrcVal, ResLTy, /*IsSigned=*/false);
+
   SrcVal = Builder.CreateAnd(SrcVal, llvm::APInt::getLowBitsSet(ResSizeInBits,
                                                                 Info.getSize()),
                              "bf.value");
