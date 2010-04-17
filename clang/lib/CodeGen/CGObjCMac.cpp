@@ -3603,14 +3603,14 @@ void CGObjCMac::FinishModule() {
       Asm += '\n';
 
     llvm::raw_svector_ostream OS(Asm);
-    for (llvm::SetVector<IdentifierInfo*>::iterator I = LazySymbols.begin(),
-           e = LazySymbols.end(); I != e; ++I)
-      OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
     for (llvm::SetVector<IdentifierInfo*>::iterator I = DefinedSymbols.begin(),
            e = DefinedSymbols.end(); I != e; ++I)
       OS << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
          << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
-
+    for (llvm::SetVector<IdentifierInfo*>::iterator I = LazySymbols.begin(),
+         e = LazySymbols.end(); I != e; ++I)
+      OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
+    
     CGM.getModule().setModuleInlineAsm(OS.str());
   }
 }
