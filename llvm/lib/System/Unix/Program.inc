@@ -34,8 +34,6 @@
 #include <spawn.h>
 #endif
 
-extern char **environ;
-
 namespace llvm {
 using namespace sys;
 
@@ -202,7 +200,6 @@ Program::Execute(const Path &path, const char **args, const char **envp,
     }
 
     pid_t PID;
-    if (!envp) envp = (const char**)environ;
     int Err = posix_spawn(&PID, path.c_str(), &FileActions,
                           /*attrp*/0, (char**)args, (char**)envp);
                           
