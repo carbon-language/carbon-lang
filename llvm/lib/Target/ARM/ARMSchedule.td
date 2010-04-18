@@ -8,19 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Functional units across ARM processors
-//
-def FU_Issue   : FuncUnit; // issue
-def FU_Pipe0   : FuncUnit; // pipeline 0
-def FU_Pipe1   : FuncUnit; // pipeline 1
-def FU_LdSt0   : FuncUnit; // pipeline 0 load/store
-def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
-def FU_NPipe   : FuncUnit; // NEON ALU/MUL pipe
-def FU_NLSPipe : FuncUnit; // NEON LS pipe
-def FU_DRegsVFP: FuncUnit; // FP register set, VFP side
-def FU_DRegsN  : FuncUnit; // FP register set, NEON side
-
-//===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for ARM
 //
 def IIC_iALUx      : InstrItinClass;
@@ -165,8 +152,7 @@ def IIC_VTBX4      : InstrItinClass;
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
 
-def GenericItineraries : ProcessorItineraries<[]>;
-
+def GenericItineraries : ProcessorItineraries<[], []>;
 
 include "ARMScheduleV6.td"
 include "ARMScheduleA8.td"

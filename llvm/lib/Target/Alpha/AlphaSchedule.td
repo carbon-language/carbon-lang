@@ -53,7 +53,8 @@ def s_pseudo : InstrItinClass;
 //Table 2­4 Instruction Class Latency in Cycles
 //modified some
 
-def Alpha21264Itineraries : ProcessorItineraries<[
+def Alpha21264Itineraries : ProcessorItineraries<
+  [L0, L1, FST0, FST1, U0, U1, FA, FM], [
   InstrItinData<s_ild    , [InstrStage<3, [L0, L1]>]>,
   InstrItinData<s_fld    , [InstrStage<4, [L0, L1]>]>,
   InstrItinData<s_ist    , [InstrStage<0, [L0, L1]>]>,

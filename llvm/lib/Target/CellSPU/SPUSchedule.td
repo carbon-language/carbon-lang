@@ -36,7 +36,7 @@ def RotateShift  : InstrItinClass;              // EVEN_UNIT
 def ImmLoad      : InstrItinClass;              // EVEN_UNIT
 
 /* Note: The itinerary for the Cell SPU is somewhat contrived... */
-def SPUItineraries : ProcessorItineraries<[
+def SPUItineraries : ProcessorItineraries<[ODD_UNIT, EVEN_UNIT], [
   InstrItinData<LoadStore   , [InstrStage<6,  [ODD_UNIT]>]>,
   InstrItinData<BranchHints , [InstrStage<6,  [ODD_UNIT]>]>,
   InstrItinData<BranchResolv, [InstrStage<4,  [ODD_UNIT]>]>,

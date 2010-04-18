@@ -34,7 +34,8 @@ class SubtargetEmitter : public TableGenBackend {
   void CPUKeyValues(raw_ostream &OS);
   unsigned CollectAllItinClasses(raw_ostream &OS,
                                std::map<std::string, unsigned> &ItinClassesMap);
-  void FormItineraryStageString(Record *ItinData, std::string &ItinString,
+  void FormItineraryStageString(const std::string &Names,
+                                Record *ItinData, std::string &ItinString,
                                 unsigned &NStages);
   void FormItineraryOperandCycleString(Record *ItinData, std::string &ItinString,
                                        unsigned &NOperandCycles);

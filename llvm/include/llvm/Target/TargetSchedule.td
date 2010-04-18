@@ -84,11 +84,12 @@ class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
 // Processor itineraries - These values represent the set of all itinerary
 // classes for a given chip set.
 //
-class ProcessorItineraries<list<InstrItinData> iid> {
+class ProcessorItineraries<list<FuncUnit> fu, list<InstrItinData> iid> {
+  list<FuncUnit> FU = fu;
   list<InstrItinData> IID = iid;
 }
 
 // NoItineraries - A marker that can be used by processors without schedule
 // info.
-def NoItineraries : ProcessorItineraries<[]>;
+def NoItineraries : ProcessorItineraries<[], []>;
 
