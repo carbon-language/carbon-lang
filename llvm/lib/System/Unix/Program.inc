@@ -34,6 +34,8 @@
 #include <spawn.h>
 #endif
 
+extern char **environ;
+
 namespace llvm {
 using namespace sys;
 
@@ -126,7 +128,7 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
 
 #ifdef HAVE_POSIX_SPAWN
 static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
-                         posix_spawn_file_actions_t &FileActions) {
+                          posix_spawn_file_actions_t &FileActions) {
   if (Path == 0) // Noop
     return false;
   std::string File;
@@ -200,6 +202,7 @@ Program::Execute(const Path &path, const char **args, const char **envp,
     }
 
     pid_t PID;
+    if (!envp) envp = (const char**)environ;
     int Err = posix_spawn(&PID, path.c_str(), &FileActions,
                           /*attrp*/0, (char**)args, (char**)envp);
                           
