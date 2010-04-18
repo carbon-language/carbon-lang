@@ -1015,8 +1015,15 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
 
 void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
   // Pretend we did this from the context of the newly-parsed
-  // declaration.
-  EffectiveContext EC(Ctx->getDeclContext());
+  // declaration. If that declaration itself forms a declaration context,
+  // include it in the effective context so that parameters and return types of
+  // befriended functions have that function's access priveledges.
+  DeclContext *DC = Ctx->getDeclContext();
+  if (isa<FunctionDecl>(Ctx))
+    DC = cast<DeclContext>(Ctx);
+  else if (FunctionTemplateDecl *FnTpl = dyn_cast<FunctionTemplateDecl>(Ctx))
+    DC = cast<DeclContext>(FnTpl->getTemplatedDecl());
+  EffectiveContext EC(DC);
 
   AccessTarget Target(DD.getAccessData());
 

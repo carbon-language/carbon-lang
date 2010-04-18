@@ -256,3 +256,27 @@ namespace test7 {
     A a; // expected-error {{calling a private constructor}}
   }
 }
+
+// Return types, parameters and default arguments to friend functions.
+namespace test8 {
+  class A {
+    typedef int I; // expected-note 4 {{declared private here}}
+    static const I x = 0;
+    friend I f(I i);
+    template<typename T> friend I g(I i);
+  };
+
+  // FIXME: This should be on line 264.
+  const A::I A::x; // expected-note {{declared private here}}
+  A::I f(A::I i = A::x) {}
+  template<typename T> A::I g(A::I i) {
+    T t;
+  }
+  template A::I g<A::I>(A::I i);
+
+  A::I f2(A::I i = A::x) {} // expected-error 3 {{is a private member of}}
+  template<typename T> A::I g2(A::I i) { // expected-error 2 {{is a private member of}}
+    T t;
+  }
+  template A::I g2<A::I>(A::I i);
+}
