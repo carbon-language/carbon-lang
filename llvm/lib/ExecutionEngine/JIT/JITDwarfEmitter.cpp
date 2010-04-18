@@ -75,7 +75,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     MCSymbol *Label = Move.getLabel();
     
     // Throw out move if the label is invalid.
-    if (Label && !Label->isDefined())
+    if (Label && (*JCE->getLabelLocations())[Label] == 0)
       continue;
     
     intptr_t LabelPtr = 0;
@@ -711,7 +711,7 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
     MCSymbol *Label = Move.getLabel();
     
     // Throw out move if the label is invalid.
-    if (Label && !Label->isDefined())
+    if (Label && (*JCE->getLabelLocations())[Label] == 0)
       continue;
     
     intptr_t LabelPtr = 0;
