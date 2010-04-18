@@ -1492,6 +1492,16 @@ CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
   return ret;
 }
 
+static inline
+bool containsInvalidMethodImplAttribute(const AttributeList *A) {
+  // The 'ibaction' attribute is allowed on method definitions because of
+  // how the IBAction macro is used on both method declarations and definitions.
+  // If the method definitions contains any other attributes, return true.
+  while (A && A->getKind() == AttributeList::AT_IBAction)
+    A = A->getNext();
+  return A != NULL;
+}
+
 Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, DeclPtrTy classDecl,
@@ -1618,7 +1628,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     }
     InterfaceMD = ImpDecl->getClassInterface()->getMethod(Sel,
                                                    MethodType == tok::minus);
-    if (AttrList)
+    if (containsInvalidMethodImplAttribute(AttrList))
       Diag(EndLoc, diag::warn_attribute_method_def);
   } else if (ObjCCategoryImplDecl *CatImpDecl =
              dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
@@ -1629,7 +1639,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       PrevMethod = CatImpDecl->getClassMethod(Sel);
       CatImpDecl->addClassMethod(ObjCMethod);
     }
-    if (AttrList)
+    if (containsInvalidMethodImplAttribute(AttrList))
       Diag(EndLoc, diag::warn_attribute_method_def);
   }
   if (PrevMethod) {
