@@ -3174,7 +3174,8 @@ static Sema::OwningExprResult CopyObject(Sema &S,
     // Only consider copy constructors.
     CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(*Con);
     if (!Constructor || Constructor->isInvalidDecl() ||
-        !Constructor->isCopyConstructor())
+        !Constructor->isCopyConstructor() ||
+        !Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
       continue;
 
     DeclAccessPair FoundDecl
