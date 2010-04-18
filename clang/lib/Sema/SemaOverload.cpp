@@ -1763,6 +1763,11 @@ Sema::CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
   else if (ICS2.getKindRank() < ICS1.getKindRank())
     return ImplicitConversionSequence::Worse;
 
+  // The following checks require both conversion sequences to be of
+  // the same kind.
+  if (ICS1.getKind() != ICS2.getKind())
+    return ImplicitConversionSequence::Indistinguishable;
+
   // Two implicit conversion sequences of the same form are
   // indistinguishable conversion sequences unless one of the
   // following rules apply: (C++ 13.3.3.2p3):
