@@ -2447,28 +2447,25 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   if (!isRValRef && T1.getCVRQualifiers() != Qualifiers::Const)
     return ICS;
 
-  //       -- If the initializer expression is an rvalue, with T2 a
-  //          class type, and "cv1 T1" is reference-compatible with
-  //          "cv2 T2," the reference is bound in one of the
-  //          following ways (the choice is implementation-defined):
+  //       -- if T2 is a class type and
+  //          -- the initializer expression is an rvalue and "cv1 T1"
+  //             is reference-compatible with "cv2 T2," or
   //
-  //          -- The reference is bound to the object represented by
-  //             the rvalue (see 3.10) or to a sub-object within that
-  //             object.
+  //          -- T1 is not reference-related to T2 and the initializer
+  //             expression can be implicitly converted to an rvalue
+  //             of type "cv3 T3" (this conversion is selected by
+  //             enumerating the applicable conversion functions
+  //             (13.3.1.6) and choosing the best one through overload
+  //             resolution (13.3)),
   //
-  //          -- A temporary of type "cv1 T2" [sic] is created, and
-  //             a constructor is called to copy the entire rvalue
-  //             object into the temporary. The reference is bound to
-  //             the temporary or to a sub-object within the
-  //             temporary.
+  //          then the reference is bound to the initializer
+  //          expression rvalue in the first case and to the object
+  //          that is the result of the conversion in the second case
+  //          (or, in either case, to the appropriate base class
+  //          subobject of the object).
   //
-  //          The constructor that would be used to make the copy
-  //          shall be callable whether or not the copy is actually
-  //          done.
-  //
-  // Note that C++0x [dcl.init.ref]p5 takes away this implementation
-  // freedom, so we will always take the first option and never build
-  // a temporary in this case. 
+  // We're only checking the first case here, which is a direct
+  // binding in C++0x but not in C++03.
   if (InitLvalue != Expr::LV_Valid && T2->isRecordType() &&
       RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
     ICS.setStandard();
@@ -2480,7 +2477,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.setToType(1, T1);
     ICS.Standard.setToType(2, T1);
     ICS.Standard.ReferenceBinding = true;
-    ICS.Standard.DirectBinding = false;
+    ICS.Standard.DirectBinding = S.getLangOptions().CPlusPlus0x;
     ICS.Standard.RRefBinding = isRValRef;
     ICS.Standard.CopyConstructor = 0;
     return ICS;
