@@ -31,6 +31,19 @@ struct ManyFields {
 struct ManyFields FewInits = {1, 2};
 
 
+// PR6766
+// CHECK: @l = global %1 { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
+typedef __WCHAR_TYPE__ wchar_t;
+struct K {
+  wchar_t L[6];
+  int M;
+} l =  { { L"foo" }, 1 };
+
+
+// CHECK: @yuv_types = global [4 x [6 x i8]] {{\[}}[6 x i8] c"4:0:0\00", [6 x i8] c"4:2:0\00", [6 x i8] c"4:2:2\00", [6 x i8] c"4:4:4\00"]
+char yuv_types[4][6]= {"4:0:0","4:2:0","4:2:2","4:4:4"};
+
+
 // NOTE: tentative definitions are processed at the end of the translation unit.
 
 // This shouldn't be emitted as common because it has an explicit section.

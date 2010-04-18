@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o %t
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 void f1() {
   // Scalars in braces.
@@ -22,8 +22,8 @@ void f3() {
 }
 
 // Constants
-// RUN: grep '@g3 = constant i32 10' %t
-// RUN: grep '@f4.g4 = internal constant i32 12' %t
+// CHECK: @g3 = constant i32 10
+// CHECK: @f4.g4 = internal constant i32 12
 const int g3 = 10;
 int f4() {
   static const int g4 = 12;
