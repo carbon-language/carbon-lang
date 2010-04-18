@@ -1106,6 +1106,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
 
     llvm::Value *V = LocalDeclMap[VD];
+    if (!V && VD->isStaticLocal()) 
+      V = CGM.getStaticLocalDeclMap(VD);
     assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 
     Qualifiers Quals = MakeQualifiers(E->getType());

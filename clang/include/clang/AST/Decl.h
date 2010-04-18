@@ -548,6 +548,12 @@ public:
     return getStorageClass() <= Register;
   }
 
+  /// isStaticLocal - Returns tru if a variable with function scope is a 
+  /// static local variable.
+  bool isStaticLocal() const {
+    return getStorageClass() == Static && !isFileVarDecl();
+  }
+  
   /// hasExternStorage - Returns true if a variable has extern or
   /// __private_extern__ storage.
   bool hasExternalStorage() const {

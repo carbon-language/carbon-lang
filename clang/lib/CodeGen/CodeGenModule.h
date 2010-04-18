@@ -133,6 +133,7 @@ class CodeGenModule : public BlockModule {
 
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
+  llvm::DenseMap<const Decl*, llvm::Value*> StaticLocalDeclMap;
 
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
@@ -169,6 +170,14 @@ public:
   /// hasObjCRuntime() - Return true iff an Objective-C runtime has
   /// been configured.
   bool hasObjCRuntime() { return !!Runtime; }
+
+  llvm::Value *getStaticLocalDeclMap(const VarDecl *VD) {
+    return StaticLocalDeclMap[VD];
+  }
+  void setStaticLocalDeclMap(const VarDecl *D, 
+                             llvm::GlobalVariable *GV) {
+    StaticLocalDeclMap[D] = GV;
+  }
 
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
   ASTContext &getContext() const { return Context; }
