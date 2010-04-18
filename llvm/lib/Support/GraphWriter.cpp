@@ -130,28 +130,28 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   if (sys::Program::ExecuteAndWait(prog, &args[0], 0, 0, 0, 0, &ErrMsg)) {
      errs() << "Error viewing graph " << Filename.str() << ": '"
             << ErrMsg << "\n";
-  } else {
-    errs() << " done. \n";
+    return;
+  }
+  errs() << " done. \n";
 
-    sys::Path gv(LLVM_PATH_GV);
-    args.clear();
-    args.push_back(gv.c_str());
-    args.push_back(PSFilename.c_str());
-    args.push_back("--spartan");
-    args.push_back(0);
-    
-    ErrMsg.clear();
-    if (wait) {
-       if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg))
-          errs() << "Error viewing graph: " << ErrMsg << "\n";
-       Filename.eraseFromDisk();
-       PSFilename.eraseFromDisk();
-    }
-    else {
-       sys::Program::ExecuteNoWait(gv, &args[0],0,0,0,&ErrMsg);
-       errs() << "Remember to erase graph files: " << Filename.str() << " "
-              << PSFilename.str() << "\n";
-    }
+  sys::Path gv(LLVM_PATH_GV);
+  args.clear();
+  args.push_back(gv.c_str());
+  args.push_back(PSFilename.c_str());
+  args.push_back("--spartan");
+  args.push_back(0);
+  
+  ErrMsg.clear();
+  if (wait) {
+     if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg))
+        errs() << "Error viewing graph: " << ErrMsg << "\n";
+     Filename.eraseFromDisk();
+     PSFilename.eraseFromDisk();
+  }
+  else {
+     sys::Program::ExecuteNoWait(gv, &args[0],0,0,0,&ErrMsg);
+     errs() << "Remember to erase graph files: " << Filename.str() << " "
+            << PSFilename.str() << "\n";
   }
 #elif HAVE_DOTTY
   sys::Path dotty(LLVM_PATH_DOTTY);
