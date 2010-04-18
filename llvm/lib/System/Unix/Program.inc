@@ -30,6 +30,9 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_POSIX_SPAWN
+#include <spawn.h>
+#endif
 
 namespace llvm {
 using namespace sys;
@@ -94,8 +97,7 @@ Program::FindProgramByName(const std::string& progName) {
 }
 
 static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
-  if (Path == 0)
-    // Noop
+  if (Path == 0) // Noop
     return false;
   std::string File;
   if (Path->isEmpty())
@@ -121,6 +123,25 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
   close(InFD);      // Close the original FD
   return false;
 }
+
+#ifdef HAVE_POSIX_SPAWN
+static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
+                         posix_spawn_file_actions_t &FileActions) {
+  if (Path == 0) // Noop
+    return false;
+  std::string File;
+  if (Path->isEmpty())
+    // Redirect empty paths to /dev/null
+    File = "/dev/null";
+  else
+    File = Path->str();
+    
+  if (int Err = posix_spawn_file_actions_addopen(&FileActions, FD,
+                    File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666))
+    return MakeErrMsg(ErrMsg, "Cannot dup2", Err);
+  return false;
+}
+#endif
 
 static void TimeOutHandler(int Sig) {
 }
@@ -151,13 +172,47 @@ static void SetMemoryLimits (unsigned size)
 }
 
 bool
-Program::Execute(const Path& path,
-                 const char** args,
-                 const char** envp,
-                 const Path** redirects,
-                 unsigned memoryLimit,
-                 std::string* ErrMsg)
-{
+Program::Execute(const Path &path, const char **args, const char **envp,
+                 const Path **redirects, unsigned memoryLimit,
+                  std::string *ErrMsg) {
+  // If this OS has posix_spawn and there is no memory limit being implied, use
+  // posix_spawn.  It is more efficient than fork/exec.
+#ifdef HAVE_POSIX_SPAWN
+  if (memoryLimit == 0) {
+    posix_spawn_file_actions_t FileActions;
+    posix_spawn_file_actions_init(&FileActions);
+
+    if (redirects) {
+      // Redirect stdin/stdout.
+      if (RedirectIO_PS(redirects[0], 0, ErrMsg, FileActions) ||
+          RedirectIO_PS(redirects[1], 1, ErrMsg, FileActions))
+        return false;
+      if (redirects[1] == 0 || redirects[2] == 0 ||
+          *redirects[1] != *redirects[2]) {
+        // Just redirect stderr
+        if (RedirectIO_PS(redirects[2], 2, ErrMsg, FileActions)) return false;
+      } else {       
+        // If stdout and stderr should go to the same place, redirect stderr
+        // to the FD already open for stdout.
+        if (int Err = posix_spawn_file_actions_adddup2(&FileActions, 1, 2))
+          return !MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout", Err);
+      }
+    }
+
+    pid_t PID;
+    int Err = posix_spawn(&PID, path.c_str(), &FileActions,
+                          /*attrp*/0, (char**)args, (char**)envp);
+                          
+    posix_spawn_file_actions_destroy(&FileActions);
+
+    if (Err)
+     return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
+      
+    Data_ = reinterpret_cast<void*>(PID);
+    return true;
+  }
+#endif
+  
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = path.str() + " is not executable";
