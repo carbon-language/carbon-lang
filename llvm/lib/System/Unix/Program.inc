@@ -104,17 +104,17 @@ Program::FindProgramByName(const std::string& progName) {
 static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
   if (Path == 0) // Noop
     return false;
-  std::string File;
+  const char *File;
   if (Path->isEmpty())
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = Path->str();
+    File = Path->c_str();
 
   // Open the file
-  int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
+  int InFD = open(File, FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
   if (InFD == -1) {
-    MakeErrMsg(ErrMsg, "Cannot open file '" + File + "' for "
+    MakeErrMsg(ErrMsg, "Cannot open file '" + std::string(File) + "' for "
               + (FD == 0 ? "input" : "output"));
     return true;
   }
