@@ -32,6 +32,9 @@
 #endif
 #ifdef HAVE_POSIX_SPAWN
 #include <spawn.h>
+#if !defined(__APPLE__)
+  extern char **environ;
+#endif
 #endif
 
 namespace llvm {
@@ -198,6 +201,10 @@ Program::Execute(const Path &path, const char **args, const char **envp,
           return !MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout", Err);
       }
     }
+
+#if !defined(__APPLE__)
+    if (!envp) envp = (const char**)environ;
+#endif
 
     pid_t PID;
     int Err = posix_spawn(&PID, path.c_str(), &FileActions,
