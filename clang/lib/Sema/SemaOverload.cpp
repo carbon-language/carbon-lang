@@ -2308,20 +2308,23 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   Sema::ReferenceCompareResult RefRelationship
     = S.CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
-  // C++ [dcl.init.ref]p5:
-  //   A reference to type "cv1 T1" is initialized by an expression
-  //   of type "cv2 T2" as follows:
-
-  //     -- If the initializer expression
 
   // C++ [over.ics.ref]p3:
   //   Except for an implicit object parameter, for which see 13.3.1,
   //   a standard conversion sequence cannot be formed if it requires
   //   binding an lvalue reference to non-const to an rvalue or
   //   binding an rvalue reference to an lvalue.
+  //
+  // FIXME: DPG doesn't trust this code. It seems far too early to
+  // abort because of a binding of an rvalue reference to an lvalue.
   if (isRValRef && InitLvalue == Expr::LV_Valid)
     return ICS;
 
+  // C++0x [dcl.init.ref]p16:
+  //   A reference to type "cv1 T1" is initialized by an expression
+  //   of type "cv2 T2" as follows:
+
+  //     -- If the initializer expression
   //       -- is an lvalue (but is not a bit-field), and "cv1 T1" is
   //          reference-compatible with "cv2 T2," or
   //
@@ -2444,7 +2447,15 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   //     -- Otherwise, the reference shall be to a non-volatile const
   //        type (i.e., cv1 shall be const), or the reference shall be an
   //        rvalue reference and the initializer expression shall be an rvalue.
-  if (!isRValRef && T1.getCVRQualifiers() != Qualifiers::Const)
+  // 
+  // We actually handle one oddity of C++ [over.ics.ref] at this
+  // point, which is that, due to p2 (which short-circuits reference
+  // binding by only attempting a simple conversion for non-direct
+  // bindings) and p3's strange wording, we allow a const volatile
+  // reference to bind to an rvalue. Hence the check for the presence
+  // of "const" rather than checking for "const" being the only
+  // qualifier.
+  if (!isRValRef && !T1.isConstQualified())
     return ICS;
 
   //       -- if T2 is a class type and
@@ -2508,7 +2519,6 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     return ICS;
 
   // C++ [over.ics.ref]p2:
-  //
   //   When a parameter of reference type is not bound directly to
   //   an argument expression, the conversion sequence is the one
   //   required to convert the argument expression to the
