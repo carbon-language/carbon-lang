@@ -13,8 +13,7 @@
 
 #include "llvm/System/Program.h"
 #include "llvm/Config/config.h"
-
-namespace llvm {
+using namespace llvm;
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
@@ -46,9 +45,6 @@ Program::ExecuteNoWait(const Path& path,
                        std::string* ErrMsg) {
   Program prg;
   prg.Execute(path, args, envp, redirects, memoryLimit, ErrMsg);
-}
-
-
 }
 
 // Include the platform-specific parts of this class.
