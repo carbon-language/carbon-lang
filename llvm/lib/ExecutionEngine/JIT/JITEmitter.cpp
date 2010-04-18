@@ -1229,35 +1229,35 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   // Mark code region readable and executable if it's not so already.
   MemMgr->setMemoryExecutable();
 
-  DEBUG(
-    if (sys::hasDisassembler()) {
-      dbgs() << "JIT: Disassembled code:\n";
-      dbgs() << sys::disassembleBuffer(FnStart, FnEnd-FnStart,
-                                       (uintptr_t)FnStart);
-    } else {
-      dbgs() << "JIT: Binary code:\n";
-      uint8_t* q = FnStart;
-      for (int i = 0; q < FnEnd; q += 4, ++i) {
-        if (i == 4)
-          i = 0;
-        if (i == 0)
-          dbgs() << "JIT: " << (long)(q - FnStart) << ": ";
-        bool Done = false;
-        for (int j = 3; j >= 0; --j) {
-          if (q + j >= FnEnd)
-            Done = true;
-          else
-            dbgs() << (unsigned short)q[j];
+  DEBUG({
+      if (sys::hasDisassembler()) {
+        dbgs() << "JIT: Disassembled code:\n";
+        dbgs() << sys::disassembleBuffer(FnStart, FnEnd-FnStart,
+                                         (uintptr_t)FnStart);
+      } else {
+        dbgs() << "JIT: Binary code:\n";
+        uint8_t* q = FnStart;
+        for (int i = 0; q < FnEnd; q += 4, ++i) {
+          if (i == 4)
+            i = 0;
+          if (i == 0)
+            dbgs() << "JIT: " << (long)(q - FnStart) << ": ";
+          bool Done = false;
+          for (int j = 3; j >= 0; --j) {
+            if (q + j >= FnEnd)
+              Done = true;
+            else
+              dbgs() << (unsigned short)q[j];
+          }
+          if (Done)
+            break;
+          dbgs() << ' ';
+          if (i == 3)
+            dbgs() << '\n';
         }
-        if (Done)
-          break;
-        dbgs() << ' ';
-        if (i == 3)
-          dbgs() << '\n';
+        dbgs()<< '\n';
       }
-      dbgs()<< '\n';
-    }
-        );
+    });
 
   if (DwarfExceptionHandling || JITEmitDebugInfo) {
     uintptr_t ActualSize = 0;
@@ -1265,9 +1265,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     SavedBufferEnd = BufferEnd;
     SavedCurBufferPtr = CurBufferPtr;
 
-    if (MemMgr->NeedsExactSize()) {
+    if (MemMgr->NeedsExactSize())
       ActualSize = DE->GetDwarfTableSizeInBytes(F, *this, FnStart, FnEnd);
-    }
 
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);
