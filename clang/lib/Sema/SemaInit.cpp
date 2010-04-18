@@ -1987,6 +1987,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_CastDerivedToBaseLValue:
   case SK_BindReference:
   case SK_BindReferenceToTemporary:
+  case SK_ExtraneousCopyToTemporary:
   case SK_UserConversion:
   case SK_QualificationConversionRValue:
   case SK_QualificationConversionLValue:
@@ -2063,6 +2064,13 @@ void InitializationSequence::AddReferenceBindingStep(QualType T,
                                                      bool BindingTemporary) {
   Step S;
   S.Kind = BindingTemporary? SK_BindReferenceToTemporary : SK_BindReference;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddExtraneousCopyToTemporary(QualType T) {
+  Step S;
+  S.Kind = SK_ExtraneousCopyToTemporary;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -2483,6 +2491,18 @@ static void TryReferenceInitialization(Sema &S,
     //         reference-compatible with "cv2 T2", or
     if (InitLvalue != Expr::LV_Valid && 
         RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
+      // The corresponding bullet in C++03 [dcl.init.ref]p5 gives the
+      // compiler the freedom to perform a copy here or bind to the
+      // object, while C++0x requires that we bind directly to the
+      // object. Hence, we always bind to the object without making an
+      // extra copy. However, in C++03 requires that we check for the
+      // presence of a suitable copy constructor:
+      //
+      //   The constructor that would be used to make the copy shall
+      //   be callable whether or not the copy is actually done.
+      if (!S.getLangOptions().CPlusPlus0x)
+        Sequence.AddExtraneousCopyToTemporary(cv2T2);
+
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
@@ -3108,15 +3128,35 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   llvm_unreachable("missed an InitializedEntity kind?");
 }
 
+/// \brief Make a (potentially elidable) temporary copy of the object
+/// provided by the given initializer by calling the appropriate copy
+/// constructor.
+///
+/// \param S The Sema object used for type-checking.
+///
+/// \param T The type of the temporary object, which must either by
+/// the type of the initializer expression or a superclass thereof.
+///
+/// \param Enter The entity being initialized.
+///
+/// \param CurInit The initializer expression.
+///
+/// \param IsExtraneousCopy Whether this is an "extraneous" copy that
+/// is permitted in C++03 (but not C++0x) when binding a reference to
+/// an rvalue.
+///
+/// \returns An expression that copies the initializer expression into
+/// a temporary object, or an error expression if a copy could not be
+/// created.
 static Sema::OwningExprResult CopyObject(Sema &S,
+                                         QualType T,
                                          const InitializedEntity &Entity,
-                                         const InitializationKind &Kind,
-                                         Sema::OwningExprResult CurInit) {
+                                         Sema::OwningExprResult CurInit,
+                                         bool IsExtraneousCopy) {
   // Determine which class type we're copying to.
   Expr *CurInitExpr = (Expr *)CurInit.get();
   CXXRecordDecl *Class = 0; 
-  if (const RecordType *Record
-                = Entity.getType().getNonReferenceType()->getAs<RecordType>())
+  if (const RecordType *Record = T->getAs<RecordType>())
     Class = cast<CXXRecordDecl>(Record->getDecl());
   if (!Class)
     return move(CurInit);
@@ -3137,7 +3177,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   // not yet) handled as part of constructor initialization, while
   // copy elision for exception handlers is handled by the run-time.
   bool Elidable = CurInitExpr->isTemporaryObject() &&
-    S.Context.hasSameUnqualifiedType(Entity.getType(), CurInitExpr->getType());
+     S.Context.hasSameUnqualifiedType(T, CurInitExpr->getType());
   SourceLocation Loc;
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
@@ -3217,9 +3257,23 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
   ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
   CurInit.release(); // Ownership transferred into MultiExprArg, below.
+
+  S.CheckConstructorAccess(Loc, Constructor,
+                           Best->FoundDecl.getAccess());
+
+  if (IsExtraneousCopy) {
+    // If this is a totally extraneous copy for C++03 reference
+    // binding purposes, just return the original initialization
+    // expression.
+
+    // FIXME: We'd like to call CompleteConstructorCall below, so that
+    // we instantiate default arguments and such.
+    return S.Owned(CurInitExpr);
+  }
   
   // Determine the arguments required to actually perform the
-  // constructor call (we might have derived-to-base conversions).
+  // constructor call (we might have derived-to-base conversions, or
+  // the copy constructor may have default arguments).
   if (S.CompleteConstructorCall(Constructor,
                                 Sema::MultiExprArg(S, 
                                                    (void **)&CurInitExpr,
@@ -3227,12 +3281,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
                                 Loc, ConstructorArgs))
     return S.ExprError();
 
-  S.CheckConstructorAccess(Loc, Constructor,
-                           Best->FoundDecl.getAccess());
-
-  return S.BuildCXXConstructExpr(Loc, Entity.getType().getNonReferenceType(),
-                                 Constructor,
-                                 Elidable,
+  return S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
                                  move_arg(ConstructorArgs));
 }
 
@@ -3326,6 +3375,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_CastDerivedToBaseLValue:
   case SK_BindReference:
   case SK_BindReferenceToTemporary:
+  case SK_ExtraneousCopyToTemporary:
   case SK_UserConversion:
   case SK_QualificationConversionLValue:
   case SK_QualificationConversionRValue:
@@ -3421,6 +3471,11 @@ InitializationSequence::Perform(Sema &S,
 
       break;
         
+    case SK_ExtraneousCopyToTemporary:
+      CurInit = CopyObject(S, Step->Type, Entity, move(CurInit), 
+                           /*IsExtraneousCopy=*/true);
+      break;
+
     case SK_UserConversion: {
       // We have a user-defined conversion that invokes either a constructor
       // or a conversion function.
@@ -3497,7 +3552,8 @@ InitializationSequence::Perform(Sema &S,
                                                          IsLvalue));
       
       if (RequiresCopy)
-        CurInit = CopyObject(S, Entity, Kind, move(CurInit));
+        CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
+                             move(CurInit), /*IsExtraneousCopy=*/false);
       break;
     }
         
@@ -4040,6 +4096,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       OS << "bind reference to a temporary";
       break;
       
+    case SK_ExtraneousCopyToTemporary:
+      OS << "extraneous C++03 copy to temporary";
+      break;
+
     case SK_UserConversion:
       OS << "user-defined conversion via " << S->Function.Function;
       break;

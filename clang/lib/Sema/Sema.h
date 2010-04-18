@@ -2154,7 +2154,7 @@ public:
 
   bool CompleteConstructorCall(CXXConstructorDecl *Constructor,
                                MultiExprArg ArgsPtr,
-                               SourceLocation Loc,                                    
+                               SourceLocation Loc,
                       ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
     
   virtual TypeTy *getDestructorName(SourceLocation TildeLoc,

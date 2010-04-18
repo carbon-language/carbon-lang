@@ -416,6 +416,10 @@ public:
     SK_BindReference,
     /// \brief Reference binding to a temporary.
     SK_BindReferenceToTemporary,
+    /// \brief An optional copy of a temporary object to another
+    /// temporary object, which is permitted (but not required) by
+    /// C++98/03 but not C++0x.
+    SK_ExtraneousCopyToTemporary,
     /// \brief Perform a user-defined conversion, either via a conversion
     /// function or via a constructor.
     SK_UserConversion,
@@ -629,11 +633,26 @@ public:
      
   /// \brief Add a new step binding a reference to an object.
   ///
-  /// \param BindingTemporary true if we are binding a reference to a temporary
+  /// \param BindingTemporary True if we are binding a reference to a temporary
   /// object (thereby extending its lifetime); false if we are binding to an
   /// lvalue or an lvalue treated as an rvalue.
+  ///
+  /// \param UnnecessaryCopy True if we should check for a copy
+  /// constructor for a completely unnecessary but
   void AddReferenceBindingStep(QualType T, bool BindingTemporary);
-  
+
+  /// \brief Add a new step that makes an extraneous copy of the input
+  /// to a temporary of the same class type.
+  ///
+  /// This extraneous copy only occurs during reference binding in
+  /// C++98/03, where we are permitted (but not required) to introduce
+  /// an extra copy. At a bare minimum, we must check that we could
+  /// call the copy constructor, and produce a diagnostic if the copy
+  /// constructor is inaccessible or no copy constructor matches.
+  //
+  /// \param T The type of the temporary being created.
+  void AddExtraneousCopyToTemporary(QualType T);
+
   /// \brief Add a new step invoking a conversion function, which is either
   /// a constructor or a conversion function.
   void AddUserConversionStep(FunctionDecl *Function,
