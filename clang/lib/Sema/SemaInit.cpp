@@ -3264,10 +3264,26 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   if (IsExtraneousCopy) {
     // If this is a totally extraneous copy for C++03 reference
     // binding purposes, just return the original initialization
-    // expression.
+    // expression. We don't generate an (elided) copy operation here
+    // because doing so would require us to pass down a flag to avoid
+    // infinite recursion, where each step adds another extraneous,
+    // elidable copy.
 
-    // FIXME: We'd like to call CompleteConstructorCall below, so that
-    // we instantiate default arguments and such.
+    // Instantiate the default arguments of any extra parameters in
+    // the selected copy constructor, as if we were going to create a
+    // proper call to the copy constructor.
+    for (unsigned I = 1, N = Constructor->getNumParams(); I != N; ++I) {
+      ParmVarDecl *Parm = Constructor->getParamDecl(I);
+      if (S.RequireCompleteType(Loc, Parm->getType(),
+                                S.PDiag(diag::err_call_incomplete_argument)))
+        break;
+
+      // Build the default argument expression; we don't actually care
+      // if this succeeds or not, because this routine will complain
+      // if there was a problem.
+      S.BuildCXXDefaultArgExpr(Loc, Constructor, Parm);
+    }
+
     return S.Owned(CurInitExpr);
   }
   

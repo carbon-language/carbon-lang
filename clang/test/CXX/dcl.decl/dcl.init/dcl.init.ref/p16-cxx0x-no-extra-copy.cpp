@@ -27,8 +27,7 @@ private:
 template<typename T>
 T get_value_badly() {
   double *dp = 0;
-  T *tp = dp; // FIXME: Should get an error here, from instantiating the
-              // default argument of X4<int>
+  T *tp = dp;
   return T();
 }
 
