@@ -34,6 +34,8 @@
 #include <spawn.h>
 #if !defined(__APPLE__)
   extern char **environ;
+#else
+#include <crt_externs.h> // _NSGetEnviron
 #endif
 #endif
 
@@ -202,8 +204,11 @@ Program::Execute(const Path &path, const char **args, const char **envp,
       }
     }
 
+    if (!envp)
 #if !defined(__APPLE__)
-    if (!envp) envp = (const char**)environ;
+      envp = (const char**)environ;
+#else
+      envp = (const char**)*_NSGetEnviron(); // environ is missing in dylibs.
 #endif
 
     pid_t PID;
