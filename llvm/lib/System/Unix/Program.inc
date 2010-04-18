@@ -134,15 +134,15 @@ static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
                           posix_spawn_file_actions_t &FileActions) {
   if (Path == 0) // Noop
     return false;
-  std::string File;
+  const char *File;
   if (Path->isEmpty())
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = Path->str();
-    
+    File = Path->c_str();
+
   if (int Err = posix_spawn_file_actions_addopen(&FileActions, FD,
-                    File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666))
+                            File, FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666))
     return MakeErrMsg(ErrMsg, "Cannot dup2", Err);
   return false;
 }
