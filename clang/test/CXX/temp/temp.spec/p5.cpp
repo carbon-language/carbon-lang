@@ -27,3 +27,20 @@ template union X0<float>::Inner; // expected-error{{duplicate explicit instantia
 
 template float X0<float>::value; // expected-note{{previous explicit instantiation}}
 template float X0<float>::value; // expected-error{{duplicate explicit instantiation}}
+
+// Make sure that we don't get tricked by redeclarations of nested classes.
+namespace NestedClassRedecls {
+  template<typename T>
+  struct X {
+    struct Nested;
+    friend struct Nested;
+
+    struct Nested { 
+      Nested() {}
+    } nested;
+  };
+
+  X<int> xi;
+
+  template struct X<int>;
+}

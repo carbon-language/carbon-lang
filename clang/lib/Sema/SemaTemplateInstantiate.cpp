@@ -1446,7 +1446,10 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         }
       }      
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
-      if (Record->isInjectedClassName())
+      // Always skip the injected-class-name, along with any
+      // redeclarations of nested classes, since both would cause us
+      // to try to instantiate the members of a class twice.
+      if (Record->isInjectedClassName() || Record->getPreviousDeclaration())
         continue;
       
       MemberSpecializationInfo *MSInfo = Record->getMemberSpecializationInfo();
