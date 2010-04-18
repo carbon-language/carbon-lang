@@ -801,22 +801,24 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //   declared as a friend, and when the name of the friend class or 
     //   function is neither a qualified name nor a template-id, scopes outside
     //   the innermost enclosing namespace scope are not considered.
-    DeclContext *OutermostContext = CurContext;
-    while (!OutermostContext->isFileContext())
-      OutermostContext = OutermostContext->getLookupParent();
+    if (!SS.isSet()) {
+      DeclContext *OutermostContext = CurContext;
+      while (!OutermostContext->isFileContext())
+        OutermostContext = OutermostContext->getLookupParent();
 
-    if (PrevDecl &&
-        (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
-         OutermostContext->Encloses(PrevDecl->getDeclContext()))) {
-      SemanticContext = PrevDecl->getDeclContext();
-    } else {
-      // Declarations in outer scopes don't matter. However, the outermost
-      // context we computed is the semantic context for our new 
-      // declaration.
-      PrevDecl = PrevClassTemplate = 0;
-      SemanticContext = OutermostContext;
+      if (PrevDecl &&
+          (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
+           OutermostContext->Encloses(PrevDecl->getDeclContext()))) {
+        SemanticContext = PrevDecl->getDeclContext();
+      } else {
+        // Declarations in outer scopes don't matter. However, the outermost
+        // context we computed is the semantic context for our new 
+        // declaration.
+        PrevDecl = PrevClassTemplate = 0;
+        SemanticContext = OutermostContext;
+      }
     }
-    
+
     if (CurContext->isDependentContext()) {
       // If this is a dependent context, we don't want to link the friend
       // class template to the template in scope, because that would perform

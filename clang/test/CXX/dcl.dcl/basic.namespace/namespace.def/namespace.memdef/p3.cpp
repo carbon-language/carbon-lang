@@ -53,4 +53,16 @@ struct Y {
   friend union X1;
 };
 
+namespace N {
+  namespace M {
+    template<typename T> class X;
+  }
+}
+
+namespace N3 {
+  class Y {
+    template<typename T> friend class N::M::X;
+  };
+}
+
 // FIXME: Woefully inadequate for testing
