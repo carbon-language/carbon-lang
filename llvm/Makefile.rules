@@ -633,6 +633,8 @@ CompileCommonOpts += -pedantic -Wno-long-long
 endif
 CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
                      $(EXTRA_OPTIONS)
+# Enable cast-qual for C++; the workaround is to use const_cast.
+CXX.Flags += -Wcast-qual
 
 ifeq ($(HOST_OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
