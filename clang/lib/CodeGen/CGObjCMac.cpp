@@ -4265,7 +4265,8 @@ bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
   if (CGM.getCodeGenOpts().ObjCLegacyDispatch)
     return true;
   /* Leopard */
-  if (CGM.getContext().Target.getTriple().getDarwinMajorNumber() <= 9)
+  if (CGM.getContext().Target.getTriple().getOS() == llvm::Triple::Darwin &&
+      CGM.getContext().Target.getTriple().getDarwinMajorNumber() <= 9)
     return false;
   
   if (NonLegacyDispatchMethods.empty()) {
