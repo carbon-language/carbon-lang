@@ -581,13 +581,6 @@ ifeq ($(TARGET_OS),Darwin)
   endif
 endif
 
-# Adjust LD.Flags depending on the kind of library that is to be built. Note
-# that if LOADABLE_MODULE is specified then the resulting shared library can
-# be opened with dlopen.
-ifdef LOADABLE_MODULE
-  LD.Flags += -module
-endif
-
 ifdef SHARED_LIBRARY
 ifneq ($(DARWIN_MAJVERS),4)
   LD.Flags += $(RPATH) -Wl,$(LibDir)
