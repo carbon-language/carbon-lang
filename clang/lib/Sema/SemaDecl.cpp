@@ -3818,7 +3818,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       }
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->getStorageClass() == VarDecl::Extern)
+    if (VDecl->getStorageClass() == VarDecl::Extern && 
+        !getLangOptions().CPlusPlus)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
