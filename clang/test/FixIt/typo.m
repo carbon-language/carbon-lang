@@ -103,3 +103,37 @@ void test2(Collide *a) {
 }
   
 @end
+
+@interface Ivar
+@end
+
+@protocol Proto
+@property (retain) id ivar;
+@end
+
+@interface User <Proto>
+- (void)method;
+@end
+
+@implementation User
+@synthesize ivar;
+
+- (void)method {
+    [ivar method]; // Test that we don't correct 'ivar' to 'Ivar'
+}
+@end
+
+@interface User2
+@end
+
+@interface User2 (Cat) < Proto>
+- (void)method;
+@end
+
+@implementation User2 (Cat)
+@synthesize ivar;
+
+- (void)method {
+    [ivar method]; // Test that we don't correct 'ivar' to 'Ivar'
+}
+@end

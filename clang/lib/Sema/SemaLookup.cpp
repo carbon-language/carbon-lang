@@ -2279,6 +2279,14 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
       LookupVisibleDecls(IFace->getSuperClass(), Result, QualifiedNameLookup,
                          true, Consumer, Visited);
     }
+    
+    // If there is an implementation, traverse it. We do this to find
+    // synthesized ivars.
+    if (IFace->getImplementation()) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(IFace->getImplementation(), Result, 
+                         QualifiedNameLookup, true, Consumer, Visited);
+    }
   } else if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Ctx)) {
     for (ObjCProtocolDecl::protocol_iterator I = Protocol->protocol_begin(),
            E = Protocol->protocol_end(); I != E; ++I) {
@@ -2293,6 +2301,13 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
       LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer, 
                          Visited);
     }
+    
+    // If there is an implementation, traverse it.
+    if (Category->getImplementation()) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(Category->getImplementation(), Result, 
+                         QualifiedNameLookup, true, Consumer, Visited);
+    }    
   }
 }
 
