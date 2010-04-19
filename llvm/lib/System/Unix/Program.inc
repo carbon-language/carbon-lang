@@ -206,14 +206,15 @@ Program::Execute(const Path &path, const char **args, const char **envp,
 
     if (!envp)
 #if !defined(__APPLE__)
-      envp = (const char**)environ;
+      envp = const_cast<const char **>(environ);
 #else
-      envp = (const char**)*_NSGetEnviron(); // environ is missing in dylibs.
+      // environ is missing in dylibs.
+      envp = const_cast<const char **>(*_NSGetEnviron());
 #endif
 
     pid_t PID;
-    int Err = posix_spawn(&PID, path.c_str(), &FileActions,
-                          /*attrp*/0, (char**)args, (char**)envp);
+    int Err = posix_spawn(&PID, path.c_str(), &FileActions, /*attrp*/0,
+                          const_cast<char **>(args), const_cast<char **>(envp));
                           
     posix_spawn_file_actions_destroy(&FileActions);
 
@@ -268,9 +269,12 @@ Program::Execute(const Path &path, const char **args, const char **envp,
 
       // Execute!
       if (envp != 0)
-        execve(path.c_str(), (char**)args, (char**)envp);
+        execve(path.c_str(),
+               const_cast<char **>(args),
+               const_cast<char **>(envp));
       else
-        execv(path.c_str(), (char**)args);
+        execv(path.c_str(),
+              const_cast<char **>(args));
       // If the execve() failed, we should exit. Follow Unix protocol and
       // return 127 if the executable was not found, and 126 otherwise.
       // Use _exit rather than exit so that atexit functions and static
