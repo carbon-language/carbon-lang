@@ -130,6 +130,8 @@ namespace {
     bool CombineToPostIndexedLoadStore(SDNode *N);
 
     SDValue PromoteIntBinOp(SDValue Op);
+    SDValue PromoteExtend(SDValue Op);
+    bool PromoteLoad(SDValue Op);
 
     /// combine - call the node-specific routine that knows how to fold each
     /// particular type of node. If that doesn't do anything, try the
@@ -167,6 +169,8 @@ namespace {
     SDValue visitSHL(SDNode *N);
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
+    SDValue visitROTL(SDNode *N);
+    SDValue visitROTR(SDNode *N);
     SDValue visitCTLZ(SDNode *N);
     SDValue visitCTTZ(SDNode *N);
     SDValue visitCTPOP(SDNode *N);
@@ -633,25 +637,44 @@ bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
   return true;
 }
 
+static SDValue SExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
+                                  const TargetLowering &TLI);
+static SDValue ZExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
+                                  const TargetLowering &TLI);
+
 static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
                               const TargetLowering &TLI) {
+  DebugLoc dl = Op.getDebugLoc();
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
-    return DAG.getExtLoad(ISD::EXTLOAD, Op.getDebugLoc(), PVT,
+    ISD::LoadExtType ExtType =
+      ISD::isNON_EXTLoad(LD) ? ISD::EXTLOAD : LD->getExtensionType();
+    return DAG.getExtLoad(ExtType, dl, PVT,
                           LD->getChain(), LD->getBasePtr(),
                           LD->getSrcValue(), LD->getSrcValueOffset(),
                           LD->getMemoryVT(), LD->isVolatile(),
                           LD->isNonTemporal(), LD->getAlignment());
   }
 
-  unsigned Opc = ISD::ANY_EXTEND;
-  if (Op.getOpcode() == ISD::Constant)
+  unsigned Opc = Op.getOpcode();
+  if (Opc == ISD::AssertSext)
+    return DAG.getNode(ISD::AssertSext, dl, PVT,
+                       SExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
+                       Op.getOperand(1));
+  else if (Opc == ISD::AssertZext)
+    return DAG.getNode(ISD::AssertZext, dl, PVT,
+                       ZExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
+                       Op.getOperand(1));
+
+  unsigned ExtOpc = ISD::ANY_EXTEND;
+  if (Opc == ISD::Constant)
     // Zero extend things like i1, sign extend everything else.  It shouldn't
     // matter in theory which one we pick, but this tends to give better code?
     // See DAGTypeLegalizer::PromoteIntRes_Constant.
-    Opc = Op.getValueType().isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-  if (!TLI.isOperationLegal(Opc, PVT))
+    ExtOpc =
+      Op.getValueType().isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+  if (!TLI.isOperationLegal(ExtOpc, PVT))
     return SDValue();
-  return DAG.getNode(Opc, Op.getDebugLoc(), PVT, Op);
+  return DAG.getNode(ExtOpc, dl, PVT, Op);
 }
 
 static SDValue SExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
@@ -725,6 +748,80 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
                        DAG.getNode(Op.getOpcode(), dl, PVT, N0, N1));
   }
   return SDValue();
+}
+
+SDValue DAGCombiner::PromoteExtend(SDValue Op) {
+  if (!LegalOperations)
+    return SDValue();
+
+  EVT VT = Op.getValueType();
+  if (VT.isVector() || !VT.isInteger())
+    return SDValue();
+
+  // If operation type is 'undesirable', e.g. i16 on x86, consider
+  // promoting it.
+  unsigned Opc = Op.getOpcode();
+  if (TLI.isTypeDesirableForOp(Opc, VT))
+    return SDValue();
+
+  EVT PVT = VT;
+  // Consult target whether it is a good idea to promote this operation and
+  // what's the right type to promote it to.
+  if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
+    assert(PVT != VT && "Don't know what type to promote to!");
+    // fold (aext (aext x)) -> (aext x)
+    // fold (aext (zext x)) -> (zext x)
+    // fold (aext (sext x)) -> (sext x)
+    return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), VT, Op.getOperand(0));
+  }
+  return SDValue();
+}
+
+bool DAGCombiner::PromoteLoad(SDValue Op) {
+  if (!LegalOperations)
+    return false;
+
+  EVT VT = Op.getValueType();
+  if (VT.isVector() || !VT.isInteger())
+    return false;
+
+  // If operation type is 'undesirable', e.g. i16 on x86, consider
+  // promoting it.
+  unsigned Opc = Op.getOpcode();
+  if (TLI.isTypeDesirableForOp(Opc, VT))
+    return false;
+
+  EVT PVT = VT;
+  // Consult target whether it is a good idea to promote this operation and
+  // what's the right type to promote it to.
+  if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
+    assert(PVT != VT && "Don't know what type to promote to!");
+
+    DebugLoc dl = Op.getDebugLoc();
+    SDNode *N = Op.getNode();
+    LoadSDNode *LD = cast<LoadSDNode>(N);
+    ISD::LoadExtType ExtType =
+      ISD::isNON_EXTLoad(LD) ? ISD::EXTLOAD : LD->getExtensionType();
+    SDValue NewLD = DAG.getExtLoad(ExtType, dl, PVT,
+                                   LD->getChain(), LD->getBasePtr(),
+                                   LD->getSrcValue(), LD->getSrcValueOffset(),
+                                   LD->getMemoryVT(), LD->isVolatile(),
+                                   LD->isNonTemporal(), LD->getAlignment());
+    SDValue Result = DAG.getNode(ISD::TRUNCATE, dl, VT, NewLD);
+
+    DEBUG(dbgs() << "\nReplacing.x ";
+          N->dump(&DAG);
+          dbgs() << "\nWith: ";
+          Result.getNode()->dump(&DAG);
+          dbgs() << '\n');
+    WorkListRemover DeadNodes(*this);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result, &DeadNodes);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLD.getValue(1), &DeadNodes);
+    removeFromWorkList(N);
+    DAG.DeleteNode(N);
+    return true;
+  }
+  return false;
 }
 
 
@@ -856,6 +953,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SHL:                return visitSHL(N);
   case ISD::SRA:                return visitSRA(N);
   case ISD::SRL:                return visitSRL(N);
+  case ISD::ROTL:               return visitROTL(N);
+  case ISD::ROTR:               return visitROTR(N);
   case ISD::CTLZ:               return visitCTLZ(N);
   case ISD::CTTZ:               return visitCTTZ(N);
   case ISD::CTPOP:              return visitCTPOP(N);
@@ -2975,6 +3074,14 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   return PromoteIntBinOp(SDValue(N, 0));
 }
 
+SDValue DAGCombiner::visitROTL(SDNode *N) {
+  return PromoteIntBinOp(SDValue(N, 0));
+}
+
+SDValue DAGCombiner::visitROTR(SDNode *N) {
+  return PromoteIntBinOp(SDValue(N, 0));
+}
+
 SDValue DAGCombiner::visitCTLZ(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -3369,7 +3476,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, N0);
 
-  return SDValue();
+  return PromoteExtend(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
@@ -3532,7 +3639,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                    N0.getOperand(1)));
   }
 
-  return SDValue();
+  return PromoteExtend(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
@@ -3668,7 +3775,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       return SCC;
   }
 
-  return SDValue();
+  return PromoteExtend(SDValue(N, 0));
 }
 
 /// GetDemandedBits - See if the specified operand can be simplified with the
@@ -5270,6 +5377,8 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   if (CombineToPreIndexedLoadStore(N) || CombineToPostIndexedLoadStore(N))
     return SDValue(N, 0);
 
+  if (PromoteLoad(SDValue(N, 0)))
+    return SDValue(N, 0);
   return SDValue();
 }
 

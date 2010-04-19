@@ -9966,9 +9966,15 @@ bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   switch (Opc) {
   default:
     return true;
+  case ISD::LOAD:
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:
+  case ISD::ROTL:
+  case ISD::ROTR:
   case ISD::SUB:
   case ISD::ADD:
   case ISD::MUL:
@@ -9990,27 +9996,47 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   if (VT != MVT::i16)
     return false;
 
-  bool Commute = true;
+  bool Promote = false;
+  bool Commute = false;
   switch (Op.getOpcode()) {
-  default: return false;
+  default: break;
+  case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(Op);
+    // If the non-extending load has a single use and it's not live out, then it
+    // might be folded.
+    if (LD->getExtensionType() == ISD::NON_EXTLOAD &&
+        Op.hasOneUse() &&
+        Op.getNode()->use_begin()->getOpcode() != ISD::CopyToReg)
+      return false;
+    Promote = true;
+    break;
+  }
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
+    Promote = true;
+    break;
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL: {
+  case ISD::SRL:
+  case ISD::ROTL:
+  case ISD::ROTR: {
     SDValue N0 = Op.getOperand(0);
     // Look out for (store (shl (load), x)).
     if (isa<LoadSDNode>(N0) && N0.hasOneUse() &&
         Op.hasOneUse() && Op.getNode()->use_begin()->getOpcode() == ISD::STORE)
       return false;
+    Promote = true;
     break;
   }
-  case ISD::SUB:
-    Commute = false;
-    // fallthrough
   case ISD::ADD:
   case ISD::MUL:
   case ISD::AND:
   case ISD::OR:
-  case ISD::XOR: {
+  case ISD::XOR:
+    Commute = true;
+    // fallthrough
+  case ISD::SUB: {
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
     if (!Commute && isa<LoadSDNode>(N1))
@@ -10020,11 +10046,12 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
       return false;
     if ((isa<LoadSDNode>(N1) && N1.hasOneUse()) && !isa<ConstantSDNode>(N0))
       return false;
+    Promote = true;
   }
   }
 
   PVT = MVT::i32;
-  return true;
+  return Promote;
 }
 
 //===----------------------------------------------------------------------===//
