@@ -860,7 +860,7 @@ const CXXMethodDecl *
 ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   assert(RD->isDynamicClass() && "Class does not have any virtual methods!");
 
-  // If a class isnt' polymorphic it doesn't have a key function.
+  // If a class isn't polymorphic it doesn't have a key function.
   if (!RD->isPolymorphic())
     return 0;
 
@@ -983,17 +983,6 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
                         "(primary virtual base)" : "(virtual base)",
                         /*IncludeVirtualBases=*/false);
   }
-}
-
-void ASTContext::DumpRecordLayout(const RecordDecl *RD,
-                                  llvm::raw_ostream &OS) {
-  const ASTRecordLayout &Info = getASTRecordLayout(RD);
-
-  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    DumpCXXRecordLayout(OS, CXXRD, *this, 0, 0, 0,
-                        /*IncludeVirtualBases=*/true);
-  else
-    OS << getTypeDeclType(RD).getAsString();
 
   OS << "  sizeof=" << Info.getSize() / 8;
   OS << ", dsize=" << Info.getDataSize() / 8;
@@ -1001,4 +990,28 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
   OS << "  nvsize=" << Info.getNonVirtualSize() / 8;
   OS << ", nvalign=" << Info.getNonVirtualAlign() / 8 << '\n';
   OS << '\n';
+}
+
+void ASTContext::DumpRecordLayout(const RecordDecl *RD,
+                                  llvm::raw_ostream &OS) {
+  const ASTRecordLayout &Info = getASTRecordLayout(RD);
+
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
+    return DumpCXXRecordLayout(OS, CXXRD, *this, 0, 0, 0,
+                               /*IncludeVirtualBases=*/true);
+
+  OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";
+  OS << "Record: ";
+  RD->dump();
+  OS << "\nLayout: ";
+  OS << "<ASTRecordLayout\n";
+  OS << "  Size:" << Info.getSize() << "\n";
+  OS << "  DataSize:" << Info.getDataSize() << "\n";
+  OS << "  Alignment:" << Info.getAlignment() << "\n";
+  OS << "  FieldOffsets: [";
+  for (unsigned i = 0, e = Info.getFieldCount(); i != e; ++i) {
+    if (i) OS << ", ";
+    OS << Info.getFieldOffset(i);
+  }
+  OS << "]>\n";
 }

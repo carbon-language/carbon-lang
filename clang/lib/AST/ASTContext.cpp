@@ -998,6 +998,11 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
     ASTRecordLayoutBuilder::ComputeLayout(*this, D);
   ASTRecordLayouts[D] = NewEntry;
 
+  if (getLangOptions().DumpRecordLayouts) {
+    llvm::errs() << "\n*** Dumping AST Record Layout\n";
+    DumpRecordLayout(D, llvm::errs());
+  }
+
   return *NewEntry;
 }
 

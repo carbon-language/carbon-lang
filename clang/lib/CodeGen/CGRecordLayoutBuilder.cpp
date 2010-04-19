@@ -566,7 +566,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
   // Dump the layout, if requested.
   if (getContext().getLangOptions().DumpRecordLayouts) {
-    llvm::errs() << "\n*** Dumping Record Layout\n";
+    llvm::errs() << "\n*** Dumping IRgen Record Layout\n";
     llvm::errs() << "Record: ";
     D->dump();
     llvm::errs() << "\nLayout: ";
