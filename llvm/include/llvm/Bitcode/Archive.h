@@ -107,7 +107,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// into memory, the return value will be null.
     /// @returns a pointer to the member's data.
     /// @brief Get the data content of the archive member
-    const void* getData() const { return data; }
+    const char* getData() const { return data; }
 
     /// This method determines if the member is a regular compressed file.
     /// @returns true iff the archive member is a compressed regular file.
@@ -172,7 +172,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     sys::PathWithStatus path;     ///< Path of file containing the member
     sys::FileStatus     info;     ///< Status info (size,mode,date)
     unsigned            flags;    ///< Flags about the archive member
-    const void*         data;     ///< Data for the member
+    const char*         data;     ///< Data for the member
 
   /// @}
   /// @name Constructors

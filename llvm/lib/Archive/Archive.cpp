@@ -233,15 +233,14 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
 }
 
 Module*
-llvm::GetBitcodeSymbols(const unsigned char *BufPtr, unsigned Length,
+llvm::GetBitcodeSymbols(const char *BufPtr, unsigned Length,
                         const std::string& ModuleID,
                         LLVMContext& Context,
                         std::vector<std::string>& symbols,
                         std::string* ErrMsg) {
   // Get the module.
   std::auto_ptr<MemoryBuffer> Buffer(
-    MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str()));
-  memcpy(const_cast<char *>(Buffer->getBufferStart()), BufPtr, Length);
+    MemoryBuffer::getMemBufferCopy(StringRef(BufPtr, Length),ModuleID.c_str()));
   
   Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
   if (!M)

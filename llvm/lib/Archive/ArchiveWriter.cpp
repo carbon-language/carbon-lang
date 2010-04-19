@@ -226,8 +226,7 @@ Archive::writeMember(
     std::string FullMemberName = archPath.str() + "(" + member.getPath().str()
       + ")";
     Module* M = 
-      GetBitcodeSymbols((const unsigned char*)data,fSize,
-                        FullMemberName, Context, symbols, ErrMsg);
+      GetBitcodeSymbols(data, fSize, FullMemberName, Context, symbols, ErrMsg);
 
     // If the bitcode parsed successfully
     if ( M ) {
