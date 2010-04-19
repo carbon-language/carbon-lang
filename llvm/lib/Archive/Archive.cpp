@@ -241,7 +241,7 @@ llvm::GetBitcodeSymbols(const unsigned char *BufPtr, unsigned Length,
   // Get the module.
   std::auto_ptr<MemoryBuffer> Buffer(
     MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str()));
-  memcpy((char*)Buffer->getBufferStart(), BufPtr, Length);
+  memcpy(const_cast<char *>(Buffer->getBufferStart()), BufPtr, Length);
   
   Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
   if (!M)

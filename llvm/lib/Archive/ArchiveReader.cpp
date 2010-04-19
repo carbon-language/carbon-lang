@@ -349,7 +349,8 @@ Archive::getAllModules(std::vector<Module*>& Modules,
         "(" + I->getPath().str() + ")";
       MemoryBuffer *Buffer =
         MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());
-      memcpy((char*)Buffer->getBufferStart(), I->getData(), I->getSize());
+      memcpy(const_cast<char *>(Buffer->getBufferStart()),
+             I->getData(), I->getSize());
       
       Module *M = ParseBitcodeFile(Buffer, Context, ErrMessage);
       delete Buffer;
@@ -489,7 +490,8 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
     mbr->getPath().str() + ")";
   MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(mbr->getSize(),
                                                       FullMemberName.c_str());
-  memcpy((char*)Buffer->getBufferStart(), mbr->getData(), mbr->getSize());
+  memcpy(const_cast<char *>(Buffer->getBufferStart()),
+         mbr->getData(), mbr->getSize());
   
   Module *m = getLazyBitcodeModule(Buffer, Context, ErrMsg);
   if (!m)
@@ -617,7 +619,8 @@ bool Archive::isBitcodeArchive() {
 
     MemoryBuffer *Buffer =
       MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());
-    memcpy((char*)Buffer->getBufferStart(), I->getData(), I->getSize());
+    memcpy(const_cast<char *>(Buffer->getBufferStart()),
+           I->getData(), I->getSize());
     Module *M = ParseBitcodeFile(Buffer, Context);
     delete Buffer;
     if (!M)

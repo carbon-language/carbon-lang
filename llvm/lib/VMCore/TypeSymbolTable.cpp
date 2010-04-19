@@ -126,13 +126,15 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
   // faster to remove them all in one pass.
   //
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    if (I->second == (Type*)OldType) {  // FIXME when Types aren't const.
+    // FIXME when Types aren't const.
+    if (I->second == const_cast<DerivedType *>(OldType)) {
 #if DEBUG_ABSTYPE
       dbgs() << "Removing type " << OldType->getDescription() << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
 
-      I->second = (Type*)NewType;  // TODO FIXME when types aren't const
+      // TODO FIXME when types aren't const
+      I->second = const_cast<Type *>(NewType);
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
         dbgs() << "Added type " << NewType->getDescription() << "\n";
