@@ -198,7 +198,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_block:                return "DW_AT_APPLE_block";
   case DW_AT_APPLE_major_runtime_vers:   return "DW_AT_APPLE_major_runtime_vers";
   case DW_AT_APPLE_runtime_class:        return "DW_AT_APPLE_runtime_class";
-  case DW_AT_APPLE_omit_frame_ptr:       return "DW_APPLE_omit_frame_ptr";
+  case DW_AT_APPLE_omit_frame_ptr:       return "DW_AT_APPLE_omit_frame_ptr";
   }
   return 0;
 }
