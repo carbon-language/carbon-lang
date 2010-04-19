@@ -205,7 +205,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
   DMEntry = GV;
-  CGM.setStaticLocalDeclMap(&D, GV);
+  if (getContext().getLangOptions().CPlusPlus)
+    CGM.setStaticLocalDeclAddress(&D, GV);
 
   // Make sure to evaluate VLA bounds now so that we have them for later.
   //

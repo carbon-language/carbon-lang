@@ -171,10 +171,10 @@ public:
   /// been configured.
   bool hasObjCRuntime() { return !!Runtime; }
 
-  llvm::Value *getStaticLocalDeclMap(const VarDecl *VD) {
+  llvm::Value *getStaticLocalDeclAddress(const VarDecl *VD) {
     return StaticLocalDeclMap[VD];
   }
-  void setStaticLocalDeclMap(const VarDecl *D, 
+  void setStaticLocalDeclAddress(const VarDecl *D, 
                              llvm::GlobalVariable *GV) {
     StaticLocalDeclMap[D] = GV;
   }
