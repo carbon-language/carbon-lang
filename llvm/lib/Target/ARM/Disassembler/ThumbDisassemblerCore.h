@@ -1340,12 +1340,15 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
     if ((Idx = TID.getOperandConstraint(OpIdx, TOI::TIED_TO)) != -1) {
       // Process tied_to operand constraint.
       MI.addOperand(MI.getOperand(Idx));
-    } else {
-      assert(!NoDstReg && "Internal error");
+      ++OpIdx;
+    } else if (!NoDstReg) {
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                          decodeRn(insn))));
+      ++OpIdx;
+    } else {
+      DEBUG(errs() << "Thumb encoding error: d==15 for three-reg operands.\n");
+      return false;
     }
-    ++OpIdx;
   }
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
