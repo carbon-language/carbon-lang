@@ -93,10 +93,6 @@ private:
   /// AppendField - Appends a field with the given offset and type.
   void AppendField(uint64_t FieldOffsetInBytes, const llvm::Type *FieldTy);
 
-  /// AppendPadding - Appends enough padding bytes so that the total struct
-  /// size matches the alignment of the passed in type.
-  void AppendPadding(uint64_t FieldOffsetInBytes, const llvm::Type *FieldTy);
-
   /// AppendPadding - Appends enough padding bytes so that the total
   /// struct size is a multiple of the field alignment.
   void AppendPadding(uint64_t FieldOffsetInBytes, unsigned FieldAlignment);
@@ -481,12 +477,6 @@ void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes,
   BitsAvailableInLastField = 0;
 }
 
-void
-CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes,
-                                     const llvm::Type *FieldTy) {
-  AppendPadding(FieldOffsetInBytes, getTypeAlignment(FieldTy));
-}
-
 void CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes,
                                           unsigned FieldAlignment) {
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes &&
@@ -562,9 +552,6 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   const llvm::Type *Ty = llvm::StructType::get(getLLVMContext(),
                                                Builder.FieldTypes,
                                                Builder.Packed);
-  assert(getContext().getASTRecordLayout(D).getSize() / 8 ==
-         getTargetData().getTypeAllocSize(Ty) &&
-         "Type size mismatch!");
 
   CGRecordLayout *RL =
     new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
@@ -577,6 +564,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i)
     RL->BitFields.insert(Builder.LLVMBitFields[i]);
 
+  // Dump the layout, if requested.
   if (getContext().getLangOptions().DumpRecordLayouts) {
     llvm::errs() << "\n*** Dumping Record Layout\n";
     llvm::errs() << "Record: ";
@@ -584,6 +572,13 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     llvm::errs() << "\nLayout: ";
     RL->dump();
   }
+
+  // Verify that the computed LLVM struct size matches the AST layout size.
+  assert(getContext().getASTRecordLayout(D).getSize() / 8 ==
+         getTargetData().getTypeAllocSize(Ty) &&
+         "Type size mismatch!");
+
+  // FIXME: We should verify the individual field offsets here as well.
 
   return RL;
 }
