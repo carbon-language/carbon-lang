@@ -1304,7 +1304,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType(IVD->getType(), TypeStr);
       IvarTypes.push_back(MakeConstantString(TypeStr));
       // Get the offset
-      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, ClassDecl, IVD);
+      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, OID, IVD);
       uint64_t Offset = BaseOffset;
       if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
         Offset = BaseOffset - superInstanceSize;
@@ -2055,7 +2055,13 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
   // when linked against code which isn't (most of the time).
   llvm::GlobalVariable *IvarOffsetPointer = TheModule.getNamedGlobal(Name);
   if (!IvarOffsetPointer) {
-    uint64_t Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
+    uint64_t Offset;
+    if (ObjCImplementationDecl *OID =
+            CGM.getContext().getObjCImplementation((ObjCInterfaceDecl*)(ID)))
+      Offset = ComputeIvarBaseOffset(CGM, OID, Ivar);
+    else
+      Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
+
     llvm::ConstantInt *OffsetGuess =
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset, "ivar");
     // Don't emit the guess in non-PIC code because the linker will not be able
