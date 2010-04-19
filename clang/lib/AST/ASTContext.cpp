@@ -4194,7 +4194,8 @@ void getIntersectionOfProtocols(ASTContext &Context,
   
   unsigned RHSNumProtocols = RHS->getNumProtocols();
   if (RHSNumProtocols > 0) {
-    ObjCProtocolDecl **RHSProtocols = (ObjCProtocolDecl **)RHS->qual_begin();
+    ObjCProtocolDecl **RHSProtocols =
+      const_cast<ObjCProtocolDecl **>(RHS->qual_begin());
     for (unsigned i = 0; i < RHSNumProtocols; ++i)
       if (InheritedProtocolSet.count(RHSProtocols[i]))
         IntersectionOfProtocols.push_back(RHSProtocols[i]);

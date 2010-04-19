@@ -302,7 +302,7 @@ bool BackendConsumer::AddEmitPasses() {
     BackendArgs.push_back("-time-passes");
   BackendArgs.push_back(0);
   llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
-                                    (char**) &BackendArgs[0]);
+                                    const_cast<char **>(&BackendArgs[0]));
 
   std::string FeaturesStr;
   if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {

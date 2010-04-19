@@ -2057,7 +2057,8 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
   if (!IvarOffsetPointer) {
     uint64_t Offset;
     if (ObjCImplementationDecl *OID =
-            CGM.getContext().getObjCImplementation((ObjCInterfaceDecl*)(ID)))
+            CGM.getContext().getObjCImplementation(
+              const_cast<ObjCInterfaceDecl *>(ID)))
       Offset = ComputeIvarBaseOffset(CGM, OID, Ivar);
     else
       Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);

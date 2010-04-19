@@ -251,7 +251,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
     for (unsigned i = 0; i != NumArgs; ++i)
       Args[i + 1] = Clang->getFrontendOpts().LLVMArgs[i].c_str();
     Args[NumArgs + 1] = 0;
-    llvm::cl::ParseCommandLineOptions(NumArgs + 1, (char**) Args);
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
   }
 
   // Create the actual diagnostics engine.

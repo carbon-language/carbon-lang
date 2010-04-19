@@ -48,7 +48,8 @@ const APValue &APValue::operator=(const APValue &RHS) {
   else if (isFloat())
     setFloat(RHS.getFloat());
   else if (isVector())
-    setVector(((Vec*)(char*)RHS.Data)->Elts, RHS.getVectorLength());
+    setVector(((const Vec *)(const char *)RHS.Data)->Elts,
+              RHS.getVectorLength());
   else if (isComplexInt())
     setComplexInt(RHS.getComplexIntReal(), RHS.getComplexIntImag());
   else if (isComplexFloat())

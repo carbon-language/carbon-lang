@@ -431,8 +431,10 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   const driver::ArgStringList &CCArgs = Cmd->getArguments();
   llvm::OwningPtr<CompilerInvocation> CI(new CompilerInvocation);
-  CompilerInvocation::CreateFromArgs(*CI, (const char**) CCArgs.data(),
-                                     (const char**) CCArgs.data()+CCArgs.size(),
+  CompilerInvocation::CreateFromArgs(*CI,
+                                     const_cast<const char **>(CCArgs.data()),
+                                     const_cast<const char **>(CCArgs.data()) +
+                                       CCArgs.size(),
                                      *Diags);
 
   // Override any files that need remapping

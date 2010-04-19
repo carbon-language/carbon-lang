@@ -122,13 +122,17 @@ public:
     return const_cast<APValue*>(this)->getFloat();
   }
 
-  APValue &getVectorElt(unsigned i) const {
+  APValue &getVectorElt(unsigned i) {
     assert(isVector() && "Invalid accessor");
     return ((Vec*)(char*)Data)->Elts[i];
   }
+  const APValue &getVectorElt(unsigned i) const {
+    assert(isVector() && "Invalid accessor");
+    return ((const Vec*)(const char*)Data)->Elts[i];
+  }
   unsigned getVectorLength() const {
     assert(isVector() && "Invalid accessor");
-    return ((Vec*)(void *)Data)->NumElts;
+    return ((const Vec*)(const void *)Data)->NumElts;
   }
 
   APSInt &getComplexIntReal() {

@@ -318,7 +318,8 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
     }
     case nonloc::LazyCompoundValKind: {
       const nonloc::LazyCompoundVal &C = *cast<nonloc::LazyCompoundVal>(this);
-      os << "lazyCompoundVal{" << (void*) C.getStore() << ',' << C.getRegion()
+      os << "lazyCompoundVal{" << const_cast<void *>(C.getStore())
+         << ',' << C.getRegion()
          << '}';
       break;
     }

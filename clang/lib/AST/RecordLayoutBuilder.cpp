@@ -913,7 +913,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
 
   PrintOffset(OS, Offset, IndentLevel);
-  OS << C.getTypeDeclType((CXXRecordDecl *)RD).getAsString();
+  OS << C.getTypeDeclType(const_cast<CXXRecordDecl *>(RD)).getAsString();
   if (Description)
     OS << ' ' << Description;
   if (RD->isEmpty())
