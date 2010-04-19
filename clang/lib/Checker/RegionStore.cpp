@@ -346,8 +346,6 @@ public: // Part of public interface to class.
   Store CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
                          const TypedRegion *R);
 
-  const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
-
   //===------------------------------------------------------------------===//
   // State pruning.
   //===------------------------------------------------------------------===//
@@ -993,14 +991,6 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   }
 
   return true;
-}
-
-const ElementRegion *
-RegionStoreManager::GetElementZeroRegion(const MemRegion *R, QualType T) {
-  ASTContext &Ctx = getContext();
-  SVal idx = ValMgr.makeZeroArrayIndex();
-  assert(!T.isNull());
-  return MRMgr.getElementRegion(T, idx, R, Ctx);
 }
 
 SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {

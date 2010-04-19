@@ -38,6 +38,13 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   return true;
 }
 
+const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R, 
+                                                        QualType T) {
+  SVal idx = ValMgr.makeZeroArrayIndex();
+  assert(!T.isNull());
+  return MRMgr.getElementRegion(T, idx, R, Ctx);
+}
+
 const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy) {
 
   ASTContext& Ctx = StateMgr.getContext();

@@ -869,11 +869,11 @@ public:
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
   const ElementRegion *getElementRegion(QualType elementType, SVal Idx,
-                                  const MemRegion *superRegion,
-                                  ASTContext &Ctx);
+                                        const MemRegion *superRegion,
+                                        ASTContext &Ctx);
 
   const ElementRegion *getElementRegionWithSuper(const ElementRegion *ER,
-                                           const MemRegion *superRegion) {
+                                                 const MemRegion *superRegion) {
     return getElementRegion(ER->getElementType(), ER->getIndex(),
                             superRegion, ER->getContext());
   }

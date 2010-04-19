@@ -593,7 +593,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXExprWithTemporariesClass:
     case Stmt::CXXNamedCastExprClass:
-    case Stmt::CXXNewExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTemporaryObjectExprClass:
@@ -716,6 +715,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXMemberCallExprClass: {
       CXXMemberCallExpr *MCE = cast<CXXMemberCallExpr>(S);
       VisitCXXMemberCallExpr(MCE, Pred, Dst);
+      break;
+    }
+
+    case Stmt::CXXNewExprClass: {
+      CXXNewExpr *NE = cast<CXXNewExpr>(S);
+      VisitCXXNewExpr(NE, Pred, Dst);
       break;
     }
 
@@ -3363,6 +3368,33 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
     if (N)
       Dst.Add(N);
   }
+}
+
+void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
+                                   ExplodedNodeSet &Dst) {
+  if (CNE->isArray()) {
+    // FIXME: allocating an array has not been handled.
+    return;
+  }
+
+  unsigned Count = Builder->getCurrentBlockCount();
+  DefinedOrUnknownSVal SymVal = getValueManager().getConjuredSymbolVal(NULL,CNE, 
+                                                         CNE->getType(), Count);
+  const MemRegion *NewReg = cast<loc::MemRegionVal>(SymVal).getRegion();
+
+  QualType ObjTy = CNE->getType()->getAs<PointerType>()->getPointeeType();
+
+  const ElementRegion *EleReg = 
+                         getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
+
+  const GRState *state = Pred->getState();
+
+  Store store = state->getStore();
+  StoreManager::InvalidatedSymbols IS;
+  store = getStoreManager().InvalidateRegion(store, EleReg, CNE, Count, &IS);
+  state = state->makeWithStore(store);
+  state = state->BindExpr(CNE, loc::MemRegionVal(EleReg));
+  MakeNode(Dst, CNE, Pred, state);
 }
 
 const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *D,

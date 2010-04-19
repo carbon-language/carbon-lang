@@ -352,6 +352,9 @@ public:
   void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
                               ExplodedNodeSet &Dst);
 
+  void VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
+                       ExplodedNodeSet &Dst);
+
   void VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
                     ExplodedNodeSet &Dst);
 
