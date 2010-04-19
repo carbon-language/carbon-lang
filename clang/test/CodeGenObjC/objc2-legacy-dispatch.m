@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck -check-prefix=CHECK_NEW_DISPATCH %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -triple i386-apple-darwin10 -emit-llvm -o - %s | FileCheck -check-prefix=CHECK_NEW_DISPATCH %s
 //
 // CHECK_NEW_DISPATCH: define void @f0
 // CHECK_NEW_DISPATCH: bitcast {{.*}}objc_msgSend_fixup_alloc
