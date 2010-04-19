@@ -60,7 +60,7 @@ public:
   Session() : ITCounter(0), ITState(0) {}
   ~Session() {}
   /// InitIT - Initializes ITCounter/ITState.
-  void InitIT(unsigned short bits7_0);
+  bool InitIT(unsigned short bits7_0);
   /// UpdateIT - Updates ITCounter/ITState as IT Block progresses.
   void UpdateIT();
 

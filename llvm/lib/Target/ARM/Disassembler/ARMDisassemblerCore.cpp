@@ -3282,7 +3282,7 @@ bool ARMBasicMCBuilder::RunBuildAfterHook(bool Status, MCInst &MI,
   if (!SP) return Status;
 
   if (Opcode == ARM::t2IT)
-    SP->InitIT(slice(insn, 7, 0));
+    Status = SP->InitIT(slice(insn, 7, 0)) ? Status : false;
   else if (InITBlock())
     SP->UpdateIT();
 

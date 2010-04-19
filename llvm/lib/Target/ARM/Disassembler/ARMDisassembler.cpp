@@ -508,17 +508,23 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
 }
 
 // A8.6.50
+// Valid return values are {1, 2, 3, 4}, with 0 signifying an error condition.
 static unsigned short CountITSize(unsigned ITMask) {
   // First count the trailing zeros of the IT mask.
   unsigned TZ = CountTrailingZeros_32(ITMask);
-  assert(TZ <= 3 && "Encoding error");
+  if (TZ > 3) {
+    DEBUG(errs() << "Encoding error of IT mask");
+    return 0;
+  }
   return (4 - TZ);
 }
 
-/// Init ITState.
-void Session::InitIT(unsigned short bits7_0) {
+/// Init ITState.  Note that at least one bit is always 1 in mask.
+bool Session::InitIT(unsigned short bits7_0) {
   ITCounter = CountITSize(slice(bits7_0, 3, 0));
   ITState = bits7_0;
+  // Only need to check for > 0.
+  return ITCounter > 0;
 }
 
 /// Update ITState if necessary.
