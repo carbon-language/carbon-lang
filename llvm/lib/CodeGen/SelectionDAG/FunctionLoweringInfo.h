@@ -24,6 +24,7 @@
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/Support/CallSite.h"
 #include <vector>
 
 namespace llvm {
@@ -165,6 +166,15 @@ ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred);
 /// the given LLVM IR integer condition code.
 ///
 ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
+
+/// Test if the given instruction is in a position to be optimized
+/// with a tail-call. This roughly means that it's in a block with
+/// a return and there's nothing that needs to be scheduled
+/// between it and the return.
+///
+/// This function only tests target-independent requirements.
+bool isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
+                          const TargetLowering &TLI);
 
 } // end namespace llvm
 
