@@ -505,6 +505,16 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
+    // Normal name lookup didn't find anything. If we're in an
+    // Objective-C method, look for ivars. If we find one, we're done!
+    // FIXME: This is a hack. Ivar lookup should be part of normal lookup.
+    if (ObjCMethodDecl *Method = getCurMethodDecl()) {
+      ObjCInterfaceDecl *ClassDeclared;
+      if (Method->getClassInterface()->lookupInstanceVariable(Name, 
+                                                              ClassDeclared))
+        return ObjCInstanceMessage;
+    }
+      
     // Break out; we'll perform typo correction below.
     break;
 
