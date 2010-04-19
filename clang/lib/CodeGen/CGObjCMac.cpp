@@ -4264,7 +4264,10 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
 bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
   if (CGM.getCodeGenOpts().ObjCLegacyDispatch)
     return true;
-
+  /* Leopard */
+  if (CGM.getContext().Target.getTriple().getDarwinMajorNumber() <= 9)
+    return false;
+  
   if (NonLegacyDispatchMethods.empty()) {
     NonLegacyDispatchMethods.insert(GetNullarySelector("alloc"));
     NonLegacyDispatchMethods.insert(GetNullarySelector("class"));
