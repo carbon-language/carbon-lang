@@ -1575,8 +1575,8 @@ LSRInstance::OptimizeLoopTermCond() {
             !DT.properlyDominates(UI->getUser()->getParent(), ExitingBlock)) {
           // Conservatively assume there may be reuse if the quotient of their
           // strides could be a legal scale.
-          const SCEV *A = CondUse->getStride(L);
-          const SCEV *B = UI->getStride(L);
+          const SCEV *A = IU.getStride(*CondUse, L);
+          const SCEV *B = IU.getStride(*UI, L);
           if (!A || !B) continue;
           if (SE.getTypeSizeInBits(A->getType()) !=
               SE.getTypeSizeInBits(B->getType())) {
@@ -1629,8 +1629,7 @@ LSRInstance::OptimizeLoopTermCond() {
         ExitingBlock->getInstList().insert(TermBr, Cond);
 
         // Clone the IVUse, as the old use still exists!
-        CondUse = &IU.AddUser(CondUse->getExpr(),
-                              Cond, CondUse->getOperandValToReplace());
+        CondUse = &IU.AddUser(Cond, CondUse->getOperandValToReplace());
         TermBr->replaceUsesOfWith(OldCond, Cond);
       }
     }
@@ -1748,7 +1747,7 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
   // Collect interesting types and strides.
   SmallVector<const SCEV *, 4> Worklist;
   for (IVUsers::const_iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI) {
-    const SCEV *Expr = UI->getExpr();
+    const SCEV *Expr = IU.getExpr(*UI);
 
     // Collect interesting types.
     Types.insert(SE.getEffectiveSCEVType(Expr->getType()));
@@ -1819,7 +1818,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
       AccessTy = getAccessType(LF.UserInst);
     }
 
-    const SCEV *S = UI->getExpr();
+    const SCEV *S = IU.getExpr(*UI);
 
     // Equality (== and !=) ICmps are special. We can rewrite (i == N) as
     // (N - i == 0), and this allows (N - i) to be the expression that we work

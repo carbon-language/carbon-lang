@@ -36,9 +36,8 @@ class IVUsers;
 class IVStrideUse : public CallbackVH, public ilist_node<IVStrideUse> {
   friend class IVUsers;
 public:
-  IVStrideUse(IVUsers *P, const SCEV *E,
-              Instruction* U, Value *O)
-    : CallbackVH(U), Parent(P), Expr(E), OperandValToReplace(O) {
+  IVStrideUse(IVUsers *P, Instruction* U, Value *O)
+    : CallbackVH(U), Parent(P), OperandValToReplace(O) {
   }
 
   /// getUser - Return the user instruction for this use.
@@ -50,20 +49,6 @@ public:
   void setUser(Instruction *NewUser) {
     setValPtr(NewUser);
   }
-
-  /// getParent - Return a pointer to the IVUsers that owns
-  /// this IVStrideUse.
-  IVUsers *getParent() const { return Parent; }
-
-  /// getExpr - Return the expression for the use.
-  const SCEV *getExpr() const { return Expr; }
-
-  /// setExpr - Assign a new expression to this use.
-  void setExpr(const SCEV *Val) {
-    Expr = Val;
-  }
-
-  const SCEV *getStride(const Loop *L) const;
 
   /// getOperandValToReplace - Return the Value of the operand in the user
   /// instruction that this IVStrideUse is representing.
@@ -90,9 +75,6 @@ public:
 private:
   /// Parent - a pointer to the IVUsers that owns this IVStrideUse.
   IVUsers *Parent;
-
-  /// Expr - The expression for this use.
-  const SCEV *Expr;
 
   /// OperandValToReplace - The Value of the operand in the user instruction
   /// that this IVStrideUse is representing.
@@ -161,12 +143,16 @@ public:
   /// return true.  Otherwise, return false.
   bool AddUsersIfInteresting(Instruction *I);
 
-  IVStrideUse &AddUser(const SCEV *Expr,
-                       Instruction *User, Value *Operand);
+  IVStrideUse &AddUser(Instruction *User, Value *Operand);
 
   /// getReplacementExpr - Return a SCEV expression which computes the
   /// value of the OperandValToReplace of the given IVStrideUse.
-  const SCEV *getReplacementExpr(const IVStrideUse &U) const;
+  const SCEV *getReplacementExpr(const IVStrideUse &IU) const;
+
+  /// getExpr - Return the expression for the use.
+  const SCEV *getExpr(const IVStrideUse &IU) const;
+
+  const SCEV *getStride(const IVStrideUse &IU, const Loop *L) const;
 
   typedef ilist<IVStrideUse>::iterator iterator;
   typedef ilist<IVStrideUse>::const_iterator const_iterator;

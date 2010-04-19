@@ -82,3 +82,27 @@ bb20.loopexit:
   %tmp.0.ph = phi i32 [ 0, %bb18 ], [ 1, %bb15 ], [ 0, %bb13 ]
   ret i32 %tmp.0.ph
 }
+
+; Indvars should eliminate the icmp here.
+
+; CHECK: @func_10
+; CHECK-NOT: icmp
+; CHECK: ret void
+
+define void @func_10() nounwind {
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ %i.next, %loop ], [ 0, %entry ]
+  %t0 = icmp slt i32 %i, 0
+  %t1 = zext i1 %t0 to i32
+  %t2 = add i32 %t1, %i
+  %u3 = zext i32 %t2 to i64
+  store i64 %u3, i64* null
+  %i.next = add i32 %i, 1
+  br i1 undef, label %loop, label %return
+
+return:
+  ret void
+}

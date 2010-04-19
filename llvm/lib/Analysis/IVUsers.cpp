@@ -122,23 +122,21 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
 
     if (AddUserToIVUsers) {
       // Okay, we found a user that we cannot reduce.
-      IVUses.push_back(new IVStrideUse(this, ISE, User, I));
+      IVUses.push_back(new IVStrideUse(this, User, I));
       IVStrideUse &NewUse = IVUses.back();
       // Transform the expression into a normalized form.
-      NewUse.Expr =
-        TransformForPostIncUse(NormalizeAutodetect, NewUse.Expr,
-                               User, I,
-                               NewUse.PostIncLoops,
-                               *SE, *DT);
-      DEBUG(dbgs() << "   NORMALIZED TO: " << *NewUse.Expr << '\n');
+      ISE = TransformForPostIncUse(NormalizeAutodetect,
+                                   ISE, User, I,
+                                   NewUse.PostIncLoops,
+                                   *SE, *DT);
+      DEBUG(dbgs() << "   NORMALIZED TO: " << *ISE << '\n');
     }
   }
   return true;
 }
 
-IVStrideUse &IVUsers::AddUser(const SCEV *Expr,
-                              Instruction *User, Value *Operand) {
-  IVUses.push_back(new IVStrideUse(this, Expr, User, Operand));
+IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
+  IVUses.push_back(new IVStrideUse(this, User, Operand));
   return IVUses.back();
 }
 
@@ -169,15 +167,6 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   return false;
 }
 
-/// getReplacementExpr - Return a SCEV expression which computes the
-/// value of the OperandValToReplace of the given IVStrideUse.
-const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &U) const {
-  PostIncLoopSet &Loops = const_cast<PostIncLoopSet &>(U.PostIncLoops);
-  return TransformForPostIncUse(Denormalize, U.getExpr(),
-                                U.getUser(), U.getOperandValToReplace(),
-                                Loops, *SE, *DT);
-}
-
 void IVUsers::print(raw_ostream &OS, const Module *M) const {
   OS << "IV Users for loop ";
   WriteAsOperand(OS, L->getHeader(), false);
@@ -194,8 +183,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
        E = IVUses.end(); UI != E; ++UI) {
     OS << "  ";
     WriteAsOperand(OS, UI->getOperandValToReplace(), false);
-    OS << " = "
-       << *getReplacementExpr(*UI);
+    OS << " = " << *getReplacementExpr(*UI);
     for (PostIncLoopSet::const_iterator
          I = UI->PostIncLoops.begin(),
          E = UI->PostIncLoops.end(); I != E; ++I) {
@@ -218,6 +206,21 @@ void IVUsers::releaseMemory() {
   IVUses.clear();
 }
 
+/// getReplacementExpr - Return a SCEV expression which computes the
+/// value of the OperandValToReplace.
+const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &IU) const {
+  return SE->getSCEV(IU.getOperandValToReplace());
+}
+
+/// getExpr - Return the expression for the use.
+const SCEV *IVUsers::getExpr(const IVStrideUse &IU) const {
+  return
+    TransformForPostIncUse(Normalize, getReplacementExpr(IU),
+                           IU.getUser(), IU.getOperandValToReplace(),
+                           const_cast<PostIncLoopSet &>(IU.getPostIncLoops()),
+                           *SE, *DT);
+}
+
 static const SCEVAddRecExpr *findAddRecForLoop(const SCEV *S, const Loop *L) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     if (AR->getLoop() == L)
@@ -236,18 +239,13 @@ static const SCEVAddRecExpr *findAddRecForLoop(const SCEV *S, const Loop *L) {
   return 0;
 }
 
-const SCEV *IVStrideUse::getStride(const Loop *L) const {
-  if (const SCEVAddRecExpr *AR = findAddRecForLoop(getExpr(), L))
-    return AR->getStepRecurrence(*Parent->SE);
+const SCEV *IVUsers::getStride(const IVStrideUse &IU, const Loop *L) const {
+  if (const SCEVAddRecExpr *AR = findAddRecForLoop(getExpr(IU), L))
+    return AR->getStepRecurrence(*SE);
   return 0;
 }
 
 void IVStrideUse::transformToPostInc(const Loop *L) {
-  PostIncLoopSet Loops;
-  Loops.insert(L);
-  Expr = TransformForPostIncUse(Normalize, Expr,
-                                getUser(), getOperandValToReplace(),
-                                Loops, *Parent->SE, *Parent->DT);
   PostIncLoops.insert(L);
 }
 
