@@ -863,7 +863,7 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   // libSupport. And performance isn't critical here.
   std::vector<char> Buf;
   Buf.resize(path.size()+8);
-  char *FNBuffer = Buf.data();
+  char *FNBuffer = &Buf[0];
     path.copy(FNBuffer,path.size());
   if (isDirectory())
     strcpy(FNBuffer+path.size(), "/XXXXXX");
