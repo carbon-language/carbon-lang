@@ -1406,7 +1406,8 @@ void DAGTypeLegalizer::ExpandIntRes_AssertZext(SDNode *N,
 
   if (NVTBits < EVTBits) {
     Hi = DAG.getNode(ISD::AssertZext, dl, NVT, Hi,
-                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(), EVTBits - NVTBits)));
+                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(),
+                                                        EVTBits - NVTBits)));
   } else {
     Lo = DAG.getNode(ISD::AssertZext, dl, NVT, Lo, DAG.getValueType(EVT));
     // The high part must be zero, make it explicit.
@@ -1849,7 +1850,8 @@ void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
     unsigned ExcessBits =
       Op.getValueType().getSizeInBits() - NVT.getSizeInBits();
     Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Hi.getValueType(), Hi,
-                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(), ExcessBits)));
+                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(),
+                                                        ExcessBits)));
   }
 }
 
