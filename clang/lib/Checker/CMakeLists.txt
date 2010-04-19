@@ -31,6 +31,7 @@ add_clang_library(clangChecker
   FlatStore.cpp
   GRBlockCounter.cpp
   GRCoreEngine.cpp
+  GRCXXExprEngine.cpp
   GRExprEngine.cpp
   GRExprEngineExperimentalChecks.cpp
   GRState.cpp
