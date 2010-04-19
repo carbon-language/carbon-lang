@@ -44,8 +44,8 @@ namespace llvm {
     // Workaround PR5482: nearly all gcc 4.x miscompile StringRef and std::min()
     // Changing the arg of min to be an integer, instead of a reference to an
     // integer works around this bug.
-    size_t min(size_t a, size_t b) const { return a < b ? a : b; }
-    size_t max(size_t a, size_t b) const { return a > b ? a : b; }
+    static size_t min(size_t a, size_t b) { return a < b ? a : b; }
+    static size_t max(size_t a, size_t b) { return a > b ? a : b; }
 
   public:
     /// @name Constructors
