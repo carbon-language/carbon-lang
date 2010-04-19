@@ -1290,16 +1290,21 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
     instanceSize = 0 - (instanceSize - superInstanceSize);
   }
-  for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
-      endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
+
+  // Collect declared and synthesized ivars.
+  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
+  CGM.getContext().ShallowCollectObjCIvars(ClassDecl, OIvars);
+
+  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
+      ObjCIvarDecl *IVD = OIvars[i];
       // Store the name
-      IvarNames.push_back(MakeConstantString((*iter)->getNameAsString()));
+      IvarNames.push_back(MakeConstantString(IVD->getNameAsString()));
       // Get the type encoding for this ivar
       std::string TypeStr;
-      Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
+      Context.getObjCEncodingForType(IVD->getType(), TypeStr);
       IvarTypes.push_back(MakeConstantString(TypeStr));
       // Get the offset
-      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
+      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, ClassDecl, IVD);
       uint64_t Offset = BaseOffset;
       if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
         Offset = BaseOffset - superInstanceSize;
@@ -1310,7 +1315,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
           false, llvm::GlobalValue::ExternalLinkage,
           llvm::ConstantInt::get(IntTy, BaseOffset),
           "__objc_ivar_offset_value_" + ClassName +"." +
-          (*iter)->getNameAsString()));
+          IVD->getNameAsString()));
   }
   llvm::Constant *IvarOffsetArrayInit =
       llvm::ConstantArray::get(llvm::ArrayType::get(PtrToIntTy,
@@ -1659,10 +1664,9 @@ llvm::Function *CGObjCGNU::GetPropertyGetFunction() {
     CGM.getTypes().ConvertType(CGM.getContext().BoolTy);
   Params.push_back(IdTy);
   Params.push_back(SelectorTy);
-  // FIXME: Using LongTy for ptrdiff_t is probably broken on Win64
-  Params.push_back(LongTy);
+  Params.push_back(IntTy);
   Params.push_back(BoolTy);
-  // void objc_getProperty (id, SEL, ptrdiff_t, bool)
+  // void objc_getProperty (id, SEL, int, bool)
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(IdTy, Params, false);
   return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
@@ -1675,12 +1679,11 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
     CGM.getTypes().ConvertType(CGM.getContext().BoolTy);
   Params.push_back(IdTy);
   Params.push_back(SelectorTy);
-  // FIXME: Using LongTy for ptrdiff_t is probably broken on Win64
-  Params.push_back(LongTy);
+  Params.push_back(IntTy);
   Params.push_back(IdTy);
   Params.push_back(BoolTy);
   Params.push_back(BoolTy);
-  // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
+  // void objc_setProperty (id, SEL, int, id, bool, bool)
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Params, false);
   return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
