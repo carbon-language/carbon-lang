@@ -743,7 +743,7 @@ bool Sema::SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
   
   if (!Arg->isIntegerConstantExpr(Result, Context))
     return Diag(TheCall->getLocStart(), diag::err_constant_integer_arg_type)
-                << ArgNum << FDecl->getDeclName() <<  Arg->getSourceRange();
+                << FDecl->getDeclName() <<  Arg->getSourceRange();
   
   return false;
 }

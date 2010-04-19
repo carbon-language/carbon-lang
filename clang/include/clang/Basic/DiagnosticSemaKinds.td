@@ -2864,7 +2864,7 @@ def err_builtin_longjmp_invalid_val : Error<
   "argument to __builtin_longjmp must be a constant 1">;
 
 def err_constant_integer_arg_type : Error<
-  "argument %0 to %1 must be a constant integer">;
+  "argument to %0 must be a constant integer">;
 
 def ext_mixed_decls_code : Extension<
   "ISO C90 forbids mixing declarations and code">;
