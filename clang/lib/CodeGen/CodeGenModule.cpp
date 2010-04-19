@@ -315,6 +315,10 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
                                        == TSK_ExplicitInstantiationDeclaration)
     return CodeGenModule::GVA_C99Inline;
 
+  // If this is a virtual method and its class has a key method in another
+  // translation unit, we know that this method will be present in that
+  // translation unit. In this translation unit we will use this method
+  // only for inlining and analysis. This is the semantics of c99 inline.
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     const CXXRecordDecl *RD = MD->getParent();
     if (MD->isVirtual() &&
