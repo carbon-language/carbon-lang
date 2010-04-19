@@ -810,7 +810,8 @@ public:
                               TypeSourceInfo *TSInfo, QualType T,
                               IdentifierInfo *Name,
                               SourceLocation NameLoc,
-                              VarDecl::StorageClass StorageClass);
+                              VarDecl::StorageClass StorageClass,
+                              VarDecl::StorageClass StorageClassAsWritten);
   virtual void ActOnObjCCatchParam(DeclPtrTy D);
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,

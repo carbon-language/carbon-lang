@@ -727,7 +727,8 @@ class NonTypeTemplateParmDecl
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
                           TypeSourceInfo *TInfo)
-    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, VarDecl::None),
+    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, VarDecl::None,
+              VarDecl::None),
       TemplateParmPosition(D, P), DefaultArgument(0)
   { }
 

@@ -433,6 +433,7 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
 void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   // Before possibly changing their values, save specs as written.
   SaveWrittenBuiltinSpecs();
+  SaveStorageSpecifierAsWritten();
 
   // Check the type specifier components first.
   SourceManager &SrcMgr = PP.getSourceManager();

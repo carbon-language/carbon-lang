@@ -812,7 +812,8 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
                                                          Pad.getQuantity()),
                                                        ArrayType::Normal, 0);
     ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
-                                         0, QualType(PadTy), 0, VarDecl::None);
+                                         0, QualType(PadTy), 0,
+                                         VarDecl::None, VarDecl::None);
     Expr *E;
     E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
                                        SourceLocation());
@@ -860,7 +861,9 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static, false,
+                                          FunctionDecl::Static,
+                                          FunctionDecl::None,
+                                          false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
@@ -941,8 +944,9 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static, false,
-                                          true);
+                                          FunctionDecl::Static,
+                                          FunctionDecl::None,
+                                          false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
   if (NoteForHelperp) {
@@ -1025,8 +1029,9 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static, false,
-                                          true);
+                                          FunctionDecl::Static,
+                                          FunctionDecl::None,
+                                          false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
   // dst->x
@@ -1089,8 +1094,9 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static, false,
-                                          true);
+                                          FunctionDecl::Static,
+                                          FunctionDecl::None,
+                                          false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
   llvm::Value *V = CGF.GetAddrOfLocalVar(Src);

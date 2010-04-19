@@ -176,6 +176,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     Writer.AddStmt(D->getBody());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
+  Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isInlineSpecified());
   Record.push_back(D->isVirtualAsWritten());
   Record.push_back(D->isPure());
@@ -383,6 +384,7 @@ void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
 void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   VisitDeclaratorDecl(D);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
+  Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isThreadSpecified());
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isDeclaredInCondition());
@@ -494,6 +496,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(pch::PREDEF_TYPE_NULL_ID)); // InfoType
   // VarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // StorageClass
+  Abv->Add(BitCodeAbbrevOp(0));                       // StorageClassAsWritten
   Abv->Add(BitCodeAbbrevOp(0));                       // isThreadSpecified
   Abv->Add(BitCodeAbbrevOp(0));                       // hasCXXDirectInitializer
   Abv->Add(BitCodeAbbrevOp(0));                       // isDeclaredInCondition

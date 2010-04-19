@@ -2630,6 +2630,7 @@ TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
                                NewDI->getType(),
                                NewDI,
                                OldParm->getStorageClass(),
+                               OldParm->getStorageClassAsWritten(),
                                /* DefArg */ NULL);
 }
 

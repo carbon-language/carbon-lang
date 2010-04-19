@@ -185,6 +185,8 @@ private:
   // constexpr-specifier
   bool Constexpr_specified : 1;
 
+  /*SCS*/unsigned StorageClassSpecAsWritten : 3;
+
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
@@ -217,6 +219,9 @@ private:
 
   WrittenBuiltinSpecs writtenBS;
   void SaveWrittenBuiltinSpecs();
+  void SaveStorageSpecifierAsWritten() {
+    StorageClassSpecAsWritten = StorageClassSpec;
+  }
 
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
@@ -238,6 +243,7 @@ public:
       FS_explicit_specified(false),
       Friend_specified(false),
       Constexpr_specified(false),
+      StorageClassSpecAsWritten(SCS_unspecified),
       TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
@@ -334,6 +340,10 @@ public:
   /// DeclSpec includes.
   ///
   unsigned getParsedSpecifiers() const;
+
+  SCS getStorageClassSpecAsWritten() const {
+    return (SCS)StorageClassSpecAsWritten;
+  }
 
   /// isEmpty - Return true if this declaration specifier is completely empty:
   /// no tokens were parsed in the production of it.

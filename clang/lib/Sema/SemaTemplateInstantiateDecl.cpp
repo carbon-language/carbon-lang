@@ -322,7 +322,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
                                  DI->getType(), DI,
-                                 D->getStorageClass());
+                                 D->getStorageClass(),
+                                 D->getStorageClassAsWritten());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
@@ -991,7 +992,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
                            D->getDeclName(), T, TInfo,
-                           D->getStorageClass(),
+                           D->getStorageClass(), D->getStorageClassAsWritten(),
                            D->isInlineSpecified(), D->hasWrittenPrototype());
 
   if (Qualifier)
@@ -1210,14 +1211,16 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         Constructor->getLocation(),
                                         Name, T, TInfo,
                                         Constructor->isExplicit(),
-                                        Constructor->isInlineSpecified(), false);
+                                        Constructor->isInlineSpecified(),
+                                        false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
     Name = SemaRef.Context.DeclarationNames.getCXXDestructorName(
                                    SemaRef.Context.getCanonicalType(ClassTy));
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        Destructor->getLocation(), Name,
-                                       T, Destructor->isInlineSpecified(), false);
+                                       T, Destructor->isInlineSpecified(),
+                                       false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
     CanQualType ConvTy
       = SemaRef.Context.getCanonicalType(
@@ -1232,7 +1235,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(),
                                    D->getDeclName(), T, TInfo,
-                                   D->isStatic(), D->isInlineSpecified());
+                                   D->isStatic(),
+                                   D->getStorageClassAsWritten(),
+                                   D->isInlineSpecified());
   }
 
   if (Qualifier)

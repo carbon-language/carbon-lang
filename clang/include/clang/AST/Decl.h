@@ -490,6 +490,7 @@ protected:
 private:
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
+  unsigned SClassAsWritten : 3;
   bool ThreadSpecified : 1;
   bool HasCXXDirectInit : 1;
 
@@ -500,11 +501,13 @@ private:
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, TypeSourceInfo *TInfo, StorageClass SC)
+          QualType T, TypeSourceInfo *TInfo, StorageClass SC,
+          StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
       DeclaredInCondition(false) {
     SClass = SC;
+    SClassAsWritten = SCAsWritten;
   }
 
   typedef Redeclarable<VarDecl> redeclarable_base;
@@ -521,7 +524,8 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, TypeSourceInfo *TInfo, StorageClass S);
+                         QualType T, TypeSourceInfo *TInfo, StorageClass S,
+                         StorageClass SCAsWritten);
 
   virtual void Destroy(ASTContext& C);
   virtual ~VarDecl();
@@ -529,7 +533,11 @@ public:
   virtual SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
+  StorageClass getStorageClassAsWritten() const {
+    return (StorageClass) SClassAsWritten;
+  }
   void setStorageClass(StorageClass SC) { SClass = SC; }
+  void setStorageClassAsWritten(StorageClass SC) { SClassAsWritten = SC; }
 
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {
@@ -862,7 +870,7 @@ class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
                     IdentifierInfo *Id, QualType Tw)
-    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, VarDecl::None) {}
+    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, VarDecl::None, VarDecl::None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
@@ -884,9 +892,9 @@ class ParmVarDecl : public VarDecl {
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-              StorageClass S, Expr *DefArg)
-  : VarDecl(DK, DC, L, Id, T, TInfo, S),
-    objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false) {
+              StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
+    : VarDecl(DK, DC, L, Id, T, TInfo, S, SCAsWritten),
+      objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false) {
     setDefaultArg(DefArg);
   }
 
@@ -894,7 +902,8 @@ public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, TypeSourceInfo *TInfo,
-                             StorageClass S, Expr *DefArg);
+                             StorageClass S, StorageClass SCAsWritten,
+                             Expr *DefArg);
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -1020,6 +1029,7 @@ private:
   // FIXME: This can be packed into the bitfields in Decl.
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
+  unsigned SClassAsWritten : 2;
   bool IsInline : 1;
   bool IsVirtualAsWritten : 1;
   bool IsPure : 1;
@@ -1060,11 +1070,11 @@ private:
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName N, QualType T, TypeSourceInfo *TInfo,
-               StorageClass S, bool isInline)
+               StorageClass S, StorageClass SCAsWritten, bool isInline)
     : DeclaratorDecl(DK, DC, L, N, T, TInfo),
       DeclContext(DK),
       ParamInfo(0), Body(),
-      SClass(S), IsInline(isInline), 
+      SClass(S), SClassAsWritten(SCAsWritten), IsInline(isInline),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       IsCopyAssignment(false),
@@ -1089,7 +1099,9 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T,
                               TypeSourceInfo *TInfo,
-                              StorageClass S = None, bool isInline = false,
+                              StorageClass S = None,
+                              StorageClass SCAsWritten = None,
+                              bool isInline = false,
                               bool hasWrittenPrototype = true);
 
   virtual void getNameForDiagnostic(std::string &S,
@@ -1243,6 +1255,11 @@ public:
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   void setStorageClass(StorageClass SC) { SClass = SC; }
+
+  StorageClass getStorageClassAsWritten() const {
+    return StorageClass(SClassAsWritten);
+  }
+  void setStorageClassAsWritten(StorageClass SC) { SClassAsWritten = SC; }
 
   /// \brief Determine whether the "inline" keyword was specified for this
   /// function.

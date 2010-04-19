@@ -586,8 +586,8 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-                         StorageClass S) {
-  return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S);
+                         StorageClass S, StorageClass SCAsWritten) {
+  return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S, SCAsWritten);
 }
 
 void VarDecl::Destroy(ASTContext& C) {
@@ -811,8 +811,10 @@ void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, TypeSourceInfo *TInfo,
-                                 StorageClass S, Expr *DefArg) {
-  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo, S, DefArg);
+                                 StorageClass S, StorageClass SCAsWritten,
+                                 Expr *DefArg) {
+  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo,
+                             S, SCAsWritten, DefArg);
 }
 
 Expr *ParmVarDecl::getDefaultArg() {
@@ -1658,10 +1660,10 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
                                    DeclarationName N, QualType T,
                                    TypeSourceInfo *TInfo,
-                                   StorageClass S, bool isInline,
-                                   bool hasWrittenPrototype) {
-  FunctionDecl *New
-    = new (C) FunctionDecl(Function, DC, L, N, T, TInfo, S, isInline);
+                                   StorageClass S, StorageClass SCAsWritten,
+                                   bool isInline, bool hasWrittenPrototype) {
+  FunctionDecl *New = new (C) FunctionDecl(Function, DC, L, N, T, TInfo,
+                                           S, SCAsWritten, isInline);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }

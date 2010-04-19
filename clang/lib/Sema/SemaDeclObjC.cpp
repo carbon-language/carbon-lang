@@ -1565,7 +1565,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     ParmVarDecl* Param
       = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
                             ArgInfo[i].Name, ArgType, DI,
-                            VarDecl::None, 0);
+                            VarDecl::None, VarDecl::None, 0);
 
     if (ArgType->isObjCInterfaceType()) {
       Diag(ArgInfo[i].NameLoc,

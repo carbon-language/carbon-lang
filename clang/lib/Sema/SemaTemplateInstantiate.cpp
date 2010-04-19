@@ -991,7 +991,8 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
                                         NewDI, NewDI->getType(),
                                         OldParm->getIdentifier(),
                                         OldParm->getLocation(),
-                                        OldParm->getStorageClass());
+                                        OldParm->getStorageClass(),
+                                        OldParm->getStorageClassAsWritten());
   if (!NewParm)
     return 0;
                                                 

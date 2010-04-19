@@ -2385,6 +2385,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, /*TInfo=*/0,
+                                                 VarDecl::None,
                                                  VarDecl::None, 0);
     CopyConstructor->setParams(&FromParam, 1);
     if (S)
@@ -2464,7 +2465,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
                                                     /*FIXME:*/false,
                                                     false, 0, 0,
                                                     FunctionType::ExtInfo()),
-                            /*TInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
+                            /*TInfo=*/0, /*isStatic=*/false,
+                            /*StorageClassAsWritten=*/FunctionDecl::None,
+                            /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
     CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
@@ -2475,6 +2478,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, /*TInfo=*/0,
+                                                 VarDecl::None,
                                                  VarDecl::None, 0);
     CopyAssignment->setParams(&FromParam, 1);
 
@@ -4787,7 +4791,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
     Invalid = true;
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
-                                    Name, ExDeclType, TInfo, VarDecl::None);
+                                    Name, ExDeclType, TInfo, VarDecl::None,
+                                    VarDecl::None);
 
   if (!Invalid) {
     if (const RecordType *RecordTy = ExDeclType->getAs<RecordType>()) {

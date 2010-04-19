@@ -1208,7 +1208,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                             FunctionType::ExtInfo());
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
-                         FnType, /*TInfo=*/0, FunctionDecl::None, false, true);
+                         FnType, /*TInfo=*/0, FunctionDecl::None,
+                         FunctionDecl::None, false, true);
   Alloc->setImplicit();
   
   if (AddMallocAttr)
@@ -1216,6 +1217,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                            0, Argument, /*TInfo=*/0,
+                                           VarDecl::None,
                                            VarDecl::None, 0);
   Alloc->setParams(&Param, 1);
 

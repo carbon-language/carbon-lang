@@ -179,6 +179,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
+  FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setInlineSpecified(Record[Idx++]);
   FD->setVirtualAsWritten(Record[Idx++]);
   FD->setPure(Record[Idx++]);
@@ -399,6 +400,7 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VisitDeclaratorDecl(VD);
   VD->setStorageClass((VarDecl::StorageClass)Record[Idx++]);
+  VD->setStorageClassAsWritten((VarDecl::StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);
   VD->setDeclaredInCondition(Record[Idx++]);
@@ -746,7 +748,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                        VarDecl::None);
+                        VarDecl::None, VarDecl::None);
     break;
 
   case pch::DECL_IMPLICIT_PARAM:
@@ -755,7 +757,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
 
   case pch::DECL_PARM_VAR:
     D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                            VarDecl::None, 0);
+                            VarDecl::None, VarDecl::None, 0);
     break;
   case pch::DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);

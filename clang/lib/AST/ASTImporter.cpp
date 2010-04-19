@@ -1905,6 +1905,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   } else {
     ToFunction = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
                                       Name, T, TInfo, D->getStorageClass(), 
+                                      D->getStorageClassAsWritten(),
                                       D->isInlineSpecified(),
                                       D->hasWrittenPrototype());
   }
@@ -2125,7 +2126,8 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
                                    Name.getAsIdentifierInfo(), T, TInfo,
-                                   D->getStorageClass());
+                                   D->getStorageClass(),
+                                   D->getStorageClassAsWritten());
   // Import the qualifier, if any.
   if (D->getQualifier()) {
     NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
@@ -2197,6 +2199,7 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
   ParmVarDecl *ToParm = ParmVarDecl::Create(Importer.getToContext(), DC,
                                             Loc, Name.getAsIdentifierInfo(),
                                             T, TInfo, D->getStorageClass(),
+                                             D->getStorageClassAsWritten(),
                                             /*FIXME: Default argument*/ 0);
   ToParm->setHasInheritedDefaultArg(D->hasInheritedDefaultArg());
   return Importer.Imported(D, ToParm);

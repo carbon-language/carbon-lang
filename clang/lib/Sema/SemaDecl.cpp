@@ -717,7 +717,8 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
                                            Loc, II, R, /*TInfo=*/0,
-                                           FunctionDecl::Extern, false,
+                                           FunctionDecl::Extern,
+                                           FunctionDecl::None, false,
                                            /*hasPrototype=*/true);
   New->setImplicit();
 
@@ -728,7 +729,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
                                            FT->getArgType(i), /*TInfo=*/0,
-                                           VarDecl::None, 0));
+                                           VarDecl::None, VarDecl::None, 0));
     New->setParams(Params.data(), Params.size());
   }
 
@@ -1160,7 +1161,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, New,
                                                  SourceLocation(), 0,
                                                  *ParamType, /*TInfo=*/0,
-                                                 VarDecl::None, 0);
+                                                 VarDecl::None, VarDecl::None,
+                                                 0);
         Param->setImplicit();
         Params.push_back(Param);
       }
@@ -1592,6 +1594,44 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
   return Invalid;
 }
 
+/// StorageClassSpecToVarDeclStorageClass - Maps a DeclSpec::SCS to
+/// a VarDecl::StorageClass. Any error reporting is up to the caller:
+/// illegal input values are mapped to VarDecl::None.
+static VarDecl::StorageClass
+StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
+  switch (StorageClassSpec) {
+  case DeclSpec::SCS_unspecified:    return VarDecl::None;
+  case DeclSpec::SCS_extern:         return VarDecl::Extern;
+  case DeclSpec::SCS_static:         return VarDecl::Static;
+  case DeclSpec::SCS_auto:           return VarDecl::Auto;
+  case DeclSpec::SCS_register:       return VarDecl::Register;
+  case DeclSpec::SCS_private_extern: return VarDecl::PrivateExtern;
+    // Illegal SCSs map to None: error reporting is up to the caller.
+  case DeclSpec::SCS_mutable:        // Fall through.
+  case DeclSpec::SCS_typedef:        return VarDecl::None;
+  }
+  llvm_unreachable("unknown storage class specifier");
+}
+
+/// StorageClassSpecToFunctionDeclStorageClass - Maps a DeclSpec::SCS to
+/// a FunctionDecl::StorageClass. Any error reporting is up to the caller:
+/// illegal input values are mapped to FunctionDecl::None.
+static FunctionDecl::StorageClass
+StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
+  switch (StorageClassSpec) {
+  case DeclSpec::SCS_unspecified:    return FunctionDecl::None;
+  case DeclSpec::SCS_extern:         return FunctionDecl::Extern;
+  case DeclSpec::SCS_static:         return FunctionDecl::Static;
+  case DeclSpec::SCS_private_extern: return FunctionDecl::PrivateExtern;
+    // Illegal SCSs map to None: error reporting is up to the caller.
+  case DeclSpec::SCS_auto:           // Fall through.
+  case DeclSpec::SCS_mutable:        // Fall through.
+  case DeclSpec::SCS_register:       // Fall through.
+  case DeclSpec::SCS_typedef:        return FunctionDecl::None;
+  }
+  llvm_unreachable("unknown storage class specifier");
+}
+
 /// ActOnAnonymousStructOrUnion - Handle the declaration of an
 /// anonymous structure or union. Anonymous unions are a C++ feature
 /// (C++ [class.union]) and a GNU C extension; anonymous structures
@@ -1712,29 +1752,25 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
   } else {
-    VarDecl::StorageClass SC;
-    switch (DS.getStorageClassSpec()) {
-    default: assert(0 && "Unknown storage class!");
-    case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
-    case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
-    case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
-    case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
-    case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
-    case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
-    case DeclSpec::SCS_mutable:
+    DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
+    assert(SCSpec != DeclSpec::SCS_typedef &&
+           "Parser allowed 'typedef' as storage class VarDecl.");
+    VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+    if (SCSpec == DeclSpec::SCS_mutable) {
       // mutable can only appear on non-static class members, so it's always
       // an error here
       Diag(Record->getLocation(), diag::err_mutable_nonmember);
       Invalid = true;
       SC = VarDecl::None;
-      break;
     }
+    SCSpec = DS.getStorageClassSpecAsWritten();
+    VarDecl::StorageClass SCAsWritten
+      = StorageClassSpecToVarDeclStorageClass(SCSpec);
 
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0,
                            Context.getTypeDeclType(Record),
-                           TInfo,
-                           SC);
+                           TInfo, SC, SCAsWritten);
   }
   Anon->setImplicit();
 
@@ -2332,24 +2368,20 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
-  VarDecl *NewVD;
-  VarDecl::StorageClass SC;
-  switch (D.getDeclSpec().getStorageClassSpec()) {
-  default: assert(0 && "Unknown storage class!");
-  case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
-  case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
-  case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
-  case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
-  case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
-  case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
-  case DeclSpec::SCS_mutable:
+  DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
+  assert(SCSpec != DeclSpec::SCS_typedef &&
+         "Parser allowed 'typedef' as storage class VarDecl.");
+  VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+  if (SCSpec == DeclSpec::SCS_mutable) {
     // mutable can only appear on non-static class members, so it's always
     // an error here
     Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
     D.setInvalidType();
     SC = VarDecl::None;
-    break;
   }
+  SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
+  VarDecl::StorageClass SCAsWritten
+    = StorageClassSpecToVarDeclStorageClass(SCSpec);
 
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (!II) {
@@ -2423,8 +2455,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
-                          II, R, TInfo, SC);
+  VarDecl *NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
+                                   II, R, TInfo, SC, SCAsWritten);
 
   if (D.isInvalidType())
     NewVD->setInvalidDecl();
@@ -2802,6 +2834,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
   bool isExplicit = D.getDeclSpec().isExplicitSpecified();
 
+  DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
+  FunctionDecl::StorageClass SCAsWritten
+    = StorageClassSpecToFunctionDeclStorageClass(SCSpec);
+
   // Check that the return type is not an abstract class type.
   // For record types, this is done by the AbstractClassUsageDiagnoser once
   // the class has been completely parsed.
@@ -2862,7 +2898,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // Create a FunctionDecl to satisfy the function definition parsing
       // code path.
       NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                   Name, R, TInfo, SC, isInline,
+                                   Name, R, TInfo, SC, SCAsWritten, isInline,
                                    /*hasPrototype=*/true);
       D.setInvalidType();
     }
@@ -2911,7 +2947,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R, TInfo,
-                                  isStatic, isInline);
+                                  isStatic, SCAsWritten, isInline);
 
     isVirtualOkay = !isStatic;
   } else {
@@ -2928,7 +2964,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
-                                 Name, R, TInfo, SC, isInline, HasPrototype);
+                                 Name, R, TInfo, SC, SCAsWritten, isInline,
+                                 HasPrototype);
   }
 
   if (D.isInvalidType())
@@ -3128,6 +3165,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       ParmVarDecl *Param = ParmVarDecl::Create(Context, NewFD,
                                                SourceLocation(), 0,
                                                *AI, /*TInfo=*/0,
+                                               VarDecl::None,
                                                VarDecl::None, 0);
       Param->setImplicit();
       Params.push_back(Param);
@@ -4088,8 +4126,10 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
   VarDecl::StorageClass StorageClass = VarDecl::None;
+  VarDecl::StorageClass StorageClassAsWritten = VarDecl::None;
   if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
     StorageClass = VarDecl::Register;
+    StorageClassAsWritten = VarDecl::Register;
   } else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified) {
     Diag(DS.getStorageClassSpecLoc(),
          diag::err_invalid_storage_class_in_func_decl);
@@ -4147,7 +4187,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // looking like class members in C++.
   ParmVarDecl *New = CheckParameter(Context.getTranslationUnitDecl(),
                                     TInfo, parmDeclType, II, 
-                                    D.getIdentifierLoc(), StorageClass);
+                                    D.getIdentifierLoc(),
+                                    StorageClass, StorageClassAsWritten);
 
   if (D.isInvalidType())
     New->setInvalidDecl();  
@@ -4176,10 +4217,12 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC,
                                   TypeSourceInfo *TSInfo, QualType T,
                                   IdentifierInfo *Name,
                                   SourceLocation NameLoc,
-                                  VarDecl::StorageClass StorageClass) {
+                                  VarDecl::StorageClass StorageClass,
+                                  VarDecl::StorageClass StorageClassAsWritten) {
   ParmVarDecl *New = ParmVarDecl::Create(Context, DC, NameLoc, Name,
                                          adjustParameterType(T), TSInfo, 
-                                         StorageClass, 0);
+                                         StorageClass, StorageClassAsWritten,
+                                         0);
 
   // Parameters can not be abstract class types.
   // For record types, this is done by the AbstractClassUsageDiagnoser once

@@ -1978,7 +1978,8 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
                            VD->getLocation(), II,
                            VD->getType(), VD->getTypeSourceInfo(),
-                           VD->getStorageClass());
+                           VD->getStorageClass(),
+                           VD->getStorageClassAsWritten());
     if (VD->getQualifier()) {
       VarDecl *NewVD = cast<VarDecl>(NewD);
       NewVD->setQualifierInfo(VD->getQualifier(), VD->getQualifierRange());

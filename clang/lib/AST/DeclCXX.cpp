@@ -587,9 +587,9 @@ CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,
                       QualType T, TypeSourceInfo *TInfo,
-                      bool isStatic, bool isInline) {
+                      bool isStatic, StorageClass SCAsWritten, bool isInline) {
   return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, TInfo,
-                               isStatic, isInline);
+                               isStatic, SCAsWritten, isInline);
 }
 
 bool CXXMethodDecl::isUsualDeallocationFunction() const {
@@ -745,11 +745,12 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            SourceLocation L, DeclarationName N,
                            QualType T, TypeSourceInfo *TInfo,
                            bool isExplicit,
-                           bool isInline, bool isImplicitlyDeclared) {
+                           bool isInline,
+                           bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
-  return new (C) CXXConstructorDecl(RD, L, N, T, TInfo, isExplicit, isInline,
-                                      isImplicitlyDeclared);
+  return new (C) CXXConstructorDecl(RD, L, N, T, TInfo, isExplicit,
+                                    isInline, isImplicitlyDeclared);
 }
 
 bool CXXConstructorDecl::isDefaultConstructor() const {
@@ -848,8 +849,7 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXDestructorName &&
          "Name must refer to a destructor");
-  return new (C) CXXDestructorDecl(RD, L, N, T, isInline,
-                                   isImplicitlyDeclared);
+  return new (C) CXXDestructorDecl(RD, L, N, T, isInline, isImplicitlyDeclared);
 }
 
 void

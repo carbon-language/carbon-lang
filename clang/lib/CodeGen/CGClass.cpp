@@ -1380,6 +1380,7 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
                                           FunctionDecl::Static,
+                                          FunctionDecl::None,
                                           false, true);
   StartFunction(FD, R, Fn, Args, SourceLocation());
   QualType BaseElementTy = getContext().getBaseElementType(Array);
