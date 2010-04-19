@@ -263,7 +263,7 @@ def llc : Tool<
 
 // Base class for linkers
 class llvm_gcc_based_linker <string cmd_prefix> : Tool<
-[(in_language "object-code"),
+[(in_language ["object-code", "static-library"]),
  (out_language "executable"),
  (output_suffix "out"),
  (command cmd_prefix),
@@ -317,6 +317,7 @@ def LanguageMap : LanguageMap<
      LangToSuffixes<"llvm-assembler", ["ll"]>,
      LangToSuffixes<"llvm-bitcode", ["bc"]>,
      LangToSuffixes<"object-code", ["o", "*empty*"]>,
+     LangToSuffixes<"static-library", ["a", "lib"]>,
      LangToSuffixes<"executable", ["out"]>
      ]>;
 
