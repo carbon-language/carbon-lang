@@ -230,6 +230,7 @@ enum dwarf_constants {
   DW_AT_APPLE_block = 0x3fe4,
   DW_AT_APPLE_major_runtime_vers = 0x3fe5,
   DW_AT_APPLE_runtime_class = 0x3fe6,
+  DW_AT_APPLE_omit_frame_ptr = 0x3fe7,
 
   // Attribute form encodings
   DW_FORM_addr = 0x01,
