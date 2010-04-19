@@ -2619,8 +2619,7 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
   // the stack alignment, we note this in the DYNAMIC_STACKALLOC node.
-  unsigned StackAlign =
-    TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
+  unsigned StackAlign = TM.getFrameInfo()->getStackAlignment();
   if (Align <= StackAlign)
     Align = 0;
 
@@ -4510,7 +4509,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
     if (F->isDeclaration()) {
-      const TargetIntrinsicInfo *II = TLI.getTargetMachine().getIntrinsicInfo();
+      const TargetIntrinsicInfo *II = TM.getIntrinsicInfo();
       if (II) {
         if (unsigned IID = II->getIntrinsicID(F)) {
           RenameFn = visitIntrinsicCall(I, IID);

@@ -34,6 +34,7 @@ STATISTIC(NumStackTempsIntroduced, "Number of stack temporaries introduced");
 
 namespace {
   class DwarfEHPrepare : public FunctionPass {
+    const TargetMachine *TM;
     const TargetLowering *TLI;
     bool CompileFast;
 
@@ -154,8 +155,9 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid.
-    DwarfEHPrepare(const TargetLowering *tli, bool fast) :
-      FunctionPass(&ID), TLI(tli), CompileFast(fast),
+    DwarfEHPrepare(const TargetMachine *tm, bool fast) :
+      FunctionPass(&ID), TM(tm), TLI(TM->getTargetLowering()),
+      CompileFast(fast),
       ExceptionValueIntrinsic(0), SelectorIntrinsic(0),
       URoR(0), EHCatchAllValue(0), RewindFunction(0) {}
 
@@ -180,8 +182,8 @@ namespace {
 
 char DwarfEHPrepare::ID = 0;
 
-FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
-  return new DwarfEHPrepare(tli, fast);
+FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm, bool fast) {
+  return new DwarfEHPrepare(tm, fast);
 }
 
 /// FindAllCleanupSelectors - Find all eh.selector calls that are clean-ups.
@@ -421,7 +423,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 bool DwarfEHPrepare::NormalizeLandingPads() {
   bool Changed = false;
 
-  const MCAsmInfo *MAI = TLI->getTargetMachine().getMCAsmInfo();
+  const MCAsmInfo *MAI = TM->getMCAsmInfo();
   bool usingSjLjEH = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {

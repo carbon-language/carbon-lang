@@ -168,7 +168,7 @@ SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, CodeGenOpt::Level OL) :
   MachineFunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
-  SDB(new SelectionDAGBuilder(*CurDAG, TLI, *FuncInfo, OL)),
+  SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
   GFI(),
   OptLevel(OL),
   DAGSize(0)
@@ -705,8 +705,7 @@ void SelectionDAGISel::PrepareEHLandingPad(MachineBasicBlock *BB) {
   // landing pad can thus be detected via the MachineModuleInfo.
   MCSymbol *Label = MF->getMMI().addLandingPad(BB);
 
-  const TargetInstrDesc &II =
-    TLI.getTargetMachine().getInstrInfo()->get(TargetOpcode::EH_LABEL);
+  const TargetInstrDesc &II = TM.getInstrInfo()->get(TargetOpcode::EH_LABEL);
   BuildMI(BB, SDB->getCurDebugLoc(), II).addSym(Label);
 
   // Mark exception register as live in.

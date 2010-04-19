@@ -53,6 +53,7 @@ using namespace llvm;
 ///
 namespace {
 class SelectionDAGLegalize {
+  const TargetMachine &TM;
   const TargetLowering &TLI;
   SelectionDAG &DAG;
   CodeGenOpt::Level OptLevel;
@@ -211,7 +212,8 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  DebugLoc dl,
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
                                            CodeGenOpt::Level ol)
-  : TLI(dag.getTargetLoweringInfo()), DAG(dag), OptLevel(ol),
+  : TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
+    DAG(dag), OptLevel(ol),
     ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
          "Too many value types for ValueTypeActions to hold!");
@@ -1661,8 +1663,7 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
   SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
   Chain = SP.getValue(1);
   unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
-  unsigned StackAlign =
-    TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
+  unsigned StackAlign = TM.getFrameInfo()->getStackAlignment();
   if (Align > StackAlign)
     SP = DAG.getNode(ISD::AND, dl, VT, SP,
                       DAG.getConstant(-(uint64_t)Align, VT));
@@ -2920,7 +2921,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                 PseudoSourceValue::getJumpTable(), 0, MemVT,
                                 false, false, 0);
     Addr = LD;
-    if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    if (TM.getRelocationModel() == Reloc::PIC_) {
       // For PIC, the sequence is:
       // BRIND(load(Jumptable + index) + RelocBase)
       // RelocBase can be JumpTable, GOT or some sort of global base.

@@ -257,6 +257,7 @@ public:
   // TLI - This is information that describes the available target features we
   // need for lowering.  This indicates when operations are unavailable,
   // implemented with a libcall, etc.
+  const TargetMachine &TM;
   const TargetLowering &TLI;
   SelectionDAG &DAG;
   const TargetData *TD;
@@ -303,10 +304,10 @@ public:
 
   LLVMContext *Context;
 
-  SelectionDAGBuilder(SelectionDAG &dag, const TargetLowering &tli,
-                      FunctionLoweringInfo &funcinfo,
+  SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : SDNodeOrder(0), TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
+    : SDNodeOrder(0), TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
+      DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false), Context(dag.getContext()) {
   }
 

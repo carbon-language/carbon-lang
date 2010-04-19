@@ -248,10 +248,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // pad is shared by multiple invokes and is also a target of a normal
     // edge from elsewhere.
     PM.add(createSjLjEHPass(getTargetLowering()));
-    PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+    PM.add(createDwarfEHPass(this, OptLevel==CodeGenOpt::None));
     break;
   case ExceptionHandling::Dwarf:
-    PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+    PM.add(createDwarfEHPass(this, OptLevel==CodeGenOpt::None));
     break;
   case ExceptionHandling::None:
     PM.add(createLowerInvokePass(getTargetLowering()));
