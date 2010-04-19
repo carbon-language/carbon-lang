@@ -49,7 +49,7 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCObjectWriter();
 
-  bool isLittleEndian() { return IsLittleEndian; }
+  bool isLittleEndian() const { return IsLittleEndian; }
 
   raw_ostream &getStream() { return OS; }
 
