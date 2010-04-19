@@ -2232,6 +2232,22 @@ static unsigned decodeN3VImm(uint32_t insn) {
   return (insn >> 8) & 0xF;
 }
 
+static bool UseDRegPair(unsigned Opcode) {
+  switch (Opcode) {
+  default:
+    return false;
+  case ARM::VLD1q8_UPD:
+  case ARM::VLD1q16_UPD:
+  case ARM::VLD1q32_UPD:
+  case ARM::VLD1q64_UPD:
+  case ARM::VST1q8_UPD:
+  case ARM::VST1q16_UPD:
+  case ARM::VST1q32_UPD:
+  case ARM::VST1q64_UPD:
+    return true;
+  }
+}
+
 // VLD*
 //   D[d] D[d2] ... Rn [TIED_TO Rn] align [Rm]
 // VLD*LN*
@@ -2305,11 +2321,9 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     RegClass = OpInfo[OpIdx].RegClass;
     while (OpIdx < NumOps && OpInfo[OpIdx].RegClass == RegClass) {
-      if (Opcode >= ARM::VST1q16 && Opcode <= ARM::VST1q8)
-        MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClass, Rd,
-                                                           true)));
-      else
-        MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClass,Rd)));
+      MI.addOperand(MCOperand::CreateReg(
+                      getRegisterEnum(B, RegClass, Rd,
+                                      UseDRegPair(Opcode))));
       Rd += Inc;
       ++OpIdx;
     }
@@ -2327,11 +2341,9 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
     RegClass = OpInfo[0].RegClass;
 
     while (OpIdx < NumOps && OpInfo[OpIdx].RegClass == RegClass) {
-      if (Opcode >= ARM::VLD1q16 && Opcode <= ARM::VLD1q8)
-        MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClass, Rd,
-                                                           true)));
-      else
-        MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClass, Rd)));
+      MI.addOperand(MCOperand::CreateReg(
+                      getRegisterEnum(B, RegClass, Rd,
+                                      UseDRegPair(Opcode))));
       Rd += Inc;
       ++OpIdx;
     }
