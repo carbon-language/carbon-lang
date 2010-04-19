@@ -1088,17 +1088,21 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
   }
 
-  // Ask HeaderInfo if we should enter this #include file.  If not, #including
-  // this file will have no effect.
-  if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport))
-    return;
-
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.
   SrcMgr::CharacteristicKind FileCharacter =
     std::max(HeaderInfo.getFileDirFlavor(File),
              SourceMgr.getFileCharacteristic(FilenameTok.getLocation()));
+
+  // Ask HeaderInfo if we should enter this #include file.  If not, #including
+  // this file will have no effect.
+  if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport)) {
+    if (Callbacks) {
+      Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);
+    }
+    return;
+  }
 
   // Look up the file, create a File ID for it.
   FileID FID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
@@ -1667,4 +1671,3 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   return SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
                                       /*FoundElse*/CI.FoundElse);
 }
-
