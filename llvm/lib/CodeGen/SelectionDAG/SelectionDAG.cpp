@@ -304,10 +304,6 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   return Result;
 }
 
-const TargetMachine &SelectionDAG::getTarget() const {
-  return MF->getTarget();
-}
-
 //===----------------------------------------------------------------------===//
 //                           SDNode Profile Support
 //===----------------------------------------------------------------------===//
@@ -792,8 +788,8 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 }
 
 // EntryNode could meaningfully have debug info if we can find it...
-SelectionDAG::SelectionDAG(const TargetLowering &tli, FunctionLoweringInfo &fli)
-  : TLI(tli), FLI(fli),
+SelectionDAG::SelectionDAG(const TargetMachine &tm, FunctionLoweringInfo &fli)
+  : TM(tm), TLI(*tm.getTargetLowering()), FLI(fli),
     EntryNode(ISD::EntryToken, DebugLoc(), getVTList(MVT::Other)),
     Root(getEntryNode()), Ordering(0) {
   AllNodes.push_back(&EntryNode);
