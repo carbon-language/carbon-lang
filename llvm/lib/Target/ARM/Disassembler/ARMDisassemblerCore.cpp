@@ -3209,6 +3209,15 @@ bool ARMBasicMCBuilder::BuildIt(MCInst &MI, uint32_t insn) {
   return TryPredicateAndSBitModifier(MI, Opcode, insn, NumOps - NumOpsAdded);
 }
 
+// A8.3 Conditional execution
+// A8.3.1 Pseudocode details of conditional execution
+// Condition bits '111x' indicate the instruction is always executed.
+static uint32_t CondCode(uint32_t CondField) {
+  if (CondField == 0xF)
+    return ARMCC::AL;
+  return CondField;
+}
+
 bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOpsRemaining) {
 
@@ -3236,18 +3245,14 @@ bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
         //
         // A8.6.16 B
         if (Name == "t2Bcc")
-          MI.addOperand(MCOperand::CreateImm(slice(insn, 25, 22)));
+          MI.addOperand(MCOperand::CreateImm(CondCode(slice(insn, 25, 22))));
         else if (Name == "tBcc")
-          MI.addOperand(MCOperand::CreateImm(slice(insn, 11, 8)));
+          MI.addOperand(MCOperand::CreateImm(CondCode(slice(insn, 11, 8))));
         else
           MI.addOperand(MCOperand::CreateImm(ARMCC::AL));
       } else {
-        // ARM Instructions.  Check condition field.
-        int64_t CondVal = getCondField(insn);
-        if (CondVal == 0xF)
-          MI.addOperand(MCOperand::CreateImm(ARMCC::AL));
-        else
-          MI.addOperand(MCOperand::CreateImm(CondVal));
+        // ARM instructions get their condition field from Inst{31-28}.
+        MI.addOperand(MCOperand::CreateImm(CondCode(getCondField(insn))));
       }
     }
     MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
