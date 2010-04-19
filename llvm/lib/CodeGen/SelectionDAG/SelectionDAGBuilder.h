@@ -82,8 +82,6 @@ class ZExtInst;
 /// implementation that is parameterized by a TargetLowering object.
 ///
 class SelectionDAGBuilder {
-  MachineBasicBlock *CurMBB;
-
   /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
   DebugLoc CurDebugLoc;
 
@@ -350,8 +348,6 @@ public:
 
   void visit(unsigned Opcode, const User &I);
 
-  void setCurrentBasicBlock(MachineBasicBlock *MBB) { CurMBB = MBB; }
-
   SDValue getValue(const Value *V);
 
   void setValue(const Value *V, SDValue NewN) {
@@ -366,10 +362,11 @@ public:
 
   void FindMergedConditions(const Value *Cond, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB, MachineBasicBlock *CurBB,
-                            unsigned Opc);
+                            MachineBasicBlock *SwitchBB, unsigned Opc);
   void EmitBranchForMergedCondition(const Value *Cond, MachineBasicBlock *TBB,
                                     MachineBasicBlock *FBB,
-                                    MachineBasicBlock *CurBB);
+                                    MachineBasicBlock *CurBB,
+                                    MachineBasicBlock *SwitchBB);
   bool ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases);
   bool isExportableFromCurrentBlock(const Value *V, const BasicBlock *FromBB);
   void CopyToExportRegsIfNeeded(const Value *V);
@@ -389,27 +386,34 @@ private:
   bool handleSmallSwitchRange(CaseRec& CR,
                               CaseRecVector& WorkList,
                               const Value* SV,
-                              MachineBasicBlock* Default);
+                              MachineBasicBlock* Default,
+                              MachineBasicBlock *SwitchBB);
   bool handleJTSwitchCase(CaseRec& CR,
                           CaseRecVector& WorkList,
                           const Value* SV,
-                          MachineBasicBlock* Default);
+                          MachineBasicBlock* Default,
+                          MachineBasicBlock *SwitchBB);
   bool handleBTSplitSwitchCase(CaseRec& CR,
                                CaseRecVector& WorkList,
                                const Value* SV,
-                               MachineBasicBlock* Default);
+                               MachineBasicBlock* Default,
+                               MachineBasicBlock *SwitchBB);
   bool handleBitTestsSwitchCase(CaseRec& CR,
                                 CaseRecVector& WorkList,
                                 const Value* SV,
-                                MachineBasicBlock* Default);  
+                                MachineBasicBlock* Default,
+                                MachineBasicBlock *SwitchBB);
 public:
-  void visitSwitchCase(CaseBlock &CB);
-  void visitBitTestHeader(BitTestBlock &B);
+  void visitSwitchCase(CaseBlock &CB,
+                       MachineBasicBlock *SwitchBB);
+  void visitBitTestHeader(BitTestBlock &B, MachineBasicBlock *SwitchBB);
   void visitBitTestCase(MachineBasicBlock* NextMBB,
                         unsigned Reg,
-                        BitTestCase &B);
+                        BitTestCase &B,
+                        MachineBasicBlock *SwitchBB);
   void visitJumpTable(JumpTable &JT);
-  void visitJumpTableHeader(JumpTable &JT, JumpTableHeader &JTH);
+  void visitJumpTableHeader(JumpTable &JT, JumpTableHeader &JTH,
+                            MachineBasicBlock *SwitchBB);
   
 private:
   // These all get lowered before this pass.

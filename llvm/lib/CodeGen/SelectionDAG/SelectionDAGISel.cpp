@@ -253,8 +253,6 @@ void SelectionDAGISel::SelectBasicBlock(const BasicBlock *LLVMBB,
                                         BasicBlock::const_iterator Begin,
                                         BasicBlock::const_iterator End,
                                         bool &HadTailCall) {
-  SDB->setCurrentBasicBlock(BB);
-
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block. Terminators
   // are handled below.
@@ -922,9 +920,8 @@ SelectionDAGISel::FinishBasicBlock() {
     if (!SDB->BitTestCases[i].Emitted) {
       // Set the current basic block to the mbb we wish to insert the code into
       BB = SDB->BitTestCases[i].Parent;
-      SDB->setCurrentBasicBlock(BB);
       // Emit the code
-      SDB->visitBitTestHeader(SDB->BitTestCases[i]);
+      SDB->visitBitTestHeader(SDB->BitTestCases[i], BB);
       CurDAG->setRoot(SDB->getRoot());
       CodeGenAndEmitDAG();
       SDB->clear();
@@ -933,16 +930,17 @@ SelectionDAGISel::FinishBasicBlock() {
     for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j) {
       // Set the current basic block to the mbb we wish to insert the code into
       BB = SDB->BitTestCases[i].Cases[j].ThisBB;
-      SDB->setCurrentBasicBlock(BB);
       // Emit the code
       if (j+1 != ej)
         SDB->visitBitTestCase(SDB->BitTestCases[i].Cases[j+1].ThisBB,
                               SDB->BitTestCases[i].Reg,
-                              SDB->BitTestCases[i].Cases[j]);
+                              SDB->BitTestCases[i].Cases[j],
+                              BB);
       else
         SDB->visitBitTestCase(SDB->BitTestCases[i].Default,
                               SDB->BitTestCases[i].Reg,
-                              SDB->BitTestCases[i].Cases[j]);
+                              SDB->BitTestCases[i].Cases[j],
+                              BB);
 
 
       CurDAG->setRoot(SDB->getRoot());
@@ -989,9 +987,9 @@ SelectionDAGISel::FinishBasicBlock() {
     if (!SDB->JTCases[i].first.Emitted) {
       // Set the current basic block to the mbb we wish to insert the code into
       BB = SDB->JTCases[i].first.HeaderBB;
-      SDB->setCurrentBasicBlock(BB);
       // Emit the code
-      SDB->visitJumpTableHeader(SDB->JTCases[i].second, SDB->JTCases[i].first);
+      SDB->visitJumpTableHeader(SDB->JTCases[i].second, SDB->JTCases[i].first,
+                                BB);
       CurDAG->setRoot(SDB->getRoot());
       CodeGenAndEmitDAG();
       SDB->clear();
@@ -999,7 +997,6 @@ SelectionDAGISel::FinishBasicBlock() {
 
     // Set the current basic block to the mbb we wish to insert the code into
     BB = SDB->JTCases[i].second.MBB;
-    SDB->setCurrentBasicBlock(BB);
     // Emit the code
     SDB->visitJumpTable(SDB->JTCases[i].second);
     CurDAG->setRoot(SDB->getRoot());
@@ -1047,10 +1044,9 @@ SelectionDAGISel::FinishBasicBlock() {
   for (unsigned i = 0, e = SDB->SwitchCases.size(); i != e; ++i) {
     // Set the current basic block to the mbb we wish to insert the code into
     MachineBasicBlock *ThisBB = BB = SDB->SwitchCases[i].ThisBB;
-    SDB->setCurrentBasicBlock(BB);
 
     // Emit the code
-    SDB->visitSwitchCase(SDB->SwitchCases[i]);
+    SDB->visitSwitchCase(SDB->SwitchCases[i], BB);
     CurDAG->setRoot(SDB->getRoot());
     CodeGenAndEmitDAG();
 

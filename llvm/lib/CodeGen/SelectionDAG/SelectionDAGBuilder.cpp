@@ -980,7 +980,8 @@ void
 SelectionDAGBuilder::EmitBranchForMergedCondition(const Value *Cond,
                                                   MachineBasicBlock *TBB,
                                                   MachineBasicBlock *FBB,
-                                                  MachineBasicBlock *CurBB) {
+                                                  MachineBasicBlock *CurBB,
+                                                  MachineBasicBlock *SwitchBB) {
   const BasicBlock *BB = CurBB->getBasicBlock();
 
   // If the leaf of the tree is a comparison, merge the condition into
@@ -989,7 +990,7 @@ SelectionDAGBuilder::EmitBranchForMergedCondition(const Value *Cond,
     // The operands of the cmp have to be in this block.  We don't know
     // how to export them from some other block.  If this is the first block
     // of the sequence, no exporting is needed.
-    if (CurBB == CurMBB ||
+    if (CurBB == SwitchBB ||
         (isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
          isExportableFromCurrentBlock(BOp->getOperand(1), BB))) {
       ISD::CondCode Condition;
@@ -1020,6 +1021,7 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
                                                MachineBasicBlock *TBB,
                                                MachineBasicBlock *FBB,
                                                MachineBasicBlock *CurBB,
+                                               MachineBasicBlock *SwitchBB,
                                                unsigned Opc) {
   // If this node is not part of the or/and tree, emit it as a branch.
   const Instruction *BOp = dyn_cast<Instruction>(Cond);
@@ -1028,7 +1030,7 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
       BOp->getParent() != CurBB->getBasicBlock() ||
       !InBlock(BOp->getOperand(0), CurBB->getBasicBlock()) ||
       !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
-    EmitBranchForMergedCondition(Cond, TBB, FBB, CurBB);
+    EmitBranchForMergedCondition(Cond, TBB, FBB, CurBB, SwitchBB);
     return;
   }
 
@@ -1048,10 +1050,10 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
     //
 
     // Emit the LHS condition.
-    FindMergedConditions(BOp->getOperand(0), TBB, TmpBB, CurBB, Opc);
+    FindMergedConditions(BOp->getOperand(0), TBB, TmpBB, CurBB, SwitchBB, Opc);
 
     // Emit the RHS condition into TmpBB.
-    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, SwitchBB, Opc);
   } else {
     assert(Opc == Instruction::And && "Unknown merge op!");
     // Codegen X & Y as:
@@ -1064,10 +1066,10 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
     //  This requires creation of TmpBB after CurBB.
 
     // Emit the LHS condition.
-    FindMergedConditions(BOp->getOperand(0), TmpBB, FBB, CurBB, Opc);
+    FindMergedConditions(BOp->getOperand(0), TmpBB, FBB, CurBB, SwitchBB, Opc);
 
     // Emit the RHS condition into TmpBB.
-    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, SwitchBB, Opc);
   }
 }
 
@@ -1103,18 +1105,20 @@ SelectionDAGBuilder::ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases){
 }
 
 void SelectionDAGBuilder::visitBr(const BranchInst &I) {
+  MachineBasicBlock *BrMBB = FuncInfo.MBBMap[I.getParent()];
+
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
+  MachineFunction::iterator BBI = BrMBB;
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   if (I.isUnconditional()) {
     // Update machine-CFG edges.
-    CurMBB->addSuccessor(Succ0MBB);
+    BrMBB->addSuccessor(Succ0MBB);
 
     // If this is not a fall-through branch, emit the branch.
     if (Succ0MBB != NextBlock)
@@ -1149,11 +1153,12 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
     if (BOp->hasOneUse() &&
         (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
-      FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
+      FindMergedConditions(BOp, Succ0MBB, Succ1MBB, BrMBB, BrMBB,
+                           BOp->getOpcode());
       // If the compares in later blocks need to use values not currently
       // exported from this block, export them now.  This block should always
       // be the first entry.
-      assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
+      assert(SwitchCases[0].ThisBB == BrMBB && "Unexpected lowering!");
 
       // Allow some cases to be rejected.
       if (ShouldEmitAsBranches(SwitchCases)) {
@@ -1163,7 +1168,7 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
         }
 
         // Emit the branch for this block.
-        visitSwitchCase(SwitchCases[0]);
+        visitSwitchCase(SwitchCases[0], BrMBB);
         SwitchCases.erase(SwitchCases.begin());
         return;
       }
@@ -1179,16 +1184,17 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
 
   // Create a CaseBlock record representing this branch.
   CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(*DAG.getContext()),
-               NULL, Succ0MBB, Succ1MBB, CurMBB);
+               NULL, Succ0MBB, Succ1MBB, BrMBB);
 
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
-  visitSwitchCase(CB);
+  visitSwitchCase(CB, BrMBB);
 }
 
 /// visitSwitchCase - Emits the necessary code to represent a single node in
 /// the binary search tree resulting from lowering a switch instruction.
-void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB) {
+void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
+                                          MachineBasicBlock *SwitchBB) {
   SDValue Cond;
   SDValue CondLHS = getValue(CB.CmpLHS);
   DebugLoc dl = getCurDebugLoc();
@@ -1227,13 +1233,13 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB) {
   }
 
   // Update successor info
-  CurMBB->addSuccessor(CB.TrueBB);
-  CurMBB->addSuccessor(CB.FalseBB);
+  SwitchBB->addSuccessor(CB.TrueBB);
+  SwitchBB->addSuccessor(CB.FalseBB);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
+  MachineFunction::iterator BBI = SwitchBB;
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
@@ -1251,11 +1257,11 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB) {
 
   // If the branch was constant folded, fix up the CFG.
   if (BrCond.getOpcode() == ISD::BR) {
-    CurMBB->removeSuccessor(CB.FalseBB);
+    SwitchBB->removeSuccessor(CB.FalseBB);
   } else {
     // Otherwise, go ahead and insert the false branch.
     if (BrCond == getControlRoot())
-      CurMBB->removeSuccessor(CB.TrueBB);
+      SwitchBB->removeSuccessor(CB.TrueBB);
 
     if (CB.FalseBB != NextBlock)
       BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
@@ -1282,7 +1288,8 @@ void SelectionDAGBuilder::visitJumpTable(JumpTable &JT) {
 /// visitJumpTableHeader - This function emits necessary code to produce index
 /// in the JumpTable from switch case.
 void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
-                                               JumpTableHeader &JTH) {
+                                               JumpTableHeader &JTH,
+                                               MachineBasicBlock *SwitchBB) {
   // Subtract the lowest switch case value from the value being switched on and
   // conditional branch to default mbb if the result is greater than the
   // difference between smallest and largest cases.
@@ -1314,7 +1321,7 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
+  MachineFunction::iterator BBI = SwitchBB;
 
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
@@ -1332,7 +1339,8 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
 
 /// visitBitTestHeader - This function emits necessary code to produce value
 /// suitable for "bit tests"
-void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B) {
+void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
+                                             MachineBasicBlock *SwitchBB) {
   // Subtract the minimum value
   SDValue SwitchOp = getValue(B.SValue);
   EVT VT = SwitchOp.getValueType();
@@ -1355,14 +1363,14 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B) {
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
+  MachineFunction::iterator BBI = SwitchBB;
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
 
-  CurMBB->addSuccessor(B.Default);
-  CurMBB->addSuccessor(MBB);
+  SwitchBB->addSuccessor(B.Default);
+  SwitchBB->addSuccessor(MBB);
 
   SDValue BrRange = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
                                 MVT::Other, CopyTo, RangeCmp,
@@ -1378,7 +1386,8 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B) {
 /// visitBitTestCase - this function produces one "bit test"
 void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
                                            unsigned Reg,
-                                           BitTestCase &B) {
+                                           BitTestCase &B,
+                                           MachineBasicBlock *SwitchBB) {
   // Make desired shift
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(), Reg,
                                        TLI.getPointerTy());
@@ -1396,8 +1405,8 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
                                 AndOp, DAG.getConstant(0, TLI.getPointerTy()),
                                 ISD::SETNE);
 
-  CurMBB->addSuccessor(B.TargetBB);
-  CurMBB->addSuccessor(NextMBB);
+  SwitchBB->addSuccessor(B.TargetBB);
+  SwitchBB->addSuccessor(NextMBB);
 
   SDValue BrAnd = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
                               MVT::Other, getControlRoot(),
@@ -1406,7 +1415,7 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
+  MachineFunction::iterator BBI = SwitchBB;
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
@@ -1418,6 +1427,8 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
 }
 
 void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
+  MachineBasicBlock *InvokeMBB = FuncInfo.MBBMap[I.getParent()];
+
   // Retrieve successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
@@ -1433,8 +1444,8 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
   CopyToExportRegsIfNeeded(&I);
 
   // Update successor info
-  CurMBB->addSuccessor(Return);
-  CurMBB->addSuccessor(LandingPad);
+  InvokeMBB->addSuccessor(Return);
+  InvokeMBB->addSuccessor(LandingPad);
 
   // Drop into normal successor.
   DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(),
@@ -1450,7 +1461,8 @@ void SelectionDAGBuilder::visitUnwind(const UnwindInst &I) {
 bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
                                                  CaseRecVector& WorkList,
                                                  const Value* SV,
-                                                 MachineBasicBlock* Default) {
+                                                 MachineBasicBlock *Default,
+                                                 MachineBasicBlock *SwitchBB) {
   Case& BackCase  = *(CR.Range.second-1);
 
   // Size is the number of Cases represented by this range.
@@ -1519,8 +1531,8 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
     // code into the current block.  Otherwise, push the CaseBlock onto the
     // vector to be later processed by SDISel, and insert the node's MBB
     // before the next MBB.
-    if (CurBlock == CurMBB)
-      visitSwitchCase(CB);
+    if (CurBlock == SwitchBB)
+      visitSwitchCase(CB, SwitchBB);
     else
       SwitchCases.push_back(CB);
 
@@ -1547,7 +1559,8 @@ static APInt ComputeRange(const APInt &First, const APInt &Last) {
 bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
                                              CaseRecVector& WorkList,
                                              const Value* SV,
-                                             MachineBasicBlock* Default) {
+                                             MachineBasicBlock* Default,
+                                             MachineBasicBlock *SwitchBB) {
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
 
@@ -1628,9 +1641,9 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
   // Set the jump table information so that we can codegen it as a second
   // MachineBasicBlock
   JumpTable JT(-1U, JTI, JumpTableBB, Default);
-  JumpTableHeader JTH(First, Last, SV, CR.CaseBB, (CR.CaseBB == CurMBB));
-  if (CR.CaseBB == CurMBB)
-    visitJumpTableHeader(JT, JTH);
+  JumpTableHeader JTH(First, Last, SV, CR.CaseBB, (CR.CaseBB == SwitchBB));
+  if (CR.CaseBB == SwitchBB)
+    visitJumpTableHeader(JT, JTH, SwitchBB);
 
   JTCases.push_back(JumpTableBlock(JTH, JT));
 
@@ -1642,7 +1655,8 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
 bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
                                                   CaseRecVector& WorkList,
                                                   const Value* SV,
-                                                  MachineBasicBlock* Default) {
+                                                  MachineBasicBlock *Default,
+                                                  MachineBasicBlock *SwitchBB) {
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
   MachineFunction *CurMF = FuncInfo.MF;
@@ -1756,8 +1770,8 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
   // Otherwise, branch to LHS.
   CaseBlock CB(ISD::SETLT, SV, C, NULL, TrueBB, FalseBB, CR.CaseBB);
 
-  if (CR.CaseBB == CurMBB)
-    visitSwitchCase(CB);
+  if (CR.CaseBB == SwitchBB)
+    visitSwitchCase(CB, SwitchBB);
   else
     SwitchCases.push_back(CB);
 
@@ -1770,7 +1784,8 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
 bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
                                                    CaseRecVector& WorkList,
                                                    const Value* SV,
-                                                   MachineBasicBlock* Default){
+                                                   MachineBasicBlock* Default,
+                                                   MachineBasicBlock *SwitchBB){
   EVT PTy = TLI.getPointerTy();
   unsigned IntPtrBits = PTy.getSizeInBits();
 
@@ -1885,11 +1900,11 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
   }
 
   BitTestBlock BTB(lowBound, cmpRange, SV,
-                   -1U, (CR.CaseBB == CurMBB),
+                   -1U, (CR.CaseBB == SwitchBB),
                    CR.CaseBB, Default, BTC);
 
-  if (CR.CaseBB == CurMBB)
-    visitBitTestHeader(BTB);
+  if (CR.CaseBB == SwitchBB)
+    visitBitTestHeader(BTB, SwitchBB);
 
   BitTestCases.push_back(BTB);
 
@@ -1940,6 +1955,8 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
 }
 
 void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
+  MachineBasicBlock *SwitchMBB = FuncInfo.MBBMap[SI.getParent()];
+
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineBasicBlock *Default = FuncInfo.MBBMap[SI.getDefaultDest()];
@@ -1950,7 +1967,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
     // Update machine-CFG edges.
 
     // If this is not a fall-through branch, emit the branch.
-    CurMBB->addSuccessor(Default);
+    SwitchMBB->addSuccessor(Default);
     if (Default != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(),
                               MVT::Other, getControlRoot(),
@@ -1975,34 +1992,37 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
 
   // Push the initial CaseRec onto the worklist
   CaseRecVector WorkList;
-  WorkList.push_back(CaseRec(CurMBB,0,0,CaseRange(Cases.begin(),Cases.end())));
+  WorkList.push_back(CaseRec(SwitchMBB,0,0,
+                             CaseRange(Cases.begin(),Cases.end())));
 
   while (!WorkList.empty()) {
     // Grab a record representing a case range to process off the worklist
     CaseRec CR = WorkList.back();
     WorkList.pop_back();
 
-    if (handleBitTestsSwitchCase(CR, WorkList, SV, Default))
+    if (handleBitTestsSwitchCase(CR, WorkList, SV, Default, SwitchMBB))
       continue;
 
     // If the range has few cases (two or less) emit a series of specific
     // tests.
-    if (handleSmallSwitchRange(CR, WorkList, SV, Default))
+    if (handleSmallSwitchRange(CR, WorkList, SV, Default, SwitchMBB))
       continue;
 
     // If the switch has more than 5 blocks, and at least 40% dense, and the
     // target supports indirect branches, then emit a jump table rather than
     // lowering the switch to a binary tree of conditional branches.
-    if (handleJTSwitchCase(CR, WorkList, SV, Default))
+    if (handleJTSwitchCase(CR, WorkList, SV, Default, SwitchMBB))
       continue;
 
     // Emit binary tree. We need to pick a pivot, and push left and right ranges
     // onto the worklist. Leafs are handled via handleSmallSwitchRange() call.
-    handleBTSplitSwitchCase(CR, WorkList, SV, Default);
+    handleBTSplitSwitchCase(CR, WorkList, SV, Default, SwitchMBB);
   }
 }
 
 void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
+  MachineBasicBlock *IndirectBrMBB = FuncInfo.MBBMap[I.getParent()];
+
   // Update machine-CFG edges with unique successors.
   SmallVector<BasicBlock*, 32> succs;
   succs.reserve(I.getNumSuccessors());
@@ -2011,7 +2031,7 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
   array_pod_sort(succs.begin(), succs.end());
   succs.erase(std::unique(succs.begin(), succs.end()), succs.end());
   for (unsigned i = 0, e = succs.size(); i != e; ++i)
-    CurMBB->addSuccessor(FuncInfo.MBBMap[succs[i]]);
+    IndirectBrMBB->addSuccessor(FuncInfo.MBBMap[succs[i]]);
 
   DAG.setRoot(DAG.getNode(ISD::BRIND, getCurDebugLoc(),
                           MVT::Other, getControlRoot(),
@@ -3819,7 +3839,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::eh_exception: {
     // Insert the EXCEPTIONADDR instruction.
-    assert(CurMBB->isLandingPad() &&"Call to eh.exception not in landing pad!");
+    assert(FuncInfo.MBBMap[I.getParent()]->isLandingPad() &&
+           "Call to eh.exception not in landing pad!");
     SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
     SDValue Ops[1];
     Ops[0] = DAG.getRoot();
@@ -3830,16 +3851,17 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
 
   case Intrinsic::eh_selector: {
+    MachineBasicBlock *CallMBB = FuncInfo.MBBMap[I.getParent()];
     MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-    if (CurMBB->isLandingPad())
-      AddCatchInfo(I, &MMI, CurMBB);
+    if (CallMBB->isLandingPad())
+      AddCatchInfo(I, &MMI, CallMBB);
     else {
 #ifndef NDEBUG
       FuncInfo.CatchInfoLost.insert(&I);
 #endif
       // FIXME: Mark exception selector register as live in.  Hack for PR1508.
       unsigned Reg = TLI.getExceptionSelectorRegister();
-      if (Reg) CurMBB->addLiveIn(Reg);
+      if (Reg) FuncInfo.MBBMap[I.getParent()]->addLiveIn(Reg);
     }
 
     // Insert the EHSELECTION instruction.
@@ -5340,7 +5362,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
           if (OpInfo.isIndirect) {
             // This happens on gcc/testsuite/gcc.dg/pr8788-1.c
-            LLVMContext &Ctx = CurMBB->getParent()->getFunction()->getContext();
+            LLVMContext &Ctx = *DAG.getContext();
             Ctx.emitError(CS.getInstruction(),  "inline asm not supported yet:"
                           " don't know how to handle tied "
                           "indirect register inputs");
