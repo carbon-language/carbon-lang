@@ -99,6 +99,12 @@ enum {
   ET_HIPROC = 0xffff  // Processor-specific
 };
 
+// Versioning
+enum {
+  EV_NONE = 0,
+  EV_CURRENT = 1
+};
+
 // Machine architectures
 enum {
   EM_NONE = 0,  // No machine
@@ -127,6 +133,11 @@ enum {
 enum {
   ELFDATA2LSB = 1, // Little-endian object file
   ELFDATA2MSB = 2  // Big-endian object file
+};
+
+// OS ABI identification -- unused.
+enum {
+  ELFOSABI_NONE = 0
 };
 
 // Section header.
