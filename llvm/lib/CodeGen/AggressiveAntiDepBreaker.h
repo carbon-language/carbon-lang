@@ -142,9 +142,9 @@ namespace llvm {
     /// path
     /// of the ScheduleDAG and break them by renaming registers.
     ///
-    unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                                   MachineBasicBlock::iterator& Begin,
-                                   MachineBasicBlock::iterator& End,
+    unsigned BreakAntiDependencies(const std::vector<SUnit>& SUnits,
+                                   MachineBasicBlock::iterator Begin,
+                                   MachineBasicBlock::iterator End,
                                    unsigned InsertPosIndex);
 
     /// Observe - Update liveness information to account for the current

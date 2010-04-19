@@ -39,9 +39,9 @@ public:
   /// basic-block region and break them by renaming registers. Return
   /// the number of anti-dependencies broken.
   ///
-  virtual unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                                MachineBasicBlock::iterator& Begin,
-                                MachineBasicBlock::iterator& End,
+  virtual unsigned BreakAntiDependencies(const std::vector<SUnit>& SUnits,
+                                MachineBasicBlock::iterator Begin,
+                                MachineBasicBlock::iterator End,
                                 unsigned InsertPosIndex) =0;
   
   /// Observe - Update liveness information to account for the current

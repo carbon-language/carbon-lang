@@ -143,13 +143,13 @@ void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
 
 /// CriticalPathStep - Return the next SUnit after SU on the bottom-up
 /// critical path.
-static SDep *CriticalPathStep(SUnit *SU) {
-  SDep *Next = 0;
+static const SDep *CriticalPathStep(const SUnit *SU) {
+  const SDep *Next = 0;
   unsigned NextDepth = 0;
   // Find the predecessor edge with the greatest depth.
-  for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
+  for (SUnit::const_pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
        P != PE; ++P) {
-    SUnit *PredSU = P->getSUnit();
+    const SUnit *PredSU = P->getSUnit();
     unsigned PredLatency = P->getLatency();
     unsigned PredTotalLatency = PredSU->getDepth() + PredLatency;
     // In the case of a latency tie, prefer an anti-dependency edge over
@@ -326,18 +326,18 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(MachineInstr *MI,
 }
 
 unsigned CriticalAntiDepBreaker::
-BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                      MachineBasicBlock::iterator& Begin,
-                      MachineBasicBlock::iterator& End,
+BreakAntiDependencies(const std::vector<SUnit>& SUnits,
+                      MachineBasicBlock::iterator Begin,
+                      MachineBasicBlock::iterator End,
                       unsigned InsertPosIndex) {
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
   if (SUnits.empty()) return 0;
 
   // Find the node at the bottom of the critical path.
-  SUnit *Max = 0;
+  const SUnit *Max = 0;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    SUnit *SU = &SUnits[i];
+    const SUnit *SU = &SUnits[i];
     if (!Max || SU->getDepth() + SU->Latency > Max->getDepth() + Max->Latency)
       Max = SU;
   }
@@ -357,7 +357,7 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
 
   // Track progress along the critical path through the SUnit graph as we walk
   // the instructions.
-  SUnit *CriticalPathSU = Max;
+  const SUnit *CriticalPathSU = Max;
   MachineInstr *CriticalPathMI = CriticalPathSU->getInstr();
 
   // Consider this pattern:
@@ -429,8 +429,8 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
     // the anti-dependencies in an instruction in order to be effective.
     unsigned AntiDepReg = 0;
     if (MI == CriticalPathMI) {
-      if (SDep *Edge = CriticalPathStep(CriticalPathSU)) {
-        SUnit *NextSU = Edge->getSUnit();
+      if (const SDep *Edge = CriticalPathStep(CriticalPathSU)) {
+        const SUnit *NextSU = Edge->getSUnit();
 
         // Only consider anti-dependence edges.
         if (Edge->getKind() == SDep::Anti) {
@@ -452,7 +452,7 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
             // Also, if there are dependencies on other SUnits with the
             // same register as the anti-dependency, don't attempt to
             // break it.
-            for (SUnit::pred_iterator P = CriticalPathSU->Preds.begin(),
+            for (SUnit::const_pred_iterator P = CriticalPathSU->Preds.begin(),
                  PE = CriticalPathSU->Preds.end(); P != PE; ++P)
               if (P->getSUnit() == NextSU ?
                     (P->getKind() != SDep::Anti || P->getReg() != AntiDepReg) :
