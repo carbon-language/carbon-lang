@@ -657,7 +657,6 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
            i != e; ++i)
         MI->addRegisterDead(IDList[i-II.getNumDefs()], TRI);
     }
-  return;
 }
 
 /// EmitSpecialNode - Generate machine code for a target-independent node and
