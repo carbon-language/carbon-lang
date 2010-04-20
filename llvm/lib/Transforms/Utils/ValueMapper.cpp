@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "ValueMapper.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
