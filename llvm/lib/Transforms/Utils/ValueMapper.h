@@ -20,10 +20,10 @@
 namespace llvm {
   class Value;
   class Instruction;
-  typedef DenseMap<const Value *, Value *> ValueMapTy;
+  typedef DenseMap<const Value *, Value *> ValueToValueMapTy;
 
-  Value *MapValue(const Value *V, ValueMapTy &VM);
-  void RemapInstruction(Instruction *I, ValueMapTy &VM);
+  Value *MapValue(const Value *V, ValueToValueMapTy &VM);
+  void RemapInstruction(Instruction *I, ValueToValueMapTy &VM);
 } // End llvm namespace
 
 #endif

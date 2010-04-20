@@ -20,7 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
+Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
@@ -127,7 +127,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
 /// RemapInstruction - Convert the instruction operands from referencing the
 /// current values into those specified by ValueMap.
 ///
-void llvm::RemapInstruction(Instruction *I, ValueMapTy &ValueMap) {
+void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &ValueMap) {
   for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
     Value *V = MapValue(*op, ValueMap);
     assert(V && "Referenced value not in value map!");
