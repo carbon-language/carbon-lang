@@ -552,14 +552,21 @@ bool FastISel::SelectBitCast(const User *I) {
 
 bool
 FastISel::SelectInstruction(const Instruction *I) {
+  DL = I->getDebugLoc();
+
   // First, try doing target-independent selection.
-  if (SelectOperator(I, I->getOpcode()))
+  if (SelectOperator(I, I->getOpcode())) {
+    DL = DebugLoc();
     return true;
+  }
 
   // Next, try calling the target to attempt to handle the instruction.
-  if (TargetSelectInstruction(I))
+  if (TargetSelectInstruction(I)) {
+    DL = DebugLoc();
     return true;
+  }
 
+  DL = DebugLoc();
   return false;
 }
 

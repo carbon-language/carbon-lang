@@ -333,7 +333,6 @@ public:
   SDValue getControlRoot();
 
   DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
-  void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 
   unsigned getSDNodeOrder() const { return SDNodeOrder; }
 

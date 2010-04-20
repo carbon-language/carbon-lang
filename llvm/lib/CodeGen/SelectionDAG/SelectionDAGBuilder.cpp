@@ -614,7 +614,11 @@ void SelectionDAGBuilder::AssignOrderingToNode(const SDNode *Node) {
 }
 
 void SelectionDAGBuilder::visit(const Instruction &I) {
+  CurDebugLoc = I.getDebugLoc();
+
   visit(I.getOpcode(), I);
+
+  CurDebugLoc = DebugLoc();
 }
 
 void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {

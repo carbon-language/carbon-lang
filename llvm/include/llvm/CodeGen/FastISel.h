@@ -75,11 +75,6 @@ public:
     MBB = mbb;
   }
 
-  /// setCurDebugLoc - Set the current debug location information, which is used
-  /// when creating a machine instruction.
-  ///
-  void setCurDebugLoc(DebugLoc dl) { DL = dl; }
-
   /// getCurDebugLoc() - Return current debug location information.
   DebugLoc getCurDebugLoc() const { return DL; }
 

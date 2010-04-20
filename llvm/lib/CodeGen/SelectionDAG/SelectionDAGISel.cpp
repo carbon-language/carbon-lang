@@ -224,26 +224,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
-/// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
-/// attached with this instruction.
-static void SetDebugLoc(const Instruction *I, SelectionDAGBuilder *SDB,
-                        FastISel *FastIS, MachineFunction *MF) {
-  DebugLoc DL = I->getDebugLoc();
-  if (DL.isUnknown()) return;
-  
-  SDB->setCurDebugLoc(DL);
-
-  if (FastIS)
-    FastIS->setCurDebugLoc(DL);
-}
-
-/// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
-static void ResetDebugLoc(SelectionDAGBuilder *SDB, FastISel *FastIS) {
-  SDB->setCurDebugLoc(DebugLoc());
-  if (FastIS)
-    FastIS->setCurDebugLoc(DebugLoc());
-}
-
 MachineBasicBlock *
 SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
                                    const BasicBlock *LLVMBB,
@@ -255,11 +235,8 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
   // are handled below.
   for (BasicBlock::const_iterator I = Begin;
        I != End && !SDB->HasTailCall && !isa<TerminatorInst>(I);
-       ++I) {
-    SetDebugLoc(I, SDB, 0, MF);
+       ++I)
     SDB->visit(*I);
-    ResetDebugLoc(SDB, 0);
-  }
 
   if (!SDB->HasTailCall) {
     // Ensure that all instructions which are used outside of their defining
@@ -273,9 +250,7 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
       HandlePHINodesInSuccessorBlocks(LLVMBB);
 
       // Lower the terminator after the copies are emitted.
-      SetDebugLoc(LLVMBB->getTerminator(), SDB, 0, MF);
       SDB->visit(*LLVMBB->getTerminator());
-      ResetDebugLoc(SDB, 0);
     }
   }
 
@@ -800,7 +775,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         if (isa<TerminatorInst>(BI))
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
             ++NumFastIselFailures;
-            ResetDebugLoc(SDB, FastIS);
             if (EnableFastISelVerbose || EnableFastISelAbort) {
               dbgs() << "FastISel miss: ";
               BI->dump();
@@ -810,17 +784,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
             break;
           }
 
-        SetDebugLoc(BI, SDB, FastIS, MF);
-
         // Try to select the instruction with FastISel.
-        if (FastIS->SelectInstruction(BI)) {
-          ResetDebugLoc(SDB, FastIS);
+        if (FastIS->SelectInstruction(BI))
           continue;
-        }
-
-        // Clear out the debug location so that it doesn't carry over to
-        // unrelated instructions.
-        ResetDebugLoc(SDB, FastIS);
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
