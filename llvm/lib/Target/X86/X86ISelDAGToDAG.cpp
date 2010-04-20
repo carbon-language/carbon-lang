@@ -694,6 +694,25 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
   return false;
 }
 
+/// isLogicallyAddWithConstant - Return true if this node is semantically an
+/// add of a value with a constantint.
+static bool isLogicallyAddWithConstant(SDValue V, SelectionDAG *CurDAG) {
+  // Check for (add x, Cst)
+  if (V->getOpcode() == ISD::ADD)
+    return isa<ConstantSDNode>(V->getOperand(1));
+
+  // Check for (or x, Cst), where Cst & x == 0.
+  if (V->getOpcode() != ISD::OR ||
+      !isa<ConstantSDNode>(V->getOperand(1)))
+    return false;
+  
+  // Handle "X | C" as "X + C" iff X is known to have C bits clear.
+  ConstantSDNode *CN = cast<ConstantSDNode>(V->getOperand(1));
+    
+  // Check to see if the LHS & C is zero.
+  return CurDAG->MaskedValueIsZero(V->getOperand(0), CN->getAPIntValue());
+}
+
 bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               X86ISelListener &DeadNodes,
                                               unsigned Depth) {
@@ -785,8 +804,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
         // Okay, we know that we have a scale by now.  However, if the scaled
         // value is an add of something and a constant, we can fold the
         // constant into the disp field here.
-        if (ShVal.getNode()->getOpcode() == ISD::ADD &&
-            isa<ConstantSDNode>(ShVal.getNode()->getOperand(1))) {
+        if (isLogicallyAddWithConstant(ShVal, CurDAG)) {
           AM.IndexReg = ShVal.getNode()->getOperand(0);
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
@@ -973,13 +991,10 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    if (isLogicallyAddWithConstant(N, CurDAG)) {
       X86ISelAddressMode Backup = AM;
+      ConstantSDNode *CN = cast<ConstantSDNode>(N.getOperand(1));
       uint64_t Offset = CN->getSExtValue();
-
-      // Check to see if the LHS & C is zero.
-      if (!CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue()))
-        break;
 
       // Start with the LHS as an addr mode.
       if (!MatchAddressRecursively(N.getOperand(0), AM, DeadNodes, Depth+1) &&
