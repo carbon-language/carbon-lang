@@ -1155,6 +1155,10 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
     OutStreamer.EmitValueToAlignment(1 << NumBits, 0, 1, 0);
 }
 
+//===----------------------------------------------------------------------===//
+// Constant emission.
+//===----------------------------------------------------------------------===//
+
 /// LowerConstant - Lower the specified LLVM Constant to an MCExpr.
 ///
 static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
@@ -1282,12 +1286,15 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
 }
 
+static void EmitGlobalConstantImpl(const Constant *C, unsigned AddrSpace,
+                                   AsmPrinter &AP);
+
 static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
                                     AsmPrinter &AP) {
   if (AddrSpace != 0 || !CA->isString()) {
     // Not a string.  Print the values in successive locations
     for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-      AP.EmitGlobalConstant(CA->getOperand(i), AddrSpace);
+      EmitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
     return;
   }
   
@@ -1303,7 +1310,7 @@ static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
 static void EmitGlobalConstantVector(const ConstantVector *CV,
                                      unsigned AddrSpace, AsmPrinter &AP) {
   for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
-    AP.EmitGlobalConstant(CV->getOperand(i), AddrSpace);
+    EmitGlobalConstantImpl(CV->getOperand(i), AddrSpace, AP);
 }
 
 static void EmitGlobalConstantStruct(const ConstantStruct *CS,
@@ -1323,7 +1330,7 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
     SizeSoFar += FieldSize + PadSize;
 
     // Now print the actual field value.
-    AP.EmitGlobalConstant(Field, AddrSpace);
+    EmitGlobalConstantImpl(Field, AddrSpace, AP);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
@@ -1343,7 +1350,7 @@ static void EmitGlobalConstantUnion(const ConstantUnion *CU,
   unsigned FilledSize = TD->getTypeAllocSize(Contents->getType());
     
   // Print the actually filled part
-  AP.EmitGlobalConstant(Contents, AddrSpace);
+  EmitGlobalConstantImpl(Contents, AddrSpace, AP);
 
   // And pad with enough zeroes
   AP.OutStreamer.EmitZeros(Size-FilledSize, AddrSpace);
@@ -1435,57 +1442,68 @@ static void EmitGlobalConstantLargeInt(const ConstantInt *CI,
   }
 }
 
-/// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
+static void EmitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
+                                   AsmPrinter &AP) {
   if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV)) {
-    uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
-    if (Size == 0) Size = 1; // An empty "_foo:" followed by a section is undef.
-    return OutStreamer.EmitZeros(Size, AddrSpace);
+    uint64_t Size = AP.TM.getTargetData()->getTypeAllocSize(CV->getType());
+    return AP.OutStreamer.EmitZeros(Size, AddrSpace);
   }
 
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    unsigned Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+    unsigned Size = AP.TM.getTargetData()->getTypeAllocSize(CV->getType());
     switch (Size) {
     case 1:
     case 2:
     case 4:
     case 8:
-      if (isVerbose())
-        OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
-      OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
+      if (AP.isVerbose())
+        AP.OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
+        AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
       return;
     default:
-      EmitGlobalConstantLargeInt(CI, AddrSpace, *this);
+      EmitGlobalConstantLargeInt(CI, AddrSpace, AP);
       return;
     }
   }
   
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
-    return EmitGlobalConstantArray(CVA, AddrSpace, *this);
+    return EmitGlobalConstantArray(CVA, AddrSpace, AP);
   
   if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    return EmitGlobalConstantStruct(CVS, AddrSpace, *this);
+    return EmitGlobalConstantStruct(CVS, AddrSpace, AP);
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
-    return EmitGlobalConstantFP(CFP, AddrSpace, *this);
+    return EmitGlobalConstantFP(CFP, AddrSpace, AP);
 
   if (isa<ConstantPointerNull>(CV)) {
-    unsigned Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
-    OutStreamer.EmitIntValue(0, Size, AddrSpace);
+    unsigned Size = AP.TM.getTargetData()->getTypeAllocSize(CV->getType());
+    AP.OutStreamer.EmitIntValue(0, Size, AddrSpace);
     return;
   }
   
   if (const ConstantUnion *CVU = dyn_cast<ConstantUnion>(CV))
-    return EmitGlobalConstantUnion(CVU, AddrSpace, *this);
+    return EmitGlobalConstantUnion(CVU, AddrSpace, AP);
   
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
-    return EmitGlobalConstantVector(V, AddrSpace, *this);
+    return EmitGlobalConstantVector(V, AddrSpace, AP);
   
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
-  OutStreamer.EmitValue(LowerConstant(CV, *this),
-                        TM.getTargetData()->getTypeAllocSize(CV->getType()),
-                        AddrSpace);
+  AP.OutStreamer.EmitValue(LowerConstant(CV, AP),
+                         AP.TM.getTargetData()->getTypeAllocSize(CV->getType()),
+                           AddrSpace);
+}
+
+/// EmitGlobalConstant - Print a general LLVM constant to the .s file.
+void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
+  uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+  if (Size)
+    EmitGlobalConstantImpl(CV, AddrSpace, *this);
+  else if (MAI->hasSubsectionsViaSymbols()) {
+    // If the global has zero size, emit a single byte so that two labels don't
+    // look like they are at the same location.
+    OutStreamer.EmitIntValue(0, 1, AddrSpace);
+  }
 }
 
 void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
