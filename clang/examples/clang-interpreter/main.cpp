@@ -107,9 +107,11 @@ int main(int argc, const char **argv, char * const *envp) {
   // Initialize a compiler invocation object from the clang (-cc1) arguments.
   const driver::ArgStringList &CCArgs = Cmd->getArguments();
   llvm::OwningPtr<CompilerInvocation> CI(new CompilerInvocation);
-  CompilerInvocation::CreateFromArgs(*CI, (const char**) CCArgs.data(),
-                                     (const char**) CCArgs.data()+CCArgs.size(),
-                                     Diags);
+  CompilerInvocation::CreateFromArgs(*CI,
+                                     const_cast<const char **>(CCArgs.data()),
+                                     const_cast<const char **>(CCArgs.data()) +
+                                       CCArgs.size(),
+                                     *Diags);
 
   // Show the invocation, with -v.
   if (CI->getHeaderSearchOpts().Verbose) {
