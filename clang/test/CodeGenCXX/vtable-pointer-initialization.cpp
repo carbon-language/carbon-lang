@@ -55,3 +55,23 @@ void f() { B b; }
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldC1Ev
 // CHECK: ret void
+
+namespace Test1 {
+
+// Test that we don't assert when initializing the vtable pointers in C.
+struct A {
+  virtual void a();
+  int i;
+};
+
+struct B : virtual A {
+  virtual void b();
+};
+
+struct C : A, virtual B {
+  virtual void c();
+  C();
+};
+
+C::C() { }
+}

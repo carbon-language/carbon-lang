@@ -1549,6 +1549,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
 void
 CodeGenFunction::InitializeVTablePointer(BaseSubobject Base, 
                                          const CXXRecordDecl *NearestVBase,
+                                         uint64_t BaseOffsetFromNearestVBase,
                                          llvm::Constant *VTable,
                                          const CXXRecordDecl *VTableClass) {
   const CXXRecordDecl *RD = Base.getBase();
@@ -1576,21 +1577,31 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
       Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
   }
 
-  // Compute where to store the address point.
-  llvm::Value *VTableField;
-  
-  if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
-    // We need to use the virtual base offset offset because the virtual base
-    // might have a different offset in the most derived class.
-    VTableField = GetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD, 
-                                        /*NullCheckValue=*/false);
-  } else {
-    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Value *VTableField = LoadCXXThis();
 
-    VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
-    VTableField = 
-      Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+  // Compute where to store the address point.
+  uint64_t NonVirtualOffset = BaseOffsetFromNearestVBase;
+
+  llvm::Value *VirtualOffset = 0;
+  if (NearestVBase) {
+    if (!CodeGenVTables::needsVTTParameter(CurGD)) {
+      // Just get the vbase offset in the complete class.
+      const ASTRecordLayout &Layout = 
+        getContext().getASTRecordLayout(VTableClass);
+
+      NonVirtualOffset += Layout.getVBaseClassOffset(NearestVBase);
+    } else {
+      // We need to use the virtual base offset offset because the virtual base
+      // might have a different offset in the most derived class.
+      VirtualOffset = GetVirtualBaseClassOffset(VTableField,
+                                                VTableClass, NearestVBase);
+    }
   }
+
+  if (NonVirtualOffset || VirtualOffset)
+    VTableField = 
+      ApplyNonVirtualAndVirtualOffset(*this, VTableField,
+                                      NonVirtualOffset, VirtualOffset);
 
   // Finally, store the address point.
   const llvm::Type *AddressPointPtrTy =
@@ -1602,6 +1613,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 void
 CodeGenFunction::InitializeVTablePointers(BaseSubobject Base, 
                                           const CXXRecordDecl *NearestVBase,
+                                          uint64_t BaseOffsetFromNearestVBase,
                                           bool BaseIsNonVirtualPrimaryBase,
                                           llvm::Constant *VTable,
                                           const CXXRecordDecl *VTableClass,
@@ -1610,7 +1622,8 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
   // been set.
   if (!BaseIsNonVirtualPrimaryBase) {
     // Initialize the vtable pointer for this base.
-    InitializeVTablePointer(Base, NearestVBase, VTable, VTableClass);
+    InitializeVTablePointer(Base, NearestVBase, BaseOffsetFromNearestVBase,
+                            VTable, VTableClass);
   }
   
   const CXXRecordDecl *RD = Base.getBase();
@@ -1647,6 +1660,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
     
     InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
                              I->isVirtual() ? BaseDecl : NearestVBase,
+                             I->isVirtual() ? 0 : BaseOffsetFromNearestVBase,
                              BaseDeclIsNonVirtualPrimaryBase, 
                              VTable, VTableClass, VBases);
   }
@@ -1663,6 +1677,7 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
   // Initialize the vtable pointers for this class and all of its bases.
   VisitedVirtualBasesSetTy VBases;
   InitializeVTablePointers(BaseSubobject(RD, 0), /*NearestVBase=*/0, 
+                           /*BaseOffsetFromNearestVBase=*/0,
                            /*BaseIsNonVirtualPrimaryBase=*/false, 
                            VTable, RD, VBases);
 }
