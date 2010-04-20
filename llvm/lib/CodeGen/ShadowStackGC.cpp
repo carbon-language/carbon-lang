@@ -160,7 +160,7 @@ namespace {
           Args.clear();
           Args.append(CI->op_begin() + 1, CI->op_end());
 
-          InvokeInst *II = InvokeInst::Create(CI->getOperand(0),
+          InvokeInst *II = InvokeInst::Create(CI->getCalledValue(),
                                               NewBB, CleanupBB,
                                               Args.begin(), Args.end(),
                                               CI->getName(), CallBB);

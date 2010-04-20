@@ -287,7 +287,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           const Type *Tys[3] = { CI.getOperand(1)->getType(),
                                  CI.getOperand(2)->getType(),
                                  CI.getOperand(3)->getType() };
-          CI.setOperand(0, 
+          CI.setCalledFunction( 
                         Intrinsic::getDeclaration(M, MemCpyID, Tys, 3));
           Changed = true;
         }
@@ -526,7 +526,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
-          UndefValue::get(II->getOperand(0)->getType()),
+          UndefValue::get(II->getCalledValue()->getType()),
           ConstantInt::getFalse(II->getContext())
         };
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
