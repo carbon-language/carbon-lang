@@ -24,7 +24,8 @@ define <8 x i8> @vld3i8(i8* %A) nounwind {
 define <4 x i16> @vld3i16(i16* %A) nounwind {
 ;CHECK: vld3i16:
 ;CHECK: vld3.16
-	%tmp1 = call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3.v4i16(i16* %A)
+	%tmp0 = bitcast i16* %A to i8*
+	%tmp1 = call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3.v4i16(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_int16x4x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int16x4x3_t %tmp1, 2
         %tmp4 = add <4 x i16> %tmp2, %tmp3
@@ -34,7 +35,8 @@ define <4 x i16> @vld3i16(i16* %A) nounwind {
 define <2 x i32> @vld3i32(i32* %A) nounwind {
 ;CHECK: vld3i32:
 ;CHECK: vld3.32
-	%tmp1 = call %struct.__neon_int32x2x3_t @llvm.arm.neon.vld3.v2i32(i32* %A)
+	%tmp0 = bitcast i32* %A to i8*
+	%tmp1 = call %struct.__neon_int32x2x3_t @llvm.arm.neon.vld3.v2i32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_int32x2x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int32x2x3_t %tmp1, 2
         %tmp4 = add <2 x i32> %tmp2, %tmp3
@@ -44,7 +46,8 @@ define <2 x i32> @vld3i32(i32* %A) nounwind {
 define <2 x float> @vld3f(float* %A) nounwind {
 ;CHECK: vld3f:
 ;CHECK: vld3.32
-	%tmp1 = call %struct.__neon_float32x2x3_t @llvm.arm.neon.vld3.v2f32(float* %A)
+	%tmp0 = bitcast float* %A to i8*
+	%tmp1 = call %struct.__neon_float32x2x3_t @llvm.arm.neon.vld3.v2f32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_float32x2x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_float32x2x3_t %tmp1, 2
         %tmp4 = add <2 x float> %tmp2, %tmp3
@@ -54,7 +57,8 @@ define <2 x float> @vld3f(float* %A) nounwind {
 define <1 x i64> @vld3i64(i64* %A) nounwind {
 ;CHECK: vld3i64:
 ;CHECK: vld1.64
-	%tmp1 = call %struct.__neon_int64x1x3_t @llvm.arm.neon.vld3.v1i64(i64* %A)
+	%tmp0 = bitcast i64* %A to i8*
+	%tmp1 = call %struct.__neon_int64x1x3_t @llvm.arm.neon.vld3.v1i64(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_int64x1x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int64x1x3_t %tmp1, 2
         %tmp4 = add <1 x i64> %tmp2, %tmp3
@@ -76,7 +80,8 @@ define <8 x i16> @vld3Qi16(i16* %A) nounwind {
 ;CHECK: vld3Qi16:
 ;CHECK: vld3.16
 ;CHECK: vld3.16
-	%tmp1 = call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3.v8i16(i16* %A)
+	%tmp0 = bitcast i16* %A to i8*
+	%tmp1 = call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3.v8i16(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_int16x8x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int16x8x3_t %tmp1, 2
         %tmp4 = add <8 x i16> %tmp2, %tmp3
@@ -87,7 +92,8 @@ define <4 x i32> @vld3Qi32(i32* %A) nounwind {
 ;CHECK: vld3Qi32:
 ;CHECK: vld3.32
 ;CHECK: vld3.32
-	%tmp1 = call %struct.__neon_int32x4x3_t @llvm.arm.neon.vld3.v4i32(i32* %A)
+	%tmp0 = bitcast i32* %A to i8*
+	%tmp1 = call %struct.__neon_int32x4x3_t @llvm.arm.neon.vld3.v4i32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_int32x4x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int32x4x3_t %tmp1, 2
         %tmp4 = add <4 x i32> %tmp2, %tmp3
@@ -98,7 +104,8 @@ define <4 x float> @vld3Qf(float* %A) nounwind {
 ;CHECK: vld3Qf:
 ;CHECK: vld3.32
 ;CHECK: vld3.32
-	%tmp1 = call %struct.__neon_float32x4x3_t @llvm.arm.neon.vld3.v4f32(float* %A)
+	%tmp0 = bitcast float* %A to i8*
+	%tmp1 = call %struct.__neon_float32x4x3_t @llvm.arm.neon.vld3.v4f32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_float32x4x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_float32x4x3_t %tmp1, 2
         %tmp4 = add <4 x float> %tmp2, %tmp3
