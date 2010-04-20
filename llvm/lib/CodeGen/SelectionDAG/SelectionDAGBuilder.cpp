@@ -618,6 +618,9 @@ void SelectionDAGBuilder::visit(const Instruction &I) {
 
   visit(I.getOpcode(), I);
 
+  if (!isa<TerminatorInst>(&I) && !HasTailCall)
+    CopyToExportRegsIfNeeded(&I);
+
   CurDebugLoc = DebugLoc();
 }
 

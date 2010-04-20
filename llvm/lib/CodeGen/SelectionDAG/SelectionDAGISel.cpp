@@ -239,12 +239,6 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
     SDB->visit(*I);
 
   if (!SDB->HasTailCall) {
-    // Ensure that all instructions which are used outside of their defining
-    // blocks are available as virtual registers.  Invoke is handled elsewhere.
-    for (BasicBlock::const_iterator I = Begin; I != End; ++I)
-      if (!isa<PHINode>(I) && !isa<InvokeInst>(I))
-        SDB->CopyToExportRegsIfNeeded(I);
-
     // Handle PHI nodes in successor blocks.
     if (End == LLVMBB->end()) {
       HandlePHINodesInSuccessorBlocks(LLVMBB);
