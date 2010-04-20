@@ -60,7 +60,7 @@ void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
 }
 
 const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
-                                                  const SourceManager &sm,
+                                                  const SourceManager &SM,
                                                   SourceLocation Loc,
                                                   bool *Invalid) const {
   if (Invalid)
@@ -68,9 +68,6 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
       
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer.getPointer() && Entry) {
-    // FIXME:
-    SourceManager &SM = const_cast<SourceManager &>(sm);
-    
     std::string ErrorStr;
     struct stat FileInfo;
     Buffer.setPointer(MemoryBuffer::getFile(Entry->getName(), &ErrorStr,

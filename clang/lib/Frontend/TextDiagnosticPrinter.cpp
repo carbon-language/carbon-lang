@@ -282,7 +282,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 SourceRange *Ranges,
                                                 unsigned NumRanges,
-                                                SourceManager &SM,
+                                                const SourceManager &SM,
                                                 const FixItHint *Hints,
                                                 unsigned NumHints,
                                                 unsigned Columns) {

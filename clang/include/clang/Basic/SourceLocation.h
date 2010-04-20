@@ -176,18 +176,13 @@ public:
 /// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
 /// for argument passing to functions that expect both objects.
 class FullSourceLoc : public SourceLocation {
-  SourceManager* SrcMgr;
+  const SourceManager *SrcMgr;
 public:
   /// Creates a FullSourceLoc where isValid() returns false.
-  explicit FullSourceLoc() : SrcMgr((SourceManager*) 0) {}
+  explicit FullSourceLoc() : SrcMgr(0) {}
 
-  explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM)
+  explicit FullSourceLoc(SourceLocation Loc, const SourceManager &SM)
     : SourceLocation(Loc), SrcMgr(&SM) {}
-
-  SourceManager &getManager() {
-    assert(SrcMgr && "SourceManager is NULL.");
-    return *SrcMgr;
-  }
 
   const SourceManager &getManager() const {
     assert(SrcMgr && "SourceManager is NULL.");
