@@ -1432,6 +1432,37 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                   RParenLoc);
 }
 
+static CXXBaseOrMemberInitializer *
+BuildImplicitBaseInitializer(Sema &SemaRef, 
+                             const CXXConstructorDecl *Constructor,
+                             CXXBaseSpecifier *BaseSpec) {
+  InitializedEntity InitEntity
+    = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec);
+
+  InitializationKind InitKind
+    = InitializationKind::CreateDefault(Constructor->getLocation());
+
+  InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);        
+  Sema::OwningExprResult BaseInit = 
+    InitSeq.Perform(SemaRef, InitEntity, InitKind,
+                    Sema::MultiExprArg(SemaRef, 0, 0));
+
+  BaseInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(BaseInit));
+  if (BaseInit.isInvalid())
+    return 0;
+        
+  CXXBaseOrMemberInitializer *CXXBaseInit =
+    new (SemaRef.Context) CXXBaseOrMemberInitializer(SemaRef.Context,
+               SemaRef.Context.getTrivialTypeSourceInfo(BaseSpec->getType(), 
+                                                        SourceLocation()),
+                                             BaseSpec->isVirtual(),
+                                             SourceLocation(),
+                                             BaseInit.takeAs<Expr>(),
+                                             SourceLocation());
+
+  return CXXBaseInit;
+}
+
 bool
 Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
@@ -1471,8 +1502,6 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       AllBaseFields[Member->getMember()] = Member;
   }
 
-  llvm::SmallVector<CXXBaseSpecifier *, 4> BasesToDefaultInit;
-
   // Push virtual bases before others.
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
@@ -1481,27 +1510,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
-      InitializedEntity InitEntity
-        = InitializedEntity::InitializeBase(Context, VBase);
-      InitializationKind InitKind
-        = InitializationKind::CreateDefault(Constructor->getLocation());
-      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
-      OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
-                                                  MultiExprArg(*this, 0, 0));
-      BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
-      if (BaseInit.isInvalid()) {
+      CXXBaseOrMemberInitializer *CXXBaseInit =
+        BuildImplicitBaseInitializer(*this, Constructor, VBase);
+
+      if (!CXXBaseInit) {
         HadError = true;
         continue;
       }
-        
-      CXXBaseOrMemberInitializer *CXXBaseInit =
-        new (Context) CXXBaseOrMemberInitializer(Context,
-                           Context.getTrivialTypeSourceInfo(VBase->getType(), 
-                                                            SourceLocation()),
-                                                 /*IsVirtual=*/true,
-                                                 SourceLocation(),
-                                                 BaseInit.takeAs<Expr>(),
-                                                 SourceLocation());
+
       AllToInit.push_back(CXXBaseInit);
     }
   }
@@ -1516,27 +1532,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
-      InitializedEntity InitEntity
-        = InitializedEntity::InitializeBase(Context, Base);
-      InitializationKind InitKind
-        = InitializationKind::CreateDefault(Constructor->getLocation());
-      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);        
-      OwningExprResult BaseInit = InitSeq.Perform(*this, InitEntity, InitKind,
-                                                  MultiExprArg(*this, 0, 0));
-      BaseInit = MaybeCreateCXXExprWithTemporaries(move(BaseInit));
-      if (BaseInit.isInvalid()) {
+      CXXBaseOrMemberInitializer *CXXBaseInit =
+        BuildImplicitBaseInitializer(*this, Constructor, Base);
+      
+      if (!CXXBaseInit) {
         HadError = true;
         continue;
       }
 
-      CXXBaseOrMemberInitializer *CXXBaseInit =
-        new (Context) CXXBaseOrMemberInitializer(Context,
-                           Context.getTrivialTypeSourceInfo(Base->getType(), 
-                                                            SourceLocation()),
-                                                 /*IsVirtual=*/false,
-                                                 SourceLocation(),
-                                                 BaseInit.takeAs<Expr>(),
-                                                 SourceLocation());
       AllToInit.push_back(CXXBaseInit);
     }
   }
