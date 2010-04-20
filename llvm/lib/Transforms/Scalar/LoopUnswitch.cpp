@@ -34,6 +34,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InlineCost.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
@@ -988,47 +989,16 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
       continue;
     }
     
-    // FIXME: Change this to use instruction simplify interfaces!
+    // See if instruction simplification can hack this up.  This is common for
+    // things like "select false, X, Y" after unswitching made the condition be
+    // 'false'.
+    if (Value *V = SimplifyInstruction(I)) {
+      ReplaceUsesOfWith(I, V, Worklist, L, LPM);
+      continue;
+    }
     
     // Special case hacks that appear commonly in unswitched code.
-    switch (I->getOpcode()) {
-    case Instruction::Select:
-      if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(0))) {
-        ReplaceUsesOfWith(I, I->getOperand(!CB->getZExtValue()+1), Worklist, L,
-                          LPM);
-        continue;
-      }
-      break;
-    case Instruction::And:
-      if (isa<ConstantInt>(I->getOperand(0)) && 
-          // constant -> RHS
-          I->getOperand(0)->getType()->isIntegerTy(1))
-        cast<BinaryOperator>(I)->swapOperands();
-      if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
-        if (CB->getType()->isIntegerTy(1)) {
-          if (CB->isOne())      // X & 1 -> X
-            ReplaceUsesOfWith(I, I->getOperand(0), Worklist, L, LPM);
-          else                  // X & 0 -> 0
-            ReplaceUsesOfWith(I, I->getOperand(1), Worklist, L, LPM);
-          continue;
-        }
-      break;
-    case Instruction::Or:
-      if (isa<ConstantInt>(I->getOperand(0)) &&
-          // constant -> RHS
-          I->getOperand(0)->getType()->isIntegerTy(1))
-        cast<BinaryOperator>(I)->swapOperands();
-      if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
-        if (CB->getType()->isIntegerTy(1)) {
-          if (CB->isOne())   // X | 1 -> 1
-            ReplaceUsesOfWith(I, I->getOperand(1), Worklist, L, LPM);
-          else                  // X | 0 -> X
-            ReplaceUsesOfWith(I, I->getOperand(0), Worklist, L, LPM);
-          continue;
-        }
-      break;
-    case Instruction::Br: {
-      BranchInst *BI = cast<BranchInst>(I);
+    if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
       if (BI->isUnconditional()) {
         // If BI's parent is the only pred of the successor, fold the two blocks
         // together.
@@ -1061,13 +1031,13 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         LPM->deleteSimpleAnalysisValue(Succ, L);
         Succ->eraseFromParent();
         ++NumSimplify;
-        break;
+        continue;
       }
       
       if (ConstantInt *CB = dyn_cast<ConstantInt>(BI->getCondition())){
         // Conditional branch.  Turn it into an unconditional branch, then
         // remove dead blocks.
-        break;  // FIXME: Enable.
+        continue;  // FIXME: Enable.
 
         DEBUG(dbgs() << "Folded branch: " << *BI);
         BasicBlock *DeadSucc = BI->getSuccessor(CB->getZExtValue());
@@ -1081,8 +1051,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
 
         RemoveBlockIfDead(DeadSucc, Worklist, L);
       }
-      break;
-    }
+      continue;
     }
   }
 }
