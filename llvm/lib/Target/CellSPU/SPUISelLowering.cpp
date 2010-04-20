@@ -1330,22 +1330,12 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       InVals.push_back(Chain.getValue(0));
     }
     break;
+  case MVT::i8:
+  case MVT::i16:
   case MVT::i64:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i64,
-                               InFlag).getValue(1);
-    InVals.push_back(Chain.getValue(0));
-    break;
   case MVT::i128:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i128,
-                               InFlag).getValue(1);
-    InVals.push_back(Chain.getValue(0));
-    break;
   case MVT::f32:
   case MVT::f64:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, Ins[0].VT,
-                               InFlag).getValue(1);
-    InVals.push_back(Chain.getValue(0));
-    break;
   case MVT::v2f64:
   case MVT::v2i64:
   case MVT::v4f32:
