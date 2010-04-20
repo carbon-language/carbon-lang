@@ -1448,7 +1448,8 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
       return StmtError();
     }
   }
-  ConsumeToken(); // consume ';'
+  // consume ';'
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@throw");
   return Actions.ActOnObjCAtThrowStmt(atLoc, move(Res), CurScope);
 }
 

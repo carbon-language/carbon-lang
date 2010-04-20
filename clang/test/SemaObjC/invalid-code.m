@@ -12,3 +12,10 @@ void test1() {
   __PRETTY_FUNCTION__; // expected-warning{{expression result unused}}
 }
 @end
+
+// <rdar://problem/7881045>
+// This previously triggered a crash because a ';' was expected after the @throw statement.
+void foo() {
+  @throw (id)0 // expected-error{{expected ';' after @throw}}
+}
+
