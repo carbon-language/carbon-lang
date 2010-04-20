@@ -193,14 +193,18 @@ static inline unsigned getShiftAmtBits(uint32_t insn) {
 // A8.6.17 BFC
 // Encoding T1 ARMv6T2, ARMv7
 // LLVM-specific encoding for #<lsb> and #<width>
-static inline uint32_t getBitfieldInvMask(uint32_t insn) {
+static inline bool getBitfieldInvMask(uint32_t insn, uint32_t &mask) {
   uint32_t lsb = getImm3(insn) << 2 | getImm2(insn);
   uint32_t msb = getMsb(insn);
   uint32_t Val = 0;
-  assert(lsb <= msb && "Encoding error: lsb > msb");
+  if (msb < lsb) {
+    DEBUG(errs() << "Encoding error: msb < lsb\n");
+    return false;
+  }
   for (uint32_t i = lsb; i <= msb; ++i)
     Val |= (1 << i);
-  return ~Val;
+  mask = ~Val;
+  return true;
 }
 
 // A8.4 Shifts applied to a register
@@ -1550,9 +1554,13 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
     MI.addOperand(MCOperand::CreateImm(getIImm3Imm8(insn)));
   else if (Opcode == ARM::t2MOVi16 || Opcode == ARM::t2MOVTi16)
     MI.addOperand(MCOperand::CreateImm(getImm16(insn)));
-  else if (Opcode == ARM::t2BFC)
-    MI.addOperand(MCOperand::CreateImm(getBitfieldInvMask(insn)));
-  else {
+  else if (Opcode == ARM::t2BFC) {
+    uint32_t mask = 0;
+    if (getBitfieldInvMask(insn, mask))
+      MI.addOperand(MCOperand::CreateImm(mask));
+    else
+      return false;
+  } else {
     // Handle the case of: lsb width
     assert((Opcode == ARM::t2SBFX || Opcode == ARM::t2UBFX ||
             Opcode == ARM::t2BFI) && "Invalid opcode");
