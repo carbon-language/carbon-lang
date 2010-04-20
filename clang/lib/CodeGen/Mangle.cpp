@@ -306,8 +306,6 @@ static bool isStd(const NamespaceDecl *NS) {
 
 static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
   while (isa<LinkageSpecDecl>(DC)) {
-    assert(cast<LinkageSpecDecl>(DC)->getLanguage() ==
-           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
     DC = DC->getParent();
   }
 
