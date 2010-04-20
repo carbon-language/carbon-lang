@@ -40,8 +40,6 @@ vector int f__r();
 void f_a(vector int a);
 void f_a2(int b, vector int a);
 
-vector int v = (vector int)(-1);
-
 // These should have warnings.
 __vector long vv_l;                 // expected-warning {{Use of 'long' with '__vector' is deprecated}}
 __vector signed long vv_sl;         // expected-warning {{Use of 'long' with '__vector' is deprecated}}
