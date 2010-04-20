@@ -372,12 +372,13 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
   VisitorData *Data = (VisitorData *)ClientData;
   if (!Data->Filter || (C.kind == *(enum CXCursorKind *)Data->Filter)) {
     CXString USR = clang_getCursorUSR(C);
-    if (!clang_getCString(USR)) {
+    const char *cstr = clang_getCString(USR);
+    if (!cstr || cstr[0] == '\0') {
       clang_disposeString(USR);
       return CXChildVisit_Recurse;
     }
-    printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C),
-                           clang_getCString(USR));
+    printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C), cstr);
+
     PrintCursorExtent(C);
     printf("\n");
     clang_disposeString(USR);

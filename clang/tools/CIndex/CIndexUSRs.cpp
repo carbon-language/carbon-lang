@@ -46,11 +46,13 @@ public:
   void VisitNamespaceDecl(NamespaceDecl *D);
   void VisitObjCClassDecl(ObjCClassDecl *CD);
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);
-  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *P);
+  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+  void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
+  void VisitVarDecl(VarDecl *D);
 
   /// Generate the string component containing the location of the
   ///  declaration.
@@ -132,7 +134,7 @@ void USRGenerator::VisitFieldDecl(FieldDecl *D) {
     return;
   }
   VisitDeclContext(D->getDeclContext());
-  Out << "@FI@" << s;
+  Out << (isa<ObjCIvarDecl>(D) ? "@" : "@FI@") << s;
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
@@ -142,6 +144,24 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
   VisitDeclContext(D->getDeclContext());
+  const std::string &s = D->getNameAsString();
+  // The string can be empty if the declaration has no name; e.g., it is
+  // the ParmDecl with no name for declaration of a function pointer type, e.g.:
+  //  	void  (*f)(void *);
+  // In this case, don't generate a USR.
+  if (s.empty())
+    IgnoreResults = true;
+  else
+    GenNamedDecl(s);
+}
+
+void USRGenerator::VisitVarDecl(VarDecl *D) {
+  // VarDecls can be declared 'extern' within a function or method body,
+  // but their enclosing DeclContext is the function, not the TU.  We need
+  // to check the storage class to correctly generate the USR.
+  if (!D->hasExternalStorage())
+    VisitDeclContext(D->getDeclContext());
+
   const std::string &s = D->getNameAsString();
   // The string can be empty if the declaration has no name; e.g., it is
   // the ParmDecl with no name for declaration of a function pointer type, e.g.:
@@ -221,6 +241,15 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
   GenObjCProperty(D->getName());
+}
+
+void USRGenerator::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+  if (ObjCPropertyDecl *PD = D->getPropertyDecl()) {
+    VisitObjCPropertyDecl(PD);
+    return;
+  }
+
+  IgnoreResults = true;
 }
 
 void USRGenerator::VisitTagDecl(TagDecl *D) {
@@ -368,6 +397,9 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
 
   if (SUG->ignoreResults())
     return createCXString("");
+
+  // For development testing.
+  // assert(SUG.str().size() > 2);
 
     // Return a copy of the string that must be disposed by the caller.
   return createCXString(SUG.str(), true);
