@@ -886,6 +886,13 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
       return true;
   }
 
+  // We don't need an operator delete if we're running under
+  // -fno-exceptions.
+  if (!getLangOptions().Exceptions) {
+    OperatorDelete = 0;
+    return false;
+  }
+
   // FindAllocationOverload can change the passed in arguments, so we need to
   // copy them back.
   if (NumPlaceArgs > 0)
