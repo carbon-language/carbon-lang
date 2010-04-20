@@ -411,12 +411,25 @@ void MachineLICM::HoistRegionPostRA() {
   delete[] PhysRegDefs;
 }
 
-/// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the
-/// current loop.
+/// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the current
+/// loop, and make sure it is not killed by any instructions in the loop.
 void MachineLICM::AddToLiveIns(unsigned Reg) {
   const std::vector<MachineBasicBlock*> Blocks = CurLoop->getBlocks();
-  for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
-    Blocks[i]->addLiveIn(Reg);
+  for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
+    MachineBasicBlock *BB = Blocks[i];
+    if (!BB->isLiveIn(Reg))
+      BB->addLiveIn(Reg);
+    for (MachineBasicBlock::iterator
+           MII = BB->begin(), E = BB->end(); MII != E; ++MII) {
+      MachineInstr *MI = &*MII;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg() || !MO.getReg() || MO.isDef()) continue;
+        if (MO.getReg() == Reg || TRI->isSuperRegister(Reg, MO.getReg()))
+          MO.setIsKill(false);
+      }
+    }
+  }
 }
 
 /// HoistPostRA - When an instruction is found to only use loop invariant
