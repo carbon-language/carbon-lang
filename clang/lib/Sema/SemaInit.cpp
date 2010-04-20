@@ -884,7 +884,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
       }
     }
 
-    // OpenCL & AltiVec require all elements to be initialized.
+    // OpenCL requires all elements to be initialized.
     if (numEltsInit != maxElements)
       if (SemaRef.getLangOptions().OpenCL)
         SemaRef.Diag(IList->getSourceRange().getBegin(),
