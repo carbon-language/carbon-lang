@@ -2297,10 +2297,8 @@ void CodeGenDAGPatterns::ParseInstructions() {
       
       // Create and insert the instruction.
       std::vector<Record*> ImpResults;
-      std::vector<Record*> ImpOperands;
       Instructions.insert(std::make_pair(Instrs[i], 
-                          DAGInstruction(0, Results, Operands, ImpResults,
-                                         ImpOperands)));
+                          DAGInstruction(0, Results, Operands, ImpResults)));
       continue;  // no pattern.
     }
     
@@ -2447,7 +2445,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
     // Create and insert the instruction.
     // FIXME: InstImpResults and InstImpInputs should not be part of
     // DAGInstruction.
-    DAGInstruction TheInst(I, Results, Operands, InstImpResults, InstImpInputs);
+    DAGInstruction TheInst(I, Results, Operands, InstImpResults);
     Instructions.insert(std::make_pair(I->getRecord(), TheInst));
 
     // Use a temporary tree pattern to infer all types and make sure that the

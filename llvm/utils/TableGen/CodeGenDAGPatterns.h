@@ -529,23 +529,19 @@ class DAGInstruction {
   std::vector<Record*> Results;
   std::vector<Record*> Operands;
   std::vector<Record*> ImpResults;
-  std::vector<Record*> ImpOperands;
   TreePatternNode *ResultPattern;
 public:
   DAGInstruction(TreePattern *TP,
                  const std::vector<Record*> &results,
                  const std::vector<Record*> &operands,
-                 const std::vector<Record*> &impresults,
-                 const std::vector<Record*> &impoperands)
+                 const std::vector<Record*> &impresults)
     : Pattern(TP), Results(results), Operands(operands), 
-      ImpResults(impresults), ImpOperands(impoperands),
-      ResultPattern(0) {}
+      ImpResults(impresults), ResultPattern(0) {}
 
   const TreePattern *getPattern() const { return Pattern; }
   unsigned getNumResults() const { return Results.size(); }
   unsigned getNumOperands() const { return Operands.size(); }
   unsigned getNumImpResults() const { return ImpResults.size(); }
-  unsigned getNumImpOperands() const { return ImpOperands.size(); }
   const std::vector<Record*>& getImpResults() const { return ImpResults; }
   
   void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
@@ -565,11 +561,6 @@ public:
     return ImpResults[RN];
   }
   
-  Record *getImpOperand(unsigned ON) const {
-    assert(ON < ImpOperands.size());
-    return ImpOperands[ON];
-  }
-
   TreePatternNode *getResultPattern() const { return ResultPattern; }
 };
   
