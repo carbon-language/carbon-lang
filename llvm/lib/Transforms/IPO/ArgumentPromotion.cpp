@@ -105,7 +105,7 @@ bool ArgPromotion::runOnSCC(CallGraphSCC &SCC) {
     }
     Changed |= LocalChange;               // Remember that we changed something.
   } while (LocalChange);
-
+  
   return Changed;
 }
 
@@ -874,8 +874,14 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   
   NF_CGN->stealCalledFunctionsFrom(CG[F]);
   
-  // Now that the old function is dead, delete it.
-  delete CG.removeFunctionFromModule(F);
+  // Now that the old function is dead, delete it.  If there is a dangling
+  // reference to the CallgraphNode, just leave the dead function around for
+  // someone else to nuke.
+  CallGraphNode *CGN = CG[F];
+  if (CGN->getNumReferences() == 0)
+    delete CG.removeFunctionFromModule(CGN);
+  else
+    F->setLinkage(Function::ExternalLinkage);
   
   return NF_CGN;
 }
