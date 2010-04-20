@@ -187,6 +187,9 @@ public:
   
   // CallGraphNode ctor - Create a node for the specified function.
   inline CallGraphNode(Function *f) : F(f), NumReferences(0) {}
+  ~CallGraphNode() {
+    assert(NumReferences == 0 && "Node deleted while references remain");
+  }
   
   //===---------------------------------------------------------------------
   // Accessor methods.
@@ -277,6 +280,11 @@ public:
   /// time, so it should be used sparingly.
   void replaceCallEdge(CallSite CS, CallSite NewCS, CallGraphNode *NewNode);
   
+  /// allReferencesDropped - This is a special function that should only be
+  /// used by the CallGraph class.
+  void allReferencesDropped() {
+    NumReferences = 0;
+  }
 };
 
 //===----------------------------------------------------------------------===//

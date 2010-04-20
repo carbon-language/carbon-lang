@@ -158,6 +158,7 @@ private:
   // destroy - Release memory for the call graph
   virtual void destroy() {
     /// CallsExternalNode is not in the function map, delete it explicitly.
+    CallsExternalNode->allReferencesDropped();
     delete CallsExternalNode;
     CallsExternalNode = 0;
     CallGraph::destroy();
@@ -180,6 +181,14 @@ void CallGraph::initialize(Module &M) {
 
 void CallGraph::destroy() {
   if (FunctionMap.empty()) return;
+  
+  // Reset all node's use counts to zero before deleting them to prevent an
+  // assertion from firing.
+#ifndef NDEBUG
+  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
+       I != E; ++I)
+    I->second->allReferencesDropped();
+#endif
   
   for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
       I != E; ++I)
