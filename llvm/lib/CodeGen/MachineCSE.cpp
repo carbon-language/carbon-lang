@@ -356,7 +356,7 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
     CSEPairs.clear();
   }
 
-  // Recursively call ProcessBlock with childred.
+  // Recursively call ProcessBlock with children.
   const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     Changed |= ProcessBlock(Children[i]);
