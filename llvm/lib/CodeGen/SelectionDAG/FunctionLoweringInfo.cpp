@@ -124,6 +124,7 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
 /// PHI nodes or outside of the basic block that defines it, or used by a
 /// switch or atomic instruction, which may expand to multiple basic blocks.
 static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
+  if (I->use_empty()) return false;
   if (isa<PHINode>(I)) return true;
   const BasicBlock *BB = I->getParent();
   for (Value::const_use_iterator UI = I->use_begin(), E = I->use_end();
@@ -190,7 +191,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   for (; BB != EB; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      if (!I->use_empty() && isUsedOutsideOfDefiningBlock(I))
+      if (isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
           InitializeRegForValue(I);
