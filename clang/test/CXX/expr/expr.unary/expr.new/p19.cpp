@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions %s
 typedef __SIZE_TYPE__ size_t;
 
 // Operator delete template for placement new with global lookup

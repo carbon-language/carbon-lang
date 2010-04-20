@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -fexceptions %s
 typedef __SIZE_TYPE__ size_t;
 
 struct S {

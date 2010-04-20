@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions %s
 typedef __SIZE_TYPE__ size_t;
 
 // Overloaded operator delete with two arguments
