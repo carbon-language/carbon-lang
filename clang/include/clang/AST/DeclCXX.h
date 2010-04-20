@@ -1217,7 +1217,7 @@ public:
   /// defined. If false, then this constructor was defined by the
   /// user. This operation can only be invoked if the constructor has
   /// already been defined.
-  bool isImplicitlyDefined(ASTContext &C) const {
+  bool isImplicitlyDefined() const {
     assert(isThisDeclarationADefinition() &&
            "Can only get the implicit-definition flag once the "
            "constructor has been defined");

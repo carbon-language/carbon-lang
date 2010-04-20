@@ -5678,8 +5678,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
       for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce;++ci){
         const FunctionDecl *body = 0;
         ci->getBody(body);
-        if (!body ||
-            !cast<CXXConstructorDecl>(body)->isImplicitlyDefined(Context)) {
+        if (!body || !cast<CXXConstructorDecl>(body)->isImplicitlyDefined()) {
           SourceLocation CtorLoc = ci->getLocation();
           Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
           return;
