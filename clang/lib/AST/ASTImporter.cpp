@@ -3090,7 +3090,7 @@ FileID ASTImporter::Import(FileID FromID) {
                              FromSLoc.getFile().getFileCharacteristic());
   } else {
     // FIXME: We want to re-use the existing MemoryBuffer!
-    const llvm::MemoryBuffer *FromBuf = Cache->getBuffer(getDiags());
+    const llvm::MemoryBuffer *FromBuf = Cache->getBuffer(getDiags(), FromSM);
     llvm::MemoryBuffer *ToBuf
       = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());

@@ -101,8 +101,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
 
 
   // Get the first preprocessing token.
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   Token PPTok;
   PP.Lex(PPTok);
 

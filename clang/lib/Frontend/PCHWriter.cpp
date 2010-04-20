@@ -1,4 +1,4 @@
-//===--- PCHWriter.h - Precompiled Headers Writer ---------------*- C++ -*-===//
+//===--- PCHWriter.cpp - Precompiled Headers Writer -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -1104,7 +1104,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // that is required by llvm::MemoryBuffer::getMemBuffer (on
         // the reader side).
         const llvm::MemoryBuffer *Buffer
-          = Content->getBuffer(PP.getDiagnostics());
+          = Content->getBuffer(PP.getDiagnostics(), PP.getSourceManager());
         const char *Name = Buffer->getBufferIdentifier();
         Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record,
                                   llvm::StringRef(Name, strlen(Name) + 1));

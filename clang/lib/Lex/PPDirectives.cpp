@@ -1098,9 +1098,8 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
   if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport)) {
-    if (Callbacks) {
+    if (Callbacks)
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);
-    }
     return;
   }
 
@@ -1113,10 +1112,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   }
 
   // Finally, if all is good, enter the new file!
-  std::string ErrorStr;
-  if (EnterSourceFile(FID, CurDir, ErrorStr))
-    Diag(FilenameTok, diag::err_pp_error_opening_file)
-      << std::string(SourceMgr.getFileEntryForID(FID)->getName()) << ErrorStr;
+  EnterSourceFile(FID, CurDir, FilenameTok.getLocation());
 }
 
 /// HandleIncludeNextDirective - Implements #include_next.

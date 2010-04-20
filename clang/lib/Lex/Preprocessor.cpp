@@ -490,7 +490,7 @@ SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc,
 
 /// EnterMainSourceFile - Enter the specified FileID as the main source file,
 /// which implicitly adds the builtin defines etc.
-bool Preprocessor::EnterMainSourceFile() {
+void Preprocessor::EnterMainSourceFile() {
   // We do not allow the preprocessor to reenter the main file.  Doing so will
   // cause FileID's to accumulate information from both runs (e.g. #line
   // information) and predefined macros aren't guaranteed to be set properly.
@@ -498,9 +498,7 @@ bool Preprocessor::EnterMainSourceFile() {
   FileID MainFileID = SourceMgr.getMainFileID();
 
   // Enter the main file source buffer.
-  std::string ErrorStr;
-  if (EnterSourceFile(MainFileID, 0, ErrorStr))
-    return true;
+  EnterSourceFile(MainFileID, 0, SourceLocation());
 
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
@@ -515,7 +513,7 @@ bool Preprocessor::EnterMainSourceFile() {
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
 
   // Start parsing the predefines.
-  return EnterSourceFile(FID, 0, ErrorStr);
+  EnterSourceFile(FID, 0, SourceLocation());
 }
 
 void Preprocessor::EndSourceFile() {

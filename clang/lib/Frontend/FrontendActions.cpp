@@ -236,8 +236,7 @@ void DumpTokensAction::ExecuteAction() {
   Preprocessor &PP = getCompilerInstance().getPreprocessor();
   // Start preprocessing the specified input file.
   Token Tok;
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   do {
     PP.Lex(Tok);
     PP.DumpToken(Tok, true);
@@ -265,8 +264,7 @@ void ParseOnlyAction::ExecuteAction() {
   llvm::OwningPtr<Action> PA(new MinimalAction(PP));
 
   Parser P(PP, *PA);
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   P.ParseTranslationUnit();
 }
 
@@ -275,8 +273,7 @@ void PreprocessOnlyAction::ExecuteAction() {
 
   Token Tok;
   // Start parsing the specified input file.
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   do {
     PP.Lex(Tok);
   } while (Tok.isNot(tok::eof));
@@ -291,8 +288,7 @@ void PrintParseAction::ExecuteAction() {
   llvm::OwningPtr<Action> PA(CreatePrintParserActionsAction(PP, OS));
 
   Parser P(PP, *PA);
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   P.ParseTranslationUnit();
 }
 

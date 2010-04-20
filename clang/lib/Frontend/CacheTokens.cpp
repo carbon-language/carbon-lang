@@ -475,7 +475,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
     if (!P.isAbsolute())
       continue;
 
-    const llvm::MemoryBuffer *B = C.getBuffer(PP.getDiagnostics());
+    const llvm::MemoryBuffer *B = C.getBuffer(PP.getDiagnostics(), SM);
     if (!B) continue;
 
     FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
@@ -550,8 +550,7 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.
   Token Tok;
-  if (PP.EnterMainSourceFile())
-    return;
+  PP.EnterMainSourceFile();
   do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
 
   // Generate the PTH file.

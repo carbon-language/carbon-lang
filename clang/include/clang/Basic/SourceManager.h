@@ -78,8 +78,13 @@ namespace SrcMgr {
     /// \param Diag Object through which diagnostics will be emitted it the
     /// buffer cannot be retrieved.
     /// 
+    /// \param Loc If specified, is the location that invalid file diagnostics
+    ///     will be emitted at.
+    ///
     /// \param Invalid If non-NULL, will be set \c true if an error occurred.
-    const llvm::MemoryBuffer *getBuffer(Diagnostic &Diag, 
+    const llvm::MemoryBuffer *getBuffer(Diagnostic &Diag,
+                                        const SourceManager &SM,
+                                        SourceLocation Loc = SourceLocation(),
                                         bool *Invalid = 0) const;
 
     /// getSize - Returns the size of the content encapsulated by this
@@ -447,11 +452,17 @@ public:
   /// getBuffer - Return the buffer for the specified FileID. If there is an
   /// error opening this buffer the first time, this manufactures a temporary
   /// buffer and returns a non-empty error string.
-  const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Diag,
-                                                                    Invalid);
+  const llvm::MemoryBuffer *getBuffer(FileID FID, SourceLocation Loc,
+                                      bool *Invalid = 0) const {
+    return getSLocEntry(FID).getFile().getContentCache()
+       ->getBuffer(Diag, *this, Loc, Invalid);
   }
 
+  const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
+    return getSLocEntry(FID).getFile().getContentCache()
+       ->getBuffer(Diag, *this, SourceLocation(), Invalid);
+  }
+  
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
     return getSLocEntry(FID).getFile().getContentCache()->Entry;

@@ -366,17 +366,17 @@ public:
   
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
-  bool EnterMainSourceFile();
+  void EnterMainSourceFile();
 
   /// EndSourceFile - Inform the preprocessor callbacks that processing is
   /// complete.
   void EndSourceFile();
 
   /// EnterSourceFile - Add a source file to the top of the include stack and
-  /// start lexing tokens from it instead of the current buffer.  Return true
-  /// and fill in ErrorStr with the error information on failure.
-  bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
-                       std::string &ErrorStr);
+  /// start lexing tokens from it instead of the current buffer.  Emit an error
+  /// and don't enter the file on error.
+  void EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
+                       SourceLocation Loc);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the
