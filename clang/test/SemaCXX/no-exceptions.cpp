@@ -2,7 +2,7 @@
 
 // Various tests for -fno-exceptions
 
-typedef __typeof(sizeof(int)) size_t;
+typedef __SIZE_TYPE__ size_t;
 
 namespace test0 {
   // rdar://problem/7878149
