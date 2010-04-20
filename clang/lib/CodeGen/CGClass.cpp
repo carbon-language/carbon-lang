@@ -120,13 +120,20 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     return Builder.CreateBitCast(Value, BasePtrTy);
   }
 
+#ifndef NDEBUG
+  CXXBasePaths Paths(/*FindAmbiguities=*/true,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
+#else
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
+#endif
   if (!const_cast<CXXRecordDecl *>(Class)->
         isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClass), Paths)) {
     assert(false && "Class must be derived from the passed in base class!");
     return 0;
   }
+
+  assert(!Paths.isAmbiguous(BTy) && "Path is ambiguous");
 
   unsigned Start = 0;
   llvm::Value *VirtualOffset = 0;
