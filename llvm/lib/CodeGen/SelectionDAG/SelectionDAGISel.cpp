@@ -249,10 +249,12 @@ static void ResetDebugLoc(SelectionDAGBuilder *SDB, FastISel *FastIS) {
     FastIS->setCurDebugLoc(DebugLoc());
 }
 
-void SelectionDAGISel::SelectBasicBlock(const BasicBlock *LLVMBB,
-                                        BasicBlock::const_iterator Begin,
-                                        BasicBlock::const_iterator End,
-                                        bool &HadTailCall) {
+MachineBasicBlock *
+SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
+                                   const BasicBlock *LLVMBB,
+                                   BasicBlock::const_iterator Begin,
+                                   BasicBlock::const_iterator End,
+                                   bool &HadTailCall) {
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block. Terminators
   // are handled below.
@@ -286,9 +288,10 @@ void SelectionDAGISel::SelectBasicBlock(const BasicBlock *LLVMBB,
   CurDAG->setRoot(SDB->getControlRoot());
 
   // Final step, emit the lowered DAG as machine code.
-  CodeGenAndEmitDAG();
+  BB = CodeGenAndEmitDAG(BB);
   HadTailCall = SDB->HasTailCall;
   SDB->clear();
+  return BB;
 }
 
 namespace {
@@ -473,7 +476,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   } while (!Worklist.empty());
 }
 
-void SelectionDAGISel::CodeGenAndEmitDAG() {
+MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
   std::string GroupName;
   if (TimePassesIsEnabled)
     GroupName = "Instruction Selection and Scheduling";
@@ -638,6 +641,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   DEBUG(dbgs() << "Selected machine code:\n");
   DEBUG(BB->dump());
+  return BB;
 }
 
 void SelectionDAGISel::DoInstructionSelection() {
@@ -754,7 +758,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Iterate over all basic blocks in the function.
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     const BasicBlock *LLVMBB = &*I;
-    BB = FuncInfo->MBBMap[LLVMBB];
+    MachineBasicBlock *BB = FuncInfo->MBBMap[LLVMBB];
 
     BasicBlock::const_iterator const Begin = LLVMBB->begin();
     BasicBlock::const_iterator const End = LLVMBB->end();
@@ -790,7 +794,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       // beginning FastISel on the entry block.
       if (LLVMBB == &Fn.getEntryBlock()) {
         CurDAG->setRoot(SDB->getControlRoot());
-        CodeGenAndEmitDAG();
+        BB = CodeGenAndEmitDAG(BB);
         SDB->clear();
       }
       FastIS->startNewBlock(BB);
@@ -838,7 +842,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           }
 
           bool HadTailCall = false;
-          SelectBasicBlock(LLVMBB, BI, llvm::next(BI), HadTailCall);
+          BB = SelectBasicBlock(BB, LLVMBB, BI, llvm::next(BI), HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {
@@ -874,17 +878,17 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     // block.
     if (BI != End) {
       bool HadTailCall;
-      SelectBasicBlock(LLVMBB, BI, End, HadTailCall);
+      BB = SelectBasicBlock(BB, LLVMBB, BI, End, HadTailCall);
     }
 
-    FinishBasicBlock();
+    FinishBasicBlock(BB);
   }
 
   delete FastIS;
 }
 
 void
-SelectionDAGISel::FinishBasicBlock() {
+SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
 
   DEBUG(dbgs() << "Target-post-processed machine code:\n");
   DEBUG(BB->dump());
@@ -923,7 +927,7 @@ SelectionDAGISel::FinishBasicBlock() {
       // Emit the code
       SDB->visitBitTestHeader(SDB->BitTestCases[i], BB);
       CurDAG->setRoot(SDB->getRoot());
-      CodeGenAndEmitDAG();
+      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
     }
 
@@ -944,7 +948,7 @@ SelectionDAGISel::FinishBasicBlock() {
 
 
       CurDAG->setRoot(SDB->getRoot());
-      CodeGenAndEmitDAG();
+      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
     }
 
@@ -991,7 +995,7 @@ SelectionDAGISel::FinishBasicBlock() {
       SDB->visitJumpTableHeader(SDB->JTCases[i].second, SDB->JTCases[i].first,
                                 BB);
       CurDAG->setRoot(SDB->getRoot());
-      CodeGenAndEmitDAG();
+      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
     }
 
@@ -1000,7 +1004,7 @@ SelectionDAGISel::FinishBasicBlock() {
     // Emit the code
     SDB->visitJumpTable(SDB->JTCases[i].second);
     CurDAG->setRoot(SDB->getRoot());
-    CodeGenAndEmitDAG();
+    BB = CodeGenAndEmitDAG(BB);
     SDB->clear();
 
     // Update PHI Nodes
@@ -1048,7 +1052,7 @@ SelectionDAGISel::FinishBasicBlock() {
     // Emit the code
     SDB->visitSwitchCase(SDB->SwitchCases[i], BB);
     CurDAG->setRoot(SDB->getRoot());
-    CodeGenAndEmitDAG();
+    BB = CodeGenAndEmitDAG(BB);
 
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can

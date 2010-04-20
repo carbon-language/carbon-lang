@@ -46,7 +46,6 @@ public:
   MachineRegisterInfo *RegInfo;
   SelectionDAG *CurDAG;
   SelectionDAGBuilder *SDB;
-  MachineBasicBlock *BB;
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;
   CodeGenOpt::Level OptLevel;
@@ -283,13 +282,14 @@ private:
   
   void PrepareEHLandingPad(MachineBasicBlock *BB);
   void SelectAllBasicBlocks(const Function &Fn);
-  void FinishBasicBlock();
+  void FinishBasicBlock(MachineBasicBlock *BB);
 
-  void SelectBasicBlock(const BasicBlock *LLVMBB,
-                        BasicBlock::const_iterator Begin,
-                        BasicBlock::const_iterator End,
-                        bool &HadTailCall);
-  void CodeGenAndEmitDAG();
+  MachineBasicBlock *SelectBasicBlock(MachineBasicBlock *BB,
+                                      const BasicBlock *LLVMBB,
+                                      BasicBlock::const_iterator Begin,
+                                      BasicBlock::const_iterator End,
+                                      bool &HadTailCall);
+  MachineBasicBlock *CodeGenAndEmitDAG(MachineBasicBlock *BB);
   void LowerArguments(const BasicBlock *BB);
   
   void ShrinkDemandedOps();
