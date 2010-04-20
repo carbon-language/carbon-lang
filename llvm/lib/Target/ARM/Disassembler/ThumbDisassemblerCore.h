@@ -1413,7 +1413,10 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
   ++OpIdx;
 
   if (TwoReg) {
-    assert(!NoDstReg && "Internal error");
+    if (NoDstReg) {
+      DEBUG(errs() << "Thumb encoding error: d==15 for DPModImm 2-reg instr.\n");
+      return false;
+    }
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRn(insn))));
     ++OpIdx;
