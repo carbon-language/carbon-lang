@@ -158,9 +158,11 @@ private:
   // destroy - Release memory for the call graph
   virtual void destroy() {
     /// CallsExternalNode is not in the function map, delete it explicitly.
-    CallsExternalNode->allReferencesDropped();
-    delete CallsExternalNode;
-    CallsExternalNode = 0;
+    if (CallsExternalNode) {
+      CallsExternalNode->allReferencesDropped();
+      delete CallsExternalNode;
+      CallsExternalNode = 0;
+    }
     CallGraph::destroy();
   }
 };
