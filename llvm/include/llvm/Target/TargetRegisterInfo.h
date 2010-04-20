@@ -109,7 +109,7 @@ public:
   }
 
   /// contains - Return true if the specified register is included in this
-  /// register class.
+  /// register class.  This does not include virtual registers.
   bool contains(unsigned Reg) const {
     return RegSet.count(Reg);
   }
