@@ -58,7 +58,7 @@ struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// RUN: grep 'define void @f11(.union.anon. noalias sret .agg.result)' %t
+// RUN: grep 'define void @f11(.union.anon. sret .agg.result)' %t
 union { long double a; float b; } f11() { while (1) {} }
 
 // RUN: grep 'define i64 @f12_0()' %t
@@ -69,7 +69,7 @@ void f12_1(struct s12 a0) {}
 
 // Check that sret parameter is accounted for when checking available integer
 // registers.
-// RUN: grep 'define void @f13(.struct.s13_0. noalias sret .agg.result, i32 .a, i32 .b, i32 .c, i32 .d, .struct.s13_1. byval .e, i32 .f)' %t
+// RUN: grep 'define void @f13(.struct.s13_0. sret .agg.result, i32 .a, i32 .b, i32 .c, i32 .d, .struct.s13_1. byval .e, i32 .f)' %t
 
 struct s13_0 { long long f0[3]; };
 struct s13_1 { long long f0[2]; };

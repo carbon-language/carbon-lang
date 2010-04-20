@@ -6,7 +6,7 @@ struct S {
   int s;
 };
 
-// CHECK: define void @_Z1fv(%struct.S* noalias sret %
+// CHECK: define void @_Z1fv(%struct.S* sret %
 S f() { return S(); }
 // CHECK: define void @_Z1f1S(%struct.S*)
 void f(S) { }
@@ -17,7 +17,7 @@ class C {
   double c;
 };
 
-// CHECK: define void @_Z1gv(%class.C* noalias sret %
+// CHECK: define void @_Z1gv(%class.C* sret %
 C g() { return C(); }
 
 // CHECK: define void @_Z1f1C(%class.C*) 

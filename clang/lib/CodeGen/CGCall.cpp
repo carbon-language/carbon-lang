@@ -586,8 +586,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   case ABIArgInfo::Indirect:
     PAL.push_back(llvm::AttributeWithIndex::get(Index,
-                                                llvm::Attribute::StructRet |
-                                                llvm::Attribute::NoAlias));
+                                                llvm::Attribute::StructRet));
     ++Index;
     // sret disables readnone and readonly
     FuncAttrs &= ~(llvm::Attribute::ReadOnly |

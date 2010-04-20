@@ -72,7 +72,7 @@ struct s10 {
 // Small vectors and 1 x {i64,double} are returned in registers
 
 // RUN: grep 'i32 @f11()' %t
-// RUN: grep -F 'void @f12(<2 x i32>* noalias sret %agg.result)' %t
+// RUN: grep -F 'void @f12(<2 x i32>* sret %agg.result)' %t
 // RUN: grep 'i64 @f13()' %t
 // RUN: grep 'i64 @f14()' %t
 // RUN: grep '<2 x i64> @f15()' %t
@@ -94,11 +94,11 @@ T16 f16(void) { while (1) {} }
 // 128-bits).
 
 // RUN: grep 'i32 @f17()' %t
-// RUN: grep -F 'void @f18(%2* noalias sret %agg.result)' %t
-// RUN: grep -F 'void @f19(%3* noalias sret %agg.result)' %t
-// RUN: grep -F 'void @f20(%4* noalias sret %agg.result)' %t
-// RUN: grep -F 'void @f21(%5* noalias sret %agg.result)' %t
-// RUN: grep -F 'void @f22(%6* noalias sret %agg.result)' %t
+// RUN: grep -F 'void @f18(%2* sret %agg.result)' %t
+// RUN: grep -F 'void @f19(%3* sret %agg.result)' %t
+// RUN: grep -F 'void @f20(%4* sret %agg.result)' %t
+// RUN: grep -F 'void @f21(%5* sret %agg.result)' %t
+// RUN: grep -F 'void @f22(%6* sret %agg.result)' %t
 struct { T11 a; } f17(void) { while (1) {} }
 struct { T12 a; } f18(void) { while (1) {} }
 struct { T13 a; } f19(void) { while (1) {} }
@@ -117,11 +117,11 @@ struct { struct {} a; struct { float a[1]; } b; } f25(void) { while (1) {} }
 
 // Small structures are handled recursively
 // RUN: grep -F 'i32 @f26()' %t
-// RUN: grep 'void @f27(%.truct.s27\* noalias sret %agg.result)' %t
+// RUN: grep 'void @f27(%.truct.s27\* sret %agg.result)' %t
 struct s26 { struct { char a, b; } a; struct { char a, b; } b; } f26(void) { while (1) {} }
 struct s27 { struct { char a, b, c; } a; struct { char a; } b; } f27(void) { while (1) {} }
 
-// RUN: grep 'void @f28(%.truct.s28\* noalias sret %agg.result)' %t
+// RUN: grep 'void @f28(%.truct.s28\* sret %agg.result)' %t
 struct s28 { int a; int b[]; } f28(void) { while (1) {} }
 
 // RUN: grep 'define i16 @f29()' %t
@@ -151,7 +151,7 @@ struct s36 { struct { int : 0; } a[2][10]; char b; char c; } f36(void) { while (
 // RUN: grep 'define float @f37()' %t
 struct s37 { float c[1][1]; } f37(void) { while (1) {} }
 
-// RUN: grep 'define void @f38(.struct.s38. noalias sret .agg.result)' %t
+// RUN: grep 'define void @f38(.struct.s38. sret .agg.result)' %t
 struct s38 { char a[3]; short b; } f38(void) { while (1) {} }
 
 // RUN: grep 'define void @f39(.struct.s39. byval align 16 .x)' %t

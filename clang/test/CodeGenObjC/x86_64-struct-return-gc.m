@@ -25,7 +25,7 @@ struct Indirect indirect_func(void);
 void Indirect_test(void) {
   struct Indirect i;
   
-  // CHECK: call void @indirect_func(%struct.Indirect* noalias sret
+  // CHECK: call void @indirect_func(%struct.Indirect* sret
   // CHECK: call i8* @objc_memmove_collectable(
   i = indirect_func();
 }
