@@ -72,5 +72,6 @@ def err_target_invalid_feature : Error<"invalid target feature '%0'">;
 def err_cannot_open_file : Error<"cannot open file '%0': %1">, DefaultFatal;
 def err_file_modified : Error<
   "file '%0' modified since it was first processed">, DefaultFatal;
-  
+def err_unsupported_bom : Error<"%0 byte order mark detected in '%1', but "
+  "encoding is not supported">, DefaultFatal;
 }
