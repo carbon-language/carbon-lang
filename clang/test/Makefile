@@ -16,9 +16,9 @@ TESTDIRS += $(EXTRA_TESTDIRS)
 
 ifndef TESTARGS
 ifdef VERBOSE
-TESTARGS = -v -j16
+TESTARGS = -v
 else
-TESTARGS = -s -v -j16
+TESTARGS = -s -v
 endif
 endif
 
