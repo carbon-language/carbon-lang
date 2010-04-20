@@ -2939,14 +2939,8 @@ let Constraints = "$src1 = $dst" in {
                            []>, OpSize;
 }
 
-def : Pat<(int_x86_ssse3_palign_r VR64:$src1, VR64:$src2, (i8 imm:$src3)),
-          (PALIGNR64rr VR64:$src1, VR64:$src2, (BYTE_imm imm:$src3))>,
-          Requires<[HasSSSE3]>;
-def : Pat<(int_x86_ssse3_palign_r VR64:$src1,
-                                      (memop64 addr:$src2),
-                                      (i8 imm:$src3)),
-          (PALIGNR64rm VR64:$src1, addr:$src2, (BYTE_imm imm:$src3))>,
-          Requires<[HasSSSE3]>;
+let AddedComplexity = 5 in {
+
 def : Pat<(v1i64 (palign:$src3 VR64:$src1, VR64:$src2)),
           (PALIGNR64rr VR64:$src2, VR64:$src1,
                        (SHUFFLE_get_palign_imm VR64:$src3))>,
@@ -2968,16 +2962,6 @@ def : Pat<(v8i8 (palign:$src3 VR64:$src1, VR64:$src2)),
                        (SHUFFLE_get_palign_imm VR64:$src3))>,
           Requires<[HasSSSE3]>;
 
-def : Pat<(int_x86_ssse3_palign_r_128 VR128:$src1, VR128:$src2, (i8 imm:$src3)),
-          (PALIGNR128rr VR128:$src1, VR128:$src2, (BYTE_imm imm:$src3))>,
-          Requires<[HasSSSE3]>;
-def : Pat<(int_x86_ssse3_palign_r_128 VR128:$src1,
-                                      (memopv2i64 addr:$src2),
-                                      (i8 imm:$src3)),
-          (PALIGNR128rm VR128:$src1, addr:$src2, (BYTE_imm imm:$src3))>,
-          Requires<[HasSSSE3]>;
-
-let AddedComplexity = 5 in {
 def : Pat<(v4i32 (palign:$src3 VR128:$src1, VR128:$src2)),
           (PALIGNR128rr VR128:$src2, VR128:$src1,
                         (SHUFFLE_get_palign_imm VR128:$src3))>,

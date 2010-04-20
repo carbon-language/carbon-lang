@@ -19,6 +19,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/IRBuilder.h"
 #include <cstring>
 using namespace llvm;
 
@@ -277,8 +278,13 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       // Calls to these intrinsics are transformed into vector multiplies.
       NewFn = 0;
       return true;
+    } else if (Name.compare(5, 18, "x86.ssse3.palign.r", 18) == 0 ||
+               Name.compare(5, 22, "x86.ssse3.palign.r.128", 22) == 0) {
+      // Calls to these intrinsics are transformed into vector shuffles, shifts,
+      // or 0.
+      NewFn = 0;
+      return true;           
     }
-    
 
     break;
   }
@@ -420,6 +426,118 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         
       // Remove upgraded multiply.
       CI->eraseFromParent();
+    } else if (F->getName() == "llvm.x86.ssse3.palign.r") {
+      Value *Op1 = CI->getOperand(1);
+      Value *Op2 = CI->getOperand(2);
+      Value *Op3 = CI->getOperand(3);
+      unsigned shiftVal = cast<ConstantInt>(Op3)->getZExtValue();
+      Value *Rep;
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI);
+
+      // If palignr is shifting the pair of input vectors less than 9 bytes,
+      // emit a shuffle instruction.
+      if (shiftVal <= 8) {
+        const Type *IntTy = Type::getInt32Ty(C);
+        const Type *EltTy = Type::getInt8Ty(C);
+        const Type *VecTy = VectorType::get(EltTy, 8);
+        
+        Op2 = Builder.CreateBitCast(Op2, VecTy);
+        Op1 = Builder.CreateBitCast(Op1, VecTy);
+
+        llvm::SmallVector<llvm::Constant*, 8> Indices;
+        for (unsigned i = 0; i != 8; ++i)
+          Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
+
+        Value *SV = ConstantVector::get(Indices.begin(), Indices.size());
+        Rep = Builder.CreateShuffleVector(Op2, Op1, SV, "palignr");
+        Rep = Builder.CreateBitCast(Rep, F->getReturnType());
+      }
+
+      // If palignr is shifting the pair of input vectors more than 8 but less
+      // than 16 bytes, emit a logical right shift of the destination.
+      else if (shiftVal < 16) {
+        // MMX has these as 1 x i64 vectors for some odd optimization reasons.
+        const Type *EltTy = Type::getInt64Ty(C);
+        const Type *VecTy = VectorType::get(EltTy, 1);
+
+        Op1 = Builder.CreateBitCast(Op1, VecTy, "cast");
+        Op2 = ConstantInt::get(VecTy, (shiftVal-8) * 8);
+
+        // create i32 constant
+        Function *I =
+          Intrinsic::getDeclaration(F->getParent(), Intrinsic::x86_mmx_psrl_q);
+        Rep = Builder.CreateCall2(I, Op1, Op2, "palignr");
+      }
+
+      // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
+      else {
+        Rep = Constant::getNullValue(F->getReturnType());
+      }
+      
+      // Replace any uses with our new instruction.
+      if (!CI->use_empty())
+        CI->replaceAllUsesWith(Rep);
+        
+      // Remove upgraded instruction.
+      CI->eraseFromParent();
+      
+    } else if (F->getName() == "llvm.x86.ssse3.palign.r.128") {
+      Value *Op1 = CI->getOperand(1);
+      Value *Op2 = CI->getOperand(2);
+      Value *Op3 = CI->getOperand(3);
+      unsigned shiftVal = cast<ConstantInt>(Op3)->getZExtValue();
+      Value *Rep;
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI);
+
+      // If palignr is shifting the pair of input vectors less than 17 bytes,
+      // emit a shuffle instruction.
+      if (shiftVal <= 16) {
+        const Type *IntTy = Type::getInt32Ty(C);
+        const Type *EltTy = Type::getInt8Ty(C);
+        const Type *VecTy = VectorType::get(EltTy, 16);
+        
+        Op2 = Builder.CreateBitCast(Op2, VecTy);
+        Op1 = Builder.CreateBitCast(Op1, VecTy);
+
+        llvm::SmallVector<llvm::Constant*, 16> Indices;
+        for (unsigned i = 0; i != 16; ++i)
+          Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
+
+        Value *SV = ConstantVector::get(Indices.begin(), Indices.size());
+        Rep = Builder.CreateShuffleVector(Op2, Op1, SV, "palignr");
+        Rep = Builder.CreateBitCast(Rep, F->getReturnType());
+      }
+
+      // If palignr is shifting the pair of input vectors more than 16 but less
+      // than 32 bytes, emit a logical right shift of the destination.
+      else if (shiftVal < 32) {
+        const Type *EltTy = Type::getInt64Ty(C);
+        const Type *VecTy = VectorType::get(EltTy, 2);
+        const Type *IntTy = Type::getInt32Ty(C);
+
+        Op1 = Builder.CreateBitCast(Op1, VecTy, "cast");
+        Op2 = ConstantInt::get(IntTy, (shiftVal-16) * 8);
+
+        // create i32 constant
+        Function *I =
+          Intrinsic::getDeclaration(F->getParent(), Intrinsic::x86_sse2_psrl_dq);
+        Rep = Builder.CreateCall2(I, Op1, Op2, "palignr");
+      }
+
+      // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
+      else {
+        Rep = Constant::getNullValue(F->getReturnType());
+      }
+      
+      // Replace any uses with our new instruction.
+      if (!CI->use_empty())
+        CI->replaceAllUsesWith(Rep);
+        
+      // Remove upgraded instruction.
+      CI->eraseFromParent();
+      
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }

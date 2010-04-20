@@ -669,16 +669,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
 }
 
-// Align ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_ssse3_palign_r        :
-              Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty,
-                         llvm_v1i64_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_ssse3_palign_r_128    :
-              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty,
-                         llvm_v2i64_ty, llvm_i8_ty], [IntrNoMem]>;
-}
-
 //===----------------------------------------------------------------------===//
 // SSE4.1
 
