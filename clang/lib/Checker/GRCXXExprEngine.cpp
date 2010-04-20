@@ -92,44 +92,11 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
 
   
   // Evaluate other arguments.
-  CXXConstructExpr::arg_iterator AB 
-    = const_cast<CXXConstructExpr*>(E)->arg_begin();
-  CXXConstructExpr::arg_iterator AE 
-    = const_cast<CXXConstructExpr*>(E)->arg_end();
-  llvm::SmallVector<CallExprWLItem, 20> WorkList;
-  WorkList.reserve(AE - AB);
-  WorkList.push_back(CallExprWLItem(AB, Pred));
   ExplodedNodeSet ArgsEvaluated;
-  const FunctionProtoType *Proto = CD->getType()->getAs<FunctionProtoType>();
-
-  while (!WorkList.empty()) {
-    CallExprWLItem Item = WorkList.back();
-    WorkList.pop_back();
-
-    if (Item.I == AE) {
-      ArgsEvaluated.insert(Item.N);
-      continue;
-    }
-
-    // Evaluate the argument.
-    ExplodedNodeSet Tmp;
-    const unsigned ParamIdx = Item.I - AB;
-
-    bool VisitAsLvalue = false;
-
-    if (ParamIdx < Proto->getNumArgs())
-      VisitAsLvalue = Proto->getArgType(ParamIdx)->isReferenceType();
-
-    if (VisitAsLvalue)
-      VisitLValue(*Item.I, Item.N, Tmp);
-    else
-      Visit(*Item.I, Item.N, Tmp);
-
-    ++(Item.I);
-
-    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
-      WorkList.push_back(CallExprWLItem(Item.I, *NI));
-  }
+  const FunctionProtoType *FnType = CD->getType()->getAs<FunctionProtoType>();
+  EvalArguments(const_cast<CXXConstructExpr*>(E)->arg_begin(),
+                const_cast<CXXConstructExpr*>(E)->arg_end(),
+                FnType, Pred, ArgsEvaluated);
   // The callee stack frame context used to create the 'this' parameter region.
   const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
                                                     Pred->getLocationContext(),
@@ -158,35 +125,11 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
   assert(FnType && "Method type not available");
 
   // Evaluate explicit arguments with a worklist.
-  CallExpr::arg_iterator AB = const_cast<CXXMemberCallExpr*>(MCE)->arg_begin(),
-                         AE = const_cast<CXXMemberCallExpr*>(MCE)->arg_end();
-  llvm::SmallVector<CallExprWLItem, 20> WorkList;
-  WorkList.reserve(AE - AB);
-  WorkList.push_back(CallExprWLItem(AB, Pred));
   ExplodedNodeSet ArgsEvaluated;
-
-  while (!WorkList.empty()) {
-    CallExprWLItem Item = WorkList.back();
-    WorkList.pop_back();
-
-    if (Item.I == AE) {
-      ArgsEvaluated.insert(Item.N);
-      continue;
-    }
-
-    ExplodedNodeSet Tmp;
-    const unsigned ParamIdx = Item.I - AB;
-    bool VisitAsLvalue = FnType->getArgType(ParamIdx)->isReferenceType();
-
-    if (VisitAsLvalue)
-      VisitLValue(*Item.I, Item.N, Tmp);
-    else
-      Visit(*Item.I, Item.N, Tmp);
-
-    ++(Item.I);
-    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI != NE; ++NI)
-      WorkList.push_back(CallExprWLItem(Item.I, *NI));
-  }
+  EvalArguments(const_cast<CXXMemberCallExpr*>(MCE)->arg_begin(),
+                const_cast<CXXMemberCallExpr*>(MCE)->arg_end(),
+                FnType, Pred, ArgsEvaluated);
+ 
   // Evaluate the implicit object argument.
   ExplodedNodeSet AllArgsEvaluated;
   const MemberExpr *ME = dyn_cast<MemberExpr>(MCE->getCallee()->IgnoreParens());
