@@ -1198,8 +1198,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       }
 
       if (E->getOpcode() == BinaryOperator::Sub) {
-        const QualType Type = E->getLHS()->getType();
-        const QualType ElementType = Type->getAs<PointerType>()->getPointeeType();
+        QualType Type = E->getLHS()->getType();
+        QualType ElementType = Type->getAs<PointerType>()->getPointeeType();
 
         CharUnits ElementSize = CharUnits::One();
         if (!ElementType->isVoidType() && !ElementType->isFunctionType())
