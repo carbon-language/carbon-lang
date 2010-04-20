@@ -339,12 +339,32 @@ bool Sema::InstantiatingTemplate::CheckInstantiationDepth(
 /// \brief Prints the current instantiation stack through a series of
 /// notes.
 void Sema::PrintInstantiationStack() {
+  // Determine which template instantiations to skip, if any.
+  unsigned SkipStart = ActiveTemplateInstantiations.size(), SkipEnd = SkipStart;
+  unsigned Limit = Diags.getTemplateBacktraceLimit();
+  if (Limit && Limit < ActiveTemplateInstantiations.size()) {
+    SkipStart = Limit / 2 + Limit % 2;
+    SkipEnd = ActiveTemplateInstantiations.size() - Limit / 2;
+  }
+
   // FIXME: In all of these cases, we need to show the template arguments
+  unsigned InstantiationIdx = 0;
   for (llvm::SmallVector<ActiveTemplateInstantiation, 16>::reverse_iterator
          Active = ActiveTemplateInstantiations.rbegin(),
          ActiveEnd = ActiveTemplateInstantiations.rend();
        Active != ActiveEnd;
-       ++Active) {
+       ++Active, ++InstantiationIdx) {
+    // Skip this instantiation?
+    if (InstantiationIdx >= SkipStart && InstantiationIdx < SkipEnd) {
+      if (InstantiationIdx == SkipStart) {
+        // Note that we're skipping instantiations.
+        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+                     diag::note_instantiation_contexts_suppressed)
+          << unsigned(ActiveTemplateInstantiations.size() - Limit);
+      }
+      continue;
+    }
+
     switch (Active->Kind) {
     case ActiveTemplateInstantiation::TemplateInstantiation: {
       Decl *D = reinterpret_cast<Decl *>(Active->Entity);

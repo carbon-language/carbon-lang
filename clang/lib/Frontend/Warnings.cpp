@@ -39,6 +39,8 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
   // Handle -ferror-limit
   if (Opts.ErrorLimit)
     Diags.setErrorLimit(Opts.ErrorLimit);
+  if (Opts.TemplateBacktraceLimit)
+    Diags.setTemplateBacktraceLimit(Opts.TemplateBacktraceLimit);
 
   // If -pedantic or -pedantic-errors was specified, then we want to map all
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd

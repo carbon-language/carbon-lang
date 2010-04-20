@@ -39,7 +39,8 @@ public:
                                  /// deserialized by, e.g., the CIndex library.
 
   unsigned ErrorLimit;           /// Limit # errors emitted.
-  
+  unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.
+
   /// The distance between tab stops.
   unsigned TabStop;
   enum { DefaultTabStop = 8, MaxTabStop = 100 };
@@ -73,6 +74,7 @@ public:
     VerifyDiagnostics = 0;
     BinaryOutput = 0;
     ErrorLimit = 0;
+    TemplateBacktraceLimit = 0;
   }
 };
 

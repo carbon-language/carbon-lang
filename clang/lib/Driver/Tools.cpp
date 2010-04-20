@@ -1079,6 +1079,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   else
     CmdArgs.push_back("19");
+
+  CmdArgs.push_back("-ftemplate-backtrace-limit");
+  if (Arg *A = Args.getLastArg(options::OPT_ftemplate_backtrace_limit_EQ))
+    CmdArgs.push_back(A->getValue(Args));
+  else
+    CmdArgs.push_back("10");
   
   // Pass -fmessage-length=.
   CmdArgs.push_back("-fmessage-length");

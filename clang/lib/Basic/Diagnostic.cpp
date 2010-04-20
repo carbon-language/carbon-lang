@@ -224,7 +224,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ErrorOccurred = false;
   FatalErrorOccurred = false;
   ErrorLimit = 0;
-  
+  TemplateBacktraceLimit = 0;
+
   NumWarnings = 0;
   NumErrors = 0;
   NumErrorsSuppressed = 0;

@@ -1434,7 +1434,10 @@ def note_prior_template_arg_substitution : Note<
   " template parameter%1 %2">;
 def note_template_default_arg_checking : Note<
   "while checking a default template argument used here">;
-  
+def note_instantiation_contexts_suppressed : Note<
+  "suppressed %0 template instantiation context%s0; use -ftemplate-backtrace-"
+  "limit=N to change the number of template instantiation entries shown">;
+
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;
 def err_nested_name_spec_non_tag : Error<

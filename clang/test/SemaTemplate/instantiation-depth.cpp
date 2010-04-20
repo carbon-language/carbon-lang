@@ -1,8 +1,10 @@
-// RUN: %clang_cc1 -fsyntax-only -ftemplate-depth 5 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -ftemplate-depth 5 -ftemplate-backtrace-limit 4 %s
 
-template<typename T> struct X : X<T*> { }; // expected-error{{recursive template instantiation exceeded maximum depth of 5}} \
-// expected-note{{use -ftemplate-depth-N to increase recursive template instantiation depth}} \
-// expected-note 5 {{instantiation of template class}}
+template<typename T> struct X : X<T*> { }; \
+// expected-error{{recursive template instantiation exceeded maximum depth of 5}} \
+// expected-note 3 {{instantiation of template class}} \
+// expected-note {{suppressed 2 template instantiation contexts}} \
+// expected-note {{use -ftemplate-depth-N to increase recursive template instantiation depth}}
 
 void test() { 
   (void)sizeof(X<int>); // expected-note {{instantiation of template class}}
