@@ -1953,7 +1953,7 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       continue;
     }
 
-    const GRState* state = Pred->getState();
+    const GRState* state = GetState(Pred);
     SVal V = state->getSVal(Ex);
     if (nonloc::SymExprVal *SEV = dyn_cast<nonloc::SymExprVal>(&V)) {
       // First assume that the condition is true.
@@ -2177,7 +2177,7 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
     SaveOr OldHasGen(Builder->HasGeneratedNode);
 
     if (const Expr *Receiver = ME->getReceiver()) {
-      const GRState *state = Pred->getState();
+      const GRState *state = GetState(Pred);
 
       // Bifurcate the state into nil and non-nil ones.
       DefinedOrUnknownSVal receiverVal =
@@ -3029,7 +3029,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   ExplodedNodeSet Tmp3;
 
   for (ExplodedNodeSet::iterator I1=Tmp1.begin(), E1=Tmp1.end(); I1!=E1; ++I1) {
-    SVal LeftV = (*I1)->getState()->getSVal(LHS);
+    SVal LeftV = GetState(*I1)->getSVal(LHS);
     ExplodedNodeSet Tmp2;
     Visit(RHS, *I1, Tmp2);
 
