@@ -609,8 +609,6 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     delete Scheduler;
   }
 
-  DEBUG(dbgs() << "Selected machine code:\n");
-  DEBUG(BB->dump());
   return BB;
 }
 
