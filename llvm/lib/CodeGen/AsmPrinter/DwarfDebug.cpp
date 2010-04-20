@@ -2283,6 +2283,21 @@ void DwarfDebug::identifyScopeMarkers() {
   }
 }
 
+/// FindFirstDebugLoc - Find the first debug location in the function. This
+/// is intended to be an approximation for the source position of the
+/// beginning of the function.
+static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I)
+    for (MachineBasicBlock::const_iterator MBBI = I->begin(), MBBE = I->end();
+         MBBI != MBBE; ++MBBI) {
+      DebugLoc DL = MBBI->getDebugLoc();
+      if (!DL.isUnknown())
+        return DL;
+    }
+  return DebugLoc();
+}
+
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
@@ -2297,7 +2312,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   // Emit label for the implicitly defined dbg.stoppoint at the start of the
   // function.
-  DebugLoc FDL = MF->getDefaultDebugLoc();
+  DebugLoc FDL = FindFirstDebugLoc(MF);
   if (FDL.isUnknown()) return;
   
   MDNode *Scope = FDL.getScope(MF->getFunction()->getContext());

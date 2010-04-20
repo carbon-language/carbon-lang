@@ -109,10 +109,6 @@ class MachineFunction {
   typedef ilist<MachineBasicBlock> BasicBlockListType;
   BasicBlockListType BasicBlocks;
 
-  /// Default debug location. Used to print out the debug label at the beginning
-  /// of a function.
-  DebugLoc DefaultDebugLoc;
-
   /// FunctionNumber - This provides a unique ID for each function emitted in
   /// this translation unit.
   ///
@@ -394,19 +390,6 @@ public:
   /// normal 'L' label is returned.
   MCSymbol *getJTISymbol(unsigned JTI, MCContext &Ctx, 
                          bool isLinkerPrivate = false) const;
-  
-  
-  //===--------------------------------------------------------------------===//
-  // Debug location.
-  //
-
-  /// getDefaultDebugLoc - Get the default debug location for the machine
-  /// function.
-  DebugLoc getDefaultDebugLoc() const { return DefaultDebugLoc; }
-
-  /// setDefaultDebugLoc - Get the default debug location for the machine
-  /// function.
-  void setDefaultDebugLoc(DebugLoc DL) { DefaultDebugLoc = DL; }
 };
 
 //===--------------------------------------------------------------------===//
