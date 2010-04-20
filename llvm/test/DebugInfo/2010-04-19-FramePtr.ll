@@ -1,7 +1,7 @@
 ; RUN: llc -asm-verbose -O0 -o %t < %s 
-; grep DW_AT_APPLE_omit_frame_ptr %t
+; RUN: grep DW_AT_APPLE_omit_frame_ptr %t
 ; RUN: llc -disable-fp-elim -asm-verbose -O0 -o %t < %s 
-; grep -v DW_AT_APPLE_omit_frame_ptr %t
+; RUN: grep -v DW_AT_APPLE_omit_frame_ptr %t
 
 
 define i32 @foo() nounwind ssp {
