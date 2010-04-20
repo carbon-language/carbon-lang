@@ -348,12 +348,9 @@ BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
 BUILTIN(__builtin_prefetch, "vvC*.", "nc")
-BUILTIN(__builtin_abort, "v", "Fnr")
 BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_unreachable, "v", "nr")
-
 BUILTIN(__builtin_shufflevector, "v."   , "nc")
-
 BUILTIN(__builtin_alloca, "v*z"   , "n")
 
 // "Overloaded" Atomic operator builtins.  These are overloaded to support data
@@ -474,6 +471,13 @@ BUILTIN(__sync_fetch_and_min, "ii*i", "n")
 BUILTIN(__sync_fetch_and_max, "ii*i", "n")
 BUILTIN(__sync_fetch_and_umin, "UiUi*Ui", "n")
 BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
+
+// Random libc builtins.
+BUILTIN(__builtin_abort, "v", "Fnr")
+BUILTIN(__builtin_index, "c*cC*i", "Fn")
+BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
+
+
 
 // C99 library functions
 // C99 stdlib.h
