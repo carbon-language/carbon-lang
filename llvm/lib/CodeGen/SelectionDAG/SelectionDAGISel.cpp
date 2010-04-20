@@ -728,7 +728,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     const BasicBlock *LLVMBB = &*I;
     MachineBasicBlock *BB = FuncInfo->MBBMap[LLVMBB];
 
-    BasicBlock::const_iterator const Begin = LLVMBB->begin();
+    BasicBlock::const_iterator const Begin = LLVMBB->getFirstNonPHI();
     BasicBlock::const_iterator const End = LLVMBB->end();
     BasicBlock::const_iterator BI = Begin;
 
