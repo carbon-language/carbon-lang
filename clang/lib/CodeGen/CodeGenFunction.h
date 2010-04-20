@@ -534,14 +534,14 @@ public:
   /// InitializeVTablePointer - Initialize the vtable pointer of the given
   /// subobject.
   ///
-  /// \param BaseIsMorallyVirtual - Whether the base subobject is a virtual base
-  /// or a direct or indirect base of a virtual base.
-  void InitializeVTablePointer(BaseSubobject Base, bool BaseIsMorallyVirtual,
+  void InitializeVTablePointer(BaseSubobject Base, 
+                               const CXXRecordDecl *NearestVBase,
                                llvm::Constant *VTable,
                                const CXXRecordDecl *VTableClass);
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
-  void InitializeVTablePointers(BaseSubobject Base, bool BaseIsMorallyVirtual,
+  void InitializeVTablePointers(BaseSubobject Base, 
+                                const CXXRecordDecl *NearestVBase,
                                 bool BaseIsNonVirtualPrimaryBase,
                                 llvm::Constant *VTable,
                                 const CXXRecordDecl *VTableClass,

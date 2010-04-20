@@ -1536,7 +1536,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
 
 void
 CodeGenFunction::InitializeVTablePointer(BaseSubobject Base, 
-                                         bool BaseIsMorallyVirtual,
+                                         const CXXRecordDecl *NearestVBase,
                                          llvm::Constant *VTable,
                                          const CXXRecordDecl *VTableClass) {
   const CXXRecordDecl *RD = Base.getBase();
@@ -1546,7 +1546,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 
   // Check if we need to use a vtable from the VTT.
   if (CodeGenVTables::needsVTTParameter(CurGD) &&
-      (RD->getNumVBases() || BaseIsMorallyVirtual)) {
+      (RD->getNumVBases() || NearestVBase)) {
     // Get the secondary vpointer index.
     uint64_t VirtualPointerIndex = 
      CGM.getVTables().getSecondaryVirtualPointerIndex(VTableClass, Base);
@@ -1567,7 +1567,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   // Compute where to store the address point.
   llvm::Value *VTableField;
   
-  if (CodeGenVTables::needsVTTParameter(CurGD) && BaseIsMorallyVirtual) {
+  if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
     VTableField = GetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD, 
@@ -1589,7 +1589,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 
 void
 CodeGenFunction::InitializeVTablePointers(BaseSubobject Base, 
-                                          bool BaseIsMorallyVirtual,
+                                          const CXXRecordDecl *NearestVBase,
                                           bool BaseIsNonVirtualPrimaryBase,
                                           llvm::Constant *VTable,
                                           const CXXRecordDecl *VTableClass,
@@ -1598,7 +1598,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
   // been set.
   if (!BaseIsNonVirtualPrimaryBase) {
     // Initialize the vtable pointer for this base.
-    InitializeVTablePointer(Base, BaseIsMorallyVirtual, VTable, VTableClass);
+    InitializeVTablePointer(Base, NearestVBase, VTable, VTableClass);
   }
   
   const CXXRecordDecl *RD = Base.getBase();
@@ -1614,7 +1614,6 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
       continue;
 
     uint64_t BaseOffset;
-    bool BaseDeclIsMorallyVirtual = BaseIsMorallyVirtual;
     bool BaseDeclIsNonVirtualPrimaryBase;
 
     if (I->isVirtual()) {
@@ -1626,7 +1625,6 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
         getContext().getASTRecordLayout(VTableClass);
 
       BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
-      BaseDeclIsMorallyVirtual = true;
       BaseDeclIsNonVirtualPrimaryBase = false;
     } else {
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
@@ -1636,7 +1634,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
     }
     
     InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
-                             BaseDeclIsMorallyVirtual, 
+                             I->isVirtual() ? BaseDecl : NearestVBase,
                              BaseDeclIsNonVirtualPrimaryBase, 
                              VTable, VTableClass, VBases);
   }
@@ -1652,8 +1650,7 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
 
   // Initialize the vtable pointers for this class and all of its bases.
   VisitedVirtualBasesSetTy VBases;
-  InitializeVTablePointers(BaseSubobject(RD, 0),
-                           /*BaseIsMorallyVirtual=*/false, 
+  InitializeVTablePointers(BaseSubobject(RD, 0), /*NearestVBase=*/0, 
                            /*BaseIsNonVirtualPrimaryBase=*/false, 
                            VTable, RD, VBases);
 }
