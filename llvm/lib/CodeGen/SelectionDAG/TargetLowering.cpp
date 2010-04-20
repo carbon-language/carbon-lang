@@ -720,7 +720,7 @@ void TargetLowering::computeRegisterProperties() {
       unsigned NElts = VT.getVectorNumElements();
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
         EVT SVT = (MVT::SimpleValueType)nVT;
-        if (isTypeLegal(SVT) && SVT.getVectorElementType() == EltVT &&
+        if (isTypeSynthesizable(SVT) && SVT.getVectorElementType() == EltVT &&
             SVT.getVectorNumElements() > NElts && NElts != 1) {
           TransformToType[i] = SVT;
           ValueTypeActions.setTypeAction(VT, Promote);

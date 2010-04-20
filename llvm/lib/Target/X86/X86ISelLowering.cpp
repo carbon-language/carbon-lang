@@ -626,11 +626,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
   if (!UseSoftFloat && !DisableMMX && Subtarget->hasMMX()) {
-    addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
-    addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
-    addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
-    addRegisterClass(MVT::v2f32, X86::VR64RegisterClass);
-    addRegisterClass(MVT::v1i64, X86::VR64RegisterClass);
+    addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass, false);
+    addRegisterClass(MVT::v4i16, X86::VR64RegisterClass, false);
+    addRegisterClass(MVT::v2i32, X86::VR64RegisterClass, false);
+    addRegisterClass(MVT::v2f32, X86::VR64RegisterClass, false);
+    addRegisterClass(MVT::v1i64, X86::VR64RegisterClass, false);
 
     setOperationAction(ISD::ADD,                MVT::v8i8,  Legal);
     setOperationAction(ISD::ADD,                MVT::v4i16, Legal);
