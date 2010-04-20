@@ -175,7 +175,6 @@ unsigned long long test_4() {
 
 /***/
 
-
 struct s5 {
   unsigned f0 : 2;
   _Bool f1 : 1;
@@ -206,18 +205,32 @@ unsigned long long test_5() {
   return res;
 }
 
-struct A {
-  _Bool b : 2;
+/***/
+
+struct s6 {
+  _Bool f0 : 2;
 };
 
-// CHECK-OPT: define zeroext i1 @test_6()
-// CHECK-OPT: ret i1 true
-// CHECK-OPT: }
-_Bool test_6() {
-  struct A a;
-  
-  a.b = (_Bool)0;
-  
-  return (a.b = !a.b);
+struct s6 g6 = { 0xF };
+
+int f6_load(struct s6 *a0) {
+  return a0->f0;
+}
+int f6_store(struct s6 *a0) {
+  return a0->f0 = 0x0;
+}
+int f6_reload(struct s6 *a0) {
+  return (a0->f0 += 0xF);
 }
 
+// CHECK-OPT: define zeroext i1 @test_6()
+// CHECK-OPT:  ret i1 true
+// CHECK-OPT: }
+_Bool test_6() {
+  struct s6 g6 = { 0xF };
+  unsigned long long res = 0;
+  res ^= g6.f0;
+  res ^= f6_load(&g6);
+  res ^= g6.f0;
+  return res;
+}

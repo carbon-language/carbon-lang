@@ -323,28 +323,19 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
     if (FieldSize == 0)
       return 0;
 
-    const llvm::Type *FieldTy;
+    const llvm::Type *FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
+    unsigned NumBytesToAppend =
+      llvm::RoundUpToAlignment(FieldSize, 8) / 8;
 
-    if (!Field->getDeclName()) {
-      // This is an unnamed bit-field, which shouldn't affect alignment on the
-      // struct so we use an array of bytes for it.
+    if (NumBytesToAppend > 1)
+      FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend);
 
-      FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
-
-      unsigned NumBytesToAppend =
-        llvm::RoundUpToAlignment(FieldSize, 8) / 8;
-
-      if (NumBytesToAppend > 1)
-        FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend);
-    } else 
-      FieldTy = Types.ConvertTypeForMemRecursive(Field->getType());
-    
     // Add the bit field info.
     LLVMBitFields.push_back(
       LLVMBitFieldInfo(Field, ComputeBitFieldInfo(Types, Field, 0, FieldSize)));
     return FieldTy;
   }
-  
+
   // This is a regular union field.
   LLVMFields.push_back(LLVMFieldInfo(Field, 0));
   return Types.ConvertTypeForMemRecursive(Field->getType());
