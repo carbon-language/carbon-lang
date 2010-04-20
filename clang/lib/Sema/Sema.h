@@ -1196,11 +1196,6 @@ public:
                              const FunctionProtoType *Proto,
                              QualType ObjectTy, Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);
-  void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
-                             SourceLocation OpLoc,
-                             Expr **Args, unsigned NumArgs,
-                             OverloadCandidateSet& CandidateSet,
-                             SourceRange OpRange = SourceRange());
   void AddMemberOperatorCandidates(OverloadedOperatorKind Op,
                                    SourceLocation OpLoc,
                                    Expr **Args, unsigned NumArgs,

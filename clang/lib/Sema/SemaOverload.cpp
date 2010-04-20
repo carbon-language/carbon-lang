@@ -3330,31 +3330,6 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   }
 }
 
-// FIXME: This will eventually be removed, once we've migrated all of the
-// operator overloading logic over to the scheme used by binary operators, which
-// works for template instantiation.
-void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
-                                 SourceLocation OpLoc,
-                                 Expr **Args, unsigned NumArgs,
-                                 OverloadCandidateSet& CandidateSet,
-                                 SourceRange OpRange) {
-  UnresolvedSet<16> Fns;
-
-  QualType T1 = Args[0]->getType();
-  QualType T2;
-  if (NumArgs > 1)
-    T2 = Args[1]->getType();
-
-  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
-  if (S)
-    LookupOverloadedOperatorName(Op, S, T1, T2, Fns);
-  AddFunctionCandidates(Fns, Args, NumArgs, CandidateSet, false);
-  AddArgumentDependentLookupCandidates(OpName, false, Args, NumArgs, 0,
-                                       CandidateSet);
-  AddMemberOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet, OpRange);
-  AddBuiltinOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet);
-}
-
 /// \brief Add overload candidates for overloaded operators that are
 /// member functions.
 ///
