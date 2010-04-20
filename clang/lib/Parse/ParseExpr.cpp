@@ -335,15 +335,15 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
         Diag(Tok, diag::ext_gnu_conditional_expr);
       }
 
-      if (Tok.isNot(tok::colon)) {
+      if (Tok.is(tok::colon)) {
+        // Eat the colon.
+        ColonLoc = ConsumeToken();
+      } else {
         Diag(Tok, diag::err_expected_colon)
           << FixItHint::CreateInsertion(Tok.getLocation(), ": ");
         Diag(OpToken, diag::note_matching) << "?";
-        return ExprError();
+        ColonLoc = Tok.getLocation();
       }
-
-      // Eat the colon.
-      ColonLoc = ConsumeToken();
     }
     
     // Parse another leaf here for the RHS of the operator.
