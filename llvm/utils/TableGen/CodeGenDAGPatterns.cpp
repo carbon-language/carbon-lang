@@ -1992,16 +1992,13 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
 /// HandleUse - Given "Pat" a leaf in the pattern, check to see if it is an
 /// instruction input.  Return true if this is a real use.
 static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
-                      std::map<std::string, TreePatternNode*> &InstInputs,
-                      std::vector<Record*> &InstImpInputs) {
+                      std::map<std::string, TreePatternNode*> &InstInputs) {
   // No name -> not interesting.
   if (Pat->getName().empty()) {
     if (Pat->isLeaf()) {
       DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
       if (DI && DI->getDef()->isSubClassOf("RegisterClass"))
         I->error("Input " + DI->getDef()->getName() + " must be named!");
-      else if (DI && DI->getDef()->isSubClassOf("Register")) 
-        InstImpInputs.push_back(DI->getDef());
     }
     return false;
   }
@@ -2047,10 +2044,9 @@ void CodeGenDAGPatterns::
 FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
                             std::map<std::string, TreePatternNode*>&InstResults,
-                            std::vector<Record*> &InstImpInputs,
                             std::vector<Record*> &InstImpResults) {
   if (Pat->isLeaf()) {
-    bool isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
+    bool isUse = HandleUse(I, Pat, InstInputs);
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
     return;
@@ -2077,12 +2073,12 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       if (Pat->getChild(i)->getNumTypes() == 0)
         I->error("Cannot have void nodes inside of patterns!");
       FindPatternInputsAndOutputs(I, Pat->getChild(i), InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
     }
     
     // If this is a non-leaf node with no children, treat it basically as if
     // it were a leaf.  This handles nodes like (imm).
-    bool isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
+    bool isUse = HandleUse(I, Pat, InstInputs);
     
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
@@ -2123,8 +2119,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     
   // Verify and collect info from the computation.
   FindPatternInputsAndOutputs(I, Pat->getChild(NumDests),
-                              InstInputs, InstResults,
-                              InstImpInputs, InstImpResults);
+                              InstInputs, InstResults, InstImpResults);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2320,7 +2315,6 @@ void CodeGenDAGPatterns::ParseInstructions() {
     // in the instruction, including what reg class they are.
     std::map<std::string, TreePatternNode*> InstResults;
 
-    std::vector<Record*> InstImpInputs;
     std::vector<Record*> InstImpResults;
     
     // Verify that the top-level forms in the instruction are of void type, and
@@ -2333,7 +2327,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
       // Find inputs and outputs, and verify the structure of the uses/defs.
       FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
     }
 
     // Now that we have inputs and outputs of the pattern, inspect the operands
@@ -2443,8 +2437,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
       ResultPattern->setType(i, Res0Node->getExtType(i));
 
     // Create and insert the instruction.
-    // FIXME: InstImpResults and InstImpInputs should not be part of
-    // DAGInstruction.
+    // FIXME: InstImpResults should not be part of DAGInstruction.
     DAGInstruction TheInst(I, Results, Operands, InstImpResults);
     Instructions.insert(std::make_pair(I->getRecord(), TheInst));
 
@@ -2680,12 +2673,11 @@ void CodeGenDAGPatterns::ParsePatterns() {
     // Validate that the input pattern is correct.
     std::map<std::string, TreePatternNode*> InstInputs;
     std::map<std::string, TreePatternNode*> InstResults;
-    std::vector<Record*> InstImpInputs;
     std::vector<Record*> InstImpResults;
     for (unsigned j = 0, ee = Pattern->getNumTrees(); j != ee; ++j)
       FindPatternInputsAndOutputs(Pattern, Pattern->getTree(j),
                                   InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
 
     // Promote the xform function to be an explicit node if set.
     TreePatternNode *DstPattern = Result->getOnlyTree();

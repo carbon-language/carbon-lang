@@ -741,7 +741,6 @@ private:
                                    TreePatternNode*> &InstInputs,
                                    std::map<std::string,
                                    TreePatternNode*> &InstResults,
-                                   std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
 };
 } // end namespace llvm
