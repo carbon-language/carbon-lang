@@ -286,6 +286,29 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
 }
 
 Linkage NamedDecl::getLinkage() const {
+
+  // Objective-C: treat all Objective-C declarations as having external
+  // linkage.
+  switch (getKind()) {
+    default:
+      break;
+    case Decl::ObjCAtDefsField:
+    case Decl::ObjCCategory:
+    case Decl::ObjCCategoryImpl:
+    case Decl::ObjCClass:
+    case Decl::ObjCCompatibleAlias:
+    case Decl::ObjCContainer:
+    case Decl::ObjCForwardProtocol:
+    case Decl::ObjCImplementation:
+    case Decl::ObjCInterface:
+    case Decl::ObjCIvar:
+    case Decl::ObjCMethod:
+    case Decl::ObjCProperty:
+    case Decl::ObjCPropertyImpl:
+    case Decl::ObjCProtocol:
+      return ExternalLinkage;
+  }
+
   // Handle linkage for namespace-scope names.
   if (getDeclContext()->getLookupContext()->isFileContext())
     if (Linkage L = getLinkageForNamespaceScopeDecl(this))
