@@ -677,15 +677,22 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   LoopProcessWorklist.push_back(NewLoop);
   redoLoop = true;
 
+  // Keep a WeakVH holding onto LIC.  If the first call to RewriteLoopBody
+  // deletes the instruction (for example by simplifying a PHI that feeds into
+  // the condition that we're unswitching on), we don't rewrite the second
+  // iteration.
+  WeakVH LICHandle(LIC);
+  
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
   RewriteLoopBodyWithConditionConstant(L, LIC, Val, false);
-  
-  // It's possible that simplifying one loop could cause the other to be
-  // deleted.  If so, don't simplify it.
-  if (!LoopProcessWorklist.empty() && LoopProcessWorklist.back() == NewLoop)
-    RewriteLoopBodyWithConditionConstant(NewLoop, LIC, Val, true);
 
+  // It's possible that simplifying one loop could cause the other to be
+  // changed to another value or a constant.  If its a constant, don't simplify
+  // it.
+  if (!LoopProcessWorklist.empty() && LoopProcessWorklist.back() == NewLoop &&
+      LICHandle && !isa<Constant>(LICHandle))
+    RewriteLoopBodyWithConditionConstant(NewLoop, LICHandle, Val, true);
 }
 
 /// RemoveFromWorklist - Remove all instances of I from the worklist vector
@@ -980,6 +987,8 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
       ++NumSimplify;
       continue;
     }
+    
+    // FIXME: Change this to use instruction simplify interfaces!
     
     // Special case hacks that appear commonly in unswitched code.
     switch (I->getOpcode()) {
