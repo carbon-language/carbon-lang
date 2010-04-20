@@ -375,6 +375,11 @@ public:
   const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *MD,
                                         const StackFrameContext *SFC);
 
+  /// Evaluate arguments with a work list algorithm.
+  void EvalArguments(ExprIterator AI, ExprIterator AE,
+                     const FunctionProtoType *FnType, 
+                     ExplodedNode *Pred, ExplodedNodeSet &Dst);
+
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
   ///  with those assumptions.

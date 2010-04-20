@@ -17,6 +17,37 @@
 
 using namespace clang;
 
+void GRExprEngine::EvalArguments(ExprIterator AI, ExprIterator AE,
+                                 const FunctionProtoType *FnType, 
+                                 ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+  llvm::SmallVector<CallExprWLItem, 20> WorkList;
+  WorkList.reserve(AE - AI);
+  WorkList.push_back(CallExprWLItem(AI, Pred));
+
+  while (!WorkList.empty()) {
+    CallExprWLItem Item = WorkList.back();
+    WorkList.pop_back();
+
+    if (Item.I == AE) {
+      Dst.insert(Item.N);
+      continue;
+    }
+
+    ExplodedNodeSet Tmp;
+    const unsigned ParamIdx = Item.I - AI;
+    bool VisitAsLvalue = FnType? FnType->getArgType(ParamIdx)->isReferenceType()
+                               : false;
+    if (VisitAsLvalue)
+      VisitLValue(*Item.I, Item.N, Tmp);
+    else
+      Visit(*Item.I, Item.N, Tmp);
+
+    ++(Item.I);
+    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI != NE; ++NI)
+      WorkList.push_back(CallExprWLItem(Item.I, *NI));
+  }
+}
+
 const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *D,
                                                  const StackFrameContext *SFC) {
   Type *T = D->getParent()->getTypeForDecl();
@@ -212,14 +243,38 @@ void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
   const ElementRegion *EleReg = 
                          getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
 
-  const GRState *state = Pred->getState();
+  // Evaluate constructor arguments.
+  const FunctionProtoType *FnType = NULL;
+  const CXXConstructorDecl *CD = CNE->getConstructor();
+  if (CD)
+    FnType = CD->getType()->getAs<FunctionProtoType>();
+  ExplodedNodeSet ArgsEvaluated;
+  EvalArguments(CNE->constructor_arg_begin(), CNE->constructor_arg_end(),
+                FnType, Pred, ArgsEvaluated);
 
-  Store store = state->getStore();
-  StoreManager::InvalidatedSymbols IS;
-  store = getStoreManager().InvalidateRegion(store, EleReg, CNE, Count, &IS);
-  state = state->makeWithStore(store);
-  state = state->BindExpr(CNE, loc::MemRegionVal(EleReg));
-  MakeNode(Dst, CNE, Pred, state);
+  // Initialize the object region and bind the 'new' expression.
+  for (ExplodedNodeSet::iterator I = ArgsEvaluated.begin(), 
+                                 E = ArgsEvaluated.end(); I != E; ++I) {
+    const GRState *state = GetState(*I);
+
+    if (ObjTy->isRecordType()) {
+      Store store = state->getStore();
+      StoreManager::InvalidatedSymbols IS;
+      store = getStoreManager().InvalidateRegion(store, EleReg, CNE, Count, &IS);
+      state = state->makeWithStore(store);
+    } else {
+      if (CNE->hasInitializer()) {
+        SVal V = state->getSVal(*CNE->constructor_arg_begin());
+        state = state->bindLoc(loc::MemRegionVal(EleReg), V);
+      } else {
+        // Explicitly set to undefined, because currently we retrieve symbolic
+        // value from symbolic region.
+        state = state->bindLoc(loc::MemRegionVal(EleReg), UndefinedVal());
+      }
+    }
+    state = state->BindExpr(CNE, loc::MemRegionVal(EleReg));
+    MakeNode(Dst, CNE, Pred, state);
+  }
 }
 
 
