@@ -314,6 +314,35 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   return 0;
 }
 
+/// SimplifySelectInst - Given operands for a SelectInst, see if we can fold
+/// the result.  If not, this returns null.
+Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
+                                const TargetData *TD) {
+  // select true, X, Y  -> X
+  // select false, X, Y -> Y
+  if (ConstantInt *CB = dyn_cast<ConstantInt>(CondVal))
+    return CB->getZExtValue() ? TrueVal : FalseVal;
+  
+  // select C, X, X -> X
+  if (TrueVal == FalseVal)
+    return TrueVal;
+  
+  if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
+    return FalseVal;
+  if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
+    return TrueVal;
+  if (isa<UndefValue>(CondVal)) {  // select undef, X, Y -> X or Y
+    if (isa<Constant>(TrueVal))
+      return TrueVal;
+    return FalseVal;
+  }
+  
+  
+  
+  return 0;
+}
+
+
 /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
 /// fold the result.  If not, this returns null.
 Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
@@ -391,6 +420,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
   case Instruction::FCmp:
     return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
                             I->getOperand(0), I->getOperand(1), TD);
+  case Instruction::Select:
+    return SimplifySelectInst(I->getOperand(0), I->getOperand(1),
+                              I->getOperand(2), TD);
   case Instruction::GetElementPtr: {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
     return SimplifyGEPInst(&Ops[0], Ops.size(), TD);

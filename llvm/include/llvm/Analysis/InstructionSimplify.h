@@ -46,6 +46,10 @@ namespace llvm {
   Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                           const TargetData *TD = 0);
   
+  /// SimplifySelectInst - Given operands for a SelectInst, see if we can fold
+  /// the result.  If not, this returns null.
+  Value *SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
+                            const TargetData *TD = 0);
 
   /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
   /// fold the result.  If not, this returns null.
