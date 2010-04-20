@@ -95,8 +95,9 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
 }
 
 Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
-                                      QualType EncodedType,
+                                      TypeSourceInfo *EncodedTypeInfo,
                                       SourceLocation RParenLoc) {
+  QualType EncodedType = EncodedTypeInfo->getType();
   QualType StrTy;
   if (EncodedType->isDependentType())
     StrTy = Context.DependentTy;
@@ -114,7 +115,7 @@ Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
                                          ArrayType::Normal, 0);
   }
 
-  return new (Context) ObjCEncodeExpr(StrTy, EncodedType, AtLoc, RParenLoc);
+  return new (Context) ObjCEncodeExpr(StrTy, EncodedTypeInfo, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
@@ -123,9 +124,13 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  TypeTy *ty,
                                                  SourceLocation RParenLoc) {
   // FIXME: Preserve type source info ?
-  QualType EncodedType = GetTypeFromParser(ty);
+  TypeSourceInfo *TInfo;
+  QualType EncodedType = GetTypeFromParser(ty, &TInfo);
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(EncodedType,
+                                             PP.getLocForEndOfToken(LParenLoc));
 
-  return BuildObjCEncodeExpression(AtLoc, EncodedType, RParenLoc);
+  return BuildObjCEncodeExpression(AtLoc, TInfo, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,

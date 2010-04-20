@@ -305,6 +305,7 @@ public:
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCMessageExpr(ObjCMessageExpr *E);
+  bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
 };
 
@@ -976,6 +977,11 @@ bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   return VisitExpr(E);
 }
+
+bool CursorVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+  return Visit(E->getEncodedTypeSourceInfo()->getTypeLoc());
+}
+
 
 bool CursorVisitor::VisitAttributes(Decl *D) {
   for (const Attr *A = D->getAttrs(); A; A = A->getNext())

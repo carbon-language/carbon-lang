@@ -5,10 +5,11 @@
 @implementation Foo
 - (int)compare:(Foo*)other {
   return 0;
+  (void)@encode(Foo);
 }
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:9:5 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:10:5 %s | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2]
 // CHECK: Identifier: "interface" [1:2 - 1:11]
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -44,6 +45,15 @@
 // CHECK: Keyword: "return" [7:3 - 7:9]
 // CHECK: Literal: "0" [7:10 - 7:11]
 // CHECK: Punctuation: ";" [7:11 - 7:12]
-// CHECK: Punctuation: "}" [8:1 - 8:2]
-// CHECK: Punctuation: "@" [9:1 - 9:2]
-// CHECK: Identifier: "end" [9:2 - 9:5]
+// CHECK: Punctuation: "(" [8:3 - 8:4]
+// CHECK: Keyword: "void" [8:4 - 8:8]
+// CHECK: Punctuation: ")" [8:8 - 8:9]
+// CHECK: Punctuation: "@" [8:9 - 8:10]
+// CHECK: Identifier: "encode" [8:10 - 8:16]
+// CHECK: Punctuation: "(" [8:16 - 8:17]
+// CHECK: Identifier: "Foo" [8:17 - 8:20] ObjCClassRef=Foo:1:12
+// CHECK: Punctuation: ")" [8:20 - 8:21]
+// CHECK: Punctuation: ";" [8:21 - 8:22]
+// CHECK: Punctuation: "}" [9:1 - 9:2]
+// CHECK: Punctuation: "@" [10:1 - 10:2]
+// CHECK: Identifier: "end" [10:2 - 10:5]

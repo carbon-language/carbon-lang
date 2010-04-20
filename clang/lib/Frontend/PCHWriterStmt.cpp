@@ -655,7 +655,7 @@ void PCHStmtWriter::VisitObjCStringLiteral(ObjCStringLiteral *E) {
 
 void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
-  Writer.AddTypeRef(E->getEncodedType(), Record);
+  Writer.AddTypeSourceInfo(E->getEncodedTypeSourceInfo(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_OBJC_ENCODE;

@@ -2411,7 +2411,7 @@ public:
                                             unsigned NumStrings);
 
   Expr *BuildObjCEncodeExpression(SourceLocation AtLoc,
-                                  QualType EncodedType,
+                                  TypeSourceInfo *EncodedTypeInfo,
                                   SourceLocation RParenLoc);
   CXXMemberCallExpr *BuildCXXMemberCallExpr(Expr *Exp,
                                             NamedDecl *FoundDecl,

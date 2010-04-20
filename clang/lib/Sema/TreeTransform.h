@@ -1688,9 +1688,9 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildObjCEncodeExpr(SourceLocation AtLoc,
-                                         QualType T,
+                                         TypeSourceInfo *EncodeTypeInfo,
                                          SourceLocation RParenLoc) {
-    return SemaRef.Owned(SemaRef.BuildObjCEncodeExpression(AtLoc, T,
+    return SemaRef.Owned(SemaRef.BuildObjCEncodeExpression(AtLoc, EncodeTypeInfo,
                                                            RParenLoc));
   }
 
@@ -5464,18 +5464,17 @@ TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
-  // FIXME: poor source location
-  TemporaryBase Rebase(*this, E->getAtLoc(), DeclarationName());
-  QualType EncodedType = getDerived().TransformType(E->getEncodedType());
-  if (EncodedType.isNull())
+  TypeSourceInfo *EncodedTypeInfo
+    = getDerived().TransformType(E->getEncodedTypeSourceInfo());
+  if (!EncodedTypeInfo)
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      EncodedType == E->getEncodedType())
+      EncodedTypeInfo == E->getEncodedTypeSourceInfo())
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildObjCEncodeExpr(E->getAtLoc(),
-                                            EncodedType,
+                                            EncodedTypeInfo,
                                             E->getRParenLoc());
 }
 

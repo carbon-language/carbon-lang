@@ -725,7 +725,7 @@ unsigned PCHStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
 
 unsigned PCHStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
-  E->setEncodedType(Reader.GetType(Record[Idx++]));
+  E->setEncodedTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;

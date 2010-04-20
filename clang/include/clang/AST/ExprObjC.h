@@ -59,13 +59,14 @@ public:
 /// and behavior as StringLiteral except that the string initializer is obtained
 /// from ASTContext with the encoding type as an argument.
 class ObjCEncodeExpr : public Expr {
-  QualType EncType;
+  TypeSourceInfo *EncodedType;
   SourceLocation AtLoc, RParenLoc;
 public:
-  ObjCEncodeExpr(QualType T, QualType ET,
+  ObjCEncodeExpr(QualType T, TypeSourceInfo *EncodedType,
                  SourceLocation at, SourceLocation rp)
-    : Expr(ObjCEncodeExprClass, T, ET->isDependentType(),
-           ET->isDependentType()), EncType(ET), AtLoc(at), RParenLoc(rp) {}
+    : Expr(ObjCEncodeExprClass, T, EncodedType->getType()->isDependentType(),
+           EncodedType->getType()->isDependentType()), 
+      EncodedType(EncodedType), AtLoc(at), RParenLoc(rp) {}
 
   explicit ObjCEncodeExpr(EmptyShell Empty) : Expr(ObjCEncodeExprClass, Empty){}
 
@@ -75,9 +76,12 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  QualType getEncodedType() const { return EncType; }
-  void setEncodedType(QualType T) { EncType = T; }
+  QualType getEncodedType() const { return EncodedType->getType(); }
 
+  TypeSourceInfo *getEncodedTypeSourceInfo() const { return EncodedType; }
+  void setEncodedTypeSourceInfo(TypeSourceInfo *EncType) { 
+    EncodedType = EncType; 
+  }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
