@@ -4911,7 +4911,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
     if (Op0.getOpcode() == Op1.getOpcode()) {
       // Avoid missing important xor optimizations.
       SDValue Tmp = visitXOR(TheXor);
-      if (Tmp.getNode()) {
+      if (Tmp.getNode() && Tmp.getNode() != TheXor) {
         DEBUG(dbgs() << "\nReplacing.8 ";
               TheXor->dump(&DAG);
               dbgs() << "\nWith: ";
