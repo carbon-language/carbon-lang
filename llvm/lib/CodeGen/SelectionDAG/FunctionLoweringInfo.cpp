@@ -211,13 +211,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
-    const PHINode *PN;
     DebugLoc DL;
-    for (BasicBlock::const_iterator
-           I = BB->begin(), E = BB->end(); I != E; ++I) {
-
-      PN = dyn_cast<PHINode>(I);
-      if (!PN || PN->use_empty()) continue;
+    for (BasicBlock::const_iterator I = BB->begin();
+         const PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      if (PN->use_empty()) continue;
 
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
