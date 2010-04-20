@@ -1699,8 +1699,12 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     // Ignore tADDrSP, tADDspr, and tPICADD, prefer the generic tADDhirr.
     // Ignore t2SUBrSPs, prefer the t2SUB[S]r[r|s].
     // Ignore t2ADDrSPs, prefer the t2ADD[S]r[r|s].
+    // Ignore t2ADDrSPi/t2SUBrSPi, which have more generic couterparts.
+    // Ignore t2ADDrSPi12/t2SUBrSPi12, which have more generic couterparts
     if (Name == "tADDrSP" || Name == "tADDspr" || Name == "tPICADD" ||
-        Name == "t2SUBrSPs" || Name == "t2ADDrSPs")
+        Name == "t2SUBrSPs" || Name == "t2ADDrSPs" ||
+        Name == "t2ADDrSPi" || Name == "t2SUBrSPi" ||
+        Name == "t2ADDrSPi12" || Name == "t2SUBrSPi12")
       return false;
 
     // Ignore t2LDRDpci, prefer the generic t2LDRDi8, t2LDRD_PRE, t2LDRD_POST.
@@ -1723,7 +1727,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     //   tLDRcp conflicts with tLDRspi
     //   tRestore conflicts with tLDRspi
     //   t2LEApcrelJT conflicts with t2LEApcrel
-    //   t2ADDrSPi/t2SUBrSPi have more generic couterparts
     if (Name == "tBfar" ||
         /* Name == "tCMNz" || */ Name == "tCMPzi8" || Name == "tCMPzr" ||
         Name == "tCMPzhir" || /* Name == "t2CMNzrr" || Name == "t2CMNzrs" ||
@@ -1731,7 +1734,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDM_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" || Name == "tBR_JTr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
-        Name == "t2LEApcrelJT" || Name == "t2ADDrSPi" || Name == "t2SUBrSPi")
+        Name == "t2LEApcrelJT")
       return false;
   }
 
