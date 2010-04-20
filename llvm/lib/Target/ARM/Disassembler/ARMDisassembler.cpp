@@ -513,7 +513,7 @@ static unsigned short CountITSize(unsigned ITMask) {
   // First count the trailing zeros of the IT mask.
   unsigned TZ = CountTrailingZeros_32(ITMask);
   if (TZ > 3) {
-    DEBUG(errs() << "Encoding error of IT mask");
+    DEBUG(errs() << "Encoding error: IT Mask '0000'");
     return 0;
   }
   return (4 - TZ);
@@ -522,9 +522,23 @@ static unsigned short CountITSize(unsigned ITMask) {
 /// Init ITState.  Note that at least one bit is always 1 in mask.
 bool Session::InitIT(unsigned short bits7_0) {
   ITCounter = CountITSize(slice(bits7_0, 3, 0));
+  if (ITCounter == 0)
+    return false;
+
+  // A8.6.50 IT
+  unsigned short FirstCond = slice(bits7_0, 7, 4);
+  if (FirstCond == 0xF) {
+    DEBUG(errs() << "Encoding error: IT FirstCond '1111'");
+    return false;
+  }
+  if (FirstCond == 0xE && ITCounter != 1) {
+    DEBUG(errs() << "Encoding error: IT FirstCond '1110' && Mask != '1000'");
+    return false;
+  }
+
   ITState = bits7_0;
-  // Only need to check for > 0.
-  return ITCounter > 0;
+
+  return true;
 }
 
 /// Update ITState if necessary.
