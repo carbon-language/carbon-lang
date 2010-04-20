@@ -111,7 +111,7 @@ int main(int argc, const char **argv, char * const *envp) {
                                      const_cast<const char **>(CCArgs.data()),
                                      const_cast<const char **>(CCArgs.data()) +
                                        CCArgs.size(),
-                                     *Diags);
+                                     Diags);
 
   // Show the invocation, with -v.
   if (CI->getHeaderSearchOpts().Verbose) {
@@ -128,7 +128,7 @@ int main(int argc, const char **argv, char * const *envp) {
   Clang.setInvocation(CI.take());
 
   // Create the compilers actual diagnostics engine.
-  Clang.createDiagnostics(int(CCArgs.size()), (char**) CCArgs.data());
+  Clang.createDiagnostics(int(CCArgs.size()),const_cast<char**>(CCArgs.data()));
   if (!Clang.hasDiagnostics())
     return 1;
 
