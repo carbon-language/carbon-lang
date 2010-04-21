@@ -142,7 +142,12 @@ public:
   /// \brief Create the initialization entity for a parameter that is
   /// only known by its type.
   static InitializedEntity InitializeParameter(QualType Type) {
-    return InitializedEntity(EK_Parameter, SourceLocation(), Type);
+    InitializedEntity Entity;
+    Entity.Kind = EK_Parameter;
+    Entity.Type = Type;
+    Entity.Parent = 0;
+    Entity.VariableOrMember = 0;
+    return Entity;
   }
 
   /// \brief Create the initialization entity for the result of a function.

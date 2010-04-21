@@ -75,3 +75,18 @@ struct identity {
   return [super method];
 }
 @end
+
+struct String {
+  String(const char *);
+};
+
+struct MutableString : public String { };
+
+// C++-specific parameter types
+@interface I5
+- method:(const String&)str1 other:(String&)str2;
+@end
+
+void test_I5(I5 *i5, String s) {
+  [i5 method:"hello" other:s];
+}

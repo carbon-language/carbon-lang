@@ -3088,7 +3088,10 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Initializing;
 
   case InitializedEntity::EK_Parameter:
-    // FIXME: Can we tell when we're sending vs. passing?
+    if (Entity.getDecl() && 
+        isa<ObjCMethodDecl>(Entity.getDecl()->getDeclContext()))
+      return Sema::AA_Sending;
+
     return Sema::AA_Passing;
 
   case InitializedEntity::EK_Result:

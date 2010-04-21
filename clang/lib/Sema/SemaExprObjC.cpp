@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "Lookup.h"
+#include "SemaInit.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
@@ -204,30 +205,23 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   bool IsError = false;
   for (unsigned i = 0; i < NumNamedArgs; i++) {
     Expr *argExpr = Args[i];
+    ParmVarDecl *Param = Method->param_begin()[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
 
-    QualType lhsType = Method->param_begin()[i]->getType();
-    QualType rhsType = argExpr->getType();
+    if (RequireCompleteType(argExpr->getSourceRange().getBegin(),
+                            Param->getType(),
+                            PDiag(diag::err_call_incomplete_argument)
+                              << argExpr->getSourceRange()))
+      return true;
 
-    // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8].
-    if (lhsType->isArrayType())
-      lhsType = Context.getArrayDecayedType(lhsType);
-    else if (lhsType->isFunctionType())
-      lhsType = Context.getPointerType(lhsType);
-
-    AssignConvertType Result =
-      CheckSingleAssignmentConstraints(lhsType, argExpr);
-    if (Result == Incompatible && !getLangOptions().CPlusPlus &&
-        CheckTransparentUnionArgumentConstraints(lhsType, argExpr)
-        == Sema::Compatible)
-      Result = Compatible;
-        
-    if (Args[i] != argExpr) // The expression was converted.
-      Args[i] = argExpr; // Make sure we store the converted expression.
-
-    IsError |=
-      DiagnoseAssignmentResult(Result, argExpr->getLocStart(), lhsType, rhsType,
-                               argExpr, AA_Sending);
+    InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
+    OwningExprResult ArgE = PerformCopyInitialization(Entity,
+                                                      SourceLocation(),
+                                                      Owned(argExpr->Retain()));
+    if (ArgE.isInvalid())
+      IsError = true;
+    else
+      Args[i] = ArgE.takeAs<Expr>();
   }
 
   // Promote additional arguments to variadic methods.
