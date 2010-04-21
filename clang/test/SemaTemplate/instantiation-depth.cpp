@@ -3,7 +3,7 @@
 template<typename T> struct X : X<T*> { }; \
 // expected-error{{recursive template instantiation exceeded maximum depth of 5}} \
 // expected-note 3 {{instantiation of template class}} \
-// expected-note {{suppressed 2 template instantiation contexts}} \
+// expected-note {{skipping 2 contexts in backtrace}} \
 // expected-note {{use -ftemplate-depth-N to increase recursive template instantiation depth}}
 
 void test() { 
