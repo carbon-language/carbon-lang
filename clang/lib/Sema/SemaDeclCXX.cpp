@@ -1240,7 +1240,6 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   QualType FieldType = Member->getType();
   if (const ArrayType *Array = Context.getAsArrayType(FieldType))
     FieldType = Array->getElementType();
-  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
   if (FieldType->isDependentType() || HasDependentArg) {
     // Can't check initialization for a member of dependent type or when
     // any of the arguments are type-dependent expressions.
