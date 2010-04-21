@@ -1384,7 +1384,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
 
   // Initialize the base.
   InitializedEntity BaseEntity =
-    InitializedEntity::InitializeBase(Context, BaseSpec);
+    InitializedEntity::InitializeBase(Context, BaseSpec, VirtualBaseSpec);
   InitializationKind Kind = 
     InitializationKind::CreateDirect(BaseLoc, LParenLoc, RParenLoc);
   
@@ -1435,9 +1435,11 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
 static CXXBaseOrMemberInitializer *
 BuildImplicitBaseInitializer(Sema &SemaRef, 
                              const CXXConstructorDecl *Constructor,
-                             CXXBaseSpecifier *BaseSpec) {
+                             CXXBaseSpecifier *BaseSpec,
+                             bool IsInheritedVirtualBase) {
   InitializedEntity InitEntity
-    = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec);
+    = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec,
+                                        IsInheritedVirtualBase);
 
   InitializationKind InitKind
     = InitializationKind::CreateDefault(Constructor->getLocation());
@@ -1502,6 +1504,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       AllBaseFields[Member->getMember()] = Member;
   }
 
+  // Keep track of the direct virtual bases.
+  llvm::SmallPtrSet<CXXBaseSpecifier *, 16> DirectVBases;
+  for (CXXRecordDecl::base_class_iterator I = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      DirectVBases.insert(I);
+  }
+
   // Push virtual bases before others.
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
@@ -1510,8 +1520,10 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
+      bool IsInheritedVirtualBase = !DirectVBases.count(VBase);
       CXXBaseOrMemberInitializer *CXXBaseInit =
-        BuildImplicitBaseInitializer(*this, Constructor, VBase);
+        BuildImplicitBaseInitializer(*this, Constructor, VBase,
+                                     IsInheritedVirtualBase);
 
       if (!CXXBaseInit) {
         HadError = true;
@@ -1533,8 +1545,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
       CXXBaseOrMemberInitializer *CXXBaseInit =
-        BuildImplicitBaseInitializer(*this, Constructor, Base);
-      
+        BuildImplicitBaseInitializer(*this, Constructor, Base,
+                                     /*IsInheritedVirtualBase=*/false);
+
       if (!CXXBaseInit) {
         HadError = true;
         continue;

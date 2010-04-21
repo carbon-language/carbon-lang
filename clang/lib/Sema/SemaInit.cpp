@@ -1921,11 +1921,15 @@ InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index,
 }
 
 InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context, 
-                                                    CXXBaseSpecifier *Base)
+                                                    CXXBaseSpecifier *Base,
+                                                    bool IsInheritedVirtualBase)
 {
   InitializedEntity Result;
   Result.Kind = EK_Base;
-  Result.Base = Base;
+  Result.Base = reinterpret_cast<uintptr_t>(Base);
+  if (IsInheritedVirtualBase)
+    Result.Base |= 0x01;
+  
   Result.Type = Base->getType();
   return Result;
 }

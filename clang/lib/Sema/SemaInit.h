@@ -92,11 +92,12 @@ private:
     unsigned Location;
     
     /// \brief When Kind == EK_Base, the base specifier that provides the 
-    /// base class.
-    CXXBaseSpecifier *Base;
+    /// base class. The lower bit specifies whether the base is an inherited
+    /// virtual base.
+    uintptr_t Base;
 
-    /// \brief When Kind = EK_ArrayElement or EK_VectorElement, the
-    /// index of the array or vector element being initialized.
+    /// \brief When Kind == EK_ArrayElement or EK_VectorElement, the
+    /// index of the array or vector element being initialized. 
     unsigned Index;
   };
 
@@ -168,7 +169,8 @@ public:
   
   /// \brief Create the initialization entity for a base class subobject.
   static InitializedEntity InitializeBase(ASTContext &Context,
-                                          CXXBaseSpecifier *Base);
+                                          CXXBaseSpecifier *Base,
+                                          bool IsInheritedVirtualBase);
   
   /// \brief Create the initialization entity for a member subobject.
   static InitializedEntity InitializeMember(FieldDecl *Member,
@@ -204,7 +206,13 @@ public:
   /// \brief Retrieve the base specifier.
   CXXBaseSpecifier *getBaseSpecifier() const {
     assert(getKind() == EK_Base && "Not a base specifier");
-    return Base;
+    return reinterpret_cast<CXXBaseSpecifier *>(Base & ~0x1);
+  }
+
+  /// \brief Return whether the base is an inherited virtual base.
+  bool isInheritedVirtualBase() const {
+    assert(getKind() == EK_Base && "Not a base specifier");
+    return Base & 0x1;
   }
 
   /// \brief Determine the location of the 'return' keyword when initializing

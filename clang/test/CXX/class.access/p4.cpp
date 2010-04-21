@@ -103,9 +103,8 @@ namespace test2 {
   public:
     C();
   };
-  
-  // FIXME: It would be better if this said something about A being an inherited virtual base.
-  class D : C { }; // expected-error {{base class 'test2::A' has private constructor}}
+
+  class D : C { }; // expected-error {{inherited virtual base class 'test2::A' has private constructor}}
   D d;
 }
 

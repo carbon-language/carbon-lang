@@ -1143,10 +1143,14 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
     AccessEntity.setDiag(diag::err_access_ctor);
     break;
 
-  case InitializedEntity::EK_Base:
-    AccessEntity.setDiag(PDiag(diag::err_access_ctor_base)
+  case InitializedEntity::EK_Base: {
+    unsigned DiagID = Entity.isInheritedVirtualBase() ?
+      diag::err_access_ctor_vbase : diag::err_access_ctor_base;
+    AccessEntity.setDiag(PDiag(DiagID)
                           << Entity.getBaseSpecifier()->getType());
     break;
+  }
+
   }
 
   return CheckAccess(*this, UseLoc, AccessEntity);
