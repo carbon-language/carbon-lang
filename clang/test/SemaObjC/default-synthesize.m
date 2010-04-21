@@ -79,3 +79,17 @@
 }
 @end
 
+@protocol TopProtocol
+  @property (readonly) id myString;
+@end
+
+@interface TopClass <TopProtocol> 
+{
+  id myString; // expected-note {{previously declared 'myString' here}}
+}
+@end
+
+@interface SubClass : TopClass <TopProtocol> 
+@end
+
+@implementation SubClass @end // expected-error {{property 'myString' attempting to use ivar 'myString' declared in super class 'TopClass'}}
