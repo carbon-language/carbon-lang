@@ -257,6 +257,11 @@ The first dragonegg release will occur shortly after llvm-2.7 is released.
 The LLVM Machine Code (MC) Toolkit project is ...
 </p>
 
+<p>
+MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
+Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
+</p>
+
 </div>	
 
 
@@ -380,16 +385,22 @@ organization changes have happened:
 <ul>
 <li>LLVM has a new <a href="http://llvm.org/Logo.html">official Logo</a>!</li>
 
-<li><a href="http://llvm.org">llvm.org</a> is now hosted on a new (and much
-faster) server.  It is still hosted as the University of Illinois.</li>
-
 <li>Ted Kremenek and Doug Gregor have stepped forward as <a
  href="http://llvm.org/docs/DeveloperPolicy.html#owners">Code Owners</a> of the
  Clang static analyzer and the Clang Frontend, respectively.</li>
- 
+
+<li>LLVM now has an <a href="http://blog.llvm.org">official Blog</a> at
+    <a href="http://blog.llvm.org">http://blog.llvm.org</a>. This is a great way
+    to learn about new LLVM-related features as they are implemented.  Several
+    features in this release are already explained on the blog.</li>
+
 <li>The LLVM web pages are now checked into the SVN server, in the "www",
     "www-pubs" and "www-releases" SVN modules.  Previously they were hidden in a
     largely inaccessible old CVS server.</p>
+
+<li><a href="http://llvm.org">llvm.org</a> is now hosted on a new (and much
+    faster) server.  It is still graciously hosted at the University of Illinois
+    of Urbana Champaign.</li>
 </ul>
 </div>
 
@@ -403,25 +414,47 @@ faster) server.  It is still hosted as the University of Illinois.</li>
 <p>LLVM 2.7 includes several major new capabilities:</p>
 
 <ul>
-<li>New MicroBlaze backend. http://en.wikipedia.org/wiki/MicroBlaze</li>
+<li>This release includes initial support for the <a
+  href="http://en.wikipedia.org/wiki/MicroBlaze">MicroBlaze</a> target.
+  MicroBlaze is a soft processor core designed for Xilinx FPGAs.</li>
 
-<li>Extensible metadata solid.</li>
+<li>LLVM 2.7 includes a new LLVM IR "extensible metadata" feature.  This feature
+ supports many different use cases, including allowing front-end authors to
+ encode source level information into LLVM IR, which is consumed by later
+ language-specific passes.  This is a great way to do high-level optimizations
+ like devirtualization, type-based alias analysis, etc.  See the <a 
+ href="http://blog.llvm.org/2010/04/extensible-metadata-in-llvm-ir.html">
+ Extensible Metadata Blog Post</a> for more information.</li>
+ 
+<li>LLVM 2.7 encodes <a href="SourceLevelDebugging.html">debug information</a>
+in a completely new way, built on extensible metadata.  The new implementation
+is much more memory efficient and paves the way for improvements to optimized
+code debugging experience.</li>
 
-<li>Debug info improvements: using metadata instead of llvm.dbg global variables.
-This brings several enhancements including improved compile times.</li>
+<li>LLVM 2.7 now directly supports taking the address of a label and doing an
+    indirect branch through a pointer.  This is particularly useful for
+    interpreter loops, and is used to implement the GCC "address of label"
+    extension.  For more information, see the <a 
+href="http://blog.llvm.org/2010/01/address-of-label-and-indirect-branches.html">
+Address of Label and Indirect Branches in LLVM IR Blog Post</a>.
 
-<li>Indirect branch + address of label (blog post), particularly useful for
-interpreters.</li>
+<li>LLVM 2.7 is the first release to start supporting APIs for assembling and
+    disassembling target machine code.  These APIs are useful for a variety of
+    low level clients, and are surfaced in the new "enhanced disassembly" API.
+    For more information see the <a 
+    href="http://blog.llvm.org/2010/01/x86-disassembler.html">The X86
+    Disassembler Blog Post</a> for more information.</li>
 
-<li>New instruction selector.</li>
+<li>LLVM 2.7 includes major parts of the work required by the new MC Project,
+    which aims to rework our handling of low-level machine code.  A few targets
+    have been refactored to support it, and work is underway to support a native
+    assembler in LLVM.  This work is not complete in LLVM 2.7, but you has made
+    substantially more progress on LLVM mainline.  You can read more about this
+    in the <a href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">
+    Intro to the LLVM MC Project Blog Post</a>.
+</li>
 
 </ul>
-libllvm2.7.so??  configure with --enable-shared 
-MC encoding and disassembler apis.
-MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
-Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
-
-
 
 </div>
 
@@ -435,12 +468,22 @@ Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1
 expose new optimization opportunities:</p>
 
 <ul>
-<li>New InlineHint and StackAlignment function attributes
-Half-float support in APFloat
-llvm.objectsize.
-New llvm/Support/Regex.h API.  FileCheck now does regex's
-Pre-Alpha support for unions in IR.
-dbgs() and -debug-buffer-size=N
+<li>LLVM IR now supports a 16-bit "half float" data type through two new <a
+    href="LangRef.html#int_fp16">intrinsics</a> and APFloat support.</li>
+<li>LLVM IR supports two <a href="LangRef.html#fnattrs">new function
+    attributes</a>: inlinehint and alignstack(n).  The former is a hint to the
+    optimizer that a function was declared 'inline' and thus it might be useful
+    to increase the chances the the inliner actually inline it.  The later
+    indicates to the code generator that the function diverges from the platform
+    ABI on stack alignment.</li>
+<li>The new <a href="LangRef.html#int_objectsize">llvm.objectsize</a> intrinsic
+    allows the optimizer to infer the sizes of memory objects in some cases.
+    This intrinsic is used to implement the GCC __builtin_object_size
+    extension.</li>
+<li>LLVM 2.7 has pre-alpha support for <a
+  href="http://llvm.org/docs/LangRef.html#t_union">unions in LLVM IR</a>.
+  Unfortuantely, this support is not really usable in 2.7, so if you're
+ interested in pushing it forward, please help contribute to LLVM mainline.</li>
 </li>
 </ul>
 
@@ -524,6 +567,7 @@ infrastructure, which allows us to implement more aggressive algorithms and make
 it run faster:</p>
 
 <ul>
+<li>New instruction selector [blog post?].</li>
 
 Code generator MC'ized except for debug info and EH.
 
@@ -576,12 +620,21 @@ Many improvements to debug info
 
 <ul>
 
-<li>complete llvm-gcc NEON support.</li>
-<li>ARM/Thumb using reg scavenging for stack object address materialization
-    (PEI).</li>
-<li>The ARM backend now has good support for ARMv4 backend (tested on StrongARM
-  hardware), previously only supported ARMv4T and newer.</li>
-<li>ARM backend generates instructions in unified assembly syntax.</li>
+<li>The ARM backend now generates instructions in unified assembly syntax.</li>
+
+<li>llvm-gcc now has complete support for the ARM v7 NEON instruction set.  This
+   support differs slightly from the GCC implementation.  Please see the
+   <a
+href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
+  ARM Advanced SIMD (NEON) Intrinsics and Types in LLVM Blog Post</a> for
+  helpful information if migrating code from GCC to LLVM-GCC.</li>
+  
+<li>The ARM and Thumb code generators now using register scavenging for stack
+    object address materialization.(FIXME: WHAT BENEFIT DOES THIS PROVIDE?)</li>
+    
+<li>The ARM backend now has good support for ARMv4 targets, and has been tested
+    on StrongARM hardware.  Previously, LLVM only supported ARMv4T and
+    newer chips.</li>
 </ul>
 
 
@@ -614,7 +667,16 @@ Many improvements to debug info
 </p>
 
 <ul>
-<li>...</li>
+<li>The llvm/Support/Regex.h header exposes a platform independent regular
+    expression API.  Building on this, the <a
+    href="TestingGuide.html#FileCheck">FileCheck</a> utility now supports
+    regular exressions.</li>
+<li>raw_ostream now supports a circular "debug stream" accessed with "dbgs()".
+    By default, this stream works the same way as "errs()", but if you pass
+    <tt>-debug-buffer-size=1000</tt> to opt, the debug stream is capped to a
+    fixed sized circular buffer and the output is printed at the end of the
+    program's execution.  This is helpful if you have a long lived compiler
+    process and you're interested in seeing snapshots in time.</li>
 </ul>
 
 
@@ -629,6 +691,9 @@ Many improvements to debug info
 <p>Other miscellaneous features include:</p>
 
 <ul>
+<li>You can now build LLVM as a big dynamic library (e.g. "libllvm2.7.so"). To
+    get this, configure LLVM with the --enable-shared option.</li>
+
 <li>LLVM command line tools now overwrite their output by default, before they
     would only do this with -f. This makes them more convenient to use, and
     behave more like standard unix tools.</li>
