@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs -stats -info-output-file - > %t
-; RUN:   grep asm-printer %t | grep 156
-; RUN:   grep stackcoloring %t | grep "stack slot refs replaced with reg refs"  | grep 4
+; RUN:   grep asm-printer %t | grep 166
+; RUN:   grep stackcoloring %t | grep "stack slot refs replaced with reg refs"  | grep 5
 
 	type { [62 x %struct.Bitvec*] }		; type %0
 	type { i8* }		; type %1

@@ -179,8 +179,11 @@ namespace llvm {
 
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
-    bool isWinToJoinCrossClass(unsigned LargeReg, unsigned SmallReg,
-                               unsigned Threshold);
+    bool isWinToJoinCrossClass(unsigned SrcReg,
+                               unsigned DstReg,
+                               const TargetRegisterClass *SrcRC,
+                               const TargetRegisterClass *DstRC,
+                               const TargetRegisterClass *NewRC);
 
     /// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
     /// register with a physical register, check if any of the virtual register

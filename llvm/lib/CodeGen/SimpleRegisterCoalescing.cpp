@@ -1168,20 +1168,44 @@ SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
 bool
-SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned LargeReg,
-                                                unsigned SmallReg,
-                                                unsigned Threshold) {
-  // Then make sure the intervals are *short*.
-  LiveInterval &LargeInt = li_->getInterval(LargeReg);
-  LiveInterval &SmallInt = li_->getInterval(SmallReg);
-  unsigned LargeSize = li_->getApproximateInstructionCount(LargeInt);
-  unsigned SmallSize = li_->getApproximateInstructionCount(SmallInt);
-  if (LargeSize > Threshold) {
-    unsigned SmallUses = std::distance(mri_->use_nodbg_begin(SmallReg),
-                                       mri_->use_nodbg_end());
-    unsigned LargeUses = std::distance(mri_->use_nodbg_begin(LargeReg),
-                                       mri_->use_nodbg_end());
-    if (SmallUses*LargeSize < LargeUses*SmallSize)
+SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
+                                                unsigned DstReg,
+                                             const TargetRegisterClass *SrcRC,
+                                             const TargetRegisterClass *DstRC,
+                                             const TargetRegisterClass *NewRC) {
+  unsigned NewRCCount = allocatableRCRegs_[NewRC].count();
+  // This heuristics is good enough in practice, but it's obviously not *right*.
+  // 4 is a magic number that works well enough for x86, ARM, etc. It filter
+  // out all but the most restrictive register classes.
+  if (NewRCCount > 4 ||
+      // Early exit if the function is fairly small, coalesce aggressively if
+      // that's the case. For really special register classes with 3 or
+      // fewer registers, be a bit more careful.
+      (li_->getFuncInstructionCount() / NewRCCount) < 8)
+    return true;
+  LiveInterval &SrcInt = li_->getInterval(SrcReg);
+  LiveInterval &DstInt = li_->getInterval(DstReg);
+  unsigned SrcSize = li_->getApproximateInstructionCount(SrcInt);
+  unsigned DstSize = li_->getApproximateInstructionCount(DstInt);
+  if (SrcSize <= NewRCCount && DstSize <= NewRCCount)
+    return true;
+  // Estimate *register use density*. If it doubles or more, abort.
+  unsigned SrcUses = std::distance(mri_->use_nodbg_begin(SrcReg),
+                                   mri_->use_nodbg_end());
+  unsigned DstUses = std::distance(mri_->use_nodbg_begin(DstReg),
+                                   mri_->use_nodbg_end());
+  float NewDensity = ((float)(SrcUses + DstUses) / (SrcSize + DstSize)) /
+    NewRCCount;
+  if (SrcRC != NewRC && SrcSize > NewRCCount) {
+    unsigned SrcRCCount = allocatableRCRegs_[SrcRC].count();
+    float Density = ((float)SrcUses / SrcSize) / SrcRCCount;
+    if (NewDensity > Density * 2.0f)
+      return false;
+  }
+  if (DstRC != NewRC && DstSize > NewRCCount) {
+    unsigned DstRCCount = allocatableRCRegs_[DstRC].count();
+    float Density = ((float)DstUses / DstSize) / DstRCCount;
+    if (NewDensity > Density * 2.0f)
       return false;
   }
   return true;
@@ -1517,10 +1541,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           return false;  // Not coalescable
         }
 
-        unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
-        unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
-        unsigned Limit= allocatableRCRegs_[mri_->getRegClass(SmallReg)].count();
-        if (!isWinToJoinCrossClass(LargeReg, SmallReg, Limit)) {
+        if (!isWinToJoinCrossClass(SrcReg, DstReg, SrcRC, DstRC, NewRC)) {
+          DEBUG(dbgs() << "\tAvoid coalescing to constrainted register class: "
+                       << SrcRC->getName() << "/"
+                       << DstRC->getName() << " -> "
+                       << NewRC->getName() << ".\n");
           Again = true;  // May be possible to coalesce later.
           return false;
         }
@@ -1568,49 +1593,40 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       }
     }
 
-    unsigned LargeReg = SrcReg;
-    unsigned SmallReg = DstReg;
-
     // Now determine the register class of the joined register.
-    if (isExtSubReg) {
-      if (SubIdx && DstRC && DstRC->isASubClass()) {
-        // This is a move to a sub-register class. However, the source is a
-        // sub-register of a larger register class. We don't know what should
-        // the register class be. FIXME.
-        Again = true;
-        return false;
+    if (!SrcIsPhys && !DstIsPhys) {
+      if (isExtSubReg) {
+        NewRC =
+          SubIdx ? tri_->getMatchingSuperRegClass(SrcRC, DstRC, SubIdx) : SrcRC;
+      } else if (isInsSubReg) {
+        NewRC =
+          SubIdx ? tri_->getMatchingSuperRegClass(DstRC, SrcRC, SubIdx) : DstRC;
+      } else {
+        NewRC = getCommonSubClass(SrcRC, DstRC);
       }
-      if (!DstIsPhys && !SrcIsPhys)
-        NewRC = SrcRC;
-    } else if (!SrcIsPhys && !DstIsPhys) {
-      NewRC = getCommonSubClass(SrcRC, DstRC);
+
       if (!NewRC) {
         DEBUG(dbgs() << "\tDisjoint regclasses: "
                      << SrcRC->getName() << ", "
                      << DstRC->getName() << ".\n");
         return false;           // Not coalescable.
       }
-      if (DstRC->getSize() > SrcRC->getSize())
-        std::swap(LargeReg, SmallReg);
-    }
 
-    // If we are joining two virtual registers and the resulting register
-    // class is more restrictive (fewer register, smaller size). Check if it's
-    // worth doing the merge.
-    if (!SrcIsPhys && !DstIsPhys &&
-        (isExtSubReg || DstRC->isASubClass()) &&
-        !isWinToJoinCrossClass(LargeReg, SmallReg,
-                               allocatableRCRegs_[NewRC].count())) {
-      DEBUG(dbgs() << "\tSrc/Dest are different register classes: "
-                   << SrcRC->getName() << "/"
-                   << DstRC->getName() << " -> "
-                   << NewRC->getName() << ".\n");
-      // Allow the coalescer to try again in case either side gets coalesced to
-      // a physical register that's compatible with the other side. e.g.
-      // r1024 = MOV32to32_ r1025
-      // But later r1024 is assigned EAX then r1025 may be coalesced with EAX.
-      Again = true;  // May be possible to coalesce later.
-      return false;
+      // If we are joining two virtual registers and the resulting register
+      // class is more restrictive (fewer register, smaller size). Check if it's
+      // worth doing the merge.
+      if (!isWinToJoinCrossClass(SrcReg, DstReg, SrcRC, DstRC, NewRC)) {
+        DEBUG(dbgs() << "\tAvoid coalescing to constrainted register class: "
+                     << SrcRC->getName() << "/"
+                     << DstRC->getName() << " -> "
+                     << NewRC->getName() << ".\n");
+        // Allow the coalescer to try again in case either side gets coalesced to
+        // a physical register that's compatible with the other side. e.g.
+        // r1024 = MOV32to32_ r1025
+        // But later r1024 is assigned EAX then r1025 may be coalesced with EAX.
+        Again = true;  // May be possible to coalesce later.
+        return false;
+      }
     }
   }
 

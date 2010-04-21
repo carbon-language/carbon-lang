@@ -149,7 +149,6 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; X86-64: movq _map_4_to_16@GOTPCREL(%rip)
-; X86-64: movq _map_4_to_16@GOTPCREL(%rip)
 ; X86-64: .align 4
   %tmp5 = zext i32 undef to i64                   ; <i64> [#uses=1]
   %tmp6 = add i64 %tmp5, 1                        ; <i64> [#uses=1]
