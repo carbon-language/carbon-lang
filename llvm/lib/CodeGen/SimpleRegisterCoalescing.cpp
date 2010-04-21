@@ -804,7 +804,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
           CopySrcReg == SrcReg && CopyDstReg != UseDstReg) {
         // If the use is a copy and it won't be coalesced away, and its source
         // is defined by a trivial computation, try to rematerialize it instead.
-        if (ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,
+        if (!JoinedCopies.count(UseMI) &&
+            ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,
                                     CopyDstSubIdx, UseMI))
           continue;
       }
