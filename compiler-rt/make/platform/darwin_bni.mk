@@ -1,7 +1,7 @@
 
 Description := Target for Darwin using an Apple-style build.
 
-Configs := Debug Release Profile
+Configs := Debug Release Profile Static 
 
 # We override this with RC_ARCHS because B&I may want to build on an ARCH we
 # haven't explicitly defined support for. If all goes well, this will just work
@@ -10,6 +10,10 @@ UniversalArchs := $(RC_ARCHS)
 
 
 CFLAGS := -Wall -Os -fomit-frame-pointer -g
+CFLAGS.Static := $(CFLAGS) -static 
+
+VISIBILITY_HIDDEN := 0
+VISIBILITY_HIDDEN.Static  := 1
 
 
 FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
@@ -53,8 +57,18 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 nedf2vfp negdf2vfp negsf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 \
-				switch8 switchu8 switch16 switch32 \
-				restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
-				sync_synchronize 
+                switch8 switchu8 switch16 switch32 \
+                restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
+                sync_synchronize 
+FUNCTIONS.armv7 := $(FUNCTIONS) \
+                adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
+                divsf3vfp eqdf2vfp eqsf2vfp extendsfdf2vfp \
+                fixdfsivfp fixsfsivfp fixunsdfsivfp fixunssfsivfp \
+                floatsidfvfp floatsisfvfp floatunssidfvfp floatunssisfvfp \
+                gedf2vfp gesf2vfp gtdf2vfp gtsf2vfp \
+                ledf2vfp lesf2vfp ltdf2vfp ltsf2vfp \
+                muldf3vfp mulsf3vfp \
+                nedf2vfp negdf2vfp negsf2vfp nesf2vfp \
+                subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
+                modsi3 umodsi3 udivsi3 divsi3 
 
-VISIBILITY_HIDDEN := 0

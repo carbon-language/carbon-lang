@@ -12,6 +12,13 @@ else
   ProjObjRoot := $(ProjSrcRoot)
 endif
 
+ifeq (,$(SDKROOT))
+	INSTALL_TARGET = install-MacOSX
+else
+	INSTALL_TARGET = install-iPhoneOS
+endif
+
+
 # Log full compile lines in B&I logs and omit summary lines.
 Verb :=
 Summary := @true
@@ -27,8 +34,10 @@ installsrc:
 	cp -r . $(SRCROOT)
 
 
+install:  $(INSTALL_TARGET)
+
 # Copy results to DSTROOT.
-install:  $(SYMROOT)/libcompiler_rt.dylib
+install-MacOSX : $(SYMROOT)/libcompiler_rt.dylib
 	mkdir -p $(DSTROOT)/usr/lib/system
 	strip -S $(SYMROOT)/libcompiler_rt.dylib \
 	    -o $(DSTROOT)/usr/lib/system/libcompiler_rt.dylib
@@ -47,6 +56,29 @@ $(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_
 
 # Rule to make fat dylib
 $(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(RC_ARCHS), \
-									$(OBJROOT)/libcompiler_rt-$(arch).dylib)
+                                        $(OBJROOT)/libcompiler_rt-$(arch).dylib)
+	lipo -create $^ -o  $@
+
+
+
+
+# Copy results to DSTROOT.
+install-iPhoneOS: $(SYMROOT)/libcompiler_rt.a $(SYMROOT)/libcompiler_rt-static.a 
+	mkdir -p $(DSTROOT)/$(SDKROOT)/usr/local/lib/libgcc
+	cp $(SYMROOT)/libcompiler_rt.a \
+				    $(DSTROOT)/$(SDKROOT)/usr/local/lib/libgcc/libcompiler_rt.a
+	mkdir -p $(DSTROOT)/$(SDKROOT)/usr/local/
+	cp $(SYMROOT)/libcompiler_rt-static.a  \
+				    $(DSTROOT)/$(SDKROOT)/usr/local/lib/libcompiler_rt-static.a
+
+
+# Rule to make fat archive
+$(SYMROOT)/libcompiler_rt.a : $(foreach arch,$(RC_ARCHS), \
+                        $(OBJROOT)/darwin_bni/Release/$(arch)/libcompiler_rt.a)
+	lipo -create $^ -o  $@
+	
+# Rule to make fat archive
+$(SYMROOT)/libcompiler_rt-static.a : $(foreach arch,$(RC_ARCHS), \
+                         $(OBJROOT)/darwin_bni/Static/$(arch)/libcompiler_rt.a)
 	lipo -create $^ -o  $@
 
