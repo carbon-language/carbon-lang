@@ -219,6 +219,8 @@ protected:
     Builder.defineMacro("__ELF__");
     if (Opts.POSIXThreads)
       Builder.defineMacro("_REENTRANT");
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
   }
 public:
   LinuxTargetInfo(const std::string& triple)
@@ -1221,6 +1223,8 @@ public:
     Builder.defineMacro("__CYGWIN__");
     Builder.defineMacro("__CYGWIN32__");
     DefineStd(Builder, "unix", Opts);
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
   }
 };
 } // end anonymous namespace
