@@ -205,6 +205,8 @@ void CodeGenFunction::SimplifyForwardingBlocks(llvm::BasicBlock *BB) {
 }
 
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+
   // Fall out of the current block (if necessary).
   EmitBranch(BB);
 
@@ -227,8 +229,8 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
 
   // Place the block after the current block, if possible, or else at
   // the end of the function.
-  if (Builder.GetInsertBlock())
-    CurFn->getBasicBlockList().insertAfter(Builder.GetInsertBlock(), BB);
+  if (CurBB && CurBB->getParent())
+    CurFn->getBasicBlockList().insertAfter(CurBB, BB);
   else
     CurFn->getBasicBlockList().push_back(BB);
   Builder.SetInsertPoint(BB);

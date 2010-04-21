@@ -184,7 +184,8 @@ public:
   public:
     DelayedCleanupBlock(CodeGenFunction &cgf, bool ehonly = false)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()),
-        CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0),
+        CleanupEntryBB(CGF.createBasicBlock("cleanup")),
+        CleanupExitBB(0),
         CurInvokeDest(CGF.getInvokeDest()),
         EHOnly(ehonly) {
       CGF.Builder.SetInsertPoint(CleanupEntryBB);
