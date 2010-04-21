@@ -1247,9 +1247,21 @@ void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "[";
-  Expr *receiver = Mess->getReceiver();
-  if (receiver) PrintExpr(receiver);
-  else OS << Mess->getClassName()->getName();
+  switch (Mess->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+    PrintExpr(Mess->getInstanceReceiver());
+    break;
+
+  case ObjCMessageExpr::Class:
+    OS << Mess->getClassReceiver().getAsString(Policy);
+    break;
+
+  case ObjCMessageExpr::SuperInstance:
+  case ObjCMessageExpr::SuperClass:
+    OS << "Super";
+    break;
+  }
+
   OS << ' ';
   Selector selector = Mess->getSelector();
   if (selector.isUnarySelector()) {

@@ -2124,7 +2124,7 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
 
   // But first evaluate the receiver (if any).
   ObjCMessageExpr::arg_iterator AI = ME->arg_begin(), AE = ME->arg_end();
-  if (Expr *Receiver = ME->getReceiver()) {
+  if (Expr *Receiver = ME->getInstanceReceiver()) {
     ExplodedNodeSet Tmp;
     Visit(Receiver, Pred, Tmp);
 
@@ -2176,7 +2176,7 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     SaveOr OldHasGen(Builder->HasGeneratedNode);
 
-    if (const Expr *Receiver = ME->getReceiver()) {
+    if (const Expr *Receiver = ME->getInstanceReceiver()) {
       const GRState *state = GetState(Pred);
 
       // Bifurcate the state into nil and non-nil ones.
@@ -2206,8 +2206,8 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
       // Dispatch to plug-in transfer function.
       EvalObjCMessageExpr(DstEval, ME, Pred, notNilState);
     }
-    else {
-      IdentifierInfo* ClsName = ME->getClassName();
+    else if (ObjCInterfaceDecl *Iface = ME->getReceiverInterface()) {
+      IdentifierInfo* ClsName = Iface->getIdentifier();
       Selector S = ME->getSelector();
 
       // Check for special instance methods.

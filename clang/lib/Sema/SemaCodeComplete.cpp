@@ -2899,13 +2899,24 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
     return 0;
 
   // Determine the class that we're sending the message to.
-  ObjCInterfaceDecl *IFace = Msg->getClassInfo().Decl;
-  if (!IFace) {
-    if (Expr *Receiver = Msg->getReceiver()) {
-      QualType T = Receiver->getType();
-      if (const ObjCObjectPointerType *Ptr = T->getAs<ObjCObjectPointerType>())
-        IFace = Ptr->getInterfaceDecl();
-    }
+  ObjCInterfaceDecl *IFace = 0;
+  switch (Msg->getReceiverKind()) {
+  case ObjCMessageExpr::Class:
+    if (const ObjCInterfaceType *IFaceType
+                           = Msg->getClassReceiver()->getAs<ObjCInterfaceType>())
+      IFace = IFaceType->getDecl();
+    break;
+
+  case ObjCMessageExpr::Instance: {
+    QualType T = Msg->getInstanceReceiver()->getType();
+    if (const ObjCObjectPointerType *Ptr = T->getAs<ObjCObjectPointerType>())
+      IFace = Ptr->getInterfaceDecl();
+    break;
+  }
+
+  case ObjCMessageExpr::SuperInstance:
+  case ObjCMessageExpr::SuperClass:
+    break;
   }
 
   if (!IFace)

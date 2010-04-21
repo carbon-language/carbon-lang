@@ -971,9 +971,9 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
 }
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
-  if (CI.Decl && Visit(MakeCursorObjCClassRef(CI.Decl, CI.Loc, TU)))
-    return true;
+  if (TypeSourceInfo *TSInfo = E->getClassReceiverTypeInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
 
   return VisitExpr(E);
 }

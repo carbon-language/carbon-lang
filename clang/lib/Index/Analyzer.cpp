@@ -153,9 +153,10 @@ public:
     ObjCInterfaceDecl *MsgD = 0;
     ObjCMessageExpr *Msg = cast<ObjCMessageExpr>(ASTLoc.AsStmt());
 
-    if (Msg->getReceiver()) {
+    switch (Msg->getReceiverKind()) {
+    case ObjCMessageExpr::Instance: {
       const ObjCObjectPointerType *OPT =
-          Msg->getReceiver()->getType()->getAsObjCInterfacePointerType();
+          Msg->getInstanceReceiver()->getType()->getAsObjCInterfacePointerType();
 
       // Can be anything! Accept it as a possibility..
       if (!OPT || OPT->isObjCIdType() || OPT->isObjCQualifiedIdType())
@@ -171,15 +172,34 @@ public:
       // Should be an instance method.
       if (!IsInstanceMethod)
         return false;
+      break;
+    }
 
-    } else {
+    case ObjCMessageExpr::Class: {
       // Expecting class method.
       if (IsInstanceMethod)
         return false;
 
-      MsgD = Msg->getClassInfo().Decl;
-      // FIXME: Case when we only have an identifier.
-      assert(MsgD && "Identifier only");
+      MsgD = Msg->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+      break;
+    }
+
+    case ObjCMessageExpr::SuperClass:
+      // Expecting class method.
+      if (IsInstanceMethod)
+        return false;
+
+      MsgD = Msg->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+      break;
+
+    case ObjCMessageExpr::SuperInstance:
+      // Expecting instance method.
+      if (!IsInstanceMethod)
+        return false;
+
+      MsgD = Msg->getSuperType()->getAs<ObjCObjectPointerType>()
+                                                          ->getInterfaceDecl();
+      break;
     }
 
     assert(MsgD);
@@ -248,31 +268,44 @@ public:
     ObjCInterfaceDecl *MsgD = 0;
 
     while (true) {
-      if (Msg->getReceiver() == 0) {
+      switch (Msg->getReceiverKind()) {
+      case ObjCMessageExpr::Instance: {
+        const ObjCObjectPointerType *OPT =
+          Msg->getInstanceReceiver()->getType()
+                                      ->getAsObjCInterfacePointerType();
+
+        if (!OPT || OPT->isObjCIdType() || OPT->isObjCQualifiedIdType()) {
+          CanBeInstanceMethod = CanBeClassMethod = true;
+          break;
+        }
+
+        if (OPT->isObjCClassType() || OPT->isObjCQualifiedClassType()) {
+          CanBeClassMethod = true;
+          break;
+        }
+
+        MsgD = OPT->getInterfaceDecl();
+        assert(MsgD);
+        CanBeInstanceMethod = true;
+        break;
+      }
+        
+      case ObjCMessageExpr::Class:
         CanBeClassMethod = true;
-        MsgD = Msg->getClassInfo().Decl;
-        // FIXME: Case when we only have an identifier.
-        assert(MsgD && "Identifier only");
+        MsgD = Msg->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
         break;
-      }
 
-      const ObjCObjectPointerType *OPT =
-          Msg->getReceiver()->getType()->getAsObjCInterfacePointerType();
-
-      if (!OPT || OPT->isObjCIdType() || OPT->isObjCQualifiedIdType()) {
-        CanBeInstanceMethod = CanBeClassMethod = true;
-        break;
-      }
-
-      if (OPT->isObjCClassType() || OPT->isObjCQualifiedClassType()) {
+      case ObjCMessageExpr::SuperClass:
         CanBeClassMethod = true;
+        MsgD = Msg->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+        break;
+
+      case ObjCMessageExpr::SuperInstance:
+        CanBeInstanceMethod = true;
+        MsgD = Msg->getSuperType()->getAs<ObjCObjectPointerType>()
+                                                           ->getInterfaceDecl();
         break;
       }
-
-      MsgD = OPT->getInterfaceDecl();
-      assert(MsgD);
-      CanBeInstanceMethod = true;
-      break;
     }
 
     assert(CanBeInstanceMethod || CanBeClassMethod);

@@ -1239,11 +1239,26 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
     // This allows us to handle chain/nested property getters.
     Receiver = PropGetters[PRE];
   }
-  MsgExpr = new (Context) ObjCMessageExpr(*Context, dyn_cast<Expr>(Receiver),
-                                PDecl->getSetterName(), PDecl->getType(),
-                                PDecl->getSetterMethodDecl(),
-                                SourceLocation(), SourceLocation(),
-                                &ExprVec[0], 1);
+  if (isa<ObjCSuperExpr>(Receiver))
+    MsgExpr = ObjCMessageExpr::Create(*Context, 
+                                      PDecl->getType().getNonReferenceType(),
+                                      /*FIXME?*/SourceLocation(),
+                                      Receiver->getLocStart(),
+                                      /*IsInstanceSuper=*/true,
+                                      cast<Expr>(Receiver)->getType(),
+                                      PDecl->getSetterName(),
+                                      PDecl->getSetterMethodDecl(),
+                                      &ExprVec[0], 1,
+                                      /*FIXME:*/SourceLocation());
+  else
+    MsgExpr = ObjCMessageExpr::Create(*Context, 
+                                      PDecl->getType().getNonReferenceType(),
+                                      /*FIXME: */SourceLocation(),
+                                      cast<Expr>(Receiver),
+                                      PDecl->getSetterName(),
+                                      PDecl->getSetterMethodDecl(),
+                                      &ExprVec[0], 1,
+                                      /*FIXME:*/SourceLocation());
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
 
   // Now do the actual rewrite.
@@ -1268,11 +1283,27 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
     // This allows us to handle chain/nested property getters.
     Receiver = PropGetters[PRE];
   }
-  MsgExpr = new (Context) ObjCMessageExpr(*Context, dyn_cast<Expr>(Receiver),
-                                PDecl->getGetterName(), PDecl->getType(),
-                                PDecl->getGetterMethodDecl(),
-                                SourceLocation(), SourceLocation(),
-                                0, 0);
+
+  if (isa<ObjCSuperExpr>(Receiver))
+    MsgExpr = ObjCMessageExpr::Create(*Context, 
+                                      PDecl->getType().getNonReferenceType(),
+                                      /*FIXME:*/SourceLocation(),
+                                      Receiver->getLocStart(),
+                                      /*IsInstanceSuper=*/true,
+                                      cast<Expr>(Receiver)->getType(),
+                                      PDecl->getGetterName(), 
+                                      PDecl->getGetterMethodDecl(),
+                                      0, 0, 
+                                      /*FIXME:*/SourceLocation());
+  else
+    MsgExpr = ObjCMessageExpr::Create(*Context, 
+                                      PDecl->getType().getNonReferenceType(),
+                                      /*FIXME:*/SourceLocation(),
+                                      cast<Expr>(Receiver),
+                                      PDecl->getGetterName(), 
+                                      PDecl->getGetterMethodDecl(),
+                                      0, 0, 
+                                      /*FIXME:*/SourceLocation());
 
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
 
@@ -2687,205 +2718,211 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
 
   // Synthesize a call to objc_msgSend().
   llvm::SmallVector<Expr*, 8> MsgExprs;
-  IdentifierInfo *clsName = Exp->getClassName();
+  switch (Exp->getReceiverKind()) {
+  case ObjCMessageExpr::SuperClass: {
+    MsgSendFlavor = MsgSendSuperFunctionDecl;
+    if (MsgSendStretFlavor)
+      MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
+    assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
 
-  // Derive/push the receiver/selector, 2 implicit arguments to objc_msgSend().
-  if (clsName) { // class message.
-    // FIXME: We need to fix Sema (and the AST for ObjCMessageExpr) to handle
-    // the 'super' idiom within a class method.
-    if (clsName->getName() == "super") {
-      MsgSendFlavor = MsgSendSuperFunctionDecl;
-      if (MsgSendStretFlavor)
-        MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
-      assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
+    ObjCInterfaceDecl *ClassDecl = CurMethodDef->getClassInterface();
 
-      ObjCInterfaceDecl *ClassDecl = CurMethodDef->getClassInterface();
+    llvm::SmallVector<Expr*, 4> InitExprs;
 
-      llvm::SmallVector<Expr*, 4> InitExprs;
+    // set the receiver to self, the first argument to all methods.
+    InitExprs.push_back(
+      NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                               CastExpr::CK_Unknown,
+                   new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
+                                   Context->getObjCIdType(),
+                                   SourceLocation()))
+                        ); // set the 'receiver'.
 
-      // set the receiver to self, the first argument to all methods.
-      InitExprs.push_back(
-        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                 CastExpr::CK_Unknown,
-                     new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
-                                     Context->getObjCIdType(),
-                                     SourceLocation()))
-                          ); // set the 'receiver'.
+    // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
+    llvm::SmallVector<Expr*, 8> ClsExprs;
+    QualType argType = Context->getPointerType(Context->CharTy);
+    ClsExprs.push_back(StringLiteral::Create(*Context,
+                                   ClassDecl->getIdentifier()->getNameStart(),
+                                   ClassDecl->getIdentifier()->getLength(),
+                                   false, argType, SourceLocation()));
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
+                                                 &ClsExprs[0],
+                                                 ClsExprs.size(),
+                                                 StartLoc,
+                                                 EndLoc);
+    // (Class)objc_getClass("CurrentClass")
+    CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
+                                             Context->getObjCClassType(),
+                                             CastExpr::CK_Unknown, Cls);
+    ClsExprs.clear();
+    ClsExprs.push_back(ArgExpr);
+    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
+                                       &ClsExprs[0], ClsExprs.size(),
+                                       StartLoc, EndLoc);
+    
+    // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
+    // To turn off a warning, type-cast to 'id'
+    InitExprs.push_back( // set 'super class', using class_getSuperclass().
+                        NoTypeInfoCStyleCastExpr(Context,
+                                                 Context->getObjCIdType(),
+                                                 CastExpr::CK_Unknown, Cls));
+    // struct objc_super
+    QualType superType = getSuperStructType();
+    Expr *SuperRep;
 
-      // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
-      llvm::SmallVector<Expr*, 8> ClsExprs;
-      QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(StringLiteral::Create(*Context,
-                                     ClassDecl->getIdentifier()->getNameStart(),
-                                     ClassDecl->getIdentifier()->getLength(),
-                                     false, argType, SourceLocation()));
-      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
-                                                   &ClsExprs[0],
-                                                   ClsExprs.size(),
-                                                   StartLoc,
-                                                   EndLoc);
-      // (Class)objc_getClass("CurrentClass")
-      CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
-                                               Context->getObjCClassType(),
-                                               CastExpr::CK_Unknown, Cls);
-      ClsExprs.clear();
-      ClsExprs.push_back(ArgExpr);
-      Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
-                                         &ClsExprs[0], ClsExprs.size(),
-                                         StartLoc, EndLoc);
-      
-      // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
-      // To turn off a warning, type-cast to 'id'
-      InitExprs.push_back( // set 'super class', using class_getSuperclass().
-                          NoTypeInfoCStyleCastExpr(Context,
-                                                   Context->getObjCIdType(),
-                                                   CastExpr::CK_Unknown, Cls));
-      // struct objc_super
-      QualType superType = getSuperStructType();
-      Expr *SuperRep;
-
-      if (LangOpts.Microsoft) {
-        SynthSuperContructorFunctionDecl();
-        // Simulate a contructor call...
-        DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
-                                           superType, SourceLocation());
-        SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
-                                          InitExprs.size(),
-                                          superType, SourceLocation());
-        // The code for super is a little tricky to prevent collision with
-        // the structure definition in the header. The rewriter has it's own
-        // internal definition (__rw_objc_super) that is uses. This is why
-        // we need the cast below. For example:
-        // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
-        //
-        SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
-                                 Context->getPointerType(SuperRep->getType()),
-                                 SourceLocation());
-        SuperRep = NoTypeInfoCStyleCastExpr(Context,
-                                            Context->getPointerType(superType),
-                                            CastExpr::CK_Unknown, SuperRep);
-      } else {
-        // (struct objc_super) { <exprs from above> }
-        InitListExpr *ILE =
-          new (Context) InitListExpr(*Context, SourceLocation(),
-                                     &InitExprs[0], InitExprs.size(),
-                                     SourceLocation());
-        TypeSourceInfo *superTInfo
-          = Context->getTrivialTypeSourceInfo(superType);
-        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,
-                                                     superType, ILE, false);
-        // struct objc_super *
-        SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
-                                 Context->getPointerType(SuperRep->getType()),
-                                 SourceLocation());
-      }
-      MsgExprs.push_back(SuperRep);
+    if (LangOpts.Microsoft) {
+      SynthSuperContructorFunctionDecl();
+      // Simulate a contructor call...
+      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
+                                         superType, SourceLocation());
+      SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
+                                        InitExprs.size(),
+                                        superType, SourceLocation());
+      // The code for super is a little tricky to prevent collision with
+      // the structure definition in the header. The rewriter has it's own
+      // internal definition (__rw_objc_super) that is uses. This is why
+      // we need the cast below. For example:
+      // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
+      //
+      SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                               Context->getPointerType(SuperRep->getType()),
+                               SourceLocation());
+      SuperRep = NoTypeInfoCStyleCastExpr(Context,
+                                          Context->getPointerType(superType),
+                                          CastExpr::CK_Unknown, SuperRep);
     } else {
-      llvm::SmallVector<Expr*, 8> ClsExprs;
-      QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(StringLiteral::Create(*Context,
-                                               clsName->getNameStart(),
-                                               clsName->getLength(),
-                                               false, argType,
-                                               SourceLocation()));
-      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                   &ClsExprs[0],
-                                                   ClsExprs.size(), 
-                                                   StartLoc, EndLoc);
-      MsgExprs.push_back(Cls);
+      // (struct objc_super) { <exprs from above> }
+      InitListExpr *ILE =
+        new (Context) InitListExpr(*Context, SourceLocation(),
+                                   &InitExprs[0], InitExprs.size(),
+                                   SourceLocation());
+      TypeSourceInfo *superTInfo
+        = Context->getTrivialTypeSourceInfo(superType);
+      SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,
+                                                   superType, ILE, false);
+      // struct objc_super *
+      SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                               Context->getPointerType(SuperRep->getType()),
+                               SourceLocation());
     }
-  } else { // instance message.
-    Expr *recExpr = Exp->getReceiver();
-
-    if (isSuperReceiver(recExpr)) {
-      MsgSendFlavor = MsgSendSuperFunctionDecl;
-      if (MsgSendStretFlavor)
-        MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
-      assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
-      ObjCInterfaceDecl *ClassDecl = CurMethodDef->getClassInterface();
-      llvm::SmallVector<Expr*, 4> InitExprs;
-
-      InitExprs.push_back(
-        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                 CastExpr::CK_Unknown,
-                     new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
-                                     Context->getObjCIdType(),
-                                     SourceLocation()))
-                          ); // set the 'receiver'.
-      
-      // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
-      llvm::SmallVector<Expr*, 8> ClsExprs;
-      QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(StringLiteral::Create(*Context,
-                                     ClassDecl->getIdentifier()->getNameStart(),
-                                     ClassDecl->getIdentifier()->getLength(),
-                                     false, argType, SourceLocation()));
-      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                   &ClsExprs[0],
-                                                   ClsExprs.size(), 
-                                                   StartLoc, EndLoc);
-      // (Class)objc_getClass("CurrentClass")
-      CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
-                                                   Context->getObjCClassType(),
-                                                   CastExpr::CK_Unknown, Cls);
-      ClsExprs.clear();
-      ClsExprs.push_back(ArgExpr);
-      Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
-                                         &ClsExprs[0], ClsExprs.size(),
-                                         StartLoc, EndLoc);
-      
-      // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
-      // To turn off a warning, type-cast to 'id'
-      InitExprs.push_back(
-        // set 'super class', using class_getSuperclass().
-        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                 CastExpr::CK_Unknown, Cls));
-      // struct objc_super
-      QualType superType = getSuperStructType();
-      Expr *SuperRep;
-
-      if (LangOpts.Microsoft) {
-        SynthSuperContructorFunctionDecl();
-        // Simulate a contructor call...
-        DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
-                                           superType, SourceLocation());
-        SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
-                                          InitExprs.size(),
-                                          superType, SourceLocation());
-        // The code for super is a little tricky to prevent collision with
-        // the structure definition in the header. The rewriter has it's own
-        // internal definition (__rw_objc_super) that is uses. This is why
-        // we need the cast below. For example:
-        // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
-        //
-        SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
-                                 Context->getPointerType(SuperRep->getType()),
-                                 SourceLocation());
-        SuperRep = NoTypeInfoCStyleCastExpr(Context,
-                                 Context->getPointerType(superType),
-                                 CastExpr::CK_Unknown, SuperRep);
-      } else {
-        // (struct objc_super) { <exprs from above> }
-        InitListExpr *ILE =
-          new (Context) InitListExpr(*Context, SourceLocation(),
-                                     &InitExprs[0], InitExprs.size(),
-                                     SourceLocation());
-        TypeSourceInfo *superTInfo
-          = Context->getTrivialTypeSourceInfo(superType);
-        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,
-                                                     superType, ILE, false);
-      }
-      MsgExprs.push_back(SuperRep);
-    } else {
-      // Remove all type-casts because it may contain objc-style types; e.g.
-      // Foo<Proto> *.
-      while (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(recExpr))
-        recExpr = CE->getSubExpr();
-      recExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                         CastExpr::CK_Unknown, recExpr);
-      MsgExprs.push_back(recExpr);
-    }
+    MsgExprs.push_back(SuperRep);
+    break;
   }
+
+  case ObjCMessageExpr::Class: {
+    llvm::SmallVector<Expr*, 8> ClsExprs;
+    QualType argType = Context->getPointerType(Context->CharTy);
+    ObjCInterfaceDecl *Class
+      = Exp->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+    IdentifierInfo *clsName = Class->getIdentifier();
+    ClsExprs.push_back(StringLiteral::Create(*Context,
+                                             clsName->getNameStart(),
+                                             clsName->getLength(),
+                                             false, argType,
+                                             SourceLocation()));
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                                 &ClsExprs[0],
+                                                 ClsExprs.size(), 
+                                                 StartLoc, EndLoc);
+    MsgExprs.push_back(Cls);
+    break;
+  }
+
+  case ObjCMessageExpr::SuperInstance:{
+    MsgSendFlavor = MsgSendSuperFunctionDecl;
+    if (MsgSendStretFlavor)
+      MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
+    assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
+    ObjCInterfaceDecl *ClassDecl = CurMethodDef->getClassInterface();
+    llvm::SmallVector<Expr*, 4> InitExprs;
+
+    InitExprs.push_back(
+      NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                               CastExpr::CK_Unknown,
+                   new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
+                                   Context->getObjCIdType(),
+                                   SourceLocation()))
+                        ); // set the 'receiver'.
+    
+    // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
+    llvm::SmallVector<Expr*, 8> ClsExprs;
+    QualType argType = Context->getPointerType(Context->CharTy);
+    ClsExprs.push_back(StringLiteral::Create(*Context,
+                                   ClassDecl->getIdentifier()->getNameStart(),
+                                   ClassDecl->getIdentifier()->getLength(),
+                                   false, argType, SourceLocation()));
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                                 &ClsExprs[0],
+                                                 ClsExprs.size(), 
+                                                 StartLoc, EndLoc);
+    // (Class)objc_getClass("CurrentClass")
+    CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
+                                                 Context->getObjCClassType(),
+                                                 CastExpr::CK_Unknown, Cls);
+    ClsExprs.clear();
+    ClsExprs.push_back(ArgExpr);
+    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
+                                       &ClsExprs[0], ClsExprs.size(),
+                                       StartLoc, EndLoc);
+    
+    // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
+    // To turn off a warning, type-cast to 'id'
+    InitExprs.push_back(
+      // set 'super class', using class_getSuperclass().
+      NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                               CastExpr::CK_Unknown, Cls));
+    // struct objc_super
+    QualType superType = getSuperStructType();
+    Expr *SuperRep;
+
+    if (LangOpts.Microsoft) {
+      SynthSuperContructorFunctionDecl();
+      // Simulate a contructor call...
+      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
+                                         superType, SourceLocation());
+      SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
+                                        InitExprs.size(),
+                                        superType, SourceLocation());
+      // The code for super is a little tricky to prevent collision with
+      // the structure definition in the header. The rewriter has it's own
+      // internal definition (__rw_objc_super) that is uses. This is why
+      // we need the cast below. For example:
+      // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
+      //
+      SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                               Context->getPointerType(SuperRep->getType()),
+                               SourceLocation());
+      SuperRep = NoTypeInfoCStyleCastExpr(Context,
+                               Context->getPointerType(superType),
+                               CastExpr::CK_Unknown, SuperRep);
+    } else {
+      // (struct objc_super) { <exprs from above> }
+      InitListExpr *ILE =
+        new (Context) InitListExpr(*Context, SourceLocation(),
+                                   &InitExprs[0], InitExprs.size(),
+                                   SourceLocation());
+      TypeSourceInfo *superTInfo
+        = Context->getTrivialTypeSourceInfo(superType);
+      SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superTInfo,
+                                                   superType, ILE, false);
+    }
+    MsgExprs.push_back(SuperRep);
+    break;
+  }
+
+  case ObjCMessageExpr::Instance: {
+    // Remove all type-casts because it may contain objc-style types; e.g.
+    // Foo<Proto> *.
+    Expr *recExpr = Exp->getInstanceReceiver();
+    while (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(recExpr))
+      recExpr = CE->getSubExpr();
+    recExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                       CastExpr::CK_Unknown, recExpr);
+    MsgExprs.push_back(recExpr);
+    break;
+  }
+  }
+
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);

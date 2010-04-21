@@ -458,7 +458,6 @@ public:
 namespace bugreporter {
 
 const Stmt *GetDerefExpr(const ExplodedNode *N);
-const Stmt *GetReceiverExpr(const ExplodedNode *N);
 const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetCalleeExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);

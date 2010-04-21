@@ -31,13 +31,22 @@
 using namespace clang;
 
 static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
-  const Expr* Receiver = ME->getReceiver();
+  QualType T;
+  switch (ME->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+    T = ME->getInstanceReceiver()->getType();
+    break;
 
-  if (!Receiver)
-    return NULL;
+  case ObjCMessageExpr::SuperInstance:
+    T = ME->getSuperType();
+    break;
 
-  if (const ObjCObjectPointerType *PT =
-      Receiver->getType()->getAs<ObjCObjectPointerType>())
+  case ObjCMessageExpr::Class:
+  case ObjCMessageExpr::SuperClass:
+    return 0;
+  }
+
+  if (const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>())
     return PT->getInterfaceType();
 
   return NULL;
@@ -509,11 +518,21 @@ public:
 
 void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
                                                   const ObjCMessageExpr *ME) {
-  
-  const IdentifierInfo *ClsName = ME->getClassName();
-  if (!ClsName)
+  ObjCInterfaceDecl *Class = 0;
+  switch (ME->getReceiverKind()) {
+  case ObjCMessageExpr::Class:
+    Class = ME->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+    break;
+
+  case ObjCMessageExpr::SuperClass:
+    Class = ME->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+    break;
+
+  case ObjCMessageExpr::Instance:
+  case ObjCMessageExpr::SuperInstance:
     return;
-  
+  }
+
   Selector S = ME->getSelector();
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
@@ -531,7 +550,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   llvm::raw_svector_ostream os(buf);
 
   os << "The '" << S.getAsString() << "' message should be sent to instances "
-        "of class '" << ClsName->getName()
+        "of class '" << Class->getName()
      << "' and not the class directly";
   
   RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);

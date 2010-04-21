@@ -712,18 +712,33 @@ void PCHStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
 void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
+  Record.push_back((unsigned)E->getReceiverKind()); // FIXME: stable encoding
+  switch (E->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+    Writer.WriteSubStmt(E->getInstanceReceiver());
+    break;
+
+  case ObjCMessageExpr::Class:
+    Writer.AddTypeSourceInfo(E->getClassReceiverTypeInfo(), Record);
+    break;
+
+  case ObjCMessageExpr::SuperClass:
+  case ObjCMessageExpr::SuperInstance:
+    Writer.AddTypeRef(E->getSuperType(), Record);
+    Writer.AddSourceLocation(E->getSuperLoc(), Record);
+    break;
+  }
+
+  if (E->getMethodDecl()) {
+    Record.push_back(1);
+    Writer.AddDeclRef(E->getMethodDecl(), Record);
+  } else {
+    Record.push_back(0);
+    Writer.AddSelectorRef(E->getSelector(), Record);    
+  }
+    
   Writer.AddSourceLocation(E->getLeftLoc(), Record);
   Writer.AddSourceLocation(E->getRightLoc(), Record);
-  Writer.AddSelectorRef(E->getSelector(), Record);
-  Writer.AddDeclRef(E->getMethodDecl(), Record); // optional
-  Writer.WriteSubStmt(E->getReceiver());
-
-  if (!E->getReceiver()) {
-    ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
-    Writer.AddDeclRef(CI.Decl, Record);
-    Writer.AddIdentifierRef(CI.Name, Record);
-    Writer.AddSourceLocation(CI.Loc, Record);
-  }
 
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg)

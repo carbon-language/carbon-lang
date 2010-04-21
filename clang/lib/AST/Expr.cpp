@@ -2239,101 +2239,156 @@ void ExtVectorElementExpr::getEncodedElementAccess(
   }
 }
 
-// constructor for instance messages.
-ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, Expr *receiver,
-                                 Selector selInfo,
-                                 QualType retType, ObjCMethodDecl *mproto,
-                                 SourceLocation LBrac, SourceLocation RBrac,
-                                 Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
-    MethodProto(mproto) {
-  NumArgs = nargs;
-  SubExprs = new (C) Stmt*[NumArgs+1];
-  SubExprs[RECEIVER] = receiver;
-  if (NumArgs) {
-    for (unsigned i = 0; i != NumArgs; ++i)
-      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
-  }
-  LBracloc = LBrac;
-  RBracloc = RBrac;
-}
-
-// constructor for class messages.
-// FIXME: clsName should be typed to ObjCInterfaceType
-ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName,
-                                 SourceLocation clsNameLoc, Selector selInfo, 
-                                 QualType retType, ObjCMethodDecl *mproto,
-                                 SourceLocation LBrac, SourceLocation RBrac,
-                                 Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType, false, false), ClassNameLoc(clsNameLoc),
-    SelName(selInfo), MethodProto(mproto) {
-  NumArgs = nargs;
-  SubExprs = new (C) Stmt*[NumArgs+1];
-  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | IsClsMethDeclUnknown);
-  if (NumArgs) {
-    for (unsigned i = 0; i != NumArgs; ++i)
-      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
-  }
-  LBracloc = LBrac;
-  RBracloc = RBrac;
-}
-
-// constructor for class messages.
-ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls,
-                                 SourceLocation clsNameLoc, Selector selInfo, 
-                                 QualType retType,
-                                 ObjCMethodDecl *mproto, SourceLocation LBrac,
-                                 SourceLocation RBrac, Expr **ArgExprs,
-                                 unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType, false, false), ClassNameLoc(clsNameLoc),
-    SelName(selInfo), MethodProto(mproto) 
+ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 SourceLocation LBracLoc,
+                                 SourceLocation SuperLoc,
+                                 bool IsInstanceSuper,
+                                 QualType SuperType,
+                                 Selector Sel, 
+                                 ObjCMethodDecl *Method,
+                                 Expr **Args, unsigned NumArgs,
+                                 SourceLocation RBracLoc)
+  : Expr(ObjCMessageExprClass, T, /*TypeDependent=*/false,
+         hasAnyValueDependentArguments(Args, NumArgs)),
+    NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
+    HasMethod(Method != 0), SuperLoc(SuperLoc),
+    SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
+                                                       : Sel.getAsOpaquePtr())),
+    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
-  NumArgs = nargs;
-  SubExprs = new (C) Stmt*[NumArgs+1];
-  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) cls | IsClsMethDeclKnown);
-  if (NumArgs) {
-    for (unsigned i = 0; i != NumArgs; ++i)
-      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
-  }
-  LBracloc = LBrac;
-  RBracloc = RBrac;
+  setReceiverPointer(SuperType.getAsOpaquePtr());
+  if (NumArgs)
+    memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
 }
 
-ObjCMessageExpr::ClassInfo ObjCMessageExpr::getClassInfo() const {
-  uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
-  switch (x & Flags) {
-    default:
-      assert(false && "Invalid ObjCMessageExpr.");
-    case IsInstMeth:
-      return ClassInfo(0, 0, SourceLocation());
-    case IsClsMethDeclUnknown:
-      return ClassInfo(0, (IdentifierInfo*) (x & ~Flags), ClassNameLoc);
-    case IsClsMethDeclKnown: {
-      ObjCInterfaceDecl* D = (ObjCInterfaceDecl*) (x & ~Flags);
-      return ClassInfo(D, D->getIdentifier(), ClassNameLoc);
-    }
-  }
+ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 SourceLocation LBracLoc,
+                                 TypeSourceInfo *Receiver,
+                                 Selector Sel, 
+                                 ObjCMethodDecl *Method,
+                                 Expr **Args, unsigned NumArgs,
+                                 SourceLocation RBracLoc)
+  : Expr(ObjCMessageExprClass, T, T->isDependentType(),
+         (T->isDependentType() || 
+          hasAnyValueDependentArguments(Args, NumArgs))),
+    NumArgs(NumArgs), Kind(Class), HasMethod(Method != 0),
+    SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
+                                                       : Sel.getAsOpaquePtr())),
+    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+{
+  setReceiverPointer(Receiver);
+  if (NumArgs)
+    memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
 }
 
-void ObjCMessageExpr::setClassInfo(const ObjCMessageExpr::ClassInfo &CI) {
-  if (CI.Decl == 0 && CI.Name == 0) {
-    SubExprs[RECEIVER] = (Expr*)((uintptr_t)0 | IsInstMeth);
-    return;
-  }
-
-  if (CI.Decl == 0)
-    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.Name | IsClsMethDeclUnknown);
-  else
-    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.Decl | IsClsMethDeclKnown);
-  ClassNameLoc = CI.Loc;
+ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 SourceLocation LBracLoc,
+                                 Expr *Receiver,
+                                 Selector Sel, 
+                                 ObjCMethodDecl *Method,
+                                 Expr **Args, unsigned NumArgs,
+                                 SourceLocation RBracLoc)
+  : Expr(ObjCMessageExprClass, T, T->isDependentType(),
+         (T->isDependentType() || 
+          hasAnyValueDependentArguments(Args, NumArgs))),
+    NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
+    SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
+                                                       : Sel.getAsOpaquePtr())),
+    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+{
+  setReceiverPointer(Receiver);
+  if (NumArgs)
+    memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
 }
 
-void ObjCMessageExpr::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  if (SubExprs)
-    C.Deallocate(SubExprs);
-  this->~ObjCMessageExpr();
-  C.Deallocate((void*) this);
+ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         SourceLocation LBracLoc,
+                                         SourceLocation SuperLoc,
+                                         bool IsInstanceSuper,
+                                         QualType SuperType,
+                                         Selector Sel, 
+                                         ObjCMethodDecl *Method,
+                                         Expr **Args, unsigned NumArgs,
+                                         SourceLocation RBracLoc) {
+  unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
+    NumArgs * sizeof(Expr *);
+  void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
+  return new (Mem) ObjCMessageExpr(T, LBracLoc, SuperLoc, IsInstanceSuper,
+                                   SuperType, Sel, Method, Args, NumArgs, 
+                                   RBracLoc);
+}
+
+ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         SourceLocation LBracLoc,
+                                         TypeSourceInfo *Receiver,
+                                         Selector Sel, 
+                                         ObjCMethodDecl *Method,
+                                         Expr **Args, unsigned NumArgs,
+                                         SourceLocation RBracLoc) {
+  unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
+    NumArgs * sizeof(Expr *);
+  void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
+  return new (Mem) ObjCMessageExpr(T, LBracLoc, Receiver, Sel, Method, Args, 
+                                   NumArgs, RBracLoc);
+}
+
+ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         SourceLocation LBracLoc,
+                                         Expr *Receiver,
+                                         Selector Sel, 
+                                         ObjCMethodDecl *Method,
+                                         Expr **Args, unsigned NumArgs,
+                                         SourceLocation RBracLoc) {
+  unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
+    NumArgs * sizeof(Expr *);
+  void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
+  return new (Mem) ObjCMessageExpr(T, LBracLoc, Receiver, Sel, Method, Args, 
+                                   NumArgs, RBracLoc);
+}
+
+ObjCMessageExpr *ObjCMessageExpr::CreateEmpty(ASTContext &Context, 
+                                              unsigned NumArgs) {
+  unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
+    NumArgs * sizeof(Expr *);
+  void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
+  return new (Mem) ObjCMessageExpr(EmptyShell(), NumArgs);
+}
+         
+Selector ObjCMessageExpr::getSelector() const {
+  if (HasMethod)
+    return reinterpret_cast<const ObjCMethodDecl *>(SelectorOrMethod)
+                                                               ->getSelector();
+  return Selector(SelectorOrMethod); 
+}
+
+ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
+  switch (getReceiverKind()) {
+  case Instance:
+    if (const ObjCObjectPointerType *Ptr
+          = getInstanceReceiver()->getType()->getAs<ObjCObjectPointerType>())
+      return Ptr->getInterfaceDecl();
+    break;
+
+  case Class:
+    if (const ObjCInterfaceType *Iface
+                       = getClassReceiver()->getAs<ObjCInterfaceType>())
+      return Iface->getDecl();
+    break;
+
+  case SuperInstance:
+    if (const ObjCObjectPointerType *Ptr
+          = getSuperType()->getAs<ObjCObjectPointerType>())
+      return Ptr->getInterfaceDecl();
+    break;
+
+  case SuperClass:
+    if (const ObjCObjectPointerType *Iface
+                       = getSuperType()->getAs<ObjCObjectPointerType>())
+      return Iface->getInterfaceDecl();
+    break;
+  }
+
+  return 0;
 }
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
@@ -2809,10 +2864,12 @@ Stmt::child_iterator ObjCProtocolExpr::child_end() {
 
 // ObjCMessageExpr
 Stmt::child_iterator ObjCMessageExpr::child_begin() {
-  return getReceiver() ? &SubExprs[0] : &SubExprs[0] + ARGS_START;
+  if (getReceiverKind() == Instance)
+    return reinterpret_cast<Stmt **>(this + 1);
+  return getArgs();
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
-  return &SubExprs[0]+ARGS_START+getNumArgs();
+  return getArgs() + getNumArgs();
 }
 
 // Blocks

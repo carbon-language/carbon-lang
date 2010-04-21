@@ -3130,10 +3130,10 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
 
-        return Owned(new (Context) ObjCMessageExpr(Context, BaseExpr, Sel,
-                                                   OMD->getResultType(),
-                                                   OMD, OpLoc, MemberLoc,
-                                                   NULL, 0));
+        return Owned(ObjCMessageExpr::Create(Context, 
+                                     OMD->getResultType().getNonReferenceType(),
+                                             OpLoc, BaseExpr, Sel,
+                                             OMD, NULL, 0, MemberLoc));
       }
     }
 

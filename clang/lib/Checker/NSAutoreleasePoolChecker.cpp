@@ -56,7 +56,7 @@ void
 NSAutoreleasePoolChecker::PreVisitObjCMessageExpr(CheckerContext &C,
                                                   const ObjCMessageExpr *ME) {
   
-  const Expr *receiver = ME->getReceiver();
+  const Expr *receiver = ME->getInstanceReceiver();
   if (!receiver)
     return;
   

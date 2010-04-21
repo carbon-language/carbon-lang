@@ -53,31 +53,34 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   // arguments in generic code.
 
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
-  const Expr *ReceiverExpr = E->getReceiver();
   bool isSuperMessage = false;
   bool isClassMessage = false;
   // Find the receiver
   llvm::Value *Receiver;
-  if (!ReceiverExpr) {
-    const ObjCInterfaceDecl *OID = E->getClassInfo().Decl;
+  switch (E->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+    Receiver = EmitScalarExpr(E->getInstanceReceiver());
+    break;
 
-    // Very special case, super send in class method. The receiver is
-    // self (the class object) and the send uses super semantics.
-    if (!OID) {
-      assert(E->getClassName()->isStr("super") &&
-             "Unexpected missing class interface in message send.");
-      isSuperMessage = true;
-      Receiver = LoadObjCSelf();
-    } else {
-      Receiver = Runtime.GetClass(Builder, OID);
-    }
-
+  case ObjCMessageExpr::Class: {
+    const ObjCInterfaceType *IFace
+      = E->getClassReceiver()->getAs<ObjCInterfaceType>();
+    assert(IFace && "Invalid Objective-C class message send");
+    Receiver = Runtime.GetClass(Builder, IFace->getDecl());
     isClassMessage = true;
-  } else if (isa<ObjCSuperExpr>(E->getReceiver())) {
-    isSuperMessage = true;
+    break;
+  }
+
+  case ObjCMessageExpr::SuperInstance:
     Receiver = LoadObjCSelf();
-  } else {
-    Receiver = EmitScalarExpr(E->getReceiver());
+    isSuperMessage = true;
+    break;
+
+  case ObjCMessageExpr::SuperClass:
+    Receiver = LoadObjCSelf();
+    isSuperMessage = true;
+    isClassMessage = true;
+    break;
   }
 
   CallArgList Args;

@@ -782,25 +782,42 @@ unsigned PCHStmtReader::VisitObjCImplicitSetterGetterRefExpr(
 
 unsigned PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
-  E->setNumArgs(Record[Idx++]);
+  assert(Record[Idx] == E->getNumArgs());
+  ++Idx;
+  ObjCMessageExpr::ReceiverKind Kind
+    = static_cast<ObjCMessageExpr::ReceiverKind>(Record[Idx++]);
+  switch (Kind) {
+  case ObjCMessageExpr::Instance:
+    E->setInstanceReceiver(
+         cast_or_null<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
+    break;
+
+  case ObjCMessageExpr::Class:
+    E->setClassReceiver(Reader.GetTypeSourceInfo(Record, Idx));
+    break;
+
+  case ObjCMessageExpr::SuperClass:
+  case ObjCMessageExpr::SuperInstance: {
+    QualType T = Reader.GetType(Record[Idx++]);
+    SourceLocation SuperLoc = SourceLocation::getFromRawEncoding(Record[Idx++]);
+    E->setSuper(SuperLoc, T, Kind == ObjCMessageExpr::SuperInstance);
+    break;
+  }
+  }
+
+  assert(Kind == E->getReceiverKind());
+
+  if (Record[Idx++])
+    E->setMethodDecl(cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  else
+    E->setSelector(Reader.GetSelector(Record, Idx));
+
   E->setLeftLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRightLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSelector(Reader.GetSelector(Record, Idx));
-  E->setMethodDecl(cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-
-  E->setReceiver(
-         cast_or_null<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
-  if (!E->getReceiver()) {
-    ObjCMessageExpr::ClassInfo CI;
-    CI.Decl = cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++]));
-    CI.Name = Reader.GetIdentifierInfo(Record, Idx);
-    CI.Loc = SourceLocation::getFromRawEncoding(Record[Idx++]);
-    E->setClassInfo(CI);
-  }
 
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
-  return E->getNumArgs() + 1;
+  return E->getNumArgs() + (Kind == ObjCMessageExpr::Instance);
 }
 
 unsigned PCHStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
@@ -1195,7 +1212,8 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) ObjCImplicitSetterGetterRefExpr(Empty);
       break;
     case pch::EXPR_OBJC_MESSAGE_EXPR:
-      S = new (Context) ObjCMessageExpr(Empty);
+      S = ObjCMessageExpr::CreateEmpty(*Context,
+                                     Record[PCHStmtReader::NumExprFields]);
       break;
     case pch::EXPR_OBJC_SUPER_EXPR:
       S = new (Context) ObjCSuperExpr(Empty);

@@ -684,20 +684,19 @@ ActOnClassMessage(Scope *S, IdentifierInfo *receiverName, Selector Sel,
 
   returnType = returnType.getNonReferenceType();
 
-  // FIXME: need to do a better job handling 'super' usage within a class.  For
-  // now, we simply pass the "super" identifier through (which isn't consistent
-  // with instance methods.
+  QualType ReceiverType = Context.getObjCInterfaceType(ClassDecl);
   if (isSuper)
-    return new (Context) ObjCMessageExpr(Context, receiverName, receiverLoc,
-                                         Sel, returnType, Method, lbrac, rbrac,
-                                         ArgExprs, NumArgs);
+    return ObjCMessageExpr::Create(Context, returnType, lbrac, receiverLoc,
+                                   /*IsInstanceSuper=*/false,ReceiverType, 
+                                   Sel, Method, ArgExprs, NumArgs, rbrac);
   
   // If we have the ObjCInterfaceDecl* for the class that is receiving the
   // message, use that to construct the ObjCMessageExpr.  Otherwise pass on the
   // IdentifierInfo* for the class.
-  return new (Context) ObjCMessageExpr(Context, ClassDecl, receiverLoc,
-                                       Sel, returnType, Method, lbrac, rbrac, 
-                                       ArgExprs, NumArgs);
+  TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(ReceiverType,
+                                                            receiverLoc);
+  return ObjCMessageExpr::Create(Context, returnType, lbrac, TSInfo, Sel, 
+                                 Method, ArgExprs, NumArgs, rbrac);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -717,6 +716,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // C99 6.7.5.3p[7,8].
   DefaultFunctionArrayLvalueConversion(RExpr);
 
+  ObjCMethodDecl *Method = 0;
   QualType returnType;
   QualType ReceiverCType =
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
@@ -724,24 +724,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // Handle messages to id.
   if (ReceiverCType->isObjCIdType() || ReceiverCType->isBlockPointerType() ||
       Context.isObjCNSObjectType(RExpr->getType())) {
-    ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
-                               Sel, SourceRange(lbrac,rbrac));
+    // FIXME: If our superclass is NSObject and we message 'super',
+    // we'll end up looking in the global method pool??
+
+    Method = LookupInstanceMethodInGlobalPool(Sel, SourceRange(lbrac,rbrac));
     if (!Method)
       Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac, rbrac));
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
-                                  lbrac, rbrac, returnType))
-      return true;
-    returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
-                                         Method, lbrac, rbrac,
-                                         ArgExprs, NumArgs);
-  }
-
-  // Handle messages to Class.
-  if (ReceiverCType->isObjCClassType() ||
-      ReceiverCType->isObjCQualifiedClassType()) {
-    ObjCMethodDecl *Method = 0;
-
+  } else if (ReceiverCType->isObjCClassType() ||
+             ReceiverCType->isObjCQualifiedClassType()) {
+    // Handle messages to Class.
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
         // First check the public methods in the class interface.
@@ -775,86 +766,78 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         }
       }
     }
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
-                                  lbrac, rbrac, returnType))
-      return true;
-    returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
-                                         Method, lbrac, rbrac,
-                                         ArgExprs, NumArgs);
-  }
+  } else {
+    ObjCInterfaceDecl* ClassDecl = 0;
 
-  ObjCMethodDecl *Method = 0;
-  ObjCInterfaceDecl* ClassDecl = 0;
-
-  // We allow sending a message to a qualified ID ("id<foo>"), which is ok as
-  // long as one of the protocols implements the selector (if not, warn).
-  if (const ObjCObjectPointerType *QIdTy =
+    // We allow sending a message to a qualified ID ("id<foo>"), which is ok as
+    // long as one of the protocols implements the selector (if not, warn).
+    if (const ObjCObjectPointerType *QIdTy =
         ReceiverCType->getAsObjCQualifiedIdType()) {
-    // Search protocols for instance methods.
-    for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
-         E = QIdTy->qual_end(); I != E; ++I) {
-      ObjCProtocolDecl *PDecl = *I;
-      if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
-        break;
-      // Since we aren't supporting "Class<foo>", look for a class method.
-      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
-        break;
-    }
-  } else if (const ObjCObjectPointerType *OCIType =
-                ReceiverCType->getAsObjCInterfacePointerType()) {
-    // We allow sending a message to a pointer to an interface (an object).
-
-    ClassDecl = OCIType->getInterfaceDecl();
-    // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
-    // faster than the following method (which can do *many* linear searches).
-    // The idea is to add class info to InstanceMethodPool.
-    Method = ClassDecl->lookupInstanceMethod(Sel);
-
-    if (!Method) {
-      // Search protocol qualifiers.
-      for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
-           E = OCIType->qual_end(); QI != E; ++QI) {
-        if ((Method = (*QI)->lookupInstanceMethod(Sel)))
+      // Search protocols for instance methods.
+      for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
+             E = QIdTy->qual_end(); I != E; ++I) {
+        ObjCProtocolDecl *PDecl = *I;
+        if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+          break;
+        // Since we aren't supporting "Class<foo>", look for a class method.
+        if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
           break;
       }
-    }
-    if (!Method) {
-      // If we have implementations in scope, check "private" methods.
-      Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+    } else if (const ObjCObjectPointerType *OCIType =
+               ReceiverCType->getAsObjCInterfacePointerType()) {
+      // We allow sending a message to a pointer to an interface (an object).
 
-      if (!Method && !isSelfExpr(RExpr)) {
-        // If we still haven't found a method, look in the global pool. This
-        // behavior isn't very desirable, however we need it for GCC
-        // compatibility. FIXME: should we deviate??
-        if (OCIType->qual_empty()) {
-          Method = LookupInstanceMethodInGlobalPool(
-                               Sel, SourceRange(lbrac,rbrac));
-          if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
-            Diag(lbrac, diag::warn_maynot_respond)
-              << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
+      ClassDecl = OCIType->getInterfaceDecl();
+      // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
+      // faster than the following method (which can do *many* linear searches).
+      // The idea is to add class info to InstanceMethodPool.
+      Method = ClassDecl->lookupInstanceMethod(Sel);
+
+      if (!Method) {
+        // Search protocol qualifiers.
+        for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
+               E = OCIType->qual_end(); QI != E; ++QI) {
+          if ((Method = (*QI)->lookupInstanceMethod(Sel)))
+            break;
         }
       }
-    }
-    if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+      if (!Method) {
+        // If we have implementations in scope, check "private" methods.
+        Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+
+        if (!Method && !isSelfExpr(RExpr)) {
+          // If we still haven't found a method, look in the global pool. This
+          // behavior isn't very desirable, however we need it for GCC
+          // compatibility. FIXME: should we deviate??
+          if (OCIType->qual_empty()) {
+            Method = LookupInstanceMethodInGlobalPool(
+                                                Sel, SourceRange(lbrac,rbrac));
+            if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
+              Diag(lbrac, diag::warn_maynot_respond)
+                << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
+          }
+        }
+      }
+      if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+        return true;
+    } else if (!Context.getObjCIdType().isNull() &&
+               (ReceiverCType->isPointerType() ||
+                (ReceiverCType->isIntegerType() &&
+                 ReceiverCType->isScalarType()))) {
+      // Implicitly convert integers and pointers to 'id' but emit a warning.
+      Diag(lbrac, diag::warn_bad_receiver_type)
+        << RExpr->getType() << RExpr->getSourceRange();
+      if (ReceiverCType->isPointerType())
+        ImpCastExprToType(RExpr, Context.getObjCIdType(), CastExpr::CK_BitCast);
+      else
+        ImpCastExprToType(RExpr, Context.getObjCIdType(),
+                          CastExpr::CK_IntegralToPointer);
+    } else {
+      // Reject other random receiver types (e.g. structs).
+      Diag(lbrac, diag::err_bad_receiver_type)
+        << RExpr->getType() << RExpr->getSourceRange();
       return true;
-  } else if (!Context.getObjCIdType().isNull() &&
-             (ReceiverCType->isPointerType() ||
-              (ReceiverCType->isIntegerType() &&
-               ReceiverCType->isScalarType()))) {
-    // Implicitly convert integers and pointers to 'id' but emit a warning.
-    Diag(lbrac, diag::warn_bad_receiver_type)
-      << RExpr->getType() << RExpr->getSourceRange();
-    if (ReceiverCType->isPointerType())
-      ImpCastExprToType(RExpr, Context.getObjCIdType(), CastExpr::CK_BitCast);
-    else
-      ImpCastExprToType(RExpr, Context.getObjCIdType(),
-                        CastExpr::CK_IntegralToPointer);
-  } else {
-    // Reject other random receiver types (e.g. structs).
-    Diag(lbrac, diag::err_bad_receiver_type)
-      << RExpr->getType() << RExpr->getSourceRange();
-    return true;
+    }
   }
 
   if (Method)
@@ -863,7 +846,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                 lbrac, rbrac, returnType))
     return true;
   returnType = returnType.getNonReferenceType();
-  return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType, Method,
-                                       lbrac, rbrac, ArgExprs, NumArgs);
+
+  if (isa<ObjCSuperExpr>(RExpr))
+    return ObjCMessageExpr::Create(Context, returnType, lbrac,
+                                   RExpr->getLocStart(), 
+                                   /*IsInstanceSuper=*/true,
+                                   RExpr->getType(),
+                                   Sel, Method, ArgExprs, NumArgs, rbrac);
+
+  return ObjCMessageExpr::Create(Context, returnType, lbrac, RExpr, Sel,
+                                 Method, ArgExprs, NumArgs, rbrac);
 }
 

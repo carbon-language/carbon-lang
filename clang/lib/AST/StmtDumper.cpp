@@ -505,8 +505,23 @@ void StmtDumper::DumpCXXTemporary(CXXTemporary *Temporary) {
 void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
   DumpExpr(Node);
   OS << " selector=" << Node->getSelector().getAsString();
-  if (IdentifierInfo *clsName = Node->getClassName())
-    OS << " class=" << clsName->getNameStart();
+  switch (Node->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+    break;
+
+  case ObjCMessageExpr::Class:
+    OS << " class=";
+    DumpType(Node->getClassReceiver());
+    break;
+
+  case ObjCMessageExpr::SuperInstance:
+    OS << " super (instance)";
+    break;
+
+  case ObjCMessageExpr::SuperClass:
+    OS << " super (class)";
+    break;
+  }
 }
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
