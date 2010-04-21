@@ -60,7 +60,7 @@ struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// CHECK: define void @f11(%union.anon* sret %agg.result)
+// CHECK: define void @f11(%struct.s19* sret %agg.result)
 union { long double a; float b; } f11() { while (1) {} }
 
 // CHECK: define i64 @f12_0()
@@ -99,3 +99,17 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 
+// Check byval alignment.
+
+// CHECK: define void @f19(%struct.s19* byval align 16 %x)
+struct s19 {
+  long double a;
+};
+void f19(struct s19 x) {}
+
+// CHECK: define void @f20(%struct.s20* byval align 32 %x)
+struct __attribute__((aligned(32))) s20 {
+  int x;
+  int y;
+};
+void f20(struct s20 x) {}

@@ -202,3 +202,15 @@ void f50(struct s50 a0) { }
 struct s51 { vvbp f0; int f1; };
 void f51(struct s51 a0) { }
 
+// CHECK: define void @f52(%struct.s52* byval align 16 %x)
+struct s52 {
+  long double a;
+};
+void f52(struct s52 x) {}
+
+// CHECK: define void @f53(%struct.s53* byval align 32 %x)
+struct __attribute__((aligned(32))) s53 {
+  int x;
+  int y;
+};
+void f53(struct s53 x) {}

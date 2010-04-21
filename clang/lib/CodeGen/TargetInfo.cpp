@@ -292,9 +292,6 @@ class X86_32ABIInfo : public ABIInfo {
 
   static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context);
 
-  static unsigned getIndirectArgumentAlignment(QualType Ty,
-                                               ASTContext &Context);
-
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
   ABIArgInfo getIndirectResult(QualType Ty, ASTContext &Context,
@@ -496,21 +493,19 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
   }
 }
 
-unsigned X86_32ABIInfo::getIndirectArgumentAlignment(QualType Ty,
-                                                     ASTContext &Context) {
-  unsigned Align = Context.getTypeAlign(Ty);
-  if (Align < 128) return 0;
-  if (const RecordType* RT = Ty->getAs<RecordType>())
-    if (typeContainsSSEVector(RT->getDecl(), Context))
-      return 16;
-  return 0;
-}
-
 ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty,
                                             ASTContext &Context,
                                             bool ByVal) const {
-  return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context),
-                                 ByVal);
+  if (!ByVal)
+    return ABIArgInfo::getIndirect(0, false);
+
+  // Compute the byval alignment. We trust the back-end to honor the
+  // minimum ABI alignment for byval, to make cleaner IR.
+  const unsigned MinABIAlign = 4;
+  unsigned Align = Context.getTypeAlign(Ty) / 8;
+  if (Align > MinABIAlign)
+    return ABIArgInfo::getIndirect(Align);
+  return ABIArgInfo::getIndirect(0);
 }
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
@@ -695,6 +690,10 @@ class X86_64ABIInfo : public ABIInfo {
   ABIArgInfo getCoerceResult(QualType Ty,
                              const llvm::Type *CoerceTo,
                              ASTContext &Context) const;
+
+  /// getIndirectResult - Give a source type \arg Ty, return a suitable result
+  /// such that the argument will be returned in memory.
+  ABIArgInfo getIndirectReturnResult(QualType Ty, ASTContext &Context) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
@@ -1071,6 +1070,22 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   return ABIArgInfo::getCoerce(CoerceTo);
 }
 
+ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty,
+                                                  ASTContext &Context) const {
+  // If this is a scalar LLVM value then assume LLVM will pass it in the right
+  // place naturally.
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
+
+  return ABIArgInfo::getIndirect(0);
+}
+
 ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
                                             ASTContext &Context) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
@@ -1084,10 +1099,16 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 
-  bool ByVal = !isRecordWithNonTrivialDestructorOrCopyConstructor(Ty);
+  if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
-  // FIXME: Set alignment correctly.
-  return ABIArgInfo::getIndirect(0, ByVal);
+  // Compute the byval alignment. We trust the back-end to honor the
+  // minimum ABI alignment for byval, to make cleaner IR.
+  const unsigned MinABIAlign = 8;
+  unsigned Align = Context.getTypeAlign(Ty) / 8;
+  if (Align > MinABIAlign)
+    return ABIArgInfo::getIndirect(Align);
+  return ABIArgInfo::getIndirect(0);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
@@ -1115,7 +1136,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
     // hidden argument.
   case Memory:
-    return getIndirectResult(RetTy, Context);
+    return getIndirectReturnResult(RetTy, Context);
 
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
