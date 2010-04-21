@@ -16,6 +16,7 @@
 // Uses Darwin calling convention where single precision arguments are passsed 
 // like 32-bit ints
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__lesf2vfp)
 	fmsr	s14, r0     // move from GPR 0 to float register
 	fmsr	s15, r1     // move from GPR 1 to float register

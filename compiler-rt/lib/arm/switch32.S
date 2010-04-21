@@ -29,6 +29,7 @@
 // The table contains signed 4-byte sized elements which are the distance
 // from lr to the target label.
 //
+	.align 2
 DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch32)
 	ldr     ip, [lr, #-1]            // get first 32-bit word in table
 	cmp     r0, ip                   // compare with index

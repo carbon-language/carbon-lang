@@ -17,6 +17,7 @@
 // Uses Darwin calling convention where a double precision parameter is 
 // passed in GPR register pair.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__fixunsdfsivfp)
 	fmdrr	d7, r0, r1    // load double register from R0/R1
 	ftouizd	s15, d7       // convert double to 32-bit int into s15

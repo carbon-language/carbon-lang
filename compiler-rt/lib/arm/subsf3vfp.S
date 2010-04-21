@@ -16,6 +16,7 @@
 // using the Darwin calling convention where single arguments are passsed
 // like 32-bit ints.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__subsf3vfp)
 	fmsr	s14, r0		// move first param from r0 into float register
 	fmsr	s15, r1		// move second param from r1 into float register

@@ -14,6 +14,7 @@
 //
 // Reverse all the bytes in a 64-bit integer.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
 	rev	r2, r1		// reverse bytes in high 32-bits into temp2
 	rev	r3, r0		// reverse bytes in low 32-bit into temp3

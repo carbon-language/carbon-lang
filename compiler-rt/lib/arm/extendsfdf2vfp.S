@@ -16,6 +16,7 @@
 // Uses Darwin calling convention where a single precision parameter is 
 // passed in a GPR and a double precision result is returned in R0/R1 pair.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__extendsfdf2vfp)
 	fmsr	s15, r0      // load float register from R0
 	fcvtds	d7, s15      // convert single to double

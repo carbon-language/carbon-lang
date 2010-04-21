@@ -16,6 +16,7 @@
 // Uses Darwin calling convention where a double precision parameter is 
 // passed in a R0/R1 pair and a signle precision result is returned in R0.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__truncdfsf2vfp)
 	fmdrr	d7, r0, r1   // load double from r0/r1 pair
 	fcvtsd	s15, d7      // convert double to single (trucate precision)

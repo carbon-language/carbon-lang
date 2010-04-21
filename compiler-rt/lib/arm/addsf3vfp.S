@@ -15,6 +15,7 @@
 // Adds two single precision floating point numbers using the Darwin
 // calling convention where single arguments are passsed in GPRs
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__addsf3vfp)
 	fmsr	s14, r0		// move first param from r0 into float register
 	fmsr	s15, r1		// move second param from r1 into float register

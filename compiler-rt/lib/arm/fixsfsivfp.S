@@ -16,6 +16,7 @@
 // Uses Darwin calling convention where a single precision parameter is 
 // passed in a GPR..
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__fixsfsivfp)
 	fmsr	s15, r0      // load float register from R0
 	ftosizs	s15, s15     // convert single to 32-bit int into s15

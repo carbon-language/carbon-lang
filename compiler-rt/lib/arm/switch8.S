@@ -29,6 +29,7 @@
 // The table contains signed byte sized elements which are 1/2 the distance
 // from lr to the target label.
 //
+	.align 2
 DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch8)
 	ldrb    ip, [lr, #-1]           // get first byte in table
 	cmp     r0, ip                  // signed compare with index

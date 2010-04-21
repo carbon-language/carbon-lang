@@ -14,6 +14,7 @@
 //
 // Reverse all the bytes in a 32-bit integer.
 //
+	.align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
 	rev	r0, r0		// reverse bytes in parameter and put into result register
 	bx	lr
