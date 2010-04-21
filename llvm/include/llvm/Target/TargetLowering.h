@@ -104,12 +104,13 @@ public:
   };
 
   /// NOTE: The constructor takes ownership of TLOF.
-  explicit TargetLowering(TargetMachine &TM, TargetLoweringObjectFile *TLOF);
+  explicit TargetLowering(const TargetMachine &TM,
+                          const TargetLoweringObjectFile *TLOF);
   virtual ~TargetLowering();
 
-  TargetMachine &getTargetMachine() const { return TM; }
+  const TargetMachine &getTargetMachine() const { return TM; }
   const TargetData *getTargetData() const { return TD; }
-  TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
+  const TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -1551,9 +1552,9 @@ public:
   }
 
 private:
-  TargetMachine &TM;
+  const TargetMachine &TM;
   const TargetData *TD;
-  TargetLoweringObjectFile &TLOF;
+  const TargetLoweringObjectFile &TLOF;
 
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///

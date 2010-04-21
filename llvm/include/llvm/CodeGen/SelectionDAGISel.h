@@ -51,7 +51,7 @@ public:
   CodeGenOpt::Level OptLevel;
   static char ID;
 
-  explicit SelectionDAGISel(TargetMachine &tm,
+  explicit SelectionDAGISel(const TargetMachine &tm,
                             CodeGenOpt::Level OL = CodeGenOpt::Default);
   virtual ~SelectionDAGISel();
   

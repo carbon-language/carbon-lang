@@ -480,7 +480,8 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 }
 
 /// NOTE: The constructor takes ownership of TLOF.
-TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
+TargetLowering::TargetLowering(const TargetMachine &tm,
+                               const TargetLoweringObjectFile *tlof)
   : TM(tm), TD(TM.getTargetData()), TLOF(*tlof) {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));

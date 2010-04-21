@@ -397,7 +397,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.
 unsigned PPCTargetLowering::getByValTypeAlignment(const Type *Ty) const {
-  TargetMachine &TM = getTargetMachine();
+  const TargetMachine &TM = getTargetMachine();
   // Darwin passes everything on 4 byte boundary.
   if (TM.getSubtarget<PPCSubtarget>().isDarwin())
     return 4;
@@ -5039,7 +5039,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
-  TargetMachine &TM = getTargetMachine();
+  const TargetMachine &TM = getTargetMachine();
   SelectionDAG &DAG = DCI.DAG;
   DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
