@@ -16,6 +16,7 @@
 #include "X86InstrInfo.h"
 #include "X86GenSubtarget.inc"
 #include "llvm/GlobalValue.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
@@ -23,6 +24,10 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
+
+static cl::opt<bool>
+DoPromote16Bit("promote-16bit", cl::Hidden,
+               cl::desc("Promote 16-bit instructions"));
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -293,6 +298,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , IsBTMemSlow(false)
   , IsUAMemFast(false)
   , HasVectorUAMem(false)
+  , Promote16Bit(DoPromote16Bit)
   , DarwinVers(0)
   , stackAlignment(8)
   // FIXME: this is a known good value for Yonah. How about others?

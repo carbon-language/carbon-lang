@@ -331,6 +331,8 @@ def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
+def Promote16Bit : Predicate<"Subtarget->shouldPromote16Bit()">;
+def NotPromote16Bit : Predicate<"!Subtarget->shouldPromote16Bit()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -4476,7 +4478,13 @@ def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
 // avoid partial-register updates.
 def : Pat<(i16 (anyext GR8 :$src)), (MOVZX16rr8  GR8 :$src)>;
 def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>;
-def : Pat<(i32 (anyext GR16:$src)), (MOVZX32rr16 GR16:$src)>;
+def : Pat<(i32 (anyext GR16:$src)), (MOVZX32rr16 GR16:$src)>,
+          Requires<[NotPromote16Bit]>;
+
+def : Pat<(i32 (anyext GR16:$src)),
+          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>,
+          Requires<[Promote16Bit]>;
+
 
 //===----------------------------------------------------------------------===//
 // Some peepholes

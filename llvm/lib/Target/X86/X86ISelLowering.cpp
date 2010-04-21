@@ -64,9 +64,6 @@ DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 static cl::opt<bool>
 Disable16Bit("disable-16bit", cl::Hidden,
              cl::desc("Disable use of 16-bit instructions"));
-static cl::opt<bool>
-Promote16Bit("promote-16bit", cl::Hidden,
-             cl::desc("Promote 16-bit instructions"));
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
@@ -6016,7 +6013,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   }
 
   // Otherwise just emit a CMP with 0, which is the TEST pattern.
-  if (Promote16Bit && Op.getValueType() == MVT::i16)
+  if (Subtarget->shouldPromote16Bit() && Op.getValueType() == MVT::i16)
     Op = DAG.getNode(ISD::ANY_EXTEND, Op.getDebugLoc(), MVT::i32, Op);
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
                      DAG.getConstant(0, Op.getValueType()));
@@ -6031,7 +6028,7 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
       return EmitTest(Op0, X86CC, DAG);
 
   DebugLoc dl = Op0.getDebugLoc();
-  if (Promote16Bit && Op0.getValueType() == MVT::i16) {
+  if (Subtarget->shouldPromote16Bit() && Op0.getValueType() == MVT::i16) {
     Op0 = DAG.getNode(ISD::ANY_EXTEND, Op0.getDebugLoc(), MVT::i32, Op0);
     Op1 = DAG.getNode(ISD::ANY_EXTEND, Op1.getDebugLoc(), MVT::i32, Op1);
   }
@@ -6040,8 +6037,8 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
 
 /// LowerToBT - Result of 'and' is compared against zero. Turn it into a BT node
 /// if it's possible.
-static SDValue LowerToBT(SDValue And, ISD::CondCode CC,
-                         DebugLoc dl, SelectionDAG &DAG) {
+SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
+                                     DebugLoc dl, SelectionDAG &DAG) const {
   SDValue Op0 = And.getOperand(0);
   SDValue Op1 = And.getOperand(1);
   if (Op0.getOpcode() == ISD::TRUNCATE)
@@ -6078,7 +6075,7 @@ static SDValue LowerToBT(SDValue And, ISD::CondCode CC,
     // the encoding for the i16 version is larger than the i32 version.
     // Also promote i16 to i32 for performance / code size reason.
     if (LHS.getValueType() == MVT::i8 ||
-        (Promote16Bit && LHS.getValueType() == MVT::i16))
+        (Subtarget->shouldPromote16Bit() && LHS.getValueType() == MVT::i16))
       LHS = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, LHS);
 
     // If the operand types disagree, extend the shift amount to match.  Since
@@ -9960,7 +9957,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
 bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   if (!isTypeLegal(VT))
     return false;
-  if (!Promote16Bit || VT != MVT::i16)
+  if (!Subtarget->shouldPromote16Bit() || VT != MVT::i16)
     return true;
 
   switch (Opc) {
@@ -9989,7 +9986,7 @@ bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
 /// beneficial for dag combiner to promote the specified node. If true, it
 /// should return the desired promotion type by reference.
 bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
-  if (!Promote16Bit)
+  if (!Subtarget->shouldPromote16Bit())
     return false;
 
   EVT VT = Op.getValueType();
