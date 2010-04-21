@@ -60,10 +60,6 @@ main LLVM web page, this document applies to the <i>next</i> release, not the
 current one.  To see the release notes for a specific release, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
 
-
-<p>FIXME: llvm.org moved to new server, mention new logo, Ted and Doug new code
-   owners, web page in llvm-www repos.</p>
-
 </div>
  
 
@@ -79,14 +75,9 @@ Almost dead code.
  
    
 <!-- Features that need text if they're finished for 2.7:
-  gcc plugin.
   strong phi elim
-  variable debug info for optimized code
-  postalloc scheduler: anti dependence breaking, hazard recognizer?
-  metadata
+  llvm.dbg.value: variable debug info for optimized code
   loop dependence analysis
-  ELF Writer?  How stable?
-  <li>PostRA scheduler improvements, ARM adoption (David Goodwin).</li>
  -->
 
  <!-- for announcement email:
@@ -216,7 +207,8 @@ libgcc routines).</p>
 
 <p>
 All of the code in the compiler-rt project is available under the standard LLVM
-License, a "BSD-style" license.</p>
+License, a "BSD-style" license.  New in LLVM 2.7: compiler_rt now
+supports ARM targets.</p>
 
 </div>
 
@@ -381,6 +373,24 @@ minor improvements.  Some of the major improvements and new features are listed
 in this section.
 </p>
 
+<p>In addition to changes to the code, between LLVM 2.6 and 2.7, a number of
+organization changes have happened:
+</p>
+
+<ul>
+<li>LLVM has a new <a href="http://llvm.org/Logo.html">official Logo</a>!</li>
+
+<li><a href="http://llvm.org">llvm.org</a> is now hosted on a new (and much
+faster) server.  It is still hosted as the University of Illinois.</li>
+
+<li>Ted Kremenek and Doug Gregor have stepped forward as <a
+ href="http://llvm.org/docs/DeveloperPolicy.html#owners">Code Owners</a> of the
+ Clang static analyzer and the Clang Frontend, respectively.</li>
+ 
+<li>The LLVM web pages are now checked into the SVN server, in the "www",
+    "www-pubs" and "www-releases" SVN modules.  Previously they were hidden in a
+    largely inaccessible old CVS server.</p>
+</ul>
 </div>
 
 <!--=========================================================================-->
@@ -393,86 +403,24 @@ in this section.
 <p>LLVM 2.7 includes several major new capabilities:</p>
 
 <ul>
-<li>...</li>
+<li>New MicroBlaze backend. http://en.wikipedia.org/wiki/MicroBlaze</li>
+
+<li>Extensible metadata solid.</li>
+
+<li>Debug info improvements: using metadata instead of llvm.dbg global variables.
+This brings several enhancements including improved compile times.</li>
+
+<li>Indirect branch + address of label (blog post), particularly useful for
+interpreters.</li>
+
+<li>New instruction selector.</li>
+
 </ul>
-
-Extensible metadata solid.
-
-Debug info improvements: using metadata instead of llvm.dbg global variables.
-This brings several enhancements including improved compile times.
-
-New instruction selector.
-GHC Haskell ABI/ calling conv support.
-Pre-Alpha support for unions in IR.
-New InlineHint and StackAlignment function attributes
-Code generator MC'ized except for debug info and EH.
-New SCEV AA pass: -scev-aa
-Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.
-MC encoding and disassembler apis.
-Optimal Edge Profiling?
-Instcombine is now a library, has its own IRBuilder to simplify itself.
-New llvm/Support/Regex.h API.  FileCheck now does regex's
-Many subtle pointer invalidation bugs in Callgraph have been fixed and it now uses asserting value handles.
-MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
-Various tools like llc and opt now read either .ll or .bc files as input.
-Malloc and free instructions got removed, along with LowerAllocations pass.
-compiler-rt support for ARM.
-completely llvm-gcc NEON support.
-Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
-JIT debug information with GDB 7.0
-New CodeGen Level CSE
-CMake can now run tests, what other improvements?
-ARM/Thumb using reg scavenging for stack object address materialization (PEI).
-New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
-  changed jump threading, GVN, etc to use it which simplified them and speed
-  them up.
-Combiner-AA improvements, why not on by default?
-Pre-regalloc tail duplication
-x86 sibcall / tailcall optimization in CCC mode.
-New LSR with "full strength reduction" mode.  Description?
-Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. 
-Better code size analysis in loop unswitch, inliner code split out to a new 
-  CodeMetrics class for reuse.
-The ARM backend now has good support for ARMv4 backend (tested on StrongARM
-  hardware), previously only supported ARMv4T and newer.
-Half-float support in APFloat
-Indirect branch + address of label (blog post), particularly useful for interpreters.
-Many changes to the pass ordering for improved optimization effectiveness.
-BasicAA improved to be less dependent on "type safe" pointers, it can now look
-  through bitcasts more aggressively.
-GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html
-llvm.objectsize.
-MachineSSAUpdater.h
-PostRA scheduler for X86?
-llvm.dbg.value, not being used by default though, more in 2.8.  Many improvements to debug info
-Support for the GCC option -fno-schedule-insns
-non-temporal load/store
 libllvm2.7.so??  configure with --enable-shared 
-dbgs() and -debug-buffer-size=N
-New MicroBlaze backend. http://en.wikipedia.org/wiki/MicroBlaze
-XMM subreg modeling for extraction of the low element.
+MC encoding and disassembler apis.
+MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
+Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
 
-
-Opt now works conservatively if no target data is set (is this fully working?)
-Target data now has notion of 'native' integer data types which optimizations can use.
-ARM backend generates instructions in unified assembly syntax.
-New Analysis/InstructionSimplify.h interface for simplifying instructions that don't exist.
-Jump threading is now much more aggressive at simplifying correlated
-   conditionals and threading blocks with otherwise complex logic. CondProp pass
-   removed (functionality merged into jump threading).
-X86 and XCore supports returning arbitrary return values, returning too many values is
-   supported by returning through a hidden pointer.
-verbose-asm now produces information about spill slots and loop nests
-
-
-Defaults to RTTI off (smaller code size!), packagers should build with make REQUIRE_RTTI=1.
-AndersAA got removed
-PredSimplify, LoopVR, GVNPRE, RSProfiling (random sampling profiling) got removed.
-LLVM command line tools now overwrite their output, before they would only do this with -f.
-DOUT removed, use DEBUG(errs() instead.
-Much stuff converted to use raw_ostream instead of std::ostream.
-TargetAsmInfo renamed to MCAsmInfo
-llvm/ADT/iterator.h gone.
 
 
 </div>
@@ -487,7 +435,13 @@ llvm/ADT/iterator.h gone.
 expose new optimization opportunities:</p>
 
 <ul>
-<li>...</li>
+<li>New InlineHint and StackAlignment function attributes
+Half-float support in APFloat
+llvm.objectsize.
+New llvm/Support/Regex.h API.  FileCheck now does regex's
+Pre-Alpha support for unions in IR.
+dbgs() and -debug-buffer-size=N
+</li>
 </ul>
 
 </div>
@@ -505,10 +459,28 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <ul>
 
 <li>...</li>
+Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.
+Optimal Edge Profiling?
+Instcombine is now a library, has its own IRBuilder to simplify itself.
+Better code size analysis in loop unswitch, inliner code split out to a new 
+  CodeMetrics class for reuse.
+Many changes to the pass ordering for improved optimization effectiveness.
+BasicAA improved to be less dependent on "type safe" pointers, it can now look
+  through bitcasts more aggressively.
+GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html
+New SCEV AA pass: -scev-aa
+Target data now has notion of 'native' integer data types which optimizations can use.
+Opt now works conservatively if no target data is set (is this fully working?)
+New Analysis/InstructionSimplify.h interface for simplifying instructions that don't exist.
+Jump threading is now much more aggressive at simplifying correlated
+   conditionals and threading blocks with otherwise complex logic. CondProp pass
+   removed (functionality merged into jump threading).
+New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
+  changed jump threading, GVN, etc to use it which simplified them and speed
+  them up.
+
 
 </ul>
-
-<p>Also, -anders-aa was removed</p>
 
 </div>
 
@@ -521,15 +493,21 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <div class="doc_text">
 
 <ul>
+<li>The JIT now supports generating debug information, which is compatible with
+the new GDB 7.0 (and later) interfaces for registering debug info for
+dynamically generated code.</li>
+
 <li>The JIT now <a
 href="http://llvm.org/viewvc/llvm-project?view=rev&revision=85295">defaults
 to compiling eagerly</a> to avoid a race condition in the lazy JIT.
 Clients that still want the lazy JIT can switch it on by calling
 <tt>ExecutionEngine::DisableLazyCompilation(false)</tt>.</li>
+
 <li>It is now possible to create more than one JIT instance in the same process.
 These JITs can generate machine code in parallel,
 although <a href="http://llvm.org/docs/ProgrammersManual.html#jitthreading">you
 still have to obey the other threading restrictions</a>.</li>
+
 </ul>
 
 </div>
@@ -547,6 +525,23 @@ it run faster:</p>
 
 <ul>
 
+Code generator MC'ized except for debug info and EH.
+
+New CodeGen Level CSE
+Combiner-AA improvements, why not on by default?
+Pre-regalloc tail duplication
+New LSR with "full strength reduction" mode.  Description?
+Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. 
+Support for the GCC option -fno-schedule-insns
+non-temporal load/store
+MachineSSAUpdater.h
+X86 and XCore supports returning arbitrary return values, returning too many values is
+   supported by returning through a hidden pointer.
+verbose-asm now produces information about spill slots and loop nests
+GHC Haskell ABI / calling conv support.
+Many improvements to debug info
+
+
 <li>...</li>
 </ul>
 </div>
@@ -562,30 +557,10 @@ it run faster:</p>
 
 <ul>
 
-<li>...</li>
+<li>PostRA scheduler for X86?</li>
+<li>x86 sibcall / tailcall optimization in CCC mode.</li>
+<li>X86: XMM subreg modeling for extraction of the low element.</li>
 
-</ul>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="pic16">PIC16 Target Improvements</a>
-</div>
-
-<div class="doc_text">
-<p>New features of the PIC16 target include:
-</p>
-
-<ul>
-<li>...</li>
-</ul>
-
-<p>Things not yet supported:</p>
-
-<ul>
-<li>Variable arguments.</li>
-<li>Interrupts/programs.</li>
 </ul>
 
 </div>
@@ -601,7 +576,12 @@ it run faster:</p>
 
 <ul>
 
-<li>...</li>
+<li>complete llvm-gcc NEON support.</li>
+<li>ARM/Thumb using reg scavenging for stack object address materialization
+    (PEI).</li>
+<li>The ARM backend now has good support for ARMv4 backend (tested on StrongARM
+  hardware), previously only supported ARMv4T and newer.</li>
+<li>ARM backend generates instructions in unified assembly syntax.</li>
 </ul>
 
 
@@ -649,7 +629,13 @@ it run faster:</p>
 <p>Other miscellaneous features include:</p>
 
 <ul>
-<li>...</li>
+<li>LLVM command line tools now overwrite their output by default, before they
+    would only do this with -f. This makes them more convenient to use, and
+    behave more like standard unix tools.</li>
+
+<li>The opt and llc tools now autodetect whether their input is a .ll or .bc
+    file, and automatically do the right thing.  This means you don't need to
+    explicitly use the llvm-as tool for most things.</li>
 </ul>
 
 </div>
@@ -667,18 +653,45 @@ on LLVM 2.6, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
+
+<li>
+The Andersen's alias analysis ("anders-aa") pass, the Predicate Simplifier
+("predsimplify") pass, the LoopVR pass, the GVNPRE pass, and the random sampling
+profiling ("rsprofiling") passes have all been removed.  They were not being
+actively maintained and had substantial problems.  If you are interested in
+these components, you are welcome to ressurect them from SVN, fix the
+correctness problems, and resubmit them to mainline.</li>
+
+<li>LLVM now defaults to building most libraries with RTTI turned off, providing
+a code size reduction.  Packagers who are interested in building LLVM to support
+plugins that require RTTI information should build with "make REQUIRE_RTTI=1"
+and should read the new <a href="Packaging.html">Advice on Packaging LLVM</a>
+document.</li>
+
 <li>The LLVM interpreter now defaults to <em>not</em> using <tt>libffi</tt> even
 if you have it installed.  This makes it more likely that an LLVM built on one
 system will work when copied to a similar system.  To use <tt>libffi</tt>,
-configure with <tt>--enable-libffi</tt>.
-</li>
-</ul>
+configure with <tt>--enable-libffi</tt></li>.
 
+<li>Debug information uses a completely different representation, an LLVM 2.6
+.bc file should work with LLVM 2.7, but debug info won't come forward.</li>
+
+<li>The LLVM 2.6 (and earlier) "malloc" and "free" instructions got removed,
+    along with LowerAllocations pass.  Now you should just use a call to the
+    malloc and free functions in libc.  These calls are optimized as well as
+    the old instructions were.</li>
+</ul>
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
 
 <ul>
+<li>Just about everything has been converted to use raw_ostream instead of
+    std::ostream.</li>
+<li>llvm/ADT/iterator.h has been removed, just use &lt;iterator&gt;
+ instead.</li>
+<li>The Streams.h file and "DOUT" got removed, use "DEBUG(errs() &lt;&lt; ...);"
+   instead.</li>
 <li><tt>ModuleProvider</tt> has been <a
 href="http://llvm.org/viewvc/llvm-project?view=rev&revision=94686">removed</a>
 and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
@@ -697,8 +710,6 @@ storage have the same linkage they will have after being read in.
 Clients must replace calls to
 <tt>GlobalValue::hasNotBeenReadFromBitcode</tt> with
 <tt>GlobalValue::isMaterializable</tt>.</li>
-
-<li>FIXME: Debug info has been totally redone. Add pointers to new APIs. Substantial caveats about compatibility of .ll and .bc files.</li>
 
 <li>The <tt>llvm/Support/DataTypes.h</tt> header has moved
 to <tt>llvm/System/DataTypes.h</tt>.</li>
