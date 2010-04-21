@@ -1005,12 +1005,12 @@ private:
   OwningExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   OwningExprResult ParseObjCMessageExpression();
   OwningExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
-                                                  SourceLocation NameLoc,
-                                                  IdentifierInfo *ReceiverName,
+                                                  SourceLocation SuperLoc,
+                                                  TypeTy *ReceiverType,
                                                   ExprArg ReceiverExpr);
   OwningExprResult ParseAssignmentExprWithObjCMessageExprStart(
-      SourceLocation LBracloc, SourceLocation NameLoc,
-      IdentifierInfo *ReceiverName, ExprArg ReceiverExpr);
+      SourceLocation LBracloc, SourceLocation SuperLoc,
+      TypeTy *ReceiverType, ExprArg ReceiverExpr);
 
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

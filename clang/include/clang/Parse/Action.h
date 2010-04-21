@@ -2389,29 +2389,63 @@ public:
                                              SourceLocation NameLoc,
                                              bool IsSuper,
                                              bool HasTrailingDot);
-  
-  // ActOnClassMessage - used for both unary and keyword messages.
-  // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from NumArgs.
-  virtual ExprResult ActOnClassMessage(
-    Scope *S,
-    IdentifierInfo *receivingClassName,
-    Selector Sel,
-    SourceLocation lbrac, SourceLocation receiverLoc,
-    SourceLocation selectorLoc,
-    SourceLocation rbrac,
-    ExprTy **ArgExprs, unsigned NumArgs) {
-    return ExprResult();
+
+  /// \brief Parsed a message send to 'super'.
+  ///
+  /// \param S The scope in which the message send occurs.
+  /// \param SuperLoc The location of the 'super' keyword.
+  /// \param Sel The selector to which the message is being sent.
+  /// \param LBracLoc The location of the opening square bracket ']'.
+  /// \param SelectorLoc The location of the first identifier in the selector.
+  /// \param RBrac The location of the closing square bracket ']'.
+  /// \param Args The message arguments.
+  virtual OwningExprResult ActOnSuperMessage(Scope *S, SourceLocation SuperLoc,
+                                             Selector Sel,
+                                             SourceLocation LBracLoc,
+                                             SourceLocation SelectorLoc,
+                                             SourceLocation RBracLoc,
+                                             MultiExprArg Args) {
+    return OwningExprResult(*this);
   }
-  // ActOnInstanceMessage - used for both unary and keyword messages.
-  // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from NumArgs.
-  virtual ExprResult ActOnInstanceMessage(
-    ExprTy *receiver, Selector Sel,
-    SourceLocation lbrac, SourceLocation selectorLoc, SourceLocation rbrac,
-    ExprTy **ArgExprs, unsigned NumArgs) {
-    return ExprResult();
+
+  /// \brief Parsed a message send to a class.
+  ///
+  /// \param S The scope in which the message send occurs.
+  /// \param Receiver The type of the class receiving the message.
+  /// \param Sel The selector to which the message is being sent.
+  /// \param LBracLoc The location of the opening square bracket ']'.
+  /// \param SelectorLoc The location of the first identifier in the selector.
+  /// \param RBrac The location of the closing square bracket ']'.
+  /// \param Args The message arguments.
+  virtual OwningExprResult ActOnClassMessage(Scope *S,
+                                             TypeTy *Receiver,
+                                             Selector Sel,
+                                             SourceLocation LBracLoc, 
+                                             SourceLocation SelectorLoc,
+                                             SourceLocation RBracLoc,
+                                             MultiExprArg Args) {
+    return OwningExprResult(*this);
   }
+
+  /// \brief Parsed a message send to an object instance.
+  ///
+  /// \param S The scope in which the message send occurs.
+  /// \param Receiver The expression that computes the receiver object.
+  /// \param Sel The selector to which the message is being sent.
+  /// \param LBracLoc The location of the opening square bracket ']'.
+  /// \param SelectorLoc The location of the first identifier in the selector.
+  /// \param RBrac The location of the closing square bracket ']'.
+  /// \param Args The message arguments.
+  virtual OwningExprResult ActOnInstanceMessage(Scope *S,
+                                                ExprArg Receiver,
+                                                Selector Sel,
+                                                SourceLocation LBracLoc, 
+                                                SourceLocation SelectorLoc, 
+                                                SourceLocation RBracLoc,
+                                                MultiExprArg Args) {
+    return OwningExprResult(*this);
+  }
+
   virtual DeclPtrTy ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,
     IdentifierInfo **IdentList,
@@ -2738,21 +2772,33 @@ public:
                                               unsigned NumMethods) {
   }
 
+  /// \brief Code completion for an ObjC message expression that sends
+  /// a message to the superclass.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the class name and after each argument.
+  ///
+  /// \param S The scope in which the message expression occurs. 
+  /// \param SuperLoc The location of the 'super' keyword.
+  /// \param SelIdents The identifiers that describe the selector (thus far).
+  /// \param NumSelIdents The number of identifiers in \p SelIdents.
+  virtual void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
+                                            IdentifierInfo **SelIdents,
+                                            unsigned NumSelIdents) { }
+
   /// \brief Code completion for an ObjC message expression that refers to
   /// a class method.
   ///
   /// This code completion action is invoked when the code-completion token is
   /// found after the class name and after each argument.
   ///
-  /// \param S the scope in which the message expression occurs. 
-  /// \param FName the factory name. 
-  /// \param FNameLoc the source location of the factory name.
-  /// \param SelIdents the identifiers that describe the selector (thus far).
-  /// \param NumSelIdents the number of identifiers in \p SelIdents.
-  virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
-                                            SourceLocation FNameLoc,
+  /// \param S The scope in which the message expression occurs. 
+  /// \param Receiver The type of the class that is receiving a message.
+  /// \param SelIdents The identifiers that describe the selector (thus far).
+  /// \param NumSelIdents The number of identifiers in \p SelIdents.
+  virtual void CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
                                             IdentifierInfo **SelIdents,
-                                            unsigned NumSelIdents){ }
+                                            unsigned NumSelIdents) { }
   
   /// \brief Code completion for an ObjC message expression that refers to
   /// an instance method.

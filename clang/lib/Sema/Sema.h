@@ -3872,22 +3872,47 @@ public:
                                              bool IsSuper,
                                              bool HasTrailingDot);
 
-  // ActOnClassMessage - used for both unary and keyword messages.
-  // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from NumArgs.
-  virtual ExprResult ActOnClassMessage(
-    Scope *S,
-    IdentifierInfo *receivingClassName, Selector Sel, SourceLocation lbrac,
-    SourceLocation receiverLoc, SourceLocation selectorLoc,SourceLocation rbrac,
-    ExprTy **ArgExprs, unsigned NumArgs);
+  virtual OwningExprResult ActOnSuperMessage(Scope *S, SourceLocation SuperLoc,
+                                             Selector Sel,
+                                             SourceLocation LBracLoc,
+                                             SourceLocation SelectorLoc,
+                                             SourceLocation RBracLoc,
+                                             MultiExprArg Args);
 
-  // ActOnInstanceMessage - used for both unary and keyword messages.
-  // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from NumArgs.
-  virtual ExprResult ActOnInstanceMessage(
-    ExprTy *receiver, Selector Sel,
-    SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac,
-    ExprTy **ArgExprs, unsigned NumArgs);
+  OwningExprResult BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
+                                     QualType ReceiverType,
+                                     SourceLocation SuperLoc,
+                                     Selector Sel,
+                                     SourceLocation LBracLoc, 
+                                     SourceLocation SelectorLoc,
+                                     SourceLocation RBracLoc,
+                                     MultiExprArg Args);
+                                     
+  virtual OwningExprResult ActOnClassMessage(Scope *S,
+                                             TypeTy *Receiver,
+                                             Selector Sel,
+                                             SourceLocation LBracLoc, 
+                                             SourceLocation SelectorLoc,
+                                             SourceLocation RBracLoc,
+                                             MultiExprArg Args);
+  
+  OwningExprResult BuildInstanceMessage(ExprArg Receiver,
+                                        QualType ReceiverType,
+                                        SourceLocation SuperLoc,
+                                        Selector Sel,
+                                        SourceLocation LBracLoc, 
+                                        SourceLocation SelectorLoc, 
+                                        SourceLocation RBracLoc,
+                                        MultiExprArg Args);
+
+  virtual OwningExprResult ActOnInstanceMessage(Scope *S,
+                                                ExprArg Receiver,
+                                                Selector Sel,
+                                                SourceLocation LBracLoc, 
+                                                SourceLocation SelectorLoc, 
+                                                SourceLocation RBracLoc,
+                                                MultiExprArg Args);
+
 
   /// ActOnPragmaPack - Called on well formed #pragma pack(...).
   virtual void ActOnPragmaPack(PragmaPackKind Kind,
@@ -4301,8 +4326,10 @@ public:
                                               DeclPtrTy *Methods,
                                               unsigned NumMethods);
 
-  virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
-                                            SourceLocation FNameLoc,
+  virtual void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
+                                            IdentifierInfo **SelIdents,
+                                            unsigned NumSelIdents);
+  virtual void CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
                                             IdentifierInfo **SelIdents, 
                                             unsigned NumSelIdents);
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,

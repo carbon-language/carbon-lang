@@ -2947,62 +2947,82 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
     .Default(0);
 }
 
-void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
-                                        SourceLocation FNameLoc,
+void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
+                                        IdentifierInfo **SelIdents,
+                                        unsigned NumSelIdents) {
+  ObjCInterfaceDecl *CDecl = 0;
+  if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
+    // Figure out which interface we're in.
+    CDecl = CurMethod->getClassInterface();
+    if (!CDecl)
+      return;
+    
+    // Find the superclass of this class.
+    CDecl = CDecl->getSuperClass();
+    if (!CDecl)
+      return;
+
+    if (CurMethod->isInstanceMethod()) {
+      // We are inside an instance method, which means that the message
+      // send [super ...] is actually calling an instance method on the
+      // current object. Build the super expression and handle this like
+      // an instance method.
+      QualType SuperTy = Context.getObjCInterfaceType(CDecl);
+      SuperTy = Context.getObjCObjectPointerType(SuperTy);
+      OwningExprResult Super
+        = Owned(new (Context) ObjCSuperExpr(SuperLoc, SuperTy));
+      return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
+                                             SelIdents, NumSelIdents);
+    }
+
+    // Fall through to send to the superclass in CDecl.
+  } else {
+    // "super" may be the name of a type or variable. Figure out which
+    // it is.
+    IdentifierInfo *Super = &Context.Idents.get("super");
+    NamedDecl *ND = LookupSingleName(S, Super, SuperLoc, 
+                                     LookupOrdinaryName);
+    if ((CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(ND))) {
+      // "super" names an interface. Use it.
+    } else if (TypeDecl *TD = dyn_cast_or_null<TypeDecl>(ND)) {
+      if (const ObjCInterfaceType *Iface
+            = Context.getTypeDeclType(TD)->getAs<ObjCInterfaceType>())
+        CDecl = Iface->getDecl();
+    } else if (ND && isa<UnresolvedUsingTypenameDecl>(ND)) {
+      // "super" names an unresolved type; we can't be more specific.
+    } else {
+      // Assume that "super" names some kind of value and parse that way.
+      CXXScopeSpec SS;
+      UnqualifiedId id;
+      id.setIdentifier(Super, SuperLoc);
+      OwningExprResult SuperExpr = ActOnIdExpression(S, SS, id, false, false);
+      return CodeCompleteObjCInstanceMessage(S, (Expr *)SuperExpr.get(),
+                                             SelIdents, NumSelIdents);
+    }
+
+    // Fall through
+  }
+
+  TypeTy *Receiver = 0;
+  if (CDecl)
+    Receiver = Context.getObjCInterfaceType(CDecl).getAsOpaquePtr();
+  return CodeCompleteObjCClassMessage(S, Receiver, SelIdents, 
+                                      NumSelIdents);
+}
+
+void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
                                         IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents) {
   typedef CodeCompleteConsumer::Result Result;
   ObjCInterfaceDecl *CDecl = 0;
 
-  if (FName->isStr("super")) {
-    // We're sending a message to "super".
-    if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
-      // Figure out which interface we're in.
-      CDecl = CurMethod->getClassInterface();
-      if (!CDecl)
-        return;
-
-      // Find the superclass of this class.
-      CDecl = CDecl->getSuperClass();
-      if (!CDecl)
-        return;
-
-      if (CurMethod->isInstanceMethod()) {
-        // We are inside an instance method, which means that the message
-        // send [super ...] is actually calling an instance method on the
-        // current object. Build the super expression and handle this like
-        // an instance method.
-        QualType SuperTy = Context.getObjCInterfaceType(CDecl);
-        SuperTy = Context.getObjCObjectPointerType(SuperTy);
-        OwningExprResult Super
-          = Owned(new (Context) ObjCSuperExpr(FNameLoc, SuperTy));
-        return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
-                                               SelIdents, NumSelIdents);
-      }
-
-      // Okay, we're calling a factory method in our superclass.
-    } 
-  }
-
   // If the given name refers to an interface type, retrieve the
   // corresponding declaration.
-  if (!CDecl)
-    if (TypeTy *Ty = getTypeName(*FName, FNameLoc, S, 0, false)) {
-      QualType T = GetTypeFromParser(Ty, 0);
-      if (!T.isNull()) 
-        if (const ObjCInterfaceType *Interface = T->getAs<ObjCInterfaceType>())
-          CDecl = Interface->getDecl();
-    }
-
-  if (!CDecl && FName->isStr("super")) {
-    // "super" may be the name of a variable, in which case we are
-    // probably calling an instance method.
-    CXXScopeSpec SS;
-    UnqualifiedId id;
-    id.setIdentifier(FName, FNameLoc);
-    OwningExprResult Super = ActOnIdExpression(S, SS, id, false, false);
-    return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
-                                           SelIdents, NumSelIdents);
+  if (Receiver) {
+    QualType T = GetTypeFromParser(Receiver, 0);
+    if (!T.isNull()) 
+      if (const ObjCInterfaceType *Interface = T->getAs<ObjCInterfaceType>())
+        CDecl = Interface->getDecl();
   }
 
   // Add all of the factory methods in this Objective-C class, its protocols,
@@ -3013,7 +3033,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
   if (CDecl) 
     AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
                    Results);  
-  else if (FName->isStr("id")) {
+  else {
     // We're messaging "id" as a type; provide all class/factory methods.
 
     // If we have an external source, load the entire class method

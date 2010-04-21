@@ -6,7 +6,7 @@
 @implementation I1
 - (void)method {
   struct x { };
-  [x method]; // expected-error{{invalid receiver to message expression}}
+  [x method]; // expected-error{{receiver type 'x' is not an Objective-C class}}
 }
 @end
 
@@ -24,6 +24,6 @@ typedef struct { int x; } ivar;
   [ivar method];
 }
 + (void)method {
-  [ivar method]; // expected-error{{invalid receiver to message expression}}
+  [ivar method]; // expected-error{{receiver type 'ivar' (aka 'ivar') is not an Objective-C class}}
 }
 @end

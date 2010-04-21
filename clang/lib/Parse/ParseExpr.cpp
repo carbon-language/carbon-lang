@@ -268,11 +268,11 @@ Parser::OwningExprResult Parser::ParseAssignmentExpression() {
 /// expressions and other binary operators for these expressions as well.
 Parser::OwningExprResult
 Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
-                                                    SourceLocation NameLoc,
-                                                   IdentifierInfo *ReceiverName,
+                                                    SourceLocation SuperLoc,
+                                                    TypeTy *ReceiverType,
                                                     ExprArg ReceiverExpr) {
-  OwningExprResult R(ParseObjCMessageExpressionBody(LBracLoc, NameLoc,
-                                                    ReceiverName,
+  OwningExprResult R(ParseObjCMessageExpressionBody(LBracLoc, SuperLoc,
+                                                    ReceiverType,
                                                     move(ReceiverExpr)));
   if (R.isInvalid()) return move(R);
   R = ParsePostfixExpressionSuffix(move(R));
@@ -481,7 +481,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [OBJC]  '@encode' '(' type-name ')'
 /// [OBJC]  objc-string-literal
 /// [C++]   simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
-/// [C++]   typename-specifier '(' expression-list[opt] ')'         [TODO]
+/// [C++]   typename-specifier '(' expression-list[opt] ')'         [C++ 5.2.3]
 /// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
@@ -501,14 +501,14 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///
 ///       id-expression: [C++ 5.1]
 ///                   unqualified-id
-///                   qualified-id           [TODO]
+///                   qualified-id          
 ///
 ///       unqualified-id: [C++ 5.1]
 ///                   identifier
 ///                   operator-function-id
-///                   conversion-function-id [TODO]
-///                   '~' class-name         [TODO]
-///                   template-id            [TODO]
+///                   conversion-function-id
+///                   '~' class-name        
+///                   template-id           
 ///
 ///       new-expression: [C++ 5.3.4]
 ///                   '::'[opt] 'new' new-placement[opt] new-type-id

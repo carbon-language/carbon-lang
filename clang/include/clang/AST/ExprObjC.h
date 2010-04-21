@@ -343,6 +343,29 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief An expression that sends a message to the given Objective-C
+/// object or class.
+///
+/// The following contains two message send expressions:
+///
+/// \code
+///   [[NSString alloc] initWithString:@"Hello"]
+/// \endcode
+///
+/// The innermost message send invokes the "alloc" class method on the
+/// NSString class, while the outermost message send invokes the
+/// "initWithString" instance method on the object returned from
+/// NSString's "alloc". In all, an Objective-C message send can take
+/// on four different (although related) forms:
+///
+///   1. Send to an object instance.
+///   2. Send to a class.
+///   3. Send to the superclass instance of the current class.
+///   4. Send to the superclass of the current class.
+///
+/// All four kinds of message sends are modeled by the ObjCMessageExpr
+/// class, and can be distinguished via \c getReceiverKind(). Example:
+///
 class ObjCMessageExpr : public Expr {
   /// \brief The number of arguments in the message send, not
   /// including the receiver.
@@ -402,7 +425,7 @@ class ObjCMessageExpr : public Expr {
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
 
-  /// \brief Retrieve the pointer value of the ,message receiver.
+  /// \brief Retrieve the pointer value of the message receiver.
   void *getReceiverPointer() const {
     return *const_cast<void **>(
                              reinterpret_cast<const void * const*>(this + 1));
@@ -712,6 +735,9 @@ public:
 
 /// ObjCSuperExpr - Represents the "super" expression in Objective-C,
 /// which refers to the object on which the current method is executing.
+///
+/// FIXME: This class is intended for removal, once its remaining
+/// clients have been altered to represent "super" internally.
 class ObjCSuperExpr : public Expr {
   SourceLocation Loc;
 public:

@@ -1714,7 +1714,7 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///   objc-message-expr:
 ///     '[' objc-receiver objc-message-args ']'
 ///
-///   objc-receiver:
+///   objc-receiver: [C]
 ///     'super'
 ///     expression
 ///     class-name
@@ -1730,11 +1730,39 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
                                        Name == Ident_super,
                                        NextToken().is(tok::period))) {
     case Action::ObjCSuperMessage:
-    case Action::ObjCClassMessage:
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), Name,
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0,
                                             ExprArg(Actions));
+
+    case Action::ObjCClassMessage: {
+      // Create the type that corresponds to the identifier (which
+      // names an Objective-C class).
+      TypeTy *Type = 0;
+      if (TypeTy *TyName = Actions.getTypeName(*Name, NameLoc, CurScope)) {
+        DeclSpec DS;
+        const char *PrevSpec = 0;
+        unsigned DiagID = 0;
+        if (!DS.SetTypeSpecType(DeclSpec::TST_typename, NameLoc, PrevSpec,
+                                DiagID, TyName)) {
+          DS.SetRangeEnd(NameLoc);
+          Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+          TypeResult Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+          if (!Ty.isInvalid())
+            Type = Ty.get();
+        }
+      }
+
+      ConsumeToken(); // The identifier.
+      if (!Type) {
+        SkipUntil(tok::r_square);
+        return ExprError();
+      }
+
+      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), Type,
+                                            ExprArg(Actions));
+    }
         
     case Action::ObjCInstanceMessage:
+      // Fall through to parse an expression.
       break;
     }
   }
@@ -1746,12 +1774,29 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
     return move(Res);
   }
 
-  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        0, move(Res));
+  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0, 
+                                        move(Res));
 }
 
-/// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
-/// the rest of a message expression.
+/// \brief Parse the remainder of an Objective-C message following the
+/// '[' objc-receiver.
+///
+/// This routine handles sends to super, class messages (sent to a
+/// class name), and instance messages (sent to an object), and the
+/// target is represented by \p SuperLoc, \p ReceiverType, or \p
+/// ReceiverExpr, respectively. Only one of these parameters may have
+/// a valid value.
+///
+/// \param LBracLoc The location of the opening '['.
+///
+/// \param SuperLoc If this is a send to 'super', the location of the
+/// 'super' keyword that indicates a send to the superclass.
+///
+/// \param ReceiverType If this is a class message, the type of the
+/// class we are sending a message to.
+///
+/// \param ReceiverExpr If this is an instance message, the expression
+/// used to compute the receiver object.
 ///
 ///   objc-message-args:
 ///     objc-selector
@@ -1773,13 +1818,14 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 ///
 Parser::OwningExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
-                                       SourceLocation NameLoc,
-                                       IdentifierInfo *ReceiverName,
+                                       SourceLocation SuperLoc,
+                                       TypeTy *ReceiverType,
                                        ExprArg ReceiverExpr) {
   if (Tok.is(tok::code_completion)) {
-    if (ReceiverName)
-      Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverName, NameLoc, 
-                                           0, 0);
+    if (SuperLoc.isValid())
+      Actions.CodeCompleteObjCSuperMessage(CurScope, SuperLoc, 0, 0);
+    else if (ReceiverType)
+      Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverType, 0, 0);
     else
       Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get(), 
                                               0, 0);
@@ -1825,8 +1871,12 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
       // Code completion after each argument.
       if (Tok.is(tok::code_completion)) {
-        if (ReceiverName)
-          Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverName, NameLoc,
+        if (SuperLoc.isValid())
+          Actions.CodeCompleteObjCSuperMessage(CurScope, SuperLoc, 
+                                               KeyIdents.data(), 
+                                               KeyIdents.size());
+        else if (ReceiverType)
+          Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverType,
                                                KeyIdents.data(), 
                                                KeyIdents.size());
         else
@@ -1887,15 +1937,23 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     KeyIdents.push_back(selIdent);
   Selector Sel = PP.getSelectorTable().getSelector(nKeys, &KeyIdents[0]);
 
-  // We've just parsed a keyword message.
-  if (ReceiverName)
-    return Owned(Actions.ActOnClassMessage(CurScope, ReceiverName, Sel,
-                                           LBracLoc, NameLoc, SelectorLoc,
-                                           RBracLoc,
-                                           KeyExprs.take(), KeyExprs.size()));
-  return Owned(Actions.ActOnInstanceMessage(ReceiverExpr.release(), Sel,
-                                            LBracLoc, SelectorLoc, RBracLoc,
-                                            KeyExprs.take(), KeyExprs.size()));
+  if (SuperLoc.isValid())
+    return Actions.ActOnSuperMessage(CurScope, SuperLoc, Sel,
+                                     LBracLoc, SelectorLoc, RBracLoc,
+                                     Action::MultiExprArg(Actions, 
+                                                          KeyExprs.take(),
+                                                          KeyExprs.size()));
+  else if (ReceiverType)
+    return Actions.ActOnClassMessage(CurScope, ReceiverType, Sel,
+                                     LBracLoc, SelectorLoc, RBracLoc,
+                                     Action::MultiExprArg(Actions, 
+                                                          KeyExprs.take(), 
+                                                          KeyExprs.size()));
+  return Actions.ActOnInstanceMessage(CurScope, move(ReceiverExpr), Sel,
+                                      LBracLoc, SelectorLoc, RBracLoc,
+                                      Action::MultiExprArg(Actions, 
+                                                           KeyExprs.take(), 
+                                                           KeyExprs.size()));
 }
 
 Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {

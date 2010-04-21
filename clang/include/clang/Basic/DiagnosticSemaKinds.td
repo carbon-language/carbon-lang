@@ -2046,6 +2046,8 @@ def err_invalid_receiver_to_message : Error<
   "invalid receiver to message expression">;
 def err_invalid_receiver_to_message_super : Error<
   "'super' is only valid in a method body">;
+def err_invalid_receiver_class_message : Error<
+  "receiver type %0 is not an Objective-C class">;
 def warn_bad_receiver_type : Warning<
   "receiver type %0 is not 'id' or interface pointer, consider "
   "casting it to 'id'">;

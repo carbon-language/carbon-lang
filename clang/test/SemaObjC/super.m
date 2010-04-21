@@ -85,5 +85,3 @@ int test3() {
   id X[] = { [ super superClassMethod] };
   return 0;
 }
-
-
