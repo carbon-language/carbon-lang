@@ -20,6 +20,7 @@
 #include "CodeGenTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Type.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
@@ -569,7 +570,25 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
          getTargetData().getTypeAllocSize(Ty) &&
          "Type size mismatch!");
 
-  // FIXME: We should verify the individual field offsets here as well.
+  // Verify that the LLVM and AST field offsets agree.
+#ifndef NDEBUG
+  const llvm::StructType *ST =
+    dyn_cast<llvm::StructType>(RL->getLLVMType());
+  const llvm::StructLayout *SL = getTargetData().getStructLayout(ST);
+
+  const ASTRecordLayout &AST_RL = getContext().getASTRecordLayout(D);
+  RecordDecl::field_iterator it = D->field_begin();
+  for (unsigned i = 0, e = AST_RL.getFieldCount(); i != e; ++i, ++it) {
+    const FieldDecl *FD = *it;
+    if (FD->isBitField()) {
+      // FIXME: Verify assorted things.
+    } else {
+      unsigned FieldNo = RL->getLLVMFieldNo(FD);
+      assert(AST_RL.getFieldOffset(i) == SL->getElementOffsetInBits(FieldNo) &&
+             "Invalid field offset!");
+    }
+  }
+#endif
 
   return RL;
 }
