@@ -270,7 +270,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 
   // Now allocate the exception object.
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-  uint64_t TypeSize = getContext().getTypeSize(ThrowType) / 8;
+  uint64_t TypeSize = getContext().getTypeSizeInChars(ThrowType).getQuantity();
 
   llvm::Constant *AllocExceptionFn = getAllocateExceptionFn(*this);
   llvm::Value *ExceptionPtr =
@@ -649,38 +649,46 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
 }
 
 CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
-  llvm::BasicBlock *Cont1 = CGF.createBasicBlock("cont");
-  CGF.EmitBranch(Cont1);
   CGF.setInvokeDest(PreviousInvokeDest);
 
+  llvm::BasicBlock *EndOfCleanup = CGF.Builder.GetInsertBlock();
 
-  CGF.EmitBlock(CleanupHandler);
-
+  // Jump to the beginning of the cleanup.
+  CGF.Builder.SetInsertPoint(CleanupHandler, CleanupHandler->begin());
+ 
+  // The libstdc++ personality function.
+  // TODO: generalize to work with other libraries.
   llvm::Constant *Personality =
     CGF.CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
                                                           (CGF.VMContext),
                                                           true),
                                   "__gxx_personality_v0");
   Personality = llvm::ConstantExpr::getBitCast(Personality, CGF.PtrToInt8Ty);
+
+  // %exception = call i8* @llvm.eh.exception()
+  //   Magic intrinsic which tells gives us a handle to the caught
+  //   exception.
   llvm::Value *llvm_eh_exception =
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+
+  llvm::Constant *Null = llvm::ConstantPointerNull::get(CGF.PtrToInt8Ty);
+
+  // %ignored = call i32 @llvm.eh.selector(i8* %exception,
+  //                                       i8* @__gxx_personality_v0,
+  //                                       i8* null)
+  //   Magic intrinsic which tells LLVM that this invoke landing pad is
+  //   just a cleanup block.
+  llvm::Value *Args[] = { Exc, Personality, Null };
   llvm::Value *llvm_eh_selector =
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
-
-  llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
-  const llvm::IntegerType *Int8Ty;
-  const llvm::PointerType *PtrToInt8Ty;
-  Int8Ty = llvm::Type::getInt8Ty(CGF.VMContext);
-  // C string type.  Used in lots of places.
-  PtrToInt8Ty = llvm::PointerType::getUnqual(Int8Ty);
-  llvm::Constant *Null = llvm::ConstantPointerNull::get(PtrToInt8Ty);
-  llvm::Value *Args[] = { Exc, Personality, Null };
   CGF.Builder.CreateCall(llvm_eh_selector, &Args[0], llvm::array_endof(Args));
 
-  CGF.EmitBlock(CleanupEntryBB);
+  // And then we fall through into the code that the user put there.
+  // Jump back to the end of the cleanup.
+  CGF.Builder.SetInsertPoint(EndOfCleanup);
 
-  CGF.EmitBlock(Cont1);
-
+  // Rethrow the exception.
   if (CGF.getInvokeDest()) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
     CGF.Builder.CreateInvoke(getUnwindResumeOrRethrowFn(CGF), Cont,
@@ -688,10 +696,11 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
     CGF.EmitBlock(Cont);
   } else
     CGF.Builder.CreateCall(getUnwindResumeOrRethrowFn(CGF), Exc);
-
   CGF.Builder.CreateUnreachable();
 
-  CGF.EmitBlock(Cont);
+  // Resume inserting where we started, but put the new cleanup
+  // handler in place.
+  CGF.Builder.SetInsertPoint(PreviousInsertionBlock);
   if (CGF.Exceptions)
     CGF.setInvokeDest(CleanupHandler);
 }
@@ -700,12 +709,11 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   if (TerminateHandler)
     return TerminateHandler;
 
-  llvm::BasicBlock *Cont = 0;
-
-  if (HaveInsertPoint()) {
-    Cont = createBasicBlock("cont");
-    EmitBranch(Cont);
-  }
+  // We don't want to change anything at the current location, so
+  // save it aside and clear the insert point.
+  llvm::BasicBlock *SavedInsertBlock = Builder.GetInsertBlock();
+  llvm::BasicBlock::iterator SavedInsertPoint = Builder.GetInsertPoint();
+  Builder.ClearInsertionPoint();
 
   llvm::Constant *Personality =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
@@ -735,11 +743,8 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   TerminateCall->setDoesNotThrow();
   Builder.CreateUnreachable();
 
-  // Clear the insertion point to indicate we are in unreachable code.
-  Builder.ClearInsertionPoint();
-
-  if (Cont)
-    EmitBlock(Cont);
+  // Restore the saved insertion state.
+  Builder.SetInsertPoint(SavedInsertBlock, SavedInsertPoint);
 
   return TerminateHandler;
 }

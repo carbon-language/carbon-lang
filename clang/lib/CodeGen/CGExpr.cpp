@@ -111,6 +111,23 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
                      IsInitializer);
 }
 
+/// EmitAnyExprToMem - Evaluate an expression into a given memory
+/// location.
+void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
+                                       llvm::Value *Location,
+                                       bool IsLocationVolatile,
+                                       bool IsInit) {
+  if (E->getType()->isComplexType())
+    EmitComplexExprIntoAddr(E, Location, IsLocationVolatile);
+  else if (hasAggregateLLVMType(E->getType()))
+    EmitAggExpr(E, Location, IsLocationVolatile, /*Ignore*/ false, IsInit);
+  else {
+    RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
+    LValue LV = LValue::MakeAddr(Location, MakeQualifiers(E->getType()));
+    EmitStoreThroughLValue(RV, LV, E->getType());
+  }
+}
+
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    bool IsInitializer) {
   bool ShouldDestroyTemporaries = false;
@@ -1561,12 +1578,7 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   const Expr* InitExpr = E->getInitializer();
   LValue Result = LValue::MakeAddr(DeclPtr, MakeQualifiers(E->getType()));
 
-  if (E->getType()->isComplexType())
-    EmitComplexExprIntoAddr(InitExpr, DeclPtr, false);
-  else if (hasAggregateLLVMType(E->getType()))
-    EmitAnyExpr(InitExpr, DeclPtr, false);
-  else
-    EmitStoreThroughLValue(EmitAnyExpr(InitExpr), Result, E->getType());
+  EmitAnyExprToMem(InitExpr, DeclPtr, /*Volatile*/ false);
 
   return Result;
 }

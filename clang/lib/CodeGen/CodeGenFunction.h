@@ -148,19 +148,17 @@ public:
   /// block.
   class EHCleanupBlock {
     CodeGenFunction& CGF;
-    llvm::BasicBlock *Cont;
+    llvm::BasicBlock *PreviousInsertionBlock;
     llvm::BasicBlock *CleanupHandler;
-    llvm::BasicBlock *CleanupEntryBB;
     llvm::BasicBlock *PreviousInvokeDest;
   public:
     EHCleanupBlock(CodeGenFunction &cgf) 
-      : CGF(cgf), Cont(CGF.createBasicBlock("cont")),
-        CleanupHandler(CGF.createBasicBlock("ehcleanup")),
-        CleanupEntryBB(CGF.createBasicBlock("ehcleanup.rest")),
+      : CGF(cgf),
+        PreviousInsertionBlock(CGF.Builder.GetInsertBlock()),
+        CleanupHandler(CGF.createBasicBlock("ehcleanup", CGF.CurFn)),
         PreviousInvokeDest(CGF.getInvokeDest()) {
-      CGF.EmitBranch(Cont);
       llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
-      CGF.Builder.SetInsertPoint(CleanupEntryBB);
+      CGF.Builder.SetInsertPoint(CleanupHandler);
       CGF.setInvokeDest(TerminateHandler);
     }
     ~EHCleanupBlock();
@@ -705,6 +703,12 @@ public:
   /// always be accessible even if no aggregate location is provided.
   RValue EmitAnyExprToTemp(const Expr *E, bool IsAggLocVolatile = false,
                            bool IsInitializer = false);
+
+  /// EmitsAnyExprToMem - Emits the code necessary to evaluate an
+  /// arbitrary expression into the given memory location.
+  void EmitAnyExprToMem(const Expr *E, llvm::Value *Location,
+                        bool IsLocationVolatile = false,
+                        bool IsInitializer = false);
 
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///

@@ -38,6 +38,7 @@ namespace llvm {
   class GlobalValue;
   class TargetData;
   class FunctionType;
+  class PointerType;
   class Value;
   class LLVMContext;
 }
@@ -127,7 +128,7 @@ protected:
   llvm::LLVMContext &VMContext;
 
 public:
-  const llvm::Type *PtrToInt8Ty;
+  const llvm::PointerType *PtrToInt8Ty;
   struct HelperInfo {
     int index;
     int flag;
