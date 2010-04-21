@@ -529,9 +529,15 @@ void SSAUpdater::FindAvailableVals(BlockListTy *BlockList) {
          E = BlockList->rend(); I != E; ++I) {
     BBInfo *Info = *I;
 
-    // Check if this block contains a newly added PHI.
-    if (Info->DefBB != Info)
+    if (Info->DefBB != Info) {
+      // Record the available value at join nodes to speed up subsequent
+      // uses of this SSAUpdater for the same value.
+      if (Info->NumPreds > 1)
+        AvailableVals[Info->BB] = Info->DefBB->AvailableVal;
       continue;
+    }
+
+    // Check if this block contains a newly added PHI.
     PHINode *PHI = dyn_cast<PHINode>(Info->AvailableVal);
     if (!PHI || PHI->getNumIncomingValues() == Info->NumPreds)
       continue;
