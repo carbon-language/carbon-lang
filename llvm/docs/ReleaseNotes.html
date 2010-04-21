@@ -501,27 +501,47 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>...</li>
-Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.
-Optimal Edge Profiling?
-Instcombine is now a library, has its own IRBuilder to simplify itself.
-Better code size analysis in loop unswitch, inliner code split out to a new 
-  CodeMetrics class for reuse.
-Many changes to the pass ordering for improved optimization effectiveness.
-BasicAA improved to be less dependent on "type safe" pointers, it can now look
-  through bitcasts more aggressively.
-GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html
-New SCEV AA pass: -scev-aa
-Target data now has notion of 'native' integer data types which optimizations can use.
-Opt now works conservatively if no target data is set (is this fully working?)
-New Analysis/InstructionSimplify.h interface for simplifying instructions that don't exist.
-Jump threading is now much more aggressive at simplifying correlated
+<li>Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.</li>
+<li>Instcombine is now a library, has its own IRBuilder to simplify itself.</li>
+<li>Better code size analysis in loop unswitch, inliner code split out to a new 
+  CodeMetrics class for reuse.</li>
+<li>Many changes to the pass ordering for improved optimization
+   effectiveness.</li>
+<li>BasicAA improved to be less dependent on "type safe" pointers, it can now look
+  through bitcasts more aggressively.</li>
+<li>GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html</li>
+<li>New SCEV AA pass: -scev-aa</li>
+<li>Target data now has notion of 'native' integer data types which optimizations can use.</li>
+<li>Opt now works conservatively if no target data is set (is this fully working?)</li>
+<li>New Analysis/InstructionSimplify.h interface for simplifying instructions that don't exist.</li>
+<li>Jump threading is now much more aggressive at simplifying correlated
    conditionals and threading blocks with otherwise complex logic. CondProp pass
-   removed (functionality merged into jump threading).
-New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
+   removed (functionality merged into jump threading).</li>
+<li>New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
   changed jump threading, GVN, etc to use it which simplified them and speed
-  them up.
+  them up.</li>
 
+
+<li>
+The Optimal Edge Profiling implementation in 2.6 was more a proof of 
+concept. The current implementation (the one that will go into 2.7) is 
+now stable and (as far as my tests go) bug free.
+
+The profiling with instrumentation via "opt" and analysis via the tool 
+"llvm-prof" should Work As Expected (TM).
+
+Two things are missing:
+
+*) Still missing is the modification of all -std-compile-opt passes to 
+update the profiling information according to the changes made to the 
+CFG, I'm planning to do this after my master thesis is finished. This 
+will enable all passes to use the ProfileInfo if available and base 
+decisions on that information.
+
+*) GCC has the options "-pg", "-fprofile-arcs" and "--coverage" that 
+insert profiling code and "-fprofile-use" to use them the next time 
+during compilation. I guess this options should also work properly in 
+llvm-gcc and clang?</li>
 
 </ul>
 
@@ -568,25 +588,20 @@ it run faster:</p>
 
 <ul>
 <li>New instruction selector [blog post?].</li>
-
-Code generator MC'ized except for debug info and EH.
-
-New CodeGen Level CSE
-Combiner-AA improvements, why not on by default?
-Pre-regalloc tail duplication
-New LSR with "full strength reduction" mode.  Description?
-Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. 
-Support for the GCC option -fno-schedule-insns
-non-temporal load/store
-MachineSSAUpdater.h
-X86 and XCore supports returning arbitrary return values, returning too many values is
-   supported by returning through a hidden pointer.
-verbose-asm now produces information about spill slots and loop nests
-GHC Haskell ABI / calling conv support.
-Many improvements to debug info
-
-
-<li>...</li>
+<li>New LSR with "full strength reduction" mode.  Description?</li>
+<li>Code generator MC'ized except for debug info and EH.</li>
+<li>New CodeGen Level CSE</li>
+<li>Combiner-AA improvements, why not on by default?</li>
+<li>Pre-regalloc tail duplication</li>
+<li>Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. </li>
+<li>Support for the GCC option -fno-schedule-insns</li>
+<li>Non-temporal load/store, only implemented on X86, see LangRef.html#i_load.</li>
+<li>MachineSSAUpdater.h</li>
+<li>X86 and XCore supports returning arbitrary return values, returning too many values is
+   supported by returning through a hidden pointer.</li>
+<li>verbose-asm now produces information about spill slots and loop nests</li>
+<li>GHC Haskell ABI / calling conv support.</li>
+<li>Many improvements to debug info</li>
 </ul>
 </div>
 
@@ -600,10 +615,13 @@ Many improvements to debug info
 </p>
 
 <ul>
+<li>The X86 backend now optimizes tails calls much more aggressively for
+    functions that use the standard C calling convention.</li>
+<li>The X86 backend now models scalar SSE registers as subregs of the SSE vector
+    registers, making the code generator more aggressive in cases where scalars
+    and vector types are mixed.</li>
 
-<li>PostRA scheduler for X86?</li>
-<li>x86 sibcall / tailcall optimization in CCC mode.</li>
-<li>X86: XMM subreg modeling for extraction of the low element.</li>
+<li>PostRA scheduler for X86? FIXME: is this on by default in 2.7?</li>
 
 </ul>
 
@@ -637,21 +655,6 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
     newer chips.</li>
 </ul>
 
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="OtherTarget">Other Target Specific Improvements</a>
-</div>
-
-<div class="doc_text">
-<p>New features of other targets include:
-</p>
-
-<ul>
-<li>...</li>
-</ul>
 
 </div>
 
@@ -917,9 +920,6 @@ compilation, and lacks support for debug information.</li>
 <div class="doc_text">
 
 <ul>
-<li>Support for the Advanced SIMD (Neon) instruction set is still incomplete
-and not well tested.  Some features may not work at all, and the code quality
-may be poor in some cases.</li>
 <li>Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
 processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
