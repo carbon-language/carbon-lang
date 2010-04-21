@@ -1711,6 +1711,92 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   }
 }
 
+/// \brirg Parse the receiver of an Objective-C++ message send.
+///
+/// This routine parses the receiver of a message send in
+/// Objective-C++ either as a type or as an expression. Note that this
+/// routine must not be called to parse a send to 'super', since it
+/// has no way to return such a result.
+/// 
+/// \param IsExpr Whether the receiver was parsed as an expression.
+///
+/// \param TypeOrExpr If the receiver was parsed as an expression (\c
+/// IsExpr is true), the parsed expression. If the receiver was parsed
+/// as a type (\c IsExpr is false), the parsed type.
+///
+/// \returns True if an error occurred during parsing or semantic
+/// analysis, in which case the arguments do not have valid
+/// values. Otherwise, returns false for a successful parse.
+///
+///   objc-receiver: [C++]
+///     'super' [not parsed here]
+///     expression
+///     simple-type-specifier
+///     typename-specifier
+
+bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
+  if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) || 
+      Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope))
+    TryAnnotateTypeOrScopeToken();
+
+  if (!isCXXSimpleTypeSpecifier()) {
+    //   objc-receiver:
+    //     expression
+    OwningExprResult Receiver = ParseExpression();
+    if (Receiver.isInvalid())
+      return true;
+
+    IsExpr = true;
+    TypeOrExpr = Receiver.take();
+    return false;
+  }
+
+  // objc-receiver:
+  //   typename-specifier
+  //   simple-type-specifier
+  //   expression (that starts with one of the above)
+  DeclSpec DS;
+  ParseCXXSimpleTypeSpecifier(DS);
+  
+  if (Tok.is(tok::l_paren)) {
+    // If we see an opening parentheses at this point, we are
+    // actually parsing an expression that starts with a
+    // function-style cast, e.g.,
+    //
+    //   postfix-expression:
+    //     simple-type-specifier ( expression-list [opt] )
+    //     typename-specifier ( expression-list [opt] )
+    //
+    // Parse the remainder of this case, then the (optional)
+    // postfix-expression suffix, followed by the (optional)
+    // right-hand side of the binary expression. We have an
+    // instance method.
+    OwningExprResult Receiver = ParseCXXTypeConstructExpression(DS);
+    if (!Receiver.isInvalid())
+      Receiver = ParsePostfixExpressionSuffix(move(Receiver));
+    if (!Receiver.isInvalid())
+      Receiver = ParseRHSOfBinaryExpression(move(Receiver), prec::Comma);
+    if (Receiver.isInvalid())
+      return true;
+
+    IsExpr = true;
+    TypeOrExpr = Receiver.take();
+    return false;
+  }
+  
+  // We have a class message. Turn the simple-type-specifier or
+  // typename-specifier we parsed into a type and parse the
+  // remainder of the class message.
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  TypeResult Type = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+  if (Type.isInvalid())
+    return true;
+
+  IsExpr = false;
+  TypeOrExpr = Type.get();
+  return false;
+}
+
 ///   objc-message-expr:
 ///     '[' objc-receiver objc-message-args ']'
 ///
@@ -1719,11 +1805,38 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     expression
 ///     class-name
 ///     type-name
+///
 Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.is(tok::l_square) && "'[' expected");
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
-  if (Tok.is(tok::identifier)) {
+  if (getLang().CPlusPlus) {
+    // We completely separate the C and C++ cases because C++ requires
+    // more complicated (read: slower) parsing. 
+    
+    // Handle send to super.  
+    // FIXME: This doesn't benefit from the same typo-correction we
+    // get in Objective-C.
+    if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
+        NextToken().isNot(tok::period) && CurScope->isInObjcMethodScope())
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0, 
+                                            ExprArg(Actions));
+
+    // Parse the receiver, which is either a type or an expression.
+    bool IsExpr;
+    void *TypeOrExpr;
+    if (ParseObjCXXMessageReceiver(IsExpr, TypeOrExpr)) {
+      SkipUntil(tok::r_square);
+      return ExprError();
+    }
+
+    if (IsExpr)
+      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0,
+                                         OwningExprResult(Actions, TypeOrExpr));
+
+    return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
+                                          TypeOrExpr, ExprArg(Actions));
+  } else if (Tok.is(tok::identifier)) {
     IdentifierInfo *Name = Tok.getIdentifierInfo();
     SourceLocation NameLoc = Tok.getLocation();
     TypeTy *ReceiverType;

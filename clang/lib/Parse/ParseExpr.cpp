@@ -29,30 +29,6 @@
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
 
-/// PrecedenceLevels - These are precedences for the binary/ternary operators in
-/// the C99 grammar.  These have been named to relate with the C99 grammar
-/// productions.  Low precedences numbers bind more weakly than high numbers.
-namespace prec {
-  enum Level {
-    Unknown         = 0,    // Not binary operator.
-    Comma           = 1,    // ,
-    Assignment      = 2,    // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
-    Conditional     = 3,    // ?
-    LogicalOr       = 4,    // ||
-    LogicalAnd      = 5,    // &&
-    InclusiveOr     = 6,    // |
-    ExclusiveOr     = 7,    // ^
-    And             = 8,    // &
-    Equality        = 9,    // ==, !=
-    Relational      = 10,   //  >=, <=, >, <
-    Shift           = 11,   // <<, >>
-    Additive        = 12,   // -, +
-    Multiplicative  = 13,   // *, /, %
-    PointerToMember = 14    // .*, ->*
-  };
-}
-
-
 /// getBinOpPrecedence - Return the precedence of the specified binary operator
 /// token.  This returns:
 ///
@@ -297,10 +273,10 @@ Parser::OwningExprResult Parser::ParseConstantExpression() {
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
 /// LHS and has a precedence of at least MinPrec.
 Parser::OwningExprResult
-Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
-  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind(),
-                                            GreaterThanIsOperator,
-                                            getLang().CPlusPlus0x);
+Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
+  prec::Level NextTokPrec = getBinOpPrecedence(Tok.getKind(),
+                                               GreaterThanIsOperator,
+                                               getLang().CPlusPlus0x);
   SourceLocation ColonLoc;
 
   while (1) {
@@ -363,7 +339,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
-    unsigned ThisPrec = NextTokPrec;
+    prec::Level ThisPrec = NextTokPrec;
     NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator,
                                      getLang().CPlusPlus0x);
 
@@ -380,7 +356,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
       // A=(B=(C=D)), where each paren is a level of recursion here.
       // The function takes ownership of the RHS.
-      RHS = ParseRHSOfBinaryExpression(move(RHS), ThisPrec + !isRightAssoc);
+      RHS = ParseRHSOfBinaryExpression(move(RHS), 
+                            static_cast<prec::Level>(ThisPrec + !isRightAssoc));
       if (RHS.isInvalid())
         return move(RHS);
 

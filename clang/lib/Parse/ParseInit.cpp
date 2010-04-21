@@ -34,6 +34,19 @@ static bool MayBeDesignationStart(tok::TokenKind K, Preprocessor &PP) {
   }
 }
 
+static void CheckArrayDesignatorSyntax(Parser &P, SourceLocation Loc,
+                                       Designation &Desig) {
+  // If we have exactly one array designator, this used the GNU
+  // 'designation: array-designator' extension, otherwise there should be no
+  // designators at all!
+  if (Desig.getNumDesignators() == 1 &&
+      (Desig.getDesignator(0).isArrayDesignator() ||
+       Desig.getDesignator(0).isArrayRangeDesignator()))
+    P.Diag(Loc, diag::ext_gnu_missing_equal_designator);
+  else if (Desig.getNumDesignators() > 0)
+    P.Diag(Loc, diag::err_expected_equal_designator);
+}
+
 /// ParseInitializerWithPotentialDesignator - Parse the 'initializer' production
 /// checking to see if the token stream starts with a designator.
 ///
@@ -124,10 +137,46 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //   [4][foo bar]      -> obsolete GNU designation with objc message send.
     //
     SourceLocation StartLoc = ConsumeBracket();
+    OwningExprResult Idx(Actions);
 
-    // If Objective-C is enabled and this is a typename (class message send) or
-    // send to 'super', parse this as a message send expression.
-    if (getLang().ObjC1 && Tok.is(tok::identifier)) {
+    // If Objective-C is enabled and this is a typename (class message
+    // send) or send to 'super', parse this as a message send
+    // expression.  We handle C++ and C separately, since C++ requires
+    // much more complicated parsing.
+    if  (getLang().ObjC1 && getLang().CPlusPlus) {
+      // Send to 'super'.
+      if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
+          NextToken().isNot(tok::period) && CurScope->isInObjcMethodScope()) {
+        CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
+        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
+                                                           ConsumeToken(), 0, 
+                                                           ExprArg(Actions));
+      }
+
+      // Parse the receiver, which is either a type or an expression.
+      bool IsExpr;
+      void *TypeOrExpr;
+      if (ParseObjCXXMessageReceiver(IsExpr, TypeOrExpr)) {
+        SkipUntil(tok::r_square);
+        return ExprError();
+      }
+      
+      // If the receiver was a type, we have a class message; parse
+      // the rest of it.
+      if (!IsExpr) {
+        CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
+        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
+                                                           SourceLocation(), 
+                                                           TypeOrExpr, 
+                                                           ExprArg(Actions));
+      }
+
+      // If the receiver was an expression, we still don't know
+      // whether we have a message send or an array designator; just
+      // adopt the expression for further analysis below.
+      // FIXME: potentially-potentially evaluated expression above?
+      Idx = OwningExprResult(Actions, TypeOrExpr);
+    } else if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
       TypeTy *ReceiverType;
@@ -141,16 +190,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
                                              ReceiverType)) {
       case Action::ObjCSuperMessage:
       case Action::ObjCClassMessage:
-        // If we have exactly one array designator, this used the GNU
-        // 'designation: array-designator' extension, otherwise there should be no
-        // designators at all!
-        if (Desig.getNumDesignators() == 1 &&
-            (Desig.getDesignator(0).isArrayDesignator() ||
-             Desig.getDesignator(0).isArrayRangeDesignator()))
-          Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
-        else if (Desig.getNumDesignators() > 0)
-          Diag(Tok, diag::err_expected_equal_designator);
-
+        CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         if (Kind == Action::ObjCSuperMessage)
           return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                              ConsumeToken(),
@@ -175,13 +215,19 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       }
     }
 
+    // Parse the index expression, if we haven't already gotten one
+    // above (which can only happen in Objective-C++).
     // Note that we parse this as an assignment expression, not a constant
     // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
     // to validate that the expression is a constant.
-    OwningExprResult Idx(ParseAssignmentExpression());
-    if (Idx.isInvalid()) {
-      SkipUntil(tok::r_square);
-      return move(Idx);
+    // FIXME: We also need to tell Sema that we're in a
+    // potentially-potentially evaluated context.
+    if (!Idx.get()) {
+      Idx = ParseAssignmentExpression();
+      if (Idx.isInvalid()) {
+        SkipUntil(tok::r_square);
+        return move(Idx);
+      }
     }
 
     // Given an expression, we could either have a designator (if the next
@@ -190,17 +236,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     // an assignment-expression production.
     if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) &&
         Tok.isNot(tok::r_square)) {
-
-      // If we have exactly one array designator, this used the GNU
-      // 'designation: array-designator' extension, otherwise there should be no
-      // designators at all!
-      if (Desig.getNumDesignators() == 1 &&
-          (Desig.getDesignator(0).isArrayDesignator() ||
-           Desig.getDesignator(0).isArrayRangeDesignator()))
-        Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
-      else if (Desig.getNumDesignators() > 0)
-        Diag(Tok, diag::err_expected_equal_designator);
-
+      CheckArrayDesignatorSyntax(*this, Tok.getLocation(), Desig);
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(),
                                                          0, move(Idx));

@@ -41,6 +41,29 @@ public:
   virtual void print(llvm::raw_ostream &OS) const;
 };
 
+/// PrecedenceLevels - These are precedences for the binary/ternary
+/// operators in the C99 grammar.  These have been named to relate
+/// with the C99 grammar productions.  Low precedences numbers bind
+/// more weakly than high numbers.
+namespace prec {
+  enum Level {
+    Unknown         = 0,    // Not binary operator.
+    Comma           = 1,    // ,
+    Assignment      = 2,    // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
+    Conditional     = 3,    // ?
+    LogicalOr       = 4,    // ||
+    LogicalAnd      = 5,    // &&
+    InclusiveOr     = 6,    // |
+    ExclusiveOr     = 7,    // ^
+    And             = 8,    // &
+    Equality        = 9,    // ==, !=
+    Relational      = 10,   //  >=, <=, >, <
+    Shift           = 11,   // <<, >>
+    Additive        = 12,   // -, +
+    Multiplicative  = 13,   // *, /, %
+    PointerToMember = 14    // .*, ->*
+  };
+}
 
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
@@ -460,9 +483,11 @@ private:
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
 
+public:
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
   DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
 
+private:
   void SuggestParentheses(SourceLocation Loc, unsigned DK,
                           SourceRange ParenRange);
 
@@ -846,7 +871,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
-
+  
   OwningExprResult ParseExpression();
   OwningExprResult ParseConstantExpression();
   // Expr that doesn't include commas.
@@ -857,7 +882,7 @@ private:
   OwningExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
 
   OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
-                                              unsigned MinPrec);
+                                              prec::Level MinPrec);
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
@@ -954,6 +979,8 @@ private:
   // C++ 5.2.3: Explicit type conversion (functional notation)
   OwningExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
 
+  bool isCXXSimpleTypeSpecifier() const;
+
   /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
   /// This should only be called when the current token is known to be part of
   /// simple-type-specifier.
@@ -1011,6 +1038,7 @@ private:
   OwningExprResult ParseAssignmentExprWithObjCMessageExprStart(
       SourceLocation LBracloc, SourceLocation SuperLoc,
       TypeTy *ReceiverType, ExprArg ReceiverExpr);
+  bool ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr);
 
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

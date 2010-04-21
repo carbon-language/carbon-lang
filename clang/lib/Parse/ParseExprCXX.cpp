@@ -749,6 +749,36 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
   return false;
 }
 
+/// \brief Determine whether the current token starts a C++
+/// simple-type-specifier.
+bool Parser::isCXXSimpleTypeSpecifier() const {
+  switch (Tok.getKind()) {
+  case tok::annot_typename:
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_int:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
+  case tok::kw_bool:
+    // FIXME: C++0x decltype support.
+  // GNU typeof support.
+  case tok::kw_typeof:
+    return true;
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
 /// This should only be called when the current token is known to be part of
 /// simple-type-specifier.
@@ -837,6 +867,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec, DiagID);
     break;
 
+    // FIXME: C++0x decltype support.
   // GNU typeof support.
   case tok::kw_typeof:
     ParseTypeofSpecifier(DS);
