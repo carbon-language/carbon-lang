@@ -338,6 +338,7 @@ public:
                                       QualType ObjectType);
 
   OwningStmtResult TransformCompoundStmt(CompoundStmt *S, bool IsStmtExpr);
+  OwningExprResult TransformCXXNamedCastExpr(CXXNamedCastExpr *E);
 
 #define STMT(Node, Parent)                        \
   OwningStmtResult Transform##Node(Node *S);

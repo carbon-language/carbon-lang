@@ -1999,7 +1999,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::ImplicitCastExprClass:
   case Expr::CStyleCastExprClass:
   case Expr::CXXFunctionalCastExprClass:
-  case Expr::CXXNamedCastExprClass:
   case Expr::CXXStaticCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass: {

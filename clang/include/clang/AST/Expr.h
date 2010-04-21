@@ -1679,7 +1679,7 @@ public:
     
   static bool classof(const Stmt *T) {
     StmtClass SC = T->getStmtClass();
-    if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
+    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
       return true;
 
     if (SC >= ImplicitCastExprClass && SC <= CStyleCastExprClass)
@@ -1783,7 +1783,7 @@ public:
     StmtClass SC = T->getStmtClass();
     if (SC >= CStyleCastExprClass && SC <= CStyleCastExprClass)
       return true;
-    if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
+    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
       return true;
 
     return false;

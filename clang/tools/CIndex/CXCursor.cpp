@@ -160,7 +160,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::TypesCompatibleExprClass:  
   case Stmt::ChooseExprClass:           
   case Stmt::GNUNullExprClass:          
-  case Stmt::CXXNamedCastExprClass:
   case Stmt::CXXStaticCastExprClass:      
   case Stmt::CXXDynamicCastExprClass:     
   case Stmt::CXXReinterpretCastExprClass: 

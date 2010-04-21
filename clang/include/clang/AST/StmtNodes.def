@@ -107,7 +107,7 @@ EXPR(GNUNullExpr          , Expr)
 // C++ Expressions.
 EXPR(CXXOperatorCallExpr    , CallExpr)
 EXPR(CXXMemberCallExpr      , CallExpr)
-EXPR(CXXNamedCastExpr       , ExplicitCastExpr)
+ABSTRACT_EXPR(CXXNamedCastExpr       , ExplicitCastExpr)
 EXPR(CXXStaticCastExpr      , CXXNamedCastExpr)
 EXPR(CXXDynamicCastExpr     , CXXNamedCastExpr)
 EXPR(CXXReinterpretCastExpr , CXXNamedCastExpr)

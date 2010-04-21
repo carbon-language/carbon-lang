@@ -591,7 +591,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXDefaultArgExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXExprWithTemporariesClass:
-    case Stmt::CXXNamedCastExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTemporaryObjectExprClass:

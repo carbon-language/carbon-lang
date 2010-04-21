@@ -137,7 +137,6 @@ public:
   }
   static bool classof(const Stmt *T) {
     switch (T->getStmtClass()) {
-    case CXXNamedCastExprClass:
     case CXXStaticCastExprClass:
     case CXXDynamicCastExprClass:
     case CXXReinterpretCastExprClass:
