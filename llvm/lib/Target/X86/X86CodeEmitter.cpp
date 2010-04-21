@@ -380,6 +380,16 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   const MachineOperand &IndexReg = MI.getOperand(Op+2);
 
   unsigned BaseReg = Base.getReg();
+  
+  // Handle %rip relative addressing.
+  if (BaseReg == X86::RIP ||
+      (Is64BitMode && DispForReloc)) { // [disp32+RIP] in X86-64 mode
+    assert(IndexReg.getReg() == 0 && Is64BitMode &&
+           "Invalid rip-relative address");
+    MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
+    emitDisplacementField(DispForReloc, DispVal, PCAdj, true);
+    return;
+  }
 
   // Indicate that the displacement will use an pcrel or absolute reference
   // by default. MCEs able to resolve addresses on-the-fly use pcrel by default
@@ -447,7 +457,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
     // Emit the normal disp32 encoding.
     MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
     ForceDisp32 = true;
-  } else if (DispVal == 0 && getX86RegNum(BaseReg) != N86::EBP) {
+  } else if (DispVal == 0 && BaseRegNo != N86::EBP) {
     // Emit no displacement ModR/M byte
     MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
   } else if (isDisp8(DispVal)) {
