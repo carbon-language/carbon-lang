@@ -706,12 +706,8 @@ public:
 
   arg_iterator arg_begin() { return getArgs(); }
   arg_iterator arg_end()   { return getArgs() + NumArgs; }
-  const_arg_iterator arg_begin() const {
-    return const_cast<Stmt**>(getArgs());
-  }
-  const_arg_iterator arg_end() const {
-    return const_cast<Stmt**>(getArgs()) + NumArgs;
-  }
+  const_arg_iterator arg_begin() const { return getArgs(); }
+  const_arg_iterator arg_end() const { return getArgs() + NumArgs; }
 };
 
 /// ObjCSuperExpr - Represents the "super" expression in Objective-C,

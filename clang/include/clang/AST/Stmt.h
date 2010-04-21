@@ -70,13 +70,13 @@ namespace clang {
   };
 
   class ConstExprIterator {
-    Stmt* const * I;
+    const Stmt * const *I;
   public:
-    ConstExprIterator(Stmt* const* i) : I(i) {}
+    ConstExprIterator(const Stmt * const *i) : I(i) {}
     ConstExprIterator() : I(0) {}
     ConstExprIterator& operator++() { ++I; return *this; }
-    ConstExprIterator operator+(size_t i) { return I+i; }
-    ConstExprIterator operator-(size_t i) { return I-i; }
+    ConstExprIterator operator+(size_t i) const { return I+i; }
+    ConstExprIterator operator-(size_t i) const { return I-i; }
     const Expr * operator[](size_t idx) const;
     signed operator-(const ConstExprIterator& R) const { return I - R.I; }
     const Expr * operator*() const;
