@@ -1,4 +1,5 @@
 add_llvm_library(LLVMCodeGen
+  Analysis.cpp
   AggressiveAntiDepBreaker.cpp
   BranchFolding.cpp
   CalcSpillWeights.cpp
