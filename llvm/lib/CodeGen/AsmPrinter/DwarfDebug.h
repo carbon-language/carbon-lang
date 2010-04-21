@@ -368,13 +368,8 @@ private:
   /// createSubprogramDIE - Create new DIE using SP.
   DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
 
-  /// getUpdatedDbgScope - Find or create DbgScope assicated with 
-  /// the instruction. Initialize scope and update scope hierarchy.
-  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
-                               MDNode *InlinedAt);
-
-  /// createDbgScope - Create DbgScope for the scope.
-  void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
+  /// getOrCreateDbgScope - Create DbgScope for the scope.
+  DbgScope *getOrCreateDbgScope(MDNode *Scope, MDNode *InlinedAt);
 
   DbgScope *getOrCreateAbstractScope(MDNode *N);
 
