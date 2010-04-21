@@ -1150,6 +1150,13 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
                           << Entity.getBaseSpecifier()->getType());
     break;
   }
+  
+  case InitializedEntity::EK_Member: {
+    const FieldDecl *Field = cast<FieldDecl>(Entity.getDecl());
+    AccessEntity.setDiag(PDiag(diag::err_access_ctor_field)
+                          << Field->getDeclName() << Field->getType());
+    break;
+  }
 
   }
 

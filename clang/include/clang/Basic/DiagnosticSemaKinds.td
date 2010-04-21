@@ -462,6 +462,9 @@ def err_access_ctor :
 def err_access_ctor_base :
     Error<"base class %0 has %select{private|protected}1 constructor">,
     NoSFINAE;
+def err_access_ctor_field :
+    Error<"field of type %1 has %select{private|protected}2 constructor">,
+    NoSFINAE;
 def err_access_ctor_vbase :
     Error<"inherited virtual base class %0 has "
     "%select{private|protected}1 constructor">,
