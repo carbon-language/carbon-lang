@@ -95,6 +95,11 @@ namespace llvm {
   ///
   FunctionPass *createLocalRegisterAllocator();
 
+  /// FastRegisterAllocation Pass - This pass register allocates as fast as
+  /// possible. It is best suited for debug code where live ranges are short.
+  ///
+  FunctionPass *createFastRegisterAllocator();
+
   /// LinearScanRegisterAllocation Pass - This pass implements the linear scan
   /// register allocation algorithm, a global register allocator.
   ///
