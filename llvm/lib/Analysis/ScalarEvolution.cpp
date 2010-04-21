@@ -188,8 +188,8 @@ const SCEV *ScalarEvolution::getConstant(const APInt& Val) {
 
 const SCEV *
 ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
-  return getConstant(
-    ConstantInt::get(cast<IntegerType>(Ty), V, isSigned));
+  const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
+  return getConstant(ConstantInt::get(ITy, V, isSigned));
 }
 
 const Type *SCEVConstant::getType() const { return V->getType(); }
