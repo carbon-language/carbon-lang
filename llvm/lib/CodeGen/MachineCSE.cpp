@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
@@ -51,9 +52,12 @@ namespace {
     }
 
   private:
-    unsigned CurrVN;
+    typedef ScopedHashTableScope<MachineInstr*, unsigned,
+                                 MachineInstrExpressionTrait> ScopeType;
+    DenseMap<MachineBasicBlock*, ScopeType*> ScopeMap;
     ScopedHashTable<MachineInstr*, unsigned, MachineInstrExpressionTrait> VNT;
     SmallVector<MachineInstr*, 64> Exps;
+    unsigned CurrVN;
 
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
@@ -63,7 +67,13 @@ namespace {
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
                            MachineInstr *CSMI, MachineInstr *MI);
-    bool ProcessBlock(MachineDomTreeNode *Node);
+    void EnterScope(MachineBasicBlock *MBB);
+    void ExitScope(MachineBasicBlock *MBB);
+    bool ProcessBlock(MachineBasicBlock *MBB);
+    void ExitScopeIfDone(MachineDomTreeNode *Node,
+                 DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
+                 DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap);
+    bool PerformCSE(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace
 
@@ -277,13 +287,24 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   return CSBBs.count(MI->getParent());
 }
 
-bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
+void MachineCSE::EnterScope(MachineBasicBlock *MBB) {
+  DEBUG(dbgs() << "Entering: " << MBB->getName() << '\n');
+  ScopeType *Scope = new ScopeType(VNT);
+  ScopeMap[MBB] = Scope;
+}
+
+void MachineCSE::ExitScope(MachineBasicBlock *MBB) {
+  DEBUG(dbgs() << "Exiting: " << MBB->getName() << '\n');
+  DenseMap<MachineBasicBlock*, ScopeType*>::iterator SI = ScopeMap.find(MBB);
+  assert(SI != ScopeMap.end());
+  ScopeMap.erase(SI);
+  delete SI->second;
+}
+
+bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
   bool Changed = false;
 
   SmallVector<std::pair<unsigned, unsigned>, 8> CSEPairs;
-  ScopedHashTableScope<MachineInstr*, unsigned,
-    MachineInstrExpressionTrait> VNTS(VNT);
-  MachineBasicBlock *MBB = Node->getBlock();
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E; ) {
     MachineInstr *MI = &*I;
     ++I;
@@ -356,10 +377,63 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
     CSEPairs.clear();
   }
 
-  // Recursively call ProcessBlock with children.
-  const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
-  for (unsigned i = 0, e = Children.size(); i != e; ++i)
-    Changed |= ProcessBlock(Children[i]);
+  return Changed;
+}
+
+/// ExitScopeIfDone - Destroy scope for the MBB that corresponds to the given
+/// dominator tree node if its a leaf or all of its children are done. Walk
+/// up the dominator tree to destroy ancestors which are now done.
+void
+MachineCSE::ExitScopeIfDone(MachineDomTreeNode *Node,
+                DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
+                DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap) {
+  if (OpenChildren[Node])
+    return;
+
+  // Pop scope.
+  ExitScope(Node->getBlock());
+
+  // Now traverse upwards to pop ancestors whose offsprings are all done.
+  while (MachineDomTreeNode *Parent = ParentMap[Node]) {
+    unsigned Left = --OpenChildren[Parent];
+    if (Left != 0)
+      break;
+    ExitScope(Parent->getBlock());
+    Node = Parent;
+  }
+}
+
+bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
+  SmallVector<MachineDomTreeNode*, 32> Scopes;
+  SmallVector<MachineDomTreeNode*, 8> WorkList;
+  DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> ParentMap;
+  DenseMap<MachineDomTreeNode*, unsigned> OpenChildren;
+
+  // Perform a DFS walk to determine the order of visit.
+  WorkList.push_back(Node);
+  do {
+    Node = WorkList.pop_back_val();
+    Scopes.push_back(Node);
+    const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
+    unsigned NumChildren = Children.size();
+    OpenChildren[Node] = NumChildren;
+    for (unsigned i = 0; i != NumChildren; ++i) {
+      MachineDomTreeNode *Child = Children[i];
+      ParentMap[Child] = Node;
+      WorkList.push_back(Child);
+    }
+  } while (!WorkList.empty());
+
+  // Now perform CSE.
+  bool Changed = false;
+  for (unsigned i = 0, e = Scopes.size(); i != e; ++i) {
+    MachineDomTreeNode *Node = Scopes[i];
+    MachineBasicBlock *MBB = Node->getBlock();
+    EnterScope(MBB);
+    Changed |= ProcessBlock(MBB);
+    // If it's a leaf node, it's done. Traverse upwards to pop ancestors.
+    ExitScopeIfDone(Node, OpenChildren, ParentMap);
+  }
 
   return Changed;
 }
@@ -370,5 +444,5 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<MachineDominatorTree>();
-  return ProcessBlock(DT->getRootNode());
+  return PerformCSE(DT->getRootNode());
 }
