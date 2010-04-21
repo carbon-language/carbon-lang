@@ -43,7 +43,8 @@ void ABIArgInfo::dump() const {
     getCoerceToType()->print(OS);
     break;
   case Indirect:
-    OS << "Indirect Align=" << getIndirectAlign();
+    OS << "Indirect Align=" << getIndirectAlign()
+       << " Byal=" << getIndirectByVal();
     break;
   case Expand:
     OS << "Expand";
@@ -270,7 +271,7 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
                                           llvm::LLVMContext &VMContext) const {
   if (CodeGenFunction::hasAggregateLLVMType(Ty))
     return ABIArgInfo::getIndirect(0);
-  
+
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
@@ -293,6 +294,11 @@ class X86_32ABIInfo : public ABIInfo {
 
   static unsigned getIndirectArgumentAlignment(QualType Ty,
                                                ASTContext &Context);
+
+  /// getIndirectResult - Give a source type \arg Ty, return a suitable result
+  /// such that the argument will be passed in memory.
+  ABIArgInfo getIndirectResult(QualType Ty, ASTContext &Context,
+                               bool ByVal = true) const;
 
 public:
   ABIArgInfo classifyReturnType(QualType RetTy,
@@ -500,6 +506,13 @@ unsigned X86_32ABIInfo::getIndirectArgumentAlignment(QualType Ty,
   return 0;
 }
 
+ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty,
+                                            ASTContext &Context,
+                                            bool ByVal) const {
+  return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context),
+                                 ByVal);
+}
+
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                                ASTContext &Context,
                                            llvm::LLVMContext &VMContext) const {
@@ -510,11 +523,10 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
       // Structures with either a non-trivial destructor or a non-trivial
       // copy constructor are always indirect.
       if (hasNonTrivialDestructorOrCopyConstructor(RT))
-        return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
-        
+        return getIndirectResult(Ty, Context, /*ByVal=*/false);
+
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty,
-                                                                    Context));
+        return getIndirectResult(Ty, Context);
     }
 
     // Ignore empty structs.
@@ -529,7 +541,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
         canExpandIndirectArgument(Ty, Context))
       return ABIArgInfo::getExpand();
 
-    return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context));
+    return getIndirectResult(Ty, Context);
   } else {
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
@@ -686,8 +698,7 @@ class X86_64ABIInfo : public ABIInfo {
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
-  ABIArgInfo getIndirectResult(QualType Ty,
-                               ASTContext &Context) const;
+  ABIArgInfo getIndirectResult(QualType Ty, ASTContext &Context) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
