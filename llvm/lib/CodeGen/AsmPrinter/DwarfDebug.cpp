@@ -44,6 +44,9 @@ using namespace llvm;
 static cl::opt<bool> PrintDbgScope("print-dbgscope", cl::Hidden,
      cl::desc("Print DbgScope information for each machine instruction"));
 
+static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print", cl::Hidden,
+     cl::desc("Disable debug info printing"));
+
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
@@ -1853,6 +1856,9 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is inovked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
+  if (DisableDebugInfoPrinting)
+    return;
+
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
