@@ -216,7 +216,7 @@ void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
       }
     }
     state = state->BindExpr(CNE, loc::MemRegionVal(EleReg));
-    MakeNode(Dst, CNE, Pred, state);
+    MakeNode(Dst, CNE, *I, state);
   }
 }
 
