@@ -525,13 +525,20 @@ CollectRecordFields(const RecordDecl *RD, llvm::DIFile Unit,
 
     uint64_t FieldOffset = RL.getFieldOffset(FieldNo);
 
+    unsigned Flags = 0;
+    AccessSpecifier Access = I->getAccess();
+    if (Access == clang::AS_private)
+      Flags |= llvm::DIType::FlagPrivate;
+    else if (Access == clang::AS_protected)
+      Flags |= llvm::DIType::FlagProtected;
+
     // Create a DW_TAG_member node to remember the offset of this field in the
     // struct.  FIXME: This is an absolutely insane way to capture this
     // information.  When we gut debug info, this should be fixed.
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
                                              FieldName, FieldDefUnit,
                                              FieldLine, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
+                                             FieldOffset, Flags, FieldTy);
     EltTys.push_back(FieldTy);
   }
 }
