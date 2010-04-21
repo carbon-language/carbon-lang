@@ -5531,7 +5531,7 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool is31 = (NoFramePointerElim || MFI->hasVarSizedObjects())
+  bool is31 = (DisableFramePointerElim(MF) || MFI->hasVarSizedObjects())
                   && MFI->getStackSize();
 
   if (isPPC64)

@@ -338,7 +338,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
 bool MipsRegisterInfo::
 hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
 // This function eliminate ADJCALLSTACKDOWN, 

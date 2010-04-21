@@ -113,7 +113,7 @@ XCoreRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
 }
 
 bool XCoreRegisterInfo::hasFP(const MachineFunction &MF) const {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+  return DisableFramePointerElim(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 // This function eliminates ADJCALLSTACKDOWN,

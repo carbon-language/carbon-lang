@@ -138,7 +138,7 @@ MSP430RegisterInfo::getPointerRegClass(unsigned Kind) const {
 bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
-  return (NoFramePointerElim ||
+  return (DisableFramePointerElim(MF) ||
           MF.getFrameInfo()->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken());
 }

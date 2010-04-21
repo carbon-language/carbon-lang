@@ -110,7 +110,8 @@ BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
 // if frame pointer elimination is disabled.
 bool BlackfinRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasCalls() || MFI->hasVarSizedObjects();
+  return DisableFramePointerElim(MF) ||
+    MFI->hasCalls() || MFI->hasVarSizedObjects();
 }
 
 bool BlackfinRegisterInfo::

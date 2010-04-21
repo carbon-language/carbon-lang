@@ -243,7 +243,7 @@ void MBlazeRegisterInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
 // if frame pointer elimination is disabled.
 bool MBlazeRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
 // This function eliminate ADJCALLSTACKDOWN,

@@ -77,7 +77,7 @@ BitVector SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const 
 /// allocas or if frame pointer elimination is disabled.
 bool SystemZRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
 void SystemZRegisterInfo::
