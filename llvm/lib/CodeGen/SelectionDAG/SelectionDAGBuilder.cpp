@@ -30,6 +30,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"

@@ -118,30 +118,6 @@ public:
   }
 };
 
-/// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
-/// of insertvalue or extractvalue indices that identify a member, return
-/// the linearized index of the start of the member.
-///
-unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
-                            const unsigned *Indices,
-                            const unsigned *IndicesEnd,
-                            unsigned CurIndex = 0);
-
-/// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
-/// EVTs that represent all the individual underlying
-/// non-aggregate types that comprise it.
-///
-/// If Offsets is non-null, it points to a vector to be filled in
-/// with the in-memory offsets of each of the individual values.
-///
-void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
-                     SmallVectorImpl<EVT> &ValueVTs,
-                     SmallVectorImpl<uint64_t> *Offsets = 0,
-                     uint64_t StartingOffset = 0);
-
-/// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
-GlobalVariable *ExtractTypeInfo(Value *V);
-
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
 /// call, and add them to the specified machine basic block.
 void AddCatchInfo(const CallInst &I,
@@ -150,31 +126,6 @@ void AddCatchInfo(const CallInst &I,
 /// CopyCatchInfo - Copy catch information from DestBB to SrcBB.
 void CopyCatchInfo(const BasicBlock *SrcBB, const BasicBlock *DestBB,
                    MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
-
-/// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
-/// processed uses a memory 'm' constraint.
-bool hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
-                               const TargetLowering &TLI);
-
-/// getFCmpCondCode - Return the ISD condition code corresponding to
-/// the given LLVM IR floating-point condition code.  This includes
-/// consideration of global floating-point math flags.
-///
-ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred);
-
-/// getICmpCondCode - Return the ISD condition code corresponding to
-/// the given LLVM IR integer condition code.
-///
-ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
-
-/// Test if the given instruction is in a position to be optimized
-/// with a tail-call. This roughly means that it's in a block with
-/// a return and there's nothing that needs to be scheduled
-/// between it and the return.
-///
-/// This function only tests target-independent requirements.
-bool isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
-                          const TargetLowering &TLI);
 
 } // end namespace llvm
 
