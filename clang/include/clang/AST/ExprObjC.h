@@ -402,7 +402,7 @@ class ObjCMessageExpr : public Expr {
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
 
-  /// \brief Retrieve the pointer value of the ,essage receiver.
+  /// \brief Retrieve the pointer value of the ,message receiver.
   void *getReceiverPointer() const {
     return *const_cast<void **>(
                              reinterpret_cast<const void * const*>(this + 1));
