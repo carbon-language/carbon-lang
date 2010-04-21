@@ -88,13 +88,25 @@ namespace test1 {
 namespace test2 {
   class A {
   private:
-    A(); // expected-note {{declared private here}}
+    A(); // expected-note 3 {{declared private here}}
 
     static A foo;
   };
 
   A a; // expected-error {{calling a private constructor}}
   A A::foo; // okay
+  
+  class B : A { }; // expected-error {{base class 'test2::A' has private constructor}}
+  B b;
+  
+  class C : virtual A { 
+  public:
+    C();
+  };
+  
+  // FIXME: It would be better if this said something about A being an inherited virtual base.
+  class D : C { }; // expected-error {{base class 'test2::A' has private constructor}}
+  D d;
 }
 
 // Implicit destructor calls.

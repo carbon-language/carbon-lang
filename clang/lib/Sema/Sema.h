@@ -2644,6 +2644,7 @@ public:
                                      DeclAccessPair FoundDecl);
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
+                                      const InitializedEntity &Entity,
                                       AccessSpecifier Access);
   AccessResult CheckDestructorAccess(SourceLocation Loc,
                                      CXXDestructorDecl *Dtor,

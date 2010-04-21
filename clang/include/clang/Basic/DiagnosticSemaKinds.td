@@ -459,6 +459,9 @@ def err_access :
 def err_access_ctor :
     Error<"calling a %select{private|protected}0 constructor of class %2">,
     NoSFINAE;
+def err_access_ctor_base :
+    Error<"base class %0 has %select{private|protected}1 constructor">,
+    NoSFINAE;
 def err_access_dtor_base :
     Error<"base class %0 has %select{private|protected}1 destructor">,
     NoSFINAE;

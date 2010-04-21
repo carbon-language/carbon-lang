@@ -3258,7 +3258,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
   CurInit.release(); // Ownership transferred into MultiExprArg, below.
 
-  S.CheckConstructorAccess(Loc, Constructor,
+  S.CheckConstructorAccess(Loc, Constructor, Entity,
                            Best->FoundDecl.getAccess());
 
   if (IsExtraneousCopy) {
@@ -3521,7 +3521,7 @@ InitializationSequence::Perform(Sema &S,
         if (CurInit.isInvalid())
           return S.ExprError();
 
-        S.CheckConstructorAccess(Kind.getLocation(), Constructor,
+        S.CheckConstructorAccess(Kind.getLocation(), Constructor, Entity,
                                  FoundFn.getAccess());
         
         CastKind = CastExpr::CK_ConstructorConversion;
@@ -3647,7 +3647,7 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
 
       // Only check access if all of that succeeded.
-      S.CheckConstructorAccess(Loc, Constructor,
+      S.CheckConstructorAccess(Loc, Constructor, Entity,
                                Step->Function.FoundDecl.getAccess());
       
       if (shouldBindAsTemporary(Entity))

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -1127,18 +1128,28 @@ Sema::AccessResult Sema::CheckDestructorAccess(SourceLocation Loc,
 /// Checks access to a constructor.
 Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
                                   CXXConstructorDecl *Constructor,
+                                  const InitializedEntity &Entity,
                                   AccessSpecifier Access) {
   if (!getLangOptions().AccessControl ||
       Access == AS_public)
     return AR_accessible;
 
   CXXRecordDecl *NamingClass = Constructor->getParent();
-  AccessTarget Entity(Context, AccessTarget::Member, NamingClass,
-                      DeclAccessPair::make(Constructor, Access),
-                      QualType());
-  Entity.setDiag(diag::err_access_ctor);
+  AccessTarget AccessEntity(Context, AccessTarget::Member, NamingClass,
+                            DeclAccessPair::make(Constructor, Access),
+                            QualType());
+  switch (Entity.getKind()) {
+  default:
+    AccessEntity.setDiag(diag::err_access_ctor);
+    break;
 
-  return CheckAccess(*this, UseLoc, Entity);
+  case InitializedEntity::EK_Base:
+    AccessEntity.setDiag(PDiag(diag::err_access_ctor_base)
+                          << Entity.getBaseSpecifier()->getType());
+    break;
+  }
+
+  return CheckAccess(*this, UseLoc, AccessEntity);
 }
 
 /// Checks direct (i.e. non-inherited) access to an arbitrary class
