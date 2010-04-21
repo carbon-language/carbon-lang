@@ -3218,6 +3218,40 @@ static uint32_t CondCode(uint32_t CondField) {
   return CondField;
 }
 
+/// DoPredicateOperands - DoPredicateOperands process the predicate operands
+/// of some Thumb instructions which come before the reglist operands.  It
+/// returns true if the two predicate operands have been processed.
+bool ARMBasicMCBuilder::DoPredicateOperands(MCInst& MI, unsigned Opcode,
+    uint32_t /* insn */, unsigned short NumOpsRemaining) {
+
+  assert(NumOpsRemaining > 0 && "Invalid argument");
+
+  const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  unsigned Idx = MI.getNumOperands();
+
+  // First, we check whether this instr specifies the PredicateOperand through
+  // a pair of TargetOperandInfos with isPredicate() property.
+  if (NumOpsRemaining >= 2 &&
+      OpInfo[Idx].isPredicate() && OpInfo[Idx+1].isPredicate() &&
+      OpInfo[Idx].RegClass == 0 && OpInfo[Idx+1].RegClass == ARM::CCRRegClassID)
+  {
+    // If we are inside an IT block, get the IT condition bits maintained via
+    // ARMBasicMCBuilder::ITState[7:0], through ARMBasicMCBuilder::GetITCond().
+    // See also A2.5.2.
+    if (InITBlock())
+      MI.addOperand(MCOperand::CreateImm(GetITCond()));
+    else
+      MI.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
+    return true;
+  }
+
+  return false;
+}
+  
+/// TryPredicateAndSBitModifier - TryPredicateAndSBitModifier tries to process
+/// the possible Predicate and SBitModifier, to build the remaining MCOperand
+/// constituents.
 bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOpsRemaining) {
 
@@ -3258,9 +3292,10 @@ bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
     MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
     Idx += 2;
     NumOpsRemaining -= 2;
-    if (NumOpsRemaining == 0)
-      return true;
   }
+
+  if (NumOpsRemaining == 0)
+    return true;
 
   // Next, if OptionalDefOperand exists, we check whether the 'S' bit is set.
   if (OpInfo[Idx].isOptionalDef() && OpInfo[Idx].RegClass==ARM::CCRRegClassID) {

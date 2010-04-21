@@ -210,6 +210,12 @@ public:
     Err = ErrCode;
   }
 
+  /// DoPredicateOperands - DoPredicateOperands process the predicate operands
+  /// of some Thumb instructions which come before the reglist operands.  It
+  /// returns true if the two predicate operands have been processed.
+  bool DoPredicateOperands(MCInst& MI, unsigned Opcode,
+      uint32_t insn, unsigned short NumOpsRemaning);
+  
   /// TryPredicateAndSBitModifier - TryPredicateAndSBitModifier tries to process
   /// the possible Predicate and SBitModifier, to build the remaining MCOperand
   /// constituents.

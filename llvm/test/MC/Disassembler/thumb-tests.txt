@@ -85,6 +85,9 @@
 # CHECK:	lsleq	r1, r0, #28
 0x01 0x07
 
-# CHECK:	rsbne	r1, r2, #0
-0x51 0x42
+# CHECK:	stmiane	r0!, {r1, r2, r3}
+0x0e 0xc0
+
 # IT block end
+# CHECK:	rsbs	r1, r2, #0
+0x51 0x42
