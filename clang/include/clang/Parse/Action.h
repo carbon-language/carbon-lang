@@ -2373,9 +2373,7 @@ public:
   ///
   /// \param S The scope in which the message send occurs.
   ///
-  /// \param Name The identifier following the '['. This identifier
-  /// may be modified by the action, if, for example, typo-correction
-  /// finds a different class name.
+  /// \param Name The identifier following the '['. 
   ///
   /// \param NameLoc The location of the identifier.
   ///
@@ -2383,12 +2381,16 @@ public:
   ///
   /// \param HasTrailingDot Whether the name is followed by a period.
   /// 
+  /// \param ReceiverType If this routine returns \c ObjCClassMessage,
+  /// this argument will be set to the receiver type.
+  ///
   /// \returns The kind of message send.
   virtual ObjCMessageKind getObjCMessageKind(Scope *S,
-                                             IdentifierInfo *&Name,
+                                             IdentifierInfo *Name,
                                              SourceLocation NameLoc,
                                              bool IsSuper,
-                                             bool HasTrailingDot);
+                                             bool HasTrailingDot,
+                                             TypeTy *&ReceiverType);
 
   /// \brief Parsed a message send to 'super'.
   ///

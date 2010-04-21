@@ -130,15 +130,17 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
+      TypeTy *ReceiverType;
       // Three cases. This is a message send to a type: [type foo]
       // This is a message send to super:  [super foo]
       // This is a message sent to an expr:  [super.bar foo]
       switch (Action::ObjCMessageKind Kind
                 = Actions.getObjCMessageKind(CurScope, II, IILoc, 
                                              II == Ident_super,
-                                             NextToken().is(tok::period))) {
+                                             NextToken().is(tok::period),
+                                             ReceiverType)) {
       case Action::ObjCSuperMessage:
-      case Action::ObjCClassMessage: {
+      case Action::ObjCClassMessage:
         // If we have exactly one array designator, this used the GNU
         // 'designation: array-designator' extension, otherwise there should be no
         // designators at all!
@@ -154,36 +156,16 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
                                                              ConsumeToken(),
                                                              0,
                                                              ExprArg(Actions));
-
-        // FIXME: This code is redundant with ParseObjCMessageExpr.
-        // Create the type that corresponds to the identifier (which
-        // names an Objective-C class).
-        TypeTy *Type = 0;
-        if (TypeTy *TyName = Actions.getTypeName(*II, IILoc, CurScope)) {
-          DeclSpec DS;
-          const char *PrevSpec = 0;
-          unsigned DiagID = 0;
-          if (!DS.SetTypeSpecType(DeclSpec::TST_typename, IILoc, PrevSpec,
-                                  DiagID, TyName)) {
-            DS.SetRangeEnd(IILoc);
-            Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-            TypeResult Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
-            if (!Ty.isInvalid())
-              Type = Ty.get();
-          }
-        }
-
-        ConsumeToken(); // The identifier.
-        if (!Type) {
+        ConsumeToken(); // the identifier
+        if (!ReceiverType) {
           SkipUntil(tok::r_square);
           return ExprError();
         }
 
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
-                                                           Type, 
+                                                           ReceiverType, 
                                                            ExprArg(Actions));
-      }
 
       case Action::ObjCInstanceMessage:
         // Fall through; we'll just parse the expression and

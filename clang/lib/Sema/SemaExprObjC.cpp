@@ -503,10 +503,13 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 }
 
 Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
-                                               IdentifierInfo *&Name,
+                                               IdentifierInfo *Name,
                                                SourceLocation NameLoc,
                                                bool IsSuper,
-                                               bool HasTrailingDot) {
+                                               bool HasTrailingDot,
+                                               TypeTy *&ReceiverType) {
+  ReceiverType = 0;
+
   // If the identifier is "super" and there is no trailing dot, we're
   // messaging super.
   if (IsSuper && !HasTrailingDot && S->isInObjcMethodScope())
@@ -541,11 +544,19 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
     // We found something. If it's a type, then we have a class
     // message. Otherwise, it's an instance message.
     NamedDecl *ND = Result.getFoundDecl();
-    if (isa<ObjCInterfaceDecl>(ND) || isa<TypeDecl>(ND) || 
-        isa<UnresolvedUsingTypenameDecl>(ND))
-      return ObjCClassMessage;
+    QualType T;
+    if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(ND))
+      T = Context.getObjCInterfaceType(Class);
+    else if (TypeDecl *Type = dyn_cast<TypeDecl>(ND))
+      T = Context.getTypeDeclType(Type);
+    else 
+      return ObjCInstanceMessage;
 
-    return ObjCInstanceMessage;
+    //  We have a class message, and T is the type we're
+    //  messaging. Build source-location information for it.
+    TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
+    ReceiverType = CreateLocInfoType(T, TSInfo).getAsOpaquePtr();
+    return ObjCClassMessage;
   }
   }
 
@@ -561,7 +572,7 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
       // If we found a declaration, correct when it refers to an Objective-C
       // class.
       NamedDecl *ND = Result.getFoundDecl();
-      if (isa<ObjCInterfaceDecl>(ND)) {
+      if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(ND)) {
         Diag(NameLoc, diag::err_unknown_receiver_suggest)
           << Name << Result.getLookupName()
           << FixItHint::CreateReplacement(SourceRange(NameLoc),
@@ -569,7 +580,9 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
         Diag(ND->getLocation(), diag::note_previous_decl)
           << Corrected;
 
-        Name = ND->getIdentifier();
+        QualType T = Context.getObjCInterfaceType(Class);
+        TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
+        ReceiverType = CreateLocInfoType(T, TSInfo).getAsOpaquePtr();
         return ObjCClassMessage;
       }
     } else if (Result.empty() && Corrected.getAsIdentifierInfo() &&

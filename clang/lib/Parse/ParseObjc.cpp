@@ -1726,40 +1726,26 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *Name = Tok.getIdentifierInfo();
     SourceLocation NameLoc = Tok.getLocation();
+    TypeTy *ReceiverType;
     switch (Actions.getObjCMessageKind(CurScope, Name, NameLoc,
                                        Name == Ident_super,
-                                       NextToken().is(tok::period))) {
+                                       NextToken().is(tok::period),
+                                       ReceiverType)) {
     case Action::ObjCSuperMessage:
       return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0,
                                             ExprArg(Actions));
 
-    case Action::ObjCClassMessage: {
-      // Create the type that corresponds to the identifier (which
-      // names an Objective-C class).
-      TypeTy *Type = 0;
-      if (TypeTy *TyName = Actions.getTypeName(*Name, NameLoc, CurScope)) {
-        DeclSpec DS;
-        const char *PrevSpec = 0;
-        unsigned DiagID = 0;
-        if (!DS.SetTypeSpecType(DeclSpec::TST_typename, NameLoc, PrevSpec,
-                                DiagID, TyName)) {
-          DS.SetRangeEnd(NameLoc);
-          Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-          TypeResult Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
-          if (!Ty.isInvalid())
-            Type = Ty.get();
-        }
-      }
-
-      ConsumeToken(); // The identifier.
-      if (!Type) {
+    case Action::ObjCClassMessage:
+      if (!ReceiverType) {
         SkipUntil(tok::r_square);
         return ExprError();
       }
 
-      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), Type,
+      ConsumeToken(); // the type name
+
+      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
+                                            ReceiverType,
                                             ExprArg(Actions));
-    }
         
     case Action::ObjCInstanceMessage:
       // Fall through to parse an expression.

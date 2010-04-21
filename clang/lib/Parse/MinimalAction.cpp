@@ -27,15 +27,30 @@ ActionBase::~ActionBase() {}
 Action::~Action() {}
 
 Action::ObjCMessageKind Action::getObjCMessageKind(Scope *S,
-                                                   IdentifierInfo *&Name,
+                                                   IdentifierInfo *Name,
                                                    SourceLocation NameLoc,
                                                    bool IsSuper,
-                                                   bool HasTrailingDot) {
+                                                   bool HasTrailingDot,
+                                                   TypeTy *&ReceiverType) {
+  ReceiverType = 0;
+
   if (IsSuper && !HasTrailingDot && S->isInObjcMethodScope())
     return ObjCSuperMessage;
       
-  if (getTypeName(*Name, NameLoc, S))
+  if (TypeTy *TyName = getTypeName(*Name, NameLoc, S)) {
+    DeclSpec DS;
+    const char *PrevSpec = 0;
+    unsigned DiagID = 0;
+    if (!DS.SetTypeSpecType(DeclSpec::TST_typename, NameLoc, PrevSpec,
+                            DiagID, TyName)) {
+      DS.SetRangeEnd(NameLoc);
+      Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+      TypeResult Ty = ActOnTypeName(S, DeclaratorInfo);
+      if (!Ty.isInvalid())
+        ReceiverType = Ty.get();
+    }
     return ObjCClassMessage;
+  }
       
   return ObjCInstanceMessage;
 }

@@ -3867,10 +3867,11 @@ public:
                             SourceLocation propertyNameLoc);
 
   virtual ObjCMessageKind getObjCMessageKind(Scope *S,
-                                             IdentifierInfo *&Name,
+                                             IdentifierInfo *Name,
                                              SourceLocation NameLoc,
                                              bool IsSuper,
-                                             bool HasTrailingDot);
+                                             bool HasTrailingDot,
+                                             TypeTy *&ReceiverType);
 
   virtual OwningExprResult ActOnSuperMessage(Scope *S, SourceLocation SuperLoc,
                                              Selector Sel,
