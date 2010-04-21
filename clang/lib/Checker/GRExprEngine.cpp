@@ -589,7 +589,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXConstructExprClass:
     case Stmt::CXXDefaultArgExprClass:
-    case Stmt::CXXDeleteExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXExprWithTemporariesClass:
     case Stmt::CXXNamedCastExprClass:
@@ -724,6 +723,11 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
     }
 
+    case Stmt::CXXDeleteExprClass: {
+      CXXDeleteExpr *CDE = cast<CXXDeleteExpr>(S);
+      VisitCXXDeleteExpr(CDE, Pred, Dst);
+      break;
+    }
       // FIXME: ChooseExpr is really a constant.  We need to fix
       //        the CFG do not model them as explicit control-flow.
 

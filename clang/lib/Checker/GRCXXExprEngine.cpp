@@ -220,9 +220,20 @@ void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 }
 
+void GRExprEngine::VisitCXXDeleteExpr(CXXDeleteExpr *CDE, ExplodedNode *Pred,
+                                      ExplodedNodeSet &Dst) {
+  // Should do more checking.
+  ExplodedNodeSet ArgEvaluated;
+  Visit(CDE->getArgument(), Pred, ArgEvaluated);
+  for (ExplodedNodeSet::iterator I = ArgEvaluated.begin(), 
+                                 E = ArgEvaluated.end(); I != E; ++I) {
+    const GRState *state = GetState(*I);
+    MakeNode(Dst, CDE, *I, state);
+  }
+}
 
 void GRExprEngine::VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred,
-                                    ExplodedNodeSet & Dst) {
+                                    ExplodedNodeSet &Dst) {
   // Get the this object region from StoreManager.
   const MemRegion *R =
     ValMgr.getRegionManager().getCXXThisRegion(

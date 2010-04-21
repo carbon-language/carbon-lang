@@ -364,6 +364,9 @@ public:
   void VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
                        ExplodedNodeSet &Dst);
 
+  void VisitCXXDeleteExpr(CXXDeleteExpr *CDE, ExplodedNode *Pred,
+                          ExplodedNodeSet &Dst);
+
   void VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
                     ExplodedNodeSet &Dst);
 
