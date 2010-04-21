@@ -596,83 +596,43 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
                                                MultiExprArg Args) {
   // Determine whether we are inside a method or not.
   ObjCMethodDecl *Method = getCurMethodDecl();
-  if (Method) {
-    ObjCInterfaceDecl *Class = Method->getClassInterface();
-    if (!Class) {
-      Diag(SuperLoc, diag::error_no_super_class_message)
-        << Method->getDeclName();
-      return ExprError();
-    }
+  if (!Method) {
+    Diag(SuperLoc, diag::err_invalid_receiver_to_message_super);
+    return ExprError();
+  }
 
-    if (ObjCInterfaceDecl *Super = Class->getSuperClass()) {
-      // We are in a method whose class has a superclass, so 'super'
-      // is acting as a keyword.
-      if (Method->isInstanceMethod()) {
-        // Since we are in an instance method, this is an instance
-        // message to the superclass instance.
-        QualType SuperTy = Context.getObjCInterfaceType(Super);
-        SuperTy = Context.getObjCObjectPointerType(SuperTy);
-        return BuildInstanceMessage(ExprArg(*this), SuperTy, SuperLoc,
-                                    Sel, LBracLoc, SelectorLoc, RBracLoc,
-                                    move(Args));
-      }
+  ObjCInterfaceDecl *Class = Method->getClassInterface();
+  if (!Class) {
+    Diag(SuperLoc, diag::error_no_super_class_message)
+      << Method->getDeclName();
+    return ExprError();
+  }
 
-      // Since we are in a class method, this is a class message to
-      // the superclass.
-      return BuildClassMessage(/*ReceiverTypeInfo=*/0,
-                               Context.getObjCInterfaceType(Super),
-                               SuperLoc, Sel, LBracLoc, SelectorLoc,
-                               RBracLoc, move(Args));
-    } 
-
+  ObjCInterfaceDecl *Super = Class->getSuperClass();
+  if (!Super) {
     // The current class does not have a superclass.
     Diag(SuperLoc, diag::error_no_super_class) << Class->getIdentifier();
     return ExprError();
   }
 
-  Diag(SuperLoc, diag::err_invalid_receiver_to_message_super);
-  return ExprError();
-    
-#if 0
-  // We are not inside a method, or the method is in a class that has
-  // no superclass, so perform normal name lookup on "super".
-  IdentifierInfo &SuperId = Context.Idents.get("super");
-  NamedDecl *Super = LookupSingleName(S, &SuperId, SuperLoc,
-                                      LookupOrdinaryName);
-  if (!Super) {
-    Diag(SuperLoc, diag::err_undeclared_var_use) << &SuperId;
-    return ExprError();
+  // We are in a method whose class has a superclass, so 'super'
+  // is acting as a keyword.
+  if (Method->isInstanceMethod()) {
+    // Since we are in an instance method, this is an instance
+    // message to the superclass instance.
+    QualType SuperTy = Context.getObjCInterfaceType(Super);
+    SuperTy = Context.getObjCObjectPointerType(SuperTy);
+    return BuildInstanceMessage(ExprArg(*this), SuperTy, SuperLoc,
+                                Sel, LBracLoc, SelectorLoc, RBracLoc,
+                                move(Args));
   }
-
-  if (isa<TypeDecl>(Super) || isa<ObjCInterfaceDecl>(Super)) {
-    // Name lookup found a type named 'super'; create a class message
-    // sending to it.
-    QualType SuperType = 
-      isa<TypeDecl>(Super)? Context.getTypeDeclType(cast<TypeDecl>(Super))
-               : Context.getObjCInterfaceType(cast<ObjCInterfaceDecl>(Super));
-    TypeSourceInfo *SuperTypeInfo
-      = Context.getTrivialTypeSourceInfo(SuperType, SuperLoc);
-    return BuildClassMessage(SuperTypeInfo, SuperType, 
-                             /*SuperLoc=*/SourceLocation(),
-                             Sel, LBracLoc, SelectorLoc, RBracLoc,
-                             move(Args));
-  }
-
-  // Assume that "super" is the name of a value of some
-  // sort. Type-check it as an id-expression.
-  CXXScopeSpec SS;
-  UnqualifiedId Id;
-  Id.setIdentifier(&SuperId, SuperLoc);
-  OwningExprResult Receiver = ActOnIdExpression(S, SS, Id, false, false);
-  if (Receiver.isInvalid() || !Receiver.get())
-    return ExprError();
-
-  Expr *ReceiverExpr = static_cast<Expr *>(Receiver.get());
-  return BuildInstanceMessage(move(Receiver), ReceiverExpr->getType(),
-                              /*SuperLoc=*/SourceLocation(),
-                              Sel, LBracLoc, SelectorLoc, RBracLoc,
-                              move(Args));
-#endif
+  
+  // Since we are in a class method, this is a class message to
+  // the superclass.
+  return BuildClassMessage(/*ReceiverTypeInfo=*/0,
+                           Context.getObjCInterfaceType(Super),
+                           SuperLoc, Sel, LBracLoc, SelectorLoc,
+                           RBracLoc, move(Args));
 }
 
 /// \brief Build an Objective-C class message expression.
