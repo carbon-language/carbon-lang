@@ -281,53 +281,6 @@ The LLVM Machine Code (MC) Toolkit project is ...
    projects that have already been updated to work with LLVM 2.7.</p>
 </div>
 
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="Rubinius">Rubinius</a>
-</div>
-
-<div class="doc_text">
-Need update.
-<!--
-<p><a href="http://github.com/evanphx/rubinius">Rubinius</a> is an environment
-for running Ruby code which strives to write as much of the core class
-implementation in Ruby as possible. Combined with a bytecode interpreting VM, it
-uses LLVM to optimize and compile ruby code down to machine code. Techniques
-such as type feedback, method inlining, and uncommon traps are all used to
-remove dynamism from ruby execution and increase performance.</p>
-
-<p>Since LLVM 2.5, Rubinius has made several major leaps forward, implementing
-a counter based JIT, type feedback and speculative method inlining.
--->
-</p>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="macruby">MacRuby</a>
-</div>
-
-<div class="doc_text">
-
-<p>
-Need update.
-<!--
-<a href="http://macruby.org">MacRuby</a> is an implementation of Ruby on top of
-core Mac OS X technologies, such as the Objective-C common runtime and garbage
-collector and the CoreFoundation framework. It is principally developed by
-Apple and aims at enabling the creation of full-fledged Mac OS X applications.
-</p>
-
-<p>
-MacRuby uses LLVM for optimization passes, JIT and AOT compilation of Ruby
-expressions. It also uses zero-cost DWARF exceptions to implement Ruby exception
-handling.--> </p>
-
-</div>
-
-
 <!--=========================================================================-->
 <div class="doc_subsection">
 <a name="pure">Pure</a>
@@ -347,27 +300,6 @@ an easy-to-use C interface. The interpreter uses LLVM as a backend to
 <p>Pure versions 0.43 and later have been tested and are known to work with
 LLVM 2.7 (and continue to work with older LLVM releases >= 2.5).</p>
 
-</div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="ldc">LLVM D Compiler</a>
-</div>
-
-<div class="doc_text">
-<p>
-Need update.
-<!--
-<a href="http://www.dsource.org/projects/ldc">LDC</a> is an implementation of
-the D Programming Language using the LLVM optimizer and code generator.
-The LDC project works great with the LLVM 2.6 release.  General improvements in
-this
-cycle have included new inline asm constraint handling, better debug info
-support, general bug fixes and better x86-64 support.  This has allowed
-some major improvements in LDC, getting it much closer to being as
-fully featured as the original DMD compiler from DigitalMars.-->
-</p>
 </div>
 
 <!--=========================================================================-->
@@ -397,42 +329,6 @@ compatible and significantly faster.  It uses LLVM's optimization passes and JIT
 compiler.
 </p>
 </div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="llvm-lua">llvm-lua</a>
-</div>
-
-<div class="doc_text">
-<p>
-Need update.
-<!--
-<a href="http://code.google.com/p/llvm-lua/">LLVM-Lua</a> uses LLVM to add JIT
-and static compiling support to the Lua VM.  Lua bytecode is analyzed to
-remove type checks, then LLVM is used to compile the bytecode down to machine
-code.-->
-</p>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="icedtea">IcedTea Java Virtual Machine Implementation</a>
-</div>
-
-<div class="doc_text">
-<p>
-Need update.
-<!--
-<a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea</a> provides a
-harness to build OpenJDK using only free software build tools and to provide
-replacements for the not-yet free parts of OpenJDK.  One of the extensions that
-IcedTea provides is a new JIT compiler named <a
-href="http://icedtea.classpath.org/wiki/ZeroSharkFaq">Shark</a> which uses LLVM
-to provide native code generation without introducing processor-dependent
-code.-->
-</p>
-</div>
-
 
 <!--=========================================================================-->
 <div class="doc_subsection">
