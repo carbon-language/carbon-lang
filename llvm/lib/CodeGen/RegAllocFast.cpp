@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -123,6 +124,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -217,10 +219,6 @@ namespace {
     MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                 unsigned OpNum, SmallSet<unsigned, 4> &RRegs,
                                 unsigned PhysReg);
-
-    /// ComputeLocalLiveness - Computes liveness of registers within a basic
-    /// block, setting the killed/dead flags as appropriate.
-    void ComputeLocalLiveness(MachineBasicBlock& MBB);
 
     void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                        unsigned PhysReg);
@@ -538,177 +536,6 @@ static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
   return false;
 }
 
-// precedes - Helper function to determine with MachineInstr A
-// precedes MachineInstr B within the same MBB.
-static bool precedes(MachineBasicBlock::iterator A,
-                     MachineBasicBlock::iterator B) {
-  if (A == B)
-    return false;
-
-  MachineBasicBlock::iterator I = A->getParent()->begin();
-  while (I != A->getParent()->end()) {
-    if (I == A)
-      return true;
-    else if (I == B)
-      return false;
-
-    ++I;
-  }
-
-  return false;
-}
-
-/// ComputeLocalLiveness - Computes liveness of registers within a basic
-/// block, setting the killed/dead flags as appropriate.
-void RAFast::ComputeLocalLiveness(MachineBasicBlock& MBB) {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  // Keep track of the most recently seen previous use or def of each reg,
-  // so that we can update them with dead/kill markers.
-  DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
-  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-       I != E; ++I) {
-    if (I->isDebugValue())
-      continue;
-
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = I->getOperand(i);
-      // Uses don't trigger any flags, but we need to save
-      // them for later.  Also, we have to process these
-      // _before_ processing the defs, since an instr
-      // uses regs before it defs them.
-      if (!MO.isReg() || !MO.getReg() || !MO.isUse())
-        continue;
-
-      LastUseDef[MO.getReg()] = std::make_pair(I, i);
-
-      if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) continue;
-
-      const unsigned *Aliases = TRI->getAliasSet(MO.getReg());
-      if (Aliases == 0)
-        continue;
-
-      while (*Aliases) {
-        DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
-          alias = LastUseDef.find(*Aliases);
-
-        if (alias != LastUseDef.end() && alias->second.first != I)
-          LastUseDef[*Aliases] = std::make_pair(I, i);
-
-        ++Aliases;
-      }
-    }
-
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = I->getOperand(i);
-      // Defs others than 2-addr redefs _do_ trigger flag changes:
-      //   - A def followed by a def is dead
-      //   - A use followed by a def is a kill
-      if (!MO.isReg() || !MO.getReg() || !MO.isDef()) continue;
-
-      DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
-        last = LastUseDef.find(MO.getReg());
-      if (last != LastUseDef.end()) {
-        // Check if this is a two address instruction.  If so, then
-        // the def does not kill the use.
-        if (last->second.first == I &&
-            I->isRegTiedToUseOperand(i))
-          continue;
-
-        MachineOperand &lastUD =
-                    last->second.first->getOperand(last->second.second);
-        if (lastUD.isDef())
-          lastUD.setIsDead(true);
-        else
-          lastUD.setIsKill(true);
-      }
-
-      LastUseDef[MO.getReg()] = std::make_pair(I, i);
-    }
-  }
-
-  // Live-out (of the function) registers contain return values of the function,
-  // so we need to make sure they are alive at return time.
-  MachineBasicBlock::iterator Ret = MBB.getFirstTerminator();
-  bool BBEndsInReturn = (Ret != MBB.end() && Ret->getDesc().isReturn());
-
-  if (BBEndsInReturn)
-    for (MachineRegisterInfo::liveout_iterator
-         I = MF->getRegInfo().liveout_begin(),
-         E = MF->getRegInfo().liveout_end(); I != E; ++I)
-      if (!Ret->readsRegister(*I)) {
-        Ret->addOperand(MachineOperand::CreateReg(*I, false, true));
-        LastUseDef[*I] = std::make_pair(Ret, Ret->getNumOperands()-1);
-      }
-
-  // Finally, loop over the final use/def of each reg
-  // in the block and determine if it is dead.
-  for (DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
-       I = LastUseDef.begin(), E = LastUseDef.end(); I != E; ++I) {
-    MachineInstr *MI = I->second.first;
-    unsigned idx = I->second.second;
-    MachineOperand &MO = MI->getOperand(idx);
-
-    bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(MO.getReg());
-
-    // A crude approximation of "live-out" calculation
-    bool usedOutsideBlock = isPhysReg ? false :
-          UsedInMultipleBlocks.test(MO.getReg() -
-                                    TargetRegisterInfo::FirstVirtualRegister);
-
-    // If the machine BB ends in a return instruction, then the value isn't used
-    // outside of the BB.
-    if (!isPhysReg && (!usedOutsideBlock || BBEndsInReturn)) {
-      // DBG_VALUE complicates this:  if the only refs of a register outside
-      // this block are DBG_VALUE, we can't keep the reg live just for that,
-      // as it will cause the reg to be spilled at the end of this block when
-      // it wouldn't have been otherwise.  Nullify the DBG_VALUEs when that
-      // happens.
-      bool UsedByDebugValueOnly = false;
-      for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-             UE = MRI.reg_end(); UI != UE; ++UI) {
-        // Two cases:
-        // - used in another block
-        // - used in the same block before it is defined (loop)
-        if (UI->getParent() == &MBB &&
-            !(MO.isDef() && UI.getOperand().isUse() && precedes(&*UI, MI)))
-          continue;
-
-        if (UI->isDebugValue()) {
-          UsedByDebugValueOnly = true;
-          continue;
-        }
-
-        // A non-DBG_VALUE use means we can leave DBG_VALUE uses alone.
-        UsedInMultipleBlocks.set(MO.getReg() -
-                                 TargetRegisterInfo::FirstVirtualRegister);
-        usedOutsideBlock = true;
-        UsedByDebugValueOnly = false;
-        break;
-      }
-
-      if (UsedByDebugValueOnly)
-        for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-             UE = MRI.reg_end(); UI != UE; ++UI)
-          if (UI->isDebugValue() &&
-              (UI->getParent() != &MBB ||
-               (MO.isDef() && precedes(&*UI, MI))))
-            UI.getOperand().setReg(0U);
-    }
-
-    // Physical registers and those that are not live-out of the block are
-    // killed/dead at their last use/def within this block.
-    if (isPhysReg || !usedOutsideBlock || BBEndsInReturn) {
-      if (MO.isUse()) {
-        // Don't mark uses that are tied to defs as kills.
-        if (!MI->isRegTiedToDefOperand(idx))
-          MO.setIsKill(true);
-      } else {
-        MO.setIsDead(true);
-      }
-    }
-  }
-}
-
 void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MII = MBB.begin();
@@ -732,8 +559,6 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MF->getRegInfo().setPhysRegUsed(*SubRegs);
     }
   }
-
-  ComputeLocalLiveness(MBB);
 
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
