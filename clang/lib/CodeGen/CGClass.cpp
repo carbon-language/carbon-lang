@@ -160,7 +160,10 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     return 0;
   }
 
+#if 0
+  // FIXME: Re-enable this assert when the underlying bugs have been fixed.
   assert(!Paths.isAmbiguous(BTy) && "Path is ambiguous");
+#endif
 
   unsigned Start = 0;
 
