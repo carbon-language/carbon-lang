@@ -544,11 +544,10 @@ href="http://blog.llvm.org/2009/12/introduction-to-load-elimination-in-gvn.html"
  Advanced Topics in Redundant Load Elimination with a Focus on PHI Translation
  Blog Post</a> for more details.</li>
 <li>The module <a href="LangRef.html#datalayout">target data string</a> now
-    includes a notion of what the 'native' integer data types a for the target,
-    which allows various optimizations to use.  This helps mid-level
-    optimizations avoid promoting complex sequences of operations to data types
-    that are not natively supported (e.g. converting i32 operations to i64 on
-    a 32-bit chip).</li>
+    includes a notion of 'native' integer data types for the target. This
+    helps mid-level optimizations avoid promoting complex sequences of
+    operations to data types that are not natively supported (e.g. converting
+    i32 operations to i64 on 32-bit chips).</li>
 <li>The mid-level optimizer is now conservative when operating on a module with
     no target data.  Previously, it would default to SparcV9 settings, which is
     not what most people expected.</li>
