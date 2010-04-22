@@ -115,13 +115,15 @@ development.  Here we include updates on these subprojects.
 
 <div class="doc_text">
 
-<p>The <a href="http://clang.llvm.org/">Clang project</a> is ...</p>
+<p><a href="http://clang.llvm.org/">Clang</a> is an LLVM front end for the C, C++, and Objective-C languages. Clang aims to provide a better user experience through expressive diagnostics, a high level of conformance to language standards, fast compilation, and low memory use. Like LLVM, Clang provides a modular, library-based architecture that makes it suitable for creating or integrating with other development tools. Clang is considered a production-quality compiler for C and Objective-C on x86 (32- and 64-bit).</p>
 
 <p>In the LLVM 2.7 time-frame, the Clang team has made many improvements:</p>
 
 <ul>
-<li>FIXME: C++! Include a link to cxx_compatibility.html  Clang 2.7 can
-bootstrap???</li>
+ 
+<li>C++ Support: Clang is now capable of self-hosting! While still alpha-quality, Clang's C++ support has matured enough to build LLVM and Clang, and C++ is now enabled by default. See the <a href="http://clang.llvm.org/cxx_compatibility.html">Clang C++ compatibility page</a> for common C++ migration issues.</li>
+
+<li>New warnings: Clang contains a number of new warnings, including control-flow warnings (unreachable code, missing return statements in a non-<code>void</code> function, etc.), sign-comparison warnings, and improved format-string warnings.</li>
 
 <li>CIndex API and Python bindings: Clang now includes a C API as part of the
 CIndex library. Although we make make some changes to the API in the future, it
