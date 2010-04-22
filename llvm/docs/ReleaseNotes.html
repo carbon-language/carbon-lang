@@ -729,7 +729,7 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
     use this to make more accurate estimates of the code size impact of various
     optimizations.</li>
 <li>A new <a href="http://llvm.org/doxygen/InstructionSimplify_8h-source.html">
-    llvm/Analysis/InstructionSimplify.h</a> interface available for doing
+    llvm/Analysis/InstructionSimplify.h</a> interface is available for doing
     symbolic simplification of instructions (e.g. <tt>a+0</tt> -&gt; <tt>a</tt>)
     without requiring the instruction to exist.  This centralizes a lot of
     ad-hoc symbolic manipulation code scattered in various passes.</li>
@@ -737,9 +737,9 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
     href="http://llvm.org/doxygen/SSAUpdater_8h-source.html">SSAUpdater</a>
     class which efficiently supports
     doing unstructured SSA update operations.  This centralized a bunch of code
-    scattered through various passes (e.g. jump threading, lcssa, loop rotate,
-    etc) for doing this sort of thing.  The code generator has an similar
-    <a href="http://llvm.org/doxygen/MachineSSAUpdater_8h-source.html">
+    scattered throughout various passes (e.g. jump threading, lcssa,
+    loop rotate, etc) for doing this sort of thing.  The code generator has a
+    similar <a href="http://llvm.org/doxygen/MachineSSAUpdater_8h-source.html">
     MachineSSAUpdater</a> class.</li>
 <li>The <a href="http://llvm.org/doxygen/Regex_8h-source.html">
     llvm/Support/Regex.h</a> header exposes a platform independent regular
