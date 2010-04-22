@@ -89,6 +89,7 @@
       <li><a href="#complexconstants">Complex Constants</a></li>
       <li><a href="#globalconstants">Global Variable and Function Addresses</a></li>
       <li><a href="#undefvalues">Undefined Values</a></li>
+      <li><a href="#trapvalues">Trap Values</a></li>
       <li><a href="#blockaddress">Addresses of Basic Blocks</a></li>
       <li><a href="#constantexprs">Constant Expressions</a></li>
     </ol>
@@ -2303,6 +2304,34 @@ has undefined behavior.</p>
 </div>
 
 <!-- ======================================================================= -->
+<div class="doc_subsection"><a name="trapvalues">Trap Values</a></div>
+<div class="doc_text">
+
+<p>Trap values are similar to <a href="undefvalues">undef values</a>, however
+   instead of representing an unspecified bit pattern, they represent the
+   fact that an instruction or constant expression which cannot evoke side
+   effects has nevertheless detected a condition which results in undefined
+   behavior.<p>
+
+<p>Any non-void instruction or constant expression other than non-intrinsic
+   calls or invokes with a trap operand has trap as its result value.
+   Any instruction with a trap operand which may have side effects emits
+   those side effects as if it had an undef operand instead.</p>
+
+<p>For example, an <a href="#i_and"><tt>and</tt></a> of a trap value with
+   zero still has a trap value result. Using that value as an index in a
+   <a href="#i_getelementptr"><tt>getelementptr</tt></a> yields a trap
+   result. Using that result as the address of a
+   <a href="#i_store"><tt>store</tt></a> produces undefined behavior.</p>
+
+<p>There is currently no way of representing a trap constant in the IR; they
+   only exist when produced by certain instructions, such as an
+   <a href="#i_add"><tt>add</tt></a> with the <tt>nsw</tt> flag
+   set, when overflow occurs.</p>
+
+</div>
+
+<!-- ======================================================================= -->
 <div class="doc_subsection"><a name="blockaddress">Addresses of Basic
     Blocks</a></div>
 <div class="doc_text">
@@ -3104,7 +3133,8 @@ Instruction</a> </div>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>add</tt>
-   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
+   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -3184,7 +3214,8 @@ Instruction</a> </div>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>sub</tt>
-   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
+   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -3270,7 +3301,8 @@ Instruction</a> </div>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>mul</tt>
-   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
+   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
