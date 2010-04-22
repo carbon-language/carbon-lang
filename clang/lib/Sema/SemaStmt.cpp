@@ -1542,10 +1542,28 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
                                            Finally.takeAs<Stmt>()));
 }
 
+Sema::OwningStmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
+                                                  ExprArg ThrowE) {
+  Expr *Throw = static_cast<Expr *>(ThrowE.get());
+  if (Throw) {
+    QualType ThrowType = Throw->getType();
+    // Make sure the expression type is an ObjC pointer or "void *".
+    if (!ThrowType->isDependentType() &&
+        !ThrowType->isObjCObjectPointerType()) {
+      const PointerType *PT = ThrowType->getAs<PointerType>();
+      if (!PT || !PT->getPointeeType()->isVoidType())
+        return StmtError(Diag(AtLoc, diag::error_objc_throw_expects_object)
+                         << Throw->getType() << Throw->getSourceRange());
+    }
+  }
+  
+  return Owned(new (Context) ObjCAtThrowStmt(AtLoc, ThrowE.takeAs<Expr>()));
+}
+
 Action::OwningStmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
-  Expr *ThrowExpr = expr.takeAs<Expr>();
-  if (!ThrowExpr) {
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg Throw, 
+                           Scope *CurScope) {
+  if (!Throw.get()) {
     // @throw without an expression designates a rethrow (which much occur
     // in the context of an @catch clause).
     Scope *AtCatchParent = CurScope;
@@ -1553,17 +1571,9 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
       AtCatchParent = AtCatchParent->getParent();
     if (!AtCatchParent)
       return StmtError(Diag(AtLoc, diag::error_rethrow_used_outside_catch));
-  } else {
-    QualType ThrowType = ThrowExpr->getType();
-    // Make sure the expression type is an ObjC pointer or "void *".
-    if (!ThrowType->isObjCObjectPointerType()) {
-      const PointerType *PT = ThrowType->getAs<PointerType>();
-      if (!PT || !PT->getPointeeType()->isVoidType())
-        return StmtError(Diag(AtLoc, diag::error_objc_throw_expects_object)
-                        << ThrowExpr->getType() << ThrowExpr->getSourceRange());
-    }
-  }
-  return Owned(new (Context) ObjCAtThrowStmt(AtLoc, ThrowExpr));
+  } 
+  
+  return BuildObjCAtThrowStmt(AtLoc, move(Throw));
 }
 
 Action::OwningStmtResult

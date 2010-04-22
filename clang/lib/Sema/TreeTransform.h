@@ -890,6 +890,15 @@ public:
                                   RParenLoc, MSAsm);
   }
   
+  /// \brief Build a new Objective-C throw statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCAtThrowStmt(SourceLocation AtLoc,
+                                          ExprArg Operand) {
+    return getSema().BuildObjCAtThrowStmt(AtLoc, move(Operand));
+  }
+  
   /// \brief Build a new C++ exception declaration.
   ///
   /// By default, performs semantic analysis to build the new decaration.
@@ -3649,9 +3658,18 @@ TreeTransform<Derived>::TransformObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtThrowStmt(ObjCAtThrowStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C @throw statement");
-  return SemaRef.Owned(S->Retain());
+  OwningExprResult Operand(SemaRef);
+  if (S->getThrowExpr()) {
+    Operand = getDerived().TransformExpr(S->getThrowExpr());
+    if (Operand.isInvalid())
+      return getSema().StmtError();
+  }
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Operand.get() == S->getThrowExpr())
+    return getSema().Owned(S->Retain());
+    
+  return getDerived().RebuildObjCAtThrowStmt(S->getThrowLoc(), move(Operand));
 }
 
 template<typename Derived>

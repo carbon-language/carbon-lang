@@ -1687,6 +1687,8 @@ public:
                                               StmtArg Try,
                                               StmtArg Catch, StmtArg Finally);
 
+  virtual OwningStmtResult BuildObjCAtThrowStmt(SourceLocation AtLoc,
+                                                ExprArg Throw);
   virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
                                                 ExprArg Throw,
                                                 Scope *CurScope);
