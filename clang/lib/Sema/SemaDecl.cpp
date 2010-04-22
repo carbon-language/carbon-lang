@@ -3856,7 +3856,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     }
   } else if (VDecl->isFileVarDecl()) {
     if (VDecl->getStorageClass() == VarDecl::Extern && 
-        (!getLangOptions().CPlusPlus || !VDecl->getType().isConstQualified()))
+        (!getLangOptions().CPlusPlus || 
+         !Context.getBaseElementType(VDecl->getType()).isConstQualified()))
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
@@ -5667,6 +5668,9 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   // Check whether the member was user-declared.
   switch (member) {
+  case CXXInvalid:
+    break;
+
   case CXXConstructor:
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
