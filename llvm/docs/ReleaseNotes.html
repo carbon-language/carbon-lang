@@ -29,10 +29,10 @@
 </div>
 
 <!--
-<h1 style="color:red">These are in-progress notes for the upcoming LLVM 2.7
+<h1 style="color:red">These are in-progress notes for the upcoming LLVM 2.8
 release.<br>
 You may prefer the
-<a href="http://llvm.org/releases/2.6/docs/ReleaseNotes.html">LLVM 2.6
+<a href="http://llvm.org/releases/2.6/docs/ReleaseNotes.html">LLVM 2.7
 Release Notes</a>.</h1>-->
 
 <!-- *********************************************************************** -->
@@ -383,7 +383,7 @@ organization changes have happened:
 </p>
 
 <ul>
-<li>LLVM has a new <a href="http://llvm.org/Logo.html">official Logo</a>!</li>
+<li>LLVM has a new <a href="http://llvm.org/Logo.html">official logo</a>!</li>
 
 <li>Ted Kremenek and Doug Gregor have stepped forward as <a
  href="http://llvm.org/docs/DeveloperPolicy.html#owners">Code Owners</a> of the
@@ -396,7 +396,7 @@ organization changes have happened:
 
 <li>The LLVM web pages are now checked into the SVN server, in the "www",
     "www-pubs" and "www-releases" SVN modules.  Previously they were hidden in a
-    largely inaccessible old CVS server.</p>
+    largely inaccessible old CVS server.</li>
 
 <li><a href="http://llvm.org">llvm.org</a> is now hosted on a new (and much
     faster) server.  It is still graciously hosted at the University of Illinois
@@ -414,11 +414,11 @@ organization changes have happened:
 <p>LLVM 2.7 includes several major new capabilities:</p>
 
 <ul>
-<li>This release includes initial support for the <a
+<li>2.7 includes initial support for the <a
   href="http://en.wikipedia.org/wiki/MicroBlaze">MicroBlaze</a> target.
   MicroBlaze is a soft processor core designed for Xilinx FPGAs.</li>
 
-<li>LLVM 2.7 includes a new LLVM IR "extensible metadata" feature.  This feature
+<li>2.7 includes a new LLVM IR "extensible metadata" feature.  This feature
  supports many different use cases, including allowing front-end authors to
  encode source level information into LLVM IR, which is consumed by later
  language-specific passes.  This is a great way to do high-level optimizations
@@ -426,26 +426,26 @@ organization changes have happened:
  href="http://blog.llvm.org/2010/04/extensible-metadata-in-llvm-ir.html">
  Extensible Metadata Blog Post</a> for more information.</li>
  
-<li>LLVM 2.7 encodes <a href="SourceLevelDebugging.html">debug information</a>
+<li>2.7 encodes <a href="SourceLevelDebugging.html">debug information</a>
 in a completely new way, built on extensible metadata.  The new implementation
 is much more memory efficient and paves the way for improvements to optimized
 code debugging experience.</li>
 
-<li>LLVM 2.7 now directly supports taking the address of a label and doing an
+<li>2.7 now directly supports taking the address of a label and doing an
     indirect branch through a pointer.  This is particularly useful for
     interpreter loops, and is used to implement the GCC "address of label"
     extension.  For more information, see the <a 
 href="http://blog.llvm.org/2010/01/address-of-label-and-indirect-branches.html">
 Address of Label and Indirect Branches in LLVM IR Blog Post</a>.
 
-<li>LLVM 2.7 is the first release to start supporting APIs for assembling and
+<li>2.7 is the first release to start supporting APIs for assembling and
     disassembling target machine code.  These APIs are useful for a variety of
     low level clients, and are surfaced in the new "enhanced disassembly" API.
     For more information see the <a 
     href="http://blog.llvm.org/2010/01/x86-disassembler.html">The X86
     Disassembler Blog Post</a> for more information.</li>
 
-<li>LLVM 2.7 includes major parts of the work required by the new MC Project,
+<li>2.7 includes major parts of the work required by the new MC Project,
     which aims to rework our handling of low-level machine code.  A few targets
     have been refactored to support it, and work is underway to support a native
     assembler in LLVM.  This work is not complete in LLVM 2.7, but you has made
@@ -468,17 +468,17 @@ Address of Label and Indirect Branches in LLVM IR Blog Post</a>.
 expose new optimization opportunities:</p>
 
 <ul>
-<li>LLVM IR now supports a 16-bit "half float" data type through two new <a
-    href="LangRef.html#int_fp16">intrinsics</a> and APFloat support.</li>
-<li>LLVM IR supports two <a href="LangRef.html#fnattrs">new function
+<li>LLVM IR now supports a 16-bit "half float" data type through <a
+   href="LangRef.html#int_fp16">two new intrinsics</a> and APFloat support.</li>
+<li>LLVM IR supports two new <a href="LangRef.html#fnattrs">function
     attributes</a>: inlinehint and alignstack(n).  The former is a hint to the
-    optimizer that a function was declared 'inline' and thus it might be useful
-    to increase the chances the the inliner actually inline it.  The later
+    optimizer that a function was declared 'inline' and thus the inliner should
+    weight it higher when considering inlining it.  The later
     indicates to the code generator that the function diverges from the platform
     ABI on stack alignment.</li>
 <li>The new <a href="LangRef.html#int_objectsize">llvm.objectsize</a> intrinsic
     allows the optimizer to infer the sizes of memory objects in some cases.
-    This intrinsic is used to implement the GCC __builtin_object_size
+    This intrinsic is used to implement the GCC <tt>__builtin_object_size</tt>
     extension.</li>
 <li>LLVM 2.7 has pre-alpha support for <a
   href="http://llvm.org/docs/LangRef.html#t_union">unions in LLVM IR</a>.
@@ -501,47 +501,50 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.</li>
-<li>Instcombine is now a library, has its own IRBuilder to simplify itself.</li>
-<li>Better code size analysis in loop unswitch, inliner code split out to a new 
-  CodeMetrics class for reuse.</li>
-<li>Many changes to the pass ordering for improved optimization
-   effectiveness.</li>
-<li>BasicAA improved to be less dependent on "type safe" pointers, it can now look
-  through bitcasts more aggressively.</li>
-<li>GVN PHI Translation improvements. blog post: http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html</li>
-<li>New SCEV AA pass: -scev-aa</li>
-<li>Target data now has notion of 'native' integer data types which optimizations can use.</li>
-<li>Opt now works conservatively if no target data is set (is this fully working?)</li>
-<li>New Analysis/InstructionSimplify.h interface for simplifying instructions that don't exist.</li>
+<li>The inliner reuses now merges arrays stack objects in different callees when
+    inlining multiple call sites into one function.  This reduces the stack size
+    of the resultant function.</li>
+<li>The -basicaa alias analysis pass (which is the default) has been improved to
+    be less dependent on "type safe" pointers.  It can now look through bitcasts
+    and other constructs more aggressively, allowing better load/store
+    optimization.</li>
+<li>The load elimination optimization in the GVN Pass [<a
+href="http://blog.llvm.org/2009/12/introduction-to-load-elimination-in-gvn.html">intro
+ blog post</a>] has been substantially improved to be more aggressive about
+ partial redundancy elimination and do more aggressive phi translation.  Please
+ see the <a
+ href="http://blog.llvm.org/2009/12/advanced-topics-in-redundant-load.html">
+ Advanced Topics in Redundant Load Elimination with a Focus on PHI Translation
+ Blog Post</a> for more details.</li>
+<li>The module <a href="LangRef.html#datalayout">target data string</a> now
+    includes a notion of what the 'native' integer data types a for the target,
+    which allows various optimizations to use.  This helps mid-level
+    optimizations avoid promoting complex sequences of operations to data types
+    that are not natively supported (e.g. converting i32 operations to i64 on
+    a 32-bit chip).</li>
+<li>The mid-level optimizer is now conservative when operating on a module with
+    no target data.  Previously, it would default to SparcV9 settings, which is
+    not what most people expected.</li>
 <li>Jump threading is now much more aggressive at simplifying correlated
-   conditionals and threading blocks with otherwise complex logic. CondProp pass
-   removed (functionality merged into jump threading).</li>
-<li>New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
-  changed jump threading, GVN, etc to use it which simplified them and speed
-  them up.</li>
+   conditionals and threading blocks with otherwise complex logic. It has
+   subsumed the old "Conditional Propagation" pass, and -condprop has been
+   removed from LLVM 2.7.</li>
+<li>The -instcombine pass has been refactored from being one huge file to being
+    a library of its own.  Internally, it uses a customized IRBuilder to clean
+    it up and simplify it.</li>
 
+<li>The optimal edge profiling pass is reliable and much more complete than in
+    2.6.  It can be used with the llvm-prof tool but isn't wired up to the
+    llvm-gcc and clang command line options yet.</li>
 
-<li>
-The Optimal Edge Profiling implementation in 2.6 was more a proof of 
-concept. The current implementation (the one that will go into 2.7) is 
-now stable and (as far as my tests go) bug free.
+<li>A new experimental alias analysis implementation, -scev-aa, has been added.
+    It uses LLVM's Scalar Evolution implementation to do symbolic analysis of
+    pointer offset expressions to disambiguate pointers.  It can catch a few
+    cases that basicaa cannot, particularly in complex loop nests.</li>
 
-The profiling with instrumentation via "opt" and analysis via the tool 
-"llvm-prof" should Work As Expected (TM).
-
-Two things are missing:
-
-*) Still missing is the modification of all -std-compile-opt passes to 
-update the profiling information according to the changes made to the 
-CFG, I'm planning to do this after my master thesis is finished. This 
-will enable all passes to use the ProfileInfo if available and base 
-decisions on that information.
-
-*) GCC has the options "-pg", "-fprofile-arcs" and "--coverage" that 
-insert profiling code and "-fprofile-use" to use them the next time 
-during compilation. I guess this options should also work properly in 
-llvm-gcc and clang?</li>
+<li>As usual, there are countless minor optimization improvements and bug fixes,
+    and the default pass ordering has been tweaked for improved optimization
+    effectiveness.</li>
 
 </ul>
 
@@ -670,7 +673,25 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
 </p>
 
 <ul>
-<li>The llvm/Support/Regex.h header exposes a platform independent regular
+<li>The optimizer uses the new CodeMetrics class to measure the size of code.
+    Various passes that use thing (like the inliner, loop unswitcher, etc) all
+    use this to make more accurate estimates of the code size impact of various
+    optimizations.</li>
+<li>A new <a href="http://llvm.org/doxygen/InstructionSimplify_8h-source.html">
+    llvm/Analysis/InstructionSimplify.h</a> interface available for doing
+    symbolic simplification of instructions (e.g. <tt>a+0</tt> -&gt; <tt>a</tt>)
+    without requiring the instruction to exist.  This centralizes a lot of
+    ad-hoc symbolic manipulation code scattered in various passes.</li>
+<li>The optimizer now uses a new <a
+    href="http://llvm.org/doxygen/SSAUpdater_8h-source.html">SSAUpdater</a>
+    class which efficiently supports
+    doing unstructured SSA update operations.  This centralized a bunch of code
+    scattered through various passes (e.g. jump threading, lcssa, loop rotate,
+    etc) for doing this sort of thing.  The code generator has an similar
+    <a href="http://llvm.org/doxygen/MachineSSAUpdater_8h-source.html">
+    MachineSSAUpdater</a> class.</li>
+<li>The <a href="http://llvm.org/doxygen/Regex_8h-source.html">
+    llvm/Support/Regex.h</a> header exposes a platform independent regular
     expression API.  Building on this, the <a
     href="TestingGuide.html#FileCheck">FileCheck</a> utility now supports
     regular exressions.</li>
