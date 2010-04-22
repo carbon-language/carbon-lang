@@ -250,6 +250,10 @@ public:
   /// GetAddrOfConstantCFString - Return a pointer to a constant CFString object
   /// for the given string.
   llvm::Constant *GetAddrOfConstantCFString(const StringLiteral *Literal);
+  
+  /// GetAddrOfConstantNSString - Return a pointer to a constant NSString object
+  /// for the given string.
+  llvm::Constant *GetAddrOfConstantNSString(const StringLiteral *Literal);
 
   /// GetAddrOfConstantStringFromLiteral - Return a pointer to a constant array
   /// for the given string literal.

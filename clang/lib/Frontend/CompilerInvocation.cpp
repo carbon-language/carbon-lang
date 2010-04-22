@@ -549,6 +549,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.ObjCGCBitmapPrint)
     Res.push_back("-print-ivar-layout");
+  if (Opts.NoConstantCFStrings)
+    Res.push_back("-fno-constant-cfstrings");
   if (!Opts.AccessControl)
     Res.push_back("-fno-access-control");
   if (!Opts.CharIsSigned)
@@ -1180,6 +1182,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
 
   if (Args.hasArg(OPT_print_ivar_layout))
     Opts.ObjCGCBitmapPrint = 1;
+  if (Args.hasArg(OPT_fno_constant_cfstrings))
+    Opts.NoConstantCFStrings = 1;
 
   if (Args.hasArg(OPT_faltivec))
     Opts.AltiVec = 1;

@@ -101,6 +101,7 @@ public:
   unsigned CatchUndefined    : 1; // Generate code to check for undefined ops.
   unsigned DumpRecordLayouts : 1; /// Dump the layout of IRgen'd records.
   unsigned DumpVTableLayouts : 1; /// Dump the layouts of emitted vtables.
+  unsigned NoConstantCFStrings : 1;  // Do not do CF strings
 
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
@@ -134,6 +135,7 @@ public:
     GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
+    NoConstantCFStrings = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;

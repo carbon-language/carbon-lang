@@ -1593,6 +1593,12 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   return GV;
 }
 
+llvm::Constant *
+CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
+  // FIXME. This is temporary so -fno-constant-cfstrings same as old.
+  return GetAddrOfConstantCFString(Literal);
+}
+
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {

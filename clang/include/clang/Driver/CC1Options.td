@@ -385,6 +385,8 @@ def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">,
 def fconstant_string_class : Separate<"-fconstant-string-class">,
   MetaVarName<"<class name>">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;
+def fno_constant_cfstrings : Flag<"-fno-constant-cfstrings">,
+  HelpText<"Enable creation of CodeFoundation-type constant strings">;
 def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,

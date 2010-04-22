@@ -1493,9 +1493,20 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   };
 */
 
+/// or Generate a constant NSString object.
+/*
+   struct __builtin_NSString {
+     const int *isa; // point to __NSConstantStringClassReference
+     const char *str;
+     unsigned int length;
+   };
+*/
+
 llvm::Constant *CGObjCCommonMac::GenerateConstantString(
   const StringLiteral *SL) {
-  return CGM.GetAddrOfConstantCFString(SL);
+  return (CGM.getLangOptions().NoConstantCFStrings == 0 ? 
+          CGM.GetAddrOfConstantCFString(SL) :
+          CGM.GetAddrOfConstantNSString(SL));
 }
 
 /// Generates a message send where the super is the receiver.  This is
