@@ -598,13 +598,26 @@ void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   OS << "  LLVMType:" << *LLVMType << "\n";
   OS << "  ContainsPointerToDataMember:" << ContainsPointerToDataMember << "\n";
   OS << "  BitFields:[\n";
+
+  // Print bit-field infos in declaration order.
+  std::vector<std::pair<unsigned, const CGBitFieldInfo*> > BFIs;
   for (llvm::DenseMap<const FieldDecl*, CGBitFieldInfo>::const_iterator
          it = BitFields.begin(), ie = BitFields.end();
        it != ie; ++it) {
+    const RecordDecl *RD = it->first->getParent();
+    unsigned Index = 0;
+    for (RecordDecl::field_iterator
+           it2 = RD->field_begin(); *it2 != it->first; ++it2)
+      ++Index;
+    BFIs.push_back(std::make_pair(Index, &it->second));
+  }
+  llvm::array_pod_sort(BFIs.begin(), BFIs.end());
+  for (unsigned i = 0, e = BFIs.size(); i != e; ++i) {
     OS.indent(4);
-    it->second.print(OS);
+    BFIs[i].second->print(OS);
     OS << "\n";
   }
+
   OS << "]>\n";
 }
 
