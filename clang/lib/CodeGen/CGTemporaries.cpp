@@ -23,7 +23,7 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
          "Pushed the same temporary twice; AST is likely wrong");
   llvm::BasicBlock *DtorBlock = createBasicBlock("temp.dtor");
 
-  llvm::Value *CondPtr = 0;
+  llvm::AllocaInst *CondPtr = 0;
 
   // Check if temporaries need to be conditional. If so, we'll create a
   // condition boolean, initialize it to 0 and
@@ -32,10 +32,7 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
 
     // Initialize it to false. This initialization takes place right after
     // the alloca insert point.
-    llvm::StoreInst *SI =
-      new llvm::StoreInst(llvm::ConstantInt::getFalse(VMContext), CondPtr);
-    llvm::BasicBlock *Block = AllocaInsertPt->getParent();
-    Block->getInstList().insertAfter((llvm::Instruction *)AllocaInsertPt, SI);
+    InitTempAlloca(CondPtr, llvm::ConstantInt::getFalse(VMContext));
 
     // Now set it to true.
     Builder.CreateStore(llvm::ConstantInt::getTrue(VMContext), CondPtr);

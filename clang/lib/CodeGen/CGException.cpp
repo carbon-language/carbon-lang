@@ -122,82 +122,71 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "_ZSt9terminatev");
 }
 
-// CopyObject - Utility to copy an object.  Calls copy constructor as necessary.
-// DestPtr is casted to the right type.
-static void CopyObject(CodeGenFunction &CGF, const Expr *E, 
-                       llvm::Value *DestPtr, llvm::Value *ExceptionPtrPtr) {
-  QualType ObjectType = E->getType();
+// Emits an exception expression into the given location.  This
+// differs from EmitAnyExprToMem only in that, if a final copy-ctor
+// call is required, an exception within that copy ctor causes
+// std::terminate to be invoked.
+static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E, 
+                             llvm::Value *ExnLoc) {
+  // We want to release the allocated exception object if this
+  // expression throws.  We do this by pushing an EH-only cleanup
+  // block which, furthermore, deactivates itself after the expression
+  // is complete.
+  llvm::AllocaInst *ShouldFreeVar =
+    CGF.CreateTempAlloca(llvm::Type::getInt1Ty(CGF.getLLVMContext()),
+                         "should-free-exnobj.var");
+  CGF.InitTempAlloca(ShouldFreeVar,
+                     llvm::ConstantInt::getFalse(CGF.getLLVMContext()));
 
-  // Store the throw exception in the exception object.
-  if (!CGF.hasAggregateLLVMType(ObjectType)) {
-    llvm::Value *Value = CGF.EmitScalarExpr(E);
-    const llvm::Type *ValuePtrTy = Value->getType()->getPointerTo();
+  // A variable holding the exception pointer.  This is necessary
+  // because the throw expression does not necessarily dominate the
+  // cleanup, for example if it appears in a conditional expression.
+  llvm::AllocaInst *ExnLocVar =
+    CGF.CreateTempAlloca(ExnLoc->getType(), "exnobj.var");
 
-    CGF.Builder.CreateStore(Value, 
-                            CGF.Builder.CreateBitCast(DestPtr, ValuePtrTy));
-  } else {
-    const llvm::Type *Ty = CGF.ConvertType(ObjectType)->getPointerTo();
-    const CXXRecordDecl *RD =
-      cast<CXXRecordDecl>(ObjectType->getAs<RecordType>()->getDecl());
-    
-    llvm::Value *This = CGF.Builder.CreateBitCast(DestPtr, Ty);
-    if (RD->hasTrivialCopyConstructor()) {
-      CGF.EmitAggExpr(E, This, false);
-    } else if (CXXConstructorDecl *CopyCtor
-               = RD->getCopyConstructor(CGF.getContext(), 0)) {
-      llvm::Value *CondPtr = 0;
-      if (CGF.Exceptions) {
-        CodeGenFunction::EHCleanupBlock Cleanup(CGF);
-        llvm::Constant *FreeExceptionFn = getFreeExceptionFn(CGF);
-        
-        llvm::BasicBlock *CondBlock = CGF.createBasicBlock("cond.free");
-        llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
-        CondPtr = CGF.CreateTempAlloca(llvm::Type::getInt1Ty(CGF.getLLVMContext()),
-                                       "doEHfree");
+  llvm::BasicBlock *SavedInvokeDest = CGF.getInvokeDest();
+  {
+    CodeGenFunction::EHCleanupBlock Cleanup(CGF);
+    llvm::BasicBlock *FreeBB = CGF.createBasicBlock("free-exnobj");
+    llvm::BasicBlock *DoneBB = CGF.createBasicBlock("free-exnobj.done");
 
-        CGF.Builder.CreateCondBr(CGF.Builder.CreateLoad(CondPtr),
-                                 CondBlock, Cont);
-        CGF.EmitBlock(CondBlock);
-
-        // Load the exception pointer.
-        llvm::Value *ExceptionPtr = CGF.Builder.CreateLoad(ExceptionPtrPtr);
-        CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
-
-        CGF.EmitBlock(Cont);
-      }
-
-      if (CondPtr)
-        CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(CGF.getLLVMContext()),
-                                CondPtr);
-
-      llvm::Value *Src = CGF.EmitLValue(E).getAddress();
-        
-      if (CondPtr)
-        CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
-                                CondPtr);
-
-      llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
-      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
-      CGF.setInvokeDest(TerminateHandler);
-
-      // Stolen from EmitClassAggrMemberwiseCopy
-      llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor,
-                                                            Ctor_Complete);
-      CallArgList CallArgs;
-      CallArgs.push_back(std::make_pair(RValue::get(This),
-                                      CopyCtor->getThisType(CGF.getContext())));
-
-      // Push the Src ptr.
-      CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                        CopyCtor->getParamDecl(0)->getType()));
-      const FunctionProtoType *FPT
-        = CopyCtor->getType()->getAs<FunctionProtoType>();
-      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-                   Callee, ReturnValueSlot(), CallArgs, CopyCtor);
-      CGF.setInvokeDest(PrevLandingPad);
-    } else
-      llvm_unreachable("uncopyable object");
+    llvm::Value *ShouldFree = CGF.Builder.CreateLoad(ShouldFreeVar,
+                                                     "should-free-exnobj");
+    CGF.Builder.CreateCondBr(ShouldFree, FreeBB, DoneBB);
+    CGF.EmitBlock(FreeBB);
+    llvm::Value *ExnLocLocal = CGF.Builder.CreateLoad(ExnLocVar, "exnobj");
+    CGF.Builder.CreateCall(getFreeExceptionFn(CGF), ExnLocLocal);
+    CGF.EmitBlock(DoneBB);
   }
+  llvm::BasicBlock *Cleanup = CGF.getInvokeDest();
+
+  CGF.Builder.CreateStore(ExnLoc, ExnLocVar);
+  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(CGF.getLLVMContext()),
+                          ShouldFreeVar);
+
+  // __cxa_allocate_exception returns a void*;  we need to cast this
+  // to the appropriate type for the object.
+  const llvm::Type *Ty = CGF.ConvertType(E->getType())->getPointerTo();
+  llvm::Value *TypedExnLoc = CGF.Builder.CreateBitCast(ExnLoc, Ty);
+
+  // FIXME: this isn't quite right!  If there's a final unelided call
+  // to a copy constructor, then according to [except.terminate]p1 we
+  // must call std::terminate() if that constructor throws, because
+  // technically that copy occurs after the exception expression is
+  // evaluated but before the exception is caught.  But the best way
+  // to handle that is to teach EmitAggExpr to do the final copy
+  // differently if it can't be elided.
+  CGF.EmitAnyExprToMem(E, TypedExnLoc, /*Volatile*/ false);
+
+  CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
+                          ShouldFreeVar);
+
+  // Pop the cleanup block if it's still the top of the cleanup stack.
+  // Otherwise, temporaries have been created and our cleanup will get
+  // properly removed in time.
+  // TODO: this is not very resilient.
+  if (CGF.getInvokeDest() == Cleanup)
+    CGF.setInvokeDest(SavedInvokeDest);
 }
 
 // CopyObject - Utility to copy an object.  Calls copy constructor as necessary.
@@ -278,17 +267,24 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
                        llvm::ConstantInt::get(SizeTy, TypeSize),
                        "exception");
   
-  llvm::Value *ExceptionPtrPtr = 
-    CreateTempAlloca(ExceptionPtr->getType(), "exception.ptr");
-  Builder.CreateStore(ExceptionPtr, ExceptionPtrPtr);
-
-
-  CopyObject(*this, E->getSubExpr(), ExceptionPtr, ExceptionPtrPtr);
+  EmitAnyExprToExn(*this, E->getSubExpr(), ExceptionPtr);
 
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
   llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType);
-  llvm::Constant *Dtor = llvm::Constant::getNullValue(Int8PtrTy);
+
+  // The address of the destructor.  If the exception type has a
+  // trivial destructor (or isn't a record), we just pass null.
+  llvm::Constant *Dtor = 0;
+  if (const RecordType *RecordTy = ThrowType->getAs<RecordType>()) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
+    if (!Record->hasTrivialDestructor()) {
+      CXXDestructorDecl *DtorD = Record->getDestructor(getContext());
+      Dtor = CGM.GetAddrOfCXXDestructor(DtorD, Dtor_Complete);
+      Dtor = llvm::ConstantExpr::getBitCast(Dtor, Int8PtrTy);
+    }
+  }
+  if (!Dtor) Dtor = llvm::Constant::getNullValue(Int8PtrTy);
 
   if (getInvokeDest()) {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");

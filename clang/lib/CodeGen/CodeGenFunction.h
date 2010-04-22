@@ -671,6 +671,9 @@ public:
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
                                      const llvm::Twine &Name = "tmp");
 
+  /// InitTempAlloca - Provide an initial value for the given alloca.
+  void InitTempAlloca(llvm::AllocaInst *Alloca, llvm::Value *Value);
+
   /// CreateIRTemp - Create a temporary IR object of the given type, with
   /// appropriate alignment. This routine should only be used when an temporary
   /// value needs to be stored into an alloca (for example, to avoid explicit

@@ -399,10 +399,10 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   //   If the type of the exception would be an incomplete type or a pointer
   //   to an incomplete type other than (cv) void the program is ill-formed.
   QualType Ty = E->getType();
-  int isPointer = 0;
+  bool isPointer = false;
   if (const PointerType* Ptr = Ty->getAs<PointerType>()) {
     Ty = Ptr->getPointeeType();
-    isPointer = 1;
+    isPointer = true;
   }
   if (!isPointer || !Ty->isVoidType()) {
     if (RequireCompleteType(ThrowLoc, Ty,
@@ -415,21 +415,18 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
                                PDiag(diag::err_throw_abstract_type)
                                  << E->getSourceRange()))
       return true;
-
-    // FIXME: This is just a hack to mark the copy constructor referenced.
-    // This should go away when the next FIXME is fixed.
-    const RecordType *RT = Ty->getAs<RecordType>();
-    if (!RT)
-      return false;
-
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (RD->hasTrivialCopyConstructor())
-      return false;
-    CXXConstructorDecl *CopyCtor = RD->getCopyConstructor(Context, 0);
-    MarkDeclarationReferenced(ThrowLoc, CopyCtor);
   }
 
-  // FIXME: Construct a temporary here.
+  // Initialize the exception result.  This implicitly weeds out
+  // abstract types or types with inaccessible copy constructors.
+  InitializedEntity Entity =
+    InitializedEntity::InitializeException(ThrowLoc, E->getType());
+  OwningExprResult Res = PerformCopyInitialization(Entity,
+                                                   SourceLocation(),
+                                                   Owned(E));
+  if (Res.isInvalid())
+    return true;
+  E = Res.takeAs<Expr>();
   return false;
 }
 

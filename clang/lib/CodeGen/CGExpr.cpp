@@ -37,6 +37,13 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
   return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
 }
 
+void CodeGenFunction::InitTempAlloca(llvm::AllocaInst *Var,
+                                     llvm::Value *Init) {
+  llvm::StoreInst *Store = new llvm::StoreInst(Init, Var);
+  llvm::BasicBlock *Block = AllocaInsertPt->getParent();
+  Block->getInstList().insertAfter(&*AllocaInsertPt, Store);
+}
+
 llvm::Value *CodeGenFunction::CreateIRTemp(QualType Ty,
                                            const llvm::Twine &Name) {
   llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertType(Ty), Name);
