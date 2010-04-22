@@ -114,7 +114,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
 <tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break critical edges in CFG</td></tr>
 <tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Prepare a function for code generation </td></tr>
-<tr><td><a href="#condprop">-condprop</a></td><td>Conditional Propagation</td></tr>
 <tr><td><a href="#constmerge">-constmerge</a></td><td>Merge Duplicate Global Constants</td></tr>
 <tr><td><a href="#constprop">-constprop</a></td><td>Simple constant propagation</td></tr>
 <tr><td><a href="#dce">-dce</a></td><td>Dead Code Elimination</td></tr>
@@ -637,15 +636,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   This pass munges the code in the input function to better prepare it for
   SelectionDAG-based code generation. This works around limitations in it's
   basic-block-at-a-time approach. It should eventually be removed.
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="condprop">Conditional Propagation</a>
-</div>
-<div class="doc_text">
-  <p>This pass propagates information about conditional expressions through the
-  program, allowing it to eliminate conditional branches in some cases.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
