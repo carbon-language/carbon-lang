@@ -35,6 +35,7 @@ class CallInst;
 class Function;
 class GlobalVariable;
 class Instruction;
+class MachineInstr;
 class MachineBasicBlock;
 class MachineFunction;
 class MachineModuleInfo;
@@ -88,6 +89,12 @@ public:
   /// LiveOutRegInfo - Information about live out vregs, indexed by their
   /// register number offset by 'FirstVirtualRegister'.
   std::vector<LiveOutInfo> LiveOutRegInfo;
+
+  /// PHINodesToUpdate - A list of phi instructions whose operand list will
+  /// be updated after processing the current basic block.
+  /// TODO: This isn't per-function state, it's per-basic-block state. But
+  /// there's no other convenient place for it to live right now.
+  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
 
   explicit FunctionLoweringInfo(const TargetLowering &TLI);
 

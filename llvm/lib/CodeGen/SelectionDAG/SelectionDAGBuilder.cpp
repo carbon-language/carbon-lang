@@ -6019,7 +6019,7 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
         EVT VT = ValueVTs[vti];
         unsigned NumRegisters = TLI.getNumRegisters(*CurDAG->getContext(), VT);
         for (unsigned i = 0, e = NumRegisters; i != e; ++i)
-          SDB->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+          FuncInfo->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
         Reg += NumRegisters;
       }
     }
@@ -6037,7 +6037,7 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
   const TerminatorInst *TI = LLVMBB->getTerminator();
 
   SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
-  unsigned OrigNumPHINodesToUpdate = SDB->PHINodesToUpdate.size();
+  unsigned OrigNumPHINodesToUpdate = FuncInfo->PHINodesToUpdate.size();
 
   // Check successor nodes' PHI nodes that expect a constant to be available
   // from this block.
@@ -6072,7 +6072,7 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
         if (VT == MVT::i1)
           VT = TLI.getTypeToTransformTo(*CurDAG->getContext(), VT);
         else {
-          SDB->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+          FuncInfo->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
           return false;
         }
       }
@@ -6081,10 +6081,10 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
 
       unsigned Reg = F->getRegForValue(PHIOp);
       if (Reg == 0) {
-        SDB->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+        FuncInfo->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
         return false;
       }
-      SDB->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
+      FuncInfo->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
     }
   }
 
