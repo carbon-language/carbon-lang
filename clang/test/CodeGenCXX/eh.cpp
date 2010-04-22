@@ -45,8 +45,8 @@ void test2() {
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
 // CHECK-NEXT:  invoke void @_ZN7test2_DC1ERKS_([[DSTAR]] [[EXN]], [[DSTAR]] @d2)
 // CHECK-NEXT:     to label %[[CONT:.*]] unwind label %{{.*}}
-// CHECK:     [[CONT]]:
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
+//      :     [[CONT]]:   (can't check this in Release-Asserts builds)
+// CHECK:       store i1 false, i1* [[FREEVAR]]
 // CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast (%{{.*}}* @_ZTI7test2_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 
@@ -101,6 +101,6 @@ namespace test5 {
 // CHECK-NEXT: invoke void @_ZN5test51AC1Ev([[A]]* [[EXNCAST]])
 // CHECK:      invoke void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({{%.*}}* @_ZTIN5test51AE to i8*), i8* bitcast (void ([[A]]*)* @_ZN5test51AD1Ev to i8*)) noreturn
 // CHECK-NEXT:   to label {{%.*}} unwind label %[[HANDLER:[^ ]*]]
-// CHECK:    [[HANDLER]]:
+//      :    [[HANDLER]]:  (can't check this in Release-Asserts builds)
 // CHECK:      {{%.*}} = call i32 @llvm.eh.typeid.for(i8* bitcast ({{%.*}}* @_ZTIN5test51AE to i8*))
 }
