@@ -657,7 +657,8 @@ it run faster:</p>
     understand assembly files.  This is wired up in llvm-gcc and clang to
     the <tt>-fverbose-asm</tt> option.</li>
 
-<li>New LSR with "full strength reduction" mode.  FIXME: Description?</li>
+<li>New LSR with "full strength reduction" mode, which can reduce address
+    register pressure in loops where address generation is important.</li>
 
 <li>A new codegen level Common Subexpression Elimination pass (MachineCSE)
     is available and enabled by default.  It catches redundancies exposed by
