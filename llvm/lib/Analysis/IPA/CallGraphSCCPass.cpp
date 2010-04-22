@@ -278,13 +278,7 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
           }
 
           // Update the edge target in CGN.
-          for (CallGraphNode::iterator I = CGN->begin(); ; ++I) {
-            assert(I != CGN->end() && "Didn't find call entry");
-            if (I->first == CS.getInstruction()) {
-              I->second = CalleeNode;
-              break;
-            }
-          }
+          CGN->replaceCallEdge(CS, CS, CalleeNode);
           MadeChange = true;
           continue;
         }
@@ -422,6 +416,9 @@ bool CGPassManager::runOnModule(Module &M) {
     unsigned Iteration = 0;
     bool DevirtualizedCall = false;
     do {
+      DEBUG(if (Iteration)
+              dbgs() << "  SCCPASSMGR: Re-visiting SCC, iteration #"
+                     << Iteration << '\n');
       DevirtualizedCall = false;
       Changed |= RunAllPassesOnSCC(CurSCC, CG, DevirtualizedCall);
     } while (Iteration++ < MaxIterations && DevirtualizedCall);
