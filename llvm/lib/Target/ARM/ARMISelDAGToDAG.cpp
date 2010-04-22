@@ -142,7 +142,7 @@ private:
                           unsigned *QOpcodes1);
 
   /// SelectV6T2BitfieldExtractOp - Select SBFX/UBFX instructions for ARM.
-  SDNode *SelectV6T2BitfieldExtractOp(SDNode *N, unsigned Opc);
+  SDNode *SelectV6T2BitfieldExtractOp(SDNode *N, bool isSigned);
 
   /// SelectCMOVOp - Select CMOV instructions for ARM.
   SDNode *SelectCMOVOp(SDNode *N);
@@ -1248,10 +1248,42 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
 }
 
 SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
-                                                     unsigned Opc) {
+                                                     bool isSigned) {
   if (!Subtarget->hasV6T2Ops())
     return NULL;
 
+  unsigned Opc = isSigned ? (Subtarget->isThumb() ? ARM::t2SBFX : ARM::SBFX)
+    : (Subtarget->isThumb() ? ARM::t2UBFX : ARM::UBFX);
+
+
+  // For unsigned extracts, check for a shift right and mask
+  unsigned And_imm = 0;
+  if (N->getOpcode() == ISD::AND) {
+    if (isOpcWithIntImmediate(N, ISD::AND, And_imm)) {
+
+      // The immediate is a mask of the low bits iff imm & (imm+1) == 0
+      if (And_imm & (And_imm + 1))
+        return NULL;
+
+      unsigned Srl_imm = 0;
+      if (isOpcWithIntImmediate(N->getOperand(0).getNode(), ISD::SRL,
+                                Srl_imm)) {
+        assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
+
+        unsigned Width = CountTrailingOnes_32(And_imm);
+        unsigned LSB = Srl_imm;
+        SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+        SDValue Ops[] = { N->getOperand(0).getOperand(0),
+                          CurDAG->getTargetConstant(LSB, MVT::i32),
+                          CurDAG->getTargetConstant(Width, MVT::i32),
+          getAL(CurDAG), Reg0 };
+        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
+      }
+    }
+    return NULL;
+  }
+
+  // Otherwise, we're looking for a shift of a shift
   unsigned Shl_imm = 0;
   if (isOpcWithIntImmediate(N->getOperand(0).getNode(), ISD::SHL, Shl_imm)) {
     assert(Shl_imm > 0 && Shl_imm < 32 && "bad amount in shift node!");
@@ -1515,13 +1547,11 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
   }
   case ISD::SRL:
-    if (SDNode *I = SelectV6T2BitfieldExtractOp(N,
-                      Subtarget->isThumb() ? ARM::t2UBFX : ARM::UBFX))
+    if (SDNode *I = SelectV6T2BitfieldExtractOp(N, false))
       return I;
     break;
   case ISD::SRA:
-    if (SDNode *I = SelectV6T2BitfieldExtractOp(N,
-                      Subtarget->isThumb() ? ARM::t2SBFX : ARM::SBFX))
+    if (SDNode *I = SelectV6T2BitfieldExtractOp(N, true))
       return I;
     break;
   case ISD::MUL:
@@ -1565,6 +1595,10 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
     break;
   case ISD::AND: {
+    // Check for unsigned bitfield extract
+    if (SDNode *I = SelectV6T2BitfieldExtractOp(N, false))
+      return I;
+
     // (and (or x, c2), c1) and top 16-bits of c1 and c2 match, lower 16-bits
     // of c1 are 0xffff, and lower 16-bit of c2 are 0. That is, the top 16-bits
     // are entirely contributed by c2 and lower 16-bits are entirely contributed
