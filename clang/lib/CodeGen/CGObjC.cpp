@@ -56,7 +56,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   bool isSuperMessage = false;
   bool isClassMessage = false;
   // Find the receiver
-  llvm::Value *Receiver;
+  llvm::Value *Receiver = 0;
   switch (E->getReceiverKind()) {
   case ObjCMessageExpr::Instance:
     Receiver = EmitScalarExpr(E->getInstanceReceiver());
