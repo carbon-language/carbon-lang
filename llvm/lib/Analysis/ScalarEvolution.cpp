@@ -1846,77 +1846,81 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                               // X udiv 1 --> x
-    if (RHSC->getValue()->isZero())
-      return getIntegerSCEV(0, LHS->getType()); // value is undefined
-
-    // Determine if the division can be folded into the operands of
-    // its operands.
-    // TODO: Generalize this to non-constants by using known-bits information.
-    const Type *Ty = LHS->getType();
-    unsigned LZ = RHSC->getValue()->getValue().countLeadingZeros();
-    unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ;
-    // For non-power-of-two values, effectively round the value up to the
-    // nearest power of two.
-    if (!RHSC->getValue()->getValue().isPowerOf2())
-      ++MaxShiftAmt;
-    const IntegerType *ExtTy =
-      IntegerType::get(getContext(), getTypeSizeInBits(Ty) + MaxShiftAmt);
-    // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
-    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
-      if (const SCEVConstant *Step =
-            dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this)))
-        if (!Step->getValue()->getValue()
-              .urem(RHSC->getValue()->getValue()) &&
-            getZeroExtendExpr(AR, ExtTy) ==
-            getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
-                          getZeroExtendExpr(Step, ExtTy),
-                          AR->getLoop())) {
-          SmallVector<const SCEV *, 4> Operands;
-          for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
-            Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
-          return getAddRecExpr(Operands, AR->getLoop());
-        }
-    // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
-    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
-      SmallVector<const SCEV *, 4> Operands;
-      for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i)
-        Operands.push_back(getZeroExtendExpr(M->getOperand(i), ExtTy));
-      if (getZeroExtendExpr(M, ExtTy) == getMulExpr(Operands))
-        // Find an operand that's safely divisible.
-        for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
-          const SCEV *Op = M->getOperand(i);
-          const SCEV *Div = getUDivExpr(Op, RHSC);
-          if (!isa<SCEVUDivExpr>(Div) && getMulExpr(Div, RHSC) == Op) {
-            Operands = SmallVector<const SCEV *, 4>(M->op_begin(), M->op_end());
-            Operands[i] = Div;
-            return getMulExpr(Operands);
+    // If the denominator is zero, the result of the udiv is undefined. Don't
+    // try to analyze it, because the resolution chosen here may differ from
+    // the resolution chosen in other parts of the compiler.
+    if (!RHSC->getValue()->isZero()) {
+      // Determine if the division can be folded into the operands of
+      // its operands.
+      // TODO: Generalize this to non-constants by using known-bits information.
+      const Type *Ty = LHS->getType();
+      unsigned LZ = RHSC->getValue()->getValue().countLeadingZeros();
+      unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ;
+      // For non-power-of-two values, effectively round the value up to the
+      // nearest power of two.
+      if (!RHSC->getValue()->getValue().isPowerOf2())
+        ++MaxShiftAmt;
+      const IntegerType *ExtTy =
+        IntegerType::get(getContext(), getTypeSizeInBits(Ty) + MaxShiftAmt);
+      // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
+      if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
+        if (const SCEVConstant *Step =
+              dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this)))
+          if (!Step->getValue()->getValue()
+                .urem(RHSC->getValue()->getValue()) &&
+              getZeroExtendExpr(AR, ExtTy) ==
+              getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
+                            getZeroExtendExpr(Step, ExtTy),
+                            AR->getLoop())) {
+            SmallVector<const SCEV *, 4> Operands;
+            for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
+              Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
+            return getAddRecExpr(Operands, AR->getLoop());
           }
-        }
-    }
-    // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
-    if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS)) {
-      SmallVector<const SCEV *, 4> Operands;
-      for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
-        Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
-      if (getZeroExtendExpr(A, ExtTy) == getAddExpr(Operands)) {
-        Operands.clear();
-        for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
-          const SCEV *Op = getUDivExpr(A->getOperand(i), RHS);
-          if (isa<SCEVUDivExpr>(Op) || getMulExpr(Op, RHS) != A->getOperand(i))
-            break;
-          Operands.push_back(Op);
-        }
-        if (Operands.size() == A->getNumOperands())
-          return getAddExpr(Operands);
+      // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
+      if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
+        SmallVector<const SCEV *, 4> Operands;
+        for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i)
+          Operands.push_back(getZeroExtendExpr(M->getOperand(i), ExtTy));
+        if (getZeroExtendExpr(M, ExtTy) == getMulExpr(Operands))
+          // Find an operand that's safely divisible.
+          for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
+            const SCEV *Op = M->getOperand(i);
+            const SCEV *Div = getUDivExpr(Op, RHSC);
+            if (!isa<SCEVUDivExpr>(Div) && getMulExpr(Div, RHSC) == Op) {
+              Operands = SmallVector<const SCEV *, 4>(M->op_begin(),
+                                                      M->op_end());
+              Operands[i] = Div;
+              return getMulExpr(Operands);
+            }
+          }
       }
-    }
+      // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
+      if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS)) {
+        SmallVector<const SCEV *, 4> Operands;
+        for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
+          Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
+        if (getZeroExtendExpr(A, ExtTy) == getAddExpr(Operands)) {
+          Operands.clear();
+          for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
+            const SCEV *Op = getUDivExpr(A->getOperand(i), RHS);
+            if (isa<SCEVUDivExpr>(Op) ||
+                getMulExpr(Op, RHS) != A->getOperand(i))
+              break;
+            Operands.push_back(Op);
+          }
+          if (Operands.size() == A->getNumOperands())
+            return getAddExpr(Operands);
+        }
+      }
 
-    // Fold if both operands are constant.
-    if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
-      Constant *LHSCV = LHSC->getValue();
-      Constant *RHSCV = RHSC->getValue();
-      return getConstant(cast<ConstantInt>(ConstantExpr::getUDiv(LHSCV,
-                                                                 RHSCV)));
+      // Fold if both operands are constant.
+      if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
+        Constant *LHSCV = LHSC->getValue();
+        Constant *RHSCV = RHSC->getValue();
+        return getConstant(cast<ConstantInt>(ConstantExpr::getUDiv(LHSCV,
+                                                                   RHSCV)));
+      }
     }
   }
 
@@ -3319,8 +3323,16 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn shift left of a constant amount into a multiply.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(U->getType())->getBitWidth();
+
+      // If the shift count is not less than the bitwidth, the result of
+      // the shift is undefined. Don't try to analyze it, because the
+      // resolution chosen here may differ from the resolution chosen in
+      // other parts of the compiler.
+      if (SA->getValue().uge(BitWidth))
+        break;
+
       Constant *X = ConstantInt::get(getContext(),
-        APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
+        APInt(BitWidth, 1).shl(SA->getZExtValue()));
       return getMulExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
     break;
@@ -3329,8 +3341,16 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn logical shift right of a constant into a unsigned divide.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(U->getType())->getBitWidth();
+
+      // If the shift count is not less than the bitwidth, the result of
+      // the shift is undefined. Don't try to analyze it, because the
+      // resolution chosen here may differ from the resolution chosen in
+      // other parts of the compiler.
+      if (SA->getValue().uge(BitWidth))
+        break;
+
       Constant *X = ConstantInt::get(getContext(),
-        APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
+        APInt(BitWidth, 1).shl(SA->getZExtValue()));
       return getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
     break;
@@ -3338,19 +3358,26 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   case Instruction::AShr:
     // For a two-shift sext-inreg, use sext(trunc(x)) as the SCEV expression.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1)))
-      if (Instruction *L = dyn_cast<Instruction>(U->getOperand(0)))
+      if (Operator *L = dyn_cast<Operator>(U->getOperand(0)))
         if (L->getOpcode() == Instruction::Shl &&
             L->getOperand(1) == U->getOperand(1)) {
-          unsigned BitWidth = getTypeSizeInBits(U->getType());
+          uint64_t BitWidth = getTypeSizeInBits(U->getType());
+
+          // If the shift count is not less than the bitwidth, the result of
+          // the shift is undefined. Don't try to analyze it, because the
+          // resolution chosen here may differ from the resolution chosen in
+          // other parts of the compiler.
+          if (CI->getValue().uge(BitWidth))
+            break;
+
           uint64_t Amt = BitWidth - CI->getZExtValue();
           if (Amt == BitWidth)
             return getSCEV(L->getOperand(0));       // shift by zero --> noop
-          if (Amt > BitWidth)
-            return getIntegerSCEV(0, U->getType()); // value is undefined
           return
             getSignExtendExpr(getTruncateExpr(getSCEV(L->getOperand(0)),
-                                           IntegerType::get(getContext(), Amt)),
-                                 U->getType());
+                                              IntegerType::get(getContext(),
+                                                               Amt)),
+                              U->getType());
         }
     break;
 
