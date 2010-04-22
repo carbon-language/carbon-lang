@@ -170,7 +170,8 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 static void UpdateCallGraphAfterInlining(CallSite CS,
                                          Function::iterator FirstNewBlock,
                                        DenseMap<const Value*, Value*> &ValueMap,
-                                         CallGraph &CG) {
+                                         InlineFunctionInfo &IFI) {
+  CallGraph &CG = *IFI.CG;
   const Function *Caller = CS.getInstruction()->getParent()->getParent();
   const Function *Callee = CS.getCalledFunction();
   CallGraphNode *CalleeNode = CG[Callee];
@@ -210,6 +211,10 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
       if (Function *F = CallSite(NewCall).getCalledFunction()) {
         // Indirect call site resolved to direct call.
         CallerNode->addCalledFunction(CallSite::get(NewCall), CG[F]);
+        
+        // Remember that this callsite got devirtualized for the client of
+        // InlineFunction.
+        IFI.DevirtualizedCalls.push_back(NewCall);
         continue;
       }
     
@@ -362,7 +367,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
     // Update the callgraph if requested.
     if (IFI.CG)
-      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, *IFI.CG);
+      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, IFI);
   }
 
   // If there are any alloca instructions in the block that used to be the entry
