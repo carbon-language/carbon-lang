@@ -75,6 +75,7 @@ Almost dead code.
  
    
 <!-- Features that need text if they're finished for 2.7:
+  combiner-aa?
   strong phi elim
   llvm.dbg.value: variable debug info for optimized code
   loop dependence analysis
@@ -378,6 +379,15 @@ minor improvements.  Some of the major improvements and new features are listed
 in this section.
 </p>
 
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="orgchanges">LLVM Community Changes</a>
+</div>
+
+<div class="doc_text">
+
 <p>In addition to changes to the code, between LLVM 2.6 and 2.7, a number of
 organization changes have happened:
 </p>
@@ -387,7 +397,7 @@ organization changes have happened:
 
 <li>Ted Kremenek and Doug Gregor have stepped forward as <a
  href="http://llvm.org/docs/DeveloperPolicy.html#owners">Code Owners</a> of the
- Clang static analyzer and the Clang Frontend, respectively.</li>
+ Clang static analyzer and the Clang frontend, respectively.</li>
 
 <li>LLVM now has an <a href="http://blog.llvm.org">official Blog</a> at
     <a href="http://blog.llvm.org">http://blog.llvm.org</a>. This is a great way
@@ -480,9 +490,16 @@ expose new optimization opportunities:</p>
     allows the optimizer to infer the sizes of memory objects in some cases.
     This intrinsic is used to implement the GCC <tt>__builtin_object_size</tt>
     extension.</li>
+<li>LLVM IR now supports marking load and store instructions with <a
+    href="LangRef.html#i_load">"non-temporal" hints</a> (building on the new
+    metadata feature).  This hint encourages the code
+    generator to generate non-temporal accesses when possible, which are useful
+    for code that is carefully managing cache behavior.  Currently, only the
+    X86 backend provides target support for this feature.</li>
+
 <li>LLVM 2.7 has pre-alpha support for <a
   href="http://llvm.org/docs/LangRef.html#t_union">unions in LLVM IR</a>.
-  Unfortuantely, this support is not really usable in 2.7, so if you're
+  Unfortunately, this support is not really usable in 2.7, so if you're
  interested in pushing it forward, please help contribute to LLVM mainline.</li>
 </li>
 </ul>
@@ -542,8 +559,7 @@ href="http://blog.llvm.org/2009/12/introduction-to-load-elimination-in-gvn.html"
     pointer offset expressions to disambiguate pointers.  It can catch a few
     cases that basicaa cannot, particularly in complex loop nests.</li>
 
-<li>As usual, there are countless minor optimization improvements and bug fixes,
-    and the default pass ordering has been tweaked for improved optimization
+<li>The default pass ordering has been tweaked for improved optimization
     effectiveness.</li>
 
 </ul>
@@ -563,8 +579,7 @@ href="http://blog.llvm.org/2009/12/introduction-to-load-elimination-in-gvn.html"
 the new GDB 7.0 (and later) interfaces for registering debug info for
 dynamically generated code.</li>
 
-<li>The JIT now <a
-href="http://llvm.org/viewvc/llvm-project?view=rev&revision=85295">defaults
+<li>The JIT now <a href="http://llvm.org/PR5184">defaults
 to compiling eagerly</a> to avoid a race condition in the lazy JIT.
 Clients that still want the lazy JIT can switch it on by calling
 <tt>ExecutionEngine::DisableLazyCompilation(false)</tt>.</li>
@@ -590,21 +605,48 @@ infrastructure, which allows us to implement more aggressive algorithms and make
 it run faster:</p>
 
 <ul>
-<li>New instruction selector [blog post?].</li>
-<li>New LSR with "full strength reduction" mode.  Description?</li>
-<li>Code generator MC'ized except for debug info and EH.</li>
-<li>New CodeGen Level CSE</li>
-<li>Combiner-AA improvements, why not on by default?</li>
-<li>Pre-regalloc tail duplication</li>
-<li>Codegen level OptimizeExtsPass pass, takes advantage of x86 subregs. </li>
-<li>Support for the GCC option -fno-schedule-insns</li>
-<li>Non-temporal load/store, only implemented on X86, see LangRef.html#i_load.</li>
-<li>MachineSSAUpdater.h</li>
-<li>X86 and XCore supports returning arbitrary return values, returning too many values is
-   supported by returning through a hidden pointer.</li>
-<li>verbose-asm now produces information about spill slots and loop nests</li>
-<li>GHC Haskell ABI / calling conv support.</li>
-<li>Many improvements to debug info</li>
+<li>The 'llc -asm-verbose' option (which is now the default) has been enhanced
+    to emit many useful comments to .s files indicating information about spill
+    slots and loop nest structure.  This should make it much easier to read and
+    understand assembly files.  This is wired up in llvm-gcc and clang to
+    the <tt>-fverbose-asm</tt> option.</li>
+
+<li>New LSR with "full strength reduction" mode.  FIXME: Description?</li>
+
+<li>A new codegen level Common Subexpression Elimination pass (MachineCSE)
+    is available and enabled by default.  It catches redundancies exposed by
+    lowering.</li>
+<li>A new pre-register-allocation tail duplication pass is available and enabled
+    by default, it can substantially improve branch prediction quality in some
+    cases.</li>
+<li>A new sign and zero extension optimization pass (OptimizeExtsPass) 
+    is available and enabled by default.  This pass can takes advantage
+    architecture features like x86-64 implicit zero extension behavior and
+    sub-registers.</li>
+<li>The code generator now supports a mode where it attempts to preserve the
+    order of instructions in the input code.  This is important for source that
+    is hand scheduled and extremely sensitive to scheduling.  It is compatible
+    with the GCC <tt>-fno-schedule-insns</tt> option.</li>
+<li>The target-independent code generator now supports generating code with
+    arbitrary numbers of result values.  Returning more values than was
+    previously supported is handled by returning through a hidden pointer.  In
+    2.7, only the X86 and XCore targets have adopted support for this
+    though.</li>
+<li>The code generator now supports generating code that follows the
+    <a href="LangRef.html#callingconv">Glasgow Haskell Compiler Calling
+    Convention</a> and ABI.</li>
+<li>The "<a href="CodeGenerator.html#selectiondag_select">DAG instruction
+    selection</a>" phase of the code generator has been largely rewritten for
+    2.7.  Previously, tblgen spit out tons of C++ code which was compiled and
+    linked into the target to do the pattern matching, now it emits a much
+    smaller table which is read by the target-independent code.  The primary
+    advantages of this approach is that the size and compile time of various
+    targets is much improved.  The X86 code generator shrunk by 1.5MB of code,
+    for example.</li>
+<li>Almost the entire code generator has switched to emitting code through the
+    MC interfaces instead of printing textually to the .s file.  This led to a
+    number of cleanups and speedups.  In 2.7, debug an exception handling
+    information does not go through MC yet.</li>
 </ul>
 </div>
 
@@ -760,7 +802,7 @@ document.</li>
 <li>The LLVM interpreter now defaults to <em>not</em> using <tt>libffi</tt> even
 if you have it installed.  This makes it more likely that an LLVM built on one
 system will work when copied to a similar system.  To use <tt>libffi</tt>,
-configure with <tt>--enable-libffi</tt></li>.
+configure with <tt>--enable-libffi</tt>.</li>
 
 <li>Debug information uses a completely different representation, an LLVM 2.6
 .bc file should work with LLVM 2.7, but debug info won't come forward.</li>
@@ -827,7 +869,7 @@ to <tt>llvm/System/DataTypes.h</tt>.</li>
 <li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat
     Linux, Fedora Core, FreeBSD and AuroraUX (and probably other unix-like
     systems).</li>
-<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit
+<li>PowerPC and X86-based Mac OS X systems, running 10.4 and above in 32-bit
     and 64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
@@ -884,7 +926,7 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <ul>
 <li>The MSIL, Alpha, SPU, MIPS, PIC16, Blackfin, MSP430, SystemZ and MicroBlaze
     backends are experimental.</li>
-<li>The <tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
+<li><tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
     supported value for this option.  The MachO writer is experimental, and
     works much better in mainline SVN.</li>
 </ul>
@@ -907,13 +949,10 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     to generate code for systems that don't have SSE2.</li>
   <li>Win64 code generation wasn't widely tested. Everything should work, but we
     expect small issues to happen. Also, llvm-gcc cannot build the mingw64
-    runtime currently due
-    to <a href="http://llvm.org/PR2255">several</a>
-    <a href="http://llvm.org/PR2257">bugs</a> and due to lack of support for
-    the
-    'u' inline assembly constraint and for X87 floating point inline assembly.</li>
+    runtime currently due to lack of support for the 'u' inline assembly
+    constraint and for X87 floating point inline assembly.</li>
   <li>The X86-64 backend does not yet support the LLVM IR instruction
-      <tt>va_arg</tt>. Currently, the llvm-gcc and front-ends support variadic
+      <tt>va_arg</tt>. Currently, front-ends support variadic
       argument constructs on X86-64 by lowering them manually.</li>
 </ul>
 
@@ -1024,9 +1063,6 @@ appropriate nops inserted to ensure restartability.</li>
     are only supported on some targets.  For example, trampolines are only
     supported on some targets (these are used when you take the address of a
     nested function).</p>
-
-<p>If you run into GCC extensions which are not supported, please let us know.
-</p>
 
 </div>
 
