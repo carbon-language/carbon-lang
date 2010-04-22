@@ -615,6 +615,10 @@ void SelectionDAGBuilder::AssignOrderingToNode(const SDNode *Node) {
 }
 
 void SelectionDAGBuilder::visit(const Instruction &I) {
+  // Set up outgoing PHI node register values before emitting the terminator.
+  if (isa<TerminatorInst>(&I))
+    HandlePHINodesInSuccessorBlocks(I.getParent());
+
   CurDebugLoc = I.getDebugLoc();
 
   visit(I.getOpcode(), I);

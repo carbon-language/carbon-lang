@@ -369,8 +369,6 @@ public:
   void LowerCallTo(ImmutableCallSite CS, SDValue Callee, bool IsTailCall,
                    MachineBasicBlock *LandingPad = NULL);
 
-  void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
-
 private:
   // Terminator instructions.
   void visitRet(const ReturnInst &I);
@@ -495,6 +493,8 @@ private:
   
   const char *implVisitBinaryAtomic(const CallInst& I, ISD::NodeType Op);
   const char *implVisitAluOverflow(const CallInst &I, ISD::NodeType Op);
+
+  void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
 };
 
 } // end namespace llvm

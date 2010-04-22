@@ -233,20 +233,8 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block. Terminators
   // are handled below.
-  for (BasicBlock::const_iterator I = Begin;
-       I != End && !SDB->HasTailCall && !isa<TerminatorInst>(I);
-       ++I)
+  for (BasicBlock::const_iterator I = Begin; I != End && !SDB->HasTailCall; ++I)
     SDB->visit(*I);
-
-  if (!SDB->HasTailCall) {
-    // Handle PHI nodes in successor blocks.
-    if (End == LLVMBB->end()) {
-      SDB->HandlePHINodesInSuccessorBlocks(LLVMBB);
-
-      // Lower the terminator after the copies are emitted.
-      SDB->visit(*LLVMBB->getTerminator());
-    }
-  }
 
   // Make sure the root of the DAG is up-to-date.
   CurDAG->setRoot(SDB->getControlRoot());
