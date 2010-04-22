@@ -382,7 +382,41 @@ statically.
 </p>
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="icedtea">IcedTea Java Virtual Machine Implementation</a>
+</div>
 
+<div class="doc_text">
+<p>
+<a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea</a> provides a
+harness to build OpenJDK using only free software build tools and to provide
+replacements for the not-yet free parts of OpenJDK.  One of the extensions that
+IcedTea provides is a new JIT compiler named <a
+href="http://icedtea.classpath.org/wiki/ZeroSharkFaq">Shark</a> which uses LLVM
+to provide native code generation without introducing processor-dependent
+code.
+</p>
+<p>Icedtea6 1.8 and later have been tested and are known to work with
+LLVM 2.7 (and continue to work with older LLVM releases >= 2.6 as well).
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="llvm-lua">LLVM-Lua</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://code.google.com/p/llvm-lua/">LLVM-Lua</a> uses LLVM
+ to add JIT and static compiling support to the Lua VM. Lua 
+bytecode is analyzed to remove type checks, then LLVM is used to compile the 
+bytecode down to machine code.
+</p>
+<p>LLVM-Lua 1.2.0  have been tested and is known to work with LLVM 2.7.
+</p>
+</div>
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="whatsnew">What's New in LLVM 2.7?</a>
