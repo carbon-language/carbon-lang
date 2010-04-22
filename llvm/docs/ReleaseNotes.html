@@ -11,7 +11,7 @@
 <div class="doc_title">LLVM 2.7 Release Notes</div>
 
 <img align=right src="http://llvm.org/img/DragonSmall.png"
-    width="136" height="136">
+    width="136" height="136" alt="LLVM Dragon Logo">
 
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -274,7 +274,7 @@ LLVM MC Project Blog Post</a>.
    made substantially more progress on LLVM mainline.</p>
 
 <p>One minor example of what MC can do is to transcode an AT&amp;T syntax
-   X86 .s file into intel syntax.  You can do this with something like:</p>
+   X86 .s file into intel syntax.  You can do this with something like:
    
 <pre>
   llvm-mc foo.s -output-asm-variant=1 -o foo-intel.s
@@ -475,7 +475,6 @@ Address of Label and Indirect Branches in LLVM IR Blog Post</a>.
 
 <li>2.7 includes major parts of the work required by the new MC Project, 
     see the <a href="#mc">MC update above</a> for more information.</li>
-</li>
 
 </ul>
 
@@ -514,7 +513,7 @@ expose new optimization opportunities:</p>
   href="LangRef.html#t_union">unions in LLVM IR</a>.
   Unfortunately, this support is not really usable in 2.7, so if you're
  interested in pushing it forward, please help contribute to LLVM mainline.</li>
-</li>
+
 </ul>
 
 </div>
@@ -837,7 +836,7 @@ API changes are:</p>
 <li>The Streams.h file and "DOUT" got removed, use "DEBUG(errs() &lt;&lt; ...);"
    instead.</li>
 <li><tt>ModuleProvider</tt> has been <a
-href="http://llvm.org/viewvc/llvm-project?view=rev&revision=94686">removed</a>
+href="http://llvm.org/viewvc/llvm-project?view=rev&amp;revision=94686">removed</a>
 and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
 Most clients can remove uses of <tt>ExistingModuleProvider</tt>,
 replace <tt>getBitcodeModuleProvider</tt> with
