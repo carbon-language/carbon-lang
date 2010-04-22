@@ -737,8 +737,11 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
   helpful information if migrating code from GCC to LLVM-GCC.</li>
   
 <li>The ARM and Thumb code generators now use register scavenging for stack
-    object address materialization.(FIXME: WHAT BENEFIT DOES THIS PROVIDE?)</li>
-    
+    object address materialization. This allows the use of R3 as a general
+    purpose register in Thumb1 code, as it was previous reserved for use in
+    stack address materialization. Secondly, sequential uses of the same
+    value will now re-use the materialized constant.</li>
+
 <li>The ARM backend now has good support for ARMv4 targets and has been tested
     on StrongARM hardware.  Previously, LLVM only supported ARMv4T and
     newer chips.</li>
