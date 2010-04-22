@@ -1,4 +1,4 @@
-///===-- FastISel.cpp - Implementation of the FastISel class --------------===//
+//===-- FastISel.cpp - Implementation of the FastISel class ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
