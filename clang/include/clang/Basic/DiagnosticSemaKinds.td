@@ -459,14 +459,15 @@ def err_access :
 def err_access_ctor :
     Error<"calling a %select{private|protected}0 constructor of class %2">,
     NoSFINAE;
-
-def err_access_base : Error<
-  "%select{base class|inherited virtual base class}0 %1 has %select{private|"
-  "protected}3 %select{constructor|copy constructor|copy assignment operator|"
-  "destructor}2">, NoSFINAE;
-    
+def err_access_ctor_base :
+    Error<"base class %0 has %select{private|protected}1 constructor">,
+    NoSFINAE;
 def err_access_ctor_field :
     Error<"field of type %1 has %select{private|protected}2 constructor">,
+    NoSFINAE;
+def err_access_ctor_vbase :
+    Error<"inherited virtual base class %0 has "
+    "%select{private|protected}1 constructor">,
     NoSFINAE;
 def err_access_dtor_base :
     Error<"base class %0 has %select{private|protected}1 destructor">,
@@ -2931,9 +2932,9 @@ def warn_ivar_use_hidden : Warning<
 def error_ivar_use_in_class_method : Error<
   "instance variable %0 accessed in class method">;
 def error_private_ivar_access : Error<"instance variable %0 is private">,
-  NoSFINAE;
+    NoSFINAE;
 def error_protected_ivar_access : Error<"instance variable %0 is protected">,
-  NoSFINAE;
+    NoSFINAE;
 def warn_maynot_respond : Warning<"%0 may not respond to %1">;
 def warn_attribute_method_def : Warning<
   "method attribute can only be specified on method declarations">;

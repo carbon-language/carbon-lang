@@ -924,7 +924,8 @@ struct GNUCompatibleParamWarning {
 
 
 /// getSpecialMember - get the special member enum for a method.
-Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
+static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
+                                               const CXXMethodDecl *MD) {
   if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
     if (Ctor->isDefaultConstructor())
       return Sema::CXXDefaultConstructor;
@@ -1111,7 +1112,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         } else {
           Diag(NewMethod->getLocation(),
                diag::err_definition_of_implicitly_declared_member) 
-            << New << getSpecialMember(OldMethod);
+            << New << getSpecialMember(Context, OldMethod);
           return true;
         }
       }
