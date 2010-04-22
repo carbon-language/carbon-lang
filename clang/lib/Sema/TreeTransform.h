@@ -1720,23 +1720,6 @@ public:
                                         move(Args));
   }
 
-  /// \brief Build a new Objective-C protocol expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildObjCProtocolExpr(ObjCProtocolDecl *Protocol,
-                                           SourceLocation AtLoc,
-                                           SourceLocation ProtoLoc,
-                                           SourceLocation LParenLoc,
-                                           SourceLocation RParenLoc) {
-    return SemaRef.Owned(SemaRef.ParseObjCProtocolExpression(
-                                              Protocol->getIdentifier(),
-                                                             AtLoc,
-                                                             ProtoLoc,
-                                                             LParenLoc,
-                                                             RParenLoc));
-  }
-
   /// \brief Build a new shuffle vector expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -3172,8 +3155,8 @@ QualType
 TreeTransform<Derived>::TransformObjCInterfaceType(TypeLocBuilder &TLB,
                                                    ObjCInterfaceTypeLoc TL,
                                                    QualType ObjectType) {
-  assert(false && "TransformObjCInterfaceType unimplemented");
-  return QualType();
+  // ObjCInterfaceType is never dependent.
+  return TL.getType();
 }
 
 template<typename Derived>
@@ -3181,8 +3164,8 @@ QualType
 TreeTransform<Derived>::TransformObjCObjectPointerType(TypeLocBuilder &TLB,
                                                ObjCObjectPointerTypeLoc TL,
                                                        QualType ObjectType) {
-  assert(false && "TransformObjCObjectPointerType unimplemented");
-  return QualType();
+  // ObjCObjectPointerType is never dependent.
+  return TL.getType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -5599,23 +5582,7 @@ TreeTransform<Derived>::TransformObjCSelectorExpr(ObjCSelectorExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E) {
-  ObjCProtocolDecl *Protocol
-    = cast_or_null<ObjCProtocolDecl>(
-                                 getDerived().TransformDecl(E->getLocStart(),
-                                                            E->getProtocol()));
-  if (!Protocol)
-    return SemaRef.ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      Protocol == E->getProtocol())
-    return SemaRef.Owned(E->Retain());
-
-  return getDerived().RebuildObjCProtocolExpr(Protocol,
-                                              E->getAtLoc(),
-                                              /*FIXME:*/E->getAtLoc(),
-                                              /*FIXME:*/E->getAtLoc(),
-                                              E->getRParenLoc());
-
+  return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
@@ -5646,8 +5613,7 @@ TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
+  // Can never occur in a dependent context.
   return SemaRef.Owned(E->Retain());
 }
 
