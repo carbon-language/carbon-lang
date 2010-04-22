@@ -180,6 +180,13 @@ bool OverloadExpr::ComputeDependence(UnresolvedSetIterator Begin,
   return false;
 }
 
+CXXRecordDecl *OverloadExpr::getNamingClass() const {
+  if (isa<UnresolvedLookupExpr>(this))
+    return cast<UnresolvedLookupExpr>(this)->getNamingClass();
+  else
+    return cast<UnresolvedMemberExpr>(this)->getNamingClass();
+}
+
 Stmt::child_iterator UnresolvedLookupExpr::child_begin() {
   return child_iterator();
 }

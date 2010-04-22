@@ -1289,6 +1289,9 @@ public:
     Results.append(Begin, End);
   }
 
+  /// Gets the naming class of this lookup, if any.
+  CXXRecordDecl *getNamingClass() const;
+
   typedef UnresolvedSetImpl::iterator decls_iterator;
   decls_iterator decls_begin() const { return Results.begin(); }
   decls_iterator decls_end() const { return Results.end(); }

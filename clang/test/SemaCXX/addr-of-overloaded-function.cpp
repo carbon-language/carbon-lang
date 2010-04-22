@@ -70,3 +70,19 @@ struct C {
     int (&fp)() = f; // expected-error{{address of overloaded function 'f' does not match required type 'int ()'}}
   }
 };
+
+// PR6886
+namespace test0 {
+  void myFunction(void (*)(void *));
+
+  class Foo {
+    void foo();
+
+    static void bar(void*);
+    static void bar();
+  };
+
+  void Foo::foo() {
+    myFunction(bar);
+  }
+}

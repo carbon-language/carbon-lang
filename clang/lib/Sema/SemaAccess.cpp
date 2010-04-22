@@ -1230,15 +1230,7 @@ Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
     return AR_accessible;
 
   OverloadExpr *Ovl = OverloadExpr::find(OvlExpr).getPointer();
-  NestedNameSpecifier *Qualifier = Ovl->getQualifier();
-  assert(Qualifier && "address of overloaded member without qualifier");
-
-  CXXScopeSpec SS;
-  SS.setScopeRep(Qualifier);
-  SS.setRange(Ovl->getQualifierRange());
-  DeclContext *DC = computeDeclContext(SS);
-  assert(DC && DC->isRecord() && "scope did not resolve to record");
-  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(DC);
+  CXXRecordDecl *NamingClass = Ovl->getNamingClass();
 
   AccessTarget Entity(Context, AccessTarget::Member, NamingClass, Found,
                       Context.getTypeDeclType(NamingClass));
