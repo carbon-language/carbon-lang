@@ -1704,7 +1704,6 @@ public:
                                      /*SuperLoc=*/SourceLocation(),
                                      Sel,
                                      LBracLoc,
-                                     /*FIXME:*/LBracLoc,
                                      RBracLoc,
                                      move(Args));
   }
@@ -1723,7 +1722,6 @@ public:
                                         /*SuperLoc=*/SourceLocation(),
                                         Sel,
                                         LBracLoc,
-                                        /*FIXME:*/LBracLoc,
                                         RBracLoc,
                                         move(Args));
   }
@@ -2339,7 +2337,7 @@ TreeTransform<Derived>::TransformBlockPointerType(TypeLocBuilder &TLB,
       return QualType();
   }
 
-  BlockPointerLoc NewT = TLB.push<BlockPointerLoc>(Result);
+  BlockPointerTypeLoc NewT = TLB.push<BlockPointerTypeLoc>(Result);
   NewT.setSigilLoc(TL.getSigilLoc());
   return Result;
 }

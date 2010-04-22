@@ -643,16 +643,14 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
     QualType SuperTy = Context.getObjCInterfaceType(Super);
     SuperTy = Context.getObjCObjectPointerType(SuperTy);
     return BuildInstanceMessage(ExprArg(*this), SuperTy, SuperLoc,
-                                Sel, LBracLoc, SelectorLoc, RBracLoc,
-                                move(Args));
+                                Sel, LBracLoc, RBracLoc, move(Args));
   }
   
   // Since we are in a class method, this is a class message to
   // the superclass.
   return BuildClassMessage(/*ReceiverTypeInfo=*/0,
                            Context.getObjCInterfaceType(Super),
-                           SuperLoc, Sel, LBracLoc, SelectorLoc,
-                           RBracLoc, move(Args));
+                           SuperLoc, Sel, LBracLoc, RBracLoc, move(Args));
 }
 
 /// \brief Build an Objective-C class message expression.
@@ -677,8 +675,6 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
 ///
 /// \param LBracLoc The location of the opening square bracket ']'.
 ///
-/// \param SelectorLoc The location of the first identifier in the selector.
-///
 /// \param RBrac The location of the closing square bracket ']'.
 ///
 /// \param Args The message arguments.
@@ -687,7 +683,6 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                                SourceLocation SuperLoc,
                                                Selector Sel,
                                                SourceLocation LBracLoc, 
-                                               SourceLocation SelectorLoc,
                                                SourceLocation RBracLoc,
                                                MultiExprArg ArgsIn) {
   if (ReceiverType->isDependentType()) {
@@ -781,7 +776,7 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
 
   return BuildClassMessage(ReceiverTypeInfo, ReceiverType, 
                            /*SuperLoc=*/SourceLocation(), Sel, 
-                           LBracLoc, SelectorLoc, RBracLoc, move(Args));
+                           LBracLoc, RBracLoc, move(Args));
 }
 
 /// \brief Build an Objective-C instance message expression.
@@ -806,8 +801,6 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
 ///
 /// \param LBracLoc The location of the opening square bracket ']'.
 ///
-/// \param SelectorLoc The location of the first identifier in the selector.
-///
 /// \param RBrac The location of the closing square bracket ']'.
 ///
 /// \param Args The message arguments.
@@ -816,7 +809,6 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
                                                   SourceLocation SuperLoc,
                                                   Selector Sel,
                                                   SourceLocation LBracLoc, 
-                                                  SourceLocation SelectorLoc, 
                                                   SourceLocation RBracLoc,
                                                   MultiExprArg ArgsIn) {
   // If we have a receiver expression, perform appropriate promotions
@@ -1001,7 +993,6 @@ Sema::OwningExprResult Sema::ActOnInstanceMessage(Scope *S,
 
   return BuildInstanceMessage(move(ReceiverE), Receiver->getType(),
                               /*SuperLoc=*/SourceLocation(),
-                              Sel, LBracLoc, SelectorLoc, RBracLoc,
-                              move(Args));
+                              Sel, LBracLoc, RBracLoc, move(Args));
 }
 

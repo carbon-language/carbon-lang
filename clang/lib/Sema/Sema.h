@@ -3887,7 +3887,6 @@ public:
                                      SourceLocation SuperLoc,
                                      Selector Sel,
                                      SourceLocation LBracLoc, 
-                                     SourceLocation SelectorLoc,
                                      SourceLocation RBracLoc,
                                      MultiExprArg Args);
                                      
@@ -3904,7 +3903,6 @@ public:
                                         SourceLocation SuperLoc,
                                         Selector Sel,
                                         SourceLocation LBracLoc, 
-                                        SourceLocation SelectorLoc, 
                                         SourceLocation RBracLoc,
                                         MultiExprArg Args);
 
