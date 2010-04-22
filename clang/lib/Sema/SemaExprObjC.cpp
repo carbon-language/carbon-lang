@@ -643,14 +643,16 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
     QualType SuperTy = Context.getObjCInterfaceType(Super);
     SuperTy = Context.getObjCObjectPointerType(SuperTy);
     return BuildInstanceMessage(ExprArg(*this), SuperTy, SuperLoc,
-                                Sel, LBracLoc, RBracLoc, move(Args));
+                                Sel, /*Method=*/0, LBracLoc, RBracLoc, 
+                                move(Args));
   }
   
   // Since we are in a class method, this is a class message to
   // the superclass.
   return BuildClassMessage(/*ReceiverTypeInfo=*/0,
                            Context.getObjCInterfaceType(Super),
-                           SuperLoc, Sel, LBracLoc, RBracLoc, move(Args));
+                           SuperLoc, Sel, /*Method=*/0, LBracLoc, RBracLoc, 
+                           move(Args));
 }
 
 /// \brief Build an Objective-C class message expression.
@@ -673,6 +675,9 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
 ///
 /// \param Sel The selector to which the message is being sent.
 ///
+/// \param Method The method that this class message is invoking, if
+/// already known.
+///
 /// \param LBracLoc The location of the opening square bracket ']'.
 ///
 /// \param RBrac The location of the closing square bracket ']'.
@@ -682,6 +687,7 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                                QualType ReceiverType,
                                                SourceLocation SuperLoc,
                                                Selector Sel,
+                                               ObjCMethodDecl *Method,
                                                SourceLocation LBracLoc, 
                                                SourceLocation RBracLoc,
                                                MultiExprArg ArgsIn) {
@@ -712,25 +718,26 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   assert(Class && "We don't know which class we're messaging?");
 
   // Find the method we are messaging.
-  ObjCMethodDecl *Method = 0;
-  if (Class->isForwardDecl()) {
-    // A forward class used in messaging is treated as a 'Class'
-    Diag(Loc, diag::warn_receiver_forward_class) << Class->getDeclName();
-    Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                             SourceRange(LBracLoc, RBracLoc));
-    if (Method)
-      Diag(Method->getLocation(), diag::note_method_sent_forward_class)
-        << Method->getDeclName();
+  if (!Method) {
+    if (Class->isForwardDecl()) {
+      // A forward class used in messaging is treated as a 'Class'
+      Diag(Loc, diag::warn_receiver_forward_class) << Class->getDeclName();
+      Method = LookupFactoryMethodInGlobalPool(Sel, 
+                                               SourceRange(LBracLoc, RBracLoc));
+      if (Method)
+        Diag(Method->getLocation(), diag::note_method_sent_forward_class)
+          << Method->getDeclName();
+    }
+    if (!Method)
+      Method = Class->lookupClassMethod(Sel);
+
+    // If we have an implementation in scope, check "private" methods.
+    if (!Method)
+      Method = LookupPrivateClassMethod(Sel, Class);
+
+    if (Method && DiagnoseUseOfDecl(Method, Loc))
+      return ExprError();
   }
-  if (!Method)
-    Method = Class->lookupClassMethod(Sel);
-
-  // If we have an implementation in scope, check "private" methods.
-  if (!Method)
-    Method = LookupPrivateClassMethod(Sel, Class);
-
-  if (Method && DiagnoseUseOfDecl(Method, Loc))
-    return ExprError();
 
   // Check the argument types and determine the result type.
   QualType ReturnType;
@@ -775,7 +782,7 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
     ReceiverTypeInfo = Context.getTrivialTypeSourceInfo(ReceiverType, LBracLoc);
 
   return BuildClassMessage(ReceiverTypeInfo, ReceiverType, 
-                           /*SuperLoc=*/SourceLocation(), Sel, 
+                           /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0,
                            LBracLoc, RBracLoc, move(Args));
 }
 
@@ -799,6 +806,9 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
 ///
 /// \param Sel The selector to which the message is being sent.
 ///
+/// \param Method The method that this instance message is invoking, if
+/// already known.
+///
 /// \param LBracLoc The location of the opening square bracket ']'.
 ///
 /// \param RBrac The location of the closing square bracket ']'.
@@ -808,6 +818,7 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
                                                   QualType ReceiverType,
                                                   SourceLocation SuperLoc,
                                                   Selector Sel,
+                                                  ObjCMethodDecl *Method,
                                                   SourceLocation LBracLoc, 
                                                   SourceLocation RBracLoc,
                                                   MultiExprArg ArgsIn) {
@@ -836,125 +847,126 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
   // The location of the receiver.
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc : Receiver->getLocStart();
 
-  ObjCMethodDecl *Method = 0;
-  // Handle messages to id.
-  if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType() ||
-      (Receiver && Context.isObjCNSObjectType(Receiver->getType()))) {
-    Method = LookupInstanceMethodInGlobalPool(Sel, 
+  if (!Method) {
+    // Handle messages to id.
+    if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType() ||
+        (Receiver && Context.isObjCNSObjectType(Receiver->getType()))) {
+      Method = LookupInstanceMethodInGlobalPool(Sel, 
                                               SourceRange(LBracLoc, RBracLoc));
-    if (!Method)
-      Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                               SourceRange(LBracLoc, RBracLoc));
-  } else if (ReceiverType->isObjCClassType() ||
-             ReceiverType->isObjCQualifiedClassType()) {
-    // Handle messages to Class.
-    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
-        // First check the public methods in the class interface.
-        Method = ClassDecl->lookupClassMethod(Sel);
-
-        if (!Method)
-          Method = LookupPrivateClassMethod(Sel, ClassDecl);
-
-        // FIXME: if we still haven't found a method, we need to look in
-        // protocols (if we have qualifiers).
-      }
-      if (Method && DiagnoseUseOfDecl(Method, Loc))
-        return ExprError();
-    }
-    if (!Method) {
-      // If not messaging 'self', look for any factory method named 'Sel'.
-      if (!Receiver || !isSelfExpr(Receiver)) {
+      if (!Method)
         Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                             SourceRange(LBracLoc, RBracLoc));
-        if (!Method) {
-          // If no class (factory) method was found, check if an _instance_
-          // method of the same name exists in the root class only.
-          Method = LookupInstanceMethodInGlobalPool(Sel,
-                                             SourceRange(LBracLoc, RBracLoc));
-          if (Method)
-              if (const ObjCInterfaceDecl *ID =
-                dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
-              if (ID->getSuperClass())
-                Diag(Loc, diag::warn_root_inst_method_not_found)
-                  << Sel << SourceRange(LBracLoc, RBracLoc);
-            }
-        }
-      }
-    }
-  } else {
-    ObjCInterfaceDecl* ClassDecl = 0;
+                                               SourceRange(LBracLoc, RBracLoc));
+    } else if (ReceiverType->isObjCClassType() ||
+               ReceiverType->isObjCQualifiedClassType()) {
+      // Handle messages to Class.
+      if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
+        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
+          // First check the public methods in the class interface.
+          Method = ClassDecl->lookupClassMethod(Sel);
 
-    // We allow sending a message to a qualified ID ("id<foo>"), which is ok as
-    // long as one of the protocols implements the selector (if not, warn).
-    if (const ObjCObjectPointerType *QIdTy 
-                                 = ReceiverType->getAsObjCQualifiedIdType()) {
-      // Search protocols for instance methods.
-      for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
-             E = QIdTy->qual_end(); I != E; ++I) {
-        ObjCProtocolDecl *PDecl = *I;
-        if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
-          break;
-        // Since we aren't supporting "Class<foo>", look for a class method.
-        if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
-          break;
-      }
-    } else if (const ObjCObjectPointerType *OCIType
-                 = ReceiverType->getAsObjCInterfacePointerType()) {
-      // We allow sending a message to a pointer to an interface (an object).
-      ClassDecl = OCIType->getInterfaceDecl();
-      // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
-      // faster than the following method (which can do *many* linear searches).
-      // The idea is to add class info to InstanceMethodPool.
-      Method = ClassDecl->lookupInstanceMethod(Sel);
+          if (!Method)
+            Method = LookupPrivateClassMethod(Sel, ClassDecl);
 
-      if (!Method) {
-        // Search protocol qualifiers.
-        for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
-               E = OCIType->qual_end(); QI != E; ++QI) {
-          if ((Method = (*QI)->lookupInstanceMethod(Sel)))
-            break;
+          // FIXME: if we still haven't found a method, we need to look in
+          // protocols (if we have qualifiers).
         }
+        if (Method && DiagnoseUseOfDecl(Method, Loc))
+          return ExprError();
       }
       if (!Method) {
-        // If we have implementations in scope, check "private" methods.
-        Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
-
-        if (!Method && (!Receiver || !isSelfExpr(Receiver))) {
-          // If we still haven't found a method, look in the global pool. This
-          // behavior isn't very desirable, however we need it for GCC
-          // compatibility. FIXME: should we deviate??
-          if (OCIType->qual_empty()) {
+        // If not messaging 'self', look for any factory method named 'Sel'.
+        if (!Receiver || !isSelfExpr(Receiver)) {
+          Method = LookupFactoryMethodInGlobalPool(Sel, 
+                                               SourceRange(LBracLoc, RBracLoc));
+          if (!Method) {
+            // If no class (factory) method was found, check if an _instance_
+            // method of the same name exists in the root class only.
             Method = LookupInstanceMethodInGlobalPool(Sel,
                                                SourceRange(LBracLoc, RBracLoc));
-            if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
-              Diag(Loc, diag::warn_maynot_respond)
-                << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
+            if (Method)
+                if (const ObjCInterfaceDecl *ID =
+                  dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
+                if (ID->getSuperClass())
+                  Diag(Loc, diag::warn_root_inst_method_not_found)
+                    << Sel << SourceRange(LBracLoc, RBracLoc);
+              }
           }
         }
       }
-      if (Method && DiagnoseUseOfDecl(Method, Loc))
-        return ExprError();
-    } else if (!Context.getObjCIdType().isNull() &&
-               (ReceiverType->isPointerType() ||
-                (ReceiverType->isIntegerType() &&
-                 ReceiverType->isScalarType()))) {
-      // Implicitly convert integers and pointers to 'id' but emit a warning.
-      Diag(Loc, diag::warn_bad_receiver_type)
-        << ReceiverType 
-        << Receiver->getSourceRange();
-      if (ReceiverType->isPointerType())
-        ImpCastExprToType(Receiver, Context.getObjCIdType(), 
-                          CastExpr::CK_BitCast);
-      else
-        ImpCastExprToType(Receiver, Context.getObjCIdType(),
-                          CastExpr::CK_IntegralToPointer);
-      ReceiverType = Receiver->getType();
     } else {
-      // Reject other random receiver types (e.g. structs).
-      Diag(Loc, diag::err_bad_receiver_type)
-        << ReceiverType << Receiver->getSourceRange();
-      return ExprError();
+      ObjCInterfaceDecl* ClassDecl = 0;
+
+      // We allow sending a message to a qualified ID ("id<foo>"), which is ok as
+      // long as one of the protocols implements the selector (if not, warn).
+      if (const ObjCObjectPointerType *QIdTy 
+                                   = ReceiverType->getAsObjCQualifiedIdType()) {
+        // Search protocols for instance methods.
+        for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
+               E = QIdTy->qual_end(); I != E; ++I) {
+          ObjCProtocolDecl *PDecl = *I;
+          if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+            break;
+          // Since we aren't supporting "Class<foo>", look for a class method.
+          if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
+            break;
+        }
+      } else if (const ObjCObjectPointerType *OCIType
+                   = ReceiverType->getAsObjCInterfacePointerType()) {
+        // We allow sending a message to a pointer to an interface (an object).
+        ClassDecl = OCIType->getInterfaceDecl();
+        // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
+        // faster than the following method (which can do *many* linear searches).
+        // The idea is to add class info to InstanceMethodPool.
+        Method = ClassDecl->lookupInstanceMethod(Sel);
+
+        if (!Method) {
+          // Search protocol qualifiers.
+          for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
+                 E = OCIType->qual_end(); QI != E; ++QI) {
+            if ((Method = (*QI)->lookupInstanceMethod(Sel)))
+              break;
+          }
+        }
+        if (!Method) {
+          // If we have implementations in scope, check "private" methods.
+          Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+
+          if (!Method && (!Receiver || !isSelfExpr(Receiver))) {
+            // If we still haven't found a method, look in the global pool. This
+            // behavior isn't very desirable, however we need it for GCC
+            // compatibility. FIXME: should we deviate??
+            if (OCIType->qual_empty()) {
+              Method = LookupInstanceMethodInGlobalPool(Sel,
+                                                 SourceRange(LBracLoc, RBracLoc));
+              if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
+                Diag(Loc, diag::warn_maynot_respond)
+                  << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
+            }
+          }
+        }
+        if (Method && DiagnoseUseOfDecl(Method, Loc))
+          return ExprError();
+      } else if (!Context.getObjCIdType().isNull() &&
+                 (ReceiverType->isPointerType() ||
+                  (ReceiverType->isIntegerType() &&
+                   ReceiverType->isScalarType()))) {
+        // Implicitly convert integers and pointers to 'id' but emit a warning.
+        Diag(Loc, diag::warn_bad_receiver_type)
+          << ReceiverType 
+          << Receiver->getSourceRange();
+        if (ReceiverType->isPointerType())
+          ImpCastExprToType(Receiver, Context.getObjCIdType(), 
+                            CastExpr::CK_BitCast);
+        else
+          ImpCastExprToType(Receiver, Context.getObjCIdType(),
+                            CastExpr::CK_IntegralToPointer);
+        ReceiverType = Receiver->getType();
+      } else {
+        // Reject other random receiver types (e.g. structs).
+        Diag(Loc, diag::err_bad_receiver_type)
+          << ReceiverType << Receiver->getSourceRange();
+        return ExprError();
+      }
     }
   }
 
@@ -992,7 +1004,7 @@ Sema::OwningExprResult Sema::ActOnInstanceMessage(Scope *S,
     return ExprError();
 
   return BuildInstanceMessage(move(ReceiverE), Receiver->getType(),
-                              /*SuperLoc=*/SourceLocation(),
-                              Sel, LBracLoc, RBracLoc, move(Args));
+                              /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0, 
+                              LBracLoc, RBracLoc, move(Args));
 }
 

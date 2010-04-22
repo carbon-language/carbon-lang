@@ -3886,6 +3886,7 @@ public:
                                      QualType ReceiverType,
                                      SourceLocation SuperLoc,
                                      Selector Sel,
+                                     ObjCMethodDecl *Method,
                                      SourceLocation LBracLoc, 
                                      SourceLocation RBracLoc,
                                      MultiExprArg Args);
@@ -3902,6 +3903,7 @@ public:
                                         QualType ReceiverType,
                                         SourceLocation SuperLoc,
                                         Selector Sel,
+                                        ObjCMethodDecl *Method,
                                         SourceLocation LBracLoc, 
                                         SourceLocation RBracLoc,
                                         MultiExprArg Args);

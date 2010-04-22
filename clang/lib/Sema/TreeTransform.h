@@ -1698,13 +1698,10 @@ public:
                                           SourceLocation LBracLoc, 
                                           MultiExprArg Args,
                                           SourceLocation RBracLoc) {
-    // FIXME: Drops Method
     return SemaRef.BuildClassMessage(ReceiverTypeInfo,
                                      ReceiverTypeInfo->getType(),
                                      /*SuperLoc=*/SourceLocation(),
-                                     Sel,
-                                     LBracLoc,
-                                     RBracLoc,
+                                     Sel, Method, LBracLoc, RBracLoc,
                                      move(Args));
   }
 
@@ -1715,14 +1712,11 @@ public:
                                           SourceLocation LBracLoc, 
                                           MultiExprArg Args,
                                           SourceLocation RBracLoc) {
-    // FIXME: Drops Method
     QualType ReceiverType = static_cast<Expr *>(Receiver.get())->getType();
     return SemaRef.BuildInstanceMessage(move(Receiver),
                                         ReceiverType,
                                         /*SuperLoc=*/SourceLocation(),
-                                        Sel,
-                                        LBracLoc,
-                                        RBracLoc,
+                                        Sel, Method, LBracLoc, RBracLoc,
                                         move(Args));
   }
 
