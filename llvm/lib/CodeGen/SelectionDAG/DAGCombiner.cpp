@@ -130,6 +130,7 @@ namespace {
     bool CombineToPostIndexedLoadStore(SDNode *N);
 
     SDValue PromoteIntBinOp(SDValue Op);
+    SDValue PromoteIntShiftOp(SDValue Op);
     SDValue PromoteExtend(SDValue Op);
     bool PromoteLoad(SDValue Op);
 
@@ -169,8 +170,6 @@ namespace {
     SDValue visitSHL(SDNode *N);
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
-    SDValue visitROTL(SDNode *N);
-    SDValue visitROTR(SDNode *N);
     SDValue visitCTLZ(SDNode *N);
     SDValue visitCTTZ(SDNode *N);
     SDValue visitCTPOP(SDNode *N);
@@ -723,7 +722,47 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
   if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
     assert(PVT != VT && "Don't know what type to promote to!");
 
-    bool isShift = (Opc == ISD::SHL) || (Opc == ISD::SRA) || (Opc == ISD::SRL);
+    SDValue N0 = PromoteOperand(Op.getOperand(0), PVT, DAG, TLI);
+    if (N0.getNode() == 0)
+      return SDValue();
+
+    SDValue N1 = PromoteOperand(Op.getOperand(1), PVT, DAG, TLI);
+    if (N1.getNode() == 0)
+      return SDValue();
+
+    AddToWorkList(N0.getNode());
+    AddToWorkList(N1.getNode());
+
+    DebugLoc dl = Op.getDebugLoc();
+    return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                       DAG.getNode(Opc, dl, PVT, N0, N1));
+  }
+  return SDValue();
+}
+
+/// PromoteIntShiftOp - Promote the specified integer shift operation if the
+/// target indicates it is beneficial. e.g. On x86, it's usually better to
+/// promote i16 operations to i32 since i16 instructions are longer.
+SDValue DAGCombiner::PromoteIntShiftOp(SDValue Op) {
+  if (!LegalOperations)
+    return SDValue();
+
+  EVT VT = Op.getValueType();
+  if (VT.isVector() || !VT.isInteger())
+    return SDValue();
+
+  // If operation type is 'undesirable', e.g. i16 on x86, consider
+  // promoting it.
+  unsigned Opc = Op.getOpcode();
+  if (TLI.isTypeDesirableForOp(Opc, VT))
+    return SDValue();
+
+  EVT PVT = VT;
+  // Consult target whether it is a good idea to promote this operation and
+  // what's the right type to promote it to.
+  if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
+    assert(PVT != VT && "Don't know what type to promote to!");
+
     SDValue N0 = Op.getOperand(0);
     if (Opc == ISD::SRA)
       N0 = SExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI);
@@ -733,19 +772,11 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
       N0 = PromoteOperand(N0, PVT, DAG, TLI);
     if (N0.getNode() == 0)
       return SDValue();
-
-    SDValue N1 = Op.getOperand(1);
-    if (!isShift) {
-      N1 = PromoteOperand(N1, PVT, DAG, TLI);
-      if (N1.getNode() == 0)
-        return SDValue();
-      AddToWorkList(N1.getNode());
-    }
     AddToWorkList(N0.getNode());
 
     DebugLoc dl = Op.getDebugLoc();
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
-                       DAG.getNode(Op.getOpcode(), dl, PVT, N0, N1));
+                       DAG.getNode(Opc, dl, PVT, N0, Op.getOperand(1)));
   }
   return SDValue();
 }
@@ -953,8 +984,6 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SHL:                return visitSHL(N);
   case ISD::SRA:                return visitSRA(N);
   case ISD::SRL:                return visitSRL(N);
-  case ISD::ROTL:               return visitROTL(N);
-  case ISD::ROTR:               return visitROTR(N);
   case ISD::CTLZ:               return visitCTLZ(N);
   case ISD::CTTZ:               return visitCTTZ(N);
   case ISD::CTPOP:              return visitCTPOP(N);
@@ -2785,7 +2814,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       return NewSHL;
   }
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return PromoteIntShiftOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitSRA(SDNode *N) {
@@ -2905,7 +2934,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       return NewSRA;
   }
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return PromoteIntShiftOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitSRL(SDNode *N) {
@@ -3071,15 +3100,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     }
   }
 
-  return PromoteIntBinOp(SDValue(N, 0));
-}
-
-SDValue DAGCombiner::visitROTL(SDNode *N) {
-  return PromoteIntBinOp(SDValue(N, 0));
-}
-
-SDValue DAGCombiner::visitROTR(SDNode *N) {
-  return PromoteIntBinOp(SDValue(N, 0));
+  return PromoteIntShiftOp(SDValue(N, 0));
 }
 
 SDValue DAGCombiner::visitCTLZ(SDNode *N) {

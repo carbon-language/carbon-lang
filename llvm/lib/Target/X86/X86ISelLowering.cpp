@@ -9970,8 +9970,6 @@ bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:
-  case ISD::ROTL:
-  case ISD::ROTR:
   case ISD::SUB:
   case ISD::ADD:
   case ISD::MUL:
@@ -10015,9 +10013,7 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     break;
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL:
-  case ISD::ROTL:
-  case ISD::ROTR: {
+  case ISD::SRL: {
     SDValue N0 = Op.getOperand(0);
     // Look out for (store (shl (load), x)).
     if (isa<LoadSDNode>(N0) && N0.hasOneUse() &&
