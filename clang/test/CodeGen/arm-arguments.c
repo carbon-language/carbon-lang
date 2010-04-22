@@ -115,7 +115,7 @@ struct s19 f19(void) {}
 struct s20 { struct s8 f1; int f0; };
 struct s20 f20(void) {}
 
-// APCS-GNU: define arm_apcscc i32 @f21()
+// APCS-GNU: define arm_apcscc i8 @f21()
 // AAPCS: define arm_aapcscc i32 @f21()
 struct s21 { struct {} f1; int f0 : 4; };
 struct s21 f21(void) {}

@@ -1418,6 +1418,10 @@ public:
       DoubleAlign = LongLongAlign = LongDoubleAlign = 32;
       SizeType = UnsignedLong;
 
+      // Do not respect the alignment of bit-field types when laying out
+      // structures. This corresponds to PCC_BITFIELD_TYPE_MATTERS in gcc.
+      UseBitFieldTypeAlignment = false;
+
       if (IsThumb) {
         DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                              "i64:32:32-f32:32:32-f64:32:32-"
