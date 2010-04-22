@@ -197,6 +197,11 @@ class DwarfDebug {
   DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
+
+  /// weakDebugRangeSymbols - In cases where function bodies is not emitted
+  /// into .text section, use function begin marker as anchor for debug range
+  /// offsets. This map keeps track of such symbols and corresponding
+  /// function begin marker symbols.
   DenseMap<const MCSymbol *, const MCSymbol *> WeakDebugRangeSymbols;
 
   /// Previous instruction's location information. This is used to determine
