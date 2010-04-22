@@ -280,6 +280,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     if (TheSema.getLangOptions().CPlusPlus) {
       TagDecl::TagKind Tag
         = TagDecl::getTagKindForTypeSpec(DS.getTypeSpecType());
+      Result = TheSema.getQualifiedNameType(DS.getTypeSpecScope(), Result);
       Result = Context.getElaboratedType(Result, Tag);
     }
 

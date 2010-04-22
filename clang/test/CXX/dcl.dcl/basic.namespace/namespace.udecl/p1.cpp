@@ -39,7 +39,7 @@ namespace Test0 {
       test<2> _1 = (foo)(a);
 
       class Test0::foo b;
-      test<2> _2 = (foo)(b); // expected-error {{no viable conversion from 'class Test0::foo' to 'class foo' is possible}}
+      test<2> _2 = (foo)(b); // expected-error {{no viable conversion from 'class Test0::foo' to 'class ::foo' is possible}}
     }
   }
 }
