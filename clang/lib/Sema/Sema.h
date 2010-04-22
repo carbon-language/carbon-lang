@@ -1370,9 +1370,7 @@ public:
     /// C99 6.2.2p4-5 and C++ [basic.link]p6.
     LookupRedeclarationWithLinkage,
     /// Look up the name of an Objective-C protocol.
-    LookupObjCProtocolName,
-    /// Look up the name of an Objective-C implementation
-    LookupObjCImplementationName
+    LookupObjCProtocolName
   };
 
   /// \brief Specifies whether (or how) name lookup is being performed for a

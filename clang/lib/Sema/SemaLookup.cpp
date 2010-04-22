@@ -232,7 +232,6 @@ LookupResult::ResultFilter getResultFilter(Sema::LookupNameKind NameKind) {
   case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
   case Sema::LookupUsingDeclName:
   case Sema::LookupObjCProtocolName:
-  case Sema::LookupObjCImplementationName:
     return &IsAcceptableIDNS;
 
   case Sema::LookupOperatorName:
@@ -290,10 +289,6 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
 
   case Sema::LookupObjCProtocolName:
     IDNS = Decl::IDNS_ObjCProtocol;
-    break;
-
-  case Sema::LookupObjCImplementationName:
-    IDNS = Decl::IDNS_ObjCImplementation;
     break;
   }
   return IDNS;
@@ -1169,7 +1164,6 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
     case LookupOperatorName:
     case LookupNamespaceName:
     case LookupObjCProtocolName:
-    case LookupObjCImplementationName:
       // These lookups will never find a member in a C++ class (or base class).
       return false;
       
