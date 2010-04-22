@@ -145,13 +145,18 @@ suitable for use as a a beta quality ARM compiler.</li>
 
 <div class="doc_text">
 
-<p>Previously announced in the 2.4, 2.5, and 2.6 LLVM releases, the Clang project also
-includes an early stage static source code analysis tool for <a
-href="http://clang.llvm.org/StaticAnalysis.html">automatically finding bugs</a>
-in C and Objective-C programs. The tool performs checks to find
-bugs that occur on a specific path within a program.</p>
+<p>The <a href="http://clang-analyzer.llvm.org/">Clang Static Analyzer</a>
+   project is an effort to use static source code analysis techniques to
+   automatically find bugs in C and Objective-C programs (and hopefully <a
+   href="http://clang-analyzer.llvm.org/dev_cxx.html">C++ in the
+   future</a>!).  The tool is very good at finding bugs that occur on specific
+   paths through code, such as on error conditions.</p>
 
-<p>In the LLVM 2.7 time-frame, the analyzer core has sprouted legs and...</p>
+<p>In the LLVM 2.7 time-frame, the analyzer core has made several major and 
+   minor improvements, including better support for tracking the fields of
+   structures, initial support (not enabled by default yet) for doing
+   interprocedural (cross-function) analysis, and new checks have been added.
+</p>
 
 </div>
 
@@ -255,12 +260,27 @@ DragonEgg is a new project which is seeing its first release with llvm-2.7.
 
 <div class="doc_text">
 <p>
-The LLVM Machine Code (MC) Toolkit project is ...
+The LLVM Machine Code (aka MC) sub-project of LLVM was created to solve a number
+of problems in the realm of assembly, disassembly, object file format handling,
+and a number of other related areas that CPU instruction-set level tools work
+in. It is a sub-project of LLVM which provides it with a number of advantages
+over other compilers that do not have tightly integrated assembly-level tools.
+For a gentle introduction, please see the <a
+href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
+LLVM MC Project Blog Post</a>.
 </p>
 
-<p>
-MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
-Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
+<p>2.7 includes major parts of the work required by the new MC Project.  A few
+   targets have been refactored to support it, and work is underway to support a
+   native assembler in LLVM.  This work is not complete in LLVM 2.7, but you has
+   made substantially more progress on LLVM mainline.</p>
+
+<p>One minor example of what MC can do is to transcode an AT&amp;T syntax
+   X86 .s file into intel syntax.  You can do this with something like:</p>
+   
+<pre>
+  llvm-mc foo.s -output-asm-variant=1 -o foo-intel.s
+</pre>
 </p>
 
 </div>	
@@ -455,13 +475,8 @@ Address of Label and Indirect Branches in LLVM IR Blog Post</a>.
     href="http://blog.llvm.org/2010/01/x86-disassembler.html">The X86
     Disassembler Blog Post</a> for more information.</li>
 
-<li>2.7 includes major parts of the work required by the new MC Project,
-    which aims to rework our handling of low-level machine code.  A few targets
-    have been refactored to support it, and work is underway to support a native
-    assembler in LLVM.  This work is not complete in LLVM 2.7, but you has made
-    substantially more progress on LLVM mainline.  You can read more about this
-    in the <a href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">
-    Intro to the LLVM MC Project Blog Post</a>.
+<li>2.7 includes major parts of the work required by the new MC Project, 
+    see the <a href="#mc">MC update above</a> for more information.</li>
 </li>
 
 </ul>
