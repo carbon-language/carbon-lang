@@ -889,6 +889,27 @@ public:
                                   move(Exprs), move(AsmString), move(Clobbers),
                                   RParenLoc, MSAsm);
   }
+
+  /// \brief Build a new Objective-C @try statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCAtTryStmt(SourceLocation AtLoc,
+                                        StmtArg TryBody,
+                                        StmtArg Catch,
+                                        StmtArg Finally) {
+    return getSema().ActOnObjCAtTryStmt(AtLoc, move(TryBody), move(Catch),
+                                        move(Finally));
+  }
+
+  /// \brief Build a new Objective-C @finally statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCAtFinallyStmt(SourceLocation AtLoc,
+                                            StmtArg Body) {
+    return getSema().ActOnObjCAtFinallyStmt(AtLoc, move(Body));
+  }
   
   /// \brief Build a new Objective-C @throw statement.
   ///
@@ -3662,9 +3683,37 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C @try statement");
-  return SemaRef.Owned(S->Retain());
+  // Transform the body of the @try.
+  OwningStmtResult TryBody = getDerived().TransformStmt(S->getTryBody());
+  if (TryBody.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the @catch statement (if present).
+  OwningStmtResult Catch(SemaRef);
+  if (S->getCatchStmts()) {
+    Catch = getDerived().TransformStmt(S->getCatchStmts());
+    if (Catch.isInvalid())
+      return SemaRef.StmtError();
+  }
+  
+  // Transform the @finally statement (if present).
+  OwningStmtResult Finally(SemaRef);
+  if (S->getFinallyStmt()) {
+    Finally = getDerived().TransformStmt(S->getFinallyStmt());
+    if (Finally.isInvalid())
+      return SemaRef.StmtError();
+  }
+
+  // If nothing changed, just retain this statement.
+  if (!getDerived().AlwaysRebuild() &&
+      TryBody.get() == S->getTryBody() &&
+      Catch.get() == S->getCatchStmts() &&
+      Finally.get() == S->getFinallyStmt())
+    return SemaRef.Owned(S->Retain());
+  
+  // Build a new statement.
+  return getDerived().RebuildObjCAtTryStmt(S->getAtTryLoc(), move(TryBody),
+                                           move(Catch), move(Finally));
 }
 
 template<typename Derived>
@@ -3678,9 +3727,19 @@ TreeTransform<Derived>::TransformObjCAtCatchStmt(ObjCAtCatchStmt *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C @finally statement");
-  return SemaRef.Owned(S->Retain());
+  // Transform the body.
+  OwningStmtResult Body = getDerived().TransformStmt(S->getFinallyBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  // If nothing changed, just retain this statement.
+  if (!getDerived().AlwaysRebuild() &&
+      Body.get() == S->getFinallyBody())
+    return SemaRef.Owned(S->Retain());
+
+  // Build a new statement.
+  return getDerived().RebuildObjCAtFinallyStmt(S->getAtFinallyLoc(),
+                                               move(Body));
 }
 
 template<typename Derived>

@@ -57,3 +57,19 @@ void fast_enumeration_test(T collection) {
 template void fast_enumeration_test<NSString *>(NSArray*);
 template void fast_enumeration_test<int>(NSArray*); // expected-note{{in instantiation of}}
 template void fast_enumeration_test<NSString *>(vector); // expected-note{{in instantiation of}}
+
+// @try/@catch/@finally
+
+template<typename T, typename U>
+void try_catch_finally_test(U value) {
+  @try {
+    value = 1; // expected-error{{assigning to 'int *' from incompatible type 'int'}}
+  }
+  // FIXME: Add @catch
+  @finally {
+    value = 0;
+  }
+}
+
+template void try_catch_finally_test<NSString *>(int);
+template void try_catch_finally_test<NSString *>(int*); // expected-note{{in instantiation of}}
