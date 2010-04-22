@@ -120,7 +120,8 @@ development.  Here we include updates on these subprojects.
 <p>In the LLVM 2.7 time-frame, the Clang team has made many improvements:</p>
 
 <ul>
-<li>FIXME: C++! Include a link to cxx_compatibility.html</li>
+<li>FIXME: C++! Include a link to cxx_compatibility.html  Clang 2.7 can
+bootstrap???</li>
 
 <li>CIndex API and Python bindings: Clang now includes a C API as part of the
 CIndex library. Although we make make some changes to the API in the future, it
@@ -832,6 +833,7 @@ API changes are:</p>
  instead.</li>
 <li>The Streams.h file and "DOUT" got removed, use "DEBUG(errs() &lt;&lt; ...);"
    instead.</li>
+<li>The TargetAsmInfo interface was renamed to MCAsmInfo.</li>
 <li><tt>ModuleProvider</tt> has been <a
 href="http://llvm.org/viewvc/llvm-project?view=rev&amp;revision=94686">removed</a>
 and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
@@ -858,6 +860,20 @@ to <tt>llvm/System/DataTypes.h</tt>.</li>
 <tt>isFPOrFPVector</tt> and <tt>isFPOrFPVector</tt> methods have been renamed
 <tt>isIntegerTy</tt>, <tt>isIntOrIntVectorTy</tt>, <tt>isFloatingPointTy</tt>, 
 <tt>isFPOrFPVectorTy</tt> and <tt>isFPOrFPVectorTy</tt> respectively.</li>
+
+<li><tt>llvm::Instruction::clone()</tt> no longer takes argument.</li>
+<li><tt>raw_fd_ostream</tt>'s constructor now takes a flag argument, not individual
+  booleans (see <tt>include/llvm/Support/raw_ostream.h</tt> for details).</li>
+<li>Some header files have been renamed:
+<ul>
+  <li><tt>llvm/Support/AIXDataTypesFix.h</tt> to
+      <tt>llvm/System/AIXDataTypesFix.h</tt></li>
+  <li><tt>llvm/Support/DataTypes.h</tt> to <tt>llvm/System/DataTypes.h</tt></li>
+  <li><tt>llvm/Transforms/Utils/InlineCost.h</tt> to
+      <tt>llvm/Analysis/InlineCost.h</tt></li>
+  <li><tt>llvm/Support/Mangler.h</tt> to <tt>llvm/Target/Mangler.h</tt></li>
+  <li><tt>llvm/Analysis/Passes.h</tt> to <tt>llvm/CodeGen/Passes.h</tt></li>
+</ul></li>
 </ul>
 
 </div>
