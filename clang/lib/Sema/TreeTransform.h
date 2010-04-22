@@ -901,7 +901,6 @@ public:
   
   /// \brief Build a new Objective-C @synchronized statement.
   ///
-  ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildObjCAtSynchronizedStmt(SourceLocation AtLoc,
@@ -909,6 +908,23 @@ public:
                                                  StmtArg Body) {
     return getSema().ActOnObjCAtSynchronizedStmt(AtLoc, move(Object),
                                                  move(Body));
+  }
+
+  /// \brief Build a new Objective-C fast enumeration statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCForCollectionStmt(SourceLocation ForLoc,
+                                                SourceLocation LParenLoc,
+                                                StmtArg Element,
+                                                ExprArg Collection,
+                                                SourceLocation RParenLoc,
+                                                StmtArg Body) {
+    return getSema().ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+                                                move(Element), 
+                                                move(Collection),
+                                                RParenLoc,
+                                                move(Body));
   }
   
   /// \brief Build a new C++ exception declaration.
@@ -3713,9 +3729,35 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCForCollectionStmt(
                                                   ObjCForCollectionStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C for-each statement");
-  return SemaRef.Owned(S->Retain());
+  // Transform the element statement.
+  OwningStmtResult Element = getDerived().TransformStmt(S->getElement());
+  if (Element.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the collection expression.
+  OwningExprResult Collection = getDerived().TransformExpr(S->getCollection());
+  if (Collection.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the body.
+  OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  // If nothing changed, just retain this statement.
+  if (!getDerived().AlwaysRebuild() &&
+      Element.get() == S->getElement() &&
+      Collection.get() == S->getCollection() &&
+      Body.get() == S->getBody())
+    return SemaRef.Owned(S->Retain());
+  
+  // Build a new statement.
+  return getDerived().RebuildObjCForCollectionStmt(S->getForLoc(),
+                                                   /*FIXME:*/S->getForLoc(),
+                                                   move(Element),
+                                                   move(Collection),
+                                                   S->getRParenLoc(),
+                                                   move(Body));
 }
 
 

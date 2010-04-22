@@ -988,19 +988,22 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return StmtError(Diag(VD->getLocation(),
                               diag::err_non_variable_decl_in_for));
     } else {
-      if (cast<Expr>(First)->isLvalue(Context) != Expr::LV_Valid)
+      Expr *FirstE = cast<Expr>(First);
+      if (!FirstE->isTypeDependent() &&
+          FirstE->isLvalue(Context) != Expr::LV_Valid)
         return StmtError(Diag(First->getLocStart(),
                    diag::err_selector_element_not_lvalue)
           << First->getSourceRange());
 
       FirstType = static_cast<Expr*>(First)->getType();
     }
-    if (!FirstType->isObjCObjectPointerType() &&
+    if (!FirstType->isDependentType() &&
+        !FirstType->isObjCObjectPointerType() &&
         !FirstType->isBlockPointerType())
         Diag(ForLoc, diag::err_selector_element_type)
           << FirstType << First->getSourceRange();
   }
-  if (Second) {
+  if (Second && !Second->isTypeDependent()) {
     DefaultFunctionArrayLvalueConversion(Second);
     QualType SecondType = Second->getType();
     if (!SecondType->isObjCObjectPointerType())

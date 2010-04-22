@@ -22,3 +22,38 @@ void synchronized_test(T value) {
 
 template void synchronized_test(NSException *);
 template void synchronized_test(int); // expected-note{{in instantiation of}}
+
+// fast enumeration
+@interface NSArray
+@end
+
+@interface NSString
+@end
+
+struct vector {};
+
+template<typename T> void eat(T);
+
+template<typename E, typename T>
+void fast_enumeration_test(T collection) {
+  for (E element in collection) { // expected-error{{selector element type 'int' is not a valid object}} \
+    // expected-error{{collection expression type 'vector' is not a valid object}}
+    eat(element);
+  }
+
+  E element;
+  for (element in collection) // expected-error{{selector element type 'int' is not a valid object}} \
+    // expected-error{{collection expression type 'vector' is not a valid object}}
+    eat(element);
+
+  for (NSString *str in collection) // expected-error{{collection expression type 'vector' is not a valid object}}
+    eat(str);
+
+  NSString *str;
+  for (str in collection) // expected-error{{collection expression type 'vector' is not a valid object}}
+    eat(str);
+}
+
+template void fast_enumeration_test<NSString *>(NSArray*);
+template void fast_enumeration_test<int>(NSArray*); // expected-note{{in instantiation of}}
+template void fast_enumeration_test<NSString *>(vector); // expected-note{{in instantiation of}}
