@@ -191,7 +191,14 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
 
   // Round down from the field offset to find the first access position that is
   // at an aligned offset of the initial access type.
-  uint64_t AccessStart = FieldOffset - (FieldOffset % TypeSizeInBits);
+  uint64_t AccessStart = FieldOffset - (FieldOffset % AccessWidth);
+
+  // Adjust initial access size to fit within record.
+  while (AccessWidth > 8 &&
+         AccessStart + AccessWidth > ContainingTypeSizeInBits) {
+    AccessWidth >>= 1;
+    AccessStart = FieldOffset - (FieldOffset % AccessWidth);
+  }
 
   while (AccessedTargetBits < FieldSize) {
     // Check that we can access using a type of this size, without reading off
@@ -210,20 +217,12 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
     // target. We are reading bits [AccessStart, AccessStart + AccessWidth); the
     // intersection with [FieldOffset, FieldOffset + FieldSize) gives the bits
     // in the target that we are reading.
+    assert(FieldOffset < AccessStart + AccessWidth && "Invalid access start!");
+    assert(AccessStart < FieldOffset + FieldSize && "Invalid access start!");
     uint64_t AccessBitsInFieldStart = std::max(AccessStart, FieldOffset);
     uint64_t AccessBitsInFieldSize =
-      std::min(AccessWidth - (AccessBitsInFieldStart - AccessStart),
-               FieldSize - (AccessBitsInFieldStart-FieldOffset));
-
-    // If we haven't accessed any target bits yet and narrowed the access size,
-    // we might not have reached any target bits yet.
-    //
-    // FIXME: This test is unnecessarily once we choose the initial acccess size
-    // more intelligently.
-    if (!AccessedTargetBits && AccessBitsInFieldSize == 0) {
-      AccessStart += AccessWidth;
-      continue;
-    }
+      std::min(AccessWidth + AccessStart,
+               FieldOffset + FieldSize) - AccessBitsInFieldStart;
 
     assert(NumComponents < 3 && "Unexpected number of components!");
     CGBitFieldInfo::AccessInfo &AI = Components[NumComponents++];

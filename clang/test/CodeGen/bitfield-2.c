@@ -345,3 +345,24 @@ unsigned test_8() {
   res ^= g8.f0 ^ g8.f2 ^ g8.f3;
   return res;
 }
+
+/***/
+
+// This is another case where we narrow the access width immediately.
+//
+// <rdar://problem/7893760>
+
+struct __attribute__((packed)) s9 {
+  unsigned f0 : 7;
+  unsigned f1 : 7;
+  unsigned f2 : 7;
+  unsigned f3 : 7;
+  unsigned f4 : 7;
+  unsigned f5 : 7;
+  unsigned f6 : 7;
+  unsigned f7 : 7;
+};
+
+int f9_load(struct s9 *a0) {
+  return a0->f7;
+}
