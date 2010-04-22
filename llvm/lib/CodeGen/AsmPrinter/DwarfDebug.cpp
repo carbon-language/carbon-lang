@@ -1393,16 +1393,16 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
             DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
     for (SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
-      DebugRangeSymbols.push_back(InsnBeforeLabelMap.lookup(RI->first));
-      DebugRangeSymbols.push_back(InsnAfterLabelMap.lookup(RI->second));
+      DebugRangeSymbols.push_back(LabelsBeforeInsn.lookup(RI->first));
+      DebugRangeSymbols.push_back(LabelsAfterInsn.lookup(RI->second));
     }
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
     return ScopeDIE;
   }
 
-  MCSymbol *Start = InsnBeforeLabelMap.lookup(RI->first);
-  MCSymbol *End = InsnAfterLabelMap.lookup(RI->second);
+  MCSymbol *Start = LabelsBeforeInsn.lookup(RI->first);
+  MCSymbol *End = LabelsAfterInsn.lookup(RI->second);
 
   if (Start == 0 || End == 0) return 0;
 
@@ -1429,8 +1429,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   // For now, use first instruction range and emit low_pc/high_pc pair and
   // corresponding .debug_inlined section entry for this pair.
   SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin();
-  MCSymbol *StartLabel = InsnBeforeLabelMap.lookup(RI->first);
-  MCSymbol *EndLabel = InsnAfterLabelMap.lookup(RI->second);
+  MCSymbol *StartLabel = LabelsBeforeInsn.lookup(RI->first);
+  MCSymbol *EndLabel = LabelsAfterInsn.lookup(RI->second);
 
   if (StartLabel == 0 || EndLabel == 0) {
     assert (0 && "Unexpected Start and End  labels for a inlined scope!");
@@ -2156,7 +2156,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
 
   // If this instruction begins a scope then note down corresponding label.
   if (InsnsBeginScopeSet.count(MI) != 0)
-    InsnBeforeLabelMap[MI] = Label;
+    LabelsBeforeInsn[MI] = Label;
 }
 
 /// endScope - Process end of a scope.
@@ -2165,7 +2165,7 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
     // Emit a label if this instruction ends a scope.
     MCSymbol *Label = MMI->getContext().CreateTempSymbol();
     Asm->OutStreamer.EmitLabel(Label);
-    InsnAfterLabelMap[MI] = Label;
+    LabelsAfterInsn[MI] = Label;
   }
 }
 
@@ -2512,8 +2512,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
   AbstractVariables.clear();
-  InsnBeforeLabelMap.clear();
-  InsnAfterLabelMap.clear();
+  LabelsBeforeInsn.clear();
+  LabelsAfterInsn.clear();
   Lines.clear();
   PrevLabel = NULL;
 }

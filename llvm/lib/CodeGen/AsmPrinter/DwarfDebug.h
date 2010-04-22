@@ -188,13 +188,13 @@ class DwarfDebug {
   DenseMap<MDNode*, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
 
-  /// InsnBeforeLabelMap - Maps instruction with label emitted before 
+  /// LabelsBeforeInsn - Maps instruction with label emitted before 
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> InsnBeforeLabelMap;
+  DenseMap<const MachineInstr *, MCSymbol *> LabelsBeforeInsn;
 
-  /// InsnAfterLabelMap - Maps instruction with label emitted after
+  /// LabelsAfterInsn - Maps instruction with label emitted after
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
+  DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
 
