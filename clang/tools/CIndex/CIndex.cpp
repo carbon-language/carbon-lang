@@ -1921,8 +1921,6 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   // Declaration kinds that don't make any sense here, but are
   // nonetheless harmless.
   case Decl::TranslationUnit:
-  case Decl::Template:
-  case Decl::ObjCContainer:
     break;
 
   // Declaration kinds for which the definition is not resolvable.
@@ -2486,7 +2484,6 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCClass:
     case Decl::ObjCCompatibleAlias:
-    case Decl::ObjCContainer:
     case Decl::ObjCForwardProtocol:
     case Decl::ObjCImplementation:
     case Decl::ObjCInterface:
@@ -2512,7 +2509,6 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
     case Decl::NamespaceAlias:
     case Decl::NonTypeTemplateParm:
     case Decl::StaticAssert:
-    case Decl::Template:
     case Decl::TemplateTemplateParm:
     case Decl::TemplateTypeParm:
     case Decl::UnresolvedUsingTypename:

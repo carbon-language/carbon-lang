@@ -238,7 +238,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ParmVar:
     case NonTypeTemplateParm:
     case ObjCMethod:
-    case ObjCContainer:
     case ObjCInterface:
     case ObjCProperty:
     case ObjCCompatibleAlias:
@@ -269,7 +268,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
       return IDNS_Tag;
 
     case Namespace:
-    case Template:
     case FunctionTemplate:
     case ClassTemplate:
     case TemplateTemplateParm:

@@ -297,7 +297,6 @@ Linkage NamedDecl::getLinkage() const {
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCClass:
     case Decl::ObjCCompatibleAlias:
-    case Decl::ObjCContainer:
     case Decl::ObjCForwardProtocol:
     case Decl::ObjCImplementation:
     case Decl::ObjCInterface:
