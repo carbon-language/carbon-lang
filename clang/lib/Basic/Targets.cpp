@@ -1236,6 +1236,8 @@ public:
   HaikuX86_32TargetInfo(const std::string& triple)
     : X86_32TargetInfo(triple) {
     SizeType = UnsignedLong;
+    IntPtrType = SignedLong;
+    PtrDiffType = SignedLong;
   }                                       	
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
