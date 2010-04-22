@@ -200,8 +200,22 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
     
     // If the call was inlined, but then constant folded, there is no edge to
     // add.  Check for this case.
-    if (Instruction *NewCall = dyn_cast<Instruction>(VMI->second))
-      CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
+    Instruction *NewCall = dyn_cast<Instruction>(VMI->second);
+    if (NewCall == 0) continue;
+    
+    // It's possible that inlining the callsite will cause it to go from an
+    // indirect to a direct call by resolving a function pointer.  If this
+    // happens, set the callee of the new call site to a more precise
+    // destination.  This can also happen if the call graph node of the caller
+    // was just unnecessarily imprecise.
+    if (I->second->getFunction() == 0)
+      if (Function *F = CallSite(NewCall).getCalledFunction()) {
+        // Indirect call site resolved to direct call.
+        CallerNode->addCalledFunction(CallSite::get(NewCall), CG[F]);
+        continue;
+      }
+    
+    CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
   }
   
   // Update the call graph by deleting the edge from Callee to Caller.  We must
