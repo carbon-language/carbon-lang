@@ -2259,29 +2259,6 @@ QualType TransformTypeSpecType(TypeLocBuilder &TLB, TyLoc T) {
   return T.getType();
 }
 
-// Ugly metaprogramming macros because I couldn't be bothered to make
-// the equivalent template version work.
-#define TransformPointerLikeType(TypeClass) do { \
-  QualType PointeeType                                       \
-    = getDerived().TransformType(TLB, TL.getPointeeLoc());   \
-  if (PointeeType.isNull())                                  \
-    return QualType();                                       \
-                                                             \
-  QualType Result = TL.getType();                            \
-  if (getDerived().AlwaysRebuild() ||                        \
-      PointeeType != TL.getPointeeLoc().getType()) {         \
-    Result = getDerived().Rebuild##TypeClass(PointeeType,    \
-                                          TL.getSigilLoc()); \
-    if (Result.isNull())                                     \
-      return QualType();                                     \
-  }                                                          \
-                                                             \
-  TypeClass##Loc NewT = TLB.push<TypeClass##Loc>(Result);    \
-  NewT.setSigilLoc(TL.getSigilLoc());                        \
-                                                             \
-  return Result;                                             \
-} while(0)
-
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformBuiltinType(TypeLocBuilder &TLB,
                                                       BuiltinTypeLoc T,
@@ -2348,7 +2325,23 @@ QualType
 TreeTransform<Derived>::TransformBlockPointerType(TypeLocBuilder &TLB,
                                                   BlockPointerTypeLoc TL,
                                                   QualType ObjectType) {
-  TransformPointerLikeType(BlockPointerType);
+  QualType PointeeType
+    = getDerived().TransformType(TLB, TL.getPointeeLoc());  
+  if (PointeeType.isNull())                                 
+    return QualType();                                      
+  
+  QualType Result = TL.getType();                           
+  if (getDerived().AlwaysRebuild() ||                       
+      PointeeType != TL.getPointeeLoc().getType()) {        
+    Result = getDerived().RebuildBlockPointerType(PointeeType, 
+                                                  TL.getSigilLoc());
+    if (Result.isNull())
+      return QualType();
+  }
+
+  BlockPointerLoc NewT = TLB.push<BlockPointerLoc>(Result);
+  NewT.setSigilLoc(TL.getSigilLoc());
+  return Result;
 }
 
 /// Transforms a reference type.  Note that somewhat paradoxically we
