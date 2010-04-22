@@ -152,8 +152,9 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
                                           uint64_t FieldOffset,
                                           uint64_t FieldSize) {
   const RecordDecl *RD = FD->getParent();
-  uint64_t ContainingTypeSizeInBits =
-    Types.getContext().getASTRecordLayout(RD).getSize();
+  const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
+  uint64_t ContainingTypeSizeInBits = RL.getSize();
+  unsigned ContainingTypeAlign = RL.getAlignment();
 
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
   uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
@@ -223,8 +224,7 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
     AI.FieldByteOffset = AccessStart / 8;
     AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
     AI.AccessWidth = AccessWidth;
-    // FIXME: This might be wrong!
-    AI.AccessAlignment = 0;
+    AI.AccessAlignment = llvm::MinAlign(ContainingTypeAlign, AccessStart) / 8;
     AI.TargetBitOffset = AccessedTargetBits;
     AI.TargetBitWidth = AccessBitsInFieldSize;
 

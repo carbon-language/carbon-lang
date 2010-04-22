@@ -17,9 +17,9 @@
 // CHECK-RECORD:     <CGBitFieldInfo Size:24 IsSigned:1
 // CHECK-RECORD:                     NumComponents:2 Components: [
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:16>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:16>
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:16 TargetBitWidth:8>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:16 TargetBitWidth:8>
 struct __attribute((packed)) s0 {
   int f0 : 24;
 };
@@ -62,14 +62,14 @@ unsigned long long test_0() {
 // CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
 // CHECK-RECORD:                     NumComponents:1 Components: [
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:10>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:10>
 // CHECK-RECORD:     ]>
 // CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
 // CHECK-RECORD:                     NumComponents:2 Components: [
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:10 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:6>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:6>
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:6 TargetBitWidth:4>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:6 TargetBitWidth:4>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -119,7 +119,7 @@ unsigned long long test_1() {
 // CHECK-RECORD:     <CGBitFieldInfo Size:3 IsSigned:0
 // CHECK-RECORD:                     NumComponents:1 Components: [
 // CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:3>
+// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:3>
 
 union __attribute__((packed)) u2 {
   unsigned long long f0 : 3;
@@ -279,4 +279,34 @@ _Bool test_6() {
   res ^= f6_load(&g6);
   res ^= g6.f0;
   return res;
+}
+
+/***/
+
+// Check that we compute the best alignment possible for each access.
+//
+// CHECK-RECORD: *** Dumping IRgen Record Layout
+// CHECK-RECORD: Record: struct s7
+// CHECK-RECORD: Layout: <CGRecordLayout
+// CHECK-RECORD:   LLVMType:{ i32, i32, i32, i8, [3 x i8], [4 x i8], [12 x i8] }
+// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   BitFields:[
+// CHECK-RECORD:     <CGBitFieldInfo Size:5 IsSigned:1
+// CHECK-RECORD:                     NumComponents:1 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:12 FieldBitStart:0 AccessWidth:32
+// CHECK-RECORD:                     AccessAlignment:4 TargetBitOffset:0 TargetBitWidth:5>
+// CHECK-RECORD:     ]>
+// CHECK-RECORD:     <CGBitFieldInfo Size:29 IsSigned:1
+// CHECK-RECORD:                     NumComponents:1 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:16 FieldBitStart:0 AccessWidth:32
+// CHECK-RECORD:                     AccessAlignment:16 TargetBitOffset:0 TargetBitWidth:29>
+
+struct __attribute__((aligned(16))) s7 {
+  int a, b, c;
+  int f0 : 5;
+  int f1 : 29;
+};
+
+int f7_load(struct s7 *a0) {
+  return a0->f0;
 }
