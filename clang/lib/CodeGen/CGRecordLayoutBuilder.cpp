@@ -151,6 +151,10 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
                                           const FieldDecl *FD,
                                           uint64_t FieldOffset,
                                           uint64_t FieldSize) {
+  const RecordDecl *RD = FD->getParent();
+  uint64_t ContainingTypeSizeInBits =
+    Types.getContext().getASTRecordLayout(RD).getSize();
+
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
   uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
   uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
@@ -170,42 +174,65 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
     FieldSize = TypeSizeInBits;
   }
 
-  unsigned StartBit = FieldOffset % TypeSizeInBits;
+  // Compute the access components. The policy we use is to start by attempting
+  // to access using the width of the bit-field type itself and to always access
+  // at aligned indices of that type. If such an access would fail because it
+  // extends past the bound of the type, then we reduce size to the next smaller
+  // power of two and retry. The current algorithm assumes pow2 sized types,
+  // although this is easy to fix.
+  //
+  // FIXME: This algorithm is wrong on big-endian systems, I think.
+  assert(llvm::isPowerOf2_32(TypeSizeInBits) && "Unexpected type size!");
+  CGBitFieldInfo::AccessInfo Components[3];
+  unsigned NumComponents = 0;
+  unsigned AccessedTargetBits = 0;       // The tumber of target bits accessed.
+  unsigned AccessWidth = TypeSizeInBits; // The current access width to attempt.
 
-  // The current policy is to always access the bit-field using the source type
-  // of the bit-field. With the C bit-field rules, this implies that we always
-  // use either one or two accesses, and two accesses can only occur with a
-  // packed structure when the bit-field straddles an alignment boundary.
-  CGBitFieldInfo::AccessInfo Components[2];
+  // Round down from the field offset to find the first access position that is
+  // at an aligned offset of the initial access type.
+  uint64_t AccessStart = FieldOffset - (FieldOffset % TypeSizeInBits);
 
-  unsigned LowBits = std::min(FieldSize, TypeSizeInBits - StartBit);
-  bool NeedsHighAccess = LowBits != FieldSize;
-  unsigned NumComponents = 1 + NeedsHighAccess;
+  while (AccessedTargetBits < FieldSize) {
+    // Check that we can access using a type of this size, without reading off
+    // the end of the structure. This can occur with packed structures and
+    // -fno-bitfield-type-align, for example.
+    if (AccessStart + AccessWidth > ContainingTypeSizeInBits) {
+      // If so, reduce access size to the next smaller power-of-two and retry.
+      AccessWidth >>= 1;
+      assert(AccessWidth >= 8 && "Cannot access under byte size!");
+      continue;
+    }
 
-  // FIXME: This access policy is probably wrong on big-endian systems.
-  CGBitFieldInfo::AccessInfo &LowAccess = Components[0];
-  LowAccess.FieldIndex = 0;
-  LowAccess.FieldByteOffset =
-    TypeSizeInBytes * ((FieldOffset / 8) / TypeSizeInBytes);
-  LowAccess.FieldBitStart = StartBit;
-  LowAccess.AccessWidth = TypeSizeInBits;
-  // FIXME: This might be wrong!
-  LowAccess.AccessAlignment = 0;
-  LowAccess.TargetBitOffset = 0;
-  LowAccess.TargetBitWidth = LowBits;
+    // Otherwise, add an access component.
 
-  if (NeedsHighAccess) {
-    CGBitFieldInfo::AccessInfo &HighAccess = Components[1];
-    HighAccess.FieldIndex = 0;
-    HighAccess.FieldByteOffset = LowAccess.FieldByteOffset + TypeSizeInBytes;
-    HighAccess.FieldBitStart = 0;
-    HighAccess.AccessWidth = TypeSizeInBits;
+    // First, compute the bits inside this access which are part of the
+    // target. We are reading bits [AccessStart, AccessStart + AccessWidth); the
+    // intersection with [FieldOffset, FieldOffset + FieldSize) gives the bits
+    // in the target that we are reading.
+    uint64_t AccessBitsInFieldStart = std::max(AccessStart, FieldOffset);
+    uint64_t AccessBitsInFieldSize =
+      std::min(AccessWidth - (AccessBitsInFieldStart - AccessStart),
+               FieldSize - (AccessBitsInFieldStart-FieldOffset));
+
+    assert(NumComponents < 3 && "Unexpected number of components!");
+    CGBitFieldInfo::AccessInfo &AI = Components[NumComponents++];
+    AI.FieldIndex = 0;
+    // FIXME: We still follow the old access pattern of only using the field
+    // byte offset. We should switch this once we fix the struct layout to be
+    // pretty.
+    AI.FieldByteOffset = AccessStart / 8;
+    AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
+    AI.AccessWidth = AccessWidth;
     // FIXME: This might be wrong!
-    HighAccess.AccessAlignment = 0;
-    HighAccess.TargetBitOffset = LowBits;
-    HighAccess.TargetBitWidth = FieldSize - LowBits;
+    AI.AccessAlignment = 0;
+    AI.TargetBitOffset = AccessedTargetBits;
+    AI.TargetBitWidth = AccessBitsInFieldSize;
+
+    AccessStart += AccessWidth;
+    AccessedTargetBits += AI.TargetBitWidth;
   }
 
+  assert(AccessedTargetBits == FieldSize && "Invalid bit-field access!");
   return CGBitFieldInfo(FieldSize, NumComponents, Components, IsSigned);
 }
 
@@ -565,13 +592,13 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     RL->dump();
   }
 
+#ifndef NDEBUG
   // Verify that the computed LLVM struct size matches the AST layout size.
-  assert(getContext().getASTRecordLayout(D).getSize() / 8 ==
-         getTargetData().getTypeAllocSize(Ty) &&
+  uint64_t TypeSizeInBits = getContext().getASTRecordLayout(D).getSize();
+  assert(TypeSizeInBits == getTargetData().getTypeAllocSizeInBits(Ty) &&
          "Type size mismatch!");
 
   // Verify that the LLVM and AST field offsets agree.
-#ifndef NDEBUG
   const llvm::StructType *ST =
     dyn_cast<llvm::StructType>(RL->getLLVMType());
   const llvm::StructLayout *SL = getTargetData().getStructLayout(ST);
@@ -580,12 +607,29 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   RecordDecl::field_iterator it = D->field_begin();
   for (unsigned i = 0, e = AST_RL.getFieldCount(); i != e; ++i, ++it) {
     const FieldDecl *FD = *it;
-    if (FD->isBitField()) {
-      // FIXME: Verify assorted things.
-    } else {
+
+    // For non-bit-fields, just check that the LLVM struct offset matches the
+    // AST offset.
+    if (!FD->isBitField()) {
       unsigned FieldNo = RL->getLLVMFieldNo(FD);
       assert(AST_RL.getFieldOffset(i) == SL->getElementOffsetInBits(FieldNo) &&
              "Invalid field offset!");
+      continue;
+    }
+
+    // Ignore unnamed bit-fields.
+    if (!FD->getDeclName())
+      continue;
+
+    const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
+    for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
+      const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
+
+      // Verify that every component access is within the structure.
+      uint64_t FieldOffset = SL->getElementOffsetInBits(AI.FieldIndex);
+      uint64_t AccessBitOffset = FieldOffset + AI.FieldByteOffset * 8;
+      assert(AccessBitOffset + AI.AccessWidth <= TypeSizeInBits &&
+             "Invalid bit-field access (out of range)!");
     }
   }
 #endif

@@ -1,10 +1,25 @@
-// RUN: %clang_cc1 -emit-llvm -triple x86_64 -O3 -o - %s | \
-// RUN:   FileCheck -check-prefix=CHECK-OPT %s
+// RUN: %clang_cc1 -emit-llvm -triple x86_64 -O3 -o %t.opt.ll %s \
+// RUN:   -fdump-record-layouts 2> %t.dump.txt
+// RUN: FileCheck -check-prefix=CHECK-RECORD < %t.dump.txt %s
+// RUN: FileCheck -check-prefix=CHECK-OPT < %t.opt.ll %s
 
 /****/
 
+// Check that we don't read off the end a packed 24-bit structure.
 // PR6176
 
+// CHECK-RECORD: *** Dumping IRgen Record Layout
+// CHECK-RECORD: Record: struct s0
+// CHECK-RECORD: Layout: <CGRecordLayout
+// CHECK-RECORD:   LLVMType:<{ [3 x i8] }>
+// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   BitFields:[
+// CHECK-RECORD:     <CGBitFieldInfo Size:24 IsSigned:1
+// CHECK-RECORD:                     NumComponents:2 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:16>
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:16 TargetBitWidth:8>
 struct __attribute((packed)) s0 {
   int f0 : 24;
 };
@@ -37,6 +52,24 @@ unsigned long long test_0() {
 /****/
 
 // PR5591
+
+// CHECK-RECORD: *** Dumping IRgen Record Layout
+// CHECK-RECORD: Record: struct s1
+// CHECK-RECORD: Layout: <CGRecordLayout
+// CHECK-RECORD:   LLVMType:<{ [2 x i8], i8 }>
+// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   BitFields:[
+// CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
+// CHECK-RECORD:                     NumComponents:1 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:10>
+// CHECK-RECORD:     ]>
+// CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
+// CHECK-RECORD:                     NumComponents:2 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:10 AccessWidth:16
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:6>
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:6 TargetBitWidth:4>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -73,9 +106,22 @@ unsigned long long test_1() {
 
 /****/
 
+// Check that we don't access beyond the bounds of a union.
+//
 // PR5567
 
-union u2 {
+// CHECK-RECORD: *** Dumping IRgen Record Layout
+// CHECK-RECORD: Record: union u2
+// CHECK-RECORD: Layout: <CGRecordLayout
+// CHECK-RECORD:   LLVMType:<{ i8 }>
+// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   BitFields:[
+// CHECK-RECORD:     <CGBitFieldInfo Size:3 IsSigned:0
+// CHECK-RECORD:                     NumComponents:1 Components: [
+// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:8
+// CHECK-RECORD:                     AccessAlignment:0 TargetBitOffset:0 TargetBitWidth:3>
+
+union __attribute__((packed)) u2 {
   unsigned long long f0 : 3;
 };
 
