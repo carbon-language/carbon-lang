@@ -1408,11 +1408,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
   
-  addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           Start ? Start : Asm->GetTempSymbol("func_begin",
-                                              Asm->getFunctionNumber()));
-  addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           End ? End : Asm->GetTempSymbol("func_end",Asm->getFunctionNumber()));
+  addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, Start);
+  addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, End);
 
   return ScopeDIE;
 }
