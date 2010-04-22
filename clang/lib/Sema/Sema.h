@@ -4076,7 +4076,8 @@ public:
   bool DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                 SourceLocation Loc,
                                 QualType DstType, QualType SrcType,
-                                Expr *SrcExpr, AssignmentAction Action);
+                                Expr *SrcExpr, AssignmentAction Action,
+                                bool *Complained = 0);
 
   /// CheckAssignmentConstraints - Perform type checking for assignment,
   /// argument passing, variable initialization, and function return values.

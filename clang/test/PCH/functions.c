@@ -6,7 +6,7 @@
 // RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
 
 int f0(int x0, int y0, ...) { return x0 + y0; }
-
+// expected-note{{passing argument to parameter here}}
 float *test_f1(int val, double x, double y) {
   if (val > 5)
     return f1(x, y);

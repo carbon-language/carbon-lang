@@ -102,7 +102,8 @@ void test_Z(const Z& z) {
 struct ZZ {
   static ZZ g(int = 17);
 
-  void f(ZZ z = g()); // expected-error{{no matching constructor for initialization}}
+  void f(ZZ z = g()); // expected-error{{no matching constructor for initialization}} \
+  // expected-note{{passing argument to parameter 'z' here}}
 
   ZZ(ZZ&, int = 17); // expected-note{{candidate constructor}}
 };

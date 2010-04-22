@@ -17,7 +17,7 @@ void test(C c) {
   const E2 &e2 = c; // expected-error {{reference initialization of type 'E2 const &' with initializer of type 'C' is ambiguous}}
 }
 
-void foo(const E2 &);
+void foo(const E2 &);// expected-note{{passing argument to parameter here}}
 
 const E2 & re(C c) {
     foo(c); // expected-error {{reference initialization of type 'E2 const &' with initializer of type 'C' is ambiguous}}

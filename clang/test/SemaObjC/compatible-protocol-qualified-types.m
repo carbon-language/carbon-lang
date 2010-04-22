@@ -44,7 +44,7 @@ extern NSString * const XCActiveSelectionLevel;
 
 @interface NSTextStorage : NSObject
 
-- (void)setDelegate:(id <NSTextStorageDelegate>)delegate;
+- (void)setDelegate:(id <NSTextStorageDelegate>)delegate; // expected-note{{passing argument to parameter 'delegate' here}}
 - (id <NSTextStorageDelegate>)delegate;
 
 @end

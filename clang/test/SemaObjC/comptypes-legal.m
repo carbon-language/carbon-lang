@@ -26,7 +26,7 @@ NSObject *ExternFunc (NSObject *filePath, NSObject *key);
 typedef id FuncSignature (NSObject *arg1, Derived *arg2);
 
 @interface Derived: NSObject
-+ (void)registerFunc:(FuncSignature *)function;
++ (void)registerFunc:(FuncSignature *)function; // expected-note{{passing argument to parameter 'function' here}}
 @end
 
 void foo(void)

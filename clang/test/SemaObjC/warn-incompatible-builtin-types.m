@@ -2,7 +2,7 @@
 // rdar 7634850
 
 @interface Foo
-- (void)foo:(Class)class;
+- (void)foo:(Class)class; // expected-note{{passing argument to parameter 'class' here}}
 @end
 
 void FUNC() {

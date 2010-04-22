@@ -4,7 +4,7 @@
 @interface Super  @end
 @interface Sub : Super @end
 
-void f2(void(^f)(Super *)) {
+void f2(void(^f)(Super *)) { // expected-note{{passing argument to parameter 'f' here}}
     Super *o;
     f(o);
 }
@@ -18,7 +18,7 @@ void r0(Super* (^f)()) {
      Super *o = f();
 }
 
-void r1(Sub* (^f)()) {
+void r1(Sub* (^f)()) { // expected-note{{passing argument to parameter 'f' here}}
     Sub *o = f();
 }
 
@@ -95,7 +95,7 @@ void test2(void)
 @end
 
 @protocol P, P2;
-void f4(void (^f)(id<P> x)) {
+void f4(void (^f)(id<P> x)) { // expected-note{{passing argument to parameter 'f' here}}
     NSArray<P2> *b;
     f(b);	// expected-warning {{passing 'NSArray<P2> *' to parameter of incompatible type 'id<P>'}}
 }

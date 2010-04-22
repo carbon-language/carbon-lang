@@ -7,7 +7,8 @@ C<char>::C(int a0);
 
 struct S { }; // expected-note 3 {{candidate constructor (the implicit copy constructor)}}
 
-template<typename T> void f1(T a, T b = 10) { } // expected-error{{no viable conversion}}
+template<typename T> void f1(T a, T b = 10) { } // expected-error{{no viable conversion}} \
+// expected-note{{passing argument to parameter 'b' here}}
 
 template<typename T> void f2(T a, T b = T()) { }
 
@@ -25,8 +26,10 @@ void g() {
 }
 
 template<typename T> struct F {
-  F(T t = 10); // expected-error{{no viable conversion}}
-  void f(T t = 10); // expected-error{{no viable conversion}}
+  F(T t = 10); // expected-error{{no viable conversion}} \
+  // expected-note{{passing argument to parameter 't' here}}
+  void f(T t = 10); // expected-error{{no viable conversion}} \
+  // expected-note{{passing argument to parameter 't' here}}
 };
 
 struct FD : F<int> { };
@@ -99,7 +102,8 @@ void test_x2(X2<int> x2i, X2<NotDefaultConstructible> x2n) {
 // PR5283
 namespace PR5283 {
 template<typename T> struct A {
-  A(T = 1); // expected-error 3 {{cannot initialize a parameter of type 'int *' with an rvalue of type 'int'}}
+  A(T = 1); // expected-error 3 {{cannot initialize a parameter of type 'int *' with an rvalue of type 'int'}} \
+  // expected-note 3{{passing argument to parameter here}}
 };
 
 struct B : A<int*> { 

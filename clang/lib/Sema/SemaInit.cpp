@@ -3308,6 +3308,20 @@ static Sema::OwningExprResult CopyObject(Sema &S,
                                  move_arg(ConstructorArgs));
 }
 
+void InitializationSequence::PrintInitLocationNote(Sema &S,
+                                              const InitializedEntity &Entity) {
+  if (Entity.getKind() == InitializedEntity::EK_Parameter && Entity.getDecl()) {
+    if (Entity.getDecl()->getLocation().isInvalid())
+      return;
+
+    if (Entity.getDecl()->getDeclName())
+      S.Diag(Entity.getDecl()->getLocation(), diag::note_parameter_named_here)
+        << Entity.getDecl()->getDeclName();
+    else
+      S.Diag(Entity.getDecl()->getLocation(), diag::note_parameter_here);
+  }
+}
+
 Action::OwningExprResult 
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -3474,6 +3488,7 @@ InitializationSequence::Perform(Sema &S,
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_vector_element)
           << Entity.getType().isVolatileQualified()
           << CurInitExpr->getSourceRange();
+        PrintInitLocationNote(S, Entity);
         return S.ExprError();
       }
         
@@ -3695,10 +3710,16 @@ InitializationSequence::Perform(Sema &S,
             == Sema::Compatible)
         ConvTy = Sema::Compatible;
 
+      bool Complained;
       if (S.DiagnoseAssignmentResult(ConvTy, Kind.getLocation(),
                                      Step->Type, SourceType,
-                                     CurInitExpr, getAssignmentAction(Entity)))
+                                     CurInitExpr, 
+                                     getAssignmentAction(Entity),
+                                     &Complained)) {
+        PrintInitLocationNote(S, Entity);
         return S.ExprError();
+      } else if (Complained)
+        PrintInitLocationNote(S, Entity);
 
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
@@ -3972,6 +3993,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
   }
   
+  PrintInitLocationNote(S, Entity);
   return true;
 }
 

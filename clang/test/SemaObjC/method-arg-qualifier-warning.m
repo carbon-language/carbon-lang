@@ -3,7 +3,7 @@
 typedef signed char BOOL;
 
 @interface NSString
-- (BOOL)isEqualToString:(NSString *)aString;
+- (BOOL)isEqualToString:(NSString *)aString; // expected-note 2{{passing argument to parameter 'aString' here}}
 @end
 
 static const NSString * Identifier1 =   @"Identifier1";

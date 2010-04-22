@@ -12,7 +12,8 @@ namespace Test0 {
   test<1> foo(class foo);
 
   namespace A {
-    test<2> foo(class ::foo); // expected-note {{candidate}}
+    test<2> foo(class ::foo); // expected-note {{candidate}} \
+    // expected-note{{passing argument to parameter here}}
 
     void test0() {
       using ::foo;

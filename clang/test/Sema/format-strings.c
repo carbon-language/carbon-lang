@@ -4,7 +4,7 @@
 typedef __typeof(sizeof(int)) size_t;
 typedef struct _FILE FILE;
 int fprintf(FILE *, const char *restrict, ...);
-int printf(const char *restrict, ...);
+int printf(const char *restrict, ...); // expected-note{{passing argument to parameter here}}
 int snprintf(char *restrict, size_t, const char *restrict, ...);
 int sprintf(char *restrict, const char *restrict, ...);
 int vasprintf(char **, const char *, va_list);
@@ -12,7 +12,7 @@ int asprintf(char **, const char *, ...);
 int vfprintf(FILE *, const char *restrict, va_list);
 int vprintf(const char *restrict, va_list);
 int vsnprintf(char *, size_t, const char *, va_list);
-int vsprintf(char *restrict, const char *restrict, va_list);
+int vsprintf(char *restrict, const char *restrict, va_list); // expected-note{{passing argument to parameter here}}
 
 char * global_fmt;
 

@@ -36,7 +36,7 @@ namespace Numbers {
     double d;
   };
   Number zero(0.0f);
-  void g(Number);
+  void g(Number); // expected-note 2{{passing argument to parameter here}}
 }
 
 void test2() {

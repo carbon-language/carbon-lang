@@ -2,7 +2,8 @@
 
 float global_f;
 
-void f0(int *ip = &global_f); // expected-error{{cannot initialize}}
+void f0(int *ip = &global_f); // expected-error{{cannot initialize}} \
+// expected-note{{passing argument to parameter 'ip' here}}
 
 // Example from C++03 standard
 int a = 1; 

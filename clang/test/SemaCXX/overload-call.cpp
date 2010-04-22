@@ -425,7 +425,7 @@ namespace PR6078 {
 namespace PR6177 {
   struct String { String(char const*); };
 
-  void f(bool const volatile&);
+  void f(bool const volatile&); // expected-note{{passing argument to parameter here}}
   void f(String);
 
   void g() { f(""); } // expected-error{{volatile lvalue reference to type 'bool const volatile' cannot bind to a value of unrelated type 'char const [1]'}}

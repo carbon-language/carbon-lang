@@ -9,7 +9,7 @@
 @interface Base : Root
 -(void) method: (int*) x; // expected-note {{previous declaration is here}}
 -(void) method1: (Base*) x; // expected-note {{previous declaration is here}}
--(void) method2: (Sub*) x;
+-(void) method2: (Sub*) x; // expected-note{{passing argument to parameter 'x' here}}
 + method3: (int)x1 : (Base *)x2 : (float)x3; // expected-note {{previous declaration is here}}
 + mathod4: (id)x1;
 - method5: (int) x : (double) d; // expected-note {{previous declaration is here}}

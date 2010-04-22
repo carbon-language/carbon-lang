@@ -8,7 +8,7 @@
 
 @interface INTF @end
 
-id<MyProto1> Func(INTF <MyProto1, MyProto2> *p2)
+id<MyProto1> Func(INTF <MyProto1, MyProto2> *p2) // expected-note 2{{passing argument to parameter 'p2' here}}
 {
 	return p2;
 }

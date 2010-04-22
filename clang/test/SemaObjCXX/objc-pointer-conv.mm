@@ -26,7 +26,7 @@ void RandomFunc(CFMDRef theDict, const void *key, const void *value);
 @end
 
 @interface I
-- (void) Meth : (I*) Arg;
+- (void) Meth : (I*) Arg; // expected-note{{passing argument to parameter 'Arg' here}}
 @end
 
 void Func (I* arg);  // expected-note {{candidate function not viable: no known conversion from 'I const *' to 'I *' for 1st argument}}

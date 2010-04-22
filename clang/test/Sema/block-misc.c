@@ -139,7 +139,7 @@ void test14() {
 
 enum { LESS };
 
-void foo(long (^comp)()) {
+void foo(long (^comp)()) { // expected-note{{passing argument to parameter 'comp' here}}
 }
 
 void (^test15f)(void);

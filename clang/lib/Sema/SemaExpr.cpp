@@ -7036,7 +7036,11 @@ static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                     SourceLocation Loc,
                                     QualType DstType, QualType SrcType,
-                                    Expr *SrcExpr, AssignmentAction Action) {
+                                    Expr *SrcExpr, AssignmentAction Action,
+                                    bool *Complained) {
+  if (Complained)
+    *Complained = false;
+
   // Decode the result (notice that AST's are still created for extensions).
   bool isInvalid = false;
   unsigned DiagKind;
@@ -7121,6 +7125,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   
   Diag(Loc, DiagKind) << FirstType << SecondType << Action
     << SrcExpr->getSourceRange() << Hint;
+  if (Complained)
+    *Complained = true;
   return isInvalid;
 }
 

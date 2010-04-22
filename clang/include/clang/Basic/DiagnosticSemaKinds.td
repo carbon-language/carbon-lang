@@ -2077,7 +2077,10 @@ def warn_setter_getter_impl_required_in_category : Warning<
   "use @dynamic or provide a method implementation in category">;
 def note_property_impl_required : Note<
   "implementation is here">;
-
+def note_parameter_named_here : Note<
+  "passing argument to parameter %0 here">;
+def note_parameter_here : Note<
+  "passing argument to parameter here">;
 
 // C++ casts
 // These messages adhere to the TryCast pattern: %0 is an int specifying the

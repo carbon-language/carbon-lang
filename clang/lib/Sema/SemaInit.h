@@ -542,7 +542,11 @@ private:
   
   /// \brief The candidate set created when initialization failed.
   OverloadCandidateSet FailedCandidateSet;
-  
+
+  /// \brief Prints a follow-up note that highlights the location of
+  /// the initialized entity, if it's remote.
+  void PrintInitLocationNote(Sema &S, const InitializedEntity &Entity);
+
 public:
   /// \brief Try to perform initialization of the given entity, creating a 
   /// record of the steps required to perform the initialization.

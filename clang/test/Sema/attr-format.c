@@ -45,7 +45,7 @@ void e2(char *str, int c, ...) __attribute__((format(printf0, 2,3))); // expecte
 // FreeBSD usage
 #define __printf0like(fmt,va) __attribute__((__format__(__printf0__,fmt,va)))
 void null(int i, const char *a, ...) __printf0like(2,0); // no-error
-void null(int i, const char *a, ...) {
+void null(int i, const char *a, ...) { // expected-note{{passing argument to parameter 'a' here}}
   if (a)
     (void)0/* vprintf(...) would go here */;
 }

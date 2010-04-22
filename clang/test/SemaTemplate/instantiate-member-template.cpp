@@ -44,7 +44,7 @@ struct X1 {
   
   template<typename U>
   struct Inner3 {
-    void f0(T t, U u) {
+    void f0(T t, U u) { // expected-note{{passing argument to parameter 't' here}}
       (void)(t + u); // expected-error{{invalid operands}}
     }
     

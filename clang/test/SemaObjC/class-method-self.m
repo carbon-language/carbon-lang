@@ -3,7 +3,7 @@
 typedef struct objc_class *Class;
 @interface XX
 
-- (void)addObserver:(XX*)o;
+- (void)addObserver:(XX*)o; // expected-note 2{{passing argument to parameter 'o' here}}
 
 @end
 

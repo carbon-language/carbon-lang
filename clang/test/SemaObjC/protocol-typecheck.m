@@ -9,7 +9,7 @@
 @interface XX
 
 - (void)setFlexElement:(NSObject <PWhatever, XCElementP> *)flexer;
-- (void)setFlexElement2:(NSObject <PWhatever, XCElementSpacerP> *)flexer;
+- (void)setFlexElement2:(NSObject <PWhatever, XCElementSpacerP> *)flexer; // expected-note{{passing argument to parameter 'flexer' here}}
 
 @end
 

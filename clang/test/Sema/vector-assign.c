@@ -47,7 +47,7 @@ float test2(__attribute__((vector_size(16))) float a, int b) {
 typedef long long __attribute__((__vector_size__(2 * sizeof(long long))))
 longlongvec;
 
-void test3a(longlongvec *);
+void test3a(longlongvec *); // expected-note{{passing argument to parameter here}}
 void test3(const unsigned *src) {
   test3a(src);  // expected-warning {{incompatible pointer types passing 'unsigned int const *' to parameter of type 'longlongvec *'}}
 }

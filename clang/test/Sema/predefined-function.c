@@ -4,7 +4,8 @@ char *funk(int format);
 enum Test {A=-1};
 char *funk(enum Test x);
 
-int eli(float b); // expected-note {{previous declaration is here}}
+int eli(float b); // expected-note {{previous declaration is here}} \
+// expected-note{{passing argument to parameter 'b' here}}
 int b(int c) {return 1;}
 
 int foo();
