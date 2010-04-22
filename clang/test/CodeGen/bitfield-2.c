@@ -310,3 +310,38 @@ struct __attribute__((aligned(16))) s7 {
 int f7_load(struct s7 *a0) {
   return a0->f0;
 }
+
+/***/
+
+// This is a case where we narrow the access width immediately.
+
+struct __attribute__((packed)) s8 {
+  char f0 : 4;
+  char f1;
+  int  f2 : 4;
+  char f3 : 4;
+};
+
+struct s8 g8 = { 0xF };
+
+int f8_load(struct s8 *a0) {
+  return a0->f0 ^ a0 ->f2 ^ a0->f3;
+}
+int f8_store(struct s8 *a0) {
+  return (a0->f0 = 0xFD) ^ (a0->f2 = 0xFD) ^ (a0->f3 = 0xFD);
+}
+int f8_reload(struct s8 *a0) {
+  return (a0->f0 += 0xFD) ^ (a0->f2 += 0xFD) ^ (a0->f3 += 0xFD);
+}
+
+// CHECK-OPT: define i32 @test_8()
+// CHECK-OPT:  ret i32 -3
+// CHECK-OPT: }
+unsigned test_8() {
+  struct s8 g8 = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
+  unsigned long long res = 0;
+  res ^= g8.f0 ^ g8.f2 ^ g8.f3;
+  res ^= f8_load(&g8) ^ f8_store(&g8) ^ f8_reload(&g8);
+  res ^= g8.f0 ^ g8.f2 ^ g8.f3;
+  return res;
+}

@@ -215,6 +215,16 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
       std::min(AccessWidth - (AccessBitsInFieldStart - AccessStart),
                FieldSize - (AccessBitsInFieldStart-FieldOffset));
 
+    // If we haven't accessed any target bits yet and narrowed the access size,
+    // we might not have reached any target bits yet.
+    //
+    // FIXME: This test is unnecessarily once we choose the initial acccess size
+    // more intelligently.
+    if (!AccessedTargetBits && AccessBitsInFieldSize == 0) {
+      AccessStart += AccessWidth;
+      continue;
+    }
+
     assert(NumComponents < 3 && "Unexpected number of components!");
     CGBitFieldInfo::AccessInfo &AI = Components[NumComponents++];
     AI.FieldIndex = 0;
