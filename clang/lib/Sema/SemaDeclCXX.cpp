@@ -3912,7 +3912,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   CurContext = Constructor;
   if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false)) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
-      << CXXDefaultConstructor << Context.getTagDeclType(ClassDecl);
+      << CXXConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
   } else {
     Constructor->setUsed();

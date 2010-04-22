@@ -924,13 +924,12 @@ struct GNUCompatibleParamWarning {
 
 
 /// getSpecialMember - get the special member enum for a method.
-static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
-                                               const CXXMethodDecl *MD) {
+Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
-    if (Ctor->isDefaultConstructor())
-      return Sema::CXXDefaultConstructor;
     if (Ctor->isCopyConstructor())
       return Sema::CXXCopyConstructor;
+    
+    return Sema::CXXConstructor;
   } 
   
   if (isa<CXXDestructorDecl>(MD))
@@ -1112,7 +1111,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         } else {
           Diag(NewMethod->getLocation(),
                diag::err_definition_of_implicitly_declared_member) 
-            << New << getSpecialMember(Context, OldMethod);
+            << New << getSpecialMember(OldMethod);
           return true;
         }
       }
@@ -5616,21 +5615,17 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
         // because otherwise we'll never get complaints about
         // copy constructors.
 
-        const CXXSpecialMember invalid = (CXXSpecialMember) -1;
-
-        CXXSpecialMember member;
+        CXXSpecialMember member = CXXInvalid;
         if (!RDecl->hasTrivialCopyConstructor())
           member = CXXCopyConstructor;
         else if (!RDecl->hasTrivialConstructor())
-          member = CXXDefaultConstructor;
+          member = CXXConstructor;
         else if (!RDecl->hasTrivialCopyAssignment())
           member = CXXCopyAssignment;
         else if (!RDecl->hasTrivialDestructor())
           member = CXXDestructor;
-        else
-          member = invalid;
 
-        if (member != invalid) {
+        if (member != CXXInvalid) {
           Diag(Loc, diag::err_illegal_union_member) << Name << member;
           DiagnoseNontrivial(RT, member);
           NewFD->setInvalidDecl();
@@ -5672,7 +5667,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   // Check whether the member was user-declared.
   switch (member) {
-  case CXXDefaultConstructor:
+  case CXXConstructor:
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
       for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce;++ci){
@@ -5746,7 +5741,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   bool (CXXRecordDecl::*hasTrivial)() const;
   switch (member) {
-  case CXXDefaultConstructor:
+  case CXXConstructor:
     hasTrivial = &CXXRecordDecl::hasTrivialConstructor; break;
   case CXXCopyConstructor:
     hasTrivial = &CXXRecordDecl::hasTrivialCopyConstructor; break;

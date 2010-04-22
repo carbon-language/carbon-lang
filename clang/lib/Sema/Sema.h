@@ -924,12 +924,14 @@ public:
                             Declarator *D = 0);
 
   enum CXXSpecialMember {
-    CXXDefaultConstructor = 0,
+    CXXInvalid = -1,
+    CXXConstructor = 0,
     CXXCopyConstructor = 1,
     CXXCopyAssignment = 2,
     CXXDestructor = 3
   };
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
+  CXXSpecialMember getSpecialMember(const CXXMethodDecl *MD);
 
   virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
                               DeclPtrTy IntfDecl,
