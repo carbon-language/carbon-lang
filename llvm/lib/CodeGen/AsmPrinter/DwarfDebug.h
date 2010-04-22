@@ -218,7 +218,8 @@ class DwarfDebug {
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
-  
+
+  MCSymbol *FunctionBeginSym;
 private:
   
   /// getSourceDirectoryAndFileIds - Return the directory and file ids that

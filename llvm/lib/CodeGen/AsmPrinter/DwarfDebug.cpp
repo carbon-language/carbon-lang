@@ -330,6 +330,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = 0;
+  FunctionBeginSym = 0;
   if (TimePassesIsEnabled) {
       NamedRegionTimer T(DbgTimerName, DWARFGroupName);
       beginModule(M);
@@ -2444,9 +2445,10 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   
   collectVariableInfo();
 
+  FunctionBeginSym = Asm->GetTempSymbol("func_begin",
+                                        Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("func_begin",
-                                                Asm->getFunctionNumber()));
+  Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
   // Emit label for the implicitly defined dbg.stoppoint at the start of the
   // function.
