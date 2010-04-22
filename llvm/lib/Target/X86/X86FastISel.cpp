@@ -55,12 +55,13 @@ public:
   explicit X86FastISel(MachineFunction &mf,
                        DenseMap<const Value *, unsigned> &vm,
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                       DenseMap<const AllocaInst *, int> &am
+                       DenseMap<const AllocaInst *, int> &am,
+                       std::vector<std::pair<MachineInstr*, unsigned> > &pn
 #ifndef NDEBUG
                        , SmallSet<const Instruction *, 8> &cil
 #endif
                        )
-    : FastISel(mf, vm, bm, am
+    : FastISel(mf, vm, bm, am, pn
 #ifndef NDEBUG
                , cil
 #endif
@@ -1754,12 +1755,13 @@ namespace llvm {
   llvm::FastISel *X86::createFastISel(MachineFunction &mf,
                         DenseMap<const Value *, unsigned> &vm,
                         DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                        DenseMap<const AllocaInst *, int> &am
+                        DenseMap<const AllocaInst *, int> &am,
+                        std::vector<std::pair<MachineInstr*, unsigned> > &pn
 #ifndef NDEBUG
                         , SmallSet<const Instruction *, 8> &cil
 #endif
                         ) {
-    return new X86FastISel(mf, vm, bm, am
+    return new X86FastISel(mf, vm, bm, am, pn
 #ifndef NDEBUG
                            , cil
 #endif

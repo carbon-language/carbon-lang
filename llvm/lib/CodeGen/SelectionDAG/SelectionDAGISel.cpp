@@ -241,7 +241,7 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
   if (!SDB->HasTailCall) {
     // Handle PHI nodes in successor blocks.
     if (End == LLVMBB->end()) {
-      HandlePHINodesInSuccessorBlocks(LLVMBB);
+      SDB->HandlePHINodesInSuccessorBlocks(LLVMBB);
 
       // Lower the terminator after the copies are emitted.
       SDB->visit(*LLVMBB->getTerminator());
@@ -711,7 +711,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   FastISel *FastIS = 0;
   if (EnableFastISel)
     FastIS = TLI.createFastISel(*MF, FuncInfo->ValueMap, FuncInfo->MBBMap,
-                                FuncInfo->StaticAllocaMap
+                                FuncInfo->StaticAllocaMap,
+                                FuncInfo->PHINodesToUpdate
 #ifndef NDEBUG
                                 , FuncInfo->CatchInfoLost
 #endif
@@ -765,7 +766,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         // Just before the terminator instruction, insert instructions to
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
-          if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
+          if (!FastIS->HandlePHINodesInSuccessorBlocks(LLVMBB)) {
             ++NumFastIselFailures;
             if (EnableFastISelVerbose || EnableFastISelAbort) {
               dbgs() << "FastISel miss: ";

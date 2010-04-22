@@ -5801,7 +5801,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     // or one register.
     ISD::ArgFlagsTy Flags;
     Flags.setSRet();
-    EVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), ValueVTs[0]);
+    EVT RegisterVT = TLI.getRegisterType(*DAG.getContext(), ValueVTs[0]);
     ISD::InputArg RetArg(Flags, RegisterVT, true);
     Ins.push_back(RetArg);
   }
@@ -5964,7 +5964,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 /// the end.
 ///
 void
-SelectionDAGISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
+SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
   const TerminatorInst *TI = LLVMBB->getTerminator();
 
   SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
@@ -5974,7 +5974,7 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     const BasicBlock *SuccBB = TI->getSuccessor(succ);
     if (!isa<PHINode>(SuccBB->begin())) continue;
-    MachineBasicBlock *SuccMBB = FuncInfo->MBBMap[SuccBB];
+    MachineBasicBlock *SuccMBB = FuncInfo.MBBMap[SuccBB];
 
     // If this terminator has multiple identical successors (common for
     // switches), only handle each succ once.
@@ -5994,20 +5994,20 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       const Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
 
       if (const Constant *C = dyn_cast<Constant>(PHIOp)) {
-        unsigned &RegOut = SDB->ConstantsOut[C];
+        unsigned &RegOut = ConstantsOut[C];
         if (RegOut == 0) {
-          RegOut = FuncInfo->CreateRegForValue(C);
-          SDB->CopyValueToVirtualRegister(C, RegOut);
+          RegOut = FuncInfo.CreateRegForValue(C);
+          CopyValueToVirtualRegister(C, RegOut);
         }
         Reg = RegOut;
       } else {
-        Reg = FuncInfo->ValueMap[PHIOp];
+        Reg = FuncInfo.ValueMap[PHIOp];
         if (Reg == 0) {
           assert(isa<AllocaInst>(PHIOp) &&
-                 FuncInfo->StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
+                 FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
-          Reg = FuncInfo->CreateRegForValue(PHIOp);
-          SDB->CopyValueToVirtualRegister(PHIOp, Reg);
+          Reg = FuncInfo.CreateRegForValue(PHIOp);
+          CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }
 
@@ -6017,76 +6017,12 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       ComputeValueVTs(TLI, PN->getType(), ValueVTs);
       for (unsigned vti = 0, vte = ValueVTs.size(); vti != vte; ++vti) {
         EVT VT = ValueVTs[vti];
-        unsigned NumRegisters = TLI.getNumRegisters(*CurDAG->getContext(), VT);
+        unsigned NumRegisters = TLI.getNumRegisters(*DAG.getContext(), VT);
         for (unsigned i = 0, e = NumRegisters; i != e; ++i)
-          FuncInfo->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+          FuncInfo.PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
         Reg += NumRegisters;
       }
     }
   }
-  SDB->ConstantsOut.clear();
-}
-
-/// This is the Fast-ISel version of HandlePHINodesInSuccessorBlocks. It only
-/// supports legal types, and it emits MachineInstrs directly instead of
-/// creating SelectionDAG nodes.
-///
-bool
-SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
-                                                      FastISel *F) {
-  const TerminatorInst *TI = LLVMBB->getTerminator();
-
-  SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
-  unsigned OrigNumPHINodesToUpdate = FuncInfo->PHINodesToUpdate.size();
-
-  // Check successor nodes' PHI nodes that expect a constant to be available
-  // from this block.
-  for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
-    const BasicBlock *SuccBB = TI->getSuccessor(succ);
-    if (!isa<PHINode>(SuccBB->begin())) continue;
-    MachineBasicBlock *SuccMBB = FuncInfo->MBBMap[SuccBB];
-
-    // If this terminator has multiple identical successors (common for
-    // switches), only handle each succ once.
-    if (!SuccsHandled.insert(SuccMBB)) continue;
-
-    MachineBasicBlock::iterator MBBI = SuccMBB->begin();
-
-    // At this point we know that there is a 1-1 correspondence between LLVM PHI
-    // nodes and Machine PHI nodes, but the incoming operands have not been
-    // emitted yet.
-    for (BasicBlock::const_iterator I = SuccBB->begin();
-         const PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      // Ignore dead phi's.
-      if (PN->use_empty()) continue;
-
-      // Only handle legal types. Two interesting things to note here. First,
-      // by bailing out early, we may leave behind some dead instructions,
-      // since SelectionDAG's HandlePHINodesInSuccessorBlocks will insert its
-      // own moves. Second, this check is necessary becuase FastISel doesn't
-      // use CreateRegForValue to create registers, so it always creates
-      // exactly one register for each non-void instruction.
-      EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
-      if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
-        // Promote MVT::i1.
-        if (VT == MVT::i1)
-          VT = TLI.getTypeToTransformTo(*CurDAG->getContext(), VT);
-        else {
-          FuncInfo->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
-          return false;
-        }
-      }
-
-      const Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
-
-      unsigned Reg = F->getRegForValue(PHIOp);
-      if (Reg == 0) {
-        FuncInfo->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
-        return false;
-      }
-      FuncInfo->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
-    }
-  }
-
-  return true;
+  ConstantsOut.clear();
 }

@@ -744,7 +744,8 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 FastISel::FastISel(MachineFunction &mf,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                   DenseMap<const AllocaInst *, int> &am
+                   DenseMap<const AllocaInst *, int> &am,
+                   std::vector<std::pair<MachineInstr*, unsigned> > &pn
 #ifndef NDEBUG
                    , SmallSet<const Instruction *, 8> &cil
 #endif
@@ -753,6 +754,7 @@ FastISel::FastISel(MachineFunction &mf,
     ValueMap(vm),
     MBBMap(bm),
     StaticAllocaMap(am),
+    PHINodesToUpdate(pn),
 #ifndef NDEBUG
     CatchInfoLost(cil),
 #endif
@@ -1019,4 +1021,68 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT,
 /// with all but the least significant bit set to zero.
 unsigned FastISel::FastEmitZExtFromI1(MVT VT, unsigned Op) {
   return FastEmit_ri(VT, VT, ISD::AND, Op, 1);
+}
+
+/// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.
+/// Emit code to ensure constants are copied into registers when needed.
+/// Remember the virtual registers that need to be added to the Machine PHI
+/// nodes as input.  We cannot just directly add them, because expansion
+/// might result in multiple MBB's for one BB.  As such, the start of the
+/// BB might correspond to a different MBB than the end.
+bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
+  const TerminatorInst *TI = LLVMBB->getTerminator();
+
+  SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
+  unsigned OrigNumPHINodesToUpdate = PHINodesToUpdate.size();
+
+  // Check successor nodes' PHI nodes that expect a constant to be available
+  // from this block.
+  for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
+    const BasicBlock *SuccBB = TI->getSuccessor(succ);
+    if (!isa<PHINode>(SuccBB->begin())) continue;
+    MachineBasicBlock *SuccMBB = MBBMap[SuccBB];
+
+    // If this terminator has multiple identical successors (common for
+    // switches), only handle each succ once.
+    if (!SuccsHandled.insert(SuccMBB)) continue;
+
+    MachineBasicBlock::iterator MBBI = SuccMBB->begin();
+
+    // At this point we know that there is a 1-1 correspondence between LLVM PHI
+    // nodes and Machine PHI nodes, but the incoming operands have not been
+    // emitted yet.
+    for (BasicBlock::const_iterator I = SuccBB->begin();
+         const PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      // Ignore dead phi's.
+      if (PN->use_empty()) continue;
+
+      // Only handle legal types. Two interesting things to note here. First,
+      // by bailing out early, we may leave behind some dead instructions,
+      // since SelectionDAG's HandlePHINodesInSuccessorBlocks will insert its
+      // own moves. Second, this check is necessary becuase FastISel doesn't
+      // use CreateRegForValue to create registers, so it always creates
+      // exactly one register for each non-void instruction.
+      EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
+      if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
+        // Promote MVT::i1.
+        if (VT == MVT::i1)
+          VT = TLI.getTypeToTransformTo(LLVMBB->getContext(), VT);
+        else {
+          PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+          return false;
+        }
+      }
+
+      const Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
+
+      unsigned Reg = getRegForValue(PHIOp);
+      if (Reg == 0) {
+        PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+        return false;
+      }
+      PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
+    }
+  }
+
+  return true;
 }

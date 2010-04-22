@@ -580,7 +580,8 @@ namespace llvm {
     createFastISel(MachineFunction &mf,
                    DenseMap<const Value *, unsigned> &,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                   DenseMap<const AllocaInst *, int> &
+                   DenseMap<const AllocaInst *, int> &,
+                   std::vector<std::pair<MachineInstr*, unsigned> > &
 #ifndef NDEBUG
                    , SmallSet<const Instruction *, 8> &
 #endif
@@ -826,7 +827,8 @@ namespace llvm {
     FastISel *createFastISel(MachineFunction &mf,
                            DenseMap<const Value *, unsigned> &,
                            DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                           DenseMap<const AllocaInst *, int> &
+                           DenseMap<const AllocaInst *, int> &,
+                           std::vector<std::pair<MachineInstr*, unsigned> > &
 #ifndef NDEBUG
                            , SmallSet<const Instruction*, 8> &
 #endif

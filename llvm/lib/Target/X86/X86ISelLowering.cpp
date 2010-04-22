@@ -2419,12 +2419,13 @@ FastISel *
 X86TargetLowering::createFastISel(MachineFunction &mf,
                             DenseMap<const Value *, unsigned> &vm,
                             DenseMap<const BasicBlock*, MachineBasicBlock*> &bm,
-                            DenseMap<const AllocaInst *, int> &am
+                            DenseMap<const AllocaInst *, int> &am,
+                            std::vector<std::pair<MachineInstr*, unsigned> > &pn
 #ifndef NDEBUG
                           , SmallSet<const Instruction *, 8> &cil
 #endif
                                   ) const {
-  return X86::createFastISel(mf, vm, bm, am
+  return X86::createFastISel(mf, vm, bm, am, pn
 #ifndef NDEBUG
                              , cil
 #endif

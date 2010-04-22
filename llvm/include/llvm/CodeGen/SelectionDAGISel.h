@@ -295,11 +295,6 @@ private:
   void ShrinkDemandedOps();
   void ComputeLiveOutVRegInfo();
 
-  void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
-
-  bool HandlePHINodesInSuccessorBlocksFast(const BasicBlock *LLVMBB,
-                                           FastISel *F);
-
   /// Create the scheduler. If a specific scheduler was specified
   /// via the SchedulerRegistry, use it, otherwise select the
   /// one preferred by the target.

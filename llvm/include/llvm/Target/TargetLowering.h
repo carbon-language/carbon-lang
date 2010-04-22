@@ -1302,7 +1302,8 @@ public:
   createFastISel(MachineFunction &,
                  DenseMap<const Value *, unsigned> &,
                  DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                 DenseMap<const AllocaInst *, int> &
+                 DenseMap<const AllocaInst *, int> &,
+                 std::vector<std::pair<MachineInstr*, unsigned> > &
 #ifndef NDEBUG
                  , SmallSet<const Instruction *, 8> &CatchInfoLost
 #endif

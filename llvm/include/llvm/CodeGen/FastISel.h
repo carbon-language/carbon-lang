@@ -28,6 +28,7 @@ class Instruction;
 class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
+class MachineInstr;
 class MachineFrameInfo;
 class MachineRegisterInfo;
 class TargetData;
@@ -46,6 +47,7 @@ protected:
   DenseMap<const Value *, unsigned> &ValueMap;
   DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
   DenseMap<const AllocaInst *, int> &StaticAllocaMap;
+  std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate;
 #ifndef NDEBUG
   SmallSet<const Instruction *, 8> &CatchInfoLost;
 #endif
@@ -105,13 +107,22 @@ public:
   /// index value.
   unsigned getRegForGEPIndex(const Value *V);
 
+  /// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.
+  /// Emit code to ensure constants are copied into registers when needed.
+  /// Remember the virtual registers that need to be added to the Machine PHI
+  /// nodes as input.  We cannot just directly add them, because expansion
+  /// might result in multiple MBB's for one BB.  As such, the start of the
+  /// BB might correspond to a different MBB than the end.
+  bool HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
+
   virtual ~FastISel();
 
 protected:
   FastISel(MachineFunction &mf,
            DenseMap<const Value *, unsigned> &vm,
            DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-           DenseMap<const AllocaInst *, int> &am
+           DenseMap<const AllocaInst *, int> &am,
+           std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate
 #ifndef NDEBUG
            , SmallSet<const Instruction *, 8> &cil
 #endif
