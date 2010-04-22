@@ -120,15 +120,17 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   // Extract the body of the if.
   Function* extractedFunction = ExtractCodeRegion(DT, toExtract);
   
+  InlineFunctionInfo IFI;
+  
   // Inline the top-level if test into all callers.
   std::vector<User*> Users(duplicateFunction->use_begin(), 
                            duplicateFunction->use_end());
   for (std::vector<User*>::iterator UI = Users.begin(), UE = Users.end();
        UI != UE; ++UI)
-    if (CallInst* CI = dyn_cast<CallInst>(*UI))
-      InlineFunction(CI);
-    else if (InvokeInst* II = dyn_cast<InvokeInst>(*UI))
-      InlineFunction(II);
+    if (CallInst *CI = dyn_cast<CallInst>(*UI))
+      InlineFunction(CI, IFI);
+    else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI))
+      InlineFunction(II, IFI);
   
   // Ditch the duplicate, since we're done with it, and rewrite all remaining
   // users (function pointers, etc.) back to the original function.

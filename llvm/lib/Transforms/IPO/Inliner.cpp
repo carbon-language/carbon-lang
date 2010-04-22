@@ -73,16 +73,14 @@ InlinedArrayAllocasTy;
 /// available from other  functions inlined into the caller.  If we are able to
 /// inline this call site we attempt to reuse already available allocas or add
 /// any new allocas to the set if not possible.
-static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                                 const TargetData *TD,
+static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
   // Try to inline the function.  Get the list of static allocas that were
   // inlined.
-  SmallVector<AllocaInst*, 16> StaticAllocas;
-  if (!InlineFunction(CS, &CG, TD, &StaticAllocas))
+  if (!InlineFunction(CS, IFI))
     return false;
 
   // If the inlined function had a higher stack protection level than the
@@ -119,9 +117,9 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   
   // Loop over all the allocas we have so far and see if they can be merged with
   // a previously inlined alloca.  If not, remember that we had it.
-  for (unsigned AllocaNo = 0, e = StaticAllocas.size();
+  for (unsigned AllocaNo = 0, e = IFI.StaticAllocas.size();
        AllocaNo != e; ++AllocaNo) {
-    AllocaInst *AI = StaticAllocas[AllocaNo];
+    AllocaInst *AI = IFI.StaticAllocas[AllocaNo];
     
     // Don't bother trying to merge array allocations (they will usually be
     // canonicalized to be an allocation *of* an array), or allocations whose
@@ -347,6 +345,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
   
   InlinedArrayAllocasTy InlinedArrayAllocas;
+  InlineFunctionInfo InlineInfo(&CG, TD);
   
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.
@@ -385,7 +384,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
           continue;
 
         // Attempt to inline the function...
-        if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
+        if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas))
           continue;
         ++NumInlined;
 

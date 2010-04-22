@@ -19,6 +19,7 @@
 #define LLVM_TRANSFORMS_UTILS_CLONING_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
 
 namespace llvm {
@@ -40,7 +41,6 @@ class TargetData;
 class Loop;
 class LoopInfo;
 class AllocaInst;
-template <typename T> class SmallVectorImpl;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -158,6 +158,29 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                const TargetData *TD = 0,
                                Instruction *TheCall = 0);
 
+  
+/// InlineFunctionInfo - This class captures the data input to the
+/// InlineFunction call, and records the auxiliary results produced by it. 
+class InlineFunctionInfo {
+public:
+  explicit InlineFunctionInfo(CallGraph *cg = 0, const TargetData *td = 0)
+    : CG(cg), TD(td) {}
+  
+  /// CG - If non-null, InlineFunction will update the callgraph to reflect the
+  /// changes it makes.
+  CallGraph *CG;
+  const TargetData *TD;
+
+  /// StaticAllocas - InlineFunction fills this in with all static allocas that
+  /// get copied into the caller.
+  SmallVector<AllocaInst*, 4> StaticAllocas;
+  
+  
+  void reset() {
+    StaticAllocas.clear();
+  }
+};
+  
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
 /// this call.  The program is still in a well defined state if this occurs
@@ -168,18 +191,9 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// exists in the instruction stream.  Similiarly this will inline a recursive
 /// function by one level.
 ///
-/// If a non-null callgraph pointer is provided, these functions update the
-/// CallGraph to represent the program after inlining.
-///
-/// If StaticAllocas is non-null, InlineFunction populates it with all of the
-/// static allocas that it inlines into the caller.
-///
-bool InlineFunction(CallInst *C, CallGraph *CG = 0, const TargetData *TD = 0,
-                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
-bool InlineFunction(InvokeInst *II, CallGraph *CG = 0, const TargetData *TD = 0,
-                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
-bool InlineFunction(CallSite CS, CallGraph *CG = 0, const TargetData *TD = 0,
-                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
+bool InlineFunction(CallInst *C, InlineFunctionInfo &IFI);
+bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI);
+bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI);
 
 } // End llvm namespace
 

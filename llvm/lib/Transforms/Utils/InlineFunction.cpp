@@ -28,13 +28,11 @@
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
-bool llvm::InlineFunction(CallInst *CI, CallGraph *CG, const TargetData *TD,
-                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
-  return InlineFunction(CallSite(CI), CG, TD, StaticAllocas);
+bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI) {
+  return InlineFunction(CallSite(CI), IFI);
 }
-bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD,
-                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
-  return InlineFunction(CallSite(II), CG, TD, StaticAllocas);
+bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI) {
+  return InlineFunction(CallSite(II), IFI);
 }
 
 
@@ -232,13 +230,15 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
-                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
+bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   Instruction *TheCall = CS.getInstruction();
   LLVMContext &Context = TheCall->getContext();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
 
+  // If IFI has any state in it, zap it before we fill it in.
+  IFI.reset();
+  
   const Function *CalledFunc = CS.getCalledFunction();
   if (CalledFunc == 0 ||          // Can't inline external function or indirect
       CalledFunc->isDeclaration() || // call, or call to a vararg function!
@@ -305,7 +305,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
 
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;
-        if (TD) Align = TD->getPrefTypeAlignment(AggTy);
+        if (IFI.TD) Align = IFI.TD->getPrefTypeAlignment(AggTy);
         Value *NewAlloca = new AllocaInst(AggTy, 0, Align, 
                                           I->getName(), 
                                           &*Caller->begin()->begin());
@@ -318,11 +318,11 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
         Value *SrcCast = new BitCastInst(*AI, VoidPtrTy, "tmp", TheCall);
 
         Value *Size;
-        if (TD == 0)
+        if (IFI.TD == 0)
           Size = ConstantExpr::getSizeOf(AggTy);
         else
           Size = ConstantInt::get(Type::getInt64Ty(Context),
-                                  TD->getTypeStoreSize(AggTy));
+                                  IFI.TD->getTypeStoreSize(AggTy));
 
         // Always generate a memcpy of alignment 1 here because we don't know
         // the alignment of the src pointer.  Other optimizations can infer
@@ -336,7 +336,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
           CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);
 
         // If we have a call graph, update it.
-        if (CG) {
+        if (CallGraph *CG = IFI.CG) {
           CallGraphNode *MemCpyCGN = CG->getOrInsertFunction(MemCpyFn);
           CallGraphNode *CallerNode = (*CG)[Caller];
           CallerNode->addCalledFunction(TheMemCpy, MemCpyCGN);
@@ -355,14 +355,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
     // (which can happen, e.g., because an argument was constant), but we'll be
     // happy with whatever the cloner can do.
     CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
-                              &InlinedFunctionInfo, TD, TheCall);
+                              &InlinedFunctionInfo, IFI.TD, TheCall);
 
     // Remember the first block that is newly cloned over.
     FirstNewBlock = LastBlock; ++FirstNewBlock;
 
     // Update the callgraph if requested.
-    if (CG)
-      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, *CG);
+    if (IFI.CG)
+      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, *IFI.CG);
   }
 
   // If there are any alloca instructions in the block that used to be the entry
@@ -389,13 +389,13 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
       
       // Keep track of the static allocas that we inline into the caller if the
       // StaticAllocas pointer is non-null.
-      if (StaticAllocas) StaticAllocas->push_back(AI);
+      IFI.StaticAllocas.push_back(AI);
       
       // Scan for the block of allocas that we can move over, and move them
       // all at once.
       while (isa<AllocaInst>(I) &&
              isa<Constant>(cast<AllocaInst>(I)->getArraySize())) {
-        if (StaticAllocas) StaticAllocas->push_back(cast<AllocaInst>(I));
+        IFI.StaticAllocas.push_back(cast<AllocaInst>(I));
         ++I;
       }
 
@@ -419,7 +419,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
     // If we are preserving the callgraph, add edges to the stacksave/restore
     // functions for the calls we insert.
     CallGraphNode *StackSaveCGN = 0, *StackRestoreCGN = 0, *CallerNode = 0;
-    if (CG) {
+    if (CallGraph *CG = IFI.CG) {
       StackSaveCGN    = CG->getOrInsertFunction(StackSave);
       StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
       CallerNode = (*CG)[Caller];
@@ -428,13 +428,13 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
     // Insert the llvm.stacksave.
     CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack",
                                           FirstNewBlock->begin());
-    if (CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
+    if (IFI.CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
-      if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
+      if (IFI.CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
     }
 
     // Count the number of StackRestore calls we insert.
@@ -447,7 +447,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
           CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", UI);
-          if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
+          if (IFI.CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
           ++NumStackRestores;
         }
     }

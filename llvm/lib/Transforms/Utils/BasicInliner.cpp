@@ -129,7 +129,8 @@ void BasicInlinerImpl::inlineFunctions() {
         }
         
         // Inline
-        if (InlineFunction(CS, NULL, TD)) {
+        InlineFunctionInfo IFI(0, TD);
+        if (InlineFunction(CS, IFI)) {
           if (Callee->use_empty() && (Callee->hasLocalLinkage() ||
                                       Callee->hasAvailableExternallyLinkage()))
             DeadFunctions.insert(Callee);
