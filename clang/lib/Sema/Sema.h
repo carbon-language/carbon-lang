@@ -930,6 +930,7 @@ public:
     CXXDestructor = 3
   };
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
+  CXXSpecialMember getSpecialMember(const CXXMethodDecl *MD);
 
   virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
                               DeclPtrTy IntfDecl,
