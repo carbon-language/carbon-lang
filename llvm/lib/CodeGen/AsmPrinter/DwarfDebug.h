@@ -197,6 +197,7 @@ class DwarfDebug {
   DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
+  DenseMap<const MCSymbol *, const MCSymbol *> WeakDebugRangeSymbols;
 
   /// Previous instruction's location information. This is used to determine
   /// label location to indicate scope boundries in dwarf debug info.

@@ -1384,6 +1384,11 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
   if (Ranges.empty())
     return 0;
 
+  bool MarkFunctionBegin = false;
+  if (FunctionBeginSym &&
+      Asm->MF->getFunction()->isWeakForLinker())
+    MarkFunctionBegin = true;
+     
   SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin();
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
@@ -1393,8 +1398,15 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
             DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
     for (SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
-      DebugRangeSymbols.push_back(LabelsBeforeInsn.lookup(RI->first));
-      DebugRangeSymbols.push_back(LabelsAfterInsn.lookup(RI->second));
+      MCSymbol *Sym = LabelsBeforeInsn.lookup(RI->first);
+      if (MarkFunctionBegin)
+        WeakDebugRangeSymbols.insert(std::make_pair(Sym, FunctionBeginSym));
+      DebugRangeSymbols.push_back(Sym);
+
+      Sym = LabelsAfterInsn.lookup(RI->second);
+      if (MarkFunctionBegin)
+        WeakDebugRangeSymbols.insert(std::make_pair(Sym, FunctionBeginSym));
+      DebugRangeSymbols.push_back(Sym);
     }
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
@@ -3228,11 +3240,21 @@ void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->OutStreamer.SwitchSection(
     Asm->getObjFileLowering().getDwarfRangesSection());
-  for (SmallVector<const MCSymbol *, 8>::const_iterator I = DebugRangeSymbols.begin(),
-         E = DebugRangeSymbols.end(); I != E; ++I) {
-    if (*I) 
-      Asm->EmitLabelDifference(*I, TextSectionSym,
+  for (SmallVector<const MCSymbol *, 8>::const_iterator
+         I = DebugRangeSymbols.begin(), E = DebugRangeSymbols.end(); 
+       I != E; ++I) {
+    if (*I) {
+      const MCSymbol *Begin = TextSectionSym;
+      // If this symbol is inside linkonce section then use appropriate begin
+      // marker;
+      DenseMap<const MCSymbol *, const MCSymbol *>::iterator WI
+        = WeakDebugRangeSymbols.find(*I);
+      if (WI != WeakDebugRangeSymbols.end())
+        Begin = WI->second;
+
+      Asm->EmitLabelDifference(*I, Begin,
                                Asm->getTargetData().getPointerSize());
+    }
     else
       Asm->OutStreamer.EmitIntValue(0, Asm->getTargetData().getPointerSize(), 
                                     /*addrspace*/0);
