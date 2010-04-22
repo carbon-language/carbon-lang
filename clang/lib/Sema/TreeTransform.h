@@ -890,13 +890,25 @@ public:
                                   RParenLoc, MSAsm);
   }
   
-  /// \brief Build a new Objective-C throw statement.
+  /// \brief Build a new Objective-C @throw statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildObjCAtThrowStmt(SourceLocation AtLoc,
                                           ExprArg Operand) {
     return getSema().BuildObjCAtThrowStmt(AtLoc, move(Operand));
+  }
+  
+  /// \brief Build a new Objective-C @synchronized statement.
+  ///
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCAtSynchronizedStmt(SourceLocation AtLoc,
+                                                 ExprArg Object,
+                                                 StmtArg Body) {
+    return getSema().ActOnObjCAtSynchronizedStmt(AtLoc, move(Object),
+                                                 move(Body));
   }
   
   /// \brief Build a new C++ exception declaration.
@@ -3676,9 +3688,25 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtSynchronizedStmt(
                                                   ObjCAtSynchronizedStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C @synchronized statement");
-  return SemaRef.Owned(S->Retain());
+  // Transform the object we are locking.
+  OwningExprResult Object = getDerived().TransformExpr(S->getSynchExpr());
+  if (Object.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the body.
+  OwningStmtResult Body = getDerived().TransformStmt(S->getSynchBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  // If nothing change, just retain the current statement.
+  if (!getDerived().AlwaysRebuild() &&
+      Object.get() == S->getSynchExpr() &&
+      Body.get() == S->getSynchBody())
+    return SemaRef.Owned(S->Retain());
+
+  // Build a new statement.
+  return getDerived().RebuildObjCAtSynchronizedStmt(S->getAtSynchronizedLoc(),
+                                                    move(Object), move(Body));
 }
 
 template<typename Derived>

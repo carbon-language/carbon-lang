@@ -1583,7 +1583,8 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
 
   // Make sure the expression type is an ObjC pointer or "void *".
   Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
-  if (!SyncExpr->getType()->isObjCObjectPointerType()) {
+  if (!SyncExpr->getType()->isDependentType() &&
+      !SyncExpr->getType()->isObjCObjectPointerType()) {
     const PointerType *PT = SyncExpr->getType()->getAs<PointerType>();
     if (!PT || !PT->getPointeeType()->isVoidType())
       return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)

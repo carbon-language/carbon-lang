@@ -12,4 +12,13 @@ void throw_test(T value) {
 template void throw_test(NSException *);
 template void throw_test(int); // expected-note{{in instantiation of}}
 
+// @synchronized
+template<typename T>
+void synchronized_test(T value) {
+  @synchronized (value) { // expected-error{{@synchronized requires an Objective-C object type ('int' invalid)}}
+    value = 0;
+  }
+}
 
+template void synchronized_test(NSException *);
+template void synchronized_test(int); // expected-note{{in instantiation of}}
