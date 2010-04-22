@@ -769,8 +769,8 @@ href="http://blog.llvm.org/2010/04/arm-advanced-simd-neon-intrinsics-and.html">
 <li>You can now build LLVM as a big dynamic library (e.g. "libllvm2.7.so"). To
     get this, configure LLVM with the --enable-shared option.</li>
 
-<li>LLVM command line tools now overwrite their output by default, before they
-    would only do this with -f. This makes them more convenient to use, and
+<li>LLVM command line tools now overwrite their output by default. Previously,
+    they would only do this with -f. This makes them more convenient to use, and
     behave more like standard unix tools.</li>
 
 <li>The opt and llc tools now autodetect whether their input is a .ll or .bc
