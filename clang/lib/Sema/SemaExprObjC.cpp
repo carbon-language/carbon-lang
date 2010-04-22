@@ -177,8 +177,12 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                      QualType &ReturnType) {
   if (!Method) {
     // Apply default argument promotion as for (C99 6.5.2.2p6).
-    for (unsigned i = 0; i != NumArgs; i++)
+    for (unsigned i = 0; i != NumArgs; i++) {
+      if (Args[i]->isTypeDependent())
+        continue;
+
       DefaultArgumentPromotion(Args[i]);
+    }
 
     unsigned DiagID = isClassMessage ? diag::warn_class_method_not_found :
                                        diag::warn_inst_method_not_found;
@@ -204,7 +208,12 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 
   bool IsError = false;
   for (unsigned i = 0; i < NumNamedArgs; i++) {
+    // We can't do any type-checking on a type-dependent argument.
+    if (Args[i]->isTypeDependent())
+      continue;
+
     Expr *argExpr = Args[i];
+
     ParmVarDecl *Param = Method->param_begin()[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
 
@@ -226,8 +235,12 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 
   // Promote additional arguments to variadic methods.
   if (Method->isVariadic()) {
-    for (unsigned i = NumNamedArgs; i < NumArgs; ++i)
+    for (unsigned i = NumNamedArgs; i < NumArgs; ++i) {
+      if (Args[i]->isTypeDependent())
+        continue;
+
       IsError |= DefaultVariadicArgumentPromotion(Args[i], VariadicMethod);
+    }
   } else {
     // Check for extra arguments to non-variadic methods.
     if (NumArgs != NumNamedArgs) {
@@ -677,8 +690,16 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                                SourceLocation SelectorLoc,
                                                SourceLocation RBracLoc,
                                                MultiExprArg ArgsIn) {
-  assert(!ReceiverType->isDependentType() && 
-         "Dependent class messages not yet implemented");
+  if (ReceiverType->isDependentType()) {
+    // If the receiver type is dependent, we can't type-check anything
+    // at this point. Build a dependent expression.
+    unsigned NumArgs = ArgsIn.size();
+    Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+    assert(SuperLoc.isInvalid() && "Message to super with dependent type");
+    return Owned(ObjCMessageExpr::Create(Context, ReceiverType, LBracLoc,
+                                         ReceiverTypeInfo, Sel, /*Method=*/0, 
+                                         Args, NumArgs, RBracLoc));
+  }
   
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc
              : ReceiverTypeInfo->getTypeLoc().getSourceRange().getBegin();
@@ -802,6 +823,18 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
   // and determine receiver type.
   Expr *Receiver = ReceiverE.takeAs<Expr>();
   if (Receiver) {
+    if (Receiver->isTypeDependent()) {
+      // If the receiver is type-dependent, we can't type-check anything
+      // at this point. Build a dependent expression.
+      unsigned NumArgs = ArgsIn.size();
+      Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
+      assert(SuperLoc.isInvalid() && "Message to super with dependent type");
+      return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
+                                           LBracLoc, Receiver, Sel, 
+                                           /*Method=*/0, Args, NumArgs, 
+                                           RBracLoc));
+    }
+
     // If necessary, apply function/array conversion to the receiver.
     // C99 6.7.5.3p[7,8].
     DefaultFunctionArrayLvalueConversion(Receiver);

@@ -80,6 +80,9 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   const SentinelAttr *attr = D->getAttr<SentinelAttr>();
   if (!attr)
     return;
+
+  // FIXME: In C++0x, if any of the arguments are parameter pack
+  // expansions, we can't check for the sentinel now.
   int sentinelPos = attr->getSentinel();
   int nullPos = attr->getNullPos();
 
@@ -155,6 +158,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   }
   Expr *sentinelExpr = Args[sentinel];
   if (sentinelExpr && (!isa<GNUNullExpr>(sentinelExpr) &&
+                       !sentinelExpr->isTypeDependent() &&
+                       !sentinelExpr->isValueDependent() &&
                        (!sentinelExpr->getType()->isPointerType() ||
                         !sentinelExpr->isNullPointerConstant(Context,
                                             Expr::NPC_ValueDependentIsNull)))) {

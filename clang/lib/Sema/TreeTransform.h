@@ -379,10 +379,6 @@ public:
   QualType RebuildMemberPointerType(QualType PointeeType, QualType ClassType,
                                     SourceLocation Sigil);
 
-  /// \brief Build a new Objective C object pointer type.
-  QualType RebuildObjCObjectPointerType(QualType PointeeType,
-                                        SourceLocation Sigil);
-
   /// \brief Build a new array type given the element type, size
   /// modifier, size of the array (if known), size expression, and index type
   /// qualifiers.
@@ -1695,6 +1691,43 @@ public:
                                                            RParenLoc));
   }
 
+  /// \brief Build a new Objective-C class message.
+  OwningExprResult RebuildObjCMessageExpr(TypeSourceInfo *ReceiverTypeInfo,
+                                          Selector Sel,
+                                          ObjCMethodDecl *Method,
+                                          SourceLocation LBracLoc, 
+                                          MultiExprArg Args,
+                                          SourceLocation RBracLoc) {
+    // FIXME: Drops Method
+    return SemaRef.BuildClassMessage(ReceiverTypeInfo,
+                                     ReceiverTypeInfo->getType(),
+                                     /*SuperLoc=*/SourceLocation(),
+                                     Sel,
+                                     LBracLoc,
+                                     /*FIXME:*/LBracLoc,
+                                     RBracLoc,
+                                     move(Args));
+  }
+
+  /// \brief Build a new Objective-C instance message.
+  OwningExprResult RebuildObjCMessageExpr(ExprArg Receiver,
+                                          Selector Sel,
+                                          ObjCMethodDecl *Method,
+                                          SourceLocation LBracLoc, 
+                                          MultiExprArg Args,
+                                          SourceLocation RBracLoc) {
+    // FIXME: Drops Method
+    QualType ReceiverType = static_cast<Expr *>(Receiver.get())->getType();
+    return SemaRef.BuildInstanceMessage(move(Receiver),
+                                        ReceiverType,
+                                        /*SuperLoc=*/SourceLocation(),
+                                        Sel,
+                                        LBracLoc,
+                                        /*FIXME:*/LBracLoc,
+                                        RBracLoc,
+                                        move(Args));
+  }
+
   /// \brief Build a new Objective-C protocol expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -2272,7 +2305,42 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
                                                       PointerTypeLoc TL, 
                                                       QualType ObjectType) {
-  TransformPointerLikeType(PointerType);
+  QualType PointeeType                                      
+    = getDerived().TransformType(TLB, TL.getPointeeLoc());  
+  if (PointeeType.isNull())
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (PointeeType->isObjCInterfaceType()) {
+    // A dependent pointer type 'T *' has is being transformed such
+    // that an Objective-C class type is being replaced for 'T'. The
+    // resulting pointer type is an ObjCObjectPointerType, not a
+    // PointerType.
+    const ObjCInterfaceType *IFace = PointeeType->getAs<ObjCInterfaceType>();
+    Result = SemaRef.Context.getObjCObjectPointerType(PointeeType,
+                                              const_cast<ObjCProtocolDecl **>(
+                                                           IFace->qual_begin()),
+                                              IFace->getNumProtocols());
+    
+    ObjCObjectPointerTypeLoc NewT = TLB.push<ObjCObjectPointerTypeLoc>(Result);   
+    NewT.setStarLoc(TL.getSigilLoc());       
+    NewT.setHasProtocolsAsWritten(false);
+    NewT.setLAngleLoc(SourceLocation());
+    NewT.setRAngleLoc(SourceLocation());
+    NewT.setHasBaseTypeAsWritten(true);
+    return Result;
+  }
+                                                            
+  if (getDerived().AlwaysRebuild() ||
+      PointeeType != TL.getPointeeLoc().getType()) {
+    Result = getDerived().RebuildPointerType(PointeeType, TL.getSigilLoc());
+    if (Result.isNull())
+      return QualType();
+  }
+                                                            
+  PointerTypeLoc NewT = TLB.push<PointerTypeLoc>(Result);
+  NewT.setSigilLoc(TL.getSigilLoc());
+  return Result;  
 }
 
 template<typename Derived>
@@ -5482,9 +5550,59 @@ TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
-  return SemaRef.Owned(E->Retain());
+  // Transform arguments.
+  bool ArgChanged = false;
+  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
+    OwningExprResult Arg = getDerived().TransformExpr(E->getArg(I));
+    if (Arg.isInvalid())
+      return SemaRef.ExprError();
+    
+    ArgChanged = ArgChanged || Arg.get() != E->getArg(I);
+    Args.push_back(Arg.takeAs<Expr>());
+  }
+
+  if (E->getReceiverKind() == ObjCMessageExpr::Class) {
+    // Class message: transform the receiver type.
+    TypeSourceInfo *ReceiverTypeInfo
+      = getDerived().TransformType(E->getClassReceiverTypeInfo());
+    if (!ReceiverTypeInfo)
+      return SemaRef.ExprError();
+    
+    // If nothing changed, just retain the existing message send.
+    if (!getDerived().AlwaysRebuild() &&
+        ReceiverTypeInfo == E->getClassReceiverTypeInfo() && !ArgChanged)
+      return SemaRef.Owned(E->Retain());
+
+    // Build a new class message send.
+    return getDerived().RebuildObjCMessageExpr(ReceiverTypeInfo,
+                                               E->getSelector(),
+                                               E->getMethodDecl(),
+                                               E->getLeftLoc(),
+                                               move_arg(Args),
+                                               E->getRightLoc());
+  }
+
+  // Instance message: transform the receiver
+  assert(E->getReceiverKind() == ObjCMessageExpr::Instance &&
+         "Only class and instance messages may be instantiated");
+  OwningExprResult Receiver
+    = getDerived().TransformExpr(E->getInstanceReceiver());
+  if (Receiver.isInvalid())
+    return SemaRef.ExprError();
+
+  // If nothing changed, just retain the existing message send.
+  if (!getDerived().AlwaysRebuild() &&
+      Receiver.get() == E->getInstanceReceiver() && !ArgChanged)
+    return SemaRef.Owned(E->Retain());
+  
+  // Build a new instance message send.
+  return getDerived().RebuildObjCMessageExpr(move(Receiver),
+                                             E->getSelector(),
+                                             E->getMethodDecl(),
+                                             E->getLeftLoc(),
+                                             move_arg(Args),
+                                             E->getRightLoc());
 }
 
 template<typename Derived>
@@ -5633,14 +5751,6 @@ TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::RebuildObjCObjectPointerType(QualType PointeeType,
-                                                     SourceLocation Sigil) {
-  return SemaRef.BuildPointerType(PointeeType, Qualifiers(), Sigil,
-                                  getDerived().getBaseEntity());
-}
-
-template<typename Derived>
-QualType
 TreeTransform<Derived>::RebuildArrayType(QualType ElementType,
                                          ArrayType::ArraySizeModifier SizeMod,
                                          const llvm::APInt *Size,
@@ -5768,6 +5878,7 @@ QualType TreeTransform<Derived>::RebuildUnresolvedUsingType(Decl *D) {
   assert(D && "no decl found");
   if (D->isInvalidDecl()) return QualType();
 
+  // FIXME: Doesn't account for ObjCInterfaceDecl!
   TypeDecl *Ty;
   if (isa<UsingDecl>(D)) {
     UsingDecl *Using = cast<UsingDecl>(D);

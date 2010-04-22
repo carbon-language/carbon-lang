@@ -499,6 +499,8 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
     Qs.removeRestrict();
   }
 
+  assert(!T->isObjCInterfaceType() && "Should build ObjCObjectPointerType");
+
   // Build the pointer type.
   return Context.getQualifiedType(Context.getPointerType(T), Qs);
 }

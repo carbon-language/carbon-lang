@@ -2248,7 +2248,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
   : Expr(ObjCMessageExprClass, T, /*TypeDependent=*/false,
-         hasAnyValueDependentArguments(Args, NumArgs)),
+         /*ValueDependent=*/false),
     NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
     HasMethod(Method != 0), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
@@ -2287,8 +2287,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
-  : Expr(ObjCMessageExprClass, T, T->isDependentType(),
-         (T->isDependentType() || 
+  : Expr(ObjCMessageExprClass, T, Receiver->isTypeDependent(),
+         (Receiver->isTypeDependent() || 
           hasAnyValueDependentArguments(Args, NumArgs))),
     NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
