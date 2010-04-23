@@ -124,3 +124,25 @@ namespace test1 {
 
   template class ClassChecker<int>;  
 }
+
+namespace PR6830 {
+  namespace foo {
+
+    class X {
+    public:
+      X() {}
+    };
+
+  }  // namespace foo
+
+  class Z {
+  public:
+    explicit Z(const foo::X& x) {}
+
+    void Work() {}
+  };
+
+  void Test() {
+    Z(foo::X()).Work();
+  }
+}

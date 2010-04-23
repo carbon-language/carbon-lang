@@ -788,6 +788,14 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   }
 
   case tok::annot_cxxscope: { // [C++] id-expression: qualified-id
+    // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
+    // (We can end up in this situation after tentative parsing.)
+    if (TryAnnotateTypeOrScopeToken())
+      return ExprError();
+    if (!Tok.is(tok::annot_cxxscope))
+      return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
+                                 NotCastExpr, TypeOfCast);
+
     Token Next = NextToken();
     if (Next.is(tok::annot_template_id)) {
       TemplateIdAnnotation *TemplateId
