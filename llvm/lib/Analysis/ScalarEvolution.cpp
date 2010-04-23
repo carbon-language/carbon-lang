@@ -1355,9 +1355,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
         }
         LargeOps.push_back(T->getOperand());
       } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
-        // This could be either sign or zero extension, but sign extension
-        // is much more likely to be foldable here.
-        LargeOps.push_back(getSignExtendExpr(C, SrcType));
+        LargeOps.push_back(getAnyExtendExpr(C, SrcType));
       } else if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Ops[i])) {
         SmallVector<const SCEV *, 8> LargeMulOps;
         for (unsigned j = 0, f = M->getNumOperands(); j != f && Ok; ++j) {
@@ -1370,9 +1368,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             LargeMulOps.push_back(T->getOperand());
           } else if (const SCEVConstant *C =
                        dyn_cast<SCEVConstant>(M->getOperand(j))) {
-            // This could be either sign or zero extension, but sign extension
-            // is much more likely to be foldable here.
-            LargeMulOps.push_back(getSignExtendExpr(C, SrcType));
+            LargeMulOps.push_back(getAnyExtendExpr(C, SrcType));
           } else {
             Ok = false;
             break;
