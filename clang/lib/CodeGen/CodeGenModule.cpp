@@ -1610,12 +1610,14 @@ CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
   llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
   llvm::Constant *Zeros[] = { Zero, Zero };
   
-  // If we don't already have it, get __NSConstantStringClassReference.
+  // If we don't already have it, get _NSConstantStringClassReference.
   if (!NSConstantStringClassRef) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     Ty = llvm::ArrayType::get(Ty, 0);
-    llvm::Constant *GV = CreateRuntimeVariable(Ty,
-                                               "__NSConstantStringClassReference");
+    llvm::Constant *GV = CreateRuntimeVariable(Ty, 
+                                        Features.ObjCNonFragileABI ?
+                                        "OBJC_CLASS_$_NSConstantString" :
+                                        "_NSConstantStringClassReference");
     // Decay array -> ptr
     NSConstantStringClassRef = 
       llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
@@ -1666,7 +1668,10 @@ CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_nsstring_");
   // FIXME. Fix section.
-  if (const char *Sect = getContext().Target.getNSStringSection())
+  if (const char *Sect = 
+        Features.ObjCNonFragileABI 
+          ? getContext().Target.getNSStringNonFragileABISection() 
+          : getContext().Target.getNSStringSection())
     GV->setSection(Sect);
   Entry.setValue(GV);
   
