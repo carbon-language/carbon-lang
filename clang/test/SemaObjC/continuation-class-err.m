@@ -12,7 +12,7 @@
 
 @interface ReadOnly ()
 @property(readwrite, copy) id object;	// expected-warning {{property attribute in continuation class does not match the primary class}}
-@property(readonly) id object1; // expected-error {{property declaration in continuation class of 'ReadOnly' is to change a 'readonly' property to 'readwrite'}}
+@property(readonly) id object1; // expected-error {{illegal declaration of property in continuation class 'ReadOnly' - attribute must be}}
 @property (readwrite, assign) int indentLevel; // OK. assign the the default in any case.
 @end
 
@@ -31,8 +31,8 @@
 @end
 
 @interface Bar ()
-@property (copy) id foo;	// expected-error {{property declaration in continuation class of 'Bar' is to change a 'readonly' property to 'readwrite'}}
-@property (copy) id fee;	// expected-error {{property declaration in continuation class of 'Bar' is to change a 'readonly' property to 'readwrite'}}
+@property (copy) id foo;	// expected-error {{illegal declaration of property in continuation class 'Bar' - attribute must be}}
+@property (copy) id fee;	// expected-error {{illegal declaration of property in continuation class 'Bar' - attribute must be}}
 @end
 
 @implementation Bar
