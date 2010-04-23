@@ -5000,8 +5000,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       SearchDC = SearchDC->getEnclosingNamespaceContext();
     }
 
-    // In C++, we need to do a redeclaration lookup to properly
-    // diagnose some problems.
+    // In C++, look for a shadow friend decl.
     if (getLangOptions().CPlusPlus) {
       Previous.setRedeclarationKind(ForRedeclaration);
       LookupQualifiedName(Previous, SearchDC);
@@ -5010,26 +5009,6 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
   if (!Previous.empty()) {
     NamedDecl *PrevDecl = (*Previous.begin())->getUnderlyingDecl();
-
-    // It's okay to have a tag decl in the same scope as a typedef
-    // which shadows a tag decl in the same scope.  Finding this
-    // insanity with a redeclaration lookup can only actually happen
-    // in C++.
-    if (getLangOptions().CPlusPlus &&
-        TUK != TUK_Reference && TUK != TUK_Friend) {
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(PrevDecl)) {
-        if (const TagType *TT = TD->getUnderlyingType()->getAs<TagType>()) {
-          TagDecl *Tag = TT->getDecl();
-          if (Tag->getDeclName() == Name &&
-              Tag->getDeclContext()->Equals(SearchDC)) {
-            PrevDecl = Tag;
-            Previous.clear();
-            Previous.addDecl(Tag);
-          }
-        }
-      }
-    }
-
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
@@ -5121,61 +5100,23 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // If we get here, we're going to create a new Decl. If PrevDecl
       // is non-NULL, it's a definition of the tag declared by
       // PrevDecl. If it's NULL, we have a new definition.
-
-
-    // Otherwise, PrevDecl is not a tag, but was found with tag
-    // lookup.  This is only actually possible in C++, where a few
-    // things like templates still live in the tag namespace.
     } else {
-      assert(getLangOptions().CPlusPlus);
-
-      // Use a better diagnostic if an elaborated-type-specifier
-      // found the wrong kind of type on the first
-      // (non-redeclaration) lookup.
-      if ((TUK == TUK_Reference || TUK == TUK_Friend) &&
-          !Previous.isForRedeclaration()) {
-        unsigned Kind = 0;
-        if (isa<TypedefDecl>(PrevDecl)) Kind = 1;
-        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 2;
-        Diag(NameLoc, diag::err_tag_reference_non_tag) << Kind;
-        Diag(PrevDecl->getLocation(), diag::note_declared_at);
-        Invalid = true;
-
-      // Otherwise, only diagnose if the declaration is in scope.
-      } else if (!isDeclInScope(PrevDecl, SearchDC, S)) {
-        // do nothing
-
-      // Diagnose implicit declarations introduced by elaborated types.
-      } else if (TUK == TUK_Reference || TUK == TUK_Friend) {
-        unsigned Kind = 0;
-        if (isa<TypedefDecl>(PrevDecl)) Kind = 1;
-        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 2;
-        Diag(NameLoc, diag::err_tag_reference_conflict) << Kind;
-        Diag(PrevDecl->getLocation(), diag::note_previous_decl) << PrevDecl;
-        Invalid = true;
-
-      // Otherwise it's a declaration.  Call out a particularly common
-      // case here.
-      } else if (isa<TypedefDecl>(PrevDecl)) {
-        Diag(NameLoc, diag::err_tag_definition_of_typedef)
-          << Name
-          << cast<TypedefDecl>(PrevDecl)->getUnderlyingType();
-        Diag(PrevDecl->getLocation(), diag::note_previous_decl) << PrevDecl;
-        Invalid = true;
-
-      // Otherwise, diagnose.
-      } else {
-        // The tag name clashes with something else in the target scope,
-        // issue an error and recover by making this tag be anonymous.
+      // PrevDecl is a namespace, template, or anything else
+      // that lives in the IDNS_Tag identifier namespace.
+      if (TUK == TUK_Reference || TUK == TUK_Friend ||
+          isDeclInScope(PrevDecl, SearchDC, S)) {
+        // The tag name clashes with a namespace name, issue an error and
+        // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         Name = 0;
+        Previous.clear();
         Invalid = true;
+      } else {
+        // The existing declaration isn't relevant to us; we're in a
+        // new scope, so clear out the previous declaration.
+        Previous.clear();
       }
-
-      // The existing declaration isn't relevant to us; we're in a
-      // new scope, so clear out the previous declaration.
-      Previous.clear();
     }
   }
 
@@ -5244,6 +5185,28 @@ CreateNewDecl:
     // parsing of the struct).
     if (unsigned Alignment = getPragmaPackAlignment())
       New->addAttr(::new (Context) PragmaPackAttr(Alignment * 8));
+  }
+
+  if (getLangOptions().CPlusPlus && SS.isEmpty() && Name && !Invalid) {
+    // C++ [dcl.typedef]p3:
+    //   [...] Similarly, in a given scope, a class or enumeration
+    //   shall not be declared with the same name as a typedef-name
+    //   that is declared in that scope and refers to a type other
+    //   than the class or enumeration itself.
+    LookupResult Lookup(*this, Name, NameLoc, LookupOrdinaryName,
+                        ForRedeclaration);
+    LookupName(Lookup, S);
+    TypedefDecl *PrevTypedef = Lookup.getAsSingle<TypedefDecl>();
+    NamedDecl *PrevTypedefNamed = PrevTypedef;
+    if (PrevTypedef && isDeclInScope(PrevTypedefNamed, SearchDC, S) &&
+        Context.getCanonicalType(Context.getTypeDeclType(PrevTypedef)) !=
+          Context.getCanonicalType(Context.getTypeDeclType(New))) {
+      Diag(Loc, diag::err_tag_definition_of_typedef)
+        << Context.getTypeDeclType(New)
+        << PrevTypedef->getUnderlyingType();
+      Diag(PrevTypedef->getLocation(), diag::note_previous_definition);
+      Invalid = true;
+    }
   }
 
   // If this is a specialization of a member class (of a class template),

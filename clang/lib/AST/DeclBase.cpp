@@ -231,28 +231,23 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case CXXConstructor:
     case CXXDestructor:
     case CXXConversion:
+    case Typedef:
     case EnumConstant:
     case Var:
     case ImplicitParam:
     case ParmVar:
     case NonTypeTemplateParm:
     case ObjCMethod:
-    case ObjCProperty:
-      return IDNS_Ordinary;
-
-    case ObjCCompatibleAlias:
     case ObjCInterface:
-      return IDNS_Ordinary | IDNS_Type;
-
-    case Typedef:
-    case UnresolvedUsingTypename:
-    case TemplateTypeParm:
-      return IDNS_Ordinary | IDNS_Type;
+    case ObjCProperty:
+    case ObjCCompatibleAlias:
+      return IDNS_Ordinary;
 
     case UsingShadow:
       return 0; // we'll actually overwrite this later
 
     case UnresolvedUsingValue:
+    case UnresolvedUsingTypename:
       return IDNS_Ordinary | IDNS_Using;
 
     case Using:
@@ -269,18 +264,15 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case Record:
     case CXXRecord:
     case Enum:
-      return IDNS_Tag | IDNS_Type;
+    case TemplateTypeParm:
+      return IDNS_Tag;
 
     case Namespace:
-    case NamespaceAlias:
-      return IDNS_Namespace;
-
     case FunctionTemplate:
-      return IDNS_Ordinary;
-
     case ClassTemplate:
     case TemplateTemplateParm:
-      return IDNS_Ordinary | IDNS_Tag | IDNS_Type;
+    case NamespaceAlias:
+      return IDNS_Tag | IDNS_Ordinary;
 
     // Never have names.
     case Friend:

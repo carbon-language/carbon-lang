@@ -1438,7 +1438,7 @@ Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
     for (DeclContext::lookup_result Lookup = DC->lookup(Name);
          Lookup.first != Lookup.second; 
          ++Lookup.first) {
-      if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_Namespace))
+      if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_Ordinary))
         continue;
       
       if (NamespaceDecl *FoundNS = dyn_cast<NamespaceDecl>(*Lookup.first)) {
@@ -1451,7 +1451,7 @@ Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
     }
     
     if (!ConflictingDecls.empty()) {
-      Name = Importer.HandleNameConflict(Name, DC, Decl::IDNS_Namespace,
+      Name = Importer.HandleNameConflict(Name, DC, Decl::IDNS_Ordinary,
                                          ConflictingDecls.data(), 
                                          ConflictingDecls.size());
     }
