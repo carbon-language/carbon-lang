@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclAccessPair.h"
 #include "clang/AST/ASTVector.h"
+#include "clang/AST/UsuallyTinyPtrVector.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
@@ -34,6 +35,7 @@ namespace clang {
   class NamedDecl;
   class ValueDecl;
   class BlockDecl;
+  class CXXBaseSpecifier;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
   class TemplateArgumentLoc;
@@ -1550,6 +1552,8 @@ public:
 /// classes).
 class CastExpr : public Expr {
 public:
+  typedef UsuallyTinyPtrVector<const CXXBaseSpecifier> CXXBaseVector;
+
   /// CastKind - the kind of cast this represents.
   enum CastKind {
     /// CK_Unknown - Unknown cast kind.
@@ -1645,8 +1649,52 @@ public:
 private:
   CastKind Kind;
   Stmt *Op;
+  
+  /// InheritancePath - For derived-to-base and base-to-derived casts, the
+  /// base vector has the inheritance path.
+  CXXBaseVector *InheritancePath;
+
+  void CheckInheritancePath() const {
+#ifndef NDEBUG
+    switch (getCastKind()) {
+    // FIXME: We should add inheritance paths for these.
+    case CK_BaseToDerived:
+    case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+    case CK_BaseToDerivedMemberPointer:
+    case CK_DerivedToBaseMemberPointer:
+
+    // These should not have an inheritance path.
+    case CK_Unknown:
+    case CK_BitCast:
+    case CK_NoOp:
+    case CK_Dynamic:
+    case CK_ToUnion:
+    case CK_ArrayToPointerDecay:
+    case CK_FunctionToPointerDecay:
+    case CK_NullToMemberPointer:
+    case CK_UserDefinedConversion:
+    case CK_ConstructorConversion:
+    case CK_IntegralToPointer:
+    case CK_PointerToIntegral:
+    case CK_ToVoid:
+    case CK_VectorSplat:
+    case CK_IntegralCast:
+    case CK_IntegralToFloating:
+    case CK_FloatingToIntegral:
+    case CK_FloatingCast:
+    case CK_MemberPointerToBoolean:
+    case CK_AnyPointerToObjCPointerCast:
+    case CK_AnyPointerToBlockPointerCast:
+      assert(!InheritancePath && "Cast kind has inheritance path!");
+      break;
+    }
+#endif
+  }
+
 protected:
-  CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op) :
+  CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op,
+           CXXBaseVector *path) :
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1654,7 +1702,9 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
-    Kind(kind), Op(op) {}
+    Kind(kind), Op(op), InheritancePath(path) {
+      CheckInheritancePath();
+    }
 
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty)
@@ -1716,12 +1766,11 @@ class ImplicitCastExpr : public CastExpr {
 
 public:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, bool Lvalue) :
-    CastExpr(ImplicitCastExprClass, ty, kind, op), LvalueCast(Lvalue) { }
+    CastExpr(ImplicitCastExprClass, ty, kind, op, 0), LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell)
     : CastExpr(ImplicitCastExprClass, Shell) { }
-
 
   virtual SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();
@@ -1763,7 +1812,7 @@ class ExplicitCastExpr : public CastExpr {
 protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
                    Expr *op, TypeSourceInfo *writtenTy)
-    : CastExpr(SC, exprTy, kind, op), TInfo(writtenTy) {}
+    : CastExpr(SC, exprTy, kind, op, 0), TInfo(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell)
