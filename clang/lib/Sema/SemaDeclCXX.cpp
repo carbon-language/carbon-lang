@@ -1471,26 +1471,6 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   QualType FieldBaseElementType = 
     SemaRef.Context.getBaseElementType(Field->getType());
   
-  if (FieldBaseElementType->isReferenceType()) {
-    SemaRef.Diag(Constructor->getLocation(), 
-                 diag::err_uninitialized_member_in_ctor)
-      << (int)Constructor->isImplicit() 
-      << SemaRef.Context.getTagDeclType(Constructor->getParent())
-      << 0 << Field->getDeclName();
-    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
-    return true;
-  }
-
-  if (FieldBaseElementType.isConstQualified()) {
-    SemaRef.Diag(Constructor->getLocation(), 
-                 diag::err_uninitialized_member_in_ctor)
-      << (int)Constructor->isImplicit() 
-      << SemaRef.Context.getTagDeclType(Constructor->getParent())
-      << 1 << Field->getDeclName();
-    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
-    return true;
-  }
-
   if (FieldBaseElementType->isRecordType()) {
     InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
     InitializationKind InitKind
@@ -1511,6 +1491,26 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                                       MemberInit.takeAs<Expr>(),
                                                        SourceLocation());
     return false;
+  }
+
+  if (FieldBaseElementType->isReferenceType()) {
+    SemaRef.Diag(Constructor->getLocation(), 
+                 diag::err_uninitialized_member_in_ctor)
+    << (int)Constructor->isImplicit() 
+    << SemaRef.Context.getTagDeclType(Constructor->getParent())
+    << 0 << Field->getDeclName();
+    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
+    return true;
+  }
+
+  if (FieldBaseElementType.isConstQualified()) {
+    SemaRef.Diag(Constructor->getLocation(), 
+                 diag::err_uninitialized_member_in_ctor)
+    << (int)Constructor->isImplicit() 
+    << SemaRef.Context.getTagDeclType(Constructor->getParent())
+    << 1 << Field->getDeclName();
+    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
+    return true;
   }
   
   // Nothing to initialize.

@@ -171,3 +171,14 @@ struct X0 : NDC<int> {
   
   NDC<int> ndc;
 };
+
+namespace Test0 {
+
+struct A { A(); };
+
+struct B {
+  B() { } 
+  const A a;
+};
+
+}
