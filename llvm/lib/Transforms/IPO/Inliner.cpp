@@ -390,9 +390,11 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
         // If inlining this function devirtualized any call sites, throw them
         // onto our worklist to process.  They are useful inline candidates.
+#if 0
         for (unsigned i = 0, e = InlineInfo.DevirtualizedCalls.size();
              i != e; ++i)
           CallSites.push_back(CallSite(InlineInfo.DevirtualizedCalls[i]));
+#endif
         
         // Update the cached cost info with the inlined call.
         growCachedCostInfo(Caller, Callee);
