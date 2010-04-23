@@ -86,3 +86,34 @@ bb260:
 lpad:                               
   unwind
 }
+
+
+
+;; This exposed a crash handling devirtualized calls.
+define void @f1(void ()* %f) ssp {
+entry:
+  call void %f()
+  ret void
+}
+
+define void @f4(i32 %size) ssp {
+entry:
+  invoke void @f1(void ()* @f3)
+          to label %invcont3 unwind label %lpad18
+
+invcont3:                                         ; preds = %bb1
+  ret void
+
+lpad18:                                           ; preds = %invcont3, %bb1
+  unreachable
+}
+
+define void @f3() ssp {
+entry:
+  unreachable
+}
+
+declare void @f5() ssp
+
+
+
