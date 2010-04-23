@@ -1542,11 +1542,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           Declarator ParmDecl(DS, Declarator::PrototypeContext);
           ParseDeclarator(ParmDecl);
 
-          // Inform the actions module about the parameter declarator, so it
+          // Inform the actions module about the declarator, so it
           // gets added to the current scope.
-          // FIXME. Probably can build a VarDecl and avoid setting DeclContext.
-          FirstPart = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
-          Actions.ActOnObjCCatchParam(FirstPart);
+          FirstPart = Actions.ActOnObjCExceptionDecl(CurScope, ParmDecl);
         } else
           ConsumeToken(); // consume '...'
 

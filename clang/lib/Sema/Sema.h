@@ -812,7 +812,7 @@ public:
                               SourceLocation NameLoc,
                               VarDecl::StorageClass StorageClass,
                               VarDecl::StorageClass StorageClassAsWritten);
-  virtual void ActOnObjCCatchParam(DeclPtrTy D);
+  virtual DeclPtrTy ActOnObjCExceptionDecl(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,
                                          ExprArg defarg);

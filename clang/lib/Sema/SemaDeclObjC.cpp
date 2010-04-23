@@ -1707,3 +1707,10 @@ void Sema::ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
   }
 }
 
+Sema::DeclPtrTy Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
+  // FIXME: Perform checking on the declaration here.
+  DeclPtrTy Dcl = ActOnParamDeclarator(S, D);
+  if (Dcl.get())
+    cast<ParmVarDecl>(Dcl.getAs<Decl>())->setDeclContext(CurContext);
+  return Dcl;
+}

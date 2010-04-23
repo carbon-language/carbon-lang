@@ -4258,11 +4258,6 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC,
   return New;
 }
 
-void Sema::ActOnObjCCatchParam(DeclPtrTy D) {
-  ParmVarDecl *Param = cast<ParmVarDecl>(D.getAs<Decl>());
-  Param->setDeclContext(CurContext);
-}
-
 void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
                                            SourceLocation LocAfterDecls) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&

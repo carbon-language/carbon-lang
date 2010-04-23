@@ -468,7 +468,11 @@ public:
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D) {
     return DeclPtrTy();
   }
-  virtual void ActOnObjCCatchParam(DeclPtrTy D) {
+
+  /// \brief Parsed an exception object declaration within an Objective-C
+  /// @catch statement.
+  virtual DeclPtrTy ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
+    return DeclPtrTy();
   }
 
   /// AddInitializerToDecl - This action is called immediately after
