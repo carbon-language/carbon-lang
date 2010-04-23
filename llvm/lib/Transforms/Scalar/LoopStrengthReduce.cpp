@@ -2060,8 +2060,11 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
                            LU.Kind, LU.AccessTy, TLI, SE))
         continue;
 
+      const SCEV *InnerSum = SE.getAddExpr(InnerAddOps);
+      if (InnerSum->isZero())
+        continue;
       Formula F = Base;
-      F.BaseRegs[i] = SE.getAddExpr(InnerAddOps);
+      F.BaseRegs[i] = InnerSum;
       F.BaseRegs.push_back(*J);
       if (InsertFormula(LU, LUIdx, F))
         // If that formula hadn't been seen before, recurse to find more like

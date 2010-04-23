@@ -16,3 +16,15 @@ In addition to being much more complicated, it involves i65 arithmetic,
 which is very inefficient when expanded into code.
 
 //===---------------------------------------------------------------------===//
+
+In test/CodeGen/X86/lsr-delayed-fold.ll,
+
+ScalarEvolution is forming this expression:
+
+((trunc i64 (-1 * %arg5) to i32) + (trunc i64 %arg5 to i32) + (-1 * (trunc i64 undef to i32)))
+
+This could be folded to
+
+(-1 * (trunc i64 undef to i32))
+
+//===---------------------------------------------------------------------===//
