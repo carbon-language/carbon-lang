@@ -453,7 +453,9 @@ namespace clang {
       /// \brief Block extedned descriptor type for Blocks CodeGen
       SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14,
+      /// \brief NSConstantString type
+      SPECIAL_TYPE_NS_CONSTANT_STRING          = 15
     };
 
     /// \brief Record codes for each kind of declaration.

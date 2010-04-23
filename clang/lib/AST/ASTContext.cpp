@@ -41,6 +41,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        Builtin::Context &builtins,
                        bool FreeMem, unsigned size_reserve) :
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0),
+  NSConstantStringTypeDecl(0),
   ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
   sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
   SourceMgr(SM), LangOpts(LOpts), FreeMemory(FreeMem), Target(t),
@@ -2904,6 +2905,45 @@ void ASTContext::setCFConstantStringType(QualType T) {
   const RecordType *Rec = T->getAs<RecordType>();
   assert(Rec && "Invalid CFConstantStringType");
   CFConstantStringTypeDecl = Rec->getDecl();
+}
+
+// getNSConstantStringType - Return the type used for constant NSStrings.
+QualType ASTContext::getNSConstantStringType() {
+  if (!NSConstantStringTypeDecl) {
+    NSConstantStringTypeDecl =
+    CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                     &Idents.get("__builtin_NSString"));
+    NSConstantStringTypeDecl->startDefinition();
+    
+    QualType FieldTypes[3];
+    
+    // const int *isa;
+    FieldTypes[0] = getPointerType(IntTy.withConst());
+    // const char *str;
+    FieldTypes[1] = getPointerType(CharTy.withConst());
+    // unsigned int length;
+    FieldTypes[2] = UnsignedIntTy;
+    
+    // Create fields
+    for (unsigned i = 0; i < 3; ++i) {
+      FieldDecl *Field = FieldDecl::Create(*this, NSConstantStringTypeDecl,
+                                           SourceLocation(), 0,
+                                           FieldTypes[i], /*TInfo=*/0,
+                                           /*BitWidth=*/0,
+                                           /*Mutable=*/false);
+      NSConstantStringTypeDecl->addDecl(Field);
+    }
+    
+    NSConstantStringTypeDecl->completeDefinition();
+  }
+  
+  return getTagDeclType(NSConstantStringTypeDecl);
+}
+
+void ASTContext::setNSConstantStringType(QualType T) {
+  const RecordType *Rec = T->getAs<RecordType>();
+  assert(Rec && "Invalid NSConstantStringType");
+  NSConstantStringTypeDecl = Rec->getDecl();
 }
 
 QualType ASTContext::getObjCFastEnumerationStateType() {

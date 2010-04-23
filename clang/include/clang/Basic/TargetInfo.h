@@ -339,6 +339,12 @@ public:
     return "__DATA,__cfstring";
   }
 
+  /// getNSStringSection - Return the section to use for NSString
+  /// literals, or 0 if no special section is used.
+  virtual const char *getNSStringSection() const {
+    return "__OBJC,__cstring_object,regular,no_dead_strip";
+  }
+
   /// isValidSectionSpecifier - This is an optional hook that targets can
   /// implement to perform semantic checking on attribute((section("foo")))
   /// specifiers.  In this case, "foo" is passed in to be checked.  If the

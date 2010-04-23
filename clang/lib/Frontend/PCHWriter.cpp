@@ -2095,12 +2095,10 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getsigjmp_bufType(), Record);
   AddTypeRef(Context.ObjCIdRedefinitionType, Record);
   AddTypeRef(Context.ObjCClassRedefinitionType, Record);
-#if 0
-  // FIXME. Accommodate for this in several PCH/Indexer tests
-  AddTypeRef(Context.ObjCSelRedefinitionType, Record);
-#endif
   AddTypeRef(Context.getRawBlockdescriptorType(), Record);
   AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);
+  AddTypeRef(Context.ObjCSelRedefinitionType, Record);
+  AddTypeRef(Context.getRawNSConstantStringType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
   // Keep writing types and declarations until all types and

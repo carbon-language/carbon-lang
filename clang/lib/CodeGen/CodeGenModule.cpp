@@ -50,6 +50,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
     MangleCtx(C, diags), VTables(*this), Runtime(0),
     CFConstantStringClassRef(0),
+    NSConstantStringClassRef(0),
     VMContext(M.getContext()) {
 
   if (!Features.ObjC1)
@@ -1595,8 +1596,81 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
 
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
-  // FIXME. This is temporary so -fno-constant-cfstrings same as old.
-  return GetAddrOfConstantCFString(Literal);
+  unsigned StringLength = 0;
+  bool isUTF16 = false;
+  llvm::StringMapEntry<llvm::Constant*> &Entry =
+    GetConstantCFStringEntry(CFConstantStringMap, Literal,
+                             getTargetData().isLittleEndian(),
+                             isUTF16, StringLength);
+  
+  if (llvm::Constant *C = Entry.getValue())
+    return C;
+  
+  llvm::Constant *Zero =
+  llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  
+  // If we don't already have it, get __NSConstantStringClassReference.
+  if (!NSConstantStringClassRef) {
+    const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
+    Ty = llvm::ArrayType::get(Ty, 0);
+    llvm::Constant *GV = CreateRuntimeVariable(Ty,
+                                               "__NSConstantStringClassReference");
+    // Decay array -> ptr
+    NSConstantStringClassRef = 
+      llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
+  }
+  
+  QualType NSTy = getContext().getNSConstantStringType();
+  
+  const llvm::StructType *STy =
+  cast<llvm::StructType>(getTypes().ConvertType(NSTy));
+  
+  std::vector<llvm::Constant*> Fields(3);
+  
+  // Class pointer.
+  Fields[0] = NSConstantStringClassRef;
+  
+  // String pointer.
+  llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());
+  
+  llvm::GlobalValue::LinkageTypes Linkage;
+  bool isConstant;
+  if (isUTF16) {
+    // FIXME: why do utf strings get "_" labels instead of "L" labels?
+    Linkage = llvm::GlobalValue::InternalLinkage;
+    // Note: -fwritable-strings doesn't make unicode NSStrings writable, but
+    // does make plain ascii ones writable.
+    isConstant = true;
+  } else {
+    Linkage = llvm::GlobalValue::PrivateLinkage;
+    isConstant = !Features.WritableStrings;
+  }
+  
+  llvm::GlobalVariable *GV =
+  new llvm::GlobalVariable(getModule(), C->getType(), isConstant, Linkage, C,
+                           ".str");
+  if (isUTF16) {
+    CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
+    GV->setAlignment(Align.getQuantity());
+  }
+  Fields[1] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
+  
+  // String length.
+  const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
+  Fields[2] = llvm::ConstantInt::get(Ty, StringLength);
+  
+  // The struct.
+  C = llvm::ConstantStruct::get(STy, Fields);
+  GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
+                                llvm::GlobalVariable::PrivateLinkage, C,
+                                "_unnamed_nsstring_");
+  // FIXME. Fix section.
+  if (const char *Sect = getContext().Target.getNSStringSection())
+    GV->setSection(Sect);
+  Entry.setValue(GV);
+  
+  return GV;
 }
 
 /// GetStringForStringLiteral - Return the appropriate bytes for a

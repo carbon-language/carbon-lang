@@ -1766,17 +1766,16 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned ObjCClassRedef
       = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
     Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
-#if 0
-  // FIXME. Accommodate for this in several PCH/Index tests
-  if (unsigned ObjCSelRedef
-      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
-    Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
-#endif
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_DESCRIPTOR])
     Context->setBlockDescriptorType(GetType(String));
   if (unsigned String
       = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
     Context->setBlockDescriptorExtendedType(GetType(String));
+  if (unsigned ObjCSelRedef
+      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
+    Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
+  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_NS_CONSTANT_STRING])
+    Context->setNSConstantStringType(GetType(String));
 }
 
 /// \brief Retrieve the name of the original source file name

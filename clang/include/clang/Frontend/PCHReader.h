@@ -436,7 +436,7 @@ private:
   std::deque<PendingIdentifierInfo> PendingIdentifierInfos;
 
   /// \brief FIXME: document!
-  llvm::SmallVector<uint64_t, 4> SpecialTypes;
+  llvm::SmallVector<uint64_t, 16> SpecialTypes;
 
   /// \brief Contains declarations and definitions that will be
   /// "interesting" to the ASTConsumer, when we get that AST consumer.

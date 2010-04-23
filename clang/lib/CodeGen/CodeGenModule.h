@@ -147,6 +147,10 @@ class CodeGenModule : public BlockModule {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 
+  /// NSConstantStringClassRef - Cached reference to the class for constant
+  /// strings. This value has type int * but is actually an Obj-C class pointer.
+  llvm::Constant *NSConstantStringClassRef;
+
   /// Lazily create the Objective-C runtime
   void createObjCRuntime();
 

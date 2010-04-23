@@ -165,6 +165,8 @@ class ASTContext {
   QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 
+  RecordDecl *NSConstantStringTypeDecl;
+
   RecordDecl *ObjCFastEnumerationStateTypeDecl;
 
   /// \brief The type for the C FILE type.
@@ -688,6 +690,19 @@ public:
   // getCFConstantStringType - Return the C structure type used to represent
   // constant CFStrings.
   QualType getCFConstantStringType();
+
+  // getNSConstantStringType - Return the C structure type used to represent
+  // constant NSStrings.
+  QualType getNSConstantStringType();
+  /// Get the structure type used to representation NSStrings, or NULL
+  /// if it hasn't yet been built.
+  QualType getRawNSConstantStringType() {
+    if (NSConstantStringTypeDecl)
+      return getTagDeclType(NSConstantStringTypeDecl);
+    return QualType();
+  }
+  void setNSConstantStringType(QualType T);
+
 
   /// Get the structure type used to representation CFStrings, or NULL
   /// if it hasn't yet been built.
