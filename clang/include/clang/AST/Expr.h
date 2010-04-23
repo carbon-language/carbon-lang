@@ -1710,6 +1710,8 @@ protected:
   CastExpr(StmtClass SC, EmptyShell Empty)
     : Expr(SC, Empty) { }
 
+  virtual void DoDestroy(ASTContext &C);
+
 public:
   CastKind getCastKind() const { return Kind; }
   void setCastKind(CastKind K) { Kind = K; }

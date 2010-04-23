@@ -652,6 +652,13 @@ const char *CastExpr::getCastKindName() const {
   return 0;
 }
 
+void CastExpr::DoDestroy(ASTContext &C)
+{
+  if (InheritancePath)
+    InheritancePath->Destroy();
+  Expr::DoDestroy(C);
+}
+
 Expr *CastExpr::getSubExprAsWritten() {
   Expr *SubExpr = 0;
   CastExpr *E = this;
