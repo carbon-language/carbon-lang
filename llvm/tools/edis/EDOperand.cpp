@@ -233,6 +233,8 @@ int EDOperand::isMemory() {
   default:
     return 0;
   case kOperandTypeX86Memory:
+  case kOperandTypeX86PCRelative:
+  case kOperandTypeX86EffectiveAddress:
   case kOperandTypeARMSoReg:
   case kOperandTypeARMSoImm:
   case kOperandTypeARMAddrMode2:
@@ -243,6 +245,7 @@ int EDOperand::isMemory() {
   case kOperandTypeARMAddrMode5:
   case kOperandTypeARMAddrMode6:
   case kOperandTypeARMAddrModePC:
+  case kOperandTypeARMBranchTarget:
   case kOperandTypeThumbAddrModeS1:
   case kOperandTypeThumbAddrModeS2:
   case kOperandTypeThumbAddrModeS4:

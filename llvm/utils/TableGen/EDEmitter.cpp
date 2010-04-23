@@ -316,12 +316,10 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   IMM("i16imm");
   IMM("i16i8imm");
   IMM("i32imm");
-  IMM("i32imm_pcrel");
   IMM("i32i8imm");
   IMM("i64imm");
   IMM("i64i8imm");
   IMM("i64i32imm");
-  IMM("i64i32imm_pcrel");
   IMM("SSECC");
   
   // all R, I, R, I, R
@@ -350,6 +348,8 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   LEA("lea64mem");
   
   // all I
+  PCR("i32imm_pcrel");
+  PCR("i64i32imm_pcrel");
   PCR("brtarget8");
   PCR("offset8");
   PCR("offset16");
