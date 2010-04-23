@@ -4153,8 +4153,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
           !CopyConstructor->isUsed()) &&
          "DefineImplicitCopyConstructor - call it for implicit copy ctor");
 
-  CXXRecordDecl *ClassDecl
-    = cast<CXXRecordDecl>(CopyConstructor->getDeclContext());
+  CXXRecordDecl *ClassDecl = CopyConstructor->getParent();
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
   DeclContext *PreviousContext = CurContext;
