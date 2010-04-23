@@ -1431,11 +1431,12 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                   RParenLoc);
 }
 
-static CXXBaseOrMemberInitializer *
+static bool
 BuildImplicitBaseInitializer(Sema &SemaRef, 
                              const CXXConstructorDecl *Constructor,
                              CXXBaseSpecifier *BaseSpec,
-                             bool IsInheritedVirtualBase) {
+                             bool IsInheritedVirtualBase,
+                             CXXBaseOrMemberInitializer *&CXXBaseInit) {
   InitializedEntity InitEntity
     = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec,
                                         IsInheritedVirtualBase);
@@ -1450,9 +1451,9 @@ BuildImplicitBaseInitializer(Sema &SemaRef,
 
   BaseInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(BaseInit));
   if (BaseInit.isInvalid())
-    return 0;
+    return true;
         
-  CXXBaseOrMemberInitializer *CXXBaseInit =
+  CXXBaseInit =
     new (SemaRef.Context) CXXBaseOrMemberInitializer(SemaRef.Context,
                SemaRef.Context.getTrivialTypeSourceInfo(BaseSpec->getType(), 
                                                         SourceLocation()),
@@ -1461,7 +1462,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef,
                                              BaseInit.takeAs<Expr>(),
                                              SourceLocation());
 
-  return CXXBaseInit;
+  return false;
 }
 
 bool
@@ -1520,11 +1521,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
       bool IsInheritedVirtualBase = !DirectVBases.count(VBase);
-      CXXBaseOrMemberInitializer *CXXBaseInit =
-        BuildImplicitBaseInitializer(*this, Constructor, VBase,
-                                     IsInheritedVirtualBase);
-
-      if (!CXXBaseInit) {
+      CXXBaseOrMemberInitializer *CXXBaseInit;
+      if (BuildImplicitBaseInitializer(*this, Constructor, VBase,
+                                       IsInheritedVirtualBase, CXXBaseInit)) {
         HadError = true;
         continue;
       }
@@ -1543,11 +1542,10 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
-      CXXBaseOrMemberInitializer *CXXBaseInit =
-        BuildImplicitBaseInitializer(*this, Constructor, Base,
-                                     /*IsInheritedVirtualBase=*/false);
-
-      if (!CXXBaseInit) {
+      CXXBaseOrMemberInitializer *CXXBaseInit;
+      if (BuildImplicitBaseInitializer(*this, Constructor, Base,
+                                       /*IsInheritedVirtualBase=*/false,
+                                       CXXBaseInit)) {
         HadError = true;
         continue;
       }
@@ -1584,7 +1582,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       continue;
     }
 
-    if ((*Field)->getType()->isDependentType() || AnyErrors)
+    if (AnyErrors)
       continue;
     
     QualType FT = Context.getBaseElementType((*Field)->getType());
@@ -1602,13 +1600,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         HadError = true;
         continue;
       }
-      
-      // Don't attach synthesized member initializers in a dependent
-      // context; they'll be regenerated a template instantiation
-      // time.
-      if (CurContext->isDependentContext())
-        continue;
-      
+
       CXXBaseOrMemberInitializer *Member =
         new (Context) CXXBaseOrMemberInitializer(Context,
                                                  *Field, SourceLocation(),
