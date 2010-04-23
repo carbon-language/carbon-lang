@@ -244,14 +244,16 @@ void CallGraphNode::print(raw_ostream &OS) const {
   else
     OS << "Call graph node <<null function>>";
   
-  OS << "<<0x" << this << ">>  #uses=" << getNumReferences() << '\n';
+  OS << "<<" << this << ">>  #uses=" << getNumReferences() << '\n';
 
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    OS << "  CS<" << I->first << "> calls ";
     if (Function *FI = I->second->getFunction())
-      OS << "  Calls function '" << FI->getName() <<"'\n";
-  else
-    OS << "  Calls external node\n";
-  OS << "\n";
+      OS << "function '" << FI->getName() <<"'\n";
+    else
+      OS << "external node\n";
+  }
+  OS << '\n';
 }
 
 void CallGraphNode::dump() const { print(dbgs()); }
