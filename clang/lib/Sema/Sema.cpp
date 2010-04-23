@@ -158,7 +158,9 @@ Sema::~Sema() {
 /// If there is already an implicit cast, merge into the existing one.
 /// If isLvalue, the result of the cast is an lvalue.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
-                             CastExpr::CastKind Kind, bool isLvalue) {
+                             CastExpr::CastKind Kind, 
+                             CastExpr::CXXBaseVector *InheritancePath,
+                             bool isLvalue) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 
@@ -178,13 +180,15 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind) {
+      assert(!InheritancePath && "FIXME: Merge paths!");
       ImpCast->setType(Ty);
       ImpCast->setLvalueCast(isLvalue);
       return;
     }
   }
 
-  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, isLvalue);
+  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, InheritancePath,
+                                        isLvalue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

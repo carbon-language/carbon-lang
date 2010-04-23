@@ -2675,7 +2675,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From,
     return PerformObjectMemberConversion(From, Qualifier, FoundDecl, Method);
 
   if (!Context.hasSameType(From->getType(), DestType))
-    ImpCastExprToType(From, DestType, CastExpr::CK_NoOp,
+    ImpCastExprToType(From, DestType, CastExpr::CK_NoOp, /*InheritancePath=*/0,
                       /*isLvalue=*/!From->getType()->getAs<PointerType>());
   return false;
 }
@@ -3157,7 +3157,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                             From->getLocStart());
   ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
                                 CastExpr::CK_FunctionToPointerDecay,
-                                &ConversionRef, false);
+                                &ConversionRef, /*InheritancePath=*/0, false);
 
   // Note that it is safe to allocate CallExpr on the stack here because
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
@@ -6860,6 +6860,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     return new (Context) ImplicitCastExpr(ICE->getType(), 
                                           ICE->getCastKind(),
                                           SubExpr,
+                                          /*InheritancePath=*/0,
                                           ICE->isLvalueCast());
   } 
   

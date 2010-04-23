@@ -2887,6 +2887,7 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   
   return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
                                                         SubExpr, 
+                                                        /* FIXME: */0,
                                                         E->isLvalueCast());
 }
 

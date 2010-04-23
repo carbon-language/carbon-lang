@@ -1767,8 +1767,9 @@ class ImplicitCastExpr : public CastExpr {
   bool LvalueCast;
 
 public:
-  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, bool Lvalue) :
-    CastExpr(ImplicitCastExprClass, ty, kind, op, 0), LvalueCast(Lvalue) { }
+  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
+                   CXXBaseVector *path, bool Lvalue) :
+    CastExpr(ImplicitCastExprClass, ty, kind, op, path), LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell)
