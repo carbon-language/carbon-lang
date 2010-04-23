@@ -14,10 +14,10 @@ struct X {
                 // expected-error {{constructor for 'X' must explicitly initialize the const member 'cvalue'}} \
                 // expected-error {{constructor for 'X' must explicitly initialize the reference member 'b'}} \
                 // expected-error {{constructor for 'X' must explicitly initialize the const member 'cb'}}
-   int &value; // expected-note{{declared at}}
-   const int cvalue; // expected-note{{declared at}}
-   B& b; // expected-note{{declared at}}
-   const B cb; // expected-note{{declared at}}
+   int &value; // expected-note{{declared here}}
+   const int cvalue; // expected-note{{declared here}}
+   B& b; // expected-note{{declared here}}
+   const B cb; // expected-note{{declared here}}
 };
 
 

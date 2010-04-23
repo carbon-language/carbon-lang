@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface A
--(float) x;	// expected-note {{declared at}}
+-(float) x;	// expected-note {{declared here}}
 @property int x; // expected-warning {{type of property 'x' does not match type of accessor 'x'}}
 @end
 
@@ -38,7 +38,7 @@ typedef void (F)(void);
 @class SSyncSet_iDisk;
 
 @interface SPeer_iDisk_remote1 : SPeer
-- (SSyncSet_iDisk*) syncSet; // expected-note {{declared at}}
+- (SSyncSet_iDisk*) syncSet; // expected-note {{declared here}}
 @end
 
 @interface SPeer_iDisk_local
@@ -76,7 +76,7 @@ typedef void (F)(void);
 @property (readonly) NSArray* pieces;  // expected-warning {{type of property 'pieces' does not match type of accessor 'pieces'}}
 @property (readonly) NSMutableArray* first; 
 
-- (NSMutableArray*) pieces; // expected-note {{declared at}} // expected-note {{declared at}}
+- (NSMutableArray*) pieces; // expected-note {{declared here}} // expected-note {{declared here}}
 - (NSArray*) first;
 @end
 

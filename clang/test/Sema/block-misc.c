@@ -202,8 +202,8 @@ L0:
 // radr://7438948
 void test20() {
   int n = 7;
-  int vla[n]; // expected-note {{declared at}}
-  int (*vm)[n] = 0; // expected-note {{declared at}}
+  int vla[n]; // expected-note {{declared here}}
+  int (*vm)[n] = 0; // expected-note {{declared here}}
   vla[1] = 4341;
   ^{
     (void)vla[1];  // expected-error {{cannot refer to declaration with a variably modified type inside block}}
@@ -213,8 +213,8 @@ void test20() {
 
 // radr://7438948
 void test21() {
-  int a[7]; // expected-note {{declared at}}
-  __block int b[10]; // expected-note {{declared at}}
+  int a[7]; // expected-note {{declared here}}
+  __block int b[10]; // expected-note {{declared here}}
   a[1] = 1;
   ^{
     (void)a[1]; // expected-error {{cannot refer to declaration with an array type inside block}}

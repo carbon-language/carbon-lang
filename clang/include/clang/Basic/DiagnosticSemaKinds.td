@@ -297,7 +297,7 @@ def warn_implements_nscopying : Warning<
 def warn_multiple_method_decl : Warning<"multiple methods named %0 found">;
 def warn_accessor_property_type_mismatch : Warning<
   "type of property %0 does not match type of accessor %1">;
-def note_declared_at : Note<"declared at">;
+def note_declared_at : Note<"declared here">;
 def err_setter_type_void : Error<"type of setter must be void">;
 def err_duplicate_method_decl : Error<"duplicate declaration of method %0">;
 def warn_missing_atend : Warning<"'@end' is missing in implementation context">;

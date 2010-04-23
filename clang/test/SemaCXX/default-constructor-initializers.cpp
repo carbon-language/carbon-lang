@@ -16,7 +16,7 @@ X3 x3; // expected-note {{first required here}}
 struct X4 { // expected-error {{must explicitly initialize the member 'x2'}} \
             // expected-error {{must explicitly initialize the reference member 'rx2'}}
   X2 x2; 	// expected-note {{member is declared here}}
-  X2 & rx2; // expected-note {{declared at}}
+  X2 & rx2; // expected-note {{declared here}}
 };
 
 X4 x4; // expected-note {{first required here}}
@@ -46,8 +46,8 @@ Y4 y4;
 
 struct Z1 { // expected-error {{must explicitly initialize the reference member 'z'}} \
             // expected-error {{must explicitly initialize the const member 'c1'}}
-  int& z;       // expected-note {{declared at}}
-  const int c1; // expected-note {{declared at}}
+  int& z;       // expected-note {{declared here}}
+  const int c1; // expected-note {{declared here}}
   volatile int v1;
 };
 
