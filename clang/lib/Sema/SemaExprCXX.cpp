@@ -1868,6 +1868,11 @@ QualType Sema::CheckPointerToMemberOperands(
   }
 
   if (!Context.hasSameUnqualifiedType(Class, LType)) {
+    // If we want to check the hierarchy, we need a complete type.
+    if (RequireCompleteType(Loc, LType, PDiag(diag::err_bad_memptr_lhs)
+        << OpSpelling << (int)isIndirect)) {
+      return QualType();
+    }
     CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
                        /*DetectVirtual=*/false);
     // FIXME: Would it be useful to print full ambiguity paths, or is that

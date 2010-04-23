@@ -147,3 +147,13 @@ namespace pr5985 {
     }
   };
 }
+
+namespace pr6783 {
+  struct Base {};
+  struct X; // expected-note {{forward declaration}}
+
+  int test1(int Base::* p2m, X* object)
+  {
+    return object->*p2m; // expected-error {{left hand operand to ->*}}
+  }
+}
