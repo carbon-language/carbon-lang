@@ -124,7 +124,6 @@ public:
   };
 
   typedef UnresolvedSetImpl::iterator iterator;
-  typedef bool (*ResultFilter)(NamedDecl*, unsigned IDNS);
 
   LookupResult(Sema &SemaRef, DeclarationName Name, SourceLocation NameLoc,
                Sema::LookupNameKind LookupKind,
@@ -136,7 +135,6 @@ public:
       Name(Name),
       NameLoc(NameLoc),
       LookupKind(LookupKind),
-      IsAcceptableFn(0),
       IDNS(0),
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
@@ -156,7 +154,6 @@ public:
       Name(Other.Name),
       NameLoc(Other.NameLoc),
       LookupKind(Other.LookupKind),
-      IsAcceptableFn(Other.IsAcceptableFn),
       IDNS(Other.IDNS),
       Redecl(Other.Redecl),
       HideTags(Other.HideTags),
@@ -242,8 +239,7 @@ public:
 
   /// \brief Tests whether the given declaration is acceptable.
   bool isAcceptableDecl(NamedDecl *D) const {
-    assert(IsAcceptableFn);
-    return IsAcceptableFn(D, IDNS);
+    return D->isInIdentifierNamespace(IDNS);
   }
 
   /// \brief Returns the identifier namespace mask for this lookup.
@@ -575,7 +571,6 @@ private:
   SourceLocation NameLoc;
   SourceRange NameContextRange;
   Sema::LookupNameKind LookupKind;
-  ResultFilter IsAcceptableFn; // set by configure()
   unsigned IDNS; // set by configure()
 
   bool Redecl;

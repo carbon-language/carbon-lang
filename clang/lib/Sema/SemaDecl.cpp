@@ -3269,6 +3269,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD->setAccess(Access);
   }
 
+  if (NewFD->isOverloadedOperator() && !DC->isRecord() &&
+      NewFD->isInIdentifierNamespace(Decl::IDNS_Ordinary)) {
+    NewFD->setNonMemberOperator();
+    if (FunctionTemplate) FunctionTemplate->setNonMemberOperator();
+  }
+
   // If we have a function template, check the template parameter
   // list. This will check and merge default template arguments.
   if (FunctionTemplate) {
