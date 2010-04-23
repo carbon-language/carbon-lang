@@ -1861,8 +1861,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   assert((*startBuf == '}') && "bogus @try block");
 
   SourceLocation lastCurlyLoc = startLoc;
-  ObjCAtCatchStmt *catchList = S->getCatchStmts();
-  if (catchList) {
+  if (S->getNumCatchStmts()) {
     startLoc = startLoc.getFileLocWithOffset(1);
     buf = " /* @catch begin */ else {\n";
     buf += " id _caught = objc_exception_extract(&_stack);\n";
@@ -1880,26 +1879,27 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   }
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
-  while (catchList) {
-    ParmVarDecl *catchDecl = catchList->getCatchParamDecl();
+  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
+    ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
+    ParmVarDecl *catchDecl = Catch->getCatchParamDecl();
 
-    if (catchList == S->getCatchStmts())
+    if (I == 0)
       buf = "if ("; // we are generating code for the first catch clause
     else
       buf = "else if (";
-    startLoc = catchList->getLocStart();
+    startLoc = Catch->getLocStart();
     startBuf = SM->getCharacterData(startLoc);
 
     assert((*startBuf == '@') && "bogus @catch location");
 
     const char *lParenLoc = strchr(startBuf, '(');
 
-    if (catchList->hasEllipsis()) {
+    if (Catch->hasEllipsis()) {
       // Now rewrite the body...
-      lastCatchBody = catchList->getCatchBody();
+      lastCatchBody = Catch->getCatchBody();
       SourceLocation bodyLoc = lastCatchBody->getLocStart();
       const char *bodyBuf = SM->getCharacterData(bodyLoc);
-      assert(*SM->getCharacterData(catchList->getRParenLoc()) == ')' &&
+      assert(*SM->getCharacterData(Catch->getRParenLoc()) == ')' &&
              "bogus @catch paren location");
       assert((*bodyBuf == '{') && "bogus @catch body location");
 
@@ -1923,8 +1923,8 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
         }
       }
       // Now rewrite the body...
-      lastCatchBody = catchList->getCatchBody();
-      SourceLocation rParenLoc = catchList->getRParenLoc();
+      lastCatchBody = Catch->getCatchBody();
+      SourceLocation rParenLoc = Catch->getRParenLoc();
       SourceLocation bodyLoc = lastCatchBody->getLocStart();
       const char *bodyBuf = SM->getCharacterData(bodyLoc);
       const char *rParenBuf = SM->getCharacterData(rParenLoc);
@@ -1937,8 +1937,6 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     } else {
       assert(false && "@catch rewrite bug");
     }
-    // make sure all the catch bodies get rewritten!
-    catchList = catchList->getNextCatchStmt();
   }
   // Complete the catch list...
   if (lastCatchBody) {

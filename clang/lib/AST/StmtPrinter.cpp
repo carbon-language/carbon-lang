@@ -388,11 +388,8 @@ void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
     OS << "\n";
   }
 
-  for (ObjCAtCatchStmt *catchStmt =
-         static_cast<ObjCAtCatchStmt *>(Node->getCatchStmts());
-       catchStmt;
-       catchStmt =
-         static_cast<ObjCAtCatchStmt *>(catchStmt->getNextCatchStmt())) {
+  for (unsigned I = 0, N = Node->getNumCatchStmts(); I != N; ++I) {
+    ObjCAtCatchStmt *catchStmt = Node->getCatchStmt(I);
     Indent() << "@catch(";
     if (catchStmt->getCatchParamDecl()) {
       if (Decl *DS = catchStmt->getCatchParamDecl())

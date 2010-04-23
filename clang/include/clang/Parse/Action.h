@@ -938,20 +938,46 @@ public:
   }
 
   // Objective-c statements
+  
+  /// \brief Parsed an Objective-C @catch statement.
+  ///
+  /// \param AtLoc The location of the '@' starting the '@catch'.
+  ///
+  /// \param RParen The location of the right parentheses ')' after the
+  /// exception variable.
+  ///
+  /// \param Parm The variable that will catch the exception. Will be NULL if 
+  /// this is a @catch(...) block.
+  ///
+  /// \param Body The body of the @catch block.
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
-                                                DeclPtrTy Parm, StmtArg Body,
-                                                StmtArg CatchList) {
+                                                DeclPtrTy Parm, StmtArg Body) {
     return StmtEmpty();
   }
 
+  /// \brief Parsed an Objective-C @finally statement.
+  ///
+  /// \param AtLoc The location of the '@' starting the '@finally'.
+  ///
+  /// \param Body The body of the @finally block.
   virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
                                                   StmtArg Body) {
     return StmtEmpty();
   }
 
+  /// \brief Parsed an Objective-C @try-@catch-@finally statement.
+  ///
+  /// \param AtLoc The location of the '@' starting '@try'.
+  ///
+  /// \param Try The body of the '@try' statement.
+  ///
+  /// \param CatchStmts The @catch statements.
+  ///
+  /// \param Finally The @finally statement.
   virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
-                                              StmtArg Try, StmtArg Catch,
+                                              StmtArg Try, 
+                                              MultiStmtArg CatchStmts,
                                               StmtArg Finally) {
     return StmtEmpty();
   }

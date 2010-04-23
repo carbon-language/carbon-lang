@@ -1509,7 +1509,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_lbrace);
     return StmtError();
   }
-  OwningStmtResult CatchStmts(Actions);
+  StmtVector CatchStmts(Actions);
   OwningStmtResult FinallyStmt(Actions);
   ParseScope TryScope(this, Scope::DeclScope);
   OwningStmtResult TryBody(ParseCompoundStatementBody());
@@ -1564,9 +1564,14 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           Diag(Tok, diag::err_expected_lbrace);
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
-        CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
-                        RParenLoc, FirstPart, move(CatchBody),
-                        move(CatchStmts));
+        
+        OwningStmtResult Catch = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
+                                                              RParenLoc, 
+                                                              FirstPart, 
+                                                              move(CatchBody));
+        if (!Catch.isInvalid())
+          CatchStmts.push_back(Catch.release());
+        
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
           << "@catch clause";
@@ -1595,7 +1600,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return StmtError();
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, move(TryBody), move(CatchStmts),
+  
+  return Actions.ActOnObjCAtTryStmt(atLoc, move(TryBody), 
+                                    move_arg(CatchStmts),
                                     move(FinallyStmt));
 }
 

@@ -1675,15 +1675,15 @@ public:
 
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
-                                                DeclPtrTy Parm, StmtArg Body,
-                                                StmtArg CatchList);
+                                                DeclPtrTy Parm, StmtArg Body);
 
   virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
                                                   StmtArg Body);
 
   virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
                                               StmtArg Try,
-                                              StmtArg Catch, StmtArg Finally);
+                                              MultiStmtArg Catch, 
+                                              StmtArg Finally);
 
   virtual OwningStmtResult BuildObjCAtThrowStmt(SourceLocation AtLoc,
                                                 ExprArg Throw);

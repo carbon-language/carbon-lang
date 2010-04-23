@@ -764,7 +764,6 @@ void PCHStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
 
 void PCHStmtWriter::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   Writer.WriteSubStmt(S->getCatchBody());
-  Writer.WriteSubStmt(S->getNextCatchStmt());
   Writer.AddDeclRef(S->getCatchParamDecl(), Record);
   Writer.AddSourceLocation(S->getAtCatchLoc(), Record);
   Writer.AddSourceLocation(S->getRParenLoc(), Record);
@@ -778,9 +777,13 @@ void PCHStmtWriter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
 }
 
 void PCHStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+  Record.push_back(S->getNumCatchStmts());
+  Record.push_back(S->getFinallyStmt() != 0);
   Writer.WriteSubStmt(S->getTryBody());
-  Writer.WriteSubStmt(S->getCatchStmts());
-  Writer.WriteSubStmt(S->getFinallyStmt());
+  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I)
+    Writer.WriteSubStmt(S->getCatchStmt(I));
+  if (S->getFinallyStmt())
+    Writer.WriteSubStmt(S->getFinallyStmt());
   Writer.AddSourceLocation(S->getAtTryLoc(), Record);
   Code = pch::STMT_OBJC_AT_TRY;
 }

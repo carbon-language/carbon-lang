@@ -71,30 +71,23 @@ public:
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
-  enum { BODY, NEXT_CATCH, END_EXPR };
   ParmVarDecl *ExceptionDecl;
-  Stmt *SubExprs[END_EXPR];
+  Stmt *Body;
   SourceLocation AtCatchLoc, RParenLoc;
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   ParmVarDecl *catchVarDecl,
-                  Stmt *atCatchStmt, Stmt *atCatchList);
+                  Stmt *atCatchStmt)
+    : Stmt(ObjCAtCatchStmtClass), ExceptionDecl(catchVarDecl), 
+    Body(atCatchStmt), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) { }
 
   explicit ObjCAtCatchStmt(EmptyShell Empty) :
     Stmt(ObjCAtCatchStmtClass, Empty) { }
 
-  const Stmt *getCatchBody() const { return SubExprs[BODY]; }
-  Stmt *getCatchBody() { return SubExprs[BODY]; }
-  void setCatchBody(Stmt *S) { SubExprs[BODY] = S; }
-
-  const ObjCAtCatchStmt *getNextCatchStmt() const {
-    return static_cast<const ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
-  }
-  ObjCAtCatchStmt *getNextCatchStmt() {
-    return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
-  }
-  void setNextCatchStmt(Stmt *S) { SubExprs[NEXT_CATCH] = S; }
+  const Stmt *getCatchBody() const { return Body; }
+  Stmt *getCatchBody() { return Body; }
+  void setCatchBody(Stmt *S) { Body = S; }
 
   const ParmVarDecl *getCatchParamDecl() const {
     return ExceptionDecl;
@@ -110,7 +103,7 @@ public:
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd());
+    return SourceRange(AtCatchLoc, Body->getLocEnd());
   }
 
   bool hasEllipsis() const { return getCatchParamDecl() == 0; }
@@ -160,49 +153,93 @@ public:
 /// @try ... @catch ... @finally statement.
 class ObjCAtTryStmt : public Stmt {
 private:
-  enum { TRY, CATCH, FINALLY, END_EXPR };
-  Stmt* SubStmts[END_EXPR];
-
+  // The location of the 
   SourceLocation AtTryLoc;
-public:
+  
+  // The number of catch blocks in this statement.
+  unsigned NumCatchStmts : 16;
+  
+  // Whether this statement has a @finally statement.
+  bool HasFinally : 1;
+  
+  /// \brief Retrieve the statements that are stored after this @try statement.
+  ///
+  /// The order of the statements in memory follows the order in the source,
+  /// with the @try body first, followed by the @catch statements (if any) and,
+  /// finally, the @finally (if it exists).
+  Stmt **getStmts() { return reinterpret_cast<Stmt **> (this + 1); }
+  const Stmt* const *getStmts() const { 
+    return reinterpret_cast<const Stmt * const*> (this + 1); 
+  }
+  
   ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt,
-                Stmt *atCatchStmt,
-                Stmt *atFinallyStmt)
-  : Stmt(ObjCAtTryStmtClass) {
-      SubStmts[TRY] = atTryStmt;
-      SubStmts[CATCH] = atCatchStmt;
-      SubStmts[FINALLY] = atFinallyStmt;
-      AtTryLoc = atTryLoc;
-    }
-  explicit ObjCAtTryStmt(EmptyShell Empty) :
-    Stmt(ObjCAtTryStmtClass, Empty) { }
+                Stmt **CatchStmts, unsigned NumCatchStmts,
+                Stmt *atFinallyStmt);
+  
+  explicit ObjCAtTryStmt(EmptyShell Empty, unsigned NumCatchStmts,
+                         bool HasFinally)
+    : Stmt(ObjCAtTryStmtClass, Empty), NumCatchStmts(NumCatchStmts),
+      HasFinally(HasFinally) { }
 
+public:
+  static ObjCAtTryStmt *Create(ASTContext &Context, SourceLocation atTryLoc, 
+                               Stmt *atTryStmt,
+                               Stmt **CatchStmts, unsigned NumCatchStmts,
+                               Stmt *atFinallyStmt);
+  static ObjCAtTryStmt *CreateEmpty(ASTContext &Context, 
+                                    unsigned NumCatchStmts,
+                                    bool HasFinally);
+  
+  /// \brief Retrieve the location of the @ in the @try.
   SourceLocation getAtTryLoc() const { return AtTryLoc; }
   void setAtTryLoc(SourceLocation Loc) { AtTryLoc = Loc; }
 
-  const Stmt *getTryBody() const { return SubStmts[TRY]; }
-  Stmt *getTryBody() { return SubStmts[TRY]; }
-  void setTryBody(Stmt *S) { SubStmts[TRY] = S; }
+  /// \brief Retrieve the @try body.
+  const Stmt *getTryBody() const { return getStmts()[0]; }
+  Stmt *getTryBody() { return getStmts()[0]; }
+  void setTryBody(Stmt *S) { getStmts()[0] = S; }
 
-  const ObjCAtCatchStmt *getCatchStmts() const {
-    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]);
+  /// \brief Retrieve the number of @catch statements in this try-catch-finally
+  /// block.
+  unsigned getNumCatchStmts() const { return NumCatchStmts; }
+  
+  /// \brief Retrieve a @catch statement.
+  const ObjCAtCatchStmt *getCatchStmt(unsigned I) const {
+    assert(I < NumCatchStmts && "Out-of-bounds @catch index");
+    return cast_or_null<ObjCAtCatchStmt>(getStmts()[I + 1]);
   }
-  ObjCAtCatchStmt *getCatchStmts() {
-    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]);
+  
+  /// \brief Retrieve a @catch statement.
+  ObjCAtCatchStmt *getCatchStmt(unsigned I) {
+    assert(I < NumCatchStmts && "Out-of-bounds @catch index");
+    return cast_or_null<ObjCAtCatchStmt>(getStmts()[I + 1]);
   }
-  void setCatchStmts(Stmt *S) { SubStmts[CATCH] = S; }
-
+  
+  /// \brief Set a particular catch statement.
+  void setCatchStmt(unsigned I, ObjCAtCatchStmt *S) {
+    assert(I < NumCatchStmts && "Out-of-bounds @catch index");
+    getStmts()[I + 1] = S;
+  }
+  
+  /// Retrieve the @finally statement, if any.
   const ObjCAtFinallyStmt *getFinallyStmt() const {
-    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]);
+    if (!HasFinally)
+      return 0;
+    
+    return cast_or_null<ObjCAtFinallyStmt>(getStmts()[1 + NumCatchStmts]);
   }
   ObjCAtFinallyStmt *getFinallyStmt() {
-    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]);
+    if (!HasFinally)
+      return 0;
+    
+    return cast_or_null<ObjCAtFinallyStmt>(getStmts()[1 + NumCatchStmts]);
   }
-  void setFinallyStmt(Stmt *S) { SubStmts[FINALLY] = S; }
+  void setFinallyStmt(Stmt *S) { 
+    assert(HasFinally && "@try does not have a @finally slot!");
+    getStmts()[1 + NumCatchStmts] = S; 
+  }
 
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd());
-  }
+  virtual SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtTryStmtClass;

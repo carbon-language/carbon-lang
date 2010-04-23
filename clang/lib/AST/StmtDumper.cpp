@@ -143,6 +143,7 @@ namespace  {
     void DumpCXXTemporary(CXXTemporary *Temporary);
 
     // ObjC
+    void VisitObjCAtCatchStmt(ObjCAtCatchStmt *Node);
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
@@ -521,6 +522,16 @@ void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
   case ObjCMessageExpr::SuperClass:
     OS << " super (class)";
     break;
+  }
+}
+
+void StmtDumper::VisitObjCAtCatchStmt(ObjCAtCatchStmt *Node) {
+  DumpStmt(Node);
+  if (ParmVarDecl *CatchParam = Node->getCatchParamDecl()) {
+    OS << " catch parm = ";
+    DumpDeclarator(CatchParam);
+  } else {
+    OS << " catch all";
   }
 }
 

@@ -1781,11 +1781,12 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   bool HasCatchAll = false;
   // Only @try blocks are allowed @catch blocks, but both can have @finally
   if (isTry) {
-    if (const ObjCAtCatchStmt* CatchStmt =
-      cast<ObjCAtTryStmt>(S).getCatchStmts())  {
+    if (cast<ObjCAtTryStmt>(S).getNumCatchStmts()) {
+      const ObjCAtTryStmt &AtTry = cast<ObjCAtTryStmt>(S);
       CGF.setInvokeDest(CatchInCatch);
 
-      for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
+      for (unsigned I = 0, N = AtTry.getNumCatchStmts(); I != N; ++I) {
+        const ObjCAtCatchStmt *CatchStmt = AtTry.getCatchStmt(I);
         const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
         Handlers.push_back(std::make_pair(CatchDecl,
                                           CatchStmt->getCatchBody()));

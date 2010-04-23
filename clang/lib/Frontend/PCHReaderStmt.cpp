@@ -838,12 +838,11 @@ unsigned PCHStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
 
 unsigned PCHStmtReader::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   VisitStmt(S);
-  S->setCatchBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
-  S->setNextCatchStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  S->setCatchBody(cast_or_null<Stmt>(StmtStack.back()));
   S->setCatchParamDecl(cast_or_null<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setAtCatchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  return 2;
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
@@ -855,11 +854,21 @@ unsigned PCHStmtReader::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
 
 unsigned PCHStmtReader::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   VisitStmt(S);
-  S->setTryBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 3]));
-  S->setCatchStmts(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
-  S->setFinallyStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  assert(Record[Idx] == S->getNumCatchStmts());
+  ++Idx;
+  bool HasFinally = Record[Idx++];
+  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
+    unsigned Offset = StmtStack.size() - N - HasFinally + I;
+    S->setCatchStmt(I, cast_or_null<ObjCAtCatchStmt>(StmtStack[Offset]));
+  }
+
+  unsigned TryOffset
+    = StmtStack.size() - S->getNumCatchStmts() - HasFinally - 1;
+  S->setTryBody(cast_or_null<Stmt>(StmtStack[TryOffset]));
+  if (HasFinally)
+    S->setFinallyStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
   S->setAtTryLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  return 3;
+  return 1 + S->getNumCatchStmts() + HasFinally;
 }
 
 unsigned PCHStmtReader::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
@@ -1231,7 +1240,9 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) ObjCAtFinallyStmt(Empty);
       break;
     case pch::STMT_OBJC_AT_TRY:
-      S = new (Context) ObjCAtTryStmt(Empty);
+      S = ObjCAtTryStmt::CreateEmpty(*Context, 
+                                     Record[PCHStmtReader::NumStmtFields],
+                                     Record[PCHStmtReader::NumStmtFields + 1]);
       break;
     case pch::STMT_OBJC_AT_SYNCHRONIZED:
       S = new (Context) ObjCAtSynchronizedStmt(Empty);

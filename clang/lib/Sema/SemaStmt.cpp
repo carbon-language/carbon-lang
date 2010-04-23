@@ -1526,8 +1526,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            SourceLocation RParen, DeclPtrTy Parm,
-                           StmtArg Body, StmtArg catchList) {
-  Stmt *CatchList = catchList.takeAs<Stmt>();
+                           StmtArg Body) {
   ParmVarDecl *PVD = cast_or_null<ParmVarDecl>(Parm.getAs<Decl>());
 
   // PVD == 0 implies @catch(...).
@@ -1544,9 +1543,8 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                        diag::err_illegal_qualifiers_on_catch_parm));
   }
 
-  ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
-    PVD, Body.takeAs<Stmt>(), CatchList);
-  return Owned(CatchList ? CatchList : CS);
+  return Owned(new (Context) ObjCAtCatchStmt(AtLoc, RParen, PVD, 
+                                             Body.takeAs<Stmt>()));
 }
 
 Action::OwningStmtResult
@@ -1556,12 +1554,14 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtArg Body) {
 }
 
 Action::OwningStmtResult
-Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
-                         StmtArg Try, StmtArg Catch, StmtArg Finally) {
+Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, StmtArg Try, 
+                         MultiStmtArg CatchStmts, StmtArg Finally) {
   FunctionNeedsScopeChecking() = true;
-  return Owned(new (Context) ObjCAtTryStmt(AtLoc, Try.takeAs<Stmt>(),
-                                           Catch.takeAs<Stmt>(),
-                                           Finally.takeAs<Stmt>()));
+  unsigned NumCatchStmts = CatchStmts.size();
+  return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try.takeAs<Stmt>(),
+                                     (Stmt **)CatchStmts.release(),
+                                     NumCatchStmts,
+                                     Finally.takeAs<Stmt>()));
 }
 
 Sema::OwningStmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,

@@ -896,9 +896,9 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildObjCAtTryStmt(SourceLocation AtLoc,
                                         StmtArg TryBody,
-                                        StmtArg Catch,
+                                        MultiStmtArg CatchStmts,
                                         StmtArg Finally) {
-    return getSema().ActOnObjCAtTryStmt(AtLoc, move(TryBody), move(Catch),
+    return getSema().ActOnObjCAtTryStmt(AtLoc, move(TryBody), move(CatchStmts),
                                         move(Finally));
   }
 
@@ -3688,12 +3688,16 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
   if (TryBody.isInvalid())
     return SemaRef.StmtError();
   
-  // Transform the @catch statement (if present).
-  OwningStmtResult Catch(SemaRef);
-  if (S->getCatchStmts()) {
-    Catch = getDerived().TransformStmt(S->getCatchStmts());
+  // Transform the @catch statements (if present).
+  bool AnyCatchChanged = false;
+  ASTOwningVector<&ActionBase::DeleteStmt> CatchStmts(SemaRef);
+  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
+    OwningStmtResult Catch = getDerived().TransformStmt(S->getCatchStmt(I));
     if (Catch.isInvalid())
       return SemaRef.StmtError();
+    if (Catch.get() != S->getCatchStmt(I))
+      AnyCatchChanged = true;
+    CatchStmts.push_back(Catch.release());
   }
   
   // Transform the @finally statement (if present).
@@ -3707,13 +3711,13 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
   // If nothing changed, just retain this statement.
   if (!getDerived().AlwaysRebuild() &&
       TryBody.get() == S->getTryBody() &&
-      Catch.get() == S->getCatchStmts() &&
+      !AnyCatchChanged &&
       Finally.get() == S->getFinallyStmt())
     return SemaRef.Owned(S->Retain());
   
   // Build a new statement.
   return getDerived().RebuildObjCAtTryStmt(S->getAtTryLoc(), move(TryBody),
-                                           move(Catch), move(Finally));
+                                           move_arg(CatchStmts), move(Finally));
 }
 
 template<typename Derived>

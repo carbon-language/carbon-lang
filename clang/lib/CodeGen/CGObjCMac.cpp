@@ -2646,8 +2646,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext),
                             CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
-  } else if (const ObjCAtCatchStmt* CatchStmt =
-             cast<ObjCAtTryStmt>(S).getCatchStmts()) {
+  } else if (cast<ObjCAtTryStmt>(S).getNumCatchStmts()) {
+    const ObjCAtTryStmt* AtTryStmt = cast<ObjCAtTryStmt>(&S);
+    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
     CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
@@ -2666,7 +2667,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     // matched and avoid generating code for falling off the end if
     // so.
     bool AllMatched = false;
-    for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
+    for (unsigned I = 0, N = AtTryStmt->getNumCatchStmts(); I != N; ++I) {
+      const ObjCAtCatchStmt *CatchStmt = AtTryStmt->getCatchStmt(I);
       llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
       const ParmVarDecl *CatchParam = CatchStmt->getCatchParamDecl();
@@ -5579,42 +5581,41 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
   bool HasCatchAll = false;
   if (isTry) {
-    if (const ObjCAtCatchStmt* CatchStmt =
-        cast<ObjCAtTryStmt>(S).getCatchStmts())  {
-      for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
-        const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
-        Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
+    const ObjCAtTryStmt &AtTry = cast<ObjCAtTryStmt>(S);
+    for (unsigned I = 0, N = AtTry.getNumCatchStmts(); I != N; ++I) {
+      const ObjCAtCatchStmt *CatchStmt = AtTry.getCatchStmt(I);
+      const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
+      Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
 
-        // catch(...) always matches.
-        if (!CatchDecl) {
-          // Use i8* null here to signal this is a catch all, not a cleanup.
-          llvm::Value *Null = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-          SelectorArgs.push_back(Null);
-          HasCatchAll = true;
-          break;
-        }
+      // catch(...) always matches.
+      if (!CatchDecl) {
+        // Use i8* null here to signal this is a catch all, not a cleanup.
+        llvm::Value *Null = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+        SelectorArgs.push_back(Null);
+        HasCatchAll = true;
+        break;
+      }
 
-        if (CatchDecl->getType()->isObjCIdType() ||
-            CatchDecl->getType()->isObjCQualifiedIdType()) {
-          llvm::Value *IDEHType =
-            CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
-          if (!IDEHType)
-            IDEHType =
-              new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
-                                       false,
-                                       llvm::GlobalValue::ExternalLinkage,
-                                       0, "OBJC_EHTYPE_id");
-          SelectorArgs.push_back(IDEHType);
-        } else {
-          // All other types should be Objective-C interface pointer types.
-          const ObjCObjectPointerType *PT =
-            CatchDecl->getType()->getAs<ObjCObjectPointerType>();
-          assert(PT && "Invalid @catch type.");
-          const ObjCInterfaceType *IT = PT->getInterfaceType();
-          assert(IT && "Invalid @catch type.");
-          llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
-          SelectorArgs.push_back(EHType);
-        }
+      if (CatchDecl->getType()->isObjCIdType() ||
+          CatchDecl->getType()->isObjCQualifiedIdType()) {
+        llvm::Value *IDEHType =
+          CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
+        if (!IDEHType)
+          IDEHType =
+            new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
+                                     false,
+                                     llvm::GlobalValue::ExternalLinkage,
+                                     0, "OBJC_EHTYPE_id");
+        SelectorArgs.push_back(IDEHType);
+      } else {
+        // All other types should be Objective-C interface pointer types.
+        const ObjCObjectPointerType *PT =
+          CatchDecl->getType()->getAs<ObjCObjectPointerType>();
+        assert(PT && "Invalid @catch type.");
+        const ObjCInterfaceType *IT = PT->getInterfaceType();
+        assert(IT && "Invalid @catch type.");
+        llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
+        SelectorArgs.push_back(EHType);
       }
     }
   }
