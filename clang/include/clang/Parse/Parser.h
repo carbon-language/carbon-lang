@@ -796,9 +796,15 @@ private:
                                     const ParsedTemplateInfo &TemplateInfo);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDefs(ParsingClass &Class);
+  bool ConsumeAndStoreUntil(tok::TokenKind T1,
+                            CachedTokens &Toks,
+                            bool StopAtSemi = true,
+                            bool ConsumeFinalToken = true) {
+    return ConsumeAndStoreUntil(T1, T1, Toks, StopAtSemi, ConsumeFinalToken);
+  }
   bool ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
                             CachedTokens &Toks,
-                            tok::TokenKind EarlyAbortIf = tok::unknown,
+                            bool StopAtSemi = true,
                             bool ConsumeFinalToken = true);
 
   //===--------------------------------------------------------------------===//

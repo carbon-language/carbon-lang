@@ -1734,7 +1734,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
 
   // Store the tokens of the parentheses. We will parse them after we determine
   // the context that follows them.
-  if (!ConsumeAndStoreUntil(tok::r_paren, tok::unknown, Toks, tok::semi)) {
+  if (!ConsumeAndStoreUntil(tok::r_paren, Toks)) {
     // We didn't find the ')' we expected.
     MatchRHSPunctuation(tok::r_paren, LParenLoc);
     return ExprError();

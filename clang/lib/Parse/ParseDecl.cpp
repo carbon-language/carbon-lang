@@ -2988,7 +2988,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           DefArgToks = new CachedTokens;
 
           if (!ConsumeAndStoreUntil(tok::comma, tok::r_paren, *DefArgToks,
-                                    tok::semi, false)) {
+                                    /*StopAtSemi=*/true,
+                                    /*ConsumeFinalToken=*/false)) {
             delete DefArgToks;
             DefArgToks = 0;
             Actions.ActOnParamDefaultArgumentError(Param);

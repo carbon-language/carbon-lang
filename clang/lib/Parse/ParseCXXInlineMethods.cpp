@@ -55,7 +55,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   // We may have a constructor initializer or function-try-block here.
   if (kind == tok::colon || kind == tok::kw_try) {
     // Consume everything up to (and including) the left brace.
-    if (!ConsumeAndStoreUntil(tok::l_brace, tok::unknown, Toks, tok::semi)) {
+    if (!ConsumeAndStoreUntil(tok::l_brace, Toks)) {
       // We didn't find the left-brace we expected after the
       // constructor initializer.
       if (Tok.is(tok::semi)) {
@@ -74,13 +74,13 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
     ConsumeBrace();
   }
   // Consume everything up to (and including) the matching right brace.
-  ConsumeAndStoreUntil(tok::r_brace, tok::unknown, Toks);
+  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
 
   // If we're in a function-try-block, we need to store all the catch blocks.
   if (kind == tok::kw_try) {
     while (Tok.is(tok::kw_catch)) {
-      ConsumeAndStoreUntil(tok::l_brace, tok::unknown, Toks);
-      ConsumeAndStoreUntil(tok::r_brace, tok::unknown, Toks);
+      ConsumeAndStoreUntil(tok::l_brace, Toks, /*StopAtSemi=*/false);
+      ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
     }
   }
 
@@ -246,14 +246,12 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 /// ConsumeAndStoreUntil - Consume and store the token at the passed token
 /// container until the token 'T' is reached (which gets
 /// consumed/stored too, if ConsumeFinalToken).
-/// If EarlyAbortIf is specified, then we will stop early if we find that
-/// token at the top level.
+/// If StopAtSemi is true, then we will stop early at a ';' character.
 /// Returns true if token 'T1' or 'T2' was found.
 /// NOTE: This is a specialized version of Parser::SkipUntil.
 bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
                                   CachedTokens &Toks,
-                                  tok::TokenKind EarlyAbortIf,
-                                  bool ConsumeFinalToken) {
+                                  bool StopAtSemi, bool ConsumeFinalToken) {
   // We always want this function to consume at least one token if the first
   // token isn't T and if not at EOF.
   bool isFirstTokenConsumed = true;
@@ -267,10 +265,6 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
       return true;
     }
 
-    // If we found the early-abort token, return.
-    if (Tok.is(EarlyAbortIf))
-      return false;
-
     switch (Tok.getKind()) {
     case tok::eof:
       // Ran out of tokens.
@@ -280,19 +274,19 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
       // Recursively consume properly-nested parens.
       Toks.push_back(Tok);
       ConsumeParen();
-      ConsumeAndStoreUntil(tok::r_paren, tok::unknown, Toks);
+      ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
       break;
     case tok::l_square:
       // Recursively consume properly-nested square brackets.
       Toks.push_back(Tok);
       ConsumeBracket();
-      ConsumeAndStoreUntil(tok::r_square, tok::unknown, Toks);
+      ConsumeAndStoreUntil(tok::r_square, Toks, /*StopAtSemi=*/false);
       break;
     case tok::l_brace:
       // Recursively consume properly-nested braces.
       Toks.push_back(Tok);
       ConsumeBrace();
-      ConsumeAndStoreUntil(tok::r_brace, tok::unknown, Toks);
+      ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
       break;
 
     // Okay, we found a ']' or '}' or ')', which we think should be balanced.
@@ -324,6 +318,10 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
       Toks.push_back(Tok);
       ConsumeStringToken();
       break;
+    case tok::semi:
+      if (StopAtSemi)
+        return false;
+      // FALL THROUGH.
     default:
       // consume this token.
       Toks.push_back(Tok);
