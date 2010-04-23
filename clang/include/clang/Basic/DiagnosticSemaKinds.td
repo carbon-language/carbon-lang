@@ -453,18 +453,18 @@ def warn_missing_exception_specification : Warning<
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;
-def err_access :
-    Error<"%1 is a %select{private|protected}0 member of %3">,
-    NoSFINAE;
-def err_access_ctor :
-    Error<"calling a %select{private|protected}0 constructor of class %2">,
-    NoSFINAE;
-
+def err_access : Error<
+  "%1 is a %select{private|protected}0 member of %3">, NoSFINAE;
+def err_access_ctor : Error<
+  "calling a %select{private|protected}0 constructor of class %2">, NoSFINAE;
 def err_access_base : Error<
   "%select{base class|inherited virtual base class}0 %1 has %select{private|"
   "protected}3 %select{constructor|copy constructor|copy assignment operator|"
   "destructor}2">, NoSFINAE;
-    
+def err_access_field: Error<
+  "field of type %0 has %select{private|protected}2 %select{constructor|copy "
+  "constructor|copy assignment operator|destructor}1">, NoSFINAE;
+
 def err_access_ctor_field :
     Error<"field of type %1 has %select{private|protected}2 constructor">,
     NoSFINAE;

@@ -1152,8 +1152,9 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
 
   case InitializedEntity::EK_Member: {
     const FieldDecl *Field = cast<FieldDecl>(Entity.getDecl());
-    AccessEntity.setDiag(PDiag(diag::err_access_ctor_field)
-                          << Field->getDeclName() << Field->getType());
+    AccessEntity.setDiag(PDiag(diag::err_access_field)
+                          << Field->getType()
+                          << getSpecialMember(Constructor));
     break;
   }
 
