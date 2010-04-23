@@ -417,7 +417,7 @@ public:
   
   /// hasNoAsmVariants - Return true if {|} are normal characters in the
   /// asm string.  If this returns false (the default), then {abc|xyz} is syntax
-  /// that says that when compmiling for asm variant #0, "abc" should be
+  /// that says that when compiling for asm variant #0, "abc" should be
   /// generated, but when compiling for asm variant #1, "xyz" should be
   /// generated.
   bool hasNoAsmVariants() const {
