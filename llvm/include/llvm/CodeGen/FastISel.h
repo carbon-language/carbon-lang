@@ -107,14 +107,6 @@ public:
   /// index value.
   unsigned getRegForGEPIndex(const Value *V);
 
-  /// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.
-  /// Emit code to ensure constants are copied into registers when needed.
-  /// Remember the virtual registers that need to be added to the Machine PHI
-  /// nodes as input.  We cannot just directly add them, because expansion
-  /// might result in multiple MBB's for one BB.  As such, the start of the
-  /// BB might correspond to a different MBB than the end.
-  bool HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
-
   virtual ~FastISel();
 
 protected:
@@ -311,6 +303,14 @@ private:
   bool SelectBitCast(const User *I);
   
   bool SelectCast(const User *I, unsigned Opcode);
+
+  /// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.
+  /// Emit code to ensure constants are copied into registers when needed.
+  /// Remember the virtual registers that need to be added to the Machine PHI
+  /// nodes as input.  We cannot just directly add them, because expansion
+  /// might result in multiple MBB's for one BB.  As such, the start of the
+  /// BB might correspond to a different MBB than the end.
+  bool HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
 };
 
 }

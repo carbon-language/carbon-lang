@@ -751,20 +751,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
-        // Just before the terminator instruction, insert instructions to
-        // feed PHI nodes in successor blocks.
-        if (isa<TerminatorInst>(BI))
-          if (!FastIS->HandlePHINodesInSuccessorBlocks(LLVMBB)) {
-            ++NumFastIselFailures;
-            if (EnableFastISelVerbose || EnableFastISelAbort) {
-              dbgs() << "FastISel miss: ";
-              BI->dump();
-            }
-            assert(!EnableFastISelAbort &&
-                   "FastISel didn't handle a PHI in a successor");
-            break;
-          }
-
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(BI))
           continue;

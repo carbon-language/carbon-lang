@@ -553,6 +553,12 @@ bool FastISel::SelectBitCast(const User *I) {
 
 bool
 FastISel::SelectInstruction(const Instruction *I) {
+  // Just before the terminator instruction, insert instructions to
+  // feed PHI nodes in successor blocks.
+  if (isa<TerminatorInst>(I))
+    if (!HandlePHINodesInSuccessorBlocks(I->getParent()))
+      return false;
+
   DL = I->getDebugLoc();
 
   // First, try doing target-independent selection.
