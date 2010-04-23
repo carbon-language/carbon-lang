@@ -182,3 +182,10 @@ struct B {
 };
 
 }
+
+namespace test1 {
+  struct A {
+    enum Kind { Foo } Kind;
+    A() : Kind(Foo) {}
+  };
+}

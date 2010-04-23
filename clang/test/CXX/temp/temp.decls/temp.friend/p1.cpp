@@ -155,7 +155,7 @@ namespace Dependent {
 }
 
 namespace test7 {
-  template <class T> class A { // expected-note {{previous definition is here}}
+  template <class T> class A { // expected-note {{declared here}}
     friend class B;
     int x; // expected-note {{declared private here}}
   };
@@ -174,7 +174,7 @@ namespace test7 {
 
   // This shouldn't crash.
   template <class T> class D {
-    friend class A; // expected-error {{redefinition of 'A' as different kind of symbol}}
+    friend class A; // expected-error {{elaborated type refers to a template}}
   };
   template class D<int>;
 }

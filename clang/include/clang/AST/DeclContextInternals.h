@@ -230,7 +230,7 @@ public:
     // Tag declarations always go at the end of the list so that an
     // iterator which points at the first tag will start a span of
     // decls that only contains tags.
-    if (D->getIdentifierNamespace() == Decl::IDNS_Tag)
+    if (D->hasTagIdentifierNamespace())
       Vec.push_back(reinterpret_cast<uintptr_t>(D));
 
     // Resolved using declarations go at the front of the list so that
@@ -251,7 +251,7 @@ public:
     // tag declarations.  But we can be clever about tag declarations
     // because there can only ever be one in a scope.
     } else if (reinterpret_cast<NamedDecl *>(Vec.back())
-                 ->getIdentifierNamespace() == Decl::IDNS_Tag) {
+                 ->hasTagIdentifierNamespace()) {
       uintptr_t TagD = Vec.back();
       Vec.back() = reinterpret_cast<uintptr_t>(D);
       Vec.push_back(TagD);

@@ -1583,6 +1583,11 @@ def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
 def err_redefinition_different_typedef : Error<
   "typedef redefinition with different types (%0 vs %1)">;
+def err_tag_reference_non_tag : Error<
+  "elaborated type refers to %select{a non-tag type|a typedef|a template}0">;
+def err_tag_reference_conflict : Error<
+  "implicit declaration introduced by elaborated type conflicts with "
+  "%select{a declaration|a typedef|a template}0 of the same name">;
 def err_tag_definition_of_typedef : Error<
   "definition of type %0 conflicts with typedef of the same name">;
 def err_conflicting_types : Error<"conflicting types for %0">;
