@@ -1170,10 +1170,10 @@ bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
       return false;
     }
     
-    if (Lex.getKind() == lltok::kw_align) {
-      if (ParseOptionalAlignment(Alignment)) return true;
-    } else
-      return true;
+    if (Lex.getKind() != lltok::kw_align)
+      return Error(Lex.getLoc(), "expected metadata or 'align'");
+    
+    if (ParseOptionalAlignment(Alignment)) return true;
   }
 
   return false;
