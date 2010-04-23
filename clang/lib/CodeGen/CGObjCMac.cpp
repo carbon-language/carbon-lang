@@ -5656,14 +5656,9 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
     if (CatchBody) {
       llvm::BasicBlock *MatchEnd = CGF.createBasicBlock("match.end");
-      llvm::BasicBlock *MatchHandler = CGF.createBasicBlock("match.handler");
 
       // Cleanups must call objc_end_catch.
-      //
-      // FIXME: It seems incorrect for objc_begin_catch to be inside this
-      // context, but this matches gcc.
       CGF.PushCleanupBlock(MatchEnd);
-      CGF.setInvokeDest(MatchHandler);
 
       llvm::Value *ExcObject =
         CGF.Builder.CreateCall(ObjCTypes.getObjCBeginCatchFn(), Exc);
@@ -5680,25 +5675,37 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         CGF.Builder.CreateStore(ExcObject, CGF.GetAddrOfLocalVar(CatchParam));
       }
 
+      // Exceptions inside the catch block must be rethrown. We set a special
+      // purpose invoke destination for this which just collects the thrown
+      // exception and overwrites the object in RethrowPtr, branches through the
+      // match.end to make sure we call objc_end_catch, before branching to the
+      // rethrow handler.
+      llvm::BasicBlock *MatchHandler = CGF.createBasicBlock("match.handler");
+      CGF.setInvokeDest(MatchHandler);
       CGF.ObjCEHValueStack.push_back(ExcObject);
       CGF.EmitStmt(CatchBody);
       CGF.ObjCEHValueStack.pop_back();
+      CGF.setInvokeDest(0);
 
       CGF.EmitBranchThroughCleanup(FinallyEnd);
 
-      CGF.EmitBlock(MatchHandler);
-
-      llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
-      // We are required to emit this call to satisfy LLVM, even
-      // though we don't use the result.
-      llvm::SmallVector<llvm::Value*, 8> Args;
-      Args.push_back(Exc);
-      Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            0));
-      CGF.Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
-      CGF.Builder.CreateStore(Exc, RethrowPtr);
-      CGF.EmitBranchThroughCleanup(FinallyRethrow);
+      // Don't emit the extra match handler if there we no unprotected calls in
+      // the catch block.
+      if (MatchHandler->use_empty()) {
+        delete MatchHandler;
+      } else {
+        CGF.EmitBlock(MatchHandler);
+        llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+        // We are required to emit this call to satisfy LLVM, even
+        // though we don't use the result.
+        CGF.Builder.CreateCall3(llvm_eh_selector,
+                                Exc, ObjCTypes.getEHPersonalityPtr(),
+                                llvm::ConstantInt::get(
+                                  llvm::Type::getInt32Ty(VMContext), 0),
+                               "unused_eh_selector");
+        CGF.Builder.CreateStore(Exc, RethrowPtr);
+        CGF.EmitBranchThroughCleanup(FinallyRethrow);
+      }
 
       CodeGenFunction::CleanupBlockInfo Info = CGF.PopCleanupBlock();
 
@@ -5710,8 +5717,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         CGF.createBasicBlock("match.end.handler");
       llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
       CGF.Builder.CreateInvoke(ObjCTypes.getObjCEndCatchFn(),
-                               Cont, MatchEndHandler,
-                               Args.begin(), Args.begin());
+                               Cont, MatchEndHandler);
 
       CGF.EmitBlock(Cont);
       if (Info.SwitchBlock)
@@ -5720,15 +5726,14 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         CGF.EmitBlock(Info.EndBlock);
 
       CGF.EmitBlock(MatchEndHandler);
-      Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+      llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
       // We are required to emit this call to satisfy LLVM, even
       // though we don't use the result.
-      Args.clear();
-      Args.push_back(Exc);
-      Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            0));
-      CGF.Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
+      CGF.Builder.CreateCall3(llvm_eh_selector,
+                              Exc, ObjCTypes.getEHPersonalityPtr(),
+                              llvm::ConstantInt::get(
+                                llvm::Type::getInt32Ty(VMContext), 0),
+                              "unused_eh_selector");
       CGF.Builder.CreateStore(Exc, RethrowPtr);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
 
