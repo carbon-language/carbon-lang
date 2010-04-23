@@ -655,25 +655,26 @@ static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
   }
 
   unsigned Opc = Op.getOpcode();
-  if (Opc == ISD::AssertSext)
+  switch (Opc) {
+  default: break;
+  case ISD::AssertSext:
     return DAG.getNode(ISD::AssertSext, dl, PVT,
                        SExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
                        Op.getOperand(1));
-  else if (Opc == ISD::AssertZext)
+  case ISD::AssertZext:
     return DAG.getNode(ISD::AssertZext, dl, PVT,
                        ZExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
                        Op.getOperand(1));
-
-  unsigned ExtOpc = ISD::ANY_EXTEND;
-  if (Opc == ISD::Constant)
-    // Zero extend things like i1, sign extend everything else.  It shouldn't
-    // matter in theory which one we pick, but this tends to give better code?
-    // See DAGTypeLegalizer::PromoteIntRes_Constant.
-    ExtOpc =
+  case ISD::Constant: {
+    unsigned ExtOpc =
       Op.getValueType().isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-  if (!TLI.isOperationLegal(ExtOpc, PVT))
+    return DAG.getNode(ExtOpc, dl, PVT, Op);
+  }    
+  }
+
+  if (!TLI.isOperationLegal(ISD::ANY_EXTEND, PVT))
     return SDValue();
-  return DAG.getNode(ExtOpc, dl, PVT, Op);
+  return DAG.getNode(ISD::ANY_EXTEND, dl, PVT, Op);
 }
 
 static SDValue SExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
