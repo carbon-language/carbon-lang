@@ -1,6 +1,6 @@
 ; RUN: opt < %s -prune-eh -inline -print-callgraph \
 ; RUN:   -disable-output |& \
-; RUN:     grep {Calls.*ce3806g__fxio__put__put_int64__4.1339} | count 2
+; RUN:     grep {calls.*ce3806g__fxio__put__put_int64__4.1339} | count 2
 	%struct.FRAME.ce3806g = type { %struct.string___XUB, %struct.string___XUB, %struct.string___XUB, %struct.string___XUB }
 	%struct.FRAME.ce3806g__fxio__put__4 = type { i32, i32, i32, %struct.system__file_control_block__pstring*, i32, i32, i8 }
 	%struct.RETURN = type { i8, i32 }

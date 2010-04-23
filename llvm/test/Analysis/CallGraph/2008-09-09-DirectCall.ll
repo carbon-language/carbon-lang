@@ -1,5 +1,5 @@
 ; RUN: opt < %s -print-callgraph -disable-output |& \
-; RUN:   grep {Calls function 'callee'} | count 2
+; RUN:   grep {calls function 'callee'} | count 2
 
 define internal void @callee(...) {
 entry:
