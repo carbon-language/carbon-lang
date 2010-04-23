@@ -767,7 +767,11 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
   if (Dependent->isIdentifier())
     mangleSourceName(Dependent->getIdentifier());
   else {
-    // FIXME: We can't possibly know the arity for mangling operators!
+    // FIXME: We can't possibly know the arity of the operator here!
+    Diagnostic &Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+                                 "cannot mangle dependent operator name");
+    Diags.Report(FullSourceLoc(), DiagID);
   }
 }
 
