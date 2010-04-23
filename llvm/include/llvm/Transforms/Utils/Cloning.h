@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 
@@ -178,7 +179,7 @@ public:
   /// DevirtualizedCalls - InlineFunction fills this in with callsites that were
   /// inlined from the callee that went from being indirect calls to direct
   /// calls due to inlining.  This is only filled in if CG is non-null.
-  SmallVector<Instruction*, 2> DevirtualizedCalls;
+  SmallVector<WeakVH, 2> DevirtualizedCalls;
   
   void reset() {
     StaticAllocas.clear();

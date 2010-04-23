@@ -392,8 +392,10 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         // onto our worklist to process.  They are useful inline candidates.
 #if 0
         for (unsigned i = 0, e = InlineInfo.DevirtualizedCalls.size();
-             i != e; ++i)
-          CallSites.push_back(CallSite(InlineInfo.DevirtualizedCalls[i]));
+             i != e; ++i) {
+          Value *Ptr = InlineInfo.DevirtualizedCalls[i];
+          CallSites.push_back(CallSite(Ptr));
+        }
 #endif
         
         // Update the cached cost info with the inlined call.
