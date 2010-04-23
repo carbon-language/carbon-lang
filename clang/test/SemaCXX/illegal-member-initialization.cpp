@@ -17,7 +17,7 @@ struct X {
    int &value; // expected-note{{declared at}}
    const int cvalue; // expected-note{{declared at}}
    B& b; // expected-note{{declared at}}
-   const B cb; // expected-note{{declared here}}
+   const B cb; // expected-note{{declared at}}
 };
 
 

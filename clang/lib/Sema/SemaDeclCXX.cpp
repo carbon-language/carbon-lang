@@ -1432,8 +1432,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
 }
 
 static bool
-BuildImplicitBaseInitializer(Sema &SemaRef, 
-                             const CXXConstructorDecl *Constructor,
+BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                              CXXBaseSpecifier *BaseSpec,
                              bool IsInheritedVirtualBase,
                              CXXBaseOrMemberInitializer *&CXXBaseInit) {
@@ -1465,6 +1464,60 @@ BuildImplicitBaseInitializer(Sema &SemaRef,
   return false;
 }
 
+static bool
+BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
+                               FieldDecl *Field,
+                               CXXBaseOrMemberInitializer *&CXXMemberInit) {
+  QualType FieldBaseElementType = 
+    SemaRef.Context.getBaseElementType(Field->getType());
+  
+  if (FieldBaseElementType->isReferenceType()) {
+    SemaRef.Diag(Constructor->getLocation(), 
+                 diag::err_uninitialized_member_in_ctor)
+      << (int)Constructor->isImplicit() 
+      << SemaRef.Context.getTagDeclType(Constructor->getParent())
+      << 0 << Field->getDeclName();
+    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
+    return true;
+  }
+
+  if (FieldBaseElementType.isConstQualified()) {
+    SemaRef.Diag(Constructor->getLocation(), 
+                 diag::err_uninitialized_member_in_ctor)
+      << (int)Constructor->isImplicit() 
+      << SemaRef.Context.getTagDeclType(Constructor->getParent())
+      << 1 << Field->getDeclName();
+    SemaRef.Diag(Field->getLocation(), diag::note_declared_at);
+    return true;
+  }
+
+  if (FieldBaseElementType->isRecordType()) {
+    InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
+    InitializationKind InitKind
+      = InitializationKind::CreateDefault(Constructor->getLocation());
+    
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
+    Sema::OwningExprResult MemberInit = 
+      InitSeq.Perform(SemaRef, InitEntity, InitKind, 
+                      Sema::MultiExprArg(SemaRef, 0, 0));
+    MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(MemberInit));
+    if (MemberInit.isInvalid())
+      return true;
+    
+    CXXMemberInit =
+      new (SemaRef.Context) CXXBaseOrMemberInitializer(SemaRef.Context,
+                                                       Field, SourceLocation(),
+                                                       SourceLocation(),
+                                                      MemberInit.takeAs<Expr>(),
+                                                       SourceLocation());
+    return false;
+  }
+  
+  // Nothing to initialize.
+  CXXMemberInit = 0;
+  return false;
+}
+                               
 bool
 Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   CXXBaseOrMemberInitializer **Initializers,
@@ -1585,45 +1638,15 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     if (AnyErrors)
       continue;
     
-    QualType FT = Context.getBaseElementType((*Field)->getType());
-    if (FT->getAs<RecordType>()) {
-      InitializedEntity InitEntity
-        = InitializedEntity::InitializeMember(*Field);
-      InitializationKind InitKind
-        = InitializationKind::CreateDefault(Constructor->getLocation());
-
-      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
-      OwningExprResult MemberInit = InitSeq.Perform(*this, InitEntity, InitKind,
-                                                    MultiExprArg(*this, 0, 0));
-      MemberInit = MaybeCreateCXXExprWithTemporaries(move(MemberInit));
-      if (MemberInit.isInvalid()) {
-        HadError = true;
-        continue;
-      }
-
-      CXXBaseOrMemberInitializer *Member =
-        new (Context) CXXBaseOrMemberInitializer(Context,
-                                                 *Field, SourceLocation(),
-                                                 SourceLocation(),
-                                                 MemberInit.takeAs<Expr>(),
-                                                 SourceLocation());
-
+    CXXBaseOrMemberInitializer *Member;
+    if (BuildImplicitMemberInitializer(*this, Constructor, *Field, Member)) {
+      HadError = true;
+      continue;
+    }
+    
+    // If the member doesn't need to be initialized, it will be null.
+    if (Member)
       AllToInit.push_back(Member);
-    }
-    else if (FT->isReferenceType()) {
-      Diag(Constructor->getLocation(), diag::err_uninitialized_member_in_ctor)
-        << (int)Constructor->isImplicit() << Context.getTagDeclType(ClassDecl)
-        << 0 << (*Field)->getDeclName();
-      Diag((*Field)->getLocation(), diag::note_declared_at);
-      HadError = true;
-    }
-    else if (FT.isConstQualified()) {
-      Diag(Constructor->getLocation(), diag::err_uninitialized_member_in_ctor)
-        << (int)Constructor->isImplicit() << Context.getTagDeclType(ClassDecl)
-        << 1 << (*Field)->getDeclName();
-      Diag((*Field)->getLocation(), diag::note_declared_at);
-      HadError = true;
-    }
   }
 
   NumInitializers = AllToInit.size();
