@@ -31,11 +31,44 @@ using namespace CodeGen;
 
 void CodeGenFunction::EmitDecl(const Decl &D) {
   switch (D.getKind()) {
-  default:
-    CGM.ErrorUnsupported(&D, "decl");
-    return;
+  case Decl::TranslationUnit:
+  case Decl::Namespace:
+  case Decl::UnresolvedUsingTypename:
+  case Decl::ClassTemplateSpecialization:
+  case Decl::ClassTemplatePartialSpecialization:
+  case Decl::TemplateTypeParm:
+  case Decl::UnresolvedUsingValue:
+    case Decl::NonTypeTemplateParm:
+  case Decl::CXXMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion:
+  case Decl::Field:
+  case Decl::ObjCIvar:
+  case Decl::ObjCAtDefsField:      
   case Decl::ParmVar:
-    assert(0 && "Parmdecls should not be in declstmts!");
+  case Decl::ImplicitParam:
+  case Decl::ClassTemplate:
+  case Decl::FunctionTemplate:
+  case Decl::TemplateTemplateParm:
+  case Decl::ObjCMethod:
+  case Decl::ObjCCategory:
+  case Decl::ObjCProtocol:
+  case Decl::ObjCInterface:
+  case Decl::ObjCCategoryImpl:
+  case Decl::ObjCImplementation:
+  case Decl::ObjCProperty:
+  case Decl::ObjCCompatibleAlias:
+  case Decl::LinkageSpec:
+  case Decl::ObjCPropertyImpl:
+  case Decl::ObjCClass:
+  case Decl::ObjCForwardProtocol:
+  case Decl::FileScopeAsm:
+  case Decl::Friend:
+  case Decl::FriendTemplate:
+  case Decl::Block:
+    
+    assert(0 && "Declaration not should not be in declstmts!");
   case Decl::Function:  // void X();
   case Decl::Record:    // struct/union/class X;
   case Decl::Enum:      // enum X;
@@ -44,6 +77,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Using:          // using X; [C++]
   case Decl::UsingShadow:
   case Decl::UsingDirective: // using namespace X; [C++]
+  case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
     // None of these decls require codegen support.
     return;
