@@ -76,24 +76,63 @@ public:
 #include "clang/AST/DeclNodes.def"
   };
 
-  /// IdentifierNamespace - According to C99 6.2.3, there are four
-  /// namespaces, labels, tags, members and ordinary
-  /// identifiers. These are meant as bitmasks, so that searches in
-  /// C++ can look into the "tag" namespace during ordinary lookup. We
-  /// use additional namespaces for Objective-C entities.  We also put
-  /// C++ friend declarations (of previously-undeclared entities) in
-  /// shadow namespaces, and 'using' declarations (as opposed to their
-  /// implicit shadow declarations) can be found in their own
-  /// namespace.
+  /// IdentifierNamespace - The different namespaces in which
+  /// declarations may appear.  According to C99 6.2.3, there are
+  /// four namespaces, labels, tags, members and ordinary
+  /// identifiers.  C++ describes lookup completely differently:
+  /// certain lookups merely "ignore" certain kinds of declarations,
+  /// usually based on whether the declaration is of a type, etc.
+  /// 
+  /// These are meant as bitmasks, so that searches in
+  /// C++ can look into the "tag" namespace during ordinary lookup.
+  ///
+  /// Decl currently provides 16 bits of IDNS bits.
   enum IdentifierNamespace {
-    IDNS_Label = 0x1,
-    IDNS_Tag = 0x2,
-    IDNS_Member = 0x4,
-    IDNS_Ordinary = 0x8,
-    IDNS_ObjCProtocol = 0x10,
-    IDNS_OrdinaryFriend = 0x80,
-    IDNS_TagFriend = 0x100,
-    IDNS_Using = 0x200
+    /// Labels, declared with 'x:' and referenced with 'goto x'.
+    IDNS_Label               = 0x0001,
+
+    /// Tags, declared with 'struct foo;' and referenced with
+    /// 'struct foo'.  All tags are also types.  This is what
+    /// elaborated-type-specifiers look for in C.
+    IDNS_Tag                 = 0x0002,
+
+    /// Types, declared with 'struct foo', typedefs, etc.
+    /// This is what elaborated-type-specifiers look for in C++,
+    /// but note that it's ill-formed to find a non-tag.
+    IDNS_Type                = 0x0004,
+
+    /// Members, declared with object declarations within tag
+    /// definitions.  In C, these can only be found by "qualified"
+    /// lookup in member expressions.  In C++, they're found by
+    /// normal lookup.
+    IDNS_Member              = 0x0008,
+
+    /// Namespaces, declared with 'namespace foo {}'.
+    /// Lookup for nested-name-specifiers find these.
+    IDNS_Namespace           = 0x0010,
+
+    /// Ordinary names.  In C, everything that's not a label, tag,
+    /// or member ends up here.
+    IDNS_Ordinary            = 0x0020,
+
+    /// Objective C @protocol.
+    IDNS_ObjCProtocol        = 0x0040,
+
+    /// This declaration is a friend function.  A friend function
+    /// declaration is always in this namespace but may also be in
+    /// IDNS_Ordinary if it was previously declared.
+    IDNS_OrdinaryFriend      = 0x0080,
+
+    /// This declaration is a friend class.  A friend class
+    /// declaration is always in this namespace but may also be in
+    /// IDNS_Tag|IDNS_Type if it was previously declared.
+    IDNS_TagFriend           = 0x0100,
+
+    /// This declaration is a using declaration.  A using declaration
+    /// *introduces* a number of other declarations into the current
+    /// scope, and those declarations use the IDNS of their targets,
+    /// but the actual using declarations go in this namespace.
+    IDNS_Using               = 0x0200
   };
 
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
@@ -453,14 +492,14 @@ public:
     assert((OldNS & (IDNS_Tag | IDNS_Ordinary |
                      IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
            "namespace includes neither ordinary nor tag");
-    assert(!(OldNS & ~(IDNS_Tag | IDNS_Ordinary |
+    assert(!(OldNS & ~(IDNS_Tag | IDNS_Ordinary | IDNS_Type |
                        IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
            "namespace includes other than ordinary or tag");
 
     IdentifierNamespace = 0;
     if (OldNS & (IDNS_Tag | IDNS_TagFriend)) {
       IdentifierNamespace |= IDNS_TagFriend;
-      if (PreviouslyDeclared) IdentifierNamespace |= IDNS_Tag;
+      if (PreviouslyDeclared) IdentifierNamespace |= IDNS_Tag | IDNS_Type;
     }
 
     if (OldNS & (IDNS_Ordinary | IDNS_OrdinaryFriend)) {

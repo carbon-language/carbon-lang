@@ -415,6 +415,9 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
 
     return false;
   }
+
+  if (Filter == &ResultBuilder::IsNestedNameSpecifier)
+    AsNestedNameSpecifier = true;
   
   // ... then it must be interesting!
   return true;
@@ -504,7 +507,8 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     }
     for (; I != IEnd; ++I) {
       // A tag declaration does not hide a non-tag declaration.
-      if (I->first->getIdentifierNamespace() == Decl::IDNS_Tag &&
+      if (I->first->getIdentifierNamespace()
+            == (Decl::IDNS_Tag | Decl::IDNS_Type) &&
           (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary | 
                    Decl::IDNS_ObjCProtocol)))
         continue;
@@ -629,7 +633,7 @@ void ResultBuilder::ExitScope() {
 bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
-    IDNS |= Decl::IDNS_Tag;
+    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
   else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
     return true;
 
@@ -641,7 +645,7 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
 bool ResultBuilder::IsOrdinaryNonValueName(NamedDecl *ND) const {
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
-    IDNS |= Decl::IDNS_Tag;
+    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
   
   return (ND->getIdentifierNamespace() & IDNS) && 
     !isa<ValueDecl>(ND) && !isa<FunctionTemplateDecl>(ND);
@@ -2094,10 +2098,16 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
     return;
   }
   
-  ResultBuilder Results(*this, Filter);
-  Results.allowNestedNameSpecifiers();
+  ResultBuilder Results(*this);
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
+
+  // First pass: look for tags.
+  Results.setFilter(Filter);
   LookupVisibleDecls(S, LookupTagName, Consumer);
+
+  // Second pass: look for nested name specifiers.
+  Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
+  LookupVisibleDecls(S, LookupNestedNameSpecifierName, Consumer);
   
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

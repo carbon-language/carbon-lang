@@ -202,26 +202,6 @@ static bool IsAcceptableOperatorName(NamedDecl *D, unsigned IDNS) {
     !D->getDeclContext()->isRecord();
 }
 
-static bool IsAcceptableNestedNameSpecifierName(NamedDecl *D, unsigned IDNS) {
-  // This lookup ignores everything that isn't a type.
-
-  // This is a fast check for the far most common case.
-  if (D->isInIdentifierNamespace(Decl::IDNS_Tag))
-    return true;
-
-  if (isa<UsingShadowDecl>(D))
-    D = cast<UsingShadowDecl>(D)->getTargetDecl();
-
-  return isa<TypeDecl>(D);
-}
-
-static bool IsAcceptableNamespaceName(NamedDecl *D, unsigned IDNS) {
-  // We don't need to look through using decls here because
-  // using decls aren't allowed to name namespaces.
-
-  return isa<NamespaceDecl>(D) || isa<NamespaceAliasDecl>(D);
-}
-
 /// Gets the default result filter for the given lookup.
 static inline
 LookupResult::ResultFilter getResultFilter(Sema::LookupNameKind NameKind) {
@@ -232,16 +212,12 @@ LookupResult::ResultFilter getResultFilter(Sema::LookupNameKind NameKind) {
   case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
   case Sema::LookupUsingDeclName:
   case Sema::LookupObjCProtocolName:
+  case Sema::LookupNestedNameSpecifierName:
+  case Sema::LookupNamespaceName:
     return &IsAcceptableIDNS;
 
   case Sema::LookupOperatorName:
     return &IsAcceptableOperatorName;
-
-  case Sema::LookupNestedNameSpecifierName:
-    return &IsAcceptableNestedNameSpecifierName;
-
-  case Sema::LookupNamespaceName:
-    return &IsAcceptableNamespaceName;
   }
 
   llvm_unreachable("unkknown lookup kind");
@@ -260,15 +236,25 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
   case Sema::LookupRedeclarationWithLinkage:
     IDNS = Decl::IDNS_Ordinary;
     if (CPlusPlus) {
-      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
+      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member | Decl::IDNS_Namespace;
       if (Redeclaration) IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
     }
     break;
 
   case Sema::LookupTagName:
-    IDNS = Decl::IDNS_Tag;
-    if (CPlusPlus && Redeclaration)
-      IDNS |= Decl::IDNS_TagFriend;
+    if (CPlusPlus) {
+      IDNS = Decl::IDNS_Type;
+
+      // When looking for a redeclaration of a tag name, we add:
+      // 1) TagFriend to find undeclared friend decls
+      // 2) Namespace because they can't "overload" with tag decls.
+      // 3) Tag because it includes class templates, which can't
+      //    "overload" with tag decls.
+      if (Redeclaration)
+        IDNS |= Decl::IDNS_Tag | Decl::IDNS_TagFriend | Decl::IDNS_Namespace;
+    } else {
+      IDNS = Decl::IDNS_Tag;
+    }
     break;
 
   case Sema::LookupMemberName:
@@ -278,8 +264,11 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
     break;
 
   case Sema::LookupNestedNameSpecifierName:
+    IDNS = Decl::IDNS_Type | Decl::IDNS_Namespace;
+    break;
+
   case Sema::LookupNamespaceName:
-    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
+    IDNS = Decl::IDNS_Namespace;
     break;
 
   case Sema::LookupUsingDeclName:
@@ -2134,7 +2123,8 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
                                IEnd = Pos->second.end();
          I != IEnd; ++I) {
       // A tag declaration does not hide a non-tag declaration.
-      if ((*I)->getIdentifierNamespace() == Decl::IDNS_Tag &&
+      if ((*I)->getIdentifierNamespace()
+            == (Decl::IDNS_Tag|Decl::IDNS_Type) &&
           (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary | 
                    Decl::IDNS_ObjCProtocol)))
         continue;

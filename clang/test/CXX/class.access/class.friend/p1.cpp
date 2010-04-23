@@ -280,3 +280,10 @@ namespace test8 {
   }
   template A::I g2<A::I>(A::I i);
 }
+
+// PR6885
+namespace test9 {
+  class B {
+    friend class test9;
+  };
+}
