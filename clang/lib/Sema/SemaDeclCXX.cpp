@@ -1431,8 +1431,17 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                   RParenLoc);
 }
 
+/// ImplicitInitializerKind - How an implicit base or member initializer should
+/// initialize its base or member.
+enum ImplicitInitializerKind {
+  IIK_Default,
+  IIK_Copy,
+  IIK_Move
+};
+
 static bool
 BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
+                             ImplicitInitializerKind ImplicitInitKind,
                              CXXBaseSpecifier *BaseSpec,
                              bool IsInheritedVirtualBase,
                              CXXBaseOrMemberInitializer *&CXXBaseInit) {
@@ -1440,14 +1449,41 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec,
                                         IsInheritedVirtualBase);
 
-  InitializationKind InitKind
-    = InitializationKind::CreateDefault(Constructor->getLocation());
+  Sema::OwningExprResult BaseInit(SemaRef);
+  
+  switch (ImplicitInitKind) {
+  case IIK_Default: {
+    InitializationKind InitKind
+      = InitializationKind::CreateDefault(Constructor->getLocation());
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
+    BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind,
+                               Sema::MultiExprArg(SemaRef, 0, 0));
+    break;
+  }
 
-  InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);        
-  Sema::OwningExprResult BaseInit = 
-    InitSeq.Perform(SemaRef, InitEntity, InitKind,
-                    Sema::MultiExprArg(SemaRef, 0, 0));
+  case IIK_Copy: {
+    ParmVarDecl *Param = Constructor->getParamDecl(0);
+    QualType ParamType = Param->getType().getNonReferenceType();
+    
+    Expr *CopyCtorArg = 
+      DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
+                          SourceLocation(), ParamType, 0);
+    
+    InitializationKind InitKind
+      = InitializationKind::CreateDirect(Constructor->getLocation(),
+                                         SourceLocation(), SourceLocation());
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 
+                                   &CopyCtorArg, 1);
+    BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind,
+                               Sema::MultiExprArg(SemaRef, 
+                                                  (void**)&CopyCtorArg, 1));
+    break;
+  }
 
+  case IIK_Move:
+    assert(false && "Unhandled initializer kind!");
+  }
+      
   BaseInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(BaseInit));
   if (BaseInit.isInvalid())
     return true;
@@ -1466,8 +1502,15 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
 static bool
 BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
+                               ImplicitInitializerKind ImplicitInitKind,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
+  // FIXME: Handle copy initialization.
+  if (ImplicitInitKind != IIK_Default) {
+    CXXMemberInit = 0;
+    return false;
+  }
+
   QualType FieldBaseElementType = 
     SemaRef.Context.getBaseElementType(Field->getType());
   
@@ -1538,6 +1581,12 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     return false;
   }
 
+  ImplicitInitializerKind ImplicitInitKind = IIK_Default;
+  
+  // FIXME: Handle implicit move constructors.
+  if (Constructor->isImplicit() && Constructor->isCopyConstructor())
+    ImplicitInitKind = IIK_Copy;
+
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
   CXXRecordDecl *ClassDecl = Constructor->getParent()->getDefinition();
@@ -1575,8 +1624,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     } else if (!AnyErrors) {
       bool IsInheritedVirtualBase = !DirectVBases.count(VBase);
       CXXBaseOrMemberInitializer *CXXBaseInit;
-      if (BuildImplicitBaseInitializer(*this, Constructor, VBase,
-                                       IsInheritedVirtualBase, CXXBaseInit)) {
+      if (BuildImplicitBaseInitializer(*this, Constructor, ImplicitInitKind,
+                                       VBase, IsInheritedVirtualBase, 
+                                       CXXBaseInit)) {
         HadError = true;
         continue;
       }
@@ -1596,8 +1646,8 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       AllToInit.push_back(Value);
     } else if (!AnyErrors) {
       CXXBaseOrMemberInitializer *CXXBaseInit;
-      if (BuildImplicitBaseInitializer(*this, Constructor, Base,
-                                       /*IsInheritedVirtualBase=*/false,
+      if (BuildImplicitBaseInitializer(*this, Constructor, ImplicitInitKind,
+                                       Base, /*IsInheritedVirtualBase=*/false,
                                        CXXBaseInit)) {
         HadError = true;
         continue;
@@ -1639,7 +1689,8 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       continue;
     
     CXXBaseOrMemberInitializer *Member;
-    if (BuildImplicitMemberInitializer(*this, Constructor, *Field, Member)) {
+    if (BuildImplicitMemberInitializer(*this, Constructor, ImplicitInitKind,
+                                       *Field, Member)) {
       HadError = true;
       continue;
     }
