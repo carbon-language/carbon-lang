@@ -238,6 +238,8 @@ def err_duplicate_class_def : Error<
   "duplicate interface definition for class %0">;
 def err_undef_superclass : Error<
   "cannot find interface declaration for %0, superclass of %1">;
+def err_no_nsconstant_string_class : Error<
+  "cannot find interface declaration for %0">;
 def err_recursive_superclass : Error<
   "trying to recursively use %0 as superclass of %1">;
 def warn_previous_alias_decl : Warning<"previously declared alias is ignored">;

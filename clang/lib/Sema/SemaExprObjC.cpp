@@ -78,6 +78,21 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   QualType Ty = Context.getObjCConstantStringInterface();
   if (!Ty.isNull()) {
     Ty = Context.getObjCObjectPointerType(Ty);
+  } else if (getLangOptions().NoConstantCFStrings) {
+    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
+    NamedDecl *IF = LookupSingleName(TUScope, NSIdent, AtLocs[0],
+                                     LookupOrdinaryName);
+    if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
+      Context.setObjCConstantStringInterface(StrIF);
+      Ty = Context.getObjCConstantStringInterface();
+      Ty = Context.getObjCObjectPointerType(Ty);
+    } else {
+      // If there is no NSConstantString interface defined then treat this
+      // as error and recover from it.
+      Diag(S->getLocStart(), diag::err_no_nsconstant_string_class) << NSIdent
+        << S->getSourceRange();
+      Ty = Context.getObjCIdType();
+    }
   } else {
     IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
     NamedDecl *IF = LookupSingleName(TUScope, NSIdent, AtLocs[0],
