@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include <cstdio>
 using namespace clang;
 
@@ -240,6 +241,8 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
   // asm string.
   std::string CurStringPiece;
 
+  bool HasVariants = !C.Target.hasNoAsmVariants();
+  
   while (1) {
     // Done with the string?
     if (CurPtr == StrEnd) {
@@ -251,9 +254,9 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     char CurChar = *CurPtr++;
     switch (CurChar) {
     case '$': CurStringPiece += "$$"; continue;
-    case '{': CurStringPiece += "$("; continue;
-    case '|': CurStringPiece += "$|"; continue;
-    case '}': CurStringPiece += "$)"; continue;
+    case '{': CurStringPiece += (HasVariants ? "$(" : "{"); continue;
+    case '|': CurStringPiece += (HasVariants ? "$|" : "|"); continue;
+    case '}': CurStringPiece += (HasVariants ? "$)" : "}"); continue;
     case '%':
       break;
     default:

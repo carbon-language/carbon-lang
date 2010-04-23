@@ -45,6 +45,7 @@ protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
   bool TLSSupported;
+  bool NoAsmVariants;  // True if {|} are normal characters.
   unsigned char PointerWidth, PointerAlign;
   unsigned char IntWidth, IntAlign;
   unsigned char FloatWidth, FloatAlign;
@@ -412,6 +413,15 @@ public:
   /// isTLSSupported - Whether the target supports thread-local storage.
   bool isTLSSupported() const {
     return TLSSupported;
+  }
+  
+  /// hasNoAsmVariants - Return true if {|} are normal characters in the
+  /// asm string.  If this returns false (the default), then {abc|xyz} is syntax
+  /// that says that when compmiling for asm variant #0, "abc" should be
+  /// generated, but when compiling for asm variant #1, "xyz" should be
+  /// generated.
+  bool hasNoAsmVariants() const {
+    return NoAsmVariants;
   }
   
   /// getEHDataRegisterNumber - Return the register number that

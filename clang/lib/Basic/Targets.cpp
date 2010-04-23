@@ -1396,6 +1396,10 @@ public:
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
 
+    // {} in inline assembly are neon specifiers, not assembly variant
+    // specifiers.
+    NoAsmVariants = true;
+    
     // FIXME: Should we just treat this as a feature?
     IsThumb = getTriple().getArchName().startswith("thumb");
     if (IsThumb) {
