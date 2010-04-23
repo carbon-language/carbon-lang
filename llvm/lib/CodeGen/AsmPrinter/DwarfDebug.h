@@ -188,21 +188,15 @@ class DwarfDebug {
   DenseMap<MDNode*, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
 
-  /// LabelsBeforeInsn - Maps instruction with label emitted before 
+  /// InsnBeforeLabelMap - Maps instruction with label emitted before 
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> LabelsBeforeInsn;
+  DenseMap<const MachineInstr *, MCSymbol *> InsnBeforeLabelMap;
 
-  /// LabelsAfterInsn - Maps instruction with label emitted after
+  /// InsnAfterLabelMap - Maps instruction with label emitted after
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
+  DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
-
-  /// weakDebugRangeSymbols - In cases where function bodies is not emitted
-  /// into .text section, use function begin marker as anchor for debug range
-  /// offsets. This map keeps track of such symbols and corresponding
-  /// function begin marker symbols.
-  DenseMap<const MCSymbol *, const MCSymbol *> WeakDebugRangeSymbols;
 
   /// Previous instruction's location information. This is used to determine
   /// label location to indicate scope boundries in dwarf debug info.
@@ -224,8 +218,7 @@ class DwarfDebug {
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
-
-  MCSymbol *FunctionBeginSym;
+  
 private:
   
   /// getSourceDirectoryAndFileIds - Return the directory and file ids that
@@ -375,8 +368,13 @@ private:
   /// createSubprogramDIE - Create new DIE using SP.
   DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
 
-  /// getOrCreateDbgScope - Create DbgScope for the scope.
-  DbgScope *getOrCreateDbgScope(MDNode *Scope, MDNode *InlinedAt);
+  /// getUpdatedDbgScope - Find or create DbgScope assicated with 
+  /// the instruction. Initialize scope and update scope hierarchy.
+  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
+                               MDNode *InlinedAt);
+
+  /// createDbgScope - Create DbgScope for the scope.
+  void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
 
   DbgScope *getOrCreateAbstractScope(MDNode *N);
 
