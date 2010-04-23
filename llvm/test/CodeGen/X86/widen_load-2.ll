@@ -24,10 +24,10 @@ define void @add3i32_2(%i32vec3*  sret %ret, %i32vec3* %ap, %i32vec3* %bp)  {
 ; CHECK: paddd
 ; CHECK: pextrd
 ; CHECK: movq
-	%a = load %i32vec3* %ap
-	%b = load %i32vec3* %bp
+	%a = load %i32vec3* %ap, align 8
+	%b = load %i32vec3* %bp, align 8
 	%x = add %i32vec3 %a, %b
-	store %i32vec3 %x, %i32vec3* %ret
+	store %i32vec3 %x, %i32vec3* %ret, align 8
 	ret void
 }
 
