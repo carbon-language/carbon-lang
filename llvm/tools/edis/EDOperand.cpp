@@ -227,7 +227,9 @@ uint64_t EDOperand::immediateVal() {
 }
 
 int EDOperand::isMemory() {
-  switch (Inst.ThisInstInfo->operandFlags[OpIndex]) {
+  uint8_t operandType = Inst.ThisInstInfo->operandTypes[OpIndex];
+    
+  switch (operandType) {
   default:
     return 0;
   case kOperandTypeX86Memory:
