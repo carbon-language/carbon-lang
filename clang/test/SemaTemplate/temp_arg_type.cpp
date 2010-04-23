@@ -30,5 +30,13 @@ void f() {
 struct { int x; } Unnamed; // expected-note{{unnamed type used in template argument was declared here}}
 A<__typeof__(Unnamed)> *a9; // expected-error{{template argument uses unnamed type}}
 
+template<typename T, unsigned N>
+struct Array {
+  typedef struct { T x[N]; } type;
+};
+
+template<typename T> struct A1 { };
+A1<Array<int, 17>::type> ax;
+
 // FIXME: [temp.arg.type]p3. The check doesn't really belong here (it
 // belongs somewhere in the template instantiation section).

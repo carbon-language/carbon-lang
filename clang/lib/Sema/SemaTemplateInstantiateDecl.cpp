@@ -200,11 +200,21 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (Invalid)
     Typedef->setInvalidDecl();
 
+  if (const TagType *TT = DI->getType()->getAs<TagType>()) {
+    TagDecl *TD = TT->getDecl();
+    
+    // If the TagDecl that the TypedefDecl points to is an anonymous decl
+    // keep track of the TypedefDecl.
+    if (!TD->getIdentifier() && !TD->getTypedefForAnonDecl())
+      TD->setTypedefForAnonDecl(Typedef);
+  }
+  
   if (TypedefDecl *Prev = D->getPreviousDeclaration()) {
     NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(D->getLocation(), Prev,
                                                        TemplateArgs);
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
+
 
   Typedef->setAccess(D->getAccess());
   Owner->addDecl(Typedef);
