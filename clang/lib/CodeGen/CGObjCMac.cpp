@@ -5772,9 +5772,19 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // Branch around the rethrow code.
   CGF.EmitBranch(FinallyEnd);
 
+  // Generate the rethrow code, taking care to use an invoke if we are in a
+  // nested exception scope.
   CGF.EmitBlock(FinallyRethrow);
-  CGF.Builder.CreateCall(ObjCTypes.getUnwindResumeOrRethrowFn(),
-                         CGF.Builder.CreateLoad(RethrowPtr));
+  if (PrevLandingPad) {
+    llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
+    CGF.Builder.CreateInvoke(ObjCTypes.getUnwindResumeOrRethrowFn(),
+                             Cont, PrevLandingPad,
+                             CGF.Builder.CreateLoad(RethrowPtr));
+    CGF.EmitBlock(Cont);
+  } else {
+    CGF.Builder.CreateCall(ObjCTypes.getUnwindResumeOrRethrowFn(),
+                           CGF.Builder.CreateLoad(RethrowPtr));
+  }
   CGF.Builder.CreateUnreachable();
 
   CGF.EmitBlock(FinallyEnd);
