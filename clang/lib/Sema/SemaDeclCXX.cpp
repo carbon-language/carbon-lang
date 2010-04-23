@@ -1505,19 +1505,49 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                ImplicitInitializerKind ImplicitInitKind,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
-  // FIXME: Handle copy initialization.
-  if (ImplicitInitKind != IIK_Default) {
+  if (ImplicitInitKind == IIK_Copy) {
+    ParmVarDecl *Param = Constructor->getParamDecl(0);
+    QualType ParamType = Param->getType().getNonReferenceType();
+    
+    Expr *MemberExprBase = 
+      DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
+                          SourceLocation(), ParamType, 0);
+    
+    
+    Expr *CopyCtorArg = 
+      MemberExpr::Create(SemaRef.Context, MemberExprBase, /*IsArrow=*/false, 
+                         0, SourceRange(), Field, 
+                         DeclAccessPair::make(Field, Field->getAccess()),
+                         SourceLocation(), 0, 
+                         Field->getType().getNonReferenceType());
+    
+    InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
+    InitializationKind InitKind =
+      InitializationKind::CreateDirect(Constructor->getLocation(), 
+                                       SourceLocation(), SourceLocation());
+    
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind,
+                                   &CopyCtorArg, 1);
+    
+    Sema::OwningExprResult MemberInit =
+      InitSeq.Perform(SemaRef, InitEntity, InitKind, 
+                      Sema::MultiExprArg(SemaRef, (void**)&CopyCtorArg, 1), 0);
+    if (MemberInit.isInvalid())
+      return true;
+    
     CXXMemberInit = 0;
     return false;
   }
+
+  assert(ImplicitInitKind == IIK_Default && "Unhandled implicit init kind!");
 
   QualType FieldBaseElementType = 
     SemaRef.Context.getBaseElementType(Field->getType());
   
   if (FieldBaseElementType->isRecordType()) {
     InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
-    InitializationKind InitKind
-      = InitializationKind::CreateDefault(Constructor->getLocation());
+    InitializationKind InitKind = 
+      InitializationKind::CreateDefault(Constructor->getLocation());
     
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
     Sema::OwningExprResult MemberInit = 
@@ -3970,8 +4000,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           !Constructor->isUsed()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
-  CXXRecordDecl *ClassDecl
-    = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  CXXRecordDecl *ClassDecl = Constructor->getParent();
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
   DeclContext *PreviousContext = CurContext;
