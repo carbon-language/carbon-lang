@@ -147,3 +147,24 @@ int t19(unsigned data) {
   // CHECK: = call {{.*}}asm "x$(abc$|def$|ghi$)z"
 }
 
+
+// PR6845 - Mismatching source/dest fp types.
+double t20(double x) {
+  register long double result;
+  __asm __volatile ("frndint"  : "=t" (result) : "0" (x));
+  return result;
+  
+  // CHECK: @t20
+  // CHECK: fpext double {{.*}} to x86_fp80
+  // CHECK-NEXT: call x86_fp80 asm sideeffect "frndint"
+  // CHECK: fptrunc x86_fp80 {{.*}} to double
+}
+
+float t21(long double x) {
+  register float result;
+  __asm __volatile ("frndint"  : "=t" (result) : "0" (x));
+  return result;
+  // CHECK: @t21
+  // CHECK: call x86_fp80 asm sideeffect "frndint"
+  // CHECK-NEXT: fptrunc x86_fp80 {{.*}} to float
+}

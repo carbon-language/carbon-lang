@@ -1446,52 +1446,71 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (Context.hasSameType(InTy, OutTy))
       continue;  // All types can be tied to themselves.
 
-    // Int/ptr operands have some special cases that we allow.
-    if ((OutTy->isIntegerType() || OutTy->isPointerType()) &&
-        (InTy->isIntegerType() || InTy->isPointerType())) {
+    // Decide if the input and output are in the same domain (integer/ptr or
+    // floating point.
+    enum AsmDomain {
+      AD_Int, AD_FP, AD_Other
+    } InputDomain, OutputDomain;
+    
+    if (InTy->isIntegerType() || InTy->isPointerType())
+      InputDomain = AD_Int;
+    else if (InTy->isFloatingType())
+      InputDomain = AD_FP;
+    else
+      InputDomain = AD_Other;
 
-      // They are ok if they are the same size.  Tying void* to int is ok if
-      // they are the same size, for example.  This also allows tying void* to
-      // int*.
-      uint64_t OutSize = Context.getTypeSize(OutTy);
-      uint64_t InSize = Context.getTypeSize(InTy);
-      if (OutSize == InSize)
-        continue;
+    if (OutTy->isIntegerType() || OutTy->isPointerType())
+      OutputDomain = AD_Int;
+    else if (OutTy->isFloatingType())
+      OutputDomain = AD_FP;
+    else
+      OutputDomain = AD_Other;
+    
+    // They are ok if they are the same size and in the same domain.  This
+    // allows tying things like:
+    //   void* to int*
+    //   void* to int            if they are the same size.
+    //   double to long double   if they are the same size.
+    // 
+    uint64_t OutSize = Context.getTypeSize(OutTy);
+    uint64_t InSize = Context.getTypeSize(InTy);
+    if (OutSize == InSize && InputDomain == OutputDomain &&
+        InputDomain != AD_Other)
+      continue;
+    
+    // If the smaller input/output operand is not mentioned in the asm string,
+    // then we can promote it and the asm string won't notice.  Check this
+    // case now.
+    bool SmallerValueMentioned = false;
+    for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
+      AsmStmt::AsmStringPiece &Piece = Pieces[p];
+      if (!Piece.isOperand()) continue;
 
-      // If the smaller input/output operand is not mentioned in the asm string,
-      // then we can promote it and the asm string won't notice.  Check this
-      // case now.
-      bool SmallerValueMentioned = false;
-      for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
-        AsmStmt::AsmStringPiece &Piece = Pieces[p];
-        if (!Piece.isOperand()) continue;
-
-        // If this is a reference to the input and if the input was the smaller
-        // one, then we have to reject this asm.
-        if (Piece.getOperandNo() == i+NumOutputs) {
-          if (InSize < OutSize) {
-            SmallerValueMentioned = true;
-            break;
-          }
-        }
-
-        // If this is a reference to the input and if the input was the smaller
-        // one, then we have to reject this asm.
-        if (Piece.getOperandNo() == TiedTo) {
-          if (InSize > OutSize) {
-            SmallerValueMentioned = true;
-            break;
-          }
+      // If this is a reference to the input and if the input was the smaller
+      // one, then we have to reject this asm.
+      if (Piece.getOperandNo() == i+NumOutputs) {
+        if (InSize < OutSize) {
+          SmallerValueMentioned = true;
+          break;
         }
       }
 
-      // If the smaller value wasn't mentioned in the asm string, and if the
-      // output was a register, just extend the shorter one to the size of the
-      // larger one.
-      if (!SmallerValueMentioned &&
-          OutputConstraintInfos[TiedTo].allowsRegister())
-        continue;
+      // If this is a reference to the input and if the input was the smaller
+      // one, then we have to reject this asm.
+      if (Piece.getOperandNo() == TiedTo) {
+        if (InSize > OutSize) {
+          SmallerValueMentioned = true;
+          break;
+        }
+      }
     }
+
+    // If the smaller value wasn't mentioned in the asm string, and if the
+    // output was a register, just extend the shorter one to the size of the
+    // larger one.
+    if (!SmallerValueMentioned && InputDomain != AD_Other &&
+        OutputConstraintInfos[TiedTo].allowsRegister())
+      continue;
 
     Diag(InputExpr->getLocStart(),
          diag::err_asm_tying_incompatible_types)
