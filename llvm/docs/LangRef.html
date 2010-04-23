@@ -3407,8 +3407,8 @@ Instruction</a> </div>
    a 32-bit division of -2147483648 by -1.</p>
 
 <p>If the <tt>exact</tt> keyword is present, the result value of the
-   <tt>sdiv</tt> is undefined if the result would be rounded or if overflow
-   would occur.</p>
+   <tt>sdiv</tt> is a <a href="#trapvalues">trap value</a> if the result would
+   be rounded or if overflow would occur.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4391,13 +4391,14 @@ entry:
 </pre>
 
 <p>If the <tt>inbounds</tt> keyword is present, the result value of the
-   <tt>getelementptr</tt> is undefined if the base pointer is not an
-   <i>in bounds</i> address of an allocated object, or if any of the addresses
-   that would be formed by successive addition of the offsets implied by the
-   indices to the base address with infinitely precise arithmetic are not an
-   <i>in bounds</i> address of that allocated object.
-   The <i>in bounds</i> addresses for an allocated object are all the addresses
-   that point into the object, plus the address one byte past the end.</p>
+   <tt>getelementptr</tt> is a <a href="#trapvalues">trap value</a> if the
+   base pointer is not an <i>in bounds</i> address of an allocated object,
+   or if any of the addresses that would be formed by successive addition of
+   the offsets implied by the indices to the base address with infinitely
+   precise arithmetic are not an <i>in bounds</i> address of that allocated
+   object. The <i>in bounds</i> addresses for an allocated object are all
+   the addresses that point into the object, plus the address one byte past
+   the end.</p>
 
 <p>If the <tt>inbounds</tt> keyword is not present, the offsets are added to
    the base address with silently-wrapping two's complement arithmetic, and
