@@ -1,5 +1,4 @@
 ; RUN: opt < %s -inline -S | FileCheck %s
-; XFAIL: *
 ; PR4834
 
 define i32 @test1() {
