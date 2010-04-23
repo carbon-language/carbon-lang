@@ -334,13 +334,15 @@ public:
   /// getCXXConstructorName - Returns the name of a C++ constructor
   /// for the given Type.
   DeclarationName getCXXConstructorName(CanQualType Ty) {
-    return getCXXSpecialName(DeclarationName::CXXConstructorName, Ty);
+    return getCXXSpecialName(DeclarationName::CXXConstructorName, 
+                             Ty.getUnqualifiedType());
   }
 
   /// getCXXDestructorName - Returns the name of a C++ destructor
   /// for the given Type.
   DeclarationName getCXXDestructorName(CanQualType Ty) {
-    return getCXXSpecialName(DeclarationName::CXXDestructorName, Ty);
+    return getCXXSpecialName(DeclarationName::CXXDestructorName, 
+                             Ty.getUnqualifiedType());
   }
 
   /// getCXXConversionFunctionName - Returns the name of a C++

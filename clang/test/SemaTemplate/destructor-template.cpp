@@ -32,3 +32,11 @@ namespace PR6152 {
   template struct X<int>;
 }
 
+namespace cvquals {
+  template<typename T>
+  void f(int *ptr) {
+    ptr->~T();
+  }
+
+  template void f<const volatile int>(int *);
+}
