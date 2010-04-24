@@ -840,15 +840,9 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     CXXRecordDecl *DerivedClassDecl = 
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
 
-    const RecordType *BaseClassTy = 
-      DestTy->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
-    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseClassTy->getDecl());
-    
-    Value *Src = Visit(const_cast<Expr*>(E));
-
-    bool NullCheckValue = ShouldNullCheckClassCastValue(CE);
-    return CGF.GetAddressOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
-                                     NullCheckValue);
+    return CGF.GetAddressOfBaseClass(Visit(E), DerivedClassDecl, 
+                                     CE->getBasePath(),
+                                     ShouldNullCheckClassCastValue(CE));
   }
   case CastExpr::CK_Dynamic: {
     Value *V = Visit(const_cast<Expr*>(E));

@@ -787,7 +787,11 @@ public:
                                      const CXXRecordDecl *ClassDecl,
                                      const CXXRecordDecl *BaseClassDecl,
                                      bool NullCheckValue);
-  
+  llvm::Value *GetAddressOfBaseClass(llvm::Value *Value, 
+                                     const CXXRecordDecl *ClassDecl,
+                                     const CXXBaseSpecifierArray &BasePath, 
+                                     bool NullCheckValue);
+
   llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
                                         const CXXRecordDecl *ClassDecl,
                                         const CXXRecordDecl *DerivedClassDecl,
