@@ -391,8 +391,8 @@ def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,
   HelpText<"Use GC exclusively for Objective-C related memory management">;
-def fobjc_legacy_dispatch : Flag<"-fobjc-legacy-dispatch">,
-  HelpText<"Use legacy dispatch with the Objective-C non-fragile ABI">;
+def fobjc_dispatch_method_EQ : Joined<"-fobjc-dispatch-method=">,
+  HelpText<"Objective-C dispatch method to use">;
 def print_ivar_layout : Flag<"-print-ivar-layout">,
   HelpText<"Enable Objective-C Ivar layout bitmap print trace">;
 def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">,

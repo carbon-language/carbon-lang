@@ -4275,13 +4275,19 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
 /// message dispatch call for all the rest.
 ///
 bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
-  if (CGM.getCodeGenOpts().ObjCLegacyDispatch)
+  switch (CGM.getCodeGenOpts().getObjCDispatchMethod()) {
+  default:
+    assert(0 && "Invalid dispatch method!");
+  case CodeGenOptions::Legacy:
     return true;
-  /* Leopard */
-  if (CGM.getContext().Target.getTriple().getOS() == llvm::Triple::Darwin &&
-      CGM.getContext().Target.getTriple().getDarwinMajorNumber() <= 9)
+  case CodeGenOptions::NonLegacy:
     return false;
-  
+  case CodeGenOptions::Mixed:
+    break;
+  }
+
+  // If so, see whether this selector is in the white-list of things which must
+  // use the new dispatch convention. We lazily build a dense set for this.
   if (NonLegacyDispatchMethods.empty()) {
     NonLegacyDispatchMethods.insert(GetNullarySelector("alloc"));
     NonLegacyDispatchMethods.insert(GetNullarySelector("class"));
@@ -4311,6 +4317,7 @@ bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
     NonLegacyDispatchMethods.insert(
       CGM.getContext().Selectors.getSelector(3, KeyIdents));
   }
+
   return (NonLegacyDispatchMethods.count(Sel) == 0);
 }
 

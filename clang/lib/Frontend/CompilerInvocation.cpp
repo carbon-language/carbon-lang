@@ -178,8 +178,16 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (Opts.NoZeroInitializedInBSS)
     Res.push_back("-mno-zero-initialized-bss");
-  if (Opts.ObjCLegacyDispatch)
-    Res.push_back("-fobjc-legacy-dispatch");
+  switch (Opts.getObjCDispatchMethod()) {
+  case CodeGenOptions::Legacy:
+    break;
+  case CodeGenOptions::Mixed:
+    Res.push_back("-fobjc-dispatch-method=mixed");
+    break;
+  case CodeGenOptions::NonLegacy:
+    Res.push_back("-fobjc-dispatch-method=non-legacy");
+    break;
+  }
   if (Opts.SoftFloat)
     Res.push_back("-msoft-float");
   if (Opts.UnwindTables)
@@ -820,7 +828,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.FloatABI = getLastArgValue(Args, OPT_mfloat_abi);
   Opts.LimitFloatPrecision = getLastArgValue(Args, OPT_mlimit_float_precision);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
-  Opts.ObjCLegacyDispatch = Args.hasArg(OPT_fobjc_legacy_dispatch);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
@@ -830,6 +837,19 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
 
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
+
+  if (Arg *A = Args.getLastArg(OPT_fobjc_dispatch_method_EQ)) {
+    llvm::StringRef Name = A->getValue(Args);
+    unsigned Method = llvm::StringSwitch<unsigned>(Name)
+      .Case("legacy", CodeGenOptions::Legacy)
+      .Case("non-legacy", CodeGenOptions::NonLegacy)
+      .Case("mixed", CodeGenOptions::Mixed)
+      .Default(~0U);
+    if (Method == ~0U)
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
+    else
+      Opts.ObjCDispatchMethod = Method;
+  }
 }
 
 static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,

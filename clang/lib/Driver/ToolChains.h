@@ -168,6 +168,12 @@ public:
     return (getTriple().getArch() == llvm::Triple::arm ||
             getTriple().getArch() == llvm::Triple::thumb);
   }
+  virtual bool UseObjCMixedDispatch() const {
+    // Mixed dispatch is only used on x86_64 for 10.6 and later.
+    return (!isTargetIPhoneOS() &&
+            getTriple().getArch() == llvm::Triple::x86_64 &&
+            !isMacosxVersionLT(10, 6));
+  }
   virtual bool IsUnwindTablesDefault() const;
   virtual unsigned GetDefaultStackProtectorLevel() const {
     // Stack protectors default to on for 10.6 and beyond.

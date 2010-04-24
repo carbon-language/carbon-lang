@@ -1230,13 +1230,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (Args.hasArg(options::OPT_fobjc_nonfragile_abi) ||
         getToolChain().IsObjCNonFragileABIDefault()) {
       CmdArgs.push_back("-fobjc-nonfragile-abi");
-      
-      // -fobjc-legacy-dispatch is only relevant with the nonfragile-abi, and
-      // defaults to off.
-      if (Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
-                       options::OPT_fno_objc_legacy_dispatch,
-                       getToolChain().IsObjCLegacyDispatchDefault()))
-        CmdArgs.push_back("-fobjc-legacy-dispatch");
+
+      // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
+      // legacy is the default.
+      if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
+                        options::OPT_fno_objc_legacy_dispatch,
+                        getToolChain().IsObjCLegacyDispatchDefault())) {
+        if (getToolChain().UseObjCMixedDispatch())
+          CmdArgs.push_back("-fobjc-dispatch-method=mixed");
+        else
+          CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
+      }
     }
   }
 

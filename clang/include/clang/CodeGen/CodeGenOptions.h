@@ -28,6 +28,12 @@ public:
     OnlyAlwaysInlining  // Only run the always inlining pass.
   };
 
+  enum ObjCDispatchMethodKind {
+    Legacy = 0,
+    NonLegacy = 1,
+    Mixed = 2
+  };
+
   unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm.
   unsigned CXAAtExit         : 1; /// Use __cxa_atexit for calling destructors.
   unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
@@ -45,8 +51,7 @@ public:
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
-  unsigned ObjCLegacyDispatch: 1; /// Use legacy Objective-C dispatch, even with
-                                  /// 2.0 runtime.
+  unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned SoftFloat         : 1; /// -soft-float.
@@ -100,7 +105,7 @@ public:
     NoCommon = 0;
     NoImplicitFloat = 0;
     NoZeroInitializedInBSS = 0;
-    ObjCLegacyDispatch = 0;
+    ObjCDispatchMethod = Legacy;
     OptimizationLevel = 0;
     OptimizeSize = 0;
     SoftFloat = 0;
@@ -112,6 +117,10 @@ public:
 
     Inlining = NoInlining;
     RelocationModel = "pic";
+  }
+
+  ObjCDispatchMethodKind getObjCDispatchMethod() const {
+    return ObjCDispatchMethodKind(ObjCDispatchMethod);
   }
 };
 

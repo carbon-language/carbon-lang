@@ -103,6 +103,10 @@ public:
   /// ABI).
   virtual bool IsObjCLegacyDispatchDefault() const { return false; }
 
+  /// UseObjCMixedDispatchDefault - When using non-legacy dispatch, should the
+  /// mixed dispatch method be used?
+  virtual bool UseObjCMixedDispatch() const { return false; }
+
   /// GetDefaultStackProtectorLevel - Get the default stack protector level for
   /// this tool chain (0=off, 1=on, 2=all).
   virtual unsigned GetDefaultStackProtectorLevel() const { return 0; }
