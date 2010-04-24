@@ -245,7 +245,10 @@ public:
   llvm::Constant *
   GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                const CXXRecordDecl *BaseClassDecl);
-
+  llvm::Constant *
+  GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                               const CXXBaseSpecifierArray &BasePath);
+  
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.

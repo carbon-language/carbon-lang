@@ -793,8 +793,8 @@ public:
                                      bool NullCheckValue);
 
   llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
-                                        const CXXRecordDecl *ClassDecl,
                                         const CXXRecordDecl *DerivedClassDecl,
+                                        const CXXBaseSpecifierArray &BasePath,
                                         bool NullCheckValue);
 
   llvm::Value *GetVirtualBaseClassOffset(llvm::Value *This,

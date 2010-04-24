@@ -74,6 +74,23 @@ ComputeNonVirtualBaseClassOffset(ASTContext &Context,
 }
 
 llvm::Constant *
+CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                                        const CXXBaseSpecifierArray &BasePath) {
+  assert(!BasePath.empty() && "Base path should not be empty!");
+
+  uint64_t Offset = 
+    ComputeNonVirtualBaseClassOffset(getContext(), ClassDecl, 
+                                     BasePath.begin(), BasePath.end());
+  if (!Offset)
+    return 0;
+  
+  const llvm::Type *PtrDiffTy = 
+  Types.ConvertType(getContext().getPointerDiffType());
+  
+  return llvm::ConstantInt::get(PtrDiffTy, Offset);
+}  
+
+llvm::Constant *
 CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *Class,
                                             const CXXRecordDecl *BaseClass) {
   if (Class == BaseClass)
@@ -336,21 +353,18 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
 llvm::Value *
 CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
-                                          const CXXRecordDecl *Class,
                                           const CXXRecordDecl *DerivedClass,
+                                          const CXXBaseSpecifierArray &BasePath,
                                           bool NullCheckValue) {
+  assert(!BasePath.empty() && "Base path should not be empty!");
+
   QualType DerivedTy =
     getContext().getCanonicalType(
     getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(DerivedClass)));
   const llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
   
-  if (Class == DerivedClass) {
-    // Just cast back.
-    return Builder.CreateBitCast(Value, DerivedPtrTy);
-  }
-
   llvm::Value *NonVirtualOffset =
-    CGM.GetNonVirtualBaseClassOffset(DerivedClass, Class);
+    CGM.GetNonVirtualBaseClassOffset(DerivedClass, BasePath);
   
   if (!NonVirtualOffset) {
     // No offset, we can just cast back.

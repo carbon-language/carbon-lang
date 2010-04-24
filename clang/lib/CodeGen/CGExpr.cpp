@@ -1693,11 +1693,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CastExpr::CK_ToUnion:
     return EmitAggExprToLValue(E);
   case CastExpr::CK_BaseToDerived: {
-    const RecordType *BaseClassTy = 
-      E->getSubExpr()->getType()->getAs<RecordType>();
-    CXXRecordDecl *BaseClassDecl = 
-      cast<CXXRecordDecl>(BaseClassTy->getDecl());
-    
     const RecordType *DerivedClassTy = E->getType()->getAs<RecordType>();
     CXXRecordDecl *DerivedClassDecl = 
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
@@ -1706,8 +1701,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     // Perform the base-to-derived conversion
     llvm::Value *Derived = 
-      GetAddressOfDerivedClass(LV.getAddress(), BaseClassDecl, 
-                               DerivedClassDecl, /*NullCheckValue=*/false);
+      GetAddressOfDerivedClass(LV.getAddress(), DerivedClassDecl, 
+                               E->getBasePath(),/*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Derived, MakeQualifiers(E->getType()));
   }
