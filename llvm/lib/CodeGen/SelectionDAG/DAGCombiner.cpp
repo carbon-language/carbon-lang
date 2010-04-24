@@ -129,6 +129,10 @@ namespace {
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
 
+    void ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad);
+    SDValue PromoteOperand(SDValue Op, EVT PVT, bool &Replace);
+    SDValue SExtPromoteOperand(SDValue Op, EVT PVT);
+    SDValue ZExtPromoteOperand(SDValue Op, EVT PVT);
     SDValue PromoteIntBinOp(SDValue Op);
     SDValue PromoteIntShiftOp(SDValue Op);
     SDValue PromoteExtend(SDValue Op);
@@ -636,17 +640,31 @@ bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
   return true;
 }
 
-static SDValue SExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
-                                  const TargetLowering &TLI);
-static SDValue ZExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
-                                  const TargetLowering &TLI);
+void DAGCombiner::ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad) {
+  DebugLoc dl = Load->getDebugLoc();
+  EVT VT = Load->getValueType(0);
+  SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, VT, SDValue(ExtLoad, 0));
 
-static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
-                              const TargetLowering &TLI) {
+  DEBUG(dbgs() << "\nReplacing.9 ";
+        Load->dump(&DAG);
+        dbgs() << "\nWith: ";
+        Trunc.getNode()->dump(&DAG);
+        dbgs() << '\n');
+  WorkListRemover DeadNodes(*this);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 0), Trunc, &DeadNodes);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 1), SDValue(ExtLoad, 1),
+                                &DeadNodes);
+  removeFromWorkList(Load);
+  DAG.DeleteNode(Load);
+}
+
+SDValue DAGCombiner::PromoteOperand(SDValue Op, EVT PVT, bool &Replace) {
+  Replace = false;
   DebugLoc dl = Op.getDebugLoc();
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
     ISD::LoadExtType ExtType =
       ISD::isNON_EXTLoad(LD) ? ISD::EXTLOAD : LD->getExtensionType();
+    Replace = true;
     return DAG.getExtLoad(ExtType, dl, PVT,
                           LD->getChain(), LD->getBasePtr(),
                           LD->getSrcValue(), LD->getSrcValueOffset(),
@@ -659,11 +677,11 @@ static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
   default: break;
   case ISD::AssertSext:
     return DAG.getNode(ISD::AssertSext, dl, PVT,
-                       SExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
+                       SExtPromoteOperand(Op.getOperand(0), PVT),
                        Op.getOperand(1));
   case ISD::AssertZext:
     return DAG.getNode(ISD::AssertZext, dl, PVT,
-                       ZExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI),
+                       ZExtPromoteOperand(Op.getOperand(0), PVT),
                        Op.getOperand(1));
   case ISD::Constant: {
     unsigned ExtOpc =
@@ -677,27 +695,33 @@ static SDValue PromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
   return DAG.getNode(ISD::ANY_EXTEND, dl, PVT, Op);
 }
 
-static SDValue SExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
-                                  const TargetLowering &TLI) {
+SDValue DAGCombiner::SExtPromoteOperand(SDValue Op, EVT PVT) {
   if (!TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, PVT))
     return SDValue();
   EVT OldVT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
-  Op = PromoteOperand(Op, PVT, DAG, TLI);
-  if (Op.getNode() == 0)
+  bool Replace = false;
+  SDValue NewOp = PromoteOperand(Op, PVT, Replace);
+  if (NewOp.getNode() == 0)
     return SDValue();
-  return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Op.getValueType(), Op,
+
+  if (Replace)
+    ReplaceLoadWithPromotedLoad(Op.getNode(), NewOp.getNode());
+  return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, NewOp.getValueType(), NewOp,
                      DAG.getValueType(OldVT));
 }
 
-static SDValue ZExtPromoteOperand(SDValue Op, EVT PVT, SelectionDAG &DAG,
-                                  const TargetLowering &TLI) {
+SDValue DAGCombiner::ZExtPromoteOperand(SDValue Op, EVT PVT) {
   EVT OldVT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
-  Op = PromoteOperand(Op, PVT, DAG, TLI);
-  if (Op.getNode() == 0)
+  bool Replace = false;
+  SDValue NewOp = PromoteOperand(Op, PVT, Replace);
+  if (NewOp.getNode() == 0)
     return SDValue();
-  return DAG.getZeroExtendInReg(Op, dl, OldVT);
+
+  if (Replace)
+    ReplaceLoadWithPromotedLoad(Op.getNode(), NewOp.getNode());
+  return DAG.getZeroExtendInReg(NewOp, dl, OldVT);
 }
 
 /// PromoteIntBinOp - Promote the specified integer binary operation if the
@@ -723,20 +747,29 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
   if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
     assert(PVT != VT && "Don't know what type to promote to!");
 
-    SDValue N0 = PromoteOperand(Op.getOperand(0), PVT, DAG, TLI);
-    if (N0.getNode() == 0)
+    bool Replace0 = false;
+    SDValue N0 = Op.getOperand(0);
+    SDValue NN0 = PromoteOperand(N0, PVT, Replace0);
+    if (NN0.getNode() == 0)
       return SDValue();
 
-    SDValue N1 = PromoteOperand(Op.getOperand(1), PVT, DAG, TLI);
-    if (N1.getNode() == 0)
+    bool Replace1 = false;
+    SDValue N1 = Op.getOperand(1);
+    SDValue NN1 = PromoteOperand(N1, PVT, Replace1);
+    if (NN1.getNode() == 0)
       return SDValue();
 
-    AddToWorkList(N0.getNode());
-    AddToWorkList(N1.getNode());
+    AddToWorkList(NN0.getNode());
+    AddToWorkList(NN1.getNode());
+
+    if (Replace0)
+      ReplaceLoadWithPromotedLoad(N0.getNode(), NN0.getNode());
+    if (Replace1)
+      ReplaceLoadWithPromotedLoad(N1.getNode(), NN1.getNode());
 
     DebugLoc dl = Op.getDebugLoc();
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
-                       DAG.getNode(Opc, dl, PVT, N0, N1));
+                       DAG.getNode(Opc, dl, PVT, NN0, NN1));
   }
   return SDValue();
 }
@@ -764,16 +797,20 @@ SDValue DAGCombiner::PromoteIntShiftOp(SDValue Op) {
   if (TLI.IsDesirableToPromoteOp(Op, PVT)) {
     assert(PVT != VT && "Don't know what type to promote to!");
 
+    bool Replace = false;
     SDValue N0 = Op.getOperand(0);
     if (Opc == ISD::SRA)
-      N0 = SExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI);
+      N0 = SExtPromoteOperand(Op.getOperand(0), PVT);
     else if (Opc == ISD::SRL)
-      N0 = ZExtPromoteOperand(Op.getOperand(0), PVT, DAG, TLI);
+      N0 = ZExtPromoteOperand(Op.getOperand(0), PVT);
     else
-      N0 = PromoteOperand(N0, PVT, DAG, TLI);
+      N0 = PromoteOperand(N0, PVT, Replace);
     if (N0.getNode() == 0)
       return SDValue();
+
     AddToWorkList(N0.getNode());
+    if (Replace)
+      ReplaceLoadWithPromotedLoad(Op.getOperand(0).getNode(), N0.getNode());
 
     DebugLoc dl = Op.getDebugLoc();
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
@@ -841,9 +878,9 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
                                    LD->isNonTemporal(), LD->getAlignment());
     SDValue Result = DAG.getNode(ISD::TRUNCATE, dl, VT, NewLD);
 
-    DEBUG(dbgs() << "\nReplacing.x ";
+    DEBUG(dbgs() << "\nPromoting ";
           N->dump(&DAG);
-          dbgs() << "\nWith: ";
+          dbgs() << "\nTo: ";
           Result.getNode()->dump(&DAG);
           dbgs() << '\n');
     WorkListRemover DeadNodes(*this);
