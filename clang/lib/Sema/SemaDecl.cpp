@@ -89,9 +89,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         
         // We know from the grammar that this name refers to a type, so build a
         // DependentNameType node to describe the type.
-        // FIXME: Record somewhere that this DependentNameType node has no "typename"
-        // keyword associated with it.
-        return CheckTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
+        return CheckTypenameType(ETK_None,
+                                 (NestedNameSpecifier *)SS->getScopeRep(),
                                  II, SS->getRange()).getAsOpaquePtr();
       }
       

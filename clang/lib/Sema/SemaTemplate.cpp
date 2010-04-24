@@ -5128,7 +5128,8 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   if (!NNS)
     return true;
 
-  QualType T = CheckTypenameType(NNS, II, SourceRange(TypenameLoc, IdLoc));
+  QualType T = CheckTypenameType(ETK_Typename, NNS, II,
+                                 SourceRange(TypenameLoc, IdLoc));
   if (T.isNull())
     return true;
   return T.getAsOpaquePtr();
@@ -5160,7 +5161,8 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 /// \brief Build the type that describes a C++ typename specifier,
 /// e.g., "typename T::type".
 QualType
-Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
+Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
+                        NestedNameSpecifier *NNS, const IdentifierInfo &II,
                         SourceRange Range) {
   CXXRecordDecl *CurrentInstantiation = 0;
   if (NNS->isDependent()) {
@@ -5169,7 +5171,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     // If the nested-name-specifier does not refer to the current
     // instantiation, then build a typename type.
     if (!CurrentInstantiation)
-      return Context.getDependentNameType(ETK_Typename, NNS, &II);
+      return Context.getDependentNameType(Keyword, NNS, &II);
 
     // The nested-name-specifier refers to the current instantiation, so the
     // "typename" keyword itself is superfluous. In C++03, the program is
@@ -5205,7 +5207,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
       
   case LookupResult::NotFoundInCurrentInstantiation:
     // Okay, it's a member of an unknown instantiation.
-    return Context.getDependentNameType(ETK_Typename, NNS, &II);
+    return Context.getDependentNameType(Keyword, NNS, &II);
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {

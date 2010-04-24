@@ -3017,7 +3017,8 @@ public:
   ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                     SourceLocation TemplateLoc, TypeTy *Ty);
 
-  QualType CheckTypenameType(NestedNameSpecifier *NNS,
+  QualType CheckTypenameType(ElaboratedTypeKeyword Keyword,
+                             NestedNameSpecifier *NNS,
                              const IdentifierInfo &II,
                              SourceRange Range);
 

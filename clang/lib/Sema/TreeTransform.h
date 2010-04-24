@@ -574,10 +574,9 @@ public:
     TagDecl::TagKind Kind = TagDecl::TK_enum;
     switch (Keyword) {
       case ETK_None:
-        // FIXME: Note the lack of the "typename" specifier!
-        // Fall through
+        // Fall through.
       case ETK_Typename:
-        return SemaRef.CheckTypenameType(NNS, *Id, SR);
+        return SemaRef.CheckTypenameType(Keyword, NNS, *Id, SR);
         
       case ETK_Class: Kind = TagDecl::TK_class; break;
       case ETK_Struct: Kind = TagDecl::TK_struct; break;

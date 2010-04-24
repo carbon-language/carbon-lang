@@ -1088,7 +1088,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
         if (!NotUnknownSpecialization) {
           // When the scope specifier can refer to a member of an unknown
           // specialization, we take it as a type name.
-          BaseType = CheckTypenameType((NestedNameSpecifier *)SS.getScopeRep(),
+          BaseType = CheckTypenameType(ETK_None,
+                                       (NestedNameSpecifier *)SS.getScopeRep(),
                                        *MemberOrBase, SS.getRange());
           if (BaseType.isNull())
             return true;
