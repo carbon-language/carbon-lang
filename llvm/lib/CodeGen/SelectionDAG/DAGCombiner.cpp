@@ -3474,8 +3474,9 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     }
     
     // sext(setcc x, y, cc) -> (select_cc x, y, -1, 0, cc)
+    unsigned ElementWidth = VT.getScalarType().getSizeInBits();
     SDValue NegOne =
-      DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
+      DAG.getConstant(APInt::getAllOnesValue(ElementWidth), VT);
     SDValue SCC =
       SimplifySelectCC(N->getDebugLoc(), N0.getOperand(0), N0.getOperand(1),
                        NegOne, DAG.getConstant(0, VT),
