@@ -1659,14 +1659,14 @@ private:
 #ifndef NDEBUG
     switch (getCastKind()) {
     case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+    case CK_DerivedToBaseMemberPointer:
       assert(!BasePath.empty() && "Cast kind should have a base path!");
       break;
 
     // FIXME: We should add inheritance paths for these.
     case CK_BaseToDerived:
-    case CK_UncheckedDerivedToBase:
     case CK_BaseToDerivedMemberPointer:
-    case CK_DerivedToBaseMemberPointer:
 
     // These should not have an inheritance path.
     case CK_Unknown:

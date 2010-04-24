@@ -1436,14 +1436,15 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     // type of the object type, in which case we just ignore it.
     // Otherwise build the appropriate casts.
     if (IsDerivedFrom(FromRecordType, QRecordType)) {
+      CXXBaseSpecifierArray BasePath;
       if (CheckDerivedToBaseConversion(FromRecordType, QRecordType,
-                                       FromLoc, FromRange))
+                                       FromLoc, FromRange, &BasePath))
         return true;
 
       if (PointerConversions)
         QType = Context.getPointerType(QType);
       ImpCastExprToType(From, QType, CastExpr::CK_UncheckedDerivedToBase,
-                        /*isLvalue=*/!PointerConversions);
+                        /*isLvalue=*/!PointerConversions, BasePath);
 
       FromType = QType;
       FromRecordType = QRecordType;
@@ -1471,15 +1472,16 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     // conversion is non-trivial.
     if (!Context.hasSameUnqualifiedType(FromRecordType, URecordType)) {
       assert(IsDerivedFrom(FromRecordType, URecordType));
+      CXXBaseSpecifierArray BasePath;
       if (CheckDerivedToBaseConversion(FromRecordType, URecordType,
-                                       FromLoc, FromRange))
+                                       FromLoc, FromRange, &BasePath))
         return true;
       
       QualType UType = URecordType;
       if (PointerConversions)
         UType = Context.getPointerType(UType);
       ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
-                        /*isLvalue*/ !PointerConversions);
+                        /*isLvalue=*/!PointerConversions, BasePath);
       FromType = UType;
       FromRecordType = URecordType;
     }
@@ -1489,15 +1491,14 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     IgnoreAccess = true;
   }
 
-  if (CheckDerivedToBaseConversion(FromRecordType,
-                                   DestRecordType,
-                                   FromLoc,
-                                   FromRange, 0,
+  CXXBaseSpecifierArray BasePath;
+  if (CheckDerivedToBaseConversion(FromRecordType, DestRecordType,
+                                   FromLoc, FromRange, &BasePath,
                                    IgnoreAccess))
     return true;
 
   ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
-                    /*isLvalue=*/!PointerConversions);
+                    /*isLvalue=*/!PointerConversions, BasePath);
   return false;
 }
 

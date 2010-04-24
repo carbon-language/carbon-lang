@@ -178,8 +178,7 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   CheckImplicitConversion(Expr, Ty);
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
-    if (ImpCast->getCastKind() == Kind) {
-      assert(BasePath.empty() && "FIXME: Merge paths!");
+    if (ImpCast->getCastKind() == Kind && BasePath.empty()) {
       ImpCast->setType(Ty);
       ImpCast->setLvalueCast(isLvalue);
       return;

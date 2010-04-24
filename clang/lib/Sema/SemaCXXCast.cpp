@@ -86,11 +86,13 @@ static TryCastResult TryStaticDowncast(Sema &Self, CanQualType SrcType,
                                        QualType OrigDestType, unsigned &msg,
                                        CastExpr::CastKind &Kind);
 static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr,
-                                                  QualType SrcType,
-                                                  QualType DestType,bool CStyle,
-                                                  const SourceRange &OpRange,
-                                                  unsigned &msg,
-                                                  CastExpr::CastKind &Kind);
+                                               QualType SrcType,
+                                               QualType DestType,bool CStyle,
+                                               const SourceRange &OpRange,
+                                               unsigned &msg,
+                                               CastExpr::CastKind &Kind,
+                                               CXXBaseSpecifierArray &BasePath);
+
 static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr,
                                            QualType DestType, bool CStyle,
                                            const SourceRange &OpRange,
@@ -550,7 +552,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // conversion. C++ 5.2.9p9 has additional information.
   // DR54's access restrictions apply here also.
   tcr = TryStaticMemberPointerUpcast(Self, SrcExpr, SrcType, DestType, CStyle,
-                                     OpRange, msg, Kind);
+                                     OpRange, msg, Kind, BasePath);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -796,7 +798,8 @@ TryCastResult
 TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType, 
                              QualType DestType, bool CStyle, 
                              const SourceRange &OpRange,
-                             unsigned &msg, CastExpr::CastKind &Kind) {
+                             unsigned &msg, CastExpr::CastKind &Kind,
+                             CXXBaseSpecifierArray &BasePath) {
   const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>();
   if (!DestMemPtr)
     return TC_NotApplicable;
@@ -828,7 +831,7 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
   // B base of D
   QualType SrcClass(SrcMemPtr->getClass(), 0);
   QualType DestClass(DestMemPtr->getClass(), 0);
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                   /*DetectVirtual=*/true);
   if (!Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
     return TC_NotApplicable;
@@ -882,6 +885,7 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
     }
   }
 
+  Self.BuildBasePathArray(Paths, BasePath);
   Kind = CastExpr::CK_DerivedToBaseMemberPointer;
   return TC_Success;
 }
