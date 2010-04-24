@@ -33,7 +33,9 @@ class UsuallyTinyPtrVector {
 
 public:
   UsuallyTinyPtrVector() : Storage(0) { }
-
+  explicit UsuallyTinyPtrVector(T *Element) 
+    : Storage(reinterpret_cast<uintptr_t>(Element)) { }
+  
   bool empty() const { return !Storage; }
 
   typedef const T **iterator;
