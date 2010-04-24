@@ -90,16 +90,16 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
   return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }
 
-/// Gets the address of a virtual base class within a complete object.
+/// Gets the address of a direct base class within a complete object.
 /// This should only be used for (1) non-virtual bases or (2) virtual bases
 /// when the type is known to be complete (e.g. in complete destructors).
 ///
 /// The object pointed to by 'This' is assumed to be non-null.
 llvm::Value *
-CodeGenFunction::GetAddressOfBaseOfCompleteClass(llvm::Value *This,
-                                                 bool isBaseVirtual,
-                                                 const CXXRecordDecl *Derived,
-                                                 const CXXRecordDecl *Base) {
+CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
+                                                   const CXXRecordDecl *Derived,
+                                                   const CXXRecordDecl *Base,
+                                                   bool BaseIsVirtual) {
   // 'this' must be a pointer (in some address space) to Derived.
   assert(This->getType()->isPointerTy() &&
          cast<llvm::PointerType>(This->getType())->getElementType()
@@ -108,7 +108,7 @@ CodeGenFunction::GetAddressOfBaseOfCompleteClass(llvm::Value *This,
   // Compute the offset of the virtual base.
   uint64_t Offset;
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
-  if (isBaseVirtual)
+  if (BaseIsVirtual)
     Offset = Layout.getVBaseClassOffset(Base);
   else
     Offset = Layout.getBaseClassOffset(Base);
@@ -155,7 +155,7 @@ ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
 
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value, 
-                                       const CXXRecordDecl *ClassDecl,
+                                       const CXXRecordDecl *Derived,
                                        const CXXBaseSpecifierArray &BasePath, 
                                        bool NullCheckValue) {
   assert(!BasePath.empty() && "Base path should not be empty!");
@@ -171,7 +171,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   }
   
   uint64_t NonVirtualOffset = 
-    ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : ClassDecl,
+    ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : Derived,
                                      Start, BasePath.end());
 
   // Get the base pointer type.
@@ -202,7 +202,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   llvm::Value *VirtualOffset = 0;
 
   if (VBase)
-    VirtualOffset = GetVirtualBaseClassOffset(Value, ClassDecl, VBase);
+    VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
 
   // Apply the offsets.
   Value = ApplyNonVirtualAndVirtualOffset(*this, Value, NonVirtualOffset, 
@@ -296,18 +296,17 @@ CodeGenFunction::OldGetAddressOfBaseClass(llvm::Value *Value,
 
 llvm::Value *
 CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
-                                          const CXXRecordDecl *DerivedClass,
+                                          const CXXRecordDecl *Derived,
                                           const CXXBaseSpecifierArray &BasePath,
                                           bool NullCheckValue) {
   assert(!BasePath.empty() && "Base path should not be empty!");
 
   QualType DerivedTy =
-    getContext().getCanonicalType(
-    getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(DerivedClass)));
+    getContext().getCanonicalType(getContext().getTagDeclType(Derived));
   const llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
   
   llvm::Value *NonVirtualOffset =
-    CGM.GetNonVirtualBaseClassOffset(DerivedClass, BasePath);
+    CGM.GetNonVirtualBaseClassOffset(Derived, BasePath);
   
   if (!NonVirtualOffset) {
     // No offset, we can just cast back.
@@ -837,9 +836,10 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
 
   // We can pretend to be a complete class because it only matters for
   // virtual bases, and we only do virtual bases for complete ctors.
-  llvm::Value *V = ThisPtr;
-  V = CGF.GetAddressOfBaseOfCompleteClass(V, isBaseVirtual,
-                                          ClassDecl, BaseClassDecl);
+  llvm::Value *V = 
+    CGF.GetAddressOfDirectBaseInCompleteClass(ThisPtr, ClassDecl,
+                                              BaseClassDecl, 
+                                              BaseInit->isBaseVirtual());
 
   CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
   
@@ -1154,10 +1154,10 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
       const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
-      llvm::Value *V = GetAddressOfBaseOfCompleteClass(LoadCXXThis(),
-                                                       true,
-                                                       ClassDecl,
-                                                       BaseClassDecl);
+      llvm::Value *V = 
+        GetAddressOfDirectBaseInCompleteClass(LoadCXXThis(),
+                                              ClassDecl, BaseClassDecl,
+                                              /*BaseIsVirtual=*/true);
       EmitCXXDestructorCall(D, Dtor_Base, V);
     }
     return;

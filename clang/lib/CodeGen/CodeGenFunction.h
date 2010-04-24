@@ -775,11 +775,12 @@ public:
   }
 
   /// GetAddressOfBaseOfCompleteClass - Convert the given pointer to a
-  /// complete class down to one of its virtual bases.
-  llvm::Value *GetAddressOfBaseOfCompleteClass(llvm::Value *Value,
-                                               bool IsVirtual,
-                                               const CXXRecordDecl *Derived,
-                                               const CXXRecordDecl *Base);
+  /// complete class to the given direct base.
+  llvm::Value *
+  GetAddressOfDirectBaseInCompleteClass(llvm::Value *Value,
+                                        const CXXRecordDecl *Derived,
+                                        const CXXRecordDecl *Base,
+                                        bool BaseIsVirtual);
 
   llvm::Value *OldGetAddressOfBaseClass(llvm::Value *Value,
                                         const CXXRecordDecl *ClassDecl,
@@ -788,12 +789,12 @@ public:
   /// GetAddressOfBaseClass - This function will add the necessary delta to the
   /// load of 'this' and returns address of the base class.
   llvm::Value *GetAddressOfBaseClass(llvm::Value *Value, 
-                                     const CXXRecordDecl *ClassDecl,
+                                     const CXXRecordDecl *Derived,
                                      const CXXBaseSpecifierArray &BasePath, 
                                      bool NullCheckValue);
 
   llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
-                                        const CXXRecordDecl *DerivedClassDecl,
+                                        const CXXRecordDecl *Derived,
                                         const CXXBaseSpecifierArray &BasePath,
                                         bool NullCheckValue);
 
