@@ -2313,8 +2313,8 @@ has undefined behavior.</p>
    effects has nevertheless detected a condition which results in undefined
    behavior.<p>
 
-<p>Any non-void instruction or constant expression other than non-intrinsic
-   calls or invokes with a trap operand has trap as its result value.
+<p>Any non-void instruction or constant expression other than a non-intrinsic
+   call, invoke, or phi with a trap operand has trap as its result value.
    Any instruction with a trap operand which may have side effects emits
    those side effects as if it had an undef operand instead.</p>
 
