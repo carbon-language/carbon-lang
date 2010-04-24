@@ -150,26 +150,34 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 
   case tok::kw_dynamic_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    // FIXME: Initialize base path!
+    CXXBaseSpecifierArray BasePath;
     if (!TypeDependent)
       CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
-                                                 Kind, Ex, DestTInfo, OpLoc));
+                                                 Kind, Ex, BasePath, DestTInfo,
+                                                 OpLoc));
   }
   case tok::kw_reinterpret_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    // FIXME: Initialize base path!
+    CXXBaseSpecifierArray BasePath;
     if (!TypeDependent)
       CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context) CXXReinterpretCastExpr(
                                   DestType.getNonReferenceType(),
-                                  Kind, Ex, DestTInfo, OpLoc));
+                                  Kind, Ex, BasePath, DestTInfo, OpLoc));
   }
   case tok::kw_static_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    // FIXME: Initialize base path!
+    CXXBaseSpecifierArray BasePath;
     if (!TypeDependent)
       CheckStaticCast(*this, Ex, DestType, OpRange, Kind);
     
     return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
-                                                 Kind, Ex, DestTInfo, OpLoc));
+                                                 Kind, Ex, BasePath,
+                                                 DestTInfo, OpLoc));
   }
   }
 

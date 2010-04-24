@@ -3957,13 +3957,15 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
   Expr *castExpr = static_cast<Expr*>(Op.get());
 
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+  // FIXME: Initialize base path!
+  CXXBaseSpecifierArray BasePath;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
                      Kind))
     return ExprError();
 
   Op.release();
   return Owned(new (Context) CStyleCastExpr(Ty->getType().getNonReferenceType(),
-                                            Kind, castExpr, Ty,
+                                            Kind, castExpr, BasePath, Ty,
                                             LParenLoc, RParenLoc));
 }
 

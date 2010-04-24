@@ -444,7 +444,7 @@ namespace {
   CStyleCastExpr* NoTypeInfoCStyleCastExpr(ASTContext *Ctx, QualType Ty,
                                            CastExpr::CastKind Kind, Expr *E) {
     TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
-    return new (Ctx) CStyleCastExpr(Ty, Kind, E, TInfo,
+    return new (Ctx) CStyleCastExpr(Ty, Kind, E, CXXBaseSpecifierArray(), TInfo,
                                     SourceLocation(), SourceLocation());
   }
 }

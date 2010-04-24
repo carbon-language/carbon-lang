@@ -2886,6 +2886,7 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
     return 0;
   
   // FIXME: Initialize the base path.
+  assert(E->getBasePath().empty() && "FIXME: Must copy base path!");
   CXXBaseSpecifierArray BasePath;
   return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
                                                         SubExpr, BasePath,
@@ -2905,8 +2906,11 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   if (!TInfo && E->getTypeInfoAsWritten())
     return 0;
   
+  // FIXME: Initialize the base path.
+  assert(E->getBasePath().empty() && "FIXME: Must copy base path!");
+  CXXBaseSpecifierArray BasePath;
   return new (Importer.getToContext()) CStyleCastExpr(T, E->getCastKind(),
-                                                      SubExpr, TInfo,
+                                                      SubExpr, BasePath, TInfo,
                                             Importer.Import(E->getLParenLoc()),
                                             Importer.Import(E->getRParenLoc()));
 }

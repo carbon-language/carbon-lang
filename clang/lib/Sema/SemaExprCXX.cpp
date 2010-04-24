@@ -501,6 +501,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    // FIXME: Initialize base path!
+    CXXBaseSpecifierArray BasePath;
     if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, /*FunctionalStyle=*/true))
       return ExprError();
 
@@ -508,7 +510,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
                                                      TInfo, TyBeginLoc, Kind,
-                                                     Exprs[0], RParenLoc));
+                                                     Exprs[0], BasePath,
+                                                     RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {

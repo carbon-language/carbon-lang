@@ -1729,7 +1729,9 @@ public:
   const Expr *getSubExprAsWritten() const {
     return const_cast<CastExpr *>(this)->getSubExprAsWritten();
   }
-    
+
+  const CXXBaseSpecifierArray& getBasePath() { return BasePath; }
+
   static bool classof(const Stmt *T) {
     StmtClass SC = T->getStmtClass();
     if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
@@ -1816,9 +1818,9 @@ class ExplicitCastExpr : public CastExpr {
 
 protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
-                   Expr *op, TypeSourceInfo *writtenTy)
-    : CastExpr(SC, exprTy, kind, op, CXXBaseSpecifierArray()), 
-    TInfo(writtenTy) {}
+                   Expr *op, CXXBaseSpecifierArray BasePath,
+                   TypeSourceInfo *writtenTy)
+    : CastExpr(SC, exprTy, kind, op, BasePath), TInfo(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell)
@@ -1854,10 +1856,10 @@ class CStyleCastExpr : public ExplicitCastExpr {
   SourceLocation RPLoc; // the location of the right paren
 public:
   CStyleCastExpr(QualType exprTy, CastKind kind, Expr *op,
-                 TypeSourceInfo *writtenTy,
-                 SourceLocation l, SourceLocation r) :
-    ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, writtenTy),
-    LPLoc(l), RPLoc(r) {}
+                 CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                 SourceLocation l, SourceLocation r)
+    : ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, BasePath,
+                       writtenTy), LPLoc(l), RPLoc(r) {}
 
   /// \brief Construct an empty C-style explicit cast.
   explicit CStyleCastExpr(EmptyShell Shell)

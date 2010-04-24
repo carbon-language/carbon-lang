@@ -118,8 +118,9 @@ private:
 
 protected:
   CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op,
-                   TypeSourceInfo *writtenTy, SourceLocation l)
-    : ExplicitCastExpr(SC, ty, kind, op, writtenTy), Loc(l) {}
+                   CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                   SourceLocation l)
+    : ExplicitCastExpr(SC, ty, kind, op, BasePath, writtenTy), Loc(l) {}
 
   explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell)
     : ExplicitCastExpr(SC, Shell) { }
@@ -155,9 +156,10 @@ public:
 /// @c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
 public:
-  CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op,
-                    TypeSourceInfo *writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, writtenTy, l) {}
+  CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op, 
+                    CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                    SourceLocation l)
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, BasePath, writtenTy, l) {}
 
   explicit CXXStaticCastExpr(EmptyShell Empty)
     : CXXNamedCastExpr(CXXStaticCastExprClass, Empty) { }
@@ -176,9 +178,11 @@ public:
 /// @c dynamic_cast<Derived*>(BasePtr).
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
 public:
-  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op,
-                     TypeSourceInfo *writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, writtenTy, l) {}
+  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op, 
+                     CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                     SourceLocation l)
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, BasePath,
+                       writtenTy, l) {}
 
   explicit CXXDynamicCastExpr(EmptyShell Empty)
     : CXXNamedCastExpr(CXXDynamicCastExprClass, Empty) { }
@@ -198,8 +202,9 @@ public:
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
 public:
   CXXReinterpretCastExpr(QualType ty, CastKind kind, Expr *op, 
+                         CXXBaseSpecifierArray BasePath,
                          TypeSourceInfo *writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op,
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op, BasePath,
                        writtenTy, l) {}
 
   explicit CXXReinterpretCastExpr(EmptyShell Empty)
@@ -220,7 +225,8 @@ class CXXConstCastExpr : public CXXNamedCastExpr {
 public:
   CXXConstCastExpr(QualType ty, Expr *op, TypeSourceInfo *writtenTy,
                    SourceLocation l)
-    : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, writtenTy, l) {}
+    : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, 
+                       CXXBaseSpecifierArray(), writtenTy, l) {}
 
   explicit CXXConstCastExpr(EmptyShell Empty)
     : CXXNamedCastExpr(CXXConstCastExprClass, Empty) { }
@@ -724,9 +730,10 @@ class CXXFunctionalCastExpr : public ExplicitCastExpr {
 public:
   CXXFunctionalCastExpr(QualType ty, TypeSourceInfo *writtenTy,
                         SourceLocation tyBeginLoc, CastKind kind,
-                        Expr *castExpr, SourceLocation rParenLoc) 
+                        Expr *castExpr, CXXBaseSpecifierArray BasePath,
+                        SourceLocation rParenLoc) 
     : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, 
-                       writtenTy),
+                       BasePath, writtenTy),
       TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
   explicit CXXFunctionalCastExpr(EmptyShell Shell)
