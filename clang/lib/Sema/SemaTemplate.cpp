@@ -2576,6 +2576,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
 
   // Create the template argument.
   Converted = TemplateArgument(Entity->getCanonicalDecl());
+  S.MarkDeclarationReferenced(Arg->getLocStart(), Entity);
   return false;
 }
 

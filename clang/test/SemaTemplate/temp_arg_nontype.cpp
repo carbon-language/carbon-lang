@@ -176,3 +176,20 @@ namespace PR6723 {
     f<512>(arr512); // expected-error{{no matching function for call}}
   }
 }
+
+// Check that we instantiate declarations whose addresses are taken
+// for non-type template arguments.
+namespace EntityReferenced {
+  template<typename T, void (*)(T)> struct X { };
+
+  template<typename T>
+  struct Y {
+    static void f(T x) { 
+      x = 1; // expected-error{{assigning to 'int *' from incompatible type 'int'}}
+    }
+  };
+
+  void g() {
+    typedef X<int*, Y<int*>::f> x; // expected-note{{in instantiation of}}
+  }
+}
