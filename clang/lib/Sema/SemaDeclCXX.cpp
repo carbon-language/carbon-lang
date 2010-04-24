@@ -1546,6 +1546,11 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
   if (ImplicitInitKind == IIK_Copy) {
+    // FIXME: We shouldn't return early here. The reason we do it is that
+    // we don't handle copying arrays.
+    CXXMemberInit = 0;
+    return false;
+
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
     
@@ -4199,25 +4204,16 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   DeclContext *PreviousContext = CurContext;
   CurContext = CopyConstructor;
 
-  // C++ [class.copy] p209
-  // Before the implicitly-declared copy constructor for a class is
-  // implicitly defined, all the implicitly-declared copy constructors
-  // for its base class and its non-static data members shall have been
-  // implicitly defined.
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (CXXConstructorDecl *BaseCopyCtor =
-        BaseClassDecl->getCopyConstructor(Context, TypeQuals)) {
-      CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
-                              BaseCopyCtor,
-                              PDiag(diag::err_access_copy_base)
-                                << Base->getType());
-
-      MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
-    }
+  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false)) {
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+    << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
+    CopyConstructor->setInvalidDecl();
+  } else {
+    CopyConstructor->setUsed();
   }
+
+  // FIXME: Once we teach SetBaseOrMemberInitializers to copy fields, we can
+  // get rid of this code.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {

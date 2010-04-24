@@ -692,18 +692,6 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
   llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
   llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
 
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    // FIXME. copy constrution of virtual base NYI
-    if (Base->isVirtual())
-      continue;
-
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl,
-                            Base->getType());
-  }
-
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
     const FieldDecl *Field = *I;
