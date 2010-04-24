@@ -229,10 +229,9 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 }
 
 llvm::Value *
-CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
-                                       const CXXRecordDecl *Class,
-                                       const CXXRecordDecl *BaseClass,
-                                       bool NullCheckValue) {
+CodeGenFunction::OldGetAddressOfBaseClass(llvm::Value *Value,
+                                          const CXXRecordDecl *Class,
+                                          const CXXRecordDecl *BaseClass) {
   QualType BTy =
     getContext().getCanonicalType(
       getContext().getTypeDeclType(BaseClass));
@@ -282,22 +281,6 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     return Builder.CreateBitCast(Value, BasePtrTy);
   }    
 
-  llvm::BasicBlock *CastNull = 0;
-  llvm::BasicBlock *CastNotNull = 0;
-  llvm::BasicBlock *CastEnd = 0;
-  
-  if (NullCheckValue) {
-    CastNull = createBasicBlock("cast.null");
-    CastNotNull = createBasicBlock("cast.notnull");
-    CastEnd = createBasicBlock("cast.end");
-    
-    llvm::Value *IsNull = 
-      Builder.CreateICmpEQ(Value,
-                           llvm::Constant::getNullValue(Value->getType()));
-    Builder.CreateCondBr(IsNull, CastNull, CastNotNull);
-    EmitBlock(CastNotNull);
-  }
-  
   llvm::Value *VirtualOffset = 0;
 
   if (VBase)
@@ -308,21 +291,6 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   
   // Cast back.
   Value = Builder.CreateBitCast(Value, BasePtrTy);
- 
-  if (NullCheckValue) {
-    Builder.CreateBr(CastEnd);
-    EmitBlock(CastNull);
-    Builder.CreateBr(CastEnd);
-    EmitBlock(CastEnd);
-    
-    llvm::PHINode *PHI = Builder.CreatePHI(Value->getType());
-    PHI->reserveOperandSpace(2);
-    PHI->addIncoming(Value, CastNotNull);
-    PHI->addIncoming(llvm::Constant::getNullValue(Value->getType()), 
-                     CastNull);
-    Value = PHI;
-  }
-  
   return Value;
 }
 
@@ -631,10 +599,8 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   CXXCtorType CtorType = Ctor_Complete;
   
   if (ClassDecl) {
-    Dest = GetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl,
-                                 /*NullCheckValue=*/false);
-    Src = GetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl,
-                                /*NullCheckValue=*/false);
+    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
+    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
 
     // We want to call the base constructor.
     CtorType = Ctor_Base;
@@ -663,10 +629,8 @@ void CodeGenFunction::EmitClassCopyAssignment(
                                         const CXXRecordDecl *BaseClassDecl,
                                         QualType Ty) {
   if (ClassDecl) {
-    Dest = GetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl,
-                                 /*NullCheckValue=*/false);
-    Src = GetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl,
-                                /*NullCheckValue=*/false);
+    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
+    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
   }
   if (BaseClassDecl->hasTrivialCopyAssignment()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -1300,9 +1264,8 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
       continue;
     const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
     
-    llvm::Value *V = GetAddressOfBaseClass(LoadCXXThis(),
-                                           ClassDecl, BaseClassDecl, 
-                                           /*NullCheckValue=*/false);
+    llvm::Value *V = OldGetAddressOfBaseClass(LoadCXXThis(),
+                                              ClassDecl, BaseClassDecl);
     EmitCXXDestructorCall(D, Dtor_Base, V);
   }
 }
@@ -1678,8 +1641,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
-    VTableField = GetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD, 
-                                        /*NullCheckValue=*/false);
+    VTableField = OldGetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD);
   } else {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
 

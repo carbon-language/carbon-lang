@@ -780,13 +780,13 @@ public:
                                                bool IsVirtual,
                                                const CXXRecordDecl *Derived,
                                                const CXXRecordDecl *Base);
-  
+
+  llvm::Value *OldGetAddressOfBaseClass(llvm::Value *Value,
+                                        const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *BaseClassDecl);
+
   /// GetAddressOfBaseClass - This function will add the necessary delta to the
   /// load of 'this' and returns address of the base class.
-  llvm::Value *GetAddressOfBaseClass(llvm::Value *Value,
-                                     const CXXRecordDecl *ClassDecl,
-                                     const CXXRecordDecl *BaseClassDecl,
-                                     bool NullCheckValue);
   llvm::Value *GetAddressOfBaseClass(llvm::Value *Value, 
                                      const CXXRecordDecl *ClassDecl,
                                      const CXXBaseSpecifierArray &BasePath, 
