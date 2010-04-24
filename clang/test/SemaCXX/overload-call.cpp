@@ -408,7 +408,7 @@ namespace PR6483 {
 }
 
 namespace PR6078 {
-  struct A { // expected-note{{candidate is the implicit copy constructor}}
+  struct A {
     A(short); // expected-note{{candidate constructor}}
     A(long); // expected-note{{candidate constructor}}
   };

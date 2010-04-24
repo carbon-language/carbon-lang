@@ -56,7 +56,7 @@ public:
 
 // This used to crash Clang.
 struct Flip;
-struct Flop { // expected-note{{candidate is the implicit copy constructor}}
+struct Flop {
   Flop();
   Flop(const Flip&); // expected-note{{candidate constructor}}
 };
@@ -201,4 +201,17 @@ namespace smart_ptr {
     X x2(make_Y());
     return X(Y());
   }
+}
+
+struct Any {
+  Any(...);
+};
+
+struct Other {
+  Other(const Other &); 
+  Other();
+};
+
+void test_any() {
+  Any any = Other(); // expected-error{{cannot pass object of non-POD type 'Other' through variadic constructor; call will abort at runtime}}
 }
