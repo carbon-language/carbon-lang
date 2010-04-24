@@ -10015,6 +10015,14 @@ bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   }
 }
 
+static bool MayFoldLoad(SDValue Op) {
+  return Op.hasOneUse() && ISD::isNormalLoad(Op.getNode());
+}
+
+static bool MayFoldIntoStore(SDValue Op) {
+  return Op.hasOneUse() && ISD::isNormalStore(*Op.getNode()->use_begin());
+}
+
 /// IsDesirableToPromoteOp - This method query the target whether it is
 /// beneficial for dag combiner to promote the specified node. If true, it
 /// should return the desired promotion type by reference.
@@ -10051,8 +10059,7 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   case ISD::SRL: {
     SDValue N0 = Op.getOperand(0);
     // Look out for (store (shl (load), x)).
-    if (isa<LoadSDNode>(N0) && N0.hasOneUse() &&
-        Op.hasOneUse() && Op.getNode()->use_begin()->getOpcode() == ISD::STORE)
+    if (MayFoldLoad(N0) && MayFoldIntoStore(Op))
       return false;
     Promote = true;
     break;
@@ -10067,12 +10074,12 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   case ISD::SUB: {
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
-    if (!Commute && isa<LoadSDNode>(N1))
+    if (!Commute && MayFoldLoad(N1))
       return false;
     // Avoid disabling potential load folding opportunities.
-    if ((isa<LoadSDNode>(N0) && N0.hasOneUse()) && !isa<ConstantSDNode>(N1))
+    if (MayFoldLoad(N0) && (!isa<ConstantSDNode>(N1) || MayFoldIntoStore(Op)))
       return false;
-    if ((isa<LoadSDNode>(N1) && N1.hasOneUse()) && !isa<ConstantSDNode>(N0))
+    if (MayFoldLoad(N1) && (!isa<ConstantSDNode>(N0) || MayFoldIntoStore(Op)))
       return false;
     Promote = true;
   }
