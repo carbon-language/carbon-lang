@@ -368,12 +368,14 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(genericParser));
   
   AsmToken OpcodeToken = genericParser.Lex();
-  genericParser.Lex();  // consume next token, because specificParser expects us to
-  
+  AsmToken NextToken = genericParser.Lex();  // consume next token, because specificParser expects us to
+    
   if (OpcodeToken.is(AsmToken::Identifier)) {
     instName = OpcodeToken.getString();
     instLoc = OpcodeToken.getLoc();
-    if (TargetParser->ParseInstruction(instName, instLoc, operands))
+    
+    if (NextToken.isNot(AsmToken::Eof) &&
+        TargetParser->ParseInstruction(instName, instLoc, operands))
       ret = -1;
   } else {
     ret = -1;
