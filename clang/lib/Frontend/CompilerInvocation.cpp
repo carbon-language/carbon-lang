@@ -361,12 +361,6 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-cxx-inheritance-view");
     Res.push_back(Opts.ViewClassInheritance);
   }
-  for (unsigned i = 0, e = Opts.FixItLocations.size(); i != e; ++i) {
-    Res.push_back("-fixit-at");
-    Res.push_back(Opts.FixItLocations[i].FileName + ":" +
-                  llvm::utostr(Opts.FixItLocations[i].Line) + ":" +
-                  llvm::utostr(Opts.FixItLocations[i].Column));
-  }
   if (!Opts.CodeCompletionAt.FileName.empty()) {
     Res.push_back("-code-completion-at");
     Res.push_back(Opts.CodeCompletionAt.FileName + ":" +
@@ -910,6 +904,9 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
       Opts.ProgramAction = frontend::EmitLLVMOnly; break;
     case OPT_emit_obj:
       Opts.ProgramAction = frontend::EmitObj; break;
+    case OPT_fixit_EQ:
+      Opts.FixItSuffix = A->getValue(Args);
+      // fall-through!
     case OPT_fixit:
       Opts.ProgramAction = frontend::FixIt; break;
     case OPT_emit_pch:
@@ -955,20 +952,6 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.DebugCodeCompletionPrinter =
     !Args.hasArg(OPT_no_code_completion_debug_printer);
   Opts.DisableFree = Args.hasArg(OPT_disable_free);
-
-  Opts.FixItLocations.clear();
-  for (arg_iterator it = Args.filtered_begin(OPT_fixit_at),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const char *Loc = it->getValue(Args);
-    ParsedSourceLocation PSL = ParsedSourceLocation::FromString(Loc);
-
-    if (PSL.FileName.empty()) {
-      Diags.Report(diag::err_drv_invalid_value) << it->getAsString(Args) << Loc;
-      continue;
-    }
-
-    Opts.FixItLocations.push_back(PSL);
-  }
 
   Opts.OutputFile = getLastArgValue(Args, OPT_o);
   Opts.Plugins = getAllArgValues(Args, OPT_load);

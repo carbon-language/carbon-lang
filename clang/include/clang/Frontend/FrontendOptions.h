@@ -92,8 +92,8 @@ public:
   /// If given, the name for a C++ class to view the inheritance of.
   std::string ViewClassInheritance;
 
-  /// A list of locations to apply fix-its at.
-  std::vector<ParsedSourceLocation> FixItLocations;
+  /// If given, the new suffix for fix-it rewritten files.
+  std::string FixItSuffix;
 
   /// If given, enable code completion at the provided location.
   ParsedSourceLocation CodeCompletionAt;

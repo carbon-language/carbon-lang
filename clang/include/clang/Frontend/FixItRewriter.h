@@ -27,16 +27,13 @@ namespace clang {
 class SourceManager;
 class FileEntry;
 
-/// \brief Stores a source location in the form that it shows up on
-/// the Clang command line, e.g., file:line:column.  A line and column of zero
-/// indicates the whole file.
-///
-/// FIXME: Would prefer to use real SourceLocations, but I don't see a
-/// good way to resolve them during parsing.
-struct RequestedSourceLocation {
-  const FileEntry *File;
-  unsigned Line;
-  unsigned Column;
+class FixItPathRewriter {
+public:
+  virtual ~FixItPathRewriter();
+
+  /// \brief This file is about to be rewritten. Return the name of the file
+  /// that is okay to write to.
+  virtual std::string RewriteFilename(const std::string &Filename) = 0;
 };
 
 class FixItRewriter : public DiagnosticClient {
@@ -51,29 +48,22 @@ class FixItRewriter : public DiagnosticClient {
   /// of error messages.
   DiagnosticClient *Client;
 
+  /// \brief Turn an input path into an output path. NULL implies overwriting
+  /// the original.
+  FixItPathRewriter *PathRewriter;
+
   /// \brief The number of rewriter failures.
   unsigned NumFailures;
-
-  /// \brief Locations at which we should perform fix-its.
-  ///
-  /// When empty, perform fix-it modifications everywhere.
-  llvm::SmallVector<RequestedSourceLocation, 4> FixItLocations;
 
 public:
   typedef Rewriter::buffer_iterator iterator;
 
   /// \brief Initialize a new fix-it rewriter.
   FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
-                const LangOptions &LangOpts);
+                const LangOptions &LangOpts, FixItPathRewriter *PathRewriter);
 
   /// \brief Destroy the fix-it rewriter.
   ~FixItRewriter();
-
-  /// \brief Add a location where fix-it modifications should be
-  /// performed.
-  void addFixItLocation(RequestedSourceLocation Loc) {
-    FixItLocations.push_back(Loc);
-  }
 
   /// \brief Check whether there are modifications for a given file.
   bool IsModified(FileID ID) const {

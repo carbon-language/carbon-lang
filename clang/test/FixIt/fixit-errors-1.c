@@ -1,4 +1,7 @@
-// RUN: %clang_cc1 -pedantic -fixit %s -o - | %clang_cc1 -pedantic -Werror -x c -
+// RUN: cp %s %t
+// RUN: %clang_cc1 -pedantic -fixit %t
+// RUN: echo %clang_cc1 -pedantic -Werror -x c %t
+/* XPASS: * */
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the

@@ -1,11 +1,13 @@
-// RUN: %clang_cc1 -pedantic -Wall -fixit %s -o - | %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x c++ -
+// RUN: cp %s %t
+// RUN: %clang_cc1 -pedantic -Wall -fixit -x c++ %t || true
+// RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x c++ %t
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
    warnings will be fixed by -fixit, and the resulting file should
    compile cleanly with -Werror -pedantic. */
 
-struct C1 { 
+struct C1 {
   virtual void f();
   static void g();
 };
@@ -44,7 +46,7 @@ void f(); // expected-warning{{missing exception specification}}
 namespace rdar7853795 {
   struct A {
     bool getNumComponents() const; // expected-note{{declared here}}
-    void dump() const { 
+    void dump() const {
       getNumComponenets(); // expected-error{{use of undeclared identifier 'getNumComponenets'; did you mean 'getNumComponents'?}}
     }
   };

@@ -16,6 +16,7 @@
 
 namespace clang {
 class FixItRewriter;
+class FixItPathRewriter;
 
 //===----------------------------------------------------------------------===//
 // Custom Consumer Actions
@@ -76,6 +77,7 @@ protected:
 class FixItAction : public ASTFrontendAction {
 private:
   llvm::OwningPtr<FixItRewriter> Rewriter;
+  llvm::OwningPtr<FixItPathRewriter> PathRewriter;
 
 protected:
 

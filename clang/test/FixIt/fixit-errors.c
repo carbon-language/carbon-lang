@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -pedantic -fixit %s -o - | %clang_cc1 -pedantic -Werror -x c -
+// RUN: cp %s %t
+// RUN: %clang_cc1 -pedantic -verify -fixit -x c %t || true
+// RUN: %clang_cc1 -pedantic -Werror -x c %t
 // XFAIL: *
 
 /* This is a test of the various code modification hints that are

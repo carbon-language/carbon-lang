@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// FIXME: the test below isn't testing quite what we want...
-// RUN: %clang_cc1 -fsyntax-only -fixit -o - %s | %clang_cc1 -fsyntax-only -pedantic -Werror -x objective-c -
+// RUN: cp %s %t
+// RUN: %clang_cc1 -fsyntax-only -fixit %t || true
+// RUN: %clang_cc1 -fsyntax-only -pedantic -Werror -x objective-c %t
 // XFAIL: *
 
 @interface NSString // expected-note{{'NSString' declared here}}

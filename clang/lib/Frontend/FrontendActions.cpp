@@ -19,6 +19,7 @@
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -113,85 +114,36 @@ ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
   return new ASTConsumer();
 }
 
-/// AddFixItLocations - Add any individual user specified "fix-it" locations,
-/// and return true on success.
-static bool AddFixItLocations(CompilerInstance &CI,
-                              FixItRewriter &FixItRewrite) {
-  const std::vector<ParsedSourceLocation> &Locs =
-    CI.getFrontendOpts().FixItLocations;
-  for (unsigned i = 0, e = Locs.size(); i != e; ++i) {
-    const FileEntry *File = CI.getFileManager().getFile(Locs[i].FileName);
-    if (!File) {
-      CI.getDiagnostics().Report(diag::err_fe_unable_to_find_fixit_file)
-        << Locs[i].FileName;
-      return false;
-    }
+class FixItActionSuffixInserter : public FixItPathRewriter {
+  std::string NewSuffix;
 
-    RequestedSourceLocation Requested;
-    Requested.File = File;
-    Requested.Line = Locs[i].Line;
-    Requested.Column = Locs[i].Column;
-    FixItRewrite.addFixItLocation(Requested);
+public:
+  explicit FixItActionSuffixInserter(std::string NewSuffix)
+    : NewSuffix(NewSuffix) {}
+
+  std::string RewriteFilename(const std::string &Filename) {
+    llvm::sys::Path Path(Filename);
+    std::string Suffix = Path.getSuffix();
+    Path.eraseSuffix();
+    Path.appendSuffix(NewSuffix + "." + Suffix);
+    return Path.c_str();
   }
-
-  const std::string &OutputFile = CI.getFrontendOpts().OutputFile;
-  if (Locs.empty() && !OutputFile.empty()) {
-    // FIXME: we will issue "FIX-IT applied suggested code changes" for every
-    // input, but only the main file will actually be rewritten.
-    const std::vector<std::pair<FrontendOptions::InputKind, std::string> > &Inputs =
-      CI.getFrontendOpts().Inputs;
-    for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
-      const FileEntry *File = CI.getFileManager().getFile(Inputs[i].second);
-      assert(File && "Input file not found in FileManager");
-      RequestedSourceLocation Requested;
-      Requested.File = File;
-      Requested.Line = 0;
-      Requested.Column = 0;
-      FixItRewrite.addFixItLocation(Requested);
-    }
-  }
-
-  return true;
-}
+};
 
 bool FixItAction::BeginSourceFileAction(CompilerInstance &CI,
                                         llvm::StringRef Filename) {
+  const FrontendOptions &FEOpts = getCompilerInstance().getFrontendOpts();
+  if (!FEOpts.FixItSuffix.empty()) {
+    PathRewriter.reset(new FixItActionSuffixInserter(FEOpts.FixItSuffix));
+  } else {
+    PathRewriter.reset();
+  }
   Rewriter.reset(new FixItRewriter(CI.getDiagnostics(), CI.getSourceManager(),
-                                   CI.getLangOpts()));
-  if (!AddFixItLocations(CI, *Rewriter))
-    return false;
-
+                                   CI.getLangOpts(), PathRewriter.get()));
   return true;
 }
 
 void FixItAction::EndSourceFileAction() {
-  const FrontendOptions &FEOpts = getCompilerInstance().getFrontendOpts();
-  if (!FEOpts.OutputFile.empty()) {
-    // When called with 'clang -fixit -o filename' output only the main file.
-
-    const SourceManager &SM = getCompilerInstance().getSourceManager();
-    FileID MainFileID = SM.getMainFileID();
-    if (!Rewriter->IsModified(MainFileID)) {
-      getCompilerInstance().getDiagnostics().Report(
-          diag::note_fixit_main_file_unchanged);
-      return;
-    }
-
-    llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
-    llvm::raw_ostream *OutFile;
-    if (FEOpts.OutputFile == "-") {
-      OutFile = &llvm::outs();
-    } else {
-      std::string Err;
-      OutFile = new llvm::raw_fd_ostream(FEOpts.OutputFile.c_str(), Err,
-                                         llvm::raw_fd_ostream::F_Binary);
-      OwnedStream.reset(OutFile);
-    }
-
-    Rewriter->WriteFixedFile(MainFileID, *OutFile);
-    return;
-  }
-
   // Otherwise rewrite all files.
   Rewriter->WriteFixedFiles();
 }

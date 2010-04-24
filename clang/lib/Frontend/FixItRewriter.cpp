@@ -26,8 +26,12 @@
 using namespace clang;
 
 FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
-                             const LangOptions &LangOpts)
-  : Diags(Diags), Rewrite(SourceMgr, LangOpts), NumFailures(0) {
+                             const LangOptions &LangOpts,
+                             FixItPathRewriter *PathRewriter)
+  : Diags(Diags),
+    Rewrite(SourceMgr, LangOpts),
+    PathRewriter(PathRewriter),
+    NumFailures(0) {
   Client = Diags.getClient();
   Diags.setClient(this);
 }
@@ -52,15 +56,15 @@ bool FixItRewriter::WriteFixedFiles() {
 
   for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
-    llvm::sys::Path Path(Entry->getName());
-    std::string Suffix = Path.getSuffix();
-    Path.eraseSuffix();
-    Path.appendSuffix("fixit." + Suffix);
+    std::string Filename = Entry->getName();
+    if (PathRewriter)
+      Filename = PathRewriter->RewriteFilename(Filename);
     std::string Err;
-    llvm::raw_fd_ostream OS(Path.c_str(), Err, llvm::raw_fd_ostream::F_Binary);
+    llvm::raw_fd_ostream OS(Filename.c_str(), Err,
+                            llvm::raw_fd_ostream::F_Binary);
     if (!Err.empty()) {
       Diags.Report(clang::diag::err_fe_unable_to_open_output)
-          << Path.c_str() << Err;
+          << Filename << Err;
       continue;
     }
     RewriteBuffer &RewriteBuf = I->second;
@@ -79,47 +83,9 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                      const DiagnosticInfo &Info) {
   Client->HandleDiagnostic(DiagLevel, Info);
 
-  // Skip over any diagnostics that are ignored.
-  if (DiagLevel == Diagnostic::Ignored)
+  // Skip over any diagnostics that are ignored or notes.
+  if (DiagLevel <= Diagnostic::Note)
     return;
-
-  const SourceManager &SM = Rewrite.getSourceMgr();
-  if (!FixItLocations.empty()) {
-    // The user has specified the locations where we should perform
-    // the various fix-it modifications.
-
-    // If this diagnostic does not have any code modifications,
-    // completely ignore it, even if it's an error: fix-it locations
-    // are meant to perform specific fix-ups even in the presence of
-    // other errors.
-    if (Info.getNumFixItHints() == 0)
-      return;
-
-    // See if the location of the error is one that matches what the
-    // user requested.
-    bool AcceptableLocation = false;
-    const FileEntry *File = SM.getFileEntryForID(
-                                                Info.getLocation().getFileID());
-    unsigned Line = Info.getLocation().getSpellingLineNumber();
-    unsigned Column = Info.getLocation().getSpellingColumnNumber();
-    for (llvm::SmallVector<RequestedSourceLocation, 4>::iterator
-           Loc = FixItLocations.begin(), LocEnd = FixItLocations.end();
-         Loc != LocEnd; ++Loc) {
-      if (Loc->File == File &&
-          ((Loc->Line == 0 && Loc->Column == 0 &&
-            DiagLevel > Diagnostic::Note) ||
-           (Loc->Line == Line && Loc->Column == Column))) {
-        AcceptableLocation = true;
-        break;
-      }
-    }
-
-    if (!AcceptableLocation)
-      return;
-  } else if (DiagLevel == Diagnostic::Note) {
-    // Don't apply fix-it modifications in notes.
-    return;
-  }
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.
@@ -197,3 +163,5 @@ void FixItRewriter::Diag(FullSourceLoc Loc, unsigned DiagID) {
   Diags.Report(Loc, DiagID);
   Diags.setClient(this);
 }
+
+FixItPathRewriter::~FixItPathRewriter() {}

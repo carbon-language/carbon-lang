@@ -245,8 +245,6 @@ def x : Separate<"-x">, HelpText<"Input language type">;
 def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
   MetaVarName<"<class name>">,
   HelpText<"View C++ inheritance for a specified class">;
-def fixit_at : Separate<"-fixit-at">, MetaVarName<"<source location>">,
-  HelpText<"Perform Fix-It modifications at the given source location">;
 def o : Separate<"-o">, MetaVarName<"<path>">, HelpText<"Specify output file">;
 def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
@@ -279,6 +277,8 @@ def fsyntax_only : Flag<"-fsyntax-only">,
   HelpText<"Run parser and perform semantic analysis">;
 def fixit : Flag<"-fixit">,
   HelpText<"Apply fix-it advice to the input source">;
+def fixit_EQ : Joined<"-fixit=">,
+  HelpText<"Apply fix-it advice creating a file with the given suffix">;
 def parse_print_callbacks : Flag<"-parse-print-callbacks">,
   HelpText<"Run parser and print each callback invoked">;
 def emit_html : Flag<"-emit-html">,
