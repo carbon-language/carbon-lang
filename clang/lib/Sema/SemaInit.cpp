@@ -3457,18 +3457,20 @@ InitializationSequence::Perform(Sema &S,
       // We have a derived-to-base cast that produces either an rvalue or an
       // lvalue. Perform that cast.
       
+      CXXBaseSpecifierArray BasePath;
+
       // Casts to inaccessible base classes are allowed with C-style casts.
       bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
       if (S.CheckDerivedToBaseConversion(SourceType, Step->Type,
                                          CurInitExpr->getLocStart(),
-                                         CurInitExpr->getSourceRange(), 0,
-                                         IgnoreBaseAccess))
+                                         CurInitExpr->getSourceRange(), 
+                                         &BasePath, IgnoreBaseAccess))
         return S.ExprError();
         
       CurInit = S.Owned(new (S.Context) ImplicitCastExpr(Step->Type,
                                                     CastExpr::CK_DerivedToBase,
                                                     (Expr*)CurInit.release(),
-                                                    CXXBaseSpecifierArray(),
+                                                    BasePath,
                                      Step->Kind == SK_CastDerivedToBaseLValue));
       break;
     }

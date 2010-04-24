@@ -1343,6 +1343,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 /// error, or returns false otherwise.
 bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
                                   CastExpr::CastKind &Kind,
+                                  CXXBaseSpecifierArray& BasePath,
                                   bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
 
@@ -1357,7 +1358,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
         // ambiguous or inaccessible conversion.
         if (CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
                                          From->getExprLoc(),
-                                         From->getSourceRange(), 0,
+                                         From->getSourceRange(), &BasePath,
                                          IgnoreBaseAccess))
           return true;
         

@@ -3794,9 +3794,11 @@ static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                           CastExpr::CastKind& Kind,
+                          CXXBaseSpecifierArray &BasePath,
                           bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle);
+    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, BasePath,
+                              FunctionalStyle);
 
   DefaultFunctionArrayLvalueConversion(castExpr);
 
@@ -3957,10 +3959,9 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
   Expr *castExpr = static_cast<Expr*>(Op.get());
 
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-  // FIXME: Initialize base path!
   CXXBaseSpecifierArray BasePath;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
-                     Kind))
+                     Kind, BasePath))
     return ExprError();
 
   Op.release();

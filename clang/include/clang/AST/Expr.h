@@ -1658,9 +1658,12 @@ private:
   void CheckBasePath() const {
 #ifndef NDEBUG
     switch (getCastKind()) {
+    case CK_DerivedToBase:
+      assert(!BasePath.empty() && "Cast kind should have a base path!");
+      break;
+
     // FIXME: We should add inheritance paths for these.
     case CK_BaseToDerived:
-    case CK_DerivedToBase:
     case CK_UncheckedDerivedToBase:
     case CK_BaseToDerivedMemberPointer:
     case CK_DerivedToBaseMemberPointer:
@@ -1687,7 +1690,7 @@ private:
     case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-      assert(BasePath.empty() && "Cast kind shoudl not have a base path!");
+      assert(BasePath.empty() && "Cast kind should not have a base path!");
       break;
     }
 #endif

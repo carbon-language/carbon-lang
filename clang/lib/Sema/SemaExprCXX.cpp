@@ -501,9 +501,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    // FIXME: Initialize base path!
     CXXBaseSpecifierArray BasePath;
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, /*FunctionalStyle=*/true))
+    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, BasePath,
+                       /*FunctionalStyle=*/true))
       return ExprError();
 
     exprs.release();
@@ -1745,9 +1745,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
     
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    if (CheckPointerConversion(From, ToType, Kind, IgnoreBaseAccess))
+    CXXBaseSpecifierArray BasePath;
+    if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
-    ImpCastExprToType(From, ToType, Kind);
+    ImpCastExprToType(From, ToType, Kind, /*isLvalue=*/false, BasePath);
     break;
   }
   
@@ -1875,7 +1876,7 @@ QualType Sema::CheckPointerToMemberOperands(
         << OpSpelling << (int)isIndirect)) {
       return QualType();
     }
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                        /*DetectVirtual=*/false);
     // FIXME: Would it be useful to print full ambiguity paths, or is that
     // overkill?
@@ -1888,7 +1889,11 @@ QualType Sema::CheckPointerToMemberOperands(
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
     bool isLValue = !isIndirect && lex->isLvalue(Context) == Expr::LV_Valid;
-    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, isLValue);
+    
+    CXXBaseSpecifierArray BasePath;
+    BuildBasePathArray(Paths, BasePath);
+    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, isLValue,
+                      BasePath);
   }
 
   if (isa<CXXZeroInitValueExpr>(rex->IgnoreParens())) {

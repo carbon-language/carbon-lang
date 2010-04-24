@@ -1087,6 +1087,7 @@ public:
                                QualType& ConvertedType, bool &IncompatibleObjC);
   bool CheckPointerConversion(Expr *From, QualType ToType,
                               CastExpr::CastKind &Kind,
+                              CXXBaseSpecifierArray& BasePath,
                               bool IgnoreBaseAccess);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  bool InOverloadResolution,
@@ -2593,7 +2594,11 @@ public:
 
   bool IsDerivedFrom(QualType Derived, QualType Base);
   bool IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths);
-  
+
+  // FIXME: I don't like this name.
+  void BuildBasePathArray(const CXXBasePaths &Paths,
+                          CXXBaseSpecifierArray &BasePath);
+
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range,
                                     CXXBaseSpecifierArray *BasePath = 0,
@@ -4227,7 +4232,7 @@ public:
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
-                      CastExpr::CastKind &Kind,
+                      CastExpr::CastKind &Kind, CXXBaseSpecifierArray &BasePath,
                       bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors.
@@ -4248,7 +4253,9 @@ public:
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
   bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                          CastExpr::CastKind &Kind, bool FunctionalStyle);
+                          CastExpr::CastKind &Kind, 
+                          CXXBaseSpecifierArray &BasePath,
+                          bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.
   /// \param Method - May be null.

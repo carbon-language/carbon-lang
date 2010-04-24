@@ -710,6 +710,29 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths) {
   return DerivedRD->isDerivedFrom(BaseRD, Paths);
 }
 
+void Sema::BuildBasePathArray(const CXXBasePaths &Paths, 
+                              CXXBaseSpecifierArray &BasePathArray) {
+  assert(BasePathArray.empty() && "Base path array must be empty!");
+  assert(Paths.isRecordingPaths() && "Must record paths!");
+  
+  const CXXBasePath &Path = Paths.front();
+       
+  // We first go backward and check if we have a virtual base.
+  // FIXME: It would be better if CXXBasePath had the base specifier for
+  // the nearest virtual base.
+  unsigned Start = 0;
+  for (unsigned I = Path.size(); I != 0; --I) {
+    if (Path[I - 1].Base->isVirtual()) {
+      Start = I - 1;
+      break;
+    }
+  }
+
+  // Now add all bases.
+  for (unsigned I = Start, E = Path.size(); I != E; ++I)
+    BasePathArray.push_back(Path[I].Base);
+}
+
 /// CheckDerivedToBaseConversion - Check whether the Derived-to-Base
 /// conversion (where Derived and Base are class types) is
 /// well-formed, meaning that the conversion is unambiguous (and
@@ -737,23 +760,23 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   (void)DerivationOkay;
   
   if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
-    if (!InaccessibleBaseID)
-      return false;
-
-    // Check that the base class can be accessed.
-    switch (CheckBaseClassAccess(Loc, Base, Derived, Paths.front(),
-                                 InaccessibleBaseID)) {
-    case AR_inaccessible: 
-      return true;
-    case AR_accessible: 
-    case AR_dependent:
-    case AR_delayed:
-      // Build a base path if necessary.
-      if (BasePath) {
-        // FIXME: Do this!
+    if (InaccessibleBaseID) {
+      // Check that the base class can be accessed.
+      switch (CheckBaseClassAccess(Loc, Base, Derived, Paths.front(),
+                                   InaccessibleBaseID)) {
+        case AR_inaccessible: 
+          return true;
+        case AR_accessible: 
+        case AR_dependent:
+        case AR_delayed:
+          break;
       }
-      return false;
     }
+    
+    // Build a base path if necessary.
+    if (BasePath)
+      BuildBasePathArray(Paths, *BasePath);
+    return false;
   }
   
   // We know that the derived-to-base conversion is ambiguous, and

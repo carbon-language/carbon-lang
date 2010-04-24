@@ -300,9 +300,35 @@ void StmtDumper::VisitExpr(Expr *Node) {
   DumpExpr(Node);
 }
 
+static void DumpBasePath(llvm::raw_ostream &OS, CastExpr *Node) {
+  if (Node->getBasePath().empty())
+    return;
+
+  OS << " (";
+  bool First = true;
+  for (CXXBaseSpecifierArray::iterator I = Node->getBasePath().begin(),
+       E = Node->getBasePath().end(); I != E; ++I) {
+    const CXXBaseSpecifier *Base = *I;
+    if (!First)
+      OS << " -> ";
+    
+    const CXXRecordDecl *RD =
+    cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    
+    if (Base->isVirtual())
+      OS << "virtual ";
+    OS << RD->getName();
+    First = false;
+  }
+    
+  OS << ')';
+}
+
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
   DumpExpr(Node);
-  OS << " <" << Node->getCastKindName() << ">";
+  OS << " <" << Node->getCastKindName();
+  DumpBasePath(OS, Node);
+  OS << ">";
 }
 
 void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
@@ -452,7 +478,9 @@ void StmtDumper::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   DumpExpr(Node);
   OS << " " << Node->getCastName() 
      << "<" << Node->getTypeAsWritten().getAsString() << ">"
-     << " <" << Node->getCastKindName() << ">";
+     << " <" << Node->getCastKindName();
+  DumpBasePath(OS, Node);
+  OS << ">";
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
