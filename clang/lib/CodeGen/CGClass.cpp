@@ -88,31 +88,6 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
   Types.ConvertType(getContext().getPointerDiffType());
   
   return llvm::ConstantInt::get(PtrDiffTy, Offset);
-}  
-
-llvm::Constant *
-CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *Class,
-                                            const CXXRecordDecl *BaseClass) {
-  if (Class == BaseClass)
-    return 0;
-
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
-  if (!const_cast<CXXRecordDecl *>(Class)->
-        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClass), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return 0;
-  }
-
-  uint64_t Offset = ComputeNonVirtualBaseClassOffset(getContext(),
-                                                     Paths.front(), 0);
-  if (!Offset)
-    return 0;
-
-  const llvm::Type *PtrDiffTy = 
-    Types.ConvertType(getContext().getPointerDiffType());
-
-  return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }
 
 /// Gets the address of a virtual base class within a complete object.

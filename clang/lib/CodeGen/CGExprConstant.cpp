@@ -556,8 +556,6 @@ public:
       const MemberPointerType *DestTy = 
         E->getType()->getAs<MemberPointerType>();
       
-      const CXXRecordDecl *BaseClass =
-        cast<CXXRecordDecl>(cast<RecordType>(SrcTy->getClass())->getDecl());
       const CXXRecordDecl *DerivedClass =
         cast<CXXRecordDecl>(cast<RecordType>(DestTy->getClass())->getDecl());
 
@@ -571,7 +569,7 @@ public:
         
         // Check if we need to update the adjustment.
         if (llvm::Constant *Offset = 
-              CGM.GetNonVirtualBaseClassOffset(DerivedClass, BaseClass)) {
+            CGM.GetNonVirtualBaseClassOffset(DerivedClass, E->getBasePath())) {
           llvm::Constant *Values[2];
         
           Values[0] = CS->getOperand(0);

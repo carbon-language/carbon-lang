@@ -241,10 +241,7 @@ public:
   llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
 
   /// GetNonVirtualBaseClassOffset - Returns the offset from a derived class to 
-  /// its base class. Returns null if the offset is 0. 
-  llvm::Constant *
-  GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                               const CXXRecordDecl *BaseClassDecl);
+  /// a class. Returns null if the offset is 0. 
   llvm::Constant *
   GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                const CXXBaseSpecifierArray &BasePath);
