@@ -3255,19 +3255,24 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           Previous.getResultKind() != LookupResult::FoundOverloaded) &&
          "previous declaration set still overloaded");
 
+  NamedDecl *PrincipalDecl = (FunctionTemplate
+                              ? cast<NamedDecl>(FunctionTemplate)
+                              : NewFD);
+
   if (isFriend && Redeclaration) {
     AccessSpecifier Access = AS_public;
     if (!NewFD->isInvalidDecl())
       Access = NewFD->getPreviousDeclaration()->getAccess();
 
-    if (FunctionTemplate) {
-      FunctionTemplate->setObjectOfFriendDecl(true);
-      FunctionTemplate->setAccess(Access);
-    } else {
-      NewFD->setObjectOfFriendDecl(true);
-    }
     NewFD->setAccess(Access);
+    if (FunctionTemplate) FunctionTemplate->setAccess(Access);
+
+    PrincipalDecl->setObjectOfFriendDecl(true);
   }
+
+  if (NewFD->isOverloadedOperator() && !DC->isRecord() &&
+      PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+    PrincipalDecl->setNonMemberOperator();
 
   // If we have a function template, check the template parameter
   // list. This will check and merge default template arguments.

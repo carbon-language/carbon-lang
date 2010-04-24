@@ -1124,21 +1124,26 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                    isExplicitSpecialization, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
+  NamedDecl *PrincipalDecl = (TemplateParams
+                              ? cast<NamedDecl>(FunctionTemplate)
+                              : Function);
+
   // If the original function was part of a friend declaration,
   // inherit its namespace state and add it to the owner.
   if (isFriend) {
-    NamedDecl *ToFriendD = 0;
     NamedDecl *PrevDecl;
-    if (TemplateParams) {
-      ToFriendD = cast<NamedDecl>(FunctionTemplate);
+    if (TemplateParams)
       PrevDecl = FunctionTemplate->getPreviousDeclaration();
-    } else {
-      ToFriendD = Function;
+    else
       PrevDecl = Function->getPreviousDeclaration();
-    }
-    ToFriendD->setObjectOfFriendDecl(PrevDecl != NULL);
-    DC->makeDeclVisibleInContext(ToFriendD, /*Recoverable=*/ false);
+
+    PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
+    DC->makeDeclVisibleInContext(PrincipalDecl, /*Recoverable=*/ false);
   }
+
+  if (Function->isOverloadedOperator() && !DC->isRecord() &&
+      PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+    PrincipalDecl->setNonMemberOperator();
 
   return Function;
 }

@@ -197,6 +197,11 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setParams(Params.data(), NumParams);
+
+  // FIXME: order this properly w.r.t. friendness
+  // FIXME: this same thing needs to happen for function templates
+  if (FD->isOverloadedOperator() && !FD->getDeclContext()->isRecord())
+    FD->setNonMemberOperator();
 }
 
 void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
