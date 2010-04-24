@@ -3138,6 +3138,8 @@ getAssignmentAction(const InitializedEntity &Entity) {
   return Sema::AA_Converting;
 }
 
+/// \brief Whether we should binding a created object as a temporary when
+/// initializing the given entity.
 static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   switch (Entity.getKind()) {
   case InitializedEntity::EK_ArrayElement:
@@ -3156,6 +3158,28 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   }
   
   llvm_unreachable("missed an InitializedEntity kind?");
+}
+
+/// \brief Whether the given entity, when initialized with an object
+/// created for that initialization, requires destruction.
+static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
+  switch (Entity.getKind()) {
+    case InitializedEntity::EK_Member:
+    case InitializedEntity::EK_Result:
+    case InitializedEntity::EK_New:
+    case InitializedEntity::EK_Base:
+    case InitializedEntity::EK_VectorElement:
+      return false;
+      
+    case InitializedEntity::EK_Variable:
+    case InitializedEntity::EK_Parameter:
+    case InitializedEntity::EK_Temporary:
+    case InitializedEntity::EK_ArrayElement:
+    case InitializedEntity::EK_Exception:
+      return true;
+  }
+  
+  llvm_unreachable("missed an InitializedEntity kind?");  
 }
 
 /// \brief Make a (potentially elidable) temporary copy of the object
@@ -3551,6 +3575,7 @@ InitializationSequence::Perform(Sema &S,
       bool IsCopy = false;
       FunctionDecl *Fn = Step->Function.Function;
       DeclAccessPair FoundFn = Step->Function.FoundDecl;
+      bool CreatedObject = false;
       bool IsLvalue = false;
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
@@ -3581,6 +3606,8 @@ InitializationSequence::Perform(Sema &S,
         if (S.Context.hasSameUnqualifiedType(SourceType, Class) ||
             S.IsDerivedFrom(SourceType, Class))
           IsCopy = true;
+        
+        CreatedObject = true;
       } else {
         // Build a call to the conversion function.
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
@@ -3606,23 +3633,37 @@ InitializationSequence::Perform(Sema &S,
           return S.ExprError();
         
         CastKind = CastExpr::CK_UserDefinedConversion;
+        
+        CreatedObject = Conversion->getResultType()->isRecordType();
       }
       
       bool RequiresCopy = !IsCopy && 
         getKind() != InitializationSequence::ReferenceBinding;
       if (RequiresCopy || shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
-
+      else if (CreatedObject && shouldDestroyTemporary(Entity)) {
+        CurInitExpr = static_cast<Expr *>(CurInit.get());
+        QualType T = CurInitExpr->getType();
+        if (const RecordType *Record = T->getAs<RecordType>()) {
+          CXXDestructorDecl *Destructor
+            = cast<CXXRecordDecl>(Record->getDecl())->getDestructor(S.Context);
+          S.CheckDestructorAccess(CurInitExpr->getLocStart(), Destructor, 
+                                  S.PDiag(diag::err_access_dtor_temp) << T);
+          S.MarkDeclarationReferenced(CurInitExpr->getLocStart(), Destructor);
+        }
+      }
+      
       CurInitExpr = CurInit.takeAs<Expr>();
       CurInit = S.Owned(new (S.Context) ImplicitCastExpr(CurInitExpr->getType(),
-                                                        CastKind, 
-                                                        CurInitExpr,
+                                                         CastKind, 
+                                                         CurInitExpr,
                                                         CXXBaseSpecifierArray(),
-                                                        IsLvalue));
+                                                         IsLvalue));
       
       if (RequiresCopy)
         CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
                              move(CurInit), /*IsExtraneousCopy=*/false);
+      
       break;
     }
         
@@ -3705,7 +3746,7 @@ InitializationSequence::Perform(Sema &S,
       
       if (shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
-
+      
       break;
     }
         

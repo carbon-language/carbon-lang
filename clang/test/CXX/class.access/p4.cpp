@@ -349,4 +349,17 @@ namespace test14 {
   void test() {
     foo(); // expected-error {{temporary of type 'test14::A' has private destructor}}
   }
+
+  class X {
+    ~X(); // expected-note {{declared private here}}
+  };
+  
+  struct Y1 {
+    operator X();
+  };
+  
+  void g() {
+    const X &xr = Y1(); // expected-error{{temporary of type 'test14::X' has private destructor}}
+  }
 }
+
