@@ -3232,7 +3232,11 @@ static Sema::OwningExprResult CopyObject(Sema &S,
     Loc = CurInitExpr->getLocStart();
     break;
   }
-    
+
+  // Make sure that the type we are copying is complete.   
+  if (S.RequireCompleteType(Loc, T, S.PDiag(diag::err_temp_copy_incomplete)))
+    return move(CurInit);
+
   // Perform overload resolution using the class's copy constructors.
   DeclarationName ConstructorName
     = S.Context.DeclarationNames.getCXXConstructorName(

@@ -720,7 +720,9 @@ def err_temp_copy_deleted : Error<
   "object|copying member subobject|copying array element|allocating object|"
   "copying temporary|initializing base subobject|initializing vector element}0 "
   "of type %1 invokes deleted constructor">;
-  
+def err_temp_copy_incomplete : Error<
+  "copying a temporary object of incomplete type %0">;
+
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
     "cannot determine the %select{type|declared type}0 of an overloaded "

@@ -84,3 +84,18 @@ namespace PR6376 {
 
   template struct Y<int, float>;
 }
+
+namespace TemporaryObjectCopy {
+  // Make sure we instantiate classes when we create a temporary copy.
+  template<typename T>
+  struct X {
+    X(T); 
+  };
+
+  template<typename T>
+  void f(T t) {
+    const X<int> &x = X<int>(t);
+  }
+
+  template void f(int);
+}
