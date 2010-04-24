@@ -68,7 +68,7 @@ bool FixItRewriter::WriteFixedFiles() {
       continue;
     }
     RewriteBuffer &RewriteBuf = I->second;
-    OS << std::string(RewriteBuf.begin(), RewriteBuf.end());
+    RewriteBuf.write(OS);
     OS.flush();
   }
 
