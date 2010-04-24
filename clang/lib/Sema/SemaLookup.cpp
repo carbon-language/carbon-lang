@@ -193,6 +193,37 @@ namespace {
   };
 }
 
+static bool IsAcceptableIDNS(NamedDecl *D, unsigned IDNS) {
+  return D->isInIdentifierNamespace(IDNS);
+}
+
+static bool IsAcceptableOperatorName(NamedDecl *D, unsigned IDNS) {
+  return D->isInIdentifierNamespace(IDNS) &&
+    !D->getDeclContext()->isRecord();
+}
+
+/// Gets the default result filter for the given lookup.
+static inline
+LookupResult::ResultFilter getResultFilter(Sema::LookupNameKind NameKind) {
+  switch (NameKind) {
+  case Sema::LookupOrdinaryName:
+  case Sema::LookupTagName:
+  case Sema::LookupMemberName:
+  case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
+  case Sema::LookupUsingDeclName:
+  case Sema::LookupObjCProtocolName:
+  case Sema::LookupNestedNameSpecifierName:
+  case Sema::LookupNamespaceName:
+    return &IsAcceptableIDNS;
+
+  case Sema::LookupOperatorName:
+    return &IsAcceptableOperatorName;
+  }
+
+  llvm_unreachable("unkknown lookup kind");
+  return 0;
+}
+
 // Retrieve the set of identifier namespaces that correspond to a
 // specific kind of name lookup.
 static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
@@ -201,19 +232,13 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
   unsigned IDNS = 0;
   switch (NameKind) {
   case Sema::LookupOrdinaryName:
+  case Sema::LookupOperatorName:
   case Sema::LookupRedeclarationWithLinkage:
     IDNS = Decl::IDNS_Ordinary;
     if (CPlusPlus) {
       IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member | Decl::IDNS_Namespace;
       if (Redeclaration) IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
     }
-    break;
-
-  case Sema::LookupOperatorName:
-    // Operator lookup is its own crazy thing;  it is not the same
-    // as (e.g.) looking up an operator name for redeclaration.
-    assert(!Redeclaration && "cannot do redeclaration operator lookup");
-    IDNS = Decl::IDNS_NonMemberOperator;
     break;
 
   case Sema::LookupTagName:
@@ -262,6 +287,7 @@ void LookupResult::configure() {
   IDNS = getIDNS(LookupKind,
                  SemaRef.getLangOptions().CPlusPlus,
                  isForRedeclaration());
+  IsAcceptableFn = getResultFilter(LookupKind);
 
   // If we're looking for one of the allocation or deallocation
   // operators, make sure that the implicitly-declared new and delete

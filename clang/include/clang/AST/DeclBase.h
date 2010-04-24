@@ -132,12 +132,7 @@ public:
     /// *introduces* a number of other declarations into the current
     /// scope, and those declarations use the IDNS of their targets,
     /// but the actual using declarations go in this namespace.
-    IDNS_Using               = 0x0200,
-
-    /// This declaration is a C++ operator declared in a non-class
-    /// context.  All such operators are also in IDNS_Ordinary.
-    /// C++ lexical operator lookup looks for these.
-    IDNS_NonMemberOperator   = 0x0400
+    IDNS_Using               = 0x0200
   };
 
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
@@ -536,14 +531,6 @@ public:
     if (!mask) return FOK_None;
     return (IdentifierNamespace & (IDNS_Tag | IDNS_Ordinary) ? 
               FOK_Declared : FOK_Undeclared);
-  }
-
-  /// Specifies that this declaration is a C++ overloaded non-member.
-  void setNonMemberOperator() {
-    assert(getKind() == Function || getKind() == FunctionTemplate);
-    assert((IdentifierNamespace & IDNS_Ordinary) &&
-           "visible non-member operators should be in ordinary namespace");
-    IdentifierNamespace |= IDNS_NonMemberOperator;
   }
 
   // Implement isa/cast/dyncast/etc.

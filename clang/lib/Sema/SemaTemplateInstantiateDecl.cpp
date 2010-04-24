@@ -1140,12 +1140,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     DC->makeDeclVisibleInContext(ToFriendD, /*Recoverable=*/ false);
   }
 
-  if (Function->isOverloadedOperator() && !DC->isRecord() &&
-      Function->isInIdentifierNamespace(Decl::IDNS_Ordinary)) {
-    Function->setNonMemberOperator();
-    if (FunctionTemplate) FunctionTemplate->setNonMemberOperator();
-  }
-
   return Function;
 }
 
