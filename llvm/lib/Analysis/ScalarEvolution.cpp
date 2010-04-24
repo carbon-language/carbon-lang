@@ -3416,10 +3416,22 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         // fall through
       case ICmpInst::ICMP_SGT:
       case ICmpInst::ICMP_SGE:
-        if (LHS == U->getOperand(1) && RHS == U->getOperand(2))
-          return getSMaxExpr(getSCEV(LHS), getSCEV(RHS));
-        else if (LHS == U->getOperand(2) && RHS == U->getOperand(1))
-          return getSMinExpr(getSCEV(LHS), getSCEV(RHS));
+        // a >s b ? a+x : b+x  ->  smax(a, b)+x
+        // a >s b ? b+x : a+x  ->  smin(a, b)+x
+        if (LHS->getType() == U->getType()) {
+          const SCEV *LS = getSCEV(LHS);
+          const SCEV *RS = getSCEV(RHS);
+          const SCEV *LA = getSCEV(U->getOperand(1));
+          const SCEV *RA = getSCEV(U->getOperand(2));
+          const SCEV *LDiff = getMinusSCEV(LA, LS);
+          const SCEV *RDiff = getMinusSCEV(RA, RS);
+          if (LDiff == RDiff)
+            return getAddExpr(getSMaxExpr(LS, RS), LDiff);
+          LDiff = getMinusSCEV(LA, RS);
+          RDiff = getMinusSCEV(RA, LS);
+          if (LDiff == RDiff)
+            return getAddExpr(getSMinExpr(LS, RS), LDiff);
+        }
         break;
       case ICmpInst::ICMP_ULT:
       case ICmpInst::ICMP_ULE:
@@ -3427,28 +3439,52 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         // fall through
       case ICmpInst::ICMP_UGT:
       case ICmpInst::ICMP_UGE:
-        if (LHS == U->getOperand(1) && RHS == U->getOperand(2))
-          return getUMaxExpr(getSCEV(LHS), getSCEV(RHS));
-        else if (LHS == U->getOperand(2) && RHS == U->getOperand(1))
-          return getUMinExpr(getSCEV(LHS), getSCEV(RHS));
+        // a >u b ? a+x : b+x  ->  umax(a, b)+x
+        // a >u b ? b+x : a+x  ->  umin(a, b)+x
+        if (LHS->getType() == U->getType()) {
+          const SCEV *LS = getSCEV(LHS);
+          const SCEV *RS = getSCEV(RHS);
+          const SCEV *LA = getSCEV(U->getOperand(1));
+          const SCEV *RA = getSCEV(U->getOperand(2));
+          const SCEV *LDiff = getMinusSCEV(LA, LS);
+          const SCEV *RDiff = getMinusSCEV(RA, RS);
+          if (LDiff == RDiff)
+            return getAddExpr(getUMaxExpr(LS, RS), LDiff);
+          LDiff = getMinusSCEV(LA, RS);
+          RDiff = getMinusSCEV(RA, LS);
+          if (LDiff == RDiff)
+            return getAddExpr(getUMinExpr(LS, RS), LDiff);
+        }
         break;
       case ICmpInst::ICMP_NE:
-        // n != 0 ? n : 1  ->  umax(n, 1)
-        if (LHS == U->getOperand(1) &&
-            isa<ConstantInt>(U->getOperand(2)) &&
-            cast<ConstantInt>(U->getOperand(2))->isOne() &&
+        // n != 0 ? n+x : 1+x  ->  umax(n, 1)+x
+        if (LHS->getType() == U->getType() &&
             isa<ConstantInt>(RHS) &&
-            cast<ConstantInt>(RHS)->isZero())
-          return getUMaxExpr(getSCEV(LHS), getSCEV(U->getOperand(2)));
+            cast<ConstantInt>(RHS)->isZero()) {
+          const SCEV *One = getConstant(LHS->getType(), 1);
+          const SCEV *LS = getSCEV(LHS);
+          const SCEV *LA = getSCEV(U->getOperand(1));
+          const SCEV *RA = getSCEV(U->getOperand(2));
+          const SCEV *LDiff = getMinusSCEV(LA, LS);
+          const SCEV *RDiff = getMinusSCEV(RA, One);
+          if (LDiff == RDiff)
+            return getAddExpr(getUMaxExpr(LS, One), LDiff);
+        }
         break;
       case ICmpInst::ICMP_EQ:
-        // n == 0 ? 1 : n  ->  umax(n, 1)
-        if (LHS == U->getOperand(2) &&
-            isa<ConstantInt>(U->getOperand(1)) &&
-            cast<ConstantInt>(U->getOperand(1))->isOne() &&
+        // n == 0 ? 1+x : n+x  ->  umax(n, 1)+x
+        if (LHS->getType() == U->getType() &&
             isa<ConstantInt>(RHS) &&
-            cast<ConstantInt>(RHS)->isZero())
-          return getUMaxExpr(getSCEV(LHS), getSCEV(U->getOperand(1)));
+            cast<ConstantInt>(RHS)->isZero()) {
+          const SCEV *One = getConstant(LHS->getType(), 1);
+          const SCEV *LS = getSCEV(LHS);
+          const SCEV *LA = getSCEV(U->getOperand(1));
+          const SCEV *RA = getSCEV(U->getOperand(2));
+          const SCEV *LDiff = getMinusSCEV(LA, One);
+          const SCEV *RDiff = getMinusSCEV(RA, LS);
+          if (LDiff == RDiff)
+            return getAddExpr(getUMaxExpr(LS, One), LDiff);
+        }
         break;
       default:
         break;
@@ -3884,6 +3920,57 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
         const SCEV *Ret = AddRec->getNumIterationsInRange(CompRange, *this);
         if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
       }
+
+  // If possible, canonicalize GE/LE comparisons to GT/LT comparisons, by
+  // adding or subtracting 1 from one of the operands.
+  switch (Cond) {
+  case ICmpInst::ICMP_SLE:
+    if (!getSignedRange(RHS).getSignedMax().isMaxSignedValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), 1, true), RHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Cond = ICmpInst::ICMP_SLT;
+    } else if (!getSignedRange(LHS).getSignedMin().isMinSignedValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), -1, true), LHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Cond = ICmpInst::ICMP_SLT;
+    }
+    break;
+  case ICmpInst::ICMP_SGE:
+    if (!getSignedRange(RHS).getSignedMin().isMinSignedValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), -1, true), RHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Cond = ICmpInst::ICMP_SGT;
+    } else if (!getSignedRange(LHS).getSignedMax().isMaxSignedValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), 1, true), LHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Cond = ICmpInst::ICMP_SGT;
+    }
+    break;
+  case ICmpInst::ICMP_ULE:
+    if (!getUnsignedRange(RHS).getUnsignedMax().isMaxValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), 1, false), RHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Cond = ICmpInst::ICMP_ULT;
+    } else if (!getUnsignedRange(LHS).getUnsignedMin().isMinValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), -1, false), LHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Cond = ICmpInst::ICMP_ULT;
+    }
+    break;
+  case ICmpInst::ICMP_UGE:
+    if (!getUnsignedRange(RHS).getUnsignedMin().isMinValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), -1, false), RHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Cond = ICmpInst::ICMP_UGT;
+    } else if (!getUnsignedRange(LHS).getUnsignedMax().isMaxValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), 1, false), LHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Cond = ICmpInst::ICMP_UGT;
+    }
+    break;
+  default:
+    break;
+  }
 
   switch (Cond) {
   case ICmpInst::ICMP_NE: {                     // while (X != Y)
