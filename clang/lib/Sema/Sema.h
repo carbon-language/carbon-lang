@@ -3959,7 +3959,7 @@ public:
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
   void ImpCastExprToType(Expr *&Expr, QualType Type, CastExpr::CastKind Kind,
-                         CastExpr::CXXBaseVector *InheritancePath = 0,
+                         CXXBaseSpecifierArray *BasePath = 0,
                          bool isLvalue = false);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts

@@ -41,6 +41,9 @@ namespace clang {
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
 
+/// \brief A simple array of base specifiers.
+typedef UsuallyTinyPtrVector<const CXXBaseSpecifier> CXXBaseSpecifierArray;
+
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
 /// is required.
@@ -1552,8 +1555,6 @@ public:
 /// classes).
 class CastExpr : public Expr {
 public:
-  typedef UsuallyTinyPtrVector<const CXXBaseSpecifier> CXXBaseVector;
-
   /// CastKind - the kind of cast this represents.
   enum CastKind {
     /// CK_Unknown - Unknown cast kind.
@@ -1649,12 +1650,12 @@ public:
 private:
   CastKind Kind;
   Stmt *Op;
-  
-  /// InheritancePath - For derived-to-base and base-to-derived casts, the
-  /// base vector has the inheritance path.
-  CXXBaseVector *InheritancePath;
 
-  void CheckInheritancePath() const {
+  /// BasePath - For derived-to-base and base-to-derived casts, the base array
+  /// contains the inheritance path.
+  CXXBaseSpecifierArray *BasePath;
+
+  void CheckBasePath() const {
 #ifndef NDEBUG
     switch (getCastKind()) {
     // FIXME: We should add inheritance paths for these.
@@ -1686,7 +1687,7 @@ private:
     case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-      assert(!InheritancePath && "Cast kind has inheritance path!");
+      assert(!BasePath && "Cast kind shoudl not have a base path!");
       break;
     }
 #endif
@@ -1694,7 +1695,7 @@ private:
 
 protected:
   CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op,
-           CXXBaseVector *path) :
+           CXXBaseSpecifierArray *BasePath) :
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1702,8 +1703,8 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
-    Kind(kind), Op(op), InheritancePath(path) {
-      CheckInheritancePath();
+    Kind(kind), Op(op), BasePath(BasePath) {
+      CheckBasePath();
     }
 
   /// \brief Construct an empty cast.
@@ -1768,8 +1769,9 @@ class ImplicitCastExpr : public CastExpr {
 
 public:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
-                   CXXBaseVector *path, bool Lvalue) :
-    CastExpr(ImplicitCastExprClass, ty, kind, op, path), LvalueCast(Lvalue) { }
+                   CXXBaseSpecifierArray *BasePath, bool Lvalue)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), 
+    LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell)

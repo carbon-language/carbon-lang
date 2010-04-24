@@ -654,8 +654,8 @@ const char *CastExpr::getCastKindName() const {
 
 void CastExpr::DoDestroy(ASTContext &C)
 {
-  if (InheritancePath)
-    InheritancePath->Destroy();
+  if (BasePath)
+    BasePath->Destroy();
   Expr::DoDestroy(C);
 }
 
