@@ -174,16 +174,15 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
         PopCXXTemporary();
     }      
   } else {
-    const CXXRecordDecl *BaseClassDecl = 0;
+    const CXXBaseSpecifierArray *BasePath = 0;
     const CXXRecordDecl *DerivedClassDecl = 0;
     
     if (const CastExpr *CE = 
           dyn_cast<CastExpr>(E->IgnoreParenNoopCasts(getContext()))) {
       if (CE->getCastKind() == CastExpr::CK_DerivedToBase) {
         E = CE->getSubExpr();
-        
-        BaseClassDecl = 
-          cast<CXXRecordDecl>(CE->getType()->getAs<RecordType>()->getDecl());
+
+        BasePath = &CE->getBasePath();
         DerivedClassDecl = 
           cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
       }
@@ -225,10 +224,10 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     }
     
     // Check if need to perform the derived-to-base cast.
-    if (BaseClassDecl) {
+    if (BasePath) {
       llvm::Value *Derived = Val.getAggregateAddr();
       llvm::Value *Base = 
-        GetAddressOfBaseClass(Derived, DerivedClassDecl, BaseClassDecl, 
+        GetAddressOfBaseClass(Derived, DerivedClassDecl, *BasePath, 
                               /*NullCheckValue=*/false);
       return RValue::get(Base);
     }
@@ -1681,16 +1680,13 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       E->getSubExpr()->getType()->getAs<RecordType>();
     CXXRecordDecl *DerivedClassDecl = 
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
-
-    const RecordType *BaseClassTy = E->getType()->getAs<RecordType>();
-    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseClassTy->getDecl());
     
     LValue LV = EmitLValue(E->getSubExpr());
     
     // Perform the derived-to-base conversion
     llvm::Value *Base = 
       GetAddressOfBaseClass(LV.getAddress(), DerivedClassDecl, 
-                            BaseClassDecl, /*NullCheckValue=*/false);
+                            E->getBasePath(), /*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
   }

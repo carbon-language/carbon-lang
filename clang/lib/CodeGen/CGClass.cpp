@@ -184,7 +184,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
   // Get the base pointer type.
   const llvm::Type *BasePtrTy = 
-    llvm::PointerType::getUnqual(ConvertType((BasePath.end()[-1])->getType()));
+    ConvertType((BasePath.end()[-1])->getType())->getPointerTo();
   
   if (!NonVirtualOffset && !VBase) {
     // Just cast back.

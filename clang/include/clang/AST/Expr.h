@@ -1731,7 +1731,7 @@ public:
     return const_cast<CastExpr *>(this)->getSubExprAsWritten();
   }
 
-  const CXXBaseSpecifierArray& getBasePath() { return BasePath; }
+  const CXXBaseSpecifierArray& getBasePath() const { return BasePath; }
 
   static bool classof(const Stmt *T) {
     StmtClass SC = T->getStmtClass();
