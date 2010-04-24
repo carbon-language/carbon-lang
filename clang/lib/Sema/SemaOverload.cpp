@@ -1429,6 +1429,7 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
                                         CastExpr::CastKind &Kind,
+                                        CXXBaseSpecifierArray &BasePath,
                                         bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
@@ -1452,7 +1453,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   assert(FromClass->isRecordType() && "Pointer into non-class.");
   assert(ToClass->isRecordType() && "Pointer into non-class.");
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/ true,
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                      /*DetectVirtual=*/true);
   bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
   assert(DerivationOkay &&
@@ -1480,6 +1481,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
                          diag::err_downcast_from_inaccessible_base);
 
   // Must be a base to derived member conversion.
+  BuildBasePathArray(Paths, BasePath);
   Kind = CastExpr::CK_BaseToDerivedMemberPointer;
   return false;
 }

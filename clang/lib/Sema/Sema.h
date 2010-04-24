@@ -1094,6 +1094,7 @@ public:
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
                                     CastExpr::CastKind &Kind,
+                                    CXXBaseSpecifierArray &BasePath,
                                     bool IgnoreBaseAccess);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,

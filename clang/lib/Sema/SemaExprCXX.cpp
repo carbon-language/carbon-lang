@@ -1754,11 +1754,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   
   case ICK_Pointer_Member: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    if (CheckMemberPointerConversion(From, ToType, Kind, IgnoreBaseAccess))
+    CXXBaseSpecifierArray BasePath;
+    if (CheckMemberPointerConversion(From, ToType, Kind, BasePath,
+                                     IgnoreBaseAccess))
       return true;
     if (CheckExceptionSpecCompatibility(From, ToType))
       return true;
-    ImpCastExprToType(From, ToType, Kind);
+    ImpCastExprToType(From, ToType, Kind, /*isLvalue=*/false, BasePath);
     break;
   }
   case ICK_Boolean_Conversion: {

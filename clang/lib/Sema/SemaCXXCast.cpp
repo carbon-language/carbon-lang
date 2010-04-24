@@ -70,21 +70,24 @@ static bool CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType);
 static TryCastResult TryLValueToRValueCast(Sema &Self, Expr *SrcExpr,
                                            QualType DestType, unsigned &msg);
 static TryCastResult TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr,
-                                                QualType DestType, bool CStyle,
-                                                const SourceRange &OpRange,
-                                                unsigned &msg,
-                                                CastExpr::CastKind &Kind);
+                                               QualType DestType, bool CStyle,
+                                               const SourceRange &OpRange,
+                                               unsigned &msg,
+                                               CastExpr::CastKind &Kind,
+                                               CXXBaseSpecifierArray &BasePath);
 static TryCastResult TryStaticPointerDowncast(Sema &Self, QualType SrcType,
                                               QualType DestType, bool CStyle,
                                               const SourceRange &OpRange,
                                               unsigned &msg,
-                                              CastExpr::CastKind &Kind);
+                                              CastExpr::CastKind &Kind,
+                                              CXXBaseSpecifierArray &BasePath);
 static TryCastResult TryStaticDowncast(Sema &Self, CanQualType SrcType,
                                        CanQualType DestType, bool CStyle,
                                        const SourceRange &OpRange,
                                        QualType OrigSrcType,
                                        QualType OrigDestType, unsigned &msg,
-                                       CastExpr::CastKind &Kind);
+                                       CastExpr::CastKind &Kind,
+                                       CXXBaseSpecifierArray &BasePath);
 static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr,
                                                QualType SrcType,
                                                QualType DestType,bool CStyle,
@@ -493,7 +496,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // See the function for details.
   // DR 427 specifies that this is to be applied before paragraph 2.
   tcr = TryStaticReferenceDowncast(Self, SrcExpr, DestType, CStyle, OpRange,
-                                   msg, Kind);
+                                   msg, Kind, BasePath);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -544,7 +547,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // Reverse pointer upcast. C++ 4.10p3 specifies pointer upcast.
   // C++ 5.2.9p8 additionally disallows a cast path through virtual inheritance.
   tcr = TryStaticPointerDowncast(Self, SrcType, DestType, CStyle, OpRange, msg,
-                                 Kind);
+                                 Kind, BasePath);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -626,7 +629,8 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
 TryCastResult
 TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
                            bool CStyle, const SourceRange &OpRange,
-                           unsigned &msg, CastExpr::CastKind &Kind) {
+                           unsigned &msg, CastExpr::CastKind &Kind,
+                           CXXBaseSpecifierArray &BasePath) {
   // C++ 5.2.9p5: An lvalue of type "cv1 B", where B is a class type, can be
   //   cast to type "reference to cv2 D", where D is a class derived from B,
   //   if a valid standard conversion from "pointer to D" to "pointer to B"
@@ -652,14 +656,16 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
   return TryStaticDowncast(Self, 
                            Self.Context.getCanonicalType(SrcExpr->getType()), 
                            Self.Context.getCanonicalType(DestPointee), CStyle,
-                           OpRange, SrcExpr->getType(), DestType, msg, Kind);
+                           OpRange, SrcExpr->getType(), DestType, msg, Kind,
+                           BasePath);
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p8 is valid.
 TryCastResult
 TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
                          bool CStyle, const SourceRange &OpRange,
-                         unsigned &msg, CastExpr::CastKind &Kind) {
+                         unsigned &msg, CastExpr::CastKind &Kind,
+                         CXXBaseSpecifierArray &BasePath) {
   // C++ 5.2.9p8: An rvalue of type "pointer to cv1 B", where B is a class
   //   type, can be converted to an rvalue of type "pointer to cv2 D", where D
   //   is a class derived from B, if a valid standard conversion from "pointer
@@ -682,7 +688,8 @@ TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
   return TryStaticDowncast(Self, 
                    Self.Context.getCanonicalType(SrcPointer->getPointeeType()),
                   Self.Context.getCanonicalType(DestPointer->getPointeeType()), 
-                           CStyle, OpRange, SrcType, DestType, msg, Kind);
+                           CStyle, OpRange, SrcType, DestType, msg, Kind,
+                           BasePath);
 }
 
 /// TryStaticDowncast - Common functionality of TryStaticReferenceDowncast and
@@ -692,7 +699,7 @@ TryCastResult
 TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
                   bool CStyle, const SourceRange &OpRange, QualType OrigSrcType,
                   QualType OrigDestType, unsigned &msg, 
-                  CastExpr::CastKind &Kind) {
+                  CastExpr::CastKind &Kind, CXXBaseSpecifierArray &BasePath) {
   // We can only work with complete types. But don't complain if it doesn't work
   if (Self.RequireCompleteType(OpRange.getBegin(), SrcType, Self.PDiag(0)) ||
       Self.RequireCompleteType(OpRange.getBegin(), DestType, Self.PDiag(0)))
@@ -703,7 +710,7 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_NotApplicable;
   }
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                      /*DetectVirtual=*/true);
   if (!Self.IsDerivedFrom(DestType, SrcType, Paths)) {
     return TC_NotApplicable;
@@ -783,6 +790,7 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_Failed;
   }
 
+  Self.BuildBasePathArray(Paths, BasePath);
   Kind = CastExpr::CK_BaseToDerived;
   return TC_Success;
 }
