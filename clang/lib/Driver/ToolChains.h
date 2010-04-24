@@ -160,19 +160,20 @@ public:
       return !isMacosxVersionLT(10, 6);
   }
   virtual bool IsObjCNonFragileABIDefault() const {
-    // Non-fragile ABI default to on for iPhoneOS and x86-64.
-    return isTargetIPhoneOS() || getTriple().getArch() == llvm::Triple::x86_64;
+    // Non-fragile ABI is default for everything but i386.
+    return getTriple().getArch() != llvm::Triple::x86;
   }
   virtual bool IsObjCLegacyDispatchDefault() const {
     // This is only used with the non-fragile ABI.
-    return (getTriple().getArch() == llvm::Triple::arm ||
-            getTriple().getArch() == llvm::Triple::thumb);
+
+    // Legacy dispatch is used everywhere except on x86_64.
+    return getTriple().getArch() != llvm::Triple::x86_64;
   }
   virtual bool UseObjCMixedDispatch() const {
-    // Mixed dispatch is only used on x86_64 for 10.6 and later.
-    return (!isTargetIPhoneOS() &&
-            getTriple().getArch() == llvm::Triple::x86_64 &&
-            !isMacosxVersionLT(10, 6));
+    // This is only used with the non-fragile ABI and non-legacy dispatch.
+
+    // Mixed dispatch is used everywhere except OS X before 10.6.
+    return !(!isTargetIPhoneOS() && isMacosxVersionLT(10, 6));
   }
   virtual bool IsUnwindTablesDefault() const;
   virtual unsigned GetDefaultStackProtectorLevel() const {
