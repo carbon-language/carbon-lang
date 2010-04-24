@@ -346,8 +346,8 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   FType = CGM.getContext().IntTy;
   EltTys.push_back(CreateMemberType(Unit, FType, "__flags", &FieldOffset));
   EltTys.push_back(CreateMemberType(Unit, FType, "__reserved", &FieldOffset));
+  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
   EltTys.push_back(CreateMemberType(Unit, FType, "__FuncPtr", &FieldOffset));
-  EltTys.push_back(CreateMemberType(Unit, FType, "__reserved", &FieldOffset));
 
   FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
   FieldTy = DescTy;
