@@ -406,15 +406,11 @@ EmitCopyCtorCall(CodeGenFunction &CGF,
 /// array of objects from SrcValue to DestValue. Copying can be either a bitwise
 /// copy or via a copy constructor call.
 //  FIXME. Consolidate this with EmitCXXAggrConstructorCall.
-void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
-                                            llvm::Value *Src,
-                                            const ArrayType *Array,
-                                            const CXXRecordDecl *BaseClassDecl,
-                                            QualType Ty) {
-  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
-  assert(CA && "VLA cannot be copied over");
-  bool BitwiseCopy = BaseClassDecl->hasTrivialCopyConstructor();
-
+void
+CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
+                                             llvm::Value *Src,
+                                             const ConstantArrayType *Array,
+                                             const CXXRecordDecl *ClassDecl) {
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
@@ -430,7 +426,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
   llvm::BasicBlock *ForBody = createBasicBlock("for.body");
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
+  uint64_t NumElements = getContext().getConstantArrayElementCount(Array);
   llvm::Value * NumElementsPtr =
     llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
@@ -441,15 +437,12 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
 
   EmitBlock(ForBody);
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
+  
   // Inside the loop body, emit the constructor call on the array element.
   Counter = Builder.CreateLoad(IndexPtr);
-  Src = Builder.CreateInBoundsGEP(Src, Counter, "srcaddress");
   Dest = Builder.CreateInBoundsGEP(Dest, Counter, "destaddress");
-  if (BitwiseCopy)
-    EmitAggregateCopy(Dest, Src, Ty);
-  else if (CXXConstructorDecl *BaseCopyCtor =
-           BaseClassDecl->getCopyConstructor(getContext(), 0))
-    EmitCopyCtorCall(*this, BaseCopyCtor, Ctor_Complete, Dest, 0, Src);
+  Src = Builder.CreateInBoundsGEP(Src, Counter, "srcaddress");
+  EmitClassMemberwiseCopy(Dest, Src, ClassDecl);
 
   EmitBlock(ContinueBlock);
 
@@ -472,19 +465,18 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
 /// FIXME. This can be consolidated with EmitClassAggrMemberwiseCopy
 void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                             llvm::Value *Src,
-                                            const ArrayType *Array,
+                                            const ConstantArrayType *Array,
                                             const CXXRecordDecl *BaseClassDecl,
                                             QualType Ty) {
-  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
-  assert(CA && "VLA cannot be asssigned");
   bool BitwiseAssign = BaseClassDecl->hasTrivialCopyAssignment();
 
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
   llvm::Value* zeroConstant =
-  llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
+    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
   Builder.CreateStore(zeroConstant, IndexPtr);
+  
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
@@ -494,9 +486,9 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
   llvm::BasicBlock *ForBody = createBasicBlock("for.body");
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
+  uint64_t NumElements = getContext().getConstantArrayElementCount(Array);
   llvm::Value * NumElementsPtr =
-  llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
+    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr,
                                               "isless");
@@ -703,7 +695,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
         llvm::Value *SrcBaseAddrPtr =
           Builder.CreateBitCast(RHS.getAddress(), BasePtr);
         EmitClassAggrMemberwiseCopy(DestBaseAddrPtr, SrcBaseAddrPtr, Array,
-                                    FieldClassDecl, FieldType);
+                                    FieldClassDecl);
       }
       else
         EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
