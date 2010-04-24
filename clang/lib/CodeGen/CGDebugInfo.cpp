@@ -320,27 +320,9 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
 
   FieldOffset = 0;
   FType = CGM.getContext().UnsignedLongTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "reserved", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
+  EltTys.push_back(CreateMemberType(Unit, FType, "reserved", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "Size", &FieldOffset));
 
-  FieldOffset += FieldSize;
-  FType = CGM.getContext().UnsignedLongTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "Size", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-
-  FieldOffset += FieldSize;
   Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   EltTys.clear();
 
@@ -360,49 +342,13 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
 
   FieldOffset = 0;
   FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__isa", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-
-  FieldOffset += FieldSize;
+  EltTys.push_back(CreateMemberType(Unit, FType, "__isa", &FieldOffset));
   FType = CGM.getContext().IntTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__flags", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
+  EltTys.push_back(CreateMemberType(Unit, FType, "__flags", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "__reserved", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "__FuncPtr", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "__reserved", &FieldOffset));
 
-  FieldOffset += FieldSize;
-  FType = CGM.getContext().IntTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__reserved", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-
-  FieldOffset += FieldSize;
-  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__FuncPtr", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-
-  FieldOffset += FieldSize;
   FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
   FieldTy = DescTy;
   FieldSize = CGM.getContext().getTypeSize(Ty);
@@ -1325,6 +1271,21 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   return llvm::DIType();
 }
 
+/// CreateMemberType - Create new member and increase Offset by FType's size.
+llvm::DIType CGDebugInfo::CreateMemberType(llvm::DIFile Unit, QualType FType,
+                                           llvm::StringRef Name,
+                                           uint64_t *Offset) {
+  llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  uint64_t FieldSize = CGM.getContext().getTypeSize(FType);
+  unsigned FieldAlign = CGM.getContext().getTypeAlign(FType);
+  llvm::DIType Ty = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
+                                                   Unit, Name, Unit, 0,
+                                                   FieldSize, FieldAlign,
+                                                   *Offset, 0, FieldTy);
+  *Offset += FieldSize;
+  return Ty;
+}
+
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
 void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
@@ -1348,17 +1309,15 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       }
     }
     Name = getFunctionName(FD);
-    if (!Name.empty() && Name[0] == '\01')
-      Name = Name.substr(1);
     // Use mangled name as linkage name for c/c++ functions.
     CGM.getMangledName(LinkageName, GD);
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
     LinkageName.setString(Name);
-    if (!Name.empty() && Name[0] == '\01')
-      Name = Name.substr(1);
   }
+  if (!Name.empty() && Name[0] == '\01')
+    Name = Name.substr(1);
 
   // It is expected that CurLoc is set before using EmitFunctionStart.
   // Usually, CurLoc points to the left bracket location of compound
@@ -1444,72 +1403,19 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 
   FieldOffset = 0;
   FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-  llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__isa", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-  FieldOffset += FieldSize;
-  
-  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__forwarding", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-  FieldOffset += FieldSize;
-  
+  EltTys.push_back(CreateMemberType(Unit, FType, "__isa", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "__forwarding", &FieldOffset));
   FType = CGM.getContext().IntTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__flags", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-  FieldOffset += FieldSize;
-  
-  FType = CGM.getContext().IntTy;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-  FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = CGM.getContext().getTypeAlign(FType);
-  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                           "__size", Unit,
-                                           0, FieldSize, FieldAlign,
-                                           FieldOffset, 0, FieldTy);
-  EltTys.push_back(FieldTy);
-  FieldOffset += FieldSize;
-  
+  EltTys.push_back(CreateMemberType(Unit, FType, "__flags", &FieldOffset));
+  EltTys.push_back(CreateMemberType(Unit, FType, "__size", &FieldOffset));
+
   bool HasCopyAndDispose = CGM.BlockRequiresCopying(Type);
   if (HasCopyAndDispose) {
     FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__copy_helper", Unit,                                             
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-    
-    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__destroy_helper", Unit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
+    EltTys.push_back(CreateMemberType(Unit, FType, "__copy_helper",
+                                      &FieldOffset));
+    EltTys.push_back(CreateMemberType(Unit, FType, "__destroy_helper",
+                                      &FieldOffset));
   }
   
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
@@ -1524,20 +1430,12 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
       llvm::APInt pad(32, NumPaddingBytes);
       FType = CGM.getContext().getConstantArrayType(CGM.getContext().CharTy,
                                                     pad, ArrayType::Normal, 0);
-      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      FieldAlign = CGM.getContext().getTypeAlign(FType);
-      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
-                                               Unit, "", Unit,
-                                               0, FieldSize, FieldAlign,
-                                               FieldOffset, 0, FieldTy);
-      EltTys.push_back(FieldTy);
-      FieldOffset += FieldSize;
+      EltTys.push_back(CreateMemberType(Unit, FType, "", &FieldOffset));
     }
   }
   
   FType = Type;
-  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
   FieldSize = CGM.getContext().getTypeSize(FType);
   FieldAlign = Align.getQuantity()*8;
 

@@ -196,6 +196,9 @@ private:
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
 
+  llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
+                                llvm::StringRef Name, uint64_t *Offset);
+
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructred on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
