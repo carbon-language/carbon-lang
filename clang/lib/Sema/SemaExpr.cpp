@@ -1443,7 +1443,6 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         QType = Context.getPointerType(QType);
       ImpCastExprToType(From, QType, CastExpr::CK_UncheckedDerivedToBase,
-                        /*FIXME: InheritancePath=*/0,
                         /*isLvalue=*/!PointerConversions);
 
       FromType = QType;
@@ -1480,7 +1479,6 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         UType = Context.getPointerType(UType);
       ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
-                        /*FIXME: InheritancePath=*/0,
                         /*isLvalue*/ !PointerConversions);
       FromType = UType;
       FromRecordType = URecordType;
@@ -1499,7 +1497,6 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     return true;
 
   ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
-                    /*FIXME: InheritancePath=*/0,
                     /*isLvalue=*/!PointerConversions);
   return false;
 }

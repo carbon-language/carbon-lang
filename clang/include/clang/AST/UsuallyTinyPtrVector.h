@@ -34,6 +34,8 @@ class UsuallyTinyPtrVector {
 public:
   UsuallyTinyPtrVector() : Storage(0) { }
 
+  bool empty() const { return !Storage; }
+
   typedef const T **iterator;
   iterator begin() const;
   iterator end() const;

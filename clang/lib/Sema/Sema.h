@@ -3959,8 +3959,9 @@ public:
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
   void ImpCastExprToType(Expr *&Expr, QualType Type, CastExpr::CastKind Kind,
-                         CXXBaseSpecifierArray *BasePath = 0,
-                         bool isLvalue = false);
+                         bool isLvalue = false,
+                         CXXBaseSpecifierArray BasePath = 
+                          CXXBaseSpecifierArray());
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).

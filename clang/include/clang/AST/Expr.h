@@ -1653,7 +1653,7 @@ private:
 
   /// BasePath - For derived-to-base and base-to-derived casts, the base array
   /// contains the inheritance path.
-  CXXBaseSpecifierArray *BasePath;
+  CXXBaseSpecifierArray BasePath;
 
   void CheckBasePath() const {
 #ifndef NDEBUG
@@ -1687,7 +1687,7 @@ private:
     case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-      assert(!BasePath && "Cast kind shoudl not have a base path!");
+      assert(BasePath.empty() && "Cast kind shoudl not have a base path!");
       break;
     }
 #endif
@@ -1695,7 +1695,7 @@ private:
 
 protected:
   CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op,
-           CXXBaseSpecifierArray *BasePath) :
+           CXXBaseSpecifierArray BasePath) :
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1769,7 +1769,7 @@ class ImplicitCastExpr : public CastExpr {
 
 public:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
-                   CXXBaseSpecifierArray *BasePath, bool Lvalue)
+                   CXXBaseSpecifierArray BasePath, bool Lvalue)
     : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), 
     LvalueCast(Lvalue) { }
 
@@ -1817,7 +1817,8 @@ class ExplicitCastExpr : public CastExpr {
 protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
                    Expr *op, TypeSourceInfo *writtenTy)
-    : CastExpr(SC, exprTy, kind, op, 0), TInfo(writtenTy) {}
+    : CastExpr(SC, exprTy, kind, op, CXXBaseSpecifierArray()), 
+    TInfo(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell)

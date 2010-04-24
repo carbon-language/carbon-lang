@@ -159,8 +159,7 @@ Sema::~Sema() {
 /// If isLvalue, the result of the cast is an lvalue.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
                              CastExpr::CastKind Kind, 
-                             CXXBaseSpecifierArray *BasePath,
-                             bool isLvalue) {
+                             bool isLvalue, CXXBaseSpecifierArray BasePath) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 
@@ -180,7 +179,7 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind) {
-      assert(!BasePath && "FIXME: Merge paths!");
+      assert(BasePath.empty() && "FIXME: Merge paths!");
       ImpCast->setType(Ty);
       ImpCast->setLvalueCast(isLvalue);
       return;

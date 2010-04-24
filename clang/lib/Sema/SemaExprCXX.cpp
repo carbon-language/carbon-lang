@@ -341,7 +341,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
       //   type.
       if (T.hasQualifiers()) {
         ImpCastExprToType(E, T.getUnqualifiedType(), CastExpr::CK_NoOp,
-                          /*InheritancePath=*/0, E->isLvalue(Context));
+                          E->isLvalue(Context));
         TyOrExpr = E;
       }
     }
@@ -392,7 +392,6 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   //   or "pointer to function returning T", [...]
   if (E->getType().hasQualifiers())
     ImpCastExprToType(E, E->getType().getUnqualifiedType(), CastExpr::CK_NoOp,
-                      /*InheritancePath=*/0,
                       E->isLvalue(Context) == Expr::LV_Valid);
   
   DefaultFunctionArrayConversion(E);
@@ -1792,8 +1791,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
     // references.
     ImpCastExprToType(From, ToType.getNonReferenceType(),
-                      CastExpr::CK_NoOp, /*InheritancePath=*/0,
-                      ToType->isLValueReferenceType());
+                      CastExpr::CK_NoOp, ToType->isLValueReferenceType());
 
     if (SCS.DeprecatedStringLiteralToCharPtr)
       Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
@@ -1887,8 +1885,7 @@ QualType Sema::CheckPointerToMemberOperands(
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
     bool isLValue = !isIndirect && lex->isLvalue(Context) == Expr::LV_Valid;
-    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, 
-                      /*FIXME: InheritancePath=*/0, isLValue);
+    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, isLValue);
   }
 
   if (isa<CXXZeroInitValueExpr>(rex->IgnoreParens())) {

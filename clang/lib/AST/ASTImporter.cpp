@@ -2885,9 +2885,10 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   if (!SubExpr)
     return 0;
   
+  // FIXME: Initialize the base path.
+  CXXBaseSpecifierArray BasePath;
   return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
-                                                        SubExpr, 
-                                                        /* FIXME: */0,
+                                                        SubExpr, BasePath,
                                                         E->isLvalueCast());
 }
 

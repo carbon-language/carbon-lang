@@ -3468,7 +3468,7 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.Owned(new (S.Context) ImplicitCastExpr(Step->Type,
                                                     CastExpr::CK_DerivedToBase,
                                                     (Expr*)CurInit.release(),
-                                                    /*FIXME:InheritancePath=*/0,
+                                                    CXXBaseSpecifierArray(),
                                      Step->Kind == SK_CastDerivedToBaseLValue));
       break;
     }
@@ -3586,10 +3586,10 @@ InitializationSequence::Perform(Sema &S,
 
       CurInitExpr = CurInit.takeAs<Expr>();
       CurInit = S.Owned(new (S.Context) ImplicitCastExpr(CurInitExpr->getType(),
-                                                         CastKind, 
-                                                         CurInitExpr,
-                                                         /*InheritancePath=*/0,
-                                                         IsLvalue));
+                                                        CastKind, 
+                                                        CurInitExpr,
+                                                        CXXBaseSpecifierArray(),
+                                                        IsLvalue));
       
       if (RequiresCopy)
         CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
@@ -3601,7 +3601,7 @@ InitializationSequence::Perform(Sema &S,
     case SK_QualificationConversionRValue:
       // Perform a qualification conversion; these can never go wrong.
       S.ImpCastExprToType(CurInitExpr, Step->Type,
-                          CastExpr::CK_NoOp, /*InheritancePath=*/0,
+                          CastExpr::CK_NoOp,
                           Step->Kind == SK_QualificationConversionLValue);
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
