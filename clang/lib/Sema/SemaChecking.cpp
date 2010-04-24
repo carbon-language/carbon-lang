@@ -432,8 +432,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    ImpCastExprToType(Arg, ValType, Kind, /*InheritancePath=*/0,
-                      /*isLvalue=*/false);
+    ImpCastExprToType(Arg, ValType, Kind);
     TheCall->setArg(i+1, Arg);
   }
 
