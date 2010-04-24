@@ -31,5 +31,6 @@ struct DeclOrDef {
 namespace PR6649 {
   template <typename T> struct foo { 
     class T::bar;  // expected-error{{nested name specifier for a declaration cannot depend on a template parameter}}
+    class T::bar { int x; }; // expected-error{{nested name specifier for a declaration cannot depend on a template parameter}}
   };
 }
