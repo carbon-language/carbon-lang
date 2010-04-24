@@ -650,6 +650,13 @@ namespace llvm {
     bool isKnownPredicate(ICmpInst::Predicate Pred,
                           const SCEV *LHS, const SCEV *RHS);
 
+    /// SimplifyICmpOperands - Simplify LHS and RHS in a comparison with
+    /// predicate Pred. Return true iff any changes were made.
+    ///
+    bool SimplifyICmpOperands(ICmpInst::Predicate &Pred,
+                              const SCEV *&LHS,
+                              const SCEV *&RHS);
+
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;

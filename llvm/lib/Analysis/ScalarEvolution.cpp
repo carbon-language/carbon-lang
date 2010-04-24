@@ -4719,6 +4719,204 @@ static bool HasSameValue(const SCEV *A, const SCEV *B) {
   return false;
 }
 
+/// SimplifyICmpOperands - Simplify LHS and RHS in a comparison with
+/// predicate Pred. Return true iff any changes were made.
+///
+bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
+                                           const SCEV *&LHS, const SCEV *&RHS) {
+  bool Changed = false;
+
+  // Canonicalize a constant to the right side.
+  if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
+    // Check for both operands constant.
+    if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
+      if (ConstantExpr::getICmp(Pred,
+                                LHSC->getValue(),
+                                RHSC->getValue())->isNullValue())
+        goto trivially_false;
+      else
+        goto trivially_true;
+    }
+    // Otherwise swap the operands to put the constant on the right.
+    std::swap(LHS, RHS);
+    Pred = ICmpInst::getSwappedPredicate(Pred);
+    Changed = true;
+  }
+
+  // If we're comparing an addrec with a value which is loop-invariant in the
+  // addrec's loop, put the addrec on the left.
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS))
+    if (LHS->isLoopInvariant(AR->getLoop())) {
+      std::swap(LHS, RHS);
+      Pred = ICmpInst::getSwappedPredicate(Pred);
+      Changed = true;
+    }
+
+  // If there's a constant operand, canonicalize comparisons with boundary
+  // cases, and canonicalize *-or-equal comparisons to regular comparisons.
+  if (const SCEVConstant *RC = dyn_cast<SCEVConstant>(RHS)) {
+    const APInt &RA = RC->getValue()->getValue();
+    switch (Pred) {
+    default: llvm_unreachable("Unexpected ICmpInst::Predicate value!");
+    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_NE:
+      break;
+    case ICmpInst::ICMP_UGE:
+      if ((RA - 1).isMinValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        RHS = getConstant(RA - 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        Changed = true;
+        break;
+      }
+      if (RA.isMinValue()) goto trivially_true;
+
+      Pred = ICmpInst::ICMP_UGT;
+      RHS = getConstant(RA - 1);
+      Changed = true;
+      break;
+    case ICmpInst::ICMP_ULE:
+      if ((RA + 1).isMaxValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        RHS = getConstant(RA + 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMinValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxValue()) goto trivially_true;
+
+      Pred = ICmpInst::ICMP_ULT;
+      RHS = getConstant(RA + 1);
+      Changed = true;
+      break;
+    case ICmpInst::ICMP_SGE:
+      if ((RA - 1).isMinSignedValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        RHS = getConstant(RA - 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxSignedValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        Changed = true;
+        break;
+      }
+      if (RA.isMinSignedValue()) goto trivially_true;
+
+      Pred = ICmpInst::ICMP_SGT;
+      RHS = getConstant(RA - 1);
+      Changed = true;
+      break;
+    case ICmpInst::ICMP_SLE:
+      if ((RA + 1).isMaxSignedValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        RHS = getConstant(RA + 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMinSignedValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxSignedValue()) goto trivially_true;
+
+      Pred = ICmpInst::ICMP_SLT;
+      RHS = getConstant(RA + 1);
+      Changed = true;
+      break;
+    case ICmpInst::ICMP_UGT:
+      if (RA.isMinValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        Changed = true;
+        break;
+      }
+      if ((RA + 1).isMaxValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        RHS = getConstant(RA + 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxValue()) goto trivially_false;
+      break;
+    case ICmpInst::ICMP_ULT:
+      if (RA.isMaxValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        Changed = true;
+        break;
+      }
+      if ((RA - 1).isMinValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        RHS = getConstant(RA - 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMinValue()) goto trivially_false;
+      break;
+    case ICmpInst::ICMP_SGT:
+      if (RA.isMinSignedValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        Changed = true;
+        break;
+      }
+      if ((RA + 1).isMaxSignedValue()) {
+        Pred = ICmpInst::ICMP_EQ;
+        RHS = getConstant(RA + 1);
+        Changed = true;
+        break;
+      }
+      if (RA.isMaxSignedValue()) goto trivially_false;
+      break;
+    case ICmpInst::ICMP_SLT:
+      if (RA.isMaxSignedValue()) {
+        Pred = ICmpInst::ICMP_NE;
+        Changed = true;
+        break;
+      }
+      if ((RA - 1).isMinSignedValue()) {
+       Pred = ICmpInst::ICMP_EQ;
+       RHS = getConstant(RA - 1);
+        Changed = true;
+       break;
+      }
+      if (RA.isMinSignedValue()) goto trivially_false;
+      break;
+    }
+  }
+
+  // Check for obvious equality.
+  if (HasSameValue(LHS, RHS)) {
+    if (ICmpInst::isTrueWhenEqual(Pred))
+      goto trivially_true;
+    if (ICmpInst::isFalseWhenEqual(Pred))
+      goto trivially_false;
+  }
+
+  // TODO: More simplifications are possible here.
+
+  return Changed;
+
+trivially_true:
+  // Return 0 == 0.
+  LHS = RHS = getConstant(Type::getInt1Ty(getContext()), 0);
+  Pred = ICmpInst::ICMP_EQ;
+  return true;
+
+trivially_false:
+  // Return 0 != 0.
+  LHS = RHS = getConstant(Type::getInt1Ty(getContext()), 0);
+  Pred = ICmpInst::ICMP_NE;
+  return true;
+}
+
 bool ScalarEvolution::isKnownNegative(const SCEV *S) {
   return getSignedRange(S).getSignedMax().isNegative();
 }
