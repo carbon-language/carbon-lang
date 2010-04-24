@@ -218,11 +218,18 @@ typedef __uint_least8_t uint_fast8_t;
 #define  __intn_t(n) __stdint_join3( int, n, _t)
 #define __uintn_t(n) __stdint_join3(uint, n, _t)
 
+#ifndef _INTPTR_T
 #ifndef __intptr_t_defined
 typedef  __intn_t(__INTPTR_WIDTH__)  intptr_t;
 #define __intptr_t_defined
+#define _INTPTR_T
 #endif
+#endif
+
+#ifndef _UINTPTR_T
 typedef __uintn_t(__INTPTR_WIDTH__) uintptr_t;
+#define _UINTPTR_T
+#endif
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
