@@ -1217,12 +1217,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fgnu-keywords default varies depending on language; only pass if
   // specified.
   if (Arg *A = Args.getLastArg(options::OPT_fgnu_keywords,
-                               options::OPT_fno_gnu_keywords)) {
-    if (A->getOption().matches(options::OPT_fgnu_keywords))
-      CmdArgs.push_back("-fgnu-keywords");
-    else
-      CmdArgs.push_back("-fno-gnu-keywords");
-  }
+                               options::OPT_fno_gnu_keywords))
+    A->render(Args, CmdArgs);
 
   // -fnext-runtime is default.
   if (!Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
