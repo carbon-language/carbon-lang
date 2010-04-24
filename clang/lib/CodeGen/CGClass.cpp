@@ -590,33 +590,21 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
 
                                     
 /// EmitClassMemberwiseCopy - This routine generates code to copy a class
-/// object from SrcValue to DestValue. Copying can be either a bitwise copy
-/// or via a copy constructor call.
-void CodeGenFunction::EmitClassMemberwiseCopy(
-                        llvm::Value *Dest, llvm::Value *Src,
-                        const CXXRecordDecl *ClassDecl,
-                        const CXXRecordDecl *BaseClassDecl, QualType Ty) {
-  CXXCtorType CtorType = Ctor_Complete;
+/// object from SrcValue to DestValue.
+void CodeGenFunction::EmitClassMemberwiseCopy(llvm::Value *Dest, 
+                                              llvm::Value *Src,
+                                              const CXXRecordDecl *ClassDecl) {
+  if (ClassDecl->hasTrivialCopyConstructor()) {
+    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
+    return;
+  }
+
+  // FIXME: Does this get the right copy constructor?
+  const CXXConstructorDecl *CopyConstructor = 
+    ClassDecl->getCopyConstructor(getContext(), 0);
+  assert(CopyConstructor && "Did not find copy constructor!");
   
-  if (ClassDecl) {
-    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
-    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
-
-    // We want to call the base constructor.
-    CtorType = Ctor_Base;
-  }
-  if (BaseClassDecl->hasTrivialCopyConstructor()) {
-    EmitAggregateCopy(Dest, Src, Ty);
-    return;
-  }
-
-  CXXConstructorDecl *BaseCopyCtor =
-    BaseClassDecl->getCopyConstructor(getContext(), 0);
-  if (!BaseCopyCtor)
-    return;
-
-  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType));
-  EmitCopyCtorCall(*this, BaseCopyCtor, CtorType, Dest, VTT, Src);
+  EmitCopyCtorCall(*this, CopyConstructor, Ctor_Complete, Dest, 0, Src);
 }
 
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class
@@ -719,7 +707,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
       }
       else
         EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
-                                0 /*ClassDecl*/, FieldClassDecl, FieldType);
+                                FieldClassDecl);
       continue;
     }
     
