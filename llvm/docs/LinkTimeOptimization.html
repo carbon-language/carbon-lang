@@ -256,7 +256,7 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
   <p>In this phase, the linker reads optimized a native object file and 
   updates the internal global symbol table to reflect any changes. The linker 
   also collects information about any changes in use of external symbols by 
-  LLVM bitcode files. In the examle above, the linker notes that 
+  LLVM bitcode files. In the example above, the linker notes that 
   <tt>foo4()</tt> is not used any more. If dead code stripping is enabled then 
   the linker refreshes the live symbol information appropriately and performs 
   dead code stripping.</p>
