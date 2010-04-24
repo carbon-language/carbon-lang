@@ -4939,6 +4939,9 @@ bool ScalarEvolution::isKnownNonZero(const SCEV *S) {
 
 bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
                                        const SCEV *LHS, const SCEV *RHS) {
+  // Canonicalize the inputs first.
+  (void)SimplifyICmpOperands(Pred, LHS, RHS);
+
   // If LHS or RHS is an addrec, check to see if the condition is true in
   // every iteration of the loop.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
