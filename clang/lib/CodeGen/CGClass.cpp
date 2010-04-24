@@ -742,18 +742,14 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
 ///   if the subobject is of scalar type, the built-in assignment operator is
 ///   used.
 void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
-  const CXXMethodDecl *CD = cast<CXXMethodDecl>(CurGD.getDecl());
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CurGD.getDecl());
+  const CXXRecordDecl *ClassDecl = MD->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
          "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
 
-  FunctionArgList::const_iterator i = Args.begin();
-  const VarDecl *ThisArg = i->first;
-  llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
-  llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
-  const VarDecl *SrcArg = (i+1)->first;
-  llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
-  llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
+  llvm::Value *ThisPtr = LoadCXXThis();
+  llvm::Value *SrcPtr = 
+    Builder.CreateLoad(GetAddrOfLocalVar(Args[1].first));
 
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
@@ -763,7 +759,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
 
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassCopyAssignment(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl,
+    EmitClassCopyAssignment(ThisPtr, SrcPtr, ClassDecl, BaseClassDecl,
                             Base->getType());
   }
 
@@ -779,8 +775,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
       = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(LoadOfThis, *Field, 0);
-      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, 0);
+      LValue LHS = EmitLValueForField(ThisPtr, *Field, 0);
+      LValue RHS = EmitLValueForField(SrcPtr, *Field, 0);
       if (Array) {
         const llvm::Type *BasePtr = ConvertType(FieldType);
         BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -797,8 +793,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
       continue;
     }
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForField(LoadOfThis, *Field, 0);
-    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, 0);
+    LValue LHS = EmitLValueForField(ThisPtr, *Field, 0);
+    LValue RHS = EmitLValueForField(SrcPtr, *Field, 0);
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
       EmitStoreThroughLValue(RVRHS, LHS, Field->getType());
@@ -812,7 +808,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
   }
 
   // return *this;
-  Builder.CreateStore(LoadOfThis, ReturnValue);
+  Builder.CreateStore(ThisPtr, ReturnValue);
 }
 
 static void EmitBaseInitializer(CodeGenFunction &CGF, 
