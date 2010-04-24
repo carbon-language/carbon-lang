@@ -5154,117 +5154,12 @@ bool ScalarEvolution::isImpliedCond(Value *CondValue,
 
   // Canonicalize the query to match the way instcombine will have
   // canonicalized the comparison.
-  // First, put a constant operand on the right.
-  if (isa<SCEVConstant>(LHS)) {
-    std::swap(LHS, RHS);
-    Pred = ICmpInst::getSwappedPredicate(Pred);
-  }
-  // Then, canonicalize comparisons with boundary cases.
-  if (const SCEVConstant *RC = dyn_cast<SCEVConstant>(RHS)) {
-    const APInt &RA = RC->getValue()->getValue();
-    switch (Pred) {
-    default: llvm_unreachable("Unexpected ICmpInst::Predicate value!");
-    case ICmpInst::ICMP_EQ:
-    case ICmpInst::ICMP_NE:
-      break;
-    case ICmpInst::ICMP_UGE:
-      if ((RA - 1).isMinValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        RHS = getConstant(RA - 1);
-        break;
-      }
-      if (RA.isMaxValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        break;
-      }
-      if (RA.isMinValue()) return true;
-      break;
-    case ICmpInst::ICMP_ULE:
-      if ((RA + 1).isMaxValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        RHS = getConstant(RA + 1);
-        break;
-      }
-      if (RA.isMinValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        break;
-      }
-      if (RA.isMaxValue()) return true;
-      break;
-    case ICmpInst::ICMP_SGE:
-      if ((RA - 1).isMinSignedValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        RHS = getConstant(RA - 1);
-        break;
-      }
-      if (RA.isMaxSignedValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        break;
-      }
-      if (RA.isMinSignedValue()) return true;
-      break;
-    case ICmpInst::ICMP_SLE:
-      if ((RA + 1).isMaxSignedValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        RHS = getConstant(RA + 1);
-        break;
-      }
-      if (RA.isMinSignedValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        break;
-      }
-      if (RA.isMaxSignedValue()) return true;
-      break;
-    case ICmpInst::ICMP_UGT:
-      if (RA.isMinValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        break;
-      }
-      if ((RA + 1).isMaxValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        RHS = getConstant(RA + 1);
-        break;
-      }
-      if (RA.isMaxValue()) return false;
-      break;
-    case ICmpInst::ICMP_ULT:
-      if (RA.isMaxValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        break;
-      }
-      if ((RA - 1).isMinValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        RHS = getConstant(RA - 1);
-        break;
-      }
-      if (RA.isMinValue()) return false;
-      break;
-    case ICmpInst::ICMP_SGT:
-      if (RA.isMinSignedValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        break;
-      }
-      if ((RA + 1).isMaxSignedValue()) {
-        Pred = ICmpInst::ICMP_EQ;
-        RHS = getConstant(RA + 1);
-        break;
-      }
-      if (RA.isMaxSignedValue()) return false;
-      break;
-    case ICmpInst::ICMP_SLT:
-      if (RA.isMaxSignedValue()) {
-        Pred = ICmpInst::ICMP_NE;
-        break;
-      }
-      if ((RA - 1).isMinSignedValue()) {
-       Pred = ICmpInst::ICMP_EQ;
-       RHS = getConstant(RA - 1);
-       break;
-      }
-      if (RA.isMinSignedValue()) return false;
-      break;
-    }
-  }
+  if (SimplifyICmpOperands(Pred, LHS, RHS))
+    if (LHS == RHS)
+      return Pred == ICmpInst::ICMP_EQ;
+  if (SimplifyICmpOperands(FoundPred, FoundLHS, FoundRHS))
+    if (FoundLHS == FoundRHS)
+      return Pred == ICmpInst::ICMP_NE;
 
   // Check to see if we can make the LHS or RHS match.
   if (LHS == FoundRHS || RHS == FoundLHS) {
