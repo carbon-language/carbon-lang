@@ -513,6 +513,9 @@ def note_access_constrained_by_path : Note<
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
   "incomplete type %0 named in nested name specifier">;
+def err_dependent_nested_name_spec : Error<
+  "nested name specifier for a declaration cannot depend on a template "
+  "parameter">;
 def err_nested_name_member_ref_lookup_ambiguous : Error<
   "lookup of %0 in member access expression is ambiguous">;
 def note_ambig_member_ref_object_type : Note<
@@ -1590,6 +1593,9 @@ def err_tag_reference_non_tag : Error<
 def err_tag_reference_conflict : Error<
   "implicit declaration introduced by elaborated type conflicts with "
   "%select{a declaration|a typedef|a template}0 of the same name">;
+def err_dependent_tag_decl : Error<
+  "%select{declaration|definition}0 of %select{struct|union|class|enum}1 "
+  "in a dependent scope">;
 def err_tag_definition_of_typedef : Error<
   "definition of type %0 conflicts with typedef of the same name">;
 def err_conflicting_types : Error<"conflicting types for %0">;

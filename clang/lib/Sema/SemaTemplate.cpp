@@ -5117,6 +5117,13 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
   assert(Keyword != ETK_None && "Invalid tag kind!");
 
+  if (TUK == TUK_Declaration || TUK == TUK_Definition) {
+    Diag(NameLoc, diag::err_dependent_tag_decl)
+      << (TUK == TUK_Definition) << TagDecl::getTagKindForTypeSpec(TagSpec)
+      << SS.getRange();
+    return true;
+  }
+  
   return Context.getDependentNameType(Keyword, NNS, Name).getAsOpaquePtr();
 }
 

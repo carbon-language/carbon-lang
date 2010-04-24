@@ -5313,7 +5313,7 @@ CreateNewDecl:
 void Sema::ActOnTagStartDefinition(Scope *S, DeclPtrTy TagD) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
-
+  
   // Enter the tag context.
   PushDeclContext(S, Tag);
 }

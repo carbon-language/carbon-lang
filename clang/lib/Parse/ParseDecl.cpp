@@ -1934,21 +1934,55 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TUK = Action::TUK_Reference;
   bool Owned = false;
   bool IsDependent = false;
+  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
+  const char *PrevSpec = 0;
+  unsigned DiagID;
   DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TUK,
                                        StartLoc, SS, Name, NameLoc, Attr.get(),
                                        AS,
                                        Action::MultiTemplateParamsArg(Actions),
                                        Owned, IsDependent);
-  assert(!IsDependent && "didn't expect dependent enum");
+  if (IsDependent) {
+    // This enum has a dependent nested-name-specifier. Handle it as a 
+    // dependent tag.
+    if (!Name) {
+      DS.SetTypeSpecError();
+      Diag(Tok, diag::err_expected_type_name_after_typename);
+      return;
+    }
+    
+    TypeResult Type = Actions.ActOnDependentTag(CurScope, DeclSpec::TST_enum,
+                                                TUK, SS, Name, StartLoc, 
+                                                NameLoc);
+    if (Type.isInvalid()) {
+      DS.SetTypeSpecError();
+      return;
+    }
+    
+    if (DS.SetTypeSpecType(DeclSpec::TST_typename, TSTLoc, PrevSpec, DiagID,
+                           Type.get(), false))
+      Diag(StartLoc, DiagID) << PrevSpec;
+    
+    return;
+  }
 
+  if (!TagDecl.get()) {
+    // The action failed to produce an enumeration tag. If this is a 
+    // definition, consume the entire definition.
+    if (Tok.is(tok::l_brace)) {
+      ConsumeBrace();
+      SkipUntil(tok::r_brace);
+    }
+    
+    DS.SetTypeSpecError();
+    return;
+  }
+  
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
 
   // FIXME: The DeclSpec should keep the locations of both the keyword and the
   // name (if there is one).
-  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
-  const char *PrevSpec = 0;
-  unsigned DiagID;
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, TSTLoc, PrevSpec, DiagID,
                          TagDecl.getAs<void>(), Owned))
     Diag(StartLoc, DiagID) << PrevSpec;

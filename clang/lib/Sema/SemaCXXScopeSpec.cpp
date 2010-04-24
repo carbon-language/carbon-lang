@@ -235,6 +235,16 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS) {
     return false;
 
   DeclContext *DC = computeDeclContext(SS, true);
+  if (!DC) {
+    // It's dependent.
+    assert(isDependentScopeSpecifier(SS) && 
+           "No context for non-dependent scope specifier?");
+    Diag(SS.getRange().getBegin(), diag::err_dependent_nested_name_spec)
+      << SS.getRange();
+    SS.setScopeRep(0);
+    return true;
+  }
+  
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
     // If this is a dependent type, then we consider it complete.
     if (Tag->isDependentContext())
