@@ -1502,6 +1502,13 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
                           SourceLocation(), ParamType, 0);
     
+    // Cast to the base class to avoid ambiguities.
+    CXXBaseSpecifierArray BasePath;
+    BasePath.push_back(BaseSpec);
+    SemaRef.ImpCastExprToType(CopyCtorArg, BaseSpec->getType(), 
+                              CastExpr::CK_UncheckedDerivedToBase,
+                              /*isLvalue=*/true, BasePath);
+
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
                                          SourceLocation(), SourceLocation());
