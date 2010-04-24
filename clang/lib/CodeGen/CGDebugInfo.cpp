@@ -1333,21 +1333,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   llvm::StringRef Name;
   MangleBuffer LinkageName;
-  // It is expected that CurLoc is set before using EmitFunctionStart.
-  // Usually, CurLoc points to the left bracket location of compound
-  // statement representing function body.
-  llvm::DIFile Unit = getOrCreateFile(CurLoc);
-  llvm::DIDescriptor Context(Unit.getNode());
 
   const Decl *D = GD.getDecl();
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (MD->isStatic()) {
-        QualType RTy = CGM.getContext().getTypeDeclType(MD->getParent());
-        Context = CreateType(RTy->getAs<RecordType>(), getOrCreateFile(CurLoc));
-      }
-    }
-
     // If there is a DISubprogram for  this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
       FI = SPCache.find(FD);
@@ -1372,11 +1360,15 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       Name = Name.substr(1);
   }
 
+  // It is expected that CurLoc is set before using EmitFunctionStart.
+  // Usually, CurLoc points to the left bracket location of compound
+  // statement representing function body.
+  llvm::DIFile Unit = getOrCreateFile(CurLoc);
   SourceManager &SM = CGM.getContext().getSourceManager();
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
 
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(Context, Name, Name, LinkageName, Unit, LineNo,
+    DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
