@@ -1141,13 +1141,18 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       // a pointer.
       if (TruncTy->isFloatingPointTy())
         Tmp = Builder.CreateFPTrunc(Tmp, TruncTy);
-      else if (!isa<llvm::PointerType>(TruncTy))
-        Tmp = Builder.CreateTrunc(Tmp, TruncTy);
-      else {
+      else if (TruncTy->isPointerTy() && Tmp->getType()->isIntegerTy()) {
         uint64_t ResSize = CGM.getTargetData().getTypeSizeInBits(TruncTy);
         Tmp = Builder.CreateTrunc(Tmp, llvm::IntegerType::get(VMContext,
                                                             (unsigned)ResSize));
         Tmp = Builder.CreateIntToPtr(Tmp, TruncTy);
+      } else if (Tmp->getType()->isPointerTy() && TruncTy->isIntegerTy()) {
+        uint64_t TmpSize =CGM.getTargetData().getTypeSizeInBits(Tmp->getType());
+        Tmp = Builder.CreatePtrToInt(Tmp, llvm::IntegerType::get(VMContext,
+                                                            (unsigned)TmpSize));
+        Tmp = Builder.CreateTrunc(Tmp, TruncTy);
+      } else if (TruncTy->isIntegerTy()) {
+        Tmp = Builder.CreateTrunc(Tmp, TruncTy);
       }
     }
 
