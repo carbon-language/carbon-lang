@@ -1492,7 +1492,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
   if (CheckDerivedToBaseConversion(FromRecordType,
                                    DestRecordType,
                                    FromLoc,
-                                   FromRange,
+                                   FromRange, 0,
                                    IgnoreAccess))
     return true;
 

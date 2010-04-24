@@ -1357,7 +1357,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
         // ambiguous or inaccessible conversion.
         if (CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
                                          From->getExprLoc(),
-                                         From->getSourceRange(),
+                                         From->getSourceRange(), 0,
                                          IgnoreBaseAccess))
           return true;
         

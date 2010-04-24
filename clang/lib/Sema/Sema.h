@@ -2596,12 +2596,14 @@ public:
   
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range,
+                                    CXXBaseSpecifierArray *BasePath = 0,
                                     bool IgnoreAccess = false);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     unsigned InaccessibleBaseID,
                                     unsigned AmbigiousBaseConvID,
                                     SourceLocation Loc, SourceRange Range,
-                                    DeclarationName Name);
+                                    DeclarationName Name,
+                                    CXXBaseSpecifierArray *BasePath);
 
   std::string getAmbiguousPathsDisplayString(CXXBasePaths &Paths);
 

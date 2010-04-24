@@ -3461,7 +3461,7 @@ InitializationSequence::Perform(Sema &S,
       bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
       if (S.CheckDerivedToBaseConversion(SourceType, Step->Type,
                                          CurInitExpr->getLocStart(),
-                                         CurInitExpr->getSourceRange(),
+                                         CurInitExpr->getSourceRange(), 0,
                                          IgnoreBaseAccess))
         return S.ExprError();
         

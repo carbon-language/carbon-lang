@@ -723,7 +723,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    unsigned InaccessibleBaseID,
                                    unsigned AmbigiousBaseConvID,
                                    SourceLocation Loc, SourceRange Range,
-                                   DeclarationName Name) {
+                                   DeclarationName Name,
+                                   CXXBaseSpecifierArray *BasePath) {
   // First, determine whether the path from Derived to Base is
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
@@ -742,10 +743,16 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
     // Check that the base class can be accessed.
     switch (CheckBaseClassAccess(Loc, Base, Derived, Paths.front(),
                                  InaccessibleBaseID)) {
-    case AR_accessible: return false;
-    case AR_inaccessible: return true;
-    case AR_dependent: return false;
-    case AR_delayed: return false;
+    case AR_inaccessible: 
+      return true;
+    case AR_accessible: 
+    case AR_dependent:
+    case AR_delayed:
+      // Build a base path if necessary.
+      if (BasePath) {
+        // FIXME: Do this!
+      }
+      return false;
     }
   }
   
@@ -775,12 +782,14 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
 bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    SourceLocation Loc, SourceRange Range,
+                                   CXXBaseSpecifierArray *BasePath,
                                    bool IgnoreAccess) {
   return CheckDerivedToBaseConversion(Derived, Base,
                                       IgnoreAccess ? 0
                                        : diag::err_upcast_to_inaccessible_base,
                                       diag::err_ambiguous_derived_to_base_conv,
-                                      Loc, Range, DeclarationName());
+                                      Loc, Range, DeclarationName(), 
+                                      BasePath);
 }
 
 
@@ -5418,10 +5427,10 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
 
     // Check if we the conversion from derived to base is valid.
     if (CheckDerivedToBaseConversion(NewClassTy, OldClassTy,
-                      diag::err_covariant_return_inaccessible_base,
-                      diag::err_covariant_return_ambiguous_derived_to_base_conv,
-                      // FIXME: Should this point to the return type?
-                      New->getLocation(), SourceRange(), New->getDeclName())) {
+                    diag::err_covariant_return_inaccessible_base,
+                    diag::err_covariant_return_ambiguous_derived_to_base_conv,
+                    // FIXME: Should this point to the return type?
+                    New->getLocation(), SourceRange(), New->getDeclName(), 0)) {
       Diag(Old->getLocation(), diag::note_overridden_virtual_function);
       return true;
     }

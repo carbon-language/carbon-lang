@@ -1770,7 +1770,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     if (CheckDerivedToBaseConversion(From->getType(), 
                                      ToType.getNonReferenceType(),
                                      From->getLocStart(),
-                                     From->getSourceRange(),
+                                     From->getSourceRange(), 0,
                                      IgnoreBaseAccess))
       return true;
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
