@@ -982,6 +982,10 @@ protected:
                                         const ObjCMethodDecl *OMD,
                                         const ObjCCommonTypesHelper &ObjCTypes);
 
+  /// EmitImageInfo - Emit the image info marker used to encode some module
+  /// level information.
+  void EmitImageInfo();
+
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) :
     CGM(cgm), VMContext(cgm.getLLVMContext()) { }
@@ -1008,9 +1012,6 @@ public:
 class CGObjCMac : public CGObjCCommonMac {
 private:
   ObjCTypesHelper ObjCTypes;
-  /// EmitImageInfo - Emit the image info marker used to encode some module
-  /// level information.
-  void EmitImageInfo();
 
   /// EmitModuleInfo - Another marker encoding module level
   /// information.
@@ -1741,7 +1742,6 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                                Init,
                                "\01L_OBJC_PROTOCOL_" + PD->getName());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
-    Entry->setAlignment(4);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
@@ -1763,7 +1763,6 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
                                0,
                                "\01L_OBJC_PROTOCOL_" + PD->getName());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
-    Entry->setAlignment(4);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
@@ -2962,18 +2961,17 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
 ///   unsigned flags;
 /// };
 enum ImageInfoFlags {
-  eImageInfo_FixAndContinue      = (1 << 0), // FIXME: Not sure what
-                                             // this implies.
+  eImageInfo_FixAndContinue      = (1 << 0),
   eImageInfo_GarbageCollected    = (1 << 1),
   eImageInfo_GCOnly              = (1 << 2),
   eImageInfo_OptimizedByDyld     = (1 << 3), // FIXME: When is this set.
 
-  // A flag indicating that the module has no instances of an
-  // @synthesize of a superclass variable. <rdar://problem/6803242>
+  // A flag indicating that the module has no instances of a @synthesize of a
+  // superclass variable. <rdar://problem/6803242>
   eImageInfo_CorrectedSynthesize = (1 << 4)
 };
 
-void CGObjCMac::EmitImageInfo() {
+void CGObjCCommonMac::EmitImageInfo() {
   unsigned version = 0; // Version is unused?
   unsigned flags = 0;
 
@@ -4245,28 +4243,7 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                      "\01L_OBJC_LABEL_NONLAZY_CATEGORY_$",
                      "__DATA, __objc_nlcatlist, regular, no_dead_strip");
 
-  //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
-  // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
-  std::vector<llvm::Constant*> Values(2);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  unsigned int flags = 0;
-  // FIXME: Fix and continue?
-  if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC)
-    flags |= eImageInfo_GarbageCollected;
-  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly)
-    flags |= eImageInfo_GCOnly;
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
-  llvm::Constant* Init = llvm::ConstantArray::get(
-    llvm::ArrayType::get(ObjCTypes.IntTy, 2),
-    Values);
-  llvm::GlobalVariable *IMGV =
-    new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             "\01L_OBJC_IMAGE_INFO");
-  IMGV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
-  IMGV->setConstant(true);
-  CGM.AddUsedGlobal(IMGV);
+  EmitImageInfo();
 }
 
 /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
