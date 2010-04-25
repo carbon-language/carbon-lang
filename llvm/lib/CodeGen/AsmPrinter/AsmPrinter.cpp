@@ -285,7 +285,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.SwitchSection(TheSection);
 
   EmitLinkage(GV->getLinkage(), GVSym);
-  EmitAlignment(AlignLog, GV);
+  EmitAlignment(AlignLog, GV, AlignLog);
 
   if (isVerbose()) {
     WriteAsOperand(OutStreamer.GetCommentOS(), GV,
@@ -987,7 +987,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors") {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticCtorSection());
-    EmitAlignment(Align, 0);
+    EmitAlignment(Align);
     EmitXXStructorList(GV->getInitializer());
     
     if (TM.getRelocationModel() == Reloc::Static &&
@@ -1001,7 +1001,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   
   if (GV->getName() == "llvm.global_dtors") {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticDtorSection());
-    EmitAlignment(Align, 0);
+    EmitAlignment(Align);
     EmitXXStructorList(GV->getInitializer());
 
     if (TM.getRelocationModel() == Reloc::Static &&
