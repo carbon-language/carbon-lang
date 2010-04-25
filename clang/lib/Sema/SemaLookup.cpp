@@ -299,9 +299,10 @@ void LookupResult::resolveKind() {
   // If there's a single decl, we need to examine it to decide what
   // kind of lookup this is.
   if (N == 1) {
-    if (isa<FunctionTemplateDecl>(*Decls.begin()))
+    NamedDecl *D = (*Decls.begin())->getUnderlyingDecl();
+    if (isa<FunctionTemplateDecl>(D))
       ResultKind = FoundOverloaded;
-    else if (isa<UnresolvedUsingValueDecl>(*Decls.begin()))
+    else if (isa<UnresolvedUsingValueDecl>(D))
       ResultKind = FoundUnresolvedValue;
     return;
   }

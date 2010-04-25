@@ -56,3 +56,19 @@ namespace test3 {
     }
   };
 }
+
+namespace test4 {
+  class X {
+  protected:
+    template<typename T> void f(T);
+  };
+
+  class Y : public X {
+  public:
+    using X::f;
+  };
+
+  void test_f(Y y) {
+    y.f(17);
+  }
+}

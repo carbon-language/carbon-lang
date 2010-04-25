@@ -2834,6 +2834,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
 
   Diag(MemberDecl->getLocation(), diag::note_member_declared_here)
     << MemberName;
+  R.suppressDiagnostics();
   return ExprError();
 }
 
@@ -3514,7 +3515,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // declarations (all methods or method templates) or a single
       // method template.
       assert((MemE->getNumDecls() > 1) ||
-             isa<FunctionTemplateDecl>(*MemE->decls_begin()));
+             isa<FunctionTemplateDecl>(
+                                 (*MemE->decls_begin())->getUnderlyingDecl()));
       (void)MemE;
 
       return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
