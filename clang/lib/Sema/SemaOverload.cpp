@@ -3703,7 +3703,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     const RecordType *TyRec;
     if (const MemberPointerType *RHSMPType =
         ArgExpr->getType()->getAs<MemberPointerType>())
-      TyRec = cast<RecordType>(RHSMPType->getClass());
+      TyRec = RHSMPType->getClass()->getAs<RecordType>();
     else
       TyRec = ArgExpr->getType()->getAs<RecordType>();
     if (!TyRec) {

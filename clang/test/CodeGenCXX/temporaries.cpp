@@ -301,3 +301,21 @@ namespace PR6648 {
     zed(foo);
   }
 }
+
+namespace UserConvertToValue {
+  struct X {
+    X(int);
+    X(const X&);
+    ~X();
+  };
+
+  void f(X);
+
+  // CHECK: void @_ZN18UserConvertToValue1gEv() 
+  void g() {
+    // CHECK: call void @_ZN18UserConvertToValue1XC1Ei
+    // CHECK: call void @_ZN18UserConvertToValue1fENS_1XE
+    // CHECK: call void @_ZN18UserConvertToValue1XD1Ev
+    f(1);
+  }
+}

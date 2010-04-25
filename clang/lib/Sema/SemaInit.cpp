@@ -3355,8 +3355,14 @@ static Sema::OwningExprResult CopyObject(Sema &S,
                                 Loc, ConstructorArgs))
     return S.ExprError();
 
-  return S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
-                                 move_arg(ConstructorArgs));
+  // Actually perform the constructor call.
+  CurInit = S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
+                                    move_arg(ConstructorArgs));
+  
+  // If we're supposed to bind temporaries, do so.
+  if (!CurInit.isInvalid() && shouldBindAsTemporary(Entity))
+    CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
+  return move(CurInit);
 }
 
 void InitializationSequence::PrintInitLocationNote(Sema &S,
