@@ -1,24 +1,27 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
-
-// RUN: grep '@"OBJC_METACLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t
-// RUN: grep '@"OBJC_CLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH1" = weak global .*section "__DATA,__datacoal_nt,coalesced", align 8' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH2" = external global' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH3" = global .*section "__DATA,__objc_const", align 8' %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: FileCheck -check-prefix=CHECK-X86_64 < %t %s
 // RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_" =.*section "__TEXT,__cstring,cstring_literals", align 1' %t | count 1
-// RUN: grep -F 'define internal void @"\01-[A im0]"' %t
-// RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t
 
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fvisibility hidden -emit-llvm -o %t %s
+// CHECK-X86_64: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
+// CHECK-X86_64: @"OBJC_METACLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
+// CHECK-X86_64: @"\01L_OBJC_CLASS_NAME_" = {{.*}}, section "__TEXT,__cstring,cstring_literals", align 1
+// CHECK-X86_64: @"OBJC_EHTYPE_$_EH1" = weak global {{.*}}, section "__DATA,__datacoal_nt,coalesced", align 8
+// CHECK-X86_64: @"OBJC_EHTYPE_$_EH2" = external global
+// CHECK-X86_64: @"OBJC_EHTYPE_$_EH3" = global {{.*}}, section "__DATA,__objc_const", align 8
+// CHECK-X86_64: @"\01L_OBJC_LABEL_CLASS_$" = internal global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 8
+// CHECK-X86_64: define internal void @"\01-[A im0]"
+// CHECK-X86_64: define internal void @"\01-[A(Cat) im1]"
 
-// RUN: grep '@"OBJC_METACLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t
-// RUN: grep '@"OBJC_CLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH1" = weak hidden global .*section "__DATA,__datacoal_nt,coalesced"' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH2" = external global' %t
-// RUN: grep '@"OBJC_EHTYPE_$_EH3" = hidden global .*section "__DATA,__objc_const", align 8' %t
-// RUN: grep -F 'define internal void @"\01-[A im0]"' %t
-// RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fvisibility hidden -emit-llvm -o %t %s
+// RUN: FileCheck -check-prefix=CHECK-X86_64-HIDDEN < %t %s
+
+// CHECK-X86_64-HIDDEN: @"OBJC_CLASS_$_A" = hidden global {{.*}}, section "__DATA, __objc_data", align 8
+// CHECK-X86_64-HIDDEN: @"OBJC_METACLASS_$_A" = hidden global {{.*}}, section "__DATA, __objc_data", align 8
+// CHECK-X86_64-HIDDEN: @"OBJC_EHTYPE_$_EH1" = weak hidden global {{.*}}, section "__DATA,__datacoal_nt,coalesced"
+// CHECK-X86_64-HIDDEN: @"OBJC_EHTYPE_$_EH2" = external global
+// CHECK-X86_64-HIDDEN: @"OBJC_EHTYPE_$_EH3" = hidden global {{.*}}, section "__DATA,__objc_const", align 8
+// CHECK-X86_64-HIDDEN: define internal void @"\01-[A im0]"
+// CHECK-X86_64-HIDDEN: define internal void @"\01-[A(Cat) im1]"
 
 
 @interface A
