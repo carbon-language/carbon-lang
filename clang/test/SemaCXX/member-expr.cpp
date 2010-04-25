@@ -2,7 +2,7 @@
 
 class X{
 public:
-  enum E {Enumerator};
+  enum E {Enumerator}; // expected-note 2{{declared here}}
   int f();
   static int mem;
   static float g();
@@ -11,8 +11,8 @@ public:
 void test(X* xp, X x) {
   int i1 = x.f();
   int i2 = xp->f();
-  x.E; // expected-error{{cannot refer to type member 'E' with '.'}}
-  xp->E; // expected-error{{cannot refer to type member 'E' with '->'}}
+  x.E; // expected-error{{cannot refer to type member 'E' in 'X' with '.'}}
+  xp->E; // expected-error{{cannot refer to type member 'E' in 'X' with '->'}}
   int i3 = x.Enumerator;
   int i4 = xp->Enumerator;
   x.mem = 1;

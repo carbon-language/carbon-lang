@@ -1261,8 +1261,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
         
     for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
          F != FEnd; ++F) {
-      Diag((*F)->getLocation(), 
-           diag::note_delete_member_function_declared_here)
+      Diag((*F)->getLocation(), diag::note_member_declared_here)
         << Name;
     }
 

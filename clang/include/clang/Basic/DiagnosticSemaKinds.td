@@ -1865,9 +1865,9 @@ def err_typecheck_member_reference_arrow : Error<
 def err_typecheck_member_reference_suggestion : Error<
   "member reference type %0 is %select{a|not a}1 pointer; maybe you meant to use '%select{->|.}1'?">;
 def err_typecheck_member_reference_type : Error<
-  "cannot refer to type member %0 with '%select{.|->}1'">;
+  "cannot refer to type member %0 in %1 with '%select{.|->}2'">;
 def err_typecheck_member_reference_unknown : Error<
-  "cannot refer to member %0 with '%select{.|->}1'">;
+  "cannot refer to member %0 in %1 with '%select{.|->}2'">;
 def err_member_reference_needs_call : Error<
   "base of member reference has function type %0; perhaps you meant to call "
   "this function with '()'?">;
@@ -2181,8 +2181,8 @@ def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
 def err_no_suitable_delete_member_function_found : Error<
   "no suitable member %0 in %1">;
-def note_delete_member_function_declared_here : Note<
-  "%0 declared here">;
+def note_member_declared_here : Note<
+  "member %0 declared here">;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
   "incrementing expression of type bool is deprecated">, InGroup<Deprecated>;

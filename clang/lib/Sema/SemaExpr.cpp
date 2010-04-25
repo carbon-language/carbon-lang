@@ -2824,16 +2824,17 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
 
   Owned(BaseExpr);
 
+  // We found something that we didn't expect. Complain.
   if (isa<TypeDecl>(MemberDecl))
-    return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
-                     << MemberName << int(IsArrow));
+    Diag(MemberLoc,diag::err_typecheck_member_reference_type)
+      << MemberName << BaseType << int(IsArrow);
+  else
+    Diag(MemberLoc, diag::err_typecheck_member_reference_unknown)
+      << MemberName << BaseType << int(IsArrow);
 
-  // We found a declaration kind that we didn't expect. This is a
-  // generic error message that tells the user that she can't refer
-  // to this member with '.' or '->'.
-  return ExprError(Diag(MemberLoc,
-                        diag::err_typecheck_member_reference_unknown)
-      << MemberName << int(IsArrow));
+  Diag(MemberDecl->getLocation(), diag::note_member_declared_here)
+    << MemberName;
+  return ExprError();
 }
 
 /// Look up the given member of the given non-type-dependent
