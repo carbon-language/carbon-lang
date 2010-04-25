@@ -4202,7 +4202,7 @@ void CGObjCNonFragileABIMac::AddModuleClassList(const
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              SymbolName);
-  GV->setAlignment(8);
+  GV->setAlignment(CGM.getTargetData().getABITypeAlignment(Init->getType()));
   GV->setSection(SectionName);
   CGM.AddUsedGlobal(GV);
 }
@@ -4399,7 +4399,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                              std::string("\01l_OBJC_METACLASS_RO_$_")+ClassName :
                              std::string("\01l_OBJC_CLASS_RO_$_")+ClassName);
   CLASS_RO_GV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ClassRonfABITy));
+    CGM.getTargetData().getABITypeAlignment(ObjCTypes.ClassRonfABITy));
   CLASS_RO_GV->setSection("__DATA, __objc_const");
   return CLASS_RO_GV;
 
@@ -4435,7 +4435,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   GV->setInitializer(Init);
   GV->setSection("__DATA, __objc_data");
   GV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ClassnfABITy));
+    CGM.getTargetData().getABITypeAlignment(ObjCTypes.ClassnfABITy));
   if (HiddenVisibility)
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   return GV;
@@ -4685,7 +4685,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                                Init,
                                ExtCatName);
   GCATV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.CategorynfABITy));
+    CGM.getTargetData().getABITypeAlignment(ObjCTypes.CategorynfABITy));
   GCATV->setSection("__DATA, __objc_const");
   CGM.AddUsedGlobal(GCATV);
   DefinedCategories.push_back(GCATV);
@@ -4745,7 +4745,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(llvm::Twine Name,
                              Init,
                              Name);
   GV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
+    CGM.getTargetData().getABITypeAlignment(Init->getType()));
   GV->setSection(Section);
   CGM.AddUsedGlobal(GV);
   return llvm::ConstantExpr::getBitCast(GV,
@@ -4780,7 +4780,7 @@ CGObjCNonFragileABIMac::EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
   IvarOffsetGV->setInitializer(llvm::ConstantInt::get(ObjCTypes.LongTy,
                                                       Offset));
   IvarOffsetGV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
+    CGM.getTargetData().getABITypeAlignment(ObjCTypes.LongTy));
 
   // FIXME: This matches gcc, but shouldn't the visibility be set on the use as
   // well (i.e., in ObjCIvarOffsetVariable).
@@ -4867,7 +4867,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                              Init,
                              Prefix + OID->getName());
   GV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
+    CGM.getTargetData().getABITypeAlignment(Init->getType()));
   GV->setSection("__DATA, __objc_const");
 
   CGM.AddUsedGlobal(GV);
@@ -4986,7 +4986,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                false, llvm::GlobalValue::WeakAnyLinkage, Init,
                                "\01l_OBJC_PROTOCOL_$_" + PD->getName());
     Entry->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ProtocolnfABITy));
+      CGM.getTargetData().getABITypeAlignment(ObjCTypes.ProtocolnfABITy));
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
@@ -4999,7 +4999,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                              false, llvm::GlobalValue::WeakAnyLinkage, Entry,
                              "\01l_OBJC_LABEL_PROTOCOL_$_" + PD->getName());
   PTGV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
+    CGM.getTargetData().getABITypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
   PTGV->setSection("__DATA, __objc_protolist, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(PTGV);
@@ -5055,7 +5055,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(llvm::Twine Name,
                                 Name);
   GV->setSection("__DATA, __objc_const");
   GV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
+    CGM.getTargetData().getABITypeAlignment(Init->getType()));
   CGM.AddUsedGlobal(GV);
   return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.ProtocolListnfABIPtrTy);
@@ -5252,7 +5252,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
                                ClassGV,
                                "\01L_OBJC_CLASSLIST_REFERENCES_$_");
     Entry->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(
+      CGM.getTargetData().getABITypeAlignment(
         ObjCTypes.ClassnfABIPtrTy));
     Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
     CGM.AddUsedGlobal(Entry);
@@ -5275,7 +5275,7 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder,
                                ClassGV,
                                "\01L_OBJC_CLASSLIST_SUP_REFS_$_");
     Entry->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(
+      CGM.getTargetData().getABITypeAlignment(
         ObjCTypes.ClassnfABIPtrTy));
     Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
     CGM.AddUsedGlobal(Entry);
@@ -5301,7 +5301,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                              MetaClassGV,
                              "\01L_OBJC_CLASSLIST_SUP_REFS_$_");
   Entry->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(
+    CGM.getTargetData().getABITypeAlignment(
       ObjCTypes.ClassnfABIPtrTy));
 
   Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
@@ -5860,7 +5860,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
 
   if (CGM.getLangOptions().getVisibilityMode() == LangOptions::Hidden)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  Entry->setAlignment(8);
+  Entry->setAlignment(CGM.getTargetData().getABITypeAlignment(
+      ObjCTypes.EHTypeTy));
 
   if (ForDefinition) {
     Entry->setSection("__DATA,__objc_const");

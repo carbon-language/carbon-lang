@@ -23,6 +23,18 @@
 // CHECK-X86_64-HIDDEN: define internal void @"\01-[A im0]"
 // CHECK-X86_64-HIDDEN: define internal void @"\01-[A(Cat) im1]"
 
+// RUN: %clang_cc1 -triple armv6-apple-darwin10 -target-abi apcs-gnu -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: FileCheck -check-prefix=CHECK-ARMV6 < %t %s
+
+// CHECK-ARMV6: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 4
+// CHECK-ARMV6: @"OBJC_METACLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 4
+// CHECK-ARMV6: @"\01L_OBJC_CLASS_NAME_" = {{.*}}, section "__TEXT,__cstring,cstring_literals", align 1
+// CHECK-ARMV6: @"OBJC_EHTYPE_$_EH1" = weak global {{.*}}, section "__DATA,__datacoal_nt,coalesced", align 4
+// CHECK-ARMV6: @"OBJC_EHTYPE_$_EH2" = external global
+// CHECK-ARMV6: @"OBJC_EHTYPE_$_EH3" = global {{.*}}, section "__DATA,__objc_const", align 4
+// CHECK-ARMV6: @"\01L_OBJC_LABEL_CLASS_$" = internal global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 4
+// CHECK-ARMV6: define internal arm_apcscc void @"\01-[A im0]"
+// CHECK-ARMV6: define internal arm_apcscc void @"\01-[A(Cat) im1]"
 
 @interface A
 @end
