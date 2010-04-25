@@ -1255,6 +1255,16 @@ public:
     return SDValue();
   }
 
+  /// EmitTargetCodeForFrameDebugValue - Emit a target-dependent form of
+  /// DBG_VALUE encoding the address of a frame index.  Addresses would
+  /// normally be lowered the same way as other addresses on the target,
+  /// e.g. in load instructions.  For targets that do not support this
+  /// the debug info is simply lost.
+  virtual void
+  EmitTargetCodeForFrameDebugValue(MachineBasicBlock* BB, unsigned FrameIx,
+                                   uint64_t Offset, MDNode *MDPtr,
+                                   DebugLoc dl) const {}
+
   /// LowerOperationWrapper - This callback is invoked by the type legalizer
   /// to legalize nodes with an illegal operand type but legal result types.
   /// It replaces the LowerOperation callback in the type Legalizer.

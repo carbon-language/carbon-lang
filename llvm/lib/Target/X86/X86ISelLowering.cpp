@@ -8622,6 +8622,19 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
   return BB;
 }
 
+void
+X86TargetLowering::EmitTargetCodeForFrameDebugValue(MachineBasicBlock* BB,
+                                      unsigned FrameIx, uint64_t Offset,
+                                      MDNode *MDPtr, DebugLoc DL) const {
+  // Target dependent DBG_VALUE.  Only the frame index case is done here.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  X86AddressMode AM;
+  AM.BaseType = X86AddressMode::FrameIndexBase;
+  AM.Base.FrameIndex = FrameIx;
+  addFullAddress(BuildMI(BB, DL, TII->get(X86::DBG_VALUE)), AM).
+    addImm(Offset).addMetadata(MDPtr);
+}
+
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB,
@@ -8724,21 +8737,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
-    // DBG_VALUE.  Only the frame index case is done here.
-  case X86::DBG_VALUE: {
-    const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-    DebugLoc DL = MI->getDebugLoc();
-    X86AddressMode AM;
-    MachineFunction *F = BB->getParent();
-    AM.BaseType = X86AddressMode::FrameIndexBase;
-    AM.Base.FrameIndex = MI->getOperand(0).getImm();
-    addFullAddress(BuildMI(BB, DL, TII->get(X86::DBG_VALUE)), AM).
-      addImm(MI->getOperand(1).getImm()).
-      addMetadata(MI->getOperand(2).getMetadata());
-    F->DeleteMachineInstr(MI);      // Remove pseudo.
-    return BB;
-  }
-
     // String/text processing lowering.
   case X86::PCMPISTRM128REG:
     return EmitPCMP(MI, BB, 3, false /* in-mem */);

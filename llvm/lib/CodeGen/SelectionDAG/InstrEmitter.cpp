@@ -514,6 +514,14 @@ MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   MDNode* MDPtr = SD->getMDPtr();
   DebugLoc DL = SD->getDebugLoc();
 
+  if (SD->getKind() == SDDbgValue::FRAMEIX) {
+    // Stack address; this needs to be lowered in target-dependent fashion.
+    // EmitTargetCodeForFrameDebugValue is responsible for allocation.
+    unsigned FrameIx = SD->getFrameIx();
+    TLI->EmitTargetCodeForFrameDebugValue(InsertBB, FrameIx, Offset, MDPtr, DL);
+    return 0;
+  }
+  // Otherwise, we're going to create an instruction here.
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
   MachineInstrBuilder MIB = BuildMI(*MF, DL, II);
   if (SD->getKind() == SDDbgValue::SDNODE) {
@@ -541,15 +549,6 @@ MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
       // dropped.
       MIB.addReg(0U);
     }
-  } else if (SD->getKind() == SDDbgValue::FRAMEIX) {
-    unsigned FrameIx = SD->getFrameIx();
-    // Stack address; this needs to be lowered in target-dependent fashion.
-    // FIXME test that the target supports this somehow; if not emit Undef.
-    // Create a pseudo for EmitInstrWithCustomInserter's consumption.
-    MIB.addImm(FrameIx).addImm(Offset).addMetadata(MDPtr);
-    abort();
-    TLI->EmitInstrWithCustomInserter(&*MIB, InsertBB, EM);
-    return 0;
   } else {
     // Insert an Undef so we can see what we dropped.
     MIB.addReg(0U);
