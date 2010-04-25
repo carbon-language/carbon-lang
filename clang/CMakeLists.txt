@@ -115,6 +115,7 @@ install(DIRECTORY include/
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
   DESTINATION include
   FILES_MATCHING
+  PATTERN "CMakeFiles" EXCLUDE
   PATTERN "*.inc"
   )
 
