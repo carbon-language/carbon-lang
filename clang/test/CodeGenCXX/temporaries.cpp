@@ -316,6 +316,7 @@ namespace UserConvertToValue {
     // CHECK: call void @_ZN18UserConvertToValue1XC1Ei
     // CHECK: call void @_ZN18UserConvertToValue1fENS_1XE
     // CHECK: call void @_ZN18UserConvertToValue1XD1Ev
+    // CHECK: ret void
     f(1);
   }
 }
