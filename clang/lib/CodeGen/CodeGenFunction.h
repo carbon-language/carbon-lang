@@ -804,17 +804,20 @@ public:
     
   void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
-                                   const ConstantArrayType *Array,
-                                   const CXXRecordDecl *ClassDecl);
+                                   const ArrayType *Array,
+                                   const CXXRecordDecl *BaseClassDecl,
+                                   QualType Ty);
 
   void EmitClassAggrCopyAssignment(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
-                                   const ConstantArrayType *Array,
+                                   const ArrayType *Array,
                                    const CXXRecordDecl *BaseClassDecl,
                                    QualType Ty);
 
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
-                               const CXXRecordDecl *ClassDecl);
+                               const CXXRecordDecl *ClassDecl,
+                               const CXXRecordDecl *BaseClassDecl,
+                               QualType Ty);
 
   void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl,

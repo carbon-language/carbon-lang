@@ -183,24 +183,9 @@ struct B {
 
 }
 
-namespace Test1 {
+namespace test1 {
   struct A {
     enum Kind { Foo } Kind;
     A() : Kind(Foo) {}
   };
-}
-
-namespace Test2 {
-
-struct A { 
-  A(const A&);
-};
-
-struct B : virtual A { };
-struct C : A, B { };
-
-C f(C c) {
-  return c;
-}
-
 }

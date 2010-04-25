@@ -405,11 +405,15 @@ EmitCopyCtorCall(CodeGenFunction &CGF,
 /// array of objects from SrcValue to DestValue. Copying can be either a bitwise
 /// copy or via a copy constructor call.
 //  FIXME. Consolidate this with EmitCXXAggrConstructorCall.
-void
-CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
-                                             llvm::Value *Src,
-                                             const ConstantArrayType *Array,
-                                             const CXXRecordDecl *ClassDecl) {
+void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
+                                            llvm::Value *Src,
+                                            const ArrayType *Array,
+                                            const CXXRecordDecl *BaseClassDecl,
+                                            QualType Ty) {
+  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
+  assert(CA && "VLA cannot be copied over");
+  bool BitwiseCopy = BaseClassDecl->hasTrivialCopyConstructor();
+
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
@@ -425,7 +429,7 @@ CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
   llvm::BasicBlock *ForBody = createBasicBlock("for.body");
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(Array);
+  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
   llvm::Value * NumElementsPtr =
     llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
@@ -436,12 +440,15 @@ CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
 
   EmitBlock(ForBody);
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
-  
   // Inside the loop body, emit the constructor call on the array element.
   Counter = Builder.CreateLoad(IndexPtr);
-  Dest = Builder.CreateInBoundsGEP(Dest, Counter, "destaddress");
   Src = Builder.CreateInBoundsGEP(Src, Counter, "srcaddress");
-  EmitClassMemberwiseCopy(Dest, Src, ClassDecl);
+  Dest = Builder.CreateInBoundsGEP(Dest, Counter, "destaddress");
+  if (BitwiseCopy)
+    EmitAggregateCopy(Dest, Src, Ty);
+  else if (CXXConstructorDecl *BaseCopyCtor =
+           BaseClassDecl->getCopyConstructor(getContext(), 0))
+    EmitCopyCtorCall(*this, BaseCopyCtor, Ctor_Complete, Dest, 0, Src);
 
   EmitBlock(ContinueBlock);
 
@@ -464,18 +471,19 @@ CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
 /// FIXME. This can be consolidated with EmitClassAggrMemberwiseCopy
 void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                             llvm::Value *Src,
-                                            const ConstantArrayType *Array,
+                                            const ArrayType *Array,
                                             const CXXRecordDecl *BaseClassDecl,
                                             QualType Ty) {
+  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
+  assert(CA && "VLA cannot be asssigned");
   bool BitwiseAssign = BaseClassDecl->hasTrivialCopyAssignment();
 
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
   llvm::Value* zeroConstant =
-    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
+  llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
   Builder.CreateStore(zeroConstant, IndexPtr);
-  
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
@@ -485,9 +493,9 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
   llvm::BasicBlock *ForBody = createBasicBlock("for.body");
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(Array);
+  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
   llvm::Value * NumElementsPtr =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
+  llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr,
                                               "isless");
@@ -581,21 +589,33 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
 
                                     
 /// EmitClassMemberwiseCopy - This routine generates code to copy a class
-/// object from SrcValue to DestValue.
-void CodeGenFunction::EmitClassMemberwiseCopy(llvm::Value *Dest, 
-                                              llvm::Value *Src,
-                                              const CXXRecordDecl *ClassDecl) {
-  if (ClassDecl->hasTrivialCopyConstructor()) {
-    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
+/// object from SrcValue to DestValue. Copying can be either a bitwise copy
+/// or via a copy constructor call.
+void CodeGenFunction::EmitClassMemberwiseCopy(
+                        llvm::Value *Dest, llvm::Value *Src,
+                        const CXXRecordDecl *ClassDecl,
+                        const CXXRecordDecl *BaseClassDecl, QualType Ty) {
+  CXXCtorType CtorType = Ctor_Complete;
+  
+  if (ClassDecl) {
+    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
+    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
+
+    // We want to call the base constructor.
+    CtorType = Ctor_Base;
+  }
+  if (BaseClassDecl->hasTrivialCopyConstructor()) {
+    EmitAggregateCopy(Dest, Src, Ty);
     return;
   }
 
-  // FIXME: Does this get the right copy constructor?
-  const CXXConstructorDecl *CopyConstructor = 
-    ClassDecl->getCopyConstructor(getContext(), 0);
-  assert(CopyConstructor && "Did not find copy constructor!");
-  
-  EmitCopyCtorCall(*this, CopyConstructor, Ctor_Complete, Dest, 0, Src);
+  CXXConstructorDecl *BaseCopyCtor =
+    BaseClassDecl->getCopyConstructor(getContext(), 0);
+  if (!BaseCopyCtor)
+    return;
+
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType));
+  EmitCopyCtorCall(*this, BaseCopyCtor, CtorType, Dest, VTT, Src);
 }
 
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class
@@ -663,9 +683,26 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
       "SynthesizeCXXCopyConstructor - copy constructor has definition already");
   assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
 
-  llvm::Value *ThisPtr = LoadCXXThis();
-  llvm::Value *SrcPtr = Builder.CreateLoad(GetAddrOfLocalVar(Args[1].first));
-  
+  FunctionArgList::const_iterator i = Args.begin();
+  const VarDecl *ThisArg = i->first;
+  llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
+  llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
+  const VarDecl *SrcArg = (i+1)->first;
+  llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
+  llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
+
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    // FIXME. copy constrution of virtual base NYI
+    if (Base->isVirtual())
+      continue;
+
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl,
+                            Base->getType());
+  }
+
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
     const FieldDecl *Field = *I;
@@ -679,26 +716,27 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(ThisPtr, Field, 0);
-      LValue RHS = EmitLValueForField(SrcPtr, Field, 0);
+      LValue LHS = EmitLValueForField(LoadOfThis, Field, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, Field, 0);
       if (Array) {
-        const llvm::Type *BasePtr = ConvertType(FieldType)->getPointerTo();
+        const llvm::Type *BasePtr = ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
         llvm::Value *DestBaseAddrPtr =
           Builder.CreateBitCast(LHS.getAddress(), BasePtr);
         llvm::Value *SrcBaseAddrPtr =
           Builder.CreateBitCast(RHS.getAddress(), BasePtr);
         EmitClassAggrMemberwiseCopy(DestBaseAddrPtr, SrcBaseAddrPtr, Array,
-                                    FieldClassDecl);
+                                    FieldClassDecl, FieldType);
       }
       else
         EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
-                                FieldClassDecl);
+                                0 /*ClassDecl*/, FieldClassDecl, FieldType);
       continue;
     }
     
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForFieldInitialization(ThisPtr, Field, 0);
-    LValue RHS = EmitLValueForFieldInitialization(SrcPtr, Field, 0);
+    LValue LHS = EmitLValueForFieldInitialization(LoadOfThis, Field, 0);
+    LValue RHS = EmitLValueForFieldInitialization(LoadOfSrc, Field, 0);
 
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
@@ -742,7 +780,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
          "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
 
   llvm::Value *ThisPtr = LoadCXXThis();
-  llvm::Value *SrcPtr = Builder.CreateLoad(GetAddrOfLocalVar(Args[1].first));
+  llvm::Value *SrcPtr = 
+    Builder.CreateLoad(GetAddrOfLocalVar(Args[1].first));
 
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
