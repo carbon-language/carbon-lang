@@ -356,3 +356,24 @@ namespace pr5900 {
     x(); // expected-error {{does not provide a call operator}}
   }
 }
+
+// Operator lookup through using declarations.
+namespace N {
+  struct X2 { };
+}
+
+namespace N2 {
+  namespace M {
+    namespace Inner {
+      template<typename T>
+      N::X2 &operator<<(N::X2&, const T&);
+    }
+    using Inner::operator<<;
+  }
+}
+
+void test_lookup_through_using() {
+  using namespace N2::M;
+  N::X2 x;
+  x << 17;
+}

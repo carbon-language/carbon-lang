@@ -1824,16 +1824,17 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 
   for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
        Op != OpEnd; ++Op) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op)) {
+    NamedDecl *Found = (*Op)->getUnderlyingDecl();
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Found)) {
       if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-        Functions.addDecl(FD, Op.getAccess()); // FIXME: canonical FD
+        Functions.addDecl(*Op, Op.getAccess()); // FIXME: canonical FD
     } else if (FunctionTemplateDecl *FunTmpl
-                 = dyn_cast<FunctionTemplateDecl>(*Op)) {
+                 = dyn_cast<FunctionTemplateDecl>(Found)) {
       // FIXME: friend operators?
       // FIXME: do we need to check IsAcceptableNonMemberOperatorCandidate,
       // later?
       if (!FunTmpl->getDeclContext()->isRecord())
-        Functions.addDecl(FunTmpl, Op.getAccess());
+        Functions.addDecl(*Op, Op.getAccess());
     }
   }
 }
