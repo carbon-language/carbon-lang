@@ -121,7 +121,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
         if (isdigit(Hdr->name[3])) {
           unsigned len = atoi(&Hdr->name[3]);
           const char *nulp = (const char *)memchr(At, '\0', len);
-          pathname.assign(At, nulp != 0 ? nulp - At : len);
+          pathname.assign(At, nulp != 0 ? (uintptr_t)(nulp - At) : len);
           At += len;
           MemberSize -= len;
           flags |= ArchiveMember::HasLongFilenameFlag;
