@@ -8,7 +8,7 @@ AC_DEFUN([AC_LINK_USE_R],
 [ AC_LANG_PUSH([C])
   oldcflags="$CFLAGS"
   CFLAGS="$CFLAGS -Wl,-R."
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[int main() { return 0; }]])],
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
     [llvm_cv_link_use_r=yes],[llvm_cv_link_use_r=no])
   CFLAGS="$oldcflags"
   AC_LANG_POP([C])
@@ -29,7 +29,7 @@ AC_DEFUN([AC_LINK_EXPORT_DYNAMIC],
 [ AC_LANG_PUSH([C])
   oldcflags="$CFLAGS"
   CFLAGS="$CFLAGS -Wl,-export-dynamic"
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[int main() { return 0; }]])],
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
     [llvm_cv_link_use_export_dynamic=yes],[llvm_cv_link_use_export_dynamic=no])
   CFLAGS="$oldcflags"
   AC_LANG_POP([C])
@@ -70,7 +70,7 @@ AC_DEFUN([AC_LINK_RETAIN_SYMBOLS_FILE],
   echo "main" > "$tmp/exports"
 
   CFLAGS="$CFLAGS -Wl,-retain-symbols-file=$tmp/exports"
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[int main() { return 0; }]])],
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
     [llvm_cv_link_use_retain_symbols_file=yes],[llvm_cv_link_use_retain_symbols_file=no])
   rm "$tmp/exports"
   rmdir "$tmp"

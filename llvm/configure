@@ -8634,7 +8634,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-int main() { return 0; }
+
   ;
   return 0;
 }
@@ -8726,7 +8726,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-int main() { return 0; }
+
   ;
   return 0;
 }
@@ -8837,7 +8837,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-int main() { return 0; }
+
   ;
   return 0;
 }
