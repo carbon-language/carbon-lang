@@ -3773,11 +3773,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    // FIXME: currently, we get here only if OptLevel != CodeGenOpt::None.
-    // The real handling of this intrinsic is in FastISel.
-//    if (OptLevel != CodeGenOpt::None)
-      // FIXME: Variable debug info is not supported here.
-//      return 0;
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
       return 0;
