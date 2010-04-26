@@ -5887,33 +5887,10 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::FOR, dl, VT, Val, SignBit);
 }
 
-// getSetCCPromoteOpcode - Return the opcode that should be used to promote
-// operands of a setcc. FIXME: See DAGTypeLegalizer::PromoteSetCCOperands.
-static unsigned getSetCCPromoteOpcode(ISD::CondCode CC) {
-  switch (CC) {
-  default: return 0;
-  case ISD::SETEQ:
-  case ISD::SETNE:
-  case ISD::SETUGE:
-  case ISD::SETUGT:
-  case ISD::SETULE:
-  case ISD::SETULT:
-    // ALL of these operations will work if we either sign or zero extend
-    // the operands (including the unsigned comparisons!).  Zero extend is
-    // usually a simpler/cheaper operation, so prefer it.
-    return ISD::ZERO_EXTEND;
-  case ISD::SETGE:
-  case ISD::SETGT:
-  case ISD::SETLT:
-  case ISD::SETLE:
-    return ISD::SIGN_EXTEND;
-  }
-}
-
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
 SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
-                                    ISD::CondCode CC, SelectionDAG &DAG) const {
+                                    SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
 
   // CF and OF aren't always set the way we want. Determine which
@@ -6037,13 +6014,6 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   }
 
   // Otherwise just emit a CMP with 0, which is the TEST pattern.
-  EVT PVT;
-  if (Subtarget->shouldPromote16Bit() && Op.getValueType() == MVT::i16 &&
-      (isa<ConstantSDNode>(Op) || IsDesirableToPromoteOp(Op, PVT))) {
-    unsigned POpc = getSetCCPromoteOpcode(CC);
-    if (POpc)
-      Op = DAG.getNode(POpc, Op.getDebugLoc(), MVT::i32, Op);
-  }
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
                      DAG.getConstant(0, Op.getValueType()));
 }
@@ -6051,22 +6021,12 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 /// Emit nodes that will be selected as "cmp Op0,Op1", or something
 /// equivalent.
 SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
-                                   ISD::CondCode CC, SelectionDAG &DAG) const {
+                                   SelectionDAG &DAG) const {
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op1))
     if (C->getAPIntValue() == 0)
-      return EmitTest(Op0, X86CC, CC, DAG);
+      return EmitTest(Op0, X86CC, DAG);
 
   DebugLoc dl = Op0.getDebugLoc();
-  EVT PVT;
-  if (Subtarget->shouldPromote16Bit() && Op0.getValueType() == MVT::i16 &&
-      (isa<ConstantSDNode>(Op0) || IsDesirableToPromoteOp(Op0, PVT)) &&
-      (isa<ConstantSDNode>(Op1) || IsDesirableToPromoteOp(Op1, PVT))) {
-    unsigned POpc = getSetCCPromoteOpcode(CC);
-    if (POpc) {
-      Op0 = DAG.getNode(POpc, Op0.getDebugLoc(), MVT::i32, Op0);
-      Op1 = DAG.getNode(POpc, Op1.getDebugLoc(), MVT::i32, Op1);
-    }
-  }
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
 }
 
@@ -6168,7 +6128,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (X86CC == X86::COND_INVALID)
     return SDValue();
 
-  SDValue Cond = EmitCmp(Op0, Op1, X86CC, CC, DAG);
+  SDValue Cond = EmitCmp(Op0, Op1, X86CC, DAG);
 
   // Use sbb x, x to materialize carry bit into a GPR.
   if (X86CC == X86::COND_B)
@@ -6401,7 +6361,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, ISD::SETNE, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
 
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
@@ -6575,7 +6535,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, ISD::SETNE, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
                      Chain, Dest, CC, Cond);
