@@ -1,6 +1,9 @@
 ; RUN: opt < %s -analyze -scalar-evolution |& grep {/u 3}
 ; XFAIL: *
 
+; This is a tricky testcase for unsigned wrap detection which ScalarEvolution
+; doesn't yet know how to do.
+
 define i32 @f(i32 %x) nounwind readnone {
 entry:
 	%0 = icmp ugt i32 %x, 999		; <i1> [#uses=1]
