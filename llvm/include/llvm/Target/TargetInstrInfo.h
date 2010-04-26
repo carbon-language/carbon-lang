@@ -23,6 +23,7 @@ class CalleeSavedInfo;
 class LiveVariables;
 class MCAsmInfo;
 class MachineMemOperand;
+class MDNode;
 class SDNode;
 class SelectionDAG;
 class TargetRegisterClass;
@@ -361,6 +362,19 @@ public:
     return false;
   }
   
+  /// emitFrameIndexDebugValue - Emit a target-dependent form of
+  /// DBG_VALUE encoding the address of a frame index.  Addresses would
+  /// normally be lowered the same way as other addresses on the target,
+  /// e.g. in load instructions.  For targets that do not support this
+  /// the debug info is simply lost.
+  virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
+                                                 unsigned FrameIx,
+                                                 uint64_t Offset,
+                                                 const MDNode *MDPtr,
+                                                 DebugLoc dl) const {
+    return 0;
+  }
+
   /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
   /// slot into the specified machine instruction for the specified operand(s).
   /// If this is possible, a new instruction is returned with the specified

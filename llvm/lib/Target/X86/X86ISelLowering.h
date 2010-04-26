@@ -453,11 +453,6 @@ namespace llvm {
     /// and some i16 instructions are slow.
     virtual bool IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const;
 
-    virtual void
-    EmitTargetCodeForFrameDebugValue(MachineBasicBlock* BB,
-                                     unsigned FrameIx, uint64_t Offset,
-                                     MDNode *MDPtr, DebugLoc DL) const;
-
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                          MachineBasicBlock *MBB,
                     DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;

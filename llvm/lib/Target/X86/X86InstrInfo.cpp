@@ -2319,6 +2319,20 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+MachineInstr*
+X86InstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
+                                       unsigned FrameIx, uint64_t Offset,
+                                       const MDNode *MDPtr,
+                                       DebugLoc DL) const {
+  // Target dependent DBG_VALUE.  Only the frame index case is done here.
+  X86AddressMode AM;
+  AM.BaseType = X86AddressMode::FrameIndexBase;
+  AM.Base.FrameIndex = FrameIx;
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(X86::DBG_VALUE));
+  addFullAddress(MIB, AM).addImm(Offset).addMetadata(MDPtr);
+  return &*MIB;
+}
+
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
                                      const SmallVectorImpl<MachineOperand> &MOs,
                                      MachineInstr *MI,

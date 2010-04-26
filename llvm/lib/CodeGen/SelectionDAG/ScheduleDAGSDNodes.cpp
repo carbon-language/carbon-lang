@@ -449,9 +449,11 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
       continue;
     unsigned DVOrder = DVs[i]->getOrder();
     if (DVOrder == ++Order) {
-      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], BB, VRBaseMap, EM);
-      Orders.push_back(std::make_pair(DVOrder, DbgMI));
-      BB->insert(InsertPos, DbgMI);
+      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap, EM);
+      if (DbgMI) {
+        Orders.push_back(std::make_pair(DVOrder, DbgMI));
+        BB->insert(InsertPos, DbgMI);
+      }
       DVs[i]->setIsInvalidated();
     }
   }
@@ -540,13 +542,15 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
 #endif
         if ((*DI)->isInvalidated())
           continue;
-        MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, MIBB, VRBaseMap, EM);
-        if (!LastOrder)
-          // Insert to start of the BB (after PHIs).
-          BB->insert(BBBegin, DbgMI);
-        else {
-          MachineBasicBlock::iterator Pos = MI;
-          MIBB->insert(llvm::next(Pos), DbgMI);
+        MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap, EM);
+        if (DbgMI) {
+          if (!LastOrder)
+            // Insert to start of the BB (after PHIs).
+            BB->insert(BBBegin, DbgMI);
+          else {
+            MachineBasicBlock::iterator Pos = MI;
+            MIBB->insert(llvm::next(Pos), DbgMI);
+          }
         }
       }
       LastOrder = Order;
@@ -558,8 +562,9 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
       MachineBasicBlock *InsertBB = Emitter.getBlock();
       MachineBasicBlock::iterator Pos= Emitter.getBlock()->getFirstTerminator();
       if (!(*DI)->isInvalidated()) {
-        MachineInstr *DbgMI= Emitter.EmitDbgValue(*DI, InsertBB, VRBaseMap, EM);
-        InsertBB->insert(Pos, DbgMI);
+        MachineInstr *DbgMI= Emitter.EmitDbgValue(*DI, VRBaseMap, EM);
+        if (DbgMI)
+          InsertBB->insert(Pos, DbgMI);
       }
       ++DI;
     }

@@ -8622,19 +8622,6 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
   return BB;
 }
 
-void
-X86TargetLowering::EmitTargetCodeForFrameDebugValue(MachineBasicBlock* BB,
-                                      unsigned FrameIx, uint64_t Offset,
-                                      MDNode *MDPtr, DebugLoc DL) const {
-  // Target dependent DBG_VALUE.  Only the frame index case is done here.
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  X86AddressMode AM;
-  AM.BaseType = X86AddressMode::FrameIndexBase;
-  AM.Base.FrameIndex = FrameIx;
-  addFullAddress(BuildMI(BB, DL, TII->get(X86::DBG_VALUE)), AM).
-    addImm(Offset).addMetadata(MDPtr);
-}
-
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB,

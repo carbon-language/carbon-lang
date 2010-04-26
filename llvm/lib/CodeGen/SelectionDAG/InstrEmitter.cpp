@@ -507,7 +507,6 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
 /// EmitDbgValue - Generate machine instruction for a dbg_value node.
 ///
 MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
-                                         MachineBasicBlock *InsertBB,
                                          DenseMap<SDValue, unsigned> &VRBaseMap,
                          DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   uint64_t Offset = SD->getOffset();
@@ -518,8 +517,7 @@ MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     // Stack address; this needs to be lowered in target-dependent fashion.
     // EmitTargetCodeForFrameDebugValue is responsible for allocation.
     unsigned FrameIx = SD->getFrameIx();
-    TLI->EmitTargetCodeForFrameDebugValue(InsertBB, FrameIx, Offset, MDPtr, DL);
-    return 0;
+    return TII->emitFrameIndexDebugValue(*MF, FrameIx, Offset, MDPtr, DL);
   }
   // Otherwise, we're going to create an instruction here.
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);

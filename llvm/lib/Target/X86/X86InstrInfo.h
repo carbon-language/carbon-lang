@@ -623,6 +623,12 @@ public:
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
   
+  virtual
+  MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
+                                         unsigned FrameIx, uint64_t Offset,
+                                         const MDNode *MDPtr,
+                                         DebugLoc DL) const;
+
   /// foldMemoryOperand - If this target supports it, fold a load or store of
   /// the specified stack slot into the specified machine instruction for the
   /// specified operand(s).  If this is possible, the target should perform the
