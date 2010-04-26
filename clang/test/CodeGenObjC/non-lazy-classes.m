@@ -1,5 +1,5 @@
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUN: grep '@".01L_OBJC_LABEL_NONLAZY_CLASS_$" = internal global \[1 x .*\] .*@"OBJC_CLASS_$_A".*, section "__DATA, __objc_nlclslist, regular, no_dead_strip", align 8' %t
 // RUN: grep '@".01L_OBJC_LABEL_NONLAZY_CATEGORY_$" = internal global \[1 x .*\] .*@".01l_OBJC_$_CATEGORY_A_$_Cat".*, section "__DATA, __objc_nlcatlist, regular, no_dead_strip", align 8' %t
 
