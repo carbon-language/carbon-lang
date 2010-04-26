@@ -219,9 +219,14 @@ void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
                 SourceLocation());
 
   // Emit the dtors, in reverse order from construction.
-  for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i)
-    Builder.CreateCall(DtorsAndObjects[e - i - 1].first,
-                       DtorsAndObjects[e - i - 1].second);
+  for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
+    llvm::Constant *Callee = DtorsAndObjects[e - i - 1].first;
+    llvm::CallInst *CI = Builder.CreateCall(Callee,
+                                            DtorsAndObjects[e - i - 1].second);
+    // Make sure the call and the callee agree on calling convention.
+    if (llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+      CI->setCallingConv(F->getCallingConv());
+  }
 
   FinishFunction();
 }
