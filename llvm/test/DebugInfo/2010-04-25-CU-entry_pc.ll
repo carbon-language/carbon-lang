@@ -1,4 +1,4 @@
-; RUN: llc < %s | grep low_pc | count 2
+; RUN: llc < %s | grep entry_pc | count 2
 @i = global i32 1                                 ; <i32*> [#uses=0]
 
 !llvm.dbg.gv = !{!0}
