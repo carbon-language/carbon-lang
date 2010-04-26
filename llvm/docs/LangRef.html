@@ -2318,6 +2318,15 @@ has undefined behavior.</p>
    Any instruction with a trap operand which may have side effects emits
    those side effects as if it had an undef operand instead.</p>
 
+<p>If a <a href="#i_br"><tt>br</tt></a> or
+   <a href="#i_switch"><tt>switch</tt></a> instruction has a trap value
+   operand, all non-phi non-void instructions which control-depend on it
+   have trap as their result value. If any instruction which
+   control-depends on the <tt>br</tt> or <tt>switch</tt> invokes externally
+   visible side effects, the behavior of the program is undefined.</p>
+
+<!-- FIXME: What about exceptions thrown from control-dependent instrs? -->
+
 <p>For example, an <a href="#i_and"><tt>and</tt></a> of a trap value with
    zero still has a trap value result. Using that value as an index in a
    <a href="#i_getelementptr"><tt>getelementptr</tt></a> yields a trap
