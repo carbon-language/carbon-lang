@@ -188,3 +188,21 @@ template<> void f4<int>(int, int);
 void f4_test(int i) {
   f4(i);
 }
+
+// Instantiate for initialization
+namespace InstForInit {
+  template<typename T>
+  struct Ptr {
+    typedef T* type;
+    Ptr(type);
+  };
+
+  template<typename T>
+  struct Holder {
+    Holder(int i, Ptr<T> ptr = 0);
+  };
+
+  void test_holder(int i) {
+    Holder<int> h(i);
+  }
+};
