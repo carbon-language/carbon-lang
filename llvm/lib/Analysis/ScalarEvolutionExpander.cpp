@@ -995,8 +995,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   // Strip off any non-loop-dominating component from the addrec step.
   const SCEV *Step = Normalized->getStepRecurrence(SE);
   const SCEV *PostLoopScale = 0;
-  if (!Step->hasComputableLoopEvolution(L) &&
-      !Step->dominates(L->getHeader(), SE.DT)) {
+  if (!Step->dominates(L->getHeader(), SE.DT)) {
     PostLoopScale = Step;
     Step = SE.getIntegerSCEV(1, Normalized->getType());
     Normalized =

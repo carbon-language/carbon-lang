@@ -17,7 +17,7 @@ which is very inefficient when expanded into code.
 
 //===---------------------------------------------------------------------===//
 
-In test/CodeGen/X86/lsr-delayed-fold.ll,
+In formatValue in test/CodeGen/X86/lsr-delayed-fold.ll,
 
 ScalarEvolution is forming this expression:
 
