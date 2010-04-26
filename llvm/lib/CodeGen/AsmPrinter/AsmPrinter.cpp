@@ -585,9 +585,15 @@ void AsmPrinter::EmitFunctionBody() {
   
   // If the function is empty and the object file uses .subsections_via_symbols,
   // then we need to emit *something* to the function body to prevent the
-  // labels from collapsing together.  Just emit a 0 byte.
-  if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode)
-    OutStreamer.EmitIntValue(0, 1, 0/*addrspace*/);
+  // labels from collapsing together.  Just emit a noop.
+  if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode) {
+    MCInst Noop;
+    TM.getInstrInfo()->getNoopForMachoTarget(Noop);
+    if (Noop.getOpcode())
+      OutStreamer.EmitInstruction(Noop);
+    else  // Target not mc-ized yet.
+      OutStreamer.EmitRawText(StringRef("\tnop\n"));
+  }
   
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();

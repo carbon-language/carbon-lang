@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -3766,3 +3767,9 @@ void X86InstrInfo::SetSSEDomain(MachineInstr *MI, unsigned Domain) const {
   assert(table && "Cannot change domain");
   MI->setDesc(get(table[Domain-1]));
 }
+
+/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  NopInst.setOpcode(X86::NOOP);
+}
+

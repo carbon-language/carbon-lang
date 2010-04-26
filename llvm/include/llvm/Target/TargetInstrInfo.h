@@ -24,6 +24,7 @@ class LiveVariables;
 class MCAsmInfo;
 class MachineMemOperand;
 class MDNode;
+class MCInst;
 class SDNode;
 class SelectionDAG;
 class TargetRegisterClass;
@@ -489,6 +490,13 @@ public:
   /// point.
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const;
+  
+  
+  /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+  virtual void getNoopForMachoTarget(MCInst &NopInst) const {
+    // Default to just using 'nop' string.
+  }
+  
   
   /// isPredicated - Returns true if the instruction is already predicated.
   ///

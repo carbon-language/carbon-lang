@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep {.byte	0}
+; RUN: llc < %s -march=x86 | grep nop
 target triple = "i686-apple-darwin8"
 
 

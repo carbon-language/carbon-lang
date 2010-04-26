@@ -693,6 +693,8 @@ public:
                                        int64_t Offset1, int64_t Offset2,
                                        unsigned NumLoads) const;
 
+  virtual void getNoopForMachoTarget(MCInst &NopInst) const;
+
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
