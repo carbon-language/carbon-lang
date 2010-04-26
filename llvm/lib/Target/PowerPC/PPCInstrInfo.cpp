@@ -645,6 +645,16 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     MBB.insert(MI, NewMIs[i]);
 }
 
+MachineInstr*
+PPCInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
+                                       unsigned FrameIx, uint64_t Offset,
+                                       const MDNode *MDPtr,
+                                       DebugLoc DL) const {
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(PPC::DBG_VALUE));
+  addFrameReference(MIB, FrameIx, 0, false).addImm(Offset).addMetadata(MDPtr);
+  return &*MIB;
+}
+
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
