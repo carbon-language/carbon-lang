@@ -401,7 +401,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
   const VarDecl *VD = VR->getDecl();
 
   // BasicStore does not model arrays and structs.
-  if (VD->getType()->isArrayType() || VD->getType()->isStructureType())
+  if (VD->getType()->isArrayType() || VD->getType()->isStructureOrClassType())
     return store;
 
   if (VD->hasGlobalStorage()) {

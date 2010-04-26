@@ -458,7 +458,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
 
   if (T->isArrayType())
     maxElements = numArrayElements(T);
-  else if (T->isStructureType() || T->isUnionType())
+  else if (T->isRecordType())
     maxElements = numStructUnionElements(T);
   else if (T->isVectorType())
     maxElements = T->getAs<VectorType>()->getNumElements();

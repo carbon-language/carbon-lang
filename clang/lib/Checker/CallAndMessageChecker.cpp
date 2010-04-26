@@ -290,7 +290,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   ASTContext &Ctx = C.getASTContext();
   CanQualType CanRetTy = Ctx.getCanonicalType(RetTy);
 
-  if (CanRetTy->isStructureType()) {
+  if (CanRetTy->isStructureOrClassType()) {
     // FIXME: At some point we shouldn't rely on isConsumedExpr(), but instead
     // have the "use of undefined value" be smarter about where the
     // undefined value came from.

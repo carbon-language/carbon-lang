@@ -67,3 +67,16 @@ void f() {
   
   C c1 = { 1 };
 }
+
+class Agg {
+public:
+  int i, j;
+};
+
+class AggAgg {
+public:
+  Agg agg1;
+  Agg agg2;
+};
+
+AggAgg aggagg = { 1, 2, 3, 4 };

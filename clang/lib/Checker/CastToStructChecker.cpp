@@ -51,7 +51,7 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   QualType OrigPointeeTy = OrigPTy->getPointeeType();
   QualType ToPointeeTy = ToPTy->getPointeeType();
 
-  if (!ToPointeeTy->isStructureType())
+  if (!ToPointeeTy->isStructureOrClassType())
     return;
 
   // We allow cast from void*.

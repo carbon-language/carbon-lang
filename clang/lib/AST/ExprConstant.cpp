@@ -968,7 +968,7 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
     return complex_type_class;
   else if (ArgTy->isFunctionType())
     return function_type_class;
-  else if (ArgTy->isStructureType())
+  else if (ArgTy->isStructureOrClassType())
     return record_type_class;
   else if (ArgTy->isUnionType())
     return union_type_class;

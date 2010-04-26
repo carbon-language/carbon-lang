@@ -1037,7 +1037,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   }
 #endif
 
-  if (RTy->isStructureType() || RTy->isClassType())
+  if (RTy->isStructureOrClassType())
     return RetrieveStruct(store, R);
 
   // FIXME: Handle unions.
@@ -1345,7 +1345,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType(getContext());
-  assert(T->isStructureType() || T->isClassType());
+  assert(T->isStructureOrClassType());
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 
@@ -1375,7 +1375,7 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
 
   // Check if the region is a struct region.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    if (TR->getValueType(getContext())->isStructureType())
+    if (TR->getValueType(getContext())->isStructureOrClassType())
       return BindStruct(store, TR, V);
 
   // Special case: the current region represents a cast and it and the super
@@ -1429,7 +1429,7 @@ Store RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
 
   if (T->isArrayType())
     return BindArray(store, VR, InitVal);
-  if (T->isStructureType())
+  if (T->isStructureOrClassType())
     return BindStruct(store, VR, InitVal);
 
   return Bind(store, ValMgr.makeLoc(VR), InitVal);
@@ -1454,7 +1454,7 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
     V = ValMgr.makeNull();
   else if (T->isIntegerType())
     V = ValMgr.makeZeroVal(T);
-  else if (T->isStructureType() || T->isArrayType()) {
+  else if (T->isStructureOrClassType() || T->isArrayType()) {
     // Set the default value to a zero constant when it is a structure
     // or array.  The type doesn't really matter.
     V = ValMgr.makeZeroVal(ValMgr.getContext().IntTy);
@@ -1530,7 +1530,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
     SVal Idx = ValMgr.makeArrayIndex(i);
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
-    if (ElementTy->isStructureType())
+    if (ElementTy->isStructureOrClassType())
       store = BindStruct(store, ER, *VI);
     else
       store = Bind(store, ValMgr.makeLoc(ER), *VI);
@@ -1551,7 +1551,7 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
     return store;
 
   QualType T = R->getValueType(getContext());
-  assert(T->isStructureType());
+  assert(T->isStructureOrClassType());
 
   const RecordType* RT = T->getAs<RecordType>();
   RecordDecl* RD = RT->getDecl();
@@ -1583,7 +1583,7 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
 
     if (FTy->isArrayType())
       store = BindArray(store, FR, *VI);
-    else if (FTy->isStructureType())
+    else if (FTy->isStructureOrClassType())
       store = BindStruct(store, FR, *VI);
     else
       store = Bind(store, ValMgr.makeLoc(FR), *VI);

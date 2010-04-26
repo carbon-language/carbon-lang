@@ -225,6 +225,11 @@ bool Type::isStructureType() const {
     return RT->getDecl()->isStruct();
   return false;
 }
+bool Type::isStructureOrClassType() const {
+  if (const RecordType *RT = getAs<RecordType>())
+    return RT->getDecl()->isStruct() || RT->getDecl()->isClass();
+  return false;
+}
 bool Type::isVoidPointerType() const {
   if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVoidType();

@@ -2504,9 +2504,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
   QualType T = getContext().getCanonicalType(E->getType());
   unsigned NumInitElements = E->getNumInits();
 
-  if (T->isArrayType() || T->isStructureType() ||
-      T->isUnionType() || T->isVectorType()) {
-
+  if (T->isArrayType() || T->isRecordType() || T->isVectorType()) {
     llvm::ImmutableList<SVal> StartVals = getBasicVals().getEmptySValList();
 
     // Handle base case where the initializer has no elements.
