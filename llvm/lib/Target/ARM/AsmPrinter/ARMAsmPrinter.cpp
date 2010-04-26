@@ -21,6 +21,7 @@
 #include "ARMMachineFunctionInfo.h"
 #include "ARMMCInstLower.h"
 #include "ARMTargetMachine.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -1108,6 +1109,24 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
+  if (MI->getOpcode() == ARM::DBG_VALUE) {
+    unsigned NOps = MI->getNumOperands();
+    assert(NOps==4);
+    OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
+    // cast away const; DIetc do not take const operands for some reason.
+    DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
+    OS << V.getName();
+    OS << " <- ";
+    // Frame address.  Currently handles register +- offset only.
+    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
+    OS << '['; printOperand(MI, 0, OS); OS << '+'; printOperand(MI, 1, OS);
+    OS << ']';
+    OS << "+";
+    printOperand(MI, NOps-2, OS);
+    OutStreamer.EmitRawText(OS.str());
+    return;
+  }
+
   printInstruction(MI, OS);
   OutStreamer.EmitRawText(OS.str());
   
