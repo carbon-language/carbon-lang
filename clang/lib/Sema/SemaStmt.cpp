@@ -1527,23 +1527,11 @@ Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            SourceLocation RParen, DeclPtrTy Parm,
                            StmtArg Body) {
-  ParmVarDecl *PVD = cast_or_null<ParmVarDecl>(Parm.getAs<Decl>());
-
-  // PVD == 0 implies @catch(...).
-  if (PVD) {
-    // If we already know the decl is invalid, reject it.
-    if (PVD->isInvalidDecl())
-      return StmtError();
-
-    if (!PVD->getType()->isObjCObjectPointerType())
-      return StmtError(Diag(PVD->getLocation(),
-                       diag::err_catch_param_not_objc_type));
-    if (PVD->getType()->isObjCQualifiedIdType())
-      return StmtError(Diag(PVD->getLocation(),
-                       diag::err_illegal_qualifiers_on_catch_parm));
-  }
-
-  return Owned(new (Context) ObjCAtCatchStmt(AtLoc, RParen, PVD, 
+  VarDecl *Var = cast_or_null<VarDecl>(Parm.getAs<Decl>());
+  if (Var && Var->isInvalidDecl())
+    return StmtError();
+  
+  return Owned(new (Context) ObjCAtCatchStmt(AtLoc, RParen, Var, 
                                              Body.takeAs<Stmt>()));
 }
 

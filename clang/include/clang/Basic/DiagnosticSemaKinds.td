@@ -2083,6 +2083,15 @@ def err_catch_param_not_objc_type : Error<
   "@catch parameter is not a pointer to an interface type">;
 def err_illegal_qualifiers_on_catch_parm : Error<
   "illegal qualifiers on @catch parameter">;
+def err_storage_spec_on_catch_parm : Error<
+  "@catch parameter cannot have storage specifier %select{|'typedef'|'extern'|"
+  "'static'|'auto'|'register'|'__private_extern__'|'mutable'}0">;
+def warn_register_objc_catch_parm : Warning<
+  "'register' storage specifier on @catch parameter will be ignored">;
+def err_qualified_objc_catch_parm : Error<
+  "@catch parameter declarator cannot be qualified">;
+
+
 def warn_setter_getter_impl_required : Warning<
   "property %0 requires method %1 to be defined - "
   "use @synthesize, @dynamic or provide a method implementation">;

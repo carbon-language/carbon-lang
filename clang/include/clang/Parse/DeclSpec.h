@@ -82,8 +82,9 @@ public:
 class DeclSpec {
 public:
   // storage-class-specifier
+  // Note: The order of these enumerators is important for diagnostics.
   enum SCS {
-    SCS_unspecified,
+    SCS_unspecified = 0,
     SCS_typedef,
     SCS_extern,
     SCS_static,

@@ -1707,10 +1707,92 @@ void Sema::ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
   }
 }
 
+/// \brief Build a type-check a new Objective-C exception variable declaration.
+VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo, 
+                                      QualType T,
+                                      IdentifierInfo *Name, 
+                                      SourceLocation NameLoc,
+                                      bool Invalid) {
+  // ISO/IEC TR 18037 S6.7.3: "The type of an object with automatic storage 
+  // duration shall not be qualified by an address-space qualifier."
+  // Since all parameters have automatic store duration, they can not have
+  // an address space.
+  if (T.getAddressSpace() != 0) {
+    Diag(NameLoc, diag::err_arg_with_address_space);
+    Invalid = true;
+  }
+  
+  // An @catch parameter must be an unqualified object pointer type;
+  // FIXME: Recover from "NSObject foo" by inserting the * in "NSObject *foo"?
+  if (Invalid) {
+    // Don't do any further checking.
+  } else if (!T->isObjCObjectPointerType()) {
+    Invalid = true;
+    Diag(NameLoc ,diag::err_catch_param_not_objc_type);
+  } else if (T->isObjCQualifiedIdType()) {
+    Invalid = true;
+    Diag(NameLoc, diag::err_illegal_qualifiers_on_catch_parm);
+  }
+  
+  VarDecl *New = VarDecl::Create(Context, CurContext, NameLoc, Name, T, TInfo,
+                                 VarDecl::None, VarDecl::None);  
+  if (Invalid)
+    New->setInvalidDecl();
+  return New;
+}
+
 Sema::DeclPtrTy Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
-  // FIXME: Perform checking on the declaration here.
-  DeclPtrTy Dcl = ActOnParamDeclarator(S, D);
-  if (Dcl.get())
-    cast<VarDecl>(Dcl.getAs<Decl>())->setDeclContext(CurContext);
-  return Dcl;
+  const DeclSpec &DS = D.getDeclSpec();
+  
+  // We allow the "register" storage class on exception variables because
+  // GCC did, but we drop it completely. Any other storage class is an error.
+  if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
+    Diag(DS.getStorageClassSpecLoc(), diag::warn_register_objc_catch_parm)
+      << FixItHint::CreateRemoval(SourceRange(DS.getStorageClassSpecLoc()));
+  } else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified) {
+    Diag(DS.getStorageClassSpecLoc(), diag::err_storage_spec_on_catch_parm)
+      << DS.getStorageClassSpec();
+  }  
+  if (D.getDeclSpec().isThreadSpecified())
+    Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+  D.getMutableDeclSpec().ClearStorageClassSpecs();
+
+  DiagnoseFunctionSpecifiers(D);
+  
+  // Check that there are no default arguments inside the type of this
+  // exception object (C++ only).
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+  
+  TypeSourceInfo *TInfo = 0;
+  TagDecl *OwnedDecl = 0;
+  QualType ExceptionType = GetTypeForDeclarator(D, S, &TInfo, &OwnedDecl);
+  
+  if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
+    // Objective-C++: Types shall not be defined in exception types.
+    Diag(OwnedDecl->getLocation(), diag::err_type_defined_in_param_type)
+      << Context.getTypeDeclType(OwnedDecl);
+  }
+
+  VarDecl *New = BuildObjCExceptionDecl(TInfo, ExceptionType, D.getIdentifier(), 
+                                        D.getIdentifierLoc(), 
+                                        D.isInvalidType());
+  
+  // Parameter declarators cannot be qualified (C++ [dcl.meaning]p1).
+  if (D.getCXXScopeSpec().isSet()) {
+    Diag(D.getIdentifierLoc(), diag::err_qualified_objc_catch_parm)
+      << D.getCXXScopeSpec().getRange();
+    New->setInvalidDecl();
+  }
+  
+  // Add the parameter declaration into this scope.
+  S->AddDecl(DeclPtrTy::make(New));
+  if (D.getIdentifier())
+    IdResolver.AddDecl(New);
+  
+  ProcessDeclAttributes(S, New, D);
+  
+  if (New->hasAttr<BlocksAttr>())
+    Diag(New->getLocation(), diag::err_block_on_nonlocal);
+  return DeclPtrTy::make(New);
 }

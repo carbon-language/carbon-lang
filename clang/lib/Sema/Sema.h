@@ -812,7 +812,6 @@ public:
                               SourceLocation NameLoc,
                               VarDecl::StorageClass StorageClass,
                               VarDecl::StorageClass StorageClassAsWritten);
-  virtual DeclPtrTy ActOnObjCExceptionDecl(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,
                                          ExprArg defarg);
@@ -1674,6 +1673,13 @@ public:
                                         MultiExprArg Clobbers,
                                         SourceLocation RParenLoc,
                                         bool MSAsm = false);
+
+
+  VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,
+                                  IdentifierInfo *Name, SourceLocation NameLoc,
+                                  bool Invalid = false);
+  
+  virtual DeclPtrTy ActOnObjCExceptionDecl(Scope *S, Declarator &D);
 
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
