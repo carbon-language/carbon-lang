@@ -1499,30 +1499,24 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXTypeidExpr(SourceLocation TypeidLoc,
-                                        SourceLocation LParenLoc,
-                                        QualType T,
+  OwningExprResult RebuildCXXTypeidExpr(QualType TypeInfoType,
+                                        SourceLocation TypeidLoc,
+                                        TypeSourceInfo *Operand,
                                         SourceLocation RParenLoc) {
-    return getSema().ActOnCXXTypeid(TypeidLoc, LParenLoc, true,
-                                    T.getAsOpaquePtr(), RParenLoc);
+    return getSema().BuildCXXTypeId(TypeInfoType, TypeidLoc, Operand, 
+                                    RParenLoc);
   }
 
   /// \brief Build a new C++ typeid(expr) expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXTypeidExpr(SourceLocation TypeidLoc,
-                                        SourceLocation LParenLoc,
+  OwningExprResult RebuildCXXTypeidExpr(QualType TypeInfoType,
+                                        SourceLocation TypeidLoc,
                                         ExprArg Operand,
                                         SourceLocation RParenLoc) {
-    OwningExprResult Result
-      = getSema().ActOnCXXTypeid(TypeidLoc, LParenLoc, false, Operand.get(),
-                                 RParenLoc);
-    if (Result.isInvalid())
-      return getSema().ExprError();
-
-    Operand.release(); // FIXME: since ActOnCXXTypeid silently took ownership
-    return move(Result);
+    return getSema().BuildCXXTypeId(TypeInfoType, TypeidLoc, move(Operand),
+                                    RParenLoc);
   }
 
   /// \brief Build a new C++ "this" expression.
@@ -4943,19 +4937,18 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
   if (E->isTypeOperand()) {
-    TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
-
-    QualType T = getDerived().TransformType(E->getTypeOperand());
-    if (T.isNull())
+    TypeSourceInfo *TInfo
+      = getDerived().TransformType(E->getTypeOperandSourceInfo());
+    if (!TInfo)
       return SemaRef.ExprError();
 
     if (!getDerived().AlwaysRebuild() &&
-        T == E->getTypeOperand())
+        TInfo == E->getTypeOperandSourceInfo())
       return SemaRef.Owned(E->Retain());
 
-    return getDerived().RebuildCXXTypeidExpr(E->getLocStart(),
-                                             /*FIXME:*/E->getLocStart(),
-                                             T,
+    return getDerived().RebuildCXXTypeidExpr(E->getType(),
+                                             E->getLocStart(),
+                                             TInfo,
                                              E->getLocEnd());
   }
 
@@ -4973,8 +4966,8 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
       SubExpr.get() == E->getExprOperand())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXTypeidExpr(E->getLocStart(),
-                                           /*FIXME:*/E->getLocStart(),
+  return getDerived().RebuildCXXTypeidExpr(E->getType(),
+                                           E->getLocStart(),
                                            move(SubExpr),
                                            E->getLocEnd());
 }

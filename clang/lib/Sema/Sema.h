@@ -2192,6 +2192,15 @@ public:
                                      SourceRange AngleBrackets,
                                      SourceRange Parens);
 
+  OwningExprResult BuildCXXTypeId(QualType TypeInfoType,
+                                  SourceLocation TypeidLoc,
+                                  TypeSourceInfo *Operand,
+                                  SourceLocation RParenLoc);
+  OwningExprResult BuildCXXTypeId(QualType TypeInfoType,
+                                  SourceLocation TypeidLoc,
+                                  ExprArg Operand,
+                                  SourceLocation RParenLoc);
+  
   /// ActOnCXXTypeid - Parse typeid( something ).
   virtual OwningExprResult ActOnCXXTypeid(SourceLocation OpLoc,
                                           SourceLocation LParenLoc, bool isType,

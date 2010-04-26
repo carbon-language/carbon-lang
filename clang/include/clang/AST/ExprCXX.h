@@ -298,37 +298,41 @@ public:
 /// This represents code like @c typeid(int) or @c typeid(*objPtr)
 class CXXTypeidExpr : public Expr {
 private:
-  bool isTypeOp : 1;
-  union {
-    void *Ty;
-    Stmt *Ex;
-  } Operand;
+  llvm::PointerUnion<Stmt *, TypeSourceInfo *> Operand;
   SourceRange Range;
 
 public:
-  CXXTypeidExpr(bool isTypeOp, void *op, QualType Ty, const SourceRange r) :
-      Expr(CXXTypeidExprClass, Ty,
+  CXXTypeidExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
+    : Expr(CXXTypeidExprClass, Ty, 
+           // typeid is never type-dependent (C++ [temp.dep.expr]p4)
+           false,
+           // typeid is value-dependent if the type or expression are dependent
+           Operand->getType()->isDependentType()),
+      Operand(Operand), Range(R) { }
+  
+  CXXTypeidExpr(QualType Ty, Expr *Operand, SourceRange R)
+    : Expr(CXXTypeidExprClass, Ty,
         // typeid is never type-dependent (C++ [temp.dep.expr]p4)
         false,
         // typeid is value-dependent if the type or expression are dependent
-        (isTypeOp ? QualType::getFromOpaquePtr(op)->isDependentType()
-                  : static_cast<Expr*>(op)->isValueDependent())),
-      isTypeOp(isTypeOp), Range(r) {
-    if (isTypeOp)
-      Operand.Ty = op;
-    else
-      // op was an Expr*, so cast it back to that to be safe
-      Operand.Ex = static_cast<Expr*>(op);
-  }
+        Operand->isTypeDependent() || Operand->isValueDependent()),
+      Operand(Operand), Range(R) { }
 
-  bool isTypeOperand() const { return isTypeOp; }
-  QualType getTypeOperand() const {
+  bool isTypeOperand() const { return Operand.is<TypeSourceInfo *>(); }
+  
+  /// \brief Retrieves the type operand of this typeid() expression after
+  /// various required adjustments (removing reference types, cv-qualifiers).
+  QualType getTypeOperand() const;
+
+  /// \brief Retrieve source information for the type operand.
+  TypeSourceInfo *getTypeOperandSourceInfo() const {
     assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
-    return QualType::getFromOpaquePtr(Operand.Ty);
+    return Operand.get<TypeSourceInfo *>();
   }
+  
   Expr* getExprOperand() const {
     assert(!isTypeOperand() && "Cannot call getExprOperand for typeid(type)");
-    return static_cast<Expr*>(Operand.Ex);
+    return static_cast<Expr*>(Operand.get<Stmt *>());
   }
 
   virtual SourceRange getSourceRange() const {

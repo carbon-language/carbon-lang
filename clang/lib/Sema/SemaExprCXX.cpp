@@ -273,36 +273,82 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
   return 0;
 }
 
-/// ActOnCXXTypeidOfType - Parse typeid( type-id ).
+/// \brief Build a C++ typeid expression with a type operand.
+Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
+                                            SourceLocation TypeidLoc,
+                                            TypeSourceInfo *Operand,
+                                            SourceLocation RParenLoc) {
+  // C++ [expr.typeid]p4:
+  //   The top-level cv-qualifiers of the lvalue expression or the type-id 
+  //   that is the operand of typeid are always ignored.
+  //   If the type of the type-id is a class type or a reference to a class 
+  //   type, the class shall be completely-defined.
+  QualType T = Operand->getType().getNonReferenceType();
+  if (T->getAs<RecordType>() &&
+      RequireCompleteType(TypeidLoc, T, diag::err_incomplete_typeid))
+    return ExprError();
+  
+  return Owned(new (Context) CXXTypeidExpr(TypeInfoType.withConst(),
+                                           Operand,
+                                           SourceRange(TypeidLoc, RParenLoc)));
+}
+
+/// \brief Build a C++ typeid expression with an expression operand.
+Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
+                                            SourceLocation TypeidLoc,
+                                            ExprArg Operand,
+                                            SourceLocation RParenLoc) {
+  bool isUnevaluatedOperand = true;
+  Expr *E = static_cast<Expr *>(Operand.get());
+  if (E && !E->isTypeDependent()) {
+    QualType T = E->getType();
+    if (const RecordType *RecordT = T->getAs<RecordType>()) {
+      CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
+      // C++ [expr.typeid]p3:
+      //   [...] If the type of the expression is a class type, the class
+      //   shall be completely-defined.
+      if (RequireCompleteType(TypeidLoc, T, diag::err_incomplete_typeid))
+        return ExprError();
+      
+      // C++ [expr.typeid]p3:
+      //   When typeid is applied to an expression other than an lvalue of a
+      //   polymorphic class type [...] [the] expression is an unevaluated
+      //   operand. [...]
+      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
+        isUnevaluatedOperand = false;
+    }
+    
+    // C++ [expr.typeid]p4:
+    //   [...] If the type of the type-id is a reference to a possibly
+    //   cv-qualified type, the result of the typeid expression refers to a 
+    //   std::type_info object representing the cv-unqualified referenced 
+    //   type.
+    if (T.hasQualifiers()) {
+      ImpCastExprToType(E, T.getUnqualifiedType(), CastExpr::CK_NoOp,
+                        E->isLvalue(Context));
+      Operand.release();
+      Operand = Owned(E);
+    }
+  }
+  
+  // If this is an unevaluated operand, clear out the set of
+  // declaration references we have been computing and eliminate any
+  // temporaries introduced in its computation.
+  if (isUnevaluatedOperand)
+    ExprEvalContexts.back().Context = Unevaluated;
+  
+  return Owned(new (Context) CXXTypeidExpr(TypeInfoType.withConst(),
+                                           Operand.takeAs<Expr>(),
+                                           SourceRange(TypeidLoc, RParenLoc)));  
+}
+
+/// ActOnCXXTypeidOfType - Parse typeid( type-id ) or typeid (expression);
 Action::OwningExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
+  // Find the std::type_info type.
   if (!StdNamespace)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
-
-  if (isType) {
-    // C++ [expr.typeid]p4:
-    //   The top-level cv-qualifiers of the lvalue expression or the type-id 
-    //   that is the operand of typeid are always ignored.
-    // FIXME: Preserve type source info.
-    // FIXME: Preserve the type before we stripped the cv-qualifiers?
-    QualType T = GetTypeFromParser(TyOrExpr);
-    if (T.isNull())
-      return ExprError();
-    
-    // C++ [expr.typeid]p4:
-    //   If the type of the type-id is a class type or a reference to a class 
-    //   type, the class shall be completely-defined.
-    QualType CheckT = T;
-    if (const ReferenceType *RefType = CheckT->getAs<ReferenceType>())
-      CheckT = RefType->getPointeeType();
-    
-    if (CheckT->getAs<RecordType>() &&
-        RequireCompleteType(OpLoc, CheckT, diag::err_incomplete_typeid))
-      return ExprError();
-    
-    TyOrExpr = T.getUnqualifiedType().getAsOpaquePtr();
-  }
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
@@ -310,52 +356,24 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   RecordDecl *TypeInfoRecordDecl = R.getAsSingle<RecordDecl>();
   if (!TypeInfoRecordDecl)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
-
+  
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
+  
+  if (isType) {
+    // The operand is a type; handle it as such.
+    TypeSourceInfo *TInfo = 0;
+    QualType T = GetTypeFromParser(TyOrExpr, &TInfo);
+    if (T.isNull())
+      return ExprError();
+    
+    if (!TInfo)
+      TInfo = Context.getTrivialTypeSourceInfo(T, OpLoc);
 
-  if (!isType) {
-    bool isUnevaluatedOperand = true;
-    Expr *E = static_cast<Expr *>(TyOrExpr);
-    if (E && !E->isTypeDependent()) {
-      QualType T = E->getType();
-      if (const RecordType *RecordT = T->getAs<RecordType>()) {
-        CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
-        // C++ [expr.typeid]p3:
-        //   [...] If the type of the expression is a class type, the class
-        //   shall be completely-defined.
-        if (RequireCompleteType(OpLoc, T, diag::err_incomplete_typeid))
-          return ExprError();
-
-        // C++ [expr.typeid]p3:
-        //   When typeid is applied to an expression other than an lvalue of a
-        //   polymorphic class type [...] [the] expression is an unevaluated
-        //   operand. [...]
-        if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
-          isUnevaluatedOperand = false;
-      }
-
-      // C++ [expr.typeid]p4:
-      //   [...] If the type of the type-id is a reference to a possibly
-      //   cv-qualified type, the result of the typeid expression refers to a 
-      //   std::type_info object representing the cv-unqualified referenced 
-      //   type.
-      if (T.hasQualifiers()) {
-        ImpCastExprToType(E, T.getUnqualifiedType(), CastExpr::CK_NoOp,
-                          E->isLvalue(Context));
-        TyOrExpr = E;
-      }
-    }
-
-    // If this is an unevaluated operand, clear out the set of
-    // declaration references we have been computing and eliminate any
-    // temporaries introduced in its computation.
-    if (isUnevaluatedOperand)
-      ExprEvalContexts.back().Context = Unevaluated;
+    return BuildCXXTypeId(TypeInfoType, OpLoc, TInfo, RParenLoc);
   }
 
-  return Owned(new (Context) CXXTypeidExpr(isType, TyOrExpr,
-                                           TypeInfoType.withConst(),
-                                           SourceRange(OpLoc, RParenLoc)));
+  // The operand is an expression.  
+  return BuildCXXTypeId(TypeInfoType, OpLoc, Owned((Expr*)TyOrExpr), RParenLoc);
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.

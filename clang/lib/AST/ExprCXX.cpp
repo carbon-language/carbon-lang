@@ -18,16 +18,25 @@
 #include "clang/AST/TypeLoc.h"
 using namespace clang;
 
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
 
+QualType CXXTypeidExpr::getTypeOperand() const {
+  assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
+  return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()
+                                                        .getUnqualifiedType();
+}
+
 // CXXTypeidExpr - has child iterators if the operand is an expression
 Stmt::child_iterator CXXTypeidExpr::child_begin() {
-  return isTypeOperand() ? child_iterator() : &Operand.Ex;
+  return isTypeOperand() ? child_iterator() 
+                         : reinterpret_cast<Stmt **>(&Operand);
 }
 Stmt::child_iterator CXXTypeidExpr::child_end() {
-  return isTypeOperand() ? child_iterator() : &Operand.Ex+1;
+  return isTypeOperand() ? child_iterator() 
+                         : reinterpret_cast<Stmt **>(&Operand) + 1;
 }
 
 // CXXBoolLiteralExpr
