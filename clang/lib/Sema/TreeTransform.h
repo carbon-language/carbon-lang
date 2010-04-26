@@ -901,6 +901,30 @@ public:
                                         move(Finally));
   }
 
+  /// \brief Rebuild an Objective-C exception declaration.
+  ///
+  /// By default, performs semantic analysis to build the new declaration.
+  /// Subclasses may override this routine to provide different behavior.
+  VarDecl *RebuildObjCExceptionDecl(VarDecl *ExceptionDecl,
+                                    TypeSourceInfo *TInfo, QualType T) {
+    return getSema().BuildObjCExceptionDecl(TInfo, T, 
+                                            ExceptionDecl->getIdentifier(), 
+                                            ExceptionDecl->getLocation());
+  }
+  
+  /// \brief Build a new Objective-C @catch statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildObjCAtCatchStmt(SourceLocation AtLoc,
+                                          SourceLocation RParenLoc,
+                                          VarDecl *Var,
+                                          StmtArg Body) {
+    return getSema().ActOnObjCAtCatchStmt(AtLoc, RParenLoc,
+                                          Sema::DeclPtrTy::make(Var),
+                                          move(Body));
+  }
+  
   /// \brief Build a new Objective-C @finally statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -3722,9 +3746,37 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtCatchStmt(ObjCAtCatchStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot transform an Objective-C @catch statement");
-  return SemaRef.Owned(S->Retain());
+  // Transform the @catch parameter, if there is one.
+  VarDecl *Var = 0;
+  if (VarDecl *FromVar = S->getCatchParamDecl()) {
+    TypeSourceInfo *TSInfo = 0;
+    if (FromVar->getTypeSourceInfo()) {
+      TSInfo = getDerived().TransformType(FromVar->getTypeSourceInfo());
+      if (!TSInfo)
+        return SemaRef.StmtError();
+    }
+    
+    QualType T;
+    if (TSInfo)
+      T = TSInfo->getType();
+    else {
+      T = getDerived().TransformType(FromVar->getType());
+      if (T.isNull())
+        return SemaRef.StmtError();        
+    }
+    
+    Var = getDerived().RebuildObjCExceptionDecl(FromVar, TSInfo, T);
+    if (!Var)
+      return SemaRef.StmtError();
+  }
+  
+  OwningStmtResult Body = getDerived().TransformStmt(S->getCatchBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  return getDerived().RebuildObjCAtCatchStmt(S->getAtCatchLoc(), 
+                                             S->getRParenLoc(),
+                                             Var, move(Body));
 }
 
 template<typename Derived>

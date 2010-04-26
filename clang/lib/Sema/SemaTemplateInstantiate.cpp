@@ -589,6 +589,11 @@ namespace {
                                   IdentifierInfo *Name,
                                   SourceLocation Loc, SourceRange TypeRange);
 
+    /// \brief Rebuild the Objective-C exception declaration and register the 
+    /// declaration as an instantiated local.
+    VarDecl *RebuildObjCExceptionDecl(VarDecl *ExceptionDecl, 
+                                      TypeSourceInfo *TSInfo, QualType T);
+      
     /// \brief Check for tag mismatches when instantiating an
     /// elaborated type.
     QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag);
@@ -687,7 +692,16 @@ TemplateInstantiator::RebuildExceptionDecl(VarDecl *ExceptionDecl,
                                            SourceRange TypeRange) {
   VarDecl *Var = inherited::RebuildExceptionDecl(ExceptionDecl, T, Declarator,
                                                  Name, Loc, TypeRange);
-  if (Var && !Var->isInvalidDecl())
+  if (Var)
+    getSema().CurrentInstantiationScope->InstantiatedLocal(ExceptionDecl, Var);
+  return Var;
+}
+
+VarDecl *TemplateInstantiator::RebuildObjCExceptionDecl(VarDecl *ExceptionDecl, 
+                                                        TypeSourceInfo *TSInfo, 
+                                                        QualType T) {
+  VarDecl *Var = inherited::RebuildObjCExceptionDecl(ExceptionDecl, TSInfo, T);
+  if (Var)
     getSema().CurrentInstantiationScope->InstantiatedLocal(ExceptionDecl, Var);
   return Var;
 }

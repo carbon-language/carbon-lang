@@ -65,11 +65,13 @@ void try_catch_finally_test(U value) {
   @try {
     value = 1; // expected-error{{assigning to 'int *' from incompatible type 'int'}}
   }
-  // FIXME: Add @catch
-  @finally {
+  @catch (T obj) { // expected-error{{@catch parameter is not a pointer to an interface type}}
+    id x = obj;
+  } @finally {
     value = 0;
   }
 }
 
 template void try_catch_finally_test<NSString *>(int);
 template void try_catch_finally_test<NSString *>(int*); // expected-note{{in instantiation of}}
+template void try_catch_finally_test<NSString>(int); // expected-note{{in instantiation of function template specialization 'try_catch_finally_test<NSString, int>' requested here}}

@@ -1726,6 +1726,8 @@ VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo,
   // FIXME: Recover from "NSObject foo" by inserting the * in "NSObject *foo"?
   if (Invalid) {
     // Don't do any further checking.
+  } else if (T->isDependentType()) {
+    // Okay: we don't know what this type will instantiate to.
   } else if (!T->isObjCObjectPointerType()) {
     Invalid = true;
     Diag(NameLoc ,diag::err_catch_param_not_objc_type);
