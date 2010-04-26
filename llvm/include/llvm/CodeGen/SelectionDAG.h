@@ -62,8 +62,15 @@ private:
 /// instead the info is kept off to the side in this structure. Each SDNode may
 /// have one or more associated dbg_value entries. This information is kept in
 /// DbgValMap.
+/// Byval parameters are handled separately because they don't use alloca's,
+/// which busts the normal mechanism.  There is good reason for handling all
+/// parameters separately:  they may not have code generated for them, they
+/// should always go at the beginning of the function regardless of other code
+/// motion, and debug info for them is potentially useful even if the parameter
+/// is unused.  Right now only byval parameters are handled separately.
 class SDDbgInfo {
   SmallVector<SDDbgValue*, 32> DbgValues;
+  SmallVector<SDDbgValue*, 32> ByvalParmDbgValues;
   DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMap;
 
   void operator=(const SDDbgInfo&);   // Do not implement.
@@ -71,19 +78,22 @@ class SDDbgInfo {
 public:
   SDDbgInfo() {}
 
-  void add(SDDbgValue *V, const SDNode *Node = 0) {
+  void add(SDDbgValue *V, const SDNode *Node, bool isParameter) {
+    if (isParameter) {
+      ByvalParmDbgValues.push_back(V);
+    } else     DbgValues.push_back(V);
     if (Node)
       DbgValMap[Node].push_back(V);
-    DbgValues.push_back(V);
   }
 
   void clear() {
     DbgValMap.clear();
     DbgValues.clear();
+    ByvalParmDbgValues.clear();
   }
 
   bool empty() const {
-    return DbgValues.empty();
+    return DbgValues.empty() && ByvalParmDbgValues.empty();
   }
 
   SmallVector<SDDbgValue*,2> &getSDDbgValues(const SDNode *Node) {
@@ -93,6 +103,8 @@ public:
   typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
   DbgIterator DbgBegin() { return DbgValues.begin(); }
   DbgIterator DbgEnd()   { return DbgValues.end(); }
+  DbgIterator ByvalParmDbgBegin() { return ByvalParmDbgValues.begin(); }
+  DbgIterator ByvalParmDbgEnd()   { return ByvalParmDbgValues.end(); }
 };
 
 enum CombineLevel {
@@ -877,7 +889,7 @@ public:
 
   /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
   /// value is produced by SD.
-  void AddDbgValue(SDDbgValue *DB, SDNode *SD = 0);
+  void AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter);
 
   /// GetDbgValues - Get the debug values which reference the given SDNode.
   SmallVector<SDDbgValue*,2> &GetDbgValues(const SDNode* SD) {
@@ -890,6 +902,12 @@ public:
 
   SDDbgInfo::DbgIterator DbgBegin() { return DbgInfo->DbgBegin(); }
   SDDbgInfo::DbgIterator DbgEnd()   { return DbgInfo->DbgEnd(); }
+  SDDbgInfo::DbgIterator ByvalParmDbgBegin() { 
+    return DbgInfo->ByvalParmDbgBegin(); 
+  }
+  SDDbgInfo::DbgIterator ByvalParmDbgEnd()   { 
+    return DbgInfo->ByvalParmDbgEnd(); 
+  }
 
   void dump() const;
 

@@ -5341,8 +5341,8 @@ unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
 
 /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
 /// value is produced by SD.
-void SelectionDAG::AddDbgValue(SDDbgValue *DB, SDNode *SD) {
-  DbgInfo->add(DB, SD);
+void SelectionDAG::AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter) {
+  DbgInfo->add(DB, SD, isParameter);
   if (SD)
     SD->setHasDebugValue(true);
 }

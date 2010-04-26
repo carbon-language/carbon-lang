@@ -3775,32 +3775,75 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_declare: {
     // FIXME: currently, we get here only if OptLevel != CodeGenOpt::None.
     // The real handling of this intrinsic is in FastISel.
-    if (OptLevel != CodeGenOpt::None)
+//    if (OptLevel != CodeGenOpt::None)
       // FIXME: Variable debug info is not supported here.
-      return 0;
+//      return 0;
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
       return 0;
 
     MDNode *Variable = DI.getVariable();
+    // Parameters are handled specially.
+    bool isParameter = false;
+    ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Variable->getOperand(0));
+    if (CI) {
+      unsigned Val = CI->getZExtValue();
+      unsigned Tag = Val & ~LLVMDebugVersionMask;
+      if (Tag == dwarf::DW_TAG_arg_variable)
+        isParameter = true;
+    }
     const Value *Address = DI.getAddress();
     if (!Address)
       return 0;
     if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
       Address = BCI->getOperand(0);
     const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
-    // Don't handle byval struct arguments or VLAs, for example.
-    if (!AI)
-      return 0;
-    DenseMap<const AllocaInst*, int>::iterator SI =
-      FuncInfo.StaticAllocaMap.find(AI);
-    if (SI == FuncInfo.StaticAllocaMap.end())
-      return 0; // VLAs.
-    int FI = SI->second;
+    if (AI) {
+      // Don't handle byval arguments or VLAs, for example.
+      // Non-byval arguments are handled here (they refer to the stack temporary
+      // alloca at this point).
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        FuncInfo.StaticAllocaMap.find(AI);
+      if (SI == FuncInfo.StaticAllocaMap.end())
+        return 0; // VLAs.
+      int FI = SI->second;
 
-    MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-    if (!DI.getDebugLoc().isUnknown() && MMI.hasDebugInfo())
-      MMI.setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
+      MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+      if (!DI.getDebugLoc().isUnknown() && MMI.hasDebugInfo())
+        MMI.setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
+    }
+
+    // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
+    // but do not always have a corresponding SDNode built.  The SDNodeOrder
+    // absolute, but not relative, values are different depending on whether
+    // debug info exists.
+    ++SDNodeOrder;
+    SDValue &N = NodeMap[Address];
+    SDDbgValue *SDV;
+    if (N.getNode()) {
+      if (isParameter && !AI) {
+        FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N.getNode());
+        if (FINode)
+          // Byval parameter.  We have a frame index at this point.
+          SDV = DAG.getDbgValue(Variable, FINode->getIndex(),
+                                0, dl, SDNodeOrder);
+        else
+          // Can't do anything with other non-AI cases yet.  This might be a
+          // parameter of a callee function that got inlined, for example.
+          return 0;
+      } else if (AI)
+        SDV = DAG.getDbgValue(Variable, N.getNode(), N.getResNo(),
+                              0, dl, SDNodeOrder);
+      else
+        // Can't do anything with other non-AI cases yet.
+        return 0;
+      DAG.AddDbgValue(SDV, N.getNode(), isParameter);
+    } else {
+      // This isn't useful, but it shows what we're missing.
+      SDV = DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
+                            0, dl, SDNodeOrder);
+      DAG.AddDbgValue(SDV, 0, isParameter);
+    }
     return 0;
   }
   case Intrinsic::dbg_value: {
@@ -3819,20 +3862,23 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // absolute, but not relative, values are different depending on whether
     // debug info exists.
     ++SDNodeOrder;
+    SDDbgValue *SDV;
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V)) {
-      DAG.AddDbgValue(DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder));
+      SDV = DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder);
+      DAG.AddDbgValue(SDV, 0, false);
     } else {
       SDValue &N = NodeMap[V];
-      if (N.getNode())
-        DAG.AddDbgValue(DAG.getDbgValue(Variable, N.getNode(),
-                                        N.getResNo(), Offset, dl, SDNodeOrder),
-                        N.getNode());
-      else
+      if (N.getNode()) {
+        SDV = DAG.getDbgValue(Variable, N.getNode(),
+                              N.getResNo(), Offset, dl, SDNodeOrder);
+        DAG.AddDbgValue(SDV, N.getNode(), false);
+      } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
-        DAG.AddDbgValue(DAG.getDbgValue(Variable, 
-                                        UndefValue::get(V->getType()),
-                                        Offset, dl, SDNodeOrder));
+        SDV = DAG.getDbgValue(Variable, UndefValue::get(V->getType()),
+                              Offset, dl, SDNodeOrder);
+        DAG.AddDbgValue(SDV, 0, false);
+      }
     }
 
     // Build a debug info table entry.
