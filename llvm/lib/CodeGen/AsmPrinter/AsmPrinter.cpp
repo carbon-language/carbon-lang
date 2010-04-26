@@ -228,7 +228,15 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypeAllocSize(GV->getType()->getElementType());
-  unsigned AlignLog = TD->getPreferredAlignmentLog(GV);
+  
+  // If the alignment is specified, we *must* obey it.  Overaligning a global
+  // with a specified alignment is a prompt way to break globals emitted to
+  // sections and expected to be contiguous (e.g. ObjC metadata).
+  unsigned AlignLog;
+  if (unsigned GVAlign = GV->getAlignment())
+    AlignLog = Log2_32(GVAlign);
+  else
+    AlignLog = TD->getPreferredAlignmentLog(GV);
   
   // Handle common and BSS local symbols (.lcomm).
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {

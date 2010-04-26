@@ -28,6 +28,7 @@ return:
 
 declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
 
+; CORE2: .section
 ; CORE2: .align  3
 ; CORE2-NEXT: _.str1:
 ; CORE2-NEXT: .asciz "DHRYSTONE PROGRAM, SOME STRING"
