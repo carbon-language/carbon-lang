@@ -929,13 +929,13 @@ configure with <tt>--enable-libffi</tt>.</li>
 API changes are:</p>
 
 <ul>
-<li>Just about everything has been converted to use raw_ostream instead of
-    std::ostream.</li>
-<li>llvm/ADT/iterator.h has been removed, just use &lt;iterator&gt;
+<li>Just about everything has been converted to use <tt>raw_ostream</tt> instead of
+    <tt>std::ostream</tt>.</li>
+<li><tt>llvm/ADT/iterator.h</tt> has been removed, just use <tt>&lt;iterator&gt;</tt>
  instead.</li>
-<li>The Streams.h file and "DOUT" got removed, use "DEBUG(errs() &lt;&lt; ...);"
+<li>The <tt>Streams.h</tt> file and <tt>DOUT</tt> got removed, use <tt>DEBUG(errs() &lt;&lt; ...);</tt>
    instead.</li>
-<li>The TargetAsmInfo interface was renamed to MCAsmInfo.</li>
+<li>The <tt>TargetAsmInfo</tt> interface was renamed to <tt>MCAsmInfo</tt>.</li>
 <li><tt>ModuleProvider</tt> has been <a
 href="http://llvm.org/viewvc/llvm-project?view=rev&amp;revision=94686">removed</a>
 and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
