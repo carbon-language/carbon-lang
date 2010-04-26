@@ -1801,6 +1801,62 @@ public:
                                         move(Args));
   }
 
+  /// \brief Build a new Objective-C ivar reference expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildObjCIvarRefExpr(ExprArg BaseArg, ObjCIvarDecl *Ivar,
+                                          SourceLocation IvarLoc,
+                                          bool IsArrow, bool IsFreeIvar) {
+    // FIXME: We lose track of the IsFreeIvar bit.
+    CXXScopeSpec SS;
+    Expr *Base = BaseArg.takeAs<Expr>();
+    LookupResult R(getSema(), Ivar->getDeclName(), IvarLoc,
+                   Sema::LookupMemberName);
+    OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
+                                                         /*FIME:*/IvarLoc,
+                                                         SS, DeclPtrTy());
+    if (Result.isInvalid())
+      return getSema().ExprError();
+    
+    if (Result.get())
+      return move(Result);
+    
+    return getSema().BuildMemberReferenceExpr(getSema().Owned(Base), 
+                                              Base->getType(),
+                                              /*FIXME:*/IvarLoc, IsArrow, SS, 
+                                              /*FirstQualifierInScope=*/0,
+                                              R, 
+                                              /*TemplateArgs=*/0);
+  }
+                                          
+  /// \brief Build a new Objective-C "isa" expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildObjCIsaExpr(ExprArg BaseArg, SourceLocation IsaLoc,
+                                      bool IsArrow) {
+    CXXScopeSpec SS;
+    Expr *Base = BaseArg.takeAs<Expr>();
+    LookupResult R(getSema(), &getSema().Context.Idents.get("isa"), IsaLoc,
+                   Sema::LookupMemberName);
+    OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
+                                                         /*FIME:*/IsaLoc,
+                                                         SS, DeclPtrTy());
+    if (Result.isInvalid())
+      return getSema().ExprError();
+    
+    if (Result.get())
+      return move(Result);
+    
+    return getSema().BuildMemberReferenceExpr(getSema().Owned(Base), 
+                                              Base->getType(),
+                                              /*FIXME:*/IsaLoc, IsArrow, SS, 
+                                              /*FirstQualifierInScope=*/0,
+                                              R, 
+                                              /*TemplateArgs=*/0);
+  }
+  
   /// \brief Build a new shuffle vector expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -5790,9 +5846,21 @@ TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
-  return SemaRef.Owned(E->Retain());
+  // Transform the base expression.
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+
+  // We don't need to transform the ivar; it will never change.
+  
+  // If nothing changed, just retain the existing expression.
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase())
+    return SemaRef.Owned(E->Retain());
+  
+  return getDerived().RebuildObjCIvarRefExpr(move(Base), E->getDecl(),
+                                             E->getLocation(),
+                                             E->isArrow(), E->isFreeIvar());
 }
 
 template<typename Derived>
@@ -5822,9 +5890,18 @@ TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCIsaExpr(ObjCIsaExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
-  return SemaRef.Owned(E->Retain());
+  // Transform the base expression.
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+  
+  // If nothing changed, just retain the existing expression.
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase())
+    return SemaRef.Owned(E->Retain());
+  
+  return getDerived().RebuildObjCIsaExpr(move(Base), E->getIsaMemberLoc(),
+                                         E->isArrow());
 }
 
 template<typename Derived>

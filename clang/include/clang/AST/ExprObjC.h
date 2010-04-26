@@ -181,11 +181,12 @@ class ObjCIvarRefExpr : public Expr {
 
 public:
   ObjCIvarRefExpr(ObjCIvarDecl *d,
-                  QualType t, SourceLocation l, Expr *base=0,
+                  QualType t, SourceLocation l, Expr *base,
                   bool arrow = false, bool freeIvar = false) :
-    Expr(ObjCIvarRefExprClass, t, false, false), D(d),
-    Loc(l), Base(base), IsArrow(arrow),
-    IsFreeIvar(freeIvar) {}
+    Expr(ObjCIvarRefExprClass, t, /*TypeDependent=*/false,
+         base->isValueDependent()), D(d),
+         Loc(l), Base(base), IsArrow(arrow),
+         IsFreeIvar(freeIvar) {}
 
   explicit ObjCIvarRefExpr(EmptyShell Empty)
     : Expr(ObjCIvarRefExprClass, Empty) {}
@@ -773,7 +774,8 @@ class ObjCIsaExpr : public Expr {
   bool IsArrow;
 public:
   ObjCIsaExpr(Expr *base, bool isarrow, SourceLocation l, QualType ty)
-    : Expr(ObjCIsaExprClass, ty, false, false),
+    : Expr(ObjCIsaExprClass, ty, /*TypeDependent=*/false, 
+           base->isValueDependent()),
       Base(base), IsaMemberLoc(l), IsArrow(isarrow) {}
 
   /// \brief Build an empty expression.
