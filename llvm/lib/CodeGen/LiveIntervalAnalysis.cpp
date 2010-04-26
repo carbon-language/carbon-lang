@@ -1296,6 +1296,8 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineOperand &O = ri.getOperand();
     ++ri;
     if (MI->isDebugValue()) {
+#if 0
+      // Disabled temporarily.
       // Modify DBG_VALUE now that the value is in a spill slot.
       uint64_t Offset = MI->getOperand(1).getImm();
       const MDNode *MDPtr = MI->getOperand(2).getMetadata();
@@ -1308,11 +1310,14 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         MachineBasicBlock *MBB = MI->getParent();
         MBB->insert(MBB->erase(MI), NewDV);
       } else {
+#endif
         DEBUG(dbgs() << "Removing debug info due to spill:" << "\t" << *MI);
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
         MI->eraseFromParent();
+#if 0
       }
+#endif
       continue;
     }
     assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
