@@ -11,9 +11,7 @@ typedef float CGFloat;
 
 // rdar: // 7822196
 @interface A
-(void) x;	// expected-error {{method type specifier must start with '-' or '+'}} \
-		// expected-warning {{type specifier missing, defaults to 'int' [-Wimplicit-int]}} \
-		// expected-error {{cannot declare variable inside @interface or @protocol}}
+(void) x;	// expected-error {{method type specifier must start with '-' or '+'}} 
 (int)im; // expected-error {{method type specifier must start with '-' or '+'}} \
 - ok;
 @end

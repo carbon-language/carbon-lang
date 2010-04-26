@@ -142,8 +142,8 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
-  bool Err = false;
-  if (Tok.is(tok::l_paren)) { // we have a category.
+  if (Tok.is(tok::l_paren) && 
+      !isKnownToBeTypeSpecifier(GetLookAheadToken(1))) { // we have a category.
     SourceLocation lparenLoc = ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
@@ -157,12 +157,6 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
       categoryId = Tok.getIdentifierInfo();
       categoryLoc = ConsumeToken();
     }
-    else if (isKnownToBeTypeSpecifier(Tok)) {
-      // Fall thru after diagnosing for better error recovery.
-      Diag(Tok, diag::err_expected_minus_or_plus);
-      ConsumeToken();
-      Err = true;
-    }
     else if (!getLang().ObjC2) {
       Diag(Tok, diag::err_expected_ident); // missing category name.
       return DeclPtrTy();
@@ -173,34 +167,32 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
       return DeclPtrTy();
     }
     rparenLoc = ConsumeParen();
-    if (!Err) {
-      // Next, we need to check for any protocol references.
-      SourceLocation LAngleLoc, EndProtoLoc;
-      llvm::SmallVector<DeclPtrTy, 8> ProtocolRefs;
-      llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
-      if (Tok.is(tok::less) &&
-          ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
+    // Next, we need to check for any protocol references.
+    SourceLocation LAngleLoc, EndProtoLoc;
+    llvm::SmallVector<DeclPtrTy, 8> ProtocolRefs;
+    llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+    if (Tok.is(tok::less) &&
+        ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
                                     LAngleLoc, EndProtoLoc))
-        return DeclPtrTy();
+      return DeclPtrTy();
 
-      if (attrList) // categories don't support attributes.
-        Diag(Tok, diag::err_objc_no_attributes_on_category);
+    if (attrList) // categories don't support attributes.
+      Diag(Tok, diag::err_objc_no_attributes_on_category);
 
-      DeclPtrTy CategoryType =
-        Actions.ActOnStartCategoryInterface(atLoc,
-                                            nameId, nameLoc,
-                                            categoryId, categoryLoc,
-                                            ProtocolRefs.data(),
-                                            ProtocolRefs.size(),
-                                            ProtocolLocs.data(),
-                                            EndProtoLoc);
-        if (Tok.is(tok::l_brace))
+    DeclPtrTy CategoryType =
+    Actions.ActOnStartCategoryInterface(atLoc,
+                                        nameId, nameLoc,
+                                        categoryId, categoryLoc,
+                                        ProtocolRefs.data(),
+                                        ProtocolRefs.size(),
+                                        ProtocolLocs.data(),
+                                        EndProtoLoc);
+    if (Tok.is(tok::l_brace))
       ParseObjCClassInstanceVariables(CategoryType, tok::objc_private,
                                       atLoc);
     
-      ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
-      return CategoryType;
-    }
+    ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
+    return CategoryType;
   }
   // Parse a class interface.
   IdentifierInfo *superClassId = 0;
@@ -242,7 +234,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, atLoc);
 
   ParseObjCInterfaceDeclList(ClsType, tok::objc_interface);
-  return Err ? DeclPtrTy() : ClsType;
+  return ClsType;
 }
 
 /// The Objective-C property callback.  This should be defined where
