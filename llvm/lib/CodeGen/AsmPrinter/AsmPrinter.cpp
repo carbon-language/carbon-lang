@@ -589,9 +589,10 @@ void AsmPrinter::EmitFunctionBody() {
   if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode) {
     MCInst Noop;
     TM.getInstrInfo()->getNoopForMachoTarget(Noop);
-    if (Noop.getOpcode())
+    if (Noop.getOpcode()) {
+      OutStreamer.AddComment("avoids zero-length function");
       OutStreamer.EmitInstruction(Noop);
-    else  // Target not mc-ized yet.
+    } else  // Target not mc-ized yet.
       OutStreamer.EmitRawText(StringRef("\tnop\n"));
   }
   
