@@ -1183,6 +1183,13 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     SPAdj = 0;
   Offset += SPAdj;
 
+  // Special handling of dbg_value instructions.
+  if (MI.isDebugValue()) {
+    MI.getOperand(i).  ChangeToRegister(FrameReg, false /*isDef*/);
+    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    return 0;
+  }
+
   // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;
   if (!AFI->isThumbFunction())

@@ -816,6 +816,16 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
+MachineInstr*
+ARMBaseInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
+                                           unsigned FrameIx, uint64_t Offset,
+                                           const MDNode *MDPtr,
+                                           DebugLoc DL) const {
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::DBG_VALUE))
+    .addFrameIndex(FrameIx).addImm(0).addImm(Offset).addMetadata(MDPtr);
+  return &*MIB;
+}
+
 MachineInstr *ARMBaseInstrInfo::
 foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                       const SmallVectorImpl<unsigned> &Ops, int FI) const {

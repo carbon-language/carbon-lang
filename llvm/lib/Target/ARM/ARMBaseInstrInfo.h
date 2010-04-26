@@ -269,6 +269,12 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC) const;
 
+  virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
+                                                 unsigned FrameIx,
+                                                 uint64_t Offset,
+                                                 const MDNode *MDPtr,
+                                                 DebugLoc DL) const;
+
   virtual bool canFoldMemoryOperand(const MachineInstr *MI,
                                     const SmallVectorImpl<unsigned> &Ops) const;
 
