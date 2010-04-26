@@ -1463,13 +1463,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
-  // Do not emit variable debug information while generating optimized code.
-  // The llvm optimizer and code generator are not yet ready to support
-  // optimized code debugging.
-  const CodeGenOptions &CGO = CGM.getCodeGenOpts();
-  if (CGO.OptimizationLevel)
-    return;
-
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::DIType Ty;
   uint64_t XOffset = 0;
@@ -1513,11 +1506,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   const ValueDecl *VD = BDRE->getDecl();
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
-  // Do not emit variable debug information while generating optimized code.
-  // The llvm optimizer and code generator are not yet ready to support
-  // optimized code debugging.
-  const CodeGenOptions &CGO = CGM.getCodeGenOpts();
-  if (CGO.OptimizationLevel || Builder.GetInsertBlock() == 0)
+  if (Builder.GetInsertBlock() == 0)
     return;
 
   uint64_t XOffset = 0;
