@@ -2332,25 +2332,74 @@ has undefined behavior.</p>
    effects has nevertheless detected a condition which results in undefined
    behavior.</p>
 
-<p>Any non-void instruction or constant expression other than a non-intrinsic
-   call, invoke, or phi with a trap operand has trap as its result value.
-   Any instruction with a trap operand which may have side effects emits
-   those side effects as if it had an undef operand instead.</p>
+<p>Any value other than a non-intrinsic call, invoke, or phi with a trap
+   operand has trap as its result value.  Any instruction with
+   a trap operand which may have side effects emits those side effects as
+   if it had an undef operand instead. If the side effects are externally
+   visible, the behavior is undefined.</p>
+
+<p>Trap values may be stored to memory; a load from memory including any
+   part of a trap value results in a (full) trap value.</p>
+   
+<p>For example:</p>
+
+<!-- FIXME: In the case of multiple threads, this only applies to loads from
+     the same thread as the store, or loads which are sequenced after the
+     store by synchronization. -->
+
+<div class="doc_code">
+<pre>
+%trap = sub nuw i32 0, 1           ; Results in a trap value.
+%still_trap = and i32 %trap, 0     ; Whereas (and i32 undef, 0) would return 0.
+%trap_yet_again = getelementptr i32* @h, i32 %still_trap
+store i32 0, i32* %trap_yet_again  ; undefined behavior
+
+volatile store i32 %trap, i32* @g  ; External observation; undefined behavior.
+%trap2 = load i32* @g              ; Returns a trap value, not just undef.
+%narrowaddr = bitcast i32* @g to i16*
+%wideaddr = bitcast i32* @g to i64*
+%trap3 = load 16* %narrowaddr      ; Returns a trap value
+%trap4 = load i64* %widaddr        ; Returns a trap value, not partial trap.
+</pre>
+</div>
 
 <p>If a <a href="#i_br"><tt>br</tt></a> or
    <a href="#i_switch"><tt>switch</tt></a> instruction has a trap value
    operand, all non-phi non-void instructions which control-depend on it
-   have trap as their result value. If any instruction which
-   control-depends on the <tt>br</tt> or <tt>switch</tt> invokes externally
-   visible side effects, the behavior of the program is undefined.</p>
+   have trap as their result value. A <a href="#i_phi"><tt>phi</tt></a>
+   node with an incoming value associated with a control edge which is
+   control-dependent on it has trap as its result value when control is
+   transferred from that block.  If any instruction which control-depends
+   on the <tt>br</tt> or <tt>switch</tt> invokes externally visible side
+   effects, the behavior of the program is undefined. For example:</p>
 
 <!-- FIXME: What about exceptions thrown from control-dependent instrs? -->
 
-<p>For example, an <a href="#i_and"><tt>and</tt></a> of a trap value with
-   zero still has a trap value result. Using that value as an index in a
-   <a href="#i_getelementptr"><tt>getelementptr</tt></a> yields a trap
-   result. Using that result as the address of a
-   <a href="#i_store"><tt>store</tt></a> produces undefined behavior.</p>
+<div class="doc_code">
+<pre>
+entry:
+  %trap = sub nuw i32 0, 1           ; Results in a trap value.
+  %cmp = icmp i32 slt %trap, 0       ; Still trap.
+  %br i1 %cmp, %true, %end           ; Branch to either destination.
+
+true:
+  volatile store i32 0, i32* @g      ; Externally visible side effects
+                                     ; control-dependent on %cmp.
+                                     ; Undefined behavior.
+  br label %end
+
+end:
+  %p = phi i32 [ 0, %entry ], [ 1, %true ]
+                                     ; Both edges into this PHI are
+                                     ; control-dependent on %cmp, so this
+                                     ; results in a trap value.
+
+  volatile store i32 0, i32* @g      ; %end is control-equivalent to %entry
+                                     ; so this is defined (ignoring earlier
+                                     ; undefined behavior in this example).
+
+</pre>
+</div>
 
 <p>There is currently no way of representing a trap constant in the IR; they
    only exist when produced by certain instructions, such as an
