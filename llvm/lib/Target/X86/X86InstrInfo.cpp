@@ -2324,7 +2324,6 @@ X86InstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
                                        unsigned FrameIx, uint64_t Offset,
                                        const MDNode *MDPtr,
                                        DebugLoc DL) const {
-  // Target dependent DBG_VALUE.  Only the frame index case is done here.
   X86AddressMode AM;
   AM.BaseType = X86AddressMode::FrameIndexBase;
   AM.Base.FrameIndex = FrameIx;
