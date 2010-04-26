@@ -1860,6 +1860,26 @@ public:
                                               /*TemplateArgs=*/0);
   }
   
+  /// \brief Build a new Objective-C implicit setter/getter reference 
+  /// expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.  
+  OwningExprResult RebuildObjCImplicitSetterGetterRefExpr(
+                                                        ObjCMethodDecl *Getter,
+                                                          QualType T,
+                                                        ObjCMethodDecl *Setter,
+                                                        SourceLocation NameLoc,
+                                                          ExprArg Base) {
+    // Since these expressions can only be value-dependent, we do not need to
+    // perform semantic analysis again.
+    return getSema().Owned(
+             new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
+                                                                     Setter,
+                                                                     NameLoc,
+                                                          Base.takeAs<Expr>()));
+  }
+
   /// \brief Build a new Objective-C "isa" expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -5916,9 +5936,30 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
                                           ObjCImplicitSetterGetterRefExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
-  return SemaRef.Owned(E->Retain());
+  // If this implicit setter/getter refers to class methods, it cannot have any
+  // dependent parts. Just retain the existing declaration.
+  if (E->getInterfaceDecl())
+    return SemaRef.Owned(E->Retain());
+  
+  // Transform the base expression.
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+  
+  // We don't need to transform the getters/setters; they will never change.
+  
+  // If nothing changed, just retain the existing expression.
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase())
+    return SemaRef.Owned(E->Retain());
+  
+  return getDerived().RebuildObjCImplicitSetterGetterRefExpr(
+                                                          E->getGetterMethod(),
+                                                             E->getType(),
+                                                          E->getSetterMethod(),
+                                                             E->getLocation(),
+                                                             move(Base));
+                                                             
 }
 
 template<typename Derived>

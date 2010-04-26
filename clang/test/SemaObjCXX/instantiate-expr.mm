@@ -49,3 +49,25 @@ void f3(U ptr) {
 
 template void f3<Class>(id);
 template void f3<int>(id); // expected-note{{instantiation of}}
+
+// Implicit setter/getter
+@interface B
+- (int)foo;
+- (void)setFoo:(int)value;
+@end
+
+template<typename T>
+void f4(B *b, T value) {
+  b.foo = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
+}
+
+template void f4(B*, int);
+template void f4(B*, int*); // expected-note{{in instantiation of function template specialization 'f4<int *>' requested here}}
+
+template<typename T, typename U>
+void f5(T ptr, U value) {
+  ptr.foo = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
+}
+
+template void f5(B*, int);
+template void f5(B*, int*); // expected-note{{in instantiation of function template specialization 'f5<B *, int *>' requested here}}

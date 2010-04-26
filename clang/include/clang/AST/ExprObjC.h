@@ -299,7 +299,8 @@ public:
                  QualType t,
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
+           base->isValueDependent()),
       Setter(setter), Getter(getter), MemberLoc(l), Base(base),
       InterfaceDecl(0), ClassLoc(SourceLocation()) {
     }
