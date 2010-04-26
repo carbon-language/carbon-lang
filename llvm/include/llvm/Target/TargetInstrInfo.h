@@ -367,6 +367,9 @@ public:
   /// normally be lowered the same way as other addresses on the target,
   /// e.g. in load instructions.  For targets that do not support this
   /// the debug info is simply lost.
+  /// If you add this for a target you should handle this DBG_VALUE in the
+  /// target-specific AsmPrinter code as well; you will probably get invalid
+  /// assembly output if you don't.
   virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
                                                  unsigned FrameIx,
                                                  uint64_t Offset,
