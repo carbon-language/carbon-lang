@@ -1893,6 +1893,8 @@ def err_out_of_line_declaration : Error<
 def note_member_def_close_match : Note<"member declaration nearly matches">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;
+def err_ivar_reference_type : Error<
+  "instance variables cannot be of reference type">;
 def err_typecheck_illegal_increment_decrement : Error<
   "cannot %select{decrement|increment}1 value of type %0">;
 def err_typecheck_arithmetic_incomplete_type : Error<

@@ -5875,10 +5875,13 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
     // validate II.
 
   }
-
+  if (T->isReferenceType()) {
+    Diag(Loc, diag::err_ivar_reference_type);
+    D.setInvalidType();
+  }
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
-  if (T->isVariablyModifiedType()) {
+  else if (T->isVariablyModifiedType()) {
     Diag(Loc, diag::err_typecheck_ivar_variable_size);
     D.setInvalidType();
   }
