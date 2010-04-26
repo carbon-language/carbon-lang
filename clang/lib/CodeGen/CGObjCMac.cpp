@@ -2670,7 +2670,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       const ObjCAtCatchStmt *CatchStmt = AtTryStmt->getCatchStmt(I);
       llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
-      const ParmVarDecl *CatchParam = CatchStmt->getCatchParamDecl();
+      const VarDecl *CatchParam = CatchStmt->getCatchParamDecl();
       const ObjCObjectPointerType *OPT = 0;
 
       // catch(...) always matches.
@@ -5562,13 +5562,13 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   SelectorArgs.push_back(ObjCTypes.getEHPersonalityPtr());
 
   // Construct the lists of (type, catch body) to handle.
-  llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
+  llvm::SmallVector<std::pair<const VarDecl*, const Stmt*>, 8> Handlers;
   bool HasCatchAll = false;
   if (isTry) {
     const ObjCAtTryStmt &AtTry = cast<ObjCAtTryStmt>(S);
     for (unsigned I = 0, N = AtTry.getNumCatchStmts(); I != N; ++I) {
       const ObjCAtCatchStmt *CatchStmt = AtTry.getCatchStmt(I);
-      const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
+      const VarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
       Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
 
       // catch(...) always matches.
@@ -5618,7 +5618,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                            SelectorArgs.begin(), SelectorArgs.end(),
                            "selector");
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    const ParmVarDecl *CatchParam = Handlers[i].first;
+    const VarDecl *CatchParam = Handlers[i].first;
     const Stmt *CatchBody = Handlers[i].second;
 
     llvm::BasicBlock *Next = 0;

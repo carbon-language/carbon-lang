@@ -839,7 +839,7 @@ unsigned PCHStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
 unsigned PCHStmtReader::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   VisitStmt(S);
   S->setCatchBody(cast_or_null<Stmt>(StmtStack.back()));
-  S->setCatchParamDecl(cast_or_null<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  S->setCatchParamDecl(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setAtCatchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;

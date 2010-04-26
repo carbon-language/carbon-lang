@@ -71,13 +71,13 @@ public:
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
-  ParmVarDecl *ExceptionDecl;
+  VarDecl *ExceptionDecl;
   Stmt *Body;
   SourceLocation AtCatchLoc, RParenLoc;
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  ParmVarDecl *catchVarDecl,
+                  VarDecl *catchVarDecl,
                   Stmt *atCatchStmt)
     : Stmt(ObjCAtCatchStmtClass), ExceptionDecl(catchVarDecl), 
     Body(atCatchStmt), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) { }
@@ -89,13 +89,13 @@ public:
   Stmt *getCatchBody() { return Body; }
   void setCatchBody(Stmt *S) { Body = S; }
 
-  const ParmVarDecl *getCatchParamDecl() const {
+  const VarDecl *getCatchParamDecl() const {
     return ExceptionDecl;
   }
-  ParmVarDecl *getCatchParamDecl() {
+  VarDecl *getCatchParamDecl() {
     return ExceptionDecl;
   }
-  void setCatchParamDecl(ParmVarDecl *D) { ExceptionDecl = D; }
+  void setCatchParamDecl(VarDecl *D) { ExceptionDecl = D; }
 
   SourceLocation getAtCatchLoc() const { return AtCatchLoc; }
   void setAtCatchLoc(SourceLocation Loc) { AtCatchLoc = Loc; }

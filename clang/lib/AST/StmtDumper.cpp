@@ -555,7 +555,7 @@ void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
 
 void StmtDumper::VisitObjCAtCatchStmt(ObjCAtCatchStmt *Node) {
   DumpStmt(Node);
-  if (ParmVarDecl *CatchParam = Node->getCatchParamDecl()) {
+  if (VarDecl *CatchParam = Node->getCatchParamDecl()) {
     OS << " catch parm = ";
     DumpDeclarator(CatchParam);
   } else {

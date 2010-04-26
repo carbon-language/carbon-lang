@@ -1881,7 +1881,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   Stmt *lastCatchBody = 0;
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
-    ParmVarDecl *catchDecl = Catch->getCatchParamDecl();
+    VarDecl *catchDecl = Catch->getCatchParamDecl();
 
     if (I == 0)
       buf = "if ("; // we are generating code for the first catch clause

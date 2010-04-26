@@ -1773,7 +1773,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *RethrowPtr = CGF.CreateTempAlloca(Exc->getType(), "_rethrow");
 
   llvm::SmallVector<llvm::Value*, 8> ESelArgs;
-  llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
+  llvm::SmallVector<std::pair<const VarDecl*, const Stmt*>, 8> Handlers;
 
   ESelArgs.push_back(Exc);
   ESelArgs.push_back(Personality);
@@ -1787,7 +1787,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       for (unsigned I = 0, N = AtTry.getNumCatchStmts(); I != N; ++I) {
         const ObjCAtCatchStmt *CatchStmt = AtTry.getCatchStmt(I);
-        const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
+        const VarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
         Handlers.push_back(std::make_pair(CatchDecl,
                                           CatchStmt->getCatchBody()));
 
@@ -1826,7 +1826,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       ESelArgs.begin(), ESelArgs.end(), "selector");
 
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    const ParmVarDecl *CatchParam = Handlers[i].first;
+    const VarDecl *CatchParam = Handlers[i].first;
     const Stmt *CatchBody = Handlers[i].second;
 
     llvm::BasicBlock *Next = 0;
