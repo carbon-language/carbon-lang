@@ -1,8 +1,19 @@
 ; RUN: opt %s -sccp -S | FileCheck %s
+
+
+; PR6940
+define double @test1() {
+  %t = sitofp i32 undef to double
+  ret double %t
+; CHECK: @test1
+; CHECK: ret double 0.0
+}
+
+
 ; rdar://7832370
 ; Check that lots of stuff doesn't get turned into undef.
-
-define i32 @main() nounwind readnone ssp {
+define i32 @test2() nounwind readnone ssp {
+; CHECK: @test2
 init:
   br label %control.outer.outer
 

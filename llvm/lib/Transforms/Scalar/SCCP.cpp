@@ -1452,6 +1452,8 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         // After a zero extend, we know the top part is zero.  SExt doesn't have
         // to be handled here, because we don't know whether the top part is 1's
         // or 0's.
+      case Instruction::SIToFP:  // some FP values are not possible, just use 0.
+      case Instruction::UIToFP:  // some FP values are not possible, just use 0.
         markForcedConstant(I, Constant::getNullValue(ITy));
         return true;
       case Instruction::Mul:
