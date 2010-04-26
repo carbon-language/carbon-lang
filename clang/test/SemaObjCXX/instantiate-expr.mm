@@ -4,36 +4,41 @@
 @public
   int ivar;
 }
+@property int prop;
 @end
 
 typedef struct objc_object {
     Class isa;
 } *id;
 
-// Test instantiation of value-dependent ObjCIvarRefExpr and
-// ObjCIsaRefExpr nodes.
+// Test instantiation of value-dependent ObjCIvarRefExpr,
+// ObjCIsaRefExpr, and ObjCPropertyRefExpr nodes.
 A *get_an_A(unsigned);
 id get_an_id(unsigned);
 
-template<unsigned N, typename T, typename U>
-void f(U value) {
+template<unsigned N, typename T, typename U, typename V>
+void f(U value, V value2) {
   get_an_A(N)->ivar = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
+  get_an_A(N).prop = value2; // expected-error{{assigning to 'int' from incompatible type 'double *'}}
   T c = get_an_id(N)->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}}
 }
 
-template void f<6, Class>(int);
-template void f<7, Class>(int*); // expected-note{{in instantiation of}}
-template void f<8, int>(int); // expected-note{{in instantiation of}}
+template void f<6, Class>(int, int);
+template void f<7, Class>(int*, int); // expected-note{{in instantiation of}}
+template void f<8, Class>(int, double*); // expected-note{{in instantiation of}}
+template void f<9, int>(int, int); // expected-note{{in instantiation of}}
 
 // Test instantiation of unresolved member reference expressions to an
 // ivar reference.
-template<typename T, typename U>
-void f2(T ptr, U value) {
+template<typename T, typename U, typename V>
+void f2(T ptr, U value, V value2) {
   ptr->ivar = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
+  ptr.prop = value2; // expected-error{{assigning to 'int' from incompatible type 'double *'}}
 }
 
-template void f2(A*, int);
-template void f2(A*, int*); // expected-note{{instantiation of}}
+template void f2(A*, int, int);
+template void f2(A*, int*, int); // expected-note{{instantiation of}}
+template void f2(A*, int, double*); // expected-note{{instantiation of}}
 
 // Test instantiation of unresolved member referfence expressions to
 // an isa.

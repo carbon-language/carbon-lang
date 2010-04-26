@@ -233,8 +233,9 @@ private:
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
                       SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t, false, false), AsProperty(PD),
-      IdLoc(l), Base(base) {
+    : Expr(ObjCPropertyRefExprClass, t, /*TypeDependent=*/false, 
+           base->isValueDependent()), 
+      AsProperty(PD), IdLoc(l), Base(base) {
   }
 
   explicit ObjCPropertyRefExpr(EmptyShell Empty)

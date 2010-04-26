@@ -1829,7 +1829,37 @@ public:
                                               R, 
                                               /*TemplateArgs=*/0);
   }
-                                          
+
+  /// \brief Build a new Objective-C property reference expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildObjCPropertyRefExpr(ExprArg BaseArg, 
+                                              ObjCPropertyDecl *Property,
+                                              SourceLocation PropertyLoc) {
+    CXXScopeSpec SS;
+    Expr *Base = BaseArg.takeAs<Expr>();
+    LookupResult R(getSema(), Property->getDeclName(), PropertyLoc,
+                   Sema::LookupMemberName);
+    bool IsArrow = false;
+    OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
+                                                         /*FIME:*/PropertyLoc,
+                                                         SS, DeclPtrTy());
+    if (Result.isInvalid())
+      return getSema().ExprError();
+    
+    if (Result.get())
+      return move(Result);
+    
+    return getSema().BuildMemberReferenceExpr(getSema().Owned(Base), 
+                                              Base->getType(),
+                                              /*FIXME:*/PropertyLoc, IsArrow, 
+                                              SS, 
+                                              /*FirstQualifierInScope=*/0,
+                                              R, 
+                                              /*TemplateArgs=*/0);
+  }
+  
   /// \brief Build a new Objective-C "isa" expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -5866,9 +5896,20 @@ TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform Objective-C expressions yet");
-  return SemaRef.Owned(E->Retain());
+  // Transform the base expression.
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+  
+  // We don't need to transform the property; it will never change.
+  
+  // If nothing changed, just retain the existing expression.
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase())
+    return SemaRef.Owned(E->Retain());
+  
+  return getDerived().RebuildObjCPropertyRefExpr(move(Base), E->getProperty(),
+                                                 E->getLocation());
 }
 
 template<typename Derived>
