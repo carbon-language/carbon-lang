@@ -23,22 +23,27 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterClass;
   template<typename T> class SmallVectorImpl;
+  class BumpPtrAllocator;
 
 /// MachineSSAUpdater - This class updates SSA form for a set of virtual
 /// registers defined in multiple blocks.  This is used when code duplication
 /// or another unstructured transformation wants to rewrite a set of uses of one
 /// vreg with uses of a set of vregs.
 class MachineSSAUpdater {
+public:
+  class BBInfo;
+  typedef SmallVectorImpl<BBInfo*> BlockListTy;
+
+private:
   /// AvailableVals - This keeps track of which value to use on a per-block
   /// basis.  When we insert PHI nodes, we keep track of them here.
   //typedef DenseMap<MachineBasicBlock*, unsigned > AvailableValsTy;
   void *AV;
 
-  /// IncomingPredInfo - We use this as scratch space when doing our recursive
-  /// walk.  This should only be used in GetValueInBlockInternal, normally it
-  /// should be empty.
-  //std::vector<std::pair<MachineBasicBlock*, unsigned > > IncomingPredInfo;
-  void *IPI;
+  /// BBMap - The GetValueAtEndOfBlock method maintains this mapping from
+  /// basic blocks to BBInfo structures.
+  /// typedef DenseMap<MachineBasicBlock*, BBInfo*> BBMapTy;
+  void *BM;
 
   /// VR - Current virtual register whose uses are being updated.
   unsigned VR;
@@ -106,6 +111,15 @@ public:
 private:
   void ReplaceRegWith(unsigned OldReg, unsigned NewReg);
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
+  void BuildBlockList(MachineBasicBlock *BB, BlockListTy *BlockList,
+                      BumpPtrAllocator *Allocator);
+  void FindDominators(BlockListTy *BlockList);
+  void FindPHIPlacement(BlockListTy *BlockList);
+  void FindAvailableVals(BlockListTy *BlockList);
+  void FindExistingPHI(MachineBasicBlock *BB, BlockListTy *BlockList);
+  bool CheckIfPHIMatches(MachineInstr *PHI);
+  void RecordMatchingPHI(MachineInstr *PHI);
+
   void operator=(const MachineSSAUpdater&); // DO NOT IMPLEMENT
   MachineSSAUpdater(const MachineSSAUpdater&);     // DO NOT IMPLEMENT
 };
