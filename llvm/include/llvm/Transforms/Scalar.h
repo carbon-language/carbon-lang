@@ -241,6 +241,8 @@ extern const PassInfo *const LowerSwitchID;
 // lowering pass.
 //
 FunctionPass *createLowerInvokePass(const TargetLowering *TLI = 0);
+FunctionPass *createLowerInvokePass(const TargetLowering *TLI,
+                                    bool useExpensiveEHSupport);
 extern const PassInfo *const LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//

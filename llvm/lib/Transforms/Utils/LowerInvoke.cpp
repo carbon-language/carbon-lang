@@ -70,15 +70,18 @@ namespace {
     // Used for expensive EH support.
     const Type *JBLinkTy;
     GlobalVariable *JBListHead;
-    Constant *SetJmpFn, *LongJmpFn;
+    Constant *SetJmpFn, *LongJmpFn, *StackSaveFn, *StackRestoreFn;
+    bool useExpensiveEHSupport;
 
     // We peek in TLI to grab the target's jmp_buf size and alignment
     const TargetLowering *TLI;
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit LowerInvoke(const TargetLowering *tli = NULL)
-      : FunctionPass(&ID), TLI(tli) { }
+    explicit LowerInvoke(const TargetLowering *tli = NULL,
+                         bool useExpensiveEHSupport = ExpensiveEHSupport)
+      : FunctionPass(&ID), useExpensiveEHSupport(useExpensiveEHSupport),
+        TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
 
@@ -94,7 +97,8 @@ namespace {
     bool insertCheapEHSupport(Function &F);
     void splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes);
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
-                                AllocaInst *InvokeNum, SwitchInst *CatchSwitch);
+                                AllocaInst *InvokeNum, AllocaInst *StackPtr,
+                                SwitchInst *CatchSwitch);
     bool insertExpensiveEHSupport(Function &F);
   };
 }
@@ -107,7 +111,11 @@ const PassInfo *const llvm::LowerInvokePassID = &X;
 
 // Public Interface To the LowerInvoke pass.
 FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
-  return new LowerInvoke(TLI);
+  return new LowerInvoke(TLI, ExpensiveEHSupport);
+}
+FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
+                                          bool useExpensiveEHSupport) {
+  return new LowerInvoke(TLI, useExpensiveEHSupport);
 }
 
 // doInitialization - Make sure that there is a prototype for abort in the
@@ -116,7 +124,7 @@ bool LowerInvoke::doInitialization(Module &M) {
   const Type *VoidPtrTy =
           Type::getInt8PtrTy(M.getContext());
   AbortMessage = 0;
-  if (ExpensiveEHSupport) {
+  if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
@@ -160,6 +168,8 @@ bool LowerInvoke::doInitialization(Module &M) {
 #endif
 
     LongJmpFn = Intrinsic::getDeclaration(&M, Intrinsic::longjmp);
+    StackSaveFn = Intrinsic::getDeclaration(&M, Intrinsic::stacksave);
+    StackRestoreFn = Intrinsic::getDeclaration(&M, Intrinsic::stackrestore);
   }
 
   // We need the 'write' and 'abort' functions for both models.
@@ -175,7 +185,7 @@ bool LowerInvoke::doInitialization(Module &M) {
 }
 
 void LowerInvoke::createAbortMessage(Module *M) {
-  if (ExpensiveEHSupport) {
+  if (useExpensiveEHSupport) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
     Constant *Msg =
@@ -229,7 +239,8 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       std::vector<Value*> CallArgs(II->op_begin(), II->op_end() - 3);
       // Insert a normal call instruction...
       CallInst *NewCall = CallInst::Create(II->getCalledValue(),
-                                           CallArgs.begin(), CallArgs.end(), "",II);
+                                           CallArgs.begin(), CallArgs.end(),
+                                           "",II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       NewCall->setAttributes(II->getAttributes());
@@ -270,6 +281,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
 /// specified invoke instruction with a call.
 void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                          AllocaInst *InvokeNum,
+                                         AllocaInst *StackPtr,
                                          SwitchInst *CatchSwitch) {
   ConstantInt *InvokeNoC = ConstantInt::get(Type::getInt32Ty(II->getContext()),
                                             InvokeNo);
@@ -288,12 +300,22 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   // Insert a store of the invoke num before the invoke and store zero into the
   // location afterward.
   new StoreInst(InvokeNoC, InvokeNum, true, II);  // volatile
+  
+  // Insert a store of the stack ptr before the invoke, so we can restore it
+  // later in the exception case.
+  CallInst* StackSaveRet = CallInst::Create(StackSaveFn, "ssret", II);
+  new StoreInst(StackSaveRet, StackPtr, true, II); // volatile
 
   BasicBlock::iterator NI = II->getNormalDest()->getFirstNonPHI();
   // nonvolatile.
   new StoreInst(Constant::getNullValue(Type::getInt32Ty(II->getContext())), 
                 InvokeNum, false, NI);
 
+  Instruction* StackPtrLoad = new LoadInst(StackPtr, "stackptr.restore", true,
+                                           II->getUnwindDest()->getFirstNonPHI()
+                                           );
+  CallInst::Create(StackRestoreFn, StackPtrLoad, "")->insertAfter(StackPtrLoad);
+    
   // Add a switch case to our unwind block.
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
 
@@ -500,6 +522,12 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     BasicBlock *CatchBB =
             BasicBlock::Create(F.getContext(), "setjmp.catch", &F);
 
+    // Create an alloca which keeps track of the stack pointer before every
+    // invoke, this allows us to properly restore the stack pointer after
+    // long jumping.
+    AllocaInst *StackPtr = new AllocaInst(Type::getInt8PtrTy(F.getContext()), 0,
+                                          "stackptr", EntryBB->begin());
+
     // Create an alloca which keeps track of which invoke is currently
     // executing.  For normal calls it contains zero.
     AllocaInst *InvokeNum = new AllocaInst(Type::getInt32Ty(F.getContext()), 0,
@@ -546,7 +574,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     // At this point, we are all set up, rewrite each invoke instruction.
     for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
-      rewriteExpensiveInvoke(Invokes[i], i+1, InvokeNum, CatchSwitch);
+      rewriteExpensiveInvoke(Invokes[i], i+1, InvokeNum, StackPtr, CatchSwitch);
   }
 
   // We know that there is at least one unwind.
@@ -622,7 +650,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 }
 
 bool LowerInvoke::runOnFunction(Function &F) {
-  if (ExpensiveEHSupport)
+  if (useExpensiveEHSupport)
     return insertExpensiveEHSupport(F);
   else
     return insertCheapEHSupport(F);
