@@ -5029,7 +5029,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         if (const TagType *TT = TD->getUnderlyingType()->getAs<TagType>()) {
           TagDecl *Tag = TT->getDecl();
           if (Tag->getDeclName() == Name &&
-              Tag->getDeclContext()->Equals(TD->getDeclContext())) {
+              Tag->getDeclContext()->getLookupContext()
+                          ->Equals(TD->getDeclContext()->getLookupContext())) {
             PrevDecl = Tag;
             Previous.clear();
             Previous.addDecl(Tag);

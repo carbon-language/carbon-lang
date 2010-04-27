@@ -37,3 +37,14 @@ namespace test1 {
   using namespace a; 
   foo x;
 }
+
+namespace PR6923 {
+  struct A;
+
+  extern "C" {
+    struct A;
+    typedef struct A A;
+  }
+
+  struct A;
+}
