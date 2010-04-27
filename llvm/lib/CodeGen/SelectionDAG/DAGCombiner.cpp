@@ -656,19 +656,22 @@ void DAGCombiner::ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad) {
                                 &DeadNodes);
   removeFromWorkList(Load);
   DAG.DeleteNode(Load);
+  AddToWorkList(Trunc.getNode());
 }
 
 SDValue DAGCombiner::PromoteOperand(SDValue Op, EVT PVT, bool &Replace) {
   Replace = false;
   DebugLoc dl = Op.getDebugLoc();
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
-    ISD::LoadExtType ExtType =
-      ISD::isNON_EXTLoad(LD) ? ISD::EXTLOAD : LD->getExtensionType();
+    EVT MemVT = LD->getMemoryVT();
+    ISD::LoadExtType ExtType = ISD::isNON_EXTLoad(LD)
+      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD : ISD::EXTLOAD)
+      : LD->getExtensionType();
     Replace = true;
     return DAG.getExtLoad(ExtType, dl, PVT,
                           LD->getChain(), LD->getBasePtr(),
                           LD->getSrcValue(), LD->getSrcValueOffset(),
-                          LD->getMemoryVT(), LD->isVolatile(),
+                          MemVT, LD->isVolatile(),
                           LD->isNonTemporal(), LD->getAlignment());
   }
 
@@ -704,6 +707,7 @@ SDValue DAGCombiner::SExtPromoteOperand(SDValue Op, EVT PVT) {
   SDValue NewOp = PromoteOperand(Op, PVT, Replace);
   if (NewOp.getNode() == 0)
     return SDValue();
+  AddToWorkList(NewOp.getNode());
 
   if (Replace)
     ReplaceLoadWithPromotedLoad(Op.getNode(), NewOp.getNode());
@@ -718,6 +722,7 @@ SDValue DAGCombiner::ZExtPromoteOperand(SDValue Op, EVT PVT) {
   SDValue NewOp = PromoteOperand(Op, PVT, Replace);
   if (NewOp.getNode() == 0)
     return SDValue();
+  AddToWorkList(NewOp.getNode());
 
   if (Replace)
     ReplaceLoadWithPromotedLoad(Op.getNode(), NewOp.getNode());
@@ -767,6 +772,8 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
     if (Replace1)
       ReplaceLoadWithPromotedLoad(N1.getNode(), NN1.getNode());
 
+    DEBUG(dbgs() << "\nPromoting ";
+          Op.getNode()->dump(&DAG));
     DebugLoc dl = Op.getDebugLoc();
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
                        DAG.getNode(Opc, dl, PVT, NN0, NN1));
@@ -812,6 +819,8 @@ SDValue DAGCombiner::PromoteIntShiftOp(SDValue Op) {
     if (Replace)
       ReplaceLoadWithPromotedLoad(Op.getOperand(0).getNode(), N0.getNode());
 
+    DEBUG(dbgs() << "\nPromoting ";
+          Op.getNode()->dump(&DAG));
     DebugLoc dl = Op.getDebugLoc();
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
                        DAG.getNode(Opc, dl, PVT, N0, Op.getOperand(1)));
@@ -841,6 +850,8 @@ SDValue DAGCombiner::PromoteExtend(SDValue Op) {
     // fold (aext (aext x)) -> (aext x)
     // fold (aext (zext x)) -> (zext x)
     // fold (aext (sext x)) -> (sext x)
+    DEBUG(dbgs() << "\nPromoting ";
+          Op.getNode()->dump(&DAG));
     return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), VT, Op.getOperand(0));
   }
   return SDValue();
@@ -869,12 +880,14 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
     DebugLoc dl = Op.getDebugLoc();
     SDNode *N = Op.getNode();
     LoadSDNode *LD = cast<LoadSDNode>(N);
-    ISD::LoadExtType ExtType =
-      ISD::isNON_EXTLoad(LD) ? ISD::EXTLOAD : LD->getExtensionType();
+    EVT MemVT = LD->getMemoryVT();
+    ISD::LoadExtType ExtType = ISD::isNON_EXTLoad(LD)
+      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD : ISD::EXTLOAD)
+      : LD->getExtensionType();
     SDValue NewLD = DAG.getExtLoad(ExtType, dl, PVT,
                                    LD->getChain(), LD->getBasePtr(),
                                    LD->getSrcValue(), LD->getSrcValueOffset(),
-                                   LD->getMemoryVT(), LD->isVolatile(),
+                                   MemVT, LD->isVolatile(),
                                    LD->isNonTemporal(), LD->getAlignment());
     SDValue Result = DAG.getNode(ISD::TRUNCATE, dl, VT, NewLD);
 
@@ -888,6 +901,7 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
     DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLD.getValue(1), &DeadNodes);
     removeFromWorkList(N);
     DAG.DeleteNode(N);
+    AddToWorkList(Result.getNode());
     return true;
   }
   return false;
