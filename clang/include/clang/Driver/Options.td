@@ -248,7 +248,7 @@ def fclasspath_EQ : Joined<"-fclasspath=">, Group<f_Group>;
 def fcolor_diagnostics : Flag<"-fcolor-diagnostics">, Group<f_Group>;
 def fcommon : Flag<"-fcommon">, Group<f_Group>;
 def fcompile_resource_EQ : Joined<"-fcompile-resource=">, Group<f_Group>;
-def fconstant_cfstrings : Flag<"-fconstant-cfstrings">, Group<clang_ignored_f_Group>;
+def fconstant_cfstrings : Flag<"-fconstant-cfstrings">, Group<f_Group>;
 def fconstant_string_class_EQ : Joined<"-fconstant-string-class=">, Group<f_Group>;
 def fcreate_profile : Flag<"-fcreate-profile">, Group<f_Group>;
 def fdebug_pass_arguments : Flag<"-fdebug-pass-arguments">, Group<f_Group>;

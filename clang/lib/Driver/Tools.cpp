@@ -1248,6 +1248,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_assume_sane_operator_new))
     CmdArgs.push_back("-fno-assume-sane-operator-new");
 
+  // -fconstant-cfstrings is default, and may be subject to argument translation
+  // on Darwin.
+  if (!Args.hasFlag(options::OPT_fconstant_cfstrings,
+                    options::OPT_fno_constant_cfstrings) ||
+      !Args.hasFlag(options::OPT_mconstant_cfstrings,
+                    options::OPT_mno_constant_cfstrings))
+    CmdArgs.push_back("-fno-constant-cfstrings");
+
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.
   if (Arg *A = Args.getLastArg(options::OPT_fshort_wchar)) {
