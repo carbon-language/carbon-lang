@@ -3745,7 +3745,8 @@ InitializationSequence::Perform(Sema &S,
                                                             Kind.getLocation(),
                                                                  Exprs, 
                                                                  NumExprs,
-                                                Kind.getParenRange().getEnd()));
+                                                Kind.getParenRange().getEnd(),
+                                             ConstructorInitRequiresZeroInit));
       } else
         CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                           Constructor, 

@@ -459,9 +459,10 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                SourceLocation tyBeginLoc,
                                                Expr **Args,
                                                unsigned NumArgs,
-                                               SourceLocation rParenLoc)
+                                               SourceLocation rParenLoc,
+                                               bool ZeroInitialization)
   : CXXConstructExpr(C, CXXTemporaryObjectExprClass, writtenTy, tyBeginLoc,
-                     Cons, false, Args, NumArgs),
+                     Cons, false, Args, NumArgs, ZeroInitialization),
   TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {
 }
 

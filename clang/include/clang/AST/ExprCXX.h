@@ -784,7 +784,8 @@ public:
   CXXTemporaryObjectExpr(ASTContext &C, CXXConstructorDecl *Cons,
                          QualType writtenTy, SourceLocation tyBeginLoc,
                          Expr **Args,unsigned NumArgs,
-                         SourceLocation rParenLoc);
+                         SourceLocation rParenLoc,
+                         bool ZeroInitialization = false);
 
   ~CXXTemporaryObjectExpr() { }
 
