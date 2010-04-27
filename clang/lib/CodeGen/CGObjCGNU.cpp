@@ -548,6 +548,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                bool IsClassMessage,
                                const CallArgList &CallArgs,
                                const ObjCMethodDecl *Method) {
+  // Strip out message sends to retain / release in GC mode
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
       return RValue::get(Receiver);
@@ -556,7 +557,38 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       return RValue::get(0);
     }
   }
+
   CGBuilderTy &Builder = CGF.Builder;
+
+  // If the return type is something that goes in an integer register, the
+  // runtime will handle 0 returns.  For other cases, we fill in the 0 value
+  // ourselves.
+  //
+  // The language spec says the result of this kind of message send is
+  // undefined, but lots of people seem to have forgotten to read that
+  // paragraph and insist on sending messages to nil that have structure
+  // returns.  With GCC, this generates a random return value (whatever happens
+  // to be on the stack / in those registers at the time) on most platforms,
+  // and generates a SegV on SPARC.  With LLVM it corrupts the stack.  
+  bool isPointerSizedReturn = false;
+  if (ResultType->isAnyPointerType() || ResultType->isIntegralType())
+    isPointerSizedReturn = true;
+
+  llvm::BasicBlock *startBB = 0;
+  llvm::BasicBlock *messageBB = 0;
+  llvm::BasicBlock *contiueBB = 0;
+
+  if (!isPointerSizedReturn) {
+    startBB = Builder.GetInsertBlock();
+    messageBB = CGF.createBasicBlock("msgSend");
+    contiueBB = CGF.createBasicBlock("continue");
+
+    llvm::Value *isNil = Builder.CreateICmpEQ(Receiver, 
+            llvm::Constant::getNullValue(Receiver->getType()));
+    Builder.CreateCondBr(isNil, contiueBB, messageBB);
+    CGF.EmitBlock(messageBB);
+  }
+
   IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
   llvm::Value *cmd;
   if (Method)
@@ -631,7 +663,41 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
   }
 
-  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
+  RValue msgRet = 
+      CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
+
+  if (!isPointerSizedReturn) {
+    CGF.EmitBlock(contiueBB);
+    if (msgRet.isScalar()) {
+      llvm::Value *v = msgRet.getScalarVal();
+      llvm::PHINode *phi = Builder.CreatePHI(v->getType());
+      phi->addIncoming(v, messageBB);
+      phi->addIncoming(llvm::Constant::getNullValue(v->getType()), startBB);
+      msgRet = RValue::get(phi);
+    } else if (msgRet.isAggregate()) {
+      llvm::Value *v = msgRet.getAggregateAddr();
+      llvm::PHINode *phi = Builder.CreatePHI(v->getType());
+      const llvm::PointerType *RetTy = cast<llvm::PointerType>(v->getType());
+      llvm::AllocaInst *NullVal = CGF.CreateTempAlloca(RetTy, "null");
+      CGF.InitTempAlloca(NullVal,
+          llvm::Constant::getNullValue(RetTy->getElementType()));
+      phi->addIncoming(v, messageBB);
+      phi->addIncoming(NullVal, startBB);
+      msgRet = RValue::getAggregate(phi);
+    } else /* isComplex() */ {
+      std::pair<llvm::Value*,llvm::Value*> v = msgRet.getComplexVal();
+      llvm::PHINode *phi = Builder.CreatePHI(v.first->getType());
+      phi->addIncoming(v.first, messageBB);
+      phi->addIncoming(llvm::Constant::getNullValue(v.first->getType()),
+          startBB);
+      llvm::PHINode *phi2 = Builder.CreatePHI(v.second->getType());
+      phi2->addIncoming(v.second, messageBB);
+      phi2->addIncoming(llvm::Constant::getNullValue(v.second->getType()),
+          startBB);
+      msgRet = RValue::getComplex(phi, phi2);
+    }
+  }
+  return msgRet;
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and
