@@ -30,3 +30,12 @@ namespace PR6383 {
     compare_and_set2 (false, gross);
   }
 }
+
+namespace Templates {
+  template<int Value>
+  void f() {
+    struct Inner {
+      static int getValue() { return Value; }
+    };
+  }
+}

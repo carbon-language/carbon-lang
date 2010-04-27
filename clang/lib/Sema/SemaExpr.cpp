@@ -459,7 +459,10 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+    if (isa<NonTypeTemplateParmDecl>(VD)) {
+      // Non-type template parameters can be referenced anywhere they are
+      // visible.
+    } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (const FunctionDecl *FD = MD->getParent()->isLocalClass()) {
         if (VD->hasLocalStorage() && VD->getDeclContext() != CurContext) {
           Diag(Loc, diag::err_reference_to_local_var_in_enclosing_function)
