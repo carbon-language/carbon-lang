@@ -1288,7 +1288,8 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
-  case ObjCImplicitSetterGetterRefExprClass: // FIXME: check if read-only property.
+  case ObjCImplicitSetterGetterRefExprClass:
+    // FIXME: check if read-only property.
     return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
@@ -2021,7 +2022,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     // then only the true side is actually considered in an integer constant
     // expression, and it is fully evaluated.  This is an important GNU
     // extension.  See GCC PR38377 for discussion.
-    if (const CallExpr *CallCE = dyn_cast<CallExpr>(Exp->getCond()->IgnoreParenCasts()))
+    if (const CallExpr *CallCE
+        = dyn_cast<CallExpr>(Exp->getCond()->IgnoreParenCasts()))
       if (CallCE->isBuiltinCall(Ctx) == Builtin::BI__builtin_constant_p) {
         Expr::EvalResult EVResult;
         if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
