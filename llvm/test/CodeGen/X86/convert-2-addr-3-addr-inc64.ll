@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86-64 -o %t -stats -info-output-file - | \
-; RUN:   grep {asm-printer} | grep {Number of machine instrs printed} | grep 10
+; RUN:   grep {asm-printer} | grep {Number of machine instrs printed} | grep 9
 ; RUN: grep {leal	1(\%rsi),} %t
 
 define fastcc zeroext i8 @fullGtU(i32 %i1, i32 %i2, i8* %ptr) nounwind optsize {
