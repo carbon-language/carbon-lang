@@ -1004,12 +1004,13 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N) {
 
 TemplateSpecializationType::
 TemplateSpecializationType(ASTContext &Context, TemplateName T,
+                           bool IsCurrentInstantiation,
                            const TemplateArgument *Args,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
          T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)),
-    Context(Context),
+    ContextAndCurrentInstantiation(&Context, IsCurrentInstantiation),
     Template(T), NumArgs(NumArgs) {
   assert((!Canon.isNull() ||
           T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&
@@ -1044,9 +1045,11 @@ TemplateSpecializationType::getArg(unsigned Idx) const {
 void
 TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
                                     TemplateName T,
+                                    bool IsCurrentInstantiation,
                                     const TemplateArgument *Args,
                                     unsigned NumArgs,
                                     ASTContext &Context) {
+  ID.AddBoolean(IsCurrentInstantiation);
   T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
     Args[Idx].Profile(ID, Context);

@@ -1246,7 +1246,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::MemberPointer:
     return CreateType(cast<MemberPointerType>(Ty), Unit);
 
-  case Type::InjectedClassName:
   case Type::TemplateSpecialization:
   case Type::Elaborated:
   case Type::QualifiedName:

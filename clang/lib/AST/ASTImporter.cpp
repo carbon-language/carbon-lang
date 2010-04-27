@@ -612,8 +612,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     const InjectedClassNameType *Inj1 = cast<InjectedClassNameType>(T1);
     const InjectedClassNameType *Inj2 = cast<InjectedClassNameType>(T2);
     if (!IsStructurallyEquivalent(Context,
-                                  Inj1->getUnderlyingType(),
-                                  Inj2->getUnderlyingType()))
+                                  Inj1->getInjectedSpecializationType(),
+                                  Inj2->getInjectedSpecializationType()))
       return false;
     break;
   }

@@ -57,12 +57,6 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
       continue;
     }
 
-    // ...or an injected class name...
-    if (isa<InjectedClassNameType>(Ty)) {
-      QT = cast<InjectedClassNameType>(Ty)->desugar();
-      continue;
-    }
-    
     // ...or a substituted template type parameter.
     if (isa<SubstTemplateTypeParmType>(Ty)) {
       QT = cast<SubstTemplateTypeParmType>(Ty)->desugar();

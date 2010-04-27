@@ -638,7 +638,8 @@ DeduceTemplateArguments(Sema &S,
     case Type::InjectedClassName: {
       // Treat a template's injected-class-name as if the template
       // specialization type had been used.
-      Param = cast<InjectedClassNameType>(Param)->getUnderlyingType();
+      Param = cast<InjectedClassNameType>(Param)
+        ->getInjectedSpecializationType();
       assert(isa<TemplateSpecializationType>(Param) &&
              "injected class name is not a template specialization type");
       // fall through
@@ -2340,13 +2341,16 @@ Sema::getMoreSpecializedPartialSpecialization(
   // are more constrained. We know that every template parameter is deduc
   llvm::SmallVector<DeducedTemplateArgument, 4> Deduced;
   Sema::TemplateDeductionInfo Info(Context, Loc);
+
+  QualType PT1 = PS1->getInjectedSpecializationType();
+  QualType PT2 = PS2->getInjectedSpecializationType();
   
   // Determine whether PS1 is at least as specialized as PS2
   Deduced.resize(PS2->getTemplateParameters()->size());
   bool Better1 = !DeduceTemplateArgumentsDuringPartialOrdering(*this,
                                                   PS2->getTemplateParameters(),
-                                                  Context.getTypeDeclType(PS2),
-                                                  Context.getTypeDeclType(PS1),
+                                                               PT2,
+                                                               PT1,
                                                                Info,
                                                                Deduced,
                                                                0);
@@ -2356,8 +2360,8 @@ Sema::getMoreSpecializedPartialSpecialization(
   Deduced.resize(PS1->getTemplateParameters()->size());
   bool Better2 = !DeduceTemplateArgumentsDuringPartialOrdering(*this,
                                                   PS1->getTemplateParameters(),
-                                                  Context.getTypeDeclType(PS1),
-                                                  Context.getTypeDeclType(PS2),
+                                                               PT1,
+                                                               PT2,
                                                                Info,
                                                                Deduced,
                                                                0);
@@ -2536,6 +2540,10 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
       Used[TTP->getIndex()] = true;
     break;
   }
+
+  case Type::InjectedClassName:
+    T = cast<InjectedClassNameType>(T)->getInjectedSpecializationType();
+    // fall through
 
   case Type::TemplateSpecialization: {
     const TemplateSpecializationType *Spec

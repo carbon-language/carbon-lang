@@ -659,15 +659,6 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   assert(isInstance() && "No 'this' for static methods!");
 
   QualType ClassTy = C.getTypeDeclType(getParent());
-
-  // Aesthetically we prefer not to synthesize a type as the
-  // InjectedClassNameType of a template pattern: injected class names
-  // are printed without template arguments, which might
-  // surprise/confuse/distract our poor users if they didn't
-  // explicitly write one.
-  if (isa<InjectedClassNameType>(ClassTy))
-    ClassTy = cast<InjectedClassNameType>(ClassTy)->getUnderlyingType();
-
   ClassTy = C.getQualifiedType(ClassTy,
                                Qualifiers::fromCVRMask(getTypeQualifiers()));
   return C.getPointerType(ClassTy);

@@ -63,6 +63,7 @@ namespace {
 #define ABSTRACT_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
+    void VisitInjectedClassNameType(const InjectedClassNameType *T);
   };
 }
 
@@ -240,7 +241,7 @@ void PCHTypeWriter::VisitQualifiedNameType(const QualifiedNameType *T) {
 
 void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
-  Writer.AddTypeRef(T->getUnderlyingType(), Record);
+  Writer.AddTypeRef(T->getInjectedSpecializationType(), Record);
   Code = pch::TYPE_INJECTED_CLASS_NAME;
 }
 

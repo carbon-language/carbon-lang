@@ -3047,6 +3047,7 @@ public:
 
   QualType RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
                                              DeclarationName Name);
+  void RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS);
 
   std::string
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,

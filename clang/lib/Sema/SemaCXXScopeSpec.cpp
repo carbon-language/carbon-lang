@@ -24,61 +24,17 @@
 using namespace clang;
 
 /// \brief Find the current instantiation that associated with the given type.
-static CXXRecordDecl *
-getCurrentInstantiationOf(ASTContext &Context, DeclContext *CurContext, 
-                          QualType T) {
+static CXXRecordDecl *getCurrentInstantiationOf(QualType T) {
   if (T.isNull())
     return 0;
-  
-  T = Context.getCanonicalType(T).getUnqualifiedType();
-  
-  for (DeclContext *Ctx = CurContext; Ctx; Ctx = Ctx->getLookupParent()) {
-    // If we've hit a namespace or the global scope, then the
-    // nested-name-specifier can't refer to the current instantiation.
-    if (Ctx->isFileContext())
-      return 0;
-    
-    // Skip non-class contexts.
-    CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx);
-    if (!Record)
-      continue;
-    
-    // If this record type is not dependent,
-    if (!Record->isDependentType())
-      return 0;
-    
-    // C++ [temp.dep.type]p1:
-    //
-    //   In the definition of a class template, a nested class of a
-    //   class template, a member of a class template, or a member of a
-    //   nested class of a class template, a name refers to the current
-    //   instantiation if it is
-    //     -- the injected-class-name (9) of the class template or
-    //        nested class,
-    //     -- in the definition of a primary class template, the name
-    //        of the class template followed by the template argument
-    //        list of the primary template (as described below)
-    //        enclosed in <>,
-    //     -- in the definition of a nested class of a class template,
-    //        the name of the nested class referenced as a member of
-    //        the current instantiation, or
-    //     -- in the definition of a partial specialization, the name
-    //        of the class template followed by the template argument
-    //        list of the partial specialization enclosed in <>. If
-    //        the nth template parameter is a parameter pack, the nth
-    //        template argument is a pack expansion (14.6.3) whose
-    //        pattern is the name of the parameter pack.
-    //        (FIXME: parameter packs)
-    //
-    // All of these options come down to having the
-    // nested-name-specifier type that is equivalent to the
-    // injected-class-name of one of the types that is currently in
-    // our context.
-    if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T)
-      return Record;
-  }  
-  
-  return 0;
+
+  const Type *Ty = T->getCanonicalTypeInternal().getTypePtr();
+  if (isa<RecordType>(Ty))
+    return cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
+  else if (isa<InjectedClassNameType>(Ty))
+    return cast<InjectedClassNameType>(Ty)->getDecl();
+  else
+    return 0;
 }
 
 /// \brief Compute the DeclContext that is associated with the given type.
@@ -92,7 +48,7 @@ DeclContext *Sema::computeDeclContext(QualType T) {
   if (const TagType *Tag = T->getAs<TagType>())
     return Tag->getDecl();
 
-  return ::getCurrentInstantiationOf(Context, CurContext, T);
+  return ::getCurrentInstantiationOf(T);
 }
 
 /// \brief Compute the DeclContext that is associated with the given
@@ -218,7 +174,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
     return 0;
 
   QualType T = QualType(NNS->getAsType(), 0);
-  return ::getCurrentInstantiationOf(Context, CurContext, T);
+  return ::getCurrentInstantiationOf(T);
 }
 
 /// \brief Require that the context specified by SS be complete.
@@ -704,6 +660,11 @@ bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, CXXScopeSpec &SS) {
     return true;
     
   EnterDeclaratorContext(S, DC);
+
+  // Rebuild the nested name specifier for the new scope.
+  if (DC->isDependentContext())
+    RebuildNestedNameSpecifierInCurrentInstantiation(SS);
+
   return false;
 }
 

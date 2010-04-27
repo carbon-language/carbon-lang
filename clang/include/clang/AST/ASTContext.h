@@ -600,11 +600,13 @@ public:
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgument *Args,
                                          unsigned NumArgs,
-                                         QualType Canon = QualType());
+                                         QualType Canon = QualType(),
+                                         bool IsCurrentInstantiation = false);
 
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgumentListInfo &Args,
-                                         QualType Canon = QualType());
+                                         QualType Canon = QualType(),
+                                         bool IsCurrentInstantiation = false);
 
   TypeSourceInfo *
   getTemplateSpecializationTypeInfo(TemplateName T, SourceLocation TLoc,

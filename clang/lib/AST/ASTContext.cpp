@@ -653,10 +653,6 @@ ASTContext::getTypeInfo(const Type *T) {
   case Type::QualifiedName:
     return getTypeInfo(cast<QualifiedNameType>(T)->getNamedType().getTypePtr());
 
- case Type::InjectedClassName:
-   return getTypeInfo(cast<InjectedClassNameType>(T)
-                        ->getUnderlyingType().getTypePtr());
-
   case Type::TemplateSpecialization:
     assert(getCanonicalType(T) != T &&
            "Cannot request the size of a dependent type");
@@ -1741,8 +1737,8 @@ QualType ASTContext::getInjectedClassNameType(CXXRecordDecl *Decl,
     Decl->TypeForDecl = PrevDecl->TypeForDecl;
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));
   } else {
-    Decl->TypeForDecl = new (*this, TypeAlignment)
-      InjectedClassNameType(Decl, TST, TST->getCanonicalTypeInternal());
+    Decl->TypeForDecl =
+      new (*this, TypeAlignment) InjectedClassNameType(Decl, TST);
     Types.push_back(Decl->TypeForDecl);
   }
   return QualType(Decl->TypeForDecl, 0);
@@ -1873,7 +1869,8 @@ ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgumentListInfo &Args,
-                                          QualType Canon) {
+                                          QualType Canon,
+                                          bool IsCurrentInstantiation) {
   unsigned NumArgs = Args.size();
 
   llvm::SmallVector<TemplateArgument, 4> ArgVec;
@@ -1881,17 +1878,23 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
   for (unsigned i = 0; i != NumArgs; ++i)
     ArgVec.push_back(Args[i].getArgument());
 
-  return getTemplateSpecializationType(Template, ArgVec.data(), NumArgs, Canon);
+  return getTemplateSpecializationType(Template, ArgVec.data(), NumArgs,
+                                       Canon, IsCurrentInstantiation);
 }
 
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
-                                          QualType Canon) {
+                                          QualType Canon,
+                                          bool IsCurrentInstantiation) {
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
   else {
+    assert(!IsCurrentInstantiation &&
+           "current-instantiation specializations should always "
+           "have a canonical type");
+
     // Build the canonical template specialization type.
     TemplateName CanonTemplate = getCanonicalTemplateName(Template);
     llvm::SmallVector<TemplateArgument, 4> CanonArgs;
@@ -1902,7 +1905,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
     // Determine whether this canonical template specialization type already
     // exists.
     llvm::FoldingSetNodeID ID;
-    TemplateSpecializationType::Profile(ID, CanonTemplate,
+    TemplateSpecializationType::Profile(ID, CanonTemplate, false,
                                         CanonArgs.data(), NumArgs, *this);
 
     void *InsertPos = 0;
@@ -1914,7 +1917,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
       void *Mem = Allocate((sizeof(TemplateSpecializationType) +
                             sizeof(TemplateArgument) * NumArgs),
                            TypeAlignment);
-      Spec = new (Mem) TemplateSpecializationType(*this, CanonTemplate,
+      Spec = new (Mem) TemplateSpecializationType(*this, CanonTemplate, false,
                                                   CanonArgs.data(), NumArgs,
                                                   Canon);
       Types.push_back(Spec);
@@ -1934,7 +1937,9 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                         sizeof(TemplateArgument) * NumArgs),
                        TypeAlignment);
   TemplateSpecializationType *Spec
-    = new (Mem) TemplateSpecializationType(*this, Template, Args, NumArgs,
+    = new (Mem) TemplateSpecializationType(*this, Template,
+                                           IsCurrentInstantiation,
+                                           Args, NumArgs,
                                            Canon);
 
   Types.push_back(Spec);

@@ -2434,8 +2434,11 @@ public:
 class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
 
-  // FIXME: Currently needed for profiling expressions; can we avoid this?
-  ASTContext &Context;
+  // The ASTContext is currently needed in order to profile expressions.
+  // FIXME: avoid this.
+  //
+  // The bool is whether this is a current instantiation.
+  llvm::PointerIntPair<ASTContext*, 1, bool> ContextAndCurrentInstantiation;
 
     /// \brief The name of the template being specialized.
   TemplateName Template;
@@ -2446,6 +2449,7 @@ class TemplateSpecializationType
 
   TemplateSpecializationType(ASTContext &Context,
                              TemplateName T,
+                             bool IsCurrentInstantiation,
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon);
 
@@ -2477,6 +2481,12 @@ public:
   static std::string PrintTemplateArgumentList(const TemplateArgumentListInfo &,
                                                const PrintingPolicy &Policy);
 
+  /// True if this template specialization type matches a current
+  /// instantiation in the context in which it is found.
+  bool isCurrentInstantiation() const {
+    return ContextAndCurrentInstantiation.getInt();
+  }
+
   typedef const TemplateArgument * iterator;
 
   iterator begin() const { return getArgs(); }
@@ -2497,15 +2507,20 @@ public:
   /// \precondition @c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const;
 
-  bool isSugared() const { return !isDependentType(); }
+  bool isSugared() const {
+    return !isDependentType() || isCurrentInstantiation();
+  }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Template, getArgs(), NumArgs, Context);
+    Profile(ID, Template, isCurrentInstantiation(), getArgs(), NumArgs,
+            *ContextAndCurrentInstantiation.getPointer());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
-                      const TemplateArgument *Args, unsigned NumArgs,
+                      bool IsCurrentInstantiation,
+                      const TemplateArgument *Args,
+                      unsigned NumArgs,
                       ASTContext &Context);
 
   static bool classof(const Type *T) {
@@ -2514,40 +2529,56 @@ public:
   static bool classof(const TemplateSpecializationType *T) { return true; }
 };
 
-/// \brief The injected class name of a C++ class template.  Used to
-/// record that a type was spelled with a bare identifier rather than
-/// as a template-id; the equivalent for non-templated classes is just
-/// RecordType.
+/// \brief The injected class name of a C++ class template or class
+/// template partial specialization.  Used to record that a type was
+/// spelled with a bare identifier rather than as a template-id; the
+/// equivalent for non-templated classes is just RecordType.
 ///
-/// For consistency, template instantiation turns these into RecordTypes.
+/// Injected class name types are always dependent.  Template
+/// instantiation turns these into RecordTypes.
 ///
-/// The desugared form is always a unqualified TemplateSpecializationType.
-/// The canonical form is always either a TemplateSpecializationType
-/// (when dependent) or a RecordType (otherwise).
+/// Injected class name types are always canonical.  This works
+/// because it is impossible to compare an injected class name type
+/// with the corresponding non-injected template type, for the same
+/// reason that it is impossible to directly compare template
+/// parameters from different dependent contexts: injected class name
+/// types can only occur within the scope of a particular templated
+/// declaration, and within that scope every template specialization
+/// will canonicalize to the injected class name (when appropriate
+/// according to the rules of the language).
 class InjectedClassNameType : public Type {
   CXXRecordDecl *Decl;
 
-  QualType UnderlyingType;
+  /// The template specialization which this type represents.
+  /// For example, in
+  ///   template <class T> class A { ... };
+  /// this is A<T>, whereas in
+  ///   template <class X, class Y> class A<B<X,Y> > { ... };
+  /// this is A<B<X,Y> >.
+  ///
+  /// It is always unqualified, always a template specialization type,
+  /// and always dependent.
+  QualType InjectedType;
 
   friend class ASTContext; // ASTContext creates these.
-  InjectedClassNameType(CXXRecordDecl *D, QualType TST, QualType Canon)
-    : Type(InjectedClassName, Canon, Canon->isDependentType()),
-      Decl(D), UnderlyingType(TST) {
+  InjectedClassNameType(CXXRecordDecl *D, QualType TST)
+    : Type(InjectedClassName, QualType(), true),
+      Decl(D), InjectedType(TST) {
     assert(isa<TemplateSpecializationType>(TST));
     assert(!TST.hasQualifiers());
-    assert(TST->getCanonicalTypeInternal() == Canon);
+    assert(TST->isDependentType());
   }
 
 public:
-  QualType getUnderlyingType() const { return UnderlyingType; }
-  const TemplateSpecializationType *getUnderlyingTST() const {
-    return cast<TemplateSpecializationType>(UnderlyingType.getTypePtr());
+  QualType getInjectedSpecializationType() const { return InjectedType; }
+  const TemplateSpecializationType *getInjectedTST() const {
+    return cast<TemplateSpecializationType>(InjectedType.getTypePtr());
   }
 
   CXXRecordDecl *getDecl() const { return Decl; }
 
-  bool isSugared() const { return true; }
-  QualType desugar() const { return UnderlyingType; }
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == InjectedClassName;

@@ -186,7 +186,7 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
   for (partial_spec_iterator P = getPartialSpecializations().begin(),
                           PEnd = getPartialSpecializations().end();
        P != PEnd; ++P) {
-    if (Context.hasSameType(Context.getTypeDeclType(&*P), T))
+    if (Context.hasSameType(P->getInjectedSpecializationType(), T))
       return &*P;
   }
 

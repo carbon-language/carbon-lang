@@ -546,7 +546,7 @@ void TypePrinter::PrintTemplateSpecialization(
 
 void TypePrinter::PrintInjectedClassName(const InjectedClassNameType *T,
                                          std::string &S) {
-  PrintTemplateSpecialization(T->getUnderlyingTST(), S);
+  PrintTemplateSpecialization(T->getInjectedTST(), S);
 }
 
 void TypePrinter::PrintQualifiedName(const QualifiedNameType *T, 

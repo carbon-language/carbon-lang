@@ -2500,7 +2500,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
       T = Context.getTypeDeclType(Record);
       assert(isa<InjectedClassNameType>(T) &&
              "type of partial specialization is not an InjectedClassNameType");
-      T = cast<InjectedClassNameType>(T)->getUnderlyingType();
+      T = cast<InjectedClassNameType>(T)->getInjectedSpecializationType();
     }  
     
     if (!T.isNull()) {

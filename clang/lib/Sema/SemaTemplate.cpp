@@ -1344,26 +1344,24 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
 
     // Check the template parameter list against its corresponding template-id.
     if (DependentTemplateId) {
-      TemplateDecl *Template
-        = TemplateIdsInSpecifier[Idx]->getTemplateName().getAsTemplateDecl();
+      TemplateParameterList *ExpectedTemplateParams = 0;
 
-      if (ClassTemplateDecl *ClassTemplate
-            = dyn_cast<ClassTemplateDecl>(Template)) {
-        TemplateParameterList *ExpectedTemplateParams = 0;
-        // Is this template-id naming the primary template?
-        if (Context.hasSameType(TemplateId,
-                 ClassTemplate->getInjectedClassNameSpecialization(Context)))
-          ExpectedTemplateParams = ClassTemplate->getTemplateParameters();
-        // ... or a partial specialization?
-        else if (ClassTemplatePartialSpecializationDecl *PartialSpec
-                   = ClassTemplate->findPartialSpecialization(TemplateId))
-          ExpectedTemplateParams = PartialSpec->getTemplateParameters();
-
-        if (ExpectedTemplateParams)
-          TemplateParameterListsAreEqual(ParamLists[Idx],
-                                         ExpectedTemplateParams,
-                                         true, TPL_TemplateMatch);
+      // Are there cases in (e.g.) friends where this won't match?
+      if (const InjectedClassNameType *Injected
+            = TemplateId->getAs<InjectedClassNameType>()) {
+        CXXRecordDecl *Record = Injected->getDecl();
+        if (ClassTemplatePartialSpecializationDecl *Partial =
+              dyn_cast<ClassTemplatePartialSpecializationDecl>(Record))
+          ExpectedTemplateParams = Partial->getTemplateParameters();
+        else
+          ExpectedTemplateParams = Record->getDescribedClassTemplate()
+            ->getTemplateParameters();
       }
+
+      if (ExpectedTemplateParams)
+        TemplateParameterListsAreEqual(ParamLists[Idx],
+                                       ExpectedTemplateParams,
+                                       true, TPL_TemplateMatch);
 
       CheckTemplateParameterList(ParamLists[Idx], 0, TPC_ClassTemplateMember);
     } else if (ParamLists[Idx]->size() > 0)
@@ -1430,6 +1428,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
          "Converted template argument list is too short!");
 
   QualType CanonType;
+  bool IsCurrentInstantiation = false;
 
   if (Name.isDependent() ||
       TemplateSpecializationType::anyDependentTemplateArguments(
@@ -1451,6 +1450,45 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     // In the future, we need to teach getTemplateSpecializationType to only
     // build the canonical type and return that to us.
     CanonType = Context.getCanonicalType(CanonType);
+
+    // This might work out to be a current instantiation, in which
+    // case the canonical type needs to be the InjectedClassNameType.
+    //
+    // TODO: in theory this could be a simple hashtable lookup; most
+    // changes to CurContext don't change the set of current
+    // instantiations.
+    if (isa<ClassTemplateDecl>(Template)) {
+      for (DeclContext *Ctx = CurContext; Ctx; Ctx = Ctx->getLookupParent()) {
+        // If we get out to a namespace, we're done.
+        if (Ctx->isFileContext()) break;
+
+        // If this isn't a record, keep looking.
+        CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx);
+        if (!Record) continue;
+
+        // Look for one of the two cases with InjectedClassNameTypes
+        // and check whether it's the same template.
+        if (!isa<ClassTemplatePartialSpecializationDecl>(Record) &&
+            !Record->getDescribedClassTemplate())
+          continue;
+          
+        // Fetch the injected class name type and check whether its
+        // injected type is equal to the type we just built.
+        QualType ICNT = Context.getTypeDeclType(Record);
+        QualType Injected = cast<InjectedClassNameType>(ICNT)
+          ->getInjectedSpecializationType();
+
+        if (CanonType != Injected->getCanonicalTypeInternal())
+          continue;
+
+        // If so, the canonical type of this TST is the injected
+        // class name type of the record we just found.
+        assert(ICNT.isCanonical());
+        CanonType = ICNT;
+        IsCurrentInstantiation = true;
+        break;
+      }
+    }
   } else if (ClassTemplateDecl *ClassTemplate
                = dyn_cast<ClassTemplateDecl>(Template)) {
     // Find the class template specialization declaration that
@@ -1484,7 +1522,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
   // Build the fully-sugared type for this class template
   // specialization, which refers back to the class template
   // specialization we created or found.
-  return Context.getTemplateSpecializationType(Name, TemplateArgs, CanonType);
+  return Context.getTemplateSpecializationType(Name, TemplateArgs, CanonType,
+                                               IsCurrentInstantiation);
 }
 
 Action::TypeResult
@@ -5387,6 +5426,17 @@ QualType Sema::RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
 
   CurrentInstantiationRebuilder Rebuilder(*this, Loc, Name);
   return Rebuilder.TransformType(T);
+}
+
+void Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
+  if (SS.isInvalid()) return;
+
+  NestedNameSpecifier *NNS = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+  CurrentInstantiationRebuilder Rebuilder(*this, SS.getRange().getBegin(),
+                                          DeclarationName());
+  NestedNameSpecifier *Rebuilt = 
+    Rebuilder.TransformNestedNameSpecifier(NNS, SS.getRange());
+  if (Rebuilt) SS.setScopeRep(Rebuilt);
 }
 
 /// \brief Produces a formatted string that describes the binding of

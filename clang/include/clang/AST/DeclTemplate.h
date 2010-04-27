@@ -1122,6 +1122,15 @@ public:
            "Only member templates can be member template specializations");
     return First->InstantiatedFromMember.setInt(true);
   }
+
+  /// Retrieves the injected specialization type for this partial
+  /// specialization.  This is not the same as the type-decl-type for
+  /// this partial specialization, which is an InjectedClassNameType.
+  QualType getInjectedSpecializationType() const {
+    assert(getTypeForDecl() && "partial specialization has no type set!");
+    return cast<InjectedClassNameType>(getTypeForDecl())
+             ->getInjectedSpecializationType();
+  }
     
   // FIXME: Add Profile support!
 
