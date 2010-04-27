@@ -415,6 +415,16 @@ const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
   return 0;
 }
 
+CXXRecordDecl *Type::getAsCXXRecordDecl() const {
+  if (const RecordType *RT = getAs<RecordType>())
+    return dyn_cast<CXXRecordDecl>(RT->getDecl());
+  else if (const InjectedClassNameType *Injected
+                                  = getAs<InjectedClassNameType>())
+    return Injected->getDecl();
+  
+  return 0;
+}
+
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&

@@ -728,15 +728,15 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
   // If there was a nested name specifier, it names the naming class.
   // It can't be dependent: after all, we were actually able to do the
   // lookup.
-  const RecordType *RT;
+  CXXRecordDecl *Record = 0;
   if (getQualifier()) {
     Type *T = getQualifier()->getAsType();
     assert(T && "qualifier in member expression does not name type");
-    RT = T->getAs<RecordType>();
-    assert(RT && "qualifier in member expression does not name record");
-
+    Record = T->getAsCXXRecordDecl();
+    assert(Record && "qualifier in member expression does not name record");
+  }
   // Otherwise the naming class must have been the base class.
-  } else {
+  else {
     QualType BaseType = getBaseType().getNonReferenceType();
     if (isArrow()) {
       const PointerType *PT = BaseType->getAs<PointerType>();
@@ -744,11 +744,11 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
       BaseType = PT->getPointeeType();
     }
     
-    RT = BaseType->getAs<RecordType>();
-    assert(RT && "base of member expression does not name record");
+    Record = BaseType->getAsCXXRecordDecl();
+    assert(Record && "base of member expression does not name record");
   }
   
-  return cast<CXXRecordDecl>(RT->getDecl());
+  return Record;
 }
 
 Stmt::child_iterator UnresolvedMemberExpr::child_begin() {

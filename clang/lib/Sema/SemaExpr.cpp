@@ -1063,6 +1063,15 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   if (TemplateArgs) {
     // Just re-use the lookup done by isTemplateName.
     DecomposeTemplateName(R, Id);
+
+    // Re-derive the naming class.
+    if (SS.isSet()) {
+      NestedNameSpecifier *Qualifier
+        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+      if (const Type *Ty = Qualifier->getAsType())
+        if (CXXRecordDecl *NamingClass = Ty->getAsCXXRecordDecl())
+          R.setNamingClass(NamingClass);
+    }
   } else {
     bool IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
@@ -3231,6 +3240,21 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
     if (TemplateArgs) {
       // Re-use the lookup done for the template name.
       DecomposeTemplateName(R, Id);
+      
+      // Re-derive the naming class.
+      if (SS.isSet()) {
+        NestedNameSpecifier *Qualifier
+        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+        if (const Type *Ty = Qualifier->getAsType())
+          if (CXXRecordDecl *NamingClass = Ty->getAsCXXRecordDecl())
+            R.setNamingClass(NamingClass);
+      } else {
+        QualType BaseType = Base->getType();
+        if (const PointerType *Ptr = BaseType->getAs<PointerType>())
+          BaseType = Ptr->getPointeeType();
+        if (CXXRecordDecl *NamingClass = BaseType->getAsCXXRecordDecl())
+          R.setNamingClass(NamingClass);
+      }
     } else {
       Result = LookupMemberExpr(R, Base, IsArrow, OpLoc,
                                 SS, ObjCImpDecl);

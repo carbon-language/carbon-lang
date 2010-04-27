@@ -923,6 +923,11 @@ public:
   const ObjCInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
 
+  /// \brief Retrieves the CXXRecordDecl that this type refers to, either
+  /// because the type is a RecordType or because it is the injected-class-name 
+  /// type of a class template or class template partial specialization.
+  CXXRecordDecl *getAsCXXRecordDecl() const;
+  
   // Member-template getAs<specific type>'.  This scheme will eventually
   // replace the specific getAsXXXX methods above.
   //
