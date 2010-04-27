@@ -188,13 +188,13 @@ class DwarfDebug {
   DenseMap<MDNode*, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
 
-  /// InsnBeforeLabelMap - Maps instruction with label emitted before 
+  /// LabelsBeforeInsn - Maps instruction with label emitted before 
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> InsnBeforeLabelMap;
+  DenseMap<const MachineInstr *, MCSymbol *> LabelsBeforeInsn;
 
-  /// InsnAfterLabelMap - Maps instruction with label emitted after
+  /// LabelsAfterInsn - Maps instruction with label emitted after
   /// instruction.
-  DenseMap<const MachineInstr *, MCSymbol *> InsnAfterLabelMap;
+  DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
 
@@ -218,7 +218,8 @@ class DwarfDebug {
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
-  
+
+  MCSymbol *FunctionBeginSym;
 private:
   
   /// getSourceDirectoryAndFileIds - Return the directory and file ids that
@@ -368,13 +369,8 @@ private:
   /// createSubprogramDIE - Create new DIE using SP.
   DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
 
-  /// getUpdatedDbgScope - Find or create DbgScope assicated with 
-  /// the instruction. Initialize scope and update scope hierarchy.
-  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
-                               MDNode *InlinedAt);
-
-  /// createDbgScope - Create DbgScope for the scope.
-  void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
+  /// getOrCreateDbgScope - Create DbgScope for the scope.
+  DbgScope *getOrCreateDbgScope(MDNode *Scope, MDNode *InlinedAt);
 
   DbgScope *getOrCreateAbstractScope(MDNode *N);
 
