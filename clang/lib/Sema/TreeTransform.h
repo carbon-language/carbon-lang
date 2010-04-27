@@ -5336,6 +5336,20 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
     
     SS.setScopeRep(Qualifier);
     SS.setRange(Old->getQualifierRange());
+    
+    // If this nested-name-specifier refers to a class type, that is the
+    // naming class.
+    if (const Type *NamedType = Qualifier->getAsType())
+      if (const RecordType *NamedRecord = NamedType->getAs<RecordType>())
+        R.setNamingClass(cast<CXXRecordDecl>(NamedRecord->getDecl()));
+  } else if (Old->getNamingClass()) {
+    CXXRecordDecl *NamingClass
+      = cast_or_null<CXXRecordDecl>(getDerived().TransformDecl(
+                                                            Old->getNameLoc(),
+                                                        Old->getNamingClass()));
+    if (!NamingClass)
+      return SemaRef.ExprError();
+    R.setNamingClass(NamingClass);
   }
 
   // If we have no template arguments, it's a normal declaration name.
@@ -5721,6 +5735,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
     BaseType = getDerived().TransformType(Old->getBaseType());
   }
 
+  CXXRecordDecl *NamingClass = 0;
   NestedNameSpecifier *Qualifier = 0;
   if (Old->getQualifier()) {
     Qualifier
@@ -5728,6 +5743,12 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
                                                   Old->getQualifierRange());
     if (Qualifier == 0)
       return SemaRef.ExprError();
+    
+    // If this nested-name-specifier refers to a class type, that is the
+    // naming class.
+    if (const Type *NamedType = Qualifier->getAsType())
+      if (const RecordType *NamedRecord = NamedType->getAs<RecordType>())
+        NamingClass = cast<CXXRecordDecl>(NamedRecord->getDecl());
   }
 
   LookupResult R(SemaRef, Old->getMemberName(), Old->getMemberLoc(),
@@ -5762,6 +5783,25 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
 
   R.resolveKind();
 
+  // Determine the naming class, if we haven't already.
+  if (!NamingClass) {
+    QualType T = BaseType;
+    if (const PointerType *PointerTy = T->getAs<PointerType>())
+      T = PointerTy->getPointeeType();
+    if (const RecordType *NamedRecord = T->getAs<RecordType>())
+      NamingClass = cast<CXXRecordDecl>(NamedRecord->getDecl());    
+  }
+  
+  if (!NamingClass && Old->getNamingClass()) {
+    NamingClass = cast_or_null<CXXRecordDecl>(getDerived().TransformDecl(
+                                                          Old->getMemberLoc(),
+                                                        Old->getNamingClass()));
+    if (!NamingClass)
+      return SemaRef.ExprError();
+  }
+  if (NamingClass)
+    R.setNamingClass(NamingClass);
+  
   TemplateArgumentListInfo TransArgs;
   if (Old->hasExplicitTemplateArgs()) {
     TransArgs.setLAngleLoc(Old->getLAngleLoc());

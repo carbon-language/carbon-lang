@@ -127,3 +127,28 @@ namespace test1 {
   };
   template class B<int>;
 }
+
+namespace PR6947 {
+  template< class T > 
+  struct X {
+    int f0( )      
+    {
+      typedef void ( X::*impl_fun_ptr )( );
+      impl_fun_ptr pImpl = &X::template
+        f0_impl1<int>;
+    }
+  private:                  
+    int f1() {
+    }
+    template< class Processor>                  
+    void f0_impl1( )                 
+    {
+    }
+  };
+
+  char g0() {
+    X<int> pc;
+    pc.f0();
+  }
+
+}
