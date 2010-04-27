@@ -1537,17 +1537,15 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     if (const MachineInstr *DbgValueInsn = DV->getDbgValue()) {
       if (DbgValueInsn->getNumOperands() == 3) {
         // FIXME : Handle getNumOperands != 3 
-        if (DbgValueInsn->getOperand(0).getType() 
-            == MachineOperand::MO_Register
-            && DbgValueInsn->getOperand(0).getReg()) {
+        if (DbgValueInsn->getOperand(0).isReg() &&
+            DbgValueInsn->getOperand(0).getReg()) {
           MachineLocation Location;
           Location.set(DbgValueInsn->getOperand(0).getReg());
           addAddress(VariableDie, dwarf::DW_AT_location, Location);
           if (MCSymbol *VS = DV->getDbgValueLabel())
             addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
                      VS);
-        } else if (DbgValueInsn->getOperand(0).getType() == 
-                   MachineOperand::MO_Immediate) {
+        } else if (DbgValueInsn->getOperand(0).isImm()) {
           DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
           unsigned Imm = DbgValueInsn->getOperand(0).getImm();
           addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
@@ -1555,8 +1553,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
           if (MCSymbol *VS = DV->getDbgValueLabel())
             addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
                      VS);
-        } else if (DbgValueInsn->getOperand(0).getType() == 
-                   MachineOperand::MO_FPImmediate) {
+        } else if (DbgValueInsn->getOperand(0).isFPImm()) {
           DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
           APFloat FPImm = DbgValueInsn->getOperand(0).getFPImm()->getValueAPF();
 
@@ -2083,8 +2080,7 @@ void DwarfDebug::collectVariableInfo() {
         continue;
 
       // Ignore Undef values.
-      if (MInsn->getOperand(0).getType() == MachineOperand::MO_Register
-          && !MInsn->getOperand(0).getReg())
+      if (MInsn->getOperand(0).isReg() && !MInsn->getOperand(0).getReg())
         continue;
 
       DIVariable DV(
