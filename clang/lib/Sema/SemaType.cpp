@@ -607,15 +607,31 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                               SourceRange Brackets, DeclarationName Entity) {
 
   SourceLocation Loc = Brackets.getBegin();
-  // C99 6.7.5.2p1: If the element type is an incomplete or function type,
-  // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
-  // Not in C++, though. There we only dislike void.
   if (getLangOptions().CPlusPlus) {
+    // C++ [dcl.array]p1:
+    //   T is called the array element type; this type shall not be a reference
+    //   type, the (possibly cv-qualified) type void, a function type or an 
+    //   abstract class type.
+    //
+    // Note: function types are handled in the common path with C.
+    if (T->isReferenceType()) {
+      Diag(Loc, diag::err_illegal_decl_array_of_references)
+      << getPrintableNameForEntity(Entity) << T;
+      return QualType();
+    }
+    
     if (T->isVoidType()) {
       Diag(Loc, diag::err_illegal_decl_array_incomplete_type) << T;
       return QualType();
     }
+    
+    if (RequireNonAbstractType(Brackets.getBegin(), T, 
+                               diag::err_array_of_abstract_type))
+      return QualType();
+    
   } else {
+    // C99 6.7.5.2p1: If the element type is an incomplete or function type,
+    // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
     if (RequireCompleteType(Loc, T,
                             diag::err_illegal_decl_array_incomplete_type))
       return QualType();
@@ -623,13 +639,6 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
 
   if (T->isFunctionType()) {
     Diag(Loc, diag::err_illegal_decl_array_of_functions)
-      << getPrintableNameForEntity(Entity) << T;
-    return QualType();
-  }
-
-  // C++ 8.3.2p4: There shall be no ... arrays of references ...
-  if (T->isReferenceType()) {
-    Diag(Loc, diag::err_illegal_decl_array_of_references)
       << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }

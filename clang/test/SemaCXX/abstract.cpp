@@ -42,11 +42,11 @@ void f() {
   t3(C()); // expected-error {{allocation of an object of abstract type 'C'}}
 }
 
-C e1[2]; // expected-error {{variable type 'C' is an abstract class}}
-C (*e2)[2]; // expected-error {{variable type 'C' is an abstract class}}
-C (**e3)[2]; // expected-error {{variable type 'C' is an abstract class}}
+C e1[2]; // expected-error {{array of abstract class type 'C'}}
+C (*e2)[2]; // expected-error {{array of abstract class type 'C'}}
+C (**e3)[2]; // expected-error {{array of abstract class type 'C'}}
 
-void t4(C c[2]); // expected-error {{parameter type 'C' is an abstract class}}
+void t4(C c[2]); // expected-error {{array of abstract class type 'C'}}
 
 void t5(void (*)(C)); // expected-error {{parameter type 'C' is an abstract class}}
 
@@ -168,4 +168,3 @@ namespace PureImplicit {
   struct D : C {};
   D y;
 }
-
