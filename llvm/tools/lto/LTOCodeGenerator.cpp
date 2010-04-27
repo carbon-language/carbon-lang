@@ -328,7 +328,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     }
     for (Module::global_iterator v = mergedModule->global_begin(), 
          e = mergedModule->global_end(); v !=  e; ++v) {
-      if (v->isDeclaration() &&
+      if (!v->isDeclaration() &&
           _mustPreserveSymbols.count(mangler.getNameWithPrefix(v)))
         mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
     }
