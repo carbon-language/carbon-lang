@@ -2119,10 +2119,10 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
   if (!InterfaceT.isCanonical() || 
       !areSortedAndUniqued(Protocols, NumProtocols)) {
     if (!areSortedAndUniqued(Protocols, NumProtocols)) {
-      llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(NumProtocols);
+      llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(Protocols,
+                                                     Protocols + NumProtocols);
       unsigned UniqueCount = NumProtocols;
 
-      std::copy(Protocols, Protocols + NumProtocols, Sorted.begin());
       SortAndUniqueProtocols(&Sorted[0], UniqueCount);
 
       Canonical = getObjCObjectPointerType(getCanonicalType(InterfaceT),
@@ -2165,8 +2165,8 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
   // Sort the protocol list alphabetically to canonicalize it.
   QualType Canonical;
   if (NumProtocols && !areSortedAndUniqued(Protocols, NumProtocols)) {
-    llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(NumProtocols);
-    std::copy(Protocols, Protocols + NumProtocols, Sorted.begin());
+    llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(Protocols,
+                                                   Protocols + NumProtocols);
 
     unsigned UniqueCount = NumProtocols;
     SortAndUniqueProtocols(&Sorted[0], UniqueCount);
@@ -2645,14 +2645,9 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
 
 QualType ASTContext::getBaseElementType(QualType QT) {
   QualifierCollector Qs;
-  while (true) {
-    const Type *UT = Qs.strip(QT);
-    if (const ArrayType *AT = getAsArrayType(QualType(UT,0))) {
-      QT = AT->getElementType();
-    } else {
-      return Qs.apply(QT);
-    }
-  }
+  while (const ArrayType *AT = getAsArrayType(QualType(Qs.strip(QT), 0)))
+    QT = AT->getElementType();
+  return Qs.apply(QT);
 }
 
 QualType ASTContext::getBaseElementType(const ArrayType *AT) {
@@ -3579,12 +3574,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       // Another legacy compatibility encoding. Some ObjC qualifier and type
       // combinations need to be rearranged.
       // Rewrite "in const" from "nr" to "rn"
-      const char * s = S.c_str();
-      int len = S.length();
-      if (len >= 2 && s[len-2] == 'n' && s[len-1] == 'r') {
-        std::string replace = "rn";
-        S.replace(S.end()-2, S.end(), replace);
-      }
+      if (llvm::StringRef(S).endswith("nr"))
+        S.replace(S.end()-2, S.end(), "rn");
     }
 
     if (PointeeTy->isCharType()) {
