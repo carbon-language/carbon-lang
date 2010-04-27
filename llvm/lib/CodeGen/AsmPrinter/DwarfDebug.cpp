@@ -2081,6 +2081,11 @@ void DwarfDebug::collectVariableInfo() {
       // FIXME : Lift this restriction.
       if (MInsn->getNumOperands() != 3)
         continue;
+
+      // Ignore Undef values.
+      if (!MInsn->getOperand(0).getReg())
+        continue;
+
       DIVariable DV(
         const_cast<MDNode *>(MInsn->getOperand(MInsn->getNumOperands() - 1)
                                .getMetadata()));

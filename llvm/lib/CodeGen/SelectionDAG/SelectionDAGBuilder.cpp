@@ -3834,15 +3834,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         return 0;
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
     } else {
-      // Generating Undefs here seems to be actively harmful because it
-      // affects the line numbers.
-      return 0;
-#if 0
       // This isn't useful, but it shows what we're missing.
       SDV = DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
                             0, dl, SDNodeOrder);
       DAG.AddDbgValue(SDV, 0, isParameter);
-#endif
     }
     return 0;
   }
