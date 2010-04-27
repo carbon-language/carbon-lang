@@ -543,6 +543,11 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
         return false;
     }
 
+    // If we failed to complete the type for some reason, don't
+    // diagnose the variable.
+    if (Ty->isIncompleteType())
+      return false;
+
     if (const TagType *TT = Ty->getAs<TagType>()) {
       const TagDecl *Tag = TT->getDecl();
       if (Tag->hasAttr<UnusedAttr>())

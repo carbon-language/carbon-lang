@@ -51,3 +51,11 @@ void test_dependent_init(T *p) {
   X0<int> i(p);
   (void)i;
 }
+
+namespace PR6948 {
+  template<typename T> class X;
+  
+  void f() {
+    X<char> str (read_from_file()); // expected-error{{use of undeclared identifier 'read_from_file'}}
+  }
+}
