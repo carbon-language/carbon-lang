@@ -43,7 +43,7 @@ namespace test1 {
     int a;
     template<typename T> struct B : A<T> {
       void f() {
-        a = 0; // expected-error {{type 'test1::O' is not a direct or virtual base of ''test1::O::B<int>''}}
+        a = 0; // expected-error {{'test1::O::a' is not a member of class 'test1::O::B<int>'}}
       }
     };
   };

@@ -2499,11 +2499,8 @@ static void DiagnoseQualifiedMemberReference(Sema &SemaRef,
   if (!BaseExpr)
     return DiagnoseInstanceReference(SemaRef, SS, R);
 
-  // FIXME: this is an exceedingly lame diagnostic for some of the more
-  // complicated cases here.
-  DeclContext *DC = R.getRepresentativeDecl()->getDeclContext();
-  SemaRef.Diag(R.getNameLoc(), diag::err_not_direct_base_or_virtual)
-    << SS.getRange() << DC << BaseType;
+  SemaRef.Diag(R.getNameLoc(), diag::err_qualified_member_of_unrelated)
+    << SS.getRange() << R.getRepresentativeDecl() << BaseType;
 }
 
 // Check whether the declarations we found through a nested-name

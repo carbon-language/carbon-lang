@@ -1406,7 +1406,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   // mem-initializer is ill-formed.
   if (!DirectBaseSpec && !VirtualBaseSpec)
     return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
-      << BaseType << ClassDecl->getNameAsCString()
+      << BaseType << Context.getTypeDeclType(ClassDecl)
       << BaseTInfo->getTypeLoc().getSourceRange();
 
   CXXBaseSpecifier *BaseSpec

@@ -48,7 +48,7 @@ namespace C
         a.A::sub::x();
         a.A::B::base::x();
 
-        a.bad::x(); // expected-error{{type 'bad' is not a direct or virtual base of ''A::sub''}}
+        a.bad::x(); // expected-error{{'bad::x' is not a member of class 'A::sub'}}
 
         a->foo();
         a->member::foo();
@@ -69,7 +69,7 @@ namespace C
         a->A::sub::x();
         a->A::B::base::x();
 
-        a->bad::x(); // expected-error{{type 'bad' is not a direct or virtual base of ''A::sub''}}
+        a->bad::x(); // expected-error{{'bad::x' is not a member of class 'A::sub'}}
 
         (*a)->foo();
         (*a)->member::foo();
@@ -107,7 +107,7 @@ namespace C
         a.A::B::base::x();
         a->A::member::foo();
 
-        a.bad::x(); // expected-error{{direct or virtual}}
+        a.bad::x(); // expected-error{{'bad::x' is not a member of class 'A::sub'}}
     }
 
   void test_fun5() {

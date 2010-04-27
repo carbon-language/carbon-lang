@@ -564,6 +564,8 @@ def err_non_virtual_pure : Error<
 def err_implicit_object_parameter_init : Error<
   "cannot initialize object parameter of type %0 with an expression "
   "of type %1">;
+def err_qualified_member_of_unrelated : Error<
+  "%q0 is not a member of class %1">;
 
 def note_field_decl : Note<"member is declared here">;
 def note_ivar_decl : Note<"ivar is declared here">;
@@ -2565,9 +2567,7 @@ def err_base_init_direct_and_virtual : Error<
   "base class initializer %0 names both a direct base class and an "
   "inherited virtual base class">;
 def err_not_direct_base_or_virtual : Error<
-  "type %0 is not a direct or virtual base of '%1'">;
-def err_not_direct_base_or_virtual_multi : Error<
-  "type %0 is not a direct or virtual base of '%1'">;
+  "type %0 is not a direct or virtual base of %1">;
 
 def err_in_class_initializer_non_integral_type : Error<
   "in-class initializer has non-integral, non-enumeration type %0">;
