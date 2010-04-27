@@ -29,7 +29,7 @@ namespace {
 
   public:
     explicit TypePrinter(const PrintingPolicy &Policy) : Policy(Policy) { }
-    
+
     void Print(QualType T, std::string &S);
     void AppendScope(DeclContext *DC, std::string &S);
     void PrintTag(TagDecl *T, std::string &S);
