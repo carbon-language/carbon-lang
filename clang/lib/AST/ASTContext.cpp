@@ -807,55 +807,6 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
   }
 }
 
-/// CollectIvarsToConstructOrDestruct - Collect those ivars which require
-/// construction (construct=true) or destruction (construct=false)
-///
-void ASTContext::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
-                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
-                                bool construct) {
-  if (!getLangOptions().CPlusPlus)
-    return;
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *Iv = (*I);
-    if (const RecordType *RT = Iv->getType()->getAs<RecordType>()) {
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        if (construct && !RD->hasTrivialConstructor() ||
-            !construct && !RD->hasTrivialDestructor())
-          Ivars.push_back(*I);
-    }
-  }
-  
-  // Find ivars to construct/destruct in class extension.
-  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension()) {
-    for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
-         E = CDecl->ivar_end(); I != E; ++I) {
-      ObjCIvarDecl *Iv = (*I);
-      if (const RecordType *RT = Iv->getType()->getAs<RecordType>()) {
-        if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-          if (construct && !RD->hasTrivialConstructor() ||
-              !construct && !RD->hasTrivialDestructor())
-            Ivars.push_back(*I);
-      }
-    }
-  }
-  
-  // Also add any ivar defined in this class's implementation.  This
-  // includes synthesized ivars.
-  if (ObjCImplementationDecl *ImplDecl = OI->getImplementation()) {
-    for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
-         E = ImplDecl->ivar_end(); I != E; ++I) {
-      ObjCIvarDecl *Iv = (*I);
-      if (const RecordType *RT = Iv->getType()->getAs<RecordType>()) {
-        if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-          if (construct && !RD->hasTrivialConstructor() ||
-              !construct && !RD->hasTrivialDestructor())
-            Ivars.push_back(*I);
-      }
-    }
-  }
-}
-
 unsigned ASTContext::CountNonClassIvars(const ObjCInterfaceDecl *OI) {
   unsigned count = 0;  
   // Count ivars declared in class extension.

@@ -1590,6 +1590,12 @@ public:
 
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
   void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);
+  
+  /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
+  /// construction (construct=true) or destruction (construct=false)
+  void CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
+                                    llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
+                                    bool construct=true);
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
