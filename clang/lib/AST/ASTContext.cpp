@@ -4311,21 +4311,16 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     allLTypes = false;
   if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
     allRTypes = false;
-  // FIXME: double check this
-  // FIXME: should we error if lbase->getRegParmAttr() != 0 &&
-  //                           rbase->getRegParmAttr() != 0 &&
-  //                           lbase->getRegParmAttr() != rbase->getRegParmAttr()?
+
+  // Check misc function attributes
   FunctionType::ExtInfo lbaseInfo = lbase->getExtInfo();
   FunctionType::ExtInfo rbaseInfo = rbase->getExtInfo();
-  unsigned RegParm = lbaseInfo.getRegParm() == 0 ? rbaseInfo.getRegParm() :
-      lbaseInfo.getRegParm();
-  bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
-  if (NoReturn != lbaseInfo.getNoReturn() ||
-      RegParm != lbaseInfo.getRegParm())
-    allLTypes = false;
-  if (NoReturn != rbaseInfo.getNoReturn() ||
-      RegParm != rbaseInfo.getRegParm())
-    allRTypes = false;
+  // Per gcc, compatible functions must have compatible regparm and noreturn
+  // attributes.
+  unsigned RegParm = lbaseInfo.getRegParm();
+  bool NoReturn = lbaseInfo.getNoReturn();
+  if (NoReturn != rbaseInfo.getNoReturn() || RegParm != rbaseInfo.getRegParm())
+    return QualType();
   CallingConv lcc = lbaseInfo.getCC();
   CallingConv rcc = rbaseInfo.getCC();
   // Compatible functions must have compatible calling conventions
