@@ -283,6 +283,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
   if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    if (Size == 0) Size = 1;  // zerofill of 0 bytes is undefined.
+    
     // .globl _foo
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
     // .zerofill __DATA, __common, _foo, 400, 5
