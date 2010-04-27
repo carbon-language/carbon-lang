@@ -2083,7 +2083,8 @@ void DwarfDebug::collectVariableInfo() {
         continue;
 
       // Ignore Undef values.
-      if (!MInsn->getOperand(0).getReg())
+      if (MInsn->getOperand(0).getType() == MachineOperand::MO_Register
+          && !MInsn->getOperand(0).getReg())
         continue;
 
       DIVariable DV(
