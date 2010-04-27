@@ -200,7 +200,7 @@ namespace {
                           raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (TM.getRelocationModel() != Reloc::Static) {
-        if (MO.getType() == MachineOperand::MO_GlobalAddress) {
+        if (MO.isGlobal()) {
           const GlobalValue *GV = MO.getGlobal();
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
@@ -214,7 +214,7 @@ namespace {
             return;
           }
         }
-        if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
+        if (MO.isSymbol()) {
           SmallString<128> TempNameStr;
           TempNameStr += StringRef(MO.getSymbolName());
           TempNameStr += StringRef("$stub");
@@ -312,7 +312,7 @@ namespace {
     void printTOCEntryLabel(const MachineInstr *MI, unsigned OpNo,
                             raw_ostream &O) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      assert(MO.getType() == MachineOperand::MO_GlobalAddress);
+      assert(MO.isGlobal());
       MCSymbol *Sym = Mang->getSymbol(MO.getGlobal());
 
       // Map symbol -> label of TOC entry.

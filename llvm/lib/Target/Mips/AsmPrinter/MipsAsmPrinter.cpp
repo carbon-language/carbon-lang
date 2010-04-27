@@ -306,7 +306,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 void MipsAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum,
                                       raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(opNum);
-  if (MO.getType() == MachineOperand::MO_Immediate)
+  if (MO.isImm())
     O << (unsigned short int)MO.getImm();
   else 
     printOperand(MI, opNum, O);
