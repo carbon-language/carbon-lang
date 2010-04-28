@@ -127,3 +127,20 @@ namespace test9 {
     f<int, X>();
   }
 }
+
+namespace test10 {
+  template<typename T>
+  struct X {
+    template<typename U>
+    struct definition {
+    };
+  };
+
+  // CHECK: _ZN6test101fIidEENS_1XIT_E10definitionIT0_EES2_S5_
+  template<typename T, typename U>
+  typename X<T>::template definition<U> f(T, U) { }
+
+  void g(int i, double d) {
+    f(i, d);
+  }
+}

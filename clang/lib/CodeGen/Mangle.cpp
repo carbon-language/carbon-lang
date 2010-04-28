@@ -111,6 +111,7 @@ public:
 private:
   bool mangleSubstitution(const NamedDecl *ND);
   bool mangleSubstitution(QualType T);
+  bool mangleSubstitution(TemplateName Template);
   bool mangleSubstitution(uintptr_t Ptr);
 
   bool mangleStandardSubstitution(const NamedDecl *ND);
@@ -121,6 +122,7 @@ private:
     addSubstitution(reinterpret_cast<uintptr_t>(ND));
   }
   void addSubstitution(QualType T);
+  void addSubstitution(TemplateName Template);
   void addSubstitution(uintptr_t Ptr);
 
   void mangleUnresolvedScope(NestedNameSpecifier *Qualifier);
@@ -138,6 +140,7 @@ private:
                              unsigned KnownArity);
   void mangleUnscopedName(const NamedDecl *ND);
   void mangleUnscopedTemplateName(const TemplateDecl *ND);
+  void mangleUnscopedTemplateName(TemplateName);
   void mangleSourceName(const IdentifierInfo *II);
   void mangleLocalName(const NamedDecl *ND);
   void mangleNestedName(const NamedDecl *ND, const DeclContext *DC,
@@ -429,6 +432,31 @@ void CXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *ND) {
 
   mangleUnscopedName(ND->getTemplatedDecl());
   addSubstitution(ND);
+}
+
+void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
+  //     <unscoped-template-name> ::= <unscoped-name>
+  //                              ::= <substitution>
+  if (TemplateDecl *TD = Template.getAsTemplateDecl())
+    return mangleUnscopedTemplateName(TD);
+  
+  if (mangleSubstitution(Template))
+    return;
+
+  // FIXME: How to cope with operators here?
+  DependentTemplateName *Dependent = Template.getAsDependentTemplateName();
+  assert(Dependent && "Not a dependent template name?");
+  if (!Dependent->isIdentifier()) {
+    // FIXME: We can't possibly know the arity of the operator here!
+    Diagnostic &Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+                                      "cannot mangle dependent operator name");
+    Diags.Report(FullSourceLoc(), DiagID);
+    return;
+  }
+  
+  mangleSourceName(Dependent->getIdentifier());
+  addSubstitution(Template);
 }
 
 void CXXNameMangler::mangleNumber(int64_t Number) {
@@ -764,15 +792,7 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
   DependentTemplateName *Dependent = Template.getAsDependentTemplateName();
   assert(Dependent && "Unknown template name kind?");
   mangleUnresolvedScope(Dependent->getQualifier());
-  if (Dependent->isIdentifier())
-    mangleSourceName(Dependent->getIdentifier());
-  else {
-    // FIXME: We can't possibly know the arity of the operator here!
-    Diagnostic &Diags = Context.getDiags();
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
-                                 "cannot mangle dependent operator name");
-    Diags.Report(FullSourceLoc(), DiagID);
-  }
+  mangleUnscopedTemplateName(Template);
 }
 
 void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
@@ -1199,17 +1219,42 @@ void CXXNameMangler::mangleType(const InjectedClassNameType *T) {
 }
 
 void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
-  TemplateDecl *TD = T->getTemplateName().getAsTemplateDecl();
-  assert(TD && "FIXME: Support dependent template names!");
-
-  mangleName(TD, T->getArgs(), T->getNumArgs());
+  if (TemplateDecl *TD = T->getTemplateName().getAsTemplateDecl()) {
+    mangleName(TD, T->getArgs(), T->getNumArgs());
+  } else {
+    if (mangleSubstitution(QualType(T, 0)))
+      return;
+    
+    mangleTemplatePrefix(T->getTemplateName());
+    
+    // FIXME: GCC does not appear to mangle the template arguments when
+    // the template in question is a dependent template name. Should we
+    // emulate that badness?
+    mangleTemplateArgs(T->getTemplateName(), T->getArgs(), T->getNumArgs());
+    addSubstitution(QualType(T, 0));
+  }
 }
 
 void CXXNameMangler::mangleType(const DependentNameType *T) {
   // Typename types are always nested
   Out << 'N';
-  mangleUnresolvedScope(T->getQualifier());
-  mangleSourceName(T->getIdentifier());
+  if (T->getIdentifier()) {
+    mangleUnresolvedScope(T->getQualifier());
+    mangleSourceName(T->getIdentifier());
+  } else {
+    const TemplateSpecializationType *TST = T->getTemplateId();
+    if (!mangleSubstitution(QualType(TST, 0))) {
+      mangleTemplatePrefix(TST->getTemplateName());
+      
+      // FIXME: GCC does not appear to mangle the template arguments when
+      // the template in question is a dependent template name. Should we
+      // emulate that badness?
+      mangleTemplateArgs(TST->getTemplateName(), TST->getArgs(),
+                         TST->getNumArgs());    
+      addSubstitution(QualType(TST, 0));
+    }
+  }
+    
   Out << 'E';
 }
 
@@ -1743,6 +1788,15 @@ bool CXXNameMangler::mangleSubstitution(QualType T) {
   return mangleSubstitution(TypePtr);
 }
 
+bool CXXNameMangler::mangleSubstitution(TemplateName Template) {
+  if (TemplateDecl *TD = Template.getAsTemplateDecl())
+    return mangleSubstitution(TD);
+  
+  Template = Context.getASTContext().getCanonicalTemplateName(Template);
+  return mangleSubstitution(
+                      reinterpret_cast<uintptr_t>(Template.getAsVoidPointer()));
+}
+
 bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
   llvm::DenseMap<uintptr_t, unsigned>::iterator I = Substitutions.find(Ptr);
   if (I == Substitutions.end())
@@ -1919,6 +1973,14 @@ void CXXNameMangler::addSubstitution(QualType T) {
 
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
   addSubstitution(TypePtr);
+}
+
+void CXXNameMangler::addSubstitution(TemplateName Template) {
+  if (TemplateDecl *TD = Template.getAsTemplateDecl())
+    return addSubstitution(TD);
+  
+  Template = Context.getASTContext().getCanonicalTemplateName(Template);
+  addSubstitution(reinterpret_cast<uintptr_t>(Template.getAsVoidPointer()));
 }
 
 void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
