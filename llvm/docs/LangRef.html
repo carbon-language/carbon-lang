@@ -855,10 +855,11 @@ define i32 @main() {                                        <i>; i32()* </i>
    of 2.  If not present, or if the alignment is set to zero, the alignment of
    the global is set by the target to whatever it feels convenient.  If an
    explicit alignment is specified, the global is forced to have exactly that
-   alignment.  Targets are not allowed to over-align the global in cases where
-   it is observable: for example, overaligning a global is observable if it has
-   an assigned section and higher alignment could cause holes between
-   consequtive globals.</p>
+   alignment.  Targets and optimizers are not allowed to over-align the global
+   if the global has an assigned section.  In this case, the extra alignment
+   could be observable: for example, code could assume that the globals are
+   densely packed in their section and try to iterate over them as an array,
+   alignment padding would break this iteration.</p>
 
 <p>For example, the following defines a global in a numbered address space with
    an initializer, section, and alignment:</p>

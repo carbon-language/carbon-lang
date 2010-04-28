@@ -59,29 +59,32 @@ static unsigned EnforceKnownAlignment(Value *V,
       // Treat this like a bitcast.
       return EnforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
     }
-    break;
+    return Align;
+  }
+  case Instruction::Alloca: {
+    AllocaInst *AI = cast<AllocaInst>(V);
+    // If there is a requested alignment and if this is an alloca, round up.
+    if (AI->getAlignment() >= PrefAlign)
+      return AI->getAlignment();
+    AI->setAlignment(PrefAlign);
+    return PrefAlign;
   }
   }
 
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // If there is a large requested alignment and we can, bump up the alignment
     // of the global.
-    if (!GV->isDeclaration()) {
-      if (GV->getAlignment() >= PrefAlign)
-        Align = GV->getAlignment();
-      else {
-        GV->setAlignment(PrefAlign);
-        Align = PrefAlign;
-      }
-    }
-  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-    // If there is a requested alignment and if this is an alloca, round up.
-    if (AI->getAlignment() >= PrefAlign)
-      Align = AI->getAlignment();
-    else {
-      AI->setAlignment(PrefAlign);
-      Align = PrefAlign;
-    }
+    if (GV->isDeclaration()) return Align;
+    
+    if (GV->getAlignment() >= PrefAlign)
+      return GV->getAlignment();
+    // We can only increase the alignment of the global if it has no alignment
+    // specified or if it is not assigned a section.  If it is assigned a
+    // section, the global could be densely packed with other objects in the
+    // section, increasing the alignment could cause padding issues.
+    if (!GV->hasSection() || GV->getAlignment() == 0)
+      GV->setAlignment(PrefAlign);
+    return GV->getAlignment();
   }
 
   return Align;
