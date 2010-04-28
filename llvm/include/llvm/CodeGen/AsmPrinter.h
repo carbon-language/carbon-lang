@@ -204,12 +204,8 @@ namespace llvm {
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
     /// byte alignment.  If a global value is specified, and if that global has
-    /// an explicit alignment requested, it will unconditionally override the
-    /// alignment request.
-    ///
-    /// The algorithm is:
-    ///     Align = NumBits;
-    ///     if (GV && GV->hasalignment) Align = GV->getAlignment();
+    /// an explicit alignment requested, it will override the alignment request
+    /// if required for correctness.
     ///
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
     
@@ -217,7 +213,6 @@ namespace llvm {
     /// MachineBasicBlock, an alignment (if present) and a comment describing
     /// it if appropriate.
     void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
-    
     
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);

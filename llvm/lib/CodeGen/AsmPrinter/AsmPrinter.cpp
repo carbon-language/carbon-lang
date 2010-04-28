@@ -61,6 +61,35 @@ static gcp_map_type &getGCMap(void *&P) {
 }
 
 
+/// getGVAlignmentLog2 - Return the alignment to use for the specified global
+/// value in log2 form.  This rounds up to the preferred alignment if possible
+/// and legal.
+static unsigned getGVAlignmentLog2(const GlobalValue *GV, const TargetData &TD,
+                                   unsigned InBits = 0) {
+  unsigned NumBits = 0;
+  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
+    NumBits = TD.getPreferredAlignmentLog(GVar);
+  
+  // If InBits is specified, round it to it.
+  if (InBits > NumBits)
+    NumBits = InBits;
+  
+  // If the GV has a specified alignment, take it into account.
+  if (GV->getAlignment() == 0)
+    return NumBits;
+  
+  unsigned GVAlign = Log2_32(GV->getAlignment());
+  
+  // If the GVAlign is larger than NumBits, or if we are required to obey
+  // NumBits because the GV has an assigned section, obey it.
+  if (GVAlign > NumBits || GV->hasSection())
+    NumBits = GVAlign;
+  return NumBits;
+}
+
+
+
+
 AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
   : MachineFunctionPass(&ID),
     TM(tm), MAI(tm.getMCAsmInfo()),
@@ -227,16 +256,12 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
 
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+  uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
   
   // If the alignment is specified, we *must* obey it.  Overaligning a global
   // with a specified alignment is a prompt way to break globals emitted to
   // sections and expected to be contiguous (e.g. ObjC metadata).
-  unsigned AlignLog;
-  if (unsigned GVAlign = GV->getAlignment())
-    AlignLog = Log2_32(GVAlign);
-  else
-    AlignLog = TD->getPreferredAlignmentLog(GV);
+  unsigned AlignLog = getGVAlignmentLog2(GV, *TD);
   
   // Handle common and BSS local symbols (.lcomm).
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
@@ -1010,7 +1035,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors") {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticCtorSection());
-    EmitAlignment(Align, 0);
+    EmitAlignment(Align);
     EmitXXStructorList(GV->getInitializer());
     
     if (TM.getRelocationModel() == Reloc::Static &&
@@ -1024,7 +1049,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   
   if (GV->getName() == "llvm.global_dtors") {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticDtorSection());
-    EmitAlignment(Align, 0);
+    EmitAlignment(Align);
     EmitXXStructorList(GV->getInitializer());
 
     if (TM.getRelocationModel() == Reloc::Static &&
@@ -1153,20 +1178,13 @@ void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
 // EmitAlignment - Emit an alignment directive to the specified power of
 // two boundary.  For example, if you pass in 3 here, you will get an 8
 // byte alignment.  If a global value is specified, and if that global has
-// an explicit alignment requested, it will unconditionally override the
-// alignment request.  However, if ForcedAlignBits is specified, this value
-// has final say: the ultimate alignment will be the max of ForcedAlignBits
-// and the alignment computed with NumBits and the global.
-//
-// The algorithm is:
-//     Align = NumBits;
-//     if (GV && GV->hasalignment) Align = GV->getAlignment();
+// an explicit alignment requested, it will override the alignment request
+// if required for correctness.
 //
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
-  if (GV && GV->getAlignment())
-    NumBits = Log2_32(GV->getAlignment());
+  if (GV) NumBits = getGVAlignmentLog2(GV, *TM.getTargetData(), NumBits);
   
-  if (NumBits == 0) return;   // No need to emit alignment.
+  if (NumBits == 0) return;   // 1-byte aligned: no need to emit alignment.
   
   if (getCurrentSection()->getKind().isText())
     OutStreamer.EmitCodeAlignment(1 << NumBits);
