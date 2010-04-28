@@ -112,7 +112,8 @@ private:
       llvm::Constant *Methods,
       llvm::Constant *Protocols,
       llvm::Constant *IvarOffsets,
-      llvm::Constant *Properties);
+      llvm::Constant *Properties,
+      bool isMeta=false);
   llvm::Constant *GenerateProtocolMethodList(
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodNames,
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes);
@@ -817,7 +818,8 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
     llvm::Constant *Methods,
     llvm::Constant *Protocols,
     llvm::Constant *IvarOffsets,
-    llvm::Constant *Properties) {
+    llvm::Constant *Properties,
+    bool isMeta) {
   // Set up the class structure
   // Note:  Several of these are char*s when they should be ids.  This is
   // because the runtime performs this translation on load.
@@ -867,8 +869,8 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   // Create an instance of the structure
   // This is now an externally visible symbol, so that we can speed up class
   // messages in the next ABI.
-  return MakeGlobal(ClassTy, Elements, SymbolNameForClass(Name),
-         llvm::GlobalValue::ExternalLinkage);
+  return MakeGlobal(ClassTy, Elements, (isMeta ? "_OBJC_METACLASS_":
+      "_OBJC_CLASS_") + std::string(Name), llvm::GlobalValue::ExternalLinkage);
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
@@ -1484,7 +1486,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
       NULLPtr, 0x12L, ClassName.c_str(), 0, Zeros[0], GenerateIvarList(
-        empty, empty, empty), ClassMethodList, NULLPtr, NULLPtr, NULLPtr);
+        empty, empty, empty), ClassMethodList, NULLPtr, NULLPtr, NULLPtr, true);
 
   // Generate the class structure
   llvm::Constant *ClassStruct =
