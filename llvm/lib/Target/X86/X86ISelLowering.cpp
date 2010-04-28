@@ -9597,7 +9597,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
 static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
                                 TargetLowering::DAGCombinerInfo &DCI,
                                 const X86Subtarget *Subtarget) {
-  if (!DCI.isBeforeLegalize())
+  if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
   EVT VT = N->getValueType(0);
