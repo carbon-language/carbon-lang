@@ -223,10 +223,6 @@ namespace llvm {
     /// subregister.
     void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
-    /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
-    /// due to live range lengthening as the result of coalescing.
-    void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
-
     /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
     /// Return true if live interval is removed.
     bool ShortenDeadCopyLiveRange(LiveInterval &li, MachineInstr *CopyMI);
