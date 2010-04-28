@@ -413,10 +413,9 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       CXXBaseOrMemberInitializer *IvarInit = IvarInitializers[I];
       FieldDecl *Field = IvarInit->getMember();
       QualType FieldType = Field->getType();
-      if (CGM.getContext().getAsConstantArrayType(FieldType))
-        assert(false && "Construction objc arrays NYI");
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
-      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
+                                    LoadObjCSelf(), Ivar, 0);
       EmitAggExpr(IvarInit->getInit(), LV.getAddress(),
                   LV.isVolatileQualified(), false, true);
     }
@@ -432,15 +431,27 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     for (size_t i = IvarInitializers.size(); i > 0; --i) {
       FieldDecl *Field = IvarInitializers[i - 1]->getMember();
       QualType FieldType = Field->getType();
-      if (CGM.getContext().getAsConstantArrayType(FieldType))
-        assert(false && "Destructing objc arrays NYI");
+      const ConstantArrayType *Array = 
+        getContext().getAsConstantArrayType(FieldType);
+      if (Array)
+        FieldType = getContext().getBaseElementType(FieldType);
+      
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
                                     LoadObjCSelf(), Ivar, 0);
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      EmitCXXDestructorCall(FieldClassDecl->getDestructor(CGM.getContext()),
-                            Dtor_Complete, LV.getAddress());
+      if (Array) {
+        const llvm::Type *BasePtr = ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
+        llvm::Value *BaseAddrPtr =
+          Builder.CreateBitCast(LV.getAddress(), BasePtr);
+        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                                  Array, BaseAddrPtr);
+      }
+      else 
+        EmitCXXDestructorCall(FieldClassDecl->getDestructor(CGM.getContext()),
+                              Dtor_Complete, LV.getAddress());
     }    
   }
   FinishFunction();
