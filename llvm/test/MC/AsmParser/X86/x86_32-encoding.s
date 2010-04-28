@@ -9968,3 +9968,19 @@
 // CHECK:  fixup A - offset: 5, value: CPI1_0-4
 pshufb	CPI1_0(%rip), %xmm1   
 
+// rdar://7910087
+// CHECK: bsfw	%bx, %bx
+// CHECK:  encoding: [0x66,0x0f,0xbc,0xdb]
+          bsfw  %bx, %bx
+
+// CHECK: bsfw	3735928559(%ebx,%ecx,8), %bx
+// CHECK:  encoding: [0x66,0x0f,0xbc,0x9c,0xcb,0xef,0xbe,0xad,0xde]
+          bsfw  3735928559(%ebx,%ecx,8), %bx
+
+// CHECK: bsrw	%bx, %bx
+// CHECK:  encoding: [0x66,0x0f,0xbd,0xdb]
+          bsrw  %bx, %bx
+
+// CHECK: bsrw	305419896, %bx
+// CHECK:  encoding: [0x66,0x0f,0xbd,0x1d,0x78,0x56,0x34,0x12]
+          bsrw  305419896, %bx
