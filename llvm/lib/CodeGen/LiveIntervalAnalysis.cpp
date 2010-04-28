@@ -1297,11 +1297,12 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     ++ri;
     if (MI->isDebugValue()) {
       // Modify DBG_VALUE now that the value is in a spill slot.
-      if (Slot == VirtRegMap::NO_STACK_SLOT) {
+      if (Slot != VirtRegMap::MAX_STACK_SLOT || isLoadSS) {
         uint64_t Offset = MI->getOperand(1).getImm();
         const MDNode *MDPtr = MI->getOperand(2).getMetadata();
         DebugLoc DL = MI->getDebugLoc();
-        if (MachineInstr *NewDV = tii_->emitFrameIndexDebugValue(*mf_, Slot,
+        int FI = isLoadSS ? LdSlot : (int)Slot;
+        if (MachineInstr *NewDV = tii_->emitFrameIndexDebugValue(*mf_, FI,
                                                            Offset, MDPtr, DL)) {
           DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
           ReplaceMachineInstrInMaps(MI, NewDV);
