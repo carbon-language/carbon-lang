@@ -122,8 +122,8 @@ public:
                       QualType ResultType,
                       Selector Sel,
                       llvm::Value *Receiver,
-                      bool IsClassMessage,
                       const CallArgList &CallArgs,
+                      const ObjCInterfaceDecl *Class = 0,
                       const ObjCMethodDecl *Method = 0) = 0;
 
   /// Generate an Objective-C message send operation to the super

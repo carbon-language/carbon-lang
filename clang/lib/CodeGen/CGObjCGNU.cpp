@@ -26,6 +26,7 @@
 
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
@@ -81,6 +82,8 @@ private:
   llvm::Constant *Zeros[2];
   llvm::Constant *NULLPtr;
   llvm::LLVMContext &VMContext;
+  /// Metadata kind used to tie method lookups to message sends.
+  unsigned msgSendMDKind;
 private:
   llvm::Constant *GenerateIvarList(
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
@@ -142,8 +145,8 @@ public:
                       QualType ResultType,
                       Selector Sel,
                       llvm::Value *Receiver,
-                      bool IsClassMessage,
                       const CallArgList &CallArgs,
+                      const ObjCInterfaceDecl *Class,
                       const ObjCMethodDecl *Method);
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
@@ -236,6 +239,9 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
 CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   : CGM(cgm), TheModule(CGM.getModule()), ClassPtrAlias(0),
     MetaClassPtrAlias(0), VMContext(cgm.getLLVMContext()) {
+
+  msgSendMDKind = VMContext.getMDKindID("GNUObjCMessageSend");
+
   IntTy = cast<llvm::IntegerType>(
       CGM.getTypes().ConvertType(CGM.getContext().IntTy));
   LongTy = cast<llvm::IntegerType>(
@@ -542,8 +548,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                QualType ResultType,
                                Selector Sel,
                                llvm::Value *Receiver,
-                               bool IsClassMessage,
                                const CallArgList &CallArgs,
+                               const ObjCInterfaceDecl *Class,
                                const ObjCMethodDecl *Method) {
   // Strip out message sends to retain / release in GC mode
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
@@ -642,9 +648,16 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       LookupFn->setDoesNotCapture(1);
     }
 
-    llvm::Value *slot =
+    llvm::Instruction *slot =
         Builder.CreateCall3(lookupFunction, ReceiverPtr, cmd, self);
     imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
+    llvm::Value *impMD[] = {
+          llvm::MDString::get(VMContext, Sel.getAsString()),
+          llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
+     };
+    llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 2);
+    cast<llvm::Instruction>(imp)->setMetadata(msgSendMDKind, node);
+
     // The lookup function may have changed the receiver, so make sure we use
     // the new one.
     ActualArgs[0] =
@@ -660,7 +673,6 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
   }
-
   RValue msgRet = 
       CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
 

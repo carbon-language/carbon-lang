@@ -1129,8 +1129,8 @@ public:
                                               QualType ResultType,
                                               Selector Sel,
                                               llvm::Value *Receiver,
-                                              bool IsClassMessage,
                                               const CallArgList &CallArgs,
+                                              const ObjCInterfaceDecl *Class,
                                               const ObjCMethodDecl *Method);
 
   virtual CodeGen::RValue
@@ -1357,8 +1357,8 @@ public:
                                               QualType ResultType,
                                               Selector Sel,
                                               llvm::Value *Receiver,
-                                              bool IsClassMessage,
                                               const CallArgList &CallArgs,
+                                              const ObjCInterfaceDecl *Class,
                                               const ObjCMethodDecl *Method);
 
   virtual CodeGen::RValue
@@ -1577,8 +1577,8 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                QualType ResultType,
                                                Selector Sel,
                                                llvm::Value *Receiver,
-                                               bool IsClassMessage,
                                                const CallArgList &CallArgs,
+                                               const ObjCInterfaceDecl *Class,
                                                const ObjCMethodDecl *Method) {
   return EmitLegacyMessageSend(CGF, ResultType,
                                EmitSelector(CGF.Builder, Sel),
@@ -5214,8 +5214,8 @@ CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                             QualType ResultType,
                                             Selector Sel,
                                             llvm::Value *Receiver,
-                                            bool IsClassMessage,
                                             const CallArgList &CallArgs,
+                                            const ObjCInterfaceDecl *Class,
                                             const ObjCMethodDecl *Method) {
   return LegacyDispatchedSelector(Sel)
     ? EmitLegacyMessageSend(CGF, ResultType, EmitSelector(CGF.Builder, Sel),

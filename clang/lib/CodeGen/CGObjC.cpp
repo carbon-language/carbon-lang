@@ -55,6 +55,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   bool isSuperMessage = false;
   bool isClassMessage = false;
+  ObjCInterfaceDecl *OID = 0;
   // Find the receiver
   llvm::Value *Receiver = 0;
   switch (E->getReceiverKind()) {
@@ -65,8 +66,9 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   case ObjCMessageExpr::Class: {
     const ObjCInterfaceType *IFace
       = E->getClassReceiver()->getAs<ObjCInterfaceType>();
+    OID = IFace->getDecl();
     assert(IFace && "Invalid Objective-C class message send");
-    Receiver = Runtime.GetClass(Builder, IFace->getDecl());
+    Receiver = Runtime.GetClass(Builder, OID);
     isClassMessage = true;
     break;
   }
@@ -101,7 +103,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   }
 
   return Runtime.GenerateMessageSend(*this, E->getType(), E->getSelector(),
-                                     Receiver, isClassMessage, Args,
+                                     Receiver, Args, OID,
                                      E->getMethodDecl());
 }
 
@@ -453,7 +455,7 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S,
                                  EmitScalarExpr(E->getBase()),
-                                 false, CallArgList());
+                                 CallArgList());
   } else {
     const ObjCImplicitSetterGetterRefExpr *KE =
       cast<ObjCImplicitSetterGetterRefExpr>(Exp);
@@ -469,7 +471,7 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S,
                                  Receiver,
-                                 KE->getInterfaceDecl() != 0, CallArgList());
+                                 CallArgList(), KE->getInterfaceDecl());
   }
 }
 
@@ -506,7 +508,7 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S,
                                              EmitScalarExpr(E->getBase()),
-                                             false, Args);
+                                             Args);
   } else if (const ObjCImplicitSetterGetterRefExpr *E =
                dyn_cast<ObjCImplicitSetterGetterRefExpr>(Exp)) {
     Selector S = E->getSetterMethod()->getSelector();
@@ -523,7 +525,7 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S,
                                              Receiver,
-                                             E->getInterfaceDecl() != 0, Args);
+                                             Args, E->getInterfaceDecl());
   } else
     assert (0 && "bad expression node in EmitObjCPropertySet");
 }
@@ -591,7 +593,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     CGM.getObjCRuntime().GenerateMessageSend(*this,
                                              getContext().UnsignedLongTy,
                                              FastEnumSel,
-                                             Collection, false, Args);
+                                             Collection, Args);
 
   llvm::Value *LimitPtr = CreateMemTemp(getContext().UnsignedLongTy,
                                         "limit.ptr");
@@ -716,7 +718,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     CGM.getObjCRuntime().GenerateMessageSend(*this,
                                              getContext().UnsignedLongTy,
                                              FastEnumSel,
-                                             Collection, false, Args);
+                                             Collection, Args);
   Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
   Limit = Builder.CreateLoad(LimitPtr);
 
