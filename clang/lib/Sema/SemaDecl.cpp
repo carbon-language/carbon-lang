@@ -1600,11 +1600,21 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
 /// StorageClassSpecToVarDeclStorageClass - Maps a DeclSpec::SCS to
 /// a VarDecl::StorageClass. Any error reporting is up to the caller:
 /// illegal input values are mapped to VarDecl::None.
+/// If the input declaration context is a linkage specification
+/// with no braces, then Extern is mapped to None.
 static VarDecl::StorageClass
-StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
+StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec,
+                                      DeclContext *DC) {
   switch (StorageClassSpec) {
   case DeclSpec::SCS_unspecified:    return VarDecl::None;
-  case DeclSpec::SCS_extern:         return VarDecl::Extern;
+  case DeclSpec::SCS_extern:
+    // If the current context is a C++ linkage specification
+    // having no braces, then the keyword "extern" is properly part
+    // of the linkage specification itself, rather than being
+    // the written storage class specifier.
+    return (DC && isa<LinkageSpecDecl>(DC) &&
+            !cast<LinkageSpecDecl>(DC)->hasBraces())
+      ? VarDecl::None : VarDecl::Extern;
   case DeclSpec::SCS_static:         return VarDecl::Static;
   case DeclSpec::SCS_auto:           return VarDecl::Auto;
   case DeclSpec::SCS_register:       return VarDecl::Register;
@@ -1619,11 +1629,21 @@ StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
 /// StorageClassSpecToFunctionDeclStorageClass - Maps a DeclSpec::SCS to
 /// a FunctionDecl::StorageClass. Any error reporting is up to the caller:
 /// illegal input values are mapped to FunctionDecl::None.
+/// If the input declaration context is a linkage specification
+/// with no braces, then Extern is mapped to None.
 static FunctionDecl::StorageClass
-StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
+StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec,
+                                           DeclContext *DC) {
   switch (StorageClassSpec) {
   case DeclSpec::SCS_unspecified:    return FunctionDecl::None;
-  case DeclSpec::SCS_extern:         return FunctionDecl::Extern;
+  case DeclSpec::SCS_extern:
+    // If the current context is a C++ linkage specification
+    // having no braces, then the keyword "extern" is properly part
+    // of the linkage specification itself, rather than being
+    // the written storage class specifier.
+    return (DC && isa<LinkageSpecDecl>(DC) &&
+            !cast<LinkageSpecDecl>(DC)->hasBraces())
+      ? FunctionDecl::None : FunctionDecl::Extern;
   case DeclSpec::SCS_static:         return FunctionDecl::Static;
   case DeclSpec::SCS_private_extern: return FunctionDecl::PrivateExtern;
     // Illegal SCSs map to None: error reporting is up to the caller.
@@ -1758,7 +1778,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
     assert(SCSpec != DeclSpec::SCS_typedef &&
            "Parser allowed 'typedef' as storage class VarDecl.");
-    VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+    VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec, 0);
     if (SCSpec == DeclSpec::SCS_mutable) {
       // mutable can only appear on non-static class members, so it's always
       // an error here
@@ -1768,7 +1788,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     }
     SCSpec = DS.getStorageClassSpecAsWritten();
     VarDecl::StorageClass SCAsWritten
-      = StorageClassSpecToVarDeclStorageClass(SCSpec);
+      = StorageClassSpecToVarDeclStorageClass(SCSpec, 0);
 
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0,
@@ -2374,7 +2394,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
   assert(SCSpec != DeclSpec::SCS_typedef &&
          "Parser allowed 'typedef' as storage class VarDecl.");
-  VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+  VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec, 0);
   if (SCSpec == DeclSpec::SCS_mutable) {
     // mutable can only appear on non-static class members, so it's always
     // an error here
@@ -2384,7 +2404,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
   SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
   VarDecl::StorageClass SCAsWritten
-    = StorageClassSpecToVarDeclStorageClass(SCSpec);
+    = StorageClassSpecToVarDeclStorageClass(SCSpec, DC);
 
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (!II) {
@@ -2839,7 +2859,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
   FunctionDecl::StorageClass SCAsWritten
-    = StorageClassSpecToFunctionDeclStorageClass(SCSpec);
+    = StorageClassSpecToFunctionDeclStorageClass(SCSpec, DC);
 
   // Check that the return type is not an abstract class type.
   // For record types, this is done by the AbstractClassUsageDiagnoser once
