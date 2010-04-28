@@ -977,7 +977,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
         // Tell the callee to try to recover.
         return false;
       }
-    
+
       if (isa<TypeDecl>(*R.begin()) || isa<ObjCInterfaceDecl>(*R.begin())) {
         // FIXME: If we ended up with a typo for a type name or
         // Objective-C class name, we're in trouble because the parser
@@ -995,7 +995,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
         return true;
       }
     } else {
-      // FIXME: We found a keyword. Suggest it, but don't provide a fix-it 
+      // FIXME: We found a keyword. Suggest it, but don't provide a fix-it
       // because we aren't able to recover.
       if (SS.isEmpty())
         Diag(R.getNameLoc(), diagnostic_suggest) << Name << Corrected;
@@ -1267,7 +1267,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                          IdentifierInfo *II, bool AllowBuiltinCreation) {
   SourceLocation Loc = Lookup.getNameLoc();
   ObjCMethodDecl *CurMethod = getCurMethodDecl();
-  
+
   // There are two cases to handle here.  1) scoped lookup could have failed,
   // in which case we should look for an ivar.  2) scoped lookup could have
   // found a decl, but that decl is outside the current instance method (i.e.
@@ -1491,7 +1491,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (CheckDerivedToBaseConversion(FromRecordType, URecordType,
                                        FromLoc, FromRange, &BasePath))
         return true;
-      
+
       QualType UType = URecordType;
       if (PointerConversions)
         UType = Context.getPointerType(UType);
@@ -2487,7 +2487,7 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
     }
   }
 
-  assert(BaseType->isDependentType() || Name.isDependentName() || 
+  assert(BaseType->isDependentType() || Name.isDependentName() ||
          isDependentScopeSpecifier(SS));
 
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
@@ -2605,7 +2605,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  if (SemaRef.CorrectTypo(R, 0, &SS, DC, false, Sema::CTC_MemberLookup) && 
+  if (SemaRef.CorrectTypo(R, 0, &SS, DC, false, Sema::CTC_MemberLookup) &&
       !R.empty() &&
       (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
@@ -3150,7 +3150,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
 
-        return Owned(ObjCMessageExpr::Create(Context, 
+        return Owned(ObjCMessageExpr::Create(Context,
                                      OMD->getResultType().getNonReferenceType(),
                                              OpLoc, BaseExpr, Sel,
                                              OMD, NULL, 0, MemberLoc));
@@ -3160,7 +3160,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
                        << MemberName << BaseType);
   }
-  
+
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
   // pointer to a (potentially qualified) interface type.
   if (!IsArrow)
@@ -3246,7 +3246,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
     if (TemplateArgs) {
       // Re-use the lookup done for the template name.
       DecomposeTemplateName(R, Id);
-      
+
       // Re-derive the naming class.
       if (SS.isSet()) {
         NestedNameSpecifier *Qualifier
@@ -3370,7 +3370,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   if (NumArgs < NumArgsInProto) {
     if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
       return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
-        << Fn->getType()->isBlockPointerType() 
+        << Fn->getType()->isBlockPointerType()
         << NumArgsInProto << NumArgs << Fn->getSourceRange();
     Call->setNumArgs(Context, NumArgsInProto);
   }
@@ -3381,7 +3381,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     if (!Proto->isVariadic()) {
       Diag(Args[NumArgsInProto]->getLocStart(),
            diag::err_typecheck_call_too_many_args)
-        << Fn->getType()->isBlockPointerType() 
+        << Fn->getType()->isBlockPointerType()
         << NumArgsInProto << NumArgs << Fn->getSourceRange()
         << SourceRange(Args[NumArgsInProto]->getLocStart(),
                        Args[NumArgs-1]->getLocEnd());
@@ -5856,7 +5856,7 @@ QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
 /// CheckIncrementDecrementOperand - unlike most "Check" methods, this routine
 /// doesn't need to call UsualUnaryConversions or UsualArithmeticConversions.
 QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
-                                              bool isInc) {
+                                              bool isInc, bool isPrefix) {
   if (Op->isTypeDependent())
     return Context.DependentTy;
 
@@ -5919,7 +5919,11 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
   // Now make sure the operand is a modifiable lvalue.
   if (CheckForModifiableLvalue(Op, OpLoc, *this))
     return QualType();
-  return ResType;
+  // In C++, a prefix increment is the same type as the operand. Otherwise
+  // (in C or with postfix), the increment is the unqualified type of the
+  // operand.
+  return isPrefix && getLangOptions().CPlusPlus
+    ? ResType : ResType.getUnqualifiedType();
 }
 
 /// getPrimaryDecl - Helper function for CheckAddressOfOperand().
@@ -6459,7 +6463,9 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   case UnaryOperator::PostDec:
     resultType = CheckIncrementDecrementOperand(Input, OpLoc,
                                                 Opc == UnaryOperator::PreInc ||
-                                                Opc == UnaryOperator::PostInc);
+                                                Opc == UnaryOperator::PostInc,
+                                                Opc == UnaryOperator::PreInc ||
+                                                Opc == UnaryOperator::PreDec);
     break;
   case UnaryOperator::AddrOf:
     resultType = CheckAddressOfOperand(Input, OpLoc);
@@ -7208,7 +7214,7 @@ Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
 
-static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType, 
+static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
                                            Expr *SrcExpr, FixItHint &Hint) {
   if (!SemaRef.getLangOptions().ObjC1)
     return;
@@ -7311,7 +7317,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     FirstType = DstType;
     SecondType = SrcType;
     break;
-      
+
   case AA_Returning:
   case AA_Passing:
   case AA_Converting:
@@ -7322,7 +7328,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     SecondType = DstType;
     break;
   }
-  
+
   Diag(Loc, DiagKind) << FirstType << SecondType << Action
     << SrcExpr->getSourceRange() << Hint;
   if (Complained)
@@ -7439,10 +7445,10 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     D->setUsed(true);
     return;
   }
-  
+
   if (!isa<VarDecl>(D) && !isa<FunctionDecl>(D))
     return;
-  
+
   // Do not mark anything as "used" within a dependent context; wait for
   // an instantiation.
   if (CurContext->isDependentContext())
