@@ -212,14 +212,28 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SelectAllBasicBlocks(Fn);
 
-  // Release function-specific state. SDB and CurDAG are already cleared
-  // at this point.
-  FuncInfo->clear();
-
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
-  RegInfo->EmitLiveInCopies(MF->begin(), TRI, TII);
+  MachineBasicBlock *EntryMBB = MF->begin();
+  RegInfo->EmitLiveInCopies(EntryMBB, TRI, TII);
+
+  // Insert DBG_VALUE instructions for function arguments to the entry block.
+  for (unsigned i = 0, e = FuncInfo->ArgDbgValues.size(); i != e; ++i) {
+    MachineInstr *MI = FuncInfo->ArgDbgValues[e-i-1];
+    unsigned Reg = MI->getOperand(0).getReg();
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
+      EntryMBB->insert(EntryMBB->begin(), MI);
+    else {
+      MachineInstr *Def = RegInfo->getVRegDef(Reg);
+      MachineBasicBlock::iterator InsertPos = Def;
+      EntryMBB->insert(llvm::next(InsertPos), MI);
+    }
+  }
+
+  // Release function-specific state. SDB and CurDAG are already cleared
+  // at this point.
+  FuncInfo->clear();
 
   return true;
 }

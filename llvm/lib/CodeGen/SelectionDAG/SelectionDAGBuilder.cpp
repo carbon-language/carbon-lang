@@ -3681,6 +3681,41 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
   return DAG.getNode(ISD::FPOWI, DL, LHS.getValueType(), LHS, RHS);
 }
 
+/// EmitFuncArgumentDbgValue - If the DbgValueInst is a dbg_value of a function
+/// argument, create the corresponding DBG_VALUE machine instruction for it now.
+/// At the end of instruction selection, they will be inserted to the entry BB.
+void
+SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
+                                              const Value *V, MDNode *Variable,
+                                              uint64_t Offset, SDValue &N) {
+  if (!isa<Argument>(V))
+    return;
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineBasicBlock *MBB = FuncInfo.MBBMap[DI.getParent()];
+  if (MBB != &MF.front())
+    return;
+
+  unsigned Reg = 0;
+  if (N.getOpcode() == ISD::CopyFromReg) {
+    Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
+    if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+      MachineRegisterInfo &RegInfo = MF.getRegInfo();
+      unsigned PR = RegInfo.getLiveInPhysReg(Reg);
+      if (PR)
+        Reg = PR;
+    }
+  }
+
+  if (!Reg)
+    Reg = FuncInfo.ValueMap[V];
+
+  const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
+  MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
+                                    TII->get(TargetOpcode::DBG_VALUE))
+    .addReg(Reg).addImm(Offset).addMetadata(Variable);
+  FuncInfo.ArgDbgValues.push_back(&*MIB);
+}
 
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
@@ -3864,6 +3899,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
+        EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N);
         SDV = DAG.getDbgValue(Variable, N.getNode(),
                               N.getResNo(), Offset, dl, SDNodeOrder);
         DAG.AddDbgValue(SDV, N.getNode(), false);

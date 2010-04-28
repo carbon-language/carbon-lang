@@ -75,6 +75,8 @@ public:
   /// anywhere in the function.
   DenseMap<const AllocaInst*, int> StaticAllocaMap;
 
+  SmallVector<MachineInstr*, 8> ArgDbgValues;
+
 #ifndef NDEBUG
   SmallSet<const Instruction *, 8> CatchInfoLost;
   SmallSet<const Instruction *, 8> CatchInfoFound;
