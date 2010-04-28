@@ -9595,9 +9595,13 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
 }
 
 static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
+                                TargetLowering::DAGCombinerInfo &DCI,
                                 const X86Subtarget *Subtarget) {
+  if (!DCI.isBeforeLegalize())
+    return SDValue();
+
   EVT VT = N->getValueType(0);
-  if (VT != MVT::i64 || !Subtarget->is64Bit())
+  if (VT != MVT::i16 && VT != MVT::i32 && VT != MVT::i64)
     return SDValue();
 
   // fold (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
@@ -9606,6 +9610,8 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
     std::swap(N0, N1);
   if (N0.getOpcode() != ISD::SHL || N1.getOpcode() != ISD::SRL)
+    return SDValue();
+  if (!N0.hasOneUse() || !N1.hasOneUse())
     return SDValue();
 
   SDValue ShAmt0 = N0.getOperand(1);
@@ -9629,10 +9635,11 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
     std::swap(ShAmt0, ShAmt1);
   }
 
+  unsigned Bits = VT.getSizeInBits();
   if (ShAmt1.getOpcode() == ISD::SUB) {
     SDValue Sum = ShAmt1.getOperand(0);
     if (ConstantSDNode *SumC = dyn_cast<ConstantSDNode>(Sum)) {
-      if (SumC->getSExtValue() == 64 &&
+      if (SumC->getSExtValue() == Bits &&
           ShAmt1.getOperand(1) == ShAmt0)
         return DAG.getNode(Opc, DL, VT,
                            Op0, Op1,
@@ -9642,7 +9649,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   } else if (ConstantSDNode *ShAmt1C = dyn_cast<ConstantSDNode>(ShAmt1)) {
     ConstantSDNode *ShAmt0C = dyn_cast<ConstantSDNode>(ShAmt0);
     if (ShAmt0C &&
-        ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue() == 64)
+        ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue() == Bits)
       return DAG.getNode(Opc, DL, VT,
                          N0.getOperand(0), N1.getOperand(0),
                          DAG.getNode(ISD::TRUNCATE, DL,
@@ -9921,7 +9928,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
-  case ISD::OR:             return PerformOrCombine(N, DAG, Subtarget);
+  case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);

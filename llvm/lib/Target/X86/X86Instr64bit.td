@@ -2156,21 +2156,6 @@ def : Pat<(sra GR64:$src1, (and CL, 63)),
 def : Pat<(store (sra (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
           (SAR64mCL addr:$dst)>;
 
-// Double shift patterns
-def : Pat<(shrd GR64:$src1, (i8 imm:$amt1), GR64:$src2, (i8 imm)),
-          (SHRD64rri8 GR64:$src1, GR64:$src2, (i8 imm:$amt1))>;
-
-def : Pat<(store (shrd (loadi64 addr:$dst), (i8 imm:$amt1),
-                       GR64:$src2, (i8 imm)), addr:$dst),
-          (SHRD64mri8 addr:$dst, GR64:$src2, (i8 imm:$amt1))>;
-
-def : Pat<(shld GR64:$src1, (i8 imm:$amt1), GR64:$src2, (i8 imm)),
-          (SHLD64rri8 GR64:$src1, GR64:$src2, (i8 imm:$amt1))>;
-
-def : Pat<(store (shld (loadi64 addr:$dst), (i8 imm:$amt1),
-                       GR64:$src2, (i8 imm)), addr:$dst),
-          (SHLD64mri8 addr:$dst, GR64:$src2, (i8 imm:$amt1))>;
-
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 let AddedComplexity = 5 in {  // Try this before the selecting to OR
 def : Pat<(or_is_add GR64:$src1, i64immSExt8:$src2),
