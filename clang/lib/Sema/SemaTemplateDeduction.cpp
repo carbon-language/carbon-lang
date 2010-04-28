@@ -1417,9 +1417,11 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
 
   // Substitute the deduced template arguments into the function template
   // declaration to produce the function template specialization.
+  DeclContext *Owner = FunctionTemplate->getDeclContext();
+  if (FunctionTemplate->getFriendObjectKind())
+    Owner = FunctionTemplate->getLexicalDeclContext();
   Specialization = cast_or_null<FunctionDecl>(
-                      SubstDecl(FunctionTemplate->getTemplatedDecl(),
-                                FunctionTemplate->getDeclContext(),
+                      SubstDecl(FunctionTemplate->getTemplatedDecl(), Owner,
                          MultiLevelTemplateArgumentList(*DeducedArgumentList)));
   if (!Specialization)
     return TDK_SubstitutionFailure;

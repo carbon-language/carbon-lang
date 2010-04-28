@@ -127,3 +127,18 @@ namespace PR6022 {
   };
 }
 
+namespace FriendTemplateDefinition {
+  template<unsigned > struct int_c { };
+
+  template<typename T>
+  struct X {
+    template<unsigned N>
+    friend void f(X, int_c<N>) {
+      int value = N;
+    };
+  };
+
+  void test_X(X<int> x, int_c<5> i5) {
+    f(x, i5);
+  }
+}
