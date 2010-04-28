@@ -779,12 +779,16 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
   // type is an incomplete struct). Use a fake type instead, and make
   // sure not to try to set attributes.
   bool IsIncompleteFunction = false;
-  if (!isa<llvm::FunctionType>(Ty)) {
-    Ty = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                                 std::vector<const llvm::Type*>(), false);
+
+  const llvm::FunctionType *FTy;
+  if (isa<llvm::FunctionType>(Ty)) {
+    FTy = cast<llvm::FunctionType>(Ty);
+  } else {
+    FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
+                                  std::vector<const llvm::Type*>(), false);
     IsIncompleteFunction = true;
   }
-  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty),
+  llvm::Function *F = llvm::Function::Create(FTy,
                                              llvm::Function::ExternalLinkage,
                                              MangledName, &getModule());
   assert(F->getName() == MangledName && "name was uniqued!");
@@ -826,7 +830,14 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
     }
   }
 
-  return F;
+  // Make sure the result is of the requested type.
+  if (!IsIncompleteFunction) {
+    assert(F->getType()->getElementType() == Ty);
+    return F;
+  }
+
+  const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
+  return llvm::ConstantExpr::getBitCast(F, PTy);
 }
 
 /// GetAddrOfFunction - Return the address of the given function.  If Ty is

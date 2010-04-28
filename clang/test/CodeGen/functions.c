@@ -47,3 +47,15 @@ void f7(float f, float g) {
 // CHECK: define void @f7(float{{.*}}, float{{.*}})
 // CHECK: call void @f6(float{{.*}}, float{{.*}})
 }
+
+// PR6911 - incomplete function types
+struct Incomplete;
+void f8_callback(struct Incomplete);
+void f8_user(void (*callback)(struct Incomplete));
+void f8_test() {
+  f8_user(&f8_callback);
+// CHECK: define void @f8_test()
+// CHECK: call void @f8_user({{.*}}* bitcast (void ()* @f8_callback to {{.*}}*))
+// CHECK: declare void @f8_user({{.*}}*)
+// CHECK: declare void @f8_callback()
+}
