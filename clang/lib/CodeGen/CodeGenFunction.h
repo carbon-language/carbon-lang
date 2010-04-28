@@ -473,6 +473,8 @@ public:
   /// GenerateObjCGetter - Synthesize an Objective-C property getter function.
   void GenerateObjCGetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
+  void GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
+                                  ObjCMethodDecl *MD, bool ctor);
 
   /// GenerateObjCSetter - Synthesize an Objective-C property setter function
   /// for the given property.

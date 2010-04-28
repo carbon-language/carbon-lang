@@ -397,6 +397,55 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   FinishFunction();
 }
 
+void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
+                                                 ObjCMethodDecl *MD,
+                                                 bool ctor) {
+  llvm::SmallVector<CXXBaseOrMemberInitializer *, 8> IvarInitializers;
+  MD->createImplicitParams(CGM.getContext(), IMP->getClassInterface());
+  StartObjCMethod(MD, IMP->getClassInterface());
+  for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
+       E = IMP->init_end(); B != E; ++B) {
+    CXXBaseOrMemberInitializer *Member = (*B);
+    IvarInitializers.push_back(Member);
+  }
+  if (ctor) {
+    for (unsigned I = 0, E = IvarInitializers.size(); I != E; ++I) {
+      CXXBaseOrMemberInitializer *IvarInit = IvarInitializers[I];
+      FieldDecl *Field = IvarInit->getMember();
+      QualType FieldType = Field->getType();
+      if (CGM.getContext().getAsConstantArrayType(FieldType))
+        assert(false && "Construction objc arrays NYI");
+      ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
+      EmitAggExpr(IvarInit->getInit(), LV.getAddress(),
+                  LV.isVolatileQualified(), false, true);
+    }
+    // constructor returns 'self'.
+    CodeGenTypes &Types = CGM.getTypes();
+    QualType IdTy(CGM.getContext().getObjCIdType());
+    llvm::Value *SelfAsId =
+      Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
+    EmitReturnOfRValue(RValue::get(SelfAsId), IdTy);
+  }
+  else {
+    // dtor
+    for (size_t i = IvarInitializers.size(); i > 0; --i) {
+      FieldDecl *Field = IvarInitializers[i - 1]->getMember();
+      QualType FieldType = Field->getType();
+      if (CGM.getContext().getAsConstantArrayType(FieldType))
+        assert(false && "Destructing objc arrays NYI");
+      ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
+                                    LoadObjCSelf(), Ivar, 0);
+      const RecordType *RT = FieldType->getAs<RecordType>();
+      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+      EmitCXXDestructorCall(FieldClassDecl->getDestructor(CGM.getContext()),
+                            Dtor_Complete, LV.getAddress());
+    }    
+  }
+  FinishFunction();
+}
+
 bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
   CGFunctionInfo::const_arg_iterator it = FI.arg_begin();
   it++; it++;

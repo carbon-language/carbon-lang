@@ -2083,6 +2083,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                      Interface->protocol_begin(),
                      Interface->protocol_end());
   unsigned Flags = eClassFlags_Factory;
+  if (ID->getNumIvarInitializers())
+    Flags |= eClassFlags_HasCXXStructors;
   unsigned Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize() / 8;
 
@@ -4497,6 +4499,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
+  if (ID->getNumIvarInitializers())
+    flags |= eClassFlags_ABI2_HasCXXStructors;
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
     flags |= CLS_ROOT;
@@ -4531,6 +4535,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   flags = CLS;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
+  if (ID->getNumIvarInitializers())
+    flags |= eClassFlags_ABI2_HasCXXStructors;
 
   if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
     flags |= CLS_EXCEPTION;

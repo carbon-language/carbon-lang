@@ -1820,6 +1820,39 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
   }
 }
 
+/// EmitObjCIvarInitializations - Emit information for ivar initialization
+/// for an implementation.
+void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
+  if (!Features.NeXTRuntime || D->getNumIvarInitializers() == 0)
+    return;
+  DeclContext* DC = const_cast<DeclContext*>(dyn_cast<DeclContext>(D));
+  assert(DC && "EmitObjCIvarInitializations - null DeclContext");
+  IdentifierInfo *II = &getContext().Idents.get(".cxx_destruct");
+  Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
+  ObjCMethodDecl *DTORMethod = ObjCMethodDecl::Create(getContext(), 
+                                                  D->getLocation(),
+                                                  D->getLocation(), cxxSelector,
+                                                  getContext().VoidTy, 0, 
+                                                  DC, true, false, true,
+                                                  ObjCMethodDecl::Required);
+  D->addInstanceMethod(DTORMethod);
+  CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, DTORMethod, false);
+  
+  II = &getContext().Idents.get(".cxx_construct");
+  cxxSelector = getContext().Selectors.getSelector(0, &II);
+  // The constructor returns 'self'.
+  ObjCMethodDecl *CTORMethod = ObjCMethodDecl::Create(getContext(), 
+                                                D->getLocation(),
+                                                D->getLocation(), cxxSelector,
+                                                getContext().getObjCIdType(), 0, 
+                                                DC, true, false, true,
+                                                ObjCMethodDecl::Required);
+  D->addInstanceMethod(CTORMethod);
+  CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, CTORMethod, true);
+  
+
+}
+
 /// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
   for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
@@ -1916,6 +1949,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCImplementation: {
     ObjCImplementationDecl *OMD = cast<ObjCImplementationDecl>(D);
     EmitObjCPropertyImplementations(OMD);
+    EmitObjCIvarInitializations(OMD);
     Runtime->GenerateClass(OMD);
     break;
   }
