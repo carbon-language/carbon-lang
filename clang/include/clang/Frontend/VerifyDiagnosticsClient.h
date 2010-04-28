@@ -25,7 +25,10 @@ class TextDiagnosticBuffer;
 /// USING THE DIAGNOSTIC CHECKER:
 ///
 /// Indicating that a line expects an error or a warning is simple. Put a
-/// comment on the line that has the diagnostic, use "expected-{error,warning}"
+/// comment on the line that has the diagnostic, use:
+///
+///     expected-{error,warning,note}
+///
 /// to tag if it's an expected error or warning, and place the expected text
 /// between {{ and }} markers. The full text doesn't have to be included, only
 /// enough to ensure that the correct diagnostic was emitted.
@@ -44,6 +47,20 @@ class TextDiagnosticBuffer;
 /// diagnostic to appear as many times as specified. Example:
 ///
 ///   void f(); // expected-note 2 {{previous declaration is here}}
+///
+/// Regex matching mode may be selected by appending '-re' to type. Example:
+///
+///   expected-error-re
+///
+/// Examples matching error: "variable has incomplete type 'struct s'"
+///
+///   // expected-error {{variable has incomplete type 'struct s'}}
+///   // expected-error {{variable has incomplete type}}
+///
+///   // expected-error-re {{variable has has type 'struct .'}}
+///   // expected-error-re {{variable has has type 'struct .*'}}
+///   // expected-error-re {{variable has has type 'struct (.*)'}}
+///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
 ///
 class VerifyDiagnosticsClient : public DiagnosticClient {
 public:

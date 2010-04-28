@@ -72,12 +72,12 @@ def err_fe_pth_file_has_no_source_header : Error<
 def warn_fe_macro_contains_embedded_newline : Warning<
     "macro '%0' contains embedded newline, text after the newline is ignored.">;
 
-def err_verify_bogus_characters : Error<
-    "bogus characters before '{{' in expected string">;
 def err_verify_missing_start : Error<
-    "cannot find start ('{{') of expected string">;
+    "cannot find start ('{{') of expected %0">;
 def err_verify_missing_end : Error<
-    "cannot find end ('}}') of expected string">;
+    "cannot find end ('}}') of expected %0">;
+def err_verify_invalid_content : Error<
+    "invalid expected %0: %1">;
 def err_verify_inconsistent_diags : Error<
     "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: %2">;
 
