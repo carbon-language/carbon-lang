@@ -19,4 +19,20 @@ namespace PR5880 {
   struct B { ArrayOfHasM a; };
   A<B> x;
   A<HasM> x2; // expected-note{{in instantiation of}}
+
+  template<typename T>
+  struct AnonymousUnion {
+    union {
+      int i;
+      float f;
+    };
+  };
+
+  template<typename T>
+  void test_anon_union() {
+    int array1[__builtin_offsetof(AnonymousUnion<T>, f) == 0? 1 : -1];
+    int array2[__builtin_offsetof(AnonymousUnion<int>, f) == 0? 1 : -1];
+  }
+
+  template void test_anon_union<int>();
 }

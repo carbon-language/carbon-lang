@@ -4219,6 +4219,9 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
     case Node::Identifier:
       Comp.isBrackets = false;
       Comp.U.IdentInfo = ON.getFieldName();
+      if (!Comp.U.IdentInfo)
+        continue;
+        
       break;
     }
     
