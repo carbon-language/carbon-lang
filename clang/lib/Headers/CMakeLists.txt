@@ -1,5 +1,6 @@
 set(files
   altivec.h
+  arm_neon.h
   emmintrin.h	
   float.h		
   iso646.h	
