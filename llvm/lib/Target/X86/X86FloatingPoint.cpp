@@ -1088,8 +1088,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // 'f' constraint.  These should be turned into the current ST(x) register
     // in the machine instr.  Also, any kills should be explicitly popped after
     // the inline asm.
-    unsigned Kills[7];
-    unsigned NumKills = 0;
+    unsigned Kills = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
       if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
@@ -1103,7 +1102,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       // asm.  We just remember it for now, and pop them all off at the end in
       // a batch.
       if (Op.isKill())
-        Kills[NumKills++] = FPReg;
+        Kills |= 1U << FPReg;
     }
 
     // If this asm kills any FP registers (is the last use of them) we must
@@ -1114,9 +1113,11 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // Note: this might be a non-optimal pop sequence.  We might be able to do
     // better by trying to pop in stack order or something.
     MachineBasicBlock::iterator InsertPt = MI;
-    while (NumKills)
-      freeStackSlotAfter(InsertPt, Kills[--NumKills]);
-
+    while (Kills) {
+      unsigned FPReg = CountTrailingZeros_32(Kills);
+      freeStackSlotAfter(InsertPt, FPReg);
+      Kills &= ~(1U << FPReg);
+    }
     // Don't delete the inline asm!
     return;
   }
