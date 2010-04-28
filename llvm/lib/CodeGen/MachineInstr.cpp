@@ -1187,7 +1187,15 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
       if (TOI.isOptionalDef())
         OS << "opt:";
     }
-    MO.print(OS, TM);
+    if (isDebugValue() && MO.isMetadata()) {
+      // Pretty print DBG_VALUE instructions.
+      const MDNode *MD = MO.getMetadata();
+      if (const MDString *MDS = dyn_cast<MDString>(MD->getOperand(2)))
+        OS << "!\"" << MDS->getString() << '\"';
+      else
+        MO.print(OS, TM);
+    } else
+      MO.print(OS, TM);
   }
 
   // Briefly indicate whether any call clobbers were omitted.
