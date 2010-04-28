@@ -5918,15 +5918,20 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     unsigned NumOperands = 0;
     switch (Op.getNode()->getOpcode()) {
     case ISD::ADD:
-      // Due to an isel shortcoming, be conservative if this add is likely to
-      // be selected as part of a load-modify-store instruction. When the root
-      // node in a match is a store, isel doesn't know how to remap non-chain
-      // non-flag uses of other nodes in the match, such as the ADD in this
-      // case. This leads to the ADD being left around and reselected, with
-      // the result being two adds in the output.
+      // Due to an isel shortcoming, be conservative if this add is
+      // likely to be selected as part of a load-modify-store
+      // instruction. When the root node in a match is a store, isel
+      // doesn't know how to remap non-chain non-flag uses of other
+      // nodes in the match, such as the ADD in this case. This leads
+      // to the ADD being left around and reselected, with the result
+      // being two adds in the output.  Alas, even if none our users
+      // are stores, that doesn't prove we're O.K.  Ergo, if we have
+      // any parents that aren't CopyToReg or SETCC, eschew INC/DEC.
+      // A better fix seems to require climbing the DAG back to the
+      // root, and it doesn't seem to be worth the effort.
       for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-           UE = Op.getNode()->use_end(); UI != UE; ++UI)
-        if (UI->getOpcode() == ISD::STORE)
+             UE = Op.getNode()->use_end(); UI != UE; ++UI)
+        if (UI->getOpcode() != ISD::CopyToReg && UI->getOpcode() != ISD::SETCC)
           goto default_case;
       if (ConstantSDNode *C =
             dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1))) {
