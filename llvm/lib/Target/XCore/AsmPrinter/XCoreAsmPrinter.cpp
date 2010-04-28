@@ -148,7 +148,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     llvm_unreachable("Unknown linkage type!");
   }
 
-  EmitAlignment(Align, GV, 2);
+  EmitAlignment(Align > 2 ? Align : 2, GV);
   
   unsigned Size = TD->getTypeAllocSize(C->getType());
   if (GV->isThreadLocal()) {

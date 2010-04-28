@@ -204,17 +204,13 @@ namespace llvm {
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
     /// byte alignment.  If a global value is specified, and if that global has
     /// an explicit alignment requested, it will unconditionally override the
-    /// alignment request.  However, if ForcedAlignBits is specified, this value
-    /// has final say: the ultimate alignment will be the max of ForcedAlignBits
-    /// and the alignment computed with NumBits and the global.
+    /// alignment request.
     ///
     /// The algorithm is:
     ///     Align = NumBits;
-    ///     if (GV && GV->hasalignment) Align = GV->getalignment();
-    ///     Align = std::max(Align, ForcedAlignBits);
+    ///     if (GV && GV->hasalignment) Align = GV->getAlignment();
     ///
-    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
-                       unsigned ForcedAlignBits = 0) const;
+    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
     
     /// EmitBasicBlockStart - This method prints the label for the specified
     /// MachineBasicBlock, an alignment (if present) and a comment describing
