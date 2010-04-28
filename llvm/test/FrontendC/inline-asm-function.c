@@ -1,5 +1,5 @@
 // RUN: %llvmgcc -S %s -fasm-blocks -o - -O | grep naked
-// PR2094
+// 7533078 (partial).
 
 asm int f() {
   xyz
