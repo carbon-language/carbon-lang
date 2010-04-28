@@ -46,6 +46,9 @@ else
 LLVM_OPTIMIZED := yes
 endif
 
+# Default to not install libLTO.dylib.
+INSTALL_LIBLTO := no
+
 ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
 endif
@@ -59,7 +62,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
-	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) \
+	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 # installhdrs does nothing, because the headers aren't useful until
