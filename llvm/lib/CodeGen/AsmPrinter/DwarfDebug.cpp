@@ -3069,7 +3069,7 @@ void DwarfDebug::emitCommonDebugFrame() {
 
   Asm->EmitFrameMoves(Moves, 0, false);
 
-  Asm->EmitAlignment(2, 0, 0, false);
+  Asm->EmitAlignment(2);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common_end"));
 }
 
@@ -3111,7 +3111,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
 
   Asm->EmitFrameMoves(DebugFrameInfo.Moves, FuncBeginSym, false);
 
-  Asm->EmitAlignment(2, 0, 0, false);
+  Asm->EmitAlignment(2);
   Asm->OutStreamer.EmitLabel(DebugFrameEnd);
 }
 

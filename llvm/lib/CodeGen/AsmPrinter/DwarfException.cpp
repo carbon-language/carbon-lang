@@ -152,8 +152,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // On Darwin the linker honors the alignment of eh_frame, which means it must
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
   // holes which confuse readers of eh_frame.
-  Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3,
-                     0, 0, false);
+  Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_common_end", Index));
 }
 
@@ -255,8 +254,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // On Darwin the linker honors the alignment of eh_frame, which means it
     // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise you
     // get holes which confuse readers of eh_frame.
-    Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3,
-                       0, 0, false);
+    Asm->EmitAlignment(Asm->getTargetData().getPointerSize() == 4 ? 2 : 3);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_frame_end",
                                                   EHFrameInfo.Number));
 
@@ -685,7 +683,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Begin the exception table.
   Asm->OutStreamer.SwitchSection(LSDASection);
-  Asm->EmitAlignment(2, 0, 0, false);
+  Asm->EmitAlignment(2);
 
   // Emit the LSDA.
   MCSymbol *GCCETSym = 
@@ -884,7 +882,7 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitULEB128(TypeID, TypeID != 0 ? "Exception specification" : 0);
   }
 
-  Asm->EmitAlignment(2, 0, 0, false);
+  Asm->EmitAlignment(2);
 }
 
 /// EndModule - Emit all exception information that should come after the
