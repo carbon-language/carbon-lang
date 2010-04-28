@@ -25,7 +25,6 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <vector>
 
 using namespace clang;
 
@@ -376,88 +375,79 @@ std::string NamedDecl::getQualifiedNameAsString() const {
 }
 
 std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
-  // FIXME: Collect contexts, then accumulate names to avoid unnecessary
-  // std::string thrashing.
-  std::vector<std::string> Names;
-  std::string QualName;
   const DeclContext *Ctx = getDeclContext();
 
   if (Ctx->isFunctionOrMethod())
     return getNameAsString();
 
-  while (Ctx) {
+  typedef llvm::SmallVector<const DeclContext *, 8> ContextsTy;
+  ContextsTy Contexts;
+
+  // Collect contexts.
+  while (Ctx && isa<NamedDecl>(Ctx)) {
+    Contexts.push_back(Ctx);
+    Ctx = Ctx->getParent();
+  };
+
+  std::string QualName;
+  llvm::raw_string_ostream OS(QualName);
+
+  for (ContextsTy::reverse_iterator I = Contexts.rbegin(), E = Contexts.rend();
+       I != E; ++I) {
     if (const ClassTemplateSpecializationDecl *Spec
-          = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
+          = dyn_cast<ClassTemplateSpecializationDecl>(*I)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                            TemplateArgs.getFlatArgumentList(),
                                            TemplateArgs.flat_size(),
                                            P);
-      Names.push_back(Spec->getIdentifier()->getNameStart() + TemplateArgsStr);
-    } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(Ctx)) {
+      OS << Spec->getName() << TemplateArgsStr;
+    } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(*I)) {
       if (ND->isAnonymousNamespace())
-        Names.push_back("<anonymous namespace>");
+        OS << "<anonymous namespace>";
       else
-        Names.push_back(ND->getNameAsString());
-    } else if (const RecordDecl *RD = dyn_cast<RecordDecl>(Ctx)) {
-      if (!RD->getIdentifier()) {
-        std::string RecordString = "<anonymous ";
-        RecordString += RD->getKindName();
-        RecordString += ">";
-        Names.push_back(RecordString);
-      } else {
-        Names.push_back(RD->getNameAsString());
-      }
-    } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Ctx)) {
-      std::string Proto = FD->getNameAsString();
-
+        OS << ND;
+    } else if (const RecordDecl *RD = dyn_cast<RecordDecl>(*I)) {
+      if (!RD->getIdentifier())
+        OS << "<anonymous " << RD->getKindName() << '>';
+      else
+        OS << RD;
+    } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       const FunctionProtoType *FT = 0;
       if (FD->hasWrittenPrototype())
         FT = dyn_cast<FunctionProtoType>(FD->getType()->getAs<FunctionType>());
 
-      Proto += "(";
+      OS << FD << '(';
       if (FT) {
-        llvm::raw_string_ostream POut(Proto);
         unsigned NumParams = FD->getNumParams();
         for (unsigned i = 0; i < NumParams; ++i) {
           if (i)
-            POut << ", ";
+            OS << ", ";
           std::string Param;
           FD->getParamDecl(i)->getType().getAsStringInternal(Param, P);
-          POut << Param;
+          OS << Param;
         }
 
         if (FT->isVariadic()) {
           if (NumParams > 0)
-            POut << ", ";
-          POut << "...";
+            OS << ", ";
+          OS << "...";
         }
       }
-      Proto += ")";
-
-      Names.push_back(Proto);
-    } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
-      Names.push_back(ND->getNameAsString());
-    else
-      break;
-
-    Ctx = Ctx->getParent();
+      OS << ')';
+    } else {
+      OS << cast<NamedDecl>(*I);
+    }
+    OS << "::";
   }
 
-  std::vector<std::string>::reverse_iterator
-    I = Names.rbegin(),
-    End = Names.rend();
-
-  for (; I!=End; ++I)
-    QualName += *I + "::";
-
   if (getDeclName())
-    QualName += getNameAsString();
+    OS << this;
   else
-    QualName += "<anonymous>";
+    OS << "<anonymous>";
 
-  return QualName;
+  return OS.str();
 }
 
 bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
