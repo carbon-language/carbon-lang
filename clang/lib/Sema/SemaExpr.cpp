@@ -1232,10 +1232,11 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                         DeclarationName Name,
                                         SourceLocation NameLoc) {
   DeclContext *DC;
-  if (!(DC = computeDeclContext(SS, false)) ||
-      DC->isDependentContext() ||
-      RequireCompleteDeclContext(SS))
+  if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
     return BuildDependentDeclRefExpr(SS, Name, NameLoc, 0);
+
+  if (RequireCompleteDeclContext(SS))
+    return ExprError();
 
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
   LookupQualifiedName(R, DC);
