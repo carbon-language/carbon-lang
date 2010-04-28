@@ -178,6 +178,13 @@ void MDNode::destroy() {
   free(this);
 }
 
+/// isFunctionLocalValue - Return true if this is a value that would require a
+/// function-local MDNode.
+static bool isFunctionLocalValue(Value *V) {
+  return isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
+         (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal());
+}
+
 MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
                           unsigned NumVals, FunctionLocalness FL,
                           bool Insert) {
@@ -188,8 +195,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
     for (unsigned i = 0; i != NumVals; ++i) {
       Value *V = Vals[i];
       if (!V) continue;
-      if (isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
-          (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal())) {
+      if (isFunctionLocalValue(V)) {
         isFunctionLocal = true;
         break;
       }
@@ -262,6 +268,13 @@ void MDNode::setIsNotUniqued() {
 void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   Value *From = *Op;
 
+  // If is possible that someone did GV->RAUW(inst), replacing a global variable
+  // with an instruction or some other function-local object.  If this is a
+  // non-function-local MDNode, it can't point to a function-local object.
+  // Handle this case by implicitly dropping the MDNode reference to null.
+  if (!isFunctionLocal() && To && isFunctionLocalValue(To))
+    To = 0;
+  
   if (From == To)
     return;
 
