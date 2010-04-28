@@ -53,4 +53,12 @@ int x[__builtin_offsetof(union x, x)];
 struct incomplete; // expected-note 2 {{forward declaration of 'struct incomplete'}}
 int test1[__builtin_offsetof(struct incomplete, foo)]; // expected-error {{offsetof of incomplete type 'struct incomplete'}}
 
-int test1[__builtin_offsetof(struct incomplete[10], [4].foo)]; // expected-error {{array has incomplete element type 'struct incomplete'}}
+int test2[__builtin_offsetof(struct incomplete[10], [4].foo)]; // expected-error {{array has incomplete element type 'struct incomplete'}}
+
+// Bitfields
+struct has_bitfields {
+  int i : 7;
+  int j : 12; // expected-note{{bit-field is declared here}}
+};
+
+int test3 = __builtin_offsetof(struct has_bitfields, j); // expected-error{{cannot compute offset of bit-field 'j'}}

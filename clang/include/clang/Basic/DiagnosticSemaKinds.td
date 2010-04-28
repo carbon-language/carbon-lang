@@ -1817,6 +1817,7 @@ def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">;
 def warn_offsetof_non_pod_type : ExtWarn<"offset of on non-POD type %0">,
   InGroup<InvalidOffsetof>;
+def err_offsetof_bitfield : Error<"cannot compute offset of bit-field %0">;
 
 def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,

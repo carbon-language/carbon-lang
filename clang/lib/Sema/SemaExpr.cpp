@@ -6718,10 +6718,20 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
                        << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, 
                                                               OC.LocEnd));
     
-    // FIXME: C99 Verify that MemberDecl isn't a bitfield.
-    
+    // C99 7.17p3:
+    //   (If the specified member is a bit-field, the behavior is undefined.)
+    //
+    // We diagnose this as an error.
+    if (MemberDecl->getBitWidth()) {
+      Diag(OC.LocEnd, diag::err_offsetof_bitfield)
+        << MemberDecl->getDeclName()
+        << SourceRange(BuiltinLoc, RParenLoc);
+      Diag(MemberDecl->getLocation(), diag::note_bitfield_decl);
+      return ExprError();
+    }
+      
     if (cast<RecordDecl>(MemberDecl->getDeclContext())->
-        isAnonymousStructOrUnion()) {
+                                                isAnonymousStructOrUnion()) {
       llvm::SmallVector<FieldDecl*, 4> Path;
       BuildAnonymousStructUnionMemberPath(MemberDecl, Path);
       unsigned n = Path.size();
@@ -6853,6 +6863,18 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       if (!MemberDecl)
         return ExprError(Diag(BuiltinLoc, diag::err_no_member)
                          << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, OC.LocEnd));
+      
+      // C99 7.17p3:
+      //   (If the specified member is a bit-field, the behavior is undefined.)
+      //
+      // We diagnose this as an error.
+      if (MemberDecl->getBitWidth()) {
+        Diag(OC.LocEnd, diag::err_offsetof_bitfield)
+          << MemberDecl->getDeclName()
+          << SourceRange(BuiltinLoc, RPLoc);
+        Diag(MemberDecl->getLocation(), diag::note_bitfield_decl);
+        return ExprError();
+      }
       
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.
