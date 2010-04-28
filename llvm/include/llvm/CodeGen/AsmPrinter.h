@@ -34,6 +34,7 @@ namespace llvm {
   class MachineBasicBlock;
   class MachineFunction;
   class MachineInstr;
+  class MachineLocation;
   class MachineLoopInfo;
   class MachineLoop;
   class MachineConstantPool;
@@ -368,7 +369,11 @@ namespace llvm {
     /// that Label lives in.
     void EmitSectionOffset(const MCSymbol *Label,
                            const MCSymbol *SectionLabel) const;
-    
+
+    /// getDebugValueLocation - Get location information encoded by DBG_VALUE
+    /// operands.
+    virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
+
     //===------------------------------------------------------------------===//
     // Dwarf Lowering Routines
     //===------------------------------------------------------------------===//

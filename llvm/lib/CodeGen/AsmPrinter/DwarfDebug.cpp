@@ -1602,6 +1602,15 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
           updated = addConstantValue(VariableDie, DV, DVInsn->getOperand(0));
         else if (DVInsn->getOperand(0).isFPImm()) 
           updated = addConstantFPValue(VariableDie, DV, DVInsn->getOperand(0));
+      } else {
+        MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
+        if (Location.getReg()) {
+          addAddress(VariableDie, dwarf::DW_AT_location, Location);
+          if (MCSymbol *VS = DV->getDbgValueLabel())
+            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
+                     VS);
+          updated = true;
+        }
       }
       if (!updated) {
         // If variableDie is not updated then DBG_VALUE instruction does not
@@ -2100,10 +2109,6 @@ void DwarfDebug::collectVariableInfo() {
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
       if (!MInsn->isDebugValue())
-        continue;
-
-      // FIXME : Lift this restriction.
-      if (MInsn->getNumOperands() != 3)
         continue;
 
       // Ignore Undef values.

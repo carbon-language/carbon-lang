@@ -80,6 +80,8 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   bool runOnMachineFunction(MachineFunction &F);
   
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
+
+  MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
 };
 
 } // end namespace llvm

@@ -641,6 +641,12 @@ void AsmPrinter::EmitFunctionBody() {
   OutStreamer.AddBlankLine();
 }
 
+/// getDebugValueLocation - Get location information encoded by DBG_VALUE
+/// operands.
+MachineLocation AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
+  // Target specific DBG_VALUE instructions are handled by each target.
+  return MachineLocation();
+}
 
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
