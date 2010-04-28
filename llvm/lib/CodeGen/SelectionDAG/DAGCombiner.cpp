@@ -1011,7 +1011,7 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
 }
 
 SDValue DAGCombiner::visit(SDNode *N) {
-  switch(N->getOpcode()) {
+  switch (N->getOpcode()) {
   default: break;
   case ISD::TokenFactor:        return visitTokenFactor(N);
   case ISD::MERGE_VALUES:       return visitMERGE_VALUES(N);
@@ -1093,6 +1093,35 @@ SDValue DAGCombiner::combine(SDNode *N) {
         DagCombineInfo(DAG, !LegalTypes, !LegalOperations, false, this);
 
       RV = TLI.PerformDAGCombine(N, DagCombineInfo);
+    }
+  }
+
+  // If nothing happened still, try promoting the operation.
+  if (RV.getNode() == 0) {
+    switch (N->getOpcode()) {
+    default: break;
+    case ISD::ADD:
+    case ISD::SUB:
+    case ISD::MUL:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR:
+      RV = PromoteIntBinOp(SDValue(N, 0));
+      break;
+    case ISD::SHL:
+    case ISD::SRA:
+    case ISD::SRL:
+      RV = PromoteIntShiftOp(SDValue(N, 0));
+      break;
+    case ISD::SIGN_EXTEND:
+    case ISD::ZERO_EXTEND:
+    case ISD::ANY_EXTEND:
+      RV = PromoteExtend(SDValue(N, 0));
+      break;
+    case ISD::LOAD:
+      if (PromoteLoad(SDValue(N, 0)))
+        RV = SDValue(N, 0);
+      break;
     }
   }
 
@@ -1387,7 +1416,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                                        N0.getOperand(0).getOperand(1),
                                        N0.getOperand(1)));
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitADDC(SDNode *N) {
@@ -1525,7 +1554,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
                                  VT);
     }
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitMUL(SDNode *N) {
@@ -1618,7 +1647,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   if (RMUL.getNode() != 0)
     return RMUL;
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitSDIV(SDNode *N) {
@@ -2264,7 +2293,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     }
   }
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitOR(SDNode *N) {
@@ -2390,7 +2419,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (SDNode *Rot = MatchRotate(N0, N1, N->getDebugLoc()))
     return SDValue(Rot, 0);
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 /// MatchRotateHalf - Match "(X shl/srl V1) & V2" where V2 may not be present.
@@ -2699,7 +2728,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
-  return PromoteIntBinOp(SDValue(N, 0));
+  return SDValue();
 }
 
 /// visitShiftByConstant - Handle transforms common to the three shifts, when
@@ -2866,7 +2895,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       return NewSHL;
   }
 
-  return PromoteIntShiftOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitSRA(SDNode *N) {
@@ -2986,7 +3015,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       return NewSRA;
   }
 
-  return PromoteIntShiftOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitSRL(SDNode *N) {
@@ -3152,7 +3181,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     }
   }
 
-  return PromoteIntShiftOp(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitCTLZ(SDNode *N) {
@@ -3550,7 +3579,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, N0);
 
-  return PromoteExtend(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
@@ -3713,7 +3742,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                    N0.getOperand(1)));
   }
 
-  return PromoteExtend(SDValue(N, 0));
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
@@ -3849,7 +3878,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       return SCC;
   }
 
-  return PromoteExtend(SDValue(N, 0));
+  return SDValue();
 }
 
 /// GetDemandedBits - See if the specified operand can be simplified with the
@@ -5451,8 +5480,6 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   if (CombineToPreIndexedLoadStore(N) || CombineToPostIndexedLoadStore(N))
     return SDValue(N, 0);
 
-  if (PromoteLoad(SDValue(N, 0)))
-    return SDValue(N, 0);
   return SDValue();
 }
 
