@@ -1,4 +1,4 @@
-; RUN: opt -S -globalopt metadata.ll | FileCheck %s
+; RUN: opt -S -globalopt < %s | FileCheck %s
 
 ; PR6112 - When globalopt does RAUW(@G, %G), the metadata reference should drop
 ; to null.
