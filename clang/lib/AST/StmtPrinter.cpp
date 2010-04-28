@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/Format.h"
+#include "clang/AST/Expr.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -700,6 +701,35 @@ bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
 void StmtPrinter::VisitUnaryOffsetOf(UnaryOperator *Node) {
   OS << "__builtin_offsetof(";
   PrintOffsetOfDesignator(Node->getSubExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
+  OS << "__builtin_offsetof(";
+  OS << Node->getTypeSourceInfo()->getType().getAsString() << ", ";
+  bool PrintedSomething = false;
+  for (unsigned i = 0, n = Node->getNumComponents(); i < n; ++i) {
+    OffsetOfExpr::OffsetOfNode ON = Node->getComponent(i);
+    if (ON.getKind() == OffsetOfExpr::OffsetOfNode::Array) {
+      // Array node
+      OS << "[";
+      PrintExpr(Node->getIndexExpr(ON.getArrayExprIndex()));
+      OS << "]";
+      PrintedSomething = true;
+      continue;
+    }
+     
+    // Field or identifier node.
+    IdentifierInfo *Id = ON.getFieldName();
+    if (!Id)
+      continue;
+    
+    if (PrintedSomething)
+      OS << ".";
+    else
+      PrintedSomething = true;
+    OS << Id->getName();    
+  }
   OS << ")";
 }
 

@@ -133,6 +133,7 @@ public:
                                   CGF.getContext().typesAreCompatible(
                                     E->getArgType1(), E->getArgType2()));
   }
+  Value *VisitOffsetOfExpr(const OffsetOfExpr *E);
   Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     llvm::Value *V = CGF.GetAddrOfLabel(E->getLabel());
@@ -242,7 +243,7 @@ public:
     return Visit(E->getSubExpr());
   }
   Value *VisitUnaryOffsetOf(const UnaryOperator *E);
-
+    
   // C++
   Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
@@ -1028,6 +1029,21 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 
   // ZExt result to the expr type.
   return Builder.CreateZExt(BoolVal, ConvertType(E->getType()), "lnot.ext");
+}
+
+Value *ScalarExprEmitter::VisitOffsetOfExpr(const OffsetOfExpr *E) {
+  Expr::EvalResult Result;
+  if(E->Evaluate(Result, CGF.getContext()))
+    return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
+  
+  // FIXME: Cannot support code generation for non-constant offsetof.
+  unsigned DiagID = CGF.CGM.getDiags().getCustomDiagID(Diagnostic::Error,
+                             "cannot compile non-constant __builtin_offsetof");
+  CGF.CGM.getDiags().Report(CGF.getContext().getFullLoc(E->getLocStart()), 
+                            DiagID)
+    << E->getSourceRange();
+  
+  return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 
 /// VisitSizeOfAlignOfExpr - Return the size or alignment of the type of

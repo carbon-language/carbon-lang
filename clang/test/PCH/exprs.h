@@ -25,6 +25,19 @@ typedef typeof('a') char_literal;
 // UnaryOperator
 typedef typeof(-Enumerator) negate_enum;
 
+// OffsetOfExpr
+struct X {
+  int member;
+};
+struct Y {
+  struct X array[5];
+};
+struct Z {
+  struct Y y;
+};
+typedef typeof(__builtin_offsetof(struct Z, y.array[1 + 2].member)) 
+  offsetof_type;
+
 // SizeOfAlignOfExpr
 typedef typeof(sizeof(int)) typeof_sizeof;
 typedef typeof(sizeof(Enumerator)) typeof_sizeof2;

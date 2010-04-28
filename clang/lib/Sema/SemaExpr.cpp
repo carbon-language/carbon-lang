@@ -18,8 +18,10 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -6450,7 +6452,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   case UnaryOperator::OffsetOf:
     assert(false && "Invalid unary operator");
     break;
-
+      
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
   case UnaryOperator::PostInc:
@@ -6608,37 +6610,30 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtArg substmt,
   return Owned(new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc));
 }
 
-Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
-                                                  SourceLocation BuiltinLoc,
-                                                  SourceLocation TypeLoc,
-                                                  TypeTy *argty,
+Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
+                                                  TypeSourceInfo *TInfo,
                                                   OffsetOfComponent *CompPtr,
                                                   unsigned NumComponents,
-                                                  SourceLocation RPLoc) {
-  // FIXME: This function leaks all expressions in the offset components on
-  // error.
-  // FIXME: Preserve type source info.
-  QualType ArgTy = GetTypeFromParser(argty);
-  assert(!ArgTy.isNull() && "Missing type argument!");
-
+                                                  SourceLocation RParenLoc) {
+  QualType ArgTy = TInfo->getType();
   bool Dependent = ArgTy->isDependentType();
-
+  SourceRange TypeRange = TInfo->getTypeLoc().getSourceRange();
+  
   // We must have at least one component that refers to the type, and the first
   // one is known to be a field designator.  Verify that the ArgTy represents
   // a struct/union/class.
   if (!Dependent && !ArgTy->isRecordType())
-    return ExprError(Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy);
-
-  // FIXME: Type must be complete per C99 7.17p3 because a declaring a variable
-  // with an incomplete type would be illegal.
-
-  // Otherwise, create a null pointer as the base, and iteratively process
-  // the offsetof designators.
-  QualType ArgTyPtr = Context.getPointerType(ArgTy);
-  Expr* Res = new (Context) ImplicitValueInitExpr(ArgTyPtr);
-  Res = new (Context) UnaryOperator(Res, UnaryOperator::Deref,
-                                    ArgTy, SourceLocation());
-
+    return ExprError(Diag(BuiltinLoc, diag::err_offsetof_record_type) 
+                       << ArgTy << TypeRange);
+  
+  // Type must be complete per C99 7.17p3 because a declaring a variable
+  // with an incomplete type would be ill-formed.
+  if (!Dependent 
+      && RequireCompleteType(BuiltinLoc, ArgTy,
+                             PDiag(diag::err_offsetof_incomplete_type)
+                               << TypeRange))
+    return ExprError();
+  
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.
   // FIXME: This diagnostic isn't actually visible because the location is in
@@ -6646,14 +6641,160 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   if (NumComponents != 1)
     Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator)
       << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
+  
+  bool DidWarnAboutNonPOD = false;
+  QualType CurrentType = ArgTy;
+  typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
+  llvm::SmallVector<OffsetOfNode, 4> Comps;
+  llvm::SmallVector<Expr*, 4> Exprs;
+  for (unsigned i = 0; i != NumComponents; ++i) {
+    const OffsetOfComponent &OC = CompPtr[i];
+    if (OC.isBrackets) {
+      // Offset of an array sub-field.  TODO: Should we allow vector elements?
+      if (!CurrentType->isDependentType()) {
+        const ArrayType *AT = Context.getAsArrayType(CurrentType);
+        if(!AT)
+          return ExprError(Diag(OC.LocEnd, diag::err_offsetof_array_type)
+                           << CurrentType);
+        CurrentType = AT->getElementType();
+      } else
+        CurrentType = Context.DependentTy;
+      
+      // The expression must be an integral expression.
+      // FIXME: An integral constant expression?
+      Expr *Idx = static_cast<Expr*>(OC.U.E);
+      if (!Idx->isTypeDependent() && !Idx->isValueDependent() &&
+          !Idx->getType()->isIntegerType())
+        return ExprError(Diag(Idx->getLocStart(),
+                              diag::err_typecheck_subscript_not_integer)
+                         << Idx->getSourceRange());
+      
+      // Record this array index.
+      Comps.push_back(OffsetOfNode(OC.LocStart, Exprs.size(), OC.LocEnd));
+      Exprs.push_back(Idx);
+      continue;
+    }
+    
+    // Offset of a field.
+    if (CurrentType->isDependentType()) {
+      // We have the offset of a field, but we can't look into the dependent
+      // type. Just record the identifier of the field.
+      Comps.push_back(OffsetOfNode(OC.LocStart, OC.U.IdentInfo, OC.LocEnd));
+      CurrentType = Context.DependentTy;
+      continue;
+    }
+    
+    // We need to have a complete type to look into.
+    if (RequireCompleteType(OC.LocStart, CurrentType,
+                            diag::err_offsetof_incomplete_type))
+      return ExprError();
+    
+    // Look for the designated field.
+    const RecordType *RC = CurrentType->getAs<RecordType>();
+    if (!RC) 
+      return ExprError(Diag(OC.LocEnd, diag::err_offsetof_record_type)
+                       << CurrentType);
+    RecordDecl *RD = RC->getDecl();
+    
+    // C++ [lib.support.types]p5:
+    //   The macro offsetof accepts a restricted set of type arguments in this
+    //   International Standard. type shall be a POD structure or a POD union
+    //   (clause 9).
+    if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
+      if (!CRD->isPOD() && !DidWarnAboutNonPOD &&
+          DiagRuntimeBehavior(BuiltinLoc,
+                              PDiag(diag::warn_offsetof_non_pod_type)
+                              << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+                              << CurrentType))
+        DidWarnAboutNonPOD = true;
+    }
+    
+    // Look for the field.
+    LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
+    LookupQualifiedName(R, RD);
+    FieldDecl *MemberDecl = R.getAsSingle<FieldDecl>();
+    if (!MemberDecl)
+      return ExprError(Diag(BuiltinLoc, diag::err_no_member)
+                       << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, 
+                                                              OC.LocEnd));
+    
+    // FIXME: C99 Verify that MemberDecl isn't a bitfield.
+    
+    if (cast<RecordDecl>(MemberDecl->getDeclContext())->
+        isAnonymousStructOrUnion()) {
+      llvm::SmallVector<FieldDecl*, 4> Path;
+      BuildAnonymousStructUnionMemberPath(MemberDecl, Path);
+      unsigned n = Path.size();
+      for (int j = n - 1; j > -1; --j)
+        Comps.push_back(OffsetOfNode(OC.LocStart, Path[j], OC.LocEnd));
+    } else {
+      Comps.push_back(OffsetOfNode(OC.LocStart, MemberDecl, OC.LocEnd));
+    }
+    CurrentType = MemberDecl->getType().getNonReferenceType(); 
+  }
+  
+  return Owned(OffsetOfExpr::Create(Context, Context.getSizeType(), BuiltinLoc, 
+                                    TInfo, Comps.data(), Comps.size(),
+                                    Exprs.data(), Exprs.size(), RParenLoc));  
+}
 
+Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
+                                                  SourceLocation BuiltinLoc,
+                                                  SourceLocation TypeLoc,
+                                                  TypeTy *argty,
+                                                  OffsetOfComponent *CompPtr,
+                                                  unsigned NumComponents,
+                                                  SourceLocation RPLoc) {
+
+  TypeSourceInfo *ArgTInfo;
+  QualType ArgTy = GetTypeFromParser(argty, &ArgTInfo);
+  if (ArgTy.isNull())
+    return ExprError();
+
+  if (getLangOptions().CPlusPlus) {
+    if (!ArgTInfo)
+      ArgTInfo = Context.getTrivialTypeSourceInfo(ArgTy, TypeLoc);
+    
+    return BuildBuiltinOffsetOf(BuiltinLoc, ArgTInfo, CompPtr, NumComponents, 
+                                RPLoc);
+  }
+  
+  // FIXME: The code below is marked for death, once we have proper CodeGen
+  // support for non-constant OffsetOf expressions.
+  
+  bool Dependent = ArgTy->isDependentType();
+  
+  // We must have at least one component that refers to the type, and the first
+  // one is known to be a field designator.  Verify that the ArgTy represents
+  // a struct/union/class.
+  if (!Dependent && !ArgTy->isRecordType())
+    return ExprError(Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy);
+  
+  // FIXME: Type must be complete per C99 7.17p3 because a declaring a variable
+  // with an incomplete type would be illegal.
+  
+  // Otherwise, create a null pointer as the base, and iteratively process
+  // the offsetof designators.
+  QualType ArgTyPtr = Context.getPointerType(ArgTy);
+  Expr* Res = new (Context) ImplicitValueInitExpr(ArgTyPtr);
+  Res = new (Context) UnaryOperator(Res, UnaryOperator::Deref,
+                                    ArgTy, SourceLocation());
+  
+  // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
+  // GCC extension, diagnose them.
+  // FIXME: This diagnostic isn't actually visible because the location is in
+  // a system header!
+  if (NumComponents != 1)
+    Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator)
+    << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
+  
   if (!Dependent) {
     bool DidWarnAboutNonPOD = false;
-
+    
     if (RequireCompleteType(TypeLoc, Res->getType(),
                             diag::err_offsetof_incomplete_type))
       return ExprError();
-
+    
     // FIXME: Dependent case loses a lot of information here. And probably
     // leaks like a sieve.
     for (unsigned i = 0; i != NumComponents; ++i) {
@@ -6664,71 +6805,71 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         if (!AT) {
           Res->Destroy(Context);
           return ExprError(Diag(OC.LocEnd, diag::err_offsetof_array_type)
-            << Res->getType());
+                           << Res->getType());
         }
-
+        
         // FIXME: C++: Verify that operator[] isn't overloaded.
-
+        
         // Promote the array so it looks more like a normal array subscript
         // expression.
         DefaultFunctionArrayLvalueConversion(Res);
-
+        
         // C99 6.5.2.1p1
         Expr *Idx = static_cast<Expr*>(OC.U.E);
         // FIXME: Leaks Res
         if (!Idx->isTypeDependent() && !Idx->getType()->isIntegerType())
           return ExprError(Diag(Idx->getLocStart(),
                                 diag::err_typecheck_subscript_not_integer)
-            << Idx->getSourceRange());
-
+                           << Idx->getSourceRange());
+        
         Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(),
                                                OC.LocEnd);
         continue;
       }
-
+      
       const RecordType *RC = Res->getType()->getAs<RecordType>();
       if (!RC) {
         Res->Destroy(Context);
         return ExprError(Diag(OC.LocEnd, diag::err_offsetof_record_type)
-          << Res->getType());
+                         << Res->getType());
       }
-
+      
       // Get the decl corresponding to this.
       RecordDecl *RD = RC->getDecl();
       if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
         if (!CRD->isPOD() && !DidWarnAboutNonPOD &&
             DiagRuntimeBehavior(BuiltinLoc,
                                 PDiag(diag::warn_offsetof_non_pod_type)
-                                  << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
-                                  << Res->getType()))
+                                << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+                                << Res->getType()))
           DidWarnAboutNonPOD = true;
       }
-
+      
       LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
       LookupQualifiedName(R, RD);
-
+      
       FieldDecl *MemberDecl = R.getAsSingle<FieldDecl>();
       // FIXME: Leaks Res
       if (!MemberDecl)
         return ExprError(Diag(BuiltinLoc, diag::err_no_member)
-         << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, OC.LocEnd));
-
+                         << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, OC.LocEnd));
+      
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.
       if (cast<RecordDecl>(MemberDecl->getDeclContext())->isAnonymousStructOrUnion()) {
         Res = BuildAnonymousStructUnionMemberReference(
-            OC.LocEnd, MemberDecl, Res, OC.LocEnd).takeAs<Expr>();
+                                                       OC.LocEnd, MemberDecl, Res, OC.LocEnd).takeAs<Expr>();
       } else {
         PerformObjectMemberConversion(Res, /*Qualifier=*/0,
                                       *R.begin(), MemberDecl);
         // MemberDecl->getType() doesn't get the right qualifiers, but it
         // doesn't matter here.
         Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
-                MemberDecl->getType().getNonReferenceType());
+                                       MemberDecl->getType().getNonReferenceType());
       }
     }
   }
-
+  
   return Owned(new (Context) UnaryOperator(Res, UnaryOperator::OffsetOf,
                                            Context.getSizeType(), BuiltinLoc));
 }

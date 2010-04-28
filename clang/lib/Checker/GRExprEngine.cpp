@@ -823,6 +823,10 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst);
       break;
 
+    case Stmt::OffsetOfExprClass:
+      VisitOffsetOfExpr(cast<OffsetOfExpr>(S), Pred, Dst);
+      break;
+
     case Stmt::SizeOfAlignOfExprClass:
       VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S), Pred, Dst);
       break;
@@ -2611,6 +2615,21 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
               ValMgr.makeIntVal(amt.getQuantity(), Ex->getType())));
 }
 
+void GRExprEngine::VisitOffsetOfExpr(OffsetOfExpr* OOE, ExplodedNode* Pred,
+                                     ExplodedNodeSet& Dst) {
+  Expr::EvalResult Res;
+  if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
+    const APSInt &IV = Res.Val.getInt();
+    assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
+    assert(OOE->getType()->isIntegerType());
+    assert(IV.isSigned() == OOE->getType()->isSignedIntegerType());
+    SVal X = ValMgr.makeIntVal(IV);
+    MakeNode(Dst, OOE, Pred, GetState(Pred)->BindExpr(OOE, X));
+    return;
+  }
+  // FIXME: Handle the case where __builtin_offsetof is not a constant.
+  Dst.Add(Pred);
+}
 
 void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
                                       ExplodedNodeSet& Dst, bool asLValue) {
@@ -2692,19 +2711,19 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
     case UnaryOperator::OffsetOf: {
       Expr::EvalResult Res;
       if (U->Evaluate(Res, getContext()) && Res.Val.isInt()) {
-        const APSInt &IV = Res.Val.getInt();
-        assert(IV.getBitWidth() == getContext().getTypeSize(U->getType()));
-        assert(U->getType()->isIntegerType());
-        assert(IV.isSigned() == U->getType()->isSignedIntegerType());
-        SVal X = ValMgr.makeIntVal(IV);
-        MakeNode(Dst, U, Pred, GetState(Pred)->BindExpr(U, X));
-        return;
-      }
+          const APSInt &IV = Res.Val.getInt();
+          assert(IV.getBitWidth() == getContext().getTypeSize(U->getType()));
+          assert(U->getType()->isIntegerType());
+          assert(IV.isSigned() == U->getType()->isSignedIntegerType());
+          SVal X = ValMgr.makeIntVal(IV);
+          MakeNode(Dst, U, Pred, GetState(Pred)->BindExpr(U, X));
+          return;
+        }
       // FIXME: Handle the case where __builtin_offsetof is not a constant.
       Dst.Add(Pred);
       return;
     }
-
+      
     case UnaryOperator::Plus: assert (!asLValue);  // FALL-THROUGH.
     case UnaryOperator::Extension: {
 

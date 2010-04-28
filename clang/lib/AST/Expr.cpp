@@ -549,6 +549,57 @@ QualType CallExpr::getCallReturnType() const {
   return FnType->getResultType();
 }
 
+OffsetOfExpr *OffsetOfExpr::Create(ASTContext &C, QualType type, 
+                                   SourceLocation OperatorLoc,
+                                   TypeSourceInfo *tsi, 
+                                   OffsetOfNode* compsPtr, unsigned numComps, 
+                                   Expr** exprsPtr, unsigned numExprs,
+                                   SourceLocation RParenLoc) {
+  void *Mem = C.Allocate(sizeof(OffsetOfExpr) +
+                         sizeof(OffsetOfNode) * numComps + 
+                         sizeof(Expr*) * numExprs);
+
+  return new (Mem) OffsetOfExpr(C, type, OperatorLoc, tsi, compsPtr, numComps,
+                                exprsPtr, numExprs, RParenLoc);
+}
+
+OffsetOfExpr *OffsetOfExpr::CreateEmpty(ASTContext &C,
+                                        unsigned numComps, unsigned numExprs) {
+  void *Mem = C.Allocate(sizeof(OffsetOfExpr) +
+                         sizeof(OffsetOfNode) * numComps +
+                         sizeof(Expr*) * numExprs);
+  return new (Mem) OffsetOfExpr(numComps, numExprs);
+}
+
+OffsetOfExpr::OffsetOfExpr(ASTContext &C, QualType type, 
+                           SourceLocation OperatorLoc, TypeSourceInfo *tsi,
+                           OffsetOfNode* compsPtr, unsigned numComps, 
+                           Expr** exprsPtr, unsigned numExprs,
+                           SourceLocation RParenLoc)
+  : Expr(OffsetOfExprClass, type, /*TypeDependent=*/false, 
+         /*ValueDependent=*/tsi->getType()->isDependentType() ||
+         hasAnyTypeDependentArguments(exprsPtr, numExprs) ||
+         hasAnyValueDependentArguments(exprsPtr, numExprs)),
+    OperatorLoc(OperatorLoc), RParenLoc(RParenLoc), TSInfo(tsi), 
+    NumComps(numComps), NumExprs(numExprs) 
+{
+  for(unsigned i = 0; i < numComps; ++i) {
+    setComponent(i, compsPtr[i]);
+  }
+  
+  for(unsigned i = 0; i < numExprs; ++i) {
+    setIndexExpr(i, exprsPtr[i]);
+  }
+}
+
+IdentifierInfo *OffsetOfExpr::OffsetOfNode::getFieldName() const {
+  assert(getKind() == Field || getKind() == Identifier);
+  if (getKind() == Field)
+    return getField()->getIdentifier();
+  
+  return reinterpret_cast<IdentifierInfo *> (Data & ~(uintptr_t)Mask);
+}
+
 MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifier *qual,
                                SourceRange qualrange,
@@ -1891,7 +1942,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::AddrOf:
     case UnaryOperator::Deref:
       return ICEDiag(2, E->getLocStart());
-
+    case UnaryOperator::OffsetOf:
     case UnaryOperator::Extension:
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
@@ -1900,7 +1951,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
       return CheckICE(Exp->getSubExpr(), Ctx);
-    case UnaryOperator::OffsetOf:
+    }
+  }
+  case Expr::OffsetOfExprClass: {
       // Note that per C99, offsetof must be an ICE. And AFAIK, using
       // Evaluate matches the proposed gcc behavior for cases like
       // "offsetof(struct s{int x[4];}, x[!.0])".  This doesn't affect
@@ -1908,7 +1961,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       // array subscripts that aren't ICEs, and if the array subscripts
       // are ICEs, the value of the offsetof must be an integer constant.
       return CheckEvalInICE(E, Ctx);
-    }
   }
   case Expr::SizeOfAlignOfExprClass: {
     const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(E);
@@ -2701,6 +2753,15 @@ Stmt::child_iterator ParenExpr::child_end() { return &Val+1; }
 // UnaryOperator
 Stmt::child_iterator UnaryOperator::child_begin() { return &Val; }
 Stmt::child_iterator UnaryOperator::child_end() { return &Val+1; }
+
+// OffsetOfExpr
+Stmt::child_iterator OffsetOfExpr::child_begin() {
+  return reinterpret_cast<Stmt **> (reinterpret_cast<OffsetOfNode *> (this + 1)
+                                      + NumComps);
+}
+Stmt::child_iterator OffsetOfExpr::child_end() {
+  return child_iterator(&*child_begin() + NumExprs);
+}
 
 // SizeOfAlignOfExpr
 Stmt::child_iterator SizeOfAlignOfExpr::child_begin() {

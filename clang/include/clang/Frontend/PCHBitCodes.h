@@ -603,6 +603,8 @@ namespace clang {
       EXPR_PAREN,
       /// \brief A UnaryOperator record.
       EXPR_UNARY_OPERATOR,
+      /// \brief An OffsetOfExpr record.
+      EXPR_OFFSETOF,
       /// \brief A SizefAlignOfExpr record.
       EXPR_SIZEOF_ALIGN_OF,
       /// \brief An ArraySubscriptExpr record.

@@ -18,3 +18,13 @@ struct Derived : Base { int y; };
 int o = __builtin_offsetof(Derived, x); // expected-warning{{offset of on non-POD type}}
 
 const int o2 = sizeof(__builtin_offsetof(Derived, x));
+
+struct HasArray {
+  int array[17];
+};
+
+// Constant and non-constant offsetof expressions
+void test_ice(int i) {
+  int array0[__builtin_offsetof(HasArray, array[5])];
+  int array1[__builtin_offsetof(HasArray, array[i])]; // expected-error{{variable length arrays are not permitted in C++}}
+}

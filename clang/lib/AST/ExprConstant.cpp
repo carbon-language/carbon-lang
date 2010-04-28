@@ -16,7 +16,9 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
@@ -228,7 +230,7 @@ public:
   APValue VisitStmt(Stmt *S) {
     return APValue();
   }
-
+  
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
   APValue VisitDeclRefExpr(DeclRefExpr *E);
   APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E); }
@@ -828,6 +830,7 @@ public:
 
   bool VisitCallExpr(CallExpr *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
+  bool VisitOffsetOfExpr(const OffsetOfExpr *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitConditionalOperator(const ConditionalOperator *E);
 
@@ -1372,6 +1375,61 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   return Success(Info.Ctx.getTypeSizeInChars(SrcTy).getQuantity(), E);
 }
 
+bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
+  CharUnits Result;
+  unsigned n = E->getNumComponents();
+  OffsetOfExpr* OOE = const_cast<OffsetOfExpr*>(E);
+  if (n == 0)
+    return false;
+  QualType CurrentType = E->getTypeSourceInfo()->getType();
+  for (unsigned i = 0; i != n; ++i) {
+    OffsetOfExpr::OffsetOfNode ON = OOE->getComponent(i);
+    switch (ON.getKind()) {
+    case OffsetOfExpr::OffsetOfNode::Array: {
+      Expr *Idx = OOE->getIndexExpr(ON.getArrayExprIndex());
+      APSInt IdxResult;
+      if (!EvaluateInteger(Idx, IdxResult, Info))
+        return false;
+      const ArrayType *AT = Info.Ctx.getAsArrayType(CurrentType);
+      if (!AT)
+        return false;
+      CurrentType = AT->getElementType();
+      CharUnits ElementSize = Info.Ctx.getTypeSizeInChars(CurrentType);
+      Result += IdxResult.getSExtValue() * ElementSize;
+        break;
+    }
+        
+    case OffsetOfExpr::OffsetOfNode::Field: {
+      FieldDecl *MemberDecl = ON.getField();
+      const RecordType *RT = CurrentType->getAs<RecordType>();
+      if (!RT) 
+        return false;
+      RecordDecl *RD = RT->getDecl();
+      const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
+      unsigned i = 0;
+      // FIXME: It would be nice if we didn't have to loop here!
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                      FieldEnd = RD->field_end();
+           Field != FieldEnd; (void)++Field, ++i) {
+        if (*Field == MemberDecl)
+          break;
+      }
+      if (i < RL.getFieldCount())
+        Result += CharUnits::fromQuantity(
+                             RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
+      else 
+        return false;
+      CurrentType = MemberDecl->getType().getNonReferenceType();
+      break;
+    }
+        
+    case OffsetOfExpr::OffsetOfNode::Identifier:
+      llvm_unreachable("dependent __builtin_offsetof");
+    }
+  }
+  return Success(Result.getQuantity(), E);
+}
+
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   // Special case unary operators that do not need their subexpression
   // evaluated.  offsetof/sizeof/alignof are all special.
@@ -1380,12 +1438,12 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     // directly Evaluate it as an l-value.
     APValue LV;
     if (!EvaluateLValue(E->getSubExpr(), LV, Info))
-      return false;
+        return false;
     if (LV.getLValueBase())
-      return false;
+        return false;
     return Success(LV.getLValueOffset().getQuantity(), E);
   }
-
+    
   if (E->getOpcode() == UnaryOperator::LNot) {
     // LNot's operand isn't necessarily an integer, so we handle it specially.
     bool bres;

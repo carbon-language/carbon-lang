@@ -1067,6 +1067,19 @@ public:
     return getSema().BuildUnaryOp(/*Scope=*/0, OpLoc, Opc, move(SubExpr));
   }
 
+  /// \brief Build a new builtin offsetof expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildOffsetOfExpr(SourceLocation OperatorLoc,
+                                       TypeSourceInfo *Type,
+                                       Action::OffsetOfComponent *Components,
+                                       unsigned NumComponents,
+                                       SourceLocation RParenLoc) {
+    return getSema().BuildBuiltinOffsetOf(OperatorLoc, Type, Components,
+                                          NumComponents, RParenLoc);
+  }
+  
   /// \brief Build a new sizeof or alignof expression with a type argument.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -4164,6 +4177,64 @@ TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E) {
   return getDerived().RebuildUnaryOperator(E->getOperatorLoc(),
                                            E->getOpcode(),
                                            move(SubExpr));
+}
+
+template<typename Derived>
+Sema::OwningExprResult
+TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
+  // Transform the type.
+  TypeSourceInfo *Type = getDerived().TransformType(E->getTypeSourceInfo());
+  if (!Type)
+    return getSema().ExprError();
+  
+  // Transform all of the components into components similar to what the
+  // parser uses.
+  // FIXME: It would be slightly more efficient in the non-dependent case to 
+  // just map FieldDecls, rather than requiring the rebuilder to look for 
+  // the fields again. However, __builtin_offsetof is rare enough in 
+  // template code that we don't care.
+  bool ExprChanged = false;
+  typedef Action::OffsetOfComponent Component;
+  typedef OffsetOfExpr::OffsetOfNode Node;
+  llvm::SmallVector<Component, 4> Components;
+  for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
+    const Node &ON = E->getComponent(I);
+    Component Comp;
+    Comp.LocStart = ON.getRange().getBegin();
+    Comp.LocEnd = ON.getRange().getEnd();
+    switch (ON.getKind()) {
+    case Node::Array: {
+      Expr *FromIndex = E->getIndexExpr(ON.getArrayExprIndex());
+      OwningExprResult Index = getDerived().TransformExpr(FromIndex);
+      if (Index.isInvalid())
+        return getSema().ExprError();
+      
+      ExprChanged = ExprChanged || Index.get() != FromIndex;
+      Comp.isBrackets = true;
+      Comp.U.E = Index.takeAs<Expr>(); // FIXME: leaked
+      break;
+    }
+        
+    case Node::Field:
+    case Node::Identifier:
+      Comp.isBrackets = false;
+      Comp.U.IdentInfo = ON.getFieldName();
+      break;
+    }
+    
+    Components.push_back(Comp);
+  }
+  
+  // If nothing changed, retain the existing expression.
+  if (!getDerived().AlwaysRebuild() &&
+      Type == E->getTypeSourceInfo() &&
+      !ExprChanged)
+    return SemaRef.Owned(E->Retain());
+  
+  // Build a new offsetof expression.
+  return getDerived().RebuildOffsetOfExpr(E->getOperatorLoc(), Type,
+                                          Components.data(), Components.size(),
+                                          E->getRParenLoc());
 }
 
 template<typename Derived>

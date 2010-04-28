@@ -261,6 +261,30 @@ void StmtProfiler::VisitUnaryOperator(UnaryOperator *S) {
   ID.AddInteger(S->getOpcode());
 }
 
+void StmtProfiler::VisitOffsetOfExpr(OffsetOfExpr *S) {
+  VisitType(S->getTypeSourceInfo()->getType());
+  unsigned n = S->getNumComponents();
+  for (unsigned i = 0; i < n; ++i) {
+    const OffsetOfExpr::OffsetOfNode& ON = S->getComponent(i);
+    ID.AddInteger(ON.getKind());
+    switch (ON.getKind()) {
+    case OffsetOfExpr::OffsetOfNode::Array:
+      // Expressions handled below.
+      break;
+
+    case OffsetOfExpr::OffsetOfNode::Field:
+      VisitDecl(ON.getField());
+      break;
+
+    case OffsetOfExpr::OffsetOfNode::Identifier:
+      ID.AddPointer(ON.getFieldName());
+      break;
+    }
+  }
+  
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isSizeOf());

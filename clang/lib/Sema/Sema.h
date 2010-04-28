@@ -1986,6 +1986,11 @@ public:
                                          SourceLocation RPLoc); // "({..})"
 
   /// __builtin_offsetof(type, a.b[123][456].c)
+  OwningExprResult BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
+                                        TypeSourceInfo *TInfo,
+                                        OffsetOfComponent *CompPtr,
+                                        unsigned NumComponents,
+                                        SourceLocation RParenLoc);
   virtual OwningExprResult ActOnBuiltinOffsetOf(Scope *S,
                                                 SourceLocation BuiltinLoc,
                                                 SourceLocation TypeLoc,

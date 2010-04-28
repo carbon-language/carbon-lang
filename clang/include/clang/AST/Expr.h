@@ -223,7 +223,7 @@ public:
   }
   /// isConstantInitializer - Returns true if this expression is a constant
   /// initializer, which can be emitted at compile-time.
-  bool isConstantInitializer(ASTContext &Ctx) const;
+  bool isConstantInitializer(ASTContext &Ctx) const; 
 
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {
@@ -914,7 +914,7 @@ public:
 ///
 /// __builtin_offsetof(type, a.b[10]) is represented as a unary operator whose
 ///   subexpression is a compound literal with the various MemberExpr and
-///   ArraySubscriptExpr's applied to it.
+///   ArraySubscriptExpr's applied to it. (This is only used in C)
 ///
 class UnaryOperator : public Expr {
 public:
@@ -997,6 +997,187 @@ public:
     return T->getStmtClass() == UnaryOperatorClass;
   }
   static bool classof(const UnaryOperator *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+/// OffsetOfExpr - [C99 7.17] - This represents an expression of the form
+/// offsetof(record-type, member-designator). For example, given:
+/// @code
+/// struct S {
+///   float f;
+///   double d;    
+/// };
+/// struct T {
+///   int i;
+///   struct S s[10];
+/// };
+/// @endcode
+/// we can represent and evaluate the expression @c offsetof(struct T, s[2].d). 
+
+class OffsetOfExpr : public Expr {
+public:
+  // __builtin_offsetof(type, identifier(.identifier|[expr])*)
+  class OffsetOfNode {
+  public:
+    /// \brief The kind of offsetof node we have.
+    enum Kind {
+      Array = 0x00,
+      Field = 0x01,
+      Identifier = 0x02
+    };
+
+  private:
+    enum { MaskBits = 2, Mask = 0x03 };
+    
+    /// \brief The source range that covers this part of the designator.
+    SourceRange Range;
+    
+    /// \brief The data describing the designator, which comes in three
+    /// different forms, depending on the lower two bits.
+    ///   - An unsigned index into the array of Expr*'s stored after this node 
+    ///     in memory, for [constant-expression] designators.
+    ///   - A FieldDecl*, for references to a known field.
+    ///   - An IdentifierInfo*, for references to a field with a given name
+    ///     when the class type is dependent.
+    uintptr_t Data;
+    
+  public:
+    /// \brief Create an offsetof node that refers to an array element.
+    OffsetOfNode(SourceLocation LBracketLoc, unsigned Index, 
+                 SourceLocation RBracketLoc)
+      : Range(LBracketLoc, RBracketLoc), Data((Index << 2) | Array) { }
+    
+    /// \brief Create an offsetof node that refers to a field.
+    OffsetOfNode(SourceLocation DotLoc, FieldDecl *Field, 
+                 SourceLocation NameLoc)
+      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc), 
+        Data(reinterpret_cast<uintptr_t>(Field) | OffsetOfNode::Field) { }
+    
+    /// \brief Create an offsetof node that refers to an identifier.
+    OffsetOfNode(SourceLocation DotLoc, IdentifierInfo *Name,
+                 SourceLocation NameLoc)
+      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc), 
+        Data(reinterpret_cast<uintptr_t>(Name) | Identifier) { }
+    
+    /// \brief Determine what kind of offsetof node this is.
+    Kind getKind() const { 
+      return static_cast<Kind>(Data & Mask);
+    }
+    
+    /// \brief For an array element node, returns the index into the array
+    /// of expressions.
+    unsigned getArrayExprIndex() const {
+      assert(getKind() == Array);
+      return Data >> 2;
+    }
+
+    /// \brief For a field offsetof node, returns the field.
+    FieldDecl *getField() const {
+      assert(getKind() == Field);
+      return reinterpret_cast<FieldDecl *> (Data & ~(uintptr_t)Mask);
+    }
+    
+    /// \brief For a field or identifier offsetof node, returns the name of
+    /// the field.
+    IdentifierInfo *getFieldName() const;
+    
+    /// \brief Retrieve the source range that covers this offsetof node.
+    ///
+    /// For an array element node, the source range contains the locations of
+    /// the square brackets. For a field or identifier node, the source range
+    /// contains the location of the period (if there is one) and the 
+    /// identifier.
+    SourceRange getRange() const { return Range; }
+  };
+
+private:
+  
+  SourceLocation OperatorLoc, RParenLoc;
+  // Base type;
+  TypeSourceInfo *TSInfo;
+  // Number of sub-components (i.e. instances of OffsetOfNode).
+  unsigned NumComps;
+  // Number of sub-expressions (i.e. array subscript expressions).
+  unsigned NumExprs;
+  
+  OffsetOfExpr(ASTContext &C, QualType type, 
+               SourceLocation OperatorLoc, TypeSourceInfo *tsi,
+               OffsetOfNode* compsPtr, unsigned numComps, 
+               Expr** exprsPtr, unsigned numExprs,
+               SourceLocation RParenLoc);
+
+  explicit OffsetOfExpr(unsigned numComps, unsigned numExprs)
+    : Expr(OffsetOfExprClass, EmptyShell()),
+      TSInfo(0), NumComps(numComps), NumExprs(numExprs) {}  
+
+public:
+  
+  static OffsetOfExpr *Create(ASTContext &C, QualType type, 
+                              SourceLocation OperatorLoc, TypeSourceInfo *tsi, 
+                              OffsetOfNode* compsPtr, unsigned numComps, 
+                              Expr** exprsPtr, unsigned numExprs,
+                              SourceLocation RParenLoc);
+
+  static OffsetOfExpr *CreateEmpty(ASTContext &C, 
+                                   unsigned NumComps, unsigned NumExprs);
+
+  /// getOperatorLoc - Return the location of the operator.
+  SourceLocation getOperatorLoc() const { return OperatorLoc; }
+  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
+
+  /// \brief Return the location of the right parentheses.
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation R) { RParenLoc = R; }
+  
+  TypeSourceInfo *getTypeSourceInfo() const {
+    return TSInfo;
+  }
+  void setTypeSourceInfo(TypeSourceInfo *tsi) {
+    TSInfo = tsi;
+  }
+  
+  const OffsetOfNode &getComponent(unsigned Idx) {
+    assert(Idx < NumComps && "Subscript out of range");
+    return reinterpret_cast<OffsetOfNode *> (this + 1)[Idx];
+  }
+
+  void setComponent(unsigned Idx, OffsetOfNode ON) {
+    assert(Idx < NumComps && "Subscript out of range");
+    reinterpret_cast<OffsetOfNode *> (this + 1)[Idx] = ON;
+  }
+  
+  unsigned getNumComponents() const {
+    return NumComps;
+  }
+
+  Expr* getIndexExpr(unsigned Idx) {
+    assert(Idx < NumExprs && "Subscript out of range");
+    return reinterpret_cast<Expr **>(
+                    reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx];
+  }
+
+  void setIndexExpr(unsigned Idx, Expr* E) {
+    assert(Idx < NumComps && "Subscript out of range");
+    reinterpret_cast<Expr **>(
+                reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx] = E;
+  }
+  
+  unsigned getNumExpressions() const {
+    return NumExprs;
+  }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(OperatorLoc, RParenLoc);
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OffsetOfExprClass;
+  }
+
+  static bool classof(const OffsetOfExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();

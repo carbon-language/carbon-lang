@@ -71,6 +71,7 @@ namespace {
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
     unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitUnaryOperator(UnaryOperator *E);
+    unsigned VisitOffsetOfExpr(OffsetOfExpr *E);
     unsigned VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     unsigned VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     unsigned VisitCallExpr(CallExpr *E);
@@ -430,6 +431,44 @@ unsigned PCHStmtReader::VisitUnaryOperator(UnaryOperator *E) {
   E->setOpcode((UnaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
+}
+
+unsigned PCHStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
+  typedef OffsetOfExpr::OffsetOfNode Node;
+  VisitExpr(E);
+  assert(E->getNumComponents() == Record[Idx]);
+  ++Idx;
+  assert(E->getNumExpressions() == Record[Idx]);
+  ++Idx;
+  E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
+    Node::Kind Kind = static_cast<Node::Kind>(Record[Idx++]);
+    SourceLocation Start = SourceLocation::getFromRawEncoding(Record[Idx++]);
+    SourceLocation End = SourceLocation::getFromRawEncoding(Record[Idx++]);
+    switch (Kind) {
+    case Node::Array:
+      E->setComponent(I, Node(Start, Record[Idx++], End));
+      break;
+        
+    case Node::Field:
+      E->setComponent(I, 
+             Node(Start,  
+                  dyn_cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++])),
+                  End));
+      break;
+
+    case Node::Identifier:
+      E->setComponent(I, Node(Start, Reader.GetIdentifier(Record[Idx++]), End));
+      break;
+    }
+  }
+  
+  for (unsigned I = 0, N = E->getNumExpressions(); I != N; ++I)
+    E->setIndexExpr(I, cast_or_null<Expr>(StmtStack[StmtStack.size() - N + I]));
+  
+  return E->getNumExpressions();
 }
 
 unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
@@ -1105,6 +1144,12 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) UnaryOperator(Empty);
       break;
 
+    case pch::EXPR_OFFSETOF:
+      S = OffsetOfExpr::CreateEmpty(*Context, 
+                                    Record[PCHStmtReader::NumExprFields],
+                                    Record[PCHStmtReader::NumExprFields + 1]);
+      break;
+        
     case pch::EXPR_SIZEOF_ALIGN_OF:
       S = new (Context) SizeOfAlignOfExpr(Empty);
       break;

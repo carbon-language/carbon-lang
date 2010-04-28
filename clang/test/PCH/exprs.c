@@ -5,6 +5,7 @@
 // RUN: %clang_cc1 -emit-pch -fblocks -o %t %S/exprs.h
 // RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
 
+__SIZE_TYPE__ size_type_value;
 int integer;
 long long_integer;
 double floating;
@@ -34,6 +35,9 @@ char_literal *int_ptr3 = &integer;
 
 // UnaryOperator
 negate_enum *int_ptr4 = &integer;
+
+// OffsetOfExpr
+offsetof_type *offsetof_ptr = &size_type_value;
 
 // SizeOfAlignOfExpr
 typeof(sizeof(float)) size_t_value;

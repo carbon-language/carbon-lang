@@ -140,7 +140,8 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::StringLiteralClass:         
   case Stmt::CharacterLiteralClass:      
   case Stmt::ParenExprClass:             
-  case Stmt::UnaryOperatorClass:         
+  case Stmt::UnaryOperatorClass:
+  case Stmt::OffsetOfExprClass:         
   case Stmt::SizeOfAlignOfExprClass:     
   case Stmt::ArraySubscriptExprClass:    
   case Stmt::BinaryOperatorClass:        

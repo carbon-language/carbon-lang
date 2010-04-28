@@ -62,6 +62,7 @@ namespace {
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
+    void VisitOffsetOfExpr(OffsetOfExpr *E);
     void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     void VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     void VisitCallExpr(CallExpr *E);
@@ -391,6 +392,37 @@ void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
   Record.push_back(E->getOpcode()); // FIXME: stable encoding
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = pch::EXPR_UNARY_OPERATOR;
+}
+
+void PCHStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumComponents());
+  Record.push_back(E->getNumExpressions());
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Writer.AddTypeSourceInfo(E->getTypeSourceInfo(), Record);
+  for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
+    const OffsetOfExpr::OffsetOfNode &ON = E->getComponent(I);
+    Record.push_back(ON.getKind()); // FIXME: Stable encoding
+    Writer.AddSourceLocation(ON.getRange().getBegin(), Record);
+    Writer.AddSourceLocation(ON.getRange().getEnd(), Record);
+    switch (ON.getKind()) {
+    case OffsetOfExpr::OffsetOfNode::Array:
+      Record.push_back(ON.getArrayExprIndex());
+      break;
+        
+    case OffsetOfExpr::OffsetOfNode::Field:
+      Writer.AddDeclRef(ON.getField(), Record);
+      break;
+        
+    case OffsetOfExpr::OffsetOfNode::Identifier:
+      Writer.AddIdentifierRef(ON.getFieldName(), Record);
+      break;
+    }
+  }
+  for (unsigned I = 0, N = E->getNumExpressions(); I != N; ++I)
+    Writer.WriteSubStmt(E->getIndexExpr(I));
+  Code = pch::EXPR_OFFSETOF;
 }
 
 void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {

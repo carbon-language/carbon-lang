@@ -306,6 +306,7 @@ public:
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCMessageExpr(ObjCMessageExpr *E);
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
+  bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
 };
 
@@ -941,6 +942,14 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
 
 bool CursorVisitor::VisitBlockExpr(BlockExpr *B) {
   return Visit(B->getBlockDecl());
+}
+
+bool CursorVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
+  // FIXME: Visit fields as well?
+  if (Visit(E->getTypeSourceInfo()->getTypeLoc()))
+    return true;
+  
+  return VisitExpr(E);
 }
 
 bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {

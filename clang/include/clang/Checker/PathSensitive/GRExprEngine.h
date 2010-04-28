@@ -342,6 +342,10 @@ public:
 
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(ReturnStmt* R, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  
+  /// VisitOffsetOfExpr - Transfer function for offsetof.
+  void VisitOffsetOfExpr(OffsetOfExpr* Ex, ExplodedNode* Pred,
+                         ExplodedNodeSet& Dst);
 
   /// VisitSizeOfAlignOfExpr - Transfer function for sizeof.
   void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex, ExplodedNode* Pred,

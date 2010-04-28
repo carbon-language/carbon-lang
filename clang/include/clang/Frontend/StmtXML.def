@@ -254,7 +254,7 @@ NODE_XML(UnaryOperator, "UnaryOperator")                // op(expr) or (expr)op
     ENUM_XML(UnaryOperator::Real,    "__real")
     ENUM_XML(UnaryOperator::Imag,    "__imag")
     ENUM_XML(UnaryOperator::Extension, "__extension__")
-    ENUM_XML(UnaryOperator::OffsetOf,  "__builtin_offsetof")
+    ENUM_XML(UnaryOperator::OffsetOf, "__builtin_offsetof")
   END_ENUM_XML
   SUB_NODE_XML(Expr)                                    // expr
 END_NODE_XML
@@ -309,6 +309,13 @@ NODE_XML(ConditionalOperator, "ConditionalOperator")    // expr1 ? expr2 : expr3
   SUB_NODE_XML(Expr)                                    // expr1
   SUB_NODE_XML(Expr)                                    // expr2
   SUB_NODE_XML(Expr)                                    // expr3
+END_NODE_XML
+
+NODE_XML(OffsetOfExpr, "OffsetOfExpr")                  // offsetof(basetype, components)
+  ATTRIBUTE_FILE_LOCATION_XML
+  TYPE_ATTRIBUTE_XML(getTypeSourceInfo()->getType())
+  ATTRIBUTE_XML(getNumComponents(), "num_components")
+  SUB_NODE_SEQUENCE_XML(OffsetOfExpr::OffsetOfNode)
 END_NODE_XML
 
 NODE_XML(SizeOfAlignOfExpr, "SizeOfAlignOfExpr")        // sizeof(expr) or alignof(expr)

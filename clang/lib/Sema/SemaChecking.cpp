@@ -1950,6 +1950,10 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
       return GetExprRange(C, UO->getSubExpr(), MaxWidth);
     }
   }
+  
+  if (dyn_cast<OffsetOfExpr>(E)) {
+    IntRange::forType(C, E->getType());
+  }
 
   FieldDecl *BitField = E->getBitField();
   if (BitField) {
