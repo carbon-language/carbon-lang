@@ -5,51 +5,47 @@ target triple = "i386-apple-darwin9.8"
 ; Currently, dbg.declare generates a DEBUG_VALUE comment.  Eventually it will
 ; generate DWARF and this test will need to be modified or removed.
 
-@Y = common global i32 0                          ; <i32*> [#uses=1]
 
-define i32 @test() nounwind {
+%struct.Pt = type { double, double }
+%struct.Rect = type { %struct.Pt, %struct.Pt }
+
+define double @foo(%struct.Rect* byval %my_r0) nounwind ssp {
 entry:
-; CHECK: DEBUG_VALUE:
-  %retval = alloca i32                            ; <i32*> [#uses=2]
-  %X = alloca i32                                 ; <i32*> [#uses=5]
-  %0 = alloca i32                                 ; <i32*> [#uses=2]
+;CHECK: DEBUG_VALUE
+  %retval = alloca double                         ; <double*> [#uses=2]
+  %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{i32* %X}, metadata !3), !dbg !7
-  store i32 4, i32* %X, align 4, !dbg !8
-  %1 = load i32* %X, align 4, !dbg !9             ; <i32> [#uses=1]
-  call void @use(i32 %1) nounwind, !dbg !9
-  %2 = load i32* @Y, align 4, !dbg !10            ; <i32> [#uses=1]
-  %3 = add nsw i32 %2, 2, !dbg !10                ; <i32> [#uses=1]
-  store i32 %3, i32* %X, align 4, !dbg !10
-  %4 = load i32* %X, align 4, !dbg !11            ; <i32> [#uses=1]
-  call void @use(i32 %4) nounwind, !dbg !11
-  %5 = load i32* %X, align 4, !dbg !12            ; <i32> [#uses=1]
-  store i32 %5, i32* %0, align 4, !dbg !12
-  %6 = load i32* %0, align 4, !dbg !12            ; <i32> [#uses=1]
-  store i32 %6, i32* %retval, align 4, !dbg !12
-  br label %return, !dbg !12
+  call void @llvm.dbg.declare(metadata !{%struct.Rect* %my_r0}, metadata !0), !dbg !15
+  %1 = getelementptr inbounds %struct.Rect* %my_r0, i32 0, i32 0, !dbg !16 ; <%struct.Pt*> [#uses=1]
+  %2 = getelementptr inbounds %struct.Pt* %1, i32 0, i32 0, !dbg !16 ; <double*> [#uses=1]
+  %3 = load double* %2, align 8, !dbg !16         ; <double> [#uses=1]
+  store double %3, double* %0, align 8, !dbg !16
+  %4 = load double* %0, align 8, !dbg !16         ; <double> [#uses=1]
+  store double %4, double* %retval, align 8, !dbg !16
+  br label %return, !dbg !16
 
 return:                                           ; preds = %entry
-  %retval1 = load i32* %retval, !dbg !12          ; <i32> [#uses=1]
-  ret i32 %retval1, !dbg !12
+  %retval1 = load double* %retval, !dbg !16       ; <double> [#uses=1]
+  ret double %retval1, !dbg !16
 }
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-declare void @use(i32)
-
-!llvm.dbg.gv = !{!0}
-
-!0 = metadata !{i32 458804, i32 0, metadata !1, metadata !"Y", metadata !"Y", metadata !"Y", metadata !1, i32 2, metadata !2, i1 false, i1 true, i32* @Y} ; [ DW_TAG_variable ]
-!1 = metadata !{i32 458769, i32 0, i32 1, metadata !"try.c", metadata !"/Volumes/MacOS9/tests/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{i32 458788, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!3 = metadata !{i32 459008, metadata !4, metadata !"X", metadata !1, i32 4, metadata !2} ; [ DW_TAG_auto_variable ]
-!4 = metadata !{i32 458798, i32 0, metadata !1, metadata !"", metadata !"", metadata !"test", metadata !1, i32 3, metadata !5, i1 false, i1 true, i32 0, i32 0, null} ; [ DW_TAG_subprogram ]
-!5 = metadata !{i32 458773, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0} ; [ DW_TAG_subroutine_type ]
-!6 = metadata !{metadata !2}
-!7 = metadata !{i32 3, i32 0, metadata !4, null}
-!8 = metadata !{i32 4, i32 0, metadata !4, null}
-!9 = metadata !{i32 5, i32 0, metadata !4, null}
-!10 = metadata !{i32 6, i32 0, metadata !4, null}
-!11 = metadata !{i32 7, i32 0, metadata !4, null}
-!12 = metadata !{i32 8, i32 0, metadata !4, null}
+!0 = metadata !{i32 524545, metadata !1, metadata !"my_r0", metadata !2, i32 11, metadata !7} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 11, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 524329, metadata !"b2.c", metadata !"/tmp/", metadata !3} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 524305, i32 0, i32 1, metadata !"b2.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 524309, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!5 = metadata !{metadata !6, metadata !7}
+!6 = metadata !{i32 524324, metadata !2, metadata !"double", metadata !2, i32 0, i64 64, i64 64, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
+!7 = metadata !{i32 524307, metadata !2, metadata !"Rect", metadata !2, i32 6, i64 256, i64 64, i64 0, i32 0, null, metadata !8, i32 0, null} ; [ DW_TAG_structure_type ]
+!8 = metadata !{metadata !9, metadata !14}
+!9 = metadata !{i32 524301, metadata !7, metadata !"P1", metadata !2, i32 7, i64 128, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_member ]
+!10 = metadata !{i32 524307, metadata !2, metadata !"Pt", metadata !2, i32 1, i64 128, i64 64, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_structure_type ]
+!11 = metadata !{metadata !12, metadata !13}
+!12 = metadata !{i32 524301, metadata !10, metadata !"x", metadata !2, i32 2, i64 64, i64 64, i64 0, i32 0, metadata !6} ; [ DW_TAG_member ]
+!13 = metadata !{i32 524301, metadata !10, metadata !"y", metadata !2, i32 3, i64 64, i64 64, i64 64, i32 0, metadata !6} ; [ DW_TAG_member ]
+!14 = metadata !{i32 524301, metadata !7, metadata !"P2", metadata !2, i32 8, i64 128, i64 64, i64 128, i32 0, metadata !10} ; [ DW_TAG_member ]
+!15 = metadata !{i32 11, i32 0, metadata !1, null}
+!16 = metadata !{i32 12, i32 0, metadata !17, null}
+!17 = metadata !{i32 524299, metadata !1, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
