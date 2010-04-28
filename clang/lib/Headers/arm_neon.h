@@ -77,9 +77,110 @@ typedef struct __int16x8_t {
   __neon_int16x8_t val;
 } int16x8_t;
 
-// FIXME: stamp out the structure-of-array types
+typedef struct __int32x2_t {
+  __neon_int32x2_t val;
+} int32x2_t;
+
+typedef struct __int32x4_t {
+  __neon_int32x4_t val;
+} int32x4_t;
+
+typedef struct __int64x1_t {
+  __neon_int64x1_t val;
+} int64x1_t;
+
+typedef struct __int64x2_t {
+  __neon_int64x2_t val;
+} int64x2_t;
+
+typedef struct __uint8x8_t {
+  __neon_uint8x8_t val;
+} uint8x8_t;
+
+typedef struct __uint8x16_t {
+  __neon_uint8x16_t val;
+} uint8x16_t;
+
+typedef struct __uint16x4_t {
+  __neon_uint16x4_t val;
+} uint16x4_t;
+
+typedef struct __uint16x8_t {
+  __neon_uint16x8_t val;
+} uint16x8_t;
+
+typedef struct __uint32x2_t {
+  __neon_uint32x2_t val;
+} uint32x2_t;
+
+typedef struct __uint32x4_t {
+  __neon_uint32x4_t val;
+} uint32x4_t;
+
+typedef struct __uint64x1_t {
+  __neon_uint64x1_t val;
+} uint64x1_t;
+
+typedef struct __uint64x2_t {
+  __neon_uint64x2_t val;
+} uint64x2_t;
+
+typedef struct __float16x4_t {
+  __neon_float16x4_t val;
+} float16x4_t;
+
+typedef struct __float16x8_t {
+  __neon_float16x8_t val;
+} float16x8_t;
+
+typedef struct __float32x2_t {
+  __neon_float32x2_t val;
+} float32x2_t;
+
+typedef struct __float32x4_t {
+  __neon_float32x4_t val;
+} float32x4_t;
+
+typedef struct __poly8x8_t {
+  __neon_poly8x8_t val;
+} poly8x8_t;
+
+typedef struct __poly8x16_t {
+  __neon_poly8x16_t val;
+} poly8x16_t;
+
+typedef struct __poly16x4_t {
+  __neon_poly16x4_t val;
+} poly16x4_t;
+
+typedef struct __poly16x8_t {
+  __neon_poly16x8_t val;
+} poly16x8_t;
+
+// FIXME: write tool to stamp out the structure-of-array types, possibly gen this whole file.
 
 // Intrinsics, per ARM document DUI0348B
+#define _ATTRS_ai __attribute__((__always_inline__))
+
+static _ATTRS_ai int8x8_t vadd_s8(int8x8_t a, int8x8_t b) { return (int8x8_t){a.val + b.val}; }
+static _ATTRS_ai int16x4_t vadd_s16(int16x4_t a, int16x4_t b) { return (int16x4_t){a.val + b.val}; }
+static _ATTRS_ai int32x2_t vadd_s32(int32x2_t a, int32x2_t b) { return (int32x2_t){a.val + b.val}; }
+static _ATTRS_ai int64x1_t vadd_s64(int64x1_t a, int64x1_t b) { return (int64x1_t){a.val + b.val}; }
+static _ATTRS_ai float32x2_t vadd_f32(float32x2_t a, float32x2_t b) { return (float32x2_t){a.val + b.val}; }
+static _ATTRS_ai uint8x8_t vadd_u8(uint8x8_t a, uint8x8_t b) { return (uint8x8_t){a.val + b.val}; }
+static _ATTRS_ai uint16x4_t vadd_u16(uint16x4_t a, uint16x4_t b) { return (uint16x4_t){a.val + b.val}; }
+static _ATTRS_ai uint32x2_t vadd_u32(uint32x2_t a, uint32x2_t b) { return (uint32x2_t){a.val + b.val}; }
+static _ATTRS_ai uint64x1_t vadd_u64(uint64x1_t a, uint64x1_t b) { return (uint64x1_t){a.val + b.val}; }
+static _ATTRS_ai int8x16_t vaddq_s8(int8x16_t a, int8x16_t b) { return (int8x16_t){a.val + b.val}; }
+static _ATTRS_ai int16x8_t vaddq_s16(int16x8_t a, int16x8_t b) { return (int16x8_t){a.val + b.val}; }
+static _ATTRS_ai int32x4_t vaddq_s32(int32x4_t a, int32x4_t b) { return (int32x4_t){a.val + b.val}; }
+static _ATTRS_ai int64x2_t vaddq_s64(int64x2_t a, int64x2_t b) { return (int64x2_t){a.val + b.val}; }
+static _ATTRS_ai float32x4_t vaddq_f32(float32x4_t a, float32x4_t b) { return (float32x4_t){a.val + b.val}; }
+static _ATTRS_ai uint8x16_t vaddq_u8(uint8x16_t a, uint8x16_t b) { return (uint8x16_t){a.val + b.val}; }
+static _ATTRS_ai uint16x8_t vaddq_u16(uint16x8_t a, uint16x8_t b) { return (uint16x8_t){a.val + b.val}; }
+static _ATTRS_ai uint32x4_t vaddq_u32(uint32x4_t a, uint32x4_t b) { return (uint32x4_t){a.val + b.val}; }
+static _ATTRS_ai uint64x2_t vaddq_u64(uint64x2_t a, uint64x2_t b) { return (uint64x2_t){a.val + b.val}; }
+
 // add
 // long add
 // wide add
