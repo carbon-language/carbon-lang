@@ -192,7 +192,7 @@ entry:
 define void @sub2(i16* nocapture %p, i32 %v) nounwind ssp {
 entry:
 ; CHECK: sub2:
-; CHECK: subw
+; CHECK: negl
 	%0 = trunc i32 %v to i16		; <i16> [#uses=1]
 	%1 = tail call i16 @llvm.atomic.load.sub.i16.p0i16(i16* %p, i16 %0)		; <i16> [#uses=0]
 	ret void

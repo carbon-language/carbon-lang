@@ -331,8 +331,6 @@ def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
-def Promote16Bit : Predicate<"Subtarget->shouldPromote16Bit()">;
-def NotPromote16Bit : Predicate<"!Subtarget->shouldPromote16Bit()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -4450,12 +4448,10 @@ def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
 // avoid partial-register updates.
 def : Pat<(i16 (anyext GR8 :$src)), (MOVZX16rr8  GR8 :$src)>;
 def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>;
-def : Pat<(i32 (anyext GR16:$src)), (MOVZX32rr16 GR16:$src)>,
-          Requires<[NotPromote16Bit]>;
 
+// Except for i16 -> i32 since isel expect i16 ops to be promoted to i32.
 def : Pat<(i32 (anyext GR16:$src)),
-          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>,
-          Requires<[Promote16Bit]>;
+          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>;
 
 
 //===----------------------------------------------------------------------===//
@@ -4542,6 +4538,11 @@ def : Pat<(i32 (anyext (srl_su GR16:$src, (i8 8)))),
                                       x86_subreg_8bit_hi))>,
       Requires<[In32BitMode]>;
 def : Pat<(and (srl_su GR32:$src, (i8 8)), (i32 255)),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
+                                                             GR32_ABCD)),
+                                      x86_subreg_8bit_hi))>,
+      Requires<[In32BitMode]>;
+def : Pat<(srl (and_su GR32:$src, 0xff00), (i8 8)),
           (MOVZX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
                                                              GR32_ABCD)),
                                       x86_subreg_8bit_hi))>,

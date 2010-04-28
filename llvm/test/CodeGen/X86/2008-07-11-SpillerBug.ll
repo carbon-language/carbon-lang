@@ -3,6 +3,7 @@
 
 ; CHECK: andl    $65534, %
 ; CHECK-NEXT: movl %
+; CHECK-NEXT: movzwl
 ; CHECK-NEXT: movl $17
 
 @g_5 = external global i16		; <i16*> [#uses=2]

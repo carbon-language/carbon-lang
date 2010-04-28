@@ -80,11 +80,11 @@ bb:
 bb12:
 	ret i16 %tmp3
 ; X64: test5:
-; X64:    notw	[[REG:%[a-z]+]]
-; X64:    andw	{{.*}}[[REG]]
+; X64:    notl	[[REG:%[a-z]+]]
+; X64:    andl	{{.*}}[[REG]]
 ; X32: test5:
-; X32:    notw	[[REG:%[a-z]+]]
-; X32:    andw	{{.*}}[[REG]]
+; X32:    notl	[[REG:%[a-z]+]]
+; X32:    andl	{{.*}}[[REG]]
 }
 
 define i8 @test6(i8 %a, i8 %b) nounwind  {

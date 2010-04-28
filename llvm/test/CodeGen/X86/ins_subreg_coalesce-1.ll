@@ -1,7 +1,13 @@
-; RUN: llc < %s -march=x86 | grep mov | count 3
+; RUN: llc < %s -march=x86 | FileCheck %s
 
-define fastcc i32 @sqlite3ExprResolveNames() nounwind  {
+define fastcc i32 @t() nounwind  {
 entry:
+; CHECK: t:
+; CHECK: movzwl 0, %eax
+; CHECK: orl $2, %eax
+; CHECK: movw %ax, 0
+; CHECK: shrl $3, %eax
+; CHECK: andl $1, %eax
 	br i1 false, label %UnifiedReturnBlock, label %bb4
 bb4:		; preds = %entry
 	br i1 false, label %bb17, label %bb22

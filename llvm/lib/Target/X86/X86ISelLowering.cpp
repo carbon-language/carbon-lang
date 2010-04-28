@@ -6075,7 +6075,7 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
     // the encoding for the i16 version is larger than the i32 version.
     // Also promote i16 to i32 for performance / code size reason.
     if (LHS.getValueType() == MVT::i8 ||
-        (Subtarget->shouldPromote16Bit() && LHS.getValueType() == MVT::i16))
+        LHS.getValueType() == MVT::i16)
       LHS = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, LHS);
 
     // If the operand types disagree, extend the shift amount to match.  Since
@@ -9949,7 +9949,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
 bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   if (!isTypeLegal(VT))
     return false;
-  if (!Subtarget->shouldPromote16Bit() || VT != MVT::i16)
+  if (VT != MVT::i16)
     return true;
 
   switch (Opc) {
@@ -9983,9 +9983,6 @@ static bool MayFoldIntoStore(SDValue Op) {
 /// beneficial for dag combiner to promote the specified node. If true, it
 /// should return the desired promotion type by reference.
 bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
-  if (!Subtarget->shouldPromote16Bit())
-    return false;
-
   EVT VT = Op.getValueType();
   if (VT != MVT::i16)
     return false;
@@ -9998,10 +9995,16 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     LoadSDNode *LD = cast<LoadSDNode>(Op);
     // If the non-extending load has a single use and it's not live out, then it
     // might be folded.
-    if (LD->getExtensionType() == ISD::NON_EXTLOAD &&
-        Op.hasOneUse() &&
-        Op.getNode()->use_begin()->getOpcode() != ISD::CopyToReg)
-      return false;
+    if (LD->getExtensionType() == ISD::NON_EXTLOAD /*&&
+                                                     Op.hasOneUse()*/) {
+      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+             UE = Op.getNode()->use_end(); UI != UE; ++UI) {
+        // The only case where we'd want to promote LOAD (rather then it being
+        // promoted as an operand is when it's only use is liveout.
+        if (UI->getOpcode() != ISD::CopyToReg)
+          return false;
+      }
+    }
     Promote = true;
     break;
   }
@@ -10011,8 +10014,7 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     Promote = true;
     break;
   case ISD::SHL:
-  case ISD::SRL:
- {
+  case ISD::SRL: {
     SDValue N0 = Op.getOperand(0);
     // Look out for (store (shl (load), x)).
     if (MayFoldLoad(N0) && MayFoldIntoStore(Op))

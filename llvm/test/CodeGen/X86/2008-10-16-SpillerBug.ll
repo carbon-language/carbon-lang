@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=pic -disable-fp-elim -mtriple=i386-apple-darwin -stats |& grep asm-printer | grep 40
+; RUN: llc < %s -relocation-model=pic -disable-fp-elim -mtriple=i386-apple-darwin -stats |& grep asm-printer | grep 41
 ; RUN: llc < %s -relocation-model=pic -disable-fp-elim -mtriple=i386-apple-darwin | FileCheck %s
 
 	%struct.XXDActiveTextureTargets = type { i64, i64, i64, i64, i64, i64 }
@@ -63,13 +63,13 @@
 define void @t(%struct.XXDState* %gldst, <4 x float>* %prgrm, <4 x float>** %buffs, %struct._XXVMConstants* %cnstn, %struct.YYToken* %pstrm, %struct.XXVMVPContext* %vmctx, %struct.XXVMTextures* %txtrs, %struct.XXVMVPStack* %vpstk, <4 x float>* %atr0, <4 x float>* %atr1, <4 x float>* %atr2, <4 x float>* %atr3, <4 x float>* %vtx0, <4 x float>* %vtx1, <4 x float>* %vtx2, <4 x float>* %vtx3, [4 x <4 x float>]* %tmpGbl, i32* %oldMsk, <4 x i32>* %adrGbl, i64 %key_token) nounwind {
 entry:
 ; CHECK: t:
-; CHECK: xorl %ecx, %ecx
 	%0 = trunc i64 %key_token to i32		; <i32> [#uses=1]
 	%1 = getelementptr %struct.YYToken* %pstrm, i32 %0		; <%struct.YYToken*> [#uses=5]
 	br label %bb1132
 
 bb51:		; preds = %bb1132
 ; CHECK: .align 4
+; CHECK: xorl %ecx, %ecx
 ; CHECK: andl $7
 	%2 = getelementptr %struct.YYToken* %1, i32 %operation.0.rec, i32 0, i32 0		; <i16*> [#uses=1]
 	%3 = load i16* %2, align 1		; <i16> [#uses=3]

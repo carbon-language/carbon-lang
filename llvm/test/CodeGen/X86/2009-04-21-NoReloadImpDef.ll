@@ -4,7 +4,7 @@
 ; rdar://6808032
 
 ; CHECK: pextrw $14
-; CHECK-NEXT: movzbl
+; CHECK-NEXT: shrl $8
 ; CHECK-NEXT: (%ebp)
 ; CHECK-NEXT: pinsrw
 

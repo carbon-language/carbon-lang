@@ -88,10 +88,6 @@ protected:
   /// operands. This may require setting a feature bit in the processor.
   bool HasVectorUAMem;
 
-  /// Promote16Bit - True if codegen should promote 16-bit operations to 32-bit.
-  /// This is a temporary option.
-  bool Promote16Bit;
-
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
   unsigned char DarwinVers; // Is any darwin-x86 platform.
@@ -160,7 +156,6 @@ public:
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
-  bool shouldPromote16Bit() const { return Promote16Bit; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
