@@ -812,6 +812,64 @@ void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
   addBlock(Die, Attribute, 0, Block);
 }
 
+/// addRegisterAddress - Add register location entry in variable DIE.
+bool DwarfDebug::addRegisterAddress(DIE *Die, DbgVariable *DV,
+                                    const MachineOperand &MO) {
+  assert (MO.isReg() && "Invalid machine operand!");
+  if (!MO.getReg())
+    return false;
+  MachineLocation Location;
+  Location.set(MO.getReg());
+  addAddress(Die, dwarf::DW_AT_location, Location);
+  if (MCSymbol *VS = DV->getDbgValueLabel())
+    addLabel(Die, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr, VS);
+  return true;
+}
+
+/// addConstantValue - Add constant value entry in variable DIE.
+bool DwarfDebug::addConstantValue(DIE *Die, DbgVariable *DV, 
+                                  const MachineOperand &MO) {
+  assert (MO.isImm() && "Invalid machine operand!");
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+  unsigned Imm = MO.getImm();
+  addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
+  addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
+  if (MCSymbol *VS = DV->getDbgValueLabel())
+    addLabel(Die, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr, VS);
+  return true;
+}
+
+/// addConstantFPValue - Add constant value entry in variable DIE.
+bool DwarfDebug::addConstantFPValue(DIE *Die, DbgVariable *DV, 
+                                    const MachineOperand &MO) {
+  assert (MO.isFPImm() && "Invalid machine operand!");
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+  APFloat FPImm = MO.getFPImm()->getValueAPF();
+  
+  // Get the raw data form of the floating point.
+  const APInt FltVal = FPImm.bitcastToAPInt();
+  const char *FltPtr = (const char*)FltVal.getRawData();
+  
+  int NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
+  bool LittleEndian = Asm->getTargetData().isLittleEndian();
+  int Incr = (LittleEndian ? 1 : -1);
+  int Start = (LittleEndian ? 0 : NumBytes - 1);
+  int Stop = (LittleEndian ? NumBytes : -1);
+  
+  // Output the constant to DWARF one byte at a time.
+  for (; Start != Stop; Start += Incr)
+    addUInt(Block, 0, dwarf::DW_FORM_data1,
+            (unsigned char)0xFF & FltPtr[Start]);
+  
+  addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
+  
+  if (MCSymbol *VS = DV->getDbgValueLabel())
+    addLabel(Die, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
+             VS);
+  return true; 
+}
+
+
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   if (Context.isType()) {
@@ -1534,56 +1592,25 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   // Add variable address.
   if (!Scope->isAbstractScope()) {
     // Check if variable is described by DBG_VALUE instruction.
-    if (const MachineInstr *DbgValueInsn = DV->getDbgValue()) {
-      if (DbgValueInsn->getNumOperands() == 3) {
-        // FIXME : Handle getNumOperands != 3 
-        if (DbgValueInsn->getOperand(0).isReg() &&
-            DbgValueInsn->getOperand(0).getReg()) {
-          MachineLocation Location;
-          Location.set(DbgValueInsn->getOperand(0).getReg());
-          addAddress(VariableDie, dwarf::DW_AT_location, Location);
-          if (MCSymbol *VS = DV->getDbgValueLabel())
-            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
-                     VS);
-        } else if (DbgValueInsn->getOperand(0).isImm()) {
-          DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-          unsigned Imm = DbgValueInsn->getOperand(0).getImm();
-          addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
-          addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
-          if (MCSymbol *VS = DV->getDbgValueLabel())
-            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
-                     VS);
-        } else if (DbgValueInsn->getOperand(0).isFPImm()) {
-          DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-          APFloat FPImm = DbgValueInsn->getOperand(0).getFPImm()->getValueAPF();
-
-          // Get the raw data form of the floating point.
-          const APInt FltVal = FPImm.bitcastToAPInt();
-          const char *FltPtr = (const char*)FltVal.getRawData();
-
-          int NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
-          bool LittleEndian = Asm->getTargetData().isLittleEndian();
-          int Incr = (LittleEndian ? 1 : -1);
-          int Start = (LittleEndian ? 0 : NumBytes - 1);
-          int Stop = (LittleEndian ? NumBytes : -1);
-
-          // Output the constant to DWARF one byte at a time.
-          for (; Start != Stop; Start += Incr)
-            addUInt(Block, 0, dwarf::DW_FORM_data1,
-                    (unsigned char)0xFF & FltPtr[Start]);
-
-          addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
-
-          if (MCSymbol *VS = DV->getDbgValueLabel())
-            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
-                     VS);
-        } else {
-          //FIXME : Handle other operand types.
-          delete VariableDie;
-          return NULL;
-        }
-      } 
-    } else {
+    if (const MachineInstr *DVInsn = DV->getDbgValue()) {
+      bool updated = false;
+      // FIXME : Handle getNumOperands != 3 
+      if (DVInsn->getNumOperands() == 3) {
+        if (DVInsn->getOperand(0).isReg())
+          updated = addRegisterAddress(VariableDie, DV, DVInsn->getOperand(0));
+        else if (DVInsn->getOperand(0).isImm())
+          updated = addConstantValue(VariableDie, DV, DVInsn->getOperand(0));
+        else if (DVInsn->getOperand(0).isFPImm()) 
+          updated = addConstantFPValue(VariableDie, DV, DVInsn->getOperand(0));
+      }
+      if (!updated) {
+        // If variableDie is not updated then DBG_VALUE instruction does not
+        // have valid variable info.
+        delete VariableDie;
+        return NULL;
+      }
+    } 
+    else {
       MachineLocation Location;
       unsigned FrameReg;
       const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
