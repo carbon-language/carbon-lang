@@ -9,12 +9,12 @@ set -x
 # The first parameter is a space-separated list of the architectures the
 # compilers will run on. For instance, "ppc i386". If the current machine
 # isn't in the list, it will (effectively) be added.
-# FIXME: HOSTS is not used in this script. Use it or Remove it.
 HOSTS="$1"
 
 # The second parameter is a space-separated list of the architectures the
 # compilers will generate code for. If the current machine isn't in the list, a
 # compiler for it will get built anyway, but won't be installed.
+# FIXME: The list of targets is currently hard-coded and TARGETS is not used.
 TARGETS="$2"
 
 # The third parameter is the path to the compiler sources. There should be a
@@ -200,7 +200,7 @@ if [ "x$MAJ_VER" != "x4" -o "x$MIN_VER" != "x0" ]; then
     JOBS_FLAG="-j $SYSCTL"
 fi
 
-make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
+make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$HOSTS" \
     UNIVERSAL_SDK_PATH=$HOST_SDKROOT \
     NO_RUNTIME_LIBS=1 \
     DISABLE_EDIS=1 \
@@ -226,7 +226,7 @@ rm -rf * || exit 1
 cd $DIR/obj-llvm || exit 1
 
 # Install the tree into the destination directory.
-make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
+make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$HOSTS" \
     NO_RUNTIME_LIBS=1 \
     DISABLE_EDIS=1 \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
