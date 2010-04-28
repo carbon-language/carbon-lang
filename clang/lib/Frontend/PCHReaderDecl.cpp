@@ -383,6 +383,7 @@ void PCHDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   D->setSuperClass(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  // FIXME. Add reading of IvarInitializers and NumIvarInitializers.
 }
 
 

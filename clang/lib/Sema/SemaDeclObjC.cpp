@@ -1441,6 +1441,7 @@ void Sema::ActOnAtEnd(SourceRange AtEnd,
           IDecl = IDecl->getSuperClass();
         }
     }
+    SetIvarInitializers(IC);
   } else if (ObjCCategoryImplDecl* CatImplClass =
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     CatImplClass->setAtEndRange(AtEnd);
@@ -1800,23 +1801,15 @@ Sema::DeclPtrTy Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
 }
 
 /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
-/// construction (construct=true) or destruction (construct=false)
-///
+/// initialization.
 void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
-                                    llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
-                                    bool construct) {
-  if (!getLangOptions().CPlusPlus)
-    return;
+                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
        E = OI->ivar_end(); I != E; ++I) {
     ObjCIvarDecl *Iv = (*I);
     QualType QT = Context.getBaseElementType(Iv->getType());
-    if (const RecordType *RT = QT->getAs<RecordType>()) {
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        if (construct && !RD->hasTrivialConstructor() ||
-            !construct && !RD->hasTrivialDestructor())
-          Ivars.push_back(*I);
-    }
+    if (isa<RecordType>(QT))
+      Ivars.push_back(*I);
   }
   
   // Find ivars to construct/destruct in class extension.
@@ -1825,12 +1818,8 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
          E = CDecl->ivar_end(); I != E; ++I) {
       ObjCIvarDecl *Iv = (*I);
       QualType QT = Context.getBaseElementType(Iv->getType());
-      if (const RecordType *RT = QT->getAs<RecordType>()) {
-        if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-          if (construct && !RD->hasTrivialConstructor() ||
-              !construct && !RD->hasTrivialDestructor())
-            Ivars.push_back(*I);
-      }
+      if (isa<RecordType>(QT))
+        Ivars.push_back(*I);
     }
   }
   
@@ -1841,12 +1830,22 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
          E = ImplDecl->ivar_end(); I != E; ++I) {
       ObjCIvarDecl *Iv = (*I);
       QualType QT = Context.getBaseElementType(Iv->getType());
-      if (const RecordType *RT = QT->getAs<RecordType>()) {
-        if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-          if (construct && !RD->hasTrivialConstructor() ||
-              !construct && !RD->hasTrivialDestructor())
-            Ivars.push_back(*I);
-      }
+      if (isa<RecordType>(QT))
+        Ivars.push_back(*I);
     }
   }
 }
+
+void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
+                                    CXXBaseOrMemberInitializer ** initializers,
+                                                 unsigned numInitializers) {
+  if (numInitializers > 0) {
+    NumIvarInitializers = numInitializers;
+    CXXBaseOrMemberInitializer **ivarInitializers =
+    new (C) CXXBaseOrMemberInitializer*[NumIvarInitializers];
+    memcpy(ivarInitializers, initializers,
+           numInitializers * sizeof(CXXBaseOrMemberInitializer*));
+    IvarInitializers = ivarInitializers;
+  }
+}
+

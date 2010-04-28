@@ -361,6 +361,7 @@ void PCHDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
 void PCHDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddDeclRef(D->getSuperClass(), Record);
+  // FIXME add writing of IvarInitializers and NumIvarInitializers.
   Code = pch::DECL_OBJC_IMPLEMENTATION;
 }
 

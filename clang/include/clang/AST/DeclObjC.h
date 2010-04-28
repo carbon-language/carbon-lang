@@ -29,6 +29,7 @@ class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
 class ObjCPropertyImplDecl;
+class CXXBaseOrMemberInitializer;
 
 class ObjCListBase {
   void operator=(const ObjCListBase &);     // DO NOT IMPLEMENT
@@ -1152,18 +1153,54 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 class ObjCImplementationDecl : public ObjCImplDecl {
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
-
+  /// Support for ivar initialization.
+  /// IvarInitializers - The arguments used to initialize the ivars
+  CXXBaseOrMemberInitializer **IvarInitializers;
+  unsigned NumIvarInitializers;
+  
   ObjCImplementationDecl(DeclContext *DC, SourceLocation L,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
     : ObjCImplDecl(ObjCImplementation, DC, L, classInterface),
-       SuperClass(superDecl){}
+       SuperClass(superDecl), IvarInitializers(0), NumIvarInitializers(0) {}
 public:
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC,
                                         SourceLocation L,
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
-
+  
+  /// init_iterator - Iterates through the ivar initializer list.
+  typedef CXXBaseOrMemberInitializer **init_iterator;
+  
+  /// init_const_iterator - Iterates through the ivar initializer list.
+  typedef CXXBaseOrMemberInitializer * const * init_const_iterator;
+  
+  /// init_begin() - Retrieve an iterator to the first initializer.
+  init_iterator       init_begin()       { return IvarInitializers; }
+  /// begin() - Retrieve an iterator to the first initializer.
+  init_const_iterator init_begin() const { return IvarInitializers; }
+  
+  /// init_end() - Retrieve an iterator past the last initializer.
+  init_iterator       init_end()       {
+    return IvarInitializers + NumIvarInitializers;
+  }
+  /// end() - Retrieve an iterator past the last initializer.
+  init_const_iterator init_end() const {
+    return IvarInitializers + NumIvarInitializers;
+  }
+  /// getNumArgs - Number of ivars which must be initialized.
+  unsigned getNumIvarInitializers() const {
+    return NumIvarInitializers;
+  }
+  
+  void setNumIvarInitializers(unsigned numNumIvarInitializers) {
+    NumIvarInitializers = numNumIvarInitializers;
+  }
+  
+  void setIvarInitializers(ASTContext &C,
+                           CXXBaseOrMemberInitializer ** initializers,
+                           unsigned numInitializers);
+    
   /// getIdentifier - Get the identifier that names the class
   /// interface associated with this implementation.
   IdentifierInfo *getIdentifier() const {

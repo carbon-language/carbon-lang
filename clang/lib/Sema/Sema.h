@@ -1592,10 +1592,9 @@ public:
   void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);
   
   /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
-  /// construction (construct=true) or destruction (construct=false)
+  /// initialization.
   void CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
-                                    llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
-                                    bool construct=true);
+                                  llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
@@ -2510,6 +2509,9 @@ public:
   bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                    CXXBaseOrMemberInitializer **Initializers,
                                    unsigned NumInitializers, bool AnyErrors);
+  
+  void SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation);
+                           
 
   /// MarkBaseAndMemberDestructorsReferenced - Given a record decl,
   /// mark all the non-trivial destructors of its members and bases as

@@ -5699,3 +5699,44 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
     MarkVirtualMembersReferenced(Loc, Base);
   }
 }
+
+/// SetIvarInitializers - This routine builds initialization ASTs for the
+/// Objective-C implementation whose ivars need be initialized.
+void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
+  if (!getLangOptions().CPlusPlus)
+    return;
+  if (const ObjCInterfaceDecl *OID = ObjCImplementation->getClassInterface()) {
+    llvm::SmallVector<ObjCIvarDecl*, 8> ivars;
+    CollectIvarsToConstructOrDestruct(OID, ivars);
+    if (ivars.empty())
+      return;
+    llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
+    for (unsigned i = 0; i < ivars.size(); i++) {
+      FieldDecl *Field = ivars[i];
+      CXXBaseOrMemberInitializer *Member;
+      InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
+      InitializationKind InitKind = 
+        InitializationKind::CreateDefault(ObjCImplementation->getLocation());
+      
+      InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
+      Sema::OwningExprResult MemberInit = 
+        InitSeq.Perform(*this, InitEntity, InitKind, 
+                        Sema::MultiExprArg(*this, 0, 0));
+      MemberInit = MaybeCreateCXXExprWithTemporaries(move(MemberInit));
+      // Note, MemberInit could actually come back empty if no initialization 
+      // is required (e.g., because it would call a trivial default constructor)
+      if (!MemberInit.get() || MemberInit.isInvalid())
+        continue;
+      
+      Member =
+        new (Context) CXXBaseOrMemberInitializer(Context,
+                                                 Field, SourceLocation(),
+                                                 SourceLocation(),
+                                                 MemberInit.takeAs<Expr>(),
+                                                 SourceLocation());
+      AllToInit.push_back(Member);
+    }
+    ObjCImplementation->setIvarInitializers(Context, 
+                                            AllToInit.data(), AllToInit.size());
+  }
+}
