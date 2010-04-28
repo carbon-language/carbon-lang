@@ -223,10 +223,6 @@ void CGObjCGNU::EmitClassRef(const std::string &className) {
     llvm::GlobalValue::WeakAnyLinkage, ClassSymbol, symbolRef);
 }
 
-static std::string SymbolNameForClass(const std::string &ClassName) {
-  return "_OBJC_CLASS_" + ClassName;
-}
-
 static std::string SymbolNameForMethod(const std::string &ClassName, const
   std::string &CategoryName, const std::string &MethodName, bool isClassMethod)
 {
