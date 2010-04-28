@@ -206,10 +206,7 @@ namespace llvm {
     /// an explicit alignment requested, it will unconditionally override the
     /// alignment request.  However, if ForcedAlignBits is specified, this value
     /// has final say: the ultimate alignment will be the max of ForcedAlignBits
-    /// and the alignment computed with NumBits and the global.  If UseFillExpr
-    /// is true, it also emits an optional second value FillValue which the
-    /// assembler uses to fill gaps to match alignment for text sections if the
-    /// has specified a non-zero fill value.
+    /// and the alignment computed with NumBits and the global.
     ///
     /// The algorithm is:
     ///     Align = NumBits;
@@ -217,8 +214,7 @@ namespace llvm {
     ///     Align = std::max(Align, ForcedAlignBits);
     ///
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
-                       unsigned ForcedAlignBits = 0,
-                       bool UseFillExpr = true) const;
+                       unsigned ForcedAlignBits = 0) const;
     
     /// EmitBasicBlockStart - This method prints the label for the specified
     /// MachineBasicBlock, an alignment (if present) and a comment describing

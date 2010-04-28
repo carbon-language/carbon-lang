@@ -1158,8 +1158,7 @@ void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
 //     Align = std::max(Align, ForcedAlignBits);
 //
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
-                               unsigned ForcedAlignBits,
-                               bool UseFillExpr) const {
+                               unsigned ForcedAlignBits) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   NumBits = std::max(NumBits, ForcedAlignBits);
