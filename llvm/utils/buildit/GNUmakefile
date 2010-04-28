@@ -58,10 +58,9 @@ endif
 install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
-	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
-	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) \
-	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
-
+	  $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
+	  $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) \
+	  $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
