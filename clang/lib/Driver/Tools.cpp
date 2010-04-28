@@ -1227,8 +1227,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fobjc-nonfragile-abi=0 is default.
   if (types::isObjC(InputType)) {
+    unsigned Version = 1;
     if (Args.hasArg(options::OPT_fobjc_nonfragile_abi) ||
-        getToolChain().IsObjCNonFragileABIDefault()) {
+        getToolChain().IsObjCNonFragileABIDefault())
+      Version = 2;
+    if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
+      if (llvm::StringRef(A->getValue(Args)) == "1")
+        Version = 1;
+      else if (llvm::StringRef(A->getValue(Args)) == "2")
+        Version = 2;
+      else
+        D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+    }
+
+    if (Version == 2) {
       CmdArgs.push_back("-fobjc-nonfragile-abi");
 
       // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
