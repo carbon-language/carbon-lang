@@ -851,11 +851,14 @@ define i32 @main() {                                        <i>; i32()* </i>
 <p>LLVM allows an explicit section to be specified for globals.  If the target
    supports it, it will emit globals to the section specified.</p>
 
-<p>An explicit alignment may be specified for a global.  If not present, or if
-   the alignment is set to zero, the alignment of the global is set by the
-   target to whatever it feels convenient.  If an explicit alignment is
-   specified, the global is forced to have at least that much alignment.  All
-   alignments must be a power of 2.</p>
+<p>An explicit alignment may be specified for a global, which must be a power
+   of 2.  If not present, or if the alignment is set to zero, the alignment of
+   the global is set by the target to whatever it feels convenient.  If an
+   explicit alignment is specified, the global is forced to have exactly that
+   alignment.  Targets are not allowed to over-align the global in cases where
+   it is observable: for example, overaligning a global is observable if it has
+   an assigned section and higher alignment could cause holes between
+   consequtive globals.</p>
 
 <p>For example, the following defines a global in a numbered address space with
    an initializer, section, and alignment:</p>
