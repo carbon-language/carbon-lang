@@ -1512,7 +1512,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         }
 
         if (!isWinToJoinCrossClass(SrcReg, DstReg, SrcRC, DstRC, NewRC)) {
-          DEBUG(dbgs() << "\tAvoid coalescing to constrainted register class: "
+          DEBUG(dbgs() << "\tAvoid coalescing to constrained register class: "
                        << SrcRC->getName() << "/"
                        << DstRC->getName() << " -> "
                        << NewRC->getName() << ".\n");
@@ -1586,7 +1586,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // class is more restrictive (fewer register, smaller size). Check if it's
       // worth doing the merge.
       if (!isWinToJoinCrossClass(SrcReg, DstReg, SrcRC, DstRC, NewRC)) {
-        DEBUG(dbgs() << "\tAvoid coalescing to constrainted register class: "
+        DEBUG(dbgs() << "\tAvoid coalescing to constrained register class: "
                      << SrcRC->getName() << "/"
                      << DstRC->getName() << " -> "
                      << NewRC->getName() << ".\n");
