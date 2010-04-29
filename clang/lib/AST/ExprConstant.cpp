@@ -1119,9 +1119,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         assert(E->getOpcode() == BinaryOperator::NE &&
                "Invalid complex comparison.");
         return Success(((CR_r == APFloat::cmpGreaterThan ||
-                         CR_r == APFloat::cmpLessThan) &&
+                         CR_r == APFloat::cmpLessThan ||
+                         CR_r == APFloat::cmpUnordered) ||
                         (CR_i == APFloat::cmpGreaterThan ||
-                         CR_i == APFloat::cmpLessThan)), E);
+                         CR_i == APFloat::cmpLessThan ||
+                         CR_i == APFloat::cmpUnordered)), E);
       }
     } else {
       if (E->getOpcode() == BinaryOperator::EQ)
@@ -1164,7 +1166,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return Success(CR == APFloat::cmpEqual, E);
     case BinaryOperator::NE:
       return Success(CR == APFloat::cmpGreaterThan
-                     || CR == APFloat::cmpLessThan, E);
+                     || CR == APFloat::cmpLessThan
+                     || CR == APFloat::cmpUnordered, E);
     }
   }
 
