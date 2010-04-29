@@ -1394,6 +1394,13 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     return false;  // Not coalescable.
   }
 
+  // We cannot handle dual subreg indices and mismatched classes at the same
+  // time.
+  if (SrcSubIdx && DstSubIdx && differingRegisterClasses(SrcReg, DstReg)) {
+    DEBUG(dbgs() << "\tCannot handle subreg indices and mismatched classes.\n");
+    return false;
+  }
+
   // Check that a physical source register is compatible with dst regclass
   if (SrcIsPhys) {
     unsigned SrcSubReg = SrcSubIdx ?
