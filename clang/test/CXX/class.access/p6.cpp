@@ -105,3 +105,17 @@ namespace test3 {
     Outer::A<B, Blue>::foo(); // expected-error {{no member named 'foo'}}
   }
 }
+
+namespace test4 {
+  template <class T> class A {
+  private: typedef int type;
+    template <class U> friend void foo(U &, typename U::type);
+  };
+
+  template <class U> void foo(U &, typename U::type) {}
+  
+  void test() {
+    A<int> a;
+    foo(a, 0);
+  }
+}
