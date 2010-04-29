@@ -810,7 +810,7 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
         Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
         PropImplMap.count(Prop))
       continue;
-    if (LangOpts.ObjCNonFragileABI2) {
+    if (LangOpts.ObjCNonFragileABI2 && !isa<ObjCCategoryImplDecl>(IMPDecl)) {
       ActOnPropertyImplDecl(IMPDecl->getLocation(),
                             IMPDecl->getLocation(),
                             true, DeclPtrTy::make(IMPDecl),

@@ -93,3 +93,13 @@
 @end
 
 @implementation SubClass @end // expected-error {{property 'myString' attempting to use ivar 'myString' declared in super class 'TopClass'}}
+
+// rdar: // 7920807
+@interface C @end
+@interface C (Category)
+@property int p; // expected-warning {{property 'p' requires method 'p' to be defined }} \
+                 // expected-warning {{property 'p' requires method 'setP:' to be defined}}
+@end
+@implementation C (Category) // expected-note 2 {{implementation is here}}
+@end
+
