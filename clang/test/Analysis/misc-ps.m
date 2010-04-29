@@ -933,3 +933,27 @@ void foo_rev95547_b(struct s_rev95547 w) {
   struct s_rev95547 w2 = w;
   w2.z1.x += 20.0; // no-warning
 }
+
+//===----------------------------------------------------------------------===//
+// Test handling statement expressions that don't populate a CFG block that
+// is used to represent the computation of the RHS of a logical operator.
+// This previously triggered a crash.
+//===----------------------------------------------------------------------===//
+
+void pr6938() {
+  if (1 && ({
+    while (0);
+    0;
+  }) == 0) {
+  }
+}
+
+void pr6938_b() {
+  if (1 && *({ // expected-warning{{Dereference of null pointer}}
+    while (0) {}
+    ({
+      (int *) 0;
+    });
+  }) == 0) {
+  }
+}

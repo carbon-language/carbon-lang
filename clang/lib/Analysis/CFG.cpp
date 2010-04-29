@@ -498,8 +498,16 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     Succ = ConfluenceBlock;
     Block = NULL;
     CFGBlock* RHSBlock = addStmt(B->getRHS());
-    if (!FinishBlock(RHSBlock))
-      return 0;
+
+    if (RHSBlock) {
+      if (!FinishBlock(RHSBlock))
+        return 0;
+    }
+    else {
+      // Create an empty block for cases where the RHS doesn't require
+      // any explicit statements in the CFG.
+      RHSBlock = createBlock();
+    }
 
     // See if this is a known constant.
     TryResult KnownVal = TryEvaluateBool(B->getLHS());
