@@ -95,8 +95,11 @@ namespace ISD {
     // execution to HANDLER. Many platform-related details also :)
     EH_RETURN,
 
-    // TargetConstant* - Like Constant*, but the DAG does not do any folding or
-    // simplification of the constant.
+    // TargetConstant* - Like Constant*, but the DAG does not do any folding,
+    // simplification, or lowering of the constant. They are used for constants
+    // which are known to fit in the immediate fields of their users, or for
+    // carrying magic numbers which are not values which need to be materialized
+    // in registers.
     TargetConstant,
     TargetConstantFP,
 
