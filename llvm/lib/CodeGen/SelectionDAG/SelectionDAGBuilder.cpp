@@ -3699,7 +3699,7 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
   unsigned Reg = 0;
   if (N.getOpcode() == ISD::CopyFromReg) {
     Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
-    if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+    if (Reg && TargetRegisterInfo::isVirtualRegister(Reg)) {
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
       unsigned PR = RegInfo.getLiveInPhysReg(Reg);
       if (PR)
