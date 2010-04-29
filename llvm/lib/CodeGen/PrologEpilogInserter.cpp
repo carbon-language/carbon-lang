@@ -197,6 +197,10 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   if (CSRegs == 0 || CSRegs[0] == 0)
     return;
 
+  // In Naked functions we aren't going to save any registers.
+  if (Fn.getFunction()->hasFnAttr(Attribute::Naked))
+    return;
+
   // Figure out which *callee saved* registers are modified by the current
   // function, thus needing to be saved and restored in the prolog/epilog.
   const TargetRegisterClass * const *CSRegClasses =
