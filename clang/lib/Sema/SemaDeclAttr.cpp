@@ -118,7 +118,7 @@ static bool isFunctionOrMethodVariadic(const Decl *d) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
   } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
-    return BD->IsVariadic();
+    return BD->isVariadic();
   else {
     return cast<ObjCMethodDecl>(d)->isVariadic();
   }
