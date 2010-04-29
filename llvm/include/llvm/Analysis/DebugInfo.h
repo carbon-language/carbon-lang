@@ -474,6 +474,10 @@ namespace llvm {
       return getType().isBlockByrefStruct();
     }
 
+    /// isInlinedFnArgument - Return trule if this variable provides debugging
+    /// information for an inlined function arguments.
+    bool isInlinedFnArgument(const Function *CurFn);
+
     /// dump - print variable.
     void dump() const;
   };
