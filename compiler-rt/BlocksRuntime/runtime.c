@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "config.h"
 
@@ -45,7 +44,7 @@
 #include <libkern/OSAtomic.h>
 #endif /* HAVE_LIBKERN_OSATOMIC_H */
 
-#elif defined(__WIN32__)
+#elif defined(__WIN32__) || defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <windows.h>
 

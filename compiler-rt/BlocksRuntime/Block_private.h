@@ -33,7 +33,14 @@
 #   endif
 #endif
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+/* MSVC doesn't have <stdbool.h>. Compensate. */
+typedef char bool;
+#define true (bool)1
+#define false (bool)0
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
