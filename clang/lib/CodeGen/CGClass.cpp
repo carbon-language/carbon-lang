@@ -622,17 +622,16 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
 /// object from SrcValue to DestValue. Assignment can be either a bitwise
 /// assignment of via an assignment operator call.
 // FIXME. Consolidate this with EmitClassMemberwiseCopy as they share a lot.
-void CodeGenFunction::EmitClassCopyAssignment(
-                                        llvm::Value *Dest, llvm::Value *Src,
-                                        const CXXRecordDecl *ClassDecl,
-                                        const CXXRecordDecl *BaseClassDecl,
-                                        QualType Ty) {
+void 
+CodeGenFunction::EmitClassCopyAssignment(llvm::Value *Dest, llvm::Value *Src,
+                                         const CXXRecordDecl *ClassDecl,
+                                         const CXXRecordDecl *BaseClassDecl) {
   if (ClassDecl) {
     Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
     Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
   }
   if (BaseClassDecl->hasTrivialCopyAssignment()) {
-    EmitAggregateCopy(Dest, Src, Ty);
+    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(BaseClassDecl));
     return;
   }
 
@@ -785,8 +784,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
 
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassCopyAssignment(ThisPtr, SrcPtr, ClassDecl, BaseClassDecl,
-                            Base->getType());
+    EmitClassCopyAssignment(ThisPtr, SrcPtr, ClassDecl, BaseClassDecl);
   }
 
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -815,7 +813,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
       }
       else
         EmitClassCopyAssignment(LHS.getAddress(), RHS.getAddress(),
-                               0 /*ClassDecl*/, FieldClassDecl, FieldType);
+                               0 /*ClassDecl*/, FieldClassDecl);
       continue;
     }
     // Do a built-in assignment of scalar data members.

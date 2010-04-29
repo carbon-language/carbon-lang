@@ -823,8 +823,7 @@ public:
 
   void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl,
-                               const CXXRecordDecl *BaseClassDecl,
-                               QualType Ty);
+                               const CXXRecordDecl *BaseClassDecl);
 
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
