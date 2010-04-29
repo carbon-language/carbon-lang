@@ -1601,7 +1601,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
                                            ArrayType::Normal, 0);
   }
-  llvm::StringRef DeclName = Var->getName();
+  llvm::StringRef DeclName = D->getName();
   llvm::DIDescriptor DContext = 
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
   DebugFactory.CreateGlobalVariable(DContext, DeclName,
