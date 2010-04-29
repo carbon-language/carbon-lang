@@ -76,6 +76,8 @@ public:
   /// anywhere in the function.
   DenseMap<const AllocaInst*, int> StaticAllocaMap;
 
+  /// ArgDbgValues - A list of DBG_VALUE instructions created during isel for
+  /// function arguments that are inserted after scheduling is completed.
   SmallVector<MachineInstr*, 8> ArgDbgValues;
 
 #ifndef NDEBUG
