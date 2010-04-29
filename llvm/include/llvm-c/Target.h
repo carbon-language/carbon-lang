@@ -43,7 +43,7 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
     it wants access to all available targets that LLVM is configured to
     support. */
-static inline void LLVMInitializeAllTargetInfos() {
+static inline void LLVMInitializeAllTargetInfos(void) {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
 #include "llvm/Config/Targets.def"
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
@@ -52,7 +52,7 @@ static inline void LLVMInitializeAllTargetInfos() {
 /** LLVMInitializeAllTargets - The main program should call this function if it
     wants to link in all available targets that LLVM is configured to
     support. */
-static inline void LLVMInitializeAllTargets() {
+static inline void LLVMInitializeAllTargets(void) {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
@@ -61,7 +61,7 @@ static inline void LLVMInitializeAllTargets() {
 /** LLVMInitializeNativeTarget - The main program should call this function to
     initialize the native target corresponding to the host.  This is useful 
     for JIT applications to ensure that the target gets linked in correctly. */
-static inline LLVMBool LLVMInitializeNativeTarget() {
+static inline LLVMBool LLVMInitializeNativeTarget(void) {
   /* If we have a native target, initialize it to ensure it is linked in. */
 #ifdef LLVM_NATIVE_ARCH
 #define DoInit2(TARG) \
