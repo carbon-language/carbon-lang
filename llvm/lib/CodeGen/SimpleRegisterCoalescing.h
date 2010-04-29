@@ -242,8 +242,6 @@ namespace llvm {
     /// cycles Start and End or NULL if there are no uses.
     MachineOperand *lastRegisterUse(SlotIndex Start, SlotIndex End,
                                     unsigned Reg, SlotIndex &LastUseIdx) const;
-
-    void printRegName(unsigned reg) const;
   };
 
 } // End llvm namespace

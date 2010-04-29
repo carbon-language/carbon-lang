@@ -179,7 +179,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
     for (const unsigned* SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
       if (li_->hasInterval(*SR) && IntA.overlaps(li_->getInterval(*SR))) {
         DEBUG({
-            dbgs() << "Interfere with sub-register ";
+            dbgs() << "\t\tInterfere with sub-register ";
             li_->getInterval(*SR).print(dbgs(), tri_);
           });
         return false;
@@ -187,7 +187,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   }
 
   DEBUG({
-      dbgs() << "\nExtending: ";
+      dbgs() << "Extending: ";
       IntB.print(dbgs(), tri_);
     });
 
@@ -470,7 +470,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // We need to insert a new liverange: [ALR.start, LastUse). It may be we can
   // simply extend BLR if CopyMI doesn't end the range.
   DEBUG({
-      dbgs() << "\nExtending: ";
+      dbgs() << "Extending: ";
       IntB.print(dbgs(), tri_);
     });
 
@@ -523,7 +523,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   DEBUG({
       dbgs() << "   result = ";
       IntB.print(dbgs(), tri_);
-      dbgs() << '\n';
       dbgs() << "\nShortening: ";
       IntA.print(dbgs(), tri_);
     });
@@ -825,6 +824,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
                     UseMI->isRegTiedToDefOperand(&O-&UseMI->getOperand(0))))
           UseMI->addRegisterKilled(DstReg, tri_, true);
       }
+      DEBUG(dbgs() << "\t\tupdated: " << li_->getInstructionIndex(UseMI)
+                   << "\t" << *UseMI);
       continue;
     }
 
@@ -838,6 +839,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     else if (SubIdx)
       O.setSubReg(SubIdx);
     O.setReg(DstReg);
+
+    DEBUG(dbgs() << "\t\tupdated: " << li_->getInstructionIndex(UseMI)
+                 << "\t" << *UseMI);
 
     // After updating the operand, check if the machine instruction has
     // become a copy. If so, update its val# information.
@@ -1253,7 +1257,7 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
   if (li_->hasInterval(RealDstReg) &&
       RHS.overlaps(li_->getInterval(RealDstReg))) {
     DEBUG({
-        dbgs() << "Interfere with register ";
+        dbgs() << "\t\tInterfere with register ";
         li_->getInterval(RealDstReg).print(dbgs(), tri_);
       });
     return false; // Not coalescable
@@ -1265,7 +1269,7 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
         !tri_->isSubRegister(DstReg, *SR) &&
         li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
       DEBUG({
-          dbgs() << "Interfere with sub-register ";
+          dbgs() << "\t\tInterfere with sub-register ";
           li_->getInterval(*SR).print(dbgs(), tri_);
         });
       return false; // Not coalescable
@@ -1288,7 +1292,7 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
   if (li_->hasInterval(RealSrcReg) &&
       LHS.overlaps(li_->getInterval(RealSrcReg))) {
     DEBUG({
-        dbgs() << "Interfere with register ";
+        dbgs() << "\t\tInterfere with register ";
         li_->getInterval(RealSrcReg).print(dbgs(), tri_);
       });
     return false; // Not coalescable
@@ -1300,7 +1304,7 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
         !tri_->isSubRegister(SrcReg, *SR) &&
         li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
       DEBUG({
-          dbgs() << "Interfere with sub-register ";
+          dbgs() << "\t\tInterfere with sub-register ";
           li_->getInterval(*SR).print(dbgs(), tri_);
         });
       return false; // Not coalescable
@@ -1608,9 +1612,13 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
          "Register mapping is horribly broken!");
 
   DEBUG({
-      dbgs() << "\t\tInspecting "; SrcInt.print(dbgs(), tri_);
-      dbgs() << " and "; DstInt.print(dbgs(), tri_);
-      dbgs() << ": ";
+      dbgs() << "\t\tInspecting ";
+      if (SrcRC) dbgs() << SrcRC->getName() << ": ";
+      SrcInt.print(dbgs(), tri_);
+      dbgs() << "\n\t\t       and ";
+      if (DstRC) dbgs() << DstRC->getName() << ": ";
+      DstInt.print(dbgs(), tri_);
+      dbgs() << "\n";
     });
 
   // Save a copy of the virtual register live interval. We'll manually
@@ -1683,7 +1691,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // Only coalesce an empty interval (defined by implicit_def) with
       // another interval which has a valno defined by the CopyMI and the CopyMI
       // is a kill of the implicit def.
-      DEBUG(dbgs() << "Not profitable!\n");
+      DEBUG(dbgs() << "\tNot profitable!\n");
       return false;
     }
   } else if (!JoinIntervals(DstInt, SrcInt, Swapped)) {
@@ -1700,12 +1708,12 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         (AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI) ||
          RemoveCopyByCommutingDef(SrcInt, DstInt, CopyMI))) {
       JoinedCopies.insert(CopyMI);
-      DEBUG(dbgs() << "Trivial!\n");
+      DEBUG(dbgs() << "\tTrivial!\n");
       return true;
     }
 
     // Otherwise, we are unable to join the intervals.
-    DEBUG(dbgs() << "Interference!\n");
+    DEBUG(dbgs() << "\tInterference!\n");
     Again = true;  // May be possible to coalesce later.
     return false;
   }
@@ -1819,7 +1827,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   }
 
   DEBUG({
-      dbgs() << "\n\t\tJoined.  Result = ";
+      dbgs() << "\t\tJoined. Result = ";
       ResDstInt->print(dbgs(), tri_);
       dbgs() << "\n";
     });
@@ -2174,7 +2182,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
       for (const unsigned* SR = tri_->getSubRegisters(LHS.reg); *SR; ++SR)
         if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
           DEBUG({
-              dbgs() << "Interfere with sub-register ";
+              dbgs() << "\tInterfere with sub-register ";
               li_->getInterval(*SR).print(dbgs(), tri_);
             });
           return false;
@@ -2191,7 +2199,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
       for (const unsigned* SR = tri_->getSubRegisters(RHS.reg); *SR; ++SR)
         if (li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
           DEBUG({
-              dbgs() << "Interfere with sub-register ";
+              dbgs() << "\tInterfere with sub-register ";
               li_->getInterval(*SR).print(dbgs(), tri_);
             });
           return false;
@@ -2647,13 +2655,6 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
   }
 
   return NULL;
-}
-
-void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
-  if (TargetRegisterInfo::isPhysicalRegister(reg))
-    dbgs() << tri_->getName(reg);
-  else
-    dbgs() << "%reg" << reg;
 }
 
 void SimpleRegisterCoalescing::releaseMemory() {
