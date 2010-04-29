@@ -5165,6 +5165,20 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   return Context.getDependentNameType(Keyword, NNS, Name).getAsOpaquePtr();
 }
 
+static void FillTypeLoc(DependentNameTypeLoc TL,
+                        SourceLocation TypenameLoc,
+                        SourceRange QualifierRange) {
+  // FIXME: typename, qualifier range
+  TL.setNameLoc(TypenameLoc);
+}
+
+static void FillTypeLoc(QualifiedNameTypeLoc TL,
+                        SourceLocation TypenameLoc,
+                        SourceRange QualifierRange) {
+  // FIXME: typename, qualifier range
+  TL.setNameLoc(TypenameLoc);
+}
+
 Sema::TypeResult
 Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                         const IdentifierInfo &II, SourceLocation IdLoc) {
@@ -5177,7 +5191,19 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                                  SourceRange(TypenameLoc, IdLoc));
   if (T.isNull())
     return true;
-  return T.getAsOpaquePtr();
+
+  TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
+  if (isa<DependentNameType>(T)) {
+    DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+    // FIXME: fill inner type loc
+    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+  } else {
+    QualifiedNameTypeLoc TL = cast<QualifiedNameTypeLoc>(TSI->getTypeLoc());
+    // FIXME: fill inner type loc
+    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+  }
+  
+  return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 
 Sema::TypeResult
@@ -5196,11 +5222,21 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     // track of the nested-name-specifier.
 
     // FIXME: Note that the QualifiedNameType had the "typename" keyword!
-    return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
+    
+    T = Context.getQualifiedNameType(NNS, T);
+    TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
+    QualifiedNameTypeLoc TL = cast<QualifiedNameTypeLoc>(TSI->getTypeLoc());
+    // FIXME: fill inner type loc
+    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+    return CreateLocInfoType(T, TSI).getAsOpaquePtr();
   }
 
-  return Context.getDependentNameType(ETK_Typename, NNS, TemplateId)
-                                                            .getAsOpaquePtr();
+  T = Context.getDependentNameType(ETK_Typename, NNS, TemplateId);
+  TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
+  DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+  // FIXME: fill inner type loc
+  FillTypeLoc(TL, TypenameLoc, SS.getRange());
+  return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 
 /// \brief Build the type that describes a C++ typename specifier,
@@ -5419,24 +5455,28 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
 /// in X<T> and returning a QualifiedNameType whose canonical type is the same
 /// as the canonical type of T*, allowing the return types of the out-of-line
 /// definition and the declaration to match.
-QualType Sema::RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
-                                                 DeclarationName Name) {
-  if (T.isNull() || !T->isDependentType())
+TypeSourceInfo *Sema::RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,
+                                                        SourceLocation Loc,
+                                                        DeclarationName Name) {
+  if (!T || !T->getType()->isDependentType())
     return T;
 
   CurrentInstantiationRebuilder Rebuilder(*this, Loc, Name);
   return Rebuilder.TransformType(T);
 }
 
-void Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
-  if (SS.isInvalid()) return;
+bool Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
+  if (SS.isInvalid()) return true;
 
   NestedNameSpecifier *NNS = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
   CurrentInstantiationRebuilder Rebuilder(*this, SS.getRange().getBegin(),
                                           DeclarationName());
   NestedNameSpecifier *Rebuilt = 
     Rebuilder.TransformNestedNameSpecifier(NNS, SS.getRange());
-  if (Rebuilt) SS.setScopeRep(Rebuilt);
+  if (!Rebuilt) return true;
+
+  SS.setScopeRep(Rebuilt);
+  return false;
 }
 
 /// \brief Produces a formatted string that describes the binding of

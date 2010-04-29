@@ -3082,9 +3082,10 @@ public:
                              const IdentifierInfo &II,
                              SourceRange Range);
 
-  QualType RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
-                                             DeclarationName Name);
-  void RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS);
+  TypeSourceInfo *RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,
+                                                    SourceLocation Loc,
+                                                    DeclarationName Name);
+  bool RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS);
 
   std::string
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,

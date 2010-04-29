@@ -51,3 +51,16 @@ struct TestA {
   typedef typename N::template B<T>::type type; // expected-error{{'B' following the 'template' keyword does not refer to a template}} \
                                                 // expected-error{{expected member name}}
 };
+
+// Reduced from a Boost failure.
+namespace test1 {
+  template <class T> struct pair {
+    T x;
+    T y;
+
+    static T pair<T>::* const mem_array[2];
+  };
+
+  template <class T>
+  T pair<T>::* const pair<T>::mem_array[2] = { &pair<T>::x, &pair<T>::y };
+}

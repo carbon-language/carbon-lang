@@ -113,6 +113,6 @@ namespace PR6463 {
   // FIXME: Improve source location info here.
   template<typename T>
   typename A<T>::type& A<T>::a() { // expected-error{{found in multiple base classes}}
-    return x;  // expected-error{{undeclared identifier}}
+    return x;
   }
 }

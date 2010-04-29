@@ -1922,6 +1922,71 @@ static bool isNearlyMatchingFunction(ASTContext &Context,
   return true;
 }
 
+/// NeedsRebuildingInCurrentInstantiation - Checks whether the given
+/// declarator needs to be rebuilt in the current instantiation.
+/// Any bits of declarator which appear before the name are valid for
+/// consideration here.  That's specifically the type in the decl spec
+/// and the base type in any member-pointer chunks.
+static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
+                                                    DeclarationName Name) {
+  // The types we specifically need to rebuild are:
+  //   - typenames, typeofs, and decltypes
+  //   - types which will become injected class names
+  // Of course, we also need to rebuild any type referencing such a
+  // type.  It's safest to just say "dependent", but we call out a
+  // few cases here.
+
+  DeclSpec &DS = D.getMutableDeclSpec();
+  switch (DS.getTypeSpecType()) {
+  case DeclSpec::TST_typename:
+  case DeclSpec::TST_typeofType:
+  case DeclSpec::TST_typeofExpr:
+  case DeclSpec::TST_decltype: {
+    // Grab the type from the parser.
+    TypeSourceInfo *TSI = 0;
+    QualType T = S.GetTypeFromParser(DS.getTypeRep(), &TSI);
+    if (T.isNull() || !T->isDependentType()) break;
+
+    // Make sure there's a type source info.  This isn't really much
+    // of a waste; most dependent types should have type source info
+    // attached already.
+    if (!TSI)
+      TSI = S.Context.getTrivialTypeSourceInfo(T, DS.getTypeSpecTypeLoc());
+
+    // Rebuild the type in the current instantiation.
+    TSI = S.RebuildTypeInCurrentInstantiation(TSI, D.getIdentifierLoc(), Name);
+    if (!TSI) return true;
+
+    // Store the new type back in the decl spec.
+    QualType LocType = S.CreateLocInfoType(TSI->getType(), TSI);
+    DS.UpdateTypeRep(LocType.getAsOpaquePtr());
+    break;
+  }
+
+  default:
+    // Nothing to do for these decl specs.
+    break;
+  }
+
+  // It doesn't matter what order we do this in.
+  for (unsigned I = 0, E = D.getNumTypeObjects(); I != E; ++I) {
+    DeclaratorChunk &Chunk = D.getTypeObject(I);
+
+    // The only type information in the declarator which can come
+    // before the declaration name is the base type of a member
+    // pointer.
+    if (Chunk.Kind != DeclaratorChunk::MemberPointer)
+      continue;
+
+    // Rebuild the scope specifier in-place.
+    CXXScopeSpec &SS = Chunk.Mem.Scope();
+    if (S.RebuildNestedNameSpecifierInCurrentInstantiation(SS))
+      return true;
+  }
+
+  return false;
+}
+
 Sema::DeclPtrTy
 Sema::HandleDeclarator(Scope *S, Declarator &D,
                        MultiTemplateParamsArg TemplateParamLists,
@@ -1944,35 +2009,47 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
 
-  // If this is an out-of-line definition of a member of a class template
-  // or class template partial specialization, we may need to rebuild the
-  // type specifier in the declarator. See RebuildTypeInCurrentInstantiation()
-  // for more information.
-  // FIXME: cope with decltype(expr) and typeof(expr) once the rebuilder can
-  // handle expressions properly.
-  DeclSpec &DS = const_cast<DeclSpec&>(D.getDeclSpec());
-  if (D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid() &&
-      isDependentScopeSpecifier(D.getCXXScopeSpec()) &&
-      (DS.getTypeSpecType() == DeclSpec::TST_typename ||
-       DS.getTypeSpecType() == DeclSpec::TST_typeofType ||
-       DS.getTypeSpecType() == DeclSpec::TST_typeofExpr ||
-       DS.getTypeSpecType() == DeclSpec::TST_decltype)) {
-    if (DeclContext *DC = computeDeclContext(D.getCXXScopeSpec(), true)) {
-      // FIXME: Preserve type source info.
-      QualType T = GetTypeFromParser(DS.getTypeRep());
+  DeclContext *DC = CurContext;
+  if (D.getCXXScopeSpec().isInvalid())
+    D.setInvalidType();
+  else if (D.getCXXScopeSpec().isSet()) {
+    bool EnteringContext = !D.getDeclSpec().isFriendSpecified();
+    DC = computeDeclContext(D.getCXXScopeSpec(), EnteringContext);
+    if (!DC) {
+      // If we could not compute the declaration context, it's because the
+      // declaration context is dependent but does not refer to a class,
+      // class template, or class template partial specialization. Complain
+      // and return early, to avoid the coming semantic disaster.
+      Diag(D.getIdentifierLoc(),
+           diag::err_template_qualified_declarator_no_match)
+        << (NestedNameSpecifier*)D.getCXXScopeSpec().getScopeRep()
+        << D.getCXXScopeSpec().getRange();
+      return DeclPtrTy();
+    }
 
-      DeclContext *SavedContext = CurContext;
-      CurContext = DC;
-      T = RebuildTypeInCurrentInstantiation(T, D.getIdentifierLoc(), Name);
-      CurContext = SavedContext;
+    bool IsDependentContext = DC->isDependentContext();
 
-      if (T.isNull())
-        return DeclPtrTy();
-      DS.UpdateTypeRep(T.getAsOpaquePtr());
+    if (!IsDependentContext && 
+        RequireCompleteDeclContext(D.getCXXScopeSpec()))
+      return DeclPtrTy();
+
+    if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
+      Diag(D.getIdentifierLoc(),
+           diag::err_member_def_undefined_record)
+        << Name << DC << D.getCXXScopeSpec().getRange();
+      D.setInvalidType();
+    }
+
+    // Check whether we need to rebuild the type of the given
+    // declaration in the current instantiation.
+    if (EnteringContext && IsDependentContext &&
+        TemplateParamLists.size() != 0) {
+      ContextRAII SavedContext(*this, DC);
+      if (RebuildDeclaratorInCurrentInstantiation(*this, D, Name))
+        D.setInvalidType();
     }
   }
 
-  DeclContext *DC;
   NamedDecl *New;
 
   TypeSourceInfo *TInfo = 0;
@@ -1982,10 +2059,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
                         ForRedeclaration);
 
   // See if this is a redefinition of a variable in the same scope.
-  if (D.getCXXScopeSpec().isInvalid()) {
-    DC = CurContext;
-    D.setInvalidType();
-  } else if (!D.getCXXScopeSpec().isSet()) {
+  if (!D.getCXXScopeSpec().isSet()) {
     bool IsLinkageLookup = false;
 
     // If the declaration we're planning to build will be a function
@@ -2006,34 +2080,8 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     if (IsLinkageLookup)
       Previous.clear(LookupRedeclarationWithLinkage);
 
-    DC = CurContext;
     LookupName(Previous, S, /* CreateBuiltins = */ IsLinkageLookup);
   } else { // Something like "int foo::x;"
-    DC = computeDeclContext(D.getCXXScopeSpec(), true);
-
-    if (!DC) {
-      // If we could not compute the declaration context, it's because the
-      // declaration context is dependent but does not refer to a class,
-      // class template, or class template partial specialization. Complain
-      // and return early, to avoid the coming semantic disaster.
-      Diag(D.getIdentifierLoc(),
-           diag::err_template_qualified_declarator_no_match)
-        << (NestedNameSpecifier*)D.getCXXScopeSpec().getScopeRep()
-        << D.getCXXScopeSpec().getRange();
-      return DeclPtrTy();
-    }
-
-    if (!DC->isDependentContext() && 
-        RequireCompleteDeclContext(D.getCXXScopeSpec()))
-      return DeclPtrTy();
-
-    if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
-      Diag(D.getIdentifierLoc(),
-           diag::err_member_def_undefined_record)
-        << Name << DC << D.getCXXScopeSpec().getRange();
-      D.setInvalidType();
-    }
-    
     LookupQualifiedName(Previous, DC);
 
     // Don't consider using declarations as previous declarations for
