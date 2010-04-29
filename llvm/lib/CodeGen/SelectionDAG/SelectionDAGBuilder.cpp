@@ -3896,11 +3896,15 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
+#if 0
         if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
+#endif
           SDV = DAG.getDbgValue(Variable, N.getNode(),
                                 N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
+#if 0
         }
+#endif
       } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
