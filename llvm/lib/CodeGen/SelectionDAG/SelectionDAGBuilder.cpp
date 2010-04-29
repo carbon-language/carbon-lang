@@ -3691,6 +3691,13 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
   if (!isa<Argument>(V))
     return false;
 
+  // Ignore inlined function arguments here.
+  DIVariable DV(Variable);
+  if (DV.getContext().isSubprogram()
+      && DISubprogram(DV.getContext().getNode()).getLinkageName()
+      != cast<Argument>(V)->getParent()->getName())
+    return false;
+
   MachineFunction &MF = DAG.getMachineFunction();
   MachineBasicBlock *MBB = FuncInfo.MBBMap[DI.getParent()];
   if (MBB != &MF.front())
