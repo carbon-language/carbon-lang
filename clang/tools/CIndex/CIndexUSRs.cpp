@@ -38,7 +38,6 @@ public:
   bool ignoreResults() const { return IgnoreResults; }
 
   // Visitation methods from generating USRs from AST elements.
-  void VisitBlockDecl(BlockDecl *D);
   void VisitDeclContext(DeclContext *D);
   void VisitFieldDecl(FieldDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
@@ -114,12 +113,6 @@ public:
 //===----------------------------------------------------------------------===//
 // Generating USRs from ASTS.
 //===----------------------------------------------------------------------===//
-
-void USRGenerator::VisitBlockDecl(BlockDecl *D) {
-  VisitDeclContext(D->getDeclContext());
-  // FIXME: Better support for anonymous blocks.
-  Out << "@B@anon";
-}
 
 void USRGenerator::VisitDeclContext(DeclContext *DC) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
