@@ -49,9 +49,6 @@ InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
-static cl::opt<bool>
-Force("f", cl::desc("Enable binary output on terminals"));
-
 // Determine optimization level.
 static cl::opt<char>
 OptLevel("O",
