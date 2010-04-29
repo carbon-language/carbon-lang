@@ -59,7 +59,7 @@ protected:
   // number of union instances for the space, which guarantee maximal alignment.
   struct U {
 #ifdef __GNUC__
-    char X __attribute__((aligned));
+    char X __attribute__((aligned(8)));
 #else
     union {
       double D;
