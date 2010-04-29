@@ -131,7 +131,14 @@ void USRGenerator::VisitFieldDecl(FieldDecl *D) {
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
-  VisitDeclContext(D->getDeclContext());
+  if (D->getLinkage() != ExternalLinkage) {
+    GenLoc(D);
+    if (IgnoreResults)
+      return;
+  }
+  else
+    VisitDeclContext(D->getDeclContext());
+
   Out << "@F@" << D;
 }
 
@@ -152,10 +159,15 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
   // VarDecls can be declared 'extern' within a function or method body,
   // but their enclosing DeclContext is the function, not the TU.  We need
   // to check the storage class to correctly generate the USR.
-  if (!D->hasExternalStorage())
-    VisitDeclContext(D->getDeclContext());
+  if (D->getLinkage() != ExternalLinkage) {
+    GenLoc(D);
+    if (IgnoreResults)
+      return;
+  }
 
-  const std::string &s = D->getNameAsString();
+  // Variables always have simple names.
+  llvm::StringRef s = D->getName();
+
   // The string can be empty if the declaration has no name; e.g., it is
   // the ParmDecl with no name for declaration of a function pointer type, e.g.:
   //  	void  (*f)(void *);
@@ -377,10 +389,13 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
         // enums/anonymous structs/etc. defined in a common header file
         // are referred to across multiple translation units.
         if (isa<TagDecl>(ND) || isa<TypedefDecl>(ND) ||
-            isa<EnumConstantDecl>(ND) || isa<FieldDecl>(ND))
+            isa<EnumConstantDecl>(ND) || isa<FieldDecl>(ND) ||
+            isa<VarDecl>(ND))
           break;
         // Fall-through.
       case InternalLinkage:
+        if (isa<FunctionDecl>(ND))
+          break;
       case UniqueExternalLinkage:
         return createCXString("");
     }
