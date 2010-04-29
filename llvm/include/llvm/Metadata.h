@@ -91,7 +91,7 @@ class MDNode : public Value, public FoldingSetNode {
     FunctionLocalBit = 1 << 0,
     
     /// NotUniquedBit - This is set on MDNodes that are not uniqued because they
-    /// have a null perand.
+    /// have a null operand.
     NotUniquedBit    = 1 << 1,
     
     /// DestroyFlag - This bit is set by destroy() so the destructor can assert
