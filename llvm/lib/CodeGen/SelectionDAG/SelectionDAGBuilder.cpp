@@ -3684,17 +3684,17 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
 /// EmitFuncArgumentDbgValue - If the DbgValueInst is a dbg_value of a function
 /// argument, create the corresponding DBG_VALUE machine instruction for it now.
 /// At the end of instruction selection, they will be inserted to the entry BB.
-void
+bool
 SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
                                               const Value *V, MDNode *Variable,
                                               uint64_t Offset, SDValue &N) {
   if (!isa<Argument>(V))
-    return;
+    return false;
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineBasicBlock *MBB = FuncInfo.MBBMap[DI.getParent()];
   if (MBB != &MF.front())
-    return;
+    return false;
 
   unsigned Reg = 0;
   if (N.getOpcode() == ISD::CopyFromReg) {
@@ -3710,13 +3710,14 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
   if (!Reg)
     Reg = FuncInfo.ValueMap[V];
   if (!Reg)
-    return;
+    return false;
 
   const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
   MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
                                     TII->get(TargetOpcode::DBG_VALUE))
     .addReg(Reg).addImm(Offset).addMetadata(Variable);
   FuncInfo.ArgDbgValues.push_back(&*MIB);
+  return true;
 }
 
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
@@ -3895,10 +3896,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
-        EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N);
-        SDV = DAG.getDbgValue(Variable, N.getNode(),
-                              N.getResNo(), Offset, dl, SDNodeOrder);
-        DAG.AddDbgValue(SDV, N.getNode(), false);
+        if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
+          SDV = DAG.getDbgValue(Variable, N.getNode(),
+                                N.getResNo(), Offset, dl, SDNodeOrder);
+          DAG.AddDbgValue(SDV, N.getNode(), false);
+        }
       } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
