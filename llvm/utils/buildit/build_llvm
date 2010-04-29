@@ -284,8 +284,6 @@ if [ "$INSTALL_LIBLTO" == yes ]; then
   mkdir -p $DT_HOME/lib
   mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
   strip -S $DT_HOME/lib/libLTO.dylib
-else
-  rm lib/libLTO.dylib
 fi
 rm -f lib/libLTO.a lib/libLTO.la
 
