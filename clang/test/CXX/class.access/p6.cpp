@@ -52,3 +52,56 @@ namespace test1 {
     A apriv = priv; // expected-error {{private constructor}}
   }
 }
+
+// PR6967
+namespace test2 {
+  class A {
+  public:
+    template <class T> static void set(T &t, typename T::type v) {
+      t.value = v;
+    }
+    template <class T> static typename T::type get(const T &t) {
+      return t.value;
+    }
+  };
+
+  class B {
+    friend class A;
+
+  private:
+    typedef int type;
+    type value;
+  };
+
+  int test() {
+    B b;
+    A::set(b, 0);
+    return A::get(b);
+  }
+}
+
+namespace test3 {
+  class Green {}; class Blue {};
+
+  // We have to wrap this in a class because a partial specialization
+  // isn't actually in the context of the template.
+  struct Outer {
+    template <class T, class Nat> class A {
+    };
+  };
+
+  template <class T> class Outer::A<T, typename T::nature> {
+  public:
+    static void foo();
+  };
+
+  class B {
+  private: typedef Green nature;
+    friend class Outer;
+  };
+
+  void test() {
+    Outer::A<B, Green>::foo();
+    Outer::A<B, Blue>::foo(); // expected-error {{no member named 'foo'}}
+  }
+}

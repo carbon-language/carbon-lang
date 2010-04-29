@@ -1167,8 +1167,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
-  DeclContext *PreviousContext = CurContext;
-  CurContext = Instantiation;
+  ContextRAII SavedContext(*this, Instantiation);
 
   // If this is an instantiation of a local class, merge this local
   // instantiation scope with the enclosing scope. Otherwise, every
@@ -1209,7 +1208,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     Invalid = true;
   
   // Exit the scope of this instantiation.
-  CurContext = PreviousContext;
+  SavedContext.pop();
 
   // If this is a polymorphic C++ class without a key function, we'll
   // have to mark all of the virtual members to allow emission of a vtable

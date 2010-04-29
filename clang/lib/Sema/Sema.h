@@ -233,6 +233,30 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
+  /// A RAII object to temporarily push a declaration context.
+  class ContextRAII {
+  private:
+    Sema &S;
+    DeclContext *SavedContext;
+
+  public:
+    ContextRAII(Sema &S, DeclContext *ContextToPush)
+      : S(S), SavedContext(S.CurContext) {
+      assert(ContextToPush && "pushing null context");
+      S.CurContext = ContextToPush;
+    }
+
+    void pop() {
+      if (!SavedContext) return;
+      S.CurContext = SavedContext;
+      SavedContext = 0;
+    }
+
+    ~ContextRAII() {
+      pop();
+    }
+  };
+
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"

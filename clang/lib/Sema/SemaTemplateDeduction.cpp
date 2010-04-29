@@ -988,6 +988,8 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   if (Inst)
     return TDK_InstantiationDepth;
 
+  ContextRAII SavedContext(*this, Partial->getDeclContext());
+
   // C++ [temp.deduct.type]p2:
   //   [...] or if any template argument remains neither deduced nor
   //   explicitly specified, template argument deduction fails.
@@ -1163,6 +1165,8 @@ Sema::SubstituteExplicitTemplateArguments(
   if (Inst)
     return TDK_InstantiationDepth;
 
+  ContextRAII SavedContext(*this, FunctionTemplate->getDeclContext());
+
   if (CheckTemplateArgumentList(FunctionTemplate,
                                 SourceLocation(),
                                 ExplicitTemplateArgs,
@@ -1310,6 +1314,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
               ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution);
   if (Inst)
     return TDK_InstantiationDepth;
+
+  ContextRAII SavedContext(*this, FunctionTemplate->getDeclContext());
 
   // C++ [temp.deduct.type]p2:
   //   [...] or if any template argument remains neither deduced nor
