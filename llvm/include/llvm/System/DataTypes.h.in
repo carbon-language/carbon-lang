@@ -15,7 +15,7 @@
 |*   [u]int(32|64)_t : typedefs for signed and unsigned 32/64 bit system types*|
 |*   [U]INT(8|16|32|64)_(MIN|MAX) : Constants for the min and max values.     *|
 |*                                                                            *|
-|* No library is required when using these functinons.                        *|
+|* No library is required when using these functions.                         *|
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*/
 
