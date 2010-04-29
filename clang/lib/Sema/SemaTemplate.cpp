@@ -5518,8 +5518,15 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
       }
         
       case TemplateArgument::Expression: {
-        assert(false && "No expressions in deduced template arguments!");
-        Result += "<expression>";
+        // FIXME: This is non-optimal, since we're regurgitating the
+        // expression we were given.
+        std::string Str; 
+        {
+          llvm::raw_string_ostream OS(Str);
+          Args[I].getAsExpr()->printPretty(OS, Context, 0,
+                                           Context.PrintingPolicy);
+        }
+        Result += Str;
         break;
       }
         
