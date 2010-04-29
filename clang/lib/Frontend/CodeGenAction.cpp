@@ -179,13 +179,13 @@ namespace {
     virtual void CompleteTentativeDefinition(VarDecl *D) {
       Gen->CompleteTentativeDefinition(D);
     }
-    
+
     static void InlineAsmDiagHandler(const llvm::SMDiagnostic &SM,void *Context,
                                      unsigned LocCookie) {
       SourceLocation Loc = SourceLocation::getFromRawEncoding(LocCookie);
       ((BackendConsumer*)Context)->InlineAsmDiagHandler2(SM, Loc);
     }
-    
+
     void InlineAsmDiagHandler2(const llvm::SMDiagnostic &,
                                SourceLocation LocCookie);
   };
@@ -226,12 +226,12 @@ bool BackendConsumer::AddEmitPasses() {
     getPerModulePasses()->add(createBitcodeWriterPass(FormattedOutStream));
     return true;
   }
-  
+
   if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
     return true;
   }
-  
+
   bool Fast = CodeGenOpts.OptimizationLevel == 0;
 
   // Create the TargetMachine for generating code.
@@ -321,11 +321,7 @@ bool BackendConsumer::AddEmitPasses() {
   RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
                                createLinearScanRegisterAllocator);
 
-  // From llvm-gcc:
-  // If there are passes we have to run on the entire module, we do codegen
-  // as a separate "pass" after that happens.
-  // FIXME: This is disabled right now until bugs can be worked out.  Reenable
-  // this for fast -O0 compiles!
+  // Create the code generator passes.
   FunctionPassManager *PM = getCodeGenPasses();
   CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
 
@@ -444,7 +440,7 @@ void BackendConsumer::EmitAssembly() {
 
   if (CodeGenPasses) {
     PrettyStackTraceString CrashInfo("Code generation");
-    
+
     // Install an inline asm handler so that diagnostics get printed through our
     // diagnostics hooks.
     LLVMContext &Ctx = TheModule->getContext();
@@ -452,13 +448,13 @@ void BackendConsumer::EmitAssembly() {
     void *OldContext = Ctx.getInlineAsmDiagnosticContext();
     Ctx.setInlineAsmDiagnosticHandler((void*)(intptr_t)InlineAsmDiagHandler,
                                       this);
-    
+
     CodeGenPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())
         CodeGenPasses->run(*I);
     CodeGenPasses->doFinalization();
-    
+
     Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
   }
 }
@@ -469,23 +465,23 @@ static FullSourceLoc ConvertBackendLocation(const llvm::SMDiagnostic &D,
                                             SourceManager &CSM) {
   // Get both the clang and llvm source managers.  The location is relative to
   // a memory buffer that the LLVM Source Manager is handling, we need to add
-  // a copy to the Clang source manager. 
+  // a copy to the Clang source manager.
   const llvm::SourceMgr &LSM = *D.getSourceMgr();
-  
+
   // We need to copy the underlying LLVM memory buffer because llvm::SourceMgr
   // already owns its one and clang::SourceManager wants to own its one.
   const MemoryBuffer *LBuf =
   LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
-  
+
   // Create the copy and transfer ownership to clang::SourceManager.
   llvm::MemoryBuffer *CBuf =
   llvm::MemoryBuffer::getMemBufferCopy(LBuf->getBuffer(),
                                        LBuf->getBufferIdentifier());
   FileID FID = CSM.createFileIDForMemBuffer(CBuf);
-  
+
   // Translate the offset into the file.
   unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();
-  SourceLocation NewLoc = 
+  SourceLocation NewLoc =
   CSM.getLocForStartOfFile(FID).getFileLocWithOffset(Offset);
   return FullSourceLoc(NewLoc, CSM);
 }
@@ -493,12 +489,12 @@ static FullSourceLoc ConvertBackendLocation(const llvm::SMDiagnostic &D,
 
 /// InlineAsmDiagHandler2 - This function is invoked when the backend hits an
 /// error parsing inline asm.  The SMDiagnostic indicates the error relative to
-/// the temporary memory buffer that the inline asm parser has set up.  
+/// the temporary memory buffer that the inline asm parser has set up.
 void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
                                             SourceLocation LocCookie) {
   // There are a couple of different kinds of errors we could get here.  First,
   // we re-format the SMDiagnostic in terms of a clang diagnostic.
-  
+
   // Strip "error: " off the start of the message string.
   llvm::StringRef Message = D.getMessage();
   if (Message.startswith("error: "))
@@ -510,7 +506,7 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   if (D.getLoc() != SMLoc())
     Loc = ConvertBackendLocation(D, Context->getSourceManager());
   Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
-  
+
   // This could be a problem with no clang-level source location information.
   // In this case, LocCookie is invalid.  If there is source level information,
   // print an "generated from" note.
