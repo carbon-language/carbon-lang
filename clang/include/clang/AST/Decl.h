@@ -1138,6 +1138,9 @@ public:
   void setBody(Stmt *B);
   void setLazyBody(uint64_t Offset) { Body = Offset; }
 
+  /// Whether this function is variadic.
+  bool isVariadic() const;
+
   /// Whether this function is marked as virtual explicitly.
   bool isVirtualAsWritten() const { return IsVirtualAsWritten; }
   void setVirtualAsWritten(bool V) { IsVirtualAsWritten = V; }

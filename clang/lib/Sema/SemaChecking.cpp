@@ -511,15 +511,10 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   bool isVariadic;
   if (CurBlock)
     isVariadic = CurBlock->isVariadic;
-  else if (getCurFunctionDecl()) {
-    if (FunctionProtoType* FTP =
-            dyn_cast<FunctionProtoType>(getCurFunctionDecl()->getType()))
-      isVariadic = FTP->isVariadic();
-    else
-      isVariadic = false;
-  } else {
+  else if (FunctionDecl *FD = getCurFunctionDecl())
+    isVariadic = FD->isVariadic();
+  else
     isVariadic = getCurMethodDecl()->isVariadic();
-  }
 
   if (!isVariadic) {
     Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);

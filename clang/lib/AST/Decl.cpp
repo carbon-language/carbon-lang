@@ -906,6 +906,12 @@ void FunctionDecl::getNameForDiagnostic(std::string &S,
     
 }
 
+bool FunctionDecl::isVariadic() const {
+  if (const FunctionProtoType *FT = getType()->getAs<FunctionProtoType>())
+    return FT->isVariadic();
+  return false;
+}
+
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
     if (I->Body) {
