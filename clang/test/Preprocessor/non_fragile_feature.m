@@ -6,3 +6,7 @@
 #if !__has_feature(objc_nonfragile_abi)
 #error Non-fragile ABI used for compilation but feature macro not set.
 #endif
+
+#if !__has_feature(objc_weak_class)
+#error objc_weak_class should be enabled with nonfragile abi
+#endif
