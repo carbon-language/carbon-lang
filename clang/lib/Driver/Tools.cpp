@@ -827,7 +827,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Add default argument set.
     if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
       CmdArgs.push_back("-analyzer-check-dead-stores");
-      CmdArgs.push_back("-analyzer-check-security-syntactic");
+      // Do not enable the security-syntatic check since it
+      // it needs to be refined (known issues).
+      // CmdArgs.push_back("-analyzer-check-security-syntactic");
       CmdArgs.push_back("-analyzer-check-objc-mem");
       CmdArgs.push_back("-analyzer-eagerly-assume");
       CmdArgs.push_back("-analyzer-check-objc-methodsigs");
