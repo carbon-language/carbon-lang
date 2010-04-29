@@ -2384,7 +2384,11 @@ Sema::getMoreSpecializedPartialSpecialization(
                                                                Info,
                                                                Deduced,
                                                                0);
-
+  if (Better1)
+    Better1 = !::FinishTemplateArgumentDeduction(*this, PS2, 
+                                                 PS1->getTemplateArgs(), 
+                                                 Deduced, Info);
+  
   // Determine whether PS2 is at least as specialized as PS1
   Deduced.clear();
   Deduced.resize(PS1->getTemplateParameters()->size());
@@ -2395,6 +2399,10 @@ Sema::getMoreSpecializedPartialSpecialization(
                                                                Info,
                                                                Deduced,
                                                                0);
+  if (Better2)
+    Better2 = !::FinishTemplateArgumentDeduction(*this, PS1, 
+                                                 PS2->getTemplateArgs(), 
+                                                 Deduced, Info);
   
   if (Better1 == Better2)
     return 0;
