@@ -608,8 +608,12 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(i).getIndex();
   unsigned BasePtr;
 
+  unsigned Opc = MI.getOpcode();
+  bool AfterFPPop = Opc == X86::TAILJMPm64 || Opc == X86::TAILJMPm;
   if (needsStackRealignment(MF))
     BasePtr = (FrameIndex < 0 ? FramePtr : StackPtr);
+  else if (AfterFPPop)
+    BasePtr = StackPtr;
   else
     BasePtr = (hasFP(MF) ? FramePtr : StackPtr);
 
@@ -618,16 +622,22 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i).ChangeToRegister(BasePtr, false);
 
   // Now add the frame object offset to the offset from EBP.
+  int FIOffset;
+  if (AfterFPPop) {
+    // Tail call jmp happens after FP is popped.
+    const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+    const MachineFrameInfo *MFI = MF.getFrameInfo();
+    FIOffset = MFI->getObjectOffset(FrameIndex) - TFI.getOffsetOfLocalArea();
+  } else
+    FIOffset = getFrameIndexOffset(MF, FrameIndex);
+
   if (MI.getOperand(i+3).isImm()) {
     // Offset is a 32-bit integer.
-    int Offset = getFrameIndexOffset(MF, FrameIndex) +
-      (int)(MI.getOperand(i + 3).getImm());
-
+    int Offset = FIOffset + (int)(MI.getOperand(i + 3).getImm());
     MI.getOperand(i + 3).ChangeToImmediate(Offset);
   } else {
     // Offset is symbolic. This is extremely rare.
-    uint64_t Offset = getFrameIndexOffset(MF, FrameIndex) +
-                      (uint64_t)MI.getOperand(i+3).getOffset();
+    uint64_t Offset = FIOffset + (uint64_t)MI.getOperand(i+3).getOffset();
     MI.getOperand(i+3).setOffset(Offset);
   }
   return 0;
