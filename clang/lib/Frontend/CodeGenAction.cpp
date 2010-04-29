@@ -335,21 +335,13 @@ bool BackendConsumer::AddEmitPasses() {
   case 3: OptLevel = CodeGenOpt::Aggressive; break;
   }
 
-  // Request that addPassesToEmitFile run the Verifier after running
-  // passes which modify the IR.
-#ifndef NDEBUG
-  bool DisableVerify = false;
-#else
-  bool DisableVerify = true;
-#endif
-
   // Normal mode, emit a .s or .o file by running the code generator. Note,
   // this also adds codegenerator level optimization passes.
   TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
   if (Action == Backend_EmitObj)
     CGFT = TargetMachine::CGFT_ObjectFile;
   if (TM->addPassesToEmitFile(*PM, FormattedOutStream, CGFT, OptLevel,
-                              DisableVerify)) {
+                              /*DisableVerify=*/!CodeGenOpts.VerifyModule)) {
     Diags.Report(diag::err_fe_unable_to_interface_with_target);
     return false;
   }

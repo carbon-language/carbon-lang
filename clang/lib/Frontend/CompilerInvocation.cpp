@@ -145,7 +145,6 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   // TimePasses is only derived.
   // UnitAtATime is unused.
   // UnrollLoops is only derived.
-  // VerifyModule is only derived.
   // Inlining is only derived.
 
   if (Opts.DataSections)
