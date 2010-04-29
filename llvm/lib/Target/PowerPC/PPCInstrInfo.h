@@ -127,7 +127,7 @@ public:
                                     const TargetRegisterClass *RC) const;
   
   virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
-                                                 unsigned FrameIx,
+                                                 int FrameIx,
                                                  uint64_t Offset,
                                                  const MDNode *MDPtr,
                                                  DebugLoc DL) const;

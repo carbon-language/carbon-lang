@@ -819,7 +819,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
 MachineInstr*
 ARMBaseInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
-                                           unsigned FrameIx, uint64_t Offset,
+                                           int FrameIx, uint64_t Offset,
                                            const MDNode *MDPtr,
                                            DebugLoc DL) const {
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::DBG_VALUE))

@@ -372,7 +372,7 @@ public:
   /// target-specific AsmPrinter code as well; you will probably get invalid
   /// assembly output if you don't.
   virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
-                                                 unsigned FrameIx,
+                                                 int FrameIx,
                                                  uint64_t Offset,
                                                  const MDNode *MDPtr,
                                                  DebugLoc dl) const {

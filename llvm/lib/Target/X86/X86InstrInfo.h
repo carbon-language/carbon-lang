@@ -625,7 +625,7 @@ public:
   
   virtual
   MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
-                                         unsigned FrameIx, uint64_t Offset,
+                                         int FrameIx, uint64_t Offset,
                                          const MDNode *MDPtr,
                                          DebugLoc DL) const;
 

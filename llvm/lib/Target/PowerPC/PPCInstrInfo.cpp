@@ -647,7 +647,7 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
 MachineInstr*
 PPCInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
-                                       unsigned FrameIx, uint64_t Offset,
+                                       int FrameIx, uint64_t Offset,
                                        const MDNode *MDPtr,
                                        DebugLoc DL) const {
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(PPC::DBG_VALUE));
