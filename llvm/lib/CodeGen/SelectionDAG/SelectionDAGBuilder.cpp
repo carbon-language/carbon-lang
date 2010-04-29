@@ -3707,15 +3707,17 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
     }
   }
 
-  if (!Reg)
-    Reg = FuncInfo.ValueMap[V];
-  if (!Reg)
-    return false;
+  if (!Reg) {
+    DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
+    if (VMI == FuncInfo.ValueMap.end())
+      return false;
+    Reg = VMI->second;
+  }
 
   const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
   MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
                                     TII->get(TargetOpcode::DBG_VALUE))
-    .addReg(Reg).addImm(Offset).addMetadata(Variable);
+    .addReg(Reg, RegState::Debug).addImm(Offset).addMetadata(Variable);
   FuncInfo.ArgDbgValues.push_back(&*MIB);
   return true;
 }
@@ -3896,15 +3898,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
-#if 0
         if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
-#endif
           SDV = DAG.getDbgValue(Variable, N.getNode(),
                                 N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
-#if 0
         }
-#endif
       } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
