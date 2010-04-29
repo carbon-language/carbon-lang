@@ -418,6 +418,11 @@ void PCHStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
     case OffsetOfExpr::OffsetOfNode::Identifier:
       Writer.AddIdentifierRef(ON.getFieldName(), Record);
       break;
+        
+    case OffsetOfExpr::OffsetOfNode::Base:
+      // FIXME: Implement this!
+      llvm_unreachable("PCH for offsetof(base-specifier) not implemented");
+      break;
     }
   }
   for (unsigned I = 0, N = E->getNumExpressions(); I != N; ++I)

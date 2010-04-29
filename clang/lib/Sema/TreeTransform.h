@@ -4223,6 +4223,10 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
         continue;
         
       break;
+        
+    case Node::Base:
+      // Will be recomputed during the rebuild.
+      continue;
     }
     
     Components.push_back(Comp);

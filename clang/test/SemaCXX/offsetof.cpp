@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -Winvalid-offsetof
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10.0.0 -fsyntax-only -verify %s -Winvalid-offsetof
 
 struct NonPOD {
   virtual void f();
@@ -36,3 +36,20 @@ struct has_bitfields {
 };
 
 int test3 = __builtin_offsetof(struct has_bitfields, j); // expected-error{{cannot compute offset of bit-field 'j'}}
+
+// offsetof referring to members of a base class.
+struct Base1 { 
+  int x;
+};
+
+struct Base2 {
+  int y;
+};
+
+struct Derived2 : public Base1, public Base2 {
+  int z; 
+};
+
+int derived1[__builtin_offsetof(Derived2, x) == 0? 1 : -1];
+int derived2[__builtin_offsetof(Derived2, y)  == 4? 1 : -1];
+int derived3[__builtin_offsetof(Derived2, z)  == 8? 1 : -1];

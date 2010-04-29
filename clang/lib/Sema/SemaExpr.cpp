@@ -16,6 +16,7 @@
 #include "Lookup.h"
 #include "AnalysisBasedWarnings.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
@@ -6736,6 +6737,19 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
       return ExprError();
     }
       
+    // If the member was found in a base class, introduce OffsetOfNodes for
+    // the base class indirections.
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                       /*DetectVirtual=*/false);
+    if (IsDerivedFrom(CurrentType, 
+                      Context.getTypeDeclType(MemberDecl->getParent()), 
+                      Paths)) {
+      CXXBasePath &Path = Paths.front();
+      for (CXXBasePath::iterator B = Path.begin(), BEnd = Path.end();
+           B != BEnd; ++B)
+        Comps.push_back(OffsetOfNode(B->Base));
+    }
+    
     if (cast<RecordDecl>(MemberDecl->getDeclContext())->
                                                 isAnonymousStructOrUnion()) {
       llvm::SmallVector<FieldDecl*, 4> Path;

@@ -718,7 +718,11 @@ void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
       PrintedSomething = true;
       continue;
     }
-     
+
+    // Skip implicit base indirections.
+    if (ON.getKind() == OffsetOfExpr::OffsetOfNode::Base)
+      continue;
+
     // Field or identifier node.
     IdentifierInfo *Id = ON.getFieldName();
     if (!Id)

@@ -279,6 +279,10 @@ void StmtProfiler::VisitOffsetOfExpr(OffsetOfExpr *S) {
     case OffsetOfExpr::OffsetOfNode::Identifier:
       ID.AddPointer(ON.getFieldName());
       break;
+        
+    case OffsetOfExpr::OffsetOfNode::Base:
+      // These nodes are implicit, and therefore don't need profiling.
+      break;
     }
   }
   

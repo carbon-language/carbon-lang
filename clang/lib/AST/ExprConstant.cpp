@@ -1414,17 +1414,41 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
         if (*Field == MemberDecl)
           break;
       }
-      if (i < RL.getFieldCount())
-        Result += CharUnits::fromQuantity(
-                             RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
-      else 
-        return false;
+      assert(i < RL.getFieldCount() && "offsetof field in wrong type");
+      Result += CharUnits::fromQuantity(
+                           RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
       CurrentType = MemberDecl->getType().getNonReferenceType();
       break;
     }
         
     case OffsetOfExpr::OffsetOfNode::Identifier:
       llvm_unreachable("dependent __builtin_offsetof");
+      return false;
+        
+    case OffsetOfExpr::OffsetOfNode::Base: {
+      CXXBaseSpecifier *BaseSpec = ON.getBase();
+      if (BaseSpec->isVirtual())
+        return false;
+
+      // Find the layout of the class whose base we are looking into.
+      const RecordType *RT = CurrentType->getAs<RecordType>();
+      if (!RT) 
+        return false;
+      RecordDecl *RD = RT->getDecl();
+      const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
+
+      // Find the base class itself.
+      CurrentType = BaseSpec->getType();
+      const RecordType *BaseRT = CurrentType->getAs<RecordType>();
+      if (!BaseRT)
+        return false;
+      
+      // Add the offset to the base.
+      Result += CharUnits::fromQuantity(
+                RL.getBaseClassOffset(cast<CXXRecordDecl>(BaseRT->getDecl()))
+                                        / Info.Ctx.getCharWidth());
+      break;
+    }
     }
   }
   return Success(Result.getQuantity(), E);

@@ -462,6 +462,11 @@ unsigned PCHStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
     case Node::Identifier:
       E->setComponent(I, Node(Start, Reader.GetIdentifier(Record[Idx++]), End));
       break;
+        
+    case Node::Base:
+      // FIXME: Implement this!
+      llvm_unreachable("PCH for offsetof(base-specifier) not implemented");
+      break;
     }
   }
   

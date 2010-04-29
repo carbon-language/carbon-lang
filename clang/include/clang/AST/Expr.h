@@ -1024,9 +1024,15 @@ public:
   public:
     /// \brief The kind of offsetof node we have.
     enum Kind {
+      /// \brief An index into an array.
       Array = 0x00,
+      /// \brief A field.
       Field = 0x01,
-      Identifier = 0x02
+      /// \brief A field in a dependent type, known only by its name.
+      Identifier = 0x02,
+      /// \brief An implicit indirection through a C++ base class, when the
+      /// field found is in a base class.
+      Base = 0x03
     };
 
   private:
@@ -1042,6 +1048,8 @@ public:
     ///   - A FieldDecl*, for references to a known field.
     ///   - An IdentifierInfo*, for references to a field with a given name
     ///     when the class type is dependent.
+    ///   - A CXXBaseSpecifier*, for references that look at a field in a 
+    ///     base class.
     uintptr_t Data;
     
   public:
@@ -1061,6 +1069,10 @@ public:
                  SourceLocation NameLoc)
       : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc), 
         Data(reinterpret_cast<uintptr_t>(Name) | Identifier) { }
+
+    /// \brief Create an offsetof node that refers into a C++ base class.
+    explicit OffsetOfNode(const CXXBaseSpecifier *Base)
+      : Range(), Data(reinterpret_cast<uintptr_t>(Base) | OffsetOfNode::Base) {}
     
     /// \brief Determine what kind of offsetof node this is.
     Kind getKind() const { 
@@ -1077,12 +1089,18 @@ public:
     /// \brief For a field offsetof node, returns the field.
     FieldDecl *getField() const {
       assert(getKind() == Field);
-      return reinterpret_cast<FieldDecl *> (Data & ~(uintptr_t)Mask);
+      return reinterpret_cast<FieldDecl *>(Data & ~(uintptr_t)Mask);
     }
     
     /// \brief For a field or identifier offsetof node, returns the name of
     /// the field.
     IdentifierInfo *getFieldName() const;
+    
+    /// \brief For a base class node, returns the base specifier.
+    CXXBaseSpecifier *getBase() const {
+      assert(getKind() == Base);
+      return reinterpret_cast<CXXBaseSpecifier *>(Data & ~(uintptr_t)Mask);      
+    }
     
     /// \brief Retrieve the source range that covers this offsetof node.
     ///
