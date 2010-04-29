@@ -546,7 +546,6 @@ GCC::FileType CBE::OutputCode(const std::string &Bitcode,
   LLCArgs.push_back("-o");
   LLCArgs.push_back(OutputCFile.c_str());   // Output to the C file
   LLCArgs.push_back("-march=c");            // Output C language
-  LLCArgs.push_back("-f");                  // Overwrite as necessary...
   LLCArgs.push_back(Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back(0);
 

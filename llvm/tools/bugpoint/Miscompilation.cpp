@@ -1000,7 +1000,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   if (isExecutingJIT()) {
     outs() << "  lli -load " << SharedObject << " " << TestModuleBC.str();
   } else {
-    outs() << "  llc -f " << TestModuleBC.str() << " -o " << TestModuleBC.str()
+    outs() << "  llc " << TestModuleBC.str() << " -o " << TestModuleBC.str()
            << ".s\n";
     outs() << "  gcc " << SharedObject << " " << TestModuleBC.str()
               << ".s -o " << TestModuleBC.str() << ".exe";
