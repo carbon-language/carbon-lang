@@ -3669,7 +3669,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   id self;
   //   Class cls;
   // }
-  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
+  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct,
+                                      Ctx.getTranslationUnitDecl(),
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
@@ -4130,7 +4131,8 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // };
 
   // First the clang type for struct _message_ref_t
-  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
+  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct,
+                                      Ctx.getTranslationUnitDecl(),
                                       SourceLocation(),
                                       &Ctx.Idents.get("_message_ref_t"));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
