@@ -345,6 +345,8 @@ void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   O << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
   // cast away const; DIetc do not take const operands for some reason.
   DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
+  if (V.getContext().isSubprogram())
+    O << DISubprogram(V.getContext().getNode()).getDisplayName() << ":";
   O << V.getName();
   O << " <- ";
   // Frame address.  Currently handles register +- offset only.
