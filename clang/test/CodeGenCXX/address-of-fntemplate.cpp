@@ -11,3 +11,17 @@ void test() {
 }
 // CHECK: define linkonce_odr void @_Z1fIiEvT_
 // CHECK: define linkonce_odr void @_Z1fIiEvv
+
+namespace PR6973 {
+  template<typename T>
+  struct X {
+    void f(const T&);
+  };
+
+  template<typename T>
+  int g();
+
+  void h(X<int (*)()> xf) {
+    xf.f(&g<int>);
+  }
+}

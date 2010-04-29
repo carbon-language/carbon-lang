@@ -1660,6 +1660,21 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     return false;
   }
 
+  // Resolve overloaded function references.
+  if (Context.hasSameType(FromType, Context.OverloadTy)) {
+    DeclAccessPair Found;
+    FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType,
+                                                          true, Found);
+    if (!Fn)
+      return true;
+
+    if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
+      return true;
+
+    From = FixOverloadedFunctionReference(From, Found, Fn);
+    FromType = From->getType();
+  }
+
   // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
@@ -1673,25 +1688,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Function_To_Pointer:
-    if (Context.getCanonicalType(FromType) == Context.OverloadTy) {
-      DeclAccessPair Found;
-      FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType,
-                                                            true, Found);
-      if (!Fn)
-        return true;
-
-      if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
-        return true;
-
-      From = FixOverloadedFunctionReference(From, Found, Fn);
-      FromType = From->getType();
-        
-      // If there's already an address-of operator in the expression, we have
-      // the right type already, and the code below would just introduce an
-      // invalid additional pointer level.
-      if (FromType->isPointerType() || FromType->isMemberFunctionPointerType())
-        break;
-    }
     FromType = Context.getPointerType(FromType);
     ImpCastExprToType(From, FromType, CastExpr::CK_FunctionToPointerDecay);
     break;

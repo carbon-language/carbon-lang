@@ -1345,6 +1345,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   case PredefinedExprClass:
     return LV_Valid;
   case UnresolvedLookupExprClass:
+  case UnresolvedMemberExprClass:
     return LV_Valid;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);

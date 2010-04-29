@@ -622,8 +622,36 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // array-to-pointer conversion, or function-to-pointer conversion
   // (C++ 4p1).
 
-  DeclAccessPair AccessPair;
-
+  if (FromType == Context.OverloadTy) {
+    DeclAccessPair AccessPair;
+    if (FunctionDecl *Fn
+          = ResolveAddressOfOverloadedFunction(From, ToType, false, 
+                                               AccessPair)) {
+      // We were able to resolve the address of the overloaded function,
+      // so we can convert to the type of that function.
+      FromType = Fn->getType();
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
+        if (!Method->isStatic()) {
+          Type *ClassType 
+            = Context.getTypeDeclType(Method->getParent()).getTypePtr();
+          FromType = Context.getMemberPointerType(FromType, ClassType);
+        }
+      }
+      
+      // If the "from" expression takes the address of the overloaded
+      // function, update the type of the resulting expression accordingly.
+      if (FromType->getAs<FunctionType>())
+        if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(From->IgnoreParens()))
+          if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+            FromType = Context.getPointerType(FromType);
+ 
+      // Check that we've computed the proper type after overload resolution.
+      assert(Context.hasSameType(FromType,
+              FixOverloadedFunctionReference(From, AccessPair, Fn)->getType()));
+    } else {
+      return false;
+    }
+  } 
   // Lvalue-to-rvalue conversion (C++ 4.1):
   //   An lvalue (3.10) of a non-function, non-array type T can be
   //   converted to an rvalue.
@@ -668,36 +696,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // type "pointer to T." The result is a pointer to the
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
-  } else if (From->getType() == Context.OverloadTy) {
-    if (FunctionDecl *Fn
-          = ResolveAddressOfOverloadedFunction(From, ToType, false, 
-                                               AccessPair)) {
-      // Address of overloaded function (C++ [over.over]).
-      SCS.First = ICK_Function_To_Pointer;
-
-      // We were able to resolve the address of the overloaded function,
-      // so we can convert to the type of that function.
-      FromType = Fn->getType();
-      if (ToType->isLValueReferenceType())
-        FromType = Context.getLValueReferenceType(FromType);
-      else if (ToType->isRValueReferenceType())
-        FromType = Context.getRValueReferenceType(FromType);
-      else if (ToType->isMemberPointerType()) {
-        // Resolve address only succeeds if both sides are member pointers,
-        // but it doesn't have to be the same class. See DR 247.
-        // Note that this means that the type of &Derived::fn can be
-        // Ret (Base::*)(Args) if the fn overload actually found is from the
-        // base class, even if it was brought into the derived class via a
-        // using declaration. The standard isn't clear on this issue at all.
-        CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
-        FromType = Context.getMemberPointerType(FromType,
-                      Context.getTypeDeclType(M->getParent()).getTypePtr());
-      } else {
-        FromType = Context.getPointerType(FromType);
-      }
-    } else {
-      return false;
-    }
   } else {
     // We don't require any conversions for the first step.
     SCS.First = ICK_Identity;
