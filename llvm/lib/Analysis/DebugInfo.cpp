@@ -402,6 +402,17 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
   return getSizeInBits();
 }
 
+/// isInlinedFnArgument - Return trule if this variable provides debugging
+/// information for an inlined function arguments.
+bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
+  assert(CurFn && "Invalid function");
+  if (!getContext().isSubprogram())
+    return false;
+  // This variable is not inlined function argument if its scope 
+  // does not describe current function.
+  return !(DISubprogram(getContext().getNode()).describes(CurFn));
+}
+
 /// describes - Return true if this subprogram provides debugging
 /// information for the function F.
 bool DISubprogram::describes(const Function *F) {
