@@ -2833,6 +2833,7 @@ QualType ASTContext::getCFConstantStringType() {
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
                                            /*Mutable=*/false);
+      Field->setAccess(AS_public);
       CFConstantStringTypeDecl->addDecl(Field);
     }
 
@@ -2872,6 +2873,7 @@ QualType ASTContext::getNSConstantStringType() {
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
                                            /*Mutable=*/false);
+      Field->setAccess(AS_public);
       NSConstantStringTypeDecl->addDecl(Field);
     }
     
@@ -2909,6 +2911,7 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
                                            /*Mutable=*/false);
+      Field->setAccess(AS_public);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
 
@@ -2946,6 +2949,7 @@ QualType ASTContext::getBlockDescriptorType() {
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
                                          /*Mutable=*/false);
+    Field->setAccess(AS_public);
     T->addDecl(Field);
   }
 
@@ -2994,6 +2998,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() {
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
                                          /*Mutable=*/false);
+    Field->setAccess(AS_public);
     T->addDecl(Field);
   }
 
@@ -3071,6 +3076,7 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
+    Field->setAccess(AS_public);
     T->addDecl(Field);
   }
 
@@ -3115,6 +3121,7 @@ QualType ASTContext::getBlockParmType(
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
+    Field->setAccess(AS_public);
     T->addDecl(Field);
   }
 
@@ -3135,6 +3142,7 @@ QualType ASTContext::getBlockParmType(
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          Name, FieldType, /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
+    Field->setAccess(AS_public);
     T->addDecl(Field);
   }
 

@@ -706,7 +706,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                                   BlockDeclRefDecls);
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
-    ImplicitParamDecl::Create(getContext(), 0,
+    ImplicitParamDecl::Create(getContext(), const_cast<BlockDecl*>(BD),
                               SourceLocation(), II,
                               ParmTy);
 
