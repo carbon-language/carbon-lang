@@ -148,6 +148,9 @@ public:
   };
   
   /// BuildTypeInfo - Build the RTTI type info struct for the given type.
+  ///
+  /// \param Force - true to force the creation of this RTTI value
+  /// \param ForEH - true if this is for exception handling
   llvm::Constant *BuildTypeInfo(QualType Ty, bool Force = false);
 };
 }
@@ -242,9 +245,10 @@ static bool TypeInfoIsInStandardLibrary(const PointerType *PointerTy) {
 }
 
 /// ShouldUseExternalRTTIDescriptor - Returns whether the type information for
-/// the given type exists somewhere else, and that we should not emit the typ
+/// the given type exists somewhere else, and that we should not emit the type
 /// information in this translation unit.
-bool ShouldUseExternalRTTIDescriptor(QualType Ty) {
+static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
+                                            QualType Ty) {
   // Type info for builtin types is defined in the standard library.
   if (const BuiltinType *BuiltinTy = dyn_cast<BuiltinType>(Ty))
     return TypeInfoIsInStandardLibrary(BuiltinTy);
@@ -253,6 +257,9 @@ bool ShouldUseExternalRTTIDescriptor(QualType Ty) {
   // standard library.
   if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty))
     return TypeInfoIsInStandardLibrary(PointerTy);
+
+  // If RTTI is disabled, don't consider key functions.
+  if (!Context.getLangOptions().RTTI) return false;
 
   if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
@@ -449,7 +456,8 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   Fields.push_back(VTable);
 }
 
-llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
+llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty,
+                                           bool Force) {
   // We want to operate on the canonical type.
   Ty = CGM.getContext().getCanonicalType(Ty);
 
@@ -463,7 +471,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);
   
   // Check if there is already an external RTTI descriptor for this type.
-  if (!Force && ShouldUseExternalRTTIDescriptor(Ty))
+  if (!Force && ShouldUseExternalRTTIDescriptor(CGM.getContext(), Ty))
     return GetAddrOfExternalRTTIDescriptor(Ty);
 
   llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(Ty);
@@ -782,12 +790,16 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   Fields.push_back(RTTIBuilder(CGM).BuildTypeInfo(QualType(ClassType, 0)));
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty) {
-  if (!getContext().getLangOptions().RTTI) {
+llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
+                                                       bool ForEH) {
+  // Return a bogus pointer if RTTI is disabled, unless it's for EH.
+  // FIXME: should we even be calling this method if RTTI is disabled
+  // and it's not for EH?
+  if (!ForEH && !getContext().getLangOptions().RTTI) {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
     return llvm::Constant::getNullValue(Int8PtrTy);
   }
-  
+
   return RTTIBuilder(*this).BuildTypeInfo(Ty);
 }
 
