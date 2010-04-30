@@ -2326,9 +2326,11 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // If -tailcallopt is specified, make fastcc functions tail-callable.
   const MachineFunction &MF = DAG.getMachineFunction();
   const Function *CallerF = DAG.getMachineFunction().getFunction();
+  CallingConv::ID CallerCC = CallerF->getCallingConv();
+  bool CCMatch = CallerCC == CalleeCC;
+
   if (GuaranteedTailCallOpt) {
-    if (IsTailCallConvention(CalleeCC) &&
-        CallerF->getCallingConv() == CalleeCC)
+    if (IsTailCallConvention(CalleeCC) && CCMatch)
       return true;
     return false;
   }
@@ -2366,10 +2368,40 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     CCState CCInfo(CalleeCC, false, getTargetMachine(),
                    RVLocs, *DAG.getContext());
     CCInfo.AnalyzeCallResult(Ins, RetCC_X86);
-    for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
       CCValAssign &VA = RVLocs[i];
       if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1)
         return false;
+    }
+  }
+
+  // If the calling conventions do not match, then we'd better make sure the
+  // results are returned in the same way as what the caller expects.
+  if (!CCMatch) {
+    SmallVector<CCValAssign, 16> RVLocs1;
+    CCState CCInfo1(CalleeCC, false, getTargetMachine(),
+                    RVLocs1, *DAG.getContext());
+    CCInfo1.AnalyzeCallResult(Ins, RetCC_X86);
+
+    SmallVector<CCValAssign, 16> RVLocs2;
+    CCState CCInfo2(CallerCC, false, getTargetMachine(),
+                    RVLocs2, *DAG.getContext());
+    CCInfo2.AnalyzeCallResult(Ins, RetCC_X86);
+
+    if (RVLocs1.size() != RVLocs2.size())
+      return false;
+    for (unsigned i = 0, e = RVLocs1.size(); i != e; ++i) {
+      if (RVLocs1[i].isRegLoc() != RVLocs2[i].isRegLoc())
+        return false;
+      if (RVLocs1[i].getLocInfo() != RVLocs2[i].getLocInfo())
+        return false;
+      if (RVLocs1[i].isRegLoc()) {
+        if (RVLocs1[i].getLocReg() != RVLocs2[i].getLocReg())
+          return false;
+      } else {
+        if (RVLocs1[i].getLocMemOffset() != RVLocs2[i].getLocMemOffset())
+          return false;
+      }
     }
   }
 

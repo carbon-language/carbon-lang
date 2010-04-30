@@ -313,3 +313,21 @@ entry:
 }
 
 declare void @foo()
+
+; If caller / callee calling convention mismatch then check if the return
+; values are returned in the same registers.
+; rdar://7874780
+
+define double @t20(double %x) nounwind {
+entry:
+; 32: t20:
+; 32: call {{_?}}foo20
+; 32: fldl (%esp)
+
+; 64: t20:
+; 64: jmp {{_?}}foo20
+  %0 = tail call fastcc double @foo20(double %x) nounwind
+  ret double %0
+}
+
+declare fastcc double @foo20(double) nounwind
