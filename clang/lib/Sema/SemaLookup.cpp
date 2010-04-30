@@ -1386,10 +1386,18 @@ addAssociatedClassesAndNamespaces(QualType T,
                           Sema::AssociatedNamespaceSet &AssociatedNamespaces,
                                   Sema::AssociatedClassSet &AssociatedClasses);
 
-static void CollectNamespace(Sema::AssociatedNamespaceSet &Namespaces,
-                             DeclContext *Ctx) {
+static void CollectEnclosingNamespace(Sema::AssociatedNamespaceSet &Namespaces,
+                                      DeclContext *Ctx) {
+  // Add the associated namespace for this class.
+
+  // We don't use DeclContext::getEnclosingNamespaceContext() as this may
+  // be a locally scoped record.
+
+  while (Ctx->isRecord() || Ctx->isTransparentContext())
+    Ctx = Ctx->getParent();
+
   if (Ctx->isFileContext())
-    Namespaces.insert(Ctx);
+    Namespaces.insert(Ctx->getPrimaryContext());
 }
 
 // \brief Add the associated classes and namespaces for argument-dependent
@@ -1425,9 +1433,7 @@ addAssociatedClassesAndNamespaces(const TemplateArgument &Arg,
         if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
           AssociatedClasses.insert(EnclosingClass);
         // Add the associated namespace for this class.
-        while (Ctx->isRecord())
-          Ctx = Ctx->getParent();
-        CollectNamespace(AssociatedNamespaces, Ctx);
+        CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
       }
       break;
     }
@@ -1471,9 +1477,7 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
   if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
     AssociatedClasses.insert(EnclosingClass);
   // Add the associated namespace for this class.
-  while (Ctx->isRecord())
-    Ctx = Ctx->getParent();
-  CollectNamespace(AssociatedNamespaces, Ctx);
+  CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
 
   // Add the class itself. If we've already seen this class, we don't
   // need to visit base classes.
@@ -1495,9 +1499,7 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
     if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
       AssociatedClasses.insert(EnclosingClass);
     // Add the associated namespace for this class.
-    while (Ctx->isRecord())
-      Ctx = Ctx->getParent();
-    CollectNamespace(AssociatedNamespaces, Ctx);
+    CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
 
     const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
@@ -1538,9 +1540,7 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
       if (AssociatedClasses.insert(BaseDecl)) {
         // Find the associated namespace for this base class.
         DeclContext *BaseCtx = BaseDecl->getDeclContext();
-        while (BaseCtx->isRecord())
-          BaseCtx = BaseCtx->getParent();
-        CollectNamespace(AssociatedNamespaces, BaseCtx);
+        CollectEnclosingNamespace(AssociatedNamespaces, BaseCtx);
 
         // Make sure we visit the bases of this base class.
         if (BaseDecl->bases_begin() != BaseDecl->bases_end())
@@ -1615,9 +1615,7 @@ addAssociatedClassesAndNamespaces(QualType T,
       AssociatedClasses.insert(EnclosingClass);
 
     // Add the associated namespace for this class.
-    while (Ctx->isRecord())
-      Ctx = Ctx->getParent();
-    CollectNamespace(AssociatedNamespaces, Ctx);
+    CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
 
     return;
   }

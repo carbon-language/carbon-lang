@@ -71,3 +71,18 @@ namespace O {
   }
 }
 
+extern "C" {
+  struct L { };
+}
+
+void h(L); // expected-note{{candidate function}}
+
+namespace P {
+  void h(L); // expected-note{{candidate function}}
+  void test_transparent_context_adl(L l) {
+    {
+      h(l); // expected-error {{call to 'h' is ambiguous}}
+    }
+  }
+}
+
