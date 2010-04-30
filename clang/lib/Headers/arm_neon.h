@@ -165,6 +165,14 @@ typedef struct __poly16x8_t {
 // Intrinsics, per ARM document DUI0348B
 #define __ai static __attribute__((__always_inline__))
 
+#define INTTYPES_WIDE(op, builtin) \
+  __ai int16x8_t op##_s8(int16x8_t a, int8x8_t b) { return (int16x8_t){ builtin(a.val, b.val) }; } \
+  __ai int32x4_t op##_s16(int32x4_t a, int16x4_t b) { return (int32x4_t){ builtin(a.val, b.val) }; } \
+  __ai int64x2_t op##_s32(int64x2_t a, int32x2_t b) { return (int64x2_t){ builtin(a.val, b.val) }; } \
+  __ai uint16x8_t op##_u8(uint16x8_t a, uint8x8_t b) { return (uint16x8_t){ builtin(a.val, b.val) }; } \
+  __ai uint32x4_t op##_u16(uint32x4_t a, uint16x4_t b) { return (uint32x4_t){ builtin(a.val, b.val) }; } \
+  __ai uint64x2_t op##_u32(uint64x2_t a, uint32x2_t b) { return (uint64x2_t){ builtin(a.val, b.val) }; }
+
 #define INTTYPES_WIDENING(op, builtin) \
   __ai int16x8_t op##_s8(int8x8_t a, int8x8_t b) { return (int16x8_t){ builtin(a.val, b.val) }; } \
   __ai int32x4_t op##_s16(int16x4_t a, int16x4_t b) { return (int32x4_t){ builtin(a.val, b.val) }; } \
@@ -213,7 +221,7 @@ typedef struct __poly16x8_t {
   __ai uint32x2_t op##_f32(float32x2_t a, float32x2_t b) { return (uint32x2_t){ builtin(a.val, b.val) }; } \
   __ai uint32x4_t op##q_f32(float32x4_t a, float32x4_t b) { return (uint32x4_t){ builtin(a.val, b.val) }; }
 
-#define INT_FLOAT_CMP_OP(op, builtin, cc) \
+#define INT_FLOAT_CMP_OP(op, cc) \
   __ai uint8x8_t op##_s8(int8x8_t a, int8x8_t b) { return (uint8x8_t){(__neon_uint8x8_t)(a.val cc b.val)}; } \
   __ai uint16x4_t op##_s16(int16x4_t a, int16x4_t b) { return (uint16x4_t){(__neon_uint16x4_t)(a.val cc b.val)}; } \
   __ai uint32x2_t op##_s32(int32x2_t a, int32x2_t b) { return (uint32x2_t){(__neon_uint32x2_t)(a.val cc b.val)}; } \
@@ -228,6 +236,49 @@ typedef struct __poly16x8_t {
   __ai uint8x16_t op##q_u8(uint8x16_t a, uint8x16_t b) { return (uint8x16_t){a.val cc b.val}; } \
   __ai uint16x8_t op##q_u16(uint16x8_t a, uint16x8_t b) { return (uint16x8_t){a.val cc b.val}; } \
   __ai uint32x4_t op##q_u32(uint32x4_t a, uint32x4_t b) { return (uint32x4_t){a.val cc b.val}; } 
+
+#define INT_UNARY(op, builtin) \
+  __ai int8x8_t op##_s8(int8x8_t a) { return (int8x8_t){ builtin(a.val) }; } \
+  __ai int16x4_t op##_s16(int16x4_t a) { return (int16x4_t){ builtin(a.val) }; } \
+  __ai int32x2_t op##_s32(int32x2_t a) { return (int32x2_t){ builtin(a.val) }; } \
+  __ai int8x16_t op##q_s8(int8x16_t a) { return (int8x16_t){ builtin(a.val) }; } \
+  __ai int16x8_t op##q_s16(int16x8_t a) { return (int16x8_t){ builtin(a.val) }; } \
+  __ai int32x4_t op##q_s32(int32x4_t a) { return (int32x4_t){ builtin(a.val) }; }
+
+#define FP_UNARY(op, builtin) \
+  __ai float32x2_t op##_f32(float32x2_t a) { return (float32x2_t){ builtin(a.val) }; } \
+  __ai float32x4_t op##q_f32(float32x4_t a) { return (float32x4_t){ builtin(a.val) }; }
+
+#define FP_BINARY(op, builtin) \
+  __ai float32x2_t op##_f32(float32x2_t a, float32x2_t b) { return (float32x2_t){ builtin(a.val, b.val) }; } \
+  __ai float32x4_t op##q_f32(float32x4_t a, float32x4_t b) { return (float32x4_t){ builtin(a.val, b.val) }; }
+
+#define INT_FP_PAIRWISE_ADD(op, builtin) \
+  __ai int8x8_t op##_s8(int8x8_t a, int8x8_t b) { return (int8x8_t){ builtin(a.val, b.val) }; } \
+  __ai int16x4_t op##_s16(int16x4_t a, int16x4_t b) { return (int16x4_t){ builtin(a.val, b.val) }; } \
+  __ai int32x2_t op##_s32(int32x2_t a, int32x2_t b) { return (int32x2_t){ builtin(a.val, b.val) }; } \
+  __ai uint8x8_t op##_u8(uint8x8_t a, uint8x8_t b) { return (uint8x8_t){ builtin(a.val, b.val) }; } \
+  __ai uint16x4_t op##_u16(uint16x4_t a, uint16x4_t b) { return (uint16x4_t){ builtin(a.val, b.val) }; } \
+  __ai uint32x2_t op##_u32(uint32x2_t a, uint32x2_t b) { return (uint32x2_t){ builtin(a.val, b.val) }; } \
+  __ai float32x2_t op##_f32(float32x2_t a, float32x2_t b) { return (float32x2_t){ builtin(a.val, b.val) }; }
+
+#define INT_LOGICAL_OP(op, lop) \
+  __ai int8x8_t op##_s8(int8x8_t a, int8x8_t b) { return (int8x8_t){ a.val lop b.val }; } \
+  __ai int16x4_t op##_s16(int16x4_t a, int16x4_t b) { return (int16x4_t){ a.val lop b.val }; } \
+  __ai int32x2_t op##_s32(int32x2_t a, int32x2_t b) { return (int32x2_t){ a.val lop b.val }; } \
+  __ai int64x1_t op##_s64(int64x1_t a, int64x1_t b) { return (int64x1_t){ a.val lop b.val }; } \
+  __ai uint8x8_t op##_u8(uint8x8_t a, uint8x8_t b) { return (uint8x8_t){ a.val lop b.val }; } \
+  __ai uint16x4_t op##_u16(uint16x4_t a, uint16x4_t b) { return (uint16x4_t){ a.val lop b.val }; } \
+  __ai uint32x2_t op##_u32(uint32x2_t a, uint32x2_t b) { return (uint32x2_t){ a.val lop b.val }; } \
+  __ai uint64x1_t op##_u64(uint64x1_t a, uint64x1_t b) { return (uint64x1_t){ a.val lop b.val }; } \
+  __ai int8x16_t op##q_s8(int8x16_t a, int8x16_t b) { return (int8x16_t){ a.val lop b.val }; } \
+  __ai int16x8_t op##q_s16(int16x8_t a, int16x8_t b) { return (int16x8_t){ a.val lop b.val }; } \
+  __ai int32x4_t op##q_s32(int32x4_t a, int32x4_t b) { return (int32x4_t){ a.val lop b.val }; } \
+  __ai int64x2_t op##q_s64(int64x2_t a, int64x2_t b) { return (int64x2_t){ a.val lop b.val }; } \
+  __ai uint8x16_t op##q_u8(uint8x16_t a, uint8x16_t b) { return (uint8x16_t){ a.val lop b.val }; } \
+  __ai uint16x8_t op##q_u16(uint16x8_t a, uint16x8_t b) { return (uint16x8_t){ a.val lop b.val }; } \
+  __ai uint32x4_t op##q_u32(uint32x4_t a, uint32x4_t b) { return (uint32x4_t){ a.val lop b.val }; } \
+  __ai uint64x2_t op##q_u64(uint64x2_t a, uint64x2_t b) { return (uint64x2_t){ a.val lop b.val }; }
 
 // vector add
 __ai int8x8_t vadd_s8(int8x8_t a, int8x8_t b) { return (int8x8_t){a.val + b.val}; }
@@ -253,12 +304,7 @@ __ai uint64x2_t vaddq_u64(uint64x2_t a, uint64x2_t b) { return (uint64x2_t){a.va
 INTTYPES_WIDENING(vaddl, __builtin_neon_vaddl)
 
 // vector wide add
-__ai int16x8_t vaddw_s8(int16x8_t a, int8x8_t b) { return (int16x8_t){ __builtin_neon_vaddw(a.val, b.val) }; }
-__ai int32x4_t vaddw_s16(int32x4_t a, int16x4_t b) { return (int32x4_t){ __builtin_neon_vaddw(a.val, b.val) }; }
-__ai int64x2_t vaddw_s32(int64x2_t a, int32x2_t b) { return (int64x2_t){ __builtin_neon_vaddw(a.val, b.val) }; }
-__ai uint16x8_t vaddw_u8(uint16x8_t a, uint8x8_t b) { return (uint16x8_t){ __builtin_neon_vaddw(a.val, b.val) }; }
-__ai uint32x4_t vaddw_u16(uint32x4_t a, uint16x4_t b) { return (uint32x4_t){ __builtin_neon_vaddw(a.val, b.val) }; }
-__ai uint64x2_t vaddw_u32(uint64x2_t a, uint32x2_t b) { return (uint64x2_t){ __builtin_neon_vaddw(a.val, b.val) }; }
+INTTYPES_WIDE(vaddw, __builtin_neon_vaddw)
 
 // halving add
 // rounding halving add
@@ -304,6 +350,7 @@ __ai poly16x8_t vmull_p8(poly8x8_t a, poly8x8_t b) { return (poly16x8_t){ __buil
 INTTYPES_WIDENING(vsubl, __builtin_neon_vsubl)
 
 // wide subtract
+INTTYPES_WIDE(vsubw, __builtin_neon_vsubw)
 
 // saturating subtract
 INTTYPES_ADD_32(vqsub, __builtin_neon_vqsub)
@@ -322,11 +369,11 @@ INTTYPES_NARROWING(vrsubhn, __builtin_neon_vrsubhn)
 // compare le
 // compare gt
 // compare lt
-INT_FLOAT_CMP_OP(vceq, __builtin_neon, ==)
-INT_FLOAT_CMP_OP(vcge, __builtin_neon, >=)
-INT_FLOAT_CMP_OP(vcle, __builtin_neon, <=)
-INT_FLOAT_CMP_OP(vcgt, __builtin_neon, >)
-INT_FLOAT_CMP_OP(vclt, __builtin_neon, <)
+INT_FLOAT_CMP_OP(vceq, ==)
+INT_FLOAT_CMP_OP(vcge, >=)
+INT_FLOAT_CMP_OP(vcle, <=)
+INT_FLOAT_CMP_OP(vcgt, >)
+INT_FLOAT_CMP_OP(vclt, <)
 
 // compare eq-poly
 
@@ -342,21 +389,36 @@ FLOATTYPES_CMP(vcalt, __builtin_neon_vcalt)
 // test bits
 
 // abs diff
+INTTYPES_ADD_32(vabd, __builtin_neon_vabd)
+FP_BINARY(vabd, __builtin_neon_vabd)
+
 // abs diff long
+INTTYPES_WIDENING(vabdl, __builtin_neon_vabdl)
+
 // abs diff accumulate
 // abs diff accumulate long
 
 // max
 // min
+INTTYPES_ADD_32(vmax, __builtin_neon_vmax)
+FP_BINARY(vmax, __builtin_neon_vmax)
+INTTYPES_ADD_32(vmin, __builtin_neon_vmin)
+FP_BINARY(vmin, __builtin_neon_vmin)
 
 // pairwise add
-// long pairwise add
-// long pairwise add accumulate
 // pairwise max
 // pairwise min
+INT_FP_PAIRWISE_ADD(vpadd, __builtin_neon_vpadd)
+INT_FP_PAIRWISE_ADD(vpmax, __builtin_neon_vpmax)
+INT_FP_PAIRWISE_ADD(vpmin, __builtin_neon_vpmin)
+
+// long pairwise add
+// long pairwise add accumulate
 
 // recip
 // recip sqrt
+FP_BINARY(vrecps, __builtin_neon_vrecps)
+FP_BINARY(vrsqrts, __builtin_neon_vrsqrts)
 
 // shl by vec
 // saturating shl by vec
@@ -432,11 +494,18 @@ FLOATTYPES_CMP(vcalt, __builtin_neon_vcalt)
 
 // endian swap (vrev)
 
+// negate
+
 // abs
 // saturating abs
-// negate
 // saturating negate
 // count leading signs
+INT_UNARY(vabs, __builtin_neon_vabs)
+FP_UNARY(vabs, __builtin_neon_vabs)
+INT_UNARY(vqabs, __builtin_neon_vqabs)
+INT_UNARY(vqneg, __builtin_neon_vqneg)
+INT_UNARY(vcls, __builtin_neon_vcls)
+
 // count leading zeroes
 // popcount
 
@@ -444,13 +513,18 @@ FLOATTYPES_CMP(vcalt, __builtin_neon_vcalt)
 // recip_sqrt_est
 
 // not-poly
-
 // not
+
 // and
 // or
 // xor
 // andn
 // orn
+INT_LOGICAL_OP(vand, &)
+INT_LOGICAL_OP(vorr, |)
+INT_LOGICAL_OP(veor, ^)
+INT_LOGICAL_OP(vbic, &~)
+INT_LOGICAL_OP(vorn, |~)
 
 // bitselect
 
@@ -459,6 +533,5 @@ FLOATTYPES_CMP(vcalt, __builtin_neon_vcalt)
 // deinterleave elts
 
 // vreinterpret
-
 
 #endif /* __ARM_NEON_H */
