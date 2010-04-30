@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -disable-mmx | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -disable-mmx | FileCheck %s
 ; <rdar://problem/7897988>
 
 define void @test1(i8** %a, i64* %b, i64 %c, i64 %d) nounwind {
