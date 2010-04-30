@@ -159,10 +159,18 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       // it.  This is a hack because we depend on the user marking their local
       // variables as volatile if they are live across a setjmp call, and they
       // probably won't do this in callers.
-      if (Function *F = CS.getCalledFunction())
+      if (Function *F = CS.getCalledFunction()) {
         if (F->isDeclaration() && 
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           NeverInline = true;
+       
+        // If this call is to function itself, then the function is recursive.
+        // Inlining it into other functions is a bad idea, because this is
+        // basically just a form of loop peeling, and our metrics aren't useful
+        // for that case.
+        if (F == BB->getParent())
+          NeverInline = true;
+      }
 
       if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
         // Each argument to a call takes on average one instruction to set up.
