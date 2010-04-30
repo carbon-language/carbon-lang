@@ -1,4 +1,4 @@
 LEVEL = ../../..
-DIRS := clang
+DIRS := clang clang-c
 
 include $(LEVEL)/Makefile.common
