@@ -189,6 +189,9 @@ namespace {
     ///
     void removePhysReg(unsigned PhysReg);
 
+    void storeVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                      unsigned VirtReg, unsigned PhysReg, bool isKill);
+
     /// spillVirtReg - This method spills the value specified by PhysReg into
     /// the virtual register slot specified by VirtReg.  It then updates the RA
     /// data structures to indicate the fact that PhysReg is now available.
@@ -286,6 +289,17 @@ void RALocal::removePhysReg(unsigned PhysReg) {
     PhysRegsUseOrder.erase(It);
 }
 
+/// storeVirtReg - Store a virtual register to its assigned stack slot.
+void RALocal::storeVirtReg(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator I,
+                           unsigned VirtReg, unsigned PhysReg,
+                           bool isKill) {
+  const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
+  int FrameIndex = getStackSpaceFor(VirtReg, RC);
+  DEBUG(dbgs() << " to stack slot #" << FrameIndex);
+  TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
+  ++NumStores;   // Update statistics
+}
 
 /// spillVirtReg - This method spills the value specified by PhysReg into the
 /// virtual register slot specified by VirtReg.  It then updates the RA data
@@ -309,15 +323,11 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
     // Otherwise, there is a virtual register corresponding to this physical
     // register.  We only need to spill it into its stack slot if it has been
     // modified.
-    const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
-    int FrameIndex = getStackSpaceFor(VirtReg, RC);
-    DEBUG(dbgs() << " to stack slot #" << FrameIndex);
     // If the instruction reads the register that's spilled, (e.g. this can
     // happen if it is a move to a physical register), then the spill
     // instruction is not a kill.
     bool isKill = !(I != MBB.end() && I->readsRegister(PhysReg));
-    TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
-    ++NumStores;   // Update statistics
+    storeVirtReg(MBB, I, VirtReg, PhysReg, isKill);
   }
 
   getVirt2PhysRegMapSlot(VirtReg) = 0;   // VirtReg no longer available
@@ -801,9 +811,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         dbgs() << "\nStarting RegAlloc of: " << *MI;
         dbgs() << "  Regs have values: ";
         for (unsigned i = 0; i != TRI->getNumRegs(); ++i)
-          if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
+          if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2) {
+            if (PhysRegsUsed[i] && isVirtRegModified(PhysRegsUsed[i]))
+              dbgs() << "*";
             dbgs() << "[" << TRI->getName(i)
                    << ",%reg" << PhysRegsUsed[i] << "] ";
+          }
         dbgs() << '\n';
       });
 
@@ -1092,6 +1105,20 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
     
+    // If this instruction is a call, make sure there are no dirty registers. The
+    // call might throw an exception, and the landing pad expects to find all
+    // registers in stack slots.
+    if (TID.isCall())
+      for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i) {
+        if (PhysRegsUsed[i] <= 0) continue;
+        unsigned VirtReg = PhysRegsUsed[i];
+        if (!isVirtRegModified(VirtReg)) continue;
+        DEBUG(dbgs() << "  Storing dirty %reg" << VirtReg);
+        storeVirtReg(MBB, MI, VirtReg, i, false);
+        markVirtRegModified(VirtReg, false);
+        DEBUG(dbgs() << " because the call might throw\n");
+      }
+
     // Finally, if this is a noop copy instruction, zap it.  (Except that if
     // the copy is dead, it must be kept to avoid messing up liveness info for
     // the register scavenger.  See pr4100.)
