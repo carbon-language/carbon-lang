@@ -521,9 +521,9 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
 
 /// EmitDbgValue - Generate machine instruction for a dbg_value node.
 ///
-MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
-                                         DenseMap<SDValue, unsigned> &VRBaseMap,
-                         DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
+MachineInstr *
+InstrEmitter::EmitDbgValue(SDDbgValue *SD,
+                           DenseMap<SDValue, unsigned> &VRBaseMap) {
   uint64_t Offset = SD->getOffset();
   MDNode* MDPtr = SD->getMDPtr();
   DebugLoc DL = SD->getDebugLoc();

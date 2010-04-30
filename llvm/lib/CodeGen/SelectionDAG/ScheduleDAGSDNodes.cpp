@@ -422,7 +422,6 @@ namespace {
 // instructions in the right order.
 static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
                            InstrEmitter &Emitter,
-                           DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM,
                            DenseMap<SDValue, unsigned> &VRBaseMap,
                     SmallVector<std::pair<unsigned, MachineInstr*>, 32> &Orders,
                            SmallSet<unsigned, 8> &Seen) {
@@ -449,7 +448,7 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
       continue;
     unsigned DVOrder = DVs[i]->getOrder();
     if (DVOrder == ++Order) {
-      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap, EM);
+      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap);
       if (DbgMI) {
         Orders.push_back(std::make_pair(DVOrder, DbgMI));
         BB->insert(InsertPos, DbgMI);
@@ -475,7 +474,7 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
     SDDbgInfo::DbgIterator PDI = DAG->ByvalParmDbgBegin();
     SDDbgInfo::DbgIterator PDE = DAG->ByvalParmDbgEnd();
     for (; PDI != PDE; ++PDI) {
-      MachineInstr *DbgMI= Emitter.EmitDbgValue(*PDI, VRBaseMap, EM);
+      MachineInstr *DbgMI= Emitter.EmitDbgValue(*PDI, VRBaseMap);
       if (DbgMI)
         BB->insert(BB->end(), DbgMI);
     }
@@ -507,14 +506,14 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
                        VRBaseMap, EM);
       // Remember the source order of the inserted instruction.
       if (HasDbg)
-        ProcessSourceNode(N, DAG, Emitter, EM, VRBaseMap, Orders, Seen);
+        ProcessSourceNode(N, DAG, Emitter, VRBaseMap, Orders, Seen);
       FlaggedNodes.pop_back();
     }
     Emitter.EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned,
                      VRBaseMap, EM);
     // Remember the source order of the inserted instruction.
     if (HasDbg)
-      ProcessSourceNode(SU->getNode(), DAG, Emitter, EM, VRBaseMap, Orders,
+      ProcessSourceNode(SU->getNode(), DAG, Emitter, VRBaseMap, Orders,
                         Seen);
   }
 
@@ -553,7 +552,7 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
 #endif
         if ((*DI)->isInvalidated())
           continue;
-        MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap, EM);
+        MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap);
         if (DbgMI) {
           if (!LastOrder)
             // Insert to start of the BB (after PHIs).
@@ -573,7 +572,7 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
       MachineBasicBlock *InsertBB = Emitter.getBlock();
       MachineBasicBlock::iterator Pos= Emitter.getBlock()->getFirstTerminator();
       if (!(*DI)->isInvalidated()) {
-        MachineInstr *DbgMI= Emitter.EmitDbgValue(*DI, VRBaseMap, EM);
+        MachineInstr *DbgMI= Emitter.EmitDbgValue(*DI, VRBaseMap);
         if (DbgMI)
           InsertBB->insert(Pos, DbgMI);
       }

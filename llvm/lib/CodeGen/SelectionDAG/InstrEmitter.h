@@ -103,8 +103,7 @@ public:
   /// EmitDbgValue - Generate machine instruction for a dbg_value node.
   ///
   MachineInstr *EmitDbgValue(SDDbgValue *SD,
-                          DenseMap<SDValue, unsigned> &VRBaseMap,
-                          DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
+                             DenseMap<SDValue, unsigned> &VRBaseMap);
 
   /// EmitNode - Generate machine code for a node and needed dependencies.
   ///
