@@ -2907,17 +2907,19 @@ QualType
 TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    FunctionProtoTypeLoc TL,
                                                    QualType ObjectType) {
-  FunctionProtoType *T = TL.getTypePtr();
-  QualType ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
-  if (ResultType.isNull())
-    return QualType();
-
-  // Transform the parameters.
+  // Transform the parameters. We do this first for the benefit of template
+  // instantiations, so that the ParmVarDecls get/ placed into the template
+  // instantiation scope before we transform the function type.
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl*, 4> ParamDecls;
   if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
     return QualType();
-
+  
+  FunctionProtoType *T = TL.getTypePtr();
+  QualType ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
+  if (ResultType.isNull())
+    return QualType();
+  
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       ResultType != T->getResultType() ||

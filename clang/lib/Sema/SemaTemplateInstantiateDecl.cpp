@@ -822,7 +822,7 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   // merged with the local instantiation scope for the function template 
   // itself.
   Sema::LocalInstantiationScope Scope(SemaRef);
-  
+
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
@@ -1775,11 +1775,18 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
 
   if (NewTInfo != OldTInfo) {
     // Get parameters from the new type info.
+    TypeLoc OldTL = OldTInfo->getTypeLoc();
+    FunctionProtoTypeLoc *OldProtoLoc = cast<FunctionProtoTypeLoc>(&OldTL);
     TypeLoc NewTL = NewTInfo->getTypeLoc();
     FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
     assert(NewProtoLoc && "Missing prototype?");
-    for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i)
+    for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i) {
+      // FIXME: Variadic templates will break this.
       Params.push_back(NewProtoLoc->getArg(i));
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(
+                                                        OldProtoLoc->getArg(i),
+                                                        NewProtoLoc->getArg(i));
+    }
   } else {
     // The function type itself was not dependent and therefore no
     // substitution occurred. However, we still need to instantiate

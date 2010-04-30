@@ -53,3 +53,26 @@ void use_func_ptr() {
 };
 
 template void use_func_ptr<int, float, double>();
+
+namespace PR6990 {
+  template < typename , typename = int, typename = int > struct X1;
+  template <typename >
+  struct X2;
+
+  template <typename = int *, typename TokenT = int,
+            typename = int( X2<TokenT> &)> 
+  struct X3
+  {
+  };
+
+  template <typename , typename P> 
+  struct X3_base : X3< X1<int, P> >
+  {
+  protected: typedef X1< P> type;
+    X3<type> e;
+  };
+
+  struct r : X3_base<int, int>
+  {
+  };
+}

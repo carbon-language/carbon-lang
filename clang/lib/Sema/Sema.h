@@ -3589,7 +3589,7 @@ public:
     /// instantiated ParmVarDecl for 'x'.
     llvm::DenseMap<const Decl *, Decl *> LocalDecls;
 
-    /// \brief The outer scope, in which contains local variable
+    /// \brief The outer scope, which contains local variable
     /// definitions from some other instantiation (that may not be
     /// relevant to this particular scope).
     LocalInstantiationScope *Outer;
@@ -3597,54 +3597,36 @@ public:
     /// \brief Whether we have already exited this scope.
     bool Exited;
 
-    /// \brief Whether this scope is temporary, meaning that we should
-    /// remove any additions we make once we exit this
-    /// scope. Temporary scopes are always combined with their outer
-    /// scopes.
-    bool Temporary;
-
-    /// \brief List of the declarations that we have added into this
-    /// temporary scope. They will be removed when we exit the
-    /// temporary scope.
-    llvm::SmallVector<const Decl *, 4> AddedTemporaryDecls;
-
+    /// \brief Whether to combine this scope with the outer scope, such that
+    /// lookup will search our outer scope.
+    bool CombineWithOuterScope;
+    
     // This class is non-copyable
     LocalInstantiationScope(const LocalInstantiationScope &);
     LocalInstantiationScope &operator=(const LocalInstantiationScope &);
 
   public:
-    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false,
-                            bool Temporary = false)
+    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
       : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope),
-        Exited(false), Temporary(Temporary) {
-      if (!CombineWithOuterScope && !Temporary)
-        SemaRef.CurrentInstantiationScope = this;
-      else
-        assert(SemaRef.CurrentInstantiationScope &&
-               "No outer instantiation scope?");
+        Exited(false), CombineWithOuterScope(CombineWithOuterScope)
+    {
+      SemaRef.CurrentInstantiationScope = this;
     }
 
     ~LocalInstantiationScope() {
-      if (!Exited) {
-        SemaRef.CurrentInstantiationScope = Outer;
-        for (unsigned I = 0, N = AddedTemporaryDecls.size(); I != N; ++I)
-          LocalDecls.erase(AddedTemporaryDecls[I]);
-      }
+      Exit();
     }
 
     /// \brief Exit this local instantiation scope early.
     void Exit() {
+      if (Exited)
+        return;
+      
       SemaRef.CurrentInstantiationScope = Outer;
-      LocalDecls.clear();
       Exited = true;
     }
 
-    Decl *getInstantiationOf(const Decl *D) {
-      Decl *Result = LocalDecls[D];
-      assert((Result || D->isInvalidDecl()) &&
-             "declaration was not instantiated in this scope!");
-      return Result;
-    }
+    Decl *getInstantiationOf(const Decl *D);
 
     VarDecl *getInstantiationOf(const VarDecl *Var) {
       return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
@@ -3659,15 +3641,7 @@ public:
       return cast<NonTypeTemplateParmDecl>(getInstantiationOf(cast<Decl>(Var)));
     }
 
-    void InstantiatedLocal(const Decl *D, Decl *Inst) {
-      Decl *&Stored = LocalDecls[D];
-      assert((!Stored || Stored == Inst) && "Already instantiated this local");
-
-      if (Temporary && !Stored)
-        AddedTemporaryDecls.push_back(D);
-
-      Stored = Inst;
-    }
+    void InstantiatedLocal(const Decl *D, Decl *Inst);
   };
 
   /// \brief The current instantiation scope used to store local

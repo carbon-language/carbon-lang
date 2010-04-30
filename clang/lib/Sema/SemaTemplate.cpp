@@ -5335,6 +5335,8 @@ namespace {
     DeclarationName Entity;
 
   public:
+    typedef TreeTransform<CurrentInstantiationRebuilder> inherited;
+      
     CurrentInstantiationRebuilder(Sema &SemaRef,
                                   SourceLocation Loc,
                                   DeclarationName Entity)
@@ -5370,7 +5372,7 @@ namespace {
     /// FIXME: This is completely unsafe; we will need to actually clone the
     /// expressions.
     Sema::OwningExprResult TransformExpr(Expr *E) {
-      return getSema().Owned(E);
+      return getSema().Owned(E->Retain());
     }
 
     /// \brief Transforms a typename type by determining whether the type now

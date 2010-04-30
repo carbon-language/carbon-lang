@@ -532,8 +532,7 @@ bool Sema::isSFINAEContext() const {
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/
 namespace {
-  class TemplateInstantiator
-    : public TreeTransform<TemplateInstantiator> {
+  class TemplateInstantiator : public TreeTransform<TemplateInstantiator> {
     const MultiLevelTemplateArgumentList &TemplateArgs;
     SourceLocation Loc;
     DeclarationName Entity;
@@ -604,13 +603,9 @@ namespace {
     Sema::OwningExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                 NonTypeTemplateParmDecl *D);
 
-    /// \brief Transforms a function proto type by performing
-    /// substitution in the function parameters, possibly adjusting
-    /// their types and marking default arguments as uninstantiated.
-    bool TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
-                                     llvm::SmallVectorImpl<QualType> &PTypes,
-                                  llvm::SmallVectorImpl<ParmVarDecl*> &PVars);
-
+    QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
+                                        FunctionProtoTypeLoc TL,
+                                        QualType ObjectType);
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm);
 
     /// \brief Transforms a template type parameter type by performing
@@ -825,23 +820,12 @@ Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
                                         E->getParam());
 }
 
-
-bool
-TemplateInstantiator::TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
-                                  llvm::SmallVectorImpl<QualType> &PTypes,
-                               llvm::SmallVectorImpl<ParmVarDecl*> &PVars) {
-  // Create a local instantiation scope for the parameters.
-  // FIXME: When we implement the C++0x late-specified return type, 
-  // we will need to move this scope out to the function type itself.
-  bool IsTemporaryScope = (SemaRef.CurrentInstantiationScope != 0);
-  Sema::LocalInstantiationScope Scope(SemaRef, IsTemporaryScope, 
-                                      IsTemporaryScope);
-
-  if (TreeTransform<TemplateInstantiator>::
-        TransformFunctionTypeParams(TL, PTypes, PVars))
-    return true;
-
-  return false;
+QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
+                                                        FunctionProtoTypeLoc TL,
+                                                          QualType ObjectType) {
+  // We need a local instantiation scope for this function prototype.
+  Sema::LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
+  return inherited::TransformFunctionProtoType(TLB, TL, ObjectType);
 }
 
 ParmVarDecl *
@@ -1599,4 +1583,30 @@ bool Sema::Subst(const TemplateArgumentLoc &Input, TemplateArgumentLoc &Output,
                                     DeclarationName());
 
   return Instantiator.TransformTemplateArgument(Input, Output);
+}
+
+Decl *Sema::LocalInstantiationScope::getInstantiationOf(const Decl *D) {
+  for (LocalInstantiationScope *Current = this; Current; 
+       Current = Current->Outer) {
+    // Check if we found something within this scope.
+    llvm::DenseMap<const Decl *, Decl *>::iterator Found
+      = Current->LocalDecls.find(D);
+    if (Found != Current->LocalDecls.end())
+      return Found->second;
+   
+    // If we aren't combined with our outer scope, we're done. 
+    if (!Current->CombineWithOuterScope)
+      break;
+  }
+  
+  assert(D->isInvalidDecl() && 
+         "declaration was not instantiated in this scope!");
+  return 0;
+}
+
+void Sema::LocalInstantiationScope::InstantiatedLocal(const Decl *D, 
+                                                      Decl *Inst) {
+  Decl *&Stored = LocalDecls[D];
+  assert((!Stored || Stored == Inst)&& "Already instantiated this local");
+  Stored = Inst;
 }
