@@ -338,6 +338,10 @@ bool CFGBuilder::FinishBlock(CFGBlock* B) {
 ///   DeclStmts (which may contain nested control-flow).
 CFGBlock* CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
 tryAgain:
+  if (!S) {
+    badCFG = true;
+    return 0;
+  }
   switch (S->getStmtClass()) {
     default:
       return VisitStmt(S, asc);
