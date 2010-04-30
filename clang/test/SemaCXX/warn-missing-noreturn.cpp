@@ -27,3 +27,12 @@ template void B::g<int>(int); // expected-note {{in instantiation of function te
 struct X {
   virtual void g() { f(); }
 };
+
+namespace test1 {
+  bool condition();
+
+  // We don't want a warning here.
+  void foo() {
+    while (condition()) {}
+  }
+}

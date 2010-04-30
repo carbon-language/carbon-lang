@@ -147,7 +147,8 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
 
     bool NoReturnEdge = false;
     if (CallExpr *C = dyn_cast<CallExpr>(S)) {
-      if (B.succ_begin()[0] != &cfg->getExit()) {
+      if (std::find(B.succ_begin(), B.succ_end(), &cfg->getExit())
+            == B.succ_end()) {
         HasAbnormalEdge = true;
         continue;
       }
