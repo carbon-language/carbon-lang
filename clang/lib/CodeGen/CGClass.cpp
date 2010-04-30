@@ -778,13 +778,16 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
 
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
-    // FIXME. copy assignment of virtual base NYI
-    if (Base->isVirtual())
-      continue;
-
+    
+    llvm::Value *Dest = GetAddressOfBaseClass(ThisPtr, ClassDecl, 
+                                              CXXBaseSpecifierArray(Base), 
+                                              /*NullCheckValue=*/false);
+    llvm::Value *Src = GetAddressOfBaseClass(SrcPtr, ClassDecl, 
+                                             CXXBaseSpecifierArray(Base), 
+                                             /*NullCheckValue=*/false);
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassCopyAssignment(ThisPtr, SrcPtr, ClassDecl, BaseClassDecl);
+    EmitClassCopyAssignment(Dest, Src, 0, BaseClassDecl);
   }
 
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
