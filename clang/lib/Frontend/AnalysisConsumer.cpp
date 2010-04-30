@@ -189,15 +189,6 @@ public:
 };
 } // end anonymous namespace
 
-namespace llvm {
-  template <> struct FoldingSetTrait<AnalysisConsumer::CodeAction> {
-    static inline void Profile(AnalysisConsumer::CodeAction X,
-                               FoldingSetNodeID& ID) {
-      ID.AddPointer(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(X)));
-    }
-  };
-}
-
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer implementation.
 //===----------------------------------------------------------------------===//
