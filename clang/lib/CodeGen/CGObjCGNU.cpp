@@ -648,8 +648,10 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       LookupFn->setDoesNotCapture(1);
     }
 
-    llvm::Instruction *slot =
+    llvm::CallInst *slot =
         Builder.CreateCall3(lookupFunction, ReceiverPtr, cmd, self);
+    slot->setOnlyReadsMemory();
+
     imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
     llvm::Value *impMD[] = {
           llvm::MDString::get(VMContext, Sel.getAsString()),
@@ -688,7 +690,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       llvm::Value *v = msgRet.getAggregateAddr();
       llvm::PHINode *phi = Builder.CreatePHI(v->getType());
       const llvm::PointerType *RetTy = cast<llvm::PointerType>(v->getType());
-      llvm::AllocaInst *NullVal = CGF.CreateTempAlloca(RetTy, "null");
+      llvm::AllocaInst *NullVal = 
+          CGF.CreateTempAlloca(RetTy->getElementType(), "null");
       CGF.InitTempAlloca(NullVal,
           llvm::Constant::getNullValue(RetTy->getElementType()));
       phi->addIncoming(v, messageBB);
