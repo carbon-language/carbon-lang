@@ -1328,11 +1328,17 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   if (SP.isArtificial())
     addUInt(SPDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
 
-  // DW_TAG_inlined_subroutine may refer to this DIE.
-  ModuleCU->insertDIE(SP.getNode(), SPDie);
+  if (!SP.isLocalToUnit())
+    addUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
   
+  if (SP.isOptimized())
+    addUInt(SPDie, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
+
   if (!DisableFramePointerElim(*Asm->MF))
     addUInt(SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr, dwarf::DW_FORM_flag, 1);
+
+  // DW_TAG_inlined_subroutine may refer to this DIE.
+  ModuleCU->insertDIE(SP.getNode(), SPDie);
 
   return SPDie;
 }
@@ -1424,9 +1430,6 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
   addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
 
-  if (!DISubprogram(SPNode).isLocalToUnit())
-    addUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-  
   return SPDie;
 }
 

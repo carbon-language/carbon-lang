@@ -425,6 +425,13 @@ bool DISubprogram::describes(const Function *F) {
   return false;
 }
 
+unsigned DISubprogram::isOptimized() const     {
+  assert (DbgNode && "Invalid subprogram descriptor!");
+  if (DbgNode->getNumOperands() == 16)
+    return getUnsignedField(15);
+  return 0;
+}
+
 StringRef DIScope::getFilename() const {
   if (!DbgNode)
     return StringRef();
@@ -912,7 +919,8 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          bool isDefinition,
                                          unsigned VK, unsigned VIndex,
                                          DIType ContainingType,
-                                         bool isArtificial) {
+                                         bool isArtificial,
+                                         bool isOptimized) {
 
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
@@ -929,9 +937,10 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
     ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
     ContainingType.getNode(),
-    ConstantInt::get(Type::getInt1Ty(VMContext), isArtificial)
+    ConstantInt::get(Type::getInt1Ty(VMContext), isArtificial),
+    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized)
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 15));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
@@ -956,9 +965,10 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
     DeclNode->getOperand(11), // Virtuality
     DeclNode->getOperand(12), // VIndex
     DeclNode->getOperand(13), // Containting Type
-    DeclNode->getOperand(14)  // isArtificial
+    DeclNode->getOperand(14), // isArtificial
+    DeclNode->getOperand(15)  // isOptimized
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 15));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
 }
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
