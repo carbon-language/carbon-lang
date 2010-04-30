@@ -41,6 +41,7 @@ class AttributeList {
   unsigned NumArgs;
   AttributeList *Next;
   bool DeclspecAttribute, CXX0XAttribute;
+  mutable bool Invalid; /// True if already diagnosed as invalid.
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
 public:
@@ -127,6 +128,9 @@ public:
 
   bool isDeclspecAttribute() const { return DeclspecAttribute; }
   bool isCXX0XAttribute() const { return CXX0XAttribute; }
+
+  bool isInvalid() const { return Invalid; }
+  void setInvalid(bool b = true) const { Invalid = b; }
 
   Kind getKind() const { return getKind(getName()); }
   static Kind getKind(const IdentifierInfo *Name);

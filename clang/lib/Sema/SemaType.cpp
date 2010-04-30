@@ -81,9 +81,12 @@ static void ProcessDelayedFnAttrs(Sema &S, QualType &Type,
                                   DelayedAttributeSet &Attrs) {
   for (DelayedAttributeSet::iterator I = Attrs.begin(),
          E = Attrs.end(); I != E; ++I)
-    if (ProcessFnAttr(S, Type, *I->first))
+    if (ProcessFnAttr(S, Type, *I->first)) {
       S.Diag(I->first->getLoc(), diag::warn_function_attribute_wrong_type)
         << I->first->getName() << I->second;
+      // Avoid any further processing of this attribute.
+      I->first->setInvalid();
+    }
   Attrs.clear();
 }
 
@@ -92,6 +95,8 @@ static void DiagnoseDelayedFnAttrs(Sema &S, DelayedAttributeSet &Attrs) {
          E = Attrs.end(); I != E; ++I) {
     S.Diag(I->first->getLoc(), diag::warn_function_attribute_wrong_type)
       << I->first->getName() << I->second;
+    // Avoid any further processing of this attribute.
+    I->first->setInvalid();
   }
   Attrs.clear();
 }
@@ -1687,12 +1692,14 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   // for two or more different address spaces."
   if (Type.getAddressSpace()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    Attr.setInvalid();
     return;
   }
 
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
     return;
   }
   Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
@@ -1700,6 +1707,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   if (!ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int)
       << ASArgExpr->getSourceRange();
+    Attr.setInvalid();
     return;
   }
 
@@ -1708,6 +1716,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
     if (addrSpace.isNegative()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_address_space_negative)
         << ASArgExpr->getSourceRange();
+      Attr.setInvalid();
       return;
     }
     addrSpace.setIsSigned(false);
@@ -1717,6 +1726,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   if (addrSpace > max) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
       << Qualifiers::MaxAddressSpace << ASArgExpr->getSourceRange();
+    Attr.setInvalid();
     return;
   }
 
@@ -1730,6 +1740,7 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
                                       const AttributeList &Attr, Sema &S) {
   if (Type.getObjCGCAttr() != Qualifiers::GCNone) {
     S.Diag(Attr.getLoc(), diag::err_attribute_multiple_objc_gc);
+    Attr.setInvalid();
     return;
   }
 
@@ -1737,11 +1748,13 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
   if (!Attr.getParameterName()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << "objc_gc" << 1;
+    Attr.setInvalid();
     return;
   }
   Qualifiers::GC GCAttr;
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
     return;
   }
   if (Attr.getParameterName()->isStr("weak"))
@@ -1751,6 +1764,7 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
       << "objc_gc" << Attr.getParameterName();
+    Attr.setInvalid();
     return;
   }
 
@@ -1764,6 +1778,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     // Complain immediately if the arg count is wrong.
     if (Attr.getNumArgs() != 0) {
       S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      Attr.setInvalid();
       return false;
     }
 
@@ -1805,6 +1820,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
   // Otherwise, a calling convention.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    Attr.setInvalid();
     return false;
   }
 
@@ -1827,13 +1843,17 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
 
   CallingConv CCOld = Fn->getCallConv();
   if (S.Context.getCanonicalCallConv(CC) ==
-      S.Context.getCanonicalCallConv(CCOld)) return false;
+      S.Context.getCanonicalCallConv(CCOld)) {
+    Attr.setInvalid();
+    return false;
+  }
 
   if (CCOld != CC_Default) {
     // Should we diagnose reapplications of the same convention?
     S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
       << FunctionType::getNameForCallConv(CC)
       << FunctionType::getNameForCallConv(CCOld);
+    Attr.setInvalid();
     return false;
   }
 
@@ -1842,6 +1862,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     if (isa<FunctionNoProtoType>(Fn)) {
       S.Diag(Attr.getLoc(), diag::err_cconv_knr)
         << FunctionType::getNameForCallConv(CC);
+      Attr.setInvalid();
       return false;
     }
 
@@ -1849,6 +1870,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     if (FnP->isVariadic()) {
       S.Diag(Attr.getLoc(), diag::err_cconv_varargs)
         << FunctionType::getNameForCallConv(CC);
+      Attr.setInvalid();
       return false;
     }
   }
@@ -1868,6 +1890,7 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   // Check the attribute arugments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
@@ -1875,12 +1898,14 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
       << "vector_size" << sizeExpr->getSourceRange();
+    Attr.setInvalid();
     return;
   }
   // the base type must be integer or float, and can't already be a vector.
   if (CurType->isVectorType() ||
       (!CurType->isIntegerType() && !CurType->isRealFloatingType())) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
+    Attr.setInvalid();
     return;
   }
   unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
@@ -1891,11 +1916,13 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   if (vectorSize % typeSize) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
       << sizeExpr->getSourceRange();
+    Attr.setInvalid();
     return;
   }
   if (vectorSize == 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_zero_size)
       << sizeExpr->getSourceRange();
+    Attr.setInvalid();
     return;
   }
 
@@ -1912,6 +1939,10 @@ void ProcessTypeAttributeList(Sema &S, QualType &Result,
   // type, but others can be present in the type specifiers even though they
   // apply to the decl.  Here we apply type attributes and ignore the rest.
   for (; AL; AL = AL->getNext()) {
+    // Skip attributes that were marked to be invalid.
+    if (AL->isInvalid())
+      continue;
+
     // If this is an attribute we can handle, do so now,
     // otherwise, add it to the FnAttrs list for rechaining.
     switch (AL->getKind()) {

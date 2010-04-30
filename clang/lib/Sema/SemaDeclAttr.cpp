@@ -467,11 +467,10 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
-                                     Sema &S, bool EmitDiagnostics) {
+                                     Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    if (EmitDiagnostics)
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return false;
   }
 
@@ -479,11 +478,10 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
     ValueDecl *VD = dyn_cast<ValueDecl>(d);
     if (VD == 0 || (!VD->getType()->isBlockPointerType()
                     && !VD->getType()->isFunctionPointerType())) {
-      if (EmitDiagnostics)
-        S.Diag(Attr.getLoc(),
-               Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                       : diag::warn_attribute_wrong_decl_type)
-          << Attr.getName() << 0 /*function*/;
+      S.Diag(Attr.getLoc(),
+             Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                     : diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 0 /*function*/;
       return false;
     }
   }
@@ -492,17 +490,14 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 }
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  /*
-    Do check for well-formedness, but do not emit diagnostics:
-    it was already emitted by Sema::ProcessFnAttr().
-  */
-  if (HandleCommonNoReturnAttr(d, Attr, S, /*EmitDiagnostic=*/false))
-    d->addAttr(::new (S.Context) NoReturnAttr());
+  /* Diagnostics (if any) was emitted by Sema::ProcessFnAttr(). */
+  assert(Attr.isInvalid() == false);
+  d->addAttr(::new (S.Context) NoReturnAttr());
 }
 
 static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
-  if (HandleCommonNoReturnAttr(d, Attr, S, true))
+  if (HandleCommonNoReturnAttr(d, Attr, S))
     d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
 }
 
@@ -1647,6 +1642,27 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) GNUInlineAttr());
 }
 
+static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Diagnostic is emitted elsewhere: here we store the (valid) Attr
+  // in the Decl node for syntactic reasoning, e.g., pretty-printing.
+  assert(Attr.isInvalid() == false);
+
+  switch (Attr.getKind()) {
+  case AttributeList::AT_fastcall:
+    d->addAttr(::new (S.Context) FastCallAttr());
+    return;
+  case AttributeList::AT_stdcall:
+    d->addAttr(::new (S.Context) StdCallAttr());
+    return;
+  case AttributeList::AT_cdecl:
+    d->addAttr(::new (S.Context) CDeclAttr());
+    return;
+  default:
+    llvm_unreachable("unexpected attribute kind");
+    return;
+  }
+}
+
 static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -1847,6 +1863,9 @@ static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
 /// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
 static void ProcessDeclAttribute(Scope *scope, Decl *D,
                                  const AttributeList &Attr, Sema &S) {
+  if (Attr.isInvalid())
+    return;
+
   if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
     // FIXME: Try to deal with other __declspec attributes!
     return;
@@ -1931,7 +1950,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_stdcall:
   case AttributeList::AT_cdecl:
   case AttributeList::AT_fastcall:
-    // These are all treated as type attributes.
+    HandleCallConvAttr(D, Attr, S);
     break;
   default:
     // Ask target about the attribute.

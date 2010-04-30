@@ -23,7 +23,7 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              AttributeList *n, bool declspec, bool cxx0x)
   : AttrName(aName), AttrLoc(aLoc), ScopeName(sName), ScopeLoc(sLoc),
     ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(n),
-    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x) {
+    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false) {
 
   if (numArgs == 0)
     Args = 0;
