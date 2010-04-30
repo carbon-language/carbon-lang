@@ -69,6 +69,14 @@ ifeq ($(MAKECMDGOALS),install-clang)
   NO_INSTALL = 1
 endif
 
+ifeq ($(MAKECMDGOALS),install-clang-c)
+  DIRS := tools/clang/tools/driver tools/clang/lib/Headers \
+          tools/clang/tools/CIndex tools/clang/tools/c-index-test \
+	  tools/clang/include/clang-c
+  OPTIONAL_DIRS :=
+  NO_INSTALL = 1
+endif
+
 ifeq ($(MAKECMDGOALS),clang-only)
   DIRS := $(filter-out tools runtime docs unittests, $(DIRS)) tools/clang
   OPTIONAL_DIRS :=
@@ -145,6 +153,7 @@ clang-only: all
 tools-only: all
 libs-only: all
 install-clang: install
+install-clang-c: install
 install-libs: install
 
 #------------------------------------------------------------------------
