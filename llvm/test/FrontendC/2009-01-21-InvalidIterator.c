@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -g
+// RUN: %llvmgcc %s -S -g -o /dev/null
 
 typedef long unsigned int size_t;
 typedef unsigned short int uint16_t;

@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S
+// RUN: %llvmgxx %s -S -o /dev/null
 
 namespace A {
   typedef int B;
