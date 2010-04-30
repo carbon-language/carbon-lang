@@ -1912,8 +1912,8 @@ void ProcessTypeAttributeList(Sema &S, QualType &Result,
   // type, but others can be present in the type specifiers even though they
   // apply to the decl.  Here we apply type attributes and ignore the rest.
   for (; AL; AL = AL->getNext()) {
-    // If this is an attribute we can handle, do so now, otherwise, add it to
-    // the LeftOverAttrs list for rechaining.
+    // If this is an attribute we can handle, do so now,
+    // otherwise, add it to the FnAttrs list for rechaining.
     switch (AL->getKind()) {
     default: break;
 

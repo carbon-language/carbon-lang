@@ -467,10 +467,11 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
-                                     Sema &S) {
+                                     Sema &S, bool EmitDiagnostics) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    if (EmitDiagnostics)
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return false;
   }
 
@@ -478,10 +479,11 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
     ValueDecl *VD = dyn_cast<ValueDecl>(d);
     if (VD == 0 || (!VD->getType()->isBlockPointerType()
                     && !VD->getType()->isFunctionPointerType())) {
-      S.Diag(Attr.getLoc(),
-             Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                     : diag::warn_attribute_wrong_decl_type)
-        << Attr.getName() << 0 /*function*/;
+      if (EmitDiagnostics)
+        S.Diag(Attr.getLoc(),
+               Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                       : diag::warn_attribute_wrong_decl_type)
+          << Attr.getName() << 0 /*function*/;
       return false;
     }
   }
@@ -490,21 +492,17 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 }
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // NOTE: We don't add the attribute to a FunctionDecl because the noreturn
-  //  trait will be part of the function's type.
-
-  // Don't apply as a decl attribute to ValueDecl.
-  // FIXME: probably ought to diagnose this.
-  if (isa<ValueDecl>(d))
-    return;
-
-  if (HandleCommonNoReturnAttr(d, Attr, S))
+  /*
+    Do check for well-formedness, but do not emit diagnostics:
+    it was already emitted by Sema::ProcessFnAttr().
+  */
+  if (HandleCommonNoReturnAttr(d, Attr, S, /*EmitDiagnostic=*/false))
     d->addAttr(::new (S.Context) NoReturnAttr());
 }
 
 static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
-  if (HandleCommonNoReturnAttr(d, Attr, S))
+  if (HandleCommonNoReturnAttr(d, Attr, S, true))
     d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
 }
 

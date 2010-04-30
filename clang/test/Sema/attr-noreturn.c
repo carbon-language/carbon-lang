@@ -40,3 +40,5 @@ f5 (unsigned long size)
 __attribute__((noreturn)) void f(__attribute__((noreturn)) void (*x)(void)) {
   x();
 }
+
+typedef void (*Fun)(void) __attribute__ ((noreturn(2))); // expected-error {{attribute requires 0 argument(s)}}
