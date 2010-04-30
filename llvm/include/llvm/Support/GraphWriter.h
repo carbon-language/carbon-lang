@@ -174,7 +174,8 @@ public:
       unsigned i = 0, e = DTraits.numEdgeDestLabels(Node);
       for (; i != e && i != 64; ++i) {
         if (i) O << "|";
-        O << "<d" << i << ">" << DTraits.getEdgeDestLabel(Node, i);
+        O << "<d" << i << ">"
+          << DOT::EscapeString(DTraits.getEdgeDestLabel(Node, i));
       }
 
       if (i != e)
@@ -230,7 +231,7 @@ public:
       for (unsigned i = 0; i != NumEdgeSources; ++i) {
         if (i) O << "|";
         O << "<s" << i << ">";
-        if (EdgeSourceLabels) O << (*EdgeSourceLabels)[i];
+        if (EdgeSourceLabels) O << DOT::EscapeString((*EdgeSourceLabels)[i]);
       }
       O << "}}";
     }
