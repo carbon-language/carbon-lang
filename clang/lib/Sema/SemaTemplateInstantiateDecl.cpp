@@ -620,21 +620,6 @@ Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
   return 0;
 }
 
-namespace {
-  class SortDeclByLocation {
-    SourceManager &SourceMgr;
-    
-  public:
-    explicit SortDeclByLocation(SourceManager &SourceMgr) 
-      : SourceMgr(SourceMgr) { }
-    
-    bool operator()(const Decl *X, const Decl *Y) const {
-      return SourceMgr.isBeforeInTranslationUnit(X->getLocation(),
-                                                 Y->getLocation());
-    }
-  };
-}
-
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   bool isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
 
@@ -791,19 +776,10 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   
   Owner->addDecl(Inst);
   
-  // First, we sort the partial specializations by location, so 
-  // that we instantiate them in the order they were declared.
-  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
-  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
-         P = D->getPartialSpecializations().begin(), 
-         PEnd = D->getPartialSpecializations().end();
-       P != PEnd; ++P)
-    PartialSpecs.push_back(&*P);
-  std::sort(PartialSpecs.begin(), PartialSpecs.end(),
-            SortDeclByLocation(SemaRef.SourceMgr));
-  
   // Instantiate all of the partial specializations of this member class 
   // template.
+  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+  D->getPartialSpecializations(PartialSpecs);
   for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
     InstantiateClassTemplatePartialSpecialization(Inst, PartialSpecs[I]);
   
@@ -1768,7 +1744,8 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      Converted,
                                                      InstTemplateArgs,
                                                      CanonType,
-                                                     0);
+                                                     0,
+                             ClassTemplate->getPartialSpecializations().size());
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(PartialSpec, InstPartialSpec))
     return 0;

@@ -1278,21 +1278,20 @@ Sema::InstantiateClassTemplateSpecialization(
   typedef std::pair<ClassTemplatePartialSpecializationDecl *,
                     TemplateArgumentList *> MatchResult;
   llvm::SmallVector<MatchResult, 4> Matched;
-  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
-         Partial = Template->getPartialSpecializations().begin(),
-         PartialEnd = Template->getPartialSpecializations().end();
-       Partial != PartialEnd;
-       ++Partial) {
+  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+  Template->getPartialSpecializations(PartialSpecs);
+  for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I) {
+    ClassTemplatePartialSpecializationDecl *Partial = PartialSpecs[I];
     TemplateDeductionInfo Info(Context, PointOfInstantiation);
     if (TemplateDeductionResult Result
-          = DeduceTemplateArguments(&*Partial,
+          = DeduceTemplateArguments(Partial,
                                     ClassTemplateSpec->getTemplateArgs(),
                                     Info)) {
       // FIXME: Store the failed-deduction information for use in
       // diagnostics, later.
       (void)Result;
     } else {
-      Matched.push_back(std::make_pair(&*Partial, Info.take()));
+      Matched.push_back(std::make_pair(Partial, Info.take()));
     }
   }
 

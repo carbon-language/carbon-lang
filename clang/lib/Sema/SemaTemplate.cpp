@@ -3781,6 +3781,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // Create a new class template partial specialization declaration node.
     ClassTemplatePartialSpecializationDecl *PrevPartial
       = cast_or_null<ClassTemplatePartialSpecializationDecl>(PrevDecl);
+    unsigned SequenceNumber = PrevPartial? PrevPartial->getSequenceNumber()
+                            : ClassTemplate->getPartialSpecializations().size();
     ClassTemplatePartialSpecializationDecl *Partial
       = ClassTemplatePartialSpecializationDecl::Create(Context,
                                              ClassTemplate->getDeclContext(),
@@ -3790,7 +3792,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        Converted,
                                                        TemplateArgs,
                                                        CanonType,
-                                                       PrevPartial);
+                                                       PrevPartial,
+                                                       SequenceNumber);
     SetNestedNameSpecifier(Partial, SS);
 
     if (PrevPartial) {

@@ -178,6 +178,20 @@ void ClassTemplateDecl::Destroy(ASTContext& C) {
   C.Deallocate((void*)this);
 }
 
+void ClassTemplateDecl::getPartialSpecializations(
+          llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS) {
+  llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &PartialSpecs
+    = CommonPtr->PartialSpecializations;
+  PS.clear();
+  PS.resize(PartialSpecs.size());
+  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
+       P = PartialSpecs.begin(), PEnd = PartialSpecs.end();
+       P != PEnd; ++P) {
+    assert(!PS[P->getSequenceNumber()]);
+    PS[P->getSequenceNumber()] = &*P;
+  }
+}
+
 ClassTemplatePartialSpecializationDecl *
 ClassTemplateDecl::findPartialSpecialization(QualType T) {
   ASTContext &Context = getASTContext();
@@ -456,7 +470,8 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        TemplateArgumentListBuilder &Builder,
        const TemplateArgumentListInfo &ArgInfos,
        QualType CanonInjectedType,
-       ClassTemplatePartialSpecializationDecl *PrevDecl) {
+       ClassTemplatePartialSpecializationDecl *PrevDecl,
+       unsigned SequenceNumber) {
   unsigned N = ArgInfos.size();
   TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
   for (unsigned I = 0; I != N; ++I)
@@ -468,7 +483,8 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
                                                           SpecializedTemplate,
                                                           Builder,
                                                           ClonedArgs, N,
-                                                          PrevDecl);
+                                                          PrevDecl,
+                                                          SequenceNumber);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
 
   Context.getInjectedClassNameType(Result, CanonInjectedType);

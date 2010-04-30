@@ -1011,6 +1011,11 @@ class ClassTemplatePartialSpecializationDecl
   TemplateArgumentLoc *ArgsAsWritten;
   unsigned NumArgsAsWritten;
 
+  /// \brief Sequence number indicating when this class template partial
+  /// specialization was added to the set of partial specializations for
+  /// its owning class template.
+  unsigned SequenceNumber;
+    
   /// \brief The class template partial specialization from which this 
   /// class template partial specialization was instantiated.
   ///
@@ -1026,13 +1031,15 @@ class ClassTemplatePartialSpecializationDecl
                                          TemplateArgumentListBuilder &Builder,
                                          TemplateArgumentLoc *ArgInfos,
                                          unsigned NumArgInfos,
-                               ClassTemplatePartialSpecializationDecl *PrevDecl)
+                               ClassTemplatePartialSpecializationDecl *PrevDecl,
+                                         unsigned SequenceNumber)
     : ClassTemplateSpecializationDecl(Context,
                                       ClassTemplatePartialSpecialization,
                                       DC, L, SpecializedTemplate, Builder,
                                       PrevDecl),
       TemplateParams(Params), ArgsAsWritten(ArgInfos),
-      NumArgsAsWritten(NumArgInfos), InstantiatedFromMember(0, false) { }
+      NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
+      InstantiatedFromMember(0, false) { }
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -1042,7 +1049,8 @@ public:
          TemplateArgumentListBuilder &Builder,
          const TemplateArgumentListInfo &ArgInfos,
          QualType CanonInjectedType,
-         ClassTemplatePartialSpecializationDecl *PrevDecl);
+         ClassTemplatePartialSpecializationDecl *PrevDecl,
+         unsigned SequenceNumber);
 
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {
@@ -1059,6 +1067,10 @@ public:
     return NumArgsAsWritten;
   }
 
+  /// \brief Get the sequence number for this class template partial
+  /// specialization.
+  unsigned getSequenceNumber() const { return SequenceNumber; }
+    
   /// \brief Retrieve the member class template partial specialization from
   /// which this particular class template partial specialization was
   /// instantiated.
@@ -1226,6 +1238,10 @@ public:
     return CommonPtr->PartialSpecializations;
   }
 
+  /// \brief Retrieve the partial specializations as an ordered list.
+  void getPartialSpecializations(
+          llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS);
+  
   /// \brief Find a class template partial specialization with the given
   /// type T.
   ///
