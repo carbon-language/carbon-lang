@@ -15,7 +15,6 @@
 #define LLVM_ADT_SMALLBITVECTOR_H
 
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -32,48 +31,57 @@ class SmallBitVector {
   // TODO: In "large" mode, a pointer to a BitVector is used, leading to an
   // unnecessary level of indirection. It would be more efficient to use a
   // pointer to memory containing size, allocation size, and the array of bits.
-  PointerIntPair<BitVector *, 1, uintptr_t> X;
+  uintptr_t X;
 
-  // The number of bits in this class.
-  static const size_t NumBaseBits = sizeof(uintptr_t) * CHAR_BIT;
+  enum {
+    // The number of bits in this class.
+    NumBaseBits = sizeof(uintptr_t) * CHAR_BIT,
 
-  // One bit is used to discriminate between small and large mode. The
-  // remaining bits are used for the small-mode representation.
-  static const size_t SmallNumRawBits = NumBaseBits - 1;
+    // One bit is used to discriminate between small and large mode. The
+    // remaining bits are used for the small-mode representation.
+    SmallNumRawBits = NumBaseBits - 1,
 
-  // A few more bits are used to store the size of the bit set in small mode.
-  // Theoretically this is a ceil-log2. These bits are encoded in the most
-  // significant bits of the raw bits.
-  static const size_t SmallNumSizeBits = (NumBaseBits == 32 ? 5 :
-                                          NumBaseBits == 64 ? 6 :
-                                          SmallNumRawBits);
+    // A few more bits are used to store the size of the bit set in small mode.
+    // Theoretically this is a ceil-log2. These bits are encoded in the most
+    // significant bits of the raw bits.
+    SmallNumSizeBits = (NumBaseBits == 32 ? 5 :
+                        NumBaseBits == 64 ? 6 :
+                        SmallNumRawBits),
 
-  // The remaining bits are used to store the actual set in small mode.
-  static const size_t SmallNumDataBits = SmallNumRawBits - SmallNumSizeBits;
+    // The remaining bits are used to store the actual set in small mode.
+    SmallNumDataBits = SmallNumRawBits - SmallNumSizeBits
+  };
 
   bool isSmall() const {
-    return X.getInt();
+    return X & uintptr_t(1);
+  }
+
+  BitVector *getPointer() const {
+    assert(!isSmall());
+    return reinterpret_cast<BitVector *>(X);
   }
 
   void switchToSmall(uintptr_t NewSmallBits, size_t NewSize) {
-    X.setInt(true);
+    X = 1;
     setSmallSize(NewSize);
     setSmallBits(NewSmallBits);
   }
 
   void switchToLarge(BitVector *BV) {
-    X.setInt(false);
-    X.setPointer(BV);
+    X = reinterpret_cast<uintptr_t>(BV);
+    assert(!isSmall() && "Tried to use an unaligned pointer");
   }
 
   // Return all the bits used for the "small" representation; this includes
   // bits for the size as well as the element bits.
   uintptr_t getSmallRawBits() const {
-    return reinterpret_cast<uintptr_t>(X.getPointer()) >> 1;
+    assert(isSmall());
+    return X >> 1;
   }
 
   void setSmallRawBits(uintptr_t NewRawBits) {
-    return X.setPointer(reinterpret_cast<BitVector *>(NewRawBits << 1));
+    assert(isSmall());
+    X = NewRawBits << 1 | uintptr_t(1);
   }
 
   // Return the size.
@@ -87,22 +95,22 @@ class SmallBitVector {
 
   // Return the element bits.
   uintptr_t getSmallBits() const {
-    return getSmallRawBits() & ~(~uintptr_t(0) << SmallNumDataBits);
+    return getSmallRawBits() & ~(~uintptr_t(0) << getSmallSize());
   }
 
   void setSmallBits(uintptr_t NewBits) {
-    setSmallRawBits((getSmallRawBits() & (~uintptr_t(0) << SmallNumDataBits)) |
-                    (NewBits & ~(~uintptr_t(0) << getSmallSize())));
+    setSmallRawBits(NewBits & ~(~uintptr_t(0) << getSmallSize()) |
+                    (getSmallSize() << SmallNumDataBits));
   }
 
 public:
   /// SmallBitVector default ctor - Creates an empty bitvector.
-  SmallBitVector() : X(0, 1) {}
+  SmallBitVector() : X(1) {}
 
   /// SmallBitVector ctor - Creates a bitvector of specified number of bits. All
   /// bits are initialized to the specified value.
-  explicit SmallBitVector(unsigned s, bool t = false) : X(0, 1) {
-    if (s <= SmallNumRawBits)
+  explicit SmallBitVector(unsigned s, bool t = false) {
+    if (s <= SmallNumDataBits)
       switchToSmall(t ? ~uintptr_t(0) : 0, s);
     else
       switchToLarge(new BitVector(s, t));
@@ -113,22 +121,22 @@ public:
     if (RHS.isSmall())
       X = RHS.X;
     else
-      switchToLarge(new BitVector(*RHS.X.getPointer()));
+      switchToLarge(new BitVector(*RHS.getPointer()));
   }
 
   ~SmallBitVector() {
     if (!isSmall())
-      delete X.getPointer();
+      delete getPointer();
   }
 
   /// empty - Tests whether there are no bits in this bitvector.
   bool empty() const {
-    return isSmall() ? getSmallSize() == 0 : X.getPointer()->empty();
+    return isSmall() ? getSmallSize() == 0 : getPointer()->empty();
   }
 
   /// size - Returns the number of bits in this bitvector.
   size_t size() const {
-    return isSmall() ? getSmallSize() : X.getPointer()->size();
+    return isSmall() ? getSmallSize() : getPointer()->size();
   }
 
   /// count - Returns the number of bits which are set.
@@ -141,21 +149,21 @@ public:
         return CountPopulation_64(Bits);
       assert(0 && "Unsupported!");
     }
-    return X.getPointer()->count();
+    return getPointer()->count();
   }
 
   /// any - Returns true if any bit is set.
   bool any() const {
     if (isSmall())
       return getSmallBits() != 0;
-    return X.getPointer()->any();
+    return getPointer()->any();
   }
 
   /// none - Returns true if none of the bits are set.
   bool none() const {
     if (isSmall())
       return getSmallBits() == 0;
-    return X.getPointer()->none();
+    return getPointer()->none();
   }
 
   /// find_first - Returns the index of the first set bit, -1 if none
@@ -163,13 +171,16 @@ public:
   int find_first() const {
     if (isSmall()) {
       uintptr_t Bits = getSmallBits();
-      if (sizeof(uintptr_t) * CHAR_BIT == 32)
-        return CountTrailingZeros_32(Bits);
-      if (sizeof(uintptr_t) * CHAR_BIT == 64)
-        return CountTrailingZeros_64(Bits);
+      if (sizeof(uintptr_t) * CHAR_BIT == 32) {
+        size_t FirstBit = CountTrailingZeros_32(Bits);
+        return FirstBit == 32 ? -1 : FirstBit;
+      } else if (sizeof(uintptr_t) * CHAR_BIT == 64) {
+        size_t FirstBit = CountTrailingZeros_64(Bits);
+        return FirstBit == 64 ? -1 : FirstBit;
+      }
       assert(0 && "Unsupported!");
     }
-    return X.getPointer()->find_first();
+    return getPointer()->find_first();
   }
 
   /// find_next - Returns the index of the next set bit following the
@@ -178,30 +189,34 @@ public:
     if (isSmall()) {
       uintptr_t Bits = getSmallBits();
       // Mask off previous bits.
-      Bits &= ~uintptr_t(0) << Prev;
-      if (sizeof(uintptr_t) * CHAR_BIT == 32)
-        return CountTrailingZeros_32(Bits);
-      if (sizeof(uintptr_t) * CHAR_BIT == 64)
-        return CountTrailingZeros_64(Bits);
+      Bits &= ~uintptr_t(0) << (Prev + 1);
+      if (sizeof(uintptr_t) * CHAR_BIT == 32) {
+        size_t FirstBit = CountTrailingZeros_32(Bits);
+        return FirstBit == 32 ? -1 : FirstBit;
+      } else if (sizeof(uintptr_t) * CHAR_BIT == 64) {
+        size_t FirstBit = CountTrailingZeros_64(Bits);
+        return FirstBit == 64 ? -1 : FirstBit;
+      }
       assert(0 && "Unsupported!");
     }
-    return X.getPointer()->find_next(Prev);
+    return getPointer()->find_next(Prev);
   }
 
   /// clear - Clear all bits.
   void clear() {
     if (!isSmall())
-      delete X.getPointer();
+      delete getPointer();
     switchToSmall(0, 0);
   }
 
   /// resize - Grow or shrink the bitvector.
   void resize(unsigned N, bool t = false) {
     if (!isSmall()) {
-      X.getPointer()->resize(N, t);
-    } else if (getSmallSize() >= N) {
+      getPointer()->resize(N, t);
+    } else if (SmallNumDataBits >= N) {
+      uintptr_t NewBits = t ? ~uintptr_t(0) << getSmallSize() : 0;
       setSmallSize(N);
-      setSmallBits(getSmallBits());
+      setSmallBits(NewBits | getSmallBits());
     } else {
       BitVector *BV = new BitVector(N, t);
       uintptr_t OldBits = getSmallBits();
@@ -224,7 +239,7 @@ public:
         switchToLarge(BV);
       }
     } else {
-      X.getPointer()->reserve(N);
+      getPointer()->reserve(N);
     }
   }
 
@@ -233,7 +248,7 @@ public:
     if (isSmall())
       setSmallBits(~uintptr_t(0));
     else
-      X.getPointer()->set();
+      getPointer()->set();
     return *this;
   }
 
@@ -241,7 +256,7 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() | (uintptr_t(1) << Idx));
     else
-      X.getPointer()->set(Idx);
+      getPointer()->set(Idx);
     return *this;
   }
 
@@ -249,7 +264,7 @@ public:
     if (isSmall())
       setSmallBits(0);
     else
-      X.getPointer()->reset();
+      getPointer()->reset();
     return *this;
   }
 
@@ -257,7 +272,7 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() & ~(uintptr_t(1) << Idx));
     else
-      X.getPointer()->reset(Idx);
+      getPointer()->reset(Idx);
     return *this;
   }
 
@@ -265,7 +280,7 @@ public:
     if (isSmall())
       setSmallBits(~getSmallBits());
     else
-      X.getPointer()->flip();
+      getPointer()->flip();
     return *this;
   }
 
@@ -273,7 +288,7 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() ^ (uintptr_t(1) << Idx));
     else
-      X.getPointer()->flip(Idx);
+      getPointer()->flip(Idx);
     return *this;
   }
 
@@ -288,7 +303,7 @@ public:
     assert(Idx < size() && "Out-of-bounds Bit access.");
     if (isSmall())
       return ((getSmallBits() >> Idx) & 1) != 0;
-    return X.getPointer()->operator[](Idx);
+    return getPointer()->operator[](Idx);
   }
 
   bool test(unsigned Idx) const {
@@ -302,7 +317,7 @@ public:
     if (isSmall())
       return getSmallBits() == RHS.getSmallBits();
     else
-      return *X.getPointer() == *RHS.X.getPointer();
+      return *getPointer() == *RHS.getPointer();
   }
 
   bool operator!=(const SmallBitVector &RHS) const {
@@ -315,11 +330,11 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() & RHS.getSmallBits());
     else if (!RHS.isSmall())
-      X.getPointer()->operator&=(*RHS.X.getPointer());
+      getPointer()->operator&=(*RHS.getPointer());
     else {
       SmallBitVector Copy = RHS;
       Copy.resize(size());
-      X.getPointer()->operator&=(*Copy.X.getPointer());
+      getPointer()->operator&=(*Copy.getPointer());
     }
     return *this;
   }
@@ -329,11 +344,11 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() | RHS.getSmallBits());
     else if (!RHS.isSmall())
-      X.getPointer()->operator|=(*RHS.X.getPointer());
+      getPointer()->operator|=(*RHS.getPointer());
     else {
       SmallBitVector Copy = RHS;
       Copy.resize(size());
-      X.getPointer()->operator|=(*Copy.X.getPointer());
+      getPointer()->operator|=(*Copy.getPointer());
     }
     return *this;
   }
@@ -343,11 +358,11 @@ public:
     if (isSmall())
       setSmallBits(getSmallBits() ^ RHS.getSmallBits());
     else if (!RHS.isSmall())
-      X.getPointer()->operator^=(*RHS.X.getPointer());
+      getPointer()->operator^=(*RHS.getPointer());
     else {
       SmallBitVector Copy = RHS;
       Copy.resize(size());
-      X.getPointer()->operator^=(*Copy.X.getPointer());
+      getPointer()->operator^=(*Copy.getPointer());
     }
     return *this;
   }
@@ -358,12 +373,12 @@ public:
       if (RHS.isSmall())
         X = RHS.X;
       else
-        switchToLarge(new BitVector(*RHS.X.getPointer()));
+        switchToLarge(new BitVector(*RHS.getPointer()));
     } else {
       if (!RHS.isSmall())
-        *X.getPointer() = *RHS.X.getPointer();
+        *getPointer() = *RHS.getPointer();
       else {
-        delete X.getPointer();
+        delete getPointer();
         X = RHS.X;
       }
     }
