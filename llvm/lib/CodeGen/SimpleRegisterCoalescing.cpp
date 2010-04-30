@@ -1034,9 +1034,8 @@ SimpleRegisterCoalescing::isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   unsigned Length = li_->getApproximateInstructionCount(DstInt);
   if (Length > Threshold &&
-      (((float)std::distance(mri_->use_nodbg_begin(DstInt.reg),
-                             mri_->use_nodbg_end()) / Length) < 
-        (1.0 / Threshold)))
+      std::distance(mri_->use_nodbg_begin(DstInt.reg),
+                    mri_->use_nodbg_end()) * Threshold < Length)
     return false;
 
   // If the virtual register live interval extends into a loop, turn down
@@ -1092,9 +1091,8 @@ SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   unsigned Length = li_->getApproximateInstructionCount(SrcInt);
   if (Length > Threshold &&
-      (((float)std::distance(mri_->use_nodbg_begin(SrcInt.reg),
-                             mri_->use_nodbg_end()) / Length) < 
-          (1.0 / Threshold)))
+      std::distance(mri_->use_nodbg_begin(SrcInt.reg),
+                    mri_->use_nodbg_end()) * Threshold < Length)
     return false;
 
   if (SrcInt.empty())
@@ -1164,18 +1162,16 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
                                    mri_->use_nodbg_end());
   unsigned DstUses = std::distance(mri_->use_nodbg_begin(DstReg),
                                    mri_->use_nodbg_end());
-  float NewDensity = ((float)(SrcUses + DstUses) / (SrcSize + DstSize)) /
-    NewRCCount;
+  unsigned NewUses = SrcUses + DstUses;
+  unsigned NewSize = SrcSize + DstSize;
   if (SrcRC != NewRC && SrcSize > NewRCCount) {
     unsigned SrcRCCount = allocatableRCRegs_[SrcRC].count();
-    float Density = ((float)SrcUses / SrcSize) / SrcRCCount;
-    if (NewDensity > Density * 2.0f)
+    if (NewUses*SrcSize*SrcRCCount > 2*SrcUses*NewSize*NewRCCount)
       return false;
   }
   if (DstRC != NewRC && DstSize > NewRCCount) {
     unsigned DstRCCount = allocatableRCRegs_[DstRC].count();
-    float Density = ((float)DstUses / DstSize) / DstRCCount;
-    if (NewDensity > Density * 2.0f)
+    if (NewUses*DstSize*DstRCCount > 2*DstUses*NewSize*NewRCCount)
       return false;
   }
   return true;
@@ -1669,10 +1665,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       const TargetRegisterClass *RC = mri_->getRegClass(JoinVReg);
       unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
       unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
-      float Ratio = 1.0 / Threshold;
       if (Length > Threshold &&
-          (((float)std::distance(mri_->use_nodbg_begin(JoinVReg),
-                                 mri_->use_nodbg_end()) / Length) < Ratio)) {
+          std::distance(mri_->use_nodbg_begin(JoinVReg),
+                        mri_->use_nodbg_end()) * Threshold < Length) {
         // Before giving up coalescing, if definition of source is defined by
         // trivial computation, try rematerializing it.
         if (ReMaterializeTrivialDef(SrcInt, DstReg, DstSubIdx, CopyMI))
