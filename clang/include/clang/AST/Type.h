@@ -2566,6 +2566,7 @@ class InjectedClassNameType : public Type {
   QualType InjectedType;
 
   friend class ASTContext; // ASTContext creates these.
+  friend class TagDecl; // TagDecl mutilates the Decl
   InjectedClassNameType(CXXRecordDecl *D, QualType TST)
     : Type(InjectedClassName, QualType(), true),
       Decl(D), InjectedType(TST) {

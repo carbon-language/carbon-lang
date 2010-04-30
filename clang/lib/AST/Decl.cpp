@@ -1479,6 +1479,10 @@ void TagDecl::startDefinition() {
   if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
     TagT->decl.setPointer(this);
     TagT->decl.setInt(1);
+  } else if (InjectedClassNameType *Injected
+               = const_cast<InjectedClassNameType *>(
+                                 TypeForDecl->getAs<InjectedClassNameType>())) {
+    Injected->Decl = cast<CXXRecordDecl>(this);
   }
 
   if (isa<CXXRecordDecl>(this)) {
@@ -1500,6 +1504,11 @@ void TagDecl::completeDefinition() {
     assert(TagT->decl.getPointer() == this &&
            "Attempt to redefine a tag definition?");
     TagT->decl.setInt(0);
+  } else if (InjectedClassNameType *Injected
+               = const_cast<InjectedClassNameType *>(
+                                TypeForDecl->getAs<InjectedClassNameType>())) {
+    assert(Injected->Decl == this &&
+           "Attempt to redefine a class template definition?");
   }
 }
 

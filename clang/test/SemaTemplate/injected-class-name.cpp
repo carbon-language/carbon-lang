@@ -48,3 +48,15 @@ namespace pr6326 {
   };
   template class A<int>;
 }
+
+namespace ForwardDecls {
+  template<typename T>
+  struct X;
+
+  template<typename T>
+  struct X {
+    typedef T foo;
+    typedef X<T> xt;
+    typename xt::foo *t;
+  };
+}
