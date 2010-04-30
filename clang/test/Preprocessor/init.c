@@ -51,7 +51,7 @@
 // COMMON:#define __clang_major__ 2
 // COMMON:#define __clang_minor__ 0
 // COMMON:#define __clang_patchlevel__ 0
-// COMMON:#define __clang_version__ "2.0 (trunk 102685)"
+// COMMON:#define __clang_version__
 // COMMON:#define __llvm__ 1
 //
 // 
