@@ -49,6 +49,11 @@ public:
 
     ~reference() {}
 
+    reference &operator=(reference t) {
+      *this = bool(t);
+      return *this;
+    }
+
     reference& operator=(bool t) {
       if (t)
         *WordRef |= 1L << BitPos;

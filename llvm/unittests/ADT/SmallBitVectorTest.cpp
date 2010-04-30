@@ -185,4 +185,5 @@ TEST(SmallBitVectorTest, ProxyIndex) {
   Vec[2] = Vec[1] = Vec[0] = false;
   EXPECT_TRUE(Vec.none());
 }
+
 }
