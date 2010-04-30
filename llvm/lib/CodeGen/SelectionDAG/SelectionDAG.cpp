@@ -2792,14 +2792,19 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
       // If the indices are the same, return the inserted element else
       // if the indices are known different, extract the element from
       // the original vector.
-      if (N1.getOperand(2) == N2) {
-        if (VT == N1.getOperand(1).getValueType())
-          return N1.getOperand(1);
-        else
-          return getSExtOrTrunc(N1.getOperand(1), DL, VT);
-      } else if (isa<ConstantSDNode>(N1.getOperand(2)) &&
-                 isa<ConstantSDNode>(N2))
+      SDValue N1Op2 = N1.getOperand(2);
+      ConstantSDNode *N1Op2C = dyn_cast<ConstantSDNode>(N1Op2.getNode());
+
+      if (N1Op2C && N2C) {
+        if (N1Op2C->getZExtValue() == N2C->getZExtValue()) {
+          if (VT == N1.getOperand(1).getValueType())
+            return N1.getOperand(1);
+          else
+            return getSExtOrTrunc(N1.getOperand(1), DL, VT);
+        }
+
         return getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, N1.getOperand(0), N2);
+      }
     }
     break;
   case ISD::EXTRACT_ELEMENT:
@@ -6089,7 +6094,7 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
 
   unsigned i;
   for (i= 0; i != NE; ++i) {
-    for (unsigned j = 0; j != N->getNumOperands(); ++j) {
+    for (unsigned j = 0, e = N->getNumOperands(); j != e; ++j) {
       SDValue Operand = N->getOperand(j);
       EVT OperandVT = Operand.getValueType();
       if (OperandVT.isVector()) {
