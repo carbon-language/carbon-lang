@@ -3538,21 +3538,36 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
   if (N0.getOpcode() == ISD::SETCC) {
     // sext(setcc) -> sext_in_reg(vsetcc) for vectors.
-    if (VT.isVector() &&
+    // Only do this before legalize for now.
+    if (VT.isVector() && !LegalOperations) {
+      EVT N0VT = N0.getOperand(0).getValueType();
         // We know that the # elements of the results is the same as the
         // # elements of the compare (and the # elements of the compare result
         // for that matter).  Check to see that they are the same size.  If so,
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
-        VT.getSizeInBits() == N0.getOperand(0).getValueType().getSizeInBits() &&
-      
-        // Only do this before legalize for now.
-        !LegalOperations) {
-      return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
-                           N0.getOperand(1),
-                           cast<CondCodeSDNode>(N0.getOperand(2))->get());
+      if (VT.getSizeInBits() == N0VT.getSizeInBits())
+	return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+			     N0.getOperand(1),
+			     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+      // If the desired elements are smaller or larger than the source
+      // elements we can use a matching integer vector type and then
+      // truncate/sign extend
+      else {
+	EVT MatchingElementType =
+	  EVT::getIntegerVT(*DAG.getContext(),
+			    N0VT.getScalarType().getSizeInBits());
+	EVT MatchingVectorType =
+	  EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+			   N0VT.getVectorNumElements());
+	SDValue VsetCC =
+	  DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+			N0.getOperand(1),
+			cast<CondCodeSDNode>(N0.getOperand(2))->get());
+	return 	DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(),  VT);
+      }
     }
-    
+
     // sext(setcc x, y, cc) -> (select_cc x, y, -1, 0, cc)
     unsigned ElementWidth = VT.getScalarType().getSizeInBits();
     SDValue NegOne =
