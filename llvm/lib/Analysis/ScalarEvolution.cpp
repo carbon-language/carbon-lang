@@ -3948,22 +3948,22 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
     break;
   case ICmpInst::ICMP_ULE:
     if (!getUnsignedRange(RHS).getUnsignedMax().isMaxValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), 1, false), RHS,
+      RHS = getAddExpr(getConstant(RHS->getType(), 1, true), RHS,
                        /*HasNUW=*/true, /*HasNSW=*/false);
       Cond = ICmpInst::ICMP_ULT;
     } else if (!getUnsignedRange(LHS).getUnsignedMin().isMinValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, false), LHS,
+      LHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), LHS,
                        /*HasNUW=*/true, /*HasNSW=*/false);
       Cond = ICmpInst::ICMP_ULT;
     }
     break;
   case ICmpInst::ICMP_UGE:
     if (!getUnsignedRange(RHS).getUnsignedMin().isMinValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, false), RHS,
+      RHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), RHS,
                        /*HasNUW=*/true, /*HasNSW=*/false);
       Cond = ICmpInst::ICMP_UGT;
     } else if (!getUnsignedRange(LHS).getUnsignedMax().isMaxValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), 1, false), LHS,
+      LHS = getAddExpr(getConstant(RHS->getType(), 1, true), LHS,
                        /*HasNUW=*/true, /*HasNSW=*/false);
       Cond = ICmpInst::ICMP_UGT;
     }
