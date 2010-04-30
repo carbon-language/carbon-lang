@@ -71,7 +71,7 @@ endif
 
 ifeq ($(MAKECMDGOALS),install-clang-c)
   DIRS := tools/clang/tools/driver tools/clang/lib/Headers \
-          tools/clang/tools/CIndex tools/clang/tools/c-index-test \
+          tools/clang/tools/libclang tools/clang/tools/c-index-test \
 	  tools/clang/include/clang-c
   OPTIONAL_DIRS :=
   NO_INSTALL = 1
