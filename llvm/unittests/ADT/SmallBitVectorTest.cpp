@@ -176,4 +176,12 @@ TEST(SmallBitVectorTest, CompoundAssignment) {
   EXPECT_EQ(100U, A.size());
 }
 
+TEST(SmallBitVectorTest, ProxyIndex) {
+  SmallBitVector Vec(3);
+  EXPECT_TRUE(Vec.none());
+  Vec[0] = Vec[1] = Vec[2] = true;
+  EXPECT_EQ(Vec.size(), Vec.count());
+  Vec[2] = Vec[1] = Vec[0] = false;
+  EXPECT_TRUE(Vec.none());
+}
 }

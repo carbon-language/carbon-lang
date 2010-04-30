@@ -52,6 +52,34 @@ class SmallBitVector {
     SmallNumDataBits = SmallNumRawBits - SmallNumSizeBits
   };
 
+public:
+  // Encapsulation of a single bit.
+  class reference {
+    SmallBitVector &TheVector;
+    unsigned BitPos;
+
+  public:
+    reference(SmallBitVector &b, unsigned Idx) : TheVector(b), BitPos(Idx) {}
+
+    reference& operator=(reference t) {
+      *this = bool(t);
+      return *this;
+    }
+
+    reference& operator=(bool t) {
+      if (t)
+        TheVector.set(BitPos);
+      else
+        TheVector.reset(BitPos);
+      return *this;
+    }
+
+    operator bool() const {
+      return const_cast<const SmallBitVector &>(TheVector).operator[](BitPos);
+    }
+  };
+
+private:
   bool isSmall() const {
     return X & uintptr_t(1);
   }
@@ -81,7 +109,7 @@ class SmallBitVector {
 
   void setSmallRawBits(uintptr_t NewRawBits) {
     assert(isSmall());
-    X = NewRawBits << 1 | uintptr_t(1);
+    X = (NewRawBits << 1) | uintptr_t(1);
   }
 
   // Return the size.
@@ -99,7 +127,7 @@ class SmallBitVector {
   }
 
   void setSmallBits(uintptr_t NewBits) {
-    setSmallRawBits(NewBits & ~(~uintptr_t(0) << getSmallSize()) |
+    setSmallRawBits((NewBits & ~(~uintptr_t(0) << getSmallSize())) |
                     (getSmallSize() << SmallNumDataBits));
   }
 
@@ -298,7 +326,11 @@ public:
   }
 
   // Indexing.
-  // TODO: Add an index operator which returns a "reference" (proxy class).
+  reference operator[](unsigned Idx) {
+    assert(Idx < size() && "Out-of-bounds Bit access.");
+    return reference(*this, Idx);
+  }
+
   bool operator[](unsigned Idx) const {
     assert(Idx < size() && "Out-of-bounds Bit access.");
     if (isSmall())
