@@ -624,19 +624,14 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
 // FIXME. Consolidate this with EmitClassMemberwiseCopy as they share a lot.
 void 
 CodeGenFunction::EmitClassCopyAssignment(llvm::Value *Dest, llvm::Value *Src,
-                                         const CXXRecordDecl *ClassDecl,
-                                         const CXXRecordDecl *BaseClassDecl) {
-  if (ClassDecl) {
-    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
-    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
-  }
-  if (BaseClassDecl->hasTrivialCopyAssignment()) {
-    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(BaseClassDecl));
+                                         const CXXRecordDecl *ClassDecl) {
+  if (ClassDecl->hasTrivialCopyAssignment()) {
+    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
     return;
   }
 
   const CXXMethodDecl *MD = 0;
-  BaseClassDecl->hasConstCopyAssignment(getContext(), MD);
+  ClassDecl->hasConstCopyAssignment(getContext(), MD);
   assert(MD && "EmitClassCopyAssignment - missing copy assign");
 
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
@@ -799,7 +794,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
                                              /*NullCheckValue=*/false);
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassCopyAssignment(Dest, Src, 0, BaseClassDecl);
+    EmitClassCopyAssignment(Dest, Src, BaseClassDecl);
   }
 
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -828,7 +823,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
       }
       else
         EmitClassCopyAssignment(LHS.getAddress(), RHS.getAddress(),
-                               0 /*ClassDecl*/, FieldClassDecl);
+                                FieldClassDecl);
       continue;
     }
     // Do a built-in assignment of scalar data members.
