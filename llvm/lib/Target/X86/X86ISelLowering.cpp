@@ -8556,21 +8556,17 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   //  copy0MBB:
   //   %FalseValue = ...
   //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
+  copy0MBB->addSuccessor(sinkMBB);
 
   //  sinkMBB:
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
-  BB = sinkMBB;
-  BuildMI(BB, DL, TII->get(X86::PHI), MI->getOperand(0).getReg())
+  BuildMI(sinkMBB, DL, TII->get(X86::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
-  return BB;
+  return sinkMBB;
 }
 
 MachineBasicBlock *
