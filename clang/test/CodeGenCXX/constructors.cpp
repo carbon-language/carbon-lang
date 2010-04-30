@@ -92,3 +92,15 @@ D::D(int x, ...) : A(ValueClass(x, x+1)), mem(x*x) {}
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
+
+
+// PR6622:  this shouldn't crash
+namespace test0 {
+  struct A {};
+  struct B : virtual A { int x; };
+  struct C : B {};
+  
+  void test(C &in) {
+    C tmp = in;
+  }
+}

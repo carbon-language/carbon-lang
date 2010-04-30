@@ -677,13 +677,25 @@ CodeGenFunction::EmitClassCopyAssignment(llvm::Value *Dest, llvm::Value *Src,
 void 
 CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
   const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
+  CXXCtorType CtorType = CurGD.getCtorType();
+  (void) CtorType;
+
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
       "SynthesizeCXXCopyConstructor - copy constructor has definition already");
   assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
 
   llvm::Value *ThisPtr = LoadCXXThis();
-  llvm::Value *SrcPtr = Builder.CreateLoad(GetAddrOfLocalVar(Args[1].first));
+
+  // Find the source pointer.
+  unsigned SrcArgIndex = Args.size() - 1;
+  assert(CtorType == Ctor_Base || SrcArgIndex == 1);
+  assert(CtorType != Ctor_Base ||
+         (ClassDecl->getNumVBases() != 0 && SrcArgIndex == 2) ||
+         SrcArgIndex == 1);
+
+  llvm::Value *SrcPtr =
+    Builder.CreateLoad(GetAddrOfLocalVar(Args[SrcArgIndex].first));
 
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
