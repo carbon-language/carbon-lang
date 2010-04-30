@@ -833,9 +833,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 void
 SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
 
-  DEBUG(dbgs() << "Target-post-processed machine code:\n");
-  DEBUG(BB->dump());
-
   DEBUG(dbgs() << "Total amount of phi nodes to update: "
                << FuncInfo->PHINodesToUpdate.size() << "\n");
   DEBUG(for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i)
