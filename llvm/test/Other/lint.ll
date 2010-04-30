@@ -3,6 +3,8 @@ target datalayout = "e-p:64:64:64"
 
 declare fastcc void @bar()
 
+@CG = constant i32 7
+
 define i32 @foo() noreturn {
 ; CHECK: Caller and callee calling convention differ
   call void @bar()
@@ -39,6 +41,16 @@ define i32 @foo() noreturn {
   %xx = xor i32 undef, undef
 ; CHECK: sub(undef, undef)
   %xs = sub i32 undef, undef
+
+; CHECK: Write to read-only memory
+  store i32 8, i32* @CG
+; CHECK: Write to text section
+  store i32 8, i32* bitcast (i32()* @foo to i32*)
+; CHECK: Load from block address
+  %lb = load i32* bitcast (i8* blockaddress(@foo, %next) to i32*)
+; CHECK: Call to block address
+  call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
+
   br label %next
 
 next:
@@ -63,4 +75,10 @@ declare void @llvm.va_start(i8*)
 define void @not_vararg(i8* %p) nounwind {
   call void @llvm.va_start(i8* %p)
   ret void
+}
+
+define void @use_indbr() {
+  indirectbr i8* bitcast (i32()* @foo to i8*), [label %block]
+block:
+  unreachable
 }

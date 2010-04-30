@@ -51,6 +51,13 @@
 using namespace llvm;
 
 namespace {
+  namespace MemRef {
+    static unsigned Read     = 1;
+    static unsigned Write    = 2;
+    static unsigned Callee   = 4;
+    static unsigned Branchee = 8;
+  }
+
   class Lint : public FunctionPass, public InstVisitor<Lint> {
     friend class InstVisitor<Lint>;
 
@@ -58,7 +65,7 @@ namespace {
 
     void visitCallSite(CallSite CS);
     void visitMemoryReference(Instruction &I, Value *Ptr, unsigned Align,
-                              const Type *Ty);
+                              const Type *Ty, unsigned Flags);
 
     void visitCallInst(CallInst &I);
     void visitInvokeInst(InvokeInst &I);
@@ -187,7 +194,7 @@ void Lint::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
 
   // TODO: Check function alignment?
-  visitMemoryReference(I, Callee, 0, 0);
+  visitMemoryReference(I, Callee, 0, 0, MemRef::Callee);
 
   if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
     Assert1(CS.getCallingConv() == F->getCallingConv(),
@@ -222,8 +229,10 @@ void Lint::visitCallSite(CallSite CS) {
 
     case Intrinsic::memcpy: {
       MemCpyInst *MCI = cast<MemCpyInst>(&I);
-      visitMemoryReference(I, MCI->getSource(), MCI->getAlignment(), 0);
-      visitMemoryReference(I, MCI->getDest(), MCI->getAlignment(), 0);
+      visitMemoryReference(I, MCI->getSource(), MCI->getAlignment(), 0,
+                           MemRef::Write);
+      visitMemoryReference(I, MCI->getDest(), MCI->getAlignment(), 0,
+                           MemRef::Read);
 
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
       // isn't expressive enough for what we really want to do. Known partial
@@ -240,13 +249,16 @@ void Lint::visitCallSite(CallSite CS) {
     }
     case Intrinsic::memmove: {
       MemMoveInst *MMI = cast<MemMoveInst>(&I);
-      visitMemoryReference(I, MMI->getSource(), MMI->getAlignment(), 0);
-      visitMemoryReference(I, MMI->getDest(), MMI->getAlignment(), 0);
+      visitMemoryReference(I, MMI->getSource(), MMI->getAlignment(), 0,
+                           MemRef::Write);
+      visitMemoryReference(I, MMI->getDest(), MMI->getAlignment(), 0,
+                           MemRef::Read);
       break;
     }
     case Intrinsic::memset: {
       MemSetInst *MSI = cast<MemSetInst>(&I);
-      visitMemoryReference(I, MSI->getDest(), MSI->getAlignment(), 0);
+      visitMemoryReference(I, MSI->getDest(), MSI->getAlignment(), 0,
+                           MemRef::Write);
       break;
     }
 
@@ -255,18 +267,21 @@ void Lint::visitCallSite(CallSite CS) {
               "Undefined behavior: va_start called in a non-varargs function",
               &I);
 
-      visitMemoryReference(I, CS.getArgument(0), 0, 0);
+      visitMemoryReference(I, CS.getArgument(0), 0, 0,
+                           MemRef::Read | MemRef::Write);
       break;
     case Intrinsic::vacopy:
-      visitMemoryReference(I, CS.getArgument(0), 0, 0);
-      visitMemoryReference(I, CS.getArgument(1), 0, 0);
+      visitMemoryReference(I, CS.getArgument(0), 0, 0, MemRef::Write);
+      visitMemoryReference(I, CS.getArgument(1), 0, 0, MemRef::Read);
       break;
     case Intrinsic::vaend:
-      visitMemoryReference(I, CS.getArgument(0), 0, 0);
+      visitMemoryReference(I, CS.getArgument(0), 0, 0,
+                           MemRef::Read | MemRef::Write);
       break;
 
     case Intrinsic::stackrestore:
-      visitMemoryReference(I, CS.getArgument(0), 0, 0);
+      visitMemoryReference(I, CS.getArgument(0), 0, 0,
+                           MemRef::Read);
       break;
     }
 }
@@ -287,15 +302,38 @@ void Lint::visitReturnInst(ReturnInst &I) {
 }
 
 // TODO: Add a length argument and check that the reference is in bounds
-// TODO: Add read/write/execute flags and check for writing to read-only
-//       memory or jumping to suspicious writeable memory
 void Lint::visitMemoryReference(Instruction &I,
-                                Value *Ptr, unsigned Align, const Type *Ty) {
+                                Value *Ptr, unsigned Align, const Type *Ty,
+                                unsigned Flags) {
   Value *UnderlyingObject = Ptr->getUnderlyingObject();
   Assert1(!isa<ConstantPointerNull>(UnderlyingObject),
           "Undefined behavior: Null pointer dereference", &I);
   Assert1(!isa<UndefValue>(UnderlyingObject),
           "Undefined behavior: Undef pointer dereference", &I);
+
+  if (Flags & MemRef::Write) {
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(UnderlyingObject))
+      Assert1(!GV->isConstant(),
+              "Undefined behavior: Write to read-only memory", &I);
+    Assert1(!isa<Function>(UnderlyingObject) &&
+            !isa<BlockAddress>(UnderlyingObject),
+            "Undefined behavior: Write to text section", &I);
+  }
+  if (Flags & MemRef::Read) {
+    Assert1(!isa<Function>(UnderlyingObject),
+            "Unusual: Load from function body", &I);
+    Assert1(!isa<BlockAddress>(UnderlyingObject),
+            "Undefined behavior: Load from block address", &I);
+  }
+  if (Flags & MemRef::Callee) {
+    Assert1(!isa<BlockAddress>(UnderlyingObject),
+            "Undefined behavior: Call to block address", &I);
+  }
+  if (Flags & MemRef::Branchee) {
+    Assert1(!isa<Constant>(UnderlyingObject) ||
+            isa<BlockAddress>(UnderlyingObject),
+            "Undefined behavior: Branch to non-blockaddress", &I);
+  }
 
   if (TD) {
     if (Align == 0 && Ty) Align = TD->getABITypeAlignment(Ty);
@@ -312,12 +350,13 @@ void Lint::visitMemoryReference(Instruction &I,
 }
 
 void Lint::visitLoadInst(LoadInst &I) {
-  visitMemoryReference(I, I.getPointerOperand(), I.getAlignment(), I.getType());
+  visitMemoryReference(I, I.getPointerOperand(), I.getAlignment(), I.getType(),
+                       MemRef::Read);
 }
 
 void Lint::visitStoreInst(StoreInst &I) {
   visitMemoryReference(I, I.getPointerOperand(), I.getAlignment(),
-                  I.getOperand(0)->getType());
+                  I.getOperand(0)->getType(), MemRef::Write);
 }
 
 void Lint::visitXor(BinaryOperator &I) {
@@ -392,11 +431,12 @@ void Lint::visitAllocaInst(AllocaInst &I) {
 }
 
 void Lint::visitVAArgInst(VAArgInst &I) {
-  visitMemoryReference(I, I.getOperand(0), 0, 0);
+  visitMemoryReference(I, I.getOperand(0), 0, 0,
+                       MemRef::Read | MemRef::Write);
 }
 
 void Lint::visitIndirectBrInst(IndirectBrInst &I) {
-  visitMemoryReference(I, I.getAddress(), 0, 0);
+  visitMemoryReference(I, I.getAddress(), 0, 0, MemRef::Branchee);
 }
 
 void Lint::visitExtractElementInst(ExtractElementInst &I) {
