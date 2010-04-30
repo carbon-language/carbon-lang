@@ -1234,7 +1234,8 @@ install-local::
 	$(Echo) Install circumvented with NO_INSTALL
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
-else ifdef NO_INSTALL_ARCHIVES
+else
+ifdef NO_INSTALL_ARCHIVES
 install-local::
 	$(Echo) Install circumvented with NO_INSTALL
 uninstall-local::
@@ -1252,6 +1253,7 @@ $(DestArchiveLib): $(LibName.A) $(DESTDIR)$(PROJ_libdir)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
 	-$(Verb) $(RM) -f $(DestArchiveLib)
+endif
 endif
 endif
 
