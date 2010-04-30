@@ -57,14 +57,6 @@ STATISTIC(NumTailCalls, "Number of tail calls");
 static cl::opt<bool>
 DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 
-// Disable16Bit - 16-bit operations typically have a larger encoding than
-// corresponding 32-bit instructions, and 16-bit code is slow on some
-// processors. This is an experimental flag to disable 16-bit operations
-// (which forces them to be Legalized to 32-bit operations).
-static cl::opt<bool>
-Disable16Bit("disable-16bit", cl::Hidden,
-             cl::desc("Disable use of 16-bit instructions"));
-
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
@@ -120,8 +112,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // Set up the register classes.
   addRegisterClass(MVT::i8, X86::GR8RegisterClass);
-  if (!Disable16Bit)
-    addRegisterClass(MVT::i16, X86::GR16RegisterClass);
+  addRegisterClass(MVT::i16, X86::GR16RegisterClass);
   addRegisterClass(MVT::i32, X86::GR32RegisterClass);
   if (Subtarget->is64Bit())
     addRegisterClass(MVT::i64, X86::GR64RegisterClass);
@@ -130,11 +121,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // We don't accept any truncstore of integer registers.
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
-  if (!Disable16Bit)
-    setTruncStoreAction(MVT::i64, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i64, MVT::i16, Expand);
   setTruncStoreAction(MVT::i64, MVT::i8 , Expand);
-  if (!Disable16Bit)
-    setTruncStoreAction(MVT::i32, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i32, MVT::i16, Expand);
   setTruncStoreAction(MVT::i32, MVT::i8 , Expand);
   setTruncStoreAction(MVT::i16, MVT::i8,  Expand);
 
@@ -285,13 +274,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::CTTZ             , MVT::i8   , Custom);
   setOperationAction(ISD::CTLZ             , MVT::i8   , Custom);
   setOperationAction(ISD::CTPOP            , MVT::i16  , Expand);
-  if (Disable16Bit) {
-    setOperationAction(ISD::CTTZ           , MVT::i16  , Expand);
-    setOperationAction(ISD::CTLZ           , MVT::i16  , Expand);
-  } else {
-    setOperationAction(ISD::CTTZ           , MVT::i16  , Custom);
-    setOperationAction(ISD::CTLZ           , MVT::i16  , Custom);
-  }
+  setOperationAction(ISD::CTTZ             , MVT::i16  , Custom);
+  setOperationAction(ISD::CTLZ             , MVT::i16  , Custom);
   setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i32  , Custom);
   setOperationAction(ISD::CTLZ             , MVT::i32  , Custom);
@@ -308,19 +292,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SELECT          , MVT::i1   , Promote);
   // X86 wants to expand cmov itself.
   setOperationAction(ISD::SELECT          , MVT::i8   , Custom);
-  if (Disable16Bit)
-    setOperationAction(ISD::SELECT        , MVT::i16  , Expand);
-  else
-    setOperationAction(ISD::SELECT        , MVT::i16  , Custom);
+  setOperationAction(ISD::SELECT        , MVT::i16  , Custom);
   setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f64  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f80  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i8   , Custom);
-  if (Disable16Bit)
-    setOperationAction(ISD::SETCC         , MVT::i16  , Expand);
-  else
-    setOperationAction(ISD::SETCC         , MVT::i16  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::i16  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f64  , Custom);

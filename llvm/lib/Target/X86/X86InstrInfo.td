@@ -4792,18 +4792,6 @@ def : Pat<(and GR16:$src1, i16immSExt8:$src2),
 def : Pat<(and GR32:$src1, i32immSExt8:$src2),
           (AND32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// -disable-16bit support.
-def : Pat<(truncstorei16 (i16 imm:$src), addr:$dst),
-          (MOV16mi addr:$dst, imm:$src)>;
-def : Pat<(truncstorei16 GR32:$src, addr:$dst),
-          (MOV16mr addr:$dst, (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit))>;
-def : Pat<(i32 (sextloadi16 addr:$dst)),
-          (MOVSX32rm16 addr:$dst)>;
-def : Pat<(i32 (zextloadi16 addr:$dst)),
-          (MOVZX32rm16 addr:$dst)>;
-def : Pat<(i32 (extloadi16 addr:$dst)),
-          (MOVZX32rm16 addr:$dst)>;
-
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
 //===----------------------------------------------------------------------===//
