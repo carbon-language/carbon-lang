@@ -103,7 +103,7 @@ extern "C" {
 
   asm(
       ".text\n"
-      ".globl AlphaComilationCallbackC\n"
+      ".globl AlphaCompilationCallbackC\n"
       ".align 4\n"
       ".globl AlphaCompilationCallback\n"
       ".ent AlphaCompilationCallback\n"
