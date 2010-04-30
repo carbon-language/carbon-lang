@@ -199,13 +199,12 @@ public:
   int find_first() const {
     if (isSmall()) {
       uintptr_t Bits = getSmallBits();
-      if (sizeof(uintptr_t) * CHAR_BIT == 32) {
-        size_t FirstBit = CountTrailingZeros_32(Bits);
-        return FirstBit == 32 ? -1 : FirstBit;
-      } else if (sizeof(uintptr_t) * CHAR_BIT == 64) {
-        size_t FirstBit = CountTrailingZeros_64(Bits);
-        return FirstBit == 64 ? -1 : FirstBit;
-      }
+      if (Bits == 0)
+        return -1;
+      if (sizeof(uintptr_t) * CHAR_BIT == 32)
+        return CountTrailingZeros_32(Bits);
+      if (sizeof(uintptr_t) * CHAR_BIT == 64)
+        return CountTrailingZeros_64(Bits);
       assert(0 && "Unsupported!");
     }
     return getPointer()->find_first();
@@ -218,13 +217,12 @@ public:
       uintptr_t Bits = getSmallBits();
       // Mask off previous bits.
       Bits &= ~uintptr_t(0) << (Prev + 1);
-      if (sizeof(uintptr_t) * CHAR_BIT == 32) {
-        size_t FirstBit = CountTrailingZeros_32(Bits);
-        return FirstBit == 32 ? -1 : FirstBit;
-      } else if (sizeof(uintptr_t) * CHAR_BIT == 64) {
-        size_t FirstBit = CountTrailingZeros_64(Bits);
-        return FirstBit == 64 ? -1 : FirstBit;
-      }
+      if (Bits == 0 || Prev + 1 >= getSmallSize())
+        return -1;
+      if (sizeof(uintptr_t) * CHAR_BIT == 32)
+        return CountTrailingZeros_32(Bits);
+      if (sizeof(uintptr_t) * CHAR_BIT == 64)
+        return CountTrailingZeros_64(Bits);
       assert(0 && "Unsupported!");
     }
     return getPointer()->find_next(Prev);

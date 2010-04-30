@@ -55,7 +55,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   Vec.resize(26, true);
   Vec.resize(29, false);
   Vec.resize(33, true);
-  Vec.resize(61, false);
+  Vec.resize(57, false);
   unsigned Count = 0;
   for (unsigned i = Vec.find_first(); i != -1u; i = Vec.find_next(i)) {
     ++Count;
@@ -66,7 +66,8 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(Count, 23u);
   EXPECT_FALSE(Vec[0]);
   EXPECT_TRUE(Vec[32]);
-  EXPECT_FALSE(Vec[60]);
+  EXPECT_FALSE(Vec[56]);
+  Vec.resize(61, false);
 
   SmallBitVector Copy = Vec;
   SmallBitVector Alt(3, false);
