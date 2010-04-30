@@ -5170,6 +5170,7 @@ echo $ECHO_N "checking optimization flags... $ECHO_C" >&6; }
 case "$withval" in
   default)
     case "$llvm_cv_os_type" in
+    FreeBSD) optimize_option=-O2 ;;
     MingW) optimize_option=-O2 ;;
     *)     optimize_option=-O3 ;;
     esac ;;
@@ -11274,7 +11275,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11277 "configure"
+#line 11278 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
