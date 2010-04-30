@@ -199,7 +199,44 @@ is used in the file argument.</p>
 <h2 id="builtinmacros">Builtin Macros</h2>
 <!-- ======================================================================= -->
 
-<p>__BASE_FILE__, __INCLUDE_LEVEL__, __TIMESTAMP__, __COUNTER__</p>
+<dl>
+  <dt><code>__BASE_FILE__</code></dt>
+  <dd>Defined to a string that contains the name of the main input
+  file passed to Clang.</dd> 
+
+  <dt><code>__COUNTER__</code></dt>
+  <dd>Defined to an integer value that starts at zero and is
+  incremented each time the <code>__COUNTER__</code> macro is
+  expanded.</dd> 
+    
+  <dt><code>__INCLUDE_LEVEL__</code></dt>
+  <dd>Defined to an integral value that is the include depth of the
+  file currently being translated. For the main file, this value is
+  zero.</dd> 
+
+  <dt><code>__TIMESTAMP__</code></dt>
+  <dd>Defined to the date and time of the last modification of the
+  current source file.</dd> 
+    
+  <dt><code>__clang__</code></dt>
+  <dd>Defined when compiling with Clang</dd>
+
+  <dt><code>__clang_major__</code></dt>
+  <dd>Defined to the major version number of Clang (e.g., the 2 in
+  2.0.1).</dd> 
+
+  <dt><code>__clang_minor__</code></dt>
+  <dd>Defined to the minor version number of Clang (e.g., the 0 in
+  2.0.1).</dd> 
+
+  <dt><code>__clang_patchlevel__</code></dt>
+  <dd>Defined to the patch level of Clang (e.g., the 1 in 2.0.1).</dd>
+
+  <dt><code>__clang_version__</code></dt>
+  <dd>Defined to a string that captures the Clang version, including
+  the Subversion tag or revision number, e.g., "1.5 (trunk
+  102332)".</dd> 
+</dl>
 
 <!-- ======================================================================= -->
 <h2 id="vectors">Vectors and Extended Vectors</h2>

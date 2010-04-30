@@ -48,6 +48,10 @@
 // COMMON:#define __STDC__ 1
 // COMMON:#define __VERSION__
 // COMMON:#define __clang__ 1
+// COMMON:#define __clang_major__ 2
+// COMMON:#define __clang_minor__ 0
+// COMMON:#define __clang_patchlevel__ 0
+// COMMON:#define __clang_version__ "2.0 (trunk 102685)"
 // COMMON:#define __llvm__ 1
 //
 // 

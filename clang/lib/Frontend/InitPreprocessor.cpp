@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/Version.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/MacroBuilder.h"
 #include "clang/Basic/TargetInfo.h"
@@ -212,7 +213,20 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Compiler version introspection macros.
   Builder.defineMacro("__llvm__");  // LLVM Backend
   Builder.defineMacro("__clang__"); // Clang Frontend
-
+#define TOSTR2(X) #X
+#define TOSTR(X) TOSTR2(X)
+  Builder.defineMacro("__clang_major__", TOSTR(CLANG_VERSION_MAJOR));
+  Builder.defineMacro("__clang_minor__", TOSTR(CLANG_VERSION_MINOR));
+#ifdef CLANG_VERSION_PATCHLEVEL
+  Builder.defineMacro("__clang_patchlevel__", TOSTR(CLANG_VERSION_PATCHLEVEL));
+#else
+  Builder.defineMacro("__clang_patchlevel__", "0");
+#endif
+  Builder.defineMacro("__clang_version__", 
+                      "\"" CLANG_VERSION_STRING " ("
+                      + getClangFullRepositoryVersion() + ")\"");
+#undef TOSTR
+#undef TOSTR2
   // Currently claim to be compatible with GCC 4.2.1-5621.
   Builder.defineMacro("__GNUC_MINOR__", "2");
   Builder.defineMacro("__GNUC_PATCHLEVEL__", "1");
