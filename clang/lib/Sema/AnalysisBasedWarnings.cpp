@@ -345,12 +345,14 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   //     don't bother trying.
   // (2) The code already has problems; running the analysis just takes more
   //     time.
-  if (S.getDiagnostics().hasErrorOccurred())
+  Diagnostic &Diags = S.getDiagnostics();
+
+  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
     return;
 
   // Do not do any analysis for declarations in system headers if we are
   // going to just ignore them.
-  if (S.getDiagnostics().getSuppressSystemWarnings() &&
+  if (Diags.getSuppressSystemWarnings() &&
       S.SourceMgr.isInSystemHeader(D->getLocation()))
     return;
 

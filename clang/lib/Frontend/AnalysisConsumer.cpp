@@ -41,10 +41,6 @@ using namespace clang;
 static ExplodedNode::Auditor* CreateUbiViz();
 
 //===----------------------------------------------------------------------===//
-// Basic type definitions.
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
 // Special PathDiagnosticClients.
 //===----------------------------------------------------------------------===//
 
@@ -276,7 +272,8 @@ static void FindBlocks(DeclContext *D, llvm::SmallVectorImpl<Decl*> &WL) {
 void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions if an error has occured with parsing the file.
-  if (PP.getDiagnostics().hasErrorOccurred())
+  Diagnostic &Diags = PP.getDiagnostics();
+  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
     return;
 
   // Don't run the actions on declarations in header files unless
