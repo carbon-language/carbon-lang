@@ -62,3 +62,6 @@ struct has_bitfields {
 };
 
 int test3 = __builtin_offsetof(struct has_bitfields, j); // expected-error{{cannot compute offset of bit-field 'j'}}
+
+typedef struct Array { int array[1]; } Array;
+int test4 = __builtin_offsetof(Array, array);

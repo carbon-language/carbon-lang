@@ -4202,6 +4202,7 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
   for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
     const Node &ON = E->getComponent(I);
     Component Comp;
+    Comp.isBrackets = true;
     Comp.LocStart = ON.getRange().getBegin();
     Comp.LocEnd = ON.getRange().getEnd();
     switch (ON.getKind()) {

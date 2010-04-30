@@ -1943,7 +1943,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::AddrOf:
     case UnaryOperator::Deref:
       return ICEDiag(2, E->getLocStart());
-    case UnaryOperator::OffsetOf:
     case UnaryOperator::Extension:
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
@@ -1952,7 +1951,11 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
       return CheckICE(Exp->getSubExpr(), Ctx);
+    case UnaryOperator::OffsetOf:
+      break;
     }
+    
+    // OffsetOf falls through here.
   }
   case Expr::OffsetOfExprClass: {
       // Note that per C99, offsetof must be an ICE. And AFAIK, using
