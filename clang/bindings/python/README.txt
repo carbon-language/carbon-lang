@@ -2,10 +2,9 @@
 // Clang Python Bindings
 //===----------------------------------------------------------------------===//
 
-This directory implements Python bindings for Clang. Currently, only bindings
-for the CIndex C API exist.
+This directory implements Python bindings for Clang.
 
-You may need to alter LD_LIBRARY_PATH so that the CIndex library can be
+You may need to alter LD_LIBRARY_PATH so that the Clang library can be
 found. The unit tests are designed to be run with 'nosetests'. For example:
 --
 $ env PYTHONPATH=$(echo ~/llvm/tools/clang/bindings/python/) \

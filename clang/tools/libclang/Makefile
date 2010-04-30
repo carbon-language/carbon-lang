@@ -1,4 +1,4 @@
-##===- tools/CIndex/Makefile -------------------------------*- Makefile -*-===##
+##===- tools/libclang/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,9 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../../..
-LIBRARYNAME = CIndex
+LIBRARYNAME = clang
 
-EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/CIndex.exports
+EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libclang.exports
 
 CPP.Flags += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 

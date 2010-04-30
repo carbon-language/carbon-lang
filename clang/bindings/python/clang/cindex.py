@@ -71,11 +71,11 @@ def get_cindex_library():
     import platform
     name = platform.system()
     if name == 'Darwin':
-        return cdll.LoadLibrary('libCIndex.dylib')
+        return cdll.LoadLibrary('libclang.dylib')
     elif name == 'Windows':
-        return cdll.LoadLibrary('libCIndex.dll')
+        return cdll.LoadLibrary('libclang.dll')
     else:
-        return cdll.LoadLibrary('libCIndex.so')
+        return cdll.LoadLibrary('libclang.so')
 
 # ctypes doesn't implicitly convert c_void_p to the appropriate wrapper
 # object. This is a problem, because it means that from_parameter will see an
