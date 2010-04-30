@@ -2796,8 +2796,12 @@ should not be exposed to source languages.</p>
 </div>
 
 <div class="doc_text">
-
-<p>TODO: Describe this.</p>
+<pre>
+%0 = type { i32, void ()* }
+@llvm.global_ctors = appending global [1 x %0] [%0 { i32 65535, void ()* @dtor }]
+</pre>
+<p>The <tt>@llvm.global_ctors</tt> array contains a list of constructor functions and associated priorities.  The functions referenced by this array will be called in ascending order of priority (i.e. lowest first) when the module is loaded.  The order of functions with the same priority is not defined.
+</p>
 
 </div>
 
@@ -2807,8 +2811,13 @@ should not be exposed to source languages.</p>
 </div>
 
 <div class="doc_text">
+<pre>
+%0 = type { i32, void ()* }
+@llvm.global_dtors = appending global [1 x %0] [%0 { i32 65535, void ()* @ctor }]
+</pre>
 
-<p>TODO: Describe this.</p>
+<p>The <tt>@llvm.global_dtors</tt> array contains a list of destructor functions and associated priorities.  The functions referenced by this array will be called in descending order of priority (i.e. highest first) when the module is loaded.  The order of functions with the same priority is not defined.
+</p>
 
 </div>
 
