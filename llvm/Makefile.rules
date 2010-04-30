@@ -1364,7 +1364,7 @@ DestToolAlias = $(DESTDIR)$(PROJ_bindir)/$(TOOLALIAS)$(EXEEXT)
 
 install-local:: $(DestToolAlias)
 
-$(DestToolAlias): $(DestTool) $(PROJ_bindir)
+$(DestToolAlias): $(DestTool)
 	$(Echo) Installing $(BuildMode) $(DestToolAlias)
 	$(Verb) $(RM) -f $(DestToolAlias)
 	$(Verb) $(AliasTool) $(TOOLEXENAME) $(DestToolAlias)
