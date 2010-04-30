@@ -9,6 +9,28 @@ public:
   }
 };
 
-int main(int argc, char *argv[]) {
+void test_stringswitch(int argc, char *argv[]) {
   (void)StringSwitch<int>();
+}
+
+namespace PR6986 {
+  template<class Class,typename Type,Type Class::*> 
+  struct non_const_member_base
+  {
+  };
+
+  template<class Class,typename Type,Type Class::*PtrToMember> 
+  struct member: non_const_member_base<Class,Type,PtrToMember>
+  {
+  };
+
+  struct test_class
+  {
+    int int_member;
+  };
+  typedef member< test_class,const int,&test_class::int_member > ckey_m;
+  void test()
+  {
+    ckey_m m;
+  }
 }

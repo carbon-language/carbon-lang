@@ -3061,9 +3061,21 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
         return ExprError();
       
       RefExpr = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(RefExpr));
+      
+      // We might need to perform a trailing qualification conversion, since
+      // the element type on the parameter could be more qualified than the
+      // element type in the expression we constructed.
+      if (IsQualificationConversion(((Expr*) RefExpr.get())->getType(),
+                                    ParamType.getUnqualifiedType())) {
+        Expr *RefE = RefExpr.takeAs<Expr>();
+        ImpCastExprToType(RefE, ParamType.getUnqualifiedType(),
+                          CastExpr::CK_NoOp);
+        RefExpr = Owned(RefE);
+      }
+      
       assert(!RefExpr.isInvalid() &&
              Context.hasSameType(((Expr*) RefExpr.get())->getType(),
-                                 ParamType));
+                                 ParamType.getUnqualifiedType()));
       return move(RefExpr);
     }
   }
