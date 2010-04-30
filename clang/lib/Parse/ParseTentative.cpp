@@ -14,6 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Template.h"
 using namespace clang;
 
 /// isCXXDeclarationStatement - C++-specialized function that disambiguates
@@ -761,6 +762,17 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___vector:
     return TPResult::True();
 
+  case tok::annot_template_id: {
+    TemplateIdAnnotation *TemplateId
+      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    if (TemplateId->Kind != TNK_Type_template)
+      return TPResult::False();
+    CXXScopeSpec SS;
+    AnnotateTemplateIdTokenAsType(&SS);
+    assert(Tok.is(tok::annot_typename));
+    goto case_typename;
+  }
+
   case tok::annot_cxxscope: // foo::bar or ::foo::bar, but already parsed
     // We've already annotated a scope; try to annotate a type.
     if (TryAnnotateTypeOrScopeToken())
@@ -801,6 +813,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_double:
   case tok::kw_void:
   case tok::annot_typename:
+  case_typename:
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 
