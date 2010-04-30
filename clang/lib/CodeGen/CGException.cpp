@@ -696,7 +696,11 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
 
   // Resume inserting where we started, but put the new cleanup
   // handler in place.
-  CGF.Builder.SetInsertPoint(PreviousInsertionBlock);
+  if (PreviousInsertionBlock)
+    CGF.Builder.SetInsertPoint(PreviousInsertionBlock);
+  else
+    CGF.Builder.ClearInsertionPoint();
+
   if (CGF.Exceptions)
     CGF.setInvokeDest(CleanupHandler);
 }
