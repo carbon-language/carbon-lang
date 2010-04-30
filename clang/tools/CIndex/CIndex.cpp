@@ -1296,9 +1296,9 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                    CXFile file,
                                    unsigned line,
                                    unsigned column) {
-  if (!tu)
+  if (!tu || !file)
     return clang_getNullLocation();
-
+  
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
   SourceLocation SLoc
     = CXXUnit->getSourceManager().getLocation(
