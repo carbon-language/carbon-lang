@@ -15,22 +15,21 @@
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)
 #endif
 
-ANALYSIS(CFGDump, "cfg-dump",
+ANALYSIS(CFGDump, "cfg-dump", 
          "Display Control-Flow Graphs", Code)
 
-ANALYSIS(CFGView, "cfg-view",
+ANALYSIS(CFGView, "cfg-view", 
          "View Control-Flow Graphs using GraphViz", Code)
 
 ANALYSIS(DisplayLiveVariables, "dump-live-variables",
          "Print results of live variable analysis", Code)
 
 ANALYSIS(SecuritySyntacticChecks, "analyzer-check-security-syntactic",
-         "Perform quick security checks that require no data flow",
-         Code)
+         "Perform quick security checks that require no data flow", Code)
 
 ANALYSIS(LLVMConventionChecker, "analyzer-check-llvm-conventions",
-  "Check code for LLVM codebase conventions (domain-specific)",
-  TranslationUnit)
+         "Check code for LLVM codebase conventions (domain-specific)", 
+         TranslationUnit)
 
 ANALYSIS(WarnDeadStores, "analyzer-check-dead-stores",
          "Warn about stores to dead variables", Code)
@@ -39,25 +38,21 @@ ANALYSIS(WarnUninitVals, "warn-uninit-values",
          "Warn about uses of uninitialized variables", Code)
 
 ANALYSIS(WarnObjCMethSigs, "analyzer-check-objc-methodsigs",
- "Warn about Objective-C method signatures with type incompatibilities",
- ObjCImplementation)
+         "Warn about Objective-C method signatures with type incompatibilities",
+         ObjCImplementation)
 
 ANALYSIS(WarnObjCDealloc, "analyzer-check-objc-missing-dealloc",
- "Warn about Objective-C classes that lack a correct implementation of -dealloc",
- ObjCImplementation)
+"Warn about Objective-C classes that lack a correct implementation of -dealloc",
+         ObjCImplementation)
  
 ANALYSIS(WarnObjCUnusedIvars, "analyzer-check-objc-unused-ivars",
-  "Warn about private ivars that are never used", ObjCImplementation)
+         "Warn about private ivars that are never used", ObjCImplementation)
 
 ANALYSIS(ObjCMemChecker, "analyzer-check-objc-mem",
          "Run the [Core] Foundation reference count checker", Code)
 
 ANALYSIS(WarnSizeofPointer, "warn-sizeof-pointer",
          "Warn about unintended use of sizeof() on pointer expressions", Code)
-
-ANALYSIS(InlineCall, "inline-call",
-         "Experimental transfer function inling callees when its definition"
-         " is available.", TranslationUnit)
 
 #ifndef ANALYSIS_STORE
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN)

@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -inline-call -analyzer-store region -analyze-function f2 -verify %s
+// RUN: false
+// XFAIL: *
 
 // Test parameter 'a' is registered to LiveVariables analysis data although it
 // is not referenced in the function body. 
