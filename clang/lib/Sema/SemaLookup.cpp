@@ -1261,7 +1261,7 @@ bool Sema::LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
     if (DeclContext *DC = computeDeclContext(*SS, EnteringContext)) {
       // We have resolved the scope specifier to a particular declaration
       // contex, and will perform name lookup in that context.
-      if (!DC->isDependentContext() && RequireCompleteDeclContext(*SS))
+      if (!DC->isDependentContext() && RequireCompleteDeclContext(*SS, DC))
         return false;
 
       R.setContextRange(SS->getRange());

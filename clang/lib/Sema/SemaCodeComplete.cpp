@@ -2286,7 +2286,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
 
   // Try to instantiate any non-dependent declaration contexts before
   // we look in them.
-  if (!isDependentScopeSpecifier(SS) && RequireCompleteDeclContext(SS))
+  if (!isDependentScopeSpecifier(SS) && RequireCompleteDeclContext(SS, Ctx))
     return;
 
   ResultBuilder Results(*this);

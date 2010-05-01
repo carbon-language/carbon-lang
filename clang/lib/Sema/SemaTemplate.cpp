@@ -210,7 +210,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     isDependent = isDependentScopeSpecifier(SS);
     
     // The declaration context must be complete.
-    if (LookupCtx && RequireCompleteDeclContext(SS))
+    if (LookupCtx && RequireCompleteDeclContext(SS, LookupCtx))
       return;
   }
 
@@ -753,14 +753,14 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   LookupResult Previous(*this, Name, NameLoc, LookupOrdinaryName,
                         ForRedeclaration);
   if (SS.isNotEmpty() && !SS.isInvalid()) {
-    if (RequireCompleteDeclContext(SS))
-      return true;
-
     SemanticContext = computeDeclContext(SS, true);
     if (!SemanticContext) {
       // FIXME: Produce a reasonable diagnostic here
       return true;
     }
+
+    if (RequireCompleteDeclContext(SS, SemanticContext))
+      return true;
 
     LookupQualifiedName(Previous, SemanticContext);
   } else {
@@ -1633,7 +1633,7 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) ||
       DC->isDependentContext() ||
-      RequireCompleteDeclContext(SS))
+      RequireCompleteDeclContext(SS, DC))
     return BuildDependentDeclRefExpr(SS, Name, NameLoc, &TemplateArgs);
 
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
@@ -5260,36 +5260,26 @@ QualType
 Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
                         NestedNameSpecifier *NNS, const IdentifierInfo &II,
                         SourceRange Range) {
-  CXXRecordDecl *CurrentInstantiation = 0;
-  if (NNS->isDependent()) {
-    CurrentInstantiation = getCurrentInstantiationOf(NNS);
+  CXXScopeSpec SS;
+  SS.setScopeRep(NNS);
+  SS.setRange(Range);
 
-    // If the nested-name-specifier does not refer to the current
-    // instantiation, then build a typename type.
-    if (!CurrentInstantiation)
-      return Context.getDependentNameType(Keyword, NNS, &II);
-
-    // The nested-name-specifier refers to the current instantiation, so the
-    // "typename" keyword itself is superfluous. In C++03, the program is
-    // actually ill-formed. However, DR 382 (in C++0x CD1) allows such
-    // extraneous "typename" keywords, and we retroactively apply this DR to
-    // C++03 code.
+  DeclContext *Ctx = computeDeclContext(SS);
+  if (!Ctx) {
+    // If the nested-name-specifier is dependent and couldn't be
+    // resolved to a type, build a typename type.
+    assert(NNS->isDependent());
+    return Context.getDependentNameType(Keyword, NNS, &II);
   }
 
-  DeclContext *Ctx = 0;
+  // If the nested-name-specifier refers to the current instantiation,
+  // the "typename" keyword itself is superfluous. In C++03, the
+  // program is actually ill-formed. However, DR 382 (in C++0x CD1)
+  // allows such extraneous "typename" keywords, and we retroactively
+  // apply this DR to C++03 code.  In any case we continue.
 
-  if (CurrentInstantiation)
-    Ctx = CurrentInstantiation;
-  else {
-    CXXScopeSpec SS;
-    SS.setScopeRep(NNS);
-    SS.setRange(Range);
-    if (RequireCompleteDeclContext(SS))
-      return QualType();
-
-    Ctx = computeDeclContext(SS);
-  }
-  assert(Ctx && "No declaration context?");
+  if (RequireCompleteDeclContext(SS, Ctx))
+    return QualType();
 
   DeclarationName Name(&II);
   LookupResult Result(*this, Name, Range.getEnd(), LookupOrdinaryName);

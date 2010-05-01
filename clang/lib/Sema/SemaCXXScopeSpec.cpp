@@ -186,21 +186,10 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
 /// that is currently being defined. Or, if we have a type that names
 /// a class template specialization that is not a complete type, we
 /// will attempt to instantiate that class template.
-bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS) {
-  if (!SS.isSet() || SS.isInvalid())
-    return false;
+bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
+                                      DeclContext *DC) {
+  assert(DC != 0 && "given null context");
 
-  DeclContext *DC = computeDeclContext(SS, true);
-  if (!DC) {
-    // It's dependent.
-    assert(isDependentScopeSpecifier(SS) && 
-           "No context for non-dependent scope specifier?");
-    Diag(SS.getRange().getBegin(), diag::err_dependent_nested_name_spec)
-      << SS.getRange();
-    SS.setScopeRep(0);
-    return true;
-  }
-  
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
     // If this is a dependent type, then we consider it complete.
     if (Tag->isDependentContext())
@@ -216,7 +205,7 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS) {
     if (RequireCompleteType(SS.getRange().getBegin(),
                             Context.getTypeDeclType(Tag),
                             PDiag(diag::err_incomplete_nested_name_spec)
-                            << SS.getRange())) {
+                              << SS.getRange())) {
       SS.setScopeRep(0);  // Mark the ScopeSpec invalid.
       return true;
     }
@@ -322,7 +311,8 @@ bool Sema::isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
     // nested-name-specifier.
     
     // The declaration context must be complete.
-    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
+    if (!LookupCtx->isDependentContext() &&
+        RequireCompleteDeclContext(SS, LookupCtx))
       return false;
     
     LookupQualifiedName(Found, LookupCtx);
@@ -392,7 +382,8 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // nested-name-specifier.
 
     // The declaration context must be complete.
-    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
+    if (!LookupCtx->isDependentContext() &&
+        RequireCompleteDeclContext(SS, LookupCtx))
       return 0;
 
     LookupQualifiedName(Found, LookupCtx);
@@ -656,7 +647,7 @@ bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, CXXScopeSpec &SS) {
 
   // Before we enter a declarator's context, we need to make sure that
   // it is a complete declaration context.
-  if (!DC->isDependentContext() && RequireCompleteDeclContext(SS))
+  if (!DC->isDependentContext() && RequireCompleteDeclContext(SS, DC))
     return true;
     
   EnterDeclaratorContext(S, DC);

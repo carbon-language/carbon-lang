@@ -2365,7 +2365,7 @@ public:
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
   // Marks SS invalid if it represents an incomplete type.
-  bool RequireCompleteDeclContext(CXXScopeSpec &SS);
+  bool RequireCompleteDeclContext(CXXScopeSpec &SS, DeclContext *DC);
 
   DeclContext *computeDeclContext(QualType T);
   DeclContext *computeDeclContext(const CXXScopeSpec &SS,

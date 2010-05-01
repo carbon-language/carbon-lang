@@ -1238,7 +1238,7 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
   if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
     return BuildDependentDeclRefExpr(SS, Name, NameLoc, 0);
 
-  if (RequireCompleteDeclContext(SS))
+  if (RequireCompleteDeclContext(SS, DC))
     return ExprError();
 
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
@@ -2582,7 +2582,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     // nested-name-specifier.
     DC = SemaRef.computeDeclContext(SS, false);
 
-    if (SemaRef.RequireCompleteDeclContext(SS)) {
+    if (SemaRef.RequireCompleteDeclContext(SS, DC)) {
       SemaRef.Diag(SS.getRange().getEnd(), diag::err_typecheck_incomplete_tag)
         << SS.getRange() << DC;
       return true;

@@ -97,7 +97,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       return 0;
     }
     
-    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
+    if (!LookupCtx->isDependentContext() &&
+        RequireCompleteDeclContext(*SS, LookupCtx))
       return 0;
   }
 
@@ -2030,7 +2031,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     bool IsDependentContext = DC->isDependentContext();
 
     if (!IsDependentContext && 
-        RequireCompleteDeclContext(D.getCXXScopeSpec()))
+        RequireCompleteDeclContext(D.getCXXScopeSpec(), DC))
       return DeclPtrTy();
 
     if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
@@ -4940,12 +4941,18 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         IsDependent = true;
         return DeclPtrTy();
       }
+    } else {
+      DC = computeDeclContext(SS, true);
+      if (!DC) {
+        Diag(SS.getRange().getBegin(), diag::err_dependent_nested_name_spec)
+          << SS.getRange();
+        return DeclPtrTy();
+      }
     }
 
-    if (RequireCompleteDeclContext(SS))
+    if (RequireCompleteDeclContext(SS, DC))
       return DeclPtrTy::make((Decl *)0);
 
-    DC = computeDeclContext(SS, true);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     LookupQualifiedName(Previous, DC);

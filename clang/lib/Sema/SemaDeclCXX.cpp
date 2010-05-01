@@ -3724,7 +3724,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   if (!LookupContext) return D;
   UsingDecl *UD = cast<UsingDecl>(D);
 
-  if (RequireCompleteDeclContext(SS)) {
+  if (RequireCompleteDeclContext(SS, LookupContext)) {
     UD->setInvalidDecl();
     return UD;
   }
@@ -5251,11 +5251,11 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
                         ForRedeclaration);
   if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
-    // FIXME: RequireCompleteDeclContext
     DC = computeDeclContext(ScopeQual);
 
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
+    if (RequireCompleteDeclContext(ScopeQual, DC)) return DeclPtrTy();
 
     LookupQualifiedName(Previous, DC);
 
