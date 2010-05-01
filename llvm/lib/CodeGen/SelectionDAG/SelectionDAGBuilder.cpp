@@ -545,7 +545,6 @@ void SelectionDAGBuilder::clear() {
   NodeMap.clear();
   PendingLoads.clear();
   PendingExports.clear();
-  DAG.clear();
   CurDebugLoc = DebugLoc();
   HasTailCall = false;
 }

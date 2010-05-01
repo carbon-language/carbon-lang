@@ -252,12 +252,11 @@ SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
 
   // Make sure the root of the DAG is up-to-date.
   CurDAG->setRoot(SDB->getControlRoot());
-
-  // Final step, emit the lowered DAG as machine code.
-  BB = CodeGenAndEmitDAG(BB);
   HadTailCall = SDB->HasTailCall;
   SDB->clear();
-  return BB;
+
+  // Final step, emit the lowered DAG as machine code.
+  return CodeGenAndEmitDAG(BB);
 }
 
 namespace {
@@ -605,6 +604,9 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     delete Scheduler;
   }
 
+  // Free the SelectionDAG state, now that we're finished with it.
+  CurDAG->clear();
+
   return BB;
 }
 
@@ -759,8 +761,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       // beginning FastISel on the entry block.
       if (LLVMBB == &Fn.getEntryBlock()) {
         CurDAG->setRoot(SDB->getControlRoot());
-        BB = CodeGenAndEmitDAG(BB);
         SDB->clear();
+        BB = CodeGenAndEmitDAG(BB);
       }
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
@@ -866,8 +868,8 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
       // Emit the code
       SDB->visitBitTestHeader(SDB->BitTestCases[i], BB);
       CurDAG->setRoot(SDB->getRoot());
-      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
+      BB = CodeGenAndEmitDAG(BB);
     }
 
     for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j) {
@@ -887,8 +889,8 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
 
 
       CurDAG->setRoot(SDB->getRoot());
-      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
+      BB = CodeGenAndEmitDAG(BB);
     }
 
     // Update PHI Nodes
@@ -938,8 +940,8 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
       SDB->visitJumpTableHeader(SDB->JTCases[i].second, SDB->JTCases[i].first,
                                 BB);
       CurDAG->setRoot(SDB->getRoot());
-      BB = CodeGenAndEmitDAG(BB);
       SDB->clear();
+      BB = CodeGenAndEmitDAG(BB);
     }
 
     // Set the current basic block to the mbb we wish to insert the code into
@@ -947,8 +949,8 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
     // Emit the code
     SDB->visitJumpTable(SDB->JTCases[i].second);
     CurDAG->setRoot(SDB->getRoot());
-    BB = CodeGenAndEmitDAG(BB);
     SDB->clear();
+    BB = CodeGenAndEmitDAG(BB);
 
     // Update PHI Nodes
     for (unsigned pi = 0, pe = FuncInfo->PHINodesToUpdate.size();
@@ -995,16 +997,25 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
     // Set the current basic block to the mbb we wish to insert the code into
     MachineBasicBlock *ThisBB = BB = SDB->SwitchCases[i].ThisBB;
 
-    // Emit the code
+    // Determine the unique successors.
+    SmallVector<MachineBasicBlock *, 2> Succs;
+    Succs.push_back(SDB->SwitchCases[i].TrueBB);
+    if (SDB->SwitchCases[i].TrueBB != SDB->SwitchCases[i].FalseBB)
+      Succs.push_back(SDB->SwitchCases[i].FalseBB);
+
+    // Emit the code. Note that this could result in ThisBB being split, so
+    // we need to check for updates.
     SDB->visitSwitchCase(SDB->SwitchCases[i], BB);
     CurDAG->setRoot(SDB->getRoot());
+    SDB->clear();
     ThisBB = CodeGenAndEmitDAG(BB);
 
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can
     // occur multiple times in PHINodesToUpdate.  We have to be very careful to
     // handle them the right number of times.
-    while ((BB = SDB->SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
+    for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
+      BB = Succs[i];
       // BB may have been removed from the CFG if a branch was constant folded.
       if (ThisBB->isSuccessor(BB)) {
         for (MachineBasicBlock::iterator Phi = BB->begin();
@@ -1024,17 +1035,7 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
           }
         }
       }
-
-      // Don't process RHS if same block as LHS.
-      if (BB == SDB->SwitchCases[i].FalseBB)
-        SDB->SwitchCases[i].FalseBB = 0;
-
-      // If we haven't handled the RHS, do so now.  Otherwise, we're done.
-      SDB->SwitchCases[i].TrueBB = SDB->SwitchCases[i].FalseBB;
-      SDB->SwitchCases[i].FalseBB = 0;
     }
-    assert(SDB->SwitchCases[i].TrueBB == 0 && SDB->SwitchCases[i].FalseBB == 0);
-    SDB->clear();
   }
   SDB->SwitchCases.clear();
 }
