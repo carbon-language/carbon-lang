@@ -162,7 +162,7 @@ public:
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;
 
-    InstantiationDepth = 500;
+    InstantiationDepth = 1024;
 
     Optimize = 0;
     OptimizeSize = 0;

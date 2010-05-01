@@ -1236,7 +1236,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.AccessControl = !Args.hasArg(OPT_fno_access_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
-  Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99,
+  Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 1024,
                                                Diags);
   Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);
   Opts.ObjCConstantStringClass = getLastArgValue(Args,
