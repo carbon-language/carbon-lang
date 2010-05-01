@@ -33,7 +33,8 @@
 using namespace llvm;
 
 STATISTIC(NumInlined, "Number of functions inlined");
-STATISTIC(NumCallsDeleted, "Number of call sites deleted, not inlined");
+// FIXME: Uncomment once call deletion xform is made safe
+// STATISTIC(NumCallsDeleted, "Number of call sites deleted, not inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 STATISTIC(NumMergedAllocas, "Number of allocas merged together");
 
@@ -382,6 +383,9 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
       Function *Caller = CS.getCaller();
       Function *Callee = CS.getCalledFunction();
 
+      // FIXME: This transformation is not legal unless we can prove
+      // that the callee always terminates.
+#if 0
       // If this call site is dead and it is to a readonly function, we should
       // just delete the call instead of trying to inline it, regardless of
       // size.  This happens because IPSCCP propagates the result out of the
@@ -396,6 +400,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         // Update the cached cost info with the missing call
         growCachedCostInfo(Caller, NULL);
       } else {
+#endif
         // We can only inline direct calls to non-declarations.
         if (Callee == 0 || Callee->isDeclaration()) continue;
       
@@ -437,7 +442,9 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         
         // Update the cached cost info with the inlined call.
         growCachedCostInfo(Caller, Callee);
+#if 0
       }
+#endif
       
       // If we inlined or deleted the last possible call site to the function,
       // delete the function body now.
