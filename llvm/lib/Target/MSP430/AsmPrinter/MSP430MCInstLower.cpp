@@ -78,6 +78,16 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
+MCSymbol *MSP430MCInstLower::
+GetBlockAddressSymbol(const MachineOperand &MO) const {
+  switch (MO.getTargetFlags()) {
+  default: assert(0 && "Unknown target flag on GV operand");
+  case 0: break;
+  }
+
+  return Printer.GetBlockAddressSymbol(MO.getBlockAddress());
+}
+
 MCOperand MSP430MCInstLower::
 LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
@@ -131,6 +141,8 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_ConstantPoolIndex:
       MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
       break;
+    case MachineOperand::MO_BlockAddress:
+      MCOp = LowerSymbolOperand(MO, GetBlockAddressSymbol(MO));
     }
 
     OutMI.addOperand(MCOp);

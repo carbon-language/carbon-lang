@@ -110,8 +110,8 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::ROTR,             MVT::i16,   Expand);
   setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
   setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
+  setOperationAction(ISD::BlockAddress,     MVT::i16,   Custom);
   setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
-  setOperationAction(ISD::BRIND,            MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::i8,    Custom);
   setOperationAction(ISD::BR_CC,            MVT::i16,   Custom);
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
@@ -183,6 +183,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
   case ISD::SRL:
   case ISD::SRA:              return LowerShifts(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:     return LowerBlockAddress(Op, DAG);
   case ISD::ExternalSymbol:   return LowerExternalSymbol(Op, DAG);
   case ISD::SETCC:            return LowerSETCC(Op, DAG);
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
@@ -655,6 +656,15 @@ SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
   return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
 }
 
+SDValue MSP430TargetLowering::LowerBlockAddress(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  DebugLoc dl = Op.getDebugLoc();
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  SDValue Result = DAG.getBlockAddress(BA, getPointerTy(), /*isTarget=*/true);
+
+  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
+}
+
 static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
                        ISD::CondCode CC,
                        DebugLoc dl, SelectionDAG &DAG) {
@@ -752,7 +762,6 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(MSP430ISD::BR_CC, dl, Op.getValueType(),
                      Chain, Dest, TargetCC, Flag);
 }
-
 
 SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue LHS   = Op.getOperand(0);
