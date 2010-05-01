@@ -16,7 +16,7 @@ struct B : A {
 int f() {
   B b;
   
-  // CHECK: call i32 @_ZN1B1fEv
+  // CHECK: ret i32 2
   return b.i;
 }
 
