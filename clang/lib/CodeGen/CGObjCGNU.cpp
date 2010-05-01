@@ -642,6 +642,14 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
+  llvm::Value *impMD[] = {
+        llvm::MDString::get(VMContext, Sel.getAsString()),
+        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
+        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
+   };
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+
+
   llvm::Value *imp;
   // For sender-aware dispatch, we pass the sender as the third argument to a
   // lookup function.  When sending messages from C code, the sender is nil.
@@ -679,6 +687,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     llvm::CallInst *slot =
         Builder.CreateCall3(lookupFunction, ReceiverPtr, cmd, self);
     slot->setOnlyReadsMemory();
+    slot->setMetadata(msgSendMDKind, node);
 
     imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
 
@@ -696,14 +705,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       "objc_msg_lookup");
 
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
+    cast<llvm::CallInst>(imp)->setMetadata(msgSendMDKind, node);
   }
-  llvm::Value *impMD[] = {
-        llvm::MDString::get(VMContext, Sel.getAsString()),
-        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
-        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
-   };
-  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
-
   RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
       0, msgSendMDKind, node);
 
