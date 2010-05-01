@@ -1503,7 +1503,10 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                           SourceLocation(), ParamType, 0);
     
     // Cast to the base class to avoid ambiguities.
-    SemaRef.ImpCastExprToType(CopyCtorArg, BaseSpec->getType(), 
+    QualType ArgTy = 
+      SemaRef.Context.getQualifiedType(BaseSpec->getType().getUnqualifiedType(), 
+                                       ParamType.getQualifiers());
+    SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy, 
                               CastExpr::CK_UncheckedDerivedToBase,
                               /*isLvalue=*/true, 
                               CXXBaseSpecifierArray(BaseSpec));
@@ -1545,6 +1548,11 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
   if (ImplicitInitKind == IIK_Copy) {
+    // FIXME: We should not return early here, but will do so until 
+    // we know how to handle copy initialization of arrays.
+    CXXMemberInit = 0;
+    return false;
+    
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
     
@@ -4212,25 +4220,16 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyConstructor);
 
-  // C++ [class.copy] p209
-  // Before the implicitly-declared copy constructor for a class is
-  // implicitly defined, all the implicitly-declared copy constructors
-  // for its base class and its non-static data members shall have been
-  // implicitly defined.
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (CXXConstructorDecl *BaseCopyCtor =
-        BaseClassDecl->getCopyConstructor(Context, TypeQuals)) {
-      CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
-                              BaseCopyCtor,
-                              PDiag(diag::err_access_copy_base)
-                                << Base->getType());
-
-      MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
-    }
+  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false)) {
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+    << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
+    CopyConstructor->setInvalidDecl();
+  } else {
+    CopyConstructor->setUsed();
   }
+
+  // FIXME: Once SetBaseOrMemberInitializers can handle copy initialization of
+  // fields, this code below should be removed.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
@@ -4251,7 +4250,6 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
       }
     }
   }
-  CopyConstructor->setUsed();
 }
 
 Sema::OwningExprResult
