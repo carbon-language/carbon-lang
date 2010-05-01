@@ -77,7 +77,10 @@ def memdst : Operand<i16> {
 }
 
 // Branch targets have OtherVT type.
-def brtarget : Operand<OtherVT> {
+def brtarget : Operand<OtherVT>;
+
+// Short jump targets have OtherVT type and are printed as pcrel imm values.
+def jmptarget : Operand<OtherVT> {
   let PrintMethod = "printPCRelImmOperand";
 }
 
@@ -169,8 +172,7 @@ let isBranch = 1, isTerminator = 1 in {
 // Direct branch
 let isBarrier = 1 in {
   // Short branch
-  def JMP : CJForm<0, 0,
-                   (outs), (ins brtarget:$dst),
+  def JMP : CJForm<0, 0, (outs), (ins jmptarget:$dst),
                    "jmp\t$dst",
                    [(br bb:$dst)]>;
   // Long branch
@@ -183,7 +185,7 @@ let isBarrier = 1 in {
 // Conditional branches
 let Uses = [SRW] in
   def JCC : CJForm<0, 0,
-                   (outs), (ins brtarget:$dst, cc:$cc),
+                   (outs), (ins jmptarget:$dst, cc:$cc),
                    "j$cc\t$dst",
                    [(MSP430brcc bb:$dst, imm:$cc)]>;
 } // isBranch, isTerminator
