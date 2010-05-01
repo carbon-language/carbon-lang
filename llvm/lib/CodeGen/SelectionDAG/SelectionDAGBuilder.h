@@ -500,7 +500,7 @@ private:
   /// the entry BB.
   bool EmitFuncArgumentDbgValue(const DbgValueInst &DI,
                                 const Value *V, MDNode *Variable,
-                                uint64_t Offset, SDValue &N);
+                                uint64_t Offset, const SDValue &N);
 };
 
 } // end namespace llvm

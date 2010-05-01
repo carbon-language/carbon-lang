@@ -3685,7 +3685,8 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
 bool
 SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
                                               const Value *V, MDNode *Variable,
-                                              uint64_t Offset, SDValue &N) {
+                                              uint64_t Offset,
+                                              const SDValue &N) {
   if (!isa<Argument>(V))
     return false;
 
