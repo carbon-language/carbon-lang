@@ -8509,8 +8509,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
 
 MachineBasicBlock *
 X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
-                                     MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                     MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
@@ -8539,12 +8538,9 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   F->insert(It, sinkMBB);
   // Update machine-CFG edges by first adding all successors of the current
   // block to the new block which will contain the Phi node for the select.
-  // Also inform sdisel of the edge changes.
   for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
-         E = BB->succ_end(); I != E; ++I) {
-    EM->insert(std::make_pair(*I, sinkMBB));
+         E = BB->succ_end(); I != E; ++I)
     sinkMBB->addSuccessor(*I);
-  }
   // Next, remove all successors of the current block, and add the true
   // and fallthrough blocks as its successors.
   while (!BB->succ_empty())
@@ -8571,8 +8567,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
 MachineBasicBlock *
 X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
-                                          MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                          MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *F = BB->getParent();
@@ -8595,12 +8590,11 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
 
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                               MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                               MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case X86::MINGW_ALLOCA:
-    return EmitLoweredMingwAlloca(MI, BB, EM);
+    return EmitLoweredMingwAlloca(MI, BB);
   case X86::CMOV_GR8:
   case X86::CMOV_V1I64:
   case X86::CMOV_FR32:
@@ -8613,7 +8607,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::CMOV_RFP32:
   case X86::CMOV_RFP64:
   case X86::CMOV_RFP80:
-    return EmitLoweredSelect(MI, BB, EM);
+    return EmitLoweredSelect(MI, BB);
 
   case X86::FP32_TO_INT16_IN_MEM:
   case X86::FP32_TO_INT32_IN_MEM:

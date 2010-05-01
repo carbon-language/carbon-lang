@@ -460,8 +460,7 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
 
 
 /// EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAGSDNodes::
-EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
+MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
   InstrEmitter Emitter(BB, InsertPos);
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
@@ -503,14 +502,14 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
     while (!FlaggedNodes.empty()) {
       SDNode *N = FlaggedNodes.back();
       Emitter.EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,
-                       VRBaseMap, EM);
+                       VRBaseMap);
       // Remember the source order of the inserted instruction.
       if (HasDbg)
         ProcessSourceNode(N, DAG, Emitter, VRBaseMap, Orders, Seen);
       FlaggedNodes.pop_back();
     }
     Emitter.EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned,
-                     VRBaseMap, EM);
+                     VRBaseMap);
     // Remember the source order of the inserted instruction.
     if (HasDbg)
       ProcessSourceNode(SU->getNode(), DAG, Emitter, VRBaseMap, Orders,

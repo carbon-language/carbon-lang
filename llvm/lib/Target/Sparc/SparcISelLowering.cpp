@@ -968,8 +968,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
 MachineBasicBlock *
 SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned BROpcode;
   unsigned CC;
@@ -1013,12 +1012,9 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   F->insert(It, sinkMBB);
   // Update machine-CFG edges by first adding all successors of the current
   // block to the new block which will contain the Phi node for the select.
-  // Also inform sdisel of the edge changes.
   for (MachineBasicBlock::succ_iterator I = BB->succ_begin(), 
-         E = BB->succ_end(); I != E; ++I) {
-    EM->insert(std::make_pair(*I, sinkMBB));
+         E = BB->succ_end(); I != E; ++I)
     sinkMBB->addSuccessor(*I);
-  }
   // Next, remove all successors of the current block, and add the true
   // and fallthrough blocks as its successors.
   while (!BB->succ_empty())

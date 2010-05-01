@@ -95,9 +95,9 @@ namespace llvm {
     //  DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
   
-    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+    virtual MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
 
     virtual bool isLegalAddressingMode(const AddrMode &AM,
                                        const Type *Ty) const;

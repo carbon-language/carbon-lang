@@ -174,9 +174,9 @@ namespace llvm {
 
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                       DenseMap<MachineBasicBlock*, MachineBasicBlock*>*) const;
+    virtual MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type.

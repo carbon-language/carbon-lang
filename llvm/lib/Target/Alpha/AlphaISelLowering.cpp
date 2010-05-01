@@ -832,8 +832,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 
 MachineBasicBlock *
 AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   assert((MI->getOpcode() == Alpha::CAS32 ||
           MI->getOpcode() == Alpha::CAS64 ||
@@ -863,11 +862,6 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *llscMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
-
-  // Inform sdisel of the edge changes.
-  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
-         E = BB->succ_end(); I != E; ++I)
-    EM->insert(std::make_pair(*I, sinkMBB));
 
   sinkMBB->transferSuccessors(thisMBB);
 

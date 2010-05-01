@@ -453,9 +453,9 @@ namespace llvm {
     /// and some i16 instructions are slow.
     virtual bool IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const;
 
-    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+    virtual MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
 
  
     /// getTargetNodeName - This method returns the name of a target specific
@@ -806,12 +806,10 @@ namespace llvm {
                                                    MachineBasicBlock *BB) const;
 
     MachineBasicBlock *EmitLoweredSelect(MachineInstr *I,
-                                         MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+                                         MachineBasicBlock *BB) const;
 
     MachineBasicBlock *EmitLoweredMingwAlloca(MachineInstr *MI,
-                                              MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+                                              MachineBasicBlock *BB) const;
 
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.

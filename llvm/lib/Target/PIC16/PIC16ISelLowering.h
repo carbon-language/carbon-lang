@@ -119,10 +119,9 @@ namespace llvm {
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue getPIC16Cmp(SDValue LHS, SDValue RHS, unsigned OrigCC, SDValue &CC,
                         SelectionDAG &DAG, DebugLoc dl) const;
-    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
-
+    virtual MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
     virtual void ReplaceNodeResults(SDNode *N,

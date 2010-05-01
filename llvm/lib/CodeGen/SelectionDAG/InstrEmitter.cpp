@@ -576,8 +576,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
 ///
 void InstrEmitter::
 EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
-                DenseMap<SDValue, unsigned> &VRBaseMap,
-                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
+                DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned Opc = Node->getMachineOpcode();
   
   // Handle subreg insert/extract specially
@@ -638,7 +637,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   if (II.usesCustomInsertionHook()) {
     // Insert this instruction into the basic block using a target
     // specific inserter which may returns a new basic block.
-    MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);
+    MBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
     InsertPos = MBB->end();
     return;
   }

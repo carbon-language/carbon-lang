@@ -91,9 +91,9 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         EVT VT) const;
 
-    MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+    MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *BB) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 

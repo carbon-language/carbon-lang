@@ -94,8 +94,7 @@ namespace llvm {
     ///
     virtual void ComputeLatency(SUnit *SU);
 
-    virtual MachineBasicBlock *
-    EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
+    virtual MachineBasicBlock *EmitSchedule();
 
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

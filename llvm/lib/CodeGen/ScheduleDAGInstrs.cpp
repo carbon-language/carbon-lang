@@ -572,8 +572,7 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 }
 
 // EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAGInstrs::
-EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
+MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
   // For MachineInstr-based scheduling, we're rescheduling the instructions in
   // the block, so start by removing them from the block.
   while (Begin != InsertPos) {

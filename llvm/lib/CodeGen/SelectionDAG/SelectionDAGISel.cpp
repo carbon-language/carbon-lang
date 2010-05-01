@@ -148,9 +148,9 @@ namespace llvm {
 // When new basic blocks are inserted and the edges from MBB to its successors
 // are modified, the method should insert pairs of <OldSucc, NewSucc> into the
 // DenseMap.
-MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+MachineBasicBlock *
+TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                            MachineBasicBlock *MBB) const {
 #ifndef NDEBUG
   dbgs() << "If a target marks an instruction with "
           "'usesCustomInserter', it must implement "
@@ -592,9 +592,9 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
   // inserted into.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Creation", GroupName);
-    BB = Scheduler->EmitSchedule(&SDB->EdgeMapping);
+    BB = Scheduler->EmitSchedule();
   } else {
-    BB = Scheduler->EmitSchedule(&SDB->EdgeMapping);
+    BB = Scheduler->EmitSchedule();
   }
 
   // Free the scheduler state.
@@ -998,21 +998,13 @@ SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
     // Emit the code
     SDB->visitSwitchCase(SDB->SwitchCases[i], BB);
     CurDAG->setRoot(SDB->getRoot());
-    BB = CodeGenAndEmitDAG(BB);
+    ThisBB = CodeGenAndEmitDAG(BB);
 
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can
     // occur multiple times in PHINodesToUpdate.  We have to be very careful to
     // handle them the right number of times.
     while ((BB = SDB->SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
-      // If new BB's are created during scheduling, the edges may have been
-      // updated. That is, the edge from ThisBB to BB may have been split and
-      // BB's predecessor is now another block.
-      DenseMap<MachineBasicBlock*, MachineBasicBlock*>::iterator EI =
-        SDB->EdgeMapping.find(BB);
-      if (EI != SDB->EdgeMapping.end())
-        ThisBB = EI->second;
-
       // BB may have been removed from the CFG if a branch was constant folded.
       if (ThisBB->isSuccessor(BB)) {
         for (MachineBasicBlock::iterator Phi = BB->begin();

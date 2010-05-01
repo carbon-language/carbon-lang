@@ -86,8 +86,7 @@ namespace llvm {
 
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+                                                   MachineBasicBlock *BB) const;
 
     /// isFPImmLegal - Returns true if the target can instruction select the
     /// specified FP immediate natively. If false, the legalizer will

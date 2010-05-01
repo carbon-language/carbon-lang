@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include <map>
 
@@ -171,8 +170,7 @@ namespace llvm {
     virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const;
 
-    virtual MachineBasicBlock*
-    EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*>*);
+    virtual MachineBasicBlock *EmitSchedule();
 
     /// StartBlock - Prepare to perform scheduling in the given block.
     ///

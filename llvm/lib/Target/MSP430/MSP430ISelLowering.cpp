@@ -1007,8 +1007,7 @@ bool MSP430TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
 
 MachineBasicBlock*
 MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
-                                     MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                     MachineBasicBlock *BB) const {
   MachineFunction *F = BB->getParent();
   MachineRegisterInfo &RI = F->getRegInfo();
   DebugLoc dl = MI->getDebugLoc();
@@ -1059,11 +1058,6 @@ MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
   // Update machine-CFG edges by transferring all successors of the current
   // block to the block containing instructions after shift.
   RemBB->transferSuccessors(BB);
-
-  // Inform sdisel of the edge changes.
-  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         SE = BB->succ_end(); SI != SE; ++SI)
-    EM->insert(std::make_pair(*SI, RemBB));
 
   // Add adges BB => LoopBB => RemBB, BB => RemBB, LoopBB => LoopBB
   BB->addSuccessor(LoopBB);
@@ -1119,14 +1113,13 @@ MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
 
 MachineBasicBlock*
 MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                  MachineBasicBlock *BB,
-                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+                                                  MachineBasicBlock *BB) const {
   unsigned Opc = MI->getOpcode();
 
   if (Opc == MSP430::Shl8 || Opc == MSP430::Shl16 ||
       Opc == MSP430::Sra8 || Opc == MSP430::Sra16 ||
       Opc == MSP430::Srl8 || Opc == MSP430::Srl16)
-    return EmitShiftInstr(MI, BB, EM);
+    return EmitShiftInstr(MI, BB);
 
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
@@ -1157,10 +1150,6 @@ MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     .addImm(MI->getOperand(3).getImm());
   F->insert(I, copy0MBB);
   F->insert(I, copy1MBB);
-  // Inform sdisel of the edge changes.
-  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(), 
-         SE = BB->succ_end(); SI != SE; ++SI)
-    EM->insert(std::make_pair(*SI, copy1MBB));
   // Update machine-CFG edges by transferring all successors of the current
   // block to the new block which will contain the Phi node for the select.
   copy1MBB->transferSuccessors(BB);

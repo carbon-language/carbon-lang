@@ -1427,12 +1427,8 @@ public:
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and this method is called to expand it into a sequence of
   // instructions, potentially also creating new basic blocks and control flow.
-  // When new basic blocks are inserted and the edges from MBB to its successors
-  // are modified, the method should insert pairs of <OldSucc, NewSucc> into the
-  // DenseMap.
-  virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+  virtual MachineBasicBlock *
+    EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
   //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).

@@ -130,9 +130,9 @@ namespace llvm {
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG) const;
 
-    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+    virtual MachineBasicBlock *
+      EmitInstrWithCustomInserter(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
 
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;

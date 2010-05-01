@@ -117,11 +117,9 @@ namespace llvm {
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+                                                   MachineBasicBlock *BB) const;
     MachineBasicBlock* EmitShiftInstr(MachineInstr *MI,
-                                      MachineBasicBlock *BB,
-                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+                                      MachineBasicBlock *BB) const;
 
   private:
     SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,

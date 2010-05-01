@@ -108,10 +108,9 @@ public:
   /// EmitNode - Generate machine code for a node and needed dependencies.
   ///
   void EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
-                DenseMap<SDValue, unsigned> &VRBaseMap,
-                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
+                DenseMap<SDValue, unsigned> &VRBaseMap) {
     if (Node->isMachineOpcode())
-      EmitMachineNode(Node, IsClone, IsCloned, VRBaseMap, EM);
+      EmitMachineNode(Node, IsClone, IsCloned, VRBaseMap);
     else
       EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap);
   }
@@ -128,8 +127,7 @@ public:
   
 private:
   void EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
-                       DenseMap<SDValue, unsigned> &VRBaseMap,
-                       DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
+                       DenseMap<SDValue, unsigned> &VRBaseMap);
   void EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
                        DenseMap<SDValue, unsigned> &VRBaseMap);
 };
