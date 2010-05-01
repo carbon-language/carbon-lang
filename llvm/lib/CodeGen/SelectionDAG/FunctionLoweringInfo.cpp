@@ -59,9 +59,7 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
 static bool isOnlyUsedInEntryBlock(const Argument *A, bool EnableFastISel) {
   // With FastISel active, we may be splitting blocks, so force creation
   // of virtual registers for all non-dead arguments.
-  // Don't force virtual registers for byval arguments though, because
-  // fast-isel can't handle those in all cases.
-  if (EnableFastISel && !A->hasByValAttr())
+  if (EnableFastISel)
     return A->use_empty();
 
   const BasicBlock *Entry = A->getParent()->begin();

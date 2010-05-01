@@ -732,31 +732,15 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     BasicBlock::const_iterator BI = Begin;
 
     // Lower any arguments needed in this block if this is the entry block.
-    bool SuppressFastISel = false;
-    if (LLVMBB == &Fn.getEntryBlock()) {
+    if (LLVMBB == &Fn.getEntryBlock())
       LowerArguments(LLVMBB);
-
-      // If any of the arguments has the byval attribute, forgo
-      // fast-isel in the entry block.
-      if (FastIS) {
-        unsigned j = 1;
-        for (Function::const_arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
-             I != E; ++I, ++j)
-          if (Fn.paramHasAttr(j, Attribute::ByVal)) {
-            if (EnableFastISelVerbose || EnableFastISelAbort)
-              dbgs() << "FastISel skips entry block due to byval argument\n";
-            SuppressFastISel = true;
-            break;
-          }
-      }
-    }
 
     // Setup an EH landing-pad block.
     if (BB->isLandingPad())
       PrepareEHLandingPad(BB);
     
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
-    if (FastIS && !SuppressFastISel) {
+    if (FastIS) {
       // Emit code for any incoming arguments. This must happen before
       // beginning FastISel on the entry block.
       if (LLVMBB == &Fn.getEntryBlock()) {
