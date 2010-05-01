@@ -145,13 +145,13 @@ diagnostic :).</p>
 pieces, this section describes them and talks about best practices when adding
 a new diagnostic.</p>
 
-<!-- ============================ -->
-<h4>The DiagnosticKinds.def file</h4>
-<!-- ============================ -->
+<!-- ============================== -->
+<h4>The Diagnostic*Kinds.def files</h4>
+<!-- ============================== -->
 
-<p>Diagnostics are created by adding an entry to the <tt><a
-href="http://llvm.org/svn/llvm-project/cfe/trunk/include/clang/Basic/DiagnosticKinds.def"
->DiagnosticKinds.def</a></tt> file.  This file encodes the unique ID of the 
+<p>Diagnostics are created by adding an entry to one of the <tt>
+clang/Basic/Diagnostic*Kinds.def</tt> files, depending on what library will
+be using it.  This file encodes the unique ID of the 
 diagnostic (as an enum, the first argument), the severity of the diagnostic
 (second argument) and the English translation + format string.</p>
 
