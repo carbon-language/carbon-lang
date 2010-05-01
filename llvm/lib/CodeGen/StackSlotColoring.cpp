@@ -182,7 +182,8 @@ void StackSlotColoring::ScanForSpillSlotRefs(MachineFunction &MF) {
         if (!LS->hasInterval(FI))
           continue;
         LiveInterval &li = LS->getInterval(FI);
-        li.weight += LiveIntervals::getSpillWeight(false, true, loopDepth);
+        if (!MI->isDebugValue())
+          li.weight += LiveIntervals::getSpillWeight(false, true, loopDepth);
         SSRefs[FI].push_back(MI);
       }
     }
