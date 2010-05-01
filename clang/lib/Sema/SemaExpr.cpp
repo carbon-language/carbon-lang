@@ -7507,7 +7507,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     if (MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
       if (!MethodDecl->isUsed())
-        DefineImplicitOverloadedAssign(Loc, MethodDecl);
+        DefineImplicitCopyAssignment(Loc, MethodDecl);
     }
   }
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {

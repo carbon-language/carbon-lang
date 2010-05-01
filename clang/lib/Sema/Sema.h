@@ -2182,10 +2182,9 @@ public:
                                      CXXConstructorDecl *Constructor,
                                      unsigned TypeQuals);
 
-  /// DefineImplicitOverloadedAssign - Checks for feasibility of
-  /// defining implicit this overloaded assignment operator.
-  void DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
-                                      CXXMethodDecl *MethodDecl);
+  /// \brief Defined and implicitly-declared copy assignment operator.
+  void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
+                                    CXXMethodDecl *MethodDecl);
 
   /// getAssignOperatorMethod - Returns the default copy assignmment operator
   /// for the class.

@@ -4033,6 +4033,30 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   return DeclPtrTy::make(AliasDecl);
 }
 
+namespace {
+  /// \brief Scoped object used to handle the state changes required in Sema
+  /// to implicitly define the body of a C++ member function;
+  class ImplicitlyDefinedFunctionScope {
+    Sema &S;
+    DeclContext *PreviousContext;
+    
+  public:
+    ImplicitlyDefinedFunctionScope(Sema &S, CXXMethodDecl *Method)
+      : S(S), PreviousContext(S.CurContext) 
+    {
+      S.CurContext = Method;
+      S.PushFunctionScope();
+      S.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+    }
+    
+    ~ImplicitlyDefinedFunctionScope() {
+      S.PopExpressionEvaluationContext();
+      S.PopFunctionOrBlockScope();
+      S.CurContext = PreviousContext;
+    }
+  };
+}
+
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
   assert((Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
@@ -4042,8 +4066,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl = Constructor->getParent();
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
-  DeclContext *PreviousContext = CurContext;
-  CurContext = Constructor;
+  ImplicitlyDefinedFunctionScope Scope(*this, Constructor);
   if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false)) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXConstructor << Context.getTagDeclType(ClassDecl);
@@ -4051,7 +4074,6 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   } else {
     Constructor->setUsed();
   }
-  CurContext = PreviousContext;
 }
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
@@ -4061,8 +4083,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
 
-  DeclContext *PreviousContext = CurContext;
-  CurContext = Destructor;
+  ImplicitlyDefinedFunctionScope Scope(*this, Destructor);
 
   MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
                                          Destructor->getParent());
@@ -4074,27 +4095,23 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
       << CXXDestructor << Context.getTagDeclType(ClassDecl);
 
     Destructor->setInvalidDecl();
-    CurContext = PreviousContext;
-
     return;
   }
-  CurContext = PreviousContext;
 
   Destructor->setUsed();
 }
 
-void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
-                                          CXXMethodDecl *MethodDecl) {
+void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
+                                        CXXMethodDecl *MethodDecl) {
   assert((MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
           MethodDecl->getOverloadedOperator() == OO_Equal &&
           !MethodDecl->isUsed()) &&
-         "DefineImplicitOverloadedAssign - call it for implicit assignment op");
+         "DefineImplicitCopyAssignment called for wrong function");
 
   CXXRecordDecl *ClassDecl
     = cast<CXXRecordDecl>(MethodDecl->getDeclContext());
 
-  DeclContext *PreviousContext = CurContext;
-  CurContext = MethodDecl;
+  ImplicitlyDefinedFunctionScope Scope(*this, MethodDecl);
 
   // C++[class.copy] p12
   // Before the implicitly-declared copy assignment operator for a class is
@@ -4151,8 +4168,6 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
   }
   if (!err)
     MethodDecl->setUsed();
-
-  CurContext = PreviousContext;
 }
 
 CXXMethodDecl *
@@ -4195,8 +4210,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl = CopyConstructor->getParent();
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
-  DeclContext *PreviousContext = CurContext;
-  CurContext = CopyConstructor;
+  ImplicitlyDefinedFunctionScope Scope(*this, CopyConstructor);
 
   // C++ [class.copy] p209
   // Before the implicitly-declared copy constructor for a class is
@@ -4238,8 +4252,6 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
     }
   }
   CopyConstructor->setUsed();
-
-  CurContext = PreviousContext;
 }
 
 Sema::OwningExprResult
