@@ -212,7 +212,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SelectAllBasicBlocks(Fn);
 
- // If the first basic block in the function has live ins that need to be
+  // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
   MachineBasicBlock *EntryMBB = MF->begin();
