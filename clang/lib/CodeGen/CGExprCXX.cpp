@@ -316,7 +316,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     const llvm::Type *BasePtr = ConvertType(BaseElementTy);
     BasePtr = llvm::PointerType::getUnqual(BasePtr);
     llvm::Value *BaseAddrPtr =
-    Builder.CreateBitCast(Dest, BasePtr);
+      Builder.CreateBitCast(Dest, BasePtr);
     
     EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
                                E->arg_begin(), E->arg_end());
