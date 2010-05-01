@@ -594,7 +594,7 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
 void CodeGenFunction::EmitClassMemberwiseCopy(
                         llvm::Value *Dest, llvm::Value *Src,
                         const CXXRecordDecl *ClassDecl,
-                        const CXXRecordDecl *BaseClassDecl, QualType Ty) {
+                        const CXXRecordDecl *BaseClassDecl) {
   CXXCtorType CtorType = Ctor_Complete;
   
   if (ClassDecl) {
@@ -605,7 +605,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     CtorType = Ctor_Base;
   }
   if (BaseClassDecl->hasTrivialCopyConstructor()) {
-    EmitAggregateCopy(Dest, Src, Ty);
+    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(BaseClassDecl));
     return;
   }
 
@@ -718,7 +718,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
       }
       else
         EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
-                                0 /*ClassDecl*/, FieldClassDecl, FieldType);
+                                0 /*ClassDecl*/, FieldClassDecl);
       continue;
     }
     

@@ -819,8 +819,7 @@ public:
 
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl,
-                               const CXXRecordDecl *BaseClassDecl,
-                               QualType Ty);
+                               const CXXRecordDecl *BaseClassDecl);
 
   void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl);
