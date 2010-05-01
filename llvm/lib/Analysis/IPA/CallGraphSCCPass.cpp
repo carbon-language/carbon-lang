@@ -30,7 +30,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned> 
-MaxIterations("max-cg-scc-iterations", cl::ReallyHidden, cl::init(0));
+MaxIterations("max-cg-scc-iterations", cl::ReallyHidden, cl::init(4));
 
 STATISTIC(MaxSCCIterations, "Maximum CGSCCPassMgr iterations on one SCC");
 

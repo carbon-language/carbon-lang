@@ -219,6 +219,7 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
       }
     
     CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
+    IFI.DevirtualizedCalls.push_back(NewCall);
   }
   
   // Update the call graph by deleting the edge from Callee to Caller.  We must
