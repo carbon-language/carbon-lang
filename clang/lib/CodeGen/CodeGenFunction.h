@@ -32,6 +32,7 @@
 namespace llvm {
   class BasicBlock;
   class LLVMContext;
+  class MDNode;
   class Module;
   class SwitchInst;
   class Twine;
@@ -1116,7 +1117,9 @@ public:
                   llvm::Value *Callee,
                   ReturnValueSlot ReturnValue,
                   const CallArgList &Args,
-                  const Decl *TargetDecl = 0);
+                  const Decl *TargetDecl = 0,
+                  unsigned MDKind = 0,
+                  llvm::MDNode *Metadata = 0);
 
   RValue EmitCall(QualType FnType, llvm::Value *Callee,
                   ReturnValueSlot ReturnValue,

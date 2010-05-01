@@ -539,7 +539,15 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
       lookupArgs+2);
 
-  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
+  llvm::Value *impMD[] = {
+      llvm::MDString::get(VMContext, Sel.getAsString()),
+      llvm::MDString::get(VMContext, Class->getSuperClass()->getNameAsString()),
+      llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), IsClassMessage)
+   };
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+
+  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
+          0, msgSendMDKind, node);
 }
 
 /// Generate code for a message send expression.
@@ -653,12 +661,6 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     slot->setOnlyReadsMemory();
 
     imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
-    llvm::Value *impMD[] = {
-          llvm::MDString::get(VMContext, Sel.getAsString()),
-          llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
-     };
-    llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 2);
-    cast<llvm::Instruction>(imp)->setMetadata(msgSendMDKind, node);
 
     // The lookup function may have changed the receiver, so make sure we use
     // the new one.
@@ -675,8 +677,15 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
   }
-  RValue msgRet = 
-      CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
+  llvm::Value *impMD[] = {
+        llvm::MDString::get(VMContext, Sel.getAsString()),
+        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
+        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
+   };
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+
+  RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
+      0, msgSendMDKind, node);
 
   if (!isPointerSizedReturn) {
     CGF.EmitBlock(contiueBB);
