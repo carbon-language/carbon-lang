@@ -593,29 +593,18 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
 /// or via a copy constructor call.
 void CodeGenFunction::EmitClassMemberwiseCopy(
                         llvm::Value *Dest, llvm::Value *Src,
-                        const CXXRecordDecl *ClassDecl,
-                        const CXXRecordDecl *BaseClassDecl) {
-  CXXCtorType CtorType = Ctor_Complete;
-  
-  if (ClassDecl) {
-    Dest = OldGetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl);
-    Src = OldGetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl);
-
-    // We want to call the base constructor.
-    CtorType = Ctor_Base;
-  }
-  if (BaseClassDecl->hasTrivialCopyConstructor()) {
-    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(BaseClassDecl));
+                        const CXXRecordDecl *ClassDecl) {
+  if (ClassDecl->hasTrivialCopyConstructor()) {
+    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
     return;
   }
 
-  CXXConstructorDecl *BaseCopyCtor =
-    BaseClassDecl->getCopyConstructor(getContext(), 0);
-  if (!BaseCopyCtor)
-    return;
+  CXXConstructorDecl *CopyCtor = ClassDecl->getCopyConstructor(getContext(), 0);
+  assert(CopyCtor && "Did not have copy ctor!");
 
-  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType));
-  EmitCopyCtorCall(*this, BaseCopyCtor, CtorType, Dest, VTT, Src);
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(CopyCtor, 
+                                                       Ctor_Complete));
+  EmitCopyCtorCall(*this, CopyCtor, Ctor_Complete, Dest, VTT, Src);
 }
 
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class
@@ -718,7 +707,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
       }
       else
         EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
-                                0 /*ClassDecl*/, FieldClassDecl);
+                                FieldClassDecl);
       continue;
     }
     

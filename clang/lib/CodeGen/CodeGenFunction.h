@@ -818,8 +818,7 @@ public:
                                    QualType Ty);
 
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
-                               const CXXRecordDecl *ClassDecl,
-                               const CXXRecordDecl *BaseClassDecl);
+                               const CXXRecordDecl *ClassDecl);
 
   void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl);
