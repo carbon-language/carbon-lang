@@ -259,9 +259,15 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
 //
 InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
                                SmallPtrSet<const Function*, 16> &NeverInline) {
+  return getInlineCost(CS, CS.getCalledFunction(), NeverInline);
+}
+
+InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
+                               Function *Callee,
+                               SmallPtrSet<const Function*, 16> &NeverInline) {
   Instruction *TheCall = CS.getInstruction();
-  Function *Callee = CS.getCalledFunction();
   Function *Caller = TheCall->getParent()->getParent();
+  bool isDirectCall = CS.getCalledFunction() == Callee;
 
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
@@ -276,11 +282,11 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // be inlined.  This value may go negative.
   //
   int InlineCost = 0;
-  
+
   // If there is only one call of the function, and it has internal linkage,
   // make it almost guaranteed to be inlined.
   //
-  if (Callee->hasLocalLinkage() && Callee->hasOneUse())
+  if (Callee->hasLocalLinkage() && Callee->hasOneUse() && isDirectCall)
     InlineCost += InlineConstants::LastCallToStaticBonus;
   
   // If this function uses the coldcc calling convention, prefer not to inline

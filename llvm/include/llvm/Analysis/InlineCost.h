@@ -176,6 +176,14 @@ namespace llvm {
     ///
     InlineCost getInlineCost(CallSite CS,
                              SmallPtrSet<const Function *, 16> &NeverInline);
+    /// getCalledFunction - The heuristic used to determine if we should inline
+    /// the function call or not.  The callee is explicitly specified, to allow
+    /// you to calculate the cost of inlining a function via a pointer.  The
+    /// result assumes that the inlined version will always be used.  You should
+    /// weight it yourself in cases where this callee will not always be called.
+    InlineCost getInlineCost(CallSite CS,
+                             Function *Callee,
+                             SmallPtrSet<const Function *, 16> &NeverInline);
 
     /// getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
     /// higher threshold to determine if the function call should be inlined.
