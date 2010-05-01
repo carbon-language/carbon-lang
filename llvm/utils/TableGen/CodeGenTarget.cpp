@@ -326,6 +326,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   const CodeGenInstruction *COPY_TO_REGCLASS =
     GetInstByName("COPY_TO_REGCLASS", Insts);
   const CodeGenInstruction *DBG_VALUE = GetInstByName("DBG_VALUE", Insts);
+  const CodeGenInstruction *REG_SEQUENCE = GetInstByName("REG_SEQUENCE", Insts);
 
   // Print out the rest of the instructions now.
   InstrsByEnum.push_back(PHI);
@@ -340,6 +341,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   InstrsByEnum.push_back(SUBREG_TO_REG);
   InstrsByEnum.push_back(COPY_TO_REGCLASS);
   InstrsByEnum.push_back(DBG_VALUE);
+  InstrsByEnum.push_back(REG_SEQUENCE);
   
   unsigned EndOfPredefines = InstrsByEnum.size();
   
@@ -357,7 +359,8 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
         CGI != IMPLICIT_DEF &&
         CGI != SUBREG_TO_REG &&
         CGI != COPY_TO_REGCLASS &&
-        CGI != DBG_VALUE)
+        CGI != DBG_VALUE &&
+        CGI != REG_SEQUENCE)
       InstrsByEnum.push_back(CGI);
   }
   

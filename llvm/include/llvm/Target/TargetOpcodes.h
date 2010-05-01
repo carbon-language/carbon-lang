@@ -62,9 +62,17 @@ namespace TargetOpcode {
     /// instructions are insufficient. The actual MachineInstrs to perform
     /// the copy are emitted with the TargetInstrInfo::copyRegToReg hook.
     COPY_TO_REGCLASS = 10,
-    
+
     /// DBG_VALUE - a mapping of the llvm.dbg.value intrinsic
-    DBG_VALUE = 11
+    DBG_VALUE = 11,
+
+    /// REG_SEQUENCE - This variadic instruction is used to form a register that
+    /// represent a consecutive sequence of sub-registers. It's used as register
+    /// coalescing / allocation aid and must be eliminated before code emission.
+    /// e.g. v1027 = REG_SEQUENCE v1024, 3, v1025, 4, v1026, 5
+    /// After register coalescing references of v1024 should be replace with
+    /// v1027:3, v1025 with v1027:4, etc.
+    REG_SEQUENCE = 12
   };
 } // end namespace TargetOpcode
 } // end namespace llvm

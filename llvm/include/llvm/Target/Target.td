@@ -473,6 +473,15 @@ def DBG_VALUE : Instruction {
   let Namespace = "TargetOpcode";
   let isAsCheapAsAMove = 1;
 }
+
+def REG_SEQUENCE : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins variable_ops);
+  let AsmString = "";
+  let Namespace = "TargetOpcode";
+  let neverHasSideEffects = 1;
+  let isAsCheapAsAMove = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//
