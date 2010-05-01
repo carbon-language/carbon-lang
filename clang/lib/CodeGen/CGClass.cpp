@@ -356,23 +356,16 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
 
 /// EmitCopyCtorCall - Emit a call to a copy constructor.
 static void
-EmitCopyCtorCall(CodeGenFunction &CGF,
-                 const CXXConstructorDecl *CopyCtor, CXXCtorType CopyCtorType,
-                 llvm::Value *ThisPtr, llvm::Value *VTT, llvm::Value *Src) {
-  llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor, CopyCtorType);
+EmitCopyCtorCall(CodeGenFunction &CGF, const CXXConstructorDecl *CopyCtor,
+                 llvm::Value *ThisPtr, llvm::Value *Src) {
+  llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor, Ctor_Complete);
 
   CallArgList CallArgs;
 
   // Push the this ptr.
   CallArgs.push_back(std::make_pair(RValue::get(ThisPtr),
                                     CopyCtor->getThisType(CGF.getContext())));
-  
-  // Push the VTT parameter if necessary.
-  if (VTT) {
-    QualType T = CGF.getContext().getPointerType(CGF.getContext().VoidPtrTy);
-    CallArgs.push_back(std::make_pair(RValue::get(VTT), T));
-  }
- 
+   
   // Push the Src ptr.
   CallArgs.push_back(std::make_pair(RValue::get(Src),
                                     CopyCtor->getParamDecl(0)->getType()));
@@ -593,7 +586,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   CXXConstructorDecl *CopyCtor = ClassDecl->getCopyConstructor(getContext(), 0);
   assert(CopyCtor && "Did not have copy ctor!");
 
-  EmitCopyCtorCall(*this, CopyCtor, Ctor_Complete, Dest, 0, Src);
+  EmitCopyCtorCall(*this, CopyCtor, Dest, Src);
 }
 
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class
