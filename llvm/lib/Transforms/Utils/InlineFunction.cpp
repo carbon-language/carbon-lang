@@ -201,7 +201,11 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
     // add.  Check for this case.
     Instruction *NewCall = dyn_cast<Instruction>(VMI->second);
     if (NewCall == 0) continue;
-    
+
+    // Remember that this call site got inlined for the client of
+    // InlineFunction.
+    IFI.InlinedCalls.push_back(NewCall);
+
     // It's possible that inlining the callsite will cause it to go from an
     // indirect to a direct call by resolving a function pointer.  If this
     // happens, set the callee of the new call site to a more precise
@@ -212,14 +216,10 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
         // Indirect call site resolved to direct call.
         CallerNode->addCalledFunction(CallSite::get(NewCall), CG[F]);
         
-        // Remember that this callsite got devirtualized for the client of
-        // InlineFunction.
-        IFI.DevirtualizedCalls.push_back(NewCall);
         continue;
       }
     
     CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
-    IFI.DevirtualizedCalls.push_back(NewCall);
   }
   
   // Update the call graph by deleting the edge from Callee to Caller.  We must

@@ -420,17 +420,17 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
           continue;
         ++NumInlined;
         
-        // If inlining this function devirtualized any call sites, throw them
+        // If inlining this function gave us any new call sites, throw them
         // onto our worklist to process.  They are useful inline candidates.
-        if (!InlineInfo.DevirtualizedCalls.empty()) {
+        if (!InlineInfo.InlinedCalls.empty()) {
           // Create a new inline history entry for this, so that we remember
           // that these new callsites came about due to inlining Callee.
           int NewHistoryID = InlineHistory.size();
           InlineHistory.push_back(std::make_pair(Callee, InlineHistoryID));
 
-          for (unsigned i = 0, e = InlineInfo.DevirtualizedCalls.size();
+          for (unsigned i = 0, e = InlineInfo.InlinedCalls.size();
                i != e; ++i) {
-            Value *Ptr = InlineInfo.DevirtualizedCalls[i];
+            Value *Ptr = InlineInfo.InlinedCalls[i];
             CallSites.push_back(std::make_pair(CallSite(Ptr), NewHistoryID));
           }
         }
