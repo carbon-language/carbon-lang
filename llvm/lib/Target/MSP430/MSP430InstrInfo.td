@@ -76,9 +76,6 @@ def memdst : Operand<i16> {
   let MIOperandInfo = (ops GR16, i16imm);
 }
 
-// Branch targets have OtherVT type.
-def brtarget : Operand<OtherVT>;
-
 // Short jump targets have OtherVT type and are printed as pcrel imm values.
 def jmptarget : Operand<OtherVT> {
   let PrintMethod = "printPCRelImmOperand";
@@ -177,9 +174,9 @@ let isBarrier = 1 in {
                    [(br bb:$dst)]>;
   let isIndirectBranch = 1 in {
     // Long branches
-    def B   : I16ri<0, (outs), (ins brtarget:$dst),
-                    "br\t$dst",
-                    []>;
+    def Bi  : I16ri<0, (outs), (ins i16imm:$brdst),
+                    "br\t$brdst",
+                    [(brind tblockaddress:$brdst)]>;
     def Br  : I16rr<0, (outs), (ins GR16:$brdst),
                     "mov.w\t{$brdst, pc}",
                     [(brind GR16:$brdst)]>;
