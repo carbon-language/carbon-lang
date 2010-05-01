@@ -456,12 +456,15 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       return RValue::get(0);
     }
   }
-  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *cmd = GetSelector(Builder, Sel);
+
 
   CallArgList ActualArgs;
 
   ActualArgs.push_back(
-      std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)),
+      std::make_pair(RValue::get(Builder.CreateBitCast(Receiver, IdTy)),
       ASTIdTy));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
@@ -485,7 +488,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
             IdTy, Params, true), "objc_get_class");
     }
-    ReceiverClass = CGF.Builder.CreateCall(classLookupFunction,
+    ReceiverClass = Builder.CreateCall(classLookupFunction,
         MakeConstantString(Class->getNameAsString()));
   } else {
     // Set up global aliases for the metaclass or class pointer if they do not
@@ -510,34 +513,51 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
     }
   }
   // Cast the pointer to a simplified version of the class structure
-  ReceiverClass = CGF.Builder.CreateBitCast(ReceiverClass,
+  ReceiverClass = Builder.CreateBitCast(ReceiverClass,
       llvm::PointerType::getUnqual(
         llvm::StructType::get(VMContext, IdTy, IdTy, NULL)));
   // Get the superclass pointer
-  ReceiverClass = CGF.Builder.CreateStructGEP(ReceiverClass, 1);
+  ReceiverClass = Builder.CreateStructGEP(ReceiverClass, 1);
   // Load the superclass pointer
-  ReceiverClass = CGF.Builder.CreateLoad(ReceiverClass);
+  ReceiverClass = Builder.CreateLoad(ReceiverClass);
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(VMContext,
       Receiver->getType(), IdTy, NULL);
-  llvm::Value *ObjCSuper = CGF.Builder.CreateAlloca(ObjCSuperTy);
+  llvm::Value *ObjCSuper = Builder.CreateAlloca(ObjCSuperTy);
 
-  CGF.Builder.CreateStore(Receiver, CGF.Builder.CreateStructGEP(ObjCSuper, 0));
-  CGF.Builder.CreateStore(ReceiverClass,
-      CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+  Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuper, 0));
+  Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
 
   // Get the IMP
   std::vector<const llvm::Type*> Params;
   Params.push_back(llvm::PointerType::getUnqual(ObjCSuperTy));
   Params.push_back(SelectorTy);
+
+  llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
+  llvm::Value *imp;
+
+  if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
+    // The lookup function returns a slot, which can be safely cached.
+    llvm::Type *SlotTy = llvm::StructType::get(VMContext, PtrTy, PtrTy, PtrTy,
+            IntTy, llvm::PointerType::getUnqual(impType), NULL);
+
+    llvm::Constant *lookupFunction =
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+            llvm::PointerType::getUnqual(SlotTy), Params, true),
+          "objc_slot_lookup_super");
+
+    llvm::CallInst *slot = Builder.CreateCall(lookupFunction, lookupArgs,
+        lookupArgs+2);
+    slot->setOnlyReadsMemory();
+
+    imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
+  } else {
   llvm::Constant *lookupFunction =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(
           llvm::PointerType::getUnqual(impType), Params, true),
         "objc_msg_lookup_super");
-
-  llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
-  llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
-      lookupArgs+2);
+    imp = Builder.CreateCall(lookupFunction, lookupArgs, lookupArgs+2);
+  }
 
   llvm::Value *impMD[] = {
       llvm::MDString::get(VMContext, Sel.getAsString()),
