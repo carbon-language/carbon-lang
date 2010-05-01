@@ -46,7 +46,7 @@ endif()
 
 if(MSVC)
   # windows.h doesn't compile with /Za
-  get_target_property(NON_ANSI_COMPILE_FLAGS CIndex COMPILE_FLAGS)
+  get_target_property(NON_ANSI_COMPILE_FLAGS libclang COMPILE_FLAGS)
   string(REPLACE /Za "" NON_ANSI_COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
   set_target_properties(libclang PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
 endif(MSVC)
