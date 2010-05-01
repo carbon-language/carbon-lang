@@ -202,13 +202,13 @@ namespace test5 {
     void operator=(const A &); // expected-note 2 {{declared private here}}
   };
 
-  class Test1 { A a; }; // expected-error {{field of type 'test5::A' has private copy assignment operator}}
+  class Test1 { A a; }; // expected-error {{private member}}
   void test1() {
     Test1 a;
     a = Test1();
   }
 
-  class Test2 : A {}; // expected-error {{base class 'test5::A' has private copy assignment operator}}
+  class Test2 : A {}; // expected-error {{private member}}
   void test2() {
     Test2 a;
     a = Test2();

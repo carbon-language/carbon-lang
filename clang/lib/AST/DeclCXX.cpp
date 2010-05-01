@@ -633,6 +633,27 @@ bool CXXMethodDecl::isUsualDeallocationFunction() const {
   return true;
 }
 
+bool CXXMethodDecl::isCopyAssignmentOperator() const {
+  // C++0x [class.copy]p19:
+  //  A user-declared copy assignment operator X::operator= is a non-static 
+  //  non-template member function of class X with exactly one parameter of 
+  //  type X, X&, const X&, volatile X& or const volatile X&.
+  if (/*operator=*/getOverloadedOperator() != OO_Equal ||
+      /*non-static*/ isStatic() || 
+      /*non-template*/getPrimaryTemplate() || getDescribedFunctionTemplate() ||
+      /*exactly one parameter*/getNumParams() != 1)
+    return false;
+      
+  QualType ParamType = getParamDecl(0)->getType();
+  if (const LValueReferenceType *Ref = ParamType->getAs<LValueReferenceType>())
+    ParamType = Ref->getPointeeType();
+  
+  ASTContext &Context = getASTContext();
+  QualType ClassType
+    = Context.getCanonicalType(Context.getTypeDeclType(getParent()));
+  return Context.hasSameUnqualifiedType(ClassType, ParamType);
+}
+
 void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {
   assert(MD->isCanonicalDecl() && "Method is not canonical!");
   assert(!MD->getParent()->isDependentContext() &&

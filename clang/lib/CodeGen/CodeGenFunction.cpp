@@ -246,15 +246,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
 void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
   const FunctionDecl *FD = cast<FunctionDecl>(CurGD.getDecl());
-
-  Stmt *Body = FD->getBody();
-  if (Body)
-    EmitStmt(Body);
-  else {
-    assert(FD->isImplicit() && "non-implicit function def has no body");
-    assert(FD->isCopyAssignment() && "implicit function not copy assignment");
-    SynthesizeCXXCopyAssignment(Args);
-  }
+  assert(FD->getBody());
+  EmitStmt(FD->getBody());
 }
 
 void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {

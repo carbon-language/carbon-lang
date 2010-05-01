@@ -1,12 +1,14 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 class Base { // expected-error {{cannot define the implicit default assignment operator for 'Base', because non-static reference member 'ref' can't use default assignment operator}} \
-  // expected-warning{{class 'Base' does not declare any constructor to initialize its non-modifiable members}}
+  // expected-warning{{class 'Base' does not declare any constructor to initialize its non-modifiable members}} \
+  // expected-note {{synthesized method is first required here}}
   int &ref;  // expected-note {{declared here}} \
   // expected-note{{reference member 'ref' will never be initialized}}
 };
 
-class X  : Base {  // // expected-error {{cannot define the implicit default assignment operator for 'X', because non-static const member 'cint' can't use default assignment operator}}
+class X  : Base {  // // expected-error {{cannot define the implicit default assignment operator for 'X', because non-static const member 'cint' can't use default assignment operator}} \
+  // expected-note  {{synthesized method is first required here}}
 public:
   X();
   const int cint;  // expected-note {{declared here}}
@@ -27,7 +29,7 @@ Z z2;
 
 // Test1
 void f(X x, const X cx) {
-  x = cx;  // expected-note 2 {{synthesized method is first required here}}
+  x = cx;
   x = cx;
   z1 = z2;
 }
@@ -72,7 +74,9 @@ void i() {
 
 // Test5
 
-class E1 { // expected-error{{cannot define the implicit default assignment operator for 'E1', because non-static const member 'a' can't use default assignment operator}}
+class E1 { // expected-error{{cannot define the implicit default assignment operator for 'E1', because non-static const member 'a' can't use default assignment operator}} \
+  // expected-note {{synthesized method is first required here}}
+
 public:
   const int a; // expected-note{{declared here}}
   E1() : a(0) {}  
@@ -82,6 +86,6 @@ public:
 E1 e1, e2;
 
 void j() {
-  e1 = e2; // expected-note{{synthesized method is first required here}}
+  e1 = e2; 
 }
 

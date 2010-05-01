@@ -1899,7 +1899,8 @@ public:
                                             const CXXScopeSpec &SS,
                                             NamedDecl *FirstQualifierInScope,
                                             LookupResult &R,
-                                 const TemplateArgumentListInfo *TemplateArgs);
+                                 const TemplateArgumentListInfo *TemplateArgs,
+                                          bool SuppressQualifierCheck = false);
 
   OwningExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
                                     bool &IsArrow, SourceLocation OpLoc,
@@ -2185,12 +2186,6 @@ public:
   /// \brief Defined and implicitly-declared copy assignment operator.
   void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                     CXXMethodDecl *MethodDecl);
-
-  /// getAssignOperatorMethod - Returns the default copy assignmment operator
-  /// for the class.
-  CXXMethodDecl *getAssignOperatorMethod(SourceLocation CurrentLocation,
-                                         ParmVarDecl *Decl,
-                                         CXXRecordDecl *ClassDecl);
 
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise

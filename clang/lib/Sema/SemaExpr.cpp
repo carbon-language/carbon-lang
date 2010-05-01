@@ -2678,7 +2678,8 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
                                const CXXScopeSpec &SS,
                                NamedDecl *FirstQualifierInScope,
                                LookupResult &R,
-                         const TemplateArgumentListInfo *TemplateArgs) {
+                         const TemplateArgumentListInfo *TemplateArgs,
+                               bool SuppressQualifierCheck) {
   Expr *BaseExpr = Base.takeAs<Expr>();
   QualType BaseType = BaseExprType;
   if (IsArrow) {
@@ -2717,6 +2718,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   if ((SS.isSet() || !BaseExpr ||
        (isa<CXXThisExpr>(BaseExpr) &&
         cast<CXXThisExpr>(BaseExpr)->isImplicit())) &&
+      !SuppressQualifierCheck &&
       CheckQualifiedMemberReference(BaseExpr, BaseType, SS, R))
     return ExprError();
 

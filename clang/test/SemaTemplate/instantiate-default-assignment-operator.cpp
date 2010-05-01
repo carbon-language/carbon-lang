@@ -5,13 +5,13 @@ template<typename T> struct RefPtr {
   RefPtr& operator=(const PassRefPtr<T>&);
 };
 
-struct A { RefPtr<int> a; };
-struct B : RefPtr<float> { };
+struct A { RefPtr<int> a; };  // expected-note {{instantiation of member function 'RefPtr<int>::operator=' requested here}}
+struct B : RefPtr<float> { }; // expected-note {{in instantiation of member function 'RefPtr<float>::operator=' requested here}}
 
 void f() {
   A a1, a2;
-  a1 = a2; // expected-note {{instantiation of member function 'RefPtr<int>::operator=' requested here}}
+  a1 = a2;
 
   B b1, b2;
-  b1 = b2; // expected-note {{in instantiation of member function 'RefPtr<float>::operator=' requested here}}
+  b1 = b2; 
 }

@@ -966,6 +966,10 @@ public:
   /// delete or delete[] operator with a particular signature.
   bool isUsualDeallocationFunction() const;
   
+  /// \brief Determine whether this is a copy-assignment operator, regardless
+  /// of whether it was declared implicitly or explicitly.
+  bool isCopyAssignmentOperator() const;
+  
   const CXXMethodDecl *getCanonicalDecl() const {
     return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
   }
