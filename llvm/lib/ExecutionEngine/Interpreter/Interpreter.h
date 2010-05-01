@@ -190,12 +190,10 @@ public:
     return &(ECStack.back ().VarArgs[0]);
   }
 
-  //FIXME: private:
-public:
+private:  // Helper functions
   GenericValue executeGEPOperation(Value *Ptr, gep_type_iterator I,
                                    gep_type_iterator E, ExecutionContext &SF);
 
-private:  // Helper functions
   // SwitchToNewBasicBlock - Start execution in a new basic block and run any
   // PHI nodes in the top of the block.  This is used for intraprocedural
   // control flow.
