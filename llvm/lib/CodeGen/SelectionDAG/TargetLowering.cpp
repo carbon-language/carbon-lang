@@ -1882,10 +1882,15 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                 isa<ConstantSDNode>(Op0.getOperand(1)) &&
                 cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
           // If this is (X&1) == / != 1, normalize it to (X&1) != / == 0.
-          if (Op0.getValueType() != VT)
+          if (Op0.getValueType().bitsGT(VT))
             Op0 = DAG.getNode(ISD::AND, dl, VT,
                           DAG.getNode(ISD::TRUNCATE, dl, VT, Op0.getOperand(0)),
                           DAG.getConstant(1, VT));
+          else if (Op0.getValueType().bitsLT(VT))
+            Op0 = DAG.getNode(ISD::AND, dl, VT,
+                        DAG.getNode(ISD::ANY_EXTEND, dl, VT, Op0.getOperand(0)),
+                        DAG.getConstant(1, VT));
+
           return DAG.getSetCC(dl, VT, Op0,
                               DAG.getConstant(0, Op0.getValueType()),
                               Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
