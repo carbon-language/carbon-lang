@@ -473,7 +473,13 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
     assert(!ForVirtualBase && "Can't have same class as virtual base!");
     SubVTTIndex = 0;
   } else {
-    SubVTTIndex = CGF.CGM.getVTables().getSubVTTIndex(RD, Base);
+    const ASTRecordLayout &Layout = 
+      CGF.getContext().getASTRecordLayout(RD);
+    uint64_t BaseOffset = ForVirtualBase ? 
+      Layout.getVBaseClassOffset(Base) : Layout.getBaseClassOffset(Base);
+
+    SubVTTIndex = 
+      CGF.CGM.getVTables().getSubVTTIndex(RD, BaseSubobject(Base, BaseOffset));
     assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
   }
   

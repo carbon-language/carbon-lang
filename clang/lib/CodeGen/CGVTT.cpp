@@ -435,8 +435,8 @@ bool CodeGenVTables::needsVTTParameter(GlobalDecl GD) {
 }
 
 uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD, 
-                                        const CXXRecordDecl *Base) {
-  ClassPairTy ClassPair(RD, Base);
+                                        BaseSubobject Base) {
+  ClassPairTy ClassPair(RD, Base.getBase());
 
   SubVTTIndiciesMapTy::iterator I = SubVTTIndicies.find(ClassPair);
   if (I != SubVTTIndicies.end())

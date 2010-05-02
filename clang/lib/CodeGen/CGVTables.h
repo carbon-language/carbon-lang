@@ -311,7 +311,7 @@ public:
 
   /// getSubVTTIndex - Return the index of the sub-VTT for the base class of the
   /// given record decl.
-  uint64_t getSubVTTIndex(const CXXRecordDecl *RD, const CXXRecordDecl *Base);
+  uint64_t getSubVTTIndex(const CXXRecordDecl *RD, BaseSubobject Base);
   
   /// getSecondaryVirtualPointerIndex - Return the index in the VTT where the
   /// virtual pointer for the given subobject is located.
