@@ -145,9 +145,9 @@ Disable fusing of spill code into instructions.
 
 Make the -lowerinvoke pass insert expensive, but correct, EH code.
 
-=item B<-enable-eh> 
+=item B<-jit-enable-eh> 
 
-Exception handling should be emitted.
+Exception handling should be enabled in the just-in-time compiler.
 
 =item B<-join-liveintervals> 
 

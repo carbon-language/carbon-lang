@@ -36,8 +36,7 @@ namespace llvm {
   FloatABI::ABIType FloatABIType;
   bool NoImplicitFloat;
   bool NoZerosInBSS;
-  bool DwarfExceptionHandling;
-  bool SjLjExceptionHandling;
+  bool JITExceptionHandling;
   bool JITEmitDebugInfo;
   bool JITEmitDebugInfoToDisk;
   bool UnwindTablesMandatory;
@@ -115,14 +114,9 @@ DontPlaceZerosInBSS("nozero-initialized-in-bss",
   cl::location(NoZerosInBSS),
   cl::init(false));
 static cl::opt<bool, true>
-EnableDwarfExceptionHandling("enable-eh",
-  cl::desc("Emit DWARF exception handling (default if target supports)"),
-  cl::location(DwarfExceptionHandling),
-  cl::init(false));
-static cl::opt<bool, true>
-EnableSjLjExceptionHandling("enable-sjlj-eh",
-  cl::desc("Emit SJLJ exception handling (default if target supports)"),
-  cl::location(SjLjExceptionHandling),
+EnableJITExceptionHandling("jit-enable-eh",
+  cl::desc("Emit exception handling information"),
+  cl::location(JITExceptionHandling),
   cl::init(false));
 // In debug builds, make this default to true.
 #ifdef NDEBUG

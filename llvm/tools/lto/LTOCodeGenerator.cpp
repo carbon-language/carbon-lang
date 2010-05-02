@@ -353,20 +353,6 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
 
     Module* mergedModule = _linker.getModule();
 
-    // If target supports exception handling then enable it now.
-    switch (_target->getMCAsmInfo()->getExceptionHandlingType()) {
-    case ExceptionHandling::Dwarf:
-      llvm::DwarfExceptionHandling = true;
-      break;
-    case ExceptionHandling::SjLj:
-      llvm::SjLjExceptionHandling = true;
-      break;
-    case ExceptionHandling::None:
-      break;
-    default:
-      assert (0 && "Unknown exception handling model!");
-    }
-
     // if options were requested, set them
     if ( !_codegenOptions.empty() )
         cl::ParseCommandLineOptions(_codegenOptions.size(), 

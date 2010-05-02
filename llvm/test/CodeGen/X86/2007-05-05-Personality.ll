@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -enable-eh -o - | grep zPL
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -o - | grep zPL
 
 @error = external global i8		; <i8*> [#uses=2]
 

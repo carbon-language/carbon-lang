@@ -186,9 +186,6 @@ foo.bc, one of the following commands should fail:</p>
 <li><tt><b>llc</b> foo.bc</tt></li>
 <li><tt><b>llc</b> foo.bc -relocation-model=pic</tt></li>
 <li><tt><b>llc</b> foo.bc -relocation-model=static</tt></li>
-<li><tt><b>llc</b> foo.bc -enable-eh</tt></li>
-<li><tt><b>llc</b> foo.bc -relocation-model=pic -enable-eh</tt></li>
-<li><tt><b>llc</b> foo.bc -relocation-model=static -enable-eh</tt></li>
 </ol>
 
 <p>If none of these crash, please follow the instructions for a
@@ -202,11 +199,6 @@ the one corresponding to the command above that failed):</p>
            -relocation-model=pic</tt></li>
 <li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args
            -relocation-model=static</tt></li>
-<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args -enable-eh</tt></li>
-<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args
-           -relocation-model=pic -enable-eh</tt></li>
-<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args
-           -relocation-model=static -enable-eh</tt></li>
 </ol>
 
 <p>Please run this, then file a bug with the instructions and reduced .bc file

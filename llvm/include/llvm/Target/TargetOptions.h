@@ -107,13 +107,9 @@ namespace llvm {
   /// crt*.o compiling).
   extern bool NoZerosInBSS;
 
-  /// DwarfExceptionHandling - This flag indicates that Dwarf exception
-  /// information should be emitted.
-  extern bool DwarfExceptionHandling;
-
-  /// SjLjExceptionHandling - This flag indicates that SJLJ exception
-  /// information should be emitted.
-  extern bool SjLjExceptionHandling;
+  /// JITExceptionHandling - This flag indicates that the JIT should emit
+  /// exception handling information.
+  extern bool JITExceptionHandling;
 
   /// JITEmitDebugInfo - This flag indicates that the JIT should try to emit
   /// debug information and notify a debugger about it.

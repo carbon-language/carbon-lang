@@ -1948,7 +1948,7 @@ int main(int argc, char* argv[]) {
     }
 
     // If not set, exception handling will not be turned on
-    llvm::DwarfExceptionHandling = true;
+    llvm::JITExceptionHandling = true;
 
     llvm::InitializeNativeTarget();
     llvm::LLVMContext& context = llvm::getGlobalContext();

@@ -384,7 +384,7 @@ namespace {
         DEBUG(dbgs() << "JIT is managing a GOT\n");
       }
 
-      if (DwarfExceptionHandling || JITEmitDebugInfo) {
+      if (JITExceptionHandling || JITEmitDebugInfo) {
         DE.reset(new JITDwarfEmitter(jit));
       }
       if (JITEmitDebugInfo) {
@@ -1259,7 +1259,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       }
     });
 
-  if (DwarfExceptionHandling || JITEmitDebugInfo) {
+  if (JITExceptionHandling || JITEmitDebugInfo) {
     uintptr_t ActualSize = 0;
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;
@@ -1282,7 +1282,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     BufferEnd = SavedBufferEnd;
     CurBufferPtr = SavedCurBufferPtr;
 
-    if (DwarfExceptionHandling) {
+    if (JITExceptionHandling) {
       TheJIT->RegisterTable(FrameRegister);
     }
 

@@ -2,10 +2,6 @@
 ; RUN: llc < %s -march=arm | grep bl.*quux | count 1
 ; RUN: llc < %s -march=arm -enable-tail-merge=0 | grep bl.*baz | count 2
 ; RUN: llc < %s -march=arm -enable-tail-merge=0 | grep bl.*quux | count 2
-; RUN: llc < %s -march=arm -enable-eh | grep bl.*baz | count 1
-; RUN: llc < %s -march=arm -enable-eh | grep bl.*quux | count 1
-; RUN: llc < %s -march=arm -enable-tail-merge=0 -enable-eh | grep bl.*baz | count 2
-; RUN: llc < %s -march=arm -enable-tail-merge=0 -enable-eh | grep bl.*quux | count 2
 ; Check that tail merging is the default on ARM, and that -enable-tail-merge=0 works.
 ; PR1628
 

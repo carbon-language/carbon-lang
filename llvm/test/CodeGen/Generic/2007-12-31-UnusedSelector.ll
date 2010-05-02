@@ -1,4 +1,4 @@
-; RUN: llc < %s -enable-eh
+; RUN: llc < %s
 ; PR1833
 
 	%struct.__class_type_info_pseudo = type { %struct.__type_info_pseudo }
