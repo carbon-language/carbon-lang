@@ -1085,7 +1085,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   {
     CXXTemporariesCleanupScope Scope(*this);
 
-    EmitCXXConstructorCall(D, CXXConstructExpr::CK_Complete, Address,
+    EmitCXXConstructorCall(D, Ctor_Complete, /*ForVirtualBase=*/false, Address,
                            ArgBeg, ArgEnd);
   }
 
@@ -1223,13 +1223,10 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
 
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
-                                        CXXConstructExpr::ConstructionKind Kind,
+                                        CXXCtorType Type, bool ForVirtualBase,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
-  CXXCtorType Type = 
-    (Kind == CXXConstructExpr::CK_Complete) ? Ctor_Complete : Ctor_Base;
-  
   if (D->isTrivial()) {
     if (ArgBeg == ArgEnd) {
       // Trivial default constructor, no codegen required.
