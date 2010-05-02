@@ -566,8 +566,11 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
    };
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
 
-  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
-          0, msgSendMDKind, node);
+  llvm::Instruction *call;
+  RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
+      0, &call);
+  call->setMetadata(msgSendMDKind, node);
+  return msgRet;
 }
 
 /// Generate code for a message send expression.
@@ -707,8 +710,10 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
     cast<llvm::CallInst>(imp)->setMetadata(msgSendMDKind, node);
   }
+  llvm::Instruction *call;
   RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
-      0, msgSendMDKind, node);
+      0, &call);
+  call->setMetadata(msgSendMDKind, node);
 
   if (!isPointerSizedReturn) {
     CGF.EmitBlock(contiueBB);

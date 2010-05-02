@@ -870,8 +870,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  ReturnValueSlot ReturnValue,
                                  const CallArgList &CallArgs,
                                  const Decl *TargetDecl,
-                                 unsigned MDKind,
-                                 llvm::MDNode *Metadata) {
+                                 llvm::Instruction **callOrInvoke) {
   // FIXME: We no longer need the types from CallArgs; lift up and simplify.
   llvm::SmallVector<llvm::Value*, 16> Args;
 
@@ -997,8 +996,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                               Args.data(), Args.data()+Args.size());
     EmitBlock(Cont);
   }
-  if (Metadata) {
-    CS->setMetadata(MDKind, Metadata);
+  if (callOrInvoke) {
+    *callOrInvoke = CS.getInstruction();
   }
 
   CS.setAttributes(Attrs);
