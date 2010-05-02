@@ -668,7 +668,7 @@ public:
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs,
                                   bool ZeroInitialization = false,
-                                  bool BaseInitialization = false);
+                                  ConstructionKind ConstructKind = CK_Complete);
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }

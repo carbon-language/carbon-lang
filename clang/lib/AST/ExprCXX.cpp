@@ -471,11 +471,10 @@ CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
                                            CXXConstructorDecl *D, bool Elidable,
                                            Expr **Args, unsigned NumArgs,
                                            bool ZeroInitialization,
-                                           bool BaseInitialization) {
+                                           ConstructionKind ConstructKind) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args, NumArgs, ZeroInitialization,
-                                  BaseInitialization ? CK_NonVirtualBase :
-                                  CK_Complete);
+                                  ConstructKind);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
