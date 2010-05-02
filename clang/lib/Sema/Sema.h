@@ -25,6 +25,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/FullExpr.h"
 #include "clang/Parse/Action.h"
 #include "clang/Sema/SemaDiagnostic.h"
@@ -2140,22 +2141,21 @@ public:
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
-  OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc,
-                                         QualType DeclInitType,
-                                         CXXConstructorDecl *Constructor,
-                                         MultiExprArg Exprs,
-                                         bool RequiresZeroInit = false,
-                                         bool BaseInitialization = false);
+  OwningExprResult
+  BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
+                        CXXConstructorDecl *Constructor, MultiExprArg Exprs,
+                        bool RequiresZeroInit = false,
+                        CXXConstructExpr::ConstructionKind ConstructKind =
+                        CXXConstructExpr::CK_Complete);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
-  OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc,
-                                         QualType DeclInitType,
-                                         CXXConstructorDecl *Constructor,
-                                         bool Elidable,
-                                         MultiExprArg Exprs,
-                                         bool RequiresZeroInit = false,
-                                         bool BaseInitialization = false);
+  OwningExprResult
+  BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
+                        CXXConstructorDecl *Constructor, bool Elidable,
+                        MultiExprArg Exprs, bool RequiresZeroInit = false,
+                        CXXConstructExpr::ConstructionKind ConstructKind =
+                        CXXConstructExpr::CK_Complete);
 
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.

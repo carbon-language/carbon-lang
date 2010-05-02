@@ -3747,12 +3747,21 @@ InitializationSequence::Perform(Sema &S,
                                                                  NumExprs,
                                                 Kind.getParenRange().getEnd(),
                                              ConstructorInitRequiresZeroInit));
-      } else
+      } else {
+        CXXConstructExpr::ConstructionKind ConstructKind =
+          CXXConstructExpr::CK_Complete;
+        
+        if (Entity.getKind() == InitializedEntity::EK_Base) {
+          ConstructKind = Entity.getBaseSpecifier()->isVirtual() ?
+            CXXConstructExpr::CK_VirtualBase : 
+            CXXConstructExpr::CK_NonVirtualBase;
+        }    
         CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                           Constructor, 
                                           move_arg(ConstructorArgs),
                                           ConstructorInitRequiresZeroInit,
-                               Entity.getKind() == InitializedEntity::EK_Base);
+                                          ConstructKind);
+      }
       if (CurInit.isInvalid())
         return S.ExprError();
 

@@ -474,22 +474,23 @@ CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
                                            bool BaseInitialization) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args, NumArgs, ZeroInitialization,
-                                  BaseInitialization);
+                                  BaseInitialization ? CK_NonVirtualBase :
+                                  CK_Complete);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    SourceLocation Loc,
                                    CXXConstructorDecl *D, bool elidable,
                                    Expr **args, unsigned numargs,
-                                   bool ZeroInitialization,
-                                   bool BaseInitialization)
+                                   bool ZeroInitialization, 
+                                   ConstructionKind ConstructKind)
 : Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
   Constructor(D), Loc(Loc), Elidable(elidable), 
-  ZeroInitialization(ZeroInitialization), 
-  BaseInitialization(BaseInitialization), Args(0), NumArgs(numargs) 
+  ZeroInitialization(ZeroInitialization), ConstructKind(ConstructKind),
+  Args(0), NumArgs(numargs) 
 {
   if (NumArgs) {
     Args = new (C) Stmt*[NumArgs];

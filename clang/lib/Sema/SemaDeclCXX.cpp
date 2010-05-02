@@ -4579,7 +4579,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            bool BaseInitialization) {
+                            CXXConstructExpr::ConstructionKind ConstructKind) {
   bool Elidable = false;
 
   // C++0x [class.copy]p34:
@@ -4601,7 +4601,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
                                Elidable, move(ExprArgs), RequiresZeroInit,
-                               BaseInitialization);
+                               ConstructKind);
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -4611,14 +4611,14 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            bool BaseInitialization) {
+                            CXXConstructExpr::ConstructionKind ConstructKind) {
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
   MarkDeclarationReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, Exprs, NumExprs, 
-                                        RequiresZeroInit, BaseInitialization));
+                                        RequiresZeroInit, ConstructKind));
 }
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,

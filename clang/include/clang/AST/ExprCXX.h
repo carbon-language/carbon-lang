@@ -630,12 +630,20 @@ public:
 
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
+public:
+  enum ConstructionKind {
+    CK_Complete,
+    CK_NonVirtualBase,
+    CK_VirtualBase
+  };
+    
+private:
   CXXConstructorDecl *Constructor;
 
   SourceLocation Loc;
   bool Elidable : 1;
   bool ZeroInitialization : 1;
-  bool BaseInitialization : 1;
+  unsigned ConstructKind : 2;
   Stmt **Args;
   unsigned NumArgs;
 
@@ -645,7 +653,7 @@ protected:
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs,
                    bool ZeroInitialization = false,
-                   bool BaseInitialization = false);
+                   ConstructionKind ConstructKind = CK_Complete);
   ~CXXConstructExpr() { }
 
   virtual void DoDestroy(ASTContext &C);
@@ -682,8 +690,12 @@ public:
   
   /// \brief Determines whether this constructor is actually constructing
   /// a base class (rather than a complete object).
-  bool isBaseInitialization() const { return BaseInitialization; }
-  void setBaseInitialization(bool BI) { BaseInitialization = BI; }
+  bool isBaseInitialization() const { 
+    return ConstructKind != CK_Complete;
+  }
+  void setConstructionKind(ConstructionKind CK) { 
+    ConstructKind = CK;
+  }
   
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
