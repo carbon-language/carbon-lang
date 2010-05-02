@@ -506,42 +506,6 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   EmitCopyCtorCall(*this, CopyCtor, Dest, Src);
 }
 
-/// EmitClassCopyAssignment - This routine generates code to copy assign a class
-/// object from SrcValue to DestValue. Assignment can be either a bitwise
-/// assignment of via an assignment operator call.
-// FIXME. Consolidate this with EmitClassMemberwiseCopy as they share a lot.
-void 
-CodeGenFunction::EmitClassCopyAssignment(llvm::Value *Dest, llvm::Value *Src,
-                                         const CXXRecordDecl *ClassDecl) {
-  if (ClassDecl->hasTrivialCopyAssignment()) {
-    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
-    return;
-  }
-
-  const CXXMethodDecl *MD = 0;
-  ClassDecl->hasConstCopyAssignment(getContext(), MD);
-  assert(MD && "EmitClassCopyAssignment - missing copy assign");
-
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  const llvm::Type *LTy =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                   FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, LTy);
-
-  CallArgList CallArgs;
-  // Push the this (Dest) ptr.
-  CallArgs.push_back(std::make_pair(RValue::get(Dest),
-                                    MD->getThisType(getContext())));
-
-  // Push the Src ptr.
-  QualType SrcTy = MD->getParamDecl(0)->getType();
-  RValue SrcValue = SrcTy->isReferenceType() ? RValue::get(Src) :
-                                               RValue::getAggregate(Src);
-  CallArgs.push_back(std::make_pair(SrcValue, SrcTy));
-  EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-           Callee, ReturnValueSlot(), CallArgs, MD);
-}
-
 /// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a
 /// copy constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise
