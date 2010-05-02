@@ -626,7 +626,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
     CodeGenFunction::EHCleanupBlock Cleanup(CGF);
 
     CXXDestructorDecl *DD = BaseClassDecl->getDestructor(CGF.getContext());
-    CGF.EmitCXXDestructorCall(DD, Dtor_Base, V);
+    CGF.EmitCXXDestructorCall(DD, Dtor_Base, isBaseVirtual, V);
   }
 }
 
@@ -685,7 +685,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
 
       CXXDestructorDecl *DD = RD->getDestructor(CGF.getContext());
-      CGF.EmitCXXDestructorCall(DD, Dtor_Complete, LHS.getAddress());
+      CGF.EmitCXXDestructorCall(DD, Dtor_Complete, /*ForVirtualBase=*/false,
+                                LHS.getAddress());
     }
   }
 }
@@ -843,7 +844,8 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // variant, then call the appropriate operator delete() on the way
   // out.
   if (DtorType == Dtor_Deleting) {
-    EmitCXXDestructorCall(Dtor, Dtor_Complete, LoadCXXThis());
+    EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
+                          LoadCXXThis());
     SkipBody = true;
 
   // If this is the complete variant, just invoke the base variant;
@@ -851,7 +853,8 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // this optimization if the body is a function-try-block, because
   // we'd introduce *two* handler blocks.
   } else if (!isTryBody && DtorType == Dtor_Complete) {
-    EmitCXXDestructorCall(Dtor, Dtor_Base, LoadCXXThis());
+    EmitCXXDestructorCall(Dtor, Dtor_Base, /*ForVirtualBase=*/false,
+                          LoadCXXThis());
     SkipBody = true;
       
   // Otherwise, we're in the base variant, so we need to ensure the
@@ -936,7 +939,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
         GetAddressOfDirectBaseInCompleteClass(LoadCXXThis(),
                                               ClassDecl, BaseClassDecl,
                                               /*BaseIsVirtual=*/true);
-      EmitCXXDestructorCall(D, Dtor_Base, V);
+      EmitCXXDestructorCall(D, Dtor_Base, /*ForVirtualBase=*/true, V);
     }
     return;
   }
@@ -990,7 +993,8 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
                                 Array, BaseAddrPtr);
     } else
       EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                            Dtor_Complete, LHS.getAddress());
+                            Dtor_Complete, /*ForVirtualBase=*/false,
+                            LHS.getAddress());
   }
 
   // Destroy non-virtual bases.
@@ -1012,7 +1016,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     
     llvm::Value *V = OldGetAddressOfBaseClass(LoadCXXThis(),
                                               ClassDecl, BaseClassDecl);
-    EmitCXXDestructorCall(D, Dtor_Base, V);
+    EmitCXXDestructorCall(D, Dtor_Base, /*ForVirtualBase=*/false, V);
   }
 }
 
@@ -1160,7 +1164,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   Counter = Builder.CreateLoad(IndexPtr);
   Counter = Builder.CreateSub(Counter, One);
   llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
-  EmitCXXDestructorCall(D, Dtor_Complete, Address);
+  EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false, Address);
 
   EmitBlock(ContinueBlock);
 
@@ -1318,6 +1322,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             CXXDtorType Type,
+                                            bool ForVirtualBase,
                                             llvm::Value *This) {
   llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type));
   llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(DD, Type);

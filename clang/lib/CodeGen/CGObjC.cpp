@@ -451,7 +451,8 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       }
       else 
         EmitCXXDestructorCall(FieldClassDecl->getDestructor(CGM.getContext()),
-                              Dtor_Complete, LV.getAddress());
+                              Dtor_Complete, /*ForVirtualBase=*/false,
+                              LV.getAddress());
     }    
   }
   FinishFunction();

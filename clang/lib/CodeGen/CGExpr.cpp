@@ -208,6 +208,7 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
             {
               DelayedCleanupBlock Scope(*this);
               EmitCXXDestructorCall(Dtor, Dtor_Complete,
+                                    /*ForVirtualBase=*/false,
                                     Val.getAggregateAddr());
               
               // Make sure to jump to the exit block.
@@ -216,6 +217,7 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
             if (Exceptions) {
               EHCleanupBlock Cleanup(*this);
               EmitCXXDestructorCall(Dtor, Dtor_Complete,
+                                    /*ForVirtualBase=*/false,
                                     Val.getAggregateAddr());
             }
           }

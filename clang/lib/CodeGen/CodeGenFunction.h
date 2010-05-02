@@ -845,7 +845,7 @@ public:
                                                 llvm::Value *This);
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
-                             llvm::Value *This);
+                             bool ForVirtualBase, llvm::Value *This);
 
   void PushCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
   void PopCXXTemporary();

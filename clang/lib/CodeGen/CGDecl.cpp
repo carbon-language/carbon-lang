@@ -676,14 +676,16 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         } else {
           {
             DelayedCleanupBlock Scope(*this);
-            EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+            EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
+                                  DeclPtr);
 
             // Make sure to jump to the exit block.
             EmitBranch(Scope.getCleanupExitBlock());
           }
           if (Exceptions) {
             EHCleanupBlock Cleanup(*this);
-            EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+            EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
+                                  DeclPtr);
           }
         }
       }

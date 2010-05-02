@@ -61,7 +61,8 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
     }
 
     EmitCXXDestructorCall(Info.Temporary->getDestructor(),
-                          Dtor_Complete, Info.ThisPtr);
+                          Dtor_Complete, /*ForVirtualBase=*/false,
+                          Info.ThisPtr);
 
     if (CondEnd) {
       // Reset the condition. to false.
@@ -104,7 +105,7 @@ void CodeGenFunction::PopCXXTemporary() {
   }
 
   EmitCXXDestructorCall(Info.Temporary->getDestructor(),
-                        Dtor_Complete, Info.ThisPtr);
+                        Dtor_Complete, /*ForVirtualBase=*/false, Info.ThisPtr);
 
   if (CondEnd) {
     // Reset the condition. to false.

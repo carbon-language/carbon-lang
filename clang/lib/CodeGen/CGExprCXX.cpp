@@ -765,7 +765,8 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
           // The dtor took care of deleting the object.
           ShouldCallDelete = false;
         } else 
-          EmitCXXDestructorCall(Dtor, Dtor_Complete, Ptr);
+          EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
+                                Ptr);
       }
     }
   }
