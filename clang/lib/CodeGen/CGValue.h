@@ -34,69 +34,64 @@ namespace CodeGen {
 /// simple LLVM SSA value, a pair of SSA values for complex numbers, or the
 /// address of an aggregate value in memory.
 class RValue {
-  llvm::Value *V1, *V2;
-  // TODO: Encode this into the low bit of pointer for more efficient
-  // return-by-value.
-  enum { Scalar, Complex, Aggregate } Flavor;
+  enum Flavor { Scalar, Complex, Aggregate };
 
-  bool Volatile:1;
+  // Stores first value and flavor.
+  llvm::PointerIntPair<llvm::Value *, 2, Flavor> V1;
+  // Stores second value and volatility.
+  llvm::PointerIntPair<llvm::Value *, 1, bool> V2;
+
 public:
+  bool isScalar() const { return V1.getInt() == Scalar; }
+  bool isComplex() const { return V1.getInt() == Complex; }
+  bool isAggregate() const { return V1.getInt() == Aggregate; }
 
-  bool isScalar() const { return Flavor == Scalar; }
-  bool isComplex() const { return Flavor == Complex; }
-  bool isAggregate() const { return Flavor == Aggregate; }
-
-  bool isVolatileQualified() const { return Volatile; }
+  bool isVolatileQualified() const { return V2.getInt(); }
 
   /// getScalarVal() - Return the Value* of this scalar value.
   llvm::Value *getScalarVal() const {
     assert(isScalar() && "Not a scalar!");
-    return V1;
+    return V1.getPointer();
   }
 
   /// getComplexVal - Return the real/imag components of this complex value.
   ///
   std::pair<llvm::Value *, llvm::Value *> getComplexVal() const {
-    return std::pair<llvm::Value *, llvm::Value *>(V1, V2);
+    return std::make_pair(V1.getPointer(), V2.getPointer());
   }
 
   /// getAggregateAddr() - Return the Value* of the address of the aggregate.
   llvm::Value *getAggregateAddr() const {
     assert(isAggregate() && "Not an aggregate!");
-    return V1;
+    return V1.getPointer();
   }
 
   static RValue get(llvm::Value *V) {
     RValue ER;
-    ER.V1 = V;
-    ER.Flavor = Scalar;
-    ER.Volatile = false;
+    ER.V1.setPointer(V);
+    ER.V1.setInt(Scalar);
+    ER.V2.setInt(false);
     return ER;
   }
   static RValue getComplex(llvm::Value *V1, llvm::Value *V2) {
     RValue ER;
-    ER.V1 = V1;
-    ER.V2 = V2;
-    ER.Flavor = Complex;
-    ER.Volatile = false;
+    ER.V1.setPointer(V1);
+    ER.V2.setPointer(V2);
+    ER.V1.setInt(Complex);
+    ER.V2.setInt(false);
     return ER;
   }
   static RValue getComplex(const std::pair<llvm::Value *, llvm::Value *> &C) {
-    RValue ER;
-    ER.V1 = C.first;
-    ER.V2 = C.second;
-    ER.Flavor = Complex;
-    ER.Volatile = false;
-    return ER;
+    return getComplex(C.first, C.second);
   }
   // FIXME: Aggregate rvalues need to retain information about whether they are
   // volatile or not.  Remove default to find all places that probably get this
   // wrong.
-  static RValue getAggregate(llvm::Value *V, bool Vol = false) {
+  static RValue getAggregate(llvm::Value *V, bool Volatile = false) {
     RValue ER;
-    ER.V1 = V;
-    ER.Flavor = Aggregate;
-    ER.Volatile = Vol;
+    ER.V1.setPointer(V);
+    ER.V1.setInt(Aggregate);
+    ER.V2.setInt(Volatile);
     return ER;
   }
 };
