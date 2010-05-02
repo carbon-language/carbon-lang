@@ -1020,10 +1020,13 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     // Ignore trivial destructors.
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
-    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
-    
-    llvm::Value *V = OldGetAddressOfBaseClass(LoadCXXThis(),
-                                              ClassDecl, BaseClassDecl);
+
+    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());    
+    llvm::Value *V = 
+      GetAddressOfDirectBaseInCompleteClass(LoadCXXThis(), ClassDecl, 
+                                            BaseClassDecl, 
+                                            /*BaseIsVirtual=*/false);
+
     EmitCXXDestructorCall(D, Dtor_Base, /*ForVirtualBase=*/false, V);
   }
 }
