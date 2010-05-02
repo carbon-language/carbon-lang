@@ -323,9 +323,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   }
   else
     // Call the constructor.
-    EmitCXXConstructorCall(CD, 
-                           E->isBaseInitialization()? Ctor_Base : Ctor_Complete, 
-                           Dest,
+    EmitCXXConstructorCall(CD, E->getConstructionKind(), Dest,
                            E->arg_begin(), E->arg_end());
 }
 
@@ -470,7 +468,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   QualType AllocType = E->getAllocatedType();
 
   if (CXXConstructorDecl *Ctor = E->getConstructor()) {
-    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr,
+    CGF.EmitCXXConstructorCall(Ctor, CXXConstructExpr::CK_Complete, NewPtr,
                                E->constructor_arg_begin(),
                                E->constructor_arg_end());
 

@@ -815,7 +815,8 @@ public:
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
                                       const FunctionArgList &Args);
-  void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
+  void EmitCXXConstructorCall(const CXXConstructorDecl *D, 
+                              CXXConstructExpr::ConstructionKind ConstructKind,
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);

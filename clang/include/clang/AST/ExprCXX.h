@@ -690,8 +690,8 @@ public:
   
   /// \brief Determines whether this constructor is actually constructing
   /// a base class (rather than a complete object).
-  bool isBaseInitialization() const { 
-    return ConstructKind != CK_Complete;
+  ConstructionKind getConstructionKind() const {
+    return (ConstructionKind)ConstructKind;
   }
   void setConstructionKind(ConstructionKind CK) { 
     ConstructKind = CK;
