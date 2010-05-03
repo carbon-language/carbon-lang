@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 2.7 Release Notes</title>
+  <title>LLVM 2.8 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 2.7 Release Notes</div>
+<div class="doc_title">LLVM 2.8 Release Notes</div>
 
 <img align=right src="http://llvm.org/img/DragonSmall.png"
     width="136" height="136" alt="LLVM Dragon Logo">
@@ -16,8 +16,8 @@
 <ol>
   <li><a href="#intro">Introduction</a></li>
   <li><a href="#subproj">Sub-project Status Update</a></li>
-  <li><a href="#externalproj">External Projects Using LLVM 2.7</a></li>
-  <li><a href="#whatsnew">What's New in LLVM 2.7?</a></li>
+  <li><a href="#externalproj">External Projects Using LLVM 2.8</a></li>
+  <li><a href="#whatsnew">What's New in LLVM 2.8?</a></li>
   <li><a href="GettingStarted.html">Installation Instructions</a></li>
   <li><a href="#portability">Portability and Supported Platforms</a></li>
   <li><a href="#knownproblems">Known Problems</a></li>
@@ -28,12 +28,11 @@
   <p>Written by the <a href="http://llvm.org">LLVM Team</a></p>
 </div>
 
-<!--
 <h1 style="color:red">These are in-progress notes for the upcoming LLVM 2.8
 release.<br>
 You may prefer the
-<a href="http://llvm.org/releases/2.6/docs/ReleaseNotes.html">LLVM 2.7
-Release Notes</a>.</h1>-->
+<a href="http://llvm.org/releases/2.7/docs/ReleaseNotes.html">LLVM 2.7
+Release Notes</a>.</h1>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -74,7 +73,7 @@ Almost dead code.
 -->
  
    
-<!-- Features that need text if they're finished for 2.7:
+<!-- Features that need text if they're finished for 2.8:
   combiner-aa?
   strong phi elim
   llvm.dbg.value: variable debug info for optimized code
@@ -94,7 +93,7 @@ Almost dead code.
 
 <div class="doc_text">
 <p>
-The LLVM 2.7 distribution currently consists of code from the core LLVM
+The LLVM 2.8 distribution currently consists of code from the core LLVM
 repository (which roughly includes the LLVM optimizers, code generators
 and supporting tools), the Clang repository and the llvm-gcc repository.  In
 addition to this code, the LLVM Project includes other sub-projects that are in
@@ -925,50 +924,11 @@ configure with <tt>--enable-libffi</tt>.</li>
 API changes are:</p>
 
 <ul>
-<li>Just about everything has been converted to use <tt>raw_ostream</tt> instead of
-    <tt>std::ostream</tt>.</li>
-<li><tt>llvm/ADT/iterator.h</tt> has been removed, just use <tt>&lt;iterator&gt;</tt>
- instead.</li>
-<li>The <tt>Streams.h</tt> file and <tt>DOUT</tt> got removed, use <tt>DEBUG(errs() &lt;&lt; ...);</tt>
-   instead.</li>
-<li>The <tt>TargetAsmInfo</tt> interface was renamed to <tt>MCAsmInfo</tt>.</li>
-<li><tt>ModuleProvider</tt> has been <a
-href="http://llvm.org/viewvc/llvm-project?view=rev&amp;revision=94686">removed</a>
-and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
-Most clients can remove uses of <tt>ExistingModuleProvider</tt>,
-replace <tt>getBitcodeModuleProvider</tt> with
-<tt>getLazyBitcodeModule</tt>, and pass their <tt>Module</tt> to
-functions that used to accept <tt>ModuleProvider</tt>.  Clients who
-wrote their own <tt>ModuleProvider</tt>s will need to derive from
-<tt>GVMaterializer</tt> instead and use
-<tt>Module::setMaterializer</tt> to attach it to a
-<tt>Module</tt>.</li>
 
-<li><tt>GhostLinkage</tt> has given up the ghost.
-<tt>GlobalValue</tt>s that have not yet been read from their backing
-storage have the same linkage they will have after being read in.
-Clients must replace calls to
-<tt>GlobalValue::hasNotBeenReadFromBitcode</tt> with
-<tt>GlobalValue::isMaterializable</tt>.</li>
+<li>The <tt>add</tt>, <tt>sub</tt>, and <tt>mul</tt> instructions no longer
+support floating-point operands. The <tt>fadd</tt>, <tt>fsub</tt>, and
+<tt>fmul</tt> instructions should be used for this purpose instead.</li>
 
-<li>The <tt>isInteger</tt>, <tt>isIntOrIntVector</tt>, <tt>isFloatingPoint</tt>,
-<tt>isFPOrFPVector</tt> and <tt>isFPOrFPVector</tt> methods have been renamed
-<tt>isIntegerTy</tt>, <tt>isIntOrIntVectorTy</tt>, <tt>isFloatingPointTy</tt>, 
-<tt>isFPOrFPVectorTy</tt> and <tt>isFPOrFPVectorTy</tt> respectively.</li>
-
-<li><tt>llvm::Instruction::clone()</tt> no longer takes argument.</li>
-<li><tt>raw_fd_ostream</tt>'s constructor now takes a flag argument, not individual
-  booleans (see <tt>include/llvm/Support/raw_ostream.h</tt> for details).</li>
-<li>Some header files have been renamed:
-<ul>
-  <li><tt>llvm/Support/AIXDataTypesFix.h</tt> to
-      <tt>llvm/System/AIXDataTypesFix.h</tt></li>
-  <li><tt>llvm/Support/DataTypes.h</tt> to <tt>llvm/System/DataTypes.h</tt></li>
-  <li><tt>llvm/Transforms/Utils/InlineCost.h</tt> to
-      <tt>llvm/Analysis/InlineCost.h</tt></li>
-  <li><tt>llvm/Support/Mangler.h</tt> to <tt>llvm/Target/Mangler.h</tt></li>
-  <li><tt>llvm/Analysis/Passes.h</tt> to <tt>llvm/CodeGen/Passes.h</tt></li>
-</ul></li>
 </ul>
 
 </div>
