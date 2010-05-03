@@ -327,8 +327,8 @@ def TST_F  : FPI<0xE4, RawFrm, (outs), (ins), "ftst">, D9;
 
 // Versions of FP instructions that take a single memory operand.  Added for the
 //   disassembler; remove as they are included with patterns elsewhere.
-def FCOM32m  : FPI<0xD8, MRM2m, (outs), (ins f32mem:$src), "fcom{l}\t$src">;
-def FCOMP32m : FPI<0xD8, MRM3m, (outs), (ins f32mem:$src), "fcomp{l}\t$src">;
+def FCOM32m  : FPI<0xD8, MRM2m, (outs), (ins f32mem:$src), "fcom{s}\t$src">;
+def FCOMP32m : FPI<0xD8, MRM3m, (outs), (ins f32mem:$src), "fcomp{s}\t$src">;
 
 def FLDENVm  : FPI<0xD9, MRM4m, (outs), (ins f32mem:$src), "fldenv\t$src">;
 def FSTENVm  : FPI<0xD9, MRM6m, (outs f32mem:$dst), (ins), "fnstenv\t$dst">;
@@ -336,15 +336,15 @@ def FSTENVm  : FPI<0xD9, MRM6m, (outs f32mem:$dst), (ins), "fnstenv\t$dst">;
 def FICOM32m : FPI<0xDA, MRM2m, (outs), (ins i32mem:$src), "ficom{l}\t$src">;
 def FICOMP32m: FPI<0xDA, MRM3m, (outs), (ins i32mem:$src), "ficomp{l}\t$src">;
 
-def FCOM64m  : FPI<0xDC, MRM2m, (outs), (ins f64mem:$src), "fcom{ll}\t$src">;
-def FCOMP64m : FPI<0xDC, MRM3m, (outs), (ins f64mem:$src), "fcomp{ll}\t$src">;
+def FCOM64m  : FPI<0xDC, MRM2m, (outs), (ins f64mem:$src), "fcom{l}\t$src">;
+def FCOMP64m : FPI<0xDC, MRM3m, (outs), (ins f64mem:$src), "fcomp{l}\t$src">;
 
 def FRSTORm  : FPI<0xDD, MRM4m, (outs f32mem:$dst), (ins), "frstor\t$dst">;
 def FSAVEm   : FPI<0xDD, MRM6m, (outs f32mem:$dst), (ins), "fnsave\t$dst">;
 def FNSTSWm  : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fnstsw\t$dst">;
 
-def FICOM16m : FPI<0xDE, MRM2m, (outs), (ins i16mem:$src), "ficom{w}\t$src">;
-def FICOMP16m: FPI<0xDE, MRM3m, (outs), (ins i16mem:$src), "ficomp{w}\t$src">;
+def FICOM16m : FPI<0xDE, MRM2m, (outs), (ins i16mem:$src), "ficom{s}\t$src">;
+def FICOMP16m: FPI<0xDE, MRM3m, (outs), (ins i16mem:$src), "ficomp{s}\t$src">;
 
 def FBLDm    : FPI<0xDF, MRM4m, (outs), (ins f32mem:$src), "fbld\t$src">;
 def FBSTPm   : FPI<0xDF, MRM6m, (outs f32mem:$dst), (ins), "fbstp\t$dst">;

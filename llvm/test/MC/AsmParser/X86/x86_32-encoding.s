@@ -10014,3 +10014,36 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: movd    3735928559(%ebx,%ecx,8), %xmm5
 // CHECK:  encoding: [0x66,0x0f,0x6e,0xac,0xcb,0xef,0xbe,0xad,0xde]
           movd    3735928559(%ebx,%ecx,8), %xmm5
+
+// radr://7914715
+// CHECK: fcoml   3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0xdc,0x94,0xcb,0xef,0xbe,0xad,0xde]
+          fcoml   3735928559(%ebx,%ecx,8) 
+
+// CHECK: fcoms   32493
+// CHECK:  encoding: [0xd8,0x15,0xed,0x7e,0x00,0x00]
+          fcoms   32493
+
+// CHECK: fcompl  3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0xdc,0x9c,0xcb,0xef,0xbe,0xad,0xde]
+          fcompl  3735928559(%ebx,%ecx,8)
+
+// CHECK: fcomps  32493
+// CHECK:  encoding: [0xd8,0x1d,0xed,0x7e,0x00,0x00]
+          fcomps  32493
+
+// CHECK: ficoml  3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0xda,0x94,0xcb,0xef,0xbe,0xad,0xde]
+          ficoml  3735928559(%ebx,%ecx,8)
+
+// CHECK: ficoms  32493
+// CHECK:  encoding: [0xde,0x15,0xed,0x7e,0x00,0x00]
+          ficoms  32493
+
+// CHECK: ficompl 3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0xda,0x9c,0xcb,0xef,0xbe,0xad,0xde]
+          ficompl 3735928559(%ebx,%ecx,8)
+
+// CHECK: ficomps 32493
+// CHECK:  encoding: [0xde,0x1d,0xed,0x7e,0x00,0x00]
+          ficomps 32493
