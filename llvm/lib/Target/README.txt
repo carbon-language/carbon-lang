@@ -1835,3 +1835,16 @@ See GCC PR34949
 
 //===---------------------------------------------------------------------===//
 
+In this code:
+
+long foo(long x) {
+  return x > 1 ? x : 1;
+}
+
+LLVM emits a comparison with 1 instead of 0. 0 would be equivalent
+and cheaper on most targets.
+
+LLVM prefers comparisons with zero over non-zero in general, but in this
+case it choses instead to keep the max operation obvious.
+
+//===---------------------------------------------------------------------===//
