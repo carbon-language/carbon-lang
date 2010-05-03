@@ -178,7 +178,7 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
   DeclPtrTy LinkageSpec
     = Actions.ActOnStartLinkageSpecification(CurScope,
                                              /*FIXME: */SourceLocation(),
-                                             Loc, Lang.data(), Lang.size(),
+                                             Loc, Lang,
                                        Tok.is(tok::l_brace)? Tok.getLocation()
                                                            : SourceLocation());
 

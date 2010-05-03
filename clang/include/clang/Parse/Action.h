@@ -580,8 +580,7 @@ public:
   virtual DeclPtrTy ActOnStartLinkageSpecification(Scope *S,
                                                    SourceLocation ExternLoc,
                                                    SourceLocation LangLoc,
-                                                   const char *Lang,
-                                                   unsigned StrSize,
+                                                   llvm::StringRef Lang,
                                                    SourceLocation LBraceLoc) {
     return DeclPtrTy();
   }

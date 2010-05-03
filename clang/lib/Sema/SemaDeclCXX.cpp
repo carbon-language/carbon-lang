@@ -5180,13 +5180,12 @@ FinishedParams:
 Sema::DeclPtrTy Sema::ActOnStartLinkageSpecification(Scope *S,
                                                      SourceLocation ExternLoc,
                                                      SourceLocation LangLoc,
-                                                     const char *Lang,
-                                                     unsigned StrSize,
+                                                     llvm::StringRef Lang,
                                                      SourceLocation LBraceLoc) {
   LinkageSpecDecl::LanguageIDs Language;
-  if (strncmp(Lang, "\"C\"", StrSize) == 0)
+  if (Lang == "\"C\"")
     Language = LinkageSpecDecl::lang_c;
-  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
+  else if (Lang == "\"C++\"")
     Language = LinkageSpecDecl::lang_cxx;
   else {
     Diag(LangLoc, diag::err_bad_language);
