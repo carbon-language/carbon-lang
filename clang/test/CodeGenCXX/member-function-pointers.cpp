@@ -184,3 +184,9 @@ namespace PR6258 {
     void (A::*pf)(bool) = &A::f;
   }
 }
+
+// PR7027 
+namespace PR7027 {
+  struct X { void test( ); };
+  void testX() { &X::test; }
+}

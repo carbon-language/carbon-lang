@@ -321,6 +321,11 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   (void) MPT;
   assert(MPT->getPointeeType()->isFunctionProtoType() &&
          "Unexpected member pointer type!");
+
+  // The creation of member function pointers has no side effects; if
+  // there is no destination pointer, we have nothing to do.
+  if (!DestPtr)
+    return;
   
   const DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
   const CXXMethodDecl *MD = 
@@ -328,6 +333,7 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
 
   const llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
+
 
   llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "dst.ptr");
   llvm::Value *FuncPtr;
