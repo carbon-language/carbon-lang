@@ -465,11 +465,13 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                llvm::Value *NewPtr,
                                llvm::Value *NumElements) {
   if (E->isArray()) {
-    if (CXXConstructorDecl *Ctor = E->getConstructor())
-      CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
-                                     E->constructor_arg_begin(), 
-                                     E->constructor_arg_end());
-    return;
+    if (CXXConstructorDecl *Ctor = E->getConstructor()) {
+      if (!Ctor->getParent()->hasTrivialConstructor())
+        CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
+                                       E->constructor_arg_begin(), 
+                                       E->constructor_arg_end());
+      return;
+    }
   }
   
   QualType AllocType = E->getAllocatedType();
