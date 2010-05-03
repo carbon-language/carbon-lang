@@ -643,7 +643,10 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // uses regs before it defs them.
       if (!MO.isReg() || !MO.getReg() || !MO.isUse())
         continue;
-      
+
+      // Ignore helpful kill flags from earlier passes.
+      MO.setIsKill(false);
+
       LastUseDef[MO.getReg()] = std::make_pair(I, i);
       
       if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) continue;
