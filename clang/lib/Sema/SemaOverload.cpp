@@ -374,8 +374,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {
   if (OldQType != NewQType &&
       (OldType->getNumArgs() != NewType->getNumArgs() ||
        OldType->isVariadic() != NewType->isVariadic() ||
-       !std::equal(OldType->arg_type_begin(), OldType->arg_type_end(),
-                   NewType->arg_type_begin())))
+       !FunctionArgTypesAreEqual(OldType, NewType)))
     return true;
 
   // C++ [temp.over.link]p4:
@@ -1331,6 +1330,47 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   }
 
   return false;
+}
+ 
+/// FunctionArgTypesAreEqual - This routine checks two function proto types
+/// for equlity of their argument types. Caller has already checked that
+/// they have same number of arguments. This routine assumes that Objective-C
+/// pointer types which only differ in their protocol qualifiers are equal.
+bool Sema::FunctionArgTypesAreEqual(FunctionProtoType*  OldType, 
+                            FunctionProtoType*  NewType){
+  if (!getLangOptions().ObjC1)
+    return std::equal(OldType->arg_type_begin(), OldType->arg_type_end(),
+                      NewType->arg_type_begin());
+  
+  for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
+       N = NewType->arg_type_begin(),
+       E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
+    QualType ToType = (*O);
+    QualType FromType = (*N);
+    if (ToType != FromType) {
+      if (const PointerType *PTTo = ToType->getAs<PointerType>()) {
+        if (const PointerType *PTFr = FromType->getAs<PointerType>())
+          if (PTTo->getPointeeType()->isObjCQualifiedIdType() && 
+              PTFr->getPointeeType()->isObjCQualifiedIdType() ||
+              PTTo->getPointeeType()->isObjCQualifiedClassType() && 
+              PTFr->getPointeeType()->isObjCQualifiedClassType())
+            continue;
+      }
+      else if (ToType->isObjCObjectPointerType() &&
+               FromType->isObjCObjectPointerType()) {
+        QualType ToInterfaceTy = ToType->getPointeeType();
+        QualType FromInterfaceTy = FromType->getPointeeType();
+        if (const ObjCInterfaceType *OITTo =
+            ToInterfaceTy->getAs<ObjCInterfaceType>())
+          if (const ObjCInterfaceType *OITFr =
+              FromInterfaceTy->getAs<ObjCInterfaceType>())
+            if (OITTo->getDecl() == OITFr->getDecl())
+              continue;
+      }
+      return false;  
+    }
+  }
+  return true;
 }
 
 /// CheckPointerConversion - Check the pointer conversion from the
