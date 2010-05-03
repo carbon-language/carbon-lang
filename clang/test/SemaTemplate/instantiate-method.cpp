@@ -152,3 +152,26 @@ namespace PR6947 {
   }
 
 }
+
+namespace PR7022 {
+  template <typename > 
+  struct X1
+  {
+    typedef int state_t( );
+    state_t g ;
+  };
+
+  template <  typename U = X1<int> > struct X2
+  {
+    X2( U = U())
+    {
+    }
+  };
+
+  void m(void)
+  {
+    typedef X2<> X2_type;
+    X2_type c;
+  }
+
+}
