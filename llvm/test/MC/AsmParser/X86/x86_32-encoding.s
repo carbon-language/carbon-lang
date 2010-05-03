@@ -9984,3 +9984,16 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: bsrw	305419896, %bx
 // CHECK:  encoding: [0x66,0x0f,0xbd,0x1d,0x78,0x56,0x34,0x12]
           bsrw  305419896, %bx
+
+// radr://7901779
+// CHECK: pushl   $127
+// CHECK:  encoding: [0x6a,0xfe]
+          pushl   $127
+
+// CHECK: pushw   $254
+// CHECK:  encoding: [0x66,0x68,0xfe,0x00]
+          pushw   $254
+
+// CHECK: pushl   $254
+// CHECK:  encoding: [0x68,0xfe,0x00,0x00,0x00]
+          pushl   $254

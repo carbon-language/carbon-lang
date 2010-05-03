@@ -753,11 +753,11 @@ def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[]>;
 }
 
 let Defs = [ESP], Uses = [ESP], neverHasSideEffects = 1, mayStore = 1 in {
-def PUSH32i8   : Ii8<0x6a, RawFrm, (outs), (ins i8imm:$imm), 
-                     "push{l}\t$imm", []>;
-def PUSH32i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
+def PUSHi8   : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm), 
                       "push{l}\t$imm", []>;
-def PUSH32i32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm), 
+def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
+                      "push{w}\t$imm", []>, OpSize;
+def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm), 
                       "push{l}\t$imm", []>;
 }
 
