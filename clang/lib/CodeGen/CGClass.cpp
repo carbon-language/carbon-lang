@@ -1373,6 +1373,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
 void
 CodeGenFunction::InitializeVTablePointer(BaseSubobject Base, 
                                          const CXXRecordDecl *NearestVBase,
+                                         uint64_t OffsetFromNearestVBase,
                                          llvm::Constant *VTable,
                                          const CXXRecordDecl *VTableClass) {
   const CXXRecordDecl *RD = Base.getBase();
@@ -1425,6 +1426,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 void
 CodeGenFunction::InitializeVTablePointers(BaseSubobject Base, 
                                           const CXXRecordDecl *NearestVBase,
+                                          uint64_t OffsetFromNearestVBase,
                                           bool BaseIsNonVirtualPrimaryBase,
                                           llvm::Constant *VTable,
                                           const CXXRecordDecl *VTableClass,
@@ -1433,7 +1435,8 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
   // been set.
   if (!BaseIsNonVirtualPrimaryBase) {
     // Initialize the vtable pointer for this base.
-    InitializeVTablePointer(Base, NearestVBase, VTable, VTableClass);
+    InitializeVTablePointer(Base, NearestVBase, OffsetFromNearestVBase,
+                            VTable, VTableClass);
   }
   
   const CXXRecordDecl *RD = Base.getBase();
@@ -1449,6 +1452,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
       continue;
 
     uint64_t BaseOffset;
+    uint64_t BaseOffsetFromNearestVBase;
     bool BaseDeclIsNonVirtualPrimaryBase;
 
     if (I->isVirtual()) {
@@ -1460,16 +1464,20 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
         getContext().getASTRecordLayout(VTableClass);
 
       BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
+      BaseOffsetFromNearestVBase = 0;
       BaseDeclIsNonVirtualPrimaryBase = false;
     } else {
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
       BaseOffset = Base.getBaseOffset() + Layout.getBaseClassOffset(BaseDecl);
+      BaseOffsetFromNearestVBase = 
+        BaseOffsetFromNearestVBase + Layout.getBaseClassOffset(BaseDecl);
       BaseDeclIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
     }
     
     InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
                              I->isVirtual() ? BaseDecl : NearestVBase,
+                             BaseOffsetFromNearestVBase,
                              BaseDeclIsNonVirtualPrimaryBase, 
                              VTable, VTableClass, VBases);
   }
@@ -1486,6 +1494,7 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
   // Initialize the vtable pointers for this class and all of its bases.
   VisitedVirtualBasesSetTy VBases;
   InitializeVTablePointers(BaseSubobject(RD, 0), /*NearestVBase=*/0, 
+                           /*OffsetFromNearestVBase=*/0,
                            /*BaseIsNonVirtualPrimaryBase=*/false, 
                            VTable, RD, VBases);
 }
