@@ -46,7 +46,7 @@ void test_D(D d1, D d2) {
 // CHECK: {{call.*_ZN1CaSERKS_}}
 // CHECK: {{call void @llvm.memcpy.p0i8.p0i8.i64.*i64 24}}
 // CHECK: {{call.*_ZN1BaSERS_}}
-// CHECK: for.cond
+// CHECK: br
 // CHECK: {{call.*_ZN1CaSERKS_}}
 // CHECK: {{call void @llvm.memcpy.p0i8.p0i8.i64.*i64 288}}
 // CHECK: {{call void @llvm.memcpy.p0i8.p0i8.i64.*i64 12}}
