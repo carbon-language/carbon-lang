@@ -34,7 +34,6 @@ void good_news()
   S *ps = new S(1, 2, 3.4);
   ps = new (pf) (S)(1, 2, 3.4);
   S *(*paps)[2] = new S*[*pi][2];
-  ps = new (S[3])(1, 2, 3.4);
   typedef int ia4[4];
   ia4 *pai = new (int[3][4]);
   pi = ::new int;
@@ -230,4 +229,24 @@ namespace PR5918 { // Look for template operator new overloads.
   void test() {
     (void)new(0) S;
   }
+}
+
+namespace Test1 {
+
+void f() {
+  (void)new int[10](1, 2); // expected-error {{array 'new' cannot have initialization arguments}}
+}
+
+template<typename T>
+void g(unsigned i) {
+  (void)new T[1](i); // expected-error {{array 'new' cannot have initialization arguments}}
+}
+
+template<typename T>
+void h(unsigned i) {
+  (void)new T(i); // expected-error {{array 'new' cannot have initialization arguments}}
+}
+template void h<unsigned>(unsigned);
+template void h<unsigned[10]>(unsigned); // expected-note {{in instantiation of function template specialization 'Test1::h<unsigned int [10]>' requested here}}
+
 }

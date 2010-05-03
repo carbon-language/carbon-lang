@@ -738,6 +738,15 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   unsigned NumConsArgs = ConstructorArgs.size();
   ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
 
+  // Array 'new' can't have any initializers.
+  if (NumConsArgs && ArraySize) {
+    SourceRange InitRange(ConsArgs[0]->getLocStart(),
+                          ConsArgs[NumConsArgs - 1]->getLocEnd());
+    
+    Diag(StartLoc, diag::err_new_array_init_args) << InitRange;
+    return ExprError();
+  }
+
   if (!AllocType->isDependentType() &&
       !Expr::hasAnyTypeDependentArguments(ConsArgs, NumConsArgs)) {
     // C++0x [expr.new]p15:
