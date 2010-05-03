@@ -1501,7 +1501,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     Expr *CopyCtorArg = 
       DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
-                          SourceLocation(), ParamType, 0);
+                          Constructor->getLocation(), ParamType, 0);
     
     // Cast to the base class to avoid ambiguities.
     QualType ArgTy = 
