@@ -1773,8 +1773,11 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS_public);
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus) {
       FieldCollector->Add(cast<FieldDecl>(Anon));
+      if (!cast<CXXRecordDecl>(Record)->isEmpty())
+        cast<CXXRecordDecl>(OwningClass)->setEmpty(false);
+    }
   } else {
     DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
     assert(SCSpec != DeclSpec::SCS_typedef &&
@@ -1802,7 +1805,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // context. We'll be referencing this object when we refer to one of
   // its members.
   Owner->addDecl(Anon);
-
+  
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
