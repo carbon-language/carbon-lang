@@ -1402,19 +1402,27 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   }
 
   // Compute where to store the address point.
-  llvm::Value *VTableField;
+  llvm::Value *VirtualOffset = 0;
+  uint64_t NonVirtualOffset = 0;
   
   if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
-    VTableField = OldGetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD);
+    VirtualOffset = GetVirtualBaseClassOffset(LoadCXXThis(), VTableClass, 
+                                              NearestVBase);
+    NonVirtualOffset = OffsetFromNearestVBase / 8;
   } else {
-    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-
-    VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
-    VTableField = 
-      Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+    // We can just use the base offset in the complete class.
+    NonVirtualOffset = Base.getBaseOffset() / 8;
   }
+  
+  // Apply the offsets.
+  llvm::Value *VTableField = LoadCXXThis();
+  
+  if (NonVirtualOffset || VirtualOffset)
+    VTableField = ApplyNonVirtualAndVirtualOffset(*this, VTableField, 
+                                                  NonVirtualOffset,
+                                                  VirtualOffset);
 
   // Finally, store the address point.
   const llvm::Type *AddressPointPtrTy =
@@ -1471,7 +1479,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
 
       BaseOffset = Base.getBaseOffset() + Layout.getBaseClassOffset(BaseDecl);
       BaseOffsetFromNearestVBase = 
-        BaseOffsetFromNearestVBase + Layout.getBaseClassOffset(BaseDecl);
+        OffsetFromNearestVBase + Layout.getBaseClassOffset(BaseDecl);
       BaseDeclIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
     }
     
