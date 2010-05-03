@@ -28,7 +28,7 @@ define <2 x float> @vnegf32(<2 x float>* %A) nounwind {
 ;CHECK: vnegf32:
 ;CHECK: vneg.f32
 	%tmp1 = load <2 x float>* %A
-	%tmp2 = sub <2 x float> < float -0.000000e+00, float -0.000000e+00 >, %tmp1
+	%tmp2 = fsub <2 x float> < float -0.000000e+00, float -0.000000e+00 >, %tmp1
 	ret <2 x float> %tmp2
 }
 
@@ -60,7 +60,7 @@ define <4 x float> @vnegQf32(<4 x float>* %A) nounwind {
 ;CHECK: vnegQf32:
 ;CHECK: vneg.f32
 	%tmp1 = load <4 x float>* %A
-	%tmp2 = sub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %tmp1
+	%tmp2 = fsub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %tmp1
 	ret <4 x float> %tmp2
 }
 

@@ -52,7 +52,7 @@ define <2 x float> @vld2lanef(float* %A, <2 x float>* %B) nounwind {
 	%tmp2 = call %struct.__neon_float32x2x2_t @llvm.arm.neon.vld2lane.v2f32(i8* %tmp0, <2 x float> %tmp1, <2 x float> %tmp1, i32 1)
         %tmp3 = extractvalue %struct.__neon_float32x2x2_t %tmp2, 0
         %tmp4 = extractvalue %struct.__neon_float32x2x2_t %tmp2, 1
-        %tmp5 = add <2 x float> %tmp3, %tmp4
+        %tmp5 = fadd <2 x float> %tmp3, %tmp4
 	ret <2 x float> %tmp5
 }
 
@@ -88,7 +88,7 @@ define <4 x float> @vld2laneQf(float* %A, <4 x float>* %B) nounwind {
 	%tmp2 = call %struct.__neon_float32x4x2_t @llvm.arm.neon.vld2lane.v4f32(i8* %tmp0, <4 x float> %tmp1, <4 x float> %tmp1, i32 1)
         %tmp3 = extractvalue %struct.__neon_float32x4x2_t %tmp2, 0
         %tmp4 = extractvalue %struct.__neon_float32x4x2_t %tmp2, 1
-        %tmp5 = add <4 x float> %tmp3, %tmp4
+        %tmp5 = fadd <4 x float> %tmp3, %tmp4
 	ret <4 x float> %tmp5
 }
 
@@ -160,8 +160,8 @@ define <2 x float> @vld3lanef(float* %A, <2 x float>* %B) nounwind {
         %tmp3 = extractvalue %struct.__neon_float32x2x3_t %tmp2, 0
         %tmp4 = extractvalue %struct.__neon_float32x2x3_t %tmp2, 1
         %tmp5 = extractvalue %struct.__neon_float32x2x3_t %tmp2, 2
-        %tmp6 = add <2 x float> %tmp3, %tmp4
-        %tmp7 = add <2 x float> %tmp5, %tmp6
+        %tmp6 = fadd <2 x float> %tmp3, %tmp4
+        %tmp7 = fadd <2 x float> %tmp5, %tmp6
 	ret <2 x float> %tmp7
 }
 
@@ -202,8 +202,8 @@ define <4 x float> @vld3laneQf(float* %A, <4 x float>* %B) nounwind {
         %tmp3 = extractvalue %struct.__neon_float32x4x3_t %tmp2, 0
         %tmp4 = extractvalue %struct.__neon_float32x4x3_t %tmp2, 1
         %tmp5 = extractvalue %struct.__neon_float32x4x3_t %tmp2, 2
-        %tmp6 = add <4 x float> %tmp3, %tmp4
-        %tmp7 = add <4 x float> %tmp5, %tmp6
+        %tmp6 = fadd <4 x float> %tmp3, %tmp4
+        %tmp7 = fadd <4 x float> %tmp5, %tmp6
 	ret <4 x float> %tmp7
 }
 
@@ -282,9 +282,9 @@ define <2 x float> @vld4lanef(float* %A, <2 x float>* %B) nounwind {
         %tmp4 = extractvalue %struct.__neon_float32x2x4_t %tmp2, 1
         %tmp5 = extractvalue %struct.__neon_float32x2x4_t %tmp2, 2
         %tmp6 = extractvalue %struct.__neon_float32x2x4_t %tmp2, 3
-        %tmp7 = add <2 x float> %tmp3, %tmp4
-        %tmp8 = add <2 x float> %tmp5, %tmp6
-        %tmp9 = add <2 x float> %tmp7, %tmp8
+        %tmp7 = fadd <2 x float> %tmp3, %tmp4
+        %tmp8 = fadd <2 x float> %tmp5, %tmp6
+        %tmp9 = fadd <2 x float> %tmp7, %tmp8
 	ret <2 x float> %tmp9
 }
 
@@ -330,9 +330,9 @@ define <4 x float> @vld4laneQf(float* %A, <4 x float>* %B) nounwind {
         %tmp4 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 1
         %tmp5 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 2
         %tmp6 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 3
-        %tmp7 = add <4 x float> %tmp3, %tmp4
-        %tmp8 = add <4 x float> %tmp5, %tmp6
-        %tmp9 = add <4 x float> %tmp7, %tmp8
+        %tmp7 = fadd <4 x float> %tmp3, %tmp4
+        %tmp8 = fadd <4 x float> %tmp5, %tmp6
+        %tmp9 = fadd <4 x float> %tmp7, %tmp8
 	ret <4 x float> %tmp9
 }
 

@@ -39,8 +39,8 @@ define <2 x float> @vmlaf32(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) n
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
 	%tmp3 = load <2 x float>* %C
-	%tmp4 = mul <2 x float> %tmp2, %tmp3
-	%tmp5 = add <2 x float> %tmp1, %tmp4
+	%tmp4 = fmul <2 x float> %tmp2, %tmp3
+	%tmp5 = fadd <2 x float> %tmp1, %tmp4
 	ret <2 x float> %tmp5
 }
 
@@ -83,8 +83,8 @@ define <4 x float> @vmlaQf32(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) 
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = load <4 x float>* %C
-	%tmp4 = mul <4 x float> %tmp2, %tmp3
-	%tmp5 = add <4 x float> %tmp1, %tmp4
+	%tmp4 = fmul <4 x float> %tmp2, %tmp3
+	%tmp5 = fadd <4 x float> %tmp1, %tmp4
 	ret <4 x float> %tmp5
 }
 

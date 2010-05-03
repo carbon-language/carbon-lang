@@ -70,6 +70,6 @@ define <4 x float> @vzipQf(<4 x float>* %A, <4 x float>* %B) nounwind {
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = shufflevector <4 x float> %tmp1, <4 x float> %tmp2, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
 	%tmp4 = shufflevector <4 x float> %tmp1, <4 x float> %tmp2, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
-        %tmp5 = add <4 x float> %tmp3, %tmp4
+        %tmp5 = fadd <4 x float> %tmp3, %tmp4
 	ret <4 x float> %tmp5
 }

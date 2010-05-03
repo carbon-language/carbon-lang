@@ -31,7 +31,7 @@ define <2 x double> @test3(<2 x double> %x, <2 x double> %y) alignstack(32) {
 entry:
     ; CHECK: andl{{.*}}$-32, %esp
     call void @test2()
-    %A = mul <2 x double> %x, %y
+    %A = fmul <2 x double> %x, %y
     ret <2 x double> %A
 }
 

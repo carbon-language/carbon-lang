@@ -32,7 +32,7 @@ define <2 x float> @vmulf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK: vmul.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
-	%tmp3 = mul <2 x float> %tmp1, %tmp2
+	%tmp3 = fmul <2 x float> %tmp1, %tmp2
 	ret <2 x float> %tmp3
 }
 
@@ -77,7 +77,7 @@ define <4 x float> @vmulQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK: vmul.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
-	%tmp3 = mul <4 x float> %tmp1, %tmp2
+	%tmp3 = fmul <4 x float> %tmp1, %tmp2
 	ret <4 x float> %tmp3
 }
 

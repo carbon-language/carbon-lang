@@ -6,6 +6,6 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define <4 x float> @foo(<4 x float>* %P, <4 x float> %In) nounwind {
 	%A = load <4 x float>* %P, align 4
-	%B = add <4 x float> %A, %In
+	%B = fadd <4 x float> %A, %In
 	ret <4 x float> %B
 }

@@ -41,7 +41,7 @@ define <2 x float> @vaddf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK: vadd.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
-	%tmp3 = add <2 x float> %tmp1, %tmp2
+	%tmp3 = fadd <2 x float> %tmp1, %tmp2
 	ret <2 x float> %tmp3
 }
 
@@ -86,7 +86,7 @@ define <4 x float> @vaddQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK: vadd.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
-	%tmp3 = add <4 x float> %tmp1, %tmp2
+	%tmp3 = fadd <4 x float> %tmp1, %tmp2
 	ret <4 x float> %tmp3
 }
 

@@ -50,7 +50,7 @@ define <2 x float> @vld2f(float* %A) nounwind {
 	%tmp1 = call %struct.__neon_float32x2x2_t @llvm.arm.neon.vld2.v2f32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_float32x2x2_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_float32x2x2_t %tmp1, 1
-        %tmp4 = add <2 x float> %tmp2, %tmp3
+        %tmp4 = fadd <2 x float> %tmp2, %tmp3
 	ret <2 x float> %tmp4
 }
 
@@ -104,7 +104,7 @@ define <4 x float> @vld2Qf(float* %A) nounwind {
 	%tmp1 = call %struct.__neon_float32x4x2_t @llvm.arm.neon.vld2.v4f32(i8* %tmp0)
         %tmp2 = extractvalue %struct.__neon_float32x4x2_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_float32x4x2_t %tmp1, 1
-        %tmp4 = add <4 x float> %tmp2, %tmp3
+        %tmp4 = fadd <4 x float> %tmp2, %tmp3
 	ret <4 x float> %tmp4
 }
 
