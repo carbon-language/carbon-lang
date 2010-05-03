@@ -365,6 +365,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     Owner->makeDeclVisibleInContext(Var);
   } else {
     Owner->addDecl(Var);
+    
+    if (Owner->isFunctionOrMethod())
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
 
   // Link instantiations of static data members back to the template from

@@ -220,3 +220,8 @@ namespace test0 {
   template <class T> class A { void foo(T array[10]); };
   template class A<int>;
 }
+
+namespace PR7016 {
+  template<typename T> void f() { T x = x; }
+  template void f<int>();
+}
