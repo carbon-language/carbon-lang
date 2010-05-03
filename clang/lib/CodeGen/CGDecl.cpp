@@ -231,6 +231,9 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
+  // Bail out early if the block is unreachable.
+  if (!Builder.GetInsertBlock()) return;
+
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
 

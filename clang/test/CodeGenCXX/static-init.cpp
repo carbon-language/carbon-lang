@@ -34,3 +34,14 @@ inline void h2() {
 void h3() {
   h2();
 }
+
+// PR6980: this shouldn't crash
+namespace test0 {
+  struct A { A(); };
+  __attribute__((noreturn)) int throw_exception();
+
+  void test() {
+    throw_exception();
+    static A r;
+  }
+}
