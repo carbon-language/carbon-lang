@@ -3908,6 +3908,9 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
     Cond = ICmpInst::getSwappedPredicate(Cond);
   }
 
+  // Simplify the operands before analyzing them.
+  (void)SimplifyICmpOperands(Cond, LHS, RHS);
+
   // If we have a comparison of a chrec against a constant, try to use value
   // ranges to answer this query.
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS))
@@ -3920,57 +3923,6 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
         const SCEV *Ret = AddRec->getNumIterationsInRange(CompRange, *this);
         if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
       }
-
-  // If possible, canonicalize GE/LE comparisons to GT/LT comparisons, by
-  // adding or subtracting 1 from one of the operands.
-  switch (Cond) {
-  case ICmpInst::ICMP_SLE:
-    if (!getSignedRange(RHS).getSignedMax().isMaxSignedValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), 1, true), RHS,
-                       /*HasNUW=*/false, /*HasNSW=*/true);
-      Cond = ICmpInst::ICMP_SLT;
-    } else if (!getSignedRange(LHS).getSignedMin().isMinSignedValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), LHS,
-                       /*HasNUW=*/false, /*HasNSW=*/true);
-      Cond = ICmpInst::ICMP_SLT;
-    }
-    break;
-  case ICmpInst::ICMP_SGE:
-    if (!getSignedRange(RHS).getSignedMin().isMinSignedValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), RHS,
-                       /*HasNUW=*/false, /*HasNSW=*/true);
-      Cond = ICmpInst::ICMP_SGT;
-    } else if (!getSignedRange(LHS).getSignedMax().isMaxSignedValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), 1, true), LHS,
-                       /*HasNUW=*/false, /*HasNSW=*/true);
-      Cond = ICmpInst::ICMP_SGT;
-    }
-    break;
-  case ICmpInst::ICMP_ULE:
-    if (!getUnsignedRange(RHS).getUnsignedMax().isMaxValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), 1, true), RHS,
-                       /*HasNUW=*/true, /*HasNSW=*/false);
-      Cond = ICmpInst::ICMP_ULT;
-    } else if (!getUnsignedRange(LHS).getUnsignedMin().isMinValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), LHS,
-                       /*HasNUW=*/true, /*HasNSW=*/false);
-      Cond = ICmpInst::ICMP_ULT;
-    }
-    break;
-  case ICmpInst::ICMP_UGE:
-    if (!getUnsignedRange(RHS).getUnsignedMin().isMinValue()) {
-      RHS = getAddExpr(getConstant(RHS->getType(), (uint64_t)-1, true), RHS,
-                       /*HasNUW=*/true, /*HasNSW=*/false);
-      Cond = ICmpInst::ICMP_UGT;
-    } else if (!getUnsignedRange(LHS).getUnsignedMax().isMaxValue()) {
-      LHS = getAddExpr(getConstant(RHS->getType(), 1, true), LHS,
-                       /*HasNUW=*/true, /*HasNSW=*/false);
-      Cond = ICmpInst::ICMP_UGT;
-    }
-    break;
-  default:
-    break;
-  }
 
   switch (Cond) {
   case ICmpInst::ICMP_NE: {                     // while (X != Y)
@@ -4985,6 +4937,65 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
       goto trivially_true;
     if (ICmpInst::isFalseWhenEqual(Pred))
       goto trivially_false;
+  }
+
+  // If possible, canonicalize GE/LE comparisons to GT/LT comparisons, by
+  // adding or subtracting 1 from one of the operands.
+  switch (Pred) {
+  case ICmpInst::ICMP_SLE:
+    if (!getSignedRange(RHS).getSignedMax().isMaxSignedValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), 1, true), RHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Pred = ICmpInst::ICMP_SLT;
+      Changed = true;
+    } else if (!getSignedRange(LHS).getSignedMin().isMinSignedValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), -1, true), LHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Pred = ICmpInst::ICMP_SLT;
+      Changed = true;
+    }
+    break;
+  case ICmpInst::ICMP_SGE:
+    if (!getSignedRange(RHS).getSignedMin().isMinSignedValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), -1, true), RHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Pred = ICmpInst::ICMP_SGT;
+      Changed = true;
+    } else if (!getSignedRange(LHS).getSignedMax().isMaxSignedValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), 1, true), LHS,
+                       /*HasNUW=*/false, /*HasNSW=*/true);
+      Pred = ICmpInst::ICMP_SGT;
+      Changed = true;
+    }
+    break;
+  case ICmpInst::ICMP_ULE:
+    if (!getUnsignedRange(RHS).getUnsignedMax().isMaxValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), 1, false), RHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Pred = ICmpInst::ICMP_ULT;
+      Changed = true;
+    } else if (!getUnsignedRange(LHS).getUnsignedMin().isMinValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), -1, false), LHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Pred = ICmpInst::ICMP_ULT;
+      Changed = true;
+    }
+    break;
+  case ICmpInst::ICMP_UGE:
+    if (!getUnsignedRange(RHS).getUnsignedMin().isMinValue()) {
+      RHS = getAddExpr(getConstant(RHS->getType(), -1, false), RHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Pred = ICmpInst::ICMP_UGT;
+      Changed = true;
+    } else if (!getUnsignedRange(LHS).getUnsignedMax().isMaxValue()) {
+      LHS = getAddExpr(getConstant(RHS->getType(), 1, false), LHS,
+                       /*HasNUW=*/true, /*HasNSW=*/false);
+      Pred = ICmpInst::ICMP_UGT;
+      Changed = true;
+    }
+    break;
+  default:
+    break;
   }
 
   // TODO: More simplifications are possible here.
