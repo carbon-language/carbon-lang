@@ -720,10 +720,10 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       OperatorNew->getType()->getAs<FunctionProtoType>();
     VariadicCallType CallType = 
       Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
-    bool Invalid = GatherArgumentsForCall(PlacementLParen, OperatorNew,
-                                          Proto, 1, PlaceArgs, NumPlaceArgs, 
-                                          AllPlaceArgs, CallType);
-    if (Invalid)
+    
+    if (GatherArgumentsForCall(PlacementLParen, OperatorNew,
+                               Proto, 1, PlaceArgs, NumPlaceArgs, 
+                               AllPlaceArgs, CallType))
       return ExprError();
     
     NumPlaceArgs = AllPlaceArgs.size();
