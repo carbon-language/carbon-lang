@@ -719,7 +719,10 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
     // scan through class's protocols.
     for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
          E = IDecl->protocol_end(); PI != E; ++PI)
-      CollectImmediateProperties((*PI), PropMap);
+      // Exclude property for protocols which conform to class's super-class, 
+      // as super-class has to implement the property.
+      if (!ProtocolConformsToSuperClass(IDecl, (*PI)))
+        CollectImmediateProperties((*PI), PropMap);
   }
   if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     if (!CATDecl->IsClassExtension())
@@ -746,6 +749,33 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
          E = PDecl->protocol_end(); PI != E; ++PI)
       CollectImmediateProperties((*PI), PropMap);
   }
+}
+
+/// ProtocolConformsToSuperClass - Returns true if class's given protocol
+/// conforms to one of its super class's protocols.
+bool Sema::ProtocolConformsToSuperClass(const ObjCInterfaceDecl *IDecl,
+                                        const ObjCProtocolDecl *PDecl) {
+  if (const ObjCInterfaceDecl *CDecl = IDecl->getSuperClass()) {
+    for (ObjCInterfaceDecl::protocol_iterator PI = CDecl->protocol_begin(),
+         E = CDecl->protocol_end(); PI != E; ++PI) {
+      if (ProtocolConformsToProtocol((*PI), PDecl))
+        return true;
+      return ProtocolConformsToSuperClass(CDecl, PDecl);
+    }
+  }
+  return false;
+}
+
+bool Sema::ProtocolConformsToProtocol(const ObjCProtocolDecl *NestedProtocol,
+                                      const ObjCProtocolDecl *PDecl) {
+  if (PDecl->getIdentifier() == NestedProtocol->getIdentifier())
+    return true;
+  // scan through protocol's protocols.
+  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); PI != E; ++PI)
+    if (ProtocolConformsToProtocol(NestedProtocol, (*PI)))
+      return true;
+  return false;
 }
 
 /// LookupPropertyDecl - Looks up a property in the current class and all

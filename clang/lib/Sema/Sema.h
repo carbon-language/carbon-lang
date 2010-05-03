@@ -1539,6 +1539,15 @@ public:
   /// the class and its conforming protocols; but not those it its super class.
   void CollectImmediateProperties(ObjCContainerDecl *CDecl,
                   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap);
+  
+  /// ProtocolConformsToSuperClass - Returns true if class has a super class
+  /// and it, or its nested super class conforms to the protocol.
+  bool ProtocolConformsToSuperClass(const ObjCInterfaceDecl *IDecl, 
+                                    const ObjCProtocolDecl *PDecl);
+  /// ProtocolConformsToProtocol - Returns true if 2nd Protocol (PDecl) is
+  /// qualified by the 1st.
+  bool ProtocolConformsToProtocol(const ObjCProtocolDecl *NestedProtocol,
+                                  const ObjCProtocolDecl *PDecl);
 
   /// LookupPropertyDecl - Looks up a property in the current class and all
   /// its protocols.
