@@ -738,6 +738,14 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         bool isVolatile) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
+  // Ignore empty classes in C++.
+  if (getContext().getLangOptions().CPlusPlus) {
+    if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      if (cast<CXXRecordDecl>(RT->getDecl())->isEmpty())
+        return;
+    }
+  }
+  
   // Aggregate assignment turns into llvm.memcpy.  This is almost valid per
   // C99 6.5.16.1p3, which states "If the value being stored in an object is
   // read from another object that overlaps in anyway the storage of the first

@@ -473,6 +473,14 @@ void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
+  // Ignore empty classes in C++.
+  if (getContext().getLangOptions().CPlusPlus) {
+    if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      if (cast<CXXRecordDecl>(RT->getDecl())->isEmpty())
+        return;
+    }
+  }
+  
   const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
