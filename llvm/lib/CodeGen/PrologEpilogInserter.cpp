@@ -510,7 +510,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // callee saved registers.
   if (StackGrowsDown) {
     for (unsigned i = MinCSFrameIndex; i <= MaxCSFrameIndex; ++i) {
-      // If stack grows down, we need to add size of find the lowest
+      // If the stack grows down, we need to add the size to find the lowest
       // address of the object.
       Offset += MFI->getObjectSize(i);
 
