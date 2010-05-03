@@ -259,6 +259,9 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
     for (; BI != IntB.ranges.end() && AI->end >= BI->start; ++BI) {
       if (BI->valno == BValNo)
         continue;
+      // When BValNo is null, we're looking for a dummy clobber-value for a subreg.
+      if (!BValNo && !BI->valno->isDefAccurate() && !BI->valno->getCopy())
+        continue;
       if (BI->start <= AI->start && BI->end > AI->start)
         return true;
       if (BI->start > AI->start && BI->start < AI->end)
@@ -369,6 +372,17 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
 
+  bool BHasSubRegs = false;
+  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
+    BHasSubRegs = *tri_->getSubRegisters(IntB.reg);
+
+  // Abort if the subregisters of IntB.reg have values that are not simply the
+  // clobbers from the superreg.
+  if (BHasSubRegs)
+    for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
+      if (HasOtherReachingDefs(IntA, li_->getInterval(*SR), AValNo, 0))
+        return false;
+
   // If some of the uses of IntA.reg is already coalesced away, return false.
   // It's not possible to determine whether it's safe to perform the coalescing.
   for (MachineRegisterInfo::use_nodbg_iterator UI = 
@@ -417,9 +431,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     BExtend[ALR->end] = BLR->end;
 
   // Update uses of IntA of the specific Val# with IntB.
-  bool BHasSubRegs = false;
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
-    BHasSubRegs = *tri_->getSubRegisters(IntB.reg);
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
          UE = mri_->use_end(); UI != UE;) {
     MachineOperand &UseMO = UI.getOperand();
