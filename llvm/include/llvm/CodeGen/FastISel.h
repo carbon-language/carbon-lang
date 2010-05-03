@@ -311,6 +311,11 @@ private:
   /// might result in multiple MBB's for one BB.  As such, the start of the
   /// BB might correspond to a different MBB than the end.
   bool HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
+
+  /// materializeRegForValue - Helper for getRegForVale. This function is
+  /// called when the value isn't already available in a register and must
+  /// be materialized with new instructions.
+  unsigned materializeRegForValue(const Value *V, MVT VT);
 };
 
 }

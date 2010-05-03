@@ -84,6 +84,15 @@ unsigned FastISel::getRegForValue(const Value *V) {
   if (Reg != 0)
     return Reg;
 
+  return materializeRegForValue(V, VT);
+}
+
+/// materializeRegForValue - Helper for getRegForVale. This function is
+/// called when the value isn't already available in a register and must
+/// be materialized with new instructions.
+unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
+  unsigned Reg = 0;
+
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() <= 64)
       Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
@@ -141,7 +150,7 @@ unsigned FastISel::lookUpRegForValue(const Value *V) {
   // Look up the value to see if we already have a register for it. We
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
-  // def-dominatess-use requirement enforced.
+  // def-dominates-use requirement enforced.
   if (ValueMap.count(V))
     return ValueMap[V];
   return LocalValueMap[V];
