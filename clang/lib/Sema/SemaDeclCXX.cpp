@@ -4004,9 +4004,13 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   LookupParsedName(R, S, &SS);
 
   // Check if we have a previous declaration with the same name.
-  if (NamedDecl *PrevDecl
-        = LookupSingleName(S, Alias, AliasLoc, LookupOrdinaryName, 
-                           ForRedeclaration)) {
+  NamedDecl *PrevDecl
+    = LookupSingleName(S, Alias, AliasLoc, LookupOrdinaryName, 
+                       ForRedeclaration);
+  if (PrevDecl && !isDeclInScope(PrevDecl, CurContext, S))
+    PrevDecl = 0;
+
+  if (PrevDecl) {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.

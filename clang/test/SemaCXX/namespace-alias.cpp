@@ -91,3 +91,13 @@ namespace A = N;
 
 A::X nx;
 
+namespace PR7014 {
+  namespace X
+  {
+    namespace Y {}
+  }
+
+  using namespace X;
+
+  namespace Y = X::Y;
+}
