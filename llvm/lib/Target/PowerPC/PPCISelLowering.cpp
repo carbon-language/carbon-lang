@@ -4298,7 +4298,7 @@ SDValue PPCTargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
   // Create a stack slot that is 16-byte aligned.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(16, 16, false);
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  EVT PtrVT = getPointerTy();
   SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
   // Store the input value into Value#0 of the stack slot.
@@ -5497,45 +5497,56 @@ bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
 SDValue PPCTargetLowering::LowerRETURNADDR(SDValue Op,
                                            SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
-  // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
-    return SDValue();
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
 
+  // Make sure the function does not optimize away the store of the RA to
+  // the stack.
   MachineFunction &MF = DAG.getMachineFunction();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  FuncInfo->setLRStoreRequired();
+  bool isPPC64 = PPCSubTarget.isPPC64();
+  bool isDarwinABI = PPCSubTarget.isDarwinABI();
+
+  if (Depth > 0) {
+    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue Offset =
+    
+      DAG.getConstant(PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI),
+                      isPPC64? MVT::i64 : MVT::i32);
+    return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                   FrameAddr, Offset),
+                       NULL, 0, false, false, 0);
+  }
 
   // Just load the return address off the stack.
   SDValue RetAddrFI = getReturnAddrFrameIndex(DAG);
-
-  // Make sure the function really does not optimize away the store of the RA
-  // to the stack.
-  FuncInfo->setLRStoreRequired();
-  return DAG.getLoad(getPointerTy(), dl,
-                     DAG.getEntryNode(), RetAddrFI, NULL, 0,
-                     false, false, 0);
+  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                     RetAddrFI, NULL, 0, false, false, 0);
 }
 
 SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
                                           SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
-  // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
-    return SDValue();
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool is31 = (DisableFramePointerElim(MF) || MFI->hasVarSizedObjects())
-                  && MFI->getStackSize();
-
-  if (isPPC64)
-    return DAG.getCopyFromReg(DAG.getEntryNode(), dl, is31 ? PPC::X31 : PPC::X1,
-      MVT::i64);
-  else
-    return DAG.getCopyFromReg(DAG.getEntryNode(), dl, is31 ? PPC::R31 : PPC::R1,
-      MVT::i32);
+  MFI->setFrameAddressIsTaken(true);
+  bool is31 = (DisableFramePointerElim(MF) || MFI->hasVarSizedObjects()) &&
+                  MFI->getStackSize() &&
+                  !MF.getFunction()->hasFnAttr(Attribute::Naked);
+  unsigned FrameReg = isPPC64 ? (is31 ? PPC::X31 : PPC::X1) :
+                                (is31 ? PPC::R31 : PPC::R1);
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg,
+                                         PtrVT);
+  while (Depth--)
+    FrameAddr = DAG.getLoad(Op.getValueType(), dl, DAG.getEntryNode(),
+                            FrameAddr, NULL, 0, false, false, 0);
+  return FrameAddr;
 }
 
 bool
