@@ -9997,3 +9997,20 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: pushl   $254
 // CHECK:  encoding: [0x68,0xfe,0x00,0x00,0x00]
           pushl   $254
+
+// radr://7928400
+// CHECK: movq    %mm3, 3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0x0f,0x7f,0x9c,0xcb,0xef,0xbe,0xad,0xde]
+          movq    %mm3, 3735928559(%ebx,%ecx,8)
+
+// CHECK: movd    %mm3, 3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0x0f,0x7e,0x9c,0xcb,0xef,0xbe,0xad,0xde]
+          movd    %mm3, 3735928559(%ebx,%ecx,8)
+
+// CHECK: movq    3735928559(%ebx,%ecx,8), %xmm5
+// CHECK:  encoding: [0xf3,0x0f,0x7e,0xac,0xcb,0xef,0xbe,0xad,0xde]
+          movq    3735928559(%ebx,%ecx,8), %xmm5
+
+// CHECK: movd    3735928559(%ebx,%ecx,8), %xmm5
+// CHECK:  encoding: [0x66,0x0f,0x6e,0xac,0xcb,0xef,0xbe,0xad,0xde]
+          movd    3735928559(%ebx,%ecx,8), %xmm5

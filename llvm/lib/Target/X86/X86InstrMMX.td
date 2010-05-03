@@ -117,7 +117,7 @@ def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
 def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs), (ins GR32:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
-def MMX_MOVQ64gmr : MMXRI<0x7E, MRMDestMem, (outs), 
+def MMX_MOVQ64gmr : MMXRI<0x7F, MRMDestMem, (outs), 
                          (ins i64mem:$dst, VR64:$src),
                          "movq\t{$src, $dst|$dst, $src}", []>;
 
