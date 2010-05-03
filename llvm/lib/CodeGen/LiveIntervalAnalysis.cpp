@@ -665,7 +665,8 @@ void LiveIntervals::computeIntervals() {
 
     // Track the index of the current machine instr.
     SlotIndex MIIndex = getMBBStartIdx(MBB);
-    DEBUG(dbgs() << MBB->getName() << ":\n");
+    DEBUG(dbgs() << "BB#" << MBB->getNumber()
+          << ":\t\t# derived from " << MBB->getName() << "\n");
 
     // Create intervals for live-ins to this BB first.
     for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
