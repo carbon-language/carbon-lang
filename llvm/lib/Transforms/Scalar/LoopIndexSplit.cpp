@@ -948,6 +948,25 @@ bool LoopIndexSplit::splitLoop() {
   if (!IVBasedValues.count(SplitCondition->getOperand(!SVOpNum)))
     return false;
 
+  // Check for side effects.
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+
+    assert(DT->dominates(Header, BB));
+    if (DT->properlyDominates(SplitCondition->getParent(), BB))
+      continue;
+
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
+	 BI != BE; ++BI) {
+      Instruction *Inst = BI;
+
+      if (!Inst->isSafeToSpeculativelyExecute() && !isa<PHINode>(Inst)
+	  && !isa<BranchInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst))
+        return false;
+    }
+  }
+
   // Normalize loop conditions so that it is easier to calculate new loop
   // bounds.
   if (IVisGT(*ExitCondition) || IVisGE(*ExitCondition)) {
