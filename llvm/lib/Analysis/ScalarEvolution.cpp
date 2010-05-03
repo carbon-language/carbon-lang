@@ -5767,7 +5767,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
   WriteAsOperand(OS, F, /*PrintType=*/false);
   OS << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (isSCEVable(I->getType())) {
+    if (isSCEVable(I->getType()) && !isa<CmpInst>(*I)) {
       OS << *I << '\n';
       OS << "  -->  ";
       const SCEV *SV = SE.getSCEV(&*I);
