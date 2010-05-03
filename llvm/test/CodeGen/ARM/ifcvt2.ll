@@ -1,7 +1,8 @@
-; RUN: llc < %s -march=arm
-; RUN: llc < %s -march=arm | grep bxlt | count 1
-; RUN: llc < %s -march=arm | grep bxgt | count 1
-; RUN: llc < %s -march=arm | grep bxge | count 1
+; RUN: llc < %s -march=arm > %t
+; RUN: grep bxlt %t | count 1
+; RUN: grep bxgt %t | count 1
+; RUN: not grep bxge %t
+; RUN: not grep bxle %t
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 	%tmp2 = icmp sgt i32 %c, 10

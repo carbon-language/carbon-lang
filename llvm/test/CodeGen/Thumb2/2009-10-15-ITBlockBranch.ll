@@ -1,6 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-eabi -mcpu=cortex-a8 -float-abi=hard | FileCheck %s
-
-; A fix for PR5204 will require this check to be changed.
+; PR5204
 
 %"struct.__gnu_cxx::__normal_iterator<char*,std::basic_string<char, std::char_traits<char>, std::allocator<char> > >" = type { i8* }
 %"struct.__gnu_cxx::new_allocator<char>" = type <{ i8 }>
@@ -11,11 +10,9 @@
 
 define weak arm_aapcs_vfpcc i32 @_ZNKSs7compareERKSs(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %this, %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %__str) {
 ; CHECK: _ZNKSs7compareERKSs:
-; CHECK:	it ne
-; CHECK-NEXT: ldmiane.w
-; CHECK-NEXT: itt eq
-; CHECK-NEXT: subeq.w
-; CHECK-NEXT: ldmiaeq.w
+; CHECK:      it  eq
+; CHECK-NEXT: subeq.w r0, r6, r8
+; CHECK-NEXT: ldmia.w sp, {r4, r5, r6, r8, r9, pc}
 entry:
   %0 = tail call arm_aapcs_vfpcc  i32 @_ZNKSs4sizeEv(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %this) ; <i32> [#uses=3]
   %1 = tail call arm_aapcs_vfpcc  i32 @_ZNKSs4sizeEv(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %__str) ; <i32> [#uses=3]

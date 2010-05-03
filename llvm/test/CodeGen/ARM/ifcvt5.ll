@@ -9,7 +9,7 @@ entry:
 	ret void
 }
 
-define void @t1(i32 %a, i32 %b) {
+define i32 @t1(i32 %a, i32 %b) {
 ; CHECK: t1:
 ; CHECK: ldmialt sp!, {r7, pc}
 entry:
@@ -18,8 +18,8 @@ entry:
 
 cond_true:		; preds = %entry
 	tail call void @foo( i32 %b )
-	ret void
+	ret i32 0
 
 UnifiedReturnBlock:		; preds = %entry
-	ret void
+	ret i32 1
 }

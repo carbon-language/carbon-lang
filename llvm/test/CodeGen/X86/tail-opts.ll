@@ -406,3 +406,26 @@ bb12:
 return:
   ret void
 }
+
+; Tail-merging should merge the two ret instructions since one side
+; can fall-through into the ret and the other side has to branch anyway.
+
+; CHECK: TESTE:
+; CHECK: imulq
+; CHECK-NEXT: LBB8_2:
+; CHECK-NEXT: ret
+
+define i64 @TESTE(i64 %parami, i64 %paraml) nounwind readnone {
+entry:
+  %cmp = icmp slt i64 %parami, 1                  ; <i1> [#uses=1]
+  %varx.0 = select i1 %cmp, i64 1, i64 %parami    ; <i64> [#uses=1]
+  %cmp410 = icmp slt i64 %paraml, 1               ; <i1> [#uses=1]
+  br i1 %cmp410, label %for.end, label %bb.nph
+
+bb.nph:                                           ; preds = %entry
+  %tmp15 = mul i64 %paraml, %parami                   ; <i64> [#uses=1]
+  ret i64 %tmp15
+
+for.end:                                          ; preds = %entry
+  ret i64 %varx.0
+}

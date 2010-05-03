@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
 
-define void @f1(i32 %a, i32 %b, i32* %v) {
+define i32 @f1(i32 %a, i32 %b, i32* %v) {
 entry:
 ; CHECK: f1:
 ; CHECK: bne LBB
@@ -9,13 +9,13 @@ entry:
 
 cond_true:              ; preds = %entry
         store i32 0, i32* %v
-        ret void
+        ret i32 0
 
 return:         ; preds = %entry
-        ret void
+        ret i32 1
 }
 
-define void @f2(i32 %a, i32 %b, i32* %v) {
+define i32 @f2(i32 %a, i32 %b, i32* %v) {
 entry:
 ; CHECK: f2:
 ; CHECK: bge LBB
@@ -24,13 +24,13 @@ entry:
 
 cond_true:              ; preds = %entry
         store i32 0, i32* %v
-        ret void
+        ret i32 0
 
 return:         ; preds = %entry
-        ret void
+        ret i32 1
 }
 
-define void @f3(i32 %a, i32 %b, i32* %v) {
+define i32 @f3(i32 %a, i32 %b, i32* %v) {
 entry:
 ; CHECK: f3:
 ; CHECK: bhs LBB
@@ -39,13 +39,13 @@ entry:
 
 cond_true:              ; preds = %entry
         store i32 0, i32* %v
-        ret void
+        ret i32 0
 
 return:         ; preds = %entry
-        ret void
+        ret i32 1
 }
 
-define void @f4(i32 %a, i32 %b, i32* %v) {
+define i32 @f4(i32 %a, i32 %b, i32* %v) {
 entry:
 ; CHECK: f4:
 ; CHECK: blo LBB
@@ -54,8 +54,8 @@ entry:
 
 cond_true:              ; preds = %entry
         store i32 0, i32* %v
-        ret void
+        ret i32 0
 
 return:         ; preds = %entry
-        ret void
+        ret i32 1
 }
