@@ -5260,10 +5260,10 @@ bool ScalarEvolution::isImpliedCond(Value *CondValue,
   // canonicalized the comparison.
   if (SimplifyICmpOperands(Pred, LHS, RHS))
     if (LHS == RHS)
-      return Pred == ICmpInst::ICMP_EQ;
+      return CmpInst::isTrueWhenEqual(Pred);
   if (SimplifyICmpOperands(FoundPred, FoundLHS, FoundRHS))
     if (FoundLHS == FoundRHS)
-      return Pred == ICmpInst::ICMP_NE;
+      return CmpInst::isFalseWhenEqual(Pred);
 
   // Check to see if we can make the LHS or RHS match.
   if (LHS == FoundRHS || RHS == FoundLHS) {
