@@ -1691,6 +1691,8 @@ def err_empty_scalar_initializer : Error<"scalar initializer cannot be empty">;
 def err_illegal_initializer : Error<
   "illegal initializer (only variables can be initialized)">;
 def err_illegal_initializer_type : Error<"illegal initializer type %0">;
+def err_init_objc_class : Error<
+  "cannot initialize Objective-C class type %0">;
 def err_implicit_empty_initializer : Error<
   "initializer for aggregate with no elements requires explicit braces">;
 def err_bitfield_has_negative_width : Error<

@@ -624,10 +624,14 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
   } else if (DeclType->isReferenceType()) {
     CheckReferenceType(Entity, IList, DeclType, Index,
                        StructuredList, StructuredIndex);
+  } else if (DeclType->isObjCInterfaceType()) {
+    SemaRef.Diag(IList->getLocStart(), diag::err_init_objc_class)
+      << DeclType;
+    hadError = true;
   } else {
-    // In C, all types are either scalars or aggregates, but
-    // additional handling is needed here for C++ (and possibly others?).
-    assert(0 && "Unsupported initializer type");
+    SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
+      << DeclType;
+    hadError = true;
   }
 }
 
