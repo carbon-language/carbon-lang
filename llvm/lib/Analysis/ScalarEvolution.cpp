@@ -4783,13 +4783,16 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
   }
 
   // If we're comparing an addrec with a value which is loop-invariant in the
-  // addrec's loop, put the addrec on the left.
-  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS))
-    if (LHS->isLoopInvariant(AR->getLoop())) {
+  // addrec's loop, put the addrec on the left. Also make a dominance check,
+  // as both operands could be addrecs loop-invariant in each other's loop.
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS)) {
+    const Loop *L = AR->getLoop();
+    if (LHS->isLoopInvariant(L) && LHS->properlyDominates(L->getHeader(), DT)) {
       std::swap(LHS, RHS);
       Pred = ICmpInst::getSwappedPredicate(Pred);
       Changed = true;
     }
+  }
 
   // If there's a constant operand, canonicalize comparisons with boundary
   // cases, and canonicalize *-or-equal comparisons to regular comparisons.
