@@ -1900,15 +1900,6 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return;
   }
 
-  // enums cannot be templates.
-  if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) {
-    Diag(Tok, diag::err_enum_template);
-
-    // Skip the rest of this declarator, up until the comma or semicolon.
-    SkipUntil(tok::comma, true);
-    return;      
-  }
-
   // If an identifier is present, consume and remember it.
   IdentifierInfo *Name = 0;
   SourceLocation NameLoc;
@@ -1932,6 +1923,18 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TUK = Action::TUK_Declaration;
   else
     TUK = Action::TUK_Reference;
+  
+  // enums cannot be templates, although they can be referenced from a 
+  // template.
+  if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
+      TUK != Action::TUK_Reference) {
+    Diag(Tok, diag::err_enum_template);
+    
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
+    return;      
+  }
+  
   bool Owned = false;
   bool IsDependent = false;
   SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
