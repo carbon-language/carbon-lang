@@ -3309,7 +3309,8 @@ public:
 
   MultiLevelTemplateArgumentList getTemplateInstantiationArgs(NamedDecl *D,
                                      const TemplateArgumentList *Innermost = 0,
-                                     bool RelativeToPrimary = false);
+                                                bool RelativeToPrimary = false,
+                                               const FunctionDecl *Pattern = 0);
 
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {

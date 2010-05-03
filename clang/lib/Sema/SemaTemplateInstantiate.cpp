@@ -38,10 +38,16 @@ using namespace clang;
 /// arguments relative to the primary template, even when we're
 /// dealing with a specialization. This is only relevant for function
 /// template specializations.
+///
+/// \param Pattern If non-NULL, indicates the pattern from which we will be
+/// instantiating the definition of the given declaration, \p D. This is
+/// used to determine the proper set of template instantiation arguments for
+/// friend function template specializations.
 MultiLevelTemplateArgumentList
 Sema::getTemplateInstantiationArgs(NamedDecl *D, 
                                    const TemplateArgumentList *Innermost,
-                                   bool RelativeToPrimary) {
+                                   bool RelativeToPrimary,
+                                   const FunctionDecl *Pattern) {
   // Accumulate the set of template argument lists in this structure.
   MultiLevelTemplateArgumentList Result;
 
@@ -89,9 +95,11 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
       
       // If this is a friend declaration and it declares an entity at
       // namespace scope, take arguments from its lexical parent
-      // instead of its semantic parent.
+      // instead of its semantic parent, unless of course the pattern we're
+      // instantiating actually comes from the file's context!
       if (Function->getFriendObjectKind() &&
-          Function->getDeclContext()->isFileContext()) {
+          Function->getDeclContext()->isFileContext() &&
+          (!Pattern || !Pattern->getLexicalDeclContext()->isFileContext())) {
         Ctx = Function->getLexicalDeclContext();
         RelativeToPrimary = false;
         continue;

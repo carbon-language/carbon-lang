@@ -1970,8 +1970,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
   if (Inst)
-    return;
-
+    return;  
+  
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
@@ -2003,7 +2003,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   CurContext = Function;
 
   MultiLevelTemplateArgumentList TemplateArgs =
-    getTemplateInstantiationArgs(Function);
+    getTemplateInstantiationArgs(Function, 0, false, PatternDecl);
 
   // If this is a constructor, instantiate the member initializers.
   if (const CXXConstructorDecl *Ctor =

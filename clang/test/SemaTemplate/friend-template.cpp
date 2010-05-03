@@ -142,3 +142,68 @@ namespace FriendTemplateDefinition {
     f(x, i5);
   }
 }
+
+namespace PR7013a {
+  template<class > struct X0
+  {
+    typedef int type;
+  };
+  template<typename > struct X1
+  {
+  };
+  template<typename , typename T> struct X2
+  {
+    typename T::type e;
+  };
+  namespace N
+  {
+    template <typename = int, typename = X1<int> > struct X3
+    {
+      template <typename T1, typename T2, typename B> friend void op(X2<T1, T2>& , B);
+    };
+    template <typename Ch, typename Tr, typename B> void op(X2<Ch, Tr>& , B)
+    {
+      X2<int, Tr> s;
+    }
+  }
+  int n()
+  {
+    X2<int, X0<int> > ngs;
+    N::X3<> b;
+    op(ngs, b);
+    return 0;
+  }
+}
+
+namespace PR7013b {
+  template<class > struct X0
+  {
+    typedef int type;
+  };
+  template<typename > struct X1
+  {
+  };
+  template<typename , typename T> struct X2
+  {
+    typename T::type e;
+  };
+  namespace N
+  {
+    template <typename = X1<int> > struct X3
+    {
+      template <typename T1, typename T2, typename B> friend void op(X2<T1, T2>& , B);
+    };
+    template <typename Ch, typename Tr, typename B> void op(X2<Ch, Tr>& , B)
+    {
+      X2<int, Tr> s;
+    }
+  }
+  int n()
+  {
+    X2<int, X0<int> > ngs;
+    N::X3<> b;
+    op(ngs, b);
+    return 0;
+  }
+
+}
