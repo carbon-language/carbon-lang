@@ -47,31 +47,6 @@ ComputeNonVirtualBaseClassOffset(ASTContext &Context,
   // FIXME: We should not use / 8 here.
   return Offset / 8;
 }
-                                 
-static uint64_t 
-ComputeNonVirtualBaseClassOffset(ASTContext &Context,
-                                 const CXXBasePath &Path,
-                                 unsigned Start) {
-  uint64_t Offset = 0;
-
-  for (unsigned i = Start, e = Path.size(); i != e; ++i) {
-    const CXXBasePathElement& Element = Path[i];
-
-    // Get the layout.
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Element.Class);
-    
-    const CXXBaseSpecifier *BS = Element.Base;
-    assert(!BS->isVirtual() && "Should not see virtual bases here!");
-    
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(BS->getType()->getAs<RecordType>()->getDecl());
-    
-    // Add the offset.
-    Offset += Layout.getBaseClassOffset(Base) / 8;
-  }
-
-  return Offset;
-}
 
 llvm::Constant *
 CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
@@ -225,72 +200,6 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     Value = PHI;
   }
   
-  return Value;
-}
-
-llvm::Value *
-CodeGenFunction::OldGetAddressOfBaseClass(llvm::Value *Value,
-                                          const CXXRecordDecl *Class,
-                                          const CXXRecordDecl *BaseClass) {
-  QualType BTy =
-    getContext().getCanonicalType(
-      getContext().getTypeDeclType(BaseClass));
-  const llvm::Type *BasePtrTy = llvm::PointerType::getUnqual(ConvertType(BTy));
-
-  if (Class == BaseClass) {
-    // Just cast back.
-    return Builder.CreateBitCast(Value, BasePtrTy);
-  }
-
-#ifndef NDEBUG
-  CXXBasePaths Paths(/*FindAmbiguities=*/true,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
-#else
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
-#endif
-  if (!const_cast<CXXRecordDecl *>(Class)->
-        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClass), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return 0;
-  }
-
-#if 0
-  // FIXME: Re-enable this assert when the underlying bugs have been fixed.
-  assert(!Paths.isAmbiguous(BTy) && "Path is ambiguous");
-#endif
-
-  unsigned Start = 0;
-
-  const CXXBasePath &Path = Paths.front();
-  const CXXRecordDecl *VBase = 0;
-  for (unsigned i = 0, e = Path.size(); i != e; ++i) {
-    const CXXBasePathElement& Element = Path[i];
-    if (Element.Base->isVirtual()) {
-      Start = i+1;
-      QualType VBaseType = Element.Base->getType();
-      VBase = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
-    }
-  }
-
-  uint64_t Offset = 
-    ComputeNonVirtualBaseClassOffset(getContext(), Paths.front(), Start);
-  
-  if (!Offset && !VBase) {
-    // Just cast back.
-    return Builder.CreateBitCast(Value, BasePtrTy);
-  }    
-
-  llvm::Value *VirtualOffset = 0;
-
-  if (VBase)
-    VirtualOffset = GetVirtualBaseClassOffset(Value, Class, VBase);
-
-  // Apply the offsets.
-  Value = ApplyNonVirtualAndVirtualOffset(*this, Value, Offset, VirtualOffset);
-  
-  // Cast back.
-  Value = Builder.CreateBitCast(Value, BasePtrTy);
   return Value;
 }
 
