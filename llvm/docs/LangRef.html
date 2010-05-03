@@ -2357,6 +2357,11 @@ has undefined behavior.</p>
     <a href="#i_ret"><tt>ret</tt></a> instructions that dynamically transfer
     control back to them.</li>
 
+<li><a href="#i_invoke"><tt>Invoke</tt></a> instructions depend on the
+    <a href="#i_ret"><tt>ret</tt></a>, <a href="#i_unwind"><tt>unwind</tt></a>,
+    or exception-throwing call instructions that dynamically transfer control
+    back to them.</li>
+
 <li>Non-volatile loads and stores depend on the most recent stores to all of the
     referenced memory addresses, following the order in the IR
     (including loads and stores implied by intrinsics such as
@@ -2374,15 +2379,11 @@ has undefined behavior.</p>
     recent preceding instruction with externally visible side effects, following
     the order in the IR. (This includes volatile loads and stores.)</li>
 
-<li>An instruction <i>control-depends</i> on a <a href="#i_br"><tt>br</tt></a>,
-    <a href="#i_switch"><tt>switch</tt></a>, or
-    <a href="#i_indirectbr"><tt>indirectbr</tt></a> if the <tt>br</tt>,
-    <tt>switch</tt>, or <tt>indirectbr</tt> has multiple successors and the
-    instruction is always executed when control transfers to one of the
-    successors, and may not be executed when control is transfered to
-    another.</li>
-
-<!-- FIXME: invoke, unwind, exceptions -->
+<li>An instruction <i>control-depends</i> on a
+    <a href="#terminators">terminator instruction</a>
+    if the terminator instruction has multiple successors and the instruction
+    is always executed when control transfers to one of the successors, and
+    may not be executed when control is transfered to another.</li>
 
 <li>Dependence is transitive.</li>
 
