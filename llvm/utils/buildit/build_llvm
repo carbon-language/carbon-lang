@@ -60,11 +60,6 @@ DIR=`pwd`
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
-if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
-    DEST_DIR="$DEST_DIR/Developer/Platforms/iPhoneOS.platform"
-    mkdir -p "$DEST_DIR"
-fi
-
 DEVELOPER_DIR="${DEVELOPER_DIR-Developer}"
 if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
     DT_HOME="$DEST_DIR/usr"
