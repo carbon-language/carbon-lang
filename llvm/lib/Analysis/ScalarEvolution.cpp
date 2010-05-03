@@ -761,7 +761,7 @@ static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
                                                       CalculationBits);
   const SCEV *Dividend = SE.getTruncateOrZeroExtend(It, CalculationTy);
   for (unsigned i = 1; i != K; ++i) {
-    const SCEV *S = SE.getMinusSCEV(It, SE.getIntegerSCEV(i, It->getType()));
+    const SCEV *S = SE.getMinusSCEV(It, SE.getConstant(It->getType(), i));
     Dividend = SE.getMulExpr(Dividend,
                              SE.getTruncateOrZeroExtend(S, CalculationTy));
   }
@@ -1326,7 +1326,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     if (Ops[i] == Ops[i+1]) {      //  X + Y + Y  -->  X + Y*2
       // Found a match, merge the two values into a multiply, and add any
       // remaining values to the result.
-      const SCEV *Two = getIntegerSCEV(2, Ty);
+      const SCEV *Two = getConstant(Ty, 2);
       const SCEV *Mul = getMulExpr(Ops[i], Two);
       if (Ops.size() == 2)
         return Mul;
@@ -1443,7 +1443,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
           Ops.push_back(getMulExpr(getConstant(I->first),
                                    getAddExpr(I->second)));
       if (Ops.empty())
-        return getIntegerSCEV(0, Ty);
+        return getConstant(Ty, 0);
       if (Ops.size() == 1)
         return Ops[0];
       return getAddExpr(Ops);
@@ -1468,7 +1468,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             MulOps.erase(MulOps.begin()+MulOp);
             InnerMul = getMulExpr(MulOps);
           }
-          const SCEV *One = getIntegerSCEV(1, Ty);
+          const SCEV *One = getConstant(Ty, 1);
           const SCEV *AddOne = getAddExpr(InnerMul, One);
           const SCEV *OuterMul = getMulExpr(AddOne, Ops[AddOp]);
           if (Ops.size() == 2) return OuterMul;
@@ -2778,7 +2778,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
   // Don't attempt to analyze GEPs over unsized objects.
   if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
     return getUnknown(GEP);
-  const SCEV *TotalOffset = getIntegerSCEV(0, IntPtrTy);
+  const SCEV *TotalOffset = getConstant(IntPtrTy, 0);
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (GetElementPtrInst::op_iterator I = next(GEP->op_begin()),
                                       E = GEP->op_end();
@@ -3187,7 +3187,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   else if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
     return getConstant(CI);
   else if (isa<ConstantPointerNull>(V))
-    return getIntegerSCEV(0, V->getType());
+    return getConstant(V->getType(), 0);
   else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
     return GA->mayBeOverridden() ? getUnknown(V) : getSCEV(GA->getAliasee());
   else
@@ -3861,7 +3861,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
       return getCouldNotCompute();
     else
       // The backedge is never taken.
-      return getIntegerSCEV(0, CI->getType());
+      return getConstant(CI->getType(), 0);
   }
 
   // If it's not an integer or pointer comparison then compute it the hard way.
@@ -4687,7 +4687,7 @@ ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   // already.  If so, the backedge will execute zero times.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     if (!C->getValue()->isNullValue())
-      return getIntegerSCEV(0, C->getType());
+      return getConstant(C->getType(), 0);
     return getCouldNotCompute();  // Otherwise it will loop infinitely.
   }
 
@@ -5374,7 +5374,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
          "This code doesn't handle negative strides yet!");
 
   const Type *Ty = Start->getType();
-  const SCEV *NegOne = getIntegerSCEV(-1, Ty);
+  const SCEV *NegOne = getConstant(Ty, (uint64_t)-1);
   const SCEV *Diff = getMinusSCEV(End, Start);
   const SCEV *RoundUp = getAddExpr(Step, NegOne);
 
@@ -5430,7 +5430,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
       // behavior, so if wrap does occur, the loop could either terminate or
       // loop infinitely, but in either case, the loop is guaranteed to
       // iterate at least until the iteration where the wrapping occurs.
-      const SCEV *One = getIntegerSCEV(1, Step->getType());
+      const SCEV *One = getConstant(Step->getType(), 1);
       if (isSigned) {
         APInt Max = APInt::getSignedMaxValue(BitWidth);
         if ((Max - getSignedRange(getMinusSCEV(Step, One)).getSignedMax())
@@ -5481,7 +5481,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // This allows the subsequent ceiling division of (N+(step-1))/step to
     // compute the correct value.
     const SCEV *StepMinusOne = getMinusSCEV(Step,
-                                            getIntegerSCEV(1, Step->getType()));
+                                            getConstant(Step->getType(), 1));
     MaxEnd = isSigned ?
       getSMinExpr(MaxEnd,
                   getMinusSCEV(getConstant(APInt::getSignedMaxValue(BitWidth)),
@@ -5518,7 +5518,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(getStart()))
     if (!SC->getValue()->isZero()) {
       SmallVector<const SCEV *, 4> Operands(op_begin(), op_end());
-      Operands[0] = SE.getIntegerSCEV(0, SC->getType());
+      Operands[0] = SE.getConstant(SC->getType(), 0);
       const SCEV *Shifted = SE.getAddRecExpr(Operands, getLoop());
       if (const SCEVAddRecExpr *ShiftedAddRec =
             dyn_cast<SCEVAddRecExpr>(Shifted))
@@ -5542,7 +5542,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   // iteration exits.
   unsigned BitWidth = SE.getTypeSizeInBits(getType());
   if (!Range.contains(APInt(BitWidth, 0)))
-    return SE.getIntegerSCEV(0, getType());
+    return SE.getConstant(getType(), 0);
 
   if (isAffine()) {
     // If this is an affine expression then we have this situation:

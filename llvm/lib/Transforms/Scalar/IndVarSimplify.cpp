@@ -144,10 +144,10 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
     if (!OrigCond) return 0;
     const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
-    R = SE->getMinusSCEV(R, SE->getIntegerSCEV(1, R->getType()));
+    R = SE->getMinusSCEV(R, SE->getConstant(R->getType(), 1));
     if (R != BackedgeTakenCount) {
       const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
-      L = SE->getMinusSCEV(L, SE->getIntegerSCEV(1, L->getType()));
+      L = SE->getMinusSCEV(L, SE->getConstant(L->getType(), 1));
       if (L != BackedgeTakenCount)
         return 0;
     }
@@ -162,10 +162,10 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     // Add one to the "backedge-taken" count to get the trip count.
     // If this addition may overflow, we have to be more pessimistic and
     // cast the induction variable before doing the add.
-    const SCEV *Zero = SE->getIntegerSCEV(0, BackedgeTakenCount->getType());
+    const SCEV *Zero = SE->getConstant(BackedgeTakenCount->getType(), 0);
     const SCEV *N =
       SE->getAddExpr(BackedgeTakenCount,
-                     SE->getIntegerSCEV(1, BackedgeTakenCount->getType()));
+                     SE->getConstant(BackedgeTakenCount->getType(), 1));
     if ((isa<SCEVConstant>(N) && !N->isZero()) ||
         SE->isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
       // No overflow. Cast the sum.
@@ -175,7 +175,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
       RHS = SE->getTruncateOrZeroExtend(BackedgeTakenCount,
                                         IndVar->getType());
       RHS = SE->getAddExpr(RHS,
-                           SE->getIntegerSCEV(1, IndVar->getType()));
+                           SE->getConstant(IndVar->getType(), 1));
     }
 
     // The BackedgeTaken expression contains the number of times that the
@@ -434,7 +434,7 @@ void IndVarSimplify::EliminateIVRemainders() {
     else {
       // (i+1) % n  -->  (i+1)==n?0:(i+1)  if i is in [0,n).
       const SCEV *LessOne =
-        SE->getMinusSCEV(S, SE->getIntegerSCEV(1, S->getType()));
+        SE->getMinusSCEV(S, SE->getConstant(S->getType(), 1));
       if ((!isSigned || SE->isKnownNonNegative(LessOne)) &&
           SE->isKnownPredicate(isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                                LessOne, X)) {

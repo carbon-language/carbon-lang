@@ -221,7 +221,7 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S))
     if (!AR->getStart()->isZero()) {
       DoInitialMatch(AR->getStart(), L, Good, Bad, SE, DT);
-      DoInitialMatch(SE.getAddRecExpr(SE.getIntegerSCEV(0, AR->getType()),
+      DoInitialMatch(SE.getAddRecExpr(SE.getConstant(AR->getType(), 0),
                                       AR->getStepRecurrence(SE),
                                       AR->getLoop()),
                      L, Good, Bad, SE, DT);
@@ -379,7 +379,7 @@ static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
                                 bool IgnoreSignificantBits = false) {
   // Handle the trivial case, which works for any SCEV type.
   if (LHS == RHS)
-    return SE.getIntegerSCEV(1, LHS->getType());
+    return SE.getConstant(LHS->getType(), 1);
 
   // Handle x /s -1 as x * -1, to give ScalarEvolution a chance to do some
   // folding.
@@ -454,7 +454,7 @@ static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
 static int64_t ExtractImmediate(const SCEV *&S, ScalarEvolution &SE) {
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
     if (C->getValue()->getValue().getMinSignedBits() <= 64) {
-      S = SE.getIntegerSCEV(0, C->getType());
+      S = SE.getConstant(C->getType(), 0);
       return C->getValue()->getSExtValue();
     }
   } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
@@ -477,7 +477,7 @@ static int64_t ExtractImmediate(const SCEV *&S, ScalarEvolution &SE) {
 static GlobalValue *ExtractSymbol(const SCEV *&S, ScalarEvolution &SE) {
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     if (GlobalValue *GV = dyn_cast<GlobalValue>(U->getValue())) {
-      S = SE.getIntegerSCEV(0, GV->getType());
+      S = SE.getConstant(GV->getType(), 0);
       return GV;
     }
   } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
@@ -1457,7 +1457,7 @@ ICmpInst *LSRInstance::OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse) {
   const SCEV *BackedgeTakenCount = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     return Cond;
-  const SCEV *One = SE.getIntegerSCEV(1, BackedgeTakenCount->getType());
+  const SCEV *One = SE.getConstant(BackedgeTakenCount->getType(), 1);
 
   // Add one to the backedge-taken count to get the trip count.
   const SCEV *IterationCount = SE.getAddExpr(BackedgeTakenCount, One);
@@ -2032,7 +2032,7 @@ static void CollectSubexprs(const SCEV *S, const SCEVConstant *C,
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Split a non-zero base out of an addrec.
     if (!AR->getStart()->isZero()) {
-      CollectSubexprs(SE.getAddRecExpr(SE.getIntegerSCEV(0, AR->getType()),
+      CollectSubexprs(SE.getAddRecExpr(SE.getConstant(AR->getType(), 0),
                                        AR->getStepRecurrence(SE),
                                        AR->getLoop()), C, Ops, SE);
       CollectSubexprs(AR->getStart(), C, Ops, SE);
@@ -2178,7 +2178,7 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
       F.AM.BaseOffs = (uint64_t)Base.AM.BaseOffs - *I;
       if (isLegalUse(F.AM, LU.MinOffset - *I, LU.MaxOffset - *I,
                      LU.Kind, LU.AccessTy, TLI)) {
-        F.BaseRegs[i] = SE.getAddExpr(G, SE.getIntegerSCEV(*I, G->getType()));
+        F.BaseRegs[i] = SE.getAddExpr(G, SE.getConstant(G->getType(), *I));
 
         (void)InsertFormula(LU, LUIdx, F);
       }
@@ -2241,7 +2241,7 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     // Compensate for the use having MinOffset built into it.
     F.AM.BaseOffs = (uint64_t)F.AM.BaseOffs + Offset - LU.MinOffset;
 
-    const SCEV *FactorS = SE.getIntegerSCEV(Factor, IntTy);
+    const SCEV *FactorS = SE.getConstant(IntTy, Factor);
 
     // Check that multiplying with each base register doesn't overflow.
     for (size_t i = 0, e = F.BaseRegs.size(); i != e; ++i) {
@@ -2303,7 +2303,7 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx,
     for (size_t i = 0, e = Base.BaseRegs.size(); i != e; ++i)
       if (const SCEVAddRecExpr *AR =
             dyn_cast<SCEVAddRecExpr>(Base.BaseRegs[i])) {
-        const SCEV *FactorS = SE.getIntegerSCEV(Factor, IntTy);
+        const SCEV *FactorS = SE.getConstant(IntTy, Factor);
         if (FactorS->isZero())
           continue;
         // Divide out the factor, ignoring high bits, since we'll be
@@ -3033,8 +3033,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
       // which is expected to be matched as part of the address.
       ScaledS = SE.getUnknown(Rewriter.expandCodeFor(ScaledS, 0, IP));
       ScaledS = SE.getMulExpr(ScaledS,
-                              SE.getIntegerSCEV(F.AM.Scale,
-                                                ScaledS->getType()));
+                              SE.getConstant(ScaledS->getType(), F.AM.Scale));
       Ops.push_back(ScaledS);
 
       // Flush the operand list to suppress SCEVExpander hoisting.
@@ -3075,7 +3074,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 
   // Emit instructions summing all the operands.
   const SCEV *FullS = Ops.empty() ?
-                      SE.getIntegerSCEV(0, IntTy) :
+                      SE.getConstant(IntTy, 0) :
                       SE.getAddExpr(Ops);
   Value *FullV = Rewriter.expandCodeFor(FullS, Ty, IP);
 
