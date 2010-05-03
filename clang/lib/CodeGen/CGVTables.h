@@ -216,8 +216,8 @@ class CodeGenVTables {
   /// integers are the vtable components.
   VTableLayoutMapTy VTableLayoutMap;
 
-  typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
-                                   BaseSubobject>, uint64_t> AddressPointsMapTy;
+  typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
+  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> AddressPointsMapTy;
   
   /// Address points - Address points for all vtables.
   AddressPointsMapTy AddressPoints;
@@ -247,14 +247,12 @@ class CodeGenVTables {
     return &Components[1];
   }
 
-  typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesMapTy;
+  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> SubVTTIndiciesMapTy;
   
   /// SubVTTIndicies - Contains indices into the various sub-VTTs.
   SubVTTIndiciesMapTy SubVTTIndicies;
 
-   
-  typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
-                                   BaseSubobject>, uint64_t>
+  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t>
     SecondaryVirtualPointerIndicesMapTy;
 
   /// SecondaryVirtualPointerIndices - Contains the secondary virtual pointer
