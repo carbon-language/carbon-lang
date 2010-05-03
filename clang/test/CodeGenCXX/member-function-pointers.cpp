@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-apple-darwin9 | FileCheck -check-prefix LP32 %s
 
 struct A { int a; void f(); virtual void vf1(); virtual void vf2(); };
 struct B { int b; virtual void g(); };
@@ -12,10 +13,12 @@ void (C::*pc)();
 // CHECK: @pa2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
 void (A::*pa2)() = &A::f;
 
-// CHECK: @pa3 = global %0 { i64 1, i64 0 }, align 8
+// CHECK:      @pa3 = global %0 { i64 1, i64 0 }, align 8
+// CHECK-LP32: @pa3 = global %0 { i32 1, i32 0 }, align 4
 void (A::*pa3)() = &A::vf1;
 
-// CHECK: @pa4 = global %0 { i64 9, i64 0 }, align 8
+// CHECK:      @pa4 = global %0 { i64 9, i64 0 }, align 8
+// CHECK-LP32: @pa4 = global %0 { i32 5, i32 0 }, align 4
 void (A::*pa4)() = &A::vf2;
 
 // CHECK: @pc2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
@@ -51,16 +54,24 @@ void f2() {
   // CHECK: store i64 0, i64* [[pa2adj]]
   void (A::*pa2)() = &A::f;
   
-  // CHECK: [[pa3ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 0 
-  // CHECK: store i64 1, i64* [[pa3ptr]]
-  // CHECK: [[pa3adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 1
-  // CHECK: store i64 0, i64* [[pa3adj]]
+  // CHECK:      [[pa3ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 0 
+  // CHECK:      store i64 1, i64* [[pa3ptr]]
+  // CHECK:      [[pa3adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 1
+  // CHECK:      store i64 0, i64* [[pa3adj]]
+  // CHECK-LP32: [[pa3ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 0 
+  // CHECK-LP32: store i32 1, i32* [[pa3ptr]]
+  // CHECK-LP32: [[pa3adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 1
+  // CHECK-LP32: store i32 0, i32* [[pa3adj]]
   void (A::*pa3)() = &A::vf1;
   
-  // CHECK: [[pa4ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 0 
-  // CHECK: store i64 9, i64* [[pa4ptr]]
-  // CHECK: [[pa4adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 1
-  // CHECK: store i64 0, i64* [[pa4adj]]
+  // CHECK:      [[pa4ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 0 
+  // CHECK:      store i64 9, i64* [[pa4ptr]]
+  // CHECK:      [[pa4adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 1
+  // CHECK:      store i64 0, i64* [[pa4adj]]
+  // CHECK-LP32: [[pa4ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 0 
+  // CHECK-LP32: store i32 5, i32* [[pa4ptr]]
+  // CHECK-LP32: [[pa4adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 1
+  // CHECK-LP32: store i32 0, i32* [[pa4adj]]
   void (A::*pa4)() = &A::vf2;
 }
 

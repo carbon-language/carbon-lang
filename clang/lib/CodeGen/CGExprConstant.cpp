@@ -448,11 +448,16 @@ public:
     if (MD->isVirtual()) {
       uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
 
+      // FIXME: We shouldn't use / 8 here.
+      uint64_t PointerWidthInBytes = 
+        CGM.getContext().Target.getPointerWidth(0) / 8;
+      
       // Itanium C++ ABI 2.3:
       //   For a non-virtual function, this field is a simple function pointer. 
       //   For a virtual function, it is 1 plus the virtual table offset 
       //   (in bytes) of the function, represented as a ptrdiff_t. 
-      Values[0] = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
+      Values[0] = llvm::ConstantInt::get(PtrDiffTy, 
+                                         (Index * PointerWidthInBytes) + 1);
     } else {
       const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
       const llvm::Type *Ty =
