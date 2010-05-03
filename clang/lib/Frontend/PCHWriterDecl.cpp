@@ -389,6 +389,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isThreadSpecified());
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isDeclaredInCondition());
+  Record.push_back(D->isExceptionVariable());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getInit()? 1 : 0);
   if (D->getInit())
@@ -429,6 +430,7 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   assert(!D->isThreadSpecified() && "PARM_VAR_DECL can't be __thread");
   assert(D->getAccess() == AS_none && "PARM_VAR_DECL can't be public/private");
   assert(!D->isDeclaredInCondition() && "PARM_VAR_DECL can't be in condition");
+  assert(!D->isExceptionVariable() && "PARM_VAR_DECL can't be exception var");
   assert(D->getPreviousDeclaration() == 0 && "PARM_VAR_DECL can't be redecl");
   assert(D->getInit() == 0 && "PARM_VAR_DECL never has init");
 }
@@ -501,6 +503,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isThreadSpecified
   Abv->Add(BitCodeAbbrevOp(0));                       // hasCXXDirectInitializer
   Abv->Add(BitCodeAbbrevOp(0));                       // isDeclaredInCondition
+  Abv->Add(BitCodeAbbrevOp(0));                       // isExceptionVariable
   Abv->Add(BitCodeAbbrevOp(0));                       // PrevDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
   // ParmVarDecl

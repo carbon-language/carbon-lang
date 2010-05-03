@@ -1738,7 +1738,9 @@ VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo,
   }
   
   VarDecl *New = VarDecl::Create(Context, CurContext, NameLoc, Name, T, TInfo,
-                                 VarDecl::None, VarDecl::None);  
+                                 VarDecl::None, VarDecl::None);
+  New->setExceptionVariable(true);
+  
   if (Invalid)
     New->setInvalidDecl();
   return New;

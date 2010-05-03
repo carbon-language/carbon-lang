@@ -585,9 +585,14 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
     // Diagnose unused variables in this scope.
     if (ShouldDiagnoseUnusedDecl(D) && 
-        S->getNumErrorsAtStart() == getDiagnostics().getNumErrors())
-      Diag(D->getLocation(), diag::warn_unused_variable) << D->getDeclName();
-    
+        S->getNumErrorsAtStart() == getDiagnostics().getNumErrors()) {
+      if (isa<VarDecl>(D) && cast<VarDecl>(D)->isExceptionVariable())
+        Diag(D->getLocation(), diag::warn_unused_exception_param)
+          << D->getDeclName();
+      else
+        Diag(D->getLocation(), diag::warn_unused_variable) 
+          << D->getDeclName();
+    }
     // Remove this name from our lexical scope.
     IdResolver.RemoveDecl(D);
   }

@@ -498,6 +498,10 @@ private:
   /// condition, e.g., if (int x = foo()) { ... }.
   bool DeclaredInCondition : 1;
 
+  /// \brief Whether this variable is the exception variable in a C++ catch
+  /// or an Objective-C @catch statement.
+  bool ExceptionVar : 1;
+  
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
@@ -505,7 +509,7 @@ protected:
           StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false) {
+      DeclaredInCondition(false), ExceptionVar(false) {
     SClass = SC;
     SClassAsWritten = SCAsWritten;
   }
@@ -840,6 +844,13 @@ public:
   void setDeclaredInCondition(bool InCondition) {
     DeclaredInCondition = InCondition;
   }
+  
+  /// \brief Determine whether this variable is the exception variable in a
+  /// C++ catch statememt or an Objective-C @catch statement.
+  bool isExceptionVariable() const {
+    return ExceptionVar;
+  }
+  void setExceptionVariable(bool EV) { ExceptionVar = EV; }
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member

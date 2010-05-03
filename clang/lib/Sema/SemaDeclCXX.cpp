@@ -5276,7 +5276,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
                                     Name, ExDeclType, TInfo, VarDecl::None,
                                     VarDecl::None);
-
+  ExDecl->setExceptionVariable(true);
+  
   if (!Invalid) {
     if (const RecordType *RecordTy = ExDeclType->getAs<RecordType>()) {
       // C++ [except.handle]p16:

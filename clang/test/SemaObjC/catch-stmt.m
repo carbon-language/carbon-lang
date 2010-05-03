@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -verify %s
-
+@interface A @end
 @protocol P;
 
 void f() {
@@ -8,6 +8,6 @@ void f() {
   } @catch (int) { // expected-error{{@catch parameter is not a pointer to an interface type}}
   } @catch (int *b) { // expected-error{{@catch parameter is not a pointer to an interface type}}
   } @catch (id <P> c) { // expected-error{{illegal qualifiers on @catch parameter}}
-  }
+  } @catch(A* a) { }
 }
 
