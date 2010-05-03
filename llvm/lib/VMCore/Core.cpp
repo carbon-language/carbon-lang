@@ -327,8 +327,7 @@ LLVMTypeRef LLVMUnionTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
   return wrap(UnionType::get(&Tys[0], Tys.size()));
 }
 
-LLVMTypeRef LLVMUnionType(LLVMTypeRef *ElementTypes,
-                           unsigned ElementCount, int Packed) {
+LLVMTypeRef LLVMUnionType(LLVMTypeRef *ElementTypes, unsigned ElementCount) {
   return LLVMUnionTypeInContext(LLVMGetGlobalContext(), ElementTypes,
                                 ElementCount);
 }
