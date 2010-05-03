@@ -1562,43 +1562,29 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
-/// AdjustIType - Map Add, Sub, and Mul to FAdd, FSub, and FMul when the
-/// type is floating-point, to help provide compatibility with an older API.
-///
-static BinaryOperator::BinaryOps AdjustIType(BinaryOperator::BinaryOps iType,
-                                             const Type *Ty) {
-  // API compatibility: Adjust integer opcodes to floating-point opcodes.
-  if (Ty->isFPOrFPVectorTy()) {
-    if (iType == BinaryOperator::Add) iType = BinaryOperator::FAdd;
-    else if (iType == BinaryOperator::Sub) iType = BinaryOperator::FSub;
-    else if (iType == BinaryOperator::Mul) iType = BinaryOperator::FMul;
-  }
-  return iType;
-}
-
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
                                const Type *Ty, const Twine &Name,
                                Instruction *InsertBefore)
-  : Instruction(Ty, AdjustIType(iType, Ty),
+  : Instruction(Ty, iType,
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertBefore) {
   Op<0>() = S1;
   Op<1>() = S2;
-  init(AdjustIType(iType, Ty));
+  init(iType);
   setName(Name);
 }
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
                                const Type *Ty, const Twine &Name,
                                BasicBlock *InsertAtEnd)
-  : Instruction(Ty, AdjustIType(iType, Ty),
+  : Instruction(Ty, iType,
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertAtEnd) {
   Op<0>() = S1;
   Op<1>() = S2;
-  init(AdjustIType(iType, Ty));
+  init(iType);
   setName(Name);
 }
 

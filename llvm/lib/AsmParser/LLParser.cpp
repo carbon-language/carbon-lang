@@ -2351,11 +2351,28 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       if (NSW)
         return Error(ModifierLoc, "nsw only applies to integer operations");
     }
-    // API compatibility: Accept either integer or floating-point types with
-    // add, sub, and mul.
-    if (!Val0->getType()->isIntOrIntVectorTy() &&
-        !Val0->getType()->isFPOrFPVectorTy())
-      return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
+    // Check that the type is valid for the operator.
+    switch (Opc) {
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+      if (!Val0->getType()->isIntOrIntVectorTy())
+        return Error(ID.Loc, "constexpr requires integer operands");
+      break;
+    case Instruction::FAdd:
+    case Instruction::FSub:
+    case Instruction::FMul:
+    case Instruction::FDiv:
+    case Instruction::FRem:
+      if (!Val0->getType()->isFPOrFPVectorTy())
+        return Error(ID.Loc, "constexpr requires fp operands");
+      break;
+    default: llvm_unreachable("Unknown binary operator!");
+    }
     unsigned Flags = 0;
     if (NUW)   Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
     if (NSW)   Flags |= OverflowingBinaryOperator::NoSignedWrap;
@@ -3000,8 +3017,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       if (EatIfPresent(lltok::kw_nuw))
         NUW = true;
     }
-    // API compatibility: Accept either integer or floating-point types.
-    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 0);
+    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
     if (!Result) {
       if (!Inst->getType()->isIntOrIntVectorTy()) {
         if (NUW)

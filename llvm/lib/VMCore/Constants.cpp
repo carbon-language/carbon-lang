@@ -1450,12 +1450,6 @@ Constant *ConstantExpr::getCompareTy(unsigned short predicate,
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
                             unsigned Flags) {
-  // API compatibility: Adjust integer opcodes to floating-point opcodes.
-  if (C1->getType()->isFPOrFPVectorTy()) {
-    if (Opcode == Instruction::Add) Opcode = Instruction::FAdd;
-    else if (Opcode == Instruction::Sub) Opcode = Instruction::FSub;
-    else if (Opcode == Instruction::Mul) Opcode = Instruction::FMul;
-  }
 #ifndef NDEBUG
   switch (Opcode) {
   case Instruction::Add:
@@ -1840,9 +1834,6 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
 }
 
 Constant* ConstantExpr::getNeg(Constant* C) {
-  // API compatibility: Adjust integer opcodes to floating-point opcodes.
-  if (C->getType()->isFPOrFPVectorTy())
-    return getFNeg(C);
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return get(Instruction::Sub,
