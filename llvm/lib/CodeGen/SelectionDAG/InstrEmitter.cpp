@@ -451,8 +451,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     unsigned SubIdx = cast<ConstantSDNode>(N2)->getZExtValue();
     const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
     const TargetRegisterClass *SRC =
-      getSuperRegisterRegClass(TRC, SubIdx,
-                               Node->getValueType(0));
+      getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
 
     // Figure out the register class to create for the destreg.
     // Note that if we're going to directly use an existing register,
@@ -509,6 +508,40 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
          "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
   (void) Emitted;
 
+  SDValue Op(Node, 0);
+  bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
+  isNew = isNew; // Silence compiler warning.
+  assert(isNew && "Node emitted out of order - early");
+}
+
+/// EmitRegSequence - Generate machine code for REG_SEQUENCE nodes.
+///
+void InstrEmitter::EmitRegSequence(SDNode *Node,
+                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
+  const TargetRegisterClass *RC = TLI->getRegClassFor(Node->getValueType(0));
+  unsigned NewVReg = MRI->createVirtualRegister(RC);
+  MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
+                             TII->get(TargetOpcode::REG_SEQUENCE), NewVReg);
+  unsigned NumOps = Node->getNumOperands();
+  assert((NumOps & 1) == 0 &&
+         "REG_SEQUENCE must have an even number of operands!");
+  const TargetInstrDesc &II = TII->get(TargetOpcode::REG_SEQUENCE);
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDValue Op = Node->getOperand(i);
+#ifndef NDEBUG
+    if (i & 1) {
+      unsigned SubIdx = cast<ConstantSDNode>(Op)->getZExtValue();
+      unsigned SubReg = getVR(Node->getOperand(i-1), VRBaseMap);
+    const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
+    const TargetRegisterClass *SRC =
+      getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
+    assert(SRC == RC && "Invalid subregister index in REG_SEQUENCE");
+    }
+#endif
+    AddOperand(MI, Op, i+1, &II, VRBaseMap);
+  }
+
+  MBB->insert(InsertPos, MI);
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
   isNew = isNew; // Silence compiler warning.
@@ -586,6 +619,12 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // Handle COPY_TO_REGCLASS specially.
   if (Opc == TargetOpcode::COPY_TO_REGCLASS) {
     EmitCopyToRegClassNode(Node, VRBaseMap);
+    return;
+  }
+
+  // Handle REG_SEQUENCE specially.
+  if (Opc == TargetOpcode::REG_SEQUENCE) {
+    EmitRegSequence(Node, VRBaseMap);
     return;
   }
 

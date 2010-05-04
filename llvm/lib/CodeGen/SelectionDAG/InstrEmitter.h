@@ -88,6 +88,9 @@ class InstrEmitter {
   void EmitCopyToRegClassNode(SDNode *Node,
                               DenseMap<SDValue, unsigned> &VRBaseMap);
 
+  /// EmitRegSequence - Generate machine code for REG_SEQUENCE nodes.
+  ///
+  void EmitRegSequence(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap);
 public:
   /// CountResults - The results of target nodes have register or immediate
   /// operands first, then an optional chain, and optional flag operands
