@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o %t -triple=x86_64-apple-darwin9
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
 struct T {
   T();
@@ -13,20 +13,62 @@ public:
         X(const X&, const T& t = T());
 };
 
+// CHECK: define void @_Z1gv()
 void g() {
-  // RUN: grep "call void @_ZN1TC1Ev" %t | count 4
-  // RUN: grep "call void @_ZN1TD1Ev" %t | count 4
-  f();
+  // CHECK:      call void @_ZN1TC1Ev([[T:%.*]]* [[AGG1:%.*]])
+  // CHECK-NEXT: call void @_Z1fRK1T([[T]]* [[AGG1]])
+  // CHECK-NEXT: call void @_ZN1TD1Ev([[T]]* [[AGG1]])
   f();
 
+  // CHECK-NEXT: call void @_ZN1TC1Ev([[T:%.*]]* [[AGG2:%.*]])
+  // CHECK-NEXT: call void @_Z1fRK1T([[T]]* [[AGG2]])
+  // CHECK-NEXT: call void @_ZN1TD1Ev([[T]]* [[AGG2]])
+  f();
+
+  // CHECK-NEXT: call void @_ZN1XC1Ev(
   X a;
+
+  // CHECK-NEXT: call void @_ZN1TC1Ev(
+  // CHECK-NEXT: call void @_ZN1XC1ERKS_RK1T(
+  // CHECK-NEXT: call void @_ZN1TD1Ev(
   X b(a);
+
+  // CHECK-NEXT: call void @_ZN1TC1Ev(
+  // CHECK-NEXT: call void @_ZN1XC1ERKS_RK1T(
+  // CHECK-NEXT: call void @_ZN1TD1Ev(
   X c = a;
 }
 
 
-// RUN: grep memset %t
 class obj{ int a; float b; double d; };
+// CHECK: define void @_Z1hv()
 void h() {
+  // CHECK: call void @llvm.memset.p0i8.i64(
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(
   obj o = obj();
+}
+
+// PR7028 - mostly this shouldn't crash
+namespace test1 {
+  struct A { A(); };
+  struct B { B(); ~B(); };
+
+  struct C {
+    C(const B &file = B());
+  };
+  C::C(const B &file) {}
+
+  struct D {
+    C c;
+    A a;
+
+    // CHECK: define linkonce_odr void @_ZN5test11DC2Ev(
+    // CHECK:      call void @_ZN5test11BC1Ev(
+    // CHECK-NEXT: call void @_ZN5test11CC1ERKNS_1BE(
+    // CHECK-NEXT: call void @_ZN5test11BD1Ev(
+    // CHECK:      call void @_ZN5test11AC1Ev(
+    D() : c(), a() {}
+  };
+
+  D d;
 }

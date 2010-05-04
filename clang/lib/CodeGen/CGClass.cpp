@@ -584,7 +584,9 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
                                 LHS.isVolatileQualified());
   } else {
     CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
-                    LHS.isVolatileQualified(), false, true);
+                    LHS.isVolatileQualified(),
+                    /*IgnoreResult*/ false,
+                    /*IsInitializer*/ true);
     
     if (!CGF.Exceptions)
       return;

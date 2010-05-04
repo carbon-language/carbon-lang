@@ -298,13 +298,15 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
         << OldParam->getDefaultArgRange();
       Invalid = true;
     } else if (OldParam->hasDefaultArg()) {
-      // Merge the old default argument into the new parameter
+      // Merge the old default argument into the new parameter.
+      // It's important to use getInit() here;  getDefaultArg()
+      // strips off any top-level CXXExprWithTemporaries.
       NewParam->setHasInheritedDefaultArg();
       if (OldParam->hasUninstantiatedDefaultArg())
         NewParam->setUninstantiatedDefaultArg(
                                       OldParam->getUninstantiatedDefaultArg());
       else
-        NewParam->setDefaultArg(OldParam->getDefaultArg());
+        NewParam->setDefaultArg(OldParam->getInit());
     } else if (NewParam->hasDefaultArg()) {
       if (New->getDescribedFunctionTemplate()) {
         // Paragraph 4, quoted above, only applies to non-template functions.
