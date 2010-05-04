@@ -495,7 +495,10 @@ CollectRecordFields(const RecordDecl *RD, llvm::DIFile Unit,
 llvm::DIType
 CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                    llvm::DIFile Unit) {
-  llvm::DIType FnTy = getOrCreateType(Method->getType(), Unit);
+  llvm::DIType FnTy
+    = getOrCreateType(QualType(Method->getType()->getAs<FunctionProtoType>(),
+                               0),
+                      Unit);
   
   // Static methods do not need "this" pointer argument.
   if (Method->isStatic())

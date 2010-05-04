@@ -3243,8 +3243,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
          AE = FT->arg_type_end(); AI != AE; ++AI) {
       ParmVarDecl *Param = ParmVarDecl::Create(Context, NewFD,
-                                               SourceLocation(), 0,
-                                               *AI, /*TInfo=*/0,
+                                               D.getIdentifierLoc(), 0,
+                                               *AI, 
+                                         Context.getTrivialTypeSourceInfo(*AI, 
+                                                          D.getIdentifierLoc()),
                                                VarDecl::None,
                                                VarDecl::None, 0);
       Param->setImplicit();

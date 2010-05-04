@@ -76,3 +76,15 @@ namespace PR6990 {
   {
   };
 }
+
+namespace InstantiateFunctionTypedef {
+  template<typename T>
+  struct X {
+    typedef int functype(int, int);
+    functype func;
+  };
+
+  void f(X<int> x) {
+    (void)x.func(1, 2);
+  }
+}

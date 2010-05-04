@@ -3565,8 +3565,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(NakedFn)) {
       if (BO->getOpcode() == BinaryOperator::PtrMemD ||
           BO->getOpcode() == BinaryOperator::PtrMemI) {
-        if (const FunctionProtoType *FPT =
-              dyn_cast<FunctionProtoType>(BO->getType())) {
+        if (const FunctionProtoType *FPT
+                                = BO->getType()->getAs<FunctionProtoType>()) {
           QualType ResultTy = FPT->getResultType().getNonReferenceType();
 
           ExprOwningPtr<CXXMemberCallExpr>

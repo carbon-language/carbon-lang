@@ -6513,7 +6513,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   MemExpr->setBase(ObjectArg);
 
   // Convert the rest of the arguments
-  const FunctionProtoType *Proto = cast<FunctionProtoType>(Method->getType());
+  const FunctionProtoType *Proto = Method->getType()->getAs<FunctionProtoType>();
   if (ConvertArgumentsForCall(&*TheCall, MemExpr, Method, Proto, Args, NumArgs,
                               RParenLoc))
     return ExprError();
