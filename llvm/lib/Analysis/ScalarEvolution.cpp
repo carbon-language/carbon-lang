@@ -5049,15 +5049,13 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
     if (isLoopEntryGuardedByCond(
           AR->getLoop(), Pred, AR->getStart(), RHS) &&
         isLoopBackedgeGuardedByCond(
-          AR->getLoop(), Pred,
-          getAddExpr(AR, AR->getStepRecurrence(*this)), RHS))
+          AR->getLoop(), Pred, AR->getPostIncExpr(*this), RHS))
       return true;
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS))
     if (isLoopEntryGuardedByCond(
           AR->getLoop(), Pred, LHS, AR->getStart()) &&
         isLoopBackedgeGuardedByCond(
-          AR->getLoop(), Pred,
-          LHS, getAddExpr(AR, AR->getStepRecurrence(*this))))
+          AR->getLoop(), Pred, LHS, AR->getPostIncExpr(*this)))
       return true;
 
   // Otherwise see what can be done with known constant ranges.
