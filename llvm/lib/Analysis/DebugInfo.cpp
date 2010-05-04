@@ -1171,10 +1171,8 @@ void DebugInfoFinder::processModule(Module &M) {
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
            ++BI) {
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI)) {
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
-          continue;
-        }
         
         DebugLoc Loc = BI->getDebugLoc();
         if (Loc.isUnknown())
