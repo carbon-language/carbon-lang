@@ -632,22 +632,22 @@ Stop.
 <p>Use commands like this:</p>
 
 <ol>
-  <li><p>Compile your program as normal with llvm-g++:</p>
+  <li><p>Compile your program with llvm-g++:</p>
 
 <pre class="doc_code">
-% llvm-g++ x.cpp -o program
+% llvm-g++ -emit-llvm x.cpp -o program.bc -c
 </pre>
 
       <p>or:</p>
 
 <pre class="doc_code">
-% llvm-g++ a.cpp -c
-% llvm-g++ b.cpp -c
-% llvm-g++ a.o b.o -o program
+% llvm-g++ a.cpp -c -emit-llvm
+% llvm-g++ b.cpp -c -emit-llvm
+% llvm-ld a.o b.o -o program
 </pre>
 
-      <p>With llvm-gcc3, this will generate program and program.bc.  The .bc
-         file is the LLVM version of the program all linked together.</p></li>
+   <p>This will generate program and program.bc.  The .bc
+      file is the LLVM version of the program all linked together.</p></li>
 
   <li><p>Convert the LLVM code to C code, using the LLC tool with the C
       backend:</p>
