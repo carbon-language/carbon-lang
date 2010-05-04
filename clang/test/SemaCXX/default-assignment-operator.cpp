@@ -89,3 +89,31 @@ void j() {
   e1 = e2; 
 }
 
+namespace ProtectedCheck {
+  struct X {
+  protected:
+    X &operator=(const X&); // expected-note{{declared protected here}}
+  };
+
+  struct Y : public X { };
+
+  void f(Y y) { y = y; }
+
+  struct Z { // expected-error{{'operator=' is a protected member of 'ProtectedCheck::X'}}
+    X x;
+  };
+
+  void f(Z z) { z = z; } // 
+}
+
+namespace MultiplePaths {
+  struct X0 { 
+    X0 &operator=(const X0&);
+  };
+
+  struct X1 : public virtual X0 { };
+
+  struct X2 : X0, X1 { };
+
+  void f(X2 x2) { x2 = x2; }
+}

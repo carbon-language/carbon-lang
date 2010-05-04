@@ -4134,13 +4134,16 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 ///
 /// \param From The expression we are copying from.
 ///
+/// \param CopyingBaseSubobject Whether we're copying a base subobject.
+/// Otherwise, it's a non-static member subobject.
+///
 /// \param Depth Internal parameter recording the depth of the recursion.
 ///
 /// \returns A statement or a loop that copies the expressions.
 static Sema::OwningStmtResult
 BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T, 
                       Sema::OwningExprResult To, Sema::OwningExprResult From,
-                      unsigned Depth = 0) {
+                      bool CopyingBaseSubobject, unsigned Depth = 0) {
   typedef Sema::OwningStmtResult OwningStmtResult;
   typedef Sema::OwningExprResult OwningExprResult;
   
@@ -4171,6 +4174,25 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
       F.erase();
     }
     F.done();
+    
+    // Suppress the protected check (C++ [class.protected]) for each of the
+    // assignment operators we found. This strange dance is required when 
+    // we're assigning via a base classes's copy-assignment operator. To
+    // ensure that we're getting the right base class subobject (without 
+    // ambiguities), we need to cast "this" to that subobject type; to
+    // ensure that we don't go through the virtual call mechanism, we need
+    // to qualify the operator= name with the base class (see below). However,
+    // this means that if the base class has a protected copy assignment
+    // operator, the protected member access check will fail. So, we
+    // rewrite "protected" access to "public" access in this case, since we
+    // know by construction that we're calling from a derived class.
+    if (CopyingBaseSubobject) {
+      for (LookupResult::iterator L = OpLookup.begin(), LEnd = OpLookup.end();
+           L != LEnd; ++L) {
+        if (L.getAccess() == AS_protected)
+          L.setAccess(AS_public);
+      }
+    }
     
     // Create the nested-name-specifier that will be used to qualify the
     // reference to operator=; this is required to suppress the virtual
@@ -4277,7 +4299,8 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   // Build the copy for an individual element of the array.
   OwningStmtResult Copy = BuildSingleCopyAssign(S, Loc, 
                                                 ArrayTy->getElementType(),
-                                                move(To), move(From), Depth+1);
+                                                move(To), move(From), 
+                                                CopyingBaseSubobject, Depth+1);
   if (Copy.isInvalid()) {
     InitStmt->Destroy(S.Context);
     return S.StmtError();
@@ -4381,7 +4404,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
     // Build the copy.
     OwningStmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,
-                                                  move(To), Owned(From));
+                                                  move(To), Owned(From),
+                                                /*CopyingBaseSubobject=*/true);
     if (Copy.isInvalid()) {
       Invalid = true;
       continue;
@@ -4501,7 +4525,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     
     // Build the copy of this field.
     OwningStmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType, 
-                                                  move(To), move(From));
+                                                  move(To), move(From),
+                                              /*CopyingBaseSubobject=*/false);
     if (Copy.isInvalid()) {
       Invalid = true;
       continue;

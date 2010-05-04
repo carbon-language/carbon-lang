@@ -45,6 +45,7 @@ public:
 
   NamedDecl *getDecl() const { return ir->getDecl(); }
   AccessSpecifier getAccess() const { return ir->getAccess(); }
+  void setAccess(AccessSpecifier AS) { ir->setAccess(AS); }
   DeclAccessPair getPair() const { return *ir; }
 
   NamedDecl *operator*() const { return getDecl(); }
