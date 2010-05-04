@@ -15,8 +15,6 @@ def Implicit : DiagGroup<"implicit", [
     ImplicitFunctionDeclare,
     ImplicitInt
 ]>;
-    
-
 
 // Empty DiagGroups are recognized by clang but ignored.
 def : DiagGroup<"address">;
@@ -102,7 +100,7 @@ def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
 def SwitchEnum     : DiagGroup<"switch-enum">;
 def Switch         : DiagGroup<"switch", [SwitchEnum]>;
-def Trigraphs : DiagGroup<"trigraphs">;
+def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
 def Uninitialized  : DiagGroup<"uninitialized">;
@@ -135,7 +133,8 @@ def Parentheses : DiagGroup<"parentheses", [DiagGroup<"idiomatic-parentheses">]>
 // -Wconversion has its own warnings, but we split this one out for
 // legacy reasons.
 def Conversion : DiagGroup<"conversion",
-                           [DiagGroup<"shorten-64-to-32">]>;
+                           [DiagGroup<"shorten-64-to-32">]>,
+                 DiagCategory<"Value Conversion">;
 
 def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
@@ -143,7 +142,8 @@ def Unused : DiagGroup<"unused",
                         UnusedValue, UnusedVariable]>;
 
 // Format settings.
-def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength, NonNull]>;
+def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength, NonNull]>,
+             DiagCategory<"Format String">;
 def FormatSecurity : DiagGroup<"format-security", [Format]>;
 def FormatNonLiteral : DiagGroup<"format-nonliteral", [FormatSecurity]>;
 def FormatY2K : DiagGroup<"format-y2k", [Format]>;

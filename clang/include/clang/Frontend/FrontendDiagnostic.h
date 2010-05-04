@@ -15,7 +15,7 @@
 namespace clang {
   namespace diag {
     enum {
-#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,SFINAE) ENUM,
+#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,SFINAE,CATEGORY) ENUM,
 #define FRONTENDSTART
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
 #undef DIAG
