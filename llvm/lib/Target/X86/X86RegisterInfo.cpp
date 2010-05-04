@@ -1307,7 +1307,7 @@ X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   // Calculate amount of bytes used for return address storing
   int stackGrowth = (Is64Bit ? -8 : -4);
 
-  // Initial state of the frame pointer is esp+4.
+  // Initial state of the frame pointer is esp+stackGrowth.
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(StackPtr, stackGrowth);
   Moves.push_back(MachineMove(0, Dst, Src));
