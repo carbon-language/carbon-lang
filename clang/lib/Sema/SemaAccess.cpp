@@ -222,6 +222,22 @@ private:
 
 }
 
+/// Checks whether one class might instantiate to the other.
+static bool MightInstantiateTo(const CXXRecordDecl *From,
+                               const CXXRecordDecl *To) {
+  // Declaration names are always preserved by instantiation.
+  if (From->getDeclName() != To->getDeclName())
+    return false;
+
+  const DeclContext *FromDC = From->getDeclContext()->getPrimaryContext();
+  const DeclContext *ToDC = To->getDeclContext()->getPrimaryContext();
+  if (FromDC == ToDC) return true;
+  if (FromDC->isFileContext() || ToDC->isFileContext()) return false;
+
+  // Be conservative.
+  return true;
+}
+
 /// Checks whether one class is derived from another, inclusively.
 /// Properly indicates when it couldn't be determined due to
 /// dependence.
@@ -233,6 +249,10 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
   assert(Target->getCanonicalDecl() == Target);
 
   if (Derived == Target) return AR_accessible;
+
+  bool CheckDependent = Derived->isDependentContext();
+  if (CheckDependent && MightInstantiateTo(Derived, Target))
+    return AR_dependent;
 
   AccessResult OnFailure = AR_inaccessible;
   llvm::SmallVector<const CXXRecordDecl*, 8> Queue; // actually a stack
@@ -246,10 +266,10 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
       QualType T = I->getType();
       if (const RecordType *RT = T->getAs<RecordType>()) {
         RD = cast<CXXRecordDecl>(RT->getDecl());
+      } else if (const InjectedClassNameType *IT
+                   = T->getAs<InjectedClassNameType>()) {
+        RD = IT->getDecl();
       } else {
-        // It's possible for a base class to be the current
-        // instantiation of some enclosing template, but I'm guessing
-        // nobody will ever care that we just dependently delay here.
         assert(T->isDependentType() && "non-dependent base wasn't a record?");
         OnFailure = AR_dependent;
         continue;
@@ -257,6 +277,9 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
 
       RD = RD->getCanonicalDecl();
       if (RD == Target) return AR_accessible;
+      if (CheckDependent && MightInstantiateTo(RD, Target))
+        OnFailure = AR_dependent;
+
       Queue.push_back(RD);
     }
 
@@ -562,6 +585,9 @@ static AccessResult HasAccess(Sema &S,
     if (Access == AS_private) {
       if (ECRecord == NamingClass)
         return AR_accessible;
+
+      if (EC.isDependent() && MightInstantiateTo(ECRecord, NamingClass))
+        OnFailure = AR_dependent;
 
     // [B3] and [M3]
     } else {

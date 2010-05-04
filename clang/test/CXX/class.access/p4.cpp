@@ -363,3 +363,58 @@ namespace test14 {
   }
 }
 
+// PR 7024
+namespace test15 {
+  template <class T> class A {
+  private:
+    int private_foo; // expected-note {{declared private here}}
+    static int private_sfoo; // expected-note {{declared private here}}
+  protected:
+    int protected_foo; // expected-note 4 {{declared protected here}}
+    static int protected_sfoo; // expected-note 3 {{declared protected here}}
+
+    int test1(A<int> &a) {
+      return a.private_foo; // expected-error {{private member}}
+    }
+
+    int test2(A<int> &a) {
+      return a.private_sfoo; // expected-error {{private member}}
+    }
+
+    int test3(A<int> &a) {
+      return a.protected_foo; // expected-error {{protected member}}
+    }
+
+    int test4(A<int> &a) {
+      return a.protected_sfoo; // expected-error {{protected member}}
+    }
+  };
+
+  template class A<int>;
+  template class A<long>; // expected-note 4 {{in instantiation}} 
+
+  template <class T> class B : public A<T> {
+    // TODO: These first two accesses can be detected as ill-formed at
+    // definition time because they're member accesses and A<int> can't
+    // be a subclass of B<T> for any T.
+
+    int test1(A<int> &a) {
+      return a.protected_foo; // expected-error 2 {{protected member}}
+    }
+
+    int test2(A<int> &a) {
+      return a.protected_sfoo; // expected-error {{protected member}}
+    }
+
+    int test3(B<int> &b) {
+      return b.protected_foo; // expected-error {{protected member}}
+    }
+
+    int test4(B<int> &b) {
+      return b.protected_sfoo; // expected-error {{protected member}}
+    }
+  };
+
+  template class B<int>;  // expected-note {{in instantiation}}
+  template class B<long>; // expected-note 4 {{in instantiation}}
+}
