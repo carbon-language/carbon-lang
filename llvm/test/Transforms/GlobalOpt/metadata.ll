@@ -13,15 +13,14 @@ define i32 @main(i32 %argc, i8** %argv) {
 }
 
 define void @foo(i32 %x) {
-  call void @llvm.dbg.value(metadata !{i8*** @G, i32 %x}, i64 0, metadata !1)
-; CHECK: call void @llvm.dbg.value(metadata !{null, i32 %x}, i64 0, metadata !1)
+  call void @llvm.foo(metadata !{i8*** @G, i32 %x})
+; CHECK: call void @llvm.foo(metadata !{null, i32 %x})
   ret void
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.foo(metadata) nounwind readnone
 
 !named = !{!0}
 
 !0 = metadata !{i8*** @G}
 ; CHECK: !0 = metadata !{null}
-!1 = metadata !{i8* null}
