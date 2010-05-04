@@ -441,18 +441,20 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                     LoadObjCSelf(), Ivar, 0);
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (Array) {
-        const llvm::Type *BasePtr = ConvertType(FieldType);
-        BasePtr = llvm::PointerType::getUnqual(BasePtr);
-        llvm::Value *BaseAddrPtr =
-          Builder.CreateBitCast(LV.getAddress(), BasePtr);
-        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                                  Array, BaseAddrPtr);
-      }
-      else 
-        EmitCXXDestructorCall(FieldClassDecl->getDestructor(CGM.getContext()),
-                              Dtor_Complete, /*ForVirtualBase=*/false,
-                              LV.getAddress());
+      CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(getContext());
+      if (!Dtor->isTrivial())
+        if (Array) {
+          const llvm::Type *BasePtr = ConvertType(FieldType);
+          BasePtr = llvm::PointerType::getUnqual(BasePtr);
+          llvm::Value *BaseAddrPtr =
+            Builder.CreateBitCast(LV.getAddress(), BasePtr);
+          EmitCXXAggrDestructorCall(Dtor,
+                                    Array, BaseAddrPtr);
+        }
+        else 
+          EmitCXXDestructorCall(Dtor,
+                                Dtor_Complete, /*ForVirtualBase=*/false,
+                                LV.getAddress());
     }    
   }
   FinishFunction();
