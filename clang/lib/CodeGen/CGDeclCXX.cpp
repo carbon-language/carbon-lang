@@ -279,6 +279,9 @@ static llvm::Constant *getGuardAbortFn(CodeGenFunction &CGF) {
 void
 CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
                                                llvm::GlobalVariable *GV) {
+  // Bail out early if this initializer isn't reachable.
+  if (!Builder.GetInsertBlock()) return;
+
   bool ThreadsafeStatics = getContext().getLangOptions().ThreadsafeStatics;
   
   llvm::SmallString<256> GuardVName;

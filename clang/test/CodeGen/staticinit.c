@@ -29,3 +29,13 @@ void foo(void) {
 // RUN: grep "f1.l0 = internal global i32 ptrtoint (i32 ()\* @f1 to i32)" %t
 int f1(void) { static int l0 = (unsigned) f1; }
 
+// PR7044
+char *f2(char key) {
+  switch (key) {
+    static char _msg[40];
+  case '\014':
+    return _msg;
+  }
+
+  return 0;
+}

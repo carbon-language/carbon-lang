@@ -231,9 +231,6 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
-  // Bail out early if the block is unreachable.
-  if (!Builder.GetInsertBlock()) return;
-
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
 
@@ -245,9 +242,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   if (getContext().getLangOptions().CPlusPlus)
     CGM.setStaticLocalDeclAddress(&D, GV);
 
+  // We can't have a VLA here, but we can have a pointer to a VLA,
+  // even though that doesn't really make any sense.
   // Make sure to evaluate VLA bounds now so that we have them for later.
-  //
-  // FIXME: Can this happen?
   if (D.getType()->isVariablyModifiedType())
     EmitVLASize(D.getType());
 
