@@ -398,7 +398,7 @@ OptVolatile ::= - volatile | _ ;
 OptExact ::= - exact | _ ;
 OptNSW ::= - nsw | _ ;
 OptNUW ::= - nuw | _ ;
-OptNW  ::= OptNUW OptNSW ;
+OptNW  ::= OptNUW OptNSW | OptNSW OptNUW ;
 OptInBounds  ::= - inbounds | _ ;
 
 MemoryInst ::= malloc Types OptCAlign
