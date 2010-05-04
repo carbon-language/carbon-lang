@@ -485,10 +485,10 @@ def REG_SEQUENCE : Instruction {
 }
 
 //===----------------------------------------------------------------------===//
-// AsmParser - This class can be implemented by targets that wish to implement 
+// AsmParser - This class can be implemented by targets that wish to implement
 // .s file parsing.
 //
-// Subtargets can have multiple different assembly parsers (e.g. AT&T vs Intel 
+// Subtargets can have multiple different assembly parsers (e.g. AT&T vs Intel
 // syntax on X86 for example).
 //
 class AsmParser {
@@ -501,9 +501,13 @@ class AsmParser {
   // AsmParser class to call on every matched instruction. This can be used to
   // perform target specific instruction post-processing.
   string AsmParserInstCleanup  = "";
- 
+
+  // MatchInstructionName - The name of the instruction matching function to
+  // generate.
+  string MatchInstructionName  = "MatchInstruction";
+
   // Variant - AsmParsers can be of multiple different variants.  Variants are
-  // used to support targets that need to parser multiple formats for the 
+  // used to support targets that need to parser multiple formats for the
   // assembly language.
   int Variant = 0;
 
