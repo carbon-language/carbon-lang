@@ -19,8 +19,8 @@ namespace llvm {
   class BasicBlock;
   class Use;
   class PHINode;
-  template<typename T>
-  class SmallVectorImpl;
+  template<typename T> class SmallVectorImpl;
+  template<typename T> class SSAUpdaterTraits;
   class BumpPtrAllocator;
 
 /// SSAUpdater - This class updates SSA form for a set of values defined in
@@ -28,9 +28,7 @@ namespace llvm {
 /// transformation wants to rewrite a set of uses of one value with uses of a
 /// set of values.
 class SSAUpdater {
-public:
-  class BBInfo;
-  typedef SmallVectorImpl<BBInfo*> BlockListTy;
+  friend class SSAUpdaterTraits<SSAUpdater>;
 
 private:
   /// AvailableVals - This keeps track of which value to use on a per-block
@@ -42,14 +40,10 @@ private:
   /// and a type for PHI nodes.
   Value *PrototypeValue;
 
-  /// BBMap - The GetValueAtEndOfBlock method maintains this mapping from
-  /// basic blocks to BBInfo structures.
-  /// typedef DenseMap<BasicBlock*, BBInfo*> BBMapTy;
-  void *BM;
-
   /// InsertedPHIs - If this is non-null, the SSAUpdater adds all PHI nodes that
   /// it creates to the vector.
   SmallVectorImpl<PHINode*> *InsertedPHIs;
+
 public:
   /// SSAUpdater constructor.  If InsertedPHIs is specified, it will be filled
   /// in with all PHI Nodes created by rewriting.
@@ -102,14 +96,6 @@ public:
 
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
-  void BuildBlockList(BasicBlock *BB, BlockListTy *BlockList,
-                      BumpPtrAllocator *Allocator);
-  void FindDominators(BlockListTy *BlockList);
-  void FindPHIPlacement(BlockListTy *BlockList);
-  void FindAvailableVals(BlockListTy *BlockList);
-  void FindExistingPHI(BasicBlock *BB, BlockListTy *BlockList);
-  bool CheckIfPHIMatches(PHINode *PHI);
-  void RecordMatchingPHI(PHINode *PHI);
 
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
   SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT

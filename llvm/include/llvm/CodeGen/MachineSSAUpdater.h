@@ -23,6 +23,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterClass;
   template<typename T> class SmallVectorImpl;
+  template<typename T> class SSAUpdaterTraits;
   class BumpPtrAllocator;
 
 /// MachineSSAUpdater - This class updates SSA form for a set of virtual
@@ -30,20 +31,13 @@ namespace llvm {
 /// or another unstructured transformation wants to rewrite a set of uses of one
 /// vreg with uses of a set of vregs.
 class MachineSSAUpdater {
-public:
-  class BBInfo;
-  typedef SmallVectorImpl<BBInfo*> BlockListTy;
+  friend class SSAUpdaterTraits<MachineSSAUpdater>;
 
 private:
   /// AvailableVals - This keeps track of which value to use on a per-block
   /// basis.  When we insert PHI nodes, we keep track of them here.
   //typedef DenseMap<MachineBasicBlock*, unsigned > AvailableValsTy;
   void *AV;
-
-  /// BBMap - The GetValueAtEndOfBlock method maintains this mapping from
-  /// basic blocks to BBInfo structures.
-  /// typedef DenseMap<MachineBasicBlock*, BBInfo*> BBMapTy;
-  void *BM;
 
   /// VR - Current virtual register whose uses are being updated.
   unsigned VR;
@@ -111,14 +105,6 @@ public:
 private:
   void ReplaceRegWith(unsigned OldReg, unsigned NewReg);
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
-  void BuildBlockList(MachineBasicBlock *BB, BlockListTy *BlockList,
-                      BumpPtrAllocator *Allocator);
-  void FindDominators(BlockListTy *BlockList);
-  void FindPHIPlacement(BlockListTy *BlockList);
-  void FindAvailableVals(BlockListTy *BlockList);
-  void FindExistingPHI(MachineBasicBlock *BB, BlockListTy *BlockList);
-  bool CheckIfPHIMatches(MachineInstr *PHI);
-  void RecordMatchingPHI(MachineInstr *PHI);
 
   void operator=(const MachineSSAUpdater&); // DO NOT IMPLEMENT
   MachineSSAUpdater(const MachineSSAUpdater&);     // DO NOT IMPLEMENT
