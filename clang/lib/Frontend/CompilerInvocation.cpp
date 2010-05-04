@@ -247,7 +247,13 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-ferror-limit");
     Res.push_back(llvm::utostr(Opts.ErrorLimit));
   }
-  if (Opts.TemplateBacktraceLimit != 10) {
+  if (Opts.MacroBacktraceLimit
+                        != DiagnosticOptions::DefaultMacroBacktraceLimit) {
+    Res.push_back("-fmacro-backtrace-limit");
+    Res.push_back(llvm::utostr(Opts.MacroBacktraceLimit));
+  }
+  if (Opts.TemplateBacktraceLimit
+                        != DiagnosticOptions::DefaultTemplateBacktraceLimit) {
     Res.push_back("-ftemplate-backtrace-limit");
     Res.push_back(llvm::utostr(Opts.TemplateBacktraceLimit));
   }
@@ -877,8 +883,13 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.BinaryOutput = Args.hasArg(OPT_fdiagnostics_binary);
   Opts.ErrorLimit = getLastArgIntValue(Args, OPT_ferror_limit, 0, Diags);
+  Opts.MacroBacktraceLimit
+    = getLastArgIntValue(Args, OPT_fmacro_backtrace_limit, 
+                         DiagnosticOptions::DefaultMacroBacktraceLimit, Diags);
   Opts.TemplateBacktraceLimit
-    = getLastArgIntValue(Args, OPT_ftemplate_backtrace_limit, 0, Diags);
+    = getLastArgIntValue(Args, OPT_ftemplate_backtrace_limit, 
+                         DiagnosticOptions::DefaultTemplateBacktraceLimit, 
+                         Diags);
   Opts.TabStop = getLastArgIntValue(Args, OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
   if (Opts.TabStop == 0 || Opts.TabStop > DiagnosticOptions::MaxTabStop) {

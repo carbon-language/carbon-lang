@@ -1457,7 +1457,7 @@ def note_template_default_arg_checking : Note<
   "while checking a default template argument used here">;
 def note_instantiation_contexts_suppressed : Note<
   "(skipping %0 context%s0 in backtrace; use -ftemplate-backtrace-limit=0 to "
-  "see  all)">;
+  "see all)">;
 
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;

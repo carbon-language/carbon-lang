@@ -280,6 +280,8 @@ def flat__namespace : Flag<"-flat_namespace">;
 def flax_vector_conversions : Flag<"-flax-vector-conversions">, Group<f_Group>;
 def flimited_precision_EQ : Joined<"-flimited-precision=">, Group<f_Group>;
 def flto : Flag<"-flto">, Group<f_Group>;
+def fmacro_backtrace_limit_EQ : Joined<"-fmacro-backtrace-limit=">, 
+                                Group<f_Group>;
 def fmath_errno : Flag<"-fmath-errno">, Group<f_Group>;
 def fmerge_all_constants : Flag<"-fmerge-all-constants">, Group<f_Group>;
 def fmessage_length_EQ : Joined<"-fmessage-length=">, Group<f_Group>;
