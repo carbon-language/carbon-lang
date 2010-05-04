@@ -941,13 +941,21 @@ SPUDAGToDAGISel::Select(SDNode *N) {
             && ((RN = dyn_cast<RegisterSDNode>(Op0.getNode())) != 0
                 && RN->getReg() != SPU::R1))) {
       NewOpc = SPU::Ar32;
+      Ops[1] = Op1;
       if (Op1.getOpcode() == ISD::Constant) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
         Op1 = CurDAG->getTargetConstant(CN->getSExtValue(), VT);
-        NewOpc = (isI32IntS10Immediate(CN) ? SPU::AIr32 : SPU::Ar32);
+        if (isInt<10>(CN->getSExtValue())) {
+          NewOpc = SPU::AIr32;
+          Ops[1] = Op1;
+        } else {
+          Ops[1] = SDValue(CurDAG->getMachineNode(SPU::ILr32, dl, 
+                                                  N->getValueType(0), 
+                                                  Op1),
+                           0); 
+        }
       }
       Ops[0] = Op0;
-      Ops[1] = Op1;
       n_ops = 2;
     }
   }
