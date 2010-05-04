@@ -30,6 +30,8 @@ public:
   unsigned ShowSourceRanges : 1; /// Show source ranges in numeric form.
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
                                  /// diagnostics.
+  unsigned ShowCategories : 2;   /// Show categories: 0 -> none, 1 -> Number,
+                                 /// 2 -> Full Name.
   unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.
   unsigned VerifyDiagnostics: 1; /// Check that diagnostics match the expected
                                  /// diagnostics, indicated by markers in the
@@ -74,6 +76,7 @@ public:
     ShowFixits = 1;
     ShowLocation = 1;
     ShowOptionNames = 0;
+    ShowCategories = 0;
     ShowSourceRanges = 0;
     VerifyDiagnostics = 0;
     BinaryOutput = 0;

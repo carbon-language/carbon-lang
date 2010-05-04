@@ -243,6 +243,10 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fdiagnostics-binary");
   if (Opts.ShowOptionNames)
     Res.push_back("-fdiagnostics-show-option");
+  if (Opts.ShowCategories == 1)
+    Res.push_back("-fdiagnostics-show-category=id");
+  else if (Opts.ShowCategories == 2)
+    Res.push_back("-fdiagnostics-show-category=name");
   if (Opts.ErrorLimit) {
     Res.push_back("-ferror-limit");
     Res.push_back(llvm::utostr(Opts.ErrorLimit));
@@ -879,6 +883,20 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowFixits = !Args.hasArg(OPT_fno_diagnostics_fixit_info);
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
+  
+  llvm::StringRef ShowCategory =
+    getLastArgValue(Args, OPT_fdiagnostics_show_category, "none");
+  if (ShowCategory == "none")
+    Opts.ShowCategories = 0;
+  else if (ShowCategory == "id")
+    Opts.ShowCategories = 1;
+  else if (ShowCategory == "name")
+    Opts.ShowCategories = 2;
+  else
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
+      << ShowCategory;
+  
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.BinaryOutput = Args.hasArg(OPT_fdiagnostics_binary);

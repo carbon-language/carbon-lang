@@ -1320,6 +1320,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_diagnostics_show_option))
     CmdArgs.push_back("-fdiagnostics-show-option");
 
+  if (const Arg *A =
+        Args.getLastArg(options::OPT_fdiagnostics_show_category_EQ)) {
+    CmdArgs.push_back("-fdiagnostics-show-category");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+  
   // Color diagnostics are the default, unless the terminal doesn't support
   // them.
   if (Args.hasFlag(options::OPT_fcolor_diagnostics,

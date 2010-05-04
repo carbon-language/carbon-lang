@@ -837,7 +837,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
   // If the user wants to see category information, include it too.
   unsigned DiagCategory = 0;
-  if (DiagOpts->ShowSourceRanges)
+  if (DiagOpts->ShowCategories)
     DiagCategory = Diagnostic::getCategoryNumberForDiag(Info.getID());
 
   // If there is any categorization information, include it.
@@ -852,7 +852,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     
     if (DiagCategory) {
       if (NeedsComma) OutStr += ',';
-      OutStr += llvm::utostr(DiagCategory);
+      if (DiagOpts->ShowCategories == 1)
+        OutStr += llvm::utostr(DiagCategory);
+      else {
+        assert(DiagOpts->ShowCategories == 2 && "Invalid ShowCategories value");
+        OutStr += Diagnostic::getCategoryNameFromID(DiagCategory);
+      }
     }
     
     OutStr += "]";

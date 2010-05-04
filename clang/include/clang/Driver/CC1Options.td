@@ -196,6 +196,9 @@ def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-rang
   HelpText<"Print source range spans in numeric form">;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
+def fdiagnostics_show_category : Separate<"-fdiagnostics-show-category">,
+  HelpText<"Print diagnostic category">;
+  
 def ftabstop : Separate<"-ftabstop">, MetaVarName<"<N>">,
   HelpText<"Set the tab stop distance.">;
 def ferror_limit : Separate<"-ferror-limit">, MetaVarName<"<N>">,
