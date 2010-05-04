@@ -649,6 +649,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     DtorTy = getContext().getBaseElementType(Array);
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      llvm::Value *Loc = DeclPtr;
+      if (isByRef)
+        Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
+                                      D.getNameAsString());
+      
       if (!ClassDecl->hasTrivialDestructor()) {
         const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
@@ -661,7 +666,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             const llvm::Type *BasePtr = ConvertType(BaseElementTy);
             BasePtr = llvm::PointerType::getUnqual(BasePtr);
             llvm::Value *BaseAddrPtr =
-              Builder.CreateBitCast(DeclPtr, BasePtr);
+              Builder.CreateBitCast(Loc, BasePtr);
             EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           
             // Make sure to jump to the exit block.
@@ -673,14 +678,14 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             const llvm::Type *BasePtr = ConvertType(BaseElementTy);
             BasePtr = llvm::PointerType::getUnqual(BasePtr);
             llvm::Value *BaseAddrPtr =
-              Builder.CreateBitCast(DeclPtr, BasePtr);
+              Builder.CreateBitCast(Loc, BasePtr);
             EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           }
         } else {
           {
             DelayedCleanupBlock Scope(*this);
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
-                                  DeclPtr);
+                                  Loc);
 
             // Make sure to jump to the exit block.
             EmitBranch(Scope.getCleanupExitBlock());
@@ -688,7 +693,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
           if (Exceptions) {
             EHCleanupBlock Cleanup(*this);
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
-                                  DeclPtr);
+                                  Loc);
           }
         }
       }
