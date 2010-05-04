@@ -159,17 +159,9 @@ const Function *MDNode::getFunction() const {
   return assertLocalFunction(this);
 #endif
   if (!isFunctionLocal()) return NULL;
-
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (Value *V = getOperand(i)) {
-      if (MDNode *MD = dyn_cast<MDNode>(V)) {
-        if (const Function *F = MD->getFunction())
-          return F;
-      } else {
-        return getFunctionForValue(V);
-      }
-    }
-  }
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (const Function *F = getFunctionForValue(getOperand(i)))
+      return F;
   return NULL;
 }
 
