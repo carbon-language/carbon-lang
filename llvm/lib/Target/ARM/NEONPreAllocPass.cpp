@@ -12,12 +12,14 @@
 #include "ARMInstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 using namespace llvm;
 
 namespace {
   class NEONPreAllocPass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
+    MachineRegisterInfo *MRI;
 
   public:
     static char ID;
@@ -30,6 +32,8 @@ namespace {
     }
 
   private:
+    bool FormsRegSequence(MachineInstr *MI,
+                          unsigned FirstOpnd, unsigned NumRegs);
     bool PreAllocNEONRegisters(MachineBasicBlock &MBB);
   };
 
@@ -334,6 +338,27 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
   return false;
 }
 
+bool NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
+                                        unsigned FirstOpnd, unsigned NumRegs) {
+  MachineInstr *RegSeq = 0;
+  for (unsigned R = 0; R < NumRegs; ++R) {
+    MachineOperand &MO = MI->getOperand(FirstOpnd + R);
+    assert(MO.isReg() && MO.getSubReg() == 0 && "unexpected operand");
+    unsigned VirtReg = MO.getReg();
+    assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+           "expected a virtual register");
+    if (!MRI->hasOneNonDBGUse(VirtReg))
+      return false;
+    MachineInstr *UseMI = &*MRI->use_nodbg_begin(VirtReg);
+    if (UseMI->getOpcode() != TargetOpcode::REG_SEQUENCE)
+      return false;
+    if (RegSeq && RegSeq != UseMI)
+      return false;
+    RegSeq = UseMI;
+  }
+  return true;
+}
+
 bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -342,6 +367,8 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
     MachineInstr *MI = &*MBBI;
     unsigned FirstOpnd, NumRegs, Offset, Stride;
     if (!isNEONMultiRegOp(MI->getOpcode(), FirstOpnd, NumRegs, Offset, Stride))
+      continue;
+    if (FormsRegSequence(MI, FirstOpnd, NumRegs))
       continue;
 
     MachineBasicBlock::iterator NextI = llvm::next(MBBI);
@@ -382,6 +409,7 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
 
 bool NEONPreAllocPass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
+  MRI = &MF.getRegInfo();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;
