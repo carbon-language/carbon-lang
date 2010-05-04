@@ -683,11 +683,6 @@ X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
   if (MatchB + MatchW + MatchL == 2)
     return false;
 
-  // Similarly, if all three matched then we assume this is a generic operation
-  // involving memory, and take the 'l' form (to match 'gas').
-  if (MatchB + MatchW + MatchL == 0)
-    return false;
-
   // Otherwise, the match failed.
   return true;
 }
