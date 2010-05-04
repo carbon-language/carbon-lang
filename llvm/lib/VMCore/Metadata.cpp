@@ -115,14 +115,17 @@ MDNode::~MDNode() {
 }
 
 static const Function *getFunctionForValue(Value *V) {
-  assert(!isa<MDNode>(V) && "does not iterate over metadata operands");
   if (!V) return NULL;
-  if (Instruction *I = dyn_cast<Instruction>(V))
-    return I->getParent()->getParent();
-  if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
-    return BB->getParent();
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    BasicBlock *BB = I->getParent();
+    return BB ? BB->getParent() : 0;
+  }
   if (Argument *A = dyn_cast<Argument>(V))
     return A->getParent();
+  if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
+    return BB->getParent();
+  if (MDNode *MD = dyn_cast<MDNode>(V))
+    return MD->getFunction();
   return NULL;
 }
 
@@ -272,8 +275,19 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   // with an instruction or some other function-local object.  If this is a
   // non-function-local MDNode, it can't point to a function-local object.
   // Handle this case by implicitly dropping the MDNode reference to null.
-  if (!isFunctionLocal() && To && isFunctionLocalValue(To))
-    To = 0;
+  // Likewise if the MDNode is function-local but for a different function.
+  if (To && isFunctionLocalValue(To)) {
+    if (!isFunctionLocal())
+      To = 0;
+    else {
+      const Function *F = getFunction();
+      const Function *FV = getFunctionForValue(To);
+      // Metadata can be function-local without having an associated function.
+      // So only consider functions to have changed if non-null.
+      if (F && FV && F != FV)
+        To = 0;
+    }
+  }
   
   if (From == To)
     return;
