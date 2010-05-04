@@ -1584,7 +1584,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
     FullyAvailableBlocks[UnavailableBlocks[i]] = false;
 
-  bool NeedToSplitEdges = false;
+  SmallVector<std::pair<TerminatorInst*, unsigned>, 4> NeedToSplit;
   for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
        PI != E; ++PI) {
     BasicBlock *Pred = *PI;
@@ -1600,12 +1600,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         return false;
       }
       unsigned SuccNum = GetSuccessorNumber(Pred, LoadBB);
-      toSplit.push_back(std::make_pair(Pred->getTerminator(), SuccNum));
-      NeedToSplitEdges = true;
+      NeedToSplit.push_back(std::make_pair(Pred->getTerminator(), SuccNum));
     }
   }
-  if (NeedToSplitEdges)
+  if (!NeedToSplit.empty()) {
+    toSplit.append(NeedToSplit.size(), NeedToSplit.front());
     return false;
+  }
 
   // Decide whether PRE is profitable for this load.
   unsigned NumUnavailablePreds = PredLoads.size();
