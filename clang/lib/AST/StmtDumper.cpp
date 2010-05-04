@@ -260,6 +260,13 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     else
       ns = "<anonymous>";
     OS << '"' << UD->getDeclKindName() << ns << ";\"";
+  } else if (UsingDecl *UD = dyn_cast<UsingDecl>(D)) {
+    // print using decl (e.g. "using std::string;")
+    const char *tn = UD->isTypeName() ? "typename " : "";
+    OS << '"' << UD->getDeclKindName() << tn;
+    UD->getTargetNestedNameDecl()->print(OS,
+        PrintingPolicy(UD->getASTContext().getLangOptions()));
+    OS << ";\"";
   } else {
     assert(0 && "Unexpected decl");
   }
