@@ -532,6 +532,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     V = Builder.CreateBitCast(V, PtrStructTy);
     V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD), 
                                 VD->getNameAsString());
+    if (VD->getType()->isReferenceType())
+      V = Builder.CreateLoad(V);
   } else {
     const llvm::Type *Ty = CGM.getTypes().ConvertType(VD->getType());
 
