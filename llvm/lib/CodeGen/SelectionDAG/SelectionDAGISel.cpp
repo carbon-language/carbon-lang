@@ -227,7 +227,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     else {
       MachineInstr *Def = RegInfo->getVRegDef(Reg);
       MachineBasicBlock::iterator InsertPos = Def;
-      EntryMBB->insert(llvm::next(InsertPos), MI);
+      // FIXME: VR def may not be in entry block.
+      Def->getParent()->insert(llvm::next(InsertPos), MI);
     }
   }
 
