@@ -729,39 +729,38 @@ bool AsmParser::ParseStatement() {
     return false;
   }
 
-  
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
-  if (getTargetParser().ParseInstruction(IDVal, IDLoc, ParsedOperands))
-    // FIXME: Leaking ParsedOperands on failure.
-    return true;
-  
-  if (Lexer.isNot(AsmToken::EndOfStatement))
-    // FIXME: Leaking ParsedOperands on failure.
-    return TokError("unexpected token in argument list");
+  bool HadError = getTargetParser().ParseInstruction(IDVal, IDLoc,
+                                                     ParsedOperands);
+  if (!HadError && Lexer.isNot(AsmToken::EndOfStatement))
+    HadError = TokError("unexpected token in argument list");
 
-  // Eat the end of statement marker.
-  Lex();
-  
+  // If parsing succeeded, match the instruction.
+  if (!HadError) {
+    MCInst Inst;
+    if (!getTargetParser().MatchInstruction(ParsedOperands, Inst)) {
+      // Emit the instruction on success.
+      Out.EmitInstruction(Inst);
+    } else {
+      // Otherwise emit a diagnostic about the match failure and set the error
+      // flag.
+      //
+      // FIXME: We should give nicer diagnostics about the exact failure.
+      Error(IDLoc, "unrecognized instruction");
+      HadError = true;
+    }
+  }
 
-  MCInst Inst;
-
-  bool MatchFail = getTargetParser().MatchInstruction(ParsedOperands, Inst);
+  // If there was no error, consume the end-of-statement token. Otherwise this
+  // will be done by our caller.
+  if (!HadError)
+    Lex();
 
   // Free any parsed operands.
   for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
     delete ParsedOperands[i];
 
-  if (MatchFail) {
-    // FIXME: We should give nicer diagnostics about the exact failure.
-    Error(IDLoc, "unrecognized instruction");
-    return true;
-  }
-  
-  // Instruction is good, process it.
-  Out.EmitInstruction(Inst);
-  
-  // Skip to end of line for now.
-  return false;
+  return HadError;
 }
 
 bool AsmParser::ParseAssignment(const StringRef &Name) {

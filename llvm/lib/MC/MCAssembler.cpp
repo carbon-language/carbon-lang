@@ -212,7 +212,7 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
   // resolved. This also works in conjunction with absolutized .set, which
   // requires the compiler to use .set to absolutize the differences between
   // symbols which the compiler knows to be assembly time constants, so we don't
-  // need to worry about consider symbol differences fully resolved.
+  // need to worry about considering symbol differences fully resolved.
 
   // Non-relative fixups are only resolved if constant.
   if (!BaseSection)
@@ -715,6 +715,8 @@ bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
     return true;
 
   // Otherwise, relax if the value is too big for a (signed) i8.
+  //
+  // FIXME: This is target dependent!
   return int64_t(Value) != int64_t(int8_t(Value));
 }
 
