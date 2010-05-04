@@ -127,6 +127,35 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
   return 0;
 }
 
+/// getWarningOptionForDiag - Return the category number that a specified
+/// DiagID belongs to, or 0 if no category.
+unsigned Diagnostic::getCategoryNumberForDiag(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Category;
+  return 0;
+}
+
+/// getCategoryNameFromID - Given a category ID, return the name of the
+/// category, an empty string if CategoryID is zero, or null if CategoryID is
+/// invalid.
+const char *Diagnostic::getCategoryNameFromID(unsigned CategoryID) {
+  // Second the table of options, sorted by name for fast binary lookup.
+  static const char *CategoryNameTable[] = {
+#define GET_CATEGORY_TABLE
+#define CATEGORY(X) X,
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_CATEGORY_TABLE
+    "<<END>>"
+  };
+  static const size_t CategoryNameTableSize =
+    sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
+  
+  if (CategoryID >= CategoryNameTableSize) return 0;
+  return CategoryNameTable[CategoryID];
+}
+
+
+
 Diagnostic::SFINAEResponse 
 Diagnostic::getDiagnosticSFINAEResponse(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {

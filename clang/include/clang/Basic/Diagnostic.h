@@ -423,6 +423,14 @@ public:
   /// the diagnostic, this returns null.
   static const char *getWarningOptionForDiag(unsigned DiagID);
 
+  /// getWarningOptionForDiag - Return the category number that a specified
+  /// DiagID belongs to, or 0 if no category.
+  static unsigned getCategoryNumberForDiag(unsigned DiagID);
+
+  /// getCategoryNameFromID - Given a category ID, return the name of the
+  /// category.
+  static const char *getCategoryNameFromID(unsigned CategoryID);
+  
   /// \brief Enumeration describing how the the emission of a diagnostic should
   /// be treated when it occurs during C++ template argument deduction.
   enum SFINAEResponse {

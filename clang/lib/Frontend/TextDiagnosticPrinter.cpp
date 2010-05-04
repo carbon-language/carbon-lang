@@ -18,6 +18,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace clang;
 
@@ -819,21 +820,45 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
+  std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
     if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
-      OutStr += " [-W";
-      OutStr += Opt;
-      OutStr += ']';
+      OptionName = "-W";
+      OptionName += Opt;
     } else {
       // If the diagnostic is an extension diagnostic and not enabled by default
       // then it must have been turned on with -pedantic.
       bool EnabledByDefault;
       if (Diagnostic::isBuiltinExtensionDiag(Info.getID(), EnabledByDefault) &&
           !EnabledByDefault)
-        OutStr += " [-pedantic]";
+        OptionName = "-pedantic";
     }
   }
+  
+  // If the user wants to see category information, include it too.
+  unsigned DiagCategory = 0;
+  if (DiagOpts->ShowSourceRanges)
+    DiagCategory = Diagnostic::getCategoryNumberForDiag(Info.getID());
 
+  // If there is any categorization information, include it.
+  if (!OptionName.empty() || DiagCategory != 0) {
+    bool NeedsComma = false;
+    OutStr += " [";
+    
+    if (!OptionName.empty()) {
+      OutStr += OptionName;
+      NeedsComma = true;
+    }
+    
+    if (DiagCategory) {
+      if (NeedsComma) OutStr += ',';
+      OutStr += llvm::utostr(DiagCategory);
+    }
+    
+    OutStr += "]";
+  }
+
+  
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
