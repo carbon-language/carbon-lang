@@ -967,8 +967,8 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
         } else if (isKnownNegative(Step)) {
           const SCEV *N = getConstant(APInt::getMaxValue(BitWidth) -
                                       getSignedRange(Step).getSignedMin());
-          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT, AR, N) &&
-              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_UGT, Start, N) ||
+          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT, AR, N) ||
+              (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_UGT, Start, N) &&
                isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT,
                                            AR->getPostIncExpr(*this), N)))
             // Return the expression with the addrec on the outside.
