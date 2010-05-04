@@ -94,6 +94,8 @@ namespace llvm {
       return I;
     }
 
+    bool EliminateRegSequences(MachineFunction &MF);
+
     typedef std::pair<unsigned, unsigned> BBVRegPair;
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
 

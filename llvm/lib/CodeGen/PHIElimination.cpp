@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
@@ -86,6 +87,10 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   LoweredPHIs.clear();
   ImpDefs.clear();
   VRegPHIUseCount.clear();
+
+  // Eliminate REG_SEQUENCE instructions. Their whole purpose was to preseve
+  // SSA form.
+  Changed |= EliminateRegSequences(MF);
 
   return Changed;
 }
@@ -443,4 +448,59 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
     MDT->addNewBlock(NMBB, A);
 
   return NMBB;
+}
+
+static void UpdateRegSequenceSrcs(unsigned SrcReg,
+                                  unsigned DstReg, unsigned SrcIdx,
+                                  MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+         UE = MRI->reg_end(); RI != UE; ) {
+    MachineOperand &MO = RI.getOperand();
+    ++RI;
+    MO.setReg(DstReg);
+    MO.setSubReg(SrcIdx);
+  }
+}
+
+/// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as second part
+/// of de-ssa process. This replaces sources of REG_SEQUENCE as sub-register
+/// references of the register defined by REG_SEQUENCE. e.g.
+///
+/// %reg1029<def>, %reg1030<def> = VLD1q16 %reg1024<kill>, ...
+/// %reg1031<def> = REG_SEQUENCE %reg1029<kill>, 5, %reg1030<kill>, 6
+/// =>
+/// %reg1031:5<def>, %reg1031:6<def> = VLD1q16 %reg1024<kill>, ...
+bool PHIElimination::EliminateRegSequences(MachineFunction &MF) {
+  bool Changed = false;
+
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+    for (MachineBasicBlock::iterator BBI = I->begin(), BBE = I->end();
+         BBI != BBE; ) {
+      MachineInstr &MI = *BBI;
+      ++BBI;
+      if (MI.getOpcode() != TargetOpcode::REG_SEQUENCE)
+        continue;
+      unsigned DstReg = MI.getOperand(0).getReg();
+      if (MI.getOperand(0).getSubReg() ||
+          TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+          !(MI.getNumOperands() & 1)) {
+        DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << MI);
+        llvm_unreachable(0);
+      }
+      for (unsigned i = 1, e = MI.getNumOperands(); i < e; i += 2) {
+        unsigned SrcReg = MI.getOperand(i).getReg();
+        if (MI.getOperand(i).getSubReg() ||
+            TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
+          DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << MI);
+          llvm_unreachable(0);
+        }
+        unsigned SrcIdx = MI.getOperand(i+1).getImm();
+        UpdateRegSequenceSrcs(SrcReg, DstReg, SrcIdx, MRI);
+      }
+
+      MI.eraseFromParent();
+      Changed = true;
+    }
+
+  return Changed;
 }
