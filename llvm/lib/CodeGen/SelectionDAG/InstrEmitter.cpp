@@ -296,7 +296,6 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     }
   }
 
-#if 0
   // If this value has only one use, that use is a kill. This is a
   // conservative approximation. Tied operands are never killed, so we need
   // to check that. And that means we need to determine the index of the
@@ -307,9 +306,6 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     --Idx;
   bool isTied = MI->getDesc().getOperandConstraint(Idx, TOI::TIED_TO) != -1;
   bool isKill = Op.hasOneUse() && !isTied && !IsDebug;
-#else
-  bool isKill = false;
-#endif
 
   MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef,
                                            false/*isImp*/, isKill,
