@@ -51,10 +51,13 @@ private:
   void InstructionCleanup(MCInst &Inst);
 
   /// @name Auto-generated Match Functions
-  /// {  
+  /// {
 
   bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst);
+
+  bool MatchInstructionImpl(
+    const SmallVectorImpl<MCParsedAsmOperand*> &Operands, MCInst &Inst);
 
   /// }
 
@@ -132,7 +135,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   X86Operand(KindTy K, SMLoc Start, SMLoc End)
     : Kind(K), StartLoc(Start), EndLoc(End) {}
-  
+
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
@@ -141,6 +144,11 @@ struct X86Operand : public MCParsedAsmOperand {
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
+  }
+  void setTokenValue(StringRef Value) {
+    assert(Kind == Token && "Invalid access!");
+    Tok.Data = Value.data();
+    Tok.Length = Value.size();
   }
 
   unsigned getReg() const {
@@ -631,6 +639,59 @@ void X86ATTAsmParser::InstructionCleanup(MCInst &Inst) {
   case X86::INC32m: Inst.setOpcode(X86::INC64_32m); break;
   }
 }
+
+bool
+X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
+                                    &Operands,
+                                  MCInst &Inst) {
+  // First, try a direct match.
+  if (!MatchInstructionImpl(Operands, Inst))
+    return false;
+
+  // Ignore anything which is obviously not a suffix match.
+  if (Operands.size() == 0)
+    return true;
+  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
+  if (!Op->isToken() || Op->getToken().size() > 15)
+    return true;
+
+  // FIXME: Ideally, we would only attempt suffix matches for things which are
+  // valid prefixes, and we could just infer the right unambiguous
+  // type. However, that requires substantially more matcher support than the
+  // following hack.
+
+  // Change the operand to point to a temporary token.
+  char Tmp[16];
+  StringRef Base = Op->getToken();
+  memcpy(Tmp, Base.data(), Base.size());
+  Op->setTokenValue(StringRef(Tmp, Base.size() + 1));
+
+  // Check for the various suffix matches.
+  Tmp[Base.size()] = 'b';
+  bool MatchB = MatchInstructionImpl(Operands, Inst);
+  Tmp[Base.size()] = 'w';
+  bool MatchW = MatchInstructionImpl(Operands, Inst);
+  Tmp[Base.size()] = 'l';
+  bool MatchL = MatchInstructionImpl(Operands, Inst);
+
+  // Restore the old token.
+  Op->setTokenValue(Base);
+
+  // If exactly one matched, then we treat that as a successful match (and the
+  // instruction will already have been filled in correctly, since the failing
+  // matches won't have modified it).
+  if (MatchB + MatchW + MatchL == 2)
+    return false;
+
+  // Similarly, if all three matched then we assume this is a generic operation
+  // involving memory, and take the 'l' form (to match 'gas').
+  if (MatchB + MatchW + MatchL == 0)
+    return false;
+
+  // Otherwise, the match failed.
+  return true;
+}
+
 
 extern "C" void LLVMInitializeX86AsmLexer();
 
