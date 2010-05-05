@@ -46,11 +46,14 @@ LLVM_OPTIMIZED="$8"
 # should be installed.
 INSTALL_LIBLTO="$9"
 
-# The tenth parameter is the version number of the submission, e.g. 1007.
-LLVM_SUBMIT_VERSION="${10}"
+# A yes/no parameter that controls whether to cross-build for an ARM host.
+ARM_HOSTED_BUILD="${10}"
 
-# The eleventh parameter is the subversion number of the submission, e.g. 03.
-LLVM_SUBMIT_SUBVERSION="${11}"
+# The version number of the submission, e.g. 1007.
+LLVM_SUBMIT_VERSION="${11}"
+
+# The subversion number of the submission, e.g. 03.
+LLVM_SUBMIT_SUBVERSION="${12}"
 
 # The current working directory is where the build will happen. It may already
 # contain a partial result of an interrupted build, in which case this script
@@ -61,7 +64,7 @@ DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
 DEVELOPER_DIR="${DEVELOPER_DIR-Developer}"
-if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+if [ "$ARM_HOSTED_BUILD" = yes ]; then
     DT_HOME="$DEST_DIR/usr"
     HOST_SDKROOT=$SDKROOT
 else
@@ -89,8 +92,7 @@ sed -e '/[Aa]pple-style/d' -e '/include.*GNUmakefile/d' $ORIG_SRC_DIR/Makefile >
 mkdir -p $DIR/obj-llvm || exit 1
 cd $DIR/obj-llvm || exit 1
 
-
-if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+if [ "$ARM_HOSTED_BUILD" = yes ]; then
   # The cross-tools' build process expects to find an existing cross toolchain
   # under names like 'arm-apple-darwin$DARWIN_VERS-as'; so make them.
   rm -rf $DIR/bin || exit 1
@@ -129,28 +131,21 @@ elif [ $DARWIN_VERS -gt 9 ]; then
   unset XTMPCC savedPATH
 fi
 
-
-if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
-  if [ \! -f Makefile.config ]; then
-      $SRC_DIR/configure --prefix=$DT_HOME \
-          --enable-targets=arm \
-          --host=arm-apple-darwin10 \
-          --target=arm-apple-darwin10 \
-          --build=i686-apple-darwin10 \
-          --enable-assertions=$LLVM_ASSERTIONS \
-          --enable-optimized=$LLVM_OPTIMIZED \
-          --disable-bindings \
-          || exit 1
-  fi
+if [ "$ARM_HOSTED_BUILD" = yes ]; then
+  configure_prefix=$DT_HOME
+  configure_opts="--enable-targets=arm --host=arm-apple-darwin10 \
+                  --target=arm-apple-darwin10 --build=i686-apple-darwin10"
 else
-  if [ \! -f Makefile.config ]; then
-      $SRC_DIR/configure --prefix=$DT_HOME/local \
-          --enable-targets=arm,x86,powerpc,cbe \
-          --enable-assertions=$LLVM_ASSERTIONS \
-          --enable-optimized=$LLVM_OPTIMIZED \
-          --disable-bindings \
-          || exit 1
-  fi
+  configure_prefix=$DT_HOME/local
+  configure_opts="--enable-targets=arm,x86,powerpc,cbe"
+fi
+
+if [ \! -f Makefile.config ]; then
+  $SRC_DIR/configure --prefix=$configure_prefix $configure_opts \
+    --enable-assertions=$LLVM_ASSERTIONS \
+    --enable-optimized=$LLVM_OPTIMIZED \
+    --disable-bindings \
+    || exit 1
 fi
 
 SUBVERSION=`echo $RC_ProjectSourceVersion | sed -e 's/[^.]*\.\([0-9]*\).*/\1/'`

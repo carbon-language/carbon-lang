@@ -49,6 +49,9 @@ endif
 # Default to not install libLTO.dylib.
 INSTALL_LIBLTO := no
 
+# Default to do a native build, not a cross-build for an ARM host.
+ARM_HOSTED_BUILD := no
+
 ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
 endif
@@ -63,7 +66,11 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	  $(SRC)/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
+	    $(ARM_HOSTED_BUILD) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
+
+EmbeddedHosted:
+	$(MAKE) ARM_HOSTED_BUILD=yes install
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
@@ -113,4 +120,4 @@ clean:
 $(OBJROOT) $(SYMROOT) $(DSTROOT):
 	mkdir -p $@
 
-.PHONY: install installsrc clean
+.PHONY: install installsrc clean EmbeddedHosted
