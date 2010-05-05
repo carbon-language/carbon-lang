@@ -1101,10 +1101,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
     Init = EmitNullConstant(D->getType());
   } else {
-    Init = EmitConstantExpr(InitExpr, D->getType());
-
+    Init = EmitConstantExpr(InitExpr, D->getType());       
     if (!Init) {
       QualType T = InitExpr->getType();
+      if (D->getType()->isReferenceType())
+        T = D->getType();
+      
       if (getLangOptions().CPlusPlus) {
         EmitCXXGlobalVarDeclInitFunc(D);
         Init = EmitNullConstant(T);
