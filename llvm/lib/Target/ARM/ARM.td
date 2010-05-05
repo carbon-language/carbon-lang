@@ -32,6 +32,8 @@ def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
                                    "ARM v6t2">;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A">;
+def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
+                                   "ARM v7M">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
                                    "Enable VFP2 instructions">;
 def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
@@ -126,6 +128,7 @@ def : Processor<"cortex-a8",        CortexA8Itineraries,
                  FeatureNEONForFP]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

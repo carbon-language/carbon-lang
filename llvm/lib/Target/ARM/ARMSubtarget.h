@@ -26,7 +26,7 @@ class GlobalValue;
 class ARMSubtarget : public TargetSubtarget {
 protected:
   enum ARMArchEnum {
-    V4, V4T, V5T, V5TE, V6, V6T2, V7A
+    V4, V4T, V5T, V5TE, V6, V6T2, V7A, V7M
   };
 
   enum ARMFPEnum {
@@ -39,7 +39,7 @@ protected:
   };
 
   /// ARMArchVersion - ARM architecture version: V4, V4T (base), V5T, V5TE,
-  /// V6, V6T2, V7A.
+  /// V6, V6T2, V7A, V7M.
   ARMArchEnum ARMArchVersion;
 
   /// ARMFPUType - Floating Point Unit type.
@@ -117,6 +117,8 @@ protected:
   bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
   bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
   bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
+  bool hasV7AOps()  const { return ARMArchVersion == V7A;  }
+  bool hasV7MOps()  const { return ARMArchVersion == V7M;  }
 
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }
   bool hasVFP3() const { return ARMFPUType >= VFPv3; }
