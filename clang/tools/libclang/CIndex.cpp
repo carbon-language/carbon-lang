@@ -2308,13 +2308,31 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   *NumTokens = CXTokens.size();
 }
 
+void clang_disposeTokens(CXTranslationUnit TU,
+                         CXToken *Tokens, unsigned NumTokens) {
+  free(Tokens);
+}
+
+} // end: extern "C"
+
+//===----------------------------------------------------------------------===//
+// Token annotation APIs.
+//===----------------------------------------------------------------------===//
+
 typedef llvm::DenseMap<unsigned, CXCursor> AnnotateTokensData;
 
-enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
-                                              CXCursor parent,
-                                              CXClientData client_data) {
-  AnnotateTokensData *Data = static_cast<AnnotateTokensData *>(client_data);
+namespace {
+class AnnotateTokensWorker {
+  AnnotateTokensData &Annotated;
+public:
+  AnnotateTokensWorker(AnnotateTokensData &annotated)
+    : Annotated(annotated) {}
+  enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent);
+};
+}
 
+enum CXChildVisitResult
+AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   // We only annotate the locations of declarations, simple
   // references, and expressions which directly reference something.
   CXCursorKind Kind = clang_getCursorKind(cursor);
@@ -2326,11 +2344,11 @@ enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
         Kind != CXCursor_MemberRefExpr &&
         Kind != CXCursor_ObjCMessageExpr)
       return CXChildVisit_Recurse;
-
+    
     CXCursor Referenced = clang_getCursorReferenced(cursor);
     if (Referenced == cursor || Referenced == clang_getNullCursor())
       return CXChildVisit_Recurse;
-
+    
     // Okay: we can annotate the location of this expression
   } else if (clang_isPreprocessing(cursor.kind)) {
     // We can always annotate a preprocessing directive/macro instantiation.
@@ -2338,41 +2356,49 @@ enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
     // Nothing to annotate
     return CXChildVisit_Recurse;
   }
-
+  
   CXSourceLocation Loc = clang_getCursorLocation(cursor);
-  (*Data)[Loc.int_data] = cursor;
+  Annotated[Loc.int_data] = cursor;
   return CXChildVisit_Recurse;
 }
+
+static enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
+                                                     CXCursor parent,
+                                                     CXClientData client_data) {
+  return static_cast<AnnotateTokensWorker*>(client_data)->Visit(cursor, parent);
+}
+
+extern "C" {
 
 void clang_annotateTokens(CXTranslationUnit TU,
                           CXToken *Tokens, unsigned NumTokens,
                           CXCursor *Cursors) {
   if (NumTokens == 0)
     return;
-
+  
   // Any token we don't specifically annotate will have a NULL cursor.
   for (unsigned I = 0; I != NumTokens; ++I)
     Cursors[I] = clang_getNullCursor();
-
+  
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
   if (!CXXUnit || !Tokens)
     return;
-
+  
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
-
+  
   // Determine the region of interest, which contains all of the tokens.
   SourceRange RegionOfInterest;
   RegionOfInterest.setBegin(
-        cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
+                            cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
   SourceLocation End
-    = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
-                                                        Tokens[NumTokens - 1]));
+  = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
+                                                          Tokens[NumTokens - 1]));
   RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
-
+  
   // A mapping from the source locations found when re-lexing or traversing the
   // region of interest to the corresponding cursors.
   AnnotateTokensData Annotated;
-
+  
   // Relex the tokens within the source range to look for preprocessing 
   // directives.
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
@@ -2415,9 +2441,9 @@ void clang_annotateTokens(CXTranslationUnit TU,
         
         using namespace cxcursor;
         CXCursor Cursor
-          = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
-                                                         Locations.back()),
-                                             CXXUnit);
+        = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
+                                                       Locations.back()),
+                                           CXXUnit);
         for (unsigned I = 0, N = Locations.size(); I != N; ++I) {
           Annotated[Locations[I].getRawEncoding()] = Cursor;
         }
@@ -2436,7 +2462,8 @@ void clang_annotateTokens(CXTranslationUnit TU,
   // Annotate all of the source locations in the region of interest that map to
   // a specific cursor.  
   CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
-  CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &Annotated,
+  AnnotateTokensWorker W(Annotated);
+  CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &W,
                             Decl::MaxPCHLevel, RegionOfInterest);
   AnnotateVis.VisitChildren(Parent);
   
@@ -2449,12 +2476,6 @@ void clang_annotateTokens(CXTranslationUnit TU,
     Cursors[I] = Pos->second;
   }  
 }
-
-void clang_disposeTokens(CXTranslationUnit TU,
-                         CXToken *Tokens, unsigned NumTokens) {
-  free(Tokens);
-}
-
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
