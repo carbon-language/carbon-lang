@@ -1369,7 +1369,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 #define EXPR(Type, Base)
 #define STMT(Type, Base) \
   case Expr::Type##Class:
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
     llvm_unreachable("unexpected statement kind");
     break;
 

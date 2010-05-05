@@ -1468,13 +1468,10 @@ public:
   }
 
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CallExprClass ||
-           T->getStmtClass() == CXXOperatorCallExprClass ||
-           T->getStmtClass() == CXXMemberCallExprClass;
+    return T->getStmtClass() >= firstCallExprConstant &&
+           T->getStmtClass() <= lastCallExprConstant;
   }
   static bool classof(const CallExpr *) { return true; }
-  static bool classof(const CXXOperatorCallExpr *) { return true; }
-  static bool classof(const CXXMemberCallExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();
@@ -1933,14 +1930,8 @@ public:
   const CXXBaseSpecifierArray& getBasePath() const { return BasePath; }
 
   static bool classof(const Stmt *T) {
-    StmtClass SC = T->getStmtClass();
-    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
-      return true;
-
-    if (SC >= ImplicitCastExprClass && SC <= CStyleCastExprClass)
-      return true;
-
-    return false;
+    return T->getStmtClass() >= firstCastExprConstant &&
+           T->getStmtClass() <= lastCastExprConstant;
   }
   static bool classof(const CastExpr *) { return true; }
 
@@ -2037,13 +2028,8 @@ public:
   QualType getTypeAsWritten() const { return TInfo->getType(); }
 
   static bool classof(const Stmt *T) {
-    StmtClass SC = T->getStmtClass();
-    if (SC >= CStyleCastExprClass && SC <= CStyleCastExprClass)
-      return true;
-    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
-      return true;
-
-    return false;
+     return T->getStmtClass() >= firstExplicitCastExprConstant &&
+            T->getStmtClass() <= lastExplicitCastExprConstant;
   }
   static bool classof(const ExplicitCastExpr *) { return true; }
 };
@@ -2198,8 +2184,8 @@ public:
   bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
 
   static bool classof(const Stmt *S) {
-    return S->getStmtClass() == BinaryOperatorClass ||
-           S->getStmtClass() == CompoundAssignOperatorClass;
+    return S->getStmtClass() >= firstBinaryOperatorConstant &&
+           S->getStmtClass() <= lastBinaryOperatorConstant;
   }
   static bool classof(const BinaryOperator *) { return true; }
 

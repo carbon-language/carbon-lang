@@ -1810,7 +1810,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   switch (E->getStmtClass()) {
 #define STMT(Node, Base) case Expr::Node##Class:
 #define EXPR(Node, Base)
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
   case Expr::PredefinedExprClass:
   case Expr::FloatingLiteralClass:
   case Expr::ImaginaryLiteralClass:

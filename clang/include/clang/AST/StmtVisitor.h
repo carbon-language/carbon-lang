@@ -105,10 +105,10 @@ public:
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (S->getStmtClass()) {
     default: assert(0 && "Unknown stmt kind!");
-#define ABSTRACT_EXPR(CLASS, PARENT)
+#define ABSTRACT(STMT)
 #define STMT(CLASS, PARENT)                              \
     case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
     }
   }
 
@@ -116,7 +116,7 @@ public:
   // back on VisitExpr or whatever else is the superclass.
 #define STMT(CLASS, PARENT)                                   \
   RetTy Visit ## CLASS(CLASS *S) { DISPATCH(PARENT, PARENT); }
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
   // If the implementation doesn't implement binary operator methods, fall back
   // on VisitBinaryOperator.

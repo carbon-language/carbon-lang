@@ -99,11 +99,24 @@ public:
     NoStmtClass = 0,
 #define STMT(CLASS, PARENT) CLASS##Class,
 #define FIRST_STMT(CLASS) firstStmtConstant = CLASS##Class,
-#define LAST_STMT(CLASS) lastStmtConstant = CLASS##Class,
+// LAST_STMT will always come last
+#define LAST_STMT(CLASS) lastStmtConstant = CLASS##Class
 #define FIRST_EXPR(CLASS) firstExprConstant = CLASS##Class,
-#define LAST_EXPR(CLASS) lastExprConstant = CLASS##Class
-#define ABSTRACT_EXPR(CLASS, PARENT)
-#include "clang/AST/StmtNodes.def"
+#define LAST_EXPR(CLASS) lastExprConstant = CLASS##Class,
+#define FIRST_CALLEXPR(CLASS) firstCallExprConstant = CLASS##Class,
+#define LAST_CALLEXPR(CLASS) lastCallExprConstant = CLASS##Class,
+#define FIRST_CASTEXPR(CLASS) firstCastExprConstant = CLASS##Class,
+#define LAST_CASTEXPR(CLASS) lastCastExprConstant = CLASS##Class,
+#define FIRST_EXPLICITCASTEXPR(CLASS) firstExplicitCastExprConstant = \
+            CLASS##Class,
+#define LAST_EXPLICITCASTEXPR(CLASS) lastExplicitCastExprConstant = \
+            CLASS##Class,
+#define FIRST_BINARYOPERATOR(CLASS) firstBinaryOperatorConstant = \
+            CLASS##Class,
+#define LAST_BINARYOPERATOR(CLASS) lastBinaryOperatorConstant = \
+            CLASS##Class,
+#define ABSTRACT(STMT)
+#include "clang/AST/StmtNodes.inc"
 };
 private:
   /// \brief The statement class.

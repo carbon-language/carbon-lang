@@ -27,7 +27,7 @@ static struct StmtClassNameTable {
   const char *Name;
   unsigned Counter;
   unsigned Size;
-} StmtClassInfo[Stmt::lastExprConstant+1];
+} StmtClassInfo[Stmt::lastStmtConstant+1];
 
 static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
   static bool Initialized = false;
@@ -36,11 +36,11 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 
   // Intialize the table on the first use.
   Initialized = true;
-#define ABSTRACT_EXPR(CLASS, PARENT)
+#define ABSTRACT(STMT)
 #define STMT(CLASS, PARENT) \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Name = #CLASS;    \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Size = sizeof(CLASS);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
   return StmtClassInfo[E];
 }
@@ -55,13 +55,13 @@ void Stmt::PrintStats() {
 
   unsigned sum = 0;
   fprintf(stderr, "*** Stmt/Expr Stats:\n");
-  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
+  for (int i = 0; i != Stmt::lastStmtConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     sum += StmtClassInfo[i].Counter;
   }
   fprintf(stderr, "  %d stmts/exprs total.\n", sum);
   sum = 0;
-  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
+  for (int i = 0; i != Stmt::lastStmtConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     if (StmtClassInfo[i].Counter == 0) continue;
     fprintf(stderr, "    %d %s, %d each (%d bytes)\n",

@@ -36,7 +36,7 @@ namespace {
     void VisitStmt(Stmt *S);
 
 #define STMT(Node, Base) void Visit##Node(Node *S);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
     /// \brief Visit a declaration that is referenced within an expression
     /// or statement.

@@ -344,8 +344,8 @@ public:
   OwningStmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
   OwningExprResult Transform##Node(Node *E);
-#define ABSTRACT_EXPR(Node, Parent)
-#include "clang/AST/StmtNodes.def"
+#define ABSTRACT(Stmt)
+#include "clang/AST/StmtNodes.inc"
 
   /// \brief Build a new pointer type given its pointee type.
   ///
@@ -1966,13 +1966,13 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
 #define STMT(Node, Parent)                                              \
   case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(S));
 #define EXPR(Node, Parent)
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
   // Transform expressions by calling TransformExpr.
 #define STMT(Node, Parent)
-#define ABSTRACT_EXPR(Node, Parent)
+#define ABSTRACT(Stmt)
 #define EXPR(Node, Parent) case Stmt::Node##Class:
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
     {
       Sema::OwningExprResult E = getDerived().TransformExpr(cast<Expr>(S));
       if (E.isInvalid())
@@ -1994,10 +1994,10 @@ Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
   switch (E->getStmtClass()) {
     case Stmt::NoStmtClass: break;
 #define STMT(Node, Parent) case Stmt::Node##Class: break;
-#define ABSTRACT_EXPR(Node, Parent)
+#define ABSTRACT(Stmt)
 #define EXPR(Node, Parent)                                              \
     case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(E));
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
   }
 
   return SemaRef.Owned(E->Retain());
