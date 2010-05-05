@@ -342,6 +342,8 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
                       operand, 
                       verboseEvaluator, 
                       &disassembler);
+      
+    outs() << "=" << evaluatedResult;
     
     outs() << " ";
   }

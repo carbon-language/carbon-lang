@@ -155,7 +155,57 @@ static void translateRegister(MCInst &mcInst, Reg reg) {
 ///
 /// @param mcInst       - The MCInst to append to.
 /// @param immediate    - The immediate value to append.
-static void translateImmediate(MCInst &mcInst, uint64_t immediate) {
+/// @param operand      - The operand, as stored in the descriptor table.
+/// @param insn         - The internal instruction.
+static void translateImmediate(MCInst &mcInst, 
+                               uint64_t immediate, 
+                               OperandSpecifier &operand,
+                               InternalInstruction &insn) {
+  // Sign-extend the immediate if necessary.
+
+  OperandType type = operand.type;
+
+  if (type == TYPE_RELv) {
+    switch (insn.displacementSize) {
+    default:
+      break;
+    case 8:
+      type = TYPE_MOFFS8;
+      break;
+    case 16:
+      type = TYPE_MOFFS16;
+      break;
+    case 32:
+      type = TYPE_MOFFS32;
+      break;
+    case 64:
+      type = TYPE_MOFFS64;
+      break;
+    }
+  }
+
+  switch (type) {
+  case TYPE_MOFFS8:
+  case TYPE_REL8:
+    if(immediate & 0x80)
+      immediate |= ~(0xffull);
+    break;
+  case TYPE_MOFFS16:
+    if(immediate & 0x8000)
+      immediate |= ~(0xffffull);
+    break;
+  case TYPE_MOFFS32:
+  case TYPE_REL32:
+  case TYPE_REL64:
+    if(immediate & 0x80000000)
+      immediate |= ~(0xffffffffull);
+    break;
+  case TYPE_MOFFS64:
+  default:
+    // operand is 64 bits wide.  Do nothing.
+    break;
+  }
+    
   mcInst.addOperand(MCOperand::CreateImm(immediate));
 }
 
@@ -447,8 +497,10 @@ static bool translateOperand(MCInst &mcInst,
   case ENCODING_IO:
   case ENCODING_Iv:
   case ENCODING_Ia:
-    translateImmediate(mcInst, 
-                       insn.immediates[insn.numImmediatesTranslated++]);
+    translateImmediate(mcInst,
+                       insn.immediates[insn.numImmediatesTranslated++],
+                       operand,
+                       insn);
     return false;
   case ENCODING_RB:
   case ENCODING_RW:
