@@ -20,13 +20,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Support/CommandLine.h"
-
 using namespace llvm;
-
-static cl::opt<bool> DisableSSEDomain("disable-sse-domain",
-    cl::init(false), cl::Hidden,
-    cl::desc("Disable SSE Domain Fixing"));
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
@@ -178,8 +172,7 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 
 bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
-  if (OptLevel != CodeGenOpt::None && Subtarget.hasSSE2() &&
-      !DisableSSEDomain) {
+  if (OptLevel != CodeGenOpt::None && Subtarget.hasSSE2()) {
     PM.add(createSSEDomainFixPass());
     return true;
   }
