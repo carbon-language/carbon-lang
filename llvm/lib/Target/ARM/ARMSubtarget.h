@@ -74,6 +74,13 @@ protected:
   /// only so far)
   bool HasFP16;
 
+  /// HasHardwareDivide - True if subtarget supports [su]div
+  bool HasHardwareDivide;
+
+  /// HasT2ExtractPack - True if subtarget supports thumb2 extract/pack
+  /// instructions.
+  bool HasT2ExtractPack;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -117,14 +124,14 @@ protected:
   bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
   bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
   bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
-  bool hasV7AOps()  const { return ARMArchVersion == V7A;  }
-  bool hasV7MOps()  const { return ARMArchVersion == V7M;  }
 
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }
   bool hasVFP3() const { return ARMFPUType >= VFPv3; }
   bool hasNEON() const { return ARMFPUType >= NEON;  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
+  bool hasDivide() const { return HasHardwareDivide; };
+  bool hasT2ExtractPack() const { return HasT2ExtractPack; };
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
 
   bool hasFP16() const { return HasFP16; }

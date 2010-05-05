@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk | \
 ; RUN:   grep pkhbt | count 5
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk | \
 ; RUN:   grep pkhtb | count 4
 
 define i32 @test1(i32 %X, i32 %Y) {

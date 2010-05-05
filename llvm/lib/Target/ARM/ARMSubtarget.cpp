@@ -39,6 +39,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , IsR9Reserved(ReserveR9)
   , UseMovt(UseMOVT)
   , HasFP16(false)
+  , HasHardwareDivide(false)
+  , HasT2ExtractPack(false)
   , stackAlignment(4)
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.

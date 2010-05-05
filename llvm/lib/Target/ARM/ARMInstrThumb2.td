@@ -640,7 +640,7 @@ multiclass T2I_unary_rrot<bits<3> opcod, string opc, PatFrag opnode> {
   def r     : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
                   opc, ".w\t$dst, $src",
                  [(set GPR:$dst, (opnode GPR:$src))]>,
-                 Requires<[NoV7M]> {
+                 Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -652,7 +652,7 @@ multiclass T2I_unary_rrot<bits<3> opcod, string opc, PatFrag opnode> {
   def r_rot : T2I<(outs GPR:$dst), (ins GPR:$src, i32imm:$rot), IIC_iUNAsi,
                   opc, ".w\t$dst, $src, ror $rot",
                  [(set GPR:$dst, (opnode (rotr GPR:$src, rot_imm:$rot)))]>,
-                 Requires<[NoV7M]> {
+                 Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -668,7 +668,7 @@ multiclass T2I_unary_rrot_nw<bits<3> opcod, string opc, PatFrag opnode> {
   def r     : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
                   opc, "\t$dst, $src",
                  [(set GPR:$dst, (opnode GPR:$src))]>,
-                 Requires<[NoV7M]> {
+                 Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -680,7 +680,7 @@ multiclass T2I_unary_rrot_nw<bits<3> opcod, string opc, PatFrag opnode> {
   def r_rot : T2I<(outs GPR:$dst), (ins GPR:$src, i32imm:$rot), IIC_iUNAsi,
                   opc, "\t$dst, $src, ror $rot",
                  [(set GPR:$dst, (opnode (rotr GPR:$src, rot_imm:$rot)))]>,
-                 Requires<[NoV7M]> {
+                 Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -722,7 +722,7 @@ multiclass T2I_bin_rrot<bits<3> opcod, string opc, PatFrag opnode> {
   def rr     : T2I<(outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS), IIC_iALUr,
                   opc, "\t$dst, $LHS, $RHS",
                   [(set GPR:$dst, (opnode GPR:$LHS, GPR:$RHS))]>,
-                  Requires<[NoV7M]> {
+                  Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -734,7 +734,7 @@ multiclass T2I_bin_rrot<bits<3> opcod, string opc, PatFrag opnode> {
                   IIC_iALUsr, opc, "\t$dst, $LHS, $RHS, ror $rot",
                   [(set GPR:$dst, (opnode GPR:$LHS,
                                           (rotr GPR:$RHS, rot_imm:$rot)))]>,
-                  Requires<[NoV7M]> {
+                  Requires<[HasT2ExtractPack]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -866,7 +866,7 @@ def t2SUBrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 def t2SDIV : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALUi, 
                  "sdiv", "\t$dst, $a, $b",
                  [(set GPR:$dst, (sdiv GPR:$a, GPR:$b))]>,
-                 Requires<[HasV7M]> {
+                 Requires<[HasDivide]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-21} = 0b011100;
   let Inst{20} = 0b1;
@@ -877,7 +877,7 @@ def t2SDIV : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALUi,
 def t2UDIV : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALUi, 
                  "udiv", "\t$dst, $a, $b",
                  [(set GPR:$dst, (udiv GPR:$a, GPR:$b))]>,
-                 Requires<[HasV7M]> {
+                 Requires<[HasDivide]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-21} = 0b011101;
   let Inst{20} = 0b1;
@@ -2069,7 +2069,7 @@ def t2PKHBT : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
                   [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
                                       (and (shl GPR:$src2, (i32 imm:$shamt)),
                                            0xFFFF0000)))]>,
-                  Requires<[NoV7M]> {
+                  Requires<[HasT2ExtractPack]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-20} = 0b01100;
@@ -2080,17 +2080,17 @@ def t2PKHBT : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
 // Alternate cases for PKHBT where identities eliminate some nodes.
 def : T2Pat<(or (and GPR:$src1, 0xFFFF), (and GPR:$src2, 0xFFFF0000)),
             (t2PKHBT GPR:$src1, GPR:$src2, 0)>,
-            Requires<[NoV7M]>;
+            Requires<[HasT2ExtractPack]>;
 def : T2Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
             (t2PKHBT GPR:$src1, GPR:$src2, imm16_31:$shamt)>,
-            Requires<[NoV7M]>;
+            Requires<[HasT2ExtractPack]>;
 
 def t2PKHTB : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
                   IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2, asr $shamt",
                   [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
                                       (and (sra GPR:$src2, imm16_31:$shamt),
                                            0xFFFF)))]>,
-                  Requires<[NoV7M]> {
+                  Requires<[HasT2ExtractPack]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-20} = 0b01100;
@@ -2102,11 +2102,11 @@ def t2PKHTB : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
 def : T2Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, (i32 16))),
             (t2PKHTB GPR:$src1, GPR:$src2, 16)>,
-            Requires<[NoV7M]>;
+            Requires<[HasT2ExtractPack]>;
 def : T2Pat<(or (and GPR:$src1, 0xFFFF0000),
                      (and (srl GPR:$src2, imm1_15:$shamt), 0xFFFF)),
             (t2PKHTB GPR:$src1, GPR:$src2, imm1_15:$shamt)>,
-            Requires<[NoV7M]>;
+            Requires<[HasT2ExtractPack]>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk | FileCheck %s
 
 define i32 @t2ADDrs_lsl(i32 %X, i32 %Y) {
 ; CHECK: t2ADDrs_lsl
