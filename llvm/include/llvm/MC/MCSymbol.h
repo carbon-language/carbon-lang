@@ -125,11 +125,14 @@ namespace llvm {
       return Value != 0;
     }
 
-    /// getValue() - Get the value for variable symbols, or null if the symbol
-    /// is not a variable.
-    const MCExpr *getValue() const { return Value; }
+    /// getValue() - Get the value for variable symbols.
+    const MCExpr *getVariableValue() const {
+      assert(isVariable() && "Invalid accessor!");
+      return Value;
+    }
 
-    void setValue(const MCExpr *Value) {
+    void setVariableValue(const MCExpr *Value) {
+      assert(Value && "Invalid variable value!");
       this->Value = Value;
     }
 

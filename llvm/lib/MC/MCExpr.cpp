@@ -249,7 +249,7 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable()) {
-      if (!Sym.getValue()->EvaluateAsRelocatable(Res, Layout))
+      if (!Sym.getVariableValue()->EvaluateAsRelocatable(Res, Layout))
         return false;
 
       // Absolutize symbol differences between defined symbols when we have a

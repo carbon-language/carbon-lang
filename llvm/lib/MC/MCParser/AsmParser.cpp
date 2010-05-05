@@ -199,11 +199,11 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 
     // If this is an absolute variable reference, substitute it now to preserve
     // semantics in the face of reassignment.
-    if (Sym->getValue() && isa<MCConstantExpr>(Sym->getValue())) {
+    if (Sym->isVariable() && isa<MCConstantExpr>(Sym->getVariableValue())) {
       if (Variant)
         return Error(EndLoc, "unexpected modified on variable reference");
 
-      Res = Sym->getValue();
+      Res = Sym->getVariableValue();
       return false;
     }
 
@@ -790,7 +790,7 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
       return Error(EqualLoc, "redefinition of '" + Name + "'");
     else if (!Sym->isVariable())
       return Error(EqualLoc, "invalid assignment to '" + Name + "'");
-    else if (!isa<MCConstantExpr>(Sym->getValue()))
+    else if (!isa<MCConstantExpr>(Sym->getVariableValue()))
       return Error(EqualLoc, "invalid reassignment of non-absolute variable '" +
                    Name + "'");
   } else
