@@ -668,6 +668,7 @@ def _pipe : Flag<"--pipe">, Alias<pipe>, Flags<[DriverOption]>;
 def _prefix_EQ : Joined<"--prefix=">, Alias<B>, Flags<[RenderSeparate]>;
 def _prefix : Separate<"--prefix">, Alias<B>;
 def _preprocess : Flag<"--preprocess">, Alias<E>;
+def _print_diagnostic_categories : Flag<"--print-diagnostic-categories">;
 def _print_file_name_EQ : Joined<"--print-file-name=">, Alias<print_file_name_EQ>;
 def _print_file_name : Separate<"--print-file-name">, Alias<print_file_name_EQ>;
 def _print_libgcc_file_name : Flag<"--print-libgcc-file-name">, Alias<print_libgcc_file_name>;

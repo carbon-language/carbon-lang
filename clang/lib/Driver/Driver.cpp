@@ -291,12 +291,25 @@ void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
   OS << "Thread model: " << "posix" << '\n';
 }
 
+/// PrintDiagnosticCategories - Implement the --print-diagnostic-categories
+/// option.
+static void PrintDiagnosticCategories(llvm::raw_ostream &OS) {
+  for (unsigned i = 1; // Skip the empty category.
+       const char *CategoryName = Diagnostic::getCategoryNameFromID(i); ++i)
+    OS << i << ',' << CategoryName << '\n';
+}
+
 bool Driver::HandleImmediateArgs(const Compilation &C) {
   // The order these options are handled in in gcc is all over the place, but we
   // don't expect inconsistencies w.r.t. that to matter in practice.
 
   if (C.getArgs().hasArg(options::OPT_dumpversion)) {
     llvm::outs() << CLANG_VERSION_STRING "\n";
+    return false;
+  }
+  
+  if (C.getArgs().hasArg(options::OPT__print_diagnostic_categories)) {
+    PrintDiagnosticCategories(llvm::outs());
     return false;
   }
 
