@@ -1,0 +1,7 @@
+{
+   False leak under RegisterPass
+   Memcheck:Leak
+   ...
+   fun:_ZN83_GLOBAL_*PassRegistrar12RegisterPassERKN4llvm8PassInfoE
+   fun:_ZN4llvm8PassInfo12registerPassEv
+}
