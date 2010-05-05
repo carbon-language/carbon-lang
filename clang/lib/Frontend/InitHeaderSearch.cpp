@@ -54,7 +54,7 @@ public:
                bool isCXXAware, bool isUserSupplied,
                bool isFramework, bool IgnoreSysRoot = false);
 
-  /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
+  /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to support a gnu
   ///  libstdc++.
   void AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
                                    llvm::StringRef ArchDir,
