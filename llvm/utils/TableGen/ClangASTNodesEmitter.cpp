@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 #include <utility>
-#include <clocale>
+#include <cctype>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
