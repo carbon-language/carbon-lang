@@ -57,3 +57,10 @@ foo:
 
 // CHECK: .long "a 9"
         .long "a 9"
+
+
+// rdar://7946934
+// CHECK: .globl $abc
+        .globl $abc
+        
+        

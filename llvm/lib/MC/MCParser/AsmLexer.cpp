@@ -69,16 +69,26 @@ int AsmLexer::getNextChar() {
   }
 }
 
-/// LexIdentifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
+/// LexIdentifier: [a-zA-Z_.$][a-zA-Z0-9_$.@]*
+/// LexIdentifier: .
+/// LexIdentifier: $
 AsmToken AsmLexer::LexIdentifier() {
   while (isalnum(*CurPtr) || *CurPtr == '_' || *CurPtr == '$' ||
          *CurPtr == '.' || *CurPtr == '@')
     ++CurPtr;
   
   // Handle . as a special case.
-  if (CurPtr == TokStart+1 && TokStart[0] == '.')
-    return AsmToken(AsmToken::Dot, StringRef(TokStart, 1));
-  
+  if (CurPtr == TokStart+1)
+    if (TokStart[0] == '.')
+      return AsmToken(AsmToken::Dot, StringRef(TokStart, 1));
+
+  // Handle $ as a special case. $foo is an identifier, $42 is not.
+  if (TokStart[0] == '$' &&
+      (CurPtr-TokStart == 1 || isdigit(TokStart[1]) || TokStart[1] == '"')) {
+    CurPtr = TokStart+1;
+    return AsmToken(AsmToken::Dollar, StringRef(TokStart, 1));
+  }
+
   return AsmToken(AsmToken::Identifier, StringRef(TokStart, CurPtr - TokStart));
 }
 
@@ -252,8 +262,8 @@ AsmToken AsmLexer::LexToken() {
 
   switch (CurChar) {
   default:
-    // Handle identifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
-    if (isalpha(CurChar) || CurChar == '_' || CurChar == '.')
+    // Handle identifier: [a-zA-Z_.$][a-zA-Z0-9_$.@]*
+    if (isalpha(CurChar) || CurChar == '_' || CurChar == '.' || CurChar == '$')
       return LexIdentifier();
     
     // Unknown character, emit an error.
@@ -279,7 +289,6 @@ AsmToken AsmLexer::LexToken() {
   case '}': return AsmToken(AsmToken::RCurly, StringRef(TokStart, 1));
   case '*': return AsmToken(AsmToken::Star, StringRef(TokStart, 1));
   case ',': return AsmToken(AsmToken::Comma, StringRef(TokStart, 1));
-  case '$': return AsmToken(AsmToken::Dollar, StringRef(TokStart, 1));
   case '=': 
     if (*CurPtr == '=')
       return ++CurPtr, AsmToken(AsmToken::EqualEqual, StringRef(TokStart, 2));
