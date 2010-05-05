@@ -258,9 +258,10 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
     lc = getLocalConfig(ts, path_in_suite, litConfig, localConfigCache)
 
     # Search for tests.
-    for res in lc.test_format.getTestsInDirectory(ts, path_in_suite,
-                                                  litConfig, lc):
-        yield res
+    if lc.test_format is not None:
+        for res in lc.test_format.getTestsInDirectory(ts, path_in_suite,
+                                                      litConfig, lc):
+            yield res
 
     # Search subdirectories.
     for filename in os.listdir(source_path):
