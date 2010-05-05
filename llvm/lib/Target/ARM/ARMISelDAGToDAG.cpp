@@ -164,6 +164,8 @@ private:
                                ARMCC::CondCodes CCVal, SDValue CCR,
                                SDValue InFlag);
 
+  SDNode *SelectConcatVector(SDNode *N);
+
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -946,7 +948,7 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
   SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
-  if (UseRegSeq) {
+  if (llvm::ModelWithRegSequence()) {
     const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
   }
@@ -1481,6 +1483,21 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 5);
 }
 
+SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
+  // The only time a CONCAT_VECTORS operation can have legal types is when
+  // two 64-bit vectors are concatenated to a 128-bit vector.
+  EVT VT = N->getValueType(0);
+  if (!VT.is128BitVector() || N->getNumOperands() != 2)
+    llvm_unreachable("unexpected CONCAT_VECTORS");
+  DebugLoc dl = N->getDebugLoc();
+  SDValue V0 = N->getOperand(0);
+  SDValue V1 = N->getOperand(1);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
+  const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
+  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
+}
+
 SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
@@ -1972,6 +1989,10 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
     }
   }
+
+  case ISD::CONCAT_VECTORS: {
+    return SelectConcatVector(N);
+  }
   }
 
   return SelectCode(N);
@@ -1994,4 +2015,10 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 FunctionPass *llvm::createARMISelDag(ARMBaseTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel) {
   return new ARMDAGToDAGISel(TM, OptLevel);
+}
+
+/// ModelWithRegSequence - Return true if isel should use REG_SEQUENCE to model
+/// operations involving sub-registers.
+bool llvm::ModelWithRegSequence() {
+  return UseRegSeq;
 }

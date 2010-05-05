@@ -94,7 +94,10 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
   }
   setOperationAction(ISD::BUILD_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, VT.getSimpleVT(), Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Custom);
+  if (llvm::ModelWithRegSequence())
+    setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Legal);
+  else
+    setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::SELECT, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::SELECT_CC, VT.getSimpleVT(), Expand);
