@@ -457,7 +457,7 @@ bool AsmParser::ParseStatement() {
     // FIXME: This doesn't diagnose assignment to a symbol which has been
     // implicitly marked as external.
     MCSymbol *Sym = CreateSymbol(IDVal);
-    if (!Sym->isUndefined())
+    if (!Sym->isUndefined() || Sym->isVariable())
       return Error(IDLoc, "invalid symbol redefinition");
     
     // Emit the label.

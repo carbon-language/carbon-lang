@@ -162,6 +162,8 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
+  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
+  assert(CurSection && "Cannot emit before setting section!");
 
   // FIXME: This is wasteful, we don't necessarily need to create a data
   // fragment. Instead, we should mark the symbol as pointing into the data
@@ -190,10 +192,6 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
-  // Only absolute symbols can be redefined.
-  assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
-         "Cannot define a symbol twice!");
-
   // FIXME: Lift context changes into super class.
   // FIXME: Set associated section.
   Symbol->setVariableValue(AddValueSymbols(Value));
