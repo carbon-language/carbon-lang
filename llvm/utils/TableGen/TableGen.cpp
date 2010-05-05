@@ -18,6 +18,7 @@
 #include "AsmMatcherEmitter.h"
 #include "AsmWriterEmitter.h"
 #include "CallingConvEmitter.h"
+#include "ClangASTNodesEmitter.h"
 #include "ClangDiagnosticsEmitter.h"
 #include "CodeEmitterGen.h"
 #include "DAGISelEmitter.h"
@@ -53,6 +54,7 @@ enum ActionType {
   GenCallingConv,
   GenClangDiagsDefs,
   GenClangDiagGroups,
+  GenClangStmtNodes,
   GenDAGISel,
   GenFastISel,
   GenOptParserDefs, GenOptParserImpl,
@@ -109,6 +111,8 @@ namespace {
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
                                "Generate Clang diagnostic groups"),
+                    clEnumValN(GenClangStmtNodes, "gen-clang-stmt-nodes",
+                               "Generate Clang AST statement nodes"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
                     clEnumValN(GenEDHeader, "gen-enhanced-disassembly-header",
@@ -133,7 +137,7 @@ namespace {
   cl::list<std::string>
   IncludeDirs("I", cl::desc("Directory of include files"),
               cl::value_desc("directory"), cl::Prefix);
-  
+
   cl::opt<std::string>
   ClangComponent("clang-component",
                  cl::desc("Only use warnings from specified component"),
@@ -160,18 +164,18 @@ static bool ParseFile(const std::string &Filename,
   std::string ErrorStr;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
-    errs() << "Could not open input file '" << Filename << "': " 
+    errs() << "Could not open input file '" << Filename << "': "
            << ErrorStr <<"\n";
     return true;
   }
-  
+
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
   SrcMgr.AddNewSourceBuffer(F, SMLoc());
 
   // Record the location of the include directory so that the lexer can find
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
-  
+
   TGParser Parser(SrcMgr);
 
   return Parser.ParseFile();
@@ -182,7 +186,7 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
-  
+
   // Parse the input file.
   if (ParseFile(InputFilename, IncludeDirs, SrcMgr))
     return 1;
@@ -193,7 +197,7 @@ int main(int argc, char **argv) {
     Out = new raw_fd_ostream(OutputFilename.c_str(), Error);
 
     if (!Error.empty()) {
-      errs() << argv[0] << ": error opening " << OutputFilename 
+      errs() << argv[0] << ": error opening " << OutputFilename
              << ":" << Error << "\n";
       return 1;
     }
@@ -244,6 +248,9 @@ int main(int argc, char **argv) {
     case GenClangDiagGroups:
       ClangDiagGroupsEmitter(Records).run(*Out);
       break;
+    case GenClangStmtNodes:
+      ClangStmtNodesEmitter(Records).run(*Out);
+      break;
     case GenDisassembler:
       DisassemblerEmitter(Records).run(*Out);
       break;
@@ -289,15 +296,15 @@ int main(int argc, char **argv) {
       assert(1 && "Invalid Action");
       return 1;
     }
-    
+
     if (Out != &outs())
       delete Out;                               // Close the file
     return 0;
-    
+
   } catch (const TGError &Error) {
     errs() << argv[0] << ": error:\n";
     PrintError(Error.getLoc(), Error.getMessage());
-    
+
   } catch (const std::string &Error) {
     errs() << argv[0] << ": " << Error << "\n";
   } catch (const char *Error) {
@@ -305,7 +312,7 @@ int main(int argc, char **argv) {
   } catch (...) {
     errs() << argv[0] << ": Unknown unexpected exception occurred.\n";
   }
-  
+
   if (Out != &outs()) {
     delete Out;                             // Close the file
     std::remove(OutputFilename.c_str());    // Remove the file, it's broken
