@@ -60,6 +60,7 @@ protected:
   const TargetData &TD;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
+  bool IsBottomUp;
 
 public:
   /// startNewBlock - Set the current block to which generated machine
