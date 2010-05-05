@@ -2548,7 +2548,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
     getMangleContext().mangleThunk(MD, Thunk, Name);
   
   const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(MD);
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+  return GetOrCreateLLVMFunction(Name, Ty, GD);
 }
 
 static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
