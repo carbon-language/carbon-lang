@@ -1,5 +1,5 @@
 LEVEL = ../../../..
-DIRS := AST Basic Driver
+DIRS := Basic Driver
 
 include $(LEVEL)/Makefile.common
 

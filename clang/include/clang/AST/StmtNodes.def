@@ -1,0 +1,165 @@
+//===-- StmtNodes.def - Metadata about Stmt AST nodes -----------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the AST Node info database.
+//
+//===---------------------------------------------------------------------===//
+
+#ifndef FIRST_STMT
+#define FIRST_STMT(CLASS)
+#define LAST_STMT(CLASS)
+#endif
+
+#ifndef FIRST_EXPR
+#define FIRST_EXPR(CLASS)
+#define LAST_EXPR(CLASS)
+#endif
+
+#ifndef EXPR
+#  define EXPR(Type, Base) STMT(Type, Base)
+#endif
+
+#ifndef ABSTRACT_EXPR
+#  define ABSTRACT_EXPR(Type, Base) EXPR(Type, Base)
+#endif
+
+// Normal Statements.
+STMT(NullStmt        , Stmt)
+FIRST_STMT(NullStmt)
+STMT(CompoundStmt    , Stmt)
+STMT(CaseStmt        , SwitchCase)
+STMT(DefaultStmt     , SwitchCase)
+STMT(LabelStmt       , Stmt)
+STMT(IfStmt          , Stmt)
+STMT(SwitchStmt      , Stmt)
+STMT(WhileStmt       , Stmt)
+STMT(DoStmt          , Stmt)
+STMT(ForStmt         , Stmt)
+STMT(GotoStmt        , Stmt)
+STMT(IndirectGotoStmt, Stmt)
+STMT(ContinueStmt    , Stmt)
+STMT(BreakStmt       , Stmt)
+STMT(ReturnStmt      , Stmt)
+STMT(DeclStmt        , Stmt)
+STMT(SwitchCase      , Stmt)
+
+// GNU Stmt Extensions
+STMT(AsmStmt         , Stmt)
+
+// Obj-C statements
+STMT(ObjCAtTryStmt        , Stmt)
+STMT(ObjCAtCatchStmt      , Stmt)
+STMT(ObjCAtFinallyStmt    , Stmt)
+STMT(ObjCAtThrowStmt      , Stmt)
+STMT(ObjCAtSynchronizedStmt , Stmt)
+// Obj-C2 statements
+STMT(ObjCForCollectionStmt, Stmt)
+
+// C++ statements
+STMT(CXXCatchStmt, Stmt)
+STMT(CXXTryStmt  , Stmt)
+
+LAST_STMT(CXXTryStmt)
+
+// Expressions.
+ABSTRACT_EXPR(Expr         , Stmt)
+EXPR(PredefinedExpr        , Expr)
+EXPR(DeclRefExpr           , Expr)
+EXPR(IntegerLiteral        , Expr)
+EXPR(FloatingLiteral       , Expr)
+EXPR(ImaginaryLiteral      , Expr)
+EXPR(StringLiteral         , Expr)
+EXPR(CharacterLiteral      , Expr)
+EXPR(ParenExpr             , Expr)
+EXPR(UnaryOperator         , Expr)
+EXPR(OffsetOfExpr          , Expr)
+EXPR(SizeOfAlignOfExpr     , Expr)
+EXPR(ArraySubscriptExpr    , Expr)
+EXPR(CallExpr              , Expr)
+EXPR(MemberExpr            , Expr)
+ABSTRACT_EXPR(CastExpr     , Expr)
+EXPR(BinaryOperator        , Expr)
+EXPR(CompoundAssignOperator, BinaryOperator)
+EXPR(ConditionalOperator   , Expr)
+EXPR(ImplicitCastExpr      , CastExpr)
+ABSTRACT_EXPR(ExplicitCastExpr, CastExpr)
+EXPR(CStyleCastExpr        , ExplicitCastExpr)
+EXPR(CompoundLiteralExpr   , Expr)
+EXPR(ExtVectorElementExpr  , Expr)
+EXPR(InitListExpr          , Expr)
+EXPR(DesignatedInitExpr    , Expr)
+EXPR(ImplicitValueInitExpr , Expr)
+EXPR(ParenListExpr         , Expr)
+EXPR(VAArgExpr             , Expr)
+
+// GNU Extensions.
+EXPR(AddrLabelExpr        , Expr)
+EXPR(StmtExpr             , Expr)
+EXPR(TypesCompatibleExpr  , Expr)
+EXPR(ChooseExpr           , Expr)
+EXPR(GNUNullExpr          , Expr)
+
+// C++ Expressions.
+EXPR(CXXOperatorCallExpr    , CallExpr)
+EXPR(CXXMemberCallExpr      , CallExpr)
+ABSTRACT_EXPR(CXXNamedCastExpr       , ExplicitCastExpr)
+EXPR(CXXStaticCastExpr      , CXXNamedCastExpr)
+EXPR(CXXDynamicCastExpr     , CXXNamedCastExpr)
+EXPR(CXXReinterpretCastExpr , CXXNamedCastExpr)
+EXPR(CXXConstCastExpr       , CXXNamedCastExpr)
+EXPR(CXXFunctionalCastExpr  , ExplicitCastExpr)
+EXPR(CXXTypeidExpr          , Expr)
+EXPR(CXXBoolLiteralExpr     , Expr)
+EXPR(CXXNullPtrLiteralExpr  , Expr)
+EXPR(CXXThisExpr            , Expr)
+EXPR(CXXThrowExpr           , Expr)
+EXPR(CXXDefaultArgExpr      , Expr)
+EXPR(CXXZeroInitValueExpr   , Expr)
+EXPR(CXXNewExpr             , Expr)
+EXPR(CXXDeleteExpr          , Expr)
+EXPR(CXXPseudoDestructorExpr, Expr)
+EXPR(UnresolvedLookupExpr   , Expr)
+EXPR(UnaryTypeTraitExpr     , Expr)
+EXPR(DependentScopeDeclRefExpr  , Expr)
+EXPR(CXXConstructExpr       , Expr)
+EXPR(CXXBindTemporaryExpr   , Expr)
+EXPR(CXXBindReferenceExpr   , Expr)
+EXPR(CXXExprWithTemporaries , Expr)
+EXPR(CXXTemporaryObjectExpr , CXXConstructExpr)
+EXPR(CXXUnresolvedConstructExpr, Expr)
+EXPR(CXXDependentScopeMemberExpr, Expr)
+EXPR(UnresolvedMemberExpr   , Expr)
+
+// Obj-C Expressions.
+EXPR(ObjCStringLiteral    , Expr)
+EXPR(ObjCEncodeExpr       , Expr)
+EXPR(ObjCMessageExpr      , Expr)
+EXPR(ObjCSelectorExpr     , Expr)
+EXPR(ObjCProtocolExpr     , Expr)
+EXPR(ObjCIvarRefExpr      , Expr)
+EXPR(ObjCPropertyRefExpr  , Expr)
+EXPR(ObjCImplicitSetterGetterRefExpr , Expr)
+EXPR(ObjCSuperExpr        , Expr)
+EXPR(ObjCIsaExpr          , Expr)
+
+// Clang Extensions.
+EXPR(ShuffleVectorExpr    , Expr)
+EXPR(BlockExpr            , Expr)
+EXPR(BlockDeclRefExpr     , Expr)
+
+FIRST_EXPR(PredefinedExpr)
+LAST_EXPR(BlockDeclRefExpr)
+
+#undef ABSTRACT_EXPR
+#undef EXPR
+#undef STMT
+#undef FIRST_STMT
+#undef LAST_STMT
+#undef FIRST_EXPR
+#undef LAST_EXPR
