@@ -152,6 +152,23 @@ static RangeComparisonResult RangeCompare(SourceManager &SM,
   return RangeOverlap;
 }
 
+/// \brief Determine if a source location falls within, before, or after a
+///   a given source range.
+static RangeComparisonResult LocationCompare(SourceManager &SM,
+                                             SourceLocation L, SourceRange R) {
+  assert(R.isValid() && "First range is invalid?");
+  assert(L.isValid() && "Second range is invalid?");
+  if (L == R.getBegin())
+    return RangeOverlap;
+  if (L == R.getEnd())
+    return RangeAfter;
+  if (SM.isBeforeInTranslationUnit(L, R.getBegin()))
+    return RangeBefore;
+  if (SM.isBeforeInTranslationUnit(R.getEnd(), L))
+    return RangeAfter;
+  return RangeOverlap;
+}
+
 /// \brief Translate a Clang source range into a CIndex source range.
 ///
 /// Clang internally represents ranges where the end location points to the
@@ -2326,65 +2343,148 @@ void clang_disposeTokens(CXTranslationUnit TU,
 //===----------------------------------------------------------------------===//
 
 typedef llvm::DenseMap<unsigned, CXCursor> AnnotateTokensData;
-
+static enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
+                                                     CXCursor parent,
+                                                     CXClientData client_data);
 namespace {
 class AnnotateTokensWorker {
   AnnotateTokensData &Annotated;
   CXToken *Tokens;
   CXCursor *Cursors;
   unsigned NumTokens;
+  unsigned TokIdx;
+  CursorVisitor AnnotateVis;
+  SourceManager &SrcMgr;
+
+  bool MoreTokens() const { return TokIdx < NumTokens; }
+  unsigned NextToken() const { return TokIdx; }
+  void AdvanceToken() { ++TokIdx; }
+  SourceLocation GetTokenLoc(unsigned tokI) {
+    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
+  }
+
 public:
   AnnotateTokensWorker(AnnotateTokensData &annotated,
-                       CXToken *tokens, CXCursor *cursors, unsigned numTokens)
+                       CXToken *tokens, CXCursor *cursors, unsigned numTokens,
+                       ASTUnit *CXXUnit, SourceRange RegionOfInterest)
     : Annotated(annotated), Tokens(tokens), Cursors(cursors),
-      NumTokens(numTokens) {}
+      NumTokens(numTokens), TokIdx(0),
+      AnnotateVis(CXXUnit, AnnotateTokensVisitor, this,
+                  Decl::MaxPCHLevel, RegionOfInterest),
+      SrcMgr(CXXUnit->getSourceManager()) {}
 
-  void CompleteAnnotations();
-
+  void VisitChildren(CXCursor C) { AnnotateVis.VisitChildren(C); }
   enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent);
+  void AnnotateTokens(CXCursor parent);
 };
 }
 
-void AnnotateTokensWorker::CompleteAnnotations() {
-  for (unsigned I = 0; I != NumTokens; ++I) {
-    // Determine whether we saw a cursor at this token's location.
-    AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
-    if (Pos == Annotated.end())
-      continue;
+void AnnotateTokensWorker::AnnotateTokens(CXCursor parent) {
+  // Walk the AST within the region of interest, annotating tokens
+  // along the way.
+  VisitChildren(parent);
 
-    Cursors[I] = Pos->second;
+  for (unsigned I = 0 ; I < TokIdx ; ++I) {
+    AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
+    if (Pos != Annotated.end())
+      Cursors[I] = Pos->second;
+  }
+
+  // Finish up annotating any tokens left.
+  if (!MoreTokens())
+    return;
+
+  const CXCursor &C = clang_getNullCursor();
+  for (unsigned I = TokIdx ; I < NumTokens ; ++I) {
+    AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
+    Cursors[I] = (Pos == Annotated.end()) ? C : Pos->second;
   }
 }
 
 enum CXChildVisitResult
 AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
-  // We only annotate the locations of declarations, simple
-  // references, and expressions which directly reference something.
-  CXCursorKind Kind = clang_getCursorKind(cursor);
-  if (clang_isDeclaration(Kind) || clang_isReference(Kind)) {
-    // Okay: We can annotate the location of this declaration with the
-    // declaration or reference
-  } else if (clang_isExpression(cursor.kind)) {
-    if (Kind != CXCursor_DeclRefExpr &&
-        Kind != CXCursor_MemberRefExpr &&
-        Kind != CXCursor_ObjCMessageExpr)
-      return CXChildVisit_Recurse;
-    
-    CXCursor Referenced = clang_getCursorReferenced(cursor);
-    if (Referenced == cursor || Referenced == clang_getNullCursor())
-      return CXChildVisit_Recurse;
-    
-    // Okay: we can annotate the location of this expression
-  } else if (clang_isPreprocessing(cursor.kind)) {
-    // We can always annotate a preprocessing directive/macro instantiation.
-  } else {
-    // Nothing to annotate
+  CXSourceLocation Loc = clang_getCursorLocation(cursor);
+  // We can always annotate a preprocessing directive/macro instantiation.
+  if (clang_isPreprocessing(cursor.kind)) {
+    Annotated[Loc.int_data] = cursor;
     return CXChildVisit_Recurse;
   }
+
+  CXSourceRange cursorExtent = clang_getCursorExtent(cursor);
+  SourceRange cursorRange = cxloc::translateCXSourceRange(cursorExtent);
+
+  if (cursorRange.isInvalid())
+    return CXChildVisit_Continue;
+
+  SourceLocation L = SourceLocation::getFromRawEncoding(Loc.int_data);
+
+  const enum CXCursorKind K = clang_getCursorKind(parent);
+  const CXCursor updateC =
+    (clang_isInvalid(K) || K == CXCursor_TranslationUnit ||
+     L.isMacroID())
+    ? clang_getNullCursor() : parent;
+
+  while (MoreTokens()) {
+    const unsigned I = NextToken();
+    SourceLocation TokLoc = GetTokenLoc(I);
+    switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
+      case RangeBefore:
+        Cursors[I] = updateC;
+        AdvanceToken();
+        continue;
+      case RangeAfter:
+        return CXChildVisit_Continue;
+      case RangeOverlap:
+        break;
+    }
+    break;
+  }
+
+  // Visit children to get their cursor information.
+  const unsigned BeforeChildren = NextToken();
+  VisitChildren(cursor);
+  const unsigned AfterChildren = NextToken();
+
+  // Adjust 'Last' to the last token within the extent of the cursor.
+  while (MoreTokens()) {
+    const unsigned I = NextToken();
+    SourceLocation TokLoc = GetTokenLoc(I);
+    switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
+      case RangeBefore:
+        assert(0 && "Infeasible");
+      case RangeAfter:
+        break;
+      case RangeOverlap:
+        Cursors[I] = updateC;
+        AdvanceToken();
+        continue;
+    }
+    break;
+  }
+  const unsigned Last = NextToken();
   
-  CXSourceLocation Loc = clang_getCursorLocation(cursor);
-  Annotated[Loc.int_data] = cursor;
-  return CXChildVisit_Recurse;
+  // Scan the tokens that are at the beginning of the cursor, but are not
+  // capture by the child cursors.
+
+  // For AST elements within macros, rely on a post-annotate pass to
+  // to correctly annotate the tokens with cursors.  Otherwise we can
+  // get confusing results of having tokens that map to cursors that really
+  // are expanded by an instantiation.
+  if (L.isMacroID())
+    cursor = clang_getNullCursor();
+
+  for (unsigned I = BeforeChildren; I != AfterChildren; ++I) {
+    if (!clang_isInvalid(clang_getCursorKind(Cursors[I])))
+      break;
+    Cursors[I] = cursor;
+  }
+  // Scan the tokens that are at the end of the cursor, but are not captured
+  // but the child cursors.
+  for (unsigned I = AfterChildren; I != Last; ++I)
+    Cursors[I] = cursor;
+
+  TokIdx = Last;
+  return CXChildVisit_Continue;
 }
 
 static enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
@@ -2398,40 +2498,43 @@ extern "C" {
 void clang_annotateTokens(CXTranslationUnit TU,
                           CXToken *Tokens, unsigned NumTokens,
                           CXCursor *Cursors) {
-  if (NumTokens == 0)
+
+  if (NumTokens == 0 || !Tokens || !Cursors)
     return;
-  
-  // Any token we don't specifically annotate will have a NULL cursor.
-  for (unsigned I = 0; I != NumTokens; ++I)
-    Cursors[I] = clang_getNullCursor();
-  
+
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
-  if (!CXXUnit || !Tokens)
+  if (!CXXUnit) {
+    // Any token we don't specifically annotate will have a NULL cursor.
+    const CXCursor &C = clang_getNullCursor();
+    for (unsigned I = 0; I != NumTokens; ++I)
+      Cursors[I] = C;
     return;
-  
+  }
+
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
-  
+
   // Determine the region of interest, which contains all of the tokens.
   SourceRange RegionOfInterest;
-  RegionOfInterest.setBegin(
-                            cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
+  RegionOfInterest.setBegin(cxloc::translateSourceLocation(
+                                        clang_getTokenLocation(TU, Tokens[0])));
+
   SourceLocation End
-  = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
-                                                          Tokens[NumTokens - 1]));
+    = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
+                                                        Tokens[NumTokens - 1]));
   RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
-  
+
   // A mapping from the source locations found when re-lexing or traversing the
   // region of interest to the corresponding cursors.
   AnnotateTokensData Annotated;
-  
-  // Relex the tokens within the source range to look for preprocessing 
+
+  // Relex the tokens within the source range to look for preprocessing
   // directives.
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
   std::pair<FileID, unsigned> EndLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
-  
+
   llvm::StringRef Buffer;
   bool Invalid = false;
   if (BeginLocInfo.first == EndLocInfo.first &&
@@ -2439,16 +2542,16 @@ void clang_annotateTokens(CXTranslationUnit TU,
       !Invalid) {
     Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
               CXXUnit->getASTContext().getLangOptions(),
-              Buffer.begin(), Buffer.data() + BeginLocInfo.second, 
+              Buffer.begin(), Buffer.data() + BeginLocInfo.second,
               Buffer.end());
     Lex.SetCommentRetentionState(true);
-    
-    // Lex tokens in raw mode until we hit the end of the range, to avoid 
+
+    // Lex tokens in raw mode until we hit the end of the range, to avoid
     // entering #includes or expanding macros.
     while (true) {
       Token Tok;
       Lex.LexFromRawLexer(Tok);
-      
+
     reprocess:
       if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
         // We have found a preprocessing directive. Gobble it up so that we
@@ -2461,37 +2564,34 @@ void clang_annotateTokens(CXTranslationUnit TU,
         std::vector<SourceLocation> Locations;
         do {
           Locations.push_back(Tok.getLocation());
-          Lex.LexFromRawLexer(Tok);        
+          Lex.LexFromRawLexer(Tok);
         } while (!Tok.isAtStartOfLine() && !Tok.is(tok::eof));
-        
+
         using namespace cxcursor;
         CXCursor Cursor
-        = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
-                                                       Locations.back()),
+          = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
+                                                         Locations.back()),
                                            CXXUnit);
         for (unsigned I = 0, N = Locations.size(); I != N; ++I) {
           Annotated[Locations[I].getRawEncoding()] = Cursor;
         }
-        
+
         if (Tok.isAtStartOfLine())
           goto reprocess;
-        
+
         continue;
       }
-      
+
       if (Tok.is(tok::eof))
         break;
     }
   }
-  
+
   // Annotate all of the source locations in the region of interest that map to
-  // a specific cursor.  
-  CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
-  AnnotateTokensWorker W(Annotated, Tokens, Cursors, NumTokens);
-  CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &W,
-                            Decl::MaxPCHLevel, RegionOfInterest);
-  AnnotateVis.VisitChildren(Parent);
-  W.CompleteAnnotations();
+  // a specific cursor.
+  AnnotateTokensWorker W(Annotated, Tokens, Cursors, NumTokens,
+                         CXXUnit, RegionOfInterest);
+  W.AnnotateTokens(clang_getTranslationUnitCursor(CXXUnit));
 }
 } // end: extern "C"
 
