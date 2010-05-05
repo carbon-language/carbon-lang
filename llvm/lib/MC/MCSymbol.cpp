@@ -44,6 +44,10 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert((isUndefined() || (isAbsolute() && isa<MCConstantExpr>(Value))) &&
          "Invalid redefinition!");
   this->Value = Value;
+
+  // Mark the variable as absolute as appropriate.
+  if (isa<MCConstantExpr>(Value))
+    setAbsolute();
 }
 
 void MCSymbol::print(raw_ostream &OS) const {

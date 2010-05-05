@@ -404,7 +404,7 @@ public:
     // Compute the symbol address.
     if (Symbol.isDefined()) {
       if (Symbol.isAbsolute()) {
-        llvm_unreachable("FIXME: Not yet implemented!");
+        Address = cast<MCConstantExpr>(Symbol.getVariableValue())->getValue();
       } else {
         Address = Layout.getSymbolAddress(&Data);
       }
@@ -552,7 +552,7 @@ public:
       // possible. This seems to be done because the debugger doesn't fully
       // understand x86_64 relocation entries, and expects to find values that
       // have already been fixed up.
-      if (Symbol->isDefined()) {
+      if (Symbol->isInSection()) {
         const MCSectionMachO &Section = static_cast<const MCSectionMachO&>(
           Fragment->getParent()->getSection());
         if (Section.hasAttribute(MCSectionMachO::S_ATTR_DEBUG))
