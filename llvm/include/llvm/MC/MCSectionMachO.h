@@ -136,6 +136,9 @@ public:
   unsigned getStubSize() const { return Reserved2; }
 
   unsigned getType() const { return TypeAndAttributes & SECTION_TYPE; }
+  bool hasAttribute(unsigned Value) const {
+    return (TypeAndAttributes & Value) != 0;
+  }
 
   /// ParseSectionSpecifier - Parse the section specifier indicated by "Spec".
   /// This is a string that can appear after a .section directive in a mach-o

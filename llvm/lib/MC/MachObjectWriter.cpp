@@ -548,6 +548,17 @@ public:
       MCSymbolData &SD = Asm.getSymbolData(*Symbol);
       const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
 
+      // Relocations inside debug sections always use local relocations when
+      // possible. This seems to be done because the debugger doesn't fully
+      // understand x86_64 relocation entries, and expects to find values that
+      // have already been fixed up.
+      if (Symbol->isDefined()) {
+        const MCSectionMachO &Section = static_cast<const MCSectionMachO&>(
+          Fragment->getParent()->getSection());
+        if (Section.hasAttribute(MCSectionMachO::S_ATTR_DEBUG))
+          Base = 0;
+      }
+
       // x86_64 almost always uses external relocations, except when there is no
       // symbol to use as a base address (a local symbol with no preceeding
       // non-local symbol).
