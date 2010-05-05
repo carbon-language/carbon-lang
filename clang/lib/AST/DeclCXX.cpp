@@ -700,8 +700,8 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            TypeSourceInfo *TInfo, bool IsVirtual,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0), IsVirtual(IsVirtual),
-    LParenLoc(L), RParenLoc(R) 
+  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0), 
+    LParenLoc(L), RParenLoc(R), NumArrayIndices(0), IsVirtual(IsVirtual)
 {
 }
 
@@ -710,13 +710,45 @@ CXXBaseOrMemberInitializer(ASTContext &Context,
                            FieldDecl *Member, SourceLocation MemberLoc,
                            SourceLocation L, Expr *Init, SourceLocation R)
   : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
-    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) 
+    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) , NumArrayIndices(0),
+    IsVirtual(false)
 {
+}
+
+CXXBaseOrMemberInitializer::
+CXXBaseOrMemberInitializer(ASTContext &Context,
+                           FieldDecl *Member, SourceLocation MemberLoc,
+                           SourceLocation L, Expr *Init, SourceLocation R,
+                           VarDecl **Indices,
+                           unsigned NumIndices)
+  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
+    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) , 
+    NumArrayIndices(NumIndices), IsVirtual(false)
+{
+  VarDecl **MyIndices = reinterpret_cast<VarDecl **> (this + 1);
+  memcpy(MyIndices, Indices, NumIndices * sizeof(VarDecl *));
+}
+
+CXXBaseOrMemberInitializer *
+CXXBaseOrMemberInitializer::Create(ASTContext &Context,
+                                   FieldDecl *Member, 
+                                   SourceLocation MemberLoc,
+                                   SourceLocation L,
+                                   Expr *Init,
+                                   SourceLocation R,
+                                   VarDecl **Indices,
+                                   unsigned NumIndices) {
+  void *Mem = Context.Allocate(sizeof(CXXBaseOrMemberInitializer) +
+                               sizeof(VarDecl *) * NumIndices,
+                               llvm::alignof<CXXBaseOrMemberInitializer>());
+  return new (Mem) CXXBaseOrMemberInitializer(Context, Member, MemberLoc,
+                                              L, Init, R, Indices, NumIndices);
 }
 
 void CXXBaseOrMemberInitializer::Destroy(ASTContext &Context) {
   if (Init)
     Init->Destroy(Context);
+  // FIXME: Destroy indices
   this->~CXXBaseOrMemberInitializer();
 }
 

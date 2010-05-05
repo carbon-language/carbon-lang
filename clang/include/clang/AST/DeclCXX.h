@@ -1061,10 +1061,6 @@ class CXXBaseOrMemberInitializer {
   /// In above example, BaseOrMember holds the field decl. for anonymous union
   /// and AnonUnionMember holds field decl for au_i1.
   FieldDecl *AnonUnionMember;
-
-  /// IsVirtual - If the initializer is a base initializer, this keeps track
-  /// of whether the base is virtual or not.
-  bool IsVirtual;
   
   /// LParenLoc - Location of the left paren of the ctor-initializer.
   SourceLocation LParenLoc;
@@ -1072,6 +1068,22 @@ class CXXBaseOrMemberInitializer {
   /// RParenLoc - Location of the right paren of the ctor-initializer.
   SourceLocation RParenLoc;
 
+  /// \brief The number of array index variables stored after this object
+  /// in memory.
+  unsigned NumArrayIndices;
+  
+  /// IsVirtual - If the initializer is a base initializer, this keeps track
+  /// of whether the base is virtual or not.
+  bool IsVirtual;
+  
+  CXXBaseOrMemberInitializer(ASTContext &Context,
+                             FieldDecl *Member, SourceLocation MemberLoc,
+                             SourceLocation L,
+                             Expr *Init,
+                             SourceLocation R,
+                             VarDecl **Indices,
+                             unsigned NumIndices);
+  
 public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit
@@ -1089,6 +1101,17 @@ public:
                              Expr *Init,
                              SourceLocation R);
 
+  /// \brief Creates a new member initializer that optionally contains 
+  /// array indices used to describe an elementwise initialization.
+  static CXXBaseOrMemberInitializer *Create(ASTContext &Context,
+                                            FieldDecl *Member, 
+                                            SourceLocation MemberLoc,
+                                            SourceLocation L,
+                                            Expr *Init,
+                                            SourceLocation R,
+                                            VarDecl **Indices,
+                                            unsigned NumIndices);
+  
   /// \brief Destroy the base or member initializer.
   void Destroy(ASTContext &Context);
 
@@ -1154,9 +1177,29 @@ public:
     AnonUnionMember = anonMember;
   }
 
+  
   SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
+  /// \brief Determine the number of implicit array indices used while
+  /// described an array member initialization.
+  unsigned getNumArrayIndices() const { return NumArrayIndices; }
+
+  /// \brief Retrieve a particular array index variable used to 
+  /// describe an array member initialization.
+  VarDecl *getArrayIndex(unsigned I) {
+    assert(I < NumArrayIndices && "Out of bounds member array index");
+    return reinterpret_cast<VarDecl **>(this + 1)[I];
+  }
+  const VarDecl *getArrayIndex(unsigned I) const {
+    assert(I < NumArrayIndices && "Out of bounds member array index");
+    return reinterpret_cast<const VarDecl * const *>(this + 1)[I];
+  }
+  void setArrayIndex(unsigned I, VarDecl *Index) {
+    assert(I < NumArrayIndices && "Out of bounds member array index");
+    reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
+  }
+  
   Expr *getInit() { return static_cast<Expr *>(Init); }
 };
 

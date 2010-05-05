@@ -531,7 +531,8 @@ public:
   /// GenerateThunk - Generate a thunk for the given method.
   void GenerateThunk(llvm::Function *Fn, GlobalDecl GD, const ThunkInfo &Thunk);
   
-  void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
+  void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type,
+                        FunctionArgList &Args);
 
   /// InitializeVTablePointer - Initialize the vtable pointer of the given
   /// subobject.
@@ -553,8 +554,6 @@ public:
 
   void InitializeVTablePointers(const CXXRecordDecl *ClassDecl);
 
-
-  void SynthesizeCXXCopyConstructor(const FunctionArgList &Args);
 
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes in
@@ -802,14 +801,6 @@ public:
                                          const CXXRecordDecl *ClassDecl,
                                          const CXXRecordDecl *BaseClassDecl);
     
-  void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
-                                   llvm::Value *SrcValue,
-                                   const ConstantArrayType *Array,
-                                   const CXXRecordDecl *ClassDecl);
-
-  void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
-                               const CXXRecordDecl *ClassDecl);
-
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
                                       const FunctionArgList &Args);

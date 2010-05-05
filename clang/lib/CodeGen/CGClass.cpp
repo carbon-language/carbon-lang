@@ -262,102 +262,7 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
   
   return Value;
 }
-
-/// EmitCopyCtorCall - Emit a call to a copy constructor.
-static void
-EmitCopyCtorCall(CodeGenFunction &CGF, const CXXConstructorDecl *CopyCtor,
-                 llvm::Value *ThisPtr, llvm::Value *Src) {
-  llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor, Ctor_Complete);
-
-  CallArgList CallArgs;
-
-  // Push the this ptr.
-  CallArgs.push_back(std::make_pair(RValue::get(ThisPtr),
-                                    CopyCtor->getThisType(CGF.getContext())));
-   
-  // Push the Src ptr.
-  CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                    CopyCtor->getParamDecl(0)->getType()));
-
-
-  {
-    CodeGenFunction::CXXTemporariesCleanupScope Scope(CGF);
-
-    // If the copy constructor has default arguments, emit them.
-    for (unsigned I = 1, E = CopyCtor->getNumParams(); I < E; ++I) {
-      const ParmVarDecl *Param = CopyCtor->getParamDecl(I);
-      const Expr *DefaultArgExpr = Param->getDefaultArg();
-
-      assert(DefaultArgExpr && "Ctor parameter must have default arg!");
-
-      QualType ArgType = Param->getType();
-      CallArgs.push_back(std::make_pair(CGF.EmitCallArg(DefaultArgExpr, 
-                                                        ArgType),
-                                        ArgType));
-    }
-
-    const FunctionProtoType *FPT =
-      CopyCtor->getType()->getAs<FunctionProtoType>();
-    CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-                 Callee, ReturnValueSlot(), CallArgs, CopyCtor);
-  }
-}
                              
-/// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class
-/// array of objects from SrcValue to DestValue. Copying can be either a bitwise
-/// copy or via a copy constructor call.
-//  FIXME. Consolidate this with EmitCXXAggrConstructorCall.
-void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
-                                            llvm::Value *Src,
-                                            const ConstantArrayType *Array,
-                                            const CXXRecordDecl *ClassDecl) {
-  // Create a temporary for the loop index and initialize it with 0.
-  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
-                                           "loop.index");
-  llvm::Value* zeroConstant =
-    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
-  Builder.CreateStore(zeroConstant, IndexPtr);
-  // Start the loop with a block that tests the condition.
-  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
-  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
-
-  EmitBlock(CondBlock);
-
-  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
-  // Generate: if (loop-index < number-of-elements fall to the loop body,
-  // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(Array);
-  llvm::Value * NumElementsPtr =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
-  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr,
-                                              "isless");
-  // If the condition is true, execute the body.
-  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
-
-  EmitBlock(ForBody);
-  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
-  // Inside the loop body, emit the constructor call on the array element.
-  Counter = Builder.CreateLoad(IndexPtr);
-  Src = Builder.CreateInBoundsGEP(Src, Counter, "srcaddress");
-  Dest = Builder.CreateInBoundsGEP(Dest, Counter, "destaddress");
-  EmitClassMemberwiseCopy(Dest, Src, ClassDecl);
-  
-  EmitBlock(ContinueBlock);
-
-  // Emit the increment of the loop counter.
-  llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
-  Counter = Builder.CreateLoad(IndexPtr);
-  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr);
-
-  // Finally, branch back up to the condition for the next iteration.
-  EmitBranch(CondBlock);
-
-  // Emit the fall-through block.
-  EmitBlock(AfterFor, true);
-}
-
 /// GetVTTParameter - Return the VTT parameter that should be passed to a
 /// base constructor/destructor with virtual bases.
 static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
@@ -405,111 +310,6 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
   return VTT;
 }
 
-                                    
-/// EmitClassMemberwiseCopy - This routine generates code to copy a class
-/// object from SrcValue to DestValue. Copying can be either a bitwise copy
-/// or via a copy constructor call.
-void CodeGenFunction::EmitClassMemberwiseCopy(
-                        llvm::Value *Dest, llvm::Value *Src,
-                        const CXXRecordDecl *ClassDecl) {
-  if (ClassDecl->hasTrivialCopyConstructor()) {
-    EmitAggregateCopy(Dest, Src, getContext().getTagDeclType(ClassDecl));
-    return;
-  }
-
-  CXXConstructorDecl *CopyCtor = ClassDecl->getCopyConstructor(getContext(), 0);
-  assert(CopyCtor && "Did not have copy ctor!");
-
-  EmitCopyCtorCall(*this, CopyCtor, Dest, Src);
-}
-
-/// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a
-/// copy constructor, in accordance with section 12.8 (p7 and p8) of C++03
-/// The implicitly-defined copy constructor for class X performs a memberwise
-/// copy of its subobjects. The order of copying is the same as the order of
-/// initialization of bases and members in a user-defined constructor
-/// Each subobject is copied in the manner appropriate to its type:
-///  if the subobject is of class type, the copy constructor for the class is
-///  used;
-///  if the subobject is an array, each element is copied, in the manner
-///  appropriate to the element type;
-///  if the subobject is of scalar type, the built-in assignment operator is
-///  used.
-/// Virtual base class subobjects shall be copied only once by the
-/// implicitly-defined copy constructor
-
-void 
-CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
-  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
-  CXXCtorType CtorType = CurGD.getCtorType();
-  (void) CtorType;
-
-  const CXXRecordDecl *ClassDecl = Ctor->getParent();
-  assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
-      "SynthesizeCXXCopyConstructor - copy constructor has definition already");
-  assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
-
-  llvm::Value *ThisPtr = LoadCXXThis();
-
-  // Find the source pointer.
-  unsigned SrcArgIndex = Args.size() - 1;
-  assert(CtorType == Ctor_Base || SrcArgIndex == 1);
-  assert(CtorType != Ctor_Base ||
-         (ClassDecl->getNumVBases() != 0 && SrcArgIndex == 2) ||
-         SrcArgIndex == 1);
-
-  llvm::Value *SrcPtr =
-    Builder.CreateLoad(GetAddrOfLocalVar(Args[SrcArgIndex].first));
-
-  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
-    
-    QualType FieldType = getContext().getCanonicalType(Field->getType());
-    const ConstantArrayType *Array =
-      getContext().getAsConstantArrayType(FieldType);
-    if (Array)
-      FieldType = getContext().getBaseElementType(FieldType);
-
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(ThisPtr, Field, 0);
-      LValue RHS = EmitLValueForField(SrcPtr, Field, 0);
-      if (Array) {
-        const llvm::Type *BasePtr = ConvertType(FieldType)->getPointerTo();
-        llvm::Value *DestBaseAddrPtr =
-          Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-        llvm::Value *SrcBaseAddrPtr =
-          Builder.CreateBitCast(RHS.getAddress(), BasePtr);
-        EmitClassAggrMemberwiseCopy(DestBaseAddrPtr, SrcBaseAddrPtr, Array,
-                                    FieldClassDecl);
-      }
-      else
-        EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(),
-                                FieldClassDecl);
-      continue;
-    }
-    
-    // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForFieldInitialization(ThisPtr, Field, 0);
-    LValue RHS = EmitLValueForFieldInitialization(SrcPtr, Field, 0);
-
-    if (!hasAggregateLLVMType(Field->getType())) {
-      RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
-      EmitStoreThroughLValue(RVRHS, LHS, Field->getType());
-    } else if (Field->getType()->isAnyComplexType()) {
-      ComplexPairTy Pair = LoadComplexFromAddr(RHS.getAddress(),
-                                               RHS.isVolatileQualified());
-      StoreComplexToAddr(Pair, LHS.getAddress(), LHS.isVolatileQualified());
-    } else {
-      EmitAggregateCopy(LHS.getAddress(), RHS.getAddress(), Field->getType());
-    }
-  }
-
-  InitializeVTablePointers(ClassDecl);
-}
-
 static void EmitBaseInitializer(CodeGenFunction &CGF, 
                                 const CXXRecordDecl *ClassDecl,
                                 CXXBaseOrMemberInitializer *BaseInit,
@@ -547,9 +347,98 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   }
 }
 
+static void EmitAggMemberInitializer(CodeGenFunction &CGF,
+                                     LValue LHS,
+                                     llvm::Value *ArrayIndexVar,
+                                     CXXBaseOrMemberInitializer *MemberInit,
+                                     QualType T,
+                                     unsigned Index) {
+  if (Index == MemberInit->getNumArrayIndices()) {
+    CodeGenFunction::CleanupScope Cleanups(CGF);
+    
+    llvm::Value *Dest = LHS.getAddress();
+    if (ArrayIndexVar) {
+      // If we have an array index variable, load it and use it as an offset.
+      // Then, increment the value.
+      llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
+      Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
+      llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
+      Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
+      CGF.Builder.CreateStore(Next, ArrayIndexVar);      
+    }
+    
+    CGF.EmitAggExpr(MemberInit->getInit(), Dest, 
+                    LHS.isVolatileQualified(),
+                    /*IgnoreResult*/ false,
+                    /*IsInitializer*/ true);
+    
+    return;
+  }
+  
+  const ConstantArrayType *Array = CGF.getContext().getAsConstantArrayType(T);
+  assert(Array && "Array initialization without the array type?");
+  llvm::Value *IndexVar
+    = CGF.GetAddrOfLocalVar(MemberInit->getArrayIndex(Index));
+  assert(IndexVar && "Array index variable not loaded");
+  
+  // Initialize this index variable to zero.
+  llvm::Value* Zero
+    = llvm::Constant::getNullValue(
+                              CGF.ConvertType(CGF.getContext().getSizeType()));
+  CGF.Builder.CreateStore(Zero, IndexVar);
+                                   
+  // Start the loop with a block that tests the condition.
+  llvm::BasicBlock *CondBlock = CGF.createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = CGF.createBasicBlock("for.end");
+  
+  CGF.EmitBlock(CondBlock);
+
+  llvm::BasicBlock *ForBody = CGF.createBasicBlock("for.body");
+  // Generate: if (loop-index < number-of-elements) fall to the loop body,
+  // otherwise, go to the block after the for-loop.
+  uint64_t NumElements = Array->getSize().getZExtValue();
+  llvm::Value * NumElementsPtr =
+    llvm::ConstantInt::get(llvm::Type::getInt64Ty(CGF.getLLVMContext()),
+                                                  NumElements);
+  llvm::Value *Counter = CGF.Builder.CreateLoad(IndexVar);
+  llvm::Value *IsLess = CGF.Builder.CreateICmpULT(Counter, NumElementsPtr,
+                                                  "isless");
+                                   
+  // If the condition is true, execute the body.
+  CGF.Builder.CreateCondBr(IsLess, ForBody, AfterFor);
+
+  CGF.EmitBlock(ForBody);
+  llvm::BasicBlock *ContinueBlock = CGF.createBasicBlock("for.inc");
+  
+  {
+    CodeGenFunction::CleanupScope Cleanups(CGF);
+    
+    // Inside the loop body recurse to emit the inner loop or, eventually, the
+    // constructor call.
+    EmitAggMemberInitializer(CGF, LHS, ArrayIndexVar, MemberInit, 
+                             Array->getElementType(), Index + 1);
+  }
+  
+  CGF.EmitBlock(ContinueBlock);
+
+  // Emit the increment of the loop counter.
+  llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
+  Counter = CGF.Builder.CreateLoad(IndexVar);
+  NextVal = CGF.Builder.CreateAdd(Counter, NextVal, "inc");
+  CGF.Builder.CreateStore(NextVal, IndexVar);
+
+  // Finally, branch back up to the condition for the next iteration.
+  CGF.EmitBranch(CondBlock);
+
+  // Emit the fall-through block.
+  CGF.EmitBlock(AfterFor, true);
+}
+  
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
-                                  CXXBaseOrMemberInitializer *MemberInit) {
+                                  CXXBaseOrMemberInitializer *MemberInit,
+                                  const CXXConstructorDecl *Constructor,
+                                  FunctionArgList &Args) {
   assert(MemberInit->isMemberInitializer() &&
          "Must have member initializer!");
   
@@ -583,14 +472,61 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), LHS.getAddress(),
                                 LHS.isVolatileQualified());
   } else {
-    CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
-                    LHS.isVolatileQualified(),
-                    /*IgnoreResult*/ false,
-                    /*IsInitializer*/ true);
+    llvm::Value *ArrayIndexVar = 0;
+    const ConstantArrayType *Array
+      = CGF.getContext().getAsConstantArrayType(FieldType);
+    if (Array && Constructor->isImplicit() && 
+        Constructor->isCopyConstructor()) {
+      const llvm::Type *SizeTy
+        = CGF.ConvertType(CGF.getContext().getSizeType());
+      
+      // The LHS is a pointer to the first object we'll be constructing, as
+      // a flat array.
+      QualType BaseElementTy = CGF.getContext().getBaseElementType(Array);
+      const llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
+      BasePtr = llvm::PointerType::getUnqual(BasePtr);
+      llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(LHS.getAddress(), 
+                                                           BasePtr);
+      LHS = LValue::MakeAddr(BaseAddrPtr, CGF.MakeQualifiers(BaseElementTy));
+      
+      // Create an array index that will be used to walk over all of the
+      // objects we're constructing.
+      ArrayIndexVar = CGF.CreateTempAlloca(SizeTy, "object.index");
+      llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
+      CGF.Builder.CreateStore(Zero, ArrayIndexVar);
+      
+      // If we are copying an array of scalars or classes with trivial copy 
+      // constructors, perform a single aggregate copy.
+      const RecordType *Record = BaseElementTy->getAs<RecordType>();
+      if (!Record || 
+          cast<CXXRecordDecl>(Record->getDecl())->hasTrivialCopyConstructor()) {
+        // Find the source pointer. We knows it's the last argument because
+        // we know we're in a copy constructor.
+        unsigned SrcArgIndex = Args.size() - 1;
+        llvm::Value *SrcPtr
+          = CGF.Builder.CreateLoad(
+                               CGF.GetAddrOfLocalVar(Args[SrcArgIndex].first));
+        LValue Src = CGF.EmitLValueForFieldInitialization(SrcPtr, Field, 0);
+        
+        // Copy the aggregate.
+        CGF.EmitAggregateCopy(LHS.getAddress(), Src.getAddress(), FieldType,
+                              LHS.isVolatileQualified());
+        return;
+      }
+      
+      // Emit the block variables for the array indices, if any.
+      for (unsigned I = 0, N = MemberInit->getNumArrayIndices(); I != N; ++I)
+        CGF.EmitLocalBlockVarDecl(*MemberInit->getArrayIndex(I));
+    }
+    
+    EmitAggMemberInitializer(CGF, LHS, ArrayIndexVar, MemberInit, FieldType, 0);
     
     if (!CGF.Exceptions)
       return;
 
+    // FIXME: If we have an array of classes w/ non-trivial destructors, 
+    // we need to destroy in reverse order of construction along the exception
+    // path.
     const RecordType *RT = FieldType->getAs<RecordType>();
     if (!RT)
       return;
@@ -680,20 +616,13 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 
   // Emit the constructor prologue, i.e. the base and member
   // initializers.
-  EmitCtorPrologue(Ctor, CtorType);
+  EmitCtorPrologue(Ctor, CtorType, Args);
 
   // Emit the body of the statement.
   if (IsTryBody)
     EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
   else if (Body)
     EmitStmt(Body);
-  else {
-    assert(Ctor->isImplicit() && "bodyless ctor not implicit");
-    if (!Ctor->isDefaultConstructor()) {
-      assert(Ctor->isCopyConstructor());
-      SynthesizeCXXCopyConstructor(Args);
-    }
-  }
 
   // Emit any cleanup blocks associated with the member or base
   // initializers, which includes (along the exceptional path) the
@@ -708,7 +637,8 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
-                                       CXXCtorType CtorType) {
+                                       CXXCtorType CtorType,
+                                       FunctionArgList &Args) {
   const CXXRecordDecl *ClassDecl = CD->getParent();
 
   llvm::SmallVector<CXXBaseOrMemberInitializer *, 8> MemberInitializers;
@@ -733,7 +663,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     assert(LiveTemporaries.empty() &&
            "Should not have any live temporaries at initializer start!");
     
-    EmitMemberInitializer(*this, ClassDecl, MemberInitializers[I]);
+    EmitMemberInitializer(*this, ClassDecl, MemberInitializers[I], CD, Args);
   }
 }
 

@@ -1551,41 +1551,103 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
   if (ImplicitInitKind == IIK_Copy) {
-    // FIXME: We should not return early here, but will do so until 
-    // we know how to handle copy initialization of arrays.
-    CXXMemberInit = 0;
-    return false;
-    
+    SourceLocation Loc = Constructor->getLocation();
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
     
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
-                          SourceLocation(), ParamType, 0);
-    
-    
-    Expr *CopyCtorArg = 
-      MemberExpr::Create(SemaRef.Context, MemberExprBase, /*IsArrow=*/false, 
-                         0, SourceRange(), Field, 
-                         DeclAccessPair::make(Field, Field->getAccess()),
-                         SourceLocation(), 0, 
-                         Field->getType().getNonReferenceType());
-    
-    InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
-    InitializationKind InitKind =
-      InitializationKind::CreateDirect(Constructor->getLocation(), 
-                                       SourceLocation(), SourceLocation());
-    
-    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind,
-                                   &CopyCtorArg, 1);
-    
-    Sema::OwningExprResult MemberInit =
-      InitSeq.Perform(SemaRef, InitEntity, InitKind, 
-                      Sema::MultiExprArg(SemaRef, (void**)&CopyCtorArg, 1), 0);
-    if (MemberInit.isInvalid())
+                          Loc, ParamType, 0);
+
+    // Build a reference to this field within the parameter.
+    CXXScopeSpec SS;
+    LookupResult MemberLookup(SemaRef, Field->getDeclName(), Loc,
+                              Sema::LookupMemberName);
+    MemberLookup.addDecl(Field, AS_public);
+    MemberLookup.resolveKind();
+    Sema::OwningExprResult CopyCtorArg 
+      = SemaRef.BuildMemberReferenceExpr(SemaRef.Owned(MemberExprBase),
+                                         ParamType, Loc,
+                                         /*IsArrow=*/false,
+                                         SS,
+                                         /*FirstQualifierInScope=*/0,
+                                         MemberLookup,
+                                         /*TemplateArgs=*/0);    
+    if (CopyCtorArg.isInvalid())
       return true;
     
-    CXXMemberInit = 0;
+    // When the field we are copying is an array, create index variables for 
+    // each dimension of the array. We use these index variables to subscript
+    // the source array, and other clients (e.g., CodeGen) will perform the
+    // necessary iteration with these index variables.
+    llvm::SmallVector<VarDecl *, 4> IndexVariables;
+    QualType BaseType = Field->getType();
+    QualType SizeType = SemaRef.Context.getSizeType();
+    while (const ConstantArrayType *Array
+                          = SemaRef.Context.getAsConstantArrayType(BaseType)) {
+      // Create the iteration variable for this array index.
+      IdentifierInfo *IterationVarName = 0;
+      {
+        llvm::SmallString<8> Str;
+        llvm::raw_svector_ostream OS(Str);
+        OS << "__i" << IndexVariables.size();
+        IterationVarName = &SemaRef.Context.Idents.get(OS.str());
+      }
+      VarDecl *IterationVar
+        = VarDecl::Create(SemaRef.Context, SemaRef.CurContext, Loc,
+                          IterationVarName, SizeType,
+                        SemaRef.Context.getTrivialTypeSourceInfo(SizeType, Loc),
+                          VarDecl::None, VarDecl::None);
+      IndexVariables.push_back(IterationVar);
+      
+      // Create a reference to the iteration variable.
+      Sema::OwningExprResult IterationVarRef
+        = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, Loc);
+      assert(!IterationVarRef.isInvalid() &&
+             "Reference to invented variable cannot fail!");
+      
+      // Subscript the array with this iteration variable.
+      CopyCtorArg = SemaRef.CreateBuiltinArraySubscriptExpr(move(CopyCtorArg),
+                                                            Loc,
+                                                          move(IterationVarRef),
+                                                            Loc);
+      if (CopyCtorArg.isInvalid())
+        return true;
+      
+      BaseType = Array->getElementType();
+    }
+    
+    // Construct the entity that we will be initializing. For an array, this
+    // will be first element in the array, which may require several levels
+    // of array-subscript entities. 
+    llvm::SmallVector<InitializedEntity, 4> Entities;
+    Entities.reserve(1 + IndexVariables.size());
+    Entities.push_back(InitializedEntity::InitializeMember(Field));
+    for (unsigned I = 0, N = IndexVariables.size(); I != N; ++I)
+      Entities.push_back(InitializedEntity::InitializeElement(SemaRef.Context,
+                                                              0,
+                                                              Entities.back()));
+    
+    // Direct-initialize to use the copy constructor.
+    InitializationKind InitKind =
+      InitializationKind::CreateDirect(Loc, SourceLocation(), SourceLocation());
+    
+    Expr *CopyCtorArgE = CopyCtorArg.takeAs<Expr>();
+    InitializationSequence InitSeq(SemaRef, Entities.back(), InitKind,
+                                   &CopyCtorArgE, 1);
+    
+    Sema::OwningExprResult MemberInit
+      = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
+                        Sema::MultiExprArg(SemaRef, (void**)&CopyCtorArgE, 1));
+    MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(MemberInit));
+    if (MemberInit.isInvalid())
+      return true;
+
+    CXXMemberInit
+      = CXXBaseOrMemberInitializer::Create(SemaRef.Context, Field, Loc, Loc,
+                                           MemberInit.takeAs<Expr>(), Loc,
+                                           IndexVariables.data(),
+                                           IndexVariables.size());
     return false;
   }
 
@@ -1758,7 +1820,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           }
         }
       }
-      continue;
+      
+      if (ImplicitInitKind == IIK_Default)        
+        continue;
     }
     if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
       AllToInit.push_back(Value);
@@ -4575,34 +4639,17 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
   if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false)) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
-    << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
+      << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
     CopyConstructor->setInvalidDecl();
-  } else {
-    CopyConstructor->setUsed();
+  }  else {
+    CopyConstructor->setBody(ActOnCompoundStmt(CopyConstructor->getLocation(),
+                                               CopyConstructor->getLocation(),
+                                               MultiStmtArg(*this, 0, 0), 
+                                               /*isStmtExpr=*/false)
+                                                              .takeAs<Stmt>());
   }
-
-  // FIXME: Once SetBaseOrMemberInitializers can handle copy initialization of
-  // fields, this code below should be removed.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = Context.getCanonicalType((*Field)->getType());
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (CXXConstructorDecl *FieldCopyCtor =
-          FieldClassDecl->getCopyConstructor(Context, TypeQuals)) {
-        CheckDirectMemberAccess(Field->getLocation(),
-                                FieldCopyCtor,
-                                PDiag(diag::err_access_copy_field)
-                                  << Field->getDeclName() << Field->getType());
-
-        MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
-      }
-    }
-  }
+  
+  CopyConstructor->setUsed();
 }
 
 Sema::OwningExprResult
