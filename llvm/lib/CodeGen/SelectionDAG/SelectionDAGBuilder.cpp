@@ -3900,6 +3900,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       SDV = DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder);
       DAG.AddDbgValue(SDV, 0, false);
     } else {
+      bool createUndef = false;
+      // FIXME : Why not use getValue() directly ?
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
         if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
@@ -3907,7 +3909,19 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                                 N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
         }
-      } else {
+      } else if (isa<PHINode>(V) && !V->use_empty()) {
+        SDValue N = getValue(V);
+        if (N.getNode()) {
+          if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
+            SDV = DAG.getDbgValue(Variable, N.getNode(),
+                                  N.getResNo(), Offset, dl, SDNodeOrder);
+            DAG.AddDbgValue(SDV, N.getNode(), false);
+          }
+        } else
+          createUndef = true;
+      } else
+        createUndef = true;
+      if (createUndef) {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
         SDV = DAG.getDbgValue(Variable, UndefValue::get(V->getType()),
