@@ -21,6 +21,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cctype>
+#include <cerrno>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -420,7 +421,11 @@ raw_fd_ostream::~raw_fd_ostream() {
 void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert(FD >= 0 && "File already closed.");
   pos += Size;
-  if (::write(FD, Ptr, Size) != (ssize_t) Size)
+  ssize_t ret;
+  do {
+    ret = ::write(FD, Ptr, Size);
+  } while (ret < 0 && (errno == EAGAIN || errno == EINTR));
+  if (ret != (ssize_t) Size)
     error_detected();
 }
 
