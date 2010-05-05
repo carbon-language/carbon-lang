@@ -203,8 +203,6 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                               MachineBasicBlock::iterator MI) const {
   DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
-
   BuildMI(MBB, MI, DL, get(PPC::NOP));
 }
 

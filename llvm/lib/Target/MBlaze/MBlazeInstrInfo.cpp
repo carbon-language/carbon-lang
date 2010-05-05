@@ -107,7 +107,6 @@ isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const {
 void MBlazeInstrInfo::
 insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const {
   DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
   BuildMI(MBB, MI, DL, get(MBlaze::NOP));
 }
 

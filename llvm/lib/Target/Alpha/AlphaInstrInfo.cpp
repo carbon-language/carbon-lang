@@ -399,7 +399,6 @@ unsigned AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                                 MachineBasicBlock::iterator MI) const {
   DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
   BuildMI(MBB, MI, DL, get(Alpha::BISr), Alpha::R31)
     .addReg(Alpha::R31)
     .addReg(Alpha::R31);
