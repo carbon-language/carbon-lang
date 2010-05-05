@@ -4471,8 +4471,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                                   move(To), Owned(From),
                                                 /*CopyingBaseSubobject=*/true);
     if (Copy.isInvalid()) {
-      Invalid = true;
-      continue;
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
+      CopyAssignOperator->setInvalidDecl();
+      return;
     }
     
     // Success! Record the copy.
@@ -4491,7 +4493,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
         << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
       Diag(Field->getLocation(), diag::note_declared_at);
-      Diag(Loc, diag::note_first_required_here);
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
       Invalid = true;
       continue;
     }
@@ -4502,7 +4505,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
         << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
       Diag(Field->getLocation(), diag::note_declared_at);
-      Diag(Loc, diag::note_first_required_here);
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
       Invalid = true;      
       continue;
     }
@@ -4592,8 +4596,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                                   move(To), move(From),
                                               /*CopyingBaseSubobject=*/false);
     if (Copy.isInvalid()) {
-      Invalid = true;
-      continue;
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
+      CopyAssignOperator->setInvalidDecl();
+      return;
     }
     
     // Success! Record the copy.
