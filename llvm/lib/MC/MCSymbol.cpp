@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -36,6 +37,13 @@ static bool NameNeedsQuoting(StringRef Str) {
     if (!isAcceptableChar(Str[i]))
       return true;
   return false;
+}
+
+void MCSymbol::setVariableValue(const MCExpr *Value) {
+  assert(Value && "Invalid variable value!");
+  assert((isUndefined() || (isAbsolute() && isa<MCConstantExpr>(Value))) &&
+         "Invalid redefinition!");
+  this->Value = Value;
 }
 
 void MCSymbol::print(raw_ostream &OS) const {

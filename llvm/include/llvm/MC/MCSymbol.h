@@ -131,10 +131,7 @@ namespace llvm {
       return Value;
     }
 
-    void setVariableValue(const MCExpr *Value) {
-      assert(Value && "Invalid variable value!");
-      this->Value = Value;
-    }
+    void setVariableValue(const MCExpr *Value);
 
     /// @}
 
