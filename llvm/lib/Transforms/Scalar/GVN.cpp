@@ -1604,7 +1604,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     }
   }
   if (!NeedToSplit.empty()) {
-    toSplit.append(NeedToSplit.size(), NeedToSplit.front());
+    toSplit.append(NeedToSplit.begin(), NeedToSplit.end());
     return false;
   }
 
