@@ -2324,11 +2324,30 @@ typedef llvm::DenseMap<unsigned, CXCursor> AnnotateTokensData;
 namespace {
 class AnnotateTokensWorker {
   AnnotateTokensData &Annotated;
+  CXToken *Tokens;
+  CXCursor *Cursors;
+  unsigned NumTokens;
 public:
-  AnnotateTokensWorker(AnnotateTokensData &annotated)
-    : Annotated(annotated) {}
+  AnnotateTokensWorker(AnnotateTokensData &annotated,
+                       CXToken *tokens, CXCursor *cursors, unsigned numTokens)
+    : Annotated(annotated), Tokens(tokens), Cursors(cursors),
+      NumTokens(numTokens) {}
+
+  void CompleteAnnotations();
+
   enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent);
 };
+}
+
+void AnnotateTokensWorker::CompleteAnnotations() {
+  for (unsigned I = 0; I != NumTokens; ++I) {
+    // Determine whether we saw a cursor at this token's location.
+    AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
+    if (Pos == Annotated.end())
+      continue;
+
+    Cursors[I] = Pos->second;
+  }
 }
 
 enum CXChildVisitResult
@@ -2462,19 +2481,11 @@ void clang_annotateTokens(CXTranslationUnit TU,
   // Annotate all of the source locations in the region of interest that map to
   // a specific cursor.  
   CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
-  AnnotateTokensWorker W(Annotated);
+  AnnotateTokensWorker W(Annotated, Tokens, Cursors, NumTokens);
   CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &W,
                             Decl::MaxPCHLevel, RegionOfInterest);
   AnnotateVis.VisitChildren(Parent);
-  
-  for (unsigned I = 0; I != NumTokens; ++I) {
-    // Determine whether we saw a cursor at this token's location.
-    AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
-    if (Pos == Annotated.end())
-      continue;
-    
-    Cursors[I] = Pos->second;
-  }  
+  W.CompleteAnnotations();
 }
 } // end: extern "C"
 
