@@ -2286,9 +2286,15 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       const char *StartPos = Buf.data() + LocInfo.second;
       IdentifierInfo *II
         = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
-      CXTok.int_data[0] = II->getTokenID() == tok::identifier?
-                               CXToken_Identifier
-                             : CXToken_Keyword;
+
+      if (II->getObjCKeywordID() != tok::objc_not_keyword) {
+        CXTok.int_data[0] = CXToken_Keyword;
+      }
+      else {
+        CXTok.int_data[0] = II->getTokenID() == tok::identifier?
+                                CXToken_Identifier
+                              : CXToken_Keyword;
+      }
       CXTok.ptr_data = II;
     } else if (Tok.is(tok::comment)) {
       CXTok.int_data[0] = CXToken_Comment;
