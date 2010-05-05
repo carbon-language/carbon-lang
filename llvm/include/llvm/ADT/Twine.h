@@ -99,11 +99,12 @@ namespace llvm {
       /// A pointer to a StringRef instance.
       StringRefKind,
 
-      /// A pointer to an unsigned int value, to render as an unsigned decimal
-      /// integer.
+      /// An unsigned int value reinterpreted as a pointer, to render as an 
+      /// unsigned decimal integer.
       DecUIKind,
 
-      /// A pointer to an int value, to render as a signed decimal integer.
+      /// An int value reinterpreted as a pointer, to render as a signed
+      /// decimal integer.
       DecIKind,
 
       /// A pointer to an unsigned long value, to render as an unsigned decimal
@@ -259,13 +260,13 @@ namespace llvm {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(const unsigned int &Val) 
-      : LHS(&Val), LHSKind(DecUIKind), RHSKind(EmptyKind) {
+    explicit Twine(unsigned Val) 
+      : LHS((void*)(intptr_t)Val), LHSKind(DecUIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(const int &Val) 
-      : LHS(&Val), LHSKind(DecIKind), RHSKind(EmptyKind) {
+    explicit Twine(int Val) 
+      : LHS((void*)(intptr_t)Val), LHSKind(DecIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
