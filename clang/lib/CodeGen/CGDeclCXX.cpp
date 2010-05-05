@@ -22,7 +22,6 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   assert(!D.getType()->isReferenceType() && 
          "Should not call EmitDeclInit on a reference!");
   
-  CodeGenModule &CGM = CGF.CGM;
   ASTContext &Context = CGF.getContext();
     
   const Expr *Init = D.getInit();
@@ -36,39 +35,50 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
     CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
     CGF.EmitAggExpr(Init, DeclPtr, isVolatile);
-    
-    // Avoid generating destructor(s) for initialized objects. 
-    if (!isa<CXXConstructExpr>(Init))
-      return;
-    
-    const ConstantArrayType *Array = Context.getAsConstantArrayType(T);
-    if (Array)
-      T = Context.getBaseElementType(Array);
-    
-    const RecordType *RT = T->getAs<RecordType>();
-    if (!RT)
-      return;
-    
-    CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (RD->hasTrivialDestructor())
-      return;
-    
-    CXXDestructorDecl *Dtor = RD->getDestructor(Context);
-    
-    llvm::Constant *DtorFn;
-    if (Array) {
-      DtorFn = 
-        CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(Dtor, 
-                                                             Array, 
-                                                             DeclPtr);
-      const llvm::Type *Int8PtrTy =
-        llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-      DeclPtr = llvm::Constant::getNullValue(Int8PtrTy);
-     } else
-      DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);
-
-    CGF.EmitCXXGlobalDtorRegistration(DtorFn, DeclPtr);
   }
+}
+
+static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
+                            llvm::Constant *DeclPtr) {
+  CodeGenModule &CGM = CGF.CGM;
+  ASTContext &Context = CGF.getContext();
+  
+  const Expr *Init = D.getInit();
+  QualType T = D.getType();
+  if (!CGF.hasAggregateLLVMType(T) || T->isAnyComplexType())
+    return;
+                                
+  // Avoid generating destructor(s) for initialized objects. 
+  if (!isa<CXXConstructExpr>(Init))
+    return;
+  
+  const ConstantArrayType *Array = Context.getAsConstantArrayType(T);
+  if (Array)
+    T = Context.getBaseElementType(Array);
+  
+  const RecordType *RT = T->getAs<RecordType>();
+  if (!RT)
+    return;
+  
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  if (RD->hasTrivialDestructor())
+    return;
+  
+  CXXDestructorDecl *Dtor = RD->getDestructor(Context);
+  
+  llvm::Constant *DtorFn;
+  if (Array) {
+    DtorFn = 
+    CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(Dtor, 
+                                                         Array, 
+                                                         DeclPtr);
+    const llvm::Type *Int8PtrTy =
+    llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+    DeclPtr = llvm::Constant::getNullValue(Int8PtrTy);
+  } else
+    DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);
+  
+  CGF.EmitCXXGlobalDtorRegistration(DtorFn, DeclPtr);
 }
 
 void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
@@ -79,6 +89,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
 
   if (!T->isReferenceType()) {
     EmitDeclInit(*this, D, DeclPtr);
+    EmitDeclDestroy(*this, D, DeclPtr);
     return;
   }
   if (Init->isLvalue(getContext()) == Expr::LV_Valid) {
@@ -349,5 +360,9 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     Builder.CreateStore(One, Builder.CreateBitCast(GuardVariable, PtrTy));
   }
 
+  // Register the call to the destructor.
+  if (!D.getType()->isReferenceType())
+    EmitDeclDestroy(*this, D, GV);
+  
   EmitBlock(EndBlock);
 }
