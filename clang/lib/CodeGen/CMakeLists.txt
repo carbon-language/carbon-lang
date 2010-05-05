@@ -32,3 +32,5 @@ add_clang_library(clangCodeGen
   ModuleBuilder.cpp
   TargetInfo.cpp
   )
+
+add_dependencies(clangCodeGen ClangStmtNodes)

@@ -39,4 +39,4 @@ add_clang_library(clangAST
   TypePrinter.cpp
   )
 
-add_dependencies(clangAST ClangDiagnosticAST)
+add_dependencies(clangAST ClangDiagnosticAST ClangStmtNodes)
