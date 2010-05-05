@@ -1557,6 +1557,18 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+Expr *Expr::IgnoreParenImpCasts() {
+  Expr *E = this;
+  while (true) {
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E))
+      E = P->getSubExpr();
+    else if (ImplicitCastExpr *P = dyn_cast<ImplicitCastExpr>(E))
+      E = P->getSubExpr();
+    else
+      return E;
+  }
+}
+
 /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
 /// value (including ptr->int casts of the same size).  Strip off any
 /// ParenExpr or CastExprs, returning their operand.
@@ -2712,7 +2724,9 @@ Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 
 // ObjCImplicitSetterGetterRefExpr
 Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_begin() {
-  return &Base;
+  // If this is accessing a class member, skip that entry.
+  if (Base) return &Base;
+  return &Base+1;
 }
 Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_end() {
   return &Base+1;

@@ -321,6 +321,10 @@ public:
   /// or CastExprs, returning their operand.
   Expr *IgnoreParenCasts();
 
+  /// IgnoreParenImpCasts - Ignore parentheses and implicit casts.  Strip off any
+  /// ParenExpr or ImplicitCastExprs, returning their operand.
+  Expr *IgnoreParenImpCasts();
+
   /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
   /// value (including ptr->int casts of the same size).  Strip off any
   /// ParenExpr or CastExprs, returning their operand.
