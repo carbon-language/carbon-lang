@@ -40,6 +40,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
@@ -76,6 +77,10 @@ namespace {
     // are likely targets to be coalesced to due to copies to physical
     // registers from virtual registers. e.g. r1 = move v1024.
     DenseMap<unsigned, unsigned> DstRegMap;
+
+    /// RegSequences - Keep track the list of REG_SEQUENCE instructions seen
+    /// during the initial walk of the machine function.
+    SmallVector<MachineInstr*, 16> RegSequences;
 
     bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
                               unsigned Reg,
@@ -123,6 +128,10 @@ namespace {
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
 
+    /// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
+    /// of the de-ssa process. This replaces sources of REG_SEQUENCE as
+    /// sub-register references of the register defined by REG_SEQUENCE.
+    bool EliminateRegSequences();
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass(&ID) {}
@@ -929,6 +938,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         continue;
       }
 
+      // Remember REG_SEQUENCE instructions, we'll deal with them later.
+      if (mi->isRegSequence())
+        RegSequences.push_back(&*mi);
+
       const TargetInstrDesc &TID = mi->getDesc();
       bool FirstTied = true;
 
@@ -1110,5 +1123,60 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     VReg = ReMatRegs.find_next(VReg);
   }
 
+  // Eliminate REG_SEQUENCE instructions. Their whole purpose was to preseve
+  // SSA form. It's now safe to de-SSA.
+  MadeChange |= EliminateRegSequences();
+
   return MadeChange;
+}
+
+static void UpdateRegSequenceSrcs(unsigned SrcReg,
+                                  unsigned DstReg, unsigned SrcIdx,
+                                  MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+         UE = MRI->reg_end(); RI != UE; ) {
+    MachineOperand &MO = RI.getOperand();
+    ++RI;
+    MO.setReg(DstReg);
+    MO.setSubReg(SrcIdx);
+  }
+}
+
+/// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
+/// of the de-ssa process. This replaces sources of REG_SEQUENCE as
+/// sub-register references of the register defined by REG_SEQUENCE. e.g.
+///
+/// %reg1029<def>, %reg1030<def> = VLD1q16 %reg1024<kill>, ...
+/// %reg1031<def> = REG_SEQUENCE %reg1029<kill>, 5, %reg1030<kill>, 6
+/// =>
+/// %reg1031:5<def>, %reg1031:6<def> = VLD1q16 %reg1024<kill>, ...
+bool TwoAddressInstructionPass::EliminateRegSequences() {
+  if (RegSequences.empty())
+    return false;
+
+  for (unsigned i = 0, e = RegSequences.size(); i != e; ++i) {
+    MachineInstr *MI = RegSequences[i];
+    unsigned DstReg = MI->getOperand(0).getReg();
+    if (MI->getOperand(0).getSubReg() ||
+        TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+        !(MI->getNumOperands() & 1)) {
+      DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
+      llvm_unreachable(0);
+    }
+    for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
+      unsigned SrcReg = MI->getOperand(i).getReg();
+      if (MI->getOperand(i).getSubReg() ||
+          TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
+        DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
+        llvm_unreachable(0);
+      }
+      unsigned SrcIdx = MI->getOperand(i+1).getImm();
+      UpdateRegSequenceSrcs(SrcReg, DstReg, SrcIdx, MRI);
+    }
+
+    DEBUG(dbgs() << "Eliminated: " << *MI);
+    MI->eraseFromParent();
+  }
+
+  return true;
 }

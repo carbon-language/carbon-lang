@@ -223,6 +223,9 @@ public:
   bool isSubregToReg() const {
     return getOpcode() == TargetOpcode::SUBREG_TO_REG;
   }
+  bool isRegSequence() const {
+    return getOpcode() == TargetOpcode::REG_SEQUENCE;
+  }
   
   /// readsRegister - Return true if the MachineInstr reads the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there
