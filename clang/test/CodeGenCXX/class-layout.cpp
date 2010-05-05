@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
-// An extra byte shoudl be allocated for an empty class.
+// An extra byte should be allocated for an empty class.
 // CHECK: %struct.A = type { i8 }
 struct A { } a;
 
@@ -9,5 +9,5 @@ struct A { } a;
 struct B { void *a; int b; } b;
 
 // C should have a vtable pointer.
-// CHECK: %struct.C = type { i8**, i32 }
+// CHECK: %struct.C = type { i32 (...)**, i32 }
 struct C { virtual void f(); int a; } *c;

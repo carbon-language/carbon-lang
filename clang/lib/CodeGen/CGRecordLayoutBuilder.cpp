@@ -439,12 +439,14 @@ void CGRecordLayoutBuilder::LayoutBases(const CXXRecordDecl *RD,
                                         const ASTRecordLayout &Layout) {
   // Check if we need to add a vtable pointer.
   if (RD->isDynamicClass() && !Layout.getPrimaryBase()) {
-    const llvm::Type *Int8PtrTy =
-      llvm::Type::getInt8PtrTy(Types.getLLVMContext());
+    const llvm::Type *FunctionType =
+      llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
+                              /*isVarArg=*/true);
+    const llvm::Type *VTableTy = FunctionType->getPointerTo();
 
     assert(NextFieldOffsetInBytes == 0 &&
            "VTable pointer must come first!");
-    AppendField(NextFieldOffsetInBytes, Int8PtrTy->getPointerTo());
+    AppendField(NextFieldOffsetInBytes, VTableTy->getPointerTo());
   }
 }
 
