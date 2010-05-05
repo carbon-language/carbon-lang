@@ -1403,7 +1403,8 @@ private:
                                     bool EnteringContext,
                                     TypeTy *ObjectType,
                                     UnqualifiedId &Id,
-                                    bool AssumeTemplateId = false);
+                                    bool AssumeTemplateId,
+                                    SourceLocation TemplateKWLoc);
   bool ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
                                   TypeTy *ObjectType,
                                   UnqualifiedId &Result);

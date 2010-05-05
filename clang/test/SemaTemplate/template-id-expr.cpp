@@ -44,3 +44,41 @@ struct X {
 };
 
 template struct X<3>;
+
+// 'template' as a disambiguator.
+// PR7030
+struct Y0 {
+  template<typename U>
+  void f1(U);
+
+  template<typename U>
+  static void f2(U);
+
+  void f3(int);
+
+  static int f4(int);
+  template<typename U>
+  static void f4(U);
+
+  template<typename U>
+  void f() {
+    Y0::template f1<U>(0);
+    Y0::template f1(0);
+    this->template f1(0);
+
+    Y0::template f2<U>(0);
+    Y0::template f2(0);
+
+    Y0::template f3(0); // expected-error {{'f3' following the 'template' keyword does not refer to a template}}
+    Y0::template f3(); // expected-error {{'f3' following the 'template' keyword does not refer to a template}}
+
+    int x;
+    x = Y0::f4(0);
+    x = Y0::f4<int>(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
+    x = Y0::template f4(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
+
+    x = this->f4(0);
+    x = this->f4<int>(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
+    x = this->template f4(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
+  }
+};

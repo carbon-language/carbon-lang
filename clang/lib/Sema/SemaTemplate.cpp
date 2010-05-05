@@ -1704,7 +1704,8 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
       Diag(Name.getSourceRange().getBegin(), 
            diag::err_template_kw_refers_to_non_template)
         << GetNameFromUnqualifiedId(Name)
-        << Name.getSourceRange();
+        << Name.getSourceRange()
+        << TemplateKWLoc;
       return TemplateTy();
     } else {
       // We found something; return it.
@@ -1734,7 +1735,8 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
   Diag(Name.getSourceRange().getBegin(), 
        diag::err_template_kw_refers_to_non_template)
     << GetNameFromUnqualifiedId(Name)
-    << Name.getSourceRange();
+    << Name.getSourceRange()
+    << TemplateKWLoc;
   return TemplateTy();
 }
 
