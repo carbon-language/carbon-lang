@@ -89,7 +89,7 @@ namespace  {
     void VisitStmt(Stmt *Node);
 #define STMT(CLASS, PARENT) \
     void Visit##CLASS(CLASS *Node);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
   };
 }
 
@@ -477,7 +477,7 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
                                                     Node->getNumTemplateArgs(),
-                                                    Policy);  
+                                                    Policy);
 }
 
 void StmtPrinter::VisitDependentScopeDeclRefExpr(
@@ -727,12 +727,12 @@ void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
     IdentifierInfo *Id = ON.getFieldName();
     if (!Id)
       continue;
-    
+
     if (PrintedSomething)
       OS << ".";
     else
       PrintedSomething = true;
-    OS << Id->getName();    
+    OS << Id->getName();
   }
   OS << ")";
 }

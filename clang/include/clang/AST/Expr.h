@@ -203,13 +203,13 @@ public:
 
   /// \brief Returns whether this expression refers to a vector element.
   bool refersToVectorElement() const;
-  
+
   /// isKnownToHaveBooleanValue - Return true if this is an integer expression
   /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
   /// but also int expressions which are produced by things like comparisons in
   /// C.
   bool isKnownToHaveBooleanValue() const;
-  
+
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
@@ -223,7 +223,7 @@ public:
   }
   /// isConstantInitializer - Returns true if this expression is a constant
   /// initializer, which can be emitted at compile-time.
-  bool isConstantInitializer(ASTContext &Ctx) const; 
+  bool isConstantInitializer(ASTContext &Ctx) const;
 
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {
@@ -269,11 +269,11 @@ public:
   bool isEvaluatable(ASTContext &Ctx) const;
 
   /// HasSideEffects - This routine returns true for all those expressions
-  /// which must be evaluated each time and must not be optimization away 
+  /// which must be evaluated each time and must not be optimization away
   /// or evaluated at compile time. Example is a function call, volatile
   /// variable read.
   bool HasSideEffects(ASTContext &Ctx) const;
-  
+
   /// EvaluateAsInt - Call Evaluate and return the folded integer. This
   /// must be called on an expression that constant folds to an integer.
   llvm::APSInt EvaluateAsInt(ASTContext &Ctx) const;
@@ -291,16 +291,16 @@ public:
   enum NullPointerConstantValueDependence {
     /// \brief Specifies that the expression should never be value-dependent.
     NPC_NeverValueDependent = 0,
-    
+
     /// \brief Specifies that a value-dependent expression of integral or
     /// dependent type should be considered a null pointer constant.
     NPC_ValueDependentIsNull,
-    
+
     /// \brief Specifies that a value-dependent expression should be considered
     /// to never be a null pointer constant.
     NPC_ValueDependentIsNotNull
   };
-  
+
   /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
   /// integer constant expression with the value zero, or if this is one that is
   /// cast to void*.
@@ -329,12 +329,12 @@ public:
   /// \brief Determine whether this expression is a default function argument.
   ///
   /// Default arguments are implicitly generated in the abstract syntax tree
-  /// by semantic analysis for function calls, object constructions, etc. in 
+  /// by semantic analysis for function calls, object constructions, etc. in
   /// C++. Default arguments are represented by \c CXXDefaultArgExpr nodes;
   /// this routine also looks through any implicit casts to determine whether
   /// the expression is a default argument.
   bool isDefaultArgument() const;
-  
+
   /// \brief Determine whether this expression directly creates a
   /// temporary object (of class type).
   bool isTemporaryObject() const { return getTemporaryObject() != 0; }
@@ -374,7 +374,7 @@ public:
 struct NameQualifier {
   /// \brief The nested name specifier.
   NestedNameSpecifier *NNS;
-  
+
   /// \brief The source range covered by the nested name specifier.
   SourceRange Range;
 };
@@ -384,20 +384,20 @@ struct NameQualifier {
 struct ExplicitTemplateArgumentList {
   /// \brief The source location of the left angle bracket ('<');
   SourceLocation LAngleLoc;
-  
+
   /// \brief The source location of the right angle bracket ('>');
   SourceLocation RAngleLoc;
-  
+
   /// \brief The number of template arguments in TemplateArgs.
   /// The actual template arguments (if any) are stored after the
   /// ExplicitTemplateArgumentList structure.
   unsigned NumTemplateArgs;
-  
+
   /// \brief Retrieve the template arguments
   TemplateArgumentLoc *getTemplateArgs() {
     return reinterpret_cast<TemplateArgumentLoc *> (this + 1);
   }
-  
+
   /// \brief Retrieve the template arguments
   const TemplateArgumentLoc *getTemplateArgs() const {
     return reinterpret_cast<const TemplateArgumentLoc *> (this + 1);
@@ -407,25 +407,25 @@ struct ExplicitTemplateArgumentList {
   void copyInto(TemplateArgumentListInfo &List) const;
   static std::size_t sizeFor(const TemplateArgumentListInfo &List);
 };
-  
+
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
   enum {
-    // Flag on DecoratedD that specifies when this declaration reference 
+    // Flag on DecoratedD that specifies when this declaration reference
     // expression has a C++ nested-name-specifier.
     HasQualifierFlag = 0x01,
-    // Flag on DecoratedD that specifies when this declaration reference 
+    // Flag on DecoratedD that specifies when this declaration reference
     // expression has an explicit C++ template argument list.
     HasExplicitTemplateArgumentListFlag = 0x02
   };
-  
-  // DecoratedD - The declaration that we are referencing, plus two bits to 
+
+  // DecoratedD - The declaration that we are referencing, plus two bits to
   // indicate whether (1) the declaration's name was explicitly qualified and
-  // (2) the declaration's name was followed by an explicit template 
+  // (2) the declaration's name was followed by an explicit template
   // argument list.
   llvm::PointerIntPair<ValueDecl *, 2> DecoratedD;
-  
+
   // Loc - The location of the declaration name itself.
   SourceLocation Loc;
 
@@ -433,39 +433,39 @@ class DeclRefExpr : public Expr {
   NameQualifier *getNameQualifier() {
     if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
       return 0;
-    
+
     return reinterpret_cast<NameQualifier *> (this + 1);
   }
-  
+
   /// \brief Retrieve the qualifier that preceded the member name, if any.
   const NameQualifier *getNameQualifier() const {
     return const_cast<DeclRefExpr *>(this)->getNameQualifier();
   }
-  
+
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
   ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
     if ((DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag) == 0)
       return 0;
-    
+
     if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
       return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-    
+
     return reinterpret_cast<ExplicitTemplateArgumentList *>(
                                                       getNameQualifier() + 1);
   }
-  
+
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
   const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
     return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgumentList();
   }
-  
+
   DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
               ValueDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T);
-  
+
 protected:
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
@@ -493,7 +493,7 @@ public:
                              SourceLocation NameLoc,
                              QualType T,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
-  
+
   ValueDecl *getDecl() { return DecoratedD.getPointer(); }
   const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }
   void setDecl(ValueDecl *NewD) { DecoratedD.setPointer(NewD); }
@@ -505,26 +505,26 @@ public:
   /// \brief Determine whether this declaration reference was preceded by a
   /// C++ nested-name-specifier, e.g., \c N::foo.
   bool hasQualifier() const { return DecoratedD.getInt() & HasQualifierFlag; }
-  
+
   /// \brief If the name was qualified, retrieves the source range of
   /// the nested-name-specifier that precedes the name. Otherwise,
   /// returns an empty source range.
   SourceRange getQualifierRange() const {
     if (!hasQualifier())
       return SourceRange();
-    
+
     return getNameQualifier()->Range;
   }
-  
-  /// \brief If the name was qualified, retrieves the nested-name-specifier 
+
+  /// \brief If the name was qualified, retrieves the nested-name-specifier
   /// that precedes the name. Otherwise, returns NULL.
   NestedNameSpecifier *getQualifier() const {
     if (!hasQualifier())
       return 0;
-    
+
     return getNameQualifier()->NNS;
   }
-  
+
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
   bool hasExplicitTemplateArgumentList() const {
@@ -537,43 +537,43 @@ public:
     if (hasExplicitTemplateArgumentList())
       getExplicitTemplateArgumentList()->copyInto(List);
   }
-  
+
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
     if (!hasExplicitTemplateArgumentList())
       return SourceLocation();
-    
+
     return getExplicitTemplateArgumentList()->LAngleLoc;
   }
-  
+
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
     if (!hasExplicitTemplateArgumentList())
       return 0;
-    
+
     return getExplicitTemplateArgumentList()->getTemplateArgs();
   }
-  
+
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
     if (!hasExplicitTemplateArgumentList())
       return 0;
-    
+
     return getExplicitTemplateArgumentList()->NumTemplateArgs;
   }
-  
+
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
   SourceLocation getRAngleLoc() const {
     if (!hasExplicitTemplateArgumentList())
       return SourceLocation();
-    
+
     return getExplicitTemplateArgumentList()->RAngleLoc;
   }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DeclRefExprClass;
   }
@@ -601,7 +601,7 @@ private:
   IdentType Type;
 public:
   PredefinedExpr(SourceLocation l, QualType type, IdentType IT)
-    : Expr(PredefinedExprClass, type, type->isDependentType(), 
+    : Expr(PredefinedExprClass, type, type->isDependentType(),
            type->isDependentType()), Loc(l), Type(IT) {}
 
   /// \brief Construct an empty predefined expression.
@@ -1008,14 +1008,14 @@ public:
 /// @code
 /// struct S {
 ///   float f;
-///   double d;    
+///   double d;
 /// };
 /// struct T {
 ///   int i;
 ///   struct S s[10];
 /// };
 /// @endcode
-/// we can represent and evaluate the expression @c offsetof(struct T, s[2].d). 
+/// we can represent and evaluate the expression @c offsetof(struct T, s[2].d).
 
 class OffsetOfExpr : public Expr {
 public:
@@ -1037,48 +1037,48 @@ public:
 
   private:
     enum { MaskBits = 2, Mask = 0x03 };
-    
+
     /// \brief The source range that covers this part of the designator.
     SourceRange Range;
-    
+
     /// \brief The data describing the designator, which comes in three
     /// different forms, depending on the lower two bits.
-    ///   - An unsigned index into the array of Expr*'s stored after this node 
+    ///   - An unsigned index into the array of Expr*'s stored after this node
     ///     in memory, for [constant-expression] designators.
     ///   - A FieldDecl*, for references to a known field.
     ///   - An IdentifierInfo*, for references to a field with a given name
     ///     when the class type is dependent.
-    ///   - A CXXBaseSpecifier*, for references that look at a field in a 
+    ///   - A CXXBaseSpecifier*, for references that look at a field in a
     ///     base class.
     uintptr_t Data;
-    
+
   public:
     /// \brief Create an offsetof node that refers to an array element.
-    OffsetOfNode(SourceLocation LBracketLoc, unsigned Index, 
+    OffsetOfNode(SourceLocation LBracketLoc, unsigned Index,
                  SourceLocation RBracketLoc)
       : Range(LBracketLoc, RBracketLoc), Data((Index << 2) | Array) { }
-    
+
     /// \brief Create an offsetof node that refers to a field.
-    OffsetOfNode(SourceLocation DotLoc, FieldDecl *Field, 
+    OffsetOfNode(SourceLocation DotLoc, FieldDecl *Field,
                  SourceLocation NameLoc)
-      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc), 
+      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc),
         Data(reinterpret_cast<uintptr_t>(Field) | OffsetOfNode::Field) { }
-    
+
     /// \brief Create an offsetof node that refers to an identifier.
     OffsetOfNode(SourceLocation DotLoc, IdentifierInfo *Name,
                  SourceLocation NameLoc)
-      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc), 
+      : Range(DotLoc.isValid()? DotLoc : NameLoc, NameLoc),
         Data(reinterpret_cast<uintptr_t>(Name) | Identifier) { }
 
     /// \brief Create an offsetof node that refers into a C++ base class.
     explicit OffsetOfNode(const CXXBaseSpecifier *Base)
       : Range(), Data(reinterpret_cast<uintptr_t>(Base) | OffsetOfNode::Base) {}
-    
+
     /// \brief Determine what kind of offsetof node this is.
-    Kind getKind() const { 
+    Kind getKind() const {
       return static_cast<Kind>(Data & Mask);
     }
-    
+
     /// \brief For an array element node, returns the index into the array
     /// of expressions.
     unsigned getArrayExprIndex() const {
@@ -1091,28 +1091,28 @@ public:
       assert(getKind() == Field);
       return reinterpret_cast<FieldDecl *>(Data & ~(uintptr_t)Mask);
     }
-    
+
     /// \brief For a field or identifier offsetof node, returns the name of
     /// the field.
     IdentifierInfo *getFieldName() const;
-    
+
     /// \brief For a base class node, returns the base specifier.
     CXXBaseSpecifier *getBase() const {
       assert(getKind() == Base);
-      return reinterpret_cast<CXXBaseSpecifier *>(Data & ~(uintptr_t)Mask);      
+      return reinterpret_cast<CXXBaseSpecifier *>(Data & ~(uintptr_t)Mask);
     }
-    
+
     /// \brief Retrieve the source range that covers this offsetof node.
     ///
     /// For an array element node, the source range contains the locations of
     /// the square brackets. For a field or identifier node, the source range
-    /// contains the location of the period (if there is one) and the 
+    /// contains the location of the period (if there is one) and the
     /// identifier.
     SourceRange getRange() const { return Range; }
   };
 
 private:
-  
+
   SourceLocation OperatorLoc, RParenLoc;
   // Base type;
   TypeSourceInfo *TSInfo;
@@ -1120,26 +1120,26 @@ private:
   unsigned NumComps;
   // Number of sub-expressions (i.e. array subscript expressions).
   unsigned NumExprs;
-  
-  OffsetOfExpr(ASTContext &C, QualType type, 
+
+  OffsetOfExpr(ASTContext &C, QualType type,
                SourceLocation OperatorLoc, TypeSourceInfo *tsi,
-               OffsetOfNode* compsPtr, unsigned numComps, 
+               OffsetOfNode* compsPtr, unsigned numComps,
                Expr** exprsPtr, unsigned numExprs,
                SourceLocation RParenLoc);
 
   explicit OffsetOfExpr(unsigned numComps, unsigned numExprs)
     : Expr(OffsetOfExprClass, EmptyShell()),
-      TSInfo(0), NumComps(numComps), NumExprs(numExprs) {}  
+      TSInfo(0), NumComps(numComps), NumExprs(numExprs) {}
 
 public:
-  
-  static OffsetOfExpr *Create(ASTContext &C, QualType type, 
-                              SourceLocation OperatorLoc, TypeSourceInfo *tsi, 
-                              OffsetOfNode* compsPtr, unsigned numComps, 
+
+  static OffsetOfExpr *Create(ASTContext &C, QualType type,
+                              SourceLocation OperatorLoc, TypeSourceInfo *tsi,
+                              OffsetOfNode* compsPtr, unsigned numComps,
                               Expr** exprsPtr, unsigned numExprs,
                               SourceLocation RParenLoc);
 
-  static OffsetOfExpr *CreateEmpty(ASTContext &C, 
+  static OffsetOfExpr *CreateEmpty(ASTContext &C,
                                    unsigned NumComps, unsigned NumExprs);
 
   /// getOperatorLoc - Return the location of the operator.
@@ -1149,14 +1149,14 @@ public:
   /// \brief Return the location of the right parentheses.
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation R) { RParenLoc = R; }
-  
+
   TypeSourceInfo *getTypeSourceInfo() const {
     return TSInfo;
   }
   void setTypeSourceInfo(TypeSourceInfo *tsi) {
     TSInfo = tsi;
   }
-  
+
   const OffsetOfNode &getComponent(unsigned Idx) {
     assert(Idx < NumComps && "Subscript out of range");
     return reinterpret_cast<OffsetOfNode *> (this + 1)[Idx];
@@ -1166,7 +1166,7 @@ public:
     assert(Idx < NumComps && "Subscript out of range");
     reinterpret_cast<OffsetOfNode *> (this + 1)[Idx] = ON;
   }
-  
+
   unsigned getNumComponents() const {
     return NumComps;
   }
@@ -1182,7 +1182,7 @@ public:
     reinterpret_cast<Expr **>(
                 reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx] = E;
   }
-  
+
   unsigned getNumExpressions() const {
     return NumExprs;
   }
@@ -1468,13 +1468,10 @@ public:
   }
 
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CallExprClass ||
-           T->getStmtClass() == CXXOperatorCallExprClass ||
-           T->getStmtClass() == CXXMemberCallExprClass;
+    return T->getStmtClass() >= firstCallExprConstant &&
+           T->getStmtClass() <= lastCallExprConstant;
   }
   static bool classof(const CallExpr *) { return true; }
-  static bool classof(const CXXOperatorCallExpr *) { return true; }
-  static bool classof(const CXXMemberCallExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();
@@ -1621,7 +1618,7 @@ public:
     if (hasExplicitTemplateArgumentList())
       getExplicitTemplateArgumentList()->copyInto(List);
   }
-  
+
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
@@ -1800,47 +1797,47 @@ public:
     /// CK_DerivedToBaseMemberPointer - Member pointer in derived class to
     /// member pointer in base class.
     CK_DerivedToBaseMemberPointer,
-    
+
     /// CK_UserDefinedConversion - Conversion using a user defined type
     /// conversion function.
     CK_UserDefinedConversion,
 
     /// CK_ConstructorConversion - Conversion by constructor
     CK_ConstructorConversion,
-    
+
     /// CK_IntegralToPointer - Integral to pointer
     CK_IntegralToPointer,
-    
+
     /// CK_PointerToIntegral - Pointer to integral
     CK_PointerToIntegral,
-    
+
     /// CK_ToVoid - Cast to void.
     CK_ToVoid,
-    
+
     /// CK_VectorSplat - Casting from an integer/floating type to an extended
-    /// vector type with the same element type as the src type. Splats the 
+    /// vector type with the same element type as the src type. Splats the
     /// src expression into the destination expression.
     CK_VectorSplat,
-    
+
     /// CK_IntegralCast - Casting between integral types of different size.
     CK_IntegralCast,
 
     /// CK_IntegralToFloating - Integral to floating point.
     CK_IntegralToFloating,
-    
+
     /// CK_FloatingToIntegral - Floating point to integral.
     CK_FloatingToIntegral,
-    
+
     /// CK_FloatingCast - Casting between floating types of different size.
     CK_FloatingCast,
-    
+
     /// CK_MemberPointerToBoolean - Member pointer to boolean
     CK_MemberPointerToBoolean,
 
-    /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
+    /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c
     /// pointer
     CK_AnyPointerToObjCPointerCast,
-    /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
+    /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block
     /// pointer
     CK_AnyPointerToBlockPointerCast
 
@@ -1933,14 +1930,8 @@ public:
   const CXXBaseSpecifierArray& getBasePath() const { return BasePath; }
 
   static bool classof(const Stmt *T) {
-    StmtClass SC = T->getStmtClass();
-    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
-      return true;
-
-    if (SC >= ImplicitCastExprClass && SC <= CStyleCastExprClass)
-      return true;
-
-    return false;
+    return T->getStmtClass() >= firstCastExprConstant &&
+           T->getStmtClass() <= lastCastExprConstant;
   }
   static bool classof(const CastExpr *) { return true; }
 
@@ -1970,9 +1961,9 @@ class ImplicitCastExpr : public CastExpr {
   bool LvalueCast;
 
 public:
-  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
+  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op,
                    CXXBaseSpecifierArray BasePath, bool Lvalue)
-    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), 
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath),
     LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
@@ -2037,13 +2028,8 @@ public:
   QualType getTypeAsWritten() const { return TInfo->getType(); }
 
   static bool classof(const Stmt *T) {
-    StmtClass SC = T->getStmtClass();
-    if (SC >= CStyleCastExprClass && SC <= CStyleCastExprClass)
-      return true;
-    if (SC >= CXXStaticCastExprClass && SC <= CXXFunctionalCastExprClass)
-      return true;
-
-    return false;
+     return T->getStmtClass() >= firstExplicitCastExprConstant &&
+            T->getStmtClass() <= lastExplicitCastExprConstant;
   }
   static bool classof(const ExplicitCastExpr *) { return true; }
 };
@@ -2198,8 +2184,8 @@ public:
   bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
 
   static bool classof(const Stmt *S) {
-    return S->getStmtClass() == BinaryOperatorClass ||
-           S->getStmtClass() == CompoundAssignOperatorClass;
+    return S->getStmtClass() >= firstBinaryOperatorConstant &&
+           S->getStmtClass() <= lastBinaryOperatorConstant;
   }
   static bool classof(const BinaryOperator *) { return true; }
 
@@ -2880,7 +2866,7 @@ protected:
   virtual void DoDestroy(ASTContext &C);
 
   void DestroyDesignators(ASTContext &C);
-  
+
 public:
   /// A field designator, e.g., ".x".
   struct FieldDesignator {
@@ -3048,7 +3034,7 @@ public:
 
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
 
-  void setDesignators(ASTContext &C, const Designator *Desigs, 
+  void setDesignators(ASTContext &C, const Designator *Desigs,
                       unsigned NumDesigs);
 
   Expr *getArrayIndex(const Designator& D);

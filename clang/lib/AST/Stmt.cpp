@@ -27,7 +27,7 @@ static struct StmtClassNameTable {
   const char *Name;
   unsigned Counter;
   unsigned Size;
-} StmtClassInfo[Stmt::lastExprConstant+1];
+} StmtClassInfo[Stmt::lastStmtConstant+1];
 
 static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
   static bool Initialized = false;
@@ -36,11 +36,11 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 
   // Intialize the table on the first use.
   Initialized = true;
-#define ABSTRACT_EXPR(CLASS, PARENT)
+#define ABSTRACT(STMT)
 #define STMT(CLASS, PARENT) \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Name = #CLASS;    \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Size = sizeof(CLASS);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
   return StmtClassInfo[E];
 }
@@ -55,13 +55,13 @@ void Stmt::PrintStats() {
 
   unsigned sum = 0;
   fprintf(stderr, "*** Stmt/Expr Stats:\n");
-  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
+  for (int i = 0; i != Stmt::lastStmtConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     sum += StmtClassInfo[i].Counter;
   }
   fprintf(stderr, "  %d stmts/exprs total.\n", sum);
   sum = 0;
-  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
+  for (int i = 0; i != Stmt::lastStmtConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     if (StmtClassInfo[i].Counter == 0) continue;
     fprintf(stderr, "    %d %s, %d each (%d bytes)\n",
@@ -164,7 +164,7 @@ void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
                                              StringLiteral **Constraints,
                                              Stmt **Exprs,
                                              unsigned NumOutputs,
-                                             unsigned NumInputs,                                      
+                                             unsigned NumInputs,
                                              StringLiteral **Clobbers,
                                              unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
@@ -172,19 +172,19 @@ void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
   this->NumClobbers = NumClobbers;
 
   unsigned NumExprs = NumOutputs + NumInputs;
-  
+
   C.Deallocate(this->Names);
   this->Names = new (C) IdentifierInfo*[NumExprs];
   std::copy(Names, Names + NumExprs, this->Names);
-  
+
   C.Deallocate(this->Exprs);
   this->Exprs = new (C) Stmt*[NumExprs];
   std::copy(Exprs, Exprs + NumExprs, this->Exprs);
-  
+
   C.Deallocate(this->Constraints);
   this->Constraints = new (C) StringLiteral*[NumExprs];
   std::copy(Constraints, Constraints + NumExprs, this->Constraints);
-  
+
   C.Deallocate(this->Clobbers);
   this->Clobbers = new (C) StringLiteral*[NumClobbers];
   std::copy(Clobbers, Clobbers + NumClobbers, this->Clobbers);
@@ -242,7 +242,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
   std::string CurStringPiece;
 
   bool HasVariants = !C.Target.hasNoAsmVariants();
-  
+
   while (1) {
     // Done with the string?
     if (CurPtr == StrEnd) {
@@ -263,7 +263,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       CurStringPiece += CurChar;
       continue;
     }
-    
+
     // Escaped "%" character in asm string.
     if (CurPtr == StrEnd) {
       // % at end of string is invalid (no escape).
@@ -356,8 +356,8 @@ QualType CXXCatchStmt::getCaughtType() const {
 // Constructors
 //===----------------------------------------------------------------------===//
 
-AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, 
-                 bool isvolatile, bool msasm, 
+AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
+                 bool isvolatile, bool msasm,
                  unsigned numoutputs, unsigned numinputs,
                  IdentifierInfo **names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
@@ -367,7 +367,7 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
   , NumOutputs(numoutputs), NumInputs(numinputs), NumClobbers(numclobbers) {
 
   unsigned NumExprs = NumOutputs +NumInputs;
-    
+
   Names = new (C) IdentifierInfo*[NumExprs];
   std::copy(names, names + NumExprs, Names);
 
@@ -402,31 +402,31 @@ ObjCAtTryStmt::ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt,
   Stmts[0] = atTryStmt;
   for (unsigned I = 0; I != NumCatchStmts; ++I)
     Stmts[I + 1] = CatchStmts[I];
-  
+
   if (HasFinally)
     Stmts[NumCatchStmts + 1] = atFinallyStmt;
 }
 
-ObjCAtTryStmt *ObjCAtTryStmt::Create(ASTContext &Context, 
-                                     SourceLocation atTryLoc, 
+ObjCAtTryStmt *ObjCAtTryStmt::Create(ASTContext &Context,
+                                     SourceLocation atTryLoc,
                                      Stmt *atTryStmt,
-                                     Stmt **CatchStmts, 
+                                     Stmt **CatchStmts,
                                      unsigned NumCatchStmts,
                                      Stmt *atFinallyStmt) {
-  unsigned Size = sizeof(ObjCAtTryStmt) + 
+  unsigned Size = sizeof(ObjCAtTryStmt) +
     (1 + NumCatchStmts + (atFinallyStmt != 0)) * sizeof(Stmt *);
   void *Mem = Context.Allocate(Size, llvm::alignof<ObjCAtTryStmt>());
   return new (Mem) ObjCAtTryStmt(atTryLoc, atTryStmt, CatchStmts, NumCatchStmts,
                                  atFinallyStmt);
 }
 
-ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(ASTContext &Context, 
+ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(ASTContext &Context,
                                                  unsigned NumCatchStmts,
                                                  bool HasFinally) {
-  unsigned Size = sizeof(ObjCAtTryStmt) + 
+  unsigned Size = sizeof(ObjCAtTryStmt) +
     (1 + NumCatchStmts + HasFinally) * sizeof(Stmt *);
   void *Mem = Context.Allocate(Size, llvm::alignof<ObjCAtTryStmt>());
-  return new (Mem) ObjCAtTryStmt(EmptyShell(), NumCatchStmts, HasFinally);  
+  return new (Mem) ObjCAtTryStmt(EmptyShell(), NumCatchStmts, HasFinally);
 }
 
 SourceRange ObjCAtTryStmt::getSourceRange() const {
@@ -437,12 +437,12 @@ SourceRange ObjCAtTryStmt::getSourceRange() const {
     EndLoc = getCatchStmt(NumCatchStmts - 1)->getLocEnd();
   else
     EndLoc = getTryBody()->getLocEnd();
-  
+
   return SourceRange(AtTryLoc, EndLoc);
 }
 
 CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
-                               Stmt *tryBlock, Stmt **handlers, 
+                               Stmt *tryBlock, Stmt **handlers,
                                unsigned numHandlers) {
   std::size_t Size = sizeof(CXXTryStmt);
   Size += ((numHandlers + 1) * sizeof(Stmt));
@@ -474,7 +474,7 @@ static void BranchDestroy(ASTContext &C, Stmt *S, Stmt **SubExprs,
   // the expressions referenced by the condition variable.
   for (Stmt **I = SubExprs, **E = SubExprs + NumExprs; I != E; ++I)
     if (Stmt *Child = *I) Child->Destroy(C);
-  
+
   S->~Stmt();
   C.Deallocate((void *) S);
 }
@@ -517,7 +517,7 @@ void SwitchStmt::DoDestroy(ASTContext &C) {
     SC->Destroy(C);
     SC = Next;
   }
-  
+
   BranchDestroy(C, this, SubExprs, END_EXPR);
 }
 
@@ -527,12 +527,12 @@ void WhileStmt::DoDestroy(ASTContext &C) {
 
 void AsmStmt::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
-  
+
   C.Deallocate(Names);
   C.Deallocate(Constraints);
   C.Deallocate(Exprs);
   C.Deallocate(Clobbers);
-  
+
   this->~AsmStmt();
   C.Deallocate((void *)this);
 }

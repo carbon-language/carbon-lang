@@ -36,7 +36,7 @@ namespace {
     void VisitStmt(Stmt *S);
 
 #define STMT(Node, Base) void Visit##Node(Node *S);
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
 
     /// \brief Visit a declaration that is referenced within an expression
     /// or statement.
@@ -279,13 +279,13 @@ void StmtProfiler::VisitOffsetOfExpr(OffsetOfExpr *S) {
     case OffsetOfExpr::OffsetOfNode::Identifier:
       ID.AddPointer(ON.getFieldName());
       break;
-        
+
     case OffsetOfExpr::OffsetOfNode::Base:
       // These nodes are implicit, and therefore don't need profiling.
       break;
     }
   }
-  
+
   VisitExpr(S);
 }
 
@@ -740,7 +740,7 @@ void StmtProfiler::VisitTemplateArgument(const TemplateArgument &Arg) {
   case TemplateArgument::Template:
     VisitTemplateName(Arg.getAsTemplate());
     break;
-      
+
   case TemplateArgument::Declaration:
     VisitDecl(Arg.getAsDecl());
     break;

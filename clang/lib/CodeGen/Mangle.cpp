@@ -178,7 +178,7 @@ private:
 
   void mangleTemplateArgs(TemplateName Template,
                           const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs);  
+                          unsigned NumTemplateArgs);
   void mangleTemplateArgs(const TemplateParameterList &PL,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
@@ -439,7 +439,7 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
   //                              ::= <substitution>
   if (TemplateDecl *TD = Template.getAsTemplateDecl())
     return mangleUnscopedTemplateName(TD);
-  
+
   if (mangleSubstitution(Template))
     return;
 
@@ -454,7 +454,7 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
     Diags.Report(FullSourceLoc(), DiagID);
     return;
   }
-  
+
   mangleSourceName(Dependent->getIdentifier());
   addSubstitution(Template);
 }
@@ -506,7 +506,7 @@ void CXXNameMangler::mangleUnresolvedScope(NestedNameSpecifier *Qualifier) {
         dyn_cast<TemplateSpecializationType>(QTy)) {
       if (!mangleSubstitution(QualType(TST, 0))) {
         mangleTemplatePrefix(TST->getTemplateName());
-        
+
         // FIXME: GCC does not appear to mangle the template arguments when
         // the template in question is a dependent template name. Should we
         // emulate that badness?
@@ -781,14 +781,14 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
 
   if (QualifiedTemplateName *Qualified = Template.getAsQualifiedTemplateName())
     mangleUnresolvedScope(Qualified->getQualifier());
-  
+
   if (OverloadedTemplateStorage *Overloaded
                                       = Template.getAsOverloadedTemplate()) {
-    mangleUnqualifiedName(0, (*Overloaded->begin())->getDeclName(), 
+    mangleUnqualifiedName(0, (*Overloaded->begin())->getDeclName(),
                           UnknownArity);
     return;
   }
-   
+
   DependentTemplateName *Dependent = Template.getAsDependentTemplateName();
   assert(Dependent && "Unknown template name kind?");
   mangleUnresolvedScope(Dependent->getQualifier());
@@ -1224,9 +1224,9 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
   } else {
     if (mangleSubstitution(QualType(T, 0)))
       return;
-    
+
     mangleTemplatePrefix(T->getTemplateName());
-    
+
     // FIXME: GCC does not appear to mangle the template arguments when
     // the template in question is a dependent template name. Should we
     // emulate that badness?
@@ -1245,16 +1245,16 @@ void CXXNameMangler::mangleType(const DependentNameType *T) {
     const TemplateSpecializationType *TST = T->getTemplateId();
     if (!mangleSubstitution(QualType(TST, 0))) {
       mangleTemplatePrefix(TST->getTemplateName());
-      
+
       // FIXME: GCC does not appear to mangle the template arguments when
       // the template in question is a dependent template name. Should we
       // emulate that badness?
       mangleTemplateArgs(TST->getTemplateName(), TST->getArgs(),
-                         TST->getNumArgs());    
+                         TST->getNumArgs());
       addSubstitution(QualType(TST, 0));
     }
   }
-    
+
   Out << 'E';
 }
 
@@ -1369,7 +1369,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 #define EXPR(Type, Base)
 #define STMT(Type, Base) \
   case Expr::Type##Class:
-#include "clang/AST/StmtNodes.def"
+#include "clang/AST/StmtNodes.inc"
     llvm_unreachable("unexpected statement kind");
     break;
 
@@ -1668,7 +1668,7 @@ void CXXNameMangler::mangleTemplateArgs(TemplateName Template,
   if (TemplateDecl *TD = Template.getAsTemplateDecl())
     return mangleTemplateArgs(*TD->getTemplateParameters(), TemplateArgs,
                               NumTemplateArgs);
-  
+
   // <template-args> ::= I <template-arg>+ E
   Out << 'I';
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
@@ -1791,7 +1791,7 @@ bool CXXNameMangler::mangleSubstitution(QualType T) {
 bool CXXNameMangler::mangleSubstitution(TemplateName Template) {
   if (TemplateDecl *TD = Template.getAsTemplateDecl())
     return mangleSubstitution(TD);
-  
+
   Template = Context.getASTContext().getCanonicalTemplateName(Template);
   return mangleSubstitution(
                       reinterpret_cast<uintptr_t>(Template.getAsVoidPointer()));
@@ -1978,7 +1978,7 @@ void CXXNameMangler::addSubstitution(QualType T) {
 void CXXNameMangler::addSubstitution(TemplateName Template) {
   if (TemplateDecl *TD = Template.getAsTemplateDecl())
     return addSubstitution(TD);
-  
+
   Template = Context.getASTContext().getCanonicalTemplateName(Template);
   addSubstitution(reinterpret_cast<uintptr_t>(Template.getAsVoidPointer()));
 }
@@ -2036,38 +2036,38 @@ void MangleContext::mangleThunk(const CXXMethodDecl *MD,
   //                      # base is the nominal target function of thunk
   //                      # first call-offset is 'this' adjustment
   //                      # second call-offset is result adjustment
-  
+
   assert(!isa<CXXDestructorDecl>(MD) &&
          "Use mangleCXXDtor for destructor decls!");
-  
+
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZT";
   if (!Thunk.Return.isEmpty())
     Mangler.getStream() << 'c';
-  
+
   // Mangle the 'this' pointer adjustment.
   Mangler.mangleCallOffset(Thunk.This.NonVirtual, Thunk.This.VCallOffsetOffset);
-  
+
   // Mangle the return pointer adjustment if there is one.
   if (!Thunk.Return.isEmpty())
     Mangler.mangleCallOffset(Thunk.Return.NonVirtual,
                              Thunk.Return.VBaseOffsetOffset);
-  
+
   Mangler.mangleFunctionEncoding(MD);
 }
 
-void 
+void
 MangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   const ThisAdjustment &ThisAdjustment,
                                   llvm::SmallVectorImpl<char> &Res) {
   //  <special-name> ::= T <call-offset> <base encoding>
   //                      # base is the nominal target function of thunk
-  
+
   CXXNameMangler Mangler(*this, Res, DD, Type);
   Mangler.getStream() << "_ZT";
 
   // Mangle the 'this' pointer adjustment.
-  Mangler.mangleCallOffset(ThisAdjustment.NonVirtual, 
+  Mangler.mangleCallOffset(ThisAdjustment.NonVirtual,
                            ThisAdjustment.VCallOffsetOffset);
 
   Mangler.mangleFunctionEncoding(DD);

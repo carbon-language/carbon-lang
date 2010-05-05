@@ -99,11 +99,24 @@ public:
     NoStmtClass = 0,
 #define STMT(CLASS, PARENT) CLASS##Class,
 #define FIRST_STMT(CLASS) firstStmtConstant = CLASS##Class,
-#define LAST_STMT(CLASS) lastStmtConstant = CLASS##Class,
+// LAST_STMT will always come last
+#define LAST_STMT(CLASS) lastStmtConstant = CLASS##Class
 #define FIRST_EXPR(CLASS) firstExprConstant = CLASS##Class,
-#define LAST_EXPR(CLASS) lastExprConstant = CLASS##Class
-#define ABSTRACT_EXPR(CLASS, PARENT)
-#include "clang/AST/StmtNodes.def"
+#define LAST_EXPR(CLASS) lastExprConstant = CLASS##Class,
+#define FIRST_CALLEXPR(CLASS) firstCallExprConstant = CLASS##Class,
+#define LAST_CALLEXPR(CLASS) lastCallExprConstant = CLASS##Class,
+#define FIRST_CASTEXPR(CLASS) firstCastExprConstant = CLASS##Class,
+#define LAST_CASTEXPR(CLASS) lastCastExprConstant = CLASS##Class,
+#define FIRST_EXPLICITCASTEXPR(CLASS) firstExplicitCastExprConstant = \
+            CLASS##Class,
+#define LAST_EXPLICITCASTEXPR(CLASS) lastExplicitCastExprConstant = \
+            CLASS##Class,
+#define FIRST_BINARYOPERATOR(CLASS) firstBinaryOperatorConstant = \
+            CLASS##Class,
+#define LAST_BINARYOPERATOR(CLASS) lastBinaryOperatorConstant = \
+            CLASS##Class,
+#define ABSTRACT(STMT)
+#include "clang/AST/StmtNodes.inc"
 };
 private:
   /// \brief The statement class.
@@ -198,9 +211,9 @@ public:
     return this;
   }
 
-  StmtClass getStmtClass() const { 
+  StmtClass getStmtClass() const {
     assert(RefCount >= 1 && "Referencing already-destroyed statement!");
-    return (StmtClass)sClass; 
+    return (StmtClass)sClass;
   }
   const char *getStmtClassName() const;
 
@@ -620,10 +633,10 @@ class IfStmt : public Stmt {
 
   /// \brief If non-NULL, the declaration in the "if" statement.
   VarDecl *Var;
-  
+
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
-  
+
 public:
   IfStmt(SourceLocation IL, VarDecl *var, Expr *cond, Stmt *then,
          SourceLocation EL = SourceLocation(), Stmt *elsev = 0)
@@ -646,7 +659,7 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const { return Var; }
   void setConditionVariable(VarDecl *V) { Var = V; }
-  
+
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   const Stmt *getThen() const { return SubExprs[THEN]; }
@@ -698,8 +711,8 @@ protected:
   virtual void DoDestroy(ASTContext &Ctx);
 
 public:
-  SwitchStmt(VarDecl *Var, Expr *cond) 
-    : Stmt(SwitchStmtClass), Var(Var), FirstCase(0) 
+  SwitchStmt(VarDecl *Var, Expr *cond)
+    : Stmt(SwitchStmtClass), Var(Var), FirstCase(0)
   {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = NULL;
@@ -772,7 +785,7 @@ class WhileStmt : public Stmt {
   SourceLocation WhileLoc;
 public:
   WhileStmt(VarDecl *Var, Expr *cond, Stmt *body, SourceLocation WL)
-    : Stmt(WhileStmtClass), Var(Var) 
+    : Stmt(WhileStmtClass), Var(Var)
   {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
@@ -814,7 +827,7 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
+
 protected:
   virtual void DoDestroy(ASTContext &Ctx);
 };
@@ -880,10 +893,10 @@ class ForStmt : public Stmt {
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, Stmt *Body, 
+  ForStmt(Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, Stmt *Body,
           SourceLocation FL, SourceLocation LP, SourceLocation RP)
-    : Stmt(ForStmtClass), CondVar(condVar), ForLoc(FL), LParenLoc(LP), 
-      RParenLoc(RP) 
+    : Stmt(ForStmtClass), CondVar(condVar), ForLoc(FL), LParenLoc(LP),
+      RParenLoc(RP)
   {
     SubExprs[INIT] = Init;
     SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
@@ -895,7 +908,7 @@ public:
   explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
 
   Stmt *getInit() { return SubExprs[INIT]; }
-  
+
   /// \brief Retrieve the variable declared in this "for" statement, if any.
   ///
   /// In the following example, "y" is the condition variable.
@@ -906,7 +919,7 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const { return CondVar; }
   void setConditionVariable(VarDecl *V) { CondVar = V; }
-  
+
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }
   Stmt *getBody() { return SubExprs[BODY]; }
@@ -939,7 +952,7 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
+
 protected:
   virtual void DoDestroy(ASTContext &Ctx);
 };
@@ -1131,16 +1144,16 @@ class AsmStmt : public Stmt {
 
 protected:
   virtual void DoDestroy(ASTContext &Ctx);
-  
+
 public:
-  AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile, 
+  AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile,
           bool msasm, unsigned numoutputs, unsigned numinputs,
           IdentifierInfo **names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 
   /// \brief Build an empty inline-assembly statement.
-  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty), 
+  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty),
     Names(0), Constraints(0), Exprs(0), Clobbers(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
@@ -1222,7 +1235,7 @@ public:
   llvm::StringRef getOutputName(unsigned i) const {
     if (IdentifierInfo *II = getOutputIdentifier(i))
       return II->getName();
-    
+
     return llvm::StringRef();
   }
 
@@ -1292,7 +1305,7 @@ public:
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
                                       unsigned NumOutputs,
-                                      unsigned NumInputs,                                      
+                                      unsigned NumInputs,
                                       StringLiteral **Clobbers,
                                       unsigned NumClobbers);
 
