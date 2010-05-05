@@ -157,9 +157,6 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
-  // FIXME: This is rather murky, we create this here since they will not have
-  // been created by Sema for us.
-  OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD, IMP->getClassInterface());
   
   // Determine if we should use an objc_getProperty call for
@@ -274,9 +271,6 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
-  // FIXME: This is rather murky, we create this here since they will not have
-  // been created by Sema for us.
-  OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD, IMP->getClassInterface());
 
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;

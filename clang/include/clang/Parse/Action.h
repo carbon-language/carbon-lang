@@ -2303,6 +2303,7 @@ public:
   }
   // ActOnPropertyImplDecl - called for every property implementation
   virtual DeclPtrTy ActOnPropertyImplDecl(
+   Scope *S,
    SourceLocation AtLoc,              // location of the @synthesize/@dynamic
    SourceLocation PropertyNameLoc,    // location for the property name
    bool ImplKind,                     // true for @synthesize, false for
@@ -2346,7 +2347,7 @@ public:
   // protocols, categories), the parser passes all methods/properties.
   // For class implementations, these values default to 0. For implementations,
   // methods are processed incrementally (by ActOnMethodDeclaration above).
-  virtual void ActOnAtEnd(SourceRange AtEnd,
+  virtual void ActOnAtEnd(Scope *S, SourceRange AtEnd,
                           DeclPtrTy classDecl,
                           DeclPtrTy *allMethods = 0,
                           unsigned allNum = 0,

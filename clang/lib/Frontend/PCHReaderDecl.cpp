@@ -394,6 +394,7 @@ void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
                cast_or_null<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
   D->setPropertyIvarDecl(
                    cast_or_null<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
+  // FIXME. read GetterCXXConstructor and SetterCXXAssignment
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {

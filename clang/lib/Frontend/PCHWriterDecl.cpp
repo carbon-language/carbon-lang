@@ -370,6 +370,7 @@ void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   Writer.AddSourceLocation(D->getLocStart(), Record);
   Writer.AddDeclRef(D->getPropertyDecl(), Record);
   Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
+  // FIXME. write GetterCXXConstructor and SetterCXXAssignment.
   Code = pch::DECL_OBJC_PROPERTY_IMPL;
 }
 

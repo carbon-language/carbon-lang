@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
+#include "clang/AST/ExprObjC.h"
 
 using namespace clang;
 
@@ -275,7 +277,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
 /// builds the AST node for a property implementation declaration; declared
 /// as @synthesize or @dynamic.
 ///
-Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
+Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
+                                            SourceLocation AtLoc,
                                             SourceLocation PropertyLoc,
                                             bool Synthesize,
                                             DeclPtrTy ClassCatImpDecl,
@@ -427,6 +430,54 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
                                 ObjCPropertyImplDecl::Synthesize
                                 : ObjCPropertyImplDecl::Dynamic),
                                Ivar);
+  if (ObjCMethodDecl *getterMethod = property->getGetterMethodDecl()) {
+    getterMethod->createImplicitParams(Context, IDecl);
+    if (getLangOptions().CPlusPlus && Synthesize) {
+      // For Objective-C++, need to synthesize the AST for the IVAR object to be
+      // returned by the getter as it must conform to C++'s copy-return rules.
+      // FIXME. Eventually we want to do this for Objective-C as well.
+      ImplicitParamDecl *SelfDecl = getterMethod->getSelfDecl();
+      DeclRefExpr *SelfExpr = 
+        new (Context) DeclRefExpr(SelfDecl,SelfDecl->getType(),
+                                  SourceLocation());
+      Expr *IvarRefExpr =
+        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
+                                      SelfExpr, true, true);
+      OwningExprResult Res = 
+        PerformCopyInitialization(InitializedEntity::InitializeResult(
+                                  SourceLocation(),
+                                  getterMethod->getResultType()),
+                                  SourceLocation(),
+                                  Owned(IvarRefExpr));
+      if (!Res.isInvalid()) {
+        Expr *ResExpr = Res.takeAs<Expr>();
+        if (ResExpr)
+          ResExpr = MaybeCreateCXXExprWithTemporaries(ResExpr);
+        PIDecl->setGetterCXXConstructor(ResExpr);
+      }
+    }
+  }
+  if (ObjCMethodDecl *setterMethod = property->getSetterMethodDecl()) {
+    setterMethod->createImplicitParams(Context, IDecl);
+    if (getLangOptions().CPlusPlus && Synthesize) {
+      // FIXME. Eventually we want to do this for Objective-C as well.
+      ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
+      DeclRefExpr *SelfExpr = 
+        new (Context) DeclRefExpr(SelfDecl,SelfDecl->getType(),
+                                  SourceLocation());
+      Expr *lhs =
+        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
+                                      SelfExpr, true, true);
+      ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
+      ParmVarDecl *Param = (*P);
+      Expr *rhs = new (Context) DeclRefExpr(Param,Param->getType(),
+                                            SourceLocation());
+      OwningExprResult Res = BuildBinOp(S, SourceLocation(), 
+                                        BinaryOperator::Assign, lhs, rhs);
+      PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
+    }
+  }
+  
   if (IC) {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl =
@@ -818,7 +869,7 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
 }
 
 
-void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
+void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
                                       const llvm::DenseSet<Selector>& InsMap) {
   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
@@ -841,7 +892,7 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
         PropImplMap.count(Prop))
       continue;
     if (LangOpts.ObjCNonFragileABI2 && !isa<ObjCCategoryImplDecl>(IMPDecl)) {
-      ActOnPropertyImplDecl(IMPDecl->getLocation(),
+      ActOnPropertyImplDecl(S, IMPDecl->getLocation(),
                             IMPDecl->getLocation(),
                             true, DeclPtrTy::make(IMPDecl),
                             Prop->getIdentifier(),

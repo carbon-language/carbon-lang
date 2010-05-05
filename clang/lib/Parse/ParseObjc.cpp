@@ -446,7 +446,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
-  Actions.ActOnAtEnd(AtEnd, interfaceDecl,
+  Actions.ActOnAtEnd(CurScope, AtEnd, interfaceDecl,
                      allMethods.data(), allMethods.size(),
                      allProperties.data(), allProperties.size(),
                      allTUVariables.data(), allTUVariables.size());
@@ -1277,7 +1277,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   DeclPtrTy Result = ObjCImpDecl;
   ConsumeToken(); // the "end" identifier
   if (ObjCImpDecl) {
-    Actions.ActOnAtEnd(atEnd, ObjCImpDecl);
+    Actions.ActOnAtEnd(CurScope, atEnd, ObjCImpDecl);
     ObjCImpDecl = DeclPtrTy();
     PendingObjCImpDecl.pop_back();
   }
@@ -1292,7 +1292,7 @@ Parser::DeclGroupPtrTy Parser::RetrievePendingObjCImpDecl() {
   if (PendingObjCImpDecl.empty())
     return Actions.ConvertDeclToDeclGroup(DeclPtrTy());
   DeclPtrTy ImpDecl = PendingObjCImpDecl.pop_back_val();
-  Actions.ActOnAtEnd(SourceRange(), ImpDecl);
+  Actions.ActOnAtEnd(CurScope, SourceRange(), ImpDecl);
   return Actions.ConvertDeclToDeclGroup(ImpDecl);
 }
 
@@ -1371,7 +1371,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
       propertyIvar = Tok.getIdentifierInfo();
       ConsumeToken(); // consume ivar-name
     }
-    Actions.ActOnPropertyImplDecl(atLoc, propertyLoc, true, ObjCImpDecl,
+    Actions.ActOnPropertyImplDecl(CurScope, atLoc, propertyLoc, true, ObjCImpDecl,
                                   propertyId, propertyIvar);
     if (Tok.isNot(tok::comma))
       break;
@@ -1411,7 +1411,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
     
     IdentifierInfo *propertyId = Tok.getIdentifierInfo();
     SourceLocation propertyLoc = ConsumeToken(); // consume property name
-    Actions.ActOnPropertyImplDecl(atLoc, propertyLoc, false, ObjCImpDecl,
+    Actions.ActOnPropertyImplDecl(CurScope, atLoc, propertyLoc, false, ObjCImpDecl,
                                   propertyId, 0);
 
     if (Tok.isNot(tok::comma))

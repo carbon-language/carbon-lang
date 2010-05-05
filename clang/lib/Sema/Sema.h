@@ -1528,13 +1528,13 @@ public:
 
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the class or category @implementation.
-  void ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
+  void ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
                                  ObjCContainerDecl* IDecl,
                                  bool IncompleteImpl = false);
 
   /// DiagnoseUnimplementedProperties - This routine warns on those properties
   /// which must be implemented by this implementation.
-  void DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
+  void DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                        ObjCContainerDecl *CDecl,
                                        const llvm::DenseSet<Selector>& InsMap);
 
@@ -3858,7 +3858,7 @@ public:
   void MatchOneProtocolPropertiesInClass(Decl *CDecl,
                                          ObjCProtocolDecl *PDecl);
 
-  virtual void ActOnAtEnd(SourceRange AtEnd,
+  virtual void ActOnAtEnd(Scope *S, SourceRange AtEnd,
                           DeclPtrTy classDecl,
                           DeclPtrTy *allMethods = 0, unsigned allNum = 0,
                           DeclPtrTy *allProperties = 0, unsigned pNum = 0,
@@ -3871,7 +3871,8 @@ public:
                                   bool *OverridingProperty,
                                   tok::ObjCKeywordKind MethodImplKind);
 
-  virtual DeclPtrTy ActOnPropertyImplDecl(SourceLocation AtLoc,
+  virtual DeclPtrTy ActOnPropertyImplDecl(Scope *S,
+                                          SourceLocation AtLoc,
                                           SourceLocation PropertyLoc,
                                           bool ImplKind,DeclPtrTy ClassImplDecl,
                                           IdentifierInfo *PropertyId,

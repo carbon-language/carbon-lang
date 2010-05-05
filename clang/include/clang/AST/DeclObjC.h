@@ -1421,13 +1421,21 @@ private:
 
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
+  
+  /// Null for @dynamic. Non-null if property must be copy-constructed in getter
+  Expr *GetterCXXConstructor;
+  
+  /// Null for @dynamic. Non-null if property has assignment operator to call
+  /// in Setter synthesis.
+  Expr *SetterCXXAssignment;
 
   ObjCPropertyImplDecl(DeclContext *DC, SourceLocation atLoc, SourceLocation L,
                        ObjCPropertyDecl *property,
                        Kind PK,
                        ObjCIvarDecl *ivarDecl)
     : Decl(ObjCPropertyImpl, DC, L), AtLoc(atLoc),
-      PropertyDecl(property), PropertyIvarDecl(ivarDecl) {
+      PropertyDecl(property), PropertyIvarDecl(ivarDecl),
+      GetterCXXConstructor(0), SetterCXXAssignment(0) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }
 
@@ -1457,7 +1465,21 @@ public:
     return PropertyIvarDecl;
   }
   void setPropertyIvarDecl(ObjCIvarDecl *Ivar) { PropertyIvarDecl = Ivar; }
+  
+  Expr *getGetterCXXConstructor() const {
+    return GetterCXXConstructor;
+  }
+  void setGetterCXXConstructor(Expr *getterCXXConstructor) {
+    GetterCXXConstructor = getterCXXConstructor;
+  }
 
+  Expr *getSetterCXXAssignment() const {
+    return SetterCXXAssignment;
+  }
+  void setSetterCXXAssignment(Expr *setterCXXAssignment) {
+    SetterCXXAssignment = setterCXXAssignment;
+  }
+  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCPropertyImplDecl *D) { return true; }
   static bool classofKind(Decl::Kind K) { return K == ObjCPropertyImpl; }

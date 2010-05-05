@@ -925,7 +925,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
   }
 }
 
-void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
+void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
                                      ObjCContainerDecl* CDecl,
                                      bool IncompleteImpl) {
   llvm::DenseSet<Selector> InsMap;
@@ -939,7 +939,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
   if (isa<ObjCInterfaceDecl>(CDecl))
-    DiagnoseUnimplementedProperties(IMPDecl, CDecl, InsMap);
+    DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
   llvm::DenseSet<Selector> ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
@@ -968,7 +968,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
     for (ObjCCategoryDecl *Categories = I->getCategoryList();
          Categories; Categories = Categories->getNextClassCategory()) {
       if (Categories->IsClassExtension()) {
-        ImplMethodsVsClassMethods(IMPDecl, Categories, IncompleteImpl);
+        ImplMethodsVsClassMethods(S, IMPDecl, Categories, IncompleteImpl);
         break;
       }
     }
@@ -990,7 +990,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
                I = IMP->instmeth_begin(), E = IMP->instmeth_end(); I!=E; ++I)
             InsMap.insert((*I)->getSelector());
         }
-      DiagnoseUnimplementedProperties(IMPDecl, CDecl, InsMap);      
+      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);      
     } 
   } else
     assert(false && "invalid ObjCContainerDecl type.");
@@ -1326,7 +1326,7 @@ void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID,
 
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
-void Sema::ActOnAtEnd(SourceRange AtEnd,
+void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
                       DeclPtrTy classDecl,
                       DeclPtrTy *allMethods, unsigned allNum,
                       DeclPtrTy *allProperties, unsigned pNum,
@@ -1433,7 +1433,7 @@ void Sema::ActOnAtEnd(SourceRange AtEnd,
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setAtEndRange(AtEnd);
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
-      ImplMethodsVsClassMethods(IC, IDecl);
+      ImplMethodsVsClassMethods(S, IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
       if (LangOpts.ObjCNonFragileABI2)
         while (IDecl->getSuperClass()) {
@@ -1452,7 +1452,7 @@ void Sema::ActOnAtEnd(SourceRange AtEnd,
       for (ObjCCategoryDecl *Categories = IDecl->getCategoryList();
            Categories; Categories = Categories->getNextClassCategory()) {
         if (Categories->getIdentifier() == CatImplClass->getIdentifier()) {
-          ImplMethodsVsClassMethods(CatImplClass, Categories);
+          ImplMethodsVsClassMethods(S, CatImplClass, Categories);
           break;
         }
       }
