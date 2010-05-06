@@ -71,7 +71,7 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
 /// Utility to insert an atomic instruction based Instrinsic::ID and
 // the expression node, where the return value is the result of the
 // operation.
-static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF,
+static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
                                    Intrinsic::ID Id, const CallExpr *E,
                                    Instruction::BinaryOps Op) {
   const llvm::Type *ResType[2];
@@ -86,6 +86,30 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF,
 
 static llvm::ConstantInt *getInt32(llvm::LLVMContext &Context, int32_t Value) {
   return llvm::ConstantInt::get(llvm::Type::getInt32Ty(Context), Value);
+}
+
+
+/// EmitFAbs - Emit a call to fabs/fabsf/fabsl, depending on the type of ValTy,
+/// which must be a scalar floating point type.
+static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
+  const BuiltinType *ValTyP = ValTy->getAs<BuiltinType>();
+  assert(ValTyP && "isn't scalar fp type!");
+  
+  StringRef FnName;
+  switch (ValTyP->getKind()) {
+  default: assert(0 && "Isn't a scalar fp type!");
+  case BuiltinType::Float:      FnName = "fabsf"; break;
+  case BuiltinType::Double:     FnName = "fabs"; break;
+  case BuiltinType::LongDouble: FnName = "fabsl"; break;
+  }
+  
+  // The prototype is something that takes and returns whatever V's type is.
+  std::vector<const llvm::Type*> Args;
+  Args.push_back(V->getType());
+  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), Args, false);
+  llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
+
+  return CGF.Builder.CreateCall(Fn, V, "abs");
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
@@ -328,6 +352,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     V = Builder.CreateFCmpUNO(V, V, "cmp");
     return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
   }
+  
+  case Builtin::BI__builtin_isinf: {
+    // isinf(x) --> fabs(x) == infinity
+    Value *V = EmitScalarExpr(E->getArg(0));
+    V = EmitFAbs(*this, V, E->getArg(0)->getType());
+    
+    V = Builder.CreateFCmpOEQ(V, ConstantFP::getInfinity(V->getType()),"isinf");
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
+  }
+   
   case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
     // FIXME: LLVM IR Should allow alloca with an i64 size!
