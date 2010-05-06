@@ -1350,10 +1350,10 @@ bool Sema::FunctionArgTypesAreEqual(FunctionProtoType*  OldType,
     if (ToType != FromType) {
       if (const PointerType *PTTo = ToType->getAs<PointerType>()) {
         if (const PointerType *PTFr = FromType->getAs<PointerType>())
-          if (PTTo->getPointeeType()->isObjCQualifiedIdType() && 
-              PTFr->getPointeeType()->isObjCQualifiedIdType() ||
-              PTTo->getPointeeType()->isObjCQualifiedClassType() && 
-              PTFr->getPointeeType()->isObjCQualifiedClassType())
+          if ((PTTo->getPointeeType()->isObjCQualifiedIdType() &&
+               PTFr->getPointeeType()->isObjCQualifiedIdType()) ||
+              (PTTo->getPointeeType()->isObjCQualifiedClassType() &&
+               PTFr->getPointeeType()->isObjCQualifiedClassType()))
             continue;
       }
       else if (ToType->isObjCObjectPointerType() &&
