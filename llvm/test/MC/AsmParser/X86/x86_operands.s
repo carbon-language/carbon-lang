@@ -1,3 +1,5 @@
+// FIXME: Actually test that we get the expected results.
+        
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
 # Immediates
@@ -5,7 +7,7 @@
         addl $1, %eax
 # CHECK: addl $3, %eax
         addl $(1+2), %eax
-# CHECK: addl ($a), %eax
+# CHECK: addl $a, %eax
         addl $a, %eax
 # CHECK: addl $3, %eax
         addl $1 + 2, %eax
