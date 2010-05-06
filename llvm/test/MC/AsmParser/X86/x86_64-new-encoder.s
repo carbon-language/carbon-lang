@@ -52,3 +52,20 @@ testq %rax, %rbx
 // CHECK: cmpq	%rbx, %r14
 // CHECK:   encoding: [0x49,0x39,0xde]
         cmpq %rbx, %r14
+
+// rdar://7947167
+
+movsq
+// CHECK: movsq
+// CHECK:   encoding: [0x48,0xa5]
+
+movsl
+// CHECK: movsl
+// CHECK:   encoding: [0xa5]
+
+stosq
+// CHECK: stosq
+// CHECK:   encoding: [0x48,0xab]
+stosl
+// CHECK: stosl
+// CHECK:   encoding: [0xab]
