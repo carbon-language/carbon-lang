@@ -10,7 +10,7 @@ install-local::
 	  cd $(PROJ_SRC_ROOT)/tools/clang/include && \
 	  for  hdr in `find clang -type f '!' '(' -name '*~' \
 	      -o -name '.#*' -o -name '*.in' -o -name '*.txt' \
-	      -o -name 'Makefile' -o -name '*.td' ')' -print \
+	      -o -name 'Makefile' -o -name '*.td' -o -name '*.orig' ')' -print \
               | grep -v CVS | grep -v .svn | grep -v .dir` ; do \
 	    instdir=$(DESTDIR)`dirname "$(PROJ_includedir)/$$hdr"` ; \
 	    if test \! -d "$$instdir" ; then \
