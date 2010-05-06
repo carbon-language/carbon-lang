@@ -6435,7 +6435,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(EnumType);
     }
 
-    Enum->completeDefinition(Context.DependentTy, Context.DependentTy);
+    Enum->completeDefinition(Context.DependentTy, Context.DependentTy, 0, 0);
     return;
   }
 
@@ -6616,7 +6616,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(NewTy);
   }
 
-  Enum->completeDefinition(BestType, BestPromotionType);
+  Enum->completeDefinition(BestType, BestPromotionType,
+                           NumPositiveBits, NumNegativeBits);
 }
 
 Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,

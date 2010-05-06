@@ -1572,10 +1572,14 @@ void EnumDecl::Destroy(ASTContext& C) {
 }
 
 void EnumDecl::completeDefinition(QualType NewType,
-                                  QualType NewPromotionType) {
+                                  QualType NewPromotionType,
+                                  unsigned NumPositiveBits,
+                                  unsigned NumNegativeBits) {
   assert(!isDefinition() && "Cannot redefine enums!");
   IntegerType = NewType;
   PromotionType = NewPromotionType;
+  setNumPositiveBits(NumPositiveBits);
+  setNumNegativeBits(NumNegativeBits);
   TagDecl::completeDefinition();
 }
 

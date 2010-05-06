@@ -1617,7 +1617,12 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
     
     D2->startDefinition();
     ImportDeclContext(D);
-    D2->completeDefinition(T, ToPromotionType);
+
+    // FIXME: we might need to merge the number of positive or negative bits
+    // if the enumerator lists don't match.
+    D2->completeDefinition(T, ToPromotionType,
+                           D->getNumPositiveBits(),
+                           D->getNumNegativeBits());
   }
   
   return D2;

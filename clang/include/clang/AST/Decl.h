@@ -1651,6 +1651,12 @@ private:
   /// in the syntax of a declarator.
   bool IsEmbeddedInDeclarator : 1;
 
+protected:
+  // These are used by (and only defined for) EnumDecl.
+  unsigned NumPositiveBits : 8;
+  unsigned NumNegativeBits : 8;
+
+private:
   SourceLocation TagKeywordLoc;
   SourceLocation RBraceLoc;
 
@@ -1820,6 +1826,13 @@ class EnumDecl : public TagDecl {
   /// enumeration declared within the template.
   EnumDecl *InstantiatedFrom;
 
+  // The number of positive and negative bits required by the
+  // enumerators are stored in the SubclassBits field.
+  enum {
+    NumBitsWidth = 8,
+    NumBitsMask = (1 << NumBitsWidth) - 1
+  };
+
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL)
     : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
@@ -1845,7 +1858,9 @@ public:
   /// added (via DeclContext::addDecl). NewType is the new underlying
   /// type of the enumeration type.
   void completeDefinition(QualType NewType,
-                          QualType PromotionType);
+                          QualType PromotionType,
+                          unsigned NumPositiveBits,
+                          unsigned NumNegativeBits);
 
   // enumerator_iterator - Iterates through the enumerators of this
   // enumeration.
@@ -1872,6 +1887,32 @@ public:
 
   /// \brief Set the underlying integer type.
   void setIntegerType(QualType T) { IntegerType = T; }
+
+  /// \brief Returns the width in bits requred to store all the
+  /// non-negative enumerators of this enum.
+  unsigned getNumPositiveBits() const {
+    return NumPositiveBits;
+  }
+  void setNumPositiveBits(unsigned Num) {
+    NumPositiveBits = Num;
+    assert(NumPositiveBits == Num && "can't store this bitcount");
+  }
+
+  /// \brief Returns the width in bits requred to store all the
+  /// negative enumerators of this enum.  These widths include
+  /// the rightmost leading 1;  that is:
+  /// 
+  /// MOST NEGATIVE ENUMERATOR     PATTERN     NUM NEGATIVE BITS
+  /// ------------------------     -------     -----------------
+  ///                       -1     1111111                     1
+  ///                      -10     1110110                     5
+  ///                     -101     1001011                     8
+  unsigned getNumNegativeBits() const {
+    return NumNegativeBits;
+  }
+  void setNumNegativeBits(unsigned Num) {
+    NumNegativeBits = Num;
+  }
 
   /// \brief Returns the enumeration (declared within the template)
   /// from which this enumeration type was instantiated, or NULL if
