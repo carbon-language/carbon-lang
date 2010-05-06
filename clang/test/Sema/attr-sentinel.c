@@ -4,7 +4,7 @@
 
 #define ATTR __attribute__ ((__sentinel__)) 
 
-void foo1 (int x, ...) ATTR; // expected-note {{function has been explicitly marked sentinel here}}
+void foo1 (int x, ...) ATTR; // expected-note 2 {{function has been explicitly marked sentinel here}}
 void foo5 (int x, ...) __attribute__ ((__sentinel__(1))); // expected-note {{function has been explicitly marked sentinel here}}
 void foo6 (int x, ...) __attribute__ ((__sentinel__(5))); // expected-note {{function has been explicitly marked sentinel here}}
 void foo7 (int x, ...) __attribute__ ((__sentinel__(0))); // expected-note {{function has been explicitly marked sentinel here}}
@@ -24,6 +24,12 @@ void test1() {
   foo7(1, NULL); // OK
 
   foo12(1); // expected-warning {{not enough variable arguments in 'foo12' declaration to fit a sentinel}}
+
+  // PR 5685
+  struct A {};
+  struct A a, b, c;
+  foo1(3, &a, &b, &c); // expected-warning {{missing sentinel in function call}}
+  foo1(3, &a, &b, &c, (struct A*) 0);
 }
  
 

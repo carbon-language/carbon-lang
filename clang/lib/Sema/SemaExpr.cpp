@@ -160,16 +160,19 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     ++sentinel;
   }
   Expr *sentinelExpr = Args[sentinel];
-  if (sentinelExpr && (!isa<GNUNullExpr>(sentinelExpr) &&
-                       !sentinelExpr->isTypeDependent() &&
-                       !sentinelExpr->isValueDependent() &&
-                       (!sentinelExpr->getType()->isPointerType() ||
-                        !sentinelExpr->isNullPointerConstant(Context,
-                                            Expr::NPC_ValueDependentIsNull)))) {
-    Diag(Loc, diag::warn_missing_sentinel) << isMethod;
-    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
-  }
-  return;
+  if (!sentinelExpr) return;
+  if (sentinelExpr->isTypeDependent()) return;
+  if (sentinelExpr->isValueDependent()) return;
+  if (sentinelExpr->getType()->isPointerType() &&
+      sentinelExpr->IgnoreParenCasts()->isNullPointerConstant(Context,
+                                            Expr::NPC_ValueDependentIsNull))
+    return;
+
+  // Unfortunately, __null has type 'int'.
+  if (isa<GNUNullExpr>(sentinelExpr)) return;
+
+  Diag(Loc, diag::warn_missing_sentinel) << isMethod;
+  Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
 }
 
 SourceRange Sema::getExprRange(ExprTy *E) const {
