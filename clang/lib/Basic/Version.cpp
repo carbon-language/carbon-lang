@@ -28,7 +28,8 @@ llvm::StringRef getClangRepositoryPath() {
   if (End)
     URLEnd = End;
 
-  End = strstr(URL, "/clang/tools/clang");
+  // Strip off version from a build from an integration branch.
+  End = strstr(URL, "/src/tools/clang");
   if (End)
     URLEnd = End;
 
