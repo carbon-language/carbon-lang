@@ -378,7 +378,7 @@ CodeGenVTables::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
 
   D1(printf("vtt %s\n", RD->getNameAsCString()));
 
-  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name, true);
   if (GV == 0 || GV->isDeclaration()) {
     const llvm::Type *Int8PtrTy = 
       llvm::Type::getInt8PtrTy(CGM.getLLVMContext());

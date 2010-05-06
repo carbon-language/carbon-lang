@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
-
 int f();
 
 namespace {
@@ -20,6 +19,13 @@ namespace {
   
   int D::d = f();
 
+  // Check for generation of a VTT with internal linkage
+  // CHECK: @_ZTSN12_GLOBAL__N_11X1EE = internal constant
+  struct X { 
+    struct EBase { };
+    struct E : public virtual EBase { virtual ~E() {} };
+  };
+
   // CHECK: define internal i32 @_ZN12_GLOBAL__N_13fooEv()
   int foo() {
     return 32;
@@ -36,3 +42,5 @@ namespace {
 int concrete() {
   return a + foo() + A::foo();
 }
+
+void test_XE() { throw X::E(); }
