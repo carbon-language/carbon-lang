@@ -322,8 +322,8 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   // only for inlining and analysis. This is the semantics of c99 inline.
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     const CXXRecordDecl *RD = MD->getParent();
-    if (MD->isVirtual() &&
-	CodeGenVTables::isKeyFunctionInAnotherTU(Context, RD))
+    if (MD->isVirtual() && !MD->isImplicit() &&
+        CodeGenVTables::isKeyFunctionInAnotherTU(Context, RD))
       return CodeGenModule::GVA_C99Inline;
   }  
 

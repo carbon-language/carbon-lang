@@ -22,3 +22,23 @@ template void f<int>(int);
 template <typename T> inline void g(T) { }
 template void g<int>(int);
 
+template<typename T>
+struct X0 {
+  virtual ~X0() { }
+};
+
+template<typename T>
+struct X1 : X0<T> {
+  virtual void blarg();
+};
+
+template<typename T> void X1<T>::blarg() { }
+
+extern template struct X0<char>;
+extern template struct X1<char>;
+
+// CHECK: define linkonce_odr void @_ZN2X1IcED1Ev(
+void test_X1() {
+  X1<char> i1c;
+}
+
