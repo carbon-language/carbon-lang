@@ -142,8 +142,8 @@ protected:
 
       // Insert store if necessary.
       if (hasDef) {
-        tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr), newVReg, true,
-                                 ss, trc);
+        tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr), newVReg,
+                                 true, ss, trc);
         MachineInstr *storeInstr(llvm::next(miItr));
         SlotIndex storeIndex =
           lis->InsertMachineInstrInMaps(storeInstr).getDefIndex();
