@@ -1761,7 +1761,9 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   
   // Create the class template partial specialization declaration.
   ClassTemplatePartialSpecializationDecl *InstPartialSpec
-    = ClassTemplatePartialSpecializationDecl::Create(SemaRef.Context, Owner, 
+    = ClassTemplatePartialSpecializationDecl::Create(SemaRef.Context, 
+                                                     PartialSpec->getTagKind(),
+                                                     Owner, 
                                                      PartialSpec->getLocation(), 
                                                      InstParams,
                                                      ClassTemplate, 

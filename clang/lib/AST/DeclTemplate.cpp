@@ -395,16 +395,12 @@ TemplateArgumentList::~TemplateArgumentList() {
 // ClassTemplateSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
 ClassTemplateSpecializationDecl::
-ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
+ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
                                 DeclContext *DC, SourceLocation L,
                                 ClassTemplateDecl *SpecializedTemplate,
                                 TemplateArgumentListBuilder &Builder,
                                 ClassTemplateSpecializationDecl *PrevDecl)
-  : CXXRecordDecl(DK,
-                  SpecializedTemplate->getTemplatedDecl()->getTagKind(),
-                  DC, L,
-                  // FIXME: Should we use DeclarationName for the name of
-                  // class template specializations?
+  : CXXRecordDecl(DK, TK, DC, L,
                   SpecializedTemplate->getIdentifier(),
                   PrevDecl),
     SpecializedTemplate(SpecializedTemplate),
@@ -414,7 +410,7 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
 }
 
 ClassTemplateSpecializationDecl *
-ClassTemplateSpecializationDecl::Create(ASTContext &Context,
+ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
                                         DeclContext *DC, SourceLocation L,
                                         ClassTemplateDecl *SpecializedTemplate,
                                         TemplateArgumentListBuilder &Builder,
@@ -422,7 +418,7 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
   ClassTemplateSpecializationDecl *Result
     = new (Context)ClassTemplateSpecializationDecl(Context,
                                                    ClassTemplateSpecialization,
-                                                   DC, L,
+                                                   TK, DC, L,
                                                    SpecializedTemplate,
                                                    Builder,
                                                    PrevDecl);
@@ -464,7 +460,7 @@ ClassTemplateSpecializationDecl::getSpecializedTemplate() const {
 //===----------------------------------------------------------------------===//
 ClassTemplatePartialSpecializationDecl *
 ClassTemplatePartialSpecializationDecl::
-Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
        TemplateParameterList *Params,
        ClassTemplateDecl *SpecializedTemplate,
        TemplateArgumentListBuilder &Builder,
@@ -478,7 +474,7 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
     ClonedArgs[I] = ArgInfos[I];
 
   ClassTemplatePartialSpecializationDecl *Result
-    = new (Context)ClassTemplatePartialSpecializationDecl(Context,
+    = new (Context)ClassTemplatePartialSpecializationDecl(Context, TK,
                                                           DC, L, Params,
                                                           SpecializedTemplate,
                                                           Builder,

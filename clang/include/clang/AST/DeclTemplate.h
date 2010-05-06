@@ -862,7 +862,7 @@ class ClassTemplateSpecializationDecl
   unsigned SpecializationKind : 3;
 
 protected:
-  ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
+  ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
                                   DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
                                   TemplateArgumentListBuilder &Builder,
@@ -870,7 +870,7 @@ protected:
 
 public:
   static ClassTemplateSpecializationDecl *
-  Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+  Create(ASTContext &Context, TagKind TK, DeclContext *DC, SourceLocation L,
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
          ClassTemplateSpecializationDecl *PrevDecl);
@@ -1024,7 +1024,7 @@ class ClassTemplatePartialSpecializationDecl
   llvm::PointerIntPair<ClassTemplatePartialSpecializationDecl *, 1, bool>
       InstantiatedFromMember;
     
-  ClassTemplatePartialSpecializationDecl(ASTContext &Context,
+  ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                          DeclContext *DC, SourceLocation L,
                                          TemplateParameterList *Params,
                                          ClassTemplateDecl *SpecializedTemplate,
@@ -1035,7 +1035,7 @@ class ClassTemplatePartialSpecializationDecl
                                          unsigned SequenceNumber)
     : ClassTemplateSpecializationDecl(Context,
                                       ClassTemplatePartialSpecialization,
-                                      DC, L, SpecializedTemplate, Builder,
+                                      TK, DC, L, SpecializedTemplate, Builder,
                                       PrevDecl),
       TemplateParams(Params), ArgsAsWritten(ArgInfos),
       NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
@@ -1043,7 +1043,7 @@ class ClassTemplatePartialSpecializationDecl
 
 public:
   static ClassTemplatePartialSpecializationDecl *
-  Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+  Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
          TemplateParameterList *Params,
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,

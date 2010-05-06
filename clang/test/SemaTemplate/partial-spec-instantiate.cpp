@@ -18,3 +18,23 @@ struct X2<U*> {
 };
 
 void a(char *a, char *b) {X2<char*>::f();}
+
+namespace WonkyAccess {
+  template<typename T>
+  struct X {
+    int m;
+  };
+
+  template<typename U>
+  class Y;
+
+  template<typename U>
+  struct Y<U*> : X<U> { };
+
+  template<>
+  struct Y<float*> : X<float> { };
+
+  int f(Y<int*> y, Y<float*> y2) {
+    return y.m + y2.m;
+  }
+}

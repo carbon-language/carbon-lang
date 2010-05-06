@@ -2293,7 +2293,9 @@ def err_cannot_form_pointer_to_member_of_reference_type : Error<
   "cannot form a pointer-to-member to member %0 of reference type %1">;
 def err_incomplete_object_call : Error<
   "incomplete type in call to object of type %0">;
-  
+def err_incomplete_pointer_to_member_return : Error<
+  "incomplete return type %0 of pointer-to-member constant">;
+
 def warn_condition_is_assignment : Warning<"using the result of an "
   "assignment as a condition without parentheses">,
   InGroup<Parentheses>;

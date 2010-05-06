@@ -504,7 +504,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   SetClassDeclAttributesFromBase(Class, CXXBaseDecl, Virtual);
   
   // Create the base specifier.
-  // FIXME: Allocate via ASTContext?
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                               Class->getTagKind() == RecordDecl::TK_class,
                               Access, BaseType);

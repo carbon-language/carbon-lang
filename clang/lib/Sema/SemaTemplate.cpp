@@ -1506,10 +1506,11 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
       // specialization. Create the canonical declaration and add it to
       // the set of specializations.
       Decl = ClassTemplateSpecializationDecl::Create(Context,
-                                    ClassTemplate->getDeclContext(),
-                                    ClassTemplate->getLocation(),
-                                    ClassTemplate,
-                                    Converted, 0);
+                            ClassTemplate->getTemplatedDecl()->getTagKind(),
+                                                ClassTemplate->getDeclContext(),
+                                                ClassTemplate->getLocation(),
+                                                ClassTemplate,
+                                                Converted, 0);
       ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
       Decl->setLexicalDeclContext(CurContext);
     }
@@ -3798,7 +3799,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     unsigned SequenceNumber = PrevPartial? PrevPartial->getSequenceNumber()
                             : ClassTemplate->getPartialSpecializations().size();
     ClassTemplatePartialSpecializationDecl *Partial
-      = ClassTemplatePartialSpecializationDecl::Create(Context,
+      = ClassTemplatePartialSpecializationDecl::Create(Context, Kind,
                                              ClassTemplate->getDeclContext(),
                                                        TemplateNameLoc,
                                                        TemplateParams,
@@ -3859,7 +3860,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // Create a new class template specialization declaration node for
     // this explicit specialization or friend declaration.
     Specialization
-      = ClassTemplateSpecializationDecl::Create(Context,
+      = ClassTemplateSpecializationDecl::Create(Context, Kind,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
@@ -4705,7 +4706,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     // Create a new class template specialization declaration node for
     // this explicit specialization.
     Specialization
-      = ClassTemplateSpecializationDecl::Create(Context,
+      = ClassTemplateSpecializationDecl::Create(Context, Kind,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
