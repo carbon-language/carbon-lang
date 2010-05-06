@@ -763,9 +763,12 @@ public:
                                  SourceLocation ElseLoc, StmtArg Else) {
     if (Cond.get()) {
       // Convert the condition to a boolean value.
-      Cond = getSema().ActOnBooleanCondition(0, IfLoc, move(Cond));
-      if (Cond.isInvalid())
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, IfLoc, 
+                                                               move(Cond));
+      if (CondE.isInvalid())
         return getSema().StmtError();
+      
+      Cond = move(CondE);
     }
     
     Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
@@ -804,9 +807,11 @@ public:
                                     StmtArg Body) {
     if (Cond.get()) {
       // Convert the condition to a boolean value.
-      Cond = getSema().ActOnBooleanCondition(0, WhileLoc, move(Cond));
-      if (Cond.isInvalid())
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, WhileLoc, 
+                                                               move(Cond));
+      if (CondE.isInvalid())
         return getSema().StmtError();
+      Cond = move(CondE);
     }
     
     Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
@@ -838,9 +843,12 @@ public:
                                   SourceLocation RParenLoc, StmtArg Body) {
     if (Cond.get()) {
       // Convert the condition to a boolean value.
-      Cond = getSema().ActOnBooleanCondition(0, ForLoc, move(Cond));
-      if (Cond.isInvalid())
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, ForLoc, 
+                                                               move(Cond));
+      if (CondE.isInvalid())
         return getSema().StmtError();
+      
+      Cond = move(CondE);
     }
     
     Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));

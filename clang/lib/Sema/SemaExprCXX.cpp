@@ -2949,12 +2949,11 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
 }
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
-  if (Arg.isInvalid())
-    return ExprError();
-
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)
     FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr);
-
+  else
+    return ExprError();
+  
   return Owned(FullExpr);
 }

@@ -989,6 +989,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
 
   bool ForEach = false;
   OwningStmtResult FirstPart(Actions);
+  bool SecondPartIsInvalid = false;
   FullExprArg SecondPart(Actions);
   OwningExprResult Collection(Actions);
   FullExprArg ThirdPart(Actions);
@@ -1062,13 +1063,14 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
           Second = Actions.ActOnBooleanCondition(CurScope, ForLoc, 
                                                  move(Second));
       }
+      SecondPartIsInvalid = Second.isInvalid();
       SecondPart = Actions.MakeFullExpr(Second);
     }
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
-      if (!SecondPart->isInvalid() || SecondVar.get()) 
+      if (!SecondPartIsInvalid || SecondVar.get()) 
         Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }

@@ -524,9 +524,11 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond,
   VarDecl *ConditionVar = 0;
   if (CondVar.get()) {
     ConditionVar = CondVar.getAs<VarDecl>();
-    Cond = CheckConditionVariable(ConditionVar, SourceLocation(), false);
-    if (Cond.isInvalid())
+    OwningExprResult CondE = CheckConditionVariable(ConditionVar, SourceLocation(), false);
+    if (CondE.isInvalid())
       return StmtError();
+    
+    Cond = move(CondE);
   }
   
   Expr *CondExpr = Cond.takeAs<Expr>();
