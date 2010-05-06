@@ -31,9 +31,10 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::raw_ostream &Out;
   bool IgnoreResults;
   ASTUnit *AU;
+  bool generatedLoc;
 public:
   USRGenerator(ASTUnit *au, llvm::raw_ostream &out)
-    : Out(out), IgnoreResults(false), AU(au) {}
+    : Out(out), IgnoreResults(false), AU(au), generatedLoc(false) {}
 
   bool ignoreResults() const { return IgnoreResults; }
 
@@ -55,7 +56,7 @@ public:
 
   /// Generate the string component containing the location of the
   ///  declaration.
-  void GenLoc(const Decl *D);
+  bool GenLoc(const Decl *D);
 
   /// String generation methods used both by the visitation methods
   /// and from other clients that want to directly generate USRs.  These
@@ -114,6 +115,16 @@ public:
 // Generating USRs from ASTS.
 //===----------------------------------------------------------------------===//
 
+static bool InAnonymousNamespace(const Decl *D) {
+  if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext()))
+    return ND->isAnonymousNamespace();
+  return false;
+}
+
+static inline bool ShouldGenerateLocation(const NamedDecl *D) {
+  return D->getLinkage() != ExternalLinkage && !InAnonymousNamespace(D);
+}
+
 void USRGenerator::VisitDeclContext(DeclContext *DC) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
     Visit(D);
@@ -131,15 +142,11 @@ void USRGenerator::VisitFieldDecl(FieldDecl *D) {
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
-  if (D->getLinkage() != ExternalLinkage) {
-    GenLoc(D);
-    if (IgnoreResults)
-      return;
-  }
-  else
-    VisitDeclContext(D->getDeclContext());
+  if (ShouldGenerateLocation(D) && GenLoc(D))
+    return;
 
-  Out << "@F@" << D;
+  VisitDeclContext(D->getDeclContext());
+  Out << "@F@" << D->getNameAsString();
 }
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
@@ -159,11 +166,10 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
   // VarDecls can be declared 'extern' within a function or method body,
   // but their enclosing DeclContext is the function, not the TU.  We need
   // to check the storage class to correctly generate the USR.
-  if (D->getLinkage() != ExternalLinkage) {
-    GenLoc(D);
-    if (IgnoreResults)
-      return;
-  }
+  if (ShouldGenerateLocation(D) && GenLoc(D))
+    return;
+
+  VisitDeclContext(D->getDeclContext());
 
   // Variables always have simple names.
   llvm::StringRef s = D->getName();
@@ -179,8 +185,14 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
 }
 
 void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
+  if (D->isAnonymousNamespace()) {
+    Out << "@aN";
+    return;
+  }
+
   VisitDeclContext(D->getDeclContext());
-  Out << "@N@" << D;
+  if (!IgnoreResults)
+    Out << "@N@" << D->getName();
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -258,8 +270,14 @@ void USRGenerator::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 }
 
 void USRGenerator::VisitTagDecl(TagDecl *D) {
+  // Add the location of the tag decl to handle resolution across
+  // translation units.
+  if (ShouldGenerateLocation(D) && GenLoc(D))
+    return;
+  
   D = D->getCanonicalDecl();
   VisitDeclContext(D->getDeclContext());
+
   switch (D->getTagKind()) {
     case TagDecl::TK_struct: Out << "@S"; break;
     case TagDecl::TK_class:  Out << "@C"; break;
@@ -274,15 +292,6 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
     Out << (TD ? 'A' : 'a');
   }
 
-  // Add the location of the tag decl to handle resolution across
-  // translation units.
-  if (D->getLinkage() == NoLinkage) {
-    Out << '@';
-    GenLoc(D);
-    if (IgnoreResults)
-      return;
-  }
-
   if (s.empty()) {
     if (TD)
       Out << '@' << TD;
@@ -292,25 +301,25 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
 }
 
 void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
+  if (ShouldGenerateLocation(D) && GenLoc(D))
+    return;
   DeclContext *DC = D->getDeclContext();
   if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
     Visit(DCN);
   Out << "@T@";
-  if (D->getLinkage() == NoLinkage) {
-    GenLoc(D);
-    if (IgnoreResults)
-      return;
-    Out << '@';
-  }
   Out << D->getName();
 }
 
-void USRGenerator::GenLoc(const Decl *D) {
+bool USRGenerator::GenLoc(const Decl *D) {
+  if (generatedLoc)
+    return IgnoreResults;
+  generatedLoc = true;
+
   const SourceManager &SM = AU->getSourceManager();
   SourceLocation L = D->getLocStart();
   if (L.isInvalid()) {
     IgnoreResults = true;
-    return;
+    return true;
   }
   L = SM.getInstantiationLoc(L);
   const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(L);
@@ -322,11 +331,13 @@ void USRGenerator::GenLoc(const Decl *D) {
   else {
     // This case really isn't interesting.
     IgnoreResults = true;
-    return;
+    return true;
   }
   Out << '@'
       << SM.getLineNumber(Decomposed.first, Decomposed.second) << ':'
       << SM.getColumnNumber(Decomposed.first, Decomposed.second);
+  
+  return IgnoreResults;
 }
 
 //===----------------------------------------------------------------------===//
@@ -383,6 +394,7 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
         // Generate USRs for all entities with external linkage.
         break;
       case NoLinkage:
+      case UniqueExternalLinkage:
         // We allow enums, typedefs, and structs that have no linkage to
         // have USRs that are anchored to the file they were defined in
         // (e.g., the header).  This is a little gross, but in principal
@@ -390,14 +402,12 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
         // are referred to across multiple translation units.
         if (isa<TagDecl>(ND) || isa<TypedefDecl>(ND) ||
             isa<EnumConstantDecl>(ND) || isa<FieldDecl>(ND) ||
-            isa<VarDecl>(ND))
+            isa<VarDecl>(ND) || isa<NamespaceDecl>(ND))
           break;
         // Fall-through.
       case InternalLinkage:
         if (isa<FunctionDecl>(ND))
           break;
-      case UniqueExternalLinkage:
-        return createCXString("");
     }
 
   StringUSRGenerator SUG(&C);
