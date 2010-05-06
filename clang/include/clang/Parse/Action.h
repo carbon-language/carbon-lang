@@ -114,7 +114,7 @@ public:
       : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
 
     FullExprArg &operator=(const FullExprArg& Other) {
-      Expr = move(const_cast<FullExprArg&>(Other).Expr);
+      Expr = ExprArg(move(const_cast<FullExprArg&>(Other).Expr));
       return *this;
     }
 
