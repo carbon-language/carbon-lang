@@ -2113,8 +2113,6 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LHS->isTypeDependent() || RHS->isTypeDependent())
     return Context.DependentTy;
 
-  CheckSignCompare(LHS, RHS, QuestionLoc);
-
   // C++0x 5.16p2
   //   If either the second or the third operand has type (cv) void, ...
   QualType LTy = LHS->getType();
@@ -2528,6 +2526,9 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
 
 Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   assert(SubExpr && "sub expression can't be null!");
+
+  // Check any implicit conversions within the expression.
+  CheckImplicitConversions(SubExpr);
 
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
   assert(ExprTemporaries.size() >= FirstTemporary);

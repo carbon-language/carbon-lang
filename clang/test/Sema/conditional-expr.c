@@ -52,7 +52,9 @@ void foo() {
   enum Enum { EVal };
   test0 = test0 ? EVal : test0;
   test0 = test0 ? EVal : (int) test0; // okay: EVal is an int
-  test0 = test0 ? (unsigned) EVal : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? // expected-warning {{operands of ? are integers of different signs}}
+                  (unsigned) EVal
+                : (int) test0;
 }
 
 int Postgresql() {
@@ -67,4 +69,9 @@ extern int f1(void);
 int f0(int a) {
   // GCC considers this a warning.
   return a ? f1() : nil; // expected-warning {{pointer/integer type mismatch in conditional expression ('int' and 'void *')}} expected-warning {{incompatible pointer to integer conversion returning 'void *' from a function with result type 'int'}}
+}
+
+int f2(int x) {
+  // We can suppress this because the immediate context wants an int.
+  return (x != 0) ? 0U : x;
 }

@@ -23,8 +23,8 @@ int ints(long a, unsigned long b) {
          ((signed char) a == b) +  // expected-warning {{comparison of integers of different signs}}
          ((long) a == (unsigned long) b) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a == (unsigned int) b) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a == (unsigned short) b) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a == (unsigned char) b) +  // expected-warning {{comparison of integers of different signs}}
+         ((short) a == (unsigned short) b) +
+         ((signed char) a == (unsigned char) b) +
          (a < (unsigned long) b) +  // expected-warning {{comparison of integers of different signs}}
          (a < (unsigned int) b) +
          (a < (unsigned short) b) +
@@ -35,8 +35,8 @@ int ints(long a, unsigned long b) {
          ((signed char) a < b) +  // expected-warning {{comparison of integers of different signs}}
          ((long) a < (unsigned long) b) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) b) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < (unsigned short) b) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < (unsigned char) b) +  // expected-warning {{comparison of integers of different signs}}
+         ((short) a < (unsigned short) b) +
+         ((signed char) a < (unsigned char) b) +
 
          // (A,b)
          (A == (unsigned long) b) +
@@ -87,8 +87,8 @@ int ints(long a, unsigned long b) {
          ((signed char) a < B) +
          ((long) a < (unsigned long) B) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) B) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < (unsigned short) B) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < (unsigned char) B) +  // expected-warning {{comparison of integers of different signs}}
+         ((short) a < (unsigned short) B) +
+         ((signed char) a < (unsigned char) B) +
 
          // (C,b)
          (C == (unsigned long) b) +
@@ -139,8 +139,8 @@ int ints(long a, unsigned long b) {
          ((signed char) a < C) +
          ((long) a < (unsigned long) C) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) C) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < (unsigned short) C) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < (unsigned char) C) +  // expected-warning {{comparison of integers of different signs}}
+         ((short) a < (unsigned short) C) +
+         ((signed char) a < (unsigned char) C) +
 
          // (0x80000,b)
          (0x80000 == (unsigned long) b) +
@@ -191,8 +191,8 @@ int ints(long a, unsigned long b) {
          ((signed char) a < 0x80000) +
          ((long) a < (unsigned long) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < (unsigned short) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < (unsigned char) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
+         ((short) a < (unsigned short) 0x80000) +
+         ((signed char) a < (unsigned char) 0x80000) +
 
          // We should be able to avoid warning about this.
          (b != (a < 4 ? 1 : 2)) +

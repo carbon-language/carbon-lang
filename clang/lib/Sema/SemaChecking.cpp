@@ -1731,8 +1731,14 @@ struct IntRange {
       T = VT->getElementType().getTypePtr();
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
-    if (const EnumType *ET = dyn_cast<EnumType>(T))
-      T = ET->getDecl()->getIntegerType().getTypePtr();
+
+    if (const EnumType *ET = dyn_cast<EnumType>(T)) {
+      EnumDecl *Enum = ET->getDecl();
+      unsigned NumPositive = Enum->getNumPositiveBits();
+      unsigned NumNegative = Enum->getNumNegativeBits();
+
+      return IntRange(std::max(NumPositive, NumNegative), NumNegative == 0);
+    }
 
     const BuiltinType *BT = cast<BuiltinType>(T);
     assert(BT->isInteger());
@@ -1974,6 +1980,10 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   return IntRange::forType(C, E->getType());
 }
 
+IntRange GetExprRange(ASTContext &C, Expr *E) {
+  return GetExprRange(C, E, C.getIntWidth(E->getType()));
+}
+
 /// Checks whether the given value, which currently has the given
 /// source semantics, has the same value when coerced through the
 /// target semantics.
@@ -2012,7 +2022,40 @@ bool IsSameFloatAfterCast(const APValue &value,
           IsSameFloatAfterCast(value.getComplexFloatImag(), Src, Tgt));
 }
 
-} // end anonymous namespace
+void AnalyzeImplicitConversions(Sema &S, Expr *E);
+
+bool IsZero(Sema &S, Expr *E) {
+  llvm::APSInt Value;
+  return E->isIntegerConstantExpr(Value, S.Context) && Value == 0;
+}
+
+void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
+  BinaryOperator::Opcode op = E->getOpcode();
+  if (op == BinaryOperator::LT && IsZero(S, E->getRHS())) {
+    S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
+      << "< 0" << "false"
+      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  } else if (op == BinaryOperator::GE && IsZero(S, E->getRHS())) {
+    S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
+      << ">= 0" << "true"
+      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  } else if (op == BinaryOperator::GT && IsZero(S, E->getLHS())) {
+    S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
+      << "0 >" << "false" 
+      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  } else if (op == BinaryOperator::LE && IsZero(S, E->getLHS())) {
+    S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
+      << "0 <=" << "true" 
+      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  }
+}
+
+/// Analyze the operands of the given comparison.  Implements the
+/// fallback case from AnalyzeComparison.
+void AnalyzeImpConvsInComparison(Sema &S, BinaryOperator *E) {
+  AnalyzeImplicitConversions(S, E->getLHS());
+  AnalyzeImplicitConversions(S, E->getRHS());
+}
 
 /// \brief Implements -Wsign-compare.
 ///
@@ -2020,138 +2063,85 @@ bool IsSameFloatAfterCast(const APValue &value,
 /// \param rex the right-hand expression
 /// \param OpLoc the location of the joining operator
 /// \param BinOpc binary opcode or 0
-void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
-                            const BinaryOperator::Opcode* BinOpc) {
-  // Don't warn if we're in an unevaluated context.
-  if (ExprEvalContexts.back().Context == Unevaluated)
-    return;
+void AnalyzeComparison(Sema &S, BinaryOperator *E) {
+  // The type the comparison is being performed in.
+  QualType T = E->getLHS()->getType();
+  assert(S.Context.hasSameUnqualifiedType(T, E->getRHS()->getType())
+         && "comparison with mismatched types");
 
-  // If either expression is value-dependent, don't warn. We'll get another
-  // chance at instantiation time.
-  if (lex->isValueDependent() || rex->isValueDependent())
-    return;
+  // We don't do anything special if this isn't an unsigned integral
+  // comparison:  we're only interested in integral comparisons, and
+  // signed comparisons only happen in cases we don't care to warn about.
+  if (!T->isUnsignedIntegerType())
+    return AnalyzeImpConvsInComparison(S, E);
 
-  QualType lt = lex->getType(), rt = rex->getType();
+  Expr *lex = E->getLHS()->IgnoreParenImpCasts();
+  Expr *rex = E->getRHS()->IgnoreParenImpCasts();
 
-  // Only warn if both operands are integral.
-  if (!lt->isIntegerType() || !rt->isIntegerType())
-    return;
-
-  // In C, the width of a bitfield determines its type, and the
-  // declared type only contributes the signedness.  This duplicates
-  // the work that will later be done by UsualUnaryConversions.
-  // Eventually, this check will be reorganized in a way that avoids
-  // this duplication.
-  if (!getLangOptions().CPlusPlus) {
-    QualType tmp;
-    tmp = Context.isPromotableBitField(lex);
-    if (!tmp.isNull()) lt = tmp;
-    tmp = Context.isPromotableBitField(rex);
-    if (!tmp.isNull()) rt = tmp;
-  }
-
-  if (const EnumType *E = lt->getAs<EnumType>())
-    lt = E->getDecl()->getPromotionType();
-  if (const EnumType *E = rt->getAs<EnumType>())
-    rt = E->getDecl()->getPromotionType();
-
-  // The rule is that the signed operand becomes unsigned, so isolate the
-  // signed operand.
-  Expr *signedOperand = lex, *unsignedOperand = rex;
-  QualType signedType = lt, unsignedType = rt;
-  if (lt->isSignedIntegerType()) {
-    if (rt->isSignedIntegerType()) return;
+  // Check to see if one of the (unmodified) operands is of different
+  // signedness.
+  Expr *signedOperand, *unsignedOperand;
+  if (lex->getType()->isSignedIntegerType()) {
+    assert(!rex->getType()->isSignedIntegerType() &&
+           "unsigned comparison between two signed integer expressions?");
+    signedOperand = lex;
+    unsignedOperand = rex;
+  } else if (rex->getType()->isSignedIntegerType()) {
+    signedOperand = rex;
+    unsignedOperand = lex;
   } else {
-    if (!rt->isSignedIntegerType()) return;
-    std::swap(signedOperand, unsignedOperand);
-    std::swap(signedType, unsignedType);
+    CheckTrivialUnsignedComparison(S, E);
+    return AnalyzeImpConvsInComparison(S, E);
   }
 
-  unsigned unsignedWidth = Context.getIntWidth(unsignedType);
-  unsigned signedWidth = Context.getIntWidth(signedType);
+  // Otherwise, calculate the effective range of the signed operand.
+  IntRange signedRange = GetExprRange(S.Context, signedOperand);
 
-  // If the unsigned type is strictly smaller than the signed type,
-  // then (1) the result type will be signed and (2) the unsigned
-  // value will fit fully within the signed type, and thus the result
-  // of the comparison will be exact.
-  if (signedWidth > unsignedWidth)
-    return;
+  // Go ahead and analyze implicit conversions in the operands.  Note
+  // that we skip the implicit conversions on both sides.
+  AnalyzeImplicitConversions(S, lex);
+  AnalyzeImplicitConversions(S, rex);
 
-  // Otherwise, calculate the effective ranges.
-  IntRange signedRange = GetExprRange(Context, signedOperand, signedWidth);
-  IntRange unsignedRange = GetExprRange(Context, unsignedOperand, unsignedWidth);
-
-  // We should never be unable to prove that the unsigned operand is
-  // non-negative.
-  assert(unsignedRange.NonNegative && "unsigned range includes negative?");
-
-  // If the signed operand is non-negative, then the signed->unsigned
-  // conversion won't change it.
-  if (signedRange.NonNegative) {
-    // Emit warnings for comparisons of unsigned to integer constant 0.
-    //   always false: x < 0  (or 0 > x)
-    //   always true:  x >= 0 (or 0 <= x)
-    llvm::APSInt X;
-    if (BinOpc && signedOperand->isIntegerConstantExpr(X, Context) && X == 0) {
-      if (signedOperand != lex) {
-        if (*BinOpc == BinaryOperator::LT) {
-          Diag(OpLoc, diag::warn_lunsigned_always_true_comparison)
-            << "< 0" << "false"
-            << lex->getSourceRange() << rex->getSourceRange();
-        }
-        else if (*BinOpc == BinaryOperator::GE) {
-          Diag(OpLoc, diag::warn_lunsigned_always_true_comparison)
-            << ">= 0" << "true"
-            << lex->getSourceRange() << rex->getSourceRange();
-        }
-      }
-      else {
-        if (*BinOpc == BinaryOperator::GT) {
-          Diag(OpLoc, diag::warn_runsigned_always_true_comparison)
-            << "0 >" << "false" 
-            << lex->getSourceRange() << rex->getSourceRange();
-        } 
-        else if (*BinOpc == BinaryOperator::LE) {
-          Diag(OpLoc, diag::warn_runsigned_always_true_comparison)
-            << "0 <=" << "true" 
-            << lex->getSourceRange() << rex->getSourceRange();
-        }
-      }
-    }
-    return;
-  }
+  // If the signed range is non-negative, -Wsign-compare won't fire,
+  // but we should still check for comparisons which are always true
+  // or false.
+  if (signedRange.NonNegative)
+    return CheckTrivialUnsignedComparison(S, E);
 
   // For (in)equality comparisons, if the unsigned operand is a
   // constant which cannot collide with a overflowed signed operand,
   // then reinterpreting the signed operand as unsigned will not
   // change the result of the comparison.
-  if (BinOpc &&
-      (*BinOpc == BinaryOperator::EQ || *BinOpc == BinaryOperator::NE) &&
-      unsignedRange.Width < unsignedWidth)
-    return;
+  if (E->isEqualityOp()) {
+    unsigned comparisonWidth = S.Context.getIntWidth(T);
+    IntRange unsignedRange = GetExprRange(S.Context, unsignedOperand);
 
-  Diag(OpLoc, BinOpc ? diag::warn_mixed_sign_comparison
-                     : diag::warn_mixed_sign_conditional)
-    << lt << rt << lex->getSourceRange() << rex->getSourceRange();
+    // We should never be unable to prove that the unsigned operand is
+    // non-negative.
+    assert(unsignedRange.NonNegative && "unsigned range includes negative?");
+
+    if (unsignedRange.Width < comparisonWidth)
+      return;
+  }
+
+  S.Diag(E->getOperatorLoc(), diag::warn_mixed_sign_comparison)
+    << lex->getType() << rex->getType()
+    << lex->getSourceRange() << rex->getSourceRange();
 }
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
-static void DiagnoseImpCast(Sema &S, Expr *E, QualType T, unsigned diag) {
+void DiagnoseImpCast(Sema &S, Expr *E, QualType T, unsigned diag) {
   S.Diag(E->getExprLoc(), diag) << E->getType() << T << E->getSourceRange();
 }
 
-/// Implements -Wconversion.
-void Sema::CheckImplicitConversion(Expr *E, QualType T) {
-  // Don't diagnose in unevaluated contexts.
-  if (ExprEvalContexts.back().Context == Sema::Unevaluated)
-    return;
+void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
+                             bool *ICContext = 0) {
+  if (E->isTypeDependent() || E->isValueDependent()) return;
 
-  // Don't diagnose for value-dependent expressions.
-  if (E->isValueDependent())
-    return;
-
-  const Type *Source = Context.getCanonicalType(E->getType()).getTypePtr();
-  const Type *Target = Context.getCanonicalType(T).getTypePtr();
+  const Type *Source = S.Context.getCanonicalType(E->getType()).getTypePtr();
+  const Type *Target = S.Context.getCanonicalType(T).getTypePtr();
+  if (Source == Target) return;
+  if (Target->isDependentType()) return;
 
   // Never diagnose implicit casts to bool.
   if (Target->isSpecificBuiltinType(BuiltinType::Bool))
@@ -2160,7 +2150,7 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
   // Strip vector types.
   if (isa<VectorType>(Source)) {
     if (!isa<VectorType>(Target))
-      return DiagnoseImpCast(*this, E, T, diag::warn_impcast_vector_scalar);
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_vector_scalar);
 
     Source = cast<VectorType>(Source)->getElementType().getTypePtr();
     Target = cast<VectorType>(Target)->getElementType().getTypePtr();
@@ -2169,7 +2159,7 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
   // Strip complex types.
   if (isa<ComplexType>(Source)) {
     if (!isa<ComplexType>(Target))
-      return DiagnoseImpCast(*this, E, T, diag::warn_impcast_complex_scalar);
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_complex_scalar);
 
     Source = cast<ComplexType>(Source)->getElementType().getTypePtr();
     Target = cast<ComplexType>(Target)->getElementType().getTypePtr();
@@ -2189,15 +2179,15 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
         // Don't warn about float constants that are precisely
         // representable in the target type.
         Expr::EvalResult result;
-        if (E->Evaluate(result, Context)) {
+        if (E->Evaluate(result, S.Context)) {
           // Value might be a float, a float vector, or a float complex.
           if (IsSameFloatAfterCast(result.Val,
-                     Context.getFloatTypeSemantics(QualType(TargetBT, 0)),
-                     Context.getFloatTypeSemantics(QualType(SourceBT, 0))))
+                   S.Context.getFloatTypeSemantics(QualType(TargetBT, 0)),
+                   S.Context.getFloatTypeSemantics(QualType(SourceBT, 0))))
             return;
         }
 
-        DiagnoseImpCast(*this, E, T, diag::warn_impcast_float_precision);
+        DiagnoseImpCast(S, E, T, diag::warn_impcast_float_precision);
       }
       return;
     }
@@ -2205,7 +2195,7 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
     // If the target is integral, always warn.
     if ((TargetBT && TargetBT->isInteger()))
       // TODO: don't warn for integer values?
-      return DiagnoseImpCast(*this, E, T, diag::warn_impcast_float_integer);
+      DiagnoseImpCast(S, E, T, diag::warn_impcast_float_integer);
 
     return;
   }
@@ -2213,20 +2203,156 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
   if (!Source->isIntegerType() || !Target->isIntegerType())
     return;
 
-  IntRange SourceRange = GetExprRange(Context, E, Context.getIntWidth(E->getType()));
-  IntRange TargetRange = IntRange::forCanonicalType(Context, Target);
-
-  // FIXME: also signed<->unsigned?
+  IntRange SourceRange = GetExprRange(S.Context, E);
+  IntRange TargetRange = IntRange::forCanonicalType(S.Context, Target);
 
   if (SourceRange.Width > TargetRange.Width) {
     // People want to build with -Wshorten-64-to-32 and not -Wconversion
     // and by god we'll let them.
     if (SourceRange.Width == 64 && TargetRange.Width == 32)
-      return DiagnoseImpCast(*this, E, T, diag::warn_impcast_integer_64_32);
-    return DiagnoseImpCast(*this, E, T, diag::warn_impcast_integer_precision);
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_64_32);
+    return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_precision);
+  }
+
+  if ((TargetRange.NonNegative && !SourceRange.NonNegative) ||
+      (!TargetRange.NonNegative && SourceRange.NonNegative &&
+       SourceRange.Width == TargetRange.Width)) {
+    unsigned DiagID = diag::warn_impcast_integer_sign;
+
+    // Traditionally, gcc has warned about this under -Wsign-compare.
+    // We also want to warn about it in -Wconversion.
+    // So if -Wconversion is off, use a completely identical diagnostic
+    // in the sign-compare group.
+    // The conditional-checking code will 
+    if (ICContext) {
+      DiagID = diag::warn_impcast_integer_sign_conditional;
+      *ICContext = true;
+    }
+
+    return DiagnoseImpCast(S, E, T, DiagID);
   }
 
   return;
+}
+
+void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T);
+
+void CheckConditionalOperand(Sema &S, Expr *E, QualType T,
+                             bool &ICContext) {
+  E = E->IgnoreParenImpCasts();
+
+  if (isa<ConditionalOperator>(E))
+    return CheckConditionalOperator(S, cast<ConditionalOperator>(E), T);
+
+  AnalyzeImplicitConversions(S, E);
+  if (E->getType() != T)
+    return CheckImplicitConversion(S, E, T, &ICContext);
+  return;
+}
+
+void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
+  AnalyzeImplicitConversions(S, E->getCond());
+
+  bool Suspicious = false;
+  CheckConditionalOperand(S, E->getTrueExpr(), T, Suspicious);
+  CheckConditionalOperand(S, E->getFalseExpr(), T, Suspicious);
+
+  // If -Wconversion would have warned about either of the candidates
+  // for a signedness conversion to the context type...
+  if (!Suspicious) return;
+
+  // ...but it's currently ignored...
+  if (S.Diags.getDiagnosticLevel(diag::warn_impcast_integer_sign_conditional))
+    return;
+
+  // ...and -Wsign-compare isn't...
+  if (!S.Diags.getDiagnosticLevel(diag::warn_mixed_sign_conditional))
+    return;
+
+  // ...then check whether it would have warned about either of the
+  // candidates for a signedness conversion to the condition type.
+  if (E->getType() != T) {
+    Suspicious = false;
+    CheckImplicitConversion(S, E->getTrueExpr()->IgnoreParenImpCasts(),
+                            E->getType(), &Suspicious);
+    if (!Suspicious)
+      CheckImplicitConversion(S, E->getFalseExpr()->IgnoreParenImpCasts(),
+                              E->getType(), &Suspicious);
+    if (!Suspicious)
+      return;
+  }
+
+  // If so, emit a diagnostic under -Wsign-compare.
+  Expr *lex = E->getTrueExpr()->IgnoreParenImpCasts();
+  Expr *rex = E->getFalseExpr()->IgnoreParenImpCasts();
+  S.Diag(E->getQuestionLoc(), diag::warn_mixed_sign_conditional)
+    << lex->getType() << rex->getType()
+    << lex->getSourceRange() << rex->getSourceRange();
+}
+
+/// AnalyzeImplicitConversions - Find and report any interesting
+/// implicit conversions in the given expression.  There are a couple
+/// of competing diagnostics here, -Wconversion and -Wsign-compare.
+void AnalyzeImplicitConversions(Sema &S, Expr *OrigE) {
+  QualType T = OrigE->getType();
+  Expr *E = OrigE->IgnoreParenImpCasts();
+
+  // For conditional operators, we analyze the arguments as if they
+  // were being fed directly into the output.
+  if (isa<ConditionalOperator>(E)) {
+    ConditionalOperator *CO = cast<ConditionalOperator>(E);
+    CheckConditionalOperator(S, CO, T);
+    return;
+  }
+
+  // Go ahead and check any implicit conversions we might have skipped.
+  // The non-canonical typecheck is just an optimization;
+  // CheckImplicitConversion will filter out dead implicit conversions.
+  if (E->getType() != T)
+    CheckImplicitConversion(S, E, T);
+
+  // Now continue drilling into this expression.
+
+  // Skip past explicit casts.
+  if (isa<ExplicitCastExpr>(E)) {
+    E = cast<ExplicitCastExpr>(E)->getSubExpr()->IgnoreParenImpCasts();
+    return AnalyzeImplicitConversions(S, E);
+  }
+
+  // Do a somewhat different check with comparison operators.
+  if (isa<BinaryOperator>(E) && cast<BinaryOperator>(E)->isComparisonOp())
+    return AnalyzeComparison(S, cast<BinaryOperator>(E));
+
+  // These break the otherwise-useful invariant below.  Fortunately,
+  // we don't really need to recurse into them, because any internal
+  // expressions should have been analyzed already when they were
+  // built into statements.
+  if (isa<StmtExpr>(E)) return;
+
+  // Don't descend into unevaluated contexts.
+  if (isa<SizeOfAlignOfExpr>(E)) return;
+
+  // Now just recurse over the expression's children.
+  for (Stmt::child_iterator I = E->child_begin(), IE = E->child_end();
+         I != IE; ++I)
+    AnalyzeImplicitConversions(S, cast<Expr>(*I));
+}
+
+} // end anonymous namespace
+
+/// Diagnoses "dangerous" implicit conversions within the given
+/// expression (which is a full expression).  Implements -Wconversion
+/// and -Wsign-compare.
+void Sema::CheckImplicitConversions(Expr *E) {
+  // Don't diagnose in unevaluated contexts.
+  if (ExprEvalContexts.back().Context == Sema::Unevaluated)
+    return;
+
+  // Don't diagnose for value- or type-dependent expressions.
+  if (E->isTypeDependent() || E->isValueDependent())
+    return;
+
+  AnalyzeImplicitConversions(*this, E);
 }
 
 /// CheckParmsForFunctionDef - Check that the parameters of the given

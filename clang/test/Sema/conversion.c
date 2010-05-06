@@ -287,3 +287,13 @@ void test_7676608(void) {
   char c = 5;
   f7676608(c *= q);
 }
+
+// <rdar://problem/7904686>
+void test_7904686(void) {
+  const int i = -1;
+  unsigned u1 = i; // expected-warning {{implicit cast changes signedness}}  
+  u1 = i; // expected-warning {{implicit cast changes signedness}}  
+
+  unsigned u2 = -1; // expected-warning {{implicit cast changes signedness}}  
+  u2 = -1; // expected-warning {{implicit cast changes signedness}}  
+}

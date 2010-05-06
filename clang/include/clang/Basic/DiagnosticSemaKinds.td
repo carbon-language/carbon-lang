@@ -883,6 +883,12 @@ def warn_impcast_float_precision : Warning<
 def warn_impcast_float_integer : Warning<
   "implicit cast turns floating-point number into integer: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_integer_sign : Warning<
+  "implicit cast changes signedness: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_integer_sign_conditional : Warning<
+  "operand of ? changes signedness: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_precision : Warning<
   "implicit cast loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;

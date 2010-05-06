@@ -4456,9 +4456,7 @@ private:
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
-  void CheckSignCompare(Expr *LHS, Expr *RHS, SourceLocation Loc,
-                        const BinaryOperator::Opcode* BinOpc = 0);
-  void CheckImplicitConversion(Expr *E, QualType Target);
+  void CheckImplicitConversions(Expr *E);
 };
 
 //===--------------------------------------------------------------------===//

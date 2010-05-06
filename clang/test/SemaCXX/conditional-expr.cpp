@@ -238,3 +238,20 @@ namespace PR6757 {
     (void)(true ? Bar() : Foo3()); // expected-error{{no viable constructor copying temporary}}
   }
 }
+
+// Reduced from selfhost.
+namespace test1 {
+  struct A {
+    enum Foo {
+      fa, fb, fc, fd, fe, ff
+    };
+
+    Foo x();
+  };
+
+  void foo(int);
+
+  void test(A *a) {
+    foo(a ? a->x() : 0);
+  }
+}

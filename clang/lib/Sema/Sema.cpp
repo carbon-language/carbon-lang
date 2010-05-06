@@ -175,8 +175,6 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
     }
   }
 
-  CheckImplicitConversion(Expr, Ty);
-
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind && BasePath.empty()) {
       ImpCast->setType(Ty);
