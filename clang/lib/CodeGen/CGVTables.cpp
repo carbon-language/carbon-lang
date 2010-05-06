@@ -3143,9 +3143,9 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
     if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
       return;
   } else {
-    // If we have no key funcion and this is a explicit instantiation declaration,
-    // we will produce a vtable at the explicit instantiation. We don't need one
-    // here.
+    // If we have no key function and this is a explicit instantiation 
+    // declaration, we will produce a vtable at the explicit instantiation. We 
+    // don't need one here.
     if (RDKind == clang::TSK_ExplicitInstantiationDeclaration)
       return;
 
