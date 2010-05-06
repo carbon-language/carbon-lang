@@ -996,6 +996,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Garg && Garg != Args.getLastArg(options::OPT_g0))
     CmdArgs.push_back("-g");
 
+  Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
+  Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);
+
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
   Args.AddLastArg(CmdArgs, options::OPT_nostdincxx);
   Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);

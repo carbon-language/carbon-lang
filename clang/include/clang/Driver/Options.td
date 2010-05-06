@@ -385,6 +385,8 @@ def fverbose_asm : Flag<"-fverbose-asm">, Group<f_Group>;
 def fvisibility_EQ : Joined<"-fvisibility=">, Group<f_Group>;
 def fwritable_strings : Flag<"-fwritable-strings">, Group<f_Group>;
 def fzero_initialized_in_bss : Flag<"-fzero-initialized-in-bss">, Group<f_Group>;
+def ffunction_sections: Flag <"-ffunction-sections">, Group<f_Group>;
+def fdata_sections : Flag <"-fdata-sections">, Group<f_Group>;
 def f : Joined<"-f">, Group<f_Group>;
 def g0 : Joined<"-g0">, Group<g_Group>;
 def g3 : Joined<"-g3">, Group<g_Group>;
