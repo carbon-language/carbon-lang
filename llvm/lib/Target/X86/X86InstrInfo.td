@@ -1059,10 +1059,10 @@ def MOV32dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
                 
 // Moves to and from control registers
-def MOV32rc : I<0x20, MRMDestReg, (outs GR32:$dst), (ins CONTROL_REG_32:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
-def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG_32:$dst), (ins GR32:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV32rc : I<0x20, MRMDestReg, (outs GR32:$dst), (ins CONTROL_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...

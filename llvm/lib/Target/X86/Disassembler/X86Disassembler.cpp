@@ -420,8 +420,7 @@ static bool translateRM(MCInst &mcInst,
   case TYPE_XMM64:
   case TYPE_XMM128:
   case TYPE_DEBUGREG:
-  case TYPE_CR32:
-  case TYPE_CR64:
+  case TYPE_CONTROLREG:
     return translateRMRegister(mcInst, insn);
   case TYPE_M:
   case TYPE_M8:

@@ -280,8 +280,7 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_XMM0,       "Implicit use of XMM0")                          \
   ENUM_ENTRY(TYPE_SEGMENTREG, "Segment register operand")                      \
   ENUM_ENTRY(TYPE_DEBUGREG,   "Debug register operand")                        \
-  ENUM_ENTRY(TYPE_CR32,       "4-byte control register operand")               \
-  ENUM_ENTRY(TYPE_CR64,       "8-byte")                                        \
+  ENUM_ENTRY(TYPE_CONTROLREG, "Control register operand")                      \
                                                                                \
   ENUM_ENTRY(TYPE_Mv,         "Memory operand of operand size")                \
   ENUM_ENTRY(TYPE_Rv,         "Register operand of operand size")              \

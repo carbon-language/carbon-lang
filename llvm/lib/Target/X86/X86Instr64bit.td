@@ -398,9 +398,9 @@ def MOV64dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR64:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 // Moves to and from control registers
-def MOV64rc : I<0x20, MRMDestReg, (outs GR64:$dst), (ins CONTROL_REG_64:$src),
+def MOV64rc : I<0x20, MRMDestReg, (outs GR64:$dst), (ins CONTROL_REG:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
-def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG_64:$dst), (ins GR64:$src),
+def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR64:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 // Sign/Zero extenders

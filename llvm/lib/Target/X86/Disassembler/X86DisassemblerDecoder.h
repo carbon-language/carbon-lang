@@ -225,26 +225,16 @@ extern "C" {
   ENTRY(DR6)        \
   ENTRY(DR7)
 
-#define REGS_CONTROL_32BIT  \
-  ENTRY(ECR0)               \
-  ENTRY(ECR1)               \
-  ENTRY(ECR2)               \
-  ENTRY(ECR3)               \
-  ENTRY(ECR4)               \
-  ENTRY(ECR5)               \
-  ENTRY(ECR6)               \
-  ENTRY(ECR7)
-
-#define REGS_CONTROL_64BIT  \
-  ENTRY(RCR0)               \
-  ENTRY(RCR1)               \
-  ENTRY(RCR2)               \
-  ENTRY(RCR3)               \
-  ENTRY(RCR4)               \
-  ENTRY(RCR5)               \
-  ENTRY(RCR6)               \
-  ENTRY(RCR7)               \
-  ENTRY(RCR8)
+#define REGS_CONTROL  \
+  ENTRY(CR0)          \
+  ENTRY(CR1)          \
+  ENTRY(CR2)          \
+  ENTRY(CR3)          \
+  ENTRY(CR4)          \
+  ENTRY(CR5)          \
+  ENTRY(CR6)          \
+  ENTRY(CR7)          \
+  ENTRY(CR8)
   
 #define ALL_EA_BASES  \
   EA_BASES_16BIT      \
@@ -264,8 +254,7 @@ extern "C" {
   REGS_XMM            \
   REGS_SEGMENT        \
   REGS_DEBUG          \
-  REGS_CONTROL_32BIT  \
-  REGS_CONTROL_64BIT  \
+  REGS_CONTROL        \
   ENTRY(RIP)
 
 /*

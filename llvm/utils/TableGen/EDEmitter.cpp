@@ -309,8 +309,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   REG("RST");
   REG("SEGMENT_REG");
   REG("DEBUG_REG");
-  REG("CONTROL_REG_32");
-  REG("CONTROL_REG_64");
+  REG("CONTROL_REG");
   
   IMM("i8imm");
   IMM("i16imm");
