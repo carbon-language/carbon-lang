@@ -361,7 +361,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     V = Builder.CreateFCmpOEQ(V, ConstantFP::getInfinity(V->getType()),"isinf");
     return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
   }
-   
+      
+  // TODO: BI__builtin_isinf_sign
+  //   isinf_sign(x) -> isinf(x) ? (signbit(x) ? -1 : 1) : 0
+  // TODO: BI__builtin_isnormal
+  //   isnormal(x) -> x != x && fabs(x) < infinity && fabsf(x) >= float_min
+  //   where floatmin is the minimum value for the fp type.  Not sure if this is
+  //   APFloat::getSmallest or getSmallestNormalized.
+      
   case Builtin::BI__builtin_isfinite: {
     // isfinite(x) --> x == x && fabs(x) != infinity; }
     Value *V = EmitScalarExpr(E->getArg(0));
