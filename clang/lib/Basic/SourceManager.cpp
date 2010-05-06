@@ -1170,15 +1170,20 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   if (LOffs.first == ROffs.first)
     return LOffs.second < ROffs.second;
 
+#if 0
   // If we are comparing a source location with multiple locations in the same
   // file, we get a big win by caching the result.
 
+  // FIXME: This caching is wrong, but I don't know enough about this code
+  // to immediately fix it.  There are cases where passing the same input
+  // values to this method causes it to return different results.
   if (LastLFIDForBeforeTUCheck == LOffs.first &&
       LastRFIDForBeforeTUCheck == ROffs.first)
     return LastResForBeforeTUCheck;
 
   LastLFIDForBeforeTUCheck = LOffs.first;
   LastRFIDForBeforeTUCheck = ROffs.first;
+#endif
 
   // "Traverse" the include/instantiation stacks of both locations and try to
   // find a common "ancestor".
