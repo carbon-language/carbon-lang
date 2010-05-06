@@ -1810,6 +1810,28 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
   }
 }
 
+bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 
+                              ExplodedNode *Pred) {
+  const GRState *state = GetState(Pred);
+  const Expr *Callee = CE->getCallee();
+  SVal L = state->getSVal(Callee);
+  
+  const FunctionDecl *FD = L.getAsFunctionDecl();
+  if (!FD)
+    return false;
+
+  if (!FD->getBody(FD))
+    return false;
+
+  // Now we have the definition of the callee, create a CallEnter node.
+  CallEnter Loc(CE, FD, Pred->getLocationContext());
+
+  ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
+  if (N)
+    Dst.Add(N);
+  return true;
+}
+
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
@@ -1889,6 +1911,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
     // If the callee is processed by a checker, skip the rest logic.
     if (CheckerEvalCall(CE, DstChecker, *DI))
       DstTmp3.insert(DstChecker);
+    else if (AMgr.shouldInlineCall() && InlineCall(Dst, CE, *DI)) {
+      // Callee is inlined. We shouldn't do post call checking.
+      return;
+    }
     else {
       for (ExplodedNodeSet::iterator DI_Checker = DstChecker.begin(),
            DE_Checker = DstChecker.end();

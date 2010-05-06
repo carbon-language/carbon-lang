@@ -1,5 +1,5 @@
-// RUN: false
-// XFAIL: *
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-inline-call -analyzer-store region -verify %s
+
 int f1() {
   int y = 1;
   y++;

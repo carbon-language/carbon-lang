@@ -456,6 +456,8 @@ private:
   void EvalLocation(ExplodedNodeSet &Dst, Stmt *S, ExplodedNode* Pred,
                     const GRState* St, SVal location,
                     const void *tag, bool isLoad);
+
+  bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
 };
 
 } // end clang namespace
