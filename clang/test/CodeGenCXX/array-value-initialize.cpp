@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s
+// RUN: %clang_cc1 -triple i386-apple-darwin -emit-llvm -o - %s
 
 // PR5463
 extern "C" int printf(...);
@@ -21,8 +22,31 @@ struct Foo {
         S sbar_[5];
 };
 
-int main(void)
-{
+int test1(void) {
         Foo a;
 }
 
+// PR7063
+
+
+struct Unit
+{
+  Unit() {}
+  Unit(const Unit& v)  {}
+};
+
+
+struct Stuff
+{
+  Unit leafPos[1];
+};
+
+
+int main()
+{
+  
+  Stuff a;
+  Stuff b = a;
+  
+  return 0;
+}

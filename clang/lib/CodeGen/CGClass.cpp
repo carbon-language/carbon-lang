@@ -397,10 +397,9 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
   // Generate: if (loop-index < number-of-elements) fall to the loop body,
   // otherwise, go to the block after the for-loop.
   uint64_t NumElements = Array->getSize().getZExtValue();
-  llvm::Value * NumElementsPtr =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(CGF.getLLVMContext()),
-                                                  NumElements);
   llvm::Value *Counter = CGF.Builder.CreateLoad(IndexVar);
+  llvm::Value *NumElementsPtr =
+    llvm::ConstantInt::get(Counter->getType(), NumElements);
   llvm::Value *IsLess = CGF.Builder.CreateICmpULT(Counter, NumElementsPtr,
                                                   "isless");
                                    
