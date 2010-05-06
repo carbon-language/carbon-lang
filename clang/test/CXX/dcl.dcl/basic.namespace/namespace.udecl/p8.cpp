@@ -81,3 +81,18 @@ namespace test2 {
 
   template struct Derived<int>; // expected-note {{in instantiation of template class}}
 }
+
+// Redeclarations are okay in a function.
+namespace test3 {
+  namespace N {
+    int f(int);
+    typedef int type;
+  }
+
+  void g() {
+    using N::f;
+    using N::f;
+    using N::type;
+    using N::type;
+  }
+}

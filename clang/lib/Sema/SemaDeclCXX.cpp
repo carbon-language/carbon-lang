@@ -3880,8 +3880,9 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
   //   A using-declaration is a declaration and can therefore be used
   //   repeatedly where (and only where) multiple declarations are
   //   allowed.
-  // That's only in file contexts.
-  if (CurContext->getLookupContext()->isFileContext())
+  //
+  // That's in non-member contexts.
+  if (!CurContext->getLookupContext()->isRecord())
     return false;
 
   NestedNameSpecifier *Qual
