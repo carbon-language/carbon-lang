@@ -540,6 +540,8 @@ bool
 ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
                               unsigned &SrcReg, unsigned &DstReg,
                               unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
+  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
+
   switch (MI.getOpcode()) {
   default: break;
   case ARM::VMOVS:
@@ -548,8 +550,6 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
   case ARM::VMOVQ: {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
-    SrcSubIdx = MI.getOperand(1).getSubReg();
-    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
   case ARM::MOVr:
@@ -564,8 +564,6 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
            "Invalid ARM MOV instruction");
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
-    SrcSubIdx = MI.getOperand(1).getSubReg();
-    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
   }
