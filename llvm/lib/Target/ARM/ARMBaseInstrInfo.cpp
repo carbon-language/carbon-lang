@@ -540,16 +540,17 @@ bool
 ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
                               unsigned &SrcReg, unsigned &DstReg,
                               unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
-
   switch (MI.getOpcode()) {
   default: break;
   case ARM::VMOVS:
   case ARM::VMOVD:
   case ARM::VMOVDneon:
-  case ARM::VMOVQ: {
+  case ARM::VMOVQ:
+  case ARM::VMOVQQ : {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
+    SrcSubIdx = MI.getOperand(1).getSubReg();
+    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
   case ARM::MOVr:
@@ -564,6 +565,8 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
            "Invalid ARM MOV instruction");
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
+    SrcSubIdx = MI.getOperand(1).getSubReg();
+    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
   }
@@ -679,6 +682,14 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       SrcRC == ARM::QPR_8RegisterClass)
     SrcRC = ARM::QPRRegisterClass;
 
+  // Allow QQPR / QQPR_VFP2 / QQPR_8 cross-class copies.
+  if (DestRC == ARM::QQPR_VFP2RegisterClass ||
+      DestRC == ARM::QQPR_8RegisterClass)
+    DestRC = ARM::QQPRRegisterClass;
+  if (SrcRC == ARM::QQPR_VFP2RegisterClass ||
+      SrcRC == ARM::QQPR_8RegisterClass)
+    SrcRC = ARM::QQPRRegisterClass;
+
   // Disallow copies of unequal sizes.
   if (DestRC != SrcRC && DestRC->getSize() != SrcRC->getSize())
     return false;
@@ -703,11 +714,12 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = ARM::VMOVDneon;
     else if (DestRC == ARM::QPRRegisterClass)
       Opc = ARM::VMOVQ;
+    else if (DestRC == ARM::QQPRRegisterClass)
+      Opc = ARM::VMOVQQ;
     else
       return false;
 
-    AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg)
-                   .addReg(SrcReg));
+    AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg));
   }
 
   return true;
@@ -748,12 +760,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRD))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-  } else {
-    assert((RC == ARM::QPRRegisterClass ||
-            RC == ARM::QPR_VFP2RegisterClass ||
-            RC == ARM::QPR_8RegisterClass) && "Unknown regclass!");
+  } else if (RC == ARM::QPRRegisterClass ||
+             RC == ARM::QPR_VFP2RegisterClass ||
+             RC == ARM::QPR_8RegisterClass) {
     // FIXME: Neon instructions should support predicates
-    if (Align >= 16 && (getRegisterInfo().canRealignStack(MF))) {
+    if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q))
                      .addFrameIndex(FI).addImm(128)
                      .addMemOperand(MMO)
@@ -765,6 +776,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
                      .addMemOperand(MMO));
     }
+  } else {
+    assert((RC == ARM::QQPRRegisterClass ||
+            RC == ARM::QQPR_VFP2RegisterClass ||
+            RC == ARM::QQPR_8RegisterClass) && "Unknown regclass!");
+    llvm_unreachable("Not yet implemented!");
   }
 }
 
@@ -800,12 +816,10 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              RC == ARM::DPR_8RegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRD), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-  } else {
-    assert((RC == ARM::QPRRegisterClass ||
-            RC == ARM::QPR_VFP2RegisterClass ||
-            RC == ARM::QPR_8RegisterClass) && "Unknown regclass!");
-    if (Align >= 16
-        && (getRegisterInfo().canRealignStack(MF))) {
+  } else if (RC == ARM::QPRRegisterClass ||
+             RC == ARM::QPR_VFP2RegisterClass ||
+             RC == ARM::QPR_8RegisterClass) {
+    if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q), DestReg)
                      .addFrameIndex(FI).addImm(128)
                      .addMemOperand(MMO));
@@ -815,6 +829,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
                      .addMemOperand(MMO));
     }
+  } else {
+    assert((RC == ARM::QQPRRegisterClass ||
+            RC == ARM::QQPR_VFP2RegisterClass ||
+            RC == ARM::QQPR_8RegisterClass) && "Unknown regclass!");
+    llvm_unreachable("Not yet implemented!");
   }
 }
 

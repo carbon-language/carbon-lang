@@ -575,10 +575,11 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("s_cc_out");
   REG("tGPR");
   REG("DPR");
-  REG("SPR");
-  REG("QPR");
   REG("DPR_VFP2");
   REG("DPR_8");
+  REG("SPR");
+  REG("QPR");
+  REG("QQPR");
   
   IMM("i32imm");
   IMM("bf_inv_mask_imm");
