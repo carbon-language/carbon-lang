@@ -1509,6 +1509,7 @@ void TagDecl::completeDefinition() {
                                 TypeForDecl->getAs<InjectedClassNameType>())) {
     assert(Injected->Decl == this &&
            "Attempt to redefine a class template definition?");
+    (void)Injected;
   }
 }
 
