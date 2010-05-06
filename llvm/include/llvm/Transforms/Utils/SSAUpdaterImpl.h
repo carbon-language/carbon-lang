@@ -69,7 +69,7 @@ public:
   /// where needed.
   ValT GetValue(BlkT *BB) {
     SmallVector<BBInfo*, 100> BlockList;
-    BuildBlockList(BB, &BlockList);
+    BBInfo *PseudoEntry = BuildBlockList(BB, &BlockList);
 
     // Special case: bail out if BB is unreachable.
     if (BlockList.size() == 0) {
@@ -78,7 +78,7 @@ public:
       return V;
     }
 
-    FindDominators(&BlockList);
+    FindDominators(&BlockList, PseudoEntry);
     FindPHIPlacement(&BlockList);
     FindAvailableVals(&BlockList);
 
@@ -89,7 +89,7 @@ public:
   /// through its predecessors until reaching blocks with known values.
   /// Create BBInfo structures for the blocks and append them to the block
   /// list.
-  void BuildBlockList(BlkT *BB, BlockListTy *BlockList) {
+  BBInfo *BuildBlockList(BlkT *BB, BlockListTy *BlockList) {
     SmallVector<BBInfo*, 10> RootList;
     SmallVector<BBInfo*, 64> WorkList;
 
@@ -106,17 +106,12 @@ public:
       Preds.clear();
       Traits::FindPredecessorBlocks(Info->BB, &Preds);
       Info->NumPreds = Preds.size();
-      Info->Preds = static_cast<BBInfo**>
-        (Allocator.Allocate(Info->NumPreds * sizeof(BBInfo*),
-                            AlignOf<BBInfo*>::Alignment));
-
-      // Treat an unreachable predecessor as a definition with 'undef'.
-      if (Info->NumPreds == 0) {
-        Info->AvailableVal = Traits::GetUndefVal(Info->BB, Updater);
-        Info->DefBB = Info;
-        RootList.push_back(Info);
-        continue;
-      }
+      if (Info->NumPreds == 0)
+        Info->Preds = 0;
+      else
+        Info->Preds = static_cast<BBInfo**>
+          (Allocator.Allocate(Info->NumPreds * sizeof(BBInfo*),
+                              AlignOf<BBInfo*>::Alignment));
 
       for (unsigned p = 0; p != Info->NumPreds; ++p) {
         BlkT *Pred = Preds[p];
@@ -187,6 +182,7 @@ public:
       }
     }
     PseudoEntry->BlkNum = BlkNum;
+    return PseudoEntry;
   }
 
   /// IntersectDominators - This is the dataflow lattice "meet" operation for
@@ -219,7 +215,7 @@ public:
   /// of root nodes for blocks that define the value.  The dominators for this
   /// subset CFG are not the standard dominators but they are adequate for
   /// placing PHIs within the subset CFG.
-  void FindDominators(BlockListTy *BlockList) {
+  void FindDominators(BlockListTy *BlockList, BBInfo *PseudoEntry) {
     bool Changed;
     do {
       Changed = false;
@@ -227,19 +223,29 @@ public:
       for (typename BlockListTy::reverse_iterator I = BlockList->rbegin(),
              E = BlockList->rend(); I != E; ++I) {
         BBInfo *Info = *I;
+        BBInfo *NewIDom = 0;
 
-        // Start with the first predecessor.
-        assert(Info->NumPreds > 0 && "unreachable block");
-        BBInfo *NewIDom = Info->Preds[0];
-
-        // Iterate through the block's other predecessors.
-        for (unsigned p = 1; p != Info->NumPreds; ++p) {
+        // Iterate through the block's predecessors.
+        for (unsigned p = 0; p != Info->NumPreds; ++p) {
           BBInfo *Pred = Info->Preds[p];
-          NewIDom = IntersectDominators(NewIDom, Pred);
+
+          // Treat an unreachable predecessor as a definition with 'undef'.
+          if (Pred->BlkNum == 0) {
+            Pred->AvailableVal = Traits::GetUndefVal(Pred->BB, Updater);
+            (*AvailableVals)[Pred->BB] = Pred->AvailableVal;
+            Pred->DefBB = Pred;
+            Pred->BlkNum = PseudoEntry->BlkNum;
+            PseudoEntry->BlkNum++;
+          }
+
+          if (!NewIDom)
+            NewIDom = Pred;
+          else
+            NewIDom = IntersectDominators(NewIDom, Pred);
         }
 
         // Check if the IDom value has changed.
-        if (NewIDom != Info->IDom) {
+        if (NewIDom && NewIDom != Info->IDom) {
           Info->IDom = NewIDom;
           Changed = true;
         }
