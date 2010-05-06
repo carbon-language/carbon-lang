@@ -130,8 +130,8 @@ protected:
   bool hasNEON() const { return ARMFPUType >= NEON;  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
-  bool hasDivide() const { return HasHardwareDivide; };
-  bool hasT2ExtractPack() const { return HasT2ExtractPack; };
+  bool hasDivide() const { return HasHardwareDivide; }
+  bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
 
   bool hasFP16() const { return HasFP16; }
