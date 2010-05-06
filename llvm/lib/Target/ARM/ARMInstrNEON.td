@@ -2834,6 +2834,11 @@ def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
                      N3RegFrm, IIC_VMOVD, "vmov", "$dst, $src", "", []>;
 
+// Pseudo vector move instruction for QQ (a pair of Q) registers. This should
+// be expanded after register allocation is completed.
+def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
+                NoItinerary, "@ vmov\t$dst, $src", []>;
+
 //   VMOV     : Vector Move (Immediate)
 
 // VMOV_get_imm8 xform function: convert build_vector to VMOV.i8 imm.
