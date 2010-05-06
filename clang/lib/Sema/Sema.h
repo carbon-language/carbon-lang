@@ -1661,10 +1661,9 @@ public:
                                        FullExprArg CondVal, DeclPtrTy CondVar,
                                        StmtArg ThenVal,
                                        SourceLocation ElseLoc, StmtArg ElseVal);
-  virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond,
+  virtual OwningStmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
+                                                  ExprArg Cond,
                                                   DeclPtrTy CondVar);
-  virtual void ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
-                                    StmtArg Body);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);
   virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
@@ -2321,7 +2320,9 @@ public:
 
   virtual DeclResult ActOnCXXConditionDeclaration(Scope *S,
                                                   Declarator &D);
-  OwningExprResult CheckConditionVariable(VarDecl *ConditionVar);
+  OwningExprResult CheckConditionVariable(VarDecl *ConditionVar,
+                                          SourceLocation StmtLoc,
+                                          bool ConvertToBoolean);
 
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
   /// pseudo-functions.
@@ -4312,6 +4313,9 @@ public:
   /// \return true iff there were any errors
   bool CheckBooleanCondition(Expr *&CondExpr, SourceLocation Loc);
 
+  virtual OwningExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                                 ExprArg SubExpr);
+  
   /// DiagnoseAssignmentAsCondition - Given that an expression is
   /// being used as a boolean condition, warn if it's an assignment.
   void DiagnoseAssignmentAsCondition(Expr *E);

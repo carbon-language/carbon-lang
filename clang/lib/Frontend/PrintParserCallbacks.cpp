@@ -315,7 +315,8 @@ namespace {
       return StmtEmpty();
     }
 
-    virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond, 
+    virtual OwningStmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
+                                                    ExprArg Cond, 
                                                     DeclPtrTy CondVar) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();

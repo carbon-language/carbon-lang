@@ -7694,3 +7694,17 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
 
   return false;
 }
+
+Sema::OwningExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                                   ExprArg SubExpr) {
+  if (SubExpr.isInvalid())
+    return ExprError();
+  
+  Expr *Sub = SubExpr.takeAs<Expr>();
+  if (CheckBooleanCondition(Sub, Loc)) {
+    Sub->Destroy(Context);
+    return ExprError();
+  }
+  
+  return Owned(Sub);
+}

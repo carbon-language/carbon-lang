@@ -758,10 +758,18 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  OwningStmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond,
+  OwningStmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::ExprArg Cond,
                                  VarDecl *CondVar, StmtArg Then, 
                                  SourceLocation ElseLoc, StmtArg Else) {
-    return getSema().ActOnIfStmt(IfLoc, Cond, DeclPtrTy::make(CondVar), 
+    if (Cond.get()) {
+      // Convert the condition to a boolean value.
+      Cond = getSema().ActOnBooleanCondition(0, IfLoc, move(Cond));
+      if (Cond.isInvalid())
+        return getSema().StmtError();
+    }
+    
+    Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
+    return getSema().ActOnIfStmt(IfLoc, FullCond, DeclPtrTy::make(CondVar), 
                                  move(Then), ElseLoc, move(Else));
   }
 
@@ -769,9 +777,11 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  OwningStmtResult RebuildSwitchStmtStart(Sema::FullExprArg Cond, 
+  OwningStmtResult RebuildSwitchStmtStart(SourceLocation SwitchLoc,
+                                          Sema::ExprArg Cond, 
                                           VarDecl *CondVar) {
-    return getSema().ActOnStartOfSwitchStmt(Cond, DeclPtrTy::make(CondVar));
+    return getSema().ActOnStartOfSwitchStmt(SwitchLoc, move(Cond), 
+                                            DeclPtrTy::make(CondVar));
   }
 
   /// \brief Attach the body to the switch statement.
@@ -789,11 +799,19 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildWhileStmt(SourceLocation WhileLoc,
-                                    Sema::FullExprArg Cond,
+                                    Sema::ExprArg Cond,
                                     VarDecl *CondVar,
                                     StmtArg Body) {
-    return getSema().ActOnWhileStmt(WhileLoc, Cond, DeclPtrTy::make(CondVar),
-                                    move(Body));
+    if (Cond.get()) {
+      // Convert the condition to a boolean value.
+      Cond = getSema().ActOnBooleanCondition(0, WhileLoc, move(Cond));
+      if (Cond.isInvalid())
+        return getSema().StmtError();
+    }
+    
+    Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
+    return getSema().ActOnWhileStmt(WhileLoc, FullCond, 
+                                    DeclPtrTy::make(CondVar), move(Body));
   }
 
   /// \brief Build a new do-while statement.
@@ -815,10 +833,18 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildForStmt(SourceLocation ForLoc,
                                   SourceLocation LParenLoc,
-                                  StmtArg Init, Sema::FullExprArg Cond, 
+                                  StmtArg Init, Sema::ExprArg Cond, 
                                   VarDecl *CondVar, Sema::FullExprArg Inc,
                                   SourceLocation RParenLoc, StmtArg Body) {
-    return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), Cond, 
+    if (Cond.get()) {
+      // Convert the condition to a boolean value.
+      Cond = getSema().ActOnBooleanCondition(0, ForLoc, move(Cond));
+      if (Cond.isInvalid())
+        return getSema().StmtError();
+    }
+    
+    Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
+    return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), FullCond, 
                                   DeclPtrTy::make(CondVar),
                                   Inc, RParenLoc, move(Body));
   }
@@ -3491,8 +3517,6 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
       return SemaRef.StmtError();
   }
   
-  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
-
   // Transform the "then" branch.
   OwningStmtResult Then = getDerived().TransformStmt(S->getThen());
   if (Then.isInvalid())
@@ -3504,13 +3528,13 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
     return SemaRef.StmtError();
 
   if (!getDerived().AlwaysRebuild() &&
-      FullCond->get() == S->getCond() &&
+      Cond.get() == S->getCond() &&
       ConditionVar == S->getConditionVariable() &&
       Then.get() == S->getThen() &&
       Else.get() == S->getElse())
     return SemaRef.Owned(S->Retain());
 
-  return getDerived().RebuildIfStmt(S->getIfLoc(), FullCond, ConditionVar,
+  return getDerived().RebuildIfStmt(S->getIfLoc(), move(Cond), ConditionVar,
                                     move(Then),
                                     S->getElseLoc(), move(Else));
 }
@@ -3536,11 +3560,10 @@ TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
       return SemaRef.StmtError();
   }
 
-  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
-  
   // Rebuild the switch statement.
-  OwningStmtResult Switch = getDerived().RebuildSwitchStmtStart(FullCond,
-                                                                ConditionVar);
+  OwningStmtResult Switch
+    = getDerived().RebuildSwitchStmtStart(S->getSwitchLoc(), move(Cond),
+                                          ConditionVar);
   if (Switch.isInvalid())
     return SemaRef.StmtError();
 
@@ -3575,21 +3598,19 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
       return SemaRef.StmtError();
   }
 
-  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
-
   // Transform the body
   OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
   if (Body.isInvalid())
     return SemaRef.StmtError();
 
   if (!getDerived().AlwaysRebuild() &&
-      FullCond->get() == S->getCond() &&
+      Cond.get() == S->getCond() &&
       ConditionVar == S->getConditionVariable() &&
       Body.get() == S->getBody())
     return SemaRef.Owned(S->Retain());
 
-  return getDerived().RebuildWhileStmt(S->getWhileLoc(), FullCond, ConditionVar,
-                                       move(Body));
+  return getDerived().RebuildWhileStmt(S->getWhileLoc(), move(Cond),
+                                       ConditionVar, move(Body));
 }
 
 template<typename Derived>
@@ -3659,8 +3680,7 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     return SemaRef.Owned(S->Retain());
 
   return getDerived().RebuildForStmt(S->getForLoc(), S->getLParenLoc(),
-                                     move(Init), getSema().MakeFullExpr(Cond),
-                                     ConditionVar,
+                                     move(Init), move(Cond), ConditionVar,
                                      getSema().MakeFullExpr(Inc),
                                      S->getRParenLoc(), move(Body));
 }

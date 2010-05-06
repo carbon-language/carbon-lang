@@ -689,17 +689,33 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// \param DeclResult if the condition was parsed as a declaration, the
 /// parsed declaration.
 ///
+/// \param Loc The location of the start of the statement that requires this
+/// condition, e.g., the "for" in a for loop.
+///
+/// \param ConvertToBoolean Whether the condition expression should be
+/// converted to a boolean value.
+///
 /// \returns true if there was a parsing, false otherwise.
 bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
-                               DeclPtrTy &DeclResult) {
+                               DeclPtrTy &DeclResult,
+                               SourceLocation Loc,
+                               bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Condition);
     ConsumeToken();
   }
 
   if (!isCXXConditionDeclaration()) {
+    // Parse the expression.
     ExprResult = ParseExpression(); // expression
     DeclResult = DeclPtrTy();
+    if (ExprResult.isInvalid())
+      return true;
+
+    // If required, convert to a boolean value.
+    if (ConvertToBoolean)
+      ExprResult
+        = Actions.ActOnBooleanCondition(CurScope, Loc, move(ExprResult));
     return ExprResult.isInvalid();
   }
 
@@ -746,6 +762,9 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
     // FIXME: C++0x allows a braced-init-list
     Diag(Tok, diag::err_expected_equal_after_declarator);
   }
+  
+  // FIXME: Build a reference to this declaration? Convert it to bool?
+  // (This is currently handled by Sema).
   
   return false;
 }

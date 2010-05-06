@@ -105,11 +105,18 @@ public:
 
   class FullExprArg {
   public:
+    FullExprArg(ActionBase &actions) : Expr(actions) { }
+                
     // FIXME: The const_cast here is ugly. RValue references would make this
     // much nicer (or we could duplicate a bunch of the move semantics
     // emulation code from Ownership.h).
     FullExprArg(const FullExprArg& Other)
       : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
+
+    FullExprArg &operator=(const FullExprArg& Other) {
+      Expr = move(const_cast<FullExprArg&>(Other).Expr);
+      return *this;
+    }
 
     OwningExprResult release() {
       return move(Expr);
@@ -826,21 +833,19 @@ public:
 
   /// \brief Parsed the start of a "switch" statement.
   ///
+  /// \param SwitchLoc The location of the "switch" keyword.
+  ///
   /// \param Cond if the "switch" condition was parsed as an expression, 
   /// the expression itself.
   ///
   /// \param CondVar if the "switch" condition was parsed as a condition 
   /// variable, the condition variable itself.
-  virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond,
+  virtual OwningStmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
+                                                  ExprArg Cond,
                                                   DeclPtrTy CondVar) {
     return StmtEmpty();
   }
 
-  /// ActOnSwitchBodyError - This is called if there is an error parsing the
-  /// body of the switch stmt instead of ActOnFinishSwitchStmt.
-  virtual void ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
-                                    StmtArg Body) {}
-  
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body) {
     return StmtEmpty();
@@ -1609,6 +1614,22 @@ public:
     return DeclResult();
   }
 
+  /// \brief Parsed an expression that will be handled as the condition in
+  /// an if/while/for statement. 
+  ///
+  /// This routine handles the conversion of the expression to 'bool'.
+  ///
+  /// \param S The scope in which the expression occurs.
+  ///
+  /// \param Loc The location of the construct that requires the conversion to
+  /// a boolean value.
+  ///
+  /// \param SubExpr The expression that is being converted to bool.
+  virtual OwningExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                                 ExprArg SubExpr) {
+    return move(SubExpr);
+  }
+  
   /// ActOnCXXNew - Parsed a C++ 'new' expression. UseGlobal is true if the
   /// new was qualified (::new). In a full new like
   /// @code new (p1, p2) type(c1, c2) @endcode

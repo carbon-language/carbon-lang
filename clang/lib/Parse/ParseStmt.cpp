@@ -536,15 +536,23 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// successfully parsed.  Note that a successful parse can still have semantic
 /// errors in the condition.
 bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
-                                       DeclPtrTy &DeclResult) {
+                                       DeclPtrTy &DeclResult,
+                                       SourceLocation Loc,
+                                       bool ConvertToBoolean) {
   bool ParseError = false;
   
   SourceLocation LParenLoc = ConsumeParen();
   if (getLang().CPlusPlus) 
-    ParseError = ParseCXXCondition(ExprResult, DeclResult);
+    ParseError = ParseCXXCondition(ExprResult, DeclResult, Loc, 
+                                   ConvertToBoolean);
   else {
     ExprResult = ParseExpression();
     DeclResult = DeclPtrTy();
+    
+    // If required, convert to a boolean value.
+    if (!ExprResult.isInvalid() && ConvertToBoolean)
+      ExprResult
+        = Actions.ActOnBooleanCondition(CurScope, Loc, move(ExprResult));
   }
 
   // If the parser was confused by the condition and we don't have a ')', try to
@@ -603,7 +611,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   // Parse the condition.
   OwningExprResult CondExp(Actions);
   DeclPtrTy CondVar;
-  if (ParseParenExprOrCondition(CondExp, CondVar))
+  if (ParseParenExprOrCondition(CondExp, CondVar, IfLoc, true))
     return StmtError();
 
   FullExprArg FullCondExp(Actions.MakeFullExpr(CondExp));
@@ -735,13 +743,24 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   // Parse the condition.
   OwningExprResult Cond(Actions);
   DeclPtrTy CondVar;
-  if (ParseParenExprOrCondition(Cond, CondVar))
+  if (ParseParenExprOrCondition(Cond, CondVar, SwitchLoc, false))
     return StmtError();
 
-  FullExprArg FullCond(Actions.MakeFullExpr(Cond));
-  
-  OwningStmtResult Switch = Actions.ActOnStartOfSwitchStmt(FullCond, CondVar);
+  OwningStmtResult Switch
+    = Actions.ActOnStartOfSwitchStmt(SwitchLoc, move(Cond), CondVar);
 
+  if (Switch.isInvalid()) {
+    // Skip the switch body. 
+    // FIXME: This is not optimal recovery, but parsing the body is more
+    // dangerous due to the presence of case and default statements, which
+    // will have no place to connect back with the switch.
+    if (Tok.is(tok::l_brace))
+      MatchRHSPunctuation(tok::r_brace, ConsumeBrace());
+    else
+      SkipUntil(tok::semi);
+    return move(Switch);
+  }
+  
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
@@ -762,11 +781,6 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   // Pop the scopes.
   InnerScope.Exit();
   SwitchScope.Exit();
-
-  if (Cond.isInvalid() && !CondVar.get()) {
-    Actions.ActOnSwitchBodyError(SwitchLoc, move(Switch), move(Body));
-    return StmtError();
-  }
 
   if (Body.isInvalid())
     // FIXME: Remove the case statement list from the Switch statement.
@@ -818,7 +832,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   // Parse the condition.
   OwningExprResult Cond(Actions);
   DeclPtrTy CondVar;
-  if (ParseParenExprOrCondition(Cond, CondVar))
+  if (ParseParenExprOrCondition(Cond, CondVar, WhileLoc, true))
     return StmtError();
 
   FullExprArg FullCond(Actions.MakeFullExpr(Cond));
@@ -975,7 +989,9 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
 
   bool ForEach = false;
   OwningStmtResult FirstPart(Actions);
-  OwningExprResult SecondPart(Actions), ThirdPart(Actions);
+  FullExprArg SecondPart(Actions);
+  OwningExprResult Collection(Actions);
+  FullExprArg ThirdPart(Actions);
   DeclPtrTy SecondVar;
   
   if (Tok.is(tok::code_completion)) {
@@ -1009,7 +1025,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
       Actions.ActOnForEachDeclStmt(DG);
       // ObjC: for (id x in expr)
       ConsumeToken(); // consume 'in'
-      SecondPart = ParseExpression();
+      Collection = ParseExpression();
     } else {
       Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
@@ -1025,35 +1041,43 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
       ConsumeToken();
     } else if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
-      SecondPart = ParseExpression();
+      Collection = ParseExpression();
     } else {
       if (!Value.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
   }
   if (!ForEach) {
-    assert(!SecondPart.get() && "Shouldn't have a second expression yet.");
+    assert(!SecondPart->get() && "Shouldn't have a second expression yet.");
     // Parse the second part of the for specifier.
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
     } else {
+      OwningExprResult Second(Actions);
       if (getLang().CPlusPlus)
-        ParseCXXCondition(SecondPart, SecondVar);
-      else
-        SecondPart = ParseExpression();
+        ParseCXXCondition(Second, SecondVar, ForLoc, true);
+      else {
+        Second = ParseExpression();
+        if (!Second.isInvalid())
+          Second = Actions.ActOnBooleanCondition(CurScope, ForLoc, 
+                                                 move(Second));
+      }
+      SecondPart = Actions.MakeFullExpr(Second);
     }
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
-      if (!SecondPart.isInvalid() || SecondVar.get()) 
+      if (!SecondPart->isInvalid() || SecondVar.get()) 
         Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
 
     // Parse the third part of the for specifier.
-    if (Tok.isNot(tok::r_paren))    // for (...;...;)
-      ThirdPart = ParseExpression();
+    if (Tok.isNot(tok::r_paren)) {   // for (...;...;)
+      OwningExprResult Third = ParseExpression();
+      ThirdPart = Actions.MakeFullExpr(Third);
+    }
   }
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
@@ -1085,15 +1109,14 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
     return StmtError();
 
   if (!ForEach)
-    return Actions.ActOnForStmt(ForLoc, LParenLoc, move(FirstPart),
-                                Actions.MakeFullExpr(SecondPart), SecondVar,
-                                Actions.MakeFullExpr(ThirdPart), RParenLoc, 
-                                move(Body));
+    return Actions.ActOnForStmt(ForLoc, LParenLoc, move(FirstPart), SecondPart,
+                                SecondVar, ThirdPart, RParenLoc, move(Body));
 
-  return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                            move(FirstPart),
-                                            move(SecondPart),
-                                            RParenLoc, move(Body));
+  // FIXME: It isn't clear how to communicate the late destruction of 
+  // C++ temporaries used to create the collection.
+  return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc, move(FirstPart), 
+                                            move(Collection), RParenLoc, 
+                                            move(Body));
 }
 
 /// ParseGotoStatement

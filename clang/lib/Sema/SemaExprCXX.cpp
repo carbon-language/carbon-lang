@@ -1437,7 +1437,9 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
 /// \brief Check the use of the given variable as a C++ condition in an if,
 /// while, do-while, or switch statement.
-Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
+Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
+                                                      SourceLocation StmtLoc,
+                                                      bool ConvertToBoolean) {
   QualType T = ConditionVar->getType();
   
   // C++ [stmt.select]p2:
@@ -1451,9 +1453,15 @@ Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
                           diag::err_invalid_use_of_array_type)
                      << ConditionVar->getSourceRange());
 
-  return Owned(DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
-                                   ConditionVar->getLocation(), 
-                                ConditionVar->getType().getNonReferenceType()));
+  Expr *Condition = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+                                        ConditionVar->getLocation(), 
+                                 ConditionVar->getType().getNonReferenceType());
+  if (ConvertToBoolean && CheckBooleanCondition(Condition, StmtLoc)) {
+    Condition->Destroy(Context);
+    return ExprError();
+  }
+  
+  return Owned(Condition);
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
@@ -2941,6 +2949,9 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
 }
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
+  if (Arg.isInvalid())
+    return ExprError();
+
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)
     FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr);

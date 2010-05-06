@@ -280,7 +280,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
   VarDecl *ConditionVar = 0;
   if (CondVar.get()) {
     ConditionVar = CondVar.getAs<VarDecl>();
-    CondResult = CheckConditionVariable(ConditionVar);
+    CondResult = CheckConditionVariable(ConditionVar, IfLoc, true);
     if (CondResult.isInvalid())
       return StmtError();
   }
@@ -288,11 +288,6 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
   if (!ConditionExpr)
     return StmtError();
   
-  if (CheckBooleanCondition(ConditionExpr, IfLoc)) {
-    CondResult = ConditionExpr;
-    return StmtError();
-  }
-
   Stmt *thenStmt = ThenVal.takeAs<Stmt>();
   DiagnoseUnusedExprResult(thenStmt);
 
@@ -311,23 +306,6 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
   CondResult.release();
   return Owned(new (Context) IfStmt(IfLoc, ConditionVar, ConditionExpr, 
                                     thenStmt, ElseLoc, elseStmt));
-}
-
-Action::OwningStmtResult
-Sema::ActOnStartOfSwitchStmt(FullExprArg cond, DeclPtrTy CondVar) {
-  OwningExprResult CondResult(cond.release());
-  
-  VarDecl *ConditionVar = 0;
-  if (CondVar.get()) {
-    ConditionVar = CondVar.getAs<VarDecl>();
-    CondResult = CheckConditionVariable(ConditionVar);
-    if (CondResult.isInvalid())
-      return StmtError();
-  }
-  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, 
-                                            CondResult.takeAs<Expr>());
-  getSwitchStack().push_back(SS);
-  return Owned(SS);
 }
 
 /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
@@ -540,14 +518,34 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
   return false;
 }
 
-/// ActOnSwitchBodyError - This is called if there is an error parsing the
-/// body of the switch stmt instead of ActOnFinishSwitchStmt.
-void Sema::ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
-                                StmtArg Body) {
-  // Keep the switch stack balanced.
-  assert(getSwitchStack().back() == (SwitchStmt*)Switch.get() &&
-         "switch stack missing push/pop!");
-  getSwitchStack().pop_back();
+Action::OwningStmtResult
+Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond, 
+                             DeclPtrTy CondVar) {
+  VarDecl *ConditionVar = 0;
+  if (CondVar.get()) {
+    ConditionVar = CondVar.getAs<VarDecl>();
+    Cond = CheckConditionVariable(ConditionVar, SourceLocation(), false);
+    if (Cond.isInvalid())
+      return StmtError();
+  }
+  
+  Expr *CondExpr = Cond.takeAs<Expr>();
+  if (!CondExpr)
+    return StmtError();
+  
+  if (getLangOptions().CPlusPlus && 
+      CheckCXXSwitchCondition(*this, SwitchLoc, CondExpr))
+    return StmtError();  
+
+  if (!CondVar.get()) {
+    CondExpr = MaybeCreateCXXExprWithTemporaries(CondExpr);
+    if (!CondExpr)
+      return StmtError();
+  }
+    
+  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, CondExpr);
+  getSwitchStack().push_back(SS);
+  return Owned(SS);
 }
 
 Action::OwningStmtResult
@@ -569,10 +567,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   Expr *CondExpr = SS->getCond();
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);
-
-  if (getLangOptions().CPlusPlus &&
-      CheckCXXSwitchCondition(*this, SwitchLoc, CondExpr))
-    return StmtError();
 
   // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
   UsualUnaryConversions(CondExpr);
@@ -870,7 +864,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   VarDecl *ConditionVar = 0;
   if (CondVar.get()) {
     ConditionVar = CondVar.getAs<VarDecl>();
-    CondResult = CheckConditionVariable(ConditionVar);
+    CondResult = CheckConditionVariable(ConditionVar, WhileLoc, true);
     if (CondResult.isInvalid())
       return StmtError();
   }
@@ -878,11 +872,6 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   if (!ConditionExpr)
     return StmtError();
   
-  if (CheckBooleanCondition(ConditionExpr, WhileLoc)) {
-    CondResult = ConditionExpr;
-    return StmtError();
-  }
-
   Stmt *bodyStmt = Body.takeAs<Stmt>();
   DiagnoseUnusedExprResult(bodyStmt);
 
@@ -903,6 +892,10 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
     return StmtError();
   }
 
+  condExpr = MaybeCreateCXXExprWithTemporaries(condExpr);
+  if (!condExpr)
+    return StmtError();
+  
   Stmt *bodyStmt = Body.takeAs<Stmt>();
   DiagnoseUnusedExprResult(bodyStmt);
 
@@ -939,17 +932,11 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   VarDecl *ConditionVar = 0;
   if (secondVar.get()) {
     ConditionVar = secondVar.getAs<VarDecl>();
-    SecondResult = CheckConditionVariable(ConditionVar);
+    SecondResult = CheckConditionVariable(ConditionVar, ForLoc, true);
     if (SecondResult.isInvalid())
       return StmtError();
   }
   
-  Expr *Second = SecondResult.takeAs<Expr>();
-  if (Second && CheckBooleanCondition(Second, ForLoc)) {
-    SecondResult = Second;
-    return StmtError();
-  }
-
   Expr *Third  = third.release().takeAs<Expr>();
   Stmt *Body  = static_cast<Stmt*>(body.get());
   
@@ -959,7 +946,8 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 
   first.release();
   body.release();
-  return Owned(new (Context) ForStmt(First, Second, ConditionVar, Third, Body, 
+  return Owned(new (Context) ForStmt(First, SecondResult.takeAs<Expr>(), 
+                                     ConditionVar, Third, Body, 
                                      ForLoc, LParenLoc, RParenLoc));
 }
 

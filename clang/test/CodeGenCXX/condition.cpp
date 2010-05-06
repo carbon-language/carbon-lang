@@ -23,6 +23,8 @@ struct Y {
   ~Y();
 };
 
+X getX();
+
 void if_destruct(int z) {
   // Verify that the condition variable is destroyed at the end of the
   // "if" statement.
@@ -44,6 +46,14 @@ void if_destruct(int z) {
   // CHECK: call  void @_ZN1YD1Ev
   // CHECK: br
   // CHECK: call  void @_ZN1XD1Ev
+
+  // CHECK: call void @_Z4getXv
+  // CHECK: call zeroext i1 @_ZN1XcvbEv
+  // CHECK: call void @_ZN1XD1Ev
+  // CHECK: br
+  if (getX()) { }
+
+  // CHECK: ret
 }
 
 struct ConvertibleToInt {
@@ -51,6 +61,8 @@ struct ConvertibleToInt {
   ~ConvertibleToInt();
   operator int();
 };
+
+ConvertibleToInt getConvToInt();
 
 void switch_destruct(int z) {
   // CHECK: call void @_ZN16ConvertibleToIntC1Ev
@@ -68,6 +80,17 @@ void switch_destruct(int z) {
   // CHECK: call void @_ZN16ConvertibleToIntD1Ev
   // CHECK: store i32 20
   z = 20;
+
+  // CHECK: call void @_Z12getConvToIntv
+  // CHECK: call i32 @_ZN16ConvertibleToIntcviEv
+  // CHECK: call void @_ZN16ConvertibleToIntD1Ev
+  switch(getConvToInt()) {
+  case 0:
+    break;
+  }
+  // CHECK: store i32 27
+  z = 27;
+  // CHECK: ret
 }
 
 int foo();
@@ -88,6 +111,17 @@ void while_destruct(int z) {
   // CHECK: {{while.end|:7}}
   // CHECK: store i32 22
   z = 22;
+
+  // CHECK: call void @_Z4getXv
+  // CHECK: call zeroext i1 @_ZN1XcvbEv
+  // CHECK: call void @_ZN1XD1Ev
+  // CHECK: br
+  while(getX()) { }
+
+  // CHECK: store i32 25
+  z = 25;
+
+  // CHECK: ret
 }
 
 void for_destruct(int z) {
@@ -107,4 +141,33 @@ void for_destruct(int z) {
   // CHECK: call void @_ZN1YD1Ev
   // CHECK: store i32 24
   z = 24;
+
+  // CHECK: call void @_Z4getXv
+  // CHECK: call zeroext i1 @_ZN1XcvbEv
+  // CHECK: call void @_ZN1XD1Ev
+  // CHECK: br
+  // CHECK: call void @_Z4getXv
+  // CHECK: load
+  // CHECK: add
+  // CHECK: call void @_ZN1XD1Ev
+  int i = 0;
+  for(; getX(); getX(), ++i) { }
+  z = 26;
+  // CHECK: store i32 26
+  // CHECK: ret
+}
+
+void do_destruct(int z) {
+  // CHECK: define void @_Z11do_destruct
+  do {
+    // CHECK: store i32 77
+    z = 77;
+    // CHECK: call void @_Z4getXv
+    // CHECK: call zeroext i1 @_ZN1XcvbEv
+    // CHECK: call void @_ZN1XD1Ev
+    // CHECK: br
+  } while (getX());
+  // CHECK: store i32 99
+  z = 99;
+  // CHECK: ret
 }

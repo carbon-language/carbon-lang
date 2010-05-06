@@ -1004,7 +1004,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while condition expression.
-  bool ParseCXXCondition(OwningExprResult &ExprResult, DeclPtrTy &DeclResult);
+  bool ParseCXXCondition(OwningExprResult &ExprResult, DeclPtrTy &DeclResult,
+                         SourceLocation Loc, bool ConvertToBoolean);
 
   //===--------------------------------------------------------------------===//
   // C++ types
@@ -1060,7 +1061,9 @@ private:
                                           bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(OwningExprResult &ExprResult,
-                                 DeclPtrTy &DeclResult);
+                                 DeclPtrTy &DeclResult,
+                                 SourceLocation Loc,
+                                 bool ConvertToBoolean);
   OwningStmtResult ParseIfStatement(AttributeList *Attr);
   OwningStmtResult ParseSwitchStatement(AttributeList *Attr);
   OwningStmtResult ParseWhileStatement(AttributeList *Attr);
