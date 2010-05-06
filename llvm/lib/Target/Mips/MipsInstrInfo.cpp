@@ -131,10 +131,8 @@ bool MipsInstrInfo::
 copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              unsigned DestReg, unsigned SrcReg,
              const TargetRegisterClass *DestRC,
-             const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
-  
-  if (I != MBB.end()) DL = I->getDebugLoc();
+             const TargetRegisterClass *SrcRC,
+             DebugLoc DL) const {
 
   if (DestRC != SrcRC) {
 
@@ -625,7 +623,8 @@ unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   GlobalBaseReg = RegInfo.createVirtualRegister(Mips::CPURegsRegisterClass);
   bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, Mips::GP,
                               Mips::CPURegsRegisterClass,
-                              Mips::CPURegsRegisterClass);
+                              Mips::CPURegsRegisterClass,
+                              DebugLoc());
   assert(Ok && "Couldn't assign to global base register!");
   Ok = Ok; // Silence warning when assertions are turned off.
   RegInfo.addLiveIn(Mips::GP);

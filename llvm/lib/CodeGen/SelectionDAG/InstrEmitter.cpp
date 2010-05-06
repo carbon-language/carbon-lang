@@ -143,7 +143,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
     // Create the reg, emit the copy.
     VRBase = MRI->createVirtualRegister(DstRC);
     bool Emitted = TII->copyRegToReg(*MBB, InsertPos, VRBase, SrcReg,
-                                     DstRC, SrcRC);
+                                     DstRC, SrcRC, Node->getDebugLoc());
 
     assert(Emitted && "Unable to issue a copy instruction!\n");
     (void) Emitted;
@@ -289,7 +289,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     if (DstRC && SrcRC != DstRC && !SrcRC->hasSuperClass(DstRC)) {
       unsigned NewVReg = MRI->createVirtualRegister(DstRC);
       bool Emitted = TII->copyRegToReg(*MBB, InsertPos, NewVReg, VReg,
-                                       DstRC, SrcRC);
+                                       DstRC, SrcRC, Op.getNode()->getDebugLoc());
       assert(Emitted && "Unable to issue a copy instruction!\n");
       (void) Emitted;
       VReg = NewVReg;
@@ -503,7 +503,7 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
   // Create the new VReg in the destination class and emit a copy.
   unsigned NewVReg = MRI->createVirtualRegister(DstRC);
   bool Emitted = TII->copyRegToReg(*MBB, InsertPos, NewVReg, VReg,
-                                   DstRC, SrcRC);
+                                   DstRC, SrcRC, Node->getDebugLoc());
   assert(Emitted &&
          "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
   (void) Emitted;
@@ -749,7 +749,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
                                             Node->getOperand(1).getValueType());
 
     bool Emitted = TII->copyRegToReg(*MBB, InsertPos, DestReg, SrcReg,
-                                     DstTRC, SrcTRC);
+                                     DstTRC, SrcTRC, Node->getDebugLoc());
     assert(Emitted && "Unable to issue a copy instruction!\n");
     (void) Emitted;
     break;

@@ -138,9 +138,8 @@ bool BlackfinInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      unsigned DestReg,
                                      unsigned SrcReg,
                                      const TargetRegisterClass *DestRC,
-                                     const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
-
+                                     const TargetRegisterClass *SrcRC,
+                                     DebugLoc DL) const {
   if (inClass(BF::ALLRegClass, DestReg, DestRC) &&
       inClass(BF::ALLRegClass, SrcReg,  SrcRC)) {
     BuildMI(MBB, I, DL, get(BF::MOVE), DestReg).addReg(SrcReg);

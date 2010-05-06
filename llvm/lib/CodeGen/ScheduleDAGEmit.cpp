@@ -51,7 +51,8 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
         }
       }
       bool Success = TII->copyRegToReg(*BB, InsertPos, Reg, VRI->second,
-                                       SU->CopyDstRC, SU->CopySrcRC);
+                                       SU->CopyDstRC, SU->CopySrcRC,
+                                       DebugLoc());
       (void)Success;
       assert(Success && "copyRegToReg failed!");
     } else {
@@ -62,7 +63,8 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
       isNew = isNew; // Silence compiler warning.
       assert(isNew && "Node emitted out of order - early");
       bool Success = TII->copyRegToReg(*BB, InsertPos, VRBase, I->getReg(),
-                                       SU->CopyDstRC, SU->CopySrcRC);
+                                       SU->CopyDstRC, SU->CopySrcRC,
+                                       DebugLoc());
       (void)Success;
       assert(Success && "copyRegToReg failed!");
     }

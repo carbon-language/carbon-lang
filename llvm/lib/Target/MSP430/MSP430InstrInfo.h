@@ -52,7 +52,8 @@ public:
   bool copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *DestRC,
-                    const TargetRegisterClass *SrcRC) const;
+                    const TargetRegisterClass *SrcRC,
+                    DebugLoc DL) const;
 
   bool isMoveInstr(const MachineInstr& MI,
                    unsigned &SrcReg, unsigned &DstReg,

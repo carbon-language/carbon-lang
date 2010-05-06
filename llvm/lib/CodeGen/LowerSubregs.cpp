@@ -140,7 +140,8 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
     // Insert copy
     const TargetRegisterClass *TRCS = TRI->getPhysicalRegisterRegClass(DstReg);
     const TargetRegisterClass *TRCD = TRI->getPhysicalRegisterRegClass(SrcReg);
-    bool Emitted = TII->copyRegToReg(*MBB, MI, DstReg, SrcReg, TRCD, TRCS);
+    bool Emitted = TII->copyRegToReg(*MBB, MI, DstReg, SrcReg, TRCD, TRCS,
+                                     MI->getDebugLoc());
     (void)Emitted;
     assert(Emitted && "Subreg and Dst must be of compatible register class");
     // Transfer the kill/dead flags, if needed.
@@ -193,7 +194,8 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
     // Insert sub-register copy
     const TargetRegisterClass *TRC0= TRI->getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI->getPhysicalRegisterRegClass(InsReg);
-    bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1,
+                                     MI->getDebugLoc());
     (void)Emitted;
     assert(Emitted && "Subreg and Dst must be of compatible register class");
     // Transfer the kill/dead flags, if needed.
@@ -262,7 +264,8 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       BuildMI(*MBB, MI, MI->getDebugLoc(),
               TII->get(TargetOpcode::KILL), DstSubReg);
     else {
-      bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+      bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1,
+                                       MI->getDebugLoc());
       (void)Emitted;
       assert(Emitted && "Subreg and Dst must be of compatible register class");
     }

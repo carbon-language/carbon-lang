@@ -121,9 +121,8 @@ bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator I,
                                     unsigned DestReg, unsigned SrcReg,
                                     const TargetRegisterClass *DestRC,
-                                    const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
+                                    const TargetRegisterClass *SrcRC,
+                                    DebugLoc DL) const {
 
   // Determine if DstRC and SrcRC have a common superclass.
   const TargetRegisterClass *CommonRC = DestRC;

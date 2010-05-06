@@ -315,7 +315,8 @@ public:
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,
-                            const TargetRegisterClass *SrcRC) const {
+                            const TargetRegisterClass *SrcRC,
+                            DebugLoc DL) const {
     assert(0 && "Target didn't implement TargetInstrInfo::copyRegToReg!");
     return false;
   }

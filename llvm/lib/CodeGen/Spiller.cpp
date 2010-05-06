@@ -336,7 +336,8 @@ private:
       // Insert a copy at the start of the MBB. The range proceeding the
       // copy will be attached to the original LiveInterval.
       MachineBasicBlock *defMBB = lis->getMBBFromIndex(newVNI->def);
-      tii->copyRegToReg(*defMBB, defMBB->begin(), newVReg, li->reg, trc, trc);
+      tii->copyRegToReg(*defMBB, defMBB->begin(), newVReg, li->reg, trc, trc,
+                        DebugLoc());
       MachineInstr *copyMI = defMBB->begin();
       copyMI->addRegisterKilled(li->reg, tri);
       SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
@@ -389,7 +390,8 @@ private:
 
       if (isTwoAddr && !twoAddrUseIsUndef) {
         MachineBasicBlock *defMBB = defInst->getParent();
-        tii->copyRegToReg(*defMBB, defInst, newVReg, li->reg, trc, trc);
+        tii->copyRegToReg(*defMBB, defInst, newVReg, li->reg, trc, trc,
+                          DebugLoc());
         MachineInstr *copyMI = prior(MachineBasicBlock::iterator(defInst));
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
         copyMI->addRegisterKilled(li->reg, tri);
@@ -449,7 +451,8 @@ private:
         // reg.
         MachineBasicBlock *useMBB = useInst->getParent();
         MachineBasicBlock::iterator useItr(useInst);
-        tii->copyRegToReg(*useMBB, next(useItr), li->reg, newVReg, trc, trc);
+        tii->copyRegToReg(*useMBB, next(useItr), li->reg, newVReg, trc, trc,
+                          DebugLoc());
         MachineInstr *copyMI = next(useItr);
         copyMI->addRegisterKilled(newVReg, tri);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
@@ -486,7 +489,8 @@ private:
         assert(oldKillRange != 0 && "No kill range?");
 
         tii->copyRegToReg(*killMBB, killMBB->getFirstTerminator(),
-                          li->reg, newVReg, trc, trc);
+                          li->reg, newVReg, trc, trc,
+                          DebugLoc());
         MachineInstr *copyMI = prior(killMBB->getFirstTerminator());
         copyMI->addRegisterKilled(newVReg, tri);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);

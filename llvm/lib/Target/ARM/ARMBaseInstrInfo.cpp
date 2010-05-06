@@ -657,10 +657,8 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I,
                                unsigned DestReg, unsigned SrcReg,
                                const TargetRegisterClass *DestRC,
-                               const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
-
+                               const TargetRegisterClass *SrcRC,
+                               DebugLoc DL) const {
   // tGPR is used sometimes in ARM instructions that need to avoid using
   // certain registers.  Just treat it as GPR here.
   if (DestRC == ARM::tGPRRegisterClass)

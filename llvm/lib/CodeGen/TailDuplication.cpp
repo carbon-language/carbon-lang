@@ -561,7 +561,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
       const TargetRegisterClass *RC = MRI->getRegClass(CopyInfos[i].first);
       TII->copyRegToReg(*PredBB, Loc, CopyInfos[i].first,
-                        CopyInfos[i].second, RC,RC);
+                        CopyInfos[i].second, RC,RC, DebugLoc());
       MachineInstr *CopyMI = prior(Loc);
       Copies.push_back(CopyMI);
     }
@@ -620,7 +620,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
       for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
         const TargetRegisterClass *RC = MRI->getRegClass(CopyInfos[i].first);
         TII->copyRegToReg(*PrevBB, Loc, CopyInfos[i].first,
-                          CopyInfos[i].second, RC, RC);
+                          CopyInfos[i].second, RC, RC, DebugLoc());
         MachineInstr *CopyMI = prior(Loc);
         Copies.push_back(CopyMI);
       }

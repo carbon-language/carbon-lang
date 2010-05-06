@@ -361,9 +361,8 @@ bool XCoreInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned DestReg, unsigned SrcReg,
                                   const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
+                                  const TargetRegisterClass *SrcRC,
+                                  DebugLoc DL) const {
 
   if (DestRC == SrcRC) {
     if (DestRC == XCore::GRRegsRegisterClass) {

@@ -122,14 +122,12 @@ bool SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned DestReg, unsigned SrcReg,
                                   const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC) const {
+                                  const TargetRegisterClass *SrcRC,
+                                  DebugLoc DL) const {
   if (DestRC != SrcRC) {
     // Not yet supported!
     return false;
   }
-
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC == SP::IntRegsRegisterClass)
     BuildMI(MBB, I, DL, get(SP::ORrr), DestReg).addReg(SP::G0).addReg(SrcReg);

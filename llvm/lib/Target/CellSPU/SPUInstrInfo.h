@@ -60,7 +60,8 @@ namespace llvm {
                               MachineBasicBlock::iterator MI,
                               unsigned DestReg, unsigned SrcReg,
                               const TargetRegisterClass *DestRC,
-                              const TargetRegisterClass *SrcRC) const;
+                              const TargetRegisterClass *SrcRC,
+                              DebugLoc DL) const;
 
     //! Store a register to a stack slot, based on its register class.
     virtual void storeRegToStackSlot(MachineBasicBlock &MBB,

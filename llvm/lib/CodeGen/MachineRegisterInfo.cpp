@@ -218,7 +218,8 @@ static void EmitLiveInCopy(MachineBasicBlock *MBB,
     --Pos;
   }
 
-  bool Emitted = TII.copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
+  bool Emitted = TII.copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC,
+                                  DebugLoc());
   assert(Emitted && "Unable to issue a live-in copy instruction!\n");
   (void) Emitted;
 
@@ -253,7 +254,8 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
       if (LI->second) {
         const TargetRegisterClass *RC = getRegClass(LI->second);
         bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
-                                        LI->second, LI->first, RC, RC);
+                                        LI->second, LI->first, RC, RC,
+                                        DebugLoc());
         assert(Emitted && "Unable to issue a live-in copy instruction!\n");
         (void) Emitted;
       }

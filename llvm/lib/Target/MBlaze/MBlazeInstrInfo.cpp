@@ -114,8 +114,8 @@ bool MBlazeInstrInfo::
 copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              unsigned DestReg, unsigned SrcReg,
              const TargetRegisterClass *DestRC,
-             const TargetRegisterClass *SrcRC) const {
-  DebugLoc DL;
+             const TargetRegisterClass *SrcRC,
+             DebugLoc DL) const {
   llvm::BuildMI(MBB, I, DL, get(MBlaze::ADD), DestReg)
       .addReg(SrcReg).addReg(MBlaze::R0);
   return true;
@@ -211,7 +211,8 @@ unsigned MBlazeInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   GlobalBaseReg = RegInfo.createVirtualRegister(MBlaze::CPURegsRegisterClass);
   bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, MBlaze::R20,
                               MBlaze::CPURegsRegisterClass,
-                              MBlaze::CPURegsRegisterClass);
+                              MBlaze::CPURegsRegisterClass,
+                              DebugLoc());
   assert(Ok && "Couldn't assign to global base register!");
   Ok = Ok; // Silence warning when assertions are turned off.
   RegInfo.addLiveIn(MBlaze::R20);

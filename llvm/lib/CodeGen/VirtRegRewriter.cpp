@@ -1794,7 +1794,8 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
         ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat, SSorRMId, TII,
                          *MBB->getParent());
 
-      TII->copyRegToReg(*MBB, InsertLoc, Phys, InReg, RC, RC);
+      TII->copyRegToReg(*MBB, InsertLoc, Phys, InReg, RC, RC,
+                        MI->getDebugLoc());
 
       // This invalidates Phys.
       Spills.ClobberPhysReg(Phys);
@@ -2139,7 +2140,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           ComputeReloadLoc(&MI, MBB->begin(), PhysReg, TRI, DoReMat,
                            SSorRMId, TII, MF);
 
-        TII->copyRegToReg(*MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC);
+        TII->copyRegToReg(*MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC,
+                          MI.getDebugLoc());
 
         MachineInstr *CopyMI = prior(InsertLoc);
         CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
@@ -2263,7 +2265,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
             DEBUG(dbgs() << "Promoted Load To Copy: " << MI);
             if (DestReg != InReg) {
               const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-              TII->copyRegToReg(*MBB, &MI, DestReg, InReg, RC, RC);
+              TII->copyRegToReg(*MBB, &MI, DestReg, InReg, RC, RC,
+                                MI.getDebugLoc());
               MachineOperand *DefMO = MI.findRegisterDefOperand(DestReg);
               unsigned SubIdx = DefMO->getSubReg();
               // Revisit the copy so we make sure to notice the effects of the

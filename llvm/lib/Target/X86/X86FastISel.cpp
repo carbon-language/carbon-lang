@@ -1019,7 +1019,7 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
   
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
   if (Op1Reg == 0) return false;
-  TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC);
+  TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC, DL);
 
   // The shift instruction uses X86::CL. If we defined a super-register
   // of X86::CL, emit an EXTRACT_SUBREG to precisely describe what
@@ -1447,7 +1447,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     if (VA.isRegLoc()) {
       TargetRegisterClass* RC = TLI.getRegClassFor(ArgVT);
       bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), VA.getLocReg(),
-                                      Arg, RC, RC);
+                                      Arg, RC, RC, DL);
       assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
       Emitted = true;
       RegArgs.push_back(VA.getLocReg());
@@ -1473,7 +1473,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (Subtarget->isPICStyleGOT()) {
     TargetRegisterClass *RC = X86::GR32RegisterClass;
     unsigned Base = getInstrInfo()->getGlobalBaseReg(&MF);
-    bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC);
+    bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC,
+                                    DL);
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
     Emitted = true;
   }
@@ -1552,7 +1553,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
     unsigned ResultReg = createResultReg(DstRC);
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                    RVLocs[0].getLocReg(), DstRC, SrcRC);
+                                    RVLocs[0].getLocReg(), DstRC, SrcRC, DL);
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
     Emitted = true;
     if (CopyVT != RVLocs[0].getValVT()) {

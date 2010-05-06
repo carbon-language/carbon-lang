@@ -433,7 +433,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
                      << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
                      << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
                      << (*Memo.PhysRegs)[i] << "), "
-                     << "MRI.getRegClass(Op" << i << "));\n";
+                     << "MRI.getRegClass(Op" << i << "), DL);\n";
               }
               
               OS << "  return FastEmitInst_";
@@ -527,7 +527,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
                      << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
                      << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
                      << (*Memo.PhysRegs)[i] << "), "
-                     << "MRI.getRegClass(Op" << i << "));\n";
+                     << "MRI.getRegClass(Op" << i << "), DL);\n";
               }
             
             OS << "  return FastEmitInst_";

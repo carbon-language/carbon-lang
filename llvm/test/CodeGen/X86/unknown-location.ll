@@ -6,9 +6,7 @@
 ; which indicates that the add's location doesn't spill over unto the
 ; divide.
 
-;      CHECK: Ltmp
-;      CHECK:         movl    %edx, %r8d
-; CHECK-NEXT:         leal    (%rdi,%rsi), %eax
+;      CHECK:         leal    (%rdi,%rsi), %eax
 ; CHECK-NEXT: Ltmp
 ; CHECK-NEXT:         cltd
 ; CHECK-NEXT:         idivl   %r8d

@@ -607,7 +607,8 @@ StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       DEBUG(MI->dump());
       ++NumLoadElim;
     } else {
-      TII->copyRegToReg(*MBB, MI, DstReg, Reg, RC, RC);
+      TII->copyRegToReg(*MBB, MI, DstReg, Reg, RC, RC,
+                        MI->getDebugLoc());
       ++NumRegRepl;
     }
 
@@ -623,7 +624,8 @@ StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       DEBUG(MI->dump());
       ++NumStoreElim;
     } else {
-      TII->copyRegToReg(*MBB, MI, Reg, SrcReg, RC, RC);
+      TII->copyRegToReg(*MBB, MI, Reg, SrcReg, RC, RC,
+                        MI->getDebugLoc());
       ++NumRegRepl;
     }
 

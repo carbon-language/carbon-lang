@@ -185,7 +185,7 @@ unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
   else if (Reg != AssignedReg) {
     const TargetRegisterClass *RegClass = MRI.getRegClass(Reg);
     TII.copyRegToReg(*MBB, MBB->end(), AssignedReg,
-                     Reg, RegClass, RegClass);
+                     Reg, RegClass, RegClass, DL);
   }
   return AssignedReg;
 }
@@ -413,7 +413,7 @@ bool FastISel::SelectCall(const User *I) {
       const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
       unsigned ResultReg = createResultReg(RC);
       bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                           Reg, RC, RC);
+                                           Reg, RC, RC, DL);
       assert(InsertedCopy && "Can't copy address registers!");
       InsertedCopy = InsertedCopy;
       UpdateValueMap(I, ResultReg);
@@ -443,7 +443,7 @@ bool FastISel::SelectCall(const User *I) {
       const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
       unsigned ResultReg = createResultReg(RC);
       bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Reg,
-                                           RC, RC);
+                                           RC, RC, DL);
       assert(InsertedCopy && "Can't copy address registers!");
       InsertedCopy = InsertedCopy;
 
@@ -556,7 +556,7 @@ bool FastISel::SelectBitCast(const User *I) {
     ResultReg = createResultReg(DstClass);
     
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         Op0, DstClass, SrcClass);
+                                         Op0, DstClass, SrcClass, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -929,7 +929,7 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addReg(Op0);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -948,7 +948,7 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addReg(Op0).addReg(Op1);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -966,7 +966,7 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addReg(Op0).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -984,7 +984,7 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addReg(Op0).addFPImm(FPImm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1002,7 +1002,7 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addReg(Op0).addReg(Op1).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1020,7 +1020,7 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   else {
     BuildMI(MBB, DL, II).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1039,7 +1039,7 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT,
   else {
     BuildMI(MBB, DL, II).addReg(Op0).addImm(Idx);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC);
+                                         II.ImplicitDefs[0], RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }

@@ -210,7 +210,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     } else {
       entry = IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
     }
-    TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
+    TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC,
+                      MPhi->getDebugLoc());
   }
 
   // Update live variable information if there is any.
@@ -292,7 +293,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Insert the copy.
     if (!reusedIncoming && IncomingReg)
-      TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
+      TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC,
+                        MPhi->getDebugLoc());
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;
