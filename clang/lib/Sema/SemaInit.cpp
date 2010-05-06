@@ -3517,6 +3517,7 @@ InitializationSequence::Perform(Sema &S,
       // Overload resolution determined which function invoke; update the 
       // initializer to reflect that choice.
       S.CheckAddressOfMemberAccess(CurInitExpr, Step->Function.FoundDecl);
+      S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Kind.getLocation());
       CurInit = S.FixOverloadedFunctionReference(move(CurInit),
                                                  Step->Function.FoundDecl,
                                                  Step->Function.Function);
@@ -3619,6 +3620,7 @@ InitializationSequence::Perform(Sema &S,
 
         S.CheckConstructorAccess(Kind.getLocation(), Constructor, Entity,
                                  FoundFn.getAccess());
+        S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
         
         CastKind = CastExpr::CK_ConstructorConversion;
         QualType Class = S.Context.getTypeDeclType(Constructor->getParent());
@@ -3633,6 +3635,7 @@ InitializationSequence::Perform(Sema &S,
         IsLvalue = Conversion->getResultType()->isLValueReferenceType();
         S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr, 0,
                                     FoundFn);
+        S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
         
         // FIXME: Should we move this initialization into a separate 
         // derived-to-base conversion? I believe the answer is "no", because
@@ -3772,6 +3775,7 @@ InitializationSequence::Perform(Sema &S,
       // Only check access if all of that succeeded.
       S.CheckConstructorAccess(Loc, Constructor, Entity,
                                Step->Function.FoundDecl.getAccess());
+      S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Loc);
       
       if (shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());

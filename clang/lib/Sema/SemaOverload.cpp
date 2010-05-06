@@ -5500,8 +5500,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     assert(Result != MatchesCopy.end() && "no most-specialized template");
     MarkDeclarationReferenced(From->getLocStart(), *Result);
     FoundResult = Matches[Result - MatchesCopy.begin()].first;
-    if (Complain)
+    if (Complain) {
       CheckUnresolvedAccess(*this, OvlExpr, FoundResult);
+      DiagnoseUseOfDecl(FoundResult, OvlExpr->getNameLoc());
+    }
     return cast<FunctionDecl>(*Result);
   }
 
@@ -5521,8 +5523,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   if (Matches.size() == 1) {
     MarkDeclarationReferenced(From->getLocStart(), Matches[0].second);
     FoundResult = Matches[0].first;
-    if (Complain)
+    if (Complain) {
       CheckUnresolvedAccess(*this, OvlExpr, Matches[0].first);
+      DiagnoseUseOfDecl(Matches[0].first, OvlExpr->getNameLoc());
+    }
     return cast<FunctionDecl>(Matches[0].second);
   }
 
@@ -5801,6 +5805,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   case OR_Success: {
     FunctionDecl *FDecl = Best->Function;
     CheckUnresolvedLookupAccess(ULE, Best->FoundDecl);
+    DiagnoseUseOfDecl(Best->FoundDecl, ULE->getNameLoc());
     Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
     return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc);
   }
@@ -5945,6 +5950,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
         Input = (Expr *)input.get();
       }
 
+      DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
+
       // Determine the result type
       QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
 
@@ -5958,7 +5965,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       ExprOwningPtr<CallExpr> TheCall(this,
         new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
                                           Args, NumArgs, ResultTy, OpLoc));
-      
+
       if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
                               FnDecl))
         return ExprError();
@@ -6150,6 +6157,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           Args[1] = RHS = Arg1.takeAs<Expr>();
         }
 
+        DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
+
         // Determine the result type
         QualType ResultTy
           = FnDecl->getType()->getAs<FunctionType>()->getResultType();
@@ -6286,6 +6295,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // operator.
 
         CheckMemberOperatorAccess(LLoc, Args[0], Args[1], Best->FoundDecl);
+        DiagnoseUseOfDecl(Best->FoundDecl, LLoc);
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
@@ -6452,6 +6462,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       Method = cast<CXXMethodDecl>(Best->Function);
       FoundDecl = Best->FoundDecl;
       CheckUnresolvedMemberAccess(UnresExpr, Best->FoundDecl);
+      DiagnoseUseOfDecl(Best->FoundDecl, UnresExpr->getNameLoc());
       break;
 
     case OR_No_Viable_Function:
@@ -6661,6 +6672,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                          Best->Conversions[0].UserDefined.ConversionFunction);
 
     CheckMemberOperatorAccess(LParenLoc, Object, 0, Best->FoundDecl);
+    DiagnoseUseOfDecl(Best->FoundDecl, LParenLoc);
 
     // We selected one of the surrogate functions that converts the
     // object parameter to a function pointer. Perform the conversion
@@ -6677,6 +6689,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   }
 
   CheckMemberOperatorAccess(LParenLoc, Object, 0, Best->FoundDecl);
+  DiagnoseUseOfDecl(Best->FoundDecl, LParenLoc);
 
   // We found an overloaded operator(). Build a CXXOperatorCallExpr
   // that calls this method, using Object for the implicit object
@@ -6847,6 +6860,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   }
 
   CheckMemberOperatorAccess(OpLoc, Base, 0, Best->FoundDecl);
+  DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
 
   // Convert the object parameter.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
