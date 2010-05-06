@@ -55,7 +55,7 @@ public:
   QualType getType() const { return Ty; }
 
   /// \brief Return the TypeLoc wrapper for the type source info.
-  TypeLoc getTypeLoc() const;
+  TypeLoc getTypeLoc() const; // implemented in TypeLoc.h
 };
 
 /// TranslationUnitDecl - The top declaration context.

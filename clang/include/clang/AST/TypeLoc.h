@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_TYPELOC_H
 
 #include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Basic/Specifiers.h"
 
@@ -139,6 +140,11 @@ private:
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
   static SourceRange getSourceRangeImpl(TypeLoc TL);
 };
+
+/// \brief Return the TypeLoc for a type source info.
+inline TypeLoc TypeSourceInfo::getTypeLoc() const {
+  return TypeLoc(Ty, (void*)(this + 1));
+}
 
 /// \brief Wrapper of type source information for a type with
 /// no direct quqlaifiers.

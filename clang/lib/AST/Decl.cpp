@@ -28,11 +28,6 @@
 
 using namespace clang;
 
-/// \brief Return the TypeLoc wrapper for the type source info.
-TypeLoc TypeSourceInfo::getTypeLoc() const {
-  return TypeLoc(Ty, (void*)(this + 1));
-}
-
 //===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
