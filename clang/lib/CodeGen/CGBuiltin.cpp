@@ -362,6 +362,19 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
   }
    
+  case Builtin::BI__builtin_isfinite: {
+    // isfinite(x) --> x == x && fabs(x) != infinity; }
+    Value *V = EmitScalarExpr(E->getArg(0));
+    Value *Eq = Builder.CreateFCmpOEQ(V, V, "iseq");
+    
+    Value *Abs = EmitFAbs(*this, V, E->getArg(0)->getType());
+    Value *IsNotInf =
+      Builder.CreateFCmpUNE(Abs, ConstantFP::getInfinity(V->getType()),"isinf");
+    
+    V = Builder.CreateAnd(Eq, IsNotInf, "and");
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType())));
+  }
+      
   case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
     // FIXME: LLVM IR Should allow alloca with an i64 size!
