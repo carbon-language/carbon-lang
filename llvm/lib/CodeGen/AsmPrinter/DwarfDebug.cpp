@@ -2162,6 +2162,11 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
       PrevInstLoc = DL;
       PrevLabel = Label;
     }
+
+    // If this instruction begins a scope then note down corresponding label.
+    if (InsnsBeginScopeSet.count(MI) != 0)
+      LabelsBeforeInsn[MI] = Label;
+
     return;
   }
 
