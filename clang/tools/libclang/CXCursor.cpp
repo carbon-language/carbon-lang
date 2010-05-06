@@ -56,6 +56,7 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::Var:                return CXCursor_VarDecl;
+    case Decl::Namespace:          return CXCursor_Namespace;
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {

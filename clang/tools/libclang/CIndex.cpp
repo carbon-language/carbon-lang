@@ -285,6 +285,7 @@ public:
   // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
   bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
   bool VisitObjCClassDecl(ObjCClassDecl *D);
+  bool VisitNamespaceDecl(NamespaceDecl *D);
 
   // Type visitors
   // FIXME: QualifiedTypeLoc doesn't provide any location information
@@ -720,6 +721,10 @@ bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
       return true;
 
   return false;
+}
+
+bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
+  return VisitDeclContext(D);
 }
 
 bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
@@ -1638,6 +1643,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("macro definition");
   case CXCursor_MacroInstantiation:
     return createCXString("macro instantiation");
+  case CXCursor_Namespace:
+    return createCXString("Namespace");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
