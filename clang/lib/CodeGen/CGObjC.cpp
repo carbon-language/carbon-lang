@@ -205,8 +205,9 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                            Types.ConvertType(PD->getType())));
     EmitReturnOfRValue(RV, PD->getType());
   } else {
-    LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
     if (Ivar->getType()->isAnyComplexType()) {
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
+                                    Ivar, 0);
       ComplexPairTy Pair = LoadComplexFromAddr(LV.getAddress(),
                                                LV.isVolatileQualified());
       StoreComplexToAddr(Pair, ReturnValue, LV.isVolatileQualified());
@@ -216,6 +217,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       if ((IsAtomic || (IsStrong = IvarTypeWithAggrGCObjects(Ivar->getType())))
           && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
           && CGM.getObjCRuntime().GetCopyStructFunction()) {
+        LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
+                                      Ivar, 0);
         llvm::Value *GetCopyStructFn =
           CGM.getObjCRuntime().GetCopyStructFunction();
         CodeGenTypes &Types = CGM.getTypes();
@@ -248,9 +251,22 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                        FunctionType::ExtInfo()),
                  GetCopyStructFn, ReturnValueSlot(), Args);
       }
-      else
-        EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
+      else {
+        if (PID->getGetterCXXConstructor()) {
+          ReturnStmt *Stmt = 
+            new (getContext()) ReturnStmt(SourceLocation(), 
+                                          PID->getGetterCXXConstructor());
+          EmitReturnStmt(*Stmt);
+        }
+        else {
+          LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
+                                        Ivar, 0);
+          EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
+        }
+      }
     } else {
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
+                                    Ivar, 0);
       CodeGenTypes &Types = CGM.getTypes();
       RValue RV = EmitLoadOfLValue(LV, Ivar->getType());
       RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
@@ -362,6 +378,10 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
                                    FunctionType::ExtInfo()),
              GetCopyStructFn, ReturnValueSlot(), Args);
+  } else if (PID->getSetterCXXAssignment()) {
+    EmitAnyExpr(PID->getSetterCXXAssignment(), (llvm::Value *)0, false, true,
+                false);
+                
   } else {
     // FIXME: Find a clean way to avoid AST node creation.
     SourceLocation Loc = PD->getLocation();
