@@ -197,13 +197,13 @@ def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
   let SuperClass = ?;
 }
-def X86AbsMemAsmOperand : AsmOperandClass {
-  let Name = "AbsMem";
-  let SuperClass = X86MemAsmOperand;
-}
 def X86NoSegMemAsmOperand : AsmOperandClass {
   let Name = "NoSegMem";
   let SuperClass = X86MemAsmOperand;
+}
+def X86AbsMemAsmOperand : AsmOperandClass {
+  let Name = "AbsMem";
+  let SuperClass = X86NoSegMemAsmOperand;
 }
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;

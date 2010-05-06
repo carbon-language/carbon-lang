@@ -143,3 +143,6 @@
 fadd %st(0)
 fadd %st(1)
 fadd %st(7)
+
+// CHECK: leal 0, %eax
+        leal 0, %eax
