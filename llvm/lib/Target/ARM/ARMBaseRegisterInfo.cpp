@@ -262,7 +262,7 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   case 1:
   case 2:
   case 3:
-  case 4: {
+  case 4:
     // S sub-registers.
     if (A->getSize() == 8) {
       if (B == &ARM::SPR_8RegClass)
@@ -273,47 +273,18 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return &ARM::DPR_VFP2RegClass;
     }
 
-    if (A->getSize() == 16) {
-      if (B == &ARM::SPR_8RegClass)
-        return &ARM::QPR_8RegClass;
-      return &ARM::QPR_VFP2RegClass;
-    }
-
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
+    assert(A->getSize() == 16 && "Expecting a Q register class!");
     if (B == &ARM::SPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
-    return &ARM::QQPR_VFP2RegClass;
-  }
+      return &ARM::QPR_8RegClass;
+    return &ARM::QPR_VFP2RegClass;
   case 5:
   case 6:
-  case 7:
-  case 8: {
     // D sub-registers.
-    if (A->getSize() == 16) {
-      if (B == &ARM::DPR_VFP2RegClass)
-        return &ARM::QPR_VFP2RegClass;
-      if (B == &ARM::DPR_8RegClass)
-        return &ARM::QPR_8RegClass;
-      return A;
-    }
-
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
     if (B == &ARM::DPR_VFP2RegClass)
-      return &ARM::QQPR_VFP2RegClass;
+      return &ARM::QPR_VFP2RegClass;
     if (B == &ARM::DPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
+      return &ARM::QPR_8RegClass;
     return A;
-  }
-  case 9:
-  case 10: {
-    // Q sub-registers.
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
-    if (B == &ARM::QPR_VFP2RegClass)
-      return &ARM::QQPR_VFP2RegClass;
-    if (B == &ARM::QPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
-    return A;
-  }
   }
   return 0;
 }

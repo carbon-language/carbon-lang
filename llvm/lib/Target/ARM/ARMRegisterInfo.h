@@ -29,8 +29,7 @@ namespace ARM {
   /// ARMRegisterInfo.td file.
   enum SubregIndex {
     SSUBREG_0 = 1, SSUBREG_1 = 2, SSUBREG_2 = 3, SSUBREG_3 = 4,
-    DSUBREG_0 = 5, DSUBREG_1 = 6, DSUBREG_2 = 7, DSUBREG_3 = 8,
-    QSUBREG_0 = 9, QSUBREG_1 = 10
+    DSUBREG_0 = 5, DSUBREG_1 = 6
   };
 }
 
