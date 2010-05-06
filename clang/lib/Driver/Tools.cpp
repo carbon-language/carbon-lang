@@ -21,7 +21,6 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -1083,20 +1082,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   else
     CmdArgs.push_back("19");
 
-  CmdArgs.push_back("-fmacro-backtrace-limit");
-  if (Arg *A = Args.getLastArg(options::OPT_fmacro_backtrace_limit_EQ))
+  if (Arg *A = Args.getLastArg(options::OPT_fmacro_backtrace_limit_EQ)) {
+    CmdArgs.push_back("-fmacro-backtrace-limit");
     CmdArgs.push_back(A->getValue(Args));
-  else
-    CmdArgs.push_back(Args.MakeArgString(
-                   llvm::Twine(DiagnosticOptions::DefaultMacroBacktraceLimit)));
-                      
-  CmdArgs.push_back("-ftemplate-backtrace-limit");
-  if (Arg *A = Args.getLastArg(options::OPT_ftemplate_backtrace_limit_EQ))
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_ftemplate_backtrace_limit_EQ)) {
+    CmdArgs.push_back("-ftemplate-backtrace-limit");
     CmdArgs.push_back(A->getValue(Args));
-  else
-    CmdArgs.push_back(Args.MakeArgString(
-                llvm::Twine(DiagnosticOptions::DefaultTemplateBacktraceLimit)));
-  
+  }
+
   // Pass -fmessage-length=.
   CmdArgs.push_back("-fmessage-length");
   if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {

@@ -81,8 +81,8 @@ public:
     VerifyDiagnostics = 0;
     BinaryOutput = 0;
     ErrorLimit = 0;
-    TemplateBacktraceLimit = 0;
-    MacroBacktraceLimit = 0;
+    TemplateBacktraceLimit = DefaultTemplateBacktraceLimit;
+    MacroBacktraceLimit = DefaultMacroBacktraceLimit;
   }
 };
 
