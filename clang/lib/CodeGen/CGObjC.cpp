@@ -419,8 +419,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     llvm::Value *SelfAsId =
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
     EmitReturnOfRValue(RValue::get(SelfAsId), IdTy);
-  }
-  else {
+  } else {
     // dtor
     for (size_t i = IvarInitializers.size(); i > 0; --i) {
       FieldDecl *Field = IvarInitializers[i - 1]->getMember();
@@ -436,7 +435,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(getContext());
-      if (!Dtor->isTrivial())
+      if (!Dtor->isTrivial()) {
         if (Array) {
           const llvm::Type *BasePtr = ConvertType(FieldType);
           BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -444,12 +443,13 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
             Builder.CreateBitCast(LV.getAddress(), BasePtr);
           EmitCXXAggrDestructorCall(Dtor,
                                     Array, BaseAddrPtr);
-        }
-        else 
+        } else {
           EmitCXXDestructorCall(Dtor,
                                 Dtor_Complete, /*ForVirtualBase=*/false,
                                 LV.getAddress());
-    }    
+        }
+      }
+    }
   }
   FinishFunction();
 }
