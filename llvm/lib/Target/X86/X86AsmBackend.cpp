@@ -12,6 +12,7 @@
 #include "X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -88,9 +89,20 @@ static unsigned getRelaxedOpcode(unsigned Op) {
 
 bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst,
                               const SmallVectorImpl<MCAsmFixup> &Fixups) const {
-  // Check for a 1byte pcrel fixup, and enforce that we would know how to relax
-  // this instruction.
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    // We don't support relaxing anything else currently. Make sure we error out
+    // if we see a non-constant 1 or 2 byte fixup.
+    //
+    // FIXME: We should need to check this here, this is better checked in the
+    // object writer which should be verifying that any final relocations match
+    // the expected fixup. However, that code is more complicated and hasn't
+    // been written yet. See the FIXMEs in MachObjectWriter.cpp.
+    if ((Fixups[i].Kind == FK_Data_1 || Fixups[i].Kind == FK_Data_2) &&
+        !isa<MCConstantExpr>(Fixups[i].Value))
+      report_fatal_error("unexpected small fixup with a non-constant operand!");
+
+    // Check for a 1byte pcrel fixup, and enforce that we would know how to
+    // relax this instruction.
     if (unsigned(Fixups[i].Kind) == X86::reloc_pcrel_1byte) {
       assert(getRelaxedOpcode(Inst.getOpcode()) != Inst.getOpcode());
       return true;
