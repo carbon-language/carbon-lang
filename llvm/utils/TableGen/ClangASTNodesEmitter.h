@@ -1,4 +1,4 @@
-//===- ClangDiagnosticsEmitter.h - Generate Clang diagnostics tables -*- C++ -*-
+//===- ClangASTNodesEmitter.h - Generate Clang AST node tables -*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// These tablegen backends emit Clang diagnostics tables.
+// These tablegen backends emit Clang AST node tables
 //
 //===----------------------------------------------------------------------===//
 
