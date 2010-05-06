@@ -1,4 +1,4 @@
-##===- docs/Makefile ---------------------------------------*- Makefile -*-===##
+##===- docs/main/Makefile ----------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,12 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
-DIRS  = main api
+LEVEL = ../..
 
 include $(LEVEL)/Makefile.common
+
+MAIN.Project    = LLVM
+MAIN.project    = llvm
+MAIN.man.center = LLVM Command Guide
+
+include $(LLVM_SRC_ROOT)/docs/mk/main.mk

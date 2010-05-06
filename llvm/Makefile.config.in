@@ -156,6 +156,7 @@ TAR        := @TAR@
 # Paths to miscellaneous programs we hope are present but might not be
 PERL       := @PERL@
 BZIP2      := @BZIP2@
+CAT        := @CAT@
 DOT        := @DOT@
 DOXYGEN    := @DOXYGEN@
 GROFF      := @GROFF@
@@ -167,6 +168,7 @@ OCAMLDOC   := @OCAMLDOC@
 GAS        := @GAS@
 POD2HTML   := @POD2HTML@
 POD2MAN    := @POD2MAN@
+PDFROFF    := @PDFROFF@
 RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@

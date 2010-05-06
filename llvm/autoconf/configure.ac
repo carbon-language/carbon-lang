@@ -1003,11 +1003,13 @@ dnl are not found then they are set to "true" which always succeeds but does
 dnl nothing. This just lets the build output show that we could have done
 dnl something if the tool was available.
 AC_PATH_PROG(BZIP2, [bzip2])
+AC_PATH_PROG(CAT, [cat])
 AC_PATH_PROG(DOXYGEN, [doxygen])
 AC_PATH_PROG(GROFF, [groff])
 AC_PATH_PROG(GZIP, [gzip])
 AC_PATH_PROG(POD2HTML, [pod2html])
 AC_PATH_PROG(POD2MAN, [pod2man])
+AC_PATH_PROG(PDFROFF, [pdfroff])
 AC_PATH_PROG(RUNTEST, [runtest])
 DJ_AC_PATH_TCLSH
 AC_PATH_PROG(ZIP, [zip])
@@ -1542,9 +1544,6 @@ AC_CONFIG_FILES([Makefile.config])
 
 dnl Configure the RPM spec file for LLVM
 AC_CONFIG_FILES([llvm.spec])
-
-dnl Configure doxygen's configuration file
-AC_CONFIG_FILES([docs/doxygen.cfg])
 
 dnl Configure llvmc's Base plugin
 AC_CONFIG_FILES([tools/llvmc/plugins/Base/Base.td])
