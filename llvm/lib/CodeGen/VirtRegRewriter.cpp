@@ -907,7 +907,7 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
                         TRI, VRM);
         } else {
           TII->loadRegFromStackSlot(*MBB, InsertLoc, NewPhysReg,
-                                    NewOp.StackSlotOrReMat, AliasRC);
+                                    NewOp.StackSlotOrReMat, AliasRC, TRI);
           MachineInstr *LoadMI = prior(InsertLoc);
           VRM.addSpillSlotUse(NewOp.StackSlotOrReMat, LoadMI);
           // Any stores to this stack slot are not dead anymore.
@@ -1265,7 +1265,7 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
   ComputeReloadLoc(MII, MBB->begin(), PhysReg, TRI, false, SS, TII, MF);
 
   // Load from SS to the spare physical register.
-  TII->loadRegFromStackSlot(*MBB, MII, PhysReg, SS, RC);
+  TII->loadRegFromStackSlot(*MBB, MII, PhysReg, SS, RC, TRI);
   // This invalidates Phys.
   Spills.ClobberPhysReg(PhysReg);
   // Remember it's available.
@@ -1308,7 +1308,7 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
   } while (FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, *VRM));
 
   // Store the value back into SS.
-  TII->storeRegToStackSlot(*MBB, NextMII, PhysReg, true, SS, RC);
+  TII->storeRegToStackSlot(*MBB, NextMII, PhysReg, true, SS, RC, TRI);
   MachineInstr *StoreMI = prior(NextMII);
   VRM->addSpillSlotUse(SS, StoreMI);
   VRM->virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
@@ -1523,7 +1523,7 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
     VRM->virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
     // Insert new def MI and spill MI.
     const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-    TII->storeRegToStackSlot(*MBB, &MI, NewReg, true, SS, RC);
+    TII->storeRegToStackSlot(*MBB, &MI, NewReg, true, SS, RC, TRI);
     MII = prior(MII);
     MachineInstr *StoreMI = MII;
     VRM->addSpillSlotUse(SS, StoreMI);
@@ -1566,7 +1566,8 @@ SpillRegToStackSlot(MachineBasicBlock::iterator &MII,
                     std::vector<MachineOperand*> &KillOps) {
 
   MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
-  TII->storeRegToStackSlot(*MBB, llvm::next(MII), PhysReg, true, StackSlot, RC);
+  TII->storeRegToStackSlot(*MBB, llvm::next(MII), PhysReg, true, StackSlot, RC,
+                           TRI);
   MachineInstr *StoreMI = prior(oldNextMII);
   VRM->addSpillSlotUse(StackSlot, StoreMI);
   DEBUG(dbgs() << "Store:\t" << *StoreMI);
@@ -1709,7 +1710,7 @@ bool LocalRewriter::InsertEmergencySpills(MachineInstr *MI) {
     if (UsedSS.count(SS))
       llvm_unreachable("Need to spill more than one physical registers!");
     UsedSS.insert(SS);
-    TII->storeRegToStackSlot(*MBB, MII, PhysReg, true, SS, RC);
+    TII->storeRegToStackSlot(*MBB, MII, PhysReg, true, SS, RC, TRI);
     MachineInstr *StoreMI = prior(MII);
     VRM->addSpillSlotUse(SS, StoreMI);
 
@@ -1718,7 +1719,7 @@ bool LocalRewriter::InsertEmergencySpills(MachineInstr *MI) {
       ComputeReloadLoc(llvm::next(MII), MBB->begin(), PhysReg, TRI, false, SS,
                        TII, *MBB->getParent());
 
-    TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SS, RC);
+    TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SS, RC, TRI);
 
     MachineInstr *LoadMI = prior(InsertLoc);
     VRM->addSpillSlotUse(SS, LoadMI);
@@ -1821,7 +1822,7 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
       ReMaterialize(*MBB, InsertLoc, Phys, VirtReg, TII, TRI, *VRM);
     } else {
       const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-      TII->loadRegFromStackSlot(*MBB, InsertLoc, Phys, SSorRMId, RC);
+      TII->loadRegFromStackSlot(*MBB, InsertLoc, Phys, SSorRMId, RC, TRI);
       MachineInstr *LoadMI = prior(InsertLoc);
       VRM->addSpillSlotUse(SSorRMId, LoadMI);
       ++NumLoads;
@@ -1857,7 +1858,7 @@ bool LocalRewriter::InsertSpills(MachineInstr *MI) {
     int StackSlot = VRM->getStackSlot(VirtReg);
     MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
     TII->storeRegToStackSlot(*MBB, llvm::next(MII), Phys, isKill, StackSlot,
-                             RC);
+                             RC, TRI);
     MachineInstr *StoreMI = prior(oldNextMII);
     VRM->addSpillSlotUse(StackSlot, StoreMI);
     DEBUG(dbgs() << "Store:\t" << *StoreMI);
@@ -2183,7 +2184,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           ReMaterialize(*MBB, InsertLoc, PhysReg, VirtReg, TII, TRI, *VRM);
         } else {
           const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-          TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SSorRMId, RC);
+          TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SSorRMId, RC,TRI);
           MachineInstr *LoadMI = prior(InsertLoc);
           VRM->addSpillSlotUse(SSorRMId, LoadMI);
           ++NumLoads;

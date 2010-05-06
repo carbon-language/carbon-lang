@@ -395,7 +395,8 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned SrcReg, bool isKill,
                                          int FrameIndex,
-                                         const TargetRegisterClass *RC) const
+                                         const TargetRegisterClass *RC,
+                                         const TargetRegisterInfo *TRI) const
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
@@ -408,7 +409,8 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I,
                                           unsigned DestReg, int FrameIndex,
-                                          const TargetRegisterClass *RC) const
+                                          const TargetRegisterClass *RC,
+                                          const TargetRegisterInfo *TRI) const
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
@@ -437,7 +439,7 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     MBB.addLiveIn(it->getReg());
 
     storeRegToStackSlot(MBB, MI, it->getReg(), true,
-                        it->getFrameIdx(), it->getRegClass());
+                        it->getFrameIdx(), it->getRegClass(), &RI);
     if (emitFrameMoves) {
       MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
       BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addSym(SaveLabel);
@@ -460,7 +462,7 @@ bool XCoreInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     
     loadRegFromStackSlot(MBB, MI, it->getReg(),
                                   it->getFrameIdx(),
-                                  it->getRegClass());
+                         it->getRegClass(), &RI);
     assert(MI != MBB.begin() &&
            "loadRegFromStackSlot didn't insert any code!");
     // Insert in reverse order.  loadRegFromStackSlot can insert multiple

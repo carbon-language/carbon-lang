@@ -189,7 +189,8 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MipsInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI, 
-                    const TargetRegisterClass *RC) const {
+                    const TargetRegisterClass *RC,
+                    const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -222,7 +223,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MipsInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
-                     const TargetRegisterClass *RC) const 
+                     const TargetRegisterClass *RC,
+                     const TargetRegisterInfo *TRI) const 
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();

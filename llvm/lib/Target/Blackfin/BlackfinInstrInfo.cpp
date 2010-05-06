@@ -196,7 +196,8 @@ BlackfinInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg,
                                        bool isKill,
                                        int FI,
-                                       const TargetRegisterClass *RC) const {
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
 
   if (inClass(BF::DPRegClass, SrcReg, RC)) {
@@ -242,7 +243,8 @@ BlackfinInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         unsigned DestReg,
                                         int FI,
-                                        const TargetRegisterClass *RC) const {
+                                        const TargetRegisterClass *RC,
+                                        const TargetRegisterInfo *TRI) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (inClass(BF::DPRegClass, DestReg, RC)) {
     BuildMI(MBB, I, DL, get(BF::LOAD32fi), DestReg)

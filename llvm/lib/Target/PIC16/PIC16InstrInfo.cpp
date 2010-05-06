@@ -70,7 +70,8 @@ unsigned PIC16InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
 void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, 
                                          MachineBasicBlock::iterator I,
                                          unsigned SrcReg, bool isKill, int FI,
-                                         const TargetRegisterClass *RC) const {
+                                         const TargetRegisterClass *RC,
+                                         const TargetRegisterInfo *TRI) const {
   const PIC16TargetLowering *PTLI = TM.getTargetLowering();
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
@@ -112,7 +113,8 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, 
                                           MachineBasicBlock::iterator I,
                                           unsigned DestReg, int FI,
-                                          const TargetRegisterClass *RC) const {
+                                          const TargetRegisterClass *RC,
+                                          const TargetRegisterInfo *TRI) const {
   const PIC16TargetLowering *PTLI = TM.getTargetLowering();
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();

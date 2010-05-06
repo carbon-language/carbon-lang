@@ -61,7 +61,8 @@ static inline bool isGVStub(GlobalValue *GV, SystemZTargetMachine &TM) {
 void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                     unsigned SrcReg, bool isKill, int FrameIdx,
-                                    const TargetRegisterClass *RC) const {
+                                           const TargetRegisterClass *RC,
+                                           const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
@@ -90,7 +91,8 @@ void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx,
-                                           const TargetRegisterClass *RC) const{
+                                            const TargetRegisterClass *RC,
+                                            const TargetRegisterInfo *TRI) const{
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
@@ -333,7 +335,8 @@ SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     const TargetRegisterClass *RegClass = CSI[i].getRegClass();
     if (RegClass == &SystemZ::FP64RegClass) {
       MBB.addLiveIn(Reg);
-      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i].getFrameIdx(), RegClass);
+      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i].getFrameIdx(), RegClass,
+                          &RI);
     }
   }
 
@@ -359,7 +362,7 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     unsigned Reg = CSI[i].getReg();
     const TargetRegisterClass *RegClass = CSI[i].getRegClass();
     if (RegClass == &SystemZ::FP64RegClass)
-      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass);
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass, &RI);
   }
 
   // Restore GP registers

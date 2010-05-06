@@ -69,11 +69,12 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 void Thumb2InstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
-                    const TargetRegisterClass *RC) const {
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
-
+                    const TargetRegisterClass *RC,
+                    const TargetRegisterInfo *TRI) const {
   if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass) {
+    DebugLoc DL;
+    if (I != MBB.end()) DL = I->getDebugLoc();
+
     MachineFunction &MF = *MBB.getParent();
     MachineFrameInfo &MFI = *MF.getFrameInfo();
     MachineMemOperand *MMO =
@@ -87,17 +88,18 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     return;
   }
 
-  ARMBaseInstrInfo::storeRegToStackSlot(MBB, I, SrcReg, isKill, FI, RC);
+  ARMBaseInstrInfo::storeRegToStackSlot(MBB, I, SrcReg, isKill, FI, RC, TRI);
 }
 
 void Thumb2InstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
-                     const TargetRegisterClass *RC) const {
-  DebugLoc DL;
-  if (I != MBB.end()) DL = I->getDebugLoc();
-
+                     const TargetRegisterClass *RC,
+                     const TargetRegisterInfo *TRI) const {
   if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass) {
+    DebugLoc DL;
+    if (I != MBB.end()) DL = I->getDebugLoc();
+
     MachineFunction &MF = *MBB.getParent();
     MachineFrameInfo &MFI = *MF.getFrameInfo();
     MachineMemOperand *MMO =
@@ -110,7 +112,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     return;
   }
 
-  ARMBaseInstrInfo::loadRegFromStackSlot(MBB, I, DestReg, FI, RC);
+  ARMBaseInstrInfo::loadRegFromStackSlot(MBB, I, DestReg, FI, RC, TRI);
 }
 
 void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,

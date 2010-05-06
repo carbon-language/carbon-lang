@@ -56,7 +56,8 @@ namespace llvm {
                                      MachineBasicBlock::iterator MBBI,
                                      unsigned SrcReg, bool isKill,
                                      int FrameIndex,
-                                     const TargetRegisterClass *RC) const;
+                                     const TargetRegisterClass *RC,
+                                     const TargetRegisterInfo *TRI) const;
 
     virtual void storeRegToAddr(MachineFunction &MF,
                                 unsigned SrcReg, bool isKill,
@@ -67,7 +68,8 @@ namespace llvm {
     virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MBBI,
                                       unsigned DestReg, int FrameIndex,
-                                      const TargetRegisterClass *RC) const;
+                                      const TargetRegisterClass *RC,
+                                      const TargetRegisterInfo *TRI) const;
 
     virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  SmallVectorImpl<MachineOperand> &Addr,

@@ -291,9 +291,10 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
 void
 SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator MI,
-                                     unsigned SrcReg, bool isKill, int FrameIdx,
-                                     const TargetRegisterClass *RC) const
+                                  MachineBasicBlock::iterator MI,
+                                  unsigned SrcReg, bool isKill, int FrameIdx,
+                                  const TargetRegisterClass *RC,
+                                  const TargetRegisterInfo *TRI) const
 {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());
@@ -325,9 +326,10 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
 void
 SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
-                                        unsigned DestReg, int FrameIdx,
-                                        const TargetRegisterClass *RC) const
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, int FrameIdx,
+                                   const TargetRegisterClass *RC,
+                                   const TargetRegisterInfo *TRI) const
 {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());

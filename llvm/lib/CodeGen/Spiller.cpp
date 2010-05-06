@@ -51,6 +51,7 @@ protected:
   MachineFrameInfo *mfi;
   MachineRegisterInfo *mri;
   const TargetInstrInfo *tii;
+  const TargetRegisterInfo *tri;
   VirtRegMap *vrm;
   
   /// Construct a spiller base. 
@@ -60,6 +61,7 @@ protected:
     mfi = mf->getFrameInfo();
     mri = &mf->getRegInfo();
     tii = mf->getTarget().getInstrInfo();
+    tri = mf->getTarget().getRegisterInfo();
   }
 
   /// Add spill ranges for every use/def of the live interval, inserting loads
@@ -129,7 +131,8 @@ protected:
       // Insert reload if necessary.
       MachineBasicBlock::iterator miItr(mi);
       if (hasUse) {
-        tii->loadRegFromStackSlot(*mi->getParent(), miItr, newVReg, ss, trc);
+        tii->loadRegFromStackSlot(*mi->getParent(), miItr, newVReg, ss, trc,
+                                  tri);
         MachineInstr *loadInstr(prior(miItr));
         SlotIndex loadIndex =
           lis->InsertMachineInstrInMaps(loadInstr).getDefIndex();
@@ -143,7 +146,7 @@ protected:
       // Insert store if necessary.
       if (hasDef) {
         tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr), newVReg,
-                                 true, ss, trc);
+                                 true, ss, trc, tri);
         MachineInstr *storeInstr(llvm::next(miItr));
         SlotIndex storeIndex =
           lis->InsertMachineInstrInMaps(storeInstr).getDefIndex();

@@ -1061,7 +1061,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       // Add spill.
     
       SS = CreateSpillStackSlot(CurrLI->reg, RC);
-      TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
+      TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC,
+                               TRI);
       SpillMI = prior(SpillPt);
       SpillIndex = LIs->InsertMachineInstrInMaps(SpillMI);
     }
@@ -1097,7 +1098,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       }
       // Add spill. 
       SS = CreateSpillStackSlot(CurrLI->reg, RC);
-      TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg, false, SS, RC);
+      TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg, false, SS, RC,
+                               TRI);
       SpillMI = prior(SpillPt);
       SpillIndex = LIs->InsertMachineInstrInMaps(SpillMI);
     }
@@ -1116,7 +1118,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     RestoreIndex = LIs->getInstructionIndex(RestorePt);
     FoldedRestore = true;
   } else {
-    TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
+    TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC, TRI);
     MachineInstr *LoadMI = prior(RestorePt);
     RestoreIndex = LIs->InsertMachineInstrInMaps(LoadMI);
   }

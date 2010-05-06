@@ -124,7 +124,8 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MBlazeInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
-                    const TargetRegisterClass *RC) const {
+                    const TargetRegisterClass *RC,
+                    const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   BuildMI(MBB, I, DL, get(MBlaze::SWI)).addReg(SrcReg,getKillRegState(isKill))
     .addImm(0).addFrameIndex(FI);
@@ -133,7 +134,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MBlazeInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
-                     const TargetRegisterClass *RC) const {
+                     const TargetRegisterClass *RC,
+                     const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   BuildMI(MBB, I, DL, get(MBlaze::LWI), DestReg)
       .addImm(0).addFrameIndex(FI);

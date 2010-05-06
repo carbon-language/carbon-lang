@@ -40,12 +40,14 @@ public:
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI,
                            unsigned SrcReg, bool isKill, int FrameIndex,
-                           const TargetRegisterClass *RC) const;
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
                             unsigned DestReg, int FrameIndex,
-                            const TargetRegisterClass *RC) const;
+                            const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const;
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

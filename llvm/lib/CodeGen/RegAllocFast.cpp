@@ -281,7 +281,7 @@ void RAFast::spillVirtReg(MachineBasicBlock &MBB,
     // happen if it is a move to a physical register), then the spill
     // instruction is not a kill.
     bool isKill = !(I != MBB.end() && I->readsRegister(PhysReg));
-    TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
+    TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC, TRI);
     ++NumStores;   // Update statistics
   }
 
@@ -476,7 +476,7 @@ MachineInstr *RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                << TRI->getName(PhysReg) << "\n");
 
   // Add move instruction(s)
-  TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
+  TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC, TRI);
   ++NumLoads;    // Update statistics
 
   MF->getRegInfo().setPhysRegUsed(PhysReg);

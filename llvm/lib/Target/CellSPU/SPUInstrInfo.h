@@ -66,13 +66,15 @@ namespace llvm {
     virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI,
                                      unsigned SrcReg, bool isKill, int FrameIndex,
-                                     const TargetRegisterClass *RC) const;
+                                     const TargetRegisterClass *RC,
+                                     const TargetRegisterInfo *TRI) const;
 
     //! Load a register from a stack slot, based on its register class.
     virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MBBI,
                                       unsigned DestReg, int FrameIndex,
-                                      const TargetRegisterClass *RC) const;
+                                      const TargetRegisterClass *RC,
+                                      const TargetRegisterInfo *TRI) const;
 
     //! Return true if the specified load or store can be folded
     virtual

@@ -297,7 +297,7 @@ void RALocal::storeVirtReg(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
   int FrameIndex = getStackSpaceFor(VirtReg, RC);
   DEBUG(dbgs() << " to stack slot #" << FrameIndex);
-  TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
+  TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC, TRI);
   ++NumStores;   // Update statistics
 }
 
@@ -543,7 +543,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                << TRI->getName(PhysReg) << "\n");
 
   // Add move instruction(s)
-  TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
+  TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC, TRI);
   ++NumLoads;    // Update statistics
 
   MF->getRegInfo().setPhysRegUsed(PhysReg);

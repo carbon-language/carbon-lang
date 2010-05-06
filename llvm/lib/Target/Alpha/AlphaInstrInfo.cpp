@@ -180,7 +180,8 @@ void
 AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned SrcReg, bool isKill, int FrameIdx,
-                                    const TargetRegisterClass *RC) const {
+                                    const TargetRegisterClass *RC,
+                                    const TargetRegisterInfo *TRI) const {
   //cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
   //     << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
@@ -208,7 +209,8 @@ void
 AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx,
-                                        const TargetRegisterClass *RC) const {
+                                     const TargetRegisterClass *RC,
+                                     const TargetRegisterInfo *TRI) const {
   //cerr << "Trying to load " << getPrettyName(DestReg) << " to "
   //     << FrameIdx << "\n";
   DebugLoc DL;

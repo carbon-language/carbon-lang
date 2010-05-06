@@ -594,7 +594,8 @@ public:
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC) const;
+                                   const TargetRegisterClass *RC,
+                                   const TargetRegisterInfo *TRI) const;
 
   virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
                               SmallVectorImpl<MachineOperand> &Addr,
@@ -606,7 +607,8 @@ public:
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC) const;
+                                    const TargetRegisterClass *RC,
+                                    const TargetRegisterInfo *TRI) const;
 
   virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                SmallVectorImpl<MachineOperand> &Addr,

@@ -289,6 +289,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
     return;
 
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
+  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   MachineBasicBlock::iterator I;
 
   if (! ShrinkWrapThisFunction) {
@@ -302,7 +303,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
 
         // Insert the spill to the stack frame.
         TII.storeRegToStackSlot(*EntryBlock, I, CSI[i].getReg(), true,
-                                CSI[i].getFrameIdx(), CSI[i].getRegClass());
+                                CSI[i].getFrameIdx(), CSI[i].getRegClass(),TRI);
       }
     }
 
@@ -328,7 +329,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
           TII.loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
                                    CSI[i].getFrameIdx(),
-                                   CSI[i].getRegClass());
+                                   CSI[i].getRegClass(), TRI);
           assert(I != MBB->begin() &&
                  "loadRegFromStackSlot didn't insert any code!");
           // Insert in reverse order.  loadRegFromStackSlot can insert
@@ -375,7 +376,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
       TII.storeRegToStackSlot(*MBB, I, blockCSI[i].getReg(),
                               true,
                               blockCSI[i].getFrameIdx(),
-                              blockCSI[i].getRegClass());
+                              blockCSI[i].getRegClass(), TRI);
     }
   }
 
@@ -423,7 +424,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
     for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
       TII.loadRegFromStackSlot(*MBB, I, blockCSI[i].getReg(),
                                blockCSI[i].getFrameIdx(),
-                               blockCSI[i].getRegClass());
+                               blockCSI[i].getRegClass(), TRI);
       assert(I != MBB->begin() &&
              "loadRegFromStackSlot didn't insert any code!");
       // Insert in reverse order.  loadRegFromStackSlot can insert
