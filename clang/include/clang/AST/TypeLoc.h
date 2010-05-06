@@ -871,8 +871,6 @@ public:
   ParmVarDecl *getArg(unsigned i) const { return getParmArray()[i]; }
   void setArg(unsigned i, ParmVarDecl *VD) { getParmArray()[i] = VD; }
 
-  TypeLoc getArgLoc(unsigned i) const;
-
   TypeLoc getResultLoc() const {
     return getInnerTypeLoc();
   }
