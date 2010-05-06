@@ -52,19 +52,21 @@ class AnalysisManager : public BugReporterData {
   //   bifurcates paths.
   bool EagerlyAssume;
   bool TrimGraph;
+  bool InlineCall;
 
 public:
   AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, unsigned maxnodes,
-                  bool vizdot, bool vizubi, bool purge, bool eager, bool trim)
+                  bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
+                  bool inlinecall)
 
     : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
       AScope(ScopeDecl), MaxNodes(maxnodes),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-      EagerlyAssume(eager), TrimGraph(trim) {}
+      EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall) {}
   
   ~AnalysisManager() { FlushDiagnostics(); }
   
@@ -121,6 +123,8 @@ public:
   bool shouldPurgeDead() const { return PurgeDead; }
 
   bool shouldEagerlyAssume() const { return EagerlyAssume; }
+
+  bool shouldInlineCall() const { return InlineCall; }
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();

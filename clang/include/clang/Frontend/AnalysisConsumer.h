@@ -71,6 +71,8 @@ public:
   unsigned VisualizeEGUbi : 1;
   unsigned EnableExperimentalChecks : 1;
   unsigned EnableExperimentalInternalChecks : 1;
+  unsigned InlineCall : 1;
+
 public:
   AnalyzerOptions() {
     AnalysisStoreOpt = BasicStoreModel;

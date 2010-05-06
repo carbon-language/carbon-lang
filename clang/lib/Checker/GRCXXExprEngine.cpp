@@ -86,7 +86,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
   const CXXConstructorDecl *CD = E->getConstructor();
   assert(CD);
 
-  if (!CD->isThisDeclarationADefinition())
+  if (!(CD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
     // FIXME: invalidate the object.
     return;
 
@@ -147,7 +147,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
   assert(MD && "not a CXXMethodDecl?");
 
-  if (!MD->isThisDeclarationADefinition())
+  if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
     // FIXME: conservative method call evaluation.
     return;
 
