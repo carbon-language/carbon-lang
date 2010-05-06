@@ -1866,7 +1866,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
     switch (IntNo) {
     default:
-      break;
+      return SelectCode(N);
 
     case Intrinsic::arm_neon_vld1: {
       unsigned DOpcodes[] = { ARM::VLD1d8, ARM::VLD1d16,
@@ -1988,6 +1988,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       return SelectVLDSTLane(N, false, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
     }
+    llvm_unreachable("Unhandled intrinsic");
   }
 
   case ISD::CONCAT_VECTORS: {
