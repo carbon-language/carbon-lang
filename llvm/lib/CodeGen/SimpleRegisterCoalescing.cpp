@@ -1255,7 +1255,12 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
                                                unsigned &RealDstReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(SrcReg);
   RealDstReg = tri_->getMatchingSuperReg(DstReg, SubIdx, RC);
-  assert(RealDstReg && "Invalid extract_subreg instruction!");
+  if (!RealDstReg) {
+    DEBUG(dbgs() << "\tIncompatible source regclass: "
+                 << "none of the super-registers of " << tri_->getName(DstReg)
+                 << " are in " << RC->getName() << ".\n");
+    return false;
+  }
 
   LiveInterval &RHS = li_->getInterval(SrcReg);
   // For this type of EXTRACT_SUBREG, conservatively
@@ -1293,7 +1298,12 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
                                                unsigned &RealSrcReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
   RealSrcReg = tri_->getMatchingSuperReg(SrcReg, SubIdx, RC);
-  assert(RealSrcReg && "Invalid extract_subreg instruction!");
+  if (!RealSrcReg) {
+    DEBUG(dbgs() << "\tIncompatible destination regclass: "
+                 << "none of the super-registers of " << tri_->getName(SrcReg)
+                 << " are in " << RC->getName() << ".\n");
+    return false;
+  }
 
   LiveInterval &LHS = li_->getInterval(DstReg);
   if (li_->hasInterval(RealSrcReg) &&
@@ -1419,7 +1429,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     assert(DstSubRC && "Illegal subregister index");
     if (!DstSubRC->contains(SrcSubReg)) {
       DEBUG(dbgs() << "\tIncompatible destination regclass: "
-                   << tri_->getName(SrcSubReg) << " not in "
+                   << "none of the super-registers of "
+                   << tri_->getName(SrcSubReg) << " are in "
                    << DstSubRC->getName() << ".\n");
       return false;             // Not coalescable.
     }
@@ -1436,7 +1447,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     assert(SrcSubRC && "Illegal subregister index");
     if (!SrcSubRC->contains(DstSubReg)) {
       DEBUG(dbgs() << "\tIncompatible source regclass: "
-                   << tri_->getName(DstSubReg) << " not in "
+                   << "none of the super-registers of "
+                   << tri_->getName(DstSubReg) << " are in "
                    << SrcSubRC->getName() << ".\n");
       (void)DstSubReg;
       return false;             // Not coalescable.
