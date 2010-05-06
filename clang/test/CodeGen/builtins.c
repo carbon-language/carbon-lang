@@ -163,3 +163,21 @@ void bar() {
 
 }
 // CHECK: }
+
+
+// CHECK: define void @test_inff
+void test_inff(float F, double D, long double LD) {
+  volatile int res;
+  res = __builtin_isinf(F);
+  // CHECK:  call float @fabsf(float
+  // CHECK:  fcmp oeq float {{.*}}, 0x7FF0000000000000
+
+  res = __builtin_isinf(D);
+  // CHECK:  call double @fabs(double
+  // CHECK:  fcmp oeq double {{.*}}, 0x7FF0000000000000
+  
+  res = __builtin_isinf(LD);
+  // CHECK:  call x86_fp80 @fabsl(x86_fp80
+  // CHECK:  fcmp oeq x86_fp80 {{.*}}, 0xK7FFF8000000000000000
+}
+

@@ -607,12 +607,25 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
   if (OrigArg->isTypeDependent())
     return false;
 
-  // This operation requires a floating-point number
+  // This operation requires a non-_Complex floating-point number.
   if (!OrigArg->getType()->isRealFloatingType())
     return Diag(OrigArg->getLocStart(),
                 diag::err_typecheck_call_invalid_unary_fp)
       << OrigArg->getType() << OrigArg->getSourceRange();
 
+  // If this is an implicit conversion from float -> double, remove it.
+  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(OrigArg)) {
+    Expr *CastArg = Cast->getSubExpr();
+    if (CastArg->getType()->isSpecificBuiltinType(BuiltinType::Float)) {
+      assert(Cast->getType()->isSpecificBuiltinType(BuiltinType::Double) &&
+             "promotion from float to double is the only expected cast here");
+      Cast->setSubExpr(0);
+      Cast->Destroy(Context);
+      TheCall->setArg(NumArgs-1, CastArg);
+      OrigArg = CastArg;
+    }
+  }
+  
   return false;
 }
 
