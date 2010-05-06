@@ -119,7 +119,8 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static formatted_raw_ostream *GetOutputStream(const char *TargetName, 
+static formatted_raw_ostream *GetOutputStream(const char *TargetName,
+                                              Triple::OSType OS,
                                               const char *ProgName) {
   if (OutputFilename != "") {
     if (OutputFilename == "-")
@@ -166,7 +167,10 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
       OutputFilename += ".s";
     break;
   case TargetMachine::CGFT_ObjectFile:
-    OutputFilename += ".o";
+    if (OS == Triple::Win32)
+      OutputFilename += ".obj";
+    else
+      OutputFilename += ".o";
     Binary = true;
     break;
   case TargetMachine::CGFT_Null:
@@ -284,7 +288,8 @@ int main(int argc, char **argv) {
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  formatted_raw_ostream *Out = GetOutputStream(TheTarget->getName(), argv[0]);
+  formatted_raw_ostream *Out = GetOutputStream(TheTarget->getName(),
+                                               TheTriple.getOS(), argv[0]);
   if (Out == 0) return 1;
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
