@@ -8,11 +8,13 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include <cstdio>
 using namespace clang;
 
 namespace {
-  class BoostConASTConsumer : public ASTConsumer {
+  class BoostConASTConsumer : public ASTConsumer, 
+                              public RecursiveASTVisitor<BoostConASTConsumer> {
   public:
     /// HandleTranslationUnit - This method is called when the ASTs for entire
     /// translation unit have been parsed.
@@ -27,4 +29,5 @@ ASTConsumer *BoostConAction::CreateASTConsumer(CompilerInstance &CI,
 
 void BoostConASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   fprintf(stderr, "Welcome to BoostCon!\n");
+  Visit(Ctx.getTranslationUnitDecl());
 }
