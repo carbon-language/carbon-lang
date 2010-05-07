@@ -47,6 +47,10 @@ static cl::opt<bool> PrintDbgScope("print-dbgscope", cl::Hidden,
 static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print", cl::Hidden,
      cl::desc("Disable debug info printing"));
 
+static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
+     cl::desc("Make an absense of debug location information explicit."),
+     cl::init(false));
+
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
@@ -2151,21 +2155,23 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   // Check location.
   DebugLoc DL = MI->getDebugLoc();
   if (DL.isUnknown()) {
-    // This instruction has no debug location. If the preceding instruction
-    // did, emit debug location information to indicate that the debug
-    // location is now unknown.
-    MCSymbol *Label = NULL;
-    if (DL == PrevInstLoc)
-      Label = PrevLabel;
-    else {
-      Label = recordSourceLine(DL.getLine(), DL.getCol(), 0);
-      PrevInstLoc = DL;
-      PrevLabel = Label;
-    }
+    if (UnknownLocations) {
+      // This instruction has no debug location. If the preceding instruction
+      // did, emit debug location information to indicate that the debug
+      // location is now unknown.
+      MCSymbol *Label = NULL;
+      if (DL == PrevInstLoc)
+        Label = PrevLabel;
+      else {
+        Label = recordSourceLine(DL.getLine(), DL.getCol(), 0);
+        PrevInstLoc = DL;
+        PrevLabel = Label;
+      }
 
-    // If this instruction begins a scope then note down corresponding label.
-    if (InsnsBeginScopeSet.count(MI) != 0)
-      LabelsBeforeInsn[MI] = Label;
+      // If this instruction begins a scope then note down corresponding label.
+      if (InsnsBeginScopeSet.count(MI) != 0)
+        LabelsBeforeInsn[MI] = Label;
+    }
 
     return;
   }
