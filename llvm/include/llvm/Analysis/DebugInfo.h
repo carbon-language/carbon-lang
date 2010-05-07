@@ -75,9 +75,6 @@ namespace llvm {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
 
-    /// ValidDebugInfo - Return true if N represents valid debug info value.
-    static bool ValidDebugInfo(const MDNode *N, unsigned OptLevel);
-
     /// print - print descriptor.
     void print(raw_ostream &OS) const;
 

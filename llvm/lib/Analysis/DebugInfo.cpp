@@ -32,42 +32,6 @@ using namespace llvm::dwarf;
 // DIDescriptor
 //===----------------------------------------------------------------------===//
 
-/// ValidDebugInfo - Return true if V represents valid debug info value.
-/// FIXME : Add DIDescriptor.isValid()
-bool DIDescriptor::ValidDebugInfo(const MDNode *N, unsigned OptLevel) {
-  if (!N)
-    return false;
-
-  DIDescriptor DI(N);
-
-  // Check current version. Allow Version7 for now.
-  unsigned Version = DI.getVersion();
-  if (Version != LLVMDebugVersion && Version != LLVMDebugVersion7)
-    return false;
-
-  switch (DI.getTag()) {
-  case DW_TAG_variable:
-    assert(DIVariable(N).Verify() && "Invalid DebugInfo value");
-    break;
-  case DW_TAG_compile_unit:
-    assert(DICompileUnit(N).Verify() && "Invalid DebugInfo value");
-    break;
-  case DW_TAG_subprogram:
-    assert(DISubprogram(N).Verify() && "Invalid DebugInfo value");
-    break;
-  case DW_TAG_lexical_block:
-    // FIXME: This interfers with the quality of generated code during
-    // optimization.
-    if (OptLevel != CodeGenOpt::None)
-      return false;
-    // FALLTHROUGH
-  default:
-    break;
-  }
-
-  return true;
-}
-
 StringRef 
 DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)

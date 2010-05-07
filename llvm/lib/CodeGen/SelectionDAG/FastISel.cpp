@@ -349,7 +349,7 @@ bool FastISel::SelectCall(const User *I) {
   default: break;
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None) ||
+    if (!DIVariable(DI->getVariable()).Verify() ||
         !MF.getMMI().hasDebugInfo())
       return true;
 

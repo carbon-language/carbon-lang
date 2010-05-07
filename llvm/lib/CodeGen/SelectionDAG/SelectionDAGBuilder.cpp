@@ -3818,7 +3818,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
+    if (!DIVariable(DI.getVariable()).Verify())
       return 0;
 
     MDNode *Variable = DI.getVariable();
@@ -3881,7 +3881,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_value: {
     const DbgValueInst &DI = cast<DbgValueInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
+    if (!DIVariable(DI.getVariable()).Verify())
       return 0;
 
     MDNode *Variable = DI.getVariable();
