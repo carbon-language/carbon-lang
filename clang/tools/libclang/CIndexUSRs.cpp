@@ -171,6 +171,13 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   }
   if (D->isVariadic())
     Out << '.';
+  Out << '#';
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    if (MD->isStatic())
+      Out << 'S';
+    if (unsigned quals = MD->getTypeQualifiers())
+      Out << (char)('0' + quals);
+  }
 }
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
@@ -372,15 +379,20 @@ void USRGenerator::VisitType(QualType T) {
   // This method mangles in USR information for types.  It can possibly
   // just reuse the naming-mangling logic used by codegen, although the
   // requirements for USRs might not be the same.
+  ASTContext &Ctx = AU->getASTContext();
+
   do {
-    T = T.getTypePtr()->getCanonicalTypeInternal();
+    T = Ctx.getCanonicalType(T);
     Qualifiers Q = T.getQualifiers();
+    unsigned qVal = 0;
     if (Q.hasConst())
-      Out << '1';
+      qVal |= 0x1;
     if (Q.hasVolatile())
-      Out << '2';
+      qVal |= 0x2;
     if (Q.hasRestrict())
-      Out << '3';
+      qVal |= 0x4;
+    if(qVal)
+      Out << ((char) ('0' + qVal));
 
     // Mangle in ObjC GC qualifiers?
 
@@ -476,6 +488,11 @@ void USRGenerator::VisitType(QualType T) {
       Out << '<';
       T = CT->getElementType();
       continue;
+    }
+    if (const TagType *TT = T->getAs<TagType>()) {
+      Out << '$';
+      VisitTagDecl(TT->getDecl());
+      return;
     }
 
     // Unhandled type.
