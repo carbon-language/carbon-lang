@@ -138,6 +138,8 @@ public:
   // FIXME: Deprecated, move clients to getName().
   std::string getNameAsString() const { return Name.getAsString(); }
 
+  void printName(llvm::raw_ostream &os) const { return Name.printName(os); }
+
   /// getDeclName - Get the actual, stored name of the declaration,
   /// which may be a special name.
   DeclarationName getDeclName() const { return Name; }
