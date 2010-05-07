@@ -1703,9 +1703,11 @@ public:
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitUnaryExtension(const UnaryOperator *E)
     { return Visit(E->getSubExpr()); }
+  bool VisitUnaryReal(const UnaryOperator *E);
+  bool VisitUnaryImag(const UnaryOperator *E);
 
-  // FIXME: Missing: __real__/__imag__, array subscript of vector,
-  //                 member of vector, ImplicitValueInitExpr
+  // FIXME: Missing: array subscript of vector, member of vector,
+  //                 ImplicitValueInitExpr
 };
 } // end anonymous namespace
 
@@ -1789,6 +1791,22 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return true;
   }
   }
+}
+
+bool FloatExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
+  ComplexValue CV;
+  if (!EvaluateComplex(E->getSubExpr(), CV, Info))
+    return false;
+  Result = CV.FloatReal;
+  return true;
+}
+
+bool FloatExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+  ComplexValue CV;
+  if (!EvaluateComplex(E->getSubExpr(), CV, Info))
+    return false;
+  Result = CV.FloatImag;
+  return true;
 }
 
 bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
