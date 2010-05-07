@@ -1,7 +1,9 @@
 ; RUN: llc < %s -march=x86 -asm-verbose=false                           | FileCheck %s -check-prefix=FP-ELIM
 ; RUN: llc < %s -march=x86 -asm-verbose=false -disable-fp-elim          | FileCheck %s -check-prefix=NO-ELIM
 ; RUN: llc < %s -march=x86 -asm-verbose=false -disable-non-leaf-fp-elim | FileCheck %s -check-prefix=NON-LEAF
+; XFAIL:*
 
+; FIXME: Temporarily reverted.
 ; Implement -momit-leaf-frame-pointer
 ; rdar://7886181
 
