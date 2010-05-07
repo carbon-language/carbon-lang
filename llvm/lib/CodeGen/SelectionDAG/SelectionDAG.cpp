@@ -15,6 +15,7 @@
 #include "SDNodeOrdering.h"
 #include "SDNodeDbgValue.h"
 #include "llvm/Constants.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalAlias.h"
@@ -6008,6 +6009,21 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
 
   if (getNodeId() != -1)
     OS << " [ID=" << getNodeId() << ']';
+
+  DebugLoc dl = getDebugLoc();
+  if (G && !dl.isUnknown()) {
+    DIScope
+      Scope(dl.getScope(G->getMachineFunction().getFunction()->getContext()));
+    OS << " dbg:";
+    // Omit the directory, since it's usually long and uninteresting.
+    if (Scope.Verify())
+      OS << Scope.getFilename();
+    else
+      OS << "<unknown>";
+    OS << ':' << dl.getLine();
+    if (dl.getCol() != 0)
+      OS << ':' << dl.getCol();
+  }
 }
 
 void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
