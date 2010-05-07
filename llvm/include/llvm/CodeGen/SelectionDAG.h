@@ -334,6 +334,8 @@ public:
   SDValue getTargetConstant(const ConstantInt &Val, EVT VT) {
     return getConstant(Val, VT, true);
   }
+  // The forms below that take a double should only be used for simple
+  // constants that can be exactly represented in VT.  No checks are made.
   SDValue getConstantFP(double Val, EVT VT, bool isTarget = false);
   SDValue getConstantFP(const APFloat& Val, EVT VT, bool isTarget = false);
   SDValue getConstantFP(const ConstantFP &CF, EVT VT, bool isTarget = false);

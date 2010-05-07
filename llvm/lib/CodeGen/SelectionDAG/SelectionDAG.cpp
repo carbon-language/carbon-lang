@@ -964,8 +964,18 @@ SDValue SelectionDAG::getConstantFP(double Val, EVT VT, bool isTarget) {
   EVT EltVT = VT.getScalarType();
   if (EltVT==MVT::f32)
     return getConstantFP(APFloat((float)Val), VT, isTarget);
-  else
+  else if (EltVT==MVT::f64)
     return getConstantFP(APFloat(Val), VT, isTarget);
+  else if (EltVT==MVT::f80 || EltVT==MVT::f128) {
+    bool ignored;
+    APFloat apf = APFloat(Val);
+    apf.convert(*EVTToAPFloatSemantics(EltVT), APFloat::rmNearestTiesToEven,
+                &ignored);
+    return getConstantFP(apf, VT, isTarget);
+  } else {
+    assert(0 && "Unsupported type in getConstantFP");
+    return SDValue();
+  }
 }
 
 SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
