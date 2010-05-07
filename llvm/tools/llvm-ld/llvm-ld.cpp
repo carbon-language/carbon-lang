@@ -266,7 +266,6 @@ static int GenerateAssembly(const std::string &OutputFilename,
   // We will use GCC to assemble the program so set the assembly syntax to AT&T,
   // regardless of what the target in the bitcode file is.
   args.push_back("-x86-asm-syntax=att");
-  args.push_back("-f");
   args.push_back("-o");
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
@@ -289,7 +288,6 @@ static int GenerateCFile(const std::string &OutputFile,
   std::vector<const char*> args;
   args.push_back(llc.c_str());
   args.push_back("-march=c");
-  args.push_back("-f");
   args.push_back("-o");
   args.push_back(OutputFile.c_str());
   args.push_back(InputFile.c_str());
