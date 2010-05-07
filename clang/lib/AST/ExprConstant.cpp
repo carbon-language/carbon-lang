@@ -56,6 +56,35 @@ struct EvalInfo {
     : Ctx(ctx), EvalResult(evalresult), AnyLValue(anylvalue) {}
 };
 
+namespace {
+  struct ComplexValue {
+  private:
+    bool IsInt;
+
+  public:
+    APSInt IntReal, IntImag;
+    APFloat FloatReal, FloatImag;
+
+    ComplexValue() : FloatReal(APFloat::Bogus), FloatImag(APFloat::Bogus) {}
+
+    void makeComplexFloat() { IsInt = false; }
+    bool isComplexFloat() const { return !IsInt; }
+    APFloat &getComplexFloatReal() { return FloatReal; }
+    APFloat &getComplexFloatImag() { return FloatImag; }
+
+    void makeComplexInt() { IsInt = true; }
+    bool isComplexInt() const { return IsInt; }
+    APSInt &getComplexIntReal() { return IntReal; }
+    APSInt &getComplexIntImag() { return IntImag; }
+
+    void moveInto(APValue &v) {
+      if (isComplexFloat())
+        v = APValue(FloatReal, FloatImag);
+      else
+        v = APValue(IntReal, IntImag);
+    }
+  };
+}
 
 static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
@@ -63,7 +92,7 @@ static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result,
                                     EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
-static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info);
+static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 
 //===----------------------------------------------------------------------===//
 // Misc utilities
@@ -107,7 +136,7 @@ static bool HandleConversionToBool(const Expr* E, bool& Result,
       return false;
     return EvalPointerValueAsBool(PointerResult, Result);
   } else if (E->getType()->isAnyComplexType()) {
-    APValue ComplexResult;
+    ComplexValue ComplexResult;
     if (!EvaluateComplex(E, ComplexResult, Info))
       return false;
     if (ComplexResult.isComplexFloat()) {
@@ -1108,7 +1137,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   if (LHSTy->isAnyComplexType()) {
     assert(RHSTy->isAnyComplexType() && "Invalid comparison");
-    APValue LHS, RHS;
+    ComplexValue LHS, RHS;
 
     if (!EvaluateComplex(E->getLHS(), LHS, Info))
       return false;
@@ -1581,7 +1610,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   }
 
   if (SrcType->isAnyComplexType()) {
-    APValue C;
+    ComplexValue C;
     if (!EvaluateComplex(SubExpr, C, Info))
       return false;
     if (C.isComplexFloat())
@@ -1606,7 +1635,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
 
 bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
   if (E->getSubExpr()->getType()->isAnyComplexType()) {
-    APValue LV;
+    ComplexValue LV;
     if (!EvaluateComplex(E->getSubExpr(), LV, Info) || !LV.isComplexInt())
       return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
     return Success(LV.getComplexIntReal(), E);
@@ -1617,7 +1646,7 @@ bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
 
 bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
   if (E->getSubExpr()->getType()->isComplexIntegerType()) {
-    APValue LV;
+    ComplexValue LV;
     if (!EvaluateComplex(E->getSubExpr(), LV, Info) || !LV.isComplexInt())
       return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
     return Success(LV.getComplexIntImag(), E);
@@ -1849,167 +1878,170 @@ bool FloatExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
 
 namespace {
 class ComplexExprEvaluator
-  : public StmtVisitor<ComplexExprEvaluator, APValue> {
+  : public StmtVisitor<ComplexExprEvaluator, bool> {
   EvalInfo &Info;
+  ComplexValue &Result;
 
 public:
-  ComplexExprEvaluator(EvalInfo &info) : Info(info) {}
+  ComplexExprEvaluator(EvalInfo &info, ComplexValue &Result)
+    : Info(info), Result(Result) {}
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
 
-  APValue VisitStmt(Stmt *S) {
-    return APValue();
+  bool VisitStmt(Stmt *S) {
+    return false;
   }
 
-  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
-  APValue VisitImaginaryLiteral(ImaginaryLiteral *E) {
+  bool VisitImaginaryLiteral(ImaginaryLiteral *E) {
     Expr* SubExpr = E->getSubExpr();
 
     if (SubExpr->getType()->isRealFloatingType()) {
-      APFloat Result(0.0);
+      Result.makeComplexFloat();
+      APFloat &Imag = Result.FloatImag;
+      if (!EvaluateFloat(SubExpr, Imag, Info))
+        return false;
 
-      if (!EvaluateFloat(SubExpr, Result, Info))
-        return APValue();
-
-      return APValue(APFloat(Result.getSemantics(), APFloat::fcZero, false),
-                     Result);
+      Result.FloatReal = APFloat(Imag.getSemantics());
+      return true;
     } else {
       assert(SubExpr->getType()->isIntegerType() &&
              "Unexpected imaginary literal.");
 
-      llvm::APSInt Result;
-      if (!EvaluateInteger(SubExpr, Result, Info))
-        return APValue();
+      Result.makeComplexInt();
+      APSInt &Imag = Result.IntImag;
+      if (!EvaluateInteger(SubExpr, Imag, Info))
+        return false;
 
-      llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
-      Zero = 0;
-      return APValue(Zero, Result);
+      Result.IntReal = APSInt(Imag.getBitWidth(), !Imag.isSigned());
+      return true;
     }
   }
 
-  APValue VisitCastExpr(CastExpr *E) {
+  bool VisitCastExpr(CastExpr *E) {
     Expr* SubExpr = E->getSubExpr();
     QualType EltType = E->getType()->getAs<ComplexType>()->getElementType();
     QualType SubType = SubExpr->getType();
 
     if (SubType->isRealFloatingType()) {
-      APFloat Result(0.0);
-
-      if (!EvaluateFloat(SubExpr, Result, Info))
-        return APValue();
+      APFloat &Real = Result.FloatReal;
+      if (!EvaluateFloat(SubExpr, Real, Info))
+        return false;
 
       if (EltType->isRealFloatingType()) {
-        Result = HandleFloatToFloatCast(EltType, SubType, Result, Info.Ctx);
-        return APValue(Result,
-                       APFloat(Result.getSemantics(), APFloat::fcZero, false));
+        Result.makeComplexFloat();
+        Real = HandleFloatToFloatCast(EltType, SubType, Real, Info.Ctx);
+        Result.FloatImag = APFloat(Real.getSemantics());
+        return true;
       } else {
-        llvm::APSInt IResult;
-        IResult = HandleFloatToIntCast(EltType, SubType, Result, Info.Ctx);
-        llvm::APSInt Zero(IResult.getBitWidth(), !IResult.isSigned());
-        Zero = 0;
-        return APValue(IResult, Zero);
+        Result.makeComplexInt();
+        Result.IntReal = HandleFloatToIntCast(EltType, SubType, Real, Info.Ctx);
+        Result.IntImag = APSInt(Result.IntReal.getBitWidth(),
+                                !Result.IntReal.isSigned());
+        return true;
       }
     } else if (SubType->isIntegerType()) {
-      APSInt Result;
-
-      if (!EvaluateInteger(SubExpr, Result, Info))
-        return APValue();
+      APSInt &Real = Result.IntReal;
+      if (!EvaluateInteger(SubExpr, Real, Info))
+        return false;
 
       if (EltType->isRealFloatingType()) {
-        APFloat FResult =
-            HandleIntToFloatCast(EltType, SubType, Result, Info.Ctx);
-        return APValue(FResult,
-                       APFloat(FResult.getSemantics(), APFloat::fcZero, false));
+        Result.makeComplexFloat();
+        Result.FloatReal
+          = HandleIntToFloatCast(EltType, SubType, Real, Info.Ctx);
+        Result.FloatImag = APFloat(Result.FloatReal.getSemantics());
+        return true;
       } else {
-        Result = HandleIntToIntCast(EltType, SubType, Result, Info.Ctx);
-        llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
-        Zero = 0;
-        return APValue(Result, Zero);
+        Result.makeComplexInt();
+        Real = HandleIntToIntCast(EltType, SubType, Real, Info.Ctx);
+        Result.IntImag = APSInt(Real.getBitWidth(), !Real.isSigned());
+        return true;
       }
     } else if (const ComplexType *CT = SubType->getAs<ComplexType>()) {
-      APValue Src;
-
-      if (!EvaluateComplex(SubExpr, Src, Info))
-        return APValue();
+      if (!Visit(SubExpr))
+        return false;
 
       QualType SrcType = CT->getElementType();
 
-      if (Src.isComplexFloat()) {
+      if (Result.isComplexFloat()) {
         if (EltType->isRealFloatingType()) {
-          return APValue(HandleFloatToFloatCast(EltType, SrcType,
-                                                Src.getComplexFloatReal(),
-                                                Info.Ctx),
-                         HandleFloatToFloatCast(EltType, SrcType,
-                                                Src.getComplexFloatImag(),
-                                                Info.Ctx));
+          Result.makeComplexFloat();
+          Result.FloatReal = HandleFloatToFloatCast(EltType, SrcType,
+                                                    Result.FloatReal,
+                                                    Info.Ctx);
+          Result.FloatImag = HandleFloatToFloatCast(EltType, SrcType,
+                                                    Result.FloatImag,
+                                                    Info.Ctx);
+          return true;
         } else {
-          return APValue(HandleFloatToIntCast(EltType, SrcType,
-                                              Src.getComplexFloatReal(),
-                                              Info.Ctx),
-                         HandleFloatToIntCast(EltType, SrcType,
-                                              Src.getComplexFloatImag(),
-                                              Info.Ctx));
+          Result.makeComplexInt();
+          Result.IntReal = HandleFloatToIntCast(EltType, SrcType,
+                                                Result.FloatReal,
+                                                Info.Ctx);
+          Result.IntImag = HandleFloatToIntCast(EltType, SrcType,
+                                                Result.FloatImag,
+                                                Info.Ctx);
+          return true;
         }
       } else {
-        assert(Src.isComplexInt() && "Invalid evaluate result.");
+        assert(Result.isComplexInt() && "Invalid evaluate result.");
         if (EltType->isRealFloatingType()) {
-          return APValue(HandleIntToFloatCast(EltType, SrcType,
-                                              Src.getComplexIntReal(),
-                                              Info.Ctx),
-                         HandleIntToFloatCast(EltType, SrcType,
-                                              Src.getComplexIntImag(),
-                                              Info.Ctx));
+          Result.makeComplexFloat();
+          Result.FloatReal = HandleIntToFloatCast(EltType, SrcType,
+                                                  Result.IntReal,
+                                                  Info.Ctx);
+          Result.FloatImag = HandleIntToFloatCast(EltType, SrcType,
+                                                  Result.IntImag,
+                                                  Info.Ctx);
+          return true;
         } else {
-          return APValue(HandleIntToIntCast(EltType, SrcType,
-                                            Src.getComplexIntReal(),
-                                            Info.Ctx),
-                         HandleIntToIntCast(EltType, SrcType,
-                                            Src.getComplexIntImag(),
-                                            Info.Ctx));
+          Result.makeComplexInt();
+          Result.IntReal = HandleIntToIntCast(EltType, SrcType,
+                                              Result.IntReal,
+                                              Info.Ctx);
+          Result.IntImag = HandleIntToIntCast(EltType, SrcType,
+                                              Result.IntImag,
+                                              Info.Ctx);
+          return true;
         }
       }
     }
 
     // FIXME: Handle more casts.
-    return APValue();
+    return false;
   }
 
-  APValue VisitBinaryOperator(const BinaryOperator *E);
-  APValue VisitChooseExpr(const ChooseExpr *E)
+  bool VisitBinaryOperator(const BinaryOperator *E);
+  bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
-  APValue VisitUnaryExtension(const UnaryOperator *E)
+  bool VisitUnaryExtension(const UnaryOperator *E)
     { return Visit(E->getSubExpr()); }
   // FIXME Missing: unary +/-/~, binary div, ImplicitValueInitExpr,
   //                conditional ?:, comma
 };
 } // end anonymous namespace
 
-static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info) {
+static bool EvaluateComplex(const Expr *E, ComplexValue &Result,
+                            EvalInfo &Info) {
   assert(E->getType()->isAnyComplexType());
-  Result = ComplexExprEvaluator(Info).Visit(const_cast<Expr*>(E));
-  assert((!Result.isComplexFloat() ||
-          (&Result.getComplexFloatReal().getSemantics() ==
-           &Result.getComplexFloatImag().getSemantics())) &&
-         "Invalid complex evaluation.");
-  return Result.isComplexFloat() || Result.isComplexInt();
+  return ComplexExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
-APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
-  APValue Result, RHS;
+bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  if (!Visit(E->getLHS()))
+    return false;
 
-  if (!EvaluateComplex(E->getLHS(), Result, Info))
-    return APValue();
-
+  ComplexValue RHS;
   if (!EvaluateComplex(E->getRHS(), RHS, Info))
-    return APValue();
+    return false;
 
   assert(Result.isComplexFloat() == RHS.isComplexFloat() &&
          "Invalid operands to binary operator.");
   switch (E->getOpcode()) {
-  default: return APValue();
+  default: return false;
   case BinaryOperator::Add:
     if (Result.isComplexFloat()) {
       Result.getComplexFloatReal().add(RHS.getComplexFloatReal(),
@@ -2034,7 +2066,7 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     break;
   case BinaryOperator::Mul:
     if (Result.isComplexFloat()) {
-      APValue LHS = Result;
+      ComplexValue LHS = Result;
       APFloat &LHS_r = LHS.getComplexFloatReal();
       APFloat &LHS_i = LHS.getComplexFloatImag();
       APFloat &RHS_r = RHS.getComplexFloatReal();
@@ -2054,7 +2086,7 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       Tmp.multiply(RHS_r, APFloat::rmNearestTiesToEven);
       Result.getComplexFloatImag().add(Tmp, APFloat::rmNearestTiesToEven);
     } else {
-      APValue LHS = Result;
+      ComplexValue LHS = Result;
       Result.getComplexIntReal() =
         (LHS.getComplexIntReal() * RHS.getComplexIntReal() -
          LHS.getComplexIntImag() * RHS.getComplexIntImag());
@@ -2065,7 +2097,7 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     break;
   }
 
-  return Result;
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2095,8 +2127,10 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
 
     Result.Val = APValue(f);
   } else if (getType()->isAnyComplexType()) {
-    if (!EvaluateComplex(this, Result.Val, Info))
+    ComplexValue c;
+    if (!EvaluateComplex(this, c, Info))
       return false;
+    c.moveInto(Result.Val);
   } else
     return false;
 
@@ -2122,8 +2156,10 @@ bool Expr::EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const {
 
     Result.Val = APValue(f);
   } else if (getType()->isAnyComplexType()) {
-    if (!EvaluateComplex(this, Result.Val, Info))
+    ComplexValue c;
+    if (!EvaluateComplex(this, c, Info))
       return false;
+    c.moveInto(Result.Val);
   } else
     return false;
 
