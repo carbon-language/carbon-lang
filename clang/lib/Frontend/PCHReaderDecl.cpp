@@ -17,6 +17,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
 
@@ -40,22 +42,49 @@ namespace {
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
     void VisitNamedDecl(NamedDecl *ND);
     void VisitNamespaceDecl(NamespaceDecl *D);
+    void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+    void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *TD);
     void VisitTypedefDecl(TypedefDecl *TD);
+    void VisitUnresolvedUsingTypename(UnresolvedUsingTypenameDecl *D);
     void VisitTagDecl(TagDecl *TD);
     void VisitEnumDecl(EnumDecl *ED);
     void VisitRecordDecl(RecordDecl *RD);
+    void VisitCXXRecordDecl(CXXRecordDecl *D);
+    void VisitClassTemplateSpecializationDecl(
+                                            ClassTemplateSpecializationDecl *D);
+    void VisitClassTemplatePartialSpecializationDecl(
+                                     ClassTemplatePartialSpecializationDecl *D);
+    void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     void VisitValueDecl(ValueDecl *VD);
     void VisitEnumConstantDecl(EnumConstantDecl *ECD);
+    void VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D);
     void VisitDeclaratorDecl(DeclaratorDecl *DD);
     void VisitFunctionDecl(FunctionDecl *FD);
+    void VisitCXXMethodDecl(CXXMethodDecl *D);
+    void VisitCXXConstructorDecl(CXXConstructorDecl *D);
+    void VisitCXXDestructorDecl(CXXDestructorDecl *D);
+    void VisitCXXConversionDecl(CXXConversionDecl *D);
     void VisitFieldDecl(FieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
     void VisitImplicitParamDecl(ImplicitParamDecl *PD);
     void VisitParmVarDecl(ParmVarDecl *PD);
+    void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
+    void VisitTemplateDecl(TemplateDecl *D);
+    void VisitClassTemplateDecl(ClassTemplateDecl *D);
+    void visitFunctionTemplateDecl(FunctionTemplateDecl *D);
+    void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    void VisitUsing(UsingDecl *D);
+    void VisitUsingShadow(UsingShadowDecl *D);
+    void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
+    void VisitFriendTemplateDecl(FriendTemplateDecl *D);
+    void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *BD);
+
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
+
+    // FIXME: Reorder according to DeclNodes.def?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
@@ -90,23 +119,13 @@ void PCHDeclReader::VisitDecl(Decl *D) {
 
 void PCHDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
   VisitDecl(TU);
+  TU->setAnonymousNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
   VisitDecl(ND);
   ND->setDeclName(Reader.ReadDeclarationName(Record, Idx));
-}
-
-void PCHDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
-  VisitNamedDecl(D);
-  D->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  D->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  D->setNextNamespace(
-                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setOriginalNamespace(
-                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setAnonymousNamespace(
-                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
@@ -193,6 +212,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setHasImplicitReturnZero(Record[Idx++]);
   FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: C++ TemplateOrInstantiation
+
+  // Read in the parameters.
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
@@ -444,6 +465,155 @@ void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   BD->setParams(Params.data(), NumParams);
+}
+
+void PCHDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+  VisitDecl(D);
+  D->setLanguage((LinkageSpecDecl::LanguageIDs)Record[Idx++]);
+  D->setHasBraces(Record[Idx++]);
+}
+
+void PCHDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
+  VisitNamedDecl(D);
+  D->setLBracLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setRBracLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setNextNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+
+  // Only read one reference--the original or anonymous namespace.
+  bool IsOriginal = Record[Idx++];
+  if (IsOriginal)
+    D->setAnonymousNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+  else
+    D->setOriginalNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  VisitNamedDecl(D);
+
+  D->setAliasLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  D->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  D->setTargetNameLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setAliasedNamespace(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitUsing(UsingDecl *D) {
+  VisitNamedDecl(D);
+  D->setUsingLocation(Reader.ReadSourceLocation(Record, Idx));
+  D->setNestedNameRange(Reader.ReadSourceRange(Record, Idx));
+  D->setTargetNestedNameDecl(Reader.ReadNestedNameSpecifier(Record, Idx));
+
+  // FIXME: It would probably be more efficient to read these into a vector
+  // and then re-cosntruct the shadow decl set over that vector since it
+  // would avoid existence checks.
+  unsigned NumShadows = Record[Idx++];
+  for(unsigned I = 0; I != NumShadows; ++I) {
+    D->addShadowDecl(cast<UsingShadowDecl>(Reader.GetDecl(Record[Idx++])));
+  }
+  D->setTypeName(Record[Idx++]);
+}
+
+void PCHDeclReader::VisitUsingShadow(UsingShadowDecl *D) {
+  VisitNamedDecl(D);
+  D->setTargetDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setUsingDecl(cast<UsingDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  VisitNamedDecl(D);
+  D->setNamespaceKeyLocation(Reader.ReadSourceLocation(Record, Idx));
+  D->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  D->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  D->setIdentLocation(Reader.ReadSourceLocation(Record, Idx));
+  D->setNominatedNamespace(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setCommonAncestor(cast_or_null<DeclContext>(
+                                                Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D) {
+  VisitValueDecl(D);
+  D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
+  D->setUsingLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+}
+
+void PCHDeclReader::VisitUnresolvedUsingTypename(
+                                               UnresolvedUsingTypenameDecl *D) {
+  VisitTypeDecl(D);
+  D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
+  D->setUsingLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setTypenameLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+}
+
+void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  // assert(false && "cannot read CXXRecordDecl");
+  VisitRecordDecl(D);
+}
+
+void PCHDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {
+  // assert(false && "cannot read CXXMethodDecl");
+  VisitFunctionDecl(D);
+}
+
+void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
+  // assert(false && "cannot read CXXConstructorDecl");
+  VisitCXXMethodDecl(D);
+}
+
+void PCHDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
+  // assert(false && "cannot read CXXDestructorDecl");
+  VisitCXXMethodDecl(D);
+}
+
+void PCHDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
+  // assert(false && "cannot read CXXConversionDecl");
+  VisitCXXMethodDecl(D);
+}
+
+void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
+  assert(false && "cannot read FriendTemplateDecl");
+}
+
+void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
+  assert(false && "cannot read TemplateDecl");
+}
+
+void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  assert(false && "cannot read ClassTemplateDecl");
+}
+
+void PCHDeclReader::VisitClassTemplateSpecializationDecl(
+                                           ClassTemplateSpecializationDecl *D) {
+  assert(false && "cannot read ClassTemplateSpecializationDecl");
+}
+
+void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
+                                    ClassTemplatePartialSpecializationDecl *D) {
+  assert(false && "cannot read ClassTemplatePartialSpecializationDecl");
+}
+
+void PCHDeclReader::visitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  assert(false && "cannot read FunctionTemplateDecl");
+}
+
+void PCHDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
+  assert(false && "cannot read TemplateTypeParmDecl");
+}
+
+void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
+  assert(false && "cannot read NonTypeTemplateParmDecl");
+}
+
+void PCHDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
+  assert(false && "cannot read TemplateTemplateParmDecl");
+}
+
+void PCHDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
+  assert(false && "cannot read StaticAssertDecl");
 }
 
 std::pair<uint64_t, uint64_t>
@@ -706,6 +876,94 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
                              QualType(), 0);
     break;
+  case pch::DECL_LINKAGE_SPEC:
+    D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
+                                (LinkageSpecDecl::LanguageIDs)0,
+                                false);
+    break;
+  case pch::DECL_NAMESPACE:
+    D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);
+    break;
+  case pch::DECL_NAMESPACE_ALIAS:
+    D = NamespaceAliasDecl::Create(*Context, 0, SourceLocation(),
+                                   SourceLocation(), 0, SourceRange(), 0,
+                                   SourceLocation(), 0);
+    break;
+  case pch::DECL_USING:
+    D = UsingDecl::Create(*Context, 0, SourceLocation(), SourceRange(),
+                          SourceLocation(), 0, DeclarationName(), false);
+    break;
+  case pch::DECL_USING_SHADOW:
+    D = UsingShadowDecl::Create(*Context, 0, SourceLocation(), 0, 0);
+    break;
+  case pch::DECL_USING_DIRECTIVE:
+    D = UsingDirectiveDecl::Create(*Context, 0, SourceLocation(),
+                                   SourceLocation(), SourceRange(), 0,
+                                   SourceLocation(), 0, 0);
+    break;
+  case pch::DECL_UNRESOLVED_USING_VALUE:
+    D = UnresolvedUsingValueDecl::Create(*Context, 0, SourceLocation(),
+                                         SourceRange(), 0, SourceLocation(),
+                                         DeclarationName());
+    break;
+  case pch::DECL_UNRESOLVED_USING_TYPENAME:
+    D = UnresolvedUsingTypenameDecl::Create(*Context, 0, SourceLocation(),
+                                            SourceLocation(), SourceRange(),
+                                            0, SourceLocation(),
+                                            DeclarationName());
+    break;
+  case pch::DECL_CXX_RECORD:
+    D = CXXRecordDecl::Create(*Context, TagDecl::TK_struct, 0,
+                              SourceLocation(), 0, SourceLocation(), 0);
+    break;
+  case pch::DECL_CXX_METHOD:
+    D = CXXMethodDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
+                              QualType(), 0);
+    break;
+  case pch::DECL_CXX_CONSTRUCTOR:
+    D = CXXConstructorDecl::Create(*Context, Decl::EmptyShell());
+    break;
+  case pch::DECL_CXX_DESTRUCTOR:
+    D = CXXDestructorDecl::Create(*Context, Decl::EmptyShell());
+    break;
+  case pch::DECL_CXX_CONVERSION:
+    D = CXXConversionDecl::Create(*Context, Decl::EmptyShell());
+    break;
+  case pch::DECL_FRIEND:
+    assert(false && "cannot read FriendDecl");
+    break;
+  case pch::DECL_FRIEND_TEMPLATE:
+    assert(false && "cannot read FriendTemplateDecl");
+    break;
+  case pch::DECL_TEMPLATE:
+    // FIXME: Should TemplateDecl be ABSTRACT_DECL???
+    assert(false && "TemplateDecl should be abstract!");
+    break;
+  case pch::DECL_CLASS_TEMPLATE:
+    assert(false && "cannot read ClassTemplateDecl");
+    break;
+  case pch::DECL_CLASS_TEMPLATE_SPECIALIZATION:
+    assert(false && "cannot read ClasstemplateSpecializationDecl");
+    break;
+  case pch::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
+    assert(false && "cannot read ClassTemplatePartialSpecializationDecl");
+    break;
+  case pch::DECL_FUNCTION_TEMPLATE:
+    assert(false && "cannot read FunctionTemplateDecl");
+    break;
+  case pch::DECL_TEMPLATE_TYPE_PARM:
+    assert(false && "cannot read TemplateTypeParmDecl");
+    break;
+  case pch::DECL_NON_TYPE_TEMPLATE_PARM:
+    assert(false && "cannot read NonTypeTemplateParmDecl");
+    break;
+  case pch::DECL_TEMPLATE_TEMPLATE_PARM:
+    assert(false && "cannot read TemplateTemplateParmDecl");
+    break;
+  case pch::DECL_STATIC_ASSERT:
+    assert(false && "cannot read StaticAssertDecl");
+    break;
+
   case pch::DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(),
                                Selector(), QualType(), 0, 0);
@@ -774,10 +1032,6 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_BLOCK:
     D = BlockDecl::Create(*Context, 0, SourceLocation());
-    break;
-      
-  case pch::DECL_NAMESPACE:
-    D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   }
 

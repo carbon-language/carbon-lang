@@ -52,6 +52,9 @@ class ASTContext;
 class Attr;
 class Decl;
 class DeclContext;
+class NestedNameSpecifier;
+class CXXBaseSpecifier;
+class CXXBaseOrMemberInitializer;
 class GotoStmt;
 class LabelStmt;
 class MacroDefinition;
@@ -694,7 +697,20 @@ public:
   Selector GetSelector(const RecordData &Record, unsigned &Idx) {
     return DecodeSelector(Record[Idx++]);
   }
+
+  /// \brief Read a declaration name.
   DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
+
+  NestedNameSpecifier *ReadNestedNameSpecifier(const RecordData &Record,
+                                               unsigned &Idx);
+
+  /// \brief Read a source location.
+  SourceLocation ReadSourceLocation(const RecordData &Record, unsigned& Idx) {
+    return SourceLocation::getFromRawEncoding(Record[Idx++]);
+  }
+
+  /// \brief Read a source range.
+  SourceRange ReadSourceRange(const RecordData &Record, unsigned& Idx);
 
   /// \brief Read an integral value
   llvm::APInt ReadAPInt(const RecordData &Record, unsigned &Idx);

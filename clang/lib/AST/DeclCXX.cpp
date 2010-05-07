@@ -785,6 +785,12 @@ SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {
 }
 
 CXXConstructorDecl *
+CXXConstructorDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) CXXConstructorDecl(0, SourceLocation(), DeclarationName(),
+                                    QualType(), 0, false, false, false);
+}
+
+CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            SourceLocation L, DeclarationName N,
                            QualType T, TypeSourceInfo *TInfo,
@@ -887,6 +893,12 @@ bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
 }
 
 CXXDestructorDecl *
+CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) CXXDestructorDecl(0, SourceLocation(), DeclarationName(),
+                                   QualType(), false, false);
+}
+
+CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, DeclarationName N,
                           QualType T, bool isInline,
@@ -900,6 +912,12 @@ void
 CXXConstructorDecl::Destroy(ASTContext& C) {
   C.Deallocate(BaseOrMemberInitializers);
   CXXMethodDecl::Destroy(C);
+}
+
+CXXConversionDecl *
+CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) CXXConversionDecl(0, SourceLocation(), DeclarationName(),
+                                   QualType(), 0, false, false);
 }
 
 CXXConversionDecl *
@@ -938,6 +956,12 @@ NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
         dyn_cast_or_null<NamespaceAliasDecl>(NominatedNamespace))
     return NA->getNamespace();
   return cast_or_null<NamespaceDecl>(NominatedNamespace);
+}
+
+void UsingDirectiveDecl::setNominatedNamespace(NamedDecl* ND) {
+  assert((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
+    "expected a NamespaceDecl or NamespaceAliasDecl");
+  NominatedNamespace = ND;
 }
 
 NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,

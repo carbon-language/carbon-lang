@@ -84,6 +84,26 @@ namespace K {
   }
 }
 
+namespace {
+  class C1;
+}
+namespace {
+  class C1;
+}
+C1 *pc1 = 0;
+
+namespace N {
+  namespace {
+    class C2;
+  }
+}
+namespace N {
+  namespace {
+    class C2;
+  }
+}
+N::C2 *pc2 = 0;
+
 // PR6341
 namespace A = N;
 namespace N { }

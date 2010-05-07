@@ -2181,6 +2181,11 @@ void PCHWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
   Record.push_back(Loc.getRawEncoding());
 }
 
+void PCHWriter::AddSourceRange(SourceRange Range, RecordData &Record) {
+  AddSourceLocation(Range.getBegin(), Record);
+  AddSourceLocation(Range.getEnd(), Record);
+}
+
 void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
   Record.push_back(Value.getBitWidth());
   unsigned N = Value.getNumWords();
@@ -2405,5 +2410,44 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   case DeclarationName::CXXUsingDirective:
     // No extra data to emit
     break;
+  }
+}
+
+void PCHWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
+                                       RecordData &Record) {
+  // Nested name specifiers usually aren't too long. I think that 8 would
+  // typically accomodate the vast majority.
+  llvm::SmallVector<NestedNameSpecifier *, 8> NestedNames;
+
+  // Push each of the NNS's onto a stack for serialization in reverse order.
+  while (NNS) {
+    NestedNames.push_back(NNS);
+    NNS = NNS->getPrefix();
+  }
+
+  Record.push_back(NestedNames.size());
+  while(!NestedNames.empty()) {
+    NNS = NestedNames.pop_back_val();
+    NestedNameSpecifier::SpecifierKind Kind = NNS->getKind();
+    Record.push_back(Kind);
+    switch (Kind) {
+    case NestedNameSpecifier::Identifier:
+      AddIdentifierRef(NNS->getAsIdentifier(), Record);
+      break;
+
+    case NestedNameSpecifier::Namespace:
+      AddDeclRef(NNS->getAsNamespace(), Record);
+      break;
+
+    case NestedNameSpecifier::TypeSpec:
+    case NestedNameSpecifier::TypeSpecWithTemplate:
+      AddTypeRef(QualType(NNS->getAsType(), 0), Record);
+      Record.push_back(Kind == NestedNameSpecifier::TypeSpecWithTemplate);
+      break;
+
+    case NestedNameSpecifier::Global:
+      // Don't need to write an associated value.
+      break;
+    }
   }
 }

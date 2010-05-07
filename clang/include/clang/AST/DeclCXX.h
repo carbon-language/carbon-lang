@@ -1244,6 +1244,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
   virtual void Destroy(ASTContext& C);
 
 public:
+  static CXXConstructorDecl *Create(ASTContext &C, EmptyShell Empty);
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                     SourceLocation L, DeclarationName N,
                                     QualType T, TypeSourceInfo *TInfo,
@@ -1386,6 +1387,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
   }
 
 public:
+  static CXXDestructorDecl *Create(ASTContext& C, EmptyShell Empty);
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, DeclarationName N,
                                    QualType T, bool isInline,
@@ -1441,6 +1443,7 @@ class CXXConversionDecl : public CXXMethodDecl {
       IsExplicitSpecified(isExplicitSpecified) { }
 
 public:
+  static CXXConversionDecl *Create(ASTContext &C, EmptyShell Empty);
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, DeclarationName N,
                                    QualType T, TypeSourceInfo *TInfo,
@@ -1481,8 +1484,10 @@ public:
   /// ASTs and cannot be changed without altering that abi.  To help
   /// ensure a stable abi for this, we choose the DW_LANG_ encodings
   /// from the dwarf standard.
-  enum LanguageIDs { lang_c = /* DW_LANG_C */ 0x0002,
-  lang_cxx = /* DW_LANG_C_plus_plus */ 0x0004 };
+  enum LanguageIDs {
+    lang_c = /* DW_LANG_C */ 0x0002,
+    lang_cxx = /* DW_LANG_C_plus_plus */ 0x0004
+  };
 private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;
@@ -1500,11 +1505,19 @@ public:
                                  SourceLocation L, LanguageIDs Lang,
                                  bool Braces);
 
+  /// \brief Return the language specified by this linkage specification.
   LanguageIDs getLanguage() const { return Language; }
 
-  /// hasBraces - Determines whether this linkage specification had
-  /// braces in its syntactic form.
+  /// \brief Set the language specified by this linkage specification.
+  void setLanguage(LanguageIDs L) { Language = L; }
+
+  /// \brief Determines whether this linkage specification had braces in
+  /// its syntactic form.
   bool hasBraces() const { return HadBraces; }
+
+  /// \brief Set whether this linkage specification has braces in its
+  /// syntactic form.
+  void setHasBraces(bool B) { HadBraces = B; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const LinkageSpecDecl *D) { return true; }
@@ -1571,12 +1584,20 @@ class UsingDirectiveDecl : public NamedDecl {
 
 public:
   /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifiers the namespace name.
+  /// that qualifies the namespace name.
   SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Set the source range of the nested-name-specifier that
+  /// qualifies the namespace name.
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
 
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name of the namespace.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
+
+  /// \brief Set the nested-name-specifier that qualifes the name of the
+  /// namespace.
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   NamedDecl *getNominatedNamespaceAsWritten() { return NominatedNamespace; }
   const NamedDecl *getNominatedNamespaceAsWritten() const {
@@ -1590,16 +1611,31 @@ public:
     return const_cast<UsingDirectiveDecl*>(this)->getNominatedNamespace();
   }
 
-  /// getCommonAncestor - returns common ancestor context of using-directive,
-  /// and nominated by it namespace.
+  /// setNominatedNamespace - Set the namespace nominataed by the
+  /// using-directive.
+  void setNominatedNamespace(NamedDecl* NS);
+
+  /// \brief Returns the common ancestor context of this using-directive and
+  /// its nominated namespace.
   DeclContext *getCommonAncestor() { return CommonAncestor; }
   const DeclContext *getCommonAncestor() const { return CommonAncestor; }
 
+  /// \brief Set the common ancestor context of this using-directive and its
+  /// nominated namespace.
+  void setCommonAncestor(DeclContext* Cxt) { CommonAncestor = Cxt; }
+
+  // FIXME: Could omit 'Key' in name.
   /// getNamespaceKeyLocation - Returns location of namespace keyword.
   SourceLocation getNamespaceKeyLocation() const { return NamespaceLoc; }
 
+  /// setNamespaceKeyLocation - Set the the location of the namespacekeyword.
+  void setNamespaceKeyLocation(SourceLocation L) { NamespaceLoc = L; }
+
   /// getIdentLocation - Returns location of identifier.
   SourceLocation getIdentLocation() const { return IdentLoc; }
+
+  /// setIdentLocation - set the location of the identifier.
+  void setIdentLocation(SourceLocation L) { IdentLoc = L; }
 
   static UsingDirectiveDecl *Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation L,
@@ -1634,7 +1670,7 @@ class NamespaceAliasDecl : public NamedDecl {
   /// name, if any.
   NestedNameSpecifier *Qualifier;
 
-  /// IdentLoc - Location of namespace identifier.
+  /// IdentLoc - Location of namespace identifier. Accessed by TargetNameLoc.
   SourceLocation IdentLoc;
 
   /// Namespace - The Decl that this alias points to. Can either be a
@@ -1655,10 +1691,19 @@ public:
   /// that qualifiers the namespace name.
   SourceRange getQualifierRange() const { return QualifierRange; }
 
+  /// \brief Set the source range of the nested-name-specifier that qualifies
+  /// the namespace name.
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
+
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name of the namespace.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
 
+  /// \brief Set the nested-name-specifier that qualifies the name of the
+  /// namespace.
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
+
+  /// \brief Retrieve the namespace declaration aliased by this directive.
   NamespaceDecl *getNamespace() {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(Namespace))
       return AD->getNamespace();
@@ -1674,15 +1719,30 @@ public:
   /// "namespace foo = ns::bar;".
   SourceLocation getAliasLoc() const { return AliasLoc; }
 
+  /// Set the location o;f the alias name, e.e., 'foo' in
+  /// "namespace foo = ns::bar;".
+  void setAliasLoc(SourceLocation L) { AliasLoc = L; }
+
   /// Returns the location of the 'namespace' keyword.
   SourceLocation getNamespaceLoc() const { return getLocation(); }
 
   /// Returns the location of the identifier in the named namespace.
   SourceLocation getTargetNameLoc() const { return IdentLoc; }
 
+  /// Set the location of the identifier in the named namespace.
+  void setTargetNameLoc(SourceLocation L) { IdentLoc = L; }
+
   /// \brief Retrieve the namespace that this alias refers to, which
   /// may either be a NamespaceDecl or a NamespaceAliasDecl.
   NamedDecl *getAliasedNamespace() const { return Namespace; }
+
+  /// \brief Set the namespace or namespace alias pointed to by this
+  /// alias decl.
+  void setAliasedNamespace(NamedDecl *ND) {
+    assert((isa<NamespaceAliasDecl>(ND) || isa<NamespaceDecl>(ND)) &&
+      "expecting namespace or namespace alias decl");
+      Namespace = ND;
+  }
 
   static NamespaceAliasDecl *Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation L, SourceLocation AliasLoc,
@@ -1730,16 +1790,20 @@ public:
     return new (C) UsingShadowDecl(DC, Loc, Using, Target);
   }
 
-  /// Gets the underlying declaration which has been brought into the
+  /// \brief Gets the underlying declaration which has been brought into the
   /// local scope.
-  NamedDecl *getTargetDecl() const {
-    return Underlying;
-  }
+  NamedDecl *getTargetDecl() const { return Underlying; }
 
-  /// Gets the using declaration to which this declaration is tied.
-  UsingDecl *getUsingDecl() const {
-    return Using;
-  }
+  /// \brief Sets the underlying declaration which has been brought into the
+  /// local scope.
+  void setTargetDecl(NamedDecl* ND) { Underlying = ND; }
+
+  /// \brief Gets the using declaration to which this declaration is tied.
+  UsingDecl *getUsingDecl() const { return Using; }
+
+  /// \brief Sets the using declaration that introduces this target
+  /// declaration.
+  void setUsingDecl(UsingDecl* UD) { Using = UD; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingShadowDecl *D) { return true; }
@@ -1776,20 +1840,38 @@ class UsingDecl : public NamedDecl {
   }
 
 public:
+  // FIXME: Should be const?
   /// \brief Returns the source range that covers the nested-name-specifier
   /// preceding the namespace name.
   SourceRange getNestedNameRange() { return NestedNameRange; }
 
-  /// \brief Returns the source location of the "using" location itself.
+  /// \brief Set the source range of the nested-name-specifier.
+  void setNestedNameRange(SourceRange R) { NestedNameRange = R; }
+
+  // FIXME; Should be const?
+  // FIXME: Naming is inconsistent with other get*Loc functions.
+  /// \brief Returns the source location of the "using" keyword.
   SourceLocation getUsingLocation() { return UsingLocation; }
 
-  /// \brief Get target nested name declaration.
+  /// \brief Set the source location of the 'using' keyword.
+  void setUsingLocation(SourceLocation L) { UsingLocation = L; }
+
+
+  /// \brief Get the target nested name declaration.
   NestedNameSpecifier* getTargetNestedNameDecl() {
     return TargetNestedName;
   }
 
-  /// isTypeName - Return true if using decl has 'typename'.
+  /// \brief Set the target nested name declaration.
+  void setTargetNestedNameDecl(NestedNameSpecifier *NNS) {
+    TargetNestedName = NNS;
+  }
+
+  /// \brief Return true if the using declaration has 'typename'.
   bool isTypeName() const { return IsTypeName; }
+
+  /// \brief Sets whether the using declaration has 'typename'.
+  void setTypeName(bool TN) { IsTypeName = TN; }
 
   typedef llvm::SmallPtrSet<UsingShadowDecl*,8>::const_iterator shadow_iterator;
   shadow_iterator shadow_begin() const { return Shadows.begin(); }
@@ -1806,6 +1888,12 @@ public:
     if (!Shadows.erase(S)) {
       assert(false && "declaration not in set");
     }
+  }
+
+  /// \brief Return the number of shadowed declarations associated with this
+  /// using declaration.
+  unsigned getNumShadowDecls() const {
+    return Shadows.size();
   }
 
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1850,13 +1938,25 @@ public:
   /// preceding the namespace name.
   SourceRange getTargetNestedNameRange() const { return TargetNestedNameRange; }
 
+  /// \brief Set the source range coverting the nested-name-specifier preceding
+  /// the namespace name.
+  void setTargetNestedNameRange(SourceRange R) { TargetNestedNameRange = R; }
+
   /// \brief Get target nested name declaration.
   NestedNameSpecifier* getTargetNestedNameSpecifier() {
     return TargetNestedNameSpecifier;
   }
 
+  /// \brief Set the nested name declaration.
+  void setTargetNestedNameSpecifier(NestedNameSpecifier* NNS) {
+    TargetNestedNameSpecifier = NNS;
+  }
+
   /// \brief Returns the source location of the 'using' keyword.
   SourceLocation getUsingLoc() const { return UsingLocation; }
+
+  /// \brief Set the source location of the 'using' keyword.
+  void setUsingLoc(SourceLocation L) { UsingLocation = L; }
 
   static UnresolvedUsingValueDecl *
     Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
@@ -1904,16 +2004,31 @@ public:
   /// preceding the namespace name.
   SourceRange getTargetNestedNameRange() const { return TargetNestedNameRange; }
 
+  /// \brief Set the source range coverting the nested-name-specifier preceding
+  /// the namespace name.
+  void setTargetNestedNameRange(SourceRange R) { TargetNestedNameRange = R; }
+
   /// \brief Get target nested name declaration.
   NestedNameSpecifier* getTargetNestedNameSpecifier() {
     return TargetNestedNameSpecifier;
   }
 
+  /// \brief Set the nested name declaration.
+  void setTargetNestedNameSpecifier(NestedNameSpecifier* NNS) {
+    TargetNestedNameSpecifier = NNS;
+  }
+
   /// \brief Returns the source location of the 'using' keyword.
   SourceLocation getUsingLoc() const { return UsingLocation; }
 
+  /// \brief Set the source location of the 'using' keyword.
+  void setUsingLoc(SourceLocation L) { UsingLocation = L; }
+
   /// \brief Returns the source location of the 'typename' keyword.
   SourceLocation getTypenameLoc() const { return TypenameLocation; }
+
+  /// \brief Set the source location of the 'typename' keyword.
+  void setTypenameLoc(SourceLocation L) { TypenameLocation = L; }
 
   static UnresolvedUsingTypenameDecl *
     Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,

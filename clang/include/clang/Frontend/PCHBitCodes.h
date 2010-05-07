@@ -534,8 +534,46 @@ namespace clang {
       /// IDs. This data is used when performing qualified name lookup
       /// into a DeclContext via DeclContext::lookup.
       DECL_CONTEXT_VISIBLE,
-      /// \brief A NamespaceDecl record.
-      DECL_NAMESPACE
+      /// \brief A NamespaceDecl rcord.
+      DECL_NAMESPACE,
+      /// \brief A NamespaceAliasDecl record.
+      DECL_NAMESPACE_ALIAS,
+      /// \brief A UsingDecl record.
+      DECL_USING,
+      /// \brief A UsingShadowDecl record.
+      DECL_USING_SHADOW,
+      /// \brief A UsingDirecitveDecl record.
+      DECL_USING_DIRECTIVE,
+      /// \brief An UnresolvedUsingValueDecl record.
+      DECL_UNRESOLVED_USING_VALUE,
+      /// \brief An UnresolvedUsingTypenameDecl record.
+      DECL_UNRESOLVED_USING_TYPENAME,
+      /// \brief A LinkageSpecDecl record.
+      DECL_LINKAGE_SPEC,
+      /// \brief A CXXRecordDecl record.
+      DECL_CXX_RECORD,
+      /// \brief A CXXMethodDecl record.
+      DECL_CXX_METHOD,
+      /// \brief A CXXConstructorDecl record.
+      DECL_CXX_CONSTRUCTOR,
+      /// \brief A CXXDestructorDecl record.
+      DECL_CXX_DESTRUCTOR,
+      /// \brief A CXXConversionDecl record.
+      DECL_CXX_CONVERSION,
+
+      // FIXME: Implement serialization for these decl types. This just
+      // allocates the order in which
+      DECL_FRIEND,
+      DECL_FRIEND_TEMPLATE,
+      DECL_TEMPLATE,
+      DECL_CLASS_TEMPLATE,
+      DECL_CLASS_TEMPLATE_SPECIALIZATION,
+      DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION,
+      DECL_FUNCTION_TEMPLATE,
+      DECL_TEMPLATE_TYPE_PARM,
+      DECL_NON_TYPE_TEMPLATE_PARM,
+      DECL_TEMPLATE_TEMPLATE_PARM,
+      DECL_STATIC_ASSERT
     };
 
     /// \brief Record codes for each kind of statement or expression.

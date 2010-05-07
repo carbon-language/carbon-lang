@@ -32,6 +32,9 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class NestedNameSpecifier;
+class CXXBaseSpecifier;
+class CXXBaseOrMemberInitializer;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
@@ -251,6 +254,9 @@ public:
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);
 
+  /// \brief Emit a source range.
+  void AddSourceRange(SourceRange Range, RecordData &Record);
+
   /// \brief Emit an integral value.
   void AddAPInt(const llvm::APInt &Value, RecordData &Record);
 
@@ -303,6 +309,9 @@ public:
 
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
+
+  /// \brief Emit a nested name specifier.
+  void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordData &Record);
 
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);

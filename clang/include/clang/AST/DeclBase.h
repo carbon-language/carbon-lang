@@ -76,6 +76,11 @@ public:
 #include "clang/AST/DeclNodes.def"
   };
 
+  /// \brief A placeholder type used to construct an empty shell of a
+  /// decl-derived type that will be filled in later (e.g., by some
+  /// deserialization method).
+  struct EmptyShell { };
+
   /// IdentifierNamespace - The different namespaces in which
   /// declarations may appear.  According to C99 6.2.3, there are
   /// four namespaces, labels, tags, members and ordinary

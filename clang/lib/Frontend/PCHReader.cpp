@@ -2901,6 +2901,51 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   return DeclarationName();
 }
 
+NestedNameSpecifier *
+PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
+  unsigned N = Record[Idx++];
+  NestedNameSpecifier *NNS = 0, *Prev = 0;
+  for (unsigned I = 0; I != N; ++I) {
+    NestedNameSpecifier::SpecifierKind Kind
+      = (NestedNameSpecifier::SpecifierKind)Record[Idx++];
+    switch (Kind) {
+    case NestedNameSpecifier::Identifier: {
+      IdentifierInfo *II = GetIdentifierInfo(Record, Idx);
+      NNS = NestedNameSpecifier::Create(*Context, Prev, II);
+      break;
+    }
+
+    case NestedNameSpecifier::Namespace: {
+      NamespaceDecl *NS = cast<NamespaceDecl>(GetDecl(Record[Idx++]));
+      NNS = NestedNameSpecifier::Create(*Context, Prev, NS);
+      break;
+    }
+
+    case NestedNameSpecifier::TypeSpec:
+    case NestedNameSpecifier::TypeSpecWithTemplate: {
+      Type *T = GetType(Record[Idx++]).getTypePtr();
+      bool Template = Record[Idx++];
+      NNS = NestedNameSpecifier::Create(*Context, Prev, Template, T);
+      break;
+    }
+
+    case NestedNameSpecifier::Global: {
+      NNS = NestedNameSpecifier::GlobalSpecifier(*Context);
+      // No associated value, and there can't be a prefix.
+      break;
+    }
+    Prev = NNS;
+    }
+  }
+  return NNS;
+}
+
+SourceRange
+PCHReader::ReadSourceRange(const RecordData &Record, unsigned &Idx) {
+  return SourceRange(SourceLocation::getFromRawEncoding(Record[Idx++]),
+                     SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+
 /// \brief Read an integral value
 llvm::APInt PCHReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
   unsigned BitWidth = Record[Idx++];

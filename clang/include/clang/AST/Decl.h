@@ -267,18 +267,25 @@ public:
   // \brief Returns true if this is an anonymous namespace declaration.
   //
   // For example:
+  /// \code
   //   namespace {
   //     ...
   //   };
+  // \endcode
   // q.v. C++ [namespace.unnamed]
   bool isAnonymousNamespace() const {
     return !getIdentifier();
   }
 
+  /// \brief Return the next extended namespace declaration or null if this
+  /// is none.
   NamespaceDecl *getNextNamespace() { return NextNamespace; }
   const NamespaceDecl *getNextNamespace() const { return NextNamespace; }
+
+  /// \brief Set the next extended namespace declaration.
   void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }
 
+  /// \brief Get the original (first) namespace declaration.
   NamespaceDecl *getOriginalNamespace() const {
     if (OrigOrAnonNamespace.getInt())
       return const_cast<NamespaceDecl *>(this);
@@ -286,6 +293,14 @@ public:
     return OrigOrAnonNamespace.getPointer();
   }
 
+  /// \brief Return true if this declaration is an original (first) declaration
+  /// of the namespace. This is false for non-original (subsequent) namespace
+  /// declarations and anonymous namespaces.
+  bool isOriginalNamespace() const {
+    return getOriginalNamespace() == this;
+  }
+
+  /// \brief Set the original (first) namespace declaration.
   void setOriginalNamespace(NamespaceDecl *ND) { 
     if (ND != this) {
       OrigOrAnonNamespace.setPointer(ND);
