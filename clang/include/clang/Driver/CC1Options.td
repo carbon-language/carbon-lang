@@ -296,6 +296,8 @@ def ast_dump : Flag<"-ast-dump">,
   HelpText<"Build ASTs and then debug dump them">;
 def ast_view : Flag<"-ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
+def boostcon : Flag<"-boostcon">,
+  HelpText<"BoostCon workshop mode">;
 def print_decl_contexts : Flag<"-print-decl-contexts">,
   HelpText<"Print DeclContexts and their Decls">;
 def emit_pth : Flag<"-emit-pth">,

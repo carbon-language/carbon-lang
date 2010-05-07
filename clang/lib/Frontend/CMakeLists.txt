@@ -5,6 +5,7 @@ add_clang_library(clangFrontend
   ASTMerge.cpp
   ASTUnit.cpp
   AnalysisConsumer.cpp
+  BoostConAction.cpp
   CacheTokens.cpp
   CodeGenAction.cpp
   CompilerInstance.cpp

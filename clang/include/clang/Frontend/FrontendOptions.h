@@ -23,6 +23,7 @@ namespace frontend {
     ASTPrint,               ///< Parse ASTs and print them.
     ASTPrintXML,            ///< Parse ASTs and print them in XML.
     ASTView,                ///< Parse ASTs and view them in Graphviz.
+    BoostCon,               ///< BoostCon mode.
     DumpRawTokens,          ///< Dump out raw tokens.
     DumpTokens,             ///< Dump out preprocessed tokens.
     EmitAssembly,           ///< Emit a .s file.
