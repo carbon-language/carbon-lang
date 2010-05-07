@@ -462,7 +462,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIGlobal *G) {
+void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable *G) {
   // If there is no compile unit specified, don't add a line #.
   if (!G->getCompileUnit().Verify())
     return;

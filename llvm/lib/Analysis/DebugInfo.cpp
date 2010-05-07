@@ -527,31 +527,6 @@ void DICompositeType::print(raw_ostream &OS) const {
   OS << " [" << A.getNumElements() << " elements]";
 }
 
-/// print - Print global.
-void DIGlobal::print(raw_ostream &OS) const {
-  StringRef Res = getName();
-  if (!Res.empty())
-    OS << " [" << Res << "] ";
-
-  unsigned Tag = getTag();
-  OS << " [" << dwarf::TagString(Tag) << "] ";
-
-  // TODO : Print context
-  getCompileUnit().print(OS);
-  OS << " [" << getLineNumber() << "] ";
-
-  if (isLocalToUnit())
-    OS << " [local] ";
-
-  if (isDefinition())
-    OS << " [def] ";
-
-  if (isGlobalVariable())
-    DIGlobalVariable(DbgNode).print(OS);
-
-  OS << "\n";
-}
-
 /// print - Print subprogram.
 void DISubprogram::print(raw_ostream &OS) const {
   StringRef Res = getName();
@@ -577,8 +552,26 @@ void DISubprogram::print(raw_ostream &OS) const {
 /// print - Print global variable.
 void DIGlobalVariable::print(raw_ostream &OS) const {
   OS << " [";
-  getGlobal()->print(OS);
-  OS << "] ";
+  StringRef Res = getName();
+  if (!Res.empty())
+    OS << " [" << Res << "] ";
+
+  unsigned Tag = getTag();
+  OS << " [" << dwarf::TagString(Tag) << "] ";
+
+  // TODO : Print context
+  getCompileUnit().print(OS);
+  OS << " [" << getLineNumber() << "] ";
+
+  if (isLocalToUnit())
+    OS << " [local] ";
+
+  if (isDefinition())
+    OS << " [def] ";
+
+  if (isGlobalVariable())
+    DIGlobalVariable(DbgNode).print(OS);
+  OS << "]\n";
 }
 
 /// print - Print variable.
@@ -622,11 +615,6 @@ void DIDerivedType::dump() const {
 
 /// dump - Print composite type to dbgs() with a newline.
 void DICompositeType::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print global to dbgs() with a newline.
-void DIGlobal::dump() const {
   print(dbgs()); dbgs() << '\n';
 }
 

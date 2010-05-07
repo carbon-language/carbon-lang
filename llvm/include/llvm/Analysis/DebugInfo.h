@@ -335,41 +335,6 @@ namespace llvm {
     void dump() const;
   };
 
-  /// DIGlobal - This is a common class for global variables and subprograms.
-  class DIGlobal : public DIDescriptor {
-  protected:
-    explicit DIGlobal(const MDNode *N) : DIDescriptor(N) {}
-
-  public:
-    virtual ~DIGlobal() {}
-
-    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
-    StringRef getName() const         { return getStringField(3); }
-    StringRef getDisplayName() const  { return getStringField(4); }
-    StringRef getLinkageName() const  { return getStringField(5); }
-    DICompileUnit getCompileUnit() const{ 
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(6);
-
-      DIFile F = getFieldAs<DIFile>(6); 
-      return F.getCompileUnit();
-    }
-
-    unsigned getLineNumber() const      { return getUnsignedField(7); }
-    DIType getType() const              { return getFieldAs<DIType>(8); }
-
-    /// isLocalToUnit - Return true if this subprogram is local to the current
-    /// compile unit, like 'static' in C.
-    unsigned isLocalToUnit() const      { return getUnsignedField(9); }
-    unsigned isDefinition() const       { return getUnsignedField(10); }
-
-    /// print - print global.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print global to dbgs() with a newline.
-    void dump() const;
-  };
-
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
   public:
@@ -447,9 +412,26 @@ namespace llvm {
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
-  class DIGlobalVariable : public DIGlobal {
+  class DIGlobalVariable : public DIDescriptor {
   public:
-    explicit DIGlobalVariable(const MDNode *N = 0) : DIGlobal(N) {}
+    explicit DIGlobalVariable(const MDNode *N = 0) : DIDescriptor(N) {}
+
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    StringRef getName() const         { return getStringField(3); }
+    StringRef getDisplayName() const  { return getStringField(4); }
+    StringRef getLinkageName() const  { return getStringField(5); }
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(6);
+
+      DIFile F = getFieldAs<DIFile>(6); 
+      return F.getCompileUnit();
+    }
+
+    unsigned getLineNumber() const      { return getUnsignedField(7); }
+    DIType getType() const              { return getFieldAs<DIType>(8); }
+    unsigned isLocalToUnit() const      { return getUnsignedField(9); }
+    unsigned isDefinition() const       { return getUnsignedField(10); }
 
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
 
