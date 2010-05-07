@@ -723,6 +723,18 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   return true;
 }
 
+static const
+MachineInstrBuilder &AddDReg(MachineInstrBuilder &MIB,
+                             unsigned Reg, unsigned SubIdx, unsigned State,
+                             const TargetRegisterInfo *TRI) {
+  if (!SubIdx)
+    return MIB.addReg(Reg, State);
+
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
+    return MIB.addReg(TRI->getSubReg(Reg, SubIdx), State);
+  return MIB.addReg(Reg, State, SubIdx);
+}
+
 void ARMBaseInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
@@ -764,13 +776,14 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              RC == ARM::QPR_8RegisterClass) {
     // FIXME: Neon instructions should support predicates
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q))
-                     .addFrameIndex(FI).addImm(128)
-                     .addMemOperand(MMO)
-                     .addReg(SrcReg, getKillRegState(isKill)));
+      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VST1q64))
+        .addFrameIndex(FI).addImm(128);
+      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_0, getKillRegState(isKill), TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
+      AddDefaultPred(MIB.addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ)).
-                     addReg(SrcReg, getKillRegState(isKill))
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ))
+                     .addReg(SrcReg, getKillRegState(isKill))
                      .addFrameIndex(FI)
                      .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
                      .addMemOperand(MMO));
@@ -820,9 +833,10 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              RC == ARM::QPR_VFP2RegisterClass ||
              RC == ARM::QPR_8RegisterClass) {
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q), DestReg)
-                     .addFrameIndex(FI).addImm(128)
-                     .addMemOperand(MMO));
+      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VLD1q64));
+      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_0, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
+      AddDefaultPred(MIB.addFrameIndex(FI).addImm(128).addMemOperand(MMO));
     } else {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
                      .addFrameIndex(FI)
