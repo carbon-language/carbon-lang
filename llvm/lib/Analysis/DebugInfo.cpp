@@ -368,6 +368,9 @@ bool DIVariable::Verify() const {
   if (!getContext().Verify())
     return false;
 
+  if (!getCompileUnit().Verify())
+    return false;
+
   DIType Ty = getType();
   if (!Ty.Verify())
     return false;
