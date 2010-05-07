@@ -448,8 +448,8 @@ void DwarfDebug::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
-  // If there is no compile unit specified, don't add a line #.
-  if (!V->getCompileUnit().Verify())
+  // Verify variable.
+  if (!V->Verify())
     return;
 
   unsigned Line = V->getLineNumber();
@@ -463,8 +463,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable *G) {
-  // If there is no compile unit specified, don't add a line #.
-  if (!G->getCompileUnit().Verify())
+  // Verify global variable.
+  if (!G->Verify())
     return;
 
   unsigned Line = G->getLineNumber();
@@ -478,8 +478,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable *G) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
-  // If there is no compile unit specified, don't add a line #.
-  if (!SP->getCompileUnit().Verify())
+  // Verify subprogram.
+  if (!SP->Verify())
     return;
   // If the line number is 0, don't add it.
   if (SP->getLineNumber() == 0)
@@ -498,9 +498,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
-  // If there is no compile unit specified, don't add a line #.
-  DICompileUnit CU = Ty->getCompileUnit();
-  if (!CU.Verify())
+  // Verify type.
+  if (!Ty->Verify())
     return;
 
   unsigned Line = Ty->getLineNumber();
@@ -516,8 +515,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace *NS) {
-  // If there is no compile unit specified, don't add a line #.
-  if (!NS->getCompileUnit().Verify())
+  // Verify namespace.
+  if (!NS->Verify())
     return;
 
   unsigned Line = NS->getLineNumber();
