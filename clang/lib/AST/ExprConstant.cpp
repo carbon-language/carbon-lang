@@ -115,7 +115,7 @@ static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
 
   Result = Base || !Value.Offset.isZero();
 
-  const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
+  const DeclRefExpr* DeclRef = dyn_cast_or_null<DeclRefExpr>(Base);
   if (!DeclRef)
     return true;
 
