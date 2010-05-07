@@ -184,10 +184,16 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
  * on each frame as the stack is unwound during a C++ exception
  * throw through a C function compiled with -fexceptions.
  */
-
+#if __arm__
+// the setjump-longjump based exceptions personality routine has a different name
+_Unwind_Reason_Code __gcc_personality_sj0(int version, _Unwind_Action actions,
+         uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
+         _Unwind_Context_t context)
+#else
 _Unwind_Reason_Code __gcc_personality_v0(int version, _Unwind_Action actions,
          uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
          _Unwind_Context_t context)
+#endif
 {
     /* Since C does not have catch clauses, there is nothing to do during */
     /* phase 1 (the search phase). */
