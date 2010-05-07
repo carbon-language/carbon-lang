@@ -2592,9 +2592,6 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
     LSRUse &LU = Uses[LUIdx];
     FormulaSorter Sorter(L, LU, SE, DT);
 
-    // Clear out the set of used regs; it will be recomputed.
-    LU.Regs.clear();
-
     for (size_t FIdx = 0, NumForms = LU.Formulae.size();
          FIdx != NumForms; ++FIdx) {
       Formula &F = LU.Formulae[FIdx];
@@ -2632,9 +2629,18 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         --NumForms;
         continue;
       }
+    }
+
+    // Now that we've filtered out some formulae, recompute the Regs set.
+    LU.Regs.clear();
+    for (size_t FIdx = 0, NumForms = LU.Formulae.size();
+         FIdx != NumForms; ++FIdx) {
+      Formula &F = LU.Formulae[FIdx];
       if (F.ScaledReg) LU.Regs.insert(F.ScaledReg);
       LU.Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
     }
+
+    // Reset this to prepare for the next use.
     BestFormulae.clear();
   }
 
@@ -2718,6 +2724,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
           LU.Formulae.pop_back();
           --e;
           --i;
+          assert(e != 0 && "Use has no formulae left! Is Regs inconsistent?");
           continue;
         }
 
@@ -2810,6 +2817,7 @@ retry:
   // If none of the formulae had all of the required registers, relax the
   // constraint so that we don't exclude all formulae.
   if (!AnySatisfiedReqRegs) {
+    assert(!ReqRegs.empty() && "Solver failed even without required registers");
     ReqRegs.clear();
     goto retry;
   }

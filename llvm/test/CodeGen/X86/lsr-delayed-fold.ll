@@ -49,3 +49,86 @@ lbl_264:                                          ; preds = %if.end, %lbl_264.pr
   %tobool12 = icmp eq i8 %mul.i18, 0              ; <i1> [#uses=1]
   unreachable
 }
+
+; LSR ends up going into conservative pruning mode; don't prune the solution
+; so far that it becomes unsolvable though.
+; PR7077
+
+%struct.Bu = type { i32, i32, i32 }
+
+define void @_Z3fooP2Bui(%struct.Bu* nocapture %bu) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.inc131, %entry
+  %indvar = phi i64 [ %indvar.next, %for.inc131 ], [ 0, %entry ] ; <i64> [#uses=3]
+  br i1 undef, label %for.inc131, label %lor.lhs.false
+
+lor.lhs.false:                                    ; preds = %for.body
+  %tmp15 = add i64 %indvar, 1                     ; <i64> [#uses=1]
+  %tmp17 = add i64 %indvar, 2                      ; <i64> [#uses=1]
+  %tmp19 = add i64 %indvar, 3                      ; <i64> [#uses=1]
+  %tmp21 = add i64 %indvar, 4                      ; <i64> [#uses=1]
+  %tmp23 = add i64 %indvar, 5                      ; <i64> [#uses=1]
+  %tmp25 = add i64 %indvar, 6                      ; <i64> [#uses=1]
+  %tmp27 = add i64 %indvar, 7                      ; <i64> [#uses=1]
+  %tmp29 = add i64 %indvar, 8                      ; <i64> [#uses=1]
+  %tmp31 = add i64 %indvar, 9                      ; <i64> [#uses=1]
+  %tmp35 = add i64 %indvar, 11                     ; <i64> [#uses=1]
+  %tmp37 = add i64 %indvar, 12                     ; <i64> [#uses=1]
+  %tmp39 = add i64 %indvar, 13                     ; <i64> [#uses=1]
+  %tmp41 = add i64 %indvar, 14                     ; <i64> [#uses=1]
+  %tmp43 = add i64 %indvar, 15                     ; <i64> [#uses=1]
+  %tmp45 = add i64 %indvar, 16                     ; <i64> [#uses=1]
+  %tmp47 = add i64 %indvar, 17                     ; <i64> [#uses=1]
+  %mul = trunc i64 %indvar to i32                  ; <i32> [#uses=1]
+  %add22 = trunc i64 %tmp15 to i32                ; <i32> [#uses=1]
+  %add28 = trunc i64 %tmp17 to i32                ; <i32> [#uses=1]
+  %add34 = trunc i64 %tmp19 to i32                ; <i32> [#uses=1]
+  %add40 = trunc i64 %tmp21 to i32                ; <i32> [#uses=1]
+  %add46 = trunc i64 %tmp23 to i32                ; <i32> [#uses=1]
+  %add52 = trunc i64 %tmp25 to i32                ; <i32> [#uses=1]
+  %add58 = trunc i64 %tmp27 to i32                ; <i32> [#uses=1]
+  %add64 = trunc i64 %tmp29 to i32                ; <i32> [#uses=1]
+  %add70 = trunc i64 %tmp31 to i32                ; <i32> [#uses=1]
+  %add82 = trunc i64 %tmp35 to i32                ; <i32> [#uses=1]
+  %add88 = trunc i64 %tmp37 to i32                ; <i32> [#uses=1]
+  %add94 = trunc i64 %tmp39 to i32                ; <i32> [#uses=1]
+  %add100 = trunc i64 %tmp41 to i32               ; <i32> [#uses=1]
+  %add106 = trunc i64 %tmp43 to i32               ; <i32> [#uses=1]
+  %add112 = trunc i64 %tmp45 to i32               ; <i32> [#uses=1]
+  %add118 = trunc i64 %tmp47 to i32               ; <i32> [#uses=1]
+  %tmp10 = getelementptr %struct.Bu* %bu, i64 %indvar, i32 2 ; <i32*> [#uses=1]
+  %tmp11 = load i32* %tmp10                       ; <i32> [#uses=0]
+  tail call void undef(i32 %add22)
+  tail call void undef(i32 %add28)
+  tail call void undef(i32 %add34)
+  tail call void undef(i32 %add40)
+  tail call void undef(i32 %add46)
+  tail call void undef(i32 %add52)
+  tail call void undef(i32 %add58)
+  tail call void undef(i32 %add64)
+  tail call void undef(i32 %add70)
+  tail call void undef(i32 %add82)
+  tail call void undef(i32 %add88)
+  tail call void undef(i32 %add94)
+  tail call void undef(i32 %add100)
+  tail call void undef(i32 %add106)
+  tail call void undef(i32 %add112)
+  tail call void undef(i32 %add118)
+  br label %for.body123
+
+for.body123:                                      ; preds = %for.body123, %lor.lhs.false
+  %j.03 = phi i32 [ 0, %lor.lhs.false ], [ %inc, %for.body123 ] ; <i32> [#uses=2]
+  %add129 = add i32 %mul, %j.03                   ; <i32> [#uses=1]
+  tail call void undef(i32 %add129)
+  %inc = add nsw i32 %j.03, 1                     ; <i32> [#uses=1]
+  br i1 undef, label %for.inc131, label %for.body123
+
+for.inc131:                                       ; preds = %for.body123, %for.body
+  %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=1]
+  br i1 undef, label %for.end134, label %for.body
+
+for.end134:                                       ; preds = %for.inc131
+  ret void
+}
