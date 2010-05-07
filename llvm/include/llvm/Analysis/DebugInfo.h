@@ -63,7 +63,6 @@ namespace llvm {
 
     bool Verify() const { return DbgNode != 0; }
 
-    operator const MDNode *() const { return DbgNode; }
     operator MDNode *() const { return const_cast<MDNode*>(DbgNode); }
     MDNode *operator ->() const { return const_cast<MDNode*>(DbgNode); }
 
