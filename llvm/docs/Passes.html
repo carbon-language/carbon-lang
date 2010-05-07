@@ -85,6 +85,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#dot-callgraph">-dot-callgraph</a></td><td>Print Call Graph to 'dot' file</td></tr>
 <tr><td><a href="#dot-cfg">-dot-cfg</a></td><td>Print CFG of function to 'dot' file</td></tr>
 <tr><td><a href="#dot-cfg-only">-dot-cfg-only</a></td><td>Print CFG of function to 'dot' file (with no function bodies)</td></tr>
+<tr><td><a href="#dot-dom">-dot-dom</a></td><td>Print dominator tree of function to 'dot' file</td></tr>
+<tr><td><a href="#dot-dom-only">-dot-dom-only</a></td><td>Print dominator tree of function to 'dot' file (with no function bodies)</td></tr>
+<tr><td><a href="#dot-postdom">-dot-postdom</a></td><td>Print post dominator tree of function to 'dot' file</td></tr>
+<tr><td><a href="#dot-postdom-only">-dot-postdom-only</a></td><td>Print post dominator tree of function to 'dot' file (with no function bodies)</td></tr>
 <tr><td><a href="#globalsmodref-aa">-globalsmodref-aa</a></td><td>Simple mod/ref analysis for globals</td></tr>
 <tr><td><a href="#instcount">-instcount</a></td><td>Counts the various types of Instructions</td></tr>
 <tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
@@ -177,6 +181,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#verify">-verify</a></td><td>Module Verifier</td></tr>
 <tr><td><a href="#view-cfg">-view-cfg</a></td><td>View CFG of function</td></tr>
 <tr><td><a href="#view-cfg-only">-view-cfg-only</a></td><td>View CFG of function (with no function bodies)</td></tr>
+<tr><td><a href="#view-dom">-view-dom</a></td><td>View dominator tree of function</td></tr>
+<tr><td><a href="#view-dom-only">-view-dom-only</a></td><td>View dominator tree of function (with no function bodies)</td></tr>
+<tr><td><a href="#view-postdom">-view-postdom</a></td><td>View post dominator tree of function</td></tr>
+<tr><td><a href="#view-postdom-only">-view-postdom-only</a></td><td>View post dominator tree of function (with no function bodies)</td></tr>
 </table>
 </div>
 
@@ -313,6 +321,58 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <div class="doc_text">
   <p>
   This pass, only available in <code>opt</code>, prints the control flow graph
+  into a <code>.dot</code> graph, omitting the function bodies.  This graph can
+  then be processed with the "dot" tool to convert it to postscript or some
+  other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-dom">Print dominator tree of function to 'dot' file</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the dominator tree
+  into a <code>.dot</code> graph.  This graph can then be processed with the
+  "dot" tool to convert it to postscript or some other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-dom-only">Print dominator tree of function to 'dot' file (with no
+  function bodies)</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the dominator tree
+  into a <code>.dot</code> graph, omitting the function bodies.  This graph can
+  then be processed with the "dot" tool to convert it to postscript or some
+  other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-postdom">Print post dominator tree of function to 'dot' file</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the post dominator tree
+  into a <code>.dot</code> graph.  This graph can then be processed with the
+  "dot" tool to convert it to postscript or some other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-postdom-only">Print post dominator tree of function to 'dot' file
+  (with no function bodies)</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the post dominator tree
   into a <code>.dot</code> graph, omitting the function bodies.  This graph can
   then be processed with the "dot" tool to convert it to postscript or some
   other suitable format.
@@ -1749,6 +1809,52 @@ if (X &lt; 3) {</pre>
   <p>
   Displays the control flow graph using the GraphViz tool, but omitting function
   bodies.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-dom">View dominator tree of function</a>
+</div>
+<div class="doc_text">
+  <p>
+  Displays the dominator tree using the GraphViz tool.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-dom-only">View dominator tree of function (with no function
+  bodies)
+  </a>
+</div>
+<div class="doc_text">
+  <p>
+  Displays the dominator tree using the GraphViz tool, but omitting function
+  bodies.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-postdom">View post dominator tree of function</a>
+</div>
+<div class="doc_text">
+  <p>
+  Displays the post dominator tree using the GraphViz tool.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-postdom-only">View post dominator tree of function (with no
+  function bodies)
+  </a>
+</div>
+<div class="doc_text">
+  <p>
+  Displays the post dominator tree using the GraphViz tool, but omitting
+  function bodies.
   </p>
 </div>
 
