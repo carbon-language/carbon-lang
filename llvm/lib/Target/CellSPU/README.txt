@@ -10,6 +10,8 @@ Department in The Aerospace Corporation:
 - Chandler Carruth (LLVM expertise)
 - Nehal Desai (debugging, i32 operations, RoadRunner SPU expertise)
 
+Some minor fixes added by Kalle Raiskila.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NONINFRINGEMENT, OR
