@@ -843,18 +843,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg()) continue;
-      unsigned Reg = MO.getReg();
-      if (!Reg) continue;
-
-      // Avoid allocating assigned early clobbers below.
-      if (MO.isEarlyClobber() && TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
-        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-        AddToPhysRegsUseOrder(Reg);
-      }
-
-      if (!MO.isKill()) continue;
+      if (!MO.isReg() || !MO.isKill()) continue;
+      
       if (!MO.isImplicit())
         Kills.push_back(MO.getReg());
       else if (!isReadModWriteImplicitKill(MI, MO.getReg()))
