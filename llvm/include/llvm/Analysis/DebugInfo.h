@@ -34,6 +34,7 @@ namespace llvm {
   class Instruction;
   class MDNode;
   class LLVMContext;
+  class raw_ostream;
 
   /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
   /// This should not be stored in a container, because underly MDNode may
@@ -75,7 +76,10 @@ namespace llvm {
     /// ValidDebugInfo - Return true if N represents valid debug info value.
     static bool ValidDebugInfo(MDNode *N, unsigned OptLevel);
 
-    /// dump - print descriptor.
+    /// print - print descriptor.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print descriptor to dbgs() with a newline.
     void dump() const;
 
     bool isDerivedType() const;
@@ -153,7 +157,10 @@ namespace llvm {
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
 
-    /// dump - print compile unit.
+    /// print - print compile unit.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print compile unit to dbgs() with a newline.
     void dump() const;
   };
 
@@ -253,7 +260,11 @@ namespace llvm {
     }
     StringRef getFilename() const    { return getCompileUnit().getFilename();}
     StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
-    /// dump - print type.
+
+    /// print - print type.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print type to dbgs() with a newline.
     void dump() const;
   };
 
@@ -264,7 +275,10 @@ namespace llvm {
 
     unsigned getEncoding() const { return getUnsignedField(9); }
 
-    /// dump - print basic type.
+    /// print - print basic type.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print basic type to dbgs() with a newline.
     void dump() const;
   };
 
@@ -283,7 +297,11 @@ namespace llvm {
     /// getOriginalTypeSize - If this type is derived from a base type then
     /// return base type size.
     uint64_t getOriginalTypeSize() const;
-    /// dump - print derived type.
+
+    /// print - print derived type.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print derived type to dbgs() with a newline.
     void dump() const;
 
     /// replaceAllUsesWith - Replace all uses of debug info referenced by
@@ -312,7 +330,10 @@ namespace llvm {
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
 
-    /// dump - print composite type.
+    /// print - print composite type.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print composite type to dbgs() with a newline.
     void dump() const;
   };
 
@@ -344,7 +365,10 @@ namespace llvm {
     unsigned isLocalToUnit() const      { return getUnsignedField(9); }
     unsigned isDefinition() const       { return getUnsignedField(10); }
 
-    /// dump - print global.
+    /// print - print global.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print global to dbgs() with a newline.
     void dump() const;
   };
 
@@ -413,7 +437,10 @@ namespace llvm {
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
 
-    /// dump - print subprogram.
+    /// print - print subprogram.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print subprogram to dbgs() with a newline.
     void dump() const;
 
     /// describes - Return true if this subprogram provides debugging
@@ -431,7 +458,10 @@ namespace llvm {
     /// Verify - Verify that a global variable descriptor is well formed.
     bool Verify() const;
 
-    /// dump - print global variable.
+    /// print - print global variable.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print global variable to dbgs() with a newline.
     void dump() const;
   };
 
@@ -479,7 +509,10 @@ namespace llvm {
     /// information for an inlined function arguments.
     bool isInlinedFnArgument(const Function *CurFn);
 
-    /// dump - print variable.
+    /// print - print variable.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print variable to dbgs() with a newline.
     void dump() const;
   };
 
