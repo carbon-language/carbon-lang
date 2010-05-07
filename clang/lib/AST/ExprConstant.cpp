@@ -395,8 +395,7 @@ public:
 } // end anonymous namespace
 
 static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {
-  if (!E->getType()->hasPointerRepresentation())
-    return false;
+  assert(E->getType()->hasPointerRepresentation());
   Result = PointerExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isLValue();
 }
@@ -872,13 +871,13 @@ private:
 } // end anonymous namespace
 
 static bool EvaluateIntegerOrLValue(const Expr* E, APValue &Result, EvalInfo &Info) {
-  if (!E->getType()->isIntegralType())
-    return false;
-
+  assert(E->getType()->isIntegralType());
   return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
 static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
+  assert(E->getType()->isIntegralType());
+
   APValue Val;
   if (!EvaluateIntegerOrLValue(E, Val, Info) || !Val.isInt())
     return false;
@@ -1656,6 +1655,7 @@ public:
 } // end anonymous namespace
 
 static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
+  assert(E->getType()->isRealFloatingType());
   return FloatExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
@@ -1977,6 +1977,7 @@ public:
 } // end anonymous namespace
 
 static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info) {
+  assert(E->getType()->isAnyComplexType());
   Result = ComplexExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   assert((!Result.isComplexFloat() ||
           (&Result.getComplexFloatReal().getSemantics() ==
