@@ -18,3 +18,11 @@ public:
 @implementation I
 @synthesize position;
 @end
+
+int main() {
+  I *i;
+  S s1;
+  i.position = s1;
+  return 0;
+}
+

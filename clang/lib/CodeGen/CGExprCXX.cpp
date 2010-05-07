@@ -273,8 +273,14 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-
-  llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+  LValue LV = EmitLValue(E->getArg(0));
+  llvm::Value *This;
+  if (LV.isPropertyRef()) {
+    RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
+    This = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
+  }
+  else
+    This = LV.getAddress();
 
   llvm::Value *Callee;
   if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0)))
