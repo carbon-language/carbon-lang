@@ -214,6 +214,15 @@ NODE_XML(RecordType, "Record")
   CONTEXT_ATTRIBUTE_XML(getDecl()->getDeclContext())
 END_NODE_XML
 
+NODE_XML(ElaboratedType, "Elaborated")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_ENUM_XML(getTagKind(), "kind")
+    ENUM_XML(ElaboratedType::TK_struct, "struct")
+    ENUM_XML(ElaboratedType::TK_union, "union")
+    ENUM_XML(ElaboratedType::TK_class, "class")
+  END_ENUM_XML
+END_NODE_XML
+
 NODE_XML(EnumType, "Enum")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_XML(getDecl()->getNameAsString(), "name")   // string
@@ -245,6 +254,29 @@ NODE_XML(ObjCObjectPointerType, "ObjCObjectPointerType")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 
+NODE_XML(SubstTemplateTypeParmType, "SubstTemplateTypeParm")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
+NODE_XML(DependentSizedExtVectorType, "DependentSizedExtVector")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
+NODE_XML(UnresolvedUsingType, "UnresolvedUsing")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
+NODE_XML(DependentTypeOfExprType, "DependentTypeOfExpr")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
+NODE_XML(DecltypeType, "Decltype")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
+NODE_XML(DependentDecltypeType, "DependentDecltype")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
 
 //===----------------------------------------------------------------------===//
 #undef NODE_XML
