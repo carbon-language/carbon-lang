@@ -3593,6 +3593,17 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     // Anonymous structures print as '?'
     if (const IdentifierInfo *II = RDecl->getIdentifier()) {
       S += II->getName();
+      if (ClassTemplateSpecializationDecl *Spec
+          = dyn_cast<ClassTemplateSpecializationDecl>(RDecl)) {
+        const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+        std::string TemplateArgsStr
+          = TemplateSpecializationType::PrintTemplateArgumentList(
+                                            TemplateArgs.getFlatArgumentList(),
+                                            TemplateArgs.flat_size(),
+                                            (*this).PrintingPolicy);
+
+        S += TemplateArgsStr;
+      }
     } else {
       S += '?';
     }
