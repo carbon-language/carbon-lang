@@ -123,11 +123,6 @@ def VLDMQ
   : AXDI5<(outs QPR:$dst), (ins addrmode5:$addr, pred:$p),
           IndexModeNone, IIC_fpLoadm,
           "vldm${addr:submode}${p}\t${addr:base}, ${dst:dregpair}", "", []>;
-def VLDMQ_UPD
-  : AXDI5<(outs QPR:$dst, GPR:$wb), (ins addrmode5:$addr, pred:$p),
-          IndexModeUpd, IIC_fpLoadm,
-          "vldm${addr:submode}${p}\t${addr:base}!, ${dst:dregpair}",
-          "$addr.base = $wb", []>;
 } // mayLoad = 1
 
 let mayStore = 1 in {
@@ -138,11 +133,6 @@ def VSTMQ
   : AXDI5<(outs), (ins QPR:$src, addrmode5:$addr, pred:$p),
           IndexModeNone, IIC_fpStorem,
           "vstm${addr:submode}${p}\t${addr:base}, ${src:dregpair}", "", []>;
-def VSTMQ_UPD
-  : AXDI5<(outs GPR:$wb), (ins QPR:$src, addrmode5:$addr, pred:$p),
-          IndexModeUpd, IIC_fpStorem,
-          "vstm${addr:submode}${p}\t${addr:base}!, ${src:dregpair}",
-          "$addr.base = $wb", []>;
 } // mayStore = 1
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
