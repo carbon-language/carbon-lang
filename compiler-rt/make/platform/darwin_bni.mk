@@ -54,7 +54,7 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 gedf2vfp gesf2vfp gtdf2vfp gtsf2vfp \
                 ledf2vfp lesf2vfp ltdf2vfp ltsf2vfp \
                 muldf3vfp mulsf3vfp \
-                nedf2vfp negdf2vfp negsf2vfp nesf2vfp \
+                nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 \
                 switch8 switchu8 switch16 switch32 \
@@ -68,7 +68,7 @@ FUNCTIONS.armv7 := $(FUNCTIONS) \
                 gedf2vfp gesf2vfp gtdf2vfp gtsf2vfp \
                 ledf2vfp lesf2vfp ltdf2vfp ltsf2vfp \
                 muldf3vfp mulsf3vfp \
-                nedf2vfp negdf2vfp negsf2vfp nesf2vfp \
+                nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 
 
