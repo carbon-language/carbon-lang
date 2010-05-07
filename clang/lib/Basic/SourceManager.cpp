@@ -1172,12 +1172,8 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
 
   // If we are comparing a source location with multiple locations in the same
   // file, we get a big win by caching the result.
-  bool Cached = false;
-  bool CachedResult = false;
-  if (IsBeforeInTUCache.isCacheValid(LOffs.first, ROffs.first)) {
-    Cached = true;
-    CachedResult = IsBeforeInTUCache.getCachedResult(LOffs.second,ROffs.second);
-  }
+  if (IsBeforeInTUCache.isCacheValid(LOffs.first, ROffs.first))
+    return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
 
   // Okay, we missed in the cache, start updating the cache for this query.
   IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
@@ -1207,10 +1203,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     // If we found a common file, cache and return our answer!
     if (LOffs.first == ROffs.first) {
       IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, ROffs.second);
-      bool Result = IsBeforeInTUCache.getCachedResult(LOffs.second,
-                                                      ROffs.second);
-      assert(!Cached || CachedResult == Result);   // Validate Cache.
-      return Result;
+      return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
     }
 
     ROffsMap[ROffs.first] = ROffs.second;
@@ -1234,10 +1227,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     std::map<FileID, unsigned>::iterator I = ROffsMap.find(LOffs.first);
     if (I != ROffsMap.end()) {
       IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, I->second);
-
-      bool Result = IsBeforeInTUCache.getCachedResult(LOffs.second, I->second);
-      assert(!Cached || CachedResult == Result);   // Validate Cache.
-      return Result;
+      return IsBeforeInTUCache.getCachedResult(LOffs.second, I->second);
     }
   }
 
@@ -1252,13 +1242,11 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
   if (LIsMB != RIsMB) {
     IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
-    assert(!Cached);
     return LIsMB;
   }
 
   // Otherwise, just assume FileIDs were created in order.
   IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
-  assert(!Cached);
   return LOffs.first < ROffs.first;
 }
 
