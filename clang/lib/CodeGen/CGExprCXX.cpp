@@ -277,7 +277,8 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   llvm::Value *This;
   if (LV.isPropertyRef()) {
     RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
-    This = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
+    assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
+    This = RV.getAggregateAddr();
   }
   else
     This = LV.getAddress();
