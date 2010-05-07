@@ -350,6 +350,17 @@ bool DILocation::Verify() const {
   return DbgNode->getNumOperands() == 4;
 }
 
+/// Verify - Verify that a namespace descriptor is well formed.
+bool DINameSpace::Verify() const {
+  if (!DbgNode)
+    return false;
+  if (getName().empty())
+    return false;
+  if (!getCompileUnit().Verify())
+    return false;
+  return true;
+}
+
 /// getOriginalTypeSize - If this type is derived from a base type then
 /// return base type size.
 uint64_t DIDerivedType::getOriginalTypeSize() const {

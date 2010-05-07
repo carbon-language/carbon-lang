@@ -541,6 +541,7 @@ namespace llvm {
       return F.getCompileUnit();
     }
     unsigned getLineNumber() const { return getUnsignedField(4);         }
+    bool Verify() const;
   };
 
   /// DILocation - This object holds location information. This object
