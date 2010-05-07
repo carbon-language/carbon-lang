@@ -6,13 +6,13 @@
 // RUN:   grep xWeaknoinline | grep weak | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xWeakextnoinline | grep weak | count 1
-// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep declare | \
-// RUN:   grep xglobnoWeak | grep -v internal | grep -v weak | \
+// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN:   grep xglobnoWeak | grep available_externally | grep -v weak | \
 // RUN:   grep -v linkonce | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xstatnoWeak | grep internal | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xextnoWeak | grep -v internal | grep -v weak | \
+// RUN:   grep xextnoWeak | grep -v available_externally | grep -v weak | \
 // RUN:   grep -v linkonce | count 1
 inline int xglobWeak(int) __attribute__((weak));
 inline int xglobWeak (int i) {
