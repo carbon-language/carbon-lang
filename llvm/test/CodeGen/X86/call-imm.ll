@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i386-darwin-apple -relocation-model=static | grep {call.*12345678}
-; RUN: llc < %s -mtriple=i386-darwin-apple -relocation-model=pic | not grep {call.*12345678}
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=static | grep {call.*12345678}
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic | not grep {call.*12345678}
 ; RUN: llc < %s -mtriple=i386-pc-linux -relocation-model=dynamic-no-pic | grep {call.*12345678}
 
 ; Call to immediate is not safe on x86-64 unless we *know* that the

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-linuxeabi-unknown-gnu -mattr=+v6
+; RUN: llc < %s -mtriple=arm-unknown-linux-gnueabi -mattr=+v6
 ; PR4166
 
 	%"byte[]" = type { i32, i8* }
