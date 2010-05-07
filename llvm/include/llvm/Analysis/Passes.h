@@ -153,6 +153,9 @@ namespace llvm {
 
   // print debug info intrinsics in human readable form
   FunctionPass *createDbgInfoPrinterPass();
+
+  // Print module-level debug info metadata in human-readable form.
+  ModulePass *createModuleDebugInfoPrinterPass();
 }
 
 #endif

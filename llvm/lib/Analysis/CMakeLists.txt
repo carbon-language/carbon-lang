@@ -28,6 +28,7 @@ add_llvm_library(LLVMAnalysis
   LoopPass.cpp
   MemoryBuiltins.cpp
   MemoryDependenceAnalysis.cpp
+  ModuleDebugInfoPrinter.cpp
   PHITransAddr.cpp
   PointerTracking.cpp
   PostDominators.cpp
