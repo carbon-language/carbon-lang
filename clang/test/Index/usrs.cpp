@@ -39,6 +39,14 @@ namespace foo { namespace taz {
 }
 }
 
+namespace foo { namespace taz {
+  class ClsD : public foo::ClsB {
+  public:
+    ClsD& operator=(int x) { a = x; return *this; }
+    ClsD& operator=(double x) { a = (int) x; return *this; }
+  };
+}}
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:11 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -71,3 +79,13 @@ namespace foo { namespace taz {
 // CHECK: usrs.cpp c:@N@foo@N@taz@F@sub Extent=[38:8 - 38:25]
 // CHECK: usrs.cpp c:usrs.cpp@38:12@N@foo@N@taz@F@sub@a Extent=[38:12 - 38:17]
 // CHECK: usrs.cpp c:usrs.cpp@38:19@N@foo@N@taz@F@sub@b Extent=[38:19 - 38:24]
+// CHECK: usrs.cpp c:@N@foo Extent=[42:11 - 48:3]
+// CHECK: usrs.cpp c:@N@foo@N@taz Extent=[42:27 - 48:2]
+// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD Extent=[43:3 - 47:4]
+// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator= Extent=[45:11 - 45:52]
+// CHECK: usrs.cpp c:usrs.cpp@45:21@N@foo@N@taz@C@ClsD@F@operator=@x Extent=[45:21 - 45:26]
+// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator= Extent=[46:11 - 46:61]
+// CHECK: usrs.cpp c:usrs.cpp@46:21@N@foo@N@taz@C@ClsD@F@operator=@x Extent=[46:21 - 46:29]
+
+
+
