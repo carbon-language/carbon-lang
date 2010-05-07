@@ -393,8 +393,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
 
-  if (!Subtarget->hasV6Ops() && (!Subtarget->isThumb2()
-      || !Subtarget->hasT2ExtractPack())) {
+  // If the subtarget does not have extract instructions, sign_extend_inreg
+  // needs to be expanded. Extract is available in ARM mode on v6 and up,
+  // and on most Thumb2 implementations.
+  if ((!Subtarget->isThumb() && !Subtarget->hasV6Ops())
+      || (Subtarget->isThumb2() && !Subtarget->hasT2ExtractPack())) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
   }
