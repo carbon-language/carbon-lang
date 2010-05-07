@@ -788,20 +788,20 @@ namespace llvm {
     bool addType(DIType DT);
 
   public:
-    typedef SmallVector<MDNode *, 8>::iterator iterator;
-    iterator compile_unit_begin()    { return CUs.begin(); }
-    iterator compile_unit_end()      { return CUs.end(); }
-    iterator subprogram_begin()      { return SPs.begin(); }
-    iterator subprogram_end()        { return SPs.end(); }
-    iterator global_variable_begin() { return GVs.begin(); }
-    iterator global_variable_end()   { return GVs.end(); }
-    iterator type_begin()            { return TYs.begin(); }
-    iterator type_end()              { return TYs.end(); }
+    typedef SmallVector<MDNode *, 8>::const_iterator iterator;
+    iterator compile_unit_begin()    const { return CUs.begin(); }
+    iterator compile_unit_end()      const { return CUs.end(); }
+    iterator subprogram_begin()      const { return SPs.begin(); }
+    iterator subprogram_end()        const { return SPs.end(); }
+    iterator global_variable_begin() const { return GVs.begin(); }
+    iterator global_variable_end()   const { return GVs.end(); }
+    iterator type_begin()            const { return TYs.begin(); }
+    iterator type_end()              const { return TYs.end(); }
 
-    unsigned compile_unit_count()    { return CUs.size(); }
-    unsigned global_variable_count() { return GVs.size(); }
-    unsigned subprogram_count()      { return SPs.size(); }
-    unsigned type_count()            { return TYs.size(); }
+    unsigned compile_unit_count()    const { return CUs.size(); }
+    unsigned global_variable_count() const { return GVs.size(); }
+    unsigned subprogram_count()      const { return SPs.size(); }
+    unsigned type_count()            const { return TYs.size(); }
 
   private:
     SmallVector<MDNode *, 8> CUs;  // Compile Units
