@@ -52,7 +52,7 @@ namespace llvm {
 
     template <typename DescTy>
     DescTy getFieldAs(unsigned Elt) const {
-      return DescTy(getDescriptorField(Elt).getNode());
+      return DescTy(getDescriptorField(Elt));
     }
 
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
@@ -63,7 +63,6 @@ namespace llvm {
 
     bool Verify() const { return DbgNode != 0; }
 
-    MDNode *getNode() const   { return DbgNode; }
     operator MDNode *() const { return DbgNode; }
     MDNode *operator ->() const { return DbgNode; }
 
