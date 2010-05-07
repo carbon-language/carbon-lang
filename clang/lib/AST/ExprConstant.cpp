@@ -113,12 +113,24 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
   const Expr* Base = Value.Base;
 
-  Result = Base || !Value.Offset.isZero();
+  // A null base expression indicates a null pointer.  These are always
+  // evaluatable, and they are false unless the offset is zero.
+  if (!Base) {
+    Result = !Value.Offset.isZero();
+    return true;
+  }
 
-  const DeclRefExpr* DeclRef = dyn_cast_or_null<DeclRefExpr>(Base);
+  // We have a non-null base expression.  These are generally known to
+  // be true, but if it'a decl-ref to a weak symbol it can be null at
+  // runtime.
+
+  Result = true;
+
+  const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
   if (!DeclRef)
     return true;
 
+  // If it's a weak symbol, it isn't constant-evaluable.
   const ValueDecl* Decl = DeclRef->getDecl();
   if (Decl->hasAttr<WeakAttr>() ||
       Decl->hasAttr<WeakRefAttr>() ||
