@@ -126,8 +126,10 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   return Result;
 }
 
-const MCSection *MCContext::
-getCOFFSection(StringRef Section, unsigned Flags, SectionKind Kind) {
+const MCSection *MCContext::getCOFFSection(StringRef Section,
+                                           unsigned Characteristics,
+                                           int Selection,
+                                           SectionKind Kind) {
   if (COFFUniquingMap == 0)
     COFFUniquingMap = new COFFUniqueMapTy();
   COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)COFFUniquingMap;
@@ -136,8 +138,9 @@ getCOFFSection(StringRef Section, unsigned Flags, SectionKind Kind) {
   StringMapEntry<const MCSectionCOFF*> &Entry = Map.GetOrCreateValue(Section);
   if (Entry.getValue()) return Entry.getValue();
   
-  MCSectionCOFF *Result = new (*this) MCSectionCOFF(Entry.getKey(), Flags,
-                                                    Kind);
+  MCSectionCOFF *Result = new (*this) MCSectionCOFF(Entry.getKey(),
+                                                    Characteristics,
+                                                    Selection, Kind);
   
   Entry.setValue(Result);
   return Result;

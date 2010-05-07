@@ -23,14 +23,22 @@ namespace llvm {
     // The memory for this string is stored in the same MCContext as *this.
     StringRef SectionName;
     
-    /// Flags - This is the Characteristics field of a section, drawn
-    /// from the enums below.
-    unsigned Flags;
+    /// Characteristics - This is the Characteristics field of a section,
+    //  drawn from the enums below.
+    unsigned Characteristics;
+
+    /// Selection - This is the Selection field for the section symbol, if
+    /// it is a COMDAT section (Characteristics & IMAGE_SCN_LNK_COMDAT) != 0
+    int Selection;
 
   private:
     friend class MCContext;
-    MCSectionCOFF(StringRef Section, unsigned flags, SectionKind K)
-      : MCSection(K), SectionName(Section), Flags(flags) {
+    MCSectionCOFF(StringRef Section, unsigned Characteristics,
+                  int Selection, SectionKind K)
+      : MCSection(K), SectionName(Section), Characteristics(Characteristics),
+        Selection (Selection) {
+      assert ((Characteristics & 0x00F00000) == 0 &&
+        "alignment must not be set upon section creation");
     }
     ~MCSectionCOFF();
 
@@ -38,6 +46,13 @@ namespace llvm {
     /// ShouldOmitSectionDirective - Decides whether a '.section' directive
     /// should be printed before the section name
     bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
+
+    //FIXME: all COFF enumerations/flags should be standardized into one place...
+    // Target/X86COFF.h doesn't seem right as COFF can be used for other targets,
+    // MC/WinCOFF.h maybe right as it isn't target or entity specific, and it is
+    //   pretty low on the dependancy graph (is there any need to support non
+    //   windows COFF?)
+    // here is good for section stuff, but others should go elsewhere
 
     /// Valid section flags.
     enum {
@@ -54,6 +69,7 @@ namespace llvm {
       IMAGE_SCN_MEM_16BIT                       = 0x00020000,
       IMAGE_SCN_MEM_LOCKED                      = 0x00040000,
       IMAGE_SCN_MEM_PRELOAD                     = 0x00080000,
+      /* these are handled elsewhere
       IMAGE_SCN_ALIGN_1BYTES                    = 0x00100000,
       IMAGE_SCN_ALIGN_2BYTES                    = 0x00200000,
       IMAGE_SCN_ALIGN_4BYTES                    = 0x00300000,
@@ -61,6 +77,7 @@ namespace llvm {
       IMAGE_SCN_ALIGN_16BYTES                   = 0x00500000,
       IMAGE_SCN_ALIGN_32BYTES                   = 0x00600000,
       IMAGE_SCN_ALIGN_64BYTES                   = 0x00700000,
+      */
       IMAGE_SCN_LNK_NRELOC_OVFL                 = 0x01000000,
       IMAGE_SCN_MEM_DISCARDABLE                 = 0x02000000,
       IMAGE_SCN_MEM_NOT_CACHED                  = 0x04000000,
@@ -71,8 +88,18 @@ namespace llvm {
       IMAGE_SCN_MEM_WRITE                       = 0x80000000
     };
 
+    enum {
+      IMAGE_COMDAT_SELECT_NODUPLICATES = 1,
+      IMAGE_COMDAT_SELECT_ANY,
+      IMAGE_COMDAT_SELECT_SAME_SIZE,
+      IMAGE_COMDAT_SELECT_EXACT_MATCH,
+      IMAGE_COMDAT_SELECT_ASSOCIATIVE,
+      IMAGE_COMDAT_SELECT_LARGEST
+    };
+
     StringRef getSectionName() const { return SectionName; }
-    unsigned getFlags() const { return Flags; }
+    unsigned getCharacteristics() const { return Characteristics; }
+    int getSelection () const { return Selection; }
     
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;

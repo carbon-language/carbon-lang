@@ -98,8 +98,14 @@ namespace llvm {
                                    unsigned Flags, SectionKind Kind,
                                    bool IsExplicit = false);
 
-    const MCSection *getCOFFSection(StringRef Section, unsigned Flags,
-                                    SectionKind Kind);
+    const MCSection *getCOFFSection(StringRef Section, unsigned Characteristics,
+                                    int Selection, SectionKind Kind);
+
+    const MCSection *getCOFFSection(StringRef Section, unsigned Characteristics,
+                                    SectionKind Kind) {
+      return getCOFFSection (Section, Characteristics, 0, Kind);
+    }
+
     
     /// @}
 

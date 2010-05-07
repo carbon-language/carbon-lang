@@ -43,7 +43,7 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << 'w';
   else
     OS << 'r';
-  if (getFlags() & MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE)
+  if (getCharacteristics() & MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE)
     OS << 'n';
   OS << "\"\n";
 }

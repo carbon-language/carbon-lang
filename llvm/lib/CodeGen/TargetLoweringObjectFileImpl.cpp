@@ -912,11 +912,17 @@ getCOFFSectionFlags(SectionKind K) {
   unsigned Flags = 0;
 
   if (!K.isMetadata())
-    Flags |= MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE;
+    Flags |=
+      MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE;
   else if (K.isText())
     Flags |=
       MCSectionCOFF::IMAGE_SCN_MEM_EXECUTE |
       MCSectionCOFF::IMAGE_SCN_CNT_CODE;
+  else if (K.isBSS ())
+    Flags |=
+      MCSectionCOFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+      MCSectionCOFF::IMAGE_SCN_MEM_READ |
+      MCSectionCOFF::IMAGE_SCN_MEM_WRITE;
   else if (K.isReadOnly())
     Flags |=
       MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
@@ -941,6 +947,8 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
   if (Kind.isText())
     return ".text$linkonce";
+  if (Kind.isBSS ())
+    return ".bss$linkonce";
   if (Kind.isWriteable())
     return ".data$linkonce";
   return ".rdata$linkonce";
@@ -959,9 +967,13 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
     MCSymbol *Sym = Mang->getSymbol(GV);
     Name.append(Sym->getName().begin(), Sym->getName().end());
-    return getContext().getCOFFSection(Name.str(),
-                                       getCOFFSectionFlags(Kind),
-                                       Kind);
+
+    unsigned Characteristics = getCOFFSectionFlags(Kind);
+
+    Characteristics |= MCSectionCOFF::IMAGE_SCN_LNK_COMDAT;
+
+    return getContext().getCOFFSection(Name.str(), Characteristics,
+                          MCSectionCOFF::IMAGE_COMDAT_SELECT_EXACT_MATCH, Kind);
   }
 
   if (Kind.isText())
