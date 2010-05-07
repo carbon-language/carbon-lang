@@ -70,7 +70,7 @@ void PIC16DbgInfo::PopulateDerivedTypeInfo (DIType Ty, unsigned short &TypeNo,
   
   // We also need to encode the information about the base type of
   // pointer in TypeNo.
-  DIType BaseType = DIDerivedType(Ty.getNode()).getTypeDerivedFrom();
+  DIType BaseType = DIDerivedType(Ty).getTypeDerivedFrom();
   PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TagName);
 }
 
@@ -79,7 +79,7 @@ void PIC16DbgInfo::PopulateArrayTypeInfo (DIType Ty, unsigned short &TypeNo,
                                           bool &HasAux, int Aux[],
                                           std::string &TagName) {
 
-  DICompositeType CTy = DICompositeType(Ty.getNode());
+  DICompositeType CTy = DICompositeType(Ty);
   DIArray Elements = CTy.getTypeArray();
   unsigned short size = 1;
   unsigned short Dimension[4]={0,0,0,0};
@@ -88,7 +88,7 @@ void PIC16DbgInfo::PopulateArrayTypeInfo (DIType Ty, unsigned short &TypeNo,
     if (Element.getTag() == dwarf::DW_TAG_subrange_type) {
       TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
       TypeNo = TypeNo | PIC16Dbg::DT_ARY;
-      DISubrange SubRange = DISubrange(Element.getNode());
+      DISubrange SubRange = DISubrange(Element);
       Dimension[i] = SubRange.getHi() - SubRange.getLo() + 1;
       // Each dimension is represented by 2 bytes starting at byte 9.
       Aux[8+i*2+0] = Dimension[i];
@@ -111,7 +111,7 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
                                                   unsigned short &TypeNo,
                                                   bool &HasAux, int Aux[],
                                                   std::string &TagName) {
-  DICompositeType CTy = DICompositeType(Ty.getNode());
+  DICompositeType CTy = DICompositeType(Ty);
   TypeNo = TypeNo << PIC16Dbg::S_BASIC;
   if (Ty.getTag() == dwarf::DW_TAG_structure_type)
     TypeNo = TypeNo | PIC16Dbg::T_STRUCT;
@@ -124,7 +124,7 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
   // llvm.dbg.composite* global variable. Since we need to revisit 
   // PIC16DebugInfo implementation anyways after the MDNodes based 
   // framework is done, let us continue with the way it is.
-  std::string UniqueSuffix = "." + Ty.getNode()->getNameStr().substr(18);
+  std::string UniqueSuffix = "." + Ty->getNameStr().substr(18);
   TagName += UniqueSuffix;
   unsigned short size = CTy.getSizeInBits()/8;
   // 7th and 8th byte represent size.
@@ -303,7 +303,7 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     bool HasAux = false;
     int ElementAux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
-    DIDerivedType DITy(Element.getNode());
+    DIDerivedType DITy(Element);
     unsigned short ElementSize = DITy.getSizeInBits()/8;
     // Get mangleddd name for this structure/union  element.
     std::string MangMemName = DITy.getName().str() + SuffixNo;
@@ -336,7 +336,7 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
         CTy.getTag() == dwarf::DW_TAG_structure_type ) {
       // Get the number after llvm.dbg.composite and make UniqueSuffix from 
       // it.
-      std::string DIVar = CTy.getNode()->getNameStr();
+      std::string DIVar = CTy->getNameStr();
       std::string UniqueSuffix = "." + DIVar.substr(18);
       std::string MangledCTyName = CTy.getName().str() + UniqueSuffix;
       unsigned short size = CTy.getSizeInBits()/8;

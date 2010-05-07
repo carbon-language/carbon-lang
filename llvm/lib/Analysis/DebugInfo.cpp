@@ -271,7 +271,7 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
   // which, due to uniquing, has merged with the source. We shield clients from
   // this detail by allowing a value to be replaced with replaceAllUsesWith()
   // itself.
-  if (getNode() != D) {
+  if (DbgNode != D) {
     MDNode *Node = DbgNode;
     Node->replaceAllUsesWith(D);
     Node->destroy();

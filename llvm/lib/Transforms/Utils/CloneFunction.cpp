@@ -344,7 +344,7 @@ static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
   DILocation OrigLocation = ILoc.getOrigLocation();
   MDNode *NewLoc = TheCallMD;
   if (OrigLocation.Verify())
-    NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD);
+    NewLoc = UpdateInlinedAtInfo(OrigLocation, TheCallMD);
 
   Value *MDVs[] = {
     InsnMD->getOperand(0), // Line
