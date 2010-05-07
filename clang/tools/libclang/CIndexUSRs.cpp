@@ -53,6 +53,10 @@ public:
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
   void VisitVarDecl(VarDecl *D);
+  void VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+    IgnoreResults = true;
+    return;
+  }
 
   /// Generate the string component containing the location of the
   ///  declaration.
@@ -82,6 +86,8 @@ public:
   void GenObjCProperty(llvm::StringRef prop);
   /// Generate a USR for an Objective-C protocol.
   void GenObjCProtocol(llvm::StringRef prot);
+
+  void VisitType(QualType T);
 };
 
 class StringUSRGenerator {
@@ -147,6 +153,20 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
 
   VisitDeclContext(D->getDeclContext());
   Out << "@F@" << D->getNameAsString();
+
+  ASTContext &Ctx = AU->getASTContext();
+  if (!Ctx.getLangOptions().CPlusPlus || D->isExternC())
+    return;
+
+  // Mangle in type information for the arguments.
+  for (FunctionDecl::param_iterator I = D->param_begin(), E = D->param_end();
+       I != E; ++I) {
+    Out << '#';
+    if (ParmVarDecl *PD = *I)
+      VisitType(PD->getType());
+  }
+  if (D->isVariadic())
+    Out << '.';
 }
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
@@ -274,7 +294,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   // translation units.
   if (ShouldGenerateLocation(D) && GenLoc(D))
     return;
-  
+
   D = D->getCanonicalDecl();
   VisitDeclContext(D->getDeclContext());
 
@@ -336,8 +356,124 @@ bool USRGenerator::GenLoc(const Decl *D) {
   Out << '@'
       << SM.getLineNumber(Decomposed.first, Decomposed.second) << ':'
       << SM.getColumnNumber(Decomposed.first, Decomposed.second);
-  
+
   return IgnoreResults;
+}
+
+void USRGenerator::VisitType(QualType T) {
+  // This method mangles in USR information for types.  It can possibly
+  // just reuse the naming-mangling logic used by codegen, although the
+  // requirements for USRs might not be the same.
+  do {
+    T = T.getTypePtr()->getCanonicalTypeInternal();
+    Qualifiers Q = T.getQualifiers();
+    if (Q.hasConst())
+      Out << '1';
+    if (Q.hasVolatile())
+      Out << '2';
+    if (Q.hasRestrict())
+      Out << '3';
+
+    // Mangle in ObjC GC qualifiers?
+
+    if (const PointerType *PT = T->getAs<PointerType>()) {
+      Out << '*';
+      T = PT->getPointeeType();
+      continue;
+    }
+    if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
+      Out << '&';
+      T = RT->getPointeeType();
+      continue;
+    }
+    if (const FunctionProtoType *FT = T->getAs<FunctionProtoType>()) {
+      Out << 'F';
+      VisitType(FT->getResultType());
+      for (FunctionProtoType::arg_type_iterator
+            I = FT->arg_type_begin(), E = FT->arg_type_end(); I!=E; ++I) {
+        VisitType(*I);
+      }
+      if (FT->isVariadic())
+        Out << '.';
+      return;
+    }
+    if (const BlockPointerType *BT = T->getAs<BlockPointerType>()) {
+      Out << 'B';
+      T = BT->getPointeeType();
+      continue;
+    }
+    if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
+      unsigned char c = '\0';
+      switch (BT->getKind()) {
+        case BuiltinType::Void:
+          c = 'v'; break;
+        case BuiltinType::Bool:
+          c = 'b'; break;
+        case BuiltinType::Char_U:
+        case BuiltinType::UChar:
+          c = 'c'; break;
+        case BuiltinType::Char16:
+          c = 'q'; break;
+        case BuiltinType::Char32:
+          c = 'w'; break;
+        case BuiltinType::UShort:
+          c = 's'; break;
+        case BuiltinType::UInt:
+          c = 'i'; break;
+        case BuiltinType::ULong:
+          c = 'l'; break;
+        case BuiltinType::ULongLong:
+          c = 'k'; break;
+        case BuiltinType::UInt128:
+          c = 'j'; break;
+        case BuiltinType::Char_S:
+        case BuiltinType::SChar:
+          c = 'C'; break;
+        case BuiltinType::WChar:
+          c = 'W'; break;
+        case BuiltinType::Short:
+          c = 'S'; break;
+        case BuiltinType::Int:
+          c = 'I'; break;
+        case BuiltinType::Long:
+          c = 'L'; break;
+        case BuiltinType::LongLong:
+          c = 'K'; break;
+        case BuiltinType::Int128:
+          c = 'J'; break;
+        case BuiltinType::Float:
+          c = 'f'; break;
+        case BuiltinType::Double:
+          c = 'd'; break;
+        case BuiltinType::LongDouble:
+          c = 'D'; break;
+        case BuiltinType::NullPtr:
+          c = 'n'; break;
+        case BuiltinType::Overload:
+        case BuiltinType::Dependent:
+        case BuiltinType::UndeducedAuto:
+          IgnoreResults = true;
+          return;
+        case BuiltinType::ObjCId:
+          c = 'o'; break;
+        case BuiltinType::ObjCClass:
+          c = 'O'; break;
+        case BuiltinType::ObjCSel:
+          c = 'e'; break;
+      }
+      Out << c;
+      return;
+    }
+    if (const ComplexType *CT = T->getAs<ComplexType>()) {
+      Out << '<';
+      T = CT->getElementType();
+      continue;
+    }
+
+    // Unhandled type.
+    Out << ' ';
+    break;
+  } while (true);
 }
 
 //===----------------------------------------------------------------------===//

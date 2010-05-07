@@ -47,21 +47,25 @@ namespace foo { namespace taz {
   };
 }}
 
+extern "C" {
+  void rez(int a, int b);
+}
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:11 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
-// CHECK: usrs.cpp c:@N@foo@F@bar Extent=[3:8 - 3:18]
-// CHECK: usrs.cpp c:usrs.cpp@3:12@N@foo@F@bar@z Extent=[3:12 - 3:17]
+// CHECK: usrs.cpp c:@N@foo@F@bar#I Extent=[3:8 - 3:18]
+// CHECK: usrs.cpp c:usrs.cpp@3:12@N@foo@F@bar#I@z Extent=[3:12 - 3:17]
 // CHECK: usrs.cpp c:@N@bar Extent=[5:11 - 8:2]
 // CHECK: usrs.cpp c:usrs.cpp@6:15@N@bar@T@QType Extent=[6:15 - 6:20]
-// CHECK: usrs.cpp c:@N@bar@F@bar Extent=[7:8 - 7:20]
-// CHECK: usrs.cpp c:usrs.cpp@7:12@N@bar@F@bar@z Extent=[7:12 - 7:19]
+// CHECK: usrs.cpp c:@N@bar@F@bar#I Extent=[7:8 - 7:20]
+// CHECK: usrs.cpp c:usrs.cpp@7:12@N@bar@F@bar#I@z Extent=[7:12 - 7:19]
 // CHECK: usrs.cpp c:@C@ClsA Extent=[10:1 - 14:2]
 // CHECK: usrs.cpp c:@C@ClsA@FI@a Extent=[12:7 - 12:8]
 // CHECK: usrs.cpp c:@C@ClsA@FI@b Extent=[12:10 - 12:11]
-// CHECK: usrs.cpp c:@C@ClsA@F@ClsA Extent=[13:3 - 13:37]
-// CHECK: usrs.cpp c:usrs.cpp@13:8@C@ClsA@F@ClsA@A Extent=[13:8 - 13:13]
-// CHECK: usrs.cpp c:usrs.cpp@13:15@C@ClsA@F@ClsA@B Extent=[13:15 - 13:20]
+// CHECK: usrs.cpp c:@C@ClsA@F@ClsA#I#I Extent=[13:3 - 13:37]
+// CHECK: usrs.cpp c:usrs.cpp@13:8@C@ClsA@F@ClsA#I#I@A Extent=[13:8 - 13:13]
+// CHECK: usrs.cpp c:usrs.cpp@13:15@C@ClsA@F@ClsA#I#I@B Extent=[13:15 - 13:20]
 // CHECK: usrs.cpp c:@N@foo Extent=[16:11 - 22:2]
 // CHECK: usrs.cpp c:@N@foo@C@ClsB Extent=[17:3 - 21:4]
 // CHECK: usrs.cpp c:@N@foo@C@ClsB@F@ClsB Extent=[19:5 - 19:27]
@@ -73,19 +77,20 @@ namespace foo { namespace taz {
 // CHECK: usrs.cpp c:@N@foo Extent=[35:11 - 40:2]
 // CHECK: usrs.cpp c:@N@foo@N@taz Extent=[35:27 - 39:2]
 // CHECK: usrs.cpp c:@N@foo@N@taz@x Extent=[36:3 - 36:8]
-// CHECK: usrs.cpp c:usrs.cpp@37:21@N@foo@N@taz@F@add Extent=[37:21 - 37:56]
-// CHECK: usrs.cpp c:usrs.cpp@37:25@N@foo@N@taz@F@add@a Extent=[37:25 - 37:30]
-// CHECK: usrs.cpp c:usrs.cpp@37:32@N@foo@N@taz@F@add@b Extent=[37:32 - 37:37]
-// CHECK: usrs.cpp c:@N@foo@N@taz@F@sub Extent=[38:8 - 38:25]
-// CHECK: usrs.cpp c:usrs.cpp@38:12@N@foo@N@taz@F@sub@a Extent=[38:12 - 38:17]
-// CHECK: usrs.cpp c:usrs.cpp@38:19@N@foo@N@taz@F@sub@b Extent=[38:19 - 38:24]
+// CHECK: usrs.cpp c:usrs.cpp@37:21@N@foo@N@taz@F@add#I#I Extent=[37:21 - 37:56]
+// CHECK: usrs.cpp c:usrs.cpp@37:25@N@foo@N@taz@F@add#I#I@a Extent=[37:25 - 37:30]
+// CHECK: usrs.cpp c:usrs.cpp@37:32@N@foo@N@taz@F@add#I#I@b Extent=[37:32 - 37:37]
+// CHECK: usrs.cpp c:@N@foo@N@taz@F@sub#I#I Extent=[38:8 - 38:25]
+// CHECK: usrs.cpp c:usrs.cpp@38:12@N@foo@N@taz@F@sub#I#I@a Extent=[38:12 - 38:17]
+// CHECK: usrs.cpp c:usrs.cpp@38:19@N@foo@N@taz@F@sub#I#I@b Extent=[38:19 - 38:24]
 // CHECK: usrs.cpp c:@N@foo Extent=[42:11 - 48:3]
 // CHECK: usrs.cpp c:@N@foo@N@taz Extent=[42:27 - 48:2]
 // CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD Extent=[43:3 - 47:4]
-// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator= Extent=[45:11 - 45:52]
-// CHECK: usrs.cpp c:usrs.cpp@45:21@N@foo@N@taz@C@ClsD@F@operator=@x Extent=[45:21 - 45:26]
-// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator= Extent=[46:11 - 46:61]
-// CHECK: usrs.cpp c:usrs.cpp@46:21@N@foo@N@taz@C@ClsD@F@operator=@x Extent=[46:21 - 46:29]
-
-
+// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator=#I Extent=[45:11 - 45:52]
+// CHECK: usrs.cpp c:usrs.cpp@45:21@N@foo@N@taz@C@ClsD@F@operator=#I@x Extent=[45:21 - 45:26]
+// CHECK: usrs.cpp c:@N@foo@N@taz@C@ClsD@F@operator=#d Extent=[46:11 - 46:61]
+// CHECK: usrs.cpp c:usrs.cpp@46:21@N@foo@N@taz@C@ClsD@F@operator=#d@x Extent=[46:21 - 46:29]
+// CHECK: usrs.cpp c:@F@rez Extent=[51:8 - 51:25]
+// CHECK: usrs.cpp c:usrs.cpp@51:12@F@rez@a Extent=[51:12 - 51:17]
+// CHECK: usrs.cpp c:usrs.cpp@51:19@F@rez@b Extent=[51:19 - 51:24]
 
