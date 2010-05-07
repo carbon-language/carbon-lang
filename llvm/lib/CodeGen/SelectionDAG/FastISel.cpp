@@ -1082,6 +1082,7 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
     // emitted yet.
     for (BasicBlock::const_iterator I = SuccBB->begin();
          const PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+
       // Ignore dead phi's.
       if (PN->use_empty()) continue;
 
@@ -1104,12 +1105,19 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
 
       const Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
 
+      // Set the DebugLoc for the copy. Prefer the location of the operand
+      // if there is one; use the location of the PHI otherwise.
+      DL = PN->getDebugLoc();
+      if (const Instruction *Inst = dyn_cast<Instruction>(PHIOp))
+        DL = Inst->getDebugLoc();
+
       unsigned Reg = getRegForValue(PHIOp);
       if (Reg == 0) {
         PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
         return false;
       }
       PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
+      DL = DebugLoc();
     }
   }
 
