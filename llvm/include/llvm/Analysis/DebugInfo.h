@@ -63,7 +63,9 @@ namespace llvm {
 
     bool Verify() const { return DbgNode != 0; }
 
-    MDNode *getNode() const { return DbgNode; }
+    MDNode *getNode() const   { return DbgNode; }
+    operator MDNode *() const { return DbgNode; }
+    MDNode *operator ->() const { return DbgNode; }
 
     unsigned getVersion() const {
       return getUnsignedField(0) & LLVMDebugVersionMask;
@@ -397,7 +399,7 @@ namespace llvm {
       DICompositeType DCT(getFieldAs<DICompositeType>(8));
       if (DCT.Verify()) {
         DIArray A = DCT.getTypeArray();
-        DIType T(A.getElement(0).getNode());
+        DIType T(A.getElement(0));
         return T.getName();
       }
       DIType T(getFieldAs<DIType>(8));
