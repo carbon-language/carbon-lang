@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
+#include <cstdio>
 using namespace clang;
 
 namespace {
