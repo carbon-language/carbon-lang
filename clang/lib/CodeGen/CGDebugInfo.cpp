@@ -1478,6 +1478,11 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   else 
     Ty = getOrCreateType(VD->getType(), Unit);
 
+  // If there is not any debug info for type then do not emit debug info
+  // for this variable.
+  if (!Ty)
+    return;
+
   // Get location information.
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(VD->getLocation());
