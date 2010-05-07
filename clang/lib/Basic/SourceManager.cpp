@@ -1179,74 +1179,77 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
 
   // "Traverse" the include/instantiation stacks of both locations and try to
-  // find a common "ancestor".
+  // find a common "ancestor".  FileIDs build a tree-like structure that
+  // reflects the #include hierarchy, and this algorithm needs to find the
+  // nearest common ancestor between the two locations.  For example, if you
+  // have a.c that includes b.h and c.h, and are comparing a location in b.h to
+  // a location in c.h, we need to find that their nearest common ancestor is
+  // a.c, and compare the locations of the two #includes to find their relative
+  // ordering.
   //
-  // First we traverse the stack of the right location and check each level
-  // against the level of the left location, while collecting all levels in a
-  // "stack map".
-  std::map<FileID, unsigned> ROffsMap;
-  ROffsMap[ROffs.first] = ROffs.second;
-
-  while (1) {
-    SourceLocation UpperLoc;
-    const SrcMgr::SLocEntry &Entry = getSLocEntry(ROffs.first);
-    if (Entry.isInstantiation())
-      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-    else
-      UpperLoc = Entry.getFile().getIncludeLoc();
-
-    if (UpperLoc.isInvalid())
-      break; // We reached the top.
-
-    ROffs = getDecomposedLoc(UpperLoc);
-
-    // If we found a common file, cache and return our answer!
-    if (LOffs.first == ROffs.first) {
-      IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, ROffs.second);
-      return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
+  // SourceManager assigns FileIDs in order of parsing.  This means that an
+  // includee always has a larger FileID than an includer.  While you might
+  // think that we could just compare the FileID's here, that doesn't work to
+  // compare a point at the end of a.c with a point within c.h.  Though c.h has
+  // a larger FileID, we have to compare the include point of c.h to the
+  // location in a.c.
+  //
+  // Despite not being able to directly compare FileID's, we can tell that a
+  // larger FileID is necessarily more deeply nested than a lower one and use
+  // this information to walk up the tree to the nearest common ancestor.
+  do {
+    // If LOffs is larger than ROffs, then LOffs must be more deeply nested than
+    // ROffs, walk up the #include chain.
+    if (LOffs.first.ID > ROffs.first.ID) {
+      SourceLocation UpperLoc;
+      const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
+      if (Entry.isInstantiation())
+        UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+      else
+        UpperLoc = Entry.getFile().getIncludeLoc();
+      
+      if (UpperLoc.isInvalid())
+        break; // We reached the top.
+      
+      LOffs = getDecomposedLoc(UpperLoc);
+    } else {
+      // Otherwise, ROffs is larger than LOffs, so ROffs must be more deeply
+      // nested than LOffs, walk up the #include chain.
+      SourceLocation UpperLoc;
+      const SrcMgr::SLocEntry &Entry = getSLocEntry(ROffs.first);
+      if (Entry.isInstantiation())
+        UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+      else
+        UpperLoc = Entry.getFile().getIncludeLoc();
+      
+      if (UpperLoc.isInvalid())
+        break; // We reached the top.
+      
+      ROffs = getDecomposedLoc(UpperLoc);
     }
+  } while (LOffs.first != ROffs.first);
 
-    ROffsMap[ROffs.first] = ROffs.second;
-  }
-
-  // We didn't find a common ancestor. Now traverse the stack of the left
-  // location, checking against the stack map of the right location.
-  while (1) {
-    SourceLocation UpperLoc;
-    const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
-    if (Entry.isInstantiation())
-      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-    else
-      UpperLoc = Entry.getFile().getIncludeLoc();
-
-    if (UpperLoc.isInvalid())
-      break; // We reached the top.
-
-    LOffs = getDecomposedLoc(UpperLoc);
-
-    std::map<FileID, unsigned>::iterator I = ROffsMap.find(LOffs.first);
-    if (I != ROffsMap.end()) {
-      IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, I->second);
-      return IsBeforeInTUCache.getCachedResult(LOffs.second, I->second);
-    }
+  // If we exited because we found a nearest common ancestor, compare the
+  // locations within the common file and cache them.
+  if (LOffs.first == ROffs.first) {
+    IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, ROffs.second);
+    return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
   }
 
   // There is no common ancestor, most probably because one location is in the
   // predefines buffer.
-  //
+  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
+
   // FIXME: We should rearrange the external interface so this simply never
   // happens; it can't conceptually happen. Also see PR5662.
-
+  
   // If exactly one location is a memory buffer, assume it preceeds the other.
   bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
   bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
-  if (LIsMB != RIsMB) {
-    IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
+  if (LIsMB != RIsMB)
     return LIsMB;
-  }
 
   // Otherwise, just assume FileIDs were created in order.
-  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
   return LOffs.first < ROffs.first;
 }
 
