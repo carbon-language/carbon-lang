@@ -1154,6 +1154,27 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
 }
 
+/// Given a decomposed source location, move it up the include/instantiation
+/// stack to the parent source location.  If this is possible, return the
+/// decomposed version of the parent in Loc and return false.  If Loc is the
+/// top-level entry, return true and don't modify it.
+static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
+                                   const SourceManager &SM) {
+  SourceLocation UpperLoc;
+  const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
+  if (Entry.isInstantiation())
+    UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+  else
+    UpperLoc = Entry.getFile().getIncludeLoc();
+  
+  if (UpperLoc.isInvalid())
+    return true; // We reached the top.
+  
+  Loc = SM.getDecomposedLoc(UpperLoc);
+  return false;
+}
+  
+
 /// \brief Determines the order of 2 source locations in the translation unit.
 ///
 /// \returns true if LHS source location comes before RHS, false otherwise.
@@ -1201,31 +1222,14 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     // If LOffs is larger than ROffs, then LOffs must be more deeply nested than
     // ROffs, walk up the #include chain.
     if (LOffs.first.ID > ROffs.first.ID) {
-      SourceLocation UpperLoc;
-      const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
-      if (Entry.isInstantiation())
-        UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-      else
-        UpperLoc = Entry.getFile().getIncludeLoc();
-      
-      if (UpperLoc.isInvalid())
+      if (MoveUpIncludeHierarchy(LOffs, *this))
         break; // We reached the top.
       
-      LOffs = getDecomposedLoc(UpperLoc);
     } else {
       // Otherwise, ROffs is larger than LOffs, so ROffs must be more deeply
       // nested than LOffs, walk up the #include chain.
-      SourceLocation UpperLoc;
-      const SrcMgr::SLocEntry &Entry = getSLocEntry(ROffs.first);
-      if (Entry.isInstantiation())
-        UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-      else
-        UpperLoc = Entry.getFile().getIncludeLoc();
-      
-      if (UpperLoc.isInvalid())
+      if (MoveUpIncludeHierarchy(ROffs, *this))
         break; // We reached the top.
-      
-      ROffs = getDecomposedLoc(UpperLoc);
     }
   } while (LOffs.first != ROffs.first);
 
@@ -1237,15 +1241,21 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   }
 
   // There is no common ancestor, most probably because one location is in the
-  // predefines buffer.
-  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
-
+  // predefines buffer or a PCH file.
   // FIXME: We should rearrange the external interface so this simply never
   // happens; it can't conceptually happen. Also see PR5662.
+  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
+
+  // Zip both entries up to the top level record.
+  while (!MoveUpIncludeHierarchy(LOffs, *this)) /*empty*/;
+  while (!MoveUpIncludeHierarchy(ROffs, *this)) /*empty*/;
   
   // If exactly one location is a memory buffer, assume it preceeds the other.
-  bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
-  bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  
+  // Strip off macro instantation locations, going up to the top-level File
+  // SLocEntry.
+  bool LIsMB = getFileEntryForID(LOffs.first) == 0;
+  bool RIsMB = getFileEntryForID(ROffs.first) == 0;
   if (LIsMB != RIsMB)
     return LIsMB;
 
