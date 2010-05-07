@@ -704,8 +704,10 @@ enum CXCursorKind {
   CXCursor_CXXMethod                     = 21,
   /** \brief A C++ namespace. */
   CXCursor_Namespace                     = 22,
+  /** \brief A linkage specification, e.g. 'extern "C"'. */
+  CXCursor_LinkageSpec                   = 23,
 
-  CXCursor_LastDecl                      = CXCursor_Namespace,
+  CXCursor_LastDecl                      = CXCursor_LinkageSpec,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */

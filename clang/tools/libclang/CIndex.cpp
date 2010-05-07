@@ -285,6 +285,7 @@ public:
   // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
   bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
   bool VisitObjCClassDecl(ObjCClassDecl *D);
+  bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
 
   // Type visitors
@@ -724,6 +725,10 @@ bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
 }
 
 bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
+  return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   return VisitDeclContext(D);
 }
 
@@ -1645,6 +1650,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("macro instantiation");
   case CXCursor_Namespace:
     return createCXString("Namespace");
+  case CXCursor_LinkageSpec:
+    return createCXString("LinkageSpec");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
