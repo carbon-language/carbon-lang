@@ -84,10 +84,22 @@ namespace {
         v = APValue(IntReal, IntImag);
     }
   };
+
+  struct LValue {
+    Expr *Base;
+    CharUnits Offset;
+
+    Expr *getLValueBase() { return Base; }
+    CharUnits getLValueOffset() { return Offset; }
+
+    void moveInto(APValue &v) {
+      v = APValue(Base, Offset);
+    }
+  };
 }
 
-static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
-static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
+static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
+static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result,
                                     EvalInfo &Info);
@@ -98,10 +110,10 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 // Misc utilities
 //===----------------------------------------------------------------------===//
 
-static bool EvalPointerValueAsBool(APValue& Value, bool& Result) {
-  const Expr* Base = Value.getLValueBase();
+static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
+  const Expr* Base = Value.Base;
 
-  Result = Base || !Value.getLValueOffset().isZero();
+  Result = Base || !Value.Offset.isZero();
 
   const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
   if (!DeclRef)
@@ -131,7 +143,7 @@ static bool HandleConversionToBool(const Expr* E, bool& Result,
     Result = !FloatResult.isZero();
     return true;
   } else if (E->getType()->hasPointerRepresentation()) {
-    APValue PointerResult;
+    LValue PointerResult;
     if (!EvaluatePointer(E, PointerResult, Info))
       return false;
     return EvalPointerValueAsBool(PointerResult, Result);
@@ -261,34 +273,42 @@ public:
 //===----------------------------------------------------------------------===//
 namespace {
 class LValueExprEvaluator
-  : public StmtVisitor<LValueExprEvaluator, APValue> {
+  : public StmtVisitor<LValueExprEvaluator, bool> {
   EvalInfo &Info;
+  LValue &Result;
+
+  bool Success(Expr *E) {
+    Result.Base = E;
+    Result.Offset = CharUnits::Zero();
+    return true;
+  }
 public:
 
-  LValueExprEvaluator(EvalInfo &info) : Info(info) {}
+  LValueExprEvaluator(EvalInfo &info, LValue &Result) :
+    Info(info), Result(Result) {}
 
-  APValue VisitStmt(Stmt *S) {
-    return APValue();
+  bool VisitStmt(Stmt *S) {
+    return false;
   }
   
-  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
-  APValue VisitDeclRefExpr(DeclRefExpr *E);
-  APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E); }
-  APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
-  APValue VisitMemberExpr(MemberExpr *E);
-  APValue VisitStringLiteral(StringLiteral *E) { return APValue(E); }
-  APValue VisitObjCEncodeExpr(ObjCEncodeExpr *E) { return APValue(E); }
-  APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
-  APValue VisitUnaryDeref(UnaryOperator *E);
-  APValue VisitUnaryExtension(const UnaryOperator *E)
+  bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitDeclRefExpr(DeclRefExpr *E);
+  bool VisitPredefinedExpr(PredefinedExpr *E) { return Success(E); }
+  bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  bool VisitMemberExpr(MemberExpr *E);
+  bool VisitStringLiteral(StringLiteral *E) { return Success(E); }
+  bool VisitObjCEncodeExpr(ObjCEncodeExpr *E) { return Success(E); }
+  bool VisitArraySubscriptExpr(ArraySubscriptExpr *E);
+  bool VisitUnaryDeref(UnaryOperator *E);
+  bool VisitUnaryExtension(const UnaryOperator *E)
     { return Visit(E->getSubExpr()); }
-  APValue VisitChooseExpr(const ChooseExpr *E)
+  bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
 
-  APValue VisitCastExpr(CastExpr *E) {
+  bool VisitCastExpr(CastExpr *E) {
     switch (E->getCastKind()) {
     default:
-      return APValue();
+      return false;
 
     case CastExpr::CK_NoOp:
       return Visit(E->getSubExpr());
@@ -298,44 +318,41 @@ public:
 };
 } // end anonymous namespace
 
-static bool EvaluateLValue(const Expr* E, APValue& Result, EvalInfo &Info) {
-  Result = LValueExprEvaluator(Info).Visit(const_cast<Expr*>(E));
-  return Result.isLValue();
+static bool EvaluateLValue(const Expr* E, LValue& Result, EvalInfo &Info) {
+  return LValueExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
-APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
+bool LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
   if (isa<FunctionDecl>(E->getDecl())) {
-    return APValue(E);
+    return Success(E);
   } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
     if (!Info.AnyLValue && !VD->hasGlobalStorage())
-      return APValue();
+      return false;
     if (!VD->getType()->isReferenceType())
-      return APValue(E);
+      return Success(E);
     // FIXME: Check whether VD might be overridden!
     if (const Expr *Init = VD->getAnyInitializer())
       return Visit(const_cast<Expr *>(Init));
   }
 
-  return APValue();
+  return false;
 }
 
-APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+bool LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   if (!Info.AnyLValue && !E->isFileScope())
-    return APValue();
-  return APValue(E);
+    return false;
+  return Success(E);
 }
 
-APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
-  APValue result;
+bool LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
   QualType Ty;
   if (E->isArrow()) {
-    if (!EvaluatePointer(E->getBase(), result, Info))
-      return APValue();
+    if (!EvaluatePointer(E->getBase(), Result, Info))
+      return false;
     Ty = E->getBase()->getType()->getAs<PointerType>()->getPointeeType();
   } else {
-    result = Visit(E->getBase());
-    if (result.isUninit())
-      return APValue();
+    if (!Visit(E->getBase()))
+      return false;
     Ty = E->getBase()->getType();
   }
 
@@ -344,10 +361,10 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
 
   FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
   if (!FD) // FIXME: deal with other kinds of member expressions
-    return APValue();
+    return false;
 
   if (FD->getType()->isReferenceType())
-    return APValue();
+    return false;
 
   // FIXME: This is linear time.
   unsigned i = 0;
@@ -358,36 +375,25 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
       break;
   }
 
-  result.setLValue(result.getLValueBase(),
-                   result.getLValueOffset() + 
-                       CharUnits::fromQuantity(RL.getFieldOffset(i) / 8));
-
-  return result;
+  Result.Offset += CharUnits::fromQuantity(RL.getFieldOffset(i) / 8);
+  return true;
 }
 
-APValue LValueExprEvaluator::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
-  APValue Result;
-
+bool LValueExprEvaluator::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   if (!EvaluatePointer(E->getBase(), Result, Info))
-    return APValue();
+    return false;
 
   APSInt Index;
   if (!EvaluateInteger(E->getIdx(), Index, Info))
-    return APValue();
+    return false;
 
   CharUnits ElementSize = Info.Ctx.getTypeSizeInChars(E->getType());
-
-  CharUnits Offset = Index.getSExtValue() * ElementSize;
-  Result.setLValue(Result.getLValueBase(),
-                   Result.getLValueOffset() + Offset);
-  return Result;
+  Result.Offset += Index.getSExtValue() * ElementSize;
+  return true;
 }
 
-APValue LValueExprEvaluator::VisitUnaryDeref(UnaryOperator *E) {
-  APValue Result;
-  if (!EvaluatePointer(E->getSubExpr(), Result, Info))
-    return APValue();
-  return Result;
+bool LValueExprEvaluator::VisitUnaryDeref(UnaryOperator *E) {
+  return EvaluatePointer(E->getSubExpr(), Result, Info);
 }
 
 //===----------------------------------------------------------------------===//
@@ -396,103 +402,103 @@ APValue LValueExprEvaluator::VisitUnaryDeref(UnaryOperator *E) {
 
 namespace {
 class PointerExprEvaluator
-  : public StmtVisitor<PointerExprEvaluator, APValue> {
+  : public StmtVisitor<PointerExprEvaluator, bool> {
   EvalInfo &Info;
+  LValue &Result;
+
+  bool Success(Expr *E) {
+    Result.Base = E;
+    Result.Offset = CharUnits::Zero();
+    return true;
+  }
 public:
 
-  PointerExprEvaluator(EvalInfo &info) : Info(info) {}
+  PointerExprEvaluator(EvalInfo &info, LValue &Result)
+    : Info(info), Result(Result) {}
 
-  APValue VisitStmt(Stmt *S) {
-    return APValue();
+  bool VisitStmt(Stmt *S) {
+    return false;
   }
 
-  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
-  APValue VisitBinaryOperator(const BinaryOperator *E);
-  APValue VisitCastExpr(CastExpr* E);
-  APValue VisitUnaryExtension(const UnaryOperator *E)
+  bool VisitBinaryOperator(const BinaryOperator *E);
+  bool VisitCastExpr(CastExpr* E);
+  bool VisitUnaryExtension(const UnaryOperator *E)
       { return Visit(E->getSubExpr()); }
-  APValue VisitUnaryAddrOf(const UnaryOperator *E);
-  APValue VisitObjCStringLiteral(ObjCStringLiteral *E)
-      { return APValue(E); }
-  APValue VisitAddrLabelExpr(AddrLabelExpr *E)
-      { return APValue(E); }
-  APValue VisitCallExpr(CallExpr *E);
-  APValue VisitBlockExpr(BlockExpr *E) {
+  bool VisitUnaryAddrOf(const UnaryOperator *E);
+  bool VisitObjCStringLiteral(ObjCStringLiteral *E)
+      { return Success(E); }
+  bool VisitAddrLabelExpr(AddrLabelExpr *E)
+      { return Success(E); }
+  bool VisitCallExpr(CallExpr *E);
+  bool VisitBlockExpr(BlockExpr *E) {
     if (!E->hasBlockDeclRefExprs())
-      return APValue(E);
-    return APValue();
+      return Success(E);
+    return false;
   }
-  APValue VisitImplicitValueInitExpr(ImplicitValueInitExpr *E)
-      { return APValue((Expr*)0); }
-  APValue VisitConditionalOperator(ConditionalOperator *E);
-  APValue VisitChooseExpr(ChooseExpr *E)
+  bool VisitImplicitValueInitExpr(ImplicitValueInitExpr *E)
+      { return Success((Expr*)0); }
+  bool VisitConditionalOperator(ConditionalOperator *E);
+  bool VisitChooseExpr(ChooseExpr *E)
       { return Visit(E->getChosenSubExpr(Info.Ctx)); }
-  APValue VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E)
-      { return APValue((Expr*)0); }
+  bool VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E)
+      { return Success((Expr*)0); }
   // FIXME: Missing: @protocol, @selector
 };
 } // end anonymous namespace
 
-static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {
+static bool EvaluatePointer(const Expr* E, LValue& Result, EvalInfo &Info) {
   assert(E->getType()->hasPointerRepresentation());
-  Result = PointerExprEvaluator(Info).Visit(const_cast<Expr*>(E));
-  return Result.isLValue();
+  return PointerExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
-APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() != BinaryOperator::Add &&
       E->getOpcode() != BinaryOperator::Sub)
-    return APValue();
+    return false;
 
   const Expr *PExp = E->getLHS();
   const Expr *IExp = E->getRHS();
   if (IExp->getType()->isPointerType())
     std::swap(PExp, IExp);
 
-  APValue ResultLValue;
-  if (!EvaluatePointer(PExp, ResultLValue, Info))
-    return APValue();
+  if (!EvaluatePointer(PExp, Result, Info))
+    return false;
 
-  llvm::APSInt AdditionalOffset;
-  if (!EvaluateInteger(IExp, AdditionalOffset, Info))
-    return APValue();
+  llvm::APSInt Offset;
+  if (!EvaluateInteger(IExp, Offset, Info))
+    return false;
+  int64_t AdditionalOffset
+    = Offset.isSigned() ? Offset.getSExtValue()
+                        : static_cast<int64_t>(Offset.getZExtValue());
 
   // Compute the new offset in the appropriate width.
 
   QualType PointeeType =
     PExp->getType()->getAs<PointerType>()->getPointeeType();
-  llvm::APSInt SizeOfPointee(AdditionalOffset);
+  CharUnits SizeOfPointee;
 
   // Explicitly handle GNU void* and function pointer arithmetic extensions.
   if (PointeeType->isVoidType() || PointeeType->isFunctionType())
-    SizeOfPointee = 1;
+    SizeOfPointee = CharUnits::One();
   else
-    SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType).getQuantity();
+    SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType);
 
-  llvm::APSInt Offset(AdditionalOffset);
-  Offset = ResultLValue.getLValueOffset().getQuantity();
   if (E->getOpcode() == BinaryOperator::Add)
-    Offset += AdditionalOffset * SizeOfPointee;
+    Result.Offset += AdditionalOffset * SizeOfPointee;
   else
-    Offset -= AdditionalOffset * SizeOfPointee;
+    Result.Offset -= AdditionalOffset * SizeOfPointee;
 
-  // Sign extend prior to converting back to a char unit.
-  if (Offset.getBitWidth() < 64)
-    Offset.extend(64);
-  return APValue(ResultLValue.getLValueBase(),
-                 CharUnits::fromQuantity(Offset.getLimitedValue()));
+  return true;
 }
 
-APValue PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
-  APValue result;
-  if (EvaluateLValue(E->getSubExpr(), result, Info))
-    return result;
-  return APValue();
+bool PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
+  return EvaluateLValue(E->getSubExpr(), Result, Info);
 }
 
 
-APValue PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
+bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
   Expr* SubExpr = E->getSubExpr();
 
   switch (E->getCastKind()) {
@@ -510,18 +516,20 @@ APValue PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
       return Visit(SubExpr);
 
     if (SubExpr->getType()->isIntegralType()) {
-      APValue Result;
-      if (!EvaluateIntegerOrLValue(SubExpr, Result, Info))
+      APValue Value;
+      if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
         break;
 
-      if (Result.isInt()) {
-        Result.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
-        return APValue(0, 
-                       CharUnits::fromQuantity(Result.getInt().getZExtValue()));
+      if (Value.isInt()) {
+        Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+        Result.Base = 0;
+        Result.Offset = CharUnits::fromQuantity(Value.getInt().getZExtValue());
+        return true;
+      } else {
+        Result.Base = Value.getLValueBase();
+        Result.Offset = Value.getLValueOffset();
+        return true;
       }
-
-      // Cast is of an lvalue, no need to change value.
-      return Result;
     }
     break;
   }
@@ -533,51 +541,46 @@ APValue PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
     return Visit(SubExpr);
 
   case CastExpr::CK_IntegralToPointer: {
-    APValue Result;
-    if (!EvaluateIntegerOrLValue(SubExpr, Result, Info))
+    APValue Value;
+    if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
       break;
 
-    if (Result.isInt()) {
-      Result.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
-      return APValue(0, 
-                     CharUnits::fromQuantity(Result.getInt().getZExtValue()));
+    if (Value.isInt()) {
+      Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+      Result.Base = 0;
+      Result.Offset = CharUnits::fromQuantity(Value.getInt().getZExtValue());
+      return true;
+    } else {
+      // Cast is of an lvalue, no need to change value.
+      Result.Base = Value.getLValueBase();
+      Result.Offset = Value.getLValueOffset();
+      return true;
     }
-
-    // Cast is of an lvalue, no need to change value.
-    return Result;
   }
   case CastExpr::CK_ArrayToPointerDecay:
-  case CastExpr::CK_FunctionToPointerDecay: {
-    APValue Result;
-    if (EvaluateLValue(SubExpr, Result, Info))
-      return Result;
-    break;
-  }
+  case CastExpr::CK_FunctionToPointerDecay:
+    return EvaluateLValue(SubExpr, Result, Info);
   }
 
-  return APValue();
+  return false;
 }
 
-APValue PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
+bool PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
   if (E->isBuiltinCall(Info.Ctx) ==
         Builtin::BI__builtin___CFStringMakeConstantString ||
       E->isBuiltinCall(Info.Ctx) ==
         Builtin::BI__builtin___NSStringMakeConstantString)
-    return APValue(E);
-  return APValue();
+    return Success(E);
+  return false;
 }
 
-APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
+bool PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
   bool BoolResult;
   if (!HandleConversionToBool(E->getCond(), BoolResult, Info))
-    return APValue();
+    return false;
 
   Expr* EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
-
-  APValue Result;
-  if (EvaluatePointer(EvalExpr, Result, Info))
-    return Result;
-  return APValue();
+  return Visit(EvalExpr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1212,11 +1215,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
     if (E->getOpcode() == BinaryOperator::Sub || E->isEqualityOp()) {
-      APValue LHSValue;
+      LValue LHSValue;
       if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
         return false;
 
-      APValue RHSValue;
+      LValue RHSValue;
       if (!EvaluatePointer(E->getRHS(), RHSValue, Info))
         return false;
 
@@ -1502,7 +1505,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   if (E->isOffsetOfOp()) {
     // The AST for offsetof is defined in such a way that we can just
     // directly Evaluate it as an l-value.
-    APValue LV;
+    LValue LV;
     if (!EvaluateLValue(E->getSubExpr(), LV, Info))
         return false;
     if (LV.getLValueBase())
@@ -1577,7 +1580,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
 
   // FIXME: Clean this up!
   if (SrcType->isPointerType()) {
-    APValue LV;
+    LValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
 
@@ -1586,7 +1589,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
       if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(SrcType))
         return false;
 
-      Result = LV;
+      LV.moveInto(Result);
       return true;
     }
 
@@ -1598,14 +1601,14 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   if (SrcType->isArrayType() || SrcType->isFunctionType()) {
     // This handles double-conversion cases, where there's both
     // an l-value promotion and an implicit conversion to int.
-    APValue LV;
+    LValue LV;
     if (!EvaluateLValue(SubExpr, LV, Info))
       return false;
 
     if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(Info.Ctx.VoidPtrTy))
       return false;
 
-    Result = LV;
+    LV.moveInto(Result);
     return true;
   }
 
@@ -2104,66 +2107,47 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 // Top level Expr::Evaluate method.
 //===----------------------------------------------------------------------===//
 
-/// Evaluate - Return true if this is a constant which we can fold using
-/// any crazy technique (that has nothing to do with language standards) that
-/// we want to.  If this function returns true, it returns the folded constant
-/// in Result.
-bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
-  EvalInfo Info(Ctx, Result);
-
-  if (getType()->isVectorType()) {
-    if (!EvaluateVector(this, Result.Val, Info))
+static bool Evaluate(const Expr *E, EvalInfo &Info) {
+  if (E->getType()->isVectorType()) {
+    if (!EvaluateVector(E, Info.EvalResult.Val, Info))
       return false;
-  } else if (getType()->isIntegerType()) {
-    if (!IntExprEvaluator(Info, Result.Val).Visit(const_cast<Expr*>(this)))
+  } else if (E->getType()->isIntegerType()) {
+    if (!IntExprEvaluator(Info, Info.EvalResult.Val).Visit(const_cast<Expr*>(E)))
       return false;
-  } else if (getType()->hasPointerRepresentation()) {
-    if (!EvaluatePointer(this, Result.Val, Info))
+  } else if (E->getType()->hasPointerRepresentation()) {
+    LValue LV;
+    if (!EvaluatePointer(E, LV, Info))
       return false;
-  } else if (getType()->isRealFloatingType()) {
-    llvm::APFloat f(0.0);
-    if (!EvaluateFloat(this, f, Info))
+    LV.moveInto(Info.EvalResult.Val);
+  } else if (E->getType()->isRealFloatingType()) {
+    llvm::APFloat F(0.0);
+    if (!EvaluateFloat(E, F, Info))
       return false;
 
-    Result.Val = APValue(f);
-  } else if (getType()->isAnyComplexType()) {
-    ComplexValue c;
-    if (!EvaluateComplex(this, c, Info))
+    Info.EvalResult.Val = APValue(F);
+  } else if (E->getType()->isAnyComplexType()) {
+    ComplexValue C;
+    if (!EvaluateComplex(E, C, Info))
       return false;
-    c.moveInto(Result.Val);
+    C.moveInto(Info.EvalResult.Val);
   } else
     return false;
 
   return true;
 }
 
+/// Evaluate - Return true if this is a constant which we can fold using
+/// any crazy technique (that has nothing to do with language standards) that
+/// we want to.  If this function returns true, it returns the folded constant
+/// in Result.
+bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result);
+  return ::Evaluate(this, Info);
+}
+
 bool Expr::EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result, true);
-
-  if (getType()->isVectorType()) {
-    if (!EvaluateVector(this, Result.Val, Info))
-      return false;
-  } else if (getType()->isIntegerType()) {
-    if (!IntExprEvaluator(Info, Result.Val).Visit(const_cast<Expr*>(this)))
-      return false;
-  } else if (getType()->hasPointerRepresentation()) {
-    if (!EvaluatePointer(this, Result.Val, Info))
-      return false;
-  } else if (getType()->isRealFloatingType()) {
-    llvm::APFloat f(0.0);
-    if (!EvaluateFloat(this, f, Info))
-      return false;
-
-    Result.Val = APValue(f);
-  } else if (getType()->isAnyComplexType()) {
-    ComplexValue c;
-    if (!EvaluateComplex(this, c, Info))
-      return false;
-    c.moveInto(Result.Val);
-  } else
-    return false;
-
-  return true;
+  return ::Evaluate(this, Info);
 }
 
 bool Expr::EvaluateAsBooleanCondition(bool &Result, ASTContext &Ctx) const {
@@ -2176,13 +2160,23 @@ bool Expr::EvaluateAsBooleanCondition(bool &Result, ASTContext &Ctx) const {
 bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
-  return EvaluateLValue(this, Result.Val, Info) && !Result.HasSideEffects;
+  LValue LV;
+  if (EvaluateLValue(this, LV, Info) && !Result.HasSideEffects) {
+    LV.moveInto(Result.Val);
+    return true;
+  }
+  return false;
 }
 
 bool Expr::EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result, true);
 
-  return EvaluateLValue(this, Result.Val, Info) && !Result.HasSideEffects;
+  LValue LV;
+  if (EvaluateLValue(this, LV, Info) && !Result.HasSideEffects) {
+    LV.moveInto(Result.Val);
+    return true;
+  }
+  return false;
 }
 
 /// isEvaluatable - Call Evaluate to see if this expression can be constant
