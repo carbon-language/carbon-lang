@@ -2289,8 +2289,7 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   //   T1 is a base class of T2.
   if (UnqualT1 == UnqualT2)
     DerivedToBase = false;
-  else if (!RequireCompleteType(Loc, OrigT1, PDiag()) &&
-           !RequireCompleteType(Loc, OrigT2, PDiag()) &&
+  else if (!RequireCompleteType(Loc, OrigT2, PDiag()) &&
            IsDerivedFrom(UnqualT2, UnqualT1))
     DerivedToBase = true;
   else
