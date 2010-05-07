@@ -332,6 +332,12 @@ FunctionPass *createGEPSplitterPass();
 //
 FunctionPass *createABCDPass();
 
+//===----------------------------------------------------------------------===//
+//
+// Sink - Code Sinking
+//
+FunctionPass *createSinkingPass();
+
 } // End llvm namespace
 
 #endif
