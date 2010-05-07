@@ -782,11 +782,14 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
       AddDefaultPred(MIB.addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ))
-                     .addReg(SrcReg, getKillRegState(isKill))
-                     .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
-                     .addMemOperand(MMO));
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMD))
+                       .addFrameIndex(FI)
+                       .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+        .addMemOperand(MMO);
+      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_0, getKillRegState(isKill), TRI);
+      AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
+        
     }
   } else {
     assert((RC == ARM::QQPRRegisterClass ||
@@ -838,10 +841,13 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
       AddDefaultPred(MIB.addFrameIndex(FI).addImm(128).addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
-                     .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
-                     .addMemOperand(MMO));
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
+                       .addFrameIndex(FI)
+                       .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+        .addMemOperand(MMO);
+      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_0, RegState::Define, TRI);
+      AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
     }
   } else {
     assert((RC == ARM::QQPRRegisterClass ||
