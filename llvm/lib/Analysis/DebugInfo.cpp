@@ -503,10 +503,10 @@ void DIType::print(raw_ostream &OS) const {
   // TODO : Print context
   getCompileUnit().print(OS);
   OS << " ["
-         << getLineNumber() << ", "
-         << getSizeInBits() << ", "
-         << getAlignInBits() << ", "
-         << getOffsetInBits()
+         << "line " << getLineNumber() << ", "
+         << getSizeInBits() << " bits, "
+         << getAlignInBits() << " bit alignment, "
+         << getOffsetInBits() << " bit offset"
          << "] ";
 
   if (isPrivate())
