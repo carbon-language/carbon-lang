@@ -280,6 +280,57 @@ public:
   /// \brief Read the source location entry with index ID.
   virtual void ReadSLocEntry(unsigned ID) = 0;
 };
+  
+
+/// IsBeforeInTranslationUnitCache - This class holds the cache used by
+/// isBeforeInTranslationUnit.  The cache structure is complex enough to be
+/// worth breaking out of SourceManager.
+class IsBeforeInTranslationUnitCache {
+  /// L/R QueryFID - These are the FID's of the cached query.  If these match up
+  /// with a subsequent query, the result can be reused.
+  FileID LQueryFID, RQueryFID;
+  
+  /// CommonFID - This is the file found in common between the two #include
+  /// traces.  It is the nearest common ancestor of the #include tree.
+  FileID CommonFID;
+  
+  /// L/R CommonOffset - This is the offset of the previous query in CommonFID.
+  /// Usually, this represents the location of the #include for QueryFID, but if
+  /// LQueryFID is a parent of RQueryFID (or vise versa) then these can be a
+  /// random token in the parent.
+  unsigned LCommonOffset, RCommonOffset;
+public:
+  
+  /// isCacheValid - Return true if the currently cached values match up with
+  /// the specified LHS/RHS query.  If not, we can't use the cache.
+  bool isCacheValid(FileID LHS, FileID RHS) const {
+    return LQueryFID == LHS && RQueryFID == RHS;
+  }
+  
+  /// getCachedResult - If the cache is valid, compute the result given the
+  /// specified offsets in the LHS/RHS FID's.
+  bool getCachedResult(unsigned LOffset, unsigned ROffset) const {
+    // If one of the query files is the common file, use the offset.  Otherwise,
+    // use the #include loc in the common file.
+    if (LQueryFID != CommonFID) LOffset = LCommonOffset;
+    if (RQueryFID != CommonFID) ROffset = RCommonOffset;
+    return LOffset < ROffset;
+  }
+  
+  // Set up a new query.
+  void setQueryFIDs(FileID LHS, FileID RHS) {
+    LQueryFID = LHS;
+    RQueryFID = RHS;
+  }
+  
+  void setCommonLoc(FileID commonFID, unsigned lCommonOffset,
+                    unsigned rCommonOffset) {
+    CommonFID = commonFID;
+    LCommonOffset = lCommonOffset;
+    RCommonOffset = rCommonOffset;
+  }
+  
+};
 
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the MemoryBuffer objects for all of the loaded
@@ -347,9 +398,7 @@ class SourceManager {
   mutable unsigned NumLinearScans, NumBinaryProbes;
 
   // Cache results for the isBeforeInTranslationUnit method.
-  mutable FileID LastLFIDForBeforeTUCheck;
-  mutable FileID LastRFIDForBeforeTUCheck;
-  mutable bool   LastResForBeforeTUCheck;
+  mutable IsBeforeInTranslationUnitCache IsBeforeInTUCache;
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);

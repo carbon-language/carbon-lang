@@ -1170,20 +1170,17 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   if (LOffs.first == ROffs.first)
     return LOffs.second < ROffs.second;
 
-#if 0
   // If we are comparing a source location with multiple locations in the same
   // file, we get a big win by caching the result.
+  bool Cached = false;
+  bool CachedResult = false;
+  if (IsBeforeInTUCache.isCacheValid(LOffs.first, ROffs.first)) {
+    Cached = true;
+    CachedResult = IsBeforeInTUCache.getCachedResult(LOffs.second,ROffs.second);
+  }
 
-  // FIXME: This caching is wrong, but I don't know enough about this code
-  // to immediately fix it.  There are cases where passing the same input
-  // values to this method causes it to return different results.
-  if (LastLFIDForBeforeTUCheck == LOffs.first &&
-      LastRFIDForBeforeTUCheck == ROffs.first)
-    return LastResForBeforeTUCheck;
-
-  LastLFIDForBeforeTUCheck = LOffs.first;
-  LastRFIDForBeforeTUCheck = ROffs.first;
-#endif
+  // Okay, we missed in the cache, start updating the cache for this query.
+  IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
 
   // "Traverse" the include/instantiation stacks of both locations and try to
   // find a common "ancestor".
@@ -1191,7 +1188,6 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // First we traverse the stack of the right location and check each level
   // against the level of the left location, while collecting all levels in a
   // "stack map".
-
   std::map<FileID, unsigned> ROffsMap;
   ROffsMap[ROffs.first] = ROffs.second;
 
@@ -1208,15 +1204,20 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
 
     ROffs = getDecomposedLoc(UpperLoc);
 
-    if (LOffs.first == ROffs.first)
-      return LastResForBeforeTUCheck = LOffs.second < ROffs.second;
+    // If we found a common file, cache and return our answer!
+    if (LOffs.first == ROffs.first) {
+      IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, ROffs.second);
+      bool Result = IsBeforeInTUCache.getCachedResult(LOffs.second,
+                                                      ROffs.second);
+      assert(!Cached || CachedResult == Result);   // Validate Cache.
+      return Result;
+    }
 
     ROffsMap[ROffs.first] = ROffs.second;
   }
 
   // We didn't find a common ancestor. Now traverse the stack of the left
   // location, checking against the stack map of the right location.
-
   while (1) {
     SourceLocation UpperLoc;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
@@ -1231,8 +1232,13 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     LOffs = getDecomposedLoc(UpperLoc);
 
     std::map<FileID, unsigned>::iterator I = ROffsMap.find(LOffs.first);
-    if (I != ROffsMap.end())
-      return LastResForBeforeTUCheck = LOffs.second < I->second;
+    if (I != ROffsMap.end()) {
+      IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, I->second);
+
+      bool Result = IsBeforeInTUCache.getCachedResult(LOffs.second, I->second);
+      assert(!Cached || CachedResult == Result);   // Validate Cache.
+      return Result;
+    }
   }
 
   // There is no common ancestor, most probably because one location is in the
@@ -1244,11 +1250,16 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // If exactly one location is a memory buffer, assume it preceeds the other.
   bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
   bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
-  if (LIsMB != RIsMB)
-    return LastResForBeforeTUCheck = LIsMB;
+  if (LIsMB != RIsMB) {
+    IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
+    assert(!Cached);
+    return LIsMB;
+  }
 
   // Otherwise, just assume FileIDs were created in order.
-  return LastResForBeforeTUCheck = (LOffs.first < ROffs.first);
+  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
+  assert(!Cached);
+  return LOffs.first < ROffs.first;
 }
 
 /// PrintStats - Print statistics to stderr.
