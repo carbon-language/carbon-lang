@@ -560,9 +560,7 @@ namespace {
     ///
     /// For the purposes of template instantiation, a type has already been
     /// transformed if it is NULL or if it is not dependent.
-    bool AlreadyTransformed(QualType T) {
-      return T.isNull() || !T->isDependentType();
-    }
+    bool AlreadyTransformed(QualType T);
 
     /// \brief Returns the location of the entity being instantiated, if known.
     SourceLocation getBaseLocation() { return Loc; }
@@ -622,6 +620,17 @@ namespace {
                                            TemplateTypeParmTypeLoc TL,
                                            QualType ObjectType);
   };
+}
+
+bool TemplateInstantiator::AlreadyTransformed(QualType T) {
+  if (T.isNull())
+    return true;
+  
+  if (T->isDependentType())
+    return false;
+  
+  getSema().MarkDeclarationsReferencedInType(Loc, T);
+  return true;
 }
 
 Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {

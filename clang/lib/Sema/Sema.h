@@ -1784,6 +1784,7 @@ public:
   virtual void PopExpressionEvaluationContext();
 
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
+  void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   bool DiagRuntimeBehavior(SourceLocation Loc, const PartialDiagnostic &PD);
 
   // Primary Expressions.

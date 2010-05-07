@@ -10,6 +10,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include <cstdio>
+#include <iostream>
 using namespace clang;
 
 namespace {
@@ -19,6 +20,11 @@ namespace {
     /// HandleTranslationUnit - This method is called when the ASTs for entire
     /// translation unit have been parsed.
     virtual void HandleTranslationUnit(ASTContext &Ctx);
+                                
+    bool VisitCXXRecordDecl(CXXRecordDecl *D) {
+      std::cout << D->getNameAsString() << std::endl;
+      return false;
+    }                                
   };
 }
 

@@ -257,6 +257,8 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
    case Type::Class: DISPATCH(Class##Type, Class##Type, T.getTypePtr());
 #include "clang/AST/TypeNodes.def"
     }
+    
+    return false;
   }
   
   template<typename Derived>
@@ -291,6 +293,8 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
     case NestedNameSpecifier::TypeSpecWithTemplate:
       return Visit(QualType(NNS->getAsType(), 0));
     }
+    
+    return false;
   }
 
   template<typename Derived>
@@ -327,6 +331,8 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
       return getDerived().VisitTemplateArguments(Arg.pack_begin(), 
                                                  Arg.pack_size());
     }
+    
+    return false;
   }
   
   template<typename Derived>
@@ -614,7 +620,8 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
       return true;
     
     if (T->getTemplateId() &&
-        getDerived().VisitTemplateSpecializationType(T->getTemplateId()))
+        getDerived().VisitTemplateSpecializationType(
+                  const_cast<TemplateSpecializationType *>(T->getTemplateId())))
       return true;
     
     return getDerived().VisitType(T);

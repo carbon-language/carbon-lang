@@ -22,6 +22,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
@@ -7570,6 +7571,48 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     D->setUsed(true);
     return;
   }
+}
+
+namespace {
+  // Mark all of the declarations referenced 
+  // FIXME: Not fully implemented yet! We need to have a better understanding
+  // of when we're entering 
+  class MarkReferencedDecls : public RecursiveASTVisitor<MarkReferencedDecls> {
+    Sema &S;
+    SourceLocation Loc;
+    
+  public:
+    typedef RecursiveASTVisitor<MarkReferencedDecls> Inherited;
+    
+    MarkReferencedDecls(Sema &S, SourceLocation Loc) : S(S), Loc(Loc) { }
+    
+    bool VisitTemplateArgument(const TemplateArgument &Arg);
+    bool VisitRecordType(RecordType *T);
+  };
+}
+
+bool MarkReferencedDecls::VisitTemplateArgument(const TemplateArgument &Arg) {
+  if (Arg.getKind() == TemplateArgument::Declaration) {
+    S.MarkDeclarationReferenced(Loc, Arg.getAsDecl());
+  }
+  
+  return Inherited::VisitTemplateArgument(Arg);
+}
+
+bool MarkReferencedDecls::VisitRecordType(RecordType *T) {
+  if (ClassTemplateSpecializationDecl *Spec
+                  = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl())) {
+    const TemplateArgumentList &Args = Spec->getTemplateArgs();
+    return VisitTemplateArguments(Args.getFlatArgumentList(), 
+                                  Args.flat_size());
+  }
+
+  return false;
+}
+
+void Sema::MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T) {
+  MarkReferencedDecls Marker(*this, Loc);
+  Marker.Visit(Context.getCanonicalType(T));
 }
 
 /// \brief Emit a diagnostic that describes an effect on the run-time behavior

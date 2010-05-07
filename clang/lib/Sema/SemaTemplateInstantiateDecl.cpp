@@ -191,6 +191,8 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
       Invalid = true;
       DI = SemaRef.Context.getTrivialTypeSourceInfo(SemaRef.Context.IntTy);
     }
+  } else {
+    SemaRef.MarkDeclarationsReferencedInType(D->getLocation(), DI->getType());
   }
 
   // Create the new typedef
@@ -440,6 +442,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
         << DI->getType();
       Invalid = true;
     }
+  } else {
+    SemaRef.MarkDeclarationsReferencedInType(D->getLocation(), DI->getType());
   }
 
   Expr *BitWidth = D->getBitWidth();
