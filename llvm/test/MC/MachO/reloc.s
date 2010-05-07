@@ -44,6 +44,13 @@ L1:
         .objc_class_name_A=0
 	.globl .objc_class_name_A
 
+        .text
+        .globl _f1
+        .weak_definition _f1
+_f1:
+        .data
+        .long _f1
+
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
@@ -56,9 +63,9 @@ L1:
 // CHECK:   ('size', 260)
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 63)
+// CHECK:   ('vm_size', 67)
 // CHECK:   ('file_offset', 392)
-// CHECK:   ('file_size', 63)
+// CHECK:   ('file_size', 67)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
 // CHECK:   ('num_sections', 3)
@@ -71,7 +78,7 @@ L1:
 // CHECK:     ('size', 8)
 // CHECK:     ('offset', 392)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 456)
+// CHECK:     ('reloc_offset', 460)
 // CHECK:     ('num_reloc', 1)
 // CHECK:     ('flags', 0x80000400)
 // CHECK:     ('reserved1', 0)
@@ -82,58 +89,61 @@ L1:
 // CHECK:     (('word-0', 0x1),
 // CHECK:      ('word-1', 0x5000003)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xe92\x00\x00\x00\xeb\xf9\xc3')
+// CHECK:   ('_section_data', '\xe96\x00\x00\x00\xeb\xf9\xc3')
 // CHECK:     # Section 1
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 8)
-// CHECK:     ('size', 43)
+// CHECK:     ('size', 47)
 // CHECK:     ('offset', 400)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 464)
-// CHECK:     ('num_reloc', 9)
+// CHECK:     ('reloc_offset', 468)
+// CHECK:     ('num_reloc', 10)
 // CHECK:     ('flags', 0x0)
 // CHECK:     ('reserved1', 0)
 // CHECK:     ('reserved2', 0)
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:     # Relocation 0
+// CHECK:     (('word-0', 0x2b),
+// CHECK:      ('word-1', 0xc000007)),
+// CHECK:     # Relocation 1
 // CHECK:     (('word-0', 0x8000002a),
 // CHECK:      ('word-1', 0x18)),
-// CHECK:     # Relocation 1
+// CHECK:     # Relocation 2
 // CHECK:     (('word-0', 0x90000028),
 // CHECK:      ('word-1', 0x18)),
-// CHECK:     # Relocation 2
+// CHECK:     # Relocation 3
 // CHECK:     (('word-0', 0xa0000024),
 // CHECK:      ('word-1', 0x18)),
-// CHECK:     # Relocation 3
+// CHECK:     # Relocation 4
 // CHECK:     (('word-0', 0xa0000020),
 // CHECK:      ('word-1', 0x18)),
-// CHECK:     # Relocation 4
+// CHECK:     # Relocation 5
 // CHECK:     (('word-0', 0xa4000014),
 // CHECK:      ('word-1', 0x1c)),
-// CHECK:     # Relocation 5
+// CHECK:     # Relocation 6
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x24)),
-// CHECK:     # Relocation 6
+// CHECK:     # Relocation 7
 // CHECK:     (('word-0', 0x8),
 // CHECK:      ('word-1', 0x4000002)),
-// CHECK:     # Relocation 7
-// CHECK:     (('word-0', 0x4),
-// CHECK:      ('word-1', 0xc000008)),
 // CHECK:     # Relocation 8
+// CHECK:     (('word-0', 0x4),
+// CHECK:      ('word-1', 0xc000009)),
+// CHECK:     # Relocation 9
 // CHECK:     (('word-0', 0x0),
-// CHECK:      ('word-1', 0xc000008)),
+// CHECK:      ('word-1', 0xc000009)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x00\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xed\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x19\x00\x00\x00"\x00\x00\x00,\x00q')
+// CHECK:   ('_section_data', '\x00\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xed\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x19\x00\x00\x00"\x00\x00\x00,\x00q\x00\x00\x00\x00')
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__const\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 51)
+// CHECK:     ('address', 55)
 // CHECK:     ('size', 12)
-// CHECK:     ('offset', 443)
+// CHECK:     ('offset', 447)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 536)
+// CHECK:     ('reloc_offset', 548)
 // CHECK:     ('num_reloc', 4)
 // CHECK:     ('flags', 0x0)
 // CHECK:     ('reserved1', 0)
@@ -151,22 +161,22 @@ L1:
 // CHECK:      ('word-1', 0x18)),
 // CHECK:     # Relocation 3
 // CHECK:     (('word-0', 0xa1000000),
-// CHECK:      ('word-1', 0x33)),
+// CHECK:      ('word-1', 0x37)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x06\x00\x00\x007\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', '\x02\x00\x00\x00;\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 568)
-// CHECK:   ('nsyms', 9)
-// CHECK:   ('stroff', 676)
-// CHECK:   ('strsize', 84)
-// CHECK:   ('_string_data', '\x00undef\x00local_a_ext\x00.objc_class_name_A\x00local_a\x00local_a_elt\x00local_b\x00local_c\x00bar\x00_f0\x00\x00\x00')
+// CHECK:   ('symoff', 580)
+// CHECK:   ('nsyms', 10)
+// CHECK:   ('stroff', 700)
+// CHECK:   ('strsize', 88)
+// CHECK:   ('_string_data', '\x00undef\x00local_a_ext\x00.objc_class_name_A\x00_f1\x00local_a\x00local_a_elt\x00local_b\x00local_c\x00bar\x00_f0\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 38)
+// CHECK:    (('n_strx', 42)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -174,7 +184,7 @@ L1:
 // CHECK:     ('_string', 'local_a')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 46)
+// CHECK:    (('n_strx', 50)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -182,7 +192,7 @@ L1:
 // CHECK:     ('_string', 'local_a_elt')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 58)
+// CHECK:    (('n_strx', 62)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -190,7 +200,7 @@ L1:
 // CHECK:     ('_string', 'local_b')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 66)
+// CHECK:    (('n_strx', 70)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -198,15 +208,15 @@ L1:
 // CHECK:     ('_string', 'local_c')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 74)
+// CHECK:    (('n_strx', 78)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 51)
+// CHECK:     ('n_value', 55)
 // CHECK:     ('_string', 'bar')
 // CHECK:    ),
 // CHECK:     # Symbol 5
-// CHECK:    (('n_strx', 78)
+// CHECK:    (('n_strx', 82)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -222,6 +232,14 @@ L1:
 // CHECK:     ('_string', '.objc_class_name_A')
 // CHECK:    ),
 // CHECK:     # Symbol 7
+// CHECK:    (('n_strx', 38)
+// CHECK:     ('n_type', 0xf)
+// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_desc', 128)
+// CHECK:     ('n_value', 8)
+// CHECK:     ('_string', '_f1')
+// CHECK:    ),
+// CHECK:     # Symbol 8
 // CHECK:    (('n_strx', 7)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
@@ -229,7 +247,7 @@ L1:
 // CHECK:     ('n_value', 16)
 // CHECK:     ('_string', 'local_a_ext')
 // CHECK:    ),
-// CHECK:     # Symbol 8
+// CHECK:     # Symbol 9
 // CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
@@ -245,8 +263,8 @@ L1:
 // CHECK:   ('ilocalsym', 0)
 // CHECK:   ('nlocalsym', 6)
 // CHECK:   ('iextdefsym', 6)
-// CHECK:   ('nextdefsym', 2)
-// CHECK:   ('iundefsym', 8)
+// CHECK:   ('nextdefsym', 3)
+// CHECK:   ('iundefsym', 9)
 // CHECK:   ('nundefsym', 1)
 // CHECK:   ('tocoff', 0)
 // CHECK:   ('ntoc', 0)

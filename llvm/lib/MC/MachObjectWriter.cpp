@@ -16,6 +16,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
@@ -753,9 +754,19 @@ public:
       const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
       MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
 
-      if (Symbol->isUndefined()) {
+      // Both references to undefined symbols and references to Weak Definitions
+      // get external relocation entries.  This is so the static and then the
+      // the dynamic linker can resolve them to the actual definition that will
+      // be used.  And in the case of Weak Definitions a reference to one will
+      // not always be to the definition in the same object file.
+      if (Symbol->isUndefined() || (SD->getFlags() & SF_WeakDefinition)) {
         IsExtern = 1;
         Index = SD->getIndex();
+        // In the case of a Weak Definition the FixedValue needs to be set to
+        // to not have the address of the symbol.  In the case of an undefined
+        // symbol you can't call getSymbolAddress().
+        if (SD->getFlags() & SF_WeakDefinition)
+          FixedValue -= Layout.getSymbolAddress(SD);
         Value = 0;
       } else {
         // The index is the section ordinal (1-based).

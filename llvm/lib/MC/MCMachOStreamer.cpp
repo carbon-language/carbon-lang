@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmBackend.h"
@@ -25,25 +26,6 @@ using namespace llvm;
 namespace {
 
 class MCMachOStreamer : public MCStreamer {
-  /// SymbolFlags - We store the value for the 'desc' symbol field in the lowest
-  /// 16 bits of the implementation defined flags.
-  enum SymbolFlags { // See <mach-o/nlist.h>.
-    SF_DescFlagsMask                        = 0xFFFF,
-
-    // Reference type flags.
-    SF_ReferenceTypeMask                    = 0x0007,
-    SF_ReferenceTypeUndefinedNonLazy        = 0x0000,
-    SF_ReferenceTypeUndefinedLazy           = 0x0001,
-    SF_ReferenceTypeDefined                 = 0x0002,
-    SF_ReferenceTypePrivateDefined          = 0x0003,
-    SF_ReferenceTypePrivateUndefinedNonLazy = 0x0004,
-    SF_ReferenceTypePrivateUndefinedLazy    = 0x0005,
-
-    // Other 'desc' flags.
-    SF_NoDeadStrip                          = 0x0020,
-    SF_WeakReference                        = 0x0040,
-    SF_WeakDefinition                       = 0x0080
-  };
 
 private:
   MCAssembler Assembler;
