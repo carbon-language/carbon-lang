@@ -2245,11 +2245,11 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   bool AllowExplicit = Kind.getKind() == InitializationKind::IK_Direct;
   
   const RecordType *T1RecordType = 0;
-  if (AllowRValues && (T1RecordType = T1->getAs<RecordType>())) {
+  if (AllowRValues && (T1RecordType = T1->getAs<RecordType>()) &&
+      !S.RequireCompleteType(Kind.getLocation(), T1, 0)) {
     // The type we're converting to is a class type. Enumerate its constructors
     // to see if there is a suitable conversion.
     CXXRecordDecl *T1RecordDecl = cast<CXXRecordDecl>(T1RecordType->getDecl());
-    
     DeclarationName ConstructorName
       = S.Context.DeclarationNames.getCXXConstructorName(
                            S.Context.getCanonicalType(T1).getUnqualifiedType());
@@ -2281,7 +2281,9 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     }    
   }
   
-  if (const RecordType *T2RecordType = T2->getAs<RecordType>()) {
+  const RecordType *T2RecordType = 0;
+  if ((T2RecordType = T2->getAs<RecordType>()) &&
+      !S.RequireCompleteType(Kind.getLocation(), T2, 0)) {
     // The type we're converting from is a class type, enumerate its conversion
     // functions.
     CXXRecordDecl *T2RecordDecl = cast<CXXRecordDecl>(T2RecordType->getDecl());
