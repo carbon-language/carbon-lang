@@ -214,7 +214,11 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     if (PrintAccess) {
       AccessSpecifier AS = D->getAccess();
 
-      if (AS != CurAS) {
+      // This is a hack: when a struct is declared in a member declaration
+      // struct outer { struct inner *ptr; }; then we encounter the struct
+      // decl, but it has no access specifier.
+      // The correct solution is to merge this with the member.
+      if (AS != CurAS && AS != AS_none) {
         if (Indent)
           this->Indent(Indentation - Policy.Indentation);
         Print(AS);

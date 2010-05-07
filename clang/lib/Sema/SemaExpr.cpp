@@ -2670,7 +2670,7 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
       return move(Result);
   }
 
-  return BuildMemberReferenceExpr(ExprArg(*this, Base), Base->getType(),
+  return BuildMemberReferenceExpr(ExprArg(*this, Base), BaseType,
                                   OpLoc, IsArrow, SS, FirstQualifierInScope,
                                   R, TemplateArgs);
 }
