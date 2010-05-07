@@ -104,11 +104,13 @@ docs-tar: $(MAIN.html.tar)
 .PHONY: docs
 docs: $(MAIN.html.files)
 docs: $(MAIN.man.out)
+ifeq ($(ENABLE_DOXYGEN),1)
 ifneq (,$(GROFF))
 docs: $(MAIN.ps.out)
 endif
 ifneq (,$(PDFROFF))
 docs: $(MAIN.pdf.out)
+endif
 endif
 
 $(MAIN.html.tar): | $(dir $(MAIN.html.tar))
@@ -154,11 +156,13 @@ vpath %.pod $(sort $(dir $(MAIN.man.in)))
 install-docs: $(INSTALL.html.tar)
 install-docs: $(INSTALL.html.out)
 install-docs: $(INSTALL.man.out)
+ifeq ($(ENABLE_DOXYGEN),1)
 ifneq (,$(GROFF))
 install-docs: $(INSTALL.ps.out)
 endif
 ifneq (,$(PDFROFF))
 install-docs: $(INSTALL.pdf.out)
+endif
 endif
 
 $(INSTALL.html.tar): | $(dir $(INSTALL.html.tar))
