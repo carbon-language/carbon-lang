@@ -11,6 +11,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
@@ -18,11 +19,13 @@ using namespace llvm;
 
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
 typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
+typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
 MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0) {
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
+  COFFUniquingMap = 0;
 }
 
 MCContext::~MCContext() {
@@ -32,6 +35,7 @@ MCContext::~MCContext() {
   // If we have the MachO uniquing map, free it.
   delete (MachOUniqueMapTy*)MachOUniquingMap;
   delete (ELFUniqueMapTy*)ELFUniquingMap;
+  delete (COFFUniqueMapTy*)COFFUniquingMap;
 }
 
 //===----------------------------------------------------------------------===//
@@ -122,4 +126,19 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   return Result;
 }
 
-
+const MCSection *MCContext::
+getCOFFSection(StringRef Section, unsigned Flags, SectionKind Kind) {
+  if (COFFUniquingMap == 0)
+    COFFUniquingMap = new COFFUniqueMapTy();
+  COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)COFFUniquingMap;
+  
+  // Do the lookup, if we have a hit, return it.
+  StringMapEntry<const MCSectionCOFF*> &Entry = Map.GetOrCreateValue(Section);
+  if (Entry.getValue()) return Entry.getValue();
+  
+  MCSectionCOFF *Result = new (*this) MCSectionCOFF(Entry.getKey(), Flags,
+                                                    Kind);
+  
+  Entry.setValue(Result);
+  return Result;
+}

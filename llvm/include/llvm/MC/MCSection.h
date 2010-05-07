@@ -48,32 +48,6 @@ namespace llvm {
       return false;
     }
   };
-
-  class MCSectionCOFF : public MCSection {
-    // The memory for this string is stored in the same MCContext as *this.
-    StringRef Name;
-    
-    /// IsDirective - This is true if the section name is a directive, not
-    /// something that should be printed with ".section".
-    ///
-    /// FIXME: This is a hack.  Switch to a semantic view of the section instead
-    /// of a syntactic one.
-    bool IsDirective;
-    
-    MCSectionCOFF(StringRef name, bool isDirective, SectionKind K)
-      : MCSection(K), Name(name), IsDirective(isDirective) {
-    }
-  public:
-    
-    static MCSectionCOFF *Create(StringRef Name, bool IsDirective, 
-                                 SectionKind K, MCContext &Ctx);
-
-    StringRef getName() const { return Name; }
-    bool isDirective() const { return IsDirective; }
-    
-    virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
-                                      raw_ostream &OS) const;
-  };
   
 } // end namespace llvm
 

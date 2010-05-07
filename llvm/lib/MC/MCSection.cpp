@@ -20,30 +20,3 @@ using namespace llvm;
 MCSection::~MCSection() {
 }
 
-//===----------------------------------------------------------------------===//
-// MCSectionCOFF
-//===----------------------------------------------------------------------===//
-
-MCSectionCOFF *MCSectionCOFF::
-Create(StringRef Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
-  char *NameCopy = static_cast<char*>(
-    Ctx.Allocate(Name.size(), /*Alignment=*/1));
-  memcpy(NameCopy, Name.data(), Name.size());
-  return new (Ctx) MCSectionCOFF(StringRef(NameCopy, Name.size()),
-                                 IsDirective, K);
-}
-
-void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
-                                         raw_ostream &OS) const {
-  
-  if (isDirective()) {
-    OS << getName() << '\n';
-    return;
-  }
-  OS << "\t.section\t" << getName() << ",\"";
-  if (getKind().isText())
-    OS << 'x';
-  if (getKind().isWriteable())
-    OS << 'w';
-  OS << "\"\n";
-}

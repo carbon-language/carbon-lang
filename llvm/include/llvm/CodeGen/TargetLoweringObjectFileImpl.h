@@ -161,12 +161,14 @@ public:
 
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
-  mutable void *UniquingMap;
+  const MCSection *DrectveSection;
 public:
-  TargetLoweringObjectFileCOFF() : UniquingMap(0) {}
-  ~TargetLoweringObjectFileCOFF();
+  TargetLoweringObjectFileCOFF() {}
+  ~TargetLoweringObjectFileCOFF() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
+  virtual const MCSection *getDrectveSection() const { return DrectveSection; }
 
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -175,11 +177,6 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
-
-  /// getCOFFSection - Return the MCSection for the specified COFF section.
-  /// FIXME: Switch this to a semantic view eventually.
-  const MCSection *getCOFFSection(StringRef Name, bool isDirective,
-                                  SectionKind K) const;
 };
 
 } // end namespace llvm
