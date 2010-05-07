@@ -2668,6 +2668,9 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
 
     if (Result.get())
       return move(Result);
+
+    // LookupMemberExpr can modify Base, and thus change BaseType
+    BaseType = Base->getType();
   }
 
   return BuildMemberReferenceExpr(ExprArg(*this, Base), BaseType,
