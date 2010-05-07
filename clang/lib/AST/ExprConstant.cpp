@@ -70,9 +70,20 @@ static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info);
 //===----------------------------------------------------------------------===//
 
 static bool EvalPointerValueAsBool(APValue& Value, bool& Result) {
-  // FIXME: Is this accurate for all kinds of bases?  If not, what would
-  // the check look like?
-  Result = Value.getLValueBase() || !Value.getLValueOffset().isZero();
+  const Expr* Base = Value.getLValueBase();
+
+  Result = Base || !Value.getLValueOffset().isZero();
+
+  const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
+  if (!DeclRef)
+    return true;
+
+  const ValueDecl* Decl = DeclRef->getDecl();
+  if (Decl->hasAttr<WeakAttr>() ||
+      Decl->hasAttr<WeakRefAttr>() ||
+      Decl->hasAttr<WeakImportAttr>())
+    return false;
+
   return true;
 }
 
