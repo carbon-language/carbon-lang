@@ -501,7 +501,7 @@ void DIType::print(raw_ostream &OS) const {
   OS << " [" << dwarf::TagString(Tag) << "] ";
 
   // TODO : Print context
-  getCompileUnit().dump();
+  getCompileUnit().print(OS);
   OS << " ["
          << getLineNumber() << ", "
          << getSizeInBits() << ", "
@@ -518,11 +518,11 @@ void DIType::print(raw_ostream &OS) const {
     OS << " [fwd] ";
 
   if (isBasicType())
-    DIBasicType(DbgNode).dump();
+    DIBasicType(DbgNode).print(OS);
   else if (isDerivedType())
-    DIDerivedType(DbgNode).dump();
+    DIDerivedType(DbgNode).print(OS);
   else if (isCompositeType())
-    DICompositeType(DbgNode).dump();
+    DICompositeType(DbgNode).print(OS);
   else {
     OS << "Invalid DIType\n";
     return;
@@ -538,7 +538,7 @@ void DIBasicType::print(raw_ostream &OS) const {
 
 /// print - Print derived type.
 void DIDerivedType::print(raw_ostream &OS) const {
-  OS << "\n\t Derived From: "; getTypeDerivedFrom().dump();
+  OS << "\n\t Derived From: "; getTypeDerivedFrom().print(OS);
 }
 
 /// print - Print composite type.
@@ -557,7 +557,7 @@ void DIGlobal::print(raw_ostream &OS) const {
   OS << " [" << dwarf::TagString(Tag) << "] ";
 
   // TODO : Print context
-  getCompileUnit().dump();
+  getCompileUnit().print(OS);
   OS << " [" << getLineNumber() << "] ";
 
   if (isLocalToUnit())
@@ -567,7 +567,7 @@ void DIGlobal::print(raw_ostream &OS) const {
     OS << " [def] ";
 
   if (isGlobalVariable())
-    DIGlobalVariable(DbgNode).dump();
+    DIGlobalVariable(DbgNode).print(OS);
 
   OS << "\n";
 }
@@ -582,7 +582,7 @@ void DISubprogram::print(raw_ostream &OS) const {
   OS << " [" << dwarf::TagString(Tag) << "] ";
 
   // TODO : Print context
-  getCompileUnit().dump();
+  getCompileUnit().print(OS);
   OS << " [" << getLineNumber() << "] ";
 
   if (isLocalToUnit())
@@ -597,7 +597,7 @@ void DISubprogram::print(raw_ostream &OS) const {
 /// print - Print global variable.
 void DIGlobalVariable::print(raw_ostream &OS) const {
   OS << " [";
-  getGlobal()->dump();
+  getGlobal()->print(OS);
   OS << "] ";
 }
 
@@ -607,9 +607,9 @@ void DIVariable::print(raw_ostream &OS) const {
   if (!Res.empty())
     OS << " [" << Res << "] ";
 
-  getCompileUnit().dump();
+  getCompileUnit().print(OS);
   OS << " [" << getLineNumber() << "] ";
-  getType().dump();
+  getType().print(OS);
   OS << "\n";
 
   // FIXME: Dump complex addresses
