@@ -913,7 +913,7 @@ DIE *DwarfDebug::getOrCreateTypeDIE(DIType Ty) {
 
 /// addType - Add a new type attribute to the specified entity.
 void DwarfDebug::addType(DIE *Entity, DIType Ty) {
-  if (!Ty.isValid())
+  if (!Ty.Verify())
     return;
 
   // Check for pre-existence.
@@ -1656,7 +1656,7 @@ void DwarfDebug::addPubTypes(DISubprogram SP) {
   DIArray Args = SPTy.getTypeArray();
   for (unsigned i = 0, e = Args.getNumElements(); i != e; ++i) {
     DIType ATy(Args.getElement(i));
-    if (!ATy.isValid())
+    if (!ATy.Verify())
       continue;
     DICompositeType CATy = getDICompositeType(ATy);
     if (DIDescriptor(CATy).Verify() && !CATy.getName().empty()
