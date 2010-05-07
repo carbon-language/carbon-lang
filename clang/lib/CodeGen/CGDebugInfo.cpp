@@ -114,7 +114,7 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   llvm::DIFile F = DebugFactory.CreateFile(AbsFileName.getLast(),
                                            AbsFileName.getDirname(), TheCU);
 
-  DIFileCache[fname] = F.getNode();
+  DIFileCache[fname] = F;
   return F;
 
 }
@@ -506,7 +506,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
 
   // Add "this" pointer.
 
-  llvm::DIArray Args = llvm::DICompositeType(FnTy.getNode()).getTypeArray();
+  llvm::DIArray Args = llvm::DICompositeType(FnTy).getTypeArray();
   assert (Args.getNumElements() && "Invalid number of arguments!");
 
   llvm::SmallVector<llvm::DIDescriptor, 16> Elts;
@@ -520,7 +520,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
     Context.getPointerType(Context.getTagDeclType(Method->getParent()));
   llvm::DIType ThisPtrType = 
     DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
-  TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType.getNode();  
+  TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;  
   Elts.push_back(ThisPtrType);
 
   // Copy rest of the arguments.
@@ -597,7 +597,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   // Don't cache ctors or dtors since we have to emit multiple functions for
   // a single ctor or dtor.
   if (!IsCtorOrDtor && Method->isThisDeclarationADefinition())
-    SPCache[Method] = llvm::WeakVH(SP.getNode());
+    SPCache[Method] = llvm::WeakVH(SP);
 
   return SP;
 }
@@ -774,13 +774,14 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   if (!RD->getDefinition())
     return FwdDecl;
 
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
+  llvm::MDNode *MN = FwdDecl;
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
   // Push the struct on region stack.
-  RegionStack.push_back(FwdDecl.getNode());
-  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl.getNode());
+  RegionStack.push_back(FwdDeclNode);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -799,9 +800,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
     if (const CXXRecordDecl *PBase = RL.getPrimaryBase())
       ContainingType = 
-        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), Unit).getNode();
+        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), Unit);
     else if (CXXDecl->isDynamicClass()) 
-      ContainingType = FwdDecl.getNode();
+      ContainingType = FwdDecl;
   }
 
   llvm::DIArray Elements =
@@ -829,7 +830,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
-  RegionMap[RD] = llvm::WeakVH(RealDecl.getNode());
+  RegionMap[RD] = llvm::WeakVH(RealDecl);
   return RealDecl;
 }
 
@@ -865,13 +866,14 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   if (ID->isForwardDecl())
     return FwdDecl;
 
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
+  llvm::MDNode *MN = FwdDecl;
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
   // Push the struct on region stack.
-  RegionStack.push_back(FwdDecl.getNode());
-  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl.getNode());
+  RegionStack.push_back(FwdDeclNode);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -962,7 +964,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
-  RegionMap[ID] = llvm::WeakVH(RealDecl.getNode());
+  RegionMap[ID] = llvm::WeakVH(RealDecl);
 
   return RealDecl;
 }
@@ -1194,7 +1196,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
 
   // And update the type cache.
-  TypeCache[Ty.getAsOpaquePtr()] = Res.getNode();  
+  TypeCache[Ty.getAsOpaquePtr()] = Res;  
   return Res;
 }
 
@@ -1304,9 +1306,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       FI = SPCache.find(FD);
     if (FI != SPCache.end()) {
       llvm::DIDescriptor SP(dyn_cast_or_null<llvm::MDNode>(FI->second));
-      if (SP.isSubprogram() && llvm::DISubprogram(SP.getNode()).isDefinition()) {
-        RegionStack.push_back(SP.getNode());
-        RegionMap[D] = llvm::WeakVH(SP.getNode());
+      if (SP.isSubprogram() && llvm::DISubprogram(SP).isDefinition()) {
+        llvm::MDNode *SPN = SP;
+        RegionStack.push_back(SPN);
+        RegionMap[D] = llvm::WeakVH(SP);
         return;
       }
     }
@@ -1334,8 +1337,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
   // Push function on region stack.
-  RegionStack.push_back(SP.getNode());
-  RegionMap[D] = llvm::WeakVH(SP.getNode());
+  llvm::MDNode *SPN = SP;
+  RegionStack.push_back(SPN);
+  RegionMap[D] = llvm::WeakVH(SP);
 }
 
 
@@ -1375,7 +1379,8 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
                                     llvm::DIDescriptor() : 
                                     llvm::DIDescriptor(RegionStack.back()),
                                     PLoc.getLine(), PLoc.getColumn());
-  RegionStack.push_back(D.getNode());
+  llvm::MDNode *DN = D;
+  RegionStack.push_back(DN);
 }
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
@@ -1662,7 +1667,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
     getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
   llvm::DINameSpace NS =
     DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
-	llvm::DIFile(Unit.getNode()), LineNo);
-  NameSpaceCache[NSDecl] = llvm::WeakVH(NS.getNode());
+	llvm::DIFile(Unit), LineNo);
+  NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
   return NS;
 }
