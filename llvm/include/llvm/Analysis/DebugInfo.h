@@ -41,7 +41,7 @@ namespace llvm {
   /// change in certain situations.
   class DIDescriptor {
   protected:
-    MDNode *DbgNode;
+    const MDNode *DbgNode;
 
     StringRef getStringField(unsigned Elt) const;
     unsigned getUnsignedField(unsigned Elt) const {
@@ -59,12 +59,13 @@ namespace llvm {
 
   public:
     explicit DIDescriptor() : DbgNode(0) {}
-    explicit DIDescriptor(MDNode *N) : DbgNode(N) {}
+    explicit DIDescriptor(const MDNode *N) : DbgNode(N) {}
 
     bool Verify() const { return DbgNode != 0; }
 
-    operator MDNode *() const { return DbgNode; }
-    MDNode *operator ->() const { return DbgNode; }
+    operator const MDNode *() const { return DbgNode; }
+    operator MDNode *() const { return const_cast<MDNode*>(DbgNode); }
+    MDNode *operator ->() const { return const_cast<MDNode*>(DbgNode); }
 
     unsigned getVersion() const {
       return getUnsignedField(0) & LLVMDebugVersionMask;
@@ -75,7 +76,7 @@ namespace llvm {
     }
 
     /// ValidDebugInfo - Return true if N represents valid debug info value.
-    static bool ValidDebugInfo(MDNode *N, unsigned OptLevel);
+    static bool ValidDebugInfo(const MDNode *N, unsigned OptLevel);
 
     /// print - print descriptor.
     void print(raw_ostream &OS) const;
@@ -103,7 +104,7 @@ namespace llvm {
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
   public:
-    explicit DISubrange(MDNode *N = 0) : DIDescriptor(N) {}
+    explicit DISubrange(const MDNode *N = 0) : DIDescriptor(N) {}
 
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
@@ -112,7 +113,7 @@ namespace llvm {
   /// DIArray - This descriptor holds an array of descriptors.
   class DIArray : public DIDescriptor {
   public:
-    explicit DIArray(MDNode *N = 0)
+    explicit DIArray(const MDNode *N = 0)
       : DIDescriptor(N) {}
 
     unsigned getNumElements() const;
@@ -124,7 +125,7 @@ namespace llvm {
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
   public:
-    explicit DIScope(MDNode *N = 0) : DIDescriptor (N) {}
+    explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
     virtual ~DIScope() {}
 
     StringRef getFilename() const;
@@ -134,7 +135,7 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIScope {
   public:
-    explicit DICompileUnit(MDNode *N = 0) : DIScope(N) {}
+    explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
     StringRef getFilename() const  { return getStringField(3);   }
@@ -168,7 +169,7 @@ namespace llvm {
   /// DIFile - This is a wrapper for a file.
   class DIFile : public DIScope {
   public:
-    explicit DIFile(MDNode *N = 0) : DIScope(N) {
+    explicit DIFile(const MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isFile())
         DbgNode = 0;
     }
@@ -182,7 +183,7 @@ namespace llvm {
   /// type/precision or a file/line pair for location info.
   class DIEnumerator : public DIDescriptor {
   public:
-    explicit DIEnumerator(MDNode *N = 0) : DIDescriptor(N) {}
+    explicit DIEnumerator(const MDNode *N = 0) : DIDescriptor(N) {}
 
     StringRef getName() const        { return getStringField(1); }
     uint64_t getEnumValue() const      { return getUInt64Field(2); }
@@ -207,14 +208,14 @@ namespace llvm {
   protected:
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
-    DIType(MDNode *N, bool, bool) : DIScope(N) {}
+    DIType(const MDNode *N, bool, bool) : DIScope(N) {}
 
   public:
 
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
   public:
-    explicit DIType(MDNode *N);
+    explicit DIType(const MDNode *N);
     explicit DIType() {}
     virtual ~DIType() {}
 
@@ -272,7 +273,7 @@ namespace llvm {
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
   public:
-    explicit DIBasicType(MDNode *N = 0) : DIType(N) {}
+    explicit DIBasicType(const MDNode *N = 0) : DIType(N) {}
 
     unsigned getEncoding() const { return getUnsignedField(9); }
 
@@ -287,10 +288,10 @@ namespace llvm {
   /// a typedef, a pointer or reference, etc.
   class DIDerivedType : public DIType {
   protected:
-    explicit DIDerivedType(MDNode *N, bool, bool)
+    explicit DIDerivedType(const MDNode *N, bool, bool)
       : DIType(N, true, true) {}
   public:
-    explicit DIDerivedType(MDNode *N = 0)
+    explicit DIDerivedType(const MDNode *N = 0)
       : DIType(N, true, true) {}
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
@@ -316,7 +317,7 @@ namespace llvm {
   /// FIXME: Why is this a DIDerivedType??
   class DICompositeType : public DIDerivedType {
   public:
-    explicit DICompositeType(MDNode *N = 0)
+    explicit DICompositeType(const MDNode *N = 0)
       : DIDerivedType(N, true, true) {
       if (N && !isCompositeType())
         DbgNode = 0;
@@ -341,7 +342,7 @@ namespace llvm {
   /// DIGlobal - This is a common class for global variables and subprograms.
   class DIGlobal : public DIDescriptor {
   protected:
-    explicit DIGlobal(MDNode *N) : DIDescriptor(N) {}
+    explicit DIGlobal(const MDNode *N) : DIDescriptor(N) {}
 
   public:
     virtual ~DIGlobal() {}
@@ -376,7 +377,7 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
   public:
-    explicit DISubprogram(MDNode *N = 0) : DIScope(N) {}
+    explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
     DIScope getContext() const          { return getFieldAs<DIScope>(2); }
     StringRef getName() const         { return getStringField(3); }
@@ -452,7 +453,7 @@ namespace llvm {
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIGlobal {
   public:
-    explicit DIGlobalVariable(MDNode *N = 0) : DIGlobal(N) {}
+    explicit DIGlobalVariable(const MDNode *N = 0) : DIGlobal(N) {}
 
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
 
@@ -470,7 +471,7 @@ namespace llvm {
   /// global etc).
   class DIVariable : public DIDescriptor {
   public:
-    explicit DIVariable(MDNode *N = 0)
+    explicit DIVariable(const MDNode *N = 0)
       : DIDescriptor(N) {}
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
@@ -520,7 +521,7 @@ namespace llvm {
   /// DILexicalBlock - This is a wrapper for a lexical block.
   class DILexicalBlock : public DIScope {
   public:
-    explicit DILexicalBlock(MDNode *N = 0) : DIScope(N) {}
+    explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
     StringRef getDirectory() const   { return getContext().getDirectory(); }
     StringRef getFilename() const    { return getContext().getFilename();  }
@@ -531,7 +532,7 @@ namespace llvm {
   /// DINameSpace - A wrapper for a C++ style name space.
   class DINameSpace : public DIScope { 
   public:
-    explicit DINameSpace(MDNode *N = 0) : DIScope(N) {}
+    explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const { return getContext().getDirectory(); }
@@ -550,7 +551,7 @@ namespace llvm {
   /// is not associated with any DWARF tag.
   class DILocation : public DIDescriptor {
   public:
-    explicit DILocation(MDNode *N) : DIDescriptor(N) { }
+    explicit DILocation(const MDNode *N) : DIDescriptor(N) { }
 
     unsigned getLineNumber() const     { return getUnsignedField(0); }
     unsigned getColumnNumber() const   { return getUnsignedField(1); }
@@ -749,7 +750,7 @@ namespace llvm {
                        std::string &Dir);
 
   /// getDISubprogram - Find subprogram that is enclosing this scope.
-  DISubprogram getDISubprogram(MDNode *Scope);
+  DISubprogram getDISubprogram(const MDNode *Scope);
 
   /// getDICompositeType - Find underlying composite type.
   DICompositeType getDICompositeType(DIType T);

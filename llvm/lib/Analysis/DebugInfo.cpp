@@ -34,7 +34,7 @@ using namespace llvm::dwarf;
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
 /// FIXME : Add DIDescriptor.isValid()
-bool DIDescriptor::ValidDebugInfo(MDNode *N, unsigned OptLevel) {
+bool DIDescriptor::ValidDebugInfo(const MDNode *N, unsigned OptLevel) {
   if (!N)
     return false;
 
@@ -96,7 +96,7 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
     return DIDescriptor();
 
   if (Elt < DbgNode->getNumOperands())
-    return DIDescriptor(dyn_cast_or_null<MDNode>(DbgNode->getOperand(Elt)));
+    return DIDescriptor(dyn_cast_or_null<const MDNode>(DbgNode->getOperand(Elt)));
   return DIDescriptor();
 }
 
@@ -246,7 +246,7 @@ bool DIDescriptor::isEnumerator() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-DIType::DIType(MDNode *N) : DIScope(N) {
+DIType::DIType(const MDNode *N) : DIScope(N) {
   if (!N) return;
   if (!isBasicType() && !isDerivedType() && !isCompositeType()) {
     DbgNode = 0;
@@ -272,8 +272,10 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
   // this detail by allowing a value to be replaced with replaceAllUsesWith()
   // itself.
   if (DbgNode != D) {
-    MDNode *Node = DbgNode;
-    Node->replaceAllUsesWith(D);
+    MDNode *Node = const_cast<MDNode*>(DbgNode);
+    const MDNode *DN = D;
+    const Value *V = cast_or_null<Value>(DN);
+    Node->replaceAllUsesWith(const_cast<Value*>(V));
     Node->destroy();
   }
 }
@@ -1154,7 +1156,7 @@ DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       Instruction *InsertBefore) {
   assert(Storage && "no storage passed to dbg.declare");
-  assert(D && "empty DIVariable passed to dbg.declare");
+  assert(D.Verify() && "empty DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1167,7 +1169,7 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       BasicBlock *InsertAtEnd) {
   assert(Storage && "no storage passed to dbg.declare");
-  assert(D && "empty DIVariable passed to dbg.declare");
+  assert(D.Verify() && "invalid DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1186,7 +1188,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
-  assert(D && "empty DIVariable passed to dbg.value");
+  assert(D.Verify() && "invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -1201,7 +1203,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
-  assert(D && "empty DIVariable passed to dbg.value");
+  assert(D.Verify() && "invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -1456,7 +1458,7 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
 }
 
 /// getDISubprogram - Find subprogram that is enclosing this scope.
-DISubprogram llvm::getDISubprogram(MDNode *Scope) {
+DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   DIDescriptor D(Scope);
   if (D.isSubprogram())
     return DISubprogram(Scope);

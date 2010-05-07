@@ -886,7 +886,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
 void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                                      StoreInst *SI) {
   DIVariable DIVar(DDI->getVariable());
-  if (!DIVar)
+  if (!DIVar.Verify())
     return;
 
   if (!DIF)
