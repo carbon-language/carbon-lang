@@ -2024,9 +2024,9 @@ static void WriteMDNodeComment(const MDNode *Node,
     return;
   ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));
   if (!CI) return;
-  unsigned Val = CI->getZExtValue();
-  unsigned Tag = Val & ~LLVMDebugVersionMask;
-  if (Val < LLVMDebugVersion)
+  APInt Val = CI->getValue();
+  APInt Tag = Val & ~APInt(Val.getBitWidth(), LLVMDebugVersionMask);
+  if (Val.ult(LLVMDebugVersion))
     return;
   
   Out.PadToColumn(50);
@@ -2040,8 +2040,10 @@ static void WriteMDNodeComment(const MDNode *Node,
     Out << "; [ DW_TAG_vector_type ]";
   else if (Tag == dwarf::DW_TAG_user_base)
     Out << "; [ DW_TAG_user_base ]";
-  else if (const char *TagName = dwarf::TagString(Tag))
-    Out << "; [ " << TagName << " ]";
+  else if (Tag.isIntN(32)) {
+    if (const char *TagName = dwarf::TagString(Tag.getZExtValue()))
+      Out << "; [ " << TagName << " ]";
+  }
 }
 
 void AssemblyWriter::writeAllMDNodes() {
