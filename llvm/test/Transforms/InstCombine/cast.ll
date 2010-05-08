@@ -605,3 +605,36 @@ define i64 @test59(i8 %A, i8 %B) nounwind {
 ; CHECK-NOT: i32
 ; CHECK:   ret i64 %H
 }
+
+define <3 x i32> @test60(<4 x i32> %call4) nounwind {
+  %tmp11 = bitcast <4 x i32> %call4 to i128
+  %tmp9 = trunc i128 %tmp11 to i96
+  %tmp10 = bitcast i96 %tmp9 to <3 x i32>
+  ret <3 x i32> %tmp10
+  
+; CHECK: @test60
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: ret
+}
+
+define <4 x i32> @test61(<3 x i32> %call4) nounwind {
+  %tmp11 = bitcast <3 x i32> %call4 to i96
+  %tmp9 = zext i96 %tmp11 to i128
+  %tmp10 = bitcast i128 %tmp9 to <4 x i32>
+  ret <4 x i32> %tmp10
+; CHECK: @test61
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: ret
+}
+
+define <4 x i32> @test62(<3 x float> %call4) nounwind {
+  %tmp11 = bitcast <3 x float> %call4 to i96
+  %tmp9 = zext i96 %tmp11 to i128
+  %tmp10 = bitcast i128 %tmp9 to <4 x i32>
+  ret <4 x i32> %tmp10
+; CHECK: @test62
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: ret
+}
+
