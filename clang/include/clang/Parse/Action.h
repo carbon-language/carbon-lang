@@ -134,6 +134,13 @@ public:
     explicit FullExprArg(ExprArg expr)
       : Expr(move(expr)) {}
 
+#if defined(_MSC_VER)
+    // Last tested with Visual Studio 2008.
+    // Visual C++ complains about the operator= above, claiming that Expr
+    // is not accessible.
+  public:
+#endif
+    
     ExprArg Expr;
   };
 
