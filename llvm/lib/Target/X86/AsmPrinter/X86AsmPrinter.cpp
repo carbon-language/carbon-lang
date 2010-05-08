@@ -58,12 +58,11 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
   if (Subtarget->isTargetCOFF()) {
-    const Function *F = MF.getFunction();
-    OutStreamer.EmitRawText("\t.def\t " + Twine(CurrentFnSym->getName()) +
-                            ";\t.scl\t" +
-                Twine(F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT) +
-                            ";\t.type\t" + Twine(COFF::DT_FCN << COFF::N_BTSHFT)
-                            + ";\t.endef");
+    bool Intrn = MF.getFunction()->hasInternalLinkage();
+    OutStreamer.BeginCOFFSymbolDef(CurrentFnSym);
+    OutStreamer.EmitCOFFSymbolStorageClass(Intrn ? COFF::C_STAT : COFF::C_EXT);
+    OutStreamer.EmitCOFFSymbolType(COFF::DT_FCN << COFF::N_BTSHFT);
+    OutStreamer.EndCOFFSymbolDef();
   }
 
   // Have common code print out the function header with linkage info etc.
@@ -571,13 +570,14 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
 
     // Emit type information for external functions
-    for (X86COFFMachineModuleInfo::stub_iterator I = COFFMMI.stub_begin(),
-           E = COFFMMI.stub_end(); I != E; ++I) {
-      OutStreamer.EmitRawText("\t.def\t " + Twine(I->getKeyData()) +
-                              ";\t.scl\t" + Twine(COFF::C_EXT) +
-                              ";\t.type\t" +
-                              Twine(COFF::DT_FCN << COFF::N_BTSHFT) +
-                              ";\t.endef");
+    typedef X86COFFMachineModuleInfo::externals_iterator externals_iterator;
+    for (externals_iterator I = COFFMMI.externals_begin(),
+                            E = COFFMMI.externals_end();
+                            I != E; ++I) {
+      OutStreamer.BeginCOFFSymbolDef(CurrentFnSym);
+      OutStreamer.EmitCOFFSymbolStorageClass(COFF::C_EXT);
+      OutStreamer.EmitCOFFSymbolType(COFF::DT_FCN << COFF::N_BTSHFT);
+      OutStreamer.EndCOFFSymbolDef();
     }
 
     if (Subtarget->isTargetCygMing()) {

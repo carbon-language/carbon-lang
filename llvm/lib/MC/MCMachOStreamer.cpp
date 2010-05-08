@@ -96,6 +96,18 @@ public:
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
+  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {
+    assert(0 && "macho doesn't support this directive");
+  }
+  virtual void EmitCOFFSymbolStorageClass(int StorageClass) {
+    assert(0 && "macho doesn't support this directive");
+  }
+  virtual void EmitCOFFSymbolType(int Type) {
+    assert(0 && "macho doesn't support this directive");
+  }
+  virtual void EndCOFFSymbolDef() {
+    assert(0 && "macho doesn't support this directive");
+  }
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     assert(0 && "macho doesn't support this directive");
   }

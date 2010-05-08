@@ -42,6 +42,12 @@ namespace {
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
 
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
+
+    virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
+    virtual void EmitCOFFSymbolStorageClass(int StorageClass) {}
+    virtual void EmitCOFFSymbolType(int Type) {}
+    virtual void EndCOFFSymbolDef() {}
+
     virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
     virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) {}

@@ -109,7 +109,10 @@ public:
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
-
+  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol);
+  virtual void EmitCOFFSymbolStorageClass(int StorageClass);
+  virtual void EmitCOFFSymbolType(int Type);
+  virtual void EndCOFFSymbolDef();
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
@@ -290,6 +293,26 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   OS << ".desc" << ' ' << *Symbol << ',' << DescValue;
+  EmitEOL();
+}
+
+void MCAsmStreamer::BeginCOFFSymbolDef(const MCSymbol *Symbol) {
+  OS << "\t.def\t " << *Symbol << ';';
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCOFFSymbolStorageClass (int StorageClass) {
+  OS << "\t.scl\t" << StorageClass << ';';
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCOFFSymbolType (int Type) {
+  OS << "\t.type\t" << Type << ';';
+  EmitEOL();
+}
+
+void MCAsmStreamer::EndCOFFSymbolDef() {
+  OS << "\t.endef";
   EmitEOL();
 }
 
