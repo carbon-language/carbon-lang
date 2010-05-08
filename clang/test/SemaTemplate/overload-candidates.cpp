@@ -29,3 +29,12 @@ template<typename T>
 void test_get_type(int *ptr) {
   (void)get_type(ptr); // expected-error{{no matching function for call to 'get_type'}}
 }
+
+struct X {
+  template<typename T>
+  const T& min(const T&, const T&); // expected-note{{candidate template ignored: deduced conflicting types for parameter 'T' ('int' vs. 'long')}}
+};
+
+void test_X_min(X x) {
+  (void)x.min(1, 2l); // expected-error{{no matching member function for call to 'min'}}
+}

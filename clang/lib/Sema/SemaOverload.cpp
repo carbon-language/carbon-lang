@@ -288,7 +288,8 @@ namespace {
 /// \brief Convert from Sema's representation of template deduction information
 /// to the form used in overload-candidate information.
 OverloadCandidate::DeductionFailureInfo
-static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
+static MakeDeductionFailureInfo(ASTContext &Context,
+                                Sema::TemplateDeductionResult TDK,
                                 Sema::TemplateDeductionInfo &Info) {
   OverloadCandidate::DeductionFailureInfo Result;
   Result.Result = static_cast<unsigned>(TDK);
@@ -307,7 +308,8 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
       
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals: {
-    DFIParamWithArguments *Saved = new DFIParamWithArguments;
+    // FIXME: Should allocate from normal heap so that we can free this later.
+    DFIParamWithArguments *Saved = new (Context) DFIParamWithArguments;
     Saved->Param = Info.Param;
     Saved->FirstArg = Info.FirstArg;
     Saved->SecondArg = Info.SecondArg;
@@ -3249,11 +3251,18 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
   if (TemplateDeductionResult Result
       = DeduceTemplateArguments(MethodTmpl, ExplicitTemplateArgs,
                                 Args, NumArgs, Specialization, Info)) {
-        // FIXME: Record what happened with template argument deduction, so
-        // that we can give the user a beautiful diagnostic.
-        (void)Result;
-        return;
-      }
+    CandidateSet.push_back(OverloadCandidate());
+    OverloadCandidate &Candidate = CandidateSet.back();
+    Candidate.FoundDecl = FoundDecl;
+    Candidate.Function = MethodTmpl->getTemplatedDecl();
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_deduction;
+    Candidate.IsSurrogate = false;
+    Candidate.IgnoreObjectArgument = false;
+    Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
+                                                          Info);
+    return;
+  }
 
   // Add the function template specialization produced by template argument
   // deduction as a candidate.
@@ -3300,7 +3309,8 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
-    Candidate.DeductionFailure = MakeDeductionFailureInfo(Result, Info);
+    Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
+                                                          Info);
     return;
   }
 
@@ -3447,9 +3457,16 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ToType,
                                   Specialization, Info)) {
-    // FIXME: Record what happened with template argument deduction, so
-    // that we can give the user a beautiful diagnostic.
-    (void)Result;
+    CandidateSet.push_back(OverloadCandidate());
+    OverloadCandidate &Candidate = CandidateSet.back();
+    Candidate.FoundDecl = FoundDecl;
+    Candidate.Function = FunctionTemplate->getTemplatedDecl();
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_deduction;
+    Candidate.IsSurrogate = false;
+    Candidate.IgnoreObjectArgument = false;
+    Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
+                                                          Info);
     return;
   }
 
