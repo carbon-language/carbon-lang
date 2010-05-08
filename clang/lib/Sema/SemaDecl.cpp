@@ -544,9 +544,9 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
         return false;
     }
 
-    // If we failed to complete the type for some reason, don't
-    // diagnose the variable.
-    if (Ty->isIncompleteType())
+    // If we failed to complete the type for some reason, or if the type is
+    // dependent, don't diagnose the variable. 
+    if (Ty->isIncompleteType() || Ty->isDependentType())
       return false;
 
     if (const TagType *TT = Ty->getAs<TagType>()) {
@@ -555,9 +555,10 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
         return false;
 
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Tag)) {
-        if (!RD->hasTrivialConstructor())
-          return false;
-        if (!RD->hasTrivialDestructor())
+        // FIXME: Checking for the presence of a user-declared constructor
+        // isn't completely accurate; we'd prefer to check that the initializer
+        // has no side effects.
+        if (RD->hasUserDeclaredConstructor() || !RD->hasTrivialDestructor())
           return false;
       }
     }
@@ -566,6 +567,18 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
   }
   
   return true;
+}
+
+void Sema::DiagnoseUnusedDecl(const NamedDecl *D) {
+  if (!ShouldDiagnoseUnusedDecl(D))
+    return;
+  
+  if (isa<VarDecl>(D) && cast<VarDecl>(D)->isExceptionVariable())
+    Diag(D->getLocation(), diag::warn_unused_exception_param)
+    << D->getDeclName();
+  else
+    Diag(D->getLocation(), diag::warn_unused_variable) 
+    << D->getDeclName();
 }
 
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
@@ -584,15 +597,9 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (ShouldDiagnoseUnusedDecl(D) && 
-        S->getNumErrorsAtStart() == getDiagnostics().getNumErrors()) {
-      if (isa<VarDecl>(D) && cast<VarDecl>(D)->isExceptionVariable())
-        Diag(D->getLocation(), diag::warn_unused_exception_param)
-          << D->getDeclName();
-      else
-        Diag(D->getLocation(), diag::warn_unused_variable) 
-          << D->getDeclName();
-    }
+    if (S->getNumErrorsAtStart() == getDiagnostics().getNumErrors())
+      DiagnoseUnusedDecl(D);
+    
     // Remove this name from our lexical scope.
     IdResolver.RemoveDecl(D);
   }

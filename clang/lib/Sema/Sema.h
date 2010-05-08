@@ -1761,7 +1761,8 @@ public:
   /// DiagnoseUnusedExprResult - If the statement passed in is an expression
   /// whose result is unused, warn.
   void DiagnoseUnusedExprResult(const Stmt *S);
-
+  void DiagnoseUnusedDecl(const NamedDecl *ND);
+  
   ParsingDeclStackState PushParsingDeclaration();
   void PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy D);
   void EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc);

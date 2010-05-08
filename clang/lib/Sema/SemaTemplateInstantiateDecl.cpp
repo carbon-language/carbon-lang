@@ -351,7 +351,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     Var->setLexicalDeclContext(D->getLexicalDeclContext());
 
   Var->setAccess(D->getAccess());
-
+  Var->setUsed(D->isUsed());
+  
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
   bool Redeclaration = false;
@@ -419,6 +420,10 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
     SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
 
+  // Diagnose unused local variables.
+  if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
+    SemaRef.DiagnoseUnusedDecl(Var);
+  
   return Var;
 }
 
