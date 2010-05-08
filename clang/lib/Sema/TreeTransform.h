@@ -3493,12 +3493,15 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
       return SemaRef.StmtError();
     
     // Convert the condition to a boolean value.
-    OwningExprResult CondE = getSema().ActOnBooleanCondition(0, S->getIfLoc(), 
-                                                             move(Cond));
-    if (CondE.isInvalid())
-      return getSema().StmtError();
+    if (S->getCond()) {
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, 
+                                                               S->getIfLoc(), 
+                                                               move(Cond));
+      if (CondE.isInvalid())
+        return getSema().StmtError();
     
-    Cond = move(CondE);
+      Cond = move(CondE);
+    }
   }
   
   Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
@@ -3584,14 +3587,16 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
     
     if (Cond.isInvalid())
       return SemaRef.StmtError();
-    
-    // Convert the condition to a boolean value.
-    OwningExprResult CondE = getSema().ActOnBooleanCondition(0, 
+
+    if (S->getCond()) {
+      // Convert the condition to a boolean value.
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, 
                                                              S->getWhileLoc(), 
-                                                             move(Cond));
-    if (CondE.isInvalid())
-      return getSema().StmtError();
-    Cond = move(CondE);
+                                                               move(Cond));
+      if (CondE.isInvalid())
+        return getSema().StmtError();
+      Cond = move(CondE);
+    }
   }
 
   Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
@@ -3660,14 +3665,17 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     
     if (Cond.isInvalid())
       return SemaRef.StmtError();
-    
-    // Convert the condition to a boolean value.
-    OwningExprResult CondE = getSema().ActOnBooleanCondition(0, S->getForLoc(), 
-                                                             move(Cond));
-    if (CondE.isInvalid())
-      return getSema().StmtError();
-    
-    Cond = move(CondE);
+
+    if (S->getCond()) {
+      // Convert the condition to a boolean value.
+      OwningExprResult CondE = getSema().ActOnBooleanCondition(0, 
+                                                               S->getForLoc(), 
+                                                               move(Cond));
+      if (CondE.isInvalid())
+        return getSema().StmtError();
+
+      Cond = move(CondE);
+    }
   }
 
   Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));  
