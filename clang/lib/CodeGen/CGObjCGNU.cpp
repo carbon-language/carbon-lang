@@ -235,6 +235,11 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
   return std::string(isClassMethod ? "_c_" : "_i_") + ClassName + "_" +
     CategoryName + "_" + MethodNameColonStripped;
 }
+static std::string MangleSelectorTypes(const std::string &TypeString) {
+  std::string Mangled = TypeString;
+  std::replace(Mangled.begin(), Mangled.end(), '@', '_');
+  return Mangled;
+}
 
 CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   : CGM(cgm), TheModule(CGM.getModule()), ClassPtrAlias(0),
@@ -1665,34 +1670,35 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::InternalLinkage,
+        true, llvm::GlobalValue::LinkOnceAnyLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr");
+        ".objc_sel_ptr"+iter->first.first+"."+MangleSelectorTypes(iter->first.second));
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
       SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
         llvm::PointerType::getUnqual(SelectorTy));
     }
-    (*iter).second->setAliasee(SelPtr);
+    (*iter).second->replaceAllUsesWith(SelPtr);
+    (*iter).second->eraseFromParent();
   }
   for (llvm::StringMap<llvm::GlobalAlias*>::iterator
       iter=UntypedSelectors.begin(), iterEnd = UntypedSelectors.end();
       iter != iterEnd; iter++) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
-    llvm::Constant *SelPtr = new llvm::GlobalVariable
-      (TheModule, SelStructPtrTy,
-       true, llvm::GlobalValue::InternalLinkage,
-       llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-       ".objc_sel_ptr");
+    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
+        true, llvm::GlobalValue::LinkOnceAnyLinkage,
+        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
+        ".objc_sel_ptr"+iter->getKey());
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
       SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
         llvm::PointerType::getUnqual(SelectorTy));
     }
-    (*iter).second->setAliasee(SelPtr);
+    (*iter).second->replaceAllUsesWith(SelPtr);
+    (*iter).second->eraseFromParent();
   }
   // Number of classes defined.
   Elements.push_back(llvm::ConstantInt::get(llvm::Type::getInt16Ty(VMContext),
