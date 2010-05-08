@@ -5056,16 +5056,21 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
   unsigned MinParams = Fn->getMinRequiredArguments();
   
   // at least / at most / exactly
+  // FIXME: variadic templates "at most" should account for parameter packs
   unsigned mode, modeCount;
   if (NumFormalArgs < MinParams) {
-    assert(Cand->FailureKind == ovl_fail_too_few_arguments);
+    assert((Cand->FailureKind == ovl_fail_too_few_arguments) ||
+           (Cand->FailureKind == ovl_fail_bad_deduction &&
+            Cand->DeductionFailure.Result == Sema::TDK_TooFewArguments));
     if (MinParams != FnTy->getNumArgs() || FnTy->isVariadic())
       mode = 0; // "at least"
     else
       mode = 2; // "exactly"
     modeCount = MinParams;
   } else {
-    assert(Cand->FailureKind == ovl_fail_too_many_arguments);
+    assert((Cand->FailureKind == ovl_fail_too_many_arguments) ||
+           (Cand->FailureKind == ovl_fail_bad_deduction &&
+            Cand->DeductionFailure.Result == Sema::TDK_TooManyArguments));
     if (MinParams != FnTy->getNumArgs())
       mode = 1; // "at most"
     else
@@ -5077,7 +5082,8 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
   OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
 
   S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
-    << (unsigned) FnKind << Description << mode << modeCount << NumFormalArgs;
+    << (unsigned) FnKind << (Fn->getDescribedFunctionTemplate() != 0) << mode 
+    << modeCount << NumFormalArgs;
 }
 
 /// Diagnose a failed template-argument deduction.
@@ -5120,14 +5126,17 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
       << *Cand->DeductionFailure.getSecondArg();
     return;
   }
+
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
+    DiagnoseArityMismatch(S, Cand, NumArgs);
+    return;
       
   // TODO: diagnose these individually, then kill off
   // note_ovl_candidate_bad_deduction, which is uselessly vague.
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_deduction);

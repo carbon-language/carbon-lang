@@ -1069,9 +1069,9 @@ def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0 not viable: requires"
-    "%select{ at least| at most|}2 %3 argument%s3, but %4 %plural{1:was|:were}4 "
-    "provided">;
+    "function (the implicit copy assignment operator)}0 %select{|template }1"
+    "not viable: requires%select{ at least| at most|}2 %3 argument%s3, but %4 "
+    "%plural{1:was|:were}4 provided">;
 
 def note_ovl_candidate_deleted : Note<
   "candidate %select{function|function|constructor|"

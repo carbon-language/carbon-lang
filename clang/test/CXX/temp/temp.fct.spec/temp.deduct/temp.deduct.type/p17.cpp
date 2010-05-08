@@ -15,7 +15,7 @@ void k2() {
   g(b); // OK: cv-qualifiers are ignored on template parameter types
 }
 
-template<short s> void h(int (&)[s]); // expected-note{{failed template argument deduction}}
+template<short s> void h(int (&)[s]); // expected-note{{candidate function template not viable: requires 1 argument, but 2 were provided}}
 void k3() {
   int array[5];
   h(array);
