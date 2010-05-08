@@ -1030,10 +1030,8 @@ FinishTemplateArgumentDeduction(Sema &S,
                                   ClassTemplate->getTemplateParameters(), N);
 
   if (S.CheckTemplateArgumentList(ClassTemplate, Partial->getLocation(),
-                                InstArgs, false, ConvertedInstArgs)) {
-    // FIXME: fail with more useful information?
+                                InstArgs, false, ConvertedInstArgs))
     return Sema::TDK_SubstitutionFailure;
-  }
   
   for (unsigned I = 0, E = ConvertedInstArgs.flatSize(); I != E; ++I) {
     TemplateArgument InstArg = ConvertedInstArgs.getFlatArguments()[I];
@@ -1377,6 +1375,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                                  NTTP->getDeclName());
             if (NTTPType.isNull()) {
               Info.Param = makeTemplateParameter(Param);
+              Info.reset(new (Context) TemplateArgumentList(Context, Builder, 
+                                                            /*TakeArgs=*/true));
               return TDK_SubstitutionFailure;
             }
           }
@@ -1402,6 +1402,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                                   : CTAK_Deduced)) {
         Info.Param = makeTemplateParameter(
                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+        Info.reset(new (Context) TemplateArgumentList(Context, Builder, 
+                                                      /*TakeArgs=*/true));
         return TDK_SubstitutionFailure;
       }
 
@@ -1432,6 +1434,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                               CTAK_Deduced)) {
       Info.Param = makeTemplateParameter(
                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+      Info.reset(new (Context) TemplateArgumentList(Context, Builder, 
+                                                    /*TakeArgs=*/true));
       return TDK_SubstitutionFailure;
     }
 
@@ -1459,7 +1463,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   
   // If the template argument list is owned by the function template
   // specialization, release it.
-  if (Specialization->getTemplateSpecializationArgs() == DeducedArgumentList)
+  if (Specialization->getTemplateSpecializationArgs() == DeducedArgumentList &&
+      !Trap.hasErrorOccurred())
     Info.take();
 
   // There may have been an error that did not prevent us from constructing a

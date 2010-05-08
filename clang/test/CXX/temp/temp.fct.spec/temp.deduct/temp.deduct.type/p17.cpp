@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 template<int i> class A {  };
-template<short s> void f(A<s>); // expected-note{{failed template argument deduction}}
+template<short s> void f(A<s>); // expected-note{{candidate template ignored: substitution failure}}
 
 void k1() { 
   A<1> a;
@@ -22,7 +22,7 @@ void k3() {
   h<5>(array);
 }
 
-template<short s> void h(int (&)[s], A<s>);  // expected-note{{failed template argument deduction}}
+template<short s> void h(int (&)[s], A<s>);  // expected-note{{candidate template ignored: substitution failure}}
 void k4() {
   A<5> a;
   int array[5];

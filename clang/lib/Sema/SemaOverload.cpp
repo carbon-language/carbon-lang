@@ -289,7 +289,7 @@ namespace {
 /// to the form used in overload-candidate information.
 OverloadCandidate::DeductionFailureInfo
 static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
-                                const Sema::TemplateDeductionInfo &Info) {
+                                Sema::TemplateDeductionInfo &Info) {
   OverloadCandidate::DeductionFailureInfo Result;
   Result.Result = static_cast<unsigned>(TDK);
   Result.Data = 0;
@@ -316,6 +316,9 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
   }
       
   case Sema::TDK_SubstitutionFailure:
+    Result.Data = Info.take();
+    break;
+      
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     break;  
@@ -339,9 +342,13 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
     delete static_cast<DFIParamWithArguments*>(Data);
     Data = 0;
     break;
+
+  case Sema::TDK_SubstitutionFailure:
+    // FIXME: Destroy the template arugment list?
+    Data = 0;
+    break;
       
   // Unhandled
-  case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -355,6 +362,7 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
+  case Sema::TDK_SubstitutionFailure:
     return TemplateParameter();
     
   case Sema::TDK_Incomplete:
@@ -366,7 +374,6 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
     return static_cast<DFIParamWithArguments*>(Data)->Param;
       
   // Unhandled
-  case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -374,7 +381,32 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   
   return TemplateParameter();
 }
-  
+ 
+TemplateArgumentList *
+OverloadCandidate::DeductionFailureInfo::getTemplateArgumentList() {
+  switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
+    case Sema::TDK_Success:
+    case Sema::TDK_InstantiationDepth:
+    case Sema::TDK_TooManyArguments:
+    case Sema::TDK_TooFewArguments:
+    case Sema::TDK_Incomplete:
+    case Sema::TDK_InvalidExplicitArguments:
+    case Sema::TDK_Inconsistent:
+    case Sema::TDK_InconsistentQuals:
+      return 0;
+
+    case Sema::TDK_SubstitutionFailure:
+      return static_cast<TemplateArgumentList*>(Data);
+      
+    // Unhandled
+    case Sema::TDK_NonDeducedMismatch:
+    case Sema::TDK_FailedOverloadResolution:
+      break;
+  }
+
+  return 0;
+}
+
 const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
@@ -383,6 +415,7 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
+  case Sema::TDK_SubstitutionFailure:
     return 0;
 
   case Sema::TDK_Inconsistent:
@@ -390,7 +423,6 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
     return &static_cast<DFIParamWithArguments*>(Data)->FirstArg;      
 
   // Unhandled
-  case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -408,6 +440,7 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
+  case Sema::TDK_SubstitutionFailure:
     return 0;
 
   case Sema::TDK_Inconsistent:
@@ -415,7 +448,6 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
     return &static_cast<DFIParamWithArguments*>(Data)->SecondArg;
 
   // Unhandled
-  case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -5151,11 +5183,25 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
   case Sema::TDK_TooFewArguments:
     DiagnoseArityMismatch(S, Cand, NumArgs);
     return;
+
+  case Sema::TDK_InstantiationDepth:
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_instantiation_depth);
+    return;
+
+  case Sema::TDK_SubstitutionFailure: {
+    std::string ArgString;
+    if (TemplateArgumentList *Args
+                            = Cand->DeductionFailure.getTemplateArgumentList())
+      ArgString = S.getTemplateArgumentBindingsText(
+                    Fn->getDescribedFunctionTemplate()->getTemplateParameters(),
+                                                    *Args);
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_substitution_failure)
+      << ArgString;
+    return;
+  }
       
   // TODO: diagnose these individually, then kill off
   // note_ovl_candidate_bad_deduction, which is uselessly vague.
-  case Sema::TDK_InstantiationDepth:
-  case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_deduction);

@@ -22,3 +22,10 @@ template<template<class T> class, typename T>
 void test_get(void *ptr) {
   get<int>(ptr); // expected-error{{no matching function for call to 'get'}}
 }
+
+template<typename T>
+  typename T::type get_type(const T&); // expected-note{{candidate template ignored: substitution failure [with T = int *]}}
+
+void test_get_type(int *ptr) {
+  (void)get_type(ptr); // expected-error{{no matching function for call to 'get_type'}}
+}

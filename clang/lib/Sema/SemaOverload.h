@@ -539,6 +539,10 @@ namespace clang {
       /// refers to, if any.
       TemplateParameter getTemplateParameter();
       
+      /// \brief Retrieve the template argument list associated with this
+      /// deduction failure, if any.
+      TemplateArgumentList *getTemplateArgumentList();
+      
       /// \brief Return the first template argument this deduction failure
       /// refers to, if any.
       const TemplateArgument *getFirstArg();

@@ -1069,7 +1069,12 @@ def note_ovl_candidate_explicit_arg_mismatch_named : Note<
 def note_ovl_candidate_explicit_arg_mismatch_unnamed : Note<
     "candidate template ignored: invalid explicitly-specified argument "
     "for %ordinal0 template parameter">;
-
+def note_ovl_candidate_instantiation_depth : Note<
+    "candidate template ignored: substitution exceeded maximum template "
+    "instantiation depth">;
+def note_ovl_candidate_substitution_failure : Note<
+    "candidate template ignored: substitution failure %0">;
+    
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"
