@@ -580,6 +580,10 @@ namespace clang {
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
     SourceLocation Loc;    
+    
+    OverloadCandidateSet(const OverloadCandidateSet &);
+    OverloadCandidateSet &operator=(const OverloadCandidateSet &);
+    
   public:
     OverloadCandidateSet(SourceLocation Loc) : Loc(Loc) {}
 

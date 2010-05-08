@@ -296,13 +296,14 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
   switch (TDK) {
   case Sema::TDK_Success:
   case Sema::TDK_InstantiationDepth:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
     break;
       
   case Sema::TDK_Incomplete:
     Result.Data = Info.Param.getOpaqueValue();
     break;
       
-  // Unhandled
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals: {
     DFIParamWithArguments *Saved = new DFIParamWithArguments;
@@ -315,8 +316,6 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
       
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;  
@@ -330,19 +329,19 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
   case Sema::TDK_Success:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
     break;
       
-  // Unhandled
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals:
     delete static_cast<DFIParamWithArguments*>(Data);
     Data = 0;
     break;
       
+  // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -354,6 +353,8 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   switch (static_cast<Sema::TemplateDeductionResult>(Result)) {
   case Sema::TDK_Success:
   case Sema::TDK_InstantiationDepth:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
     return TemplateParameter();
     
   case Sema::TDK_Incomplete:
@@ -366,8 +367,6 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -381,17 +380,17 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   case Sema::TDK_Success:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
     return 0;
 
-  // Unhandled
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals:
     return &static_cast<DFIParamWithArguments*>(Data)->FirstArg;      
 
+  // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
@@ -406,17 +405,17 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   case Sema::TDK_Success:
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_Incomplete:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
     return 0;
 
-  // Unhandled
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals:
     return &static_cast<DFIParamWithArguments*>(Data)->SecondArg;
 
+  // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_TooManyArguments:
-  case Sema::TDK_TooFewArguments:
   case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
