@@ -71,12 +71,12 @@ void switch_destruct(int z) {
     break;
 
   default:
-    // CHECK: {{sw.default:|:3}}
+    // CHECK: {{sw.default:|:5}}
     // CHECK: store i32 19
     z = 19;
     break;
   }
-  // CHECK: {{sw.epilog:|:5}}
+  // CHECK: {{sw.epilog:|:6}}
   // CHECK: call void @_ZN16ConvertibleToIntD1Ev
   // CHECK: store i32 20
   z = 20;
@@ -97,18 +97,18 @@ int foo();
 
 void while_destruct(int z) {
   // CHECK: define void @_Z14while_destructi
-  // CHECK: {{while.cond:|:2}}
+  // CHECK: {{while.cond:|:3}}
   while (X x = X()) {
     // CHECK: call void @_ZN1XC1Ev
 
-    // CHECK: {{while.body:|:4}}
+    // CHECK: {{while.body:|:5}}
     // CHECK: store i32 21
     z = 21;
 
-    // CHECK: {{while.cleanup:|:5}}
+    // CHECK: {{while.cleanup:|:6}}
     // CHECK: call void @_ZN1XD1Ev
   }
-  // CHECK: {{while.end|:7}}
+  // CHECK: {{while.end|:8}}
   // CHECK: store i32 22
   z = 22;
 
@@ -128,16 +128,16 @@ void for_destruct(int z) {
   // CHECK: define void @_Z12for_destruct
   // CHECK: call void @_ZN1YC1Ev
   for(Y y = Y(); X x = X(); ++z)
-    // CHECK: {{for.cond:|:2}}
+    // CHECK: {{for.cond:|:4}}
     // CHECK: call void @_ZN1XC1Ev
-    // CHECK: {{for.body:|:4}}
+    // CHECK: {{for.body:|:6}}
     // CHECK: store i32 23
     z = 23;
-    // CHECK: {{for.inc:|:5}}
-    // CHECK: br label %{{for.cond.cleanup|8}}
-    // CHECK: {{for.cond.cleanup:|:8}}
+    // CHECK: {{for.inc:|:7}}
+    // CHECK: br label %{{for.cond.cleanup|10}}
+    // CHECK: {{for.cond.cleanup:|:10}}
     // CHECK: call void @_ZN1XD1Ev
-  // CHECK: {{for.end:|:10}}
+  // CHECK: {{for.end:|:12}}
   // CHECK: call void @_ZN1YD1Ev
   // CHECK: store i32 24
   z = 24;
