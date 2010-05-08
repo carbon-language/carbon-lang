@@ -16,6 +16,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Signals.h"
 #include "llvm/System/Threading.h"
 #include <cassert>
 #include <cstdlib>
@@ -52,6 +53,12 @@ void llvm::report_fatal_error(const Twine &reason) {
   } else {
     ErrorHandler(ErrorHandlerUserData, reason.str());
   }
+
+  // If we reached here, we are failing ungracefully. Run the interrupt handlers
+  // to make sure any special cleanups get done, in particular that we remove
+  // files registered with RemoveFileOnSignal.
+  sys::RunInterruptHandlers();
+
   exit(1);
 }
 
