@@ -63,7 +63,7 @@ template struct Conditional0<int, int, int>;
 template<typename T>
 struct StatementExpr0 {
   void f(T t) {
-    (void)({ if (t) t = t + 17; t + 12;}); // expected-error{{invalid}}
+    (void)({ if (t) t = t + 17; t + 12;}); // expected-error{{contextually convertible}}
   }
 };
 
