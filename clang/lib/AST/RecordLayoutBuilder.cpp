@@ -24,8 +24,8 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Context)
   : Context(Context), Size(0), Alignment(8), Packed(false), 
   UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), IsUnion(false),
-  SizeOfLargestEmptySubobject(0), NonVirtualSize(0), NonVirtualAlignment(8),
-  FirstNearlyEmptyVBase(0) { }
+  NonVirtualSize(0), NonVirtualAlignment(8), FirstNearlyEmptyVBase(0),
+  SizeOfLargestEmptySubobject(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
@@ -37,6 +37,56 @@ bool ASTRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
   if (BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0))
     return true;
   return false;
+}
+
+void 
+ASTRecordLayoutBuilder::ComputeEmptySubobjectSizes(const CXXRecordDecl *RD) {
+  // Check the bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t EmptySize = 0;
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
+    if (BaseDecl->isEmpty()) {
+      // If the class decl is empty, get its size.
+      EmptySize = Layout.getSize();
+    } else {
+      // Otherwise, we get the largest empty subobject for the decl.
+      EmptySize = Layout.getSizeOfLargestEmptySubobject();
+    }
+    
+    SizeOfLargestEmptySubobject = std::max(SizeOfLargestEmptySubobject, 
+                                           EmptySize);
+  }
+
+  // Check the fields.
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I) {
+    const FieldDecl *FD = *I;
+    
+    const RecordType *RT = 
+      Context.getBaseElementType(FD->getType())->getAs<RecordType>();
+    
+    // We only care about record types.
+    if (!RT)
+      continue;
+
+    uint64_t EmptySize = 0;
+    const CXXRecordDecl *MemberDecl = cast<CXXRecordDecl>(RT->getDecl());
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(MemberDecl);
+    if (MemberDecl->isEmpty()) {
+      // If the class decl is empty, get its size.
+      EmptySize = Layout.getSize();
+    } else {
+      // Otherwise, we get the largest empty subobject for the decl.
+      EmptySize = Layout.getSizeOfLargestEmptySubobject();
+    }
+      
+   SizeOfLargestEmptySubobject = std::max(SizeOfLargestEmptySubobject, 
+                                          EmptySize);
+  }
 }
 
 void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
@@ -522,8 +572,10 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   // If this is a C++ class, lay out the vtable and the non-virtual bases.
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
-  if (RD)
+  if (RD) {
+    ComputeEmptySubobjectSizes(RD);
     LayoutNonVirtualBases(RD);
+  }
 
   LayoutFields(D);
 

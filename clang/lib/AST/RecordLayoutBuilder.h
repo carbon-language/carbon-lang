@@ -77,7 +77,7 @@ class ASTRecordLayoutBuilder {
   /// VisitedVirtualBases - A set of all the visited virtual bases, used to
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
-  
+
   /// SizeOfLargestEmptySubobject - When laying out C++ classes, this holds the
   /// size of the largest empty subobject (either a base or a member).
   /// Will be zero if the record being built doesn't contain any empty classes.
@@ -98,6 +98,10 @@ class ASTRecordLayoutBuilder {
   void LayoutField(const FieldDecl *D);
   void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize);
   void LayoutBitField(const FieldDecl *D);
+
+  /// ComputeEmptySubobjectSizes - Compute the size of the largest base or 
+  /// member subobject that is empty.
+  void ComputeEmptySubobjectSizes(const CXXRecordDecl *RD);
 
   /// DeterminePrimaryBase - Determine the primary base of the given class.
   void DeterminePrimaryBase(const CXXRecordDecl *RD);

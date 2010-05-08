@@ -228,6 +228,11 @@ public:
     return CXXInfo->VBaseOffsets[VBase];
   }
   
+  uint64_t getSizeOfLargestEmptySubobject() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    return CXXInfo->SizeOfLargestEmptySubobject;
+  }
+
   primary_base_info_iterator primary_base_begin() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
   
