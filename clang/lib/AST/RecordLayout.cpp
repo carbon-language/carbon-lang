@@ -44,6 +44,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
                                  unsigned fieldcount,
                                  uint64_t nonvirtualsize,
                                  unsigned nonvirtualalign,
+                                 uint64_t SizeOfLargestEmptySubobject,
                                  const PrimaryBaseInfo &PrimaryBase,
                                  const BaseOffsetsMapTy& BaseOffsets,
                                  const BaseOffsetsMapTy& VBaseOffsets)
@@ -58,6 +59,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
   CXXInfo->PrimaryBase = PrimaryBase;
   CXXInfo->NonVirtualSize = nonvirtualsize;
   CXXInfo->NonVirtualAlign = nonvirtualalign;
+  CXXInfo->SizeOfLargestEmptySubobject = SizeOfLargestEmptySubobject;
   CXXInfo->BaseOffsets = BaseOffsets;
   CXXInfo->VBaseOffsets = VBaseOffsets;
 

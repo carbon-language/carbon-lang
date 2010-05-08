@@ -109,6 +109,11 @@ private:
     /// which is the alignment of the object without virtual bases.
     uint64_t NonVirtualAlign;
 
+    /// SizeOfLargestEmptySubobject - The size of the largest empty subobject
+    /// (either a base or a member). Will be zero if the class doesn't contain
+    /// any empty subobjects.
+    uint64_t SizeOfLargestEmptySubobject;
+    
     /// PrimaryBase - The primary base info for this record.
     PrimaryBaseInfo PrimaryBase;
     
@@ -139,6 +144,7 @@ private:
                   uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
+                  uint64_t SizeOfLargestEmptySubobject,
                   const PrimaryBaseInfo &PrimaryBase,
                   const BaseOffsetsMapTy& BaseOffsets,
                   const BaseOffsetsMapTy& VBaseOffsets);

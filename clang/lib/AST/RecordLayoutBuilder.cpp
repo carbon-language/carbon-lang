@@ -24,7 +24,8 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Context)
   : Context(Context), Size(0), Alignment(8), Packed(false), 
   UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), IsUnion(false),
-  NonVirtualSize(0), NonVirtualAlignment(8), FirstNearlyEmptyVBase(0) { }
+  SizeOfLargestEmptySubobject(0), NonVirtualSize(0), NonVirtualAlignment(8),
+  FirstNearlyEmptyVBase(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
@@ -321,19 +322,19 @@ void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
 }
 
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
-  const ASTRecordLayout &BaseInfo = Context.getASTRecordLayout(RD);
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // If we have an empty base class, try to place it at offset 0.
   if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
     // We were able to place the class at offset 0.
     UpdateEmptyClassOffsets(RD, 0);
 
-    Size = std::max(Size, BaseInfo.getSize());
+    Size = std::max(Size, Layout.getSize());
 
     return 0;
   }
 
-  unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
+  unsigned BaseAlign = Layout.getNonVirtualAlign();
 
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
@@ -348,11 +349,11 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
 
   if (!RD->isEmpty()) {
     // Update the data size.
-    DataSize = Offset + BaseInfo.getNonVirtualSize();
+    DataSize = Offset + Layout.getNonVirtualSize();
 
     Size = std::max(Size, DataSize);
   } else
-    Size = std::max(Size, Offset + BaseInfo.getSize());
+    Size = std::max(Size, Offset + Layout.getSize());
 
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
@@ -424,7 +425,7 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
     if (!RD)
       return true;
 
-    const ASTRecordLayout &Info = Context.getASTRecordLayout(RD);
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
     uint64_t NumElements = Context.getConstantArrayElementCount(AT);
     uint64_t ElementOffset = Offset;
@@ -432,7 +433,7 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
       if (!canPlaceRecordAtOffset(RD, ElementOffset))
         return false;
 
-      ElementOffset += Info.getSize();
+      ElementOffset += Layout.getSize();
     }
   }
 
@@ -444,7 +445,7 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
   if (RD->isEmpty())
     EmptyClassOffsets.insert(std::make_pair(Offset, RD));
 
-  const ASTRecordLayout &Info = Context.getASTRecordLayout(RD);
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // Update bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -457,7 +458,7 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
+    uint64_t BaseClassOffset = Layout.getBaseClassOffset(Base);
     UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset);
   }
 
@@ -467,7 +468,7 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
        I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
 
-    uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
+    uint64_t FieldOffset = Layout.getFieldOffset(FieldNo);
     UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
   }
 
@@ -838,6 +839,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                                    Builder.FieldOffsets.size(),
                                    NonVirtualSize,
                                    Builder.NonVirtualAlignment,
+                                   Builder.SizeOfLargestEmptySubobject,
                                    Builder.PrimaryBase,
                                    Builder.Bases, Builder.VBases);
 }

@@ -78,6 +78,11 @@ class ASTRecordLayoutBuilder {
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
   
+  /// SizeOfLargestEmptySubobject - When laying out C++ classes, this holds the
+  /// size of the largest empty subobject (either a base or a member).
+  /// Will be zero if the record being built doesn't contain any empty classes.
+  uint64_t SizeOfLargestEmptySubobject;
+  
   /// EmptyClassOffsets - A map from offsets to empty record decls.
   typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
   EmptyClassOffsetsTy EmptyClassOffsets;
