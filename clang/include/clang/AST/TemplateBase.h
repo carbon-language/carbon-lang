@@ -28,6 +28,7 @@ namespace llvm {
 namespace clang {
 
 class Decl;
+class DiagnosticBuilder;
 class Expr;
 class TypeSourceInfo;
 
@@ -473,6 +474,9 @@ public:
   }
 };
 
-}
+const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                    const TemplateArgument &Arg);
+  
+} // end namespace clang
 
 #endif

@@ -16,7 +16,8 @@ void test_f1(int *ip, float fv) {
 }
 
 // TODO: this diagnostic can and should improve
-template<typename T> void f2(T*, T*); // expected-note 2 {{candidate template ignored: failed template argument deduction}}
+template<typename T> void f2(T*, T*); // expected-note {{candidate template ignored: failed template argument deduction}} \
+// expected-note{{candidate template ignored: deduced conflicting types for parameter 'T' ('int' vs. 'float')}}
 
 struct ConvToIntPtr {
   operator int*() const;

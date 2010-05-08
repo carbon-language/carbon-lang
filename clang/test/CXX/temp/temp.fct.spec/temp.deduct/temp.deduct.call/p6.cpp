@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 namespace test0 {
-  template<class T> void apply(T x, void (*f)(T)) { f(x); } // expected-note 2 {{failed template argument deduction}}\
+  template<class T> void apply(T x, void (*f)(T)) { f(x); } // expected-note 2 {{candidate template ignored: deduced conflicting types for parameter 'T'}}\
   // expected-note {{no overload of 'temp2' matching 'void (*)(int)'}}
 
   template<class A> void temp(A);

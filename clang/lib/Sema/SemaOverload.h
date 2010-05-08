@@ -16,7 +16,9 @@
 #define LLVM_CLANG_SEMA_OVERLOAD_H
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TemplateBase.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -529,8 +531,24 @@ namespace clang {
       // A Sema::TemplateDeductionResult.
       unsigned Result;
 
-      // A TemplateParameter.
-      void *TemplateParameter;
+      /// \brief Opaque pointer containing additional data about
+      /// this deduction failure.
+      void *Data;
+      
+      /// \brief Retrieve the template parameter this deduction failure
+      /// refers to, if any.
+      TemplateParameter getTemplateParameter();
+      
+      /// \brief Return the first template argument this deduction failure
+      /// refers to, if any.
+      const TemplateArgument *getFirstArg();
+
+      /// \brief Return the second template argument this deduction failure
+      /// refers to, if any.
+      const TemplateArgument *getSecondArg();
+      
+      /// \brief Free any memory associated with this deduction failure.
+      void Destroy();
     };
 
     union {
@@ -574,10 +592,9 @@ namespace clang {
     }
 
     /// \brief Clear out all of the candidates.
-    void clear() {
-      inherited::clear();
-      Functions.clear();
-    }
+    void clear();
+    
+    ~OverloadCandidateSet() { clear(); }
   };
 } // end namespace clang
 

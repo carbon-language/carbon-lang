@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/Basic/Diagnostic.h"
 
 using namespace clang;
 
@@ -118,4 +119,43 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
 
   // Silence bonus gcc warning.
   return SourceRange();
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    return DB;
+      
+  case TemplateArgument::Type:
+    return DB << Arg.getAsType();
+      
+  case TemplateArgument::Declaration:
+    return DB << Arg.getAsDecl();
+      
+  case TemplateArgument::Integral:
+    return DB << Arg.getAsIntegral()->toString(10);
+      
+  case TemplateArgument::Template:
+    return DB << Arg.getAsTemplate();
+      
+  case TemplateArgument::Expression: {
+    // This shouldn't actually ever happen, so it's okay that we're
+    // regurgitating an expression here.
+    // FIXME: We're guessing at LangOptions!
+    llvm::SmallString<32> Str;
+    llvm::raw_svector_ostream OS(Str);
+    LangOptions LangOpts;
+    LangOpts.CPlusPlus = true;
+    PrintingPolicy Policy(LangOpts);
+    Arg.getAsExpr()->printPretty(OS, 0, Policy);
+    return DB << OS.str();
+  }
+      
+  case TemplateArgument::Pack:
+    // FIXME: Format arguments in a list!
+    return DB << "<parameter pack>";
+  }
+  
+  return DB;
 }

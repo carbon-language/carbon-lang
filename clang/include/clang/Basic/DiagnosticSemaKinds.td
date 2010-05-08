@@ -1060,7 +1060,10 @@ def note_ovl_candidate_bad_deduction : Note<
     "candidate template ignored: failed template argument deduction">;
 def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
     "couldn't infer template argument %0">;
-
+def note_ovl_candidate_inconsistent_deduction : Note<
+    "candidate template ignored: deduced conflicting %select{types|values|"
+    "templates}0 for parameter %1 (%2 vs. %3)">;
+    
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"
