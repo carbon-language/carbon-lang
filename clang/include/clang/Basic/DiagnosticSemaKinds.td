@@ -1063,7 +1063,13 @@ def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: 
 def note_ovl_candidate_inconsistent_deduction : Note<
     "candidate template ignored: deduced conflicting %select{types|values|"
     "templates}0 for parameter %1 (%2 vs. %3)">;
-    
+def note_ovl_candidate_explicit_arg_mismatch_named : Note<
+    "candidate template ignored: invalid explicitly-specified argument "
+    "for template parameter %0">;
+def note_ovl_candidate_explicit_arg_mismatch_unnamed : Note<
+    "candidate template ignored: invalid explicitly-specified argument "
+    "for %ordinal0 template parameter">;
+
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"

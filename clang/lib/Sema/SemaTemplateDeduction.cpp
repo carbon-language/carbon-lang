@@ -1190,8 +1190,11 @@ Sema::SubstituteExplicitTemplateArguments(
                                 SourceLocation(),
                                 ExplicitTemplateArgs,
                                 true,
-                                Builder) || Trap.hasErrorOccurred())
+                                Builder) || Trap.hasErrorOccurred()) {
+    Info.Param = makeTemplateParameter(TemplateParams->getParam(
+                                                    Builder.structuredSize()));
     return TDK_InvalidExplicitArguments;
+  }
 
   // Form the template argument list from the explicitly-specified
   // template arguments.

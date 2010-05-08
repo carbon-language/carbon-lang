@@ -301,6 +301,7 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
     break;
       
   case Sema::TDK_Incomplete:
+  case Sema::TDK_InvalidExplicitArguments:
     Result.Data = Info.Param.getOpaqueValue();
     break;
       
@@ -316,7 +317,6 @@ static MakeDeductionFailureInfo(Sema::TemplateDeductionResult TDK,
       
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;  
   }
@@ -331,6 +331,7 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
+  case Sema::TDK_InvalidExplicitArguments:
     break;
       
   case Sema::TDK_Inconsistent:
@@ -342,7 +343,6 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
   // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
   }
@@ -358,6 +358,7 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
     return TemplateParameter();
     
   case Sema::TDK_Incomplete:
+  case Sema::TDK_InvalidExplicitArguments:
     return TemplateParameter::getFromOpaqueValue(Data);    
 
   case Sema::TDK_Inconsistent:
@@ -367,7 +368,6 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
   // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
   }
@@ -382,6 +382,7 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
+  case Sema::TDK_InvalidExplicitArguments:
     return 0;
 
   case Sema::TDK_Inconsistent:
@@ -391,7 +392,6 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
   // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
   }
@@ -407,6 +407,7 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   case Sema::TDK_Incomplete:
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
+  case Sema::TDK_InvalidExplicitArguments:
     return 0;
 
   case Sema::TDK_Inconsistent:
@@ -416,7 +417,6 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   // Unhandled
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     break;
   }
@@ -425,6 +425,12 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 }
 
 void OverloadCandidateSet::clear() {
+  // 
+  for (iterator C = begin(), CEnd = end(); C != CEnd; ++C) {
+    if (C->FailureKind == ovl_fail_bad_deduction)
+      C->DeductionFailure.Destroy();
+  }
+       
   inherited::clear();
   Functions.clear();
 }
@@ -5086,15 +5092,15 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
   FunctionDecl *Fn = Cand->Function; // pattern
 
   TemplateParameter Param = Cand->DeductionFailure.getTemplateParameter();
+  NamedDecl *ParamD;
+  (ParamD = Param.dyn_cast<TemplateTypeParmDecl*>()) ||
+  (ParamD = Param.dyn_cast<NonTypeTemplateParmDecl*>()) ||
+  (ParamD = Param.dyn_cast<TemplateTemplateParmDecl*>());
   switch (Cand->DeductionFailure.Result) {
   case Sema::TDK_Success:
     llvm_unreachable("TDK_success while diagnosing bad deduction");
 
   case Sema::TDK_Incomplete: {
-    NamedDecl *ParamD;
-    (ParamD = Param.dyn_cast<TemplateTypeParmDecl*>()) ||
-    (ParamD = Param.dyn_cast<NonTypeTemplateParmDecl*>()) ||
-    (ParamD = Param.dyn_cast<TemplateTemplateParmDecl*>());
     assert(ParamD && "no parameter found for incomplete deduction result");
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_incomplete_deduction)
       << ParamD->getDeclName();
@@ -5103,14 +5109,13 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
 
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals: {
-    NamedDecl *ParamD;
+    assert(ParamD && "no parameter found for inconsistent deduction result");    
     int which = 0;
-    if ((ParamD = Param.dyn_cast<TemplateTypeParmDecl*>()))
+    if (isa<TemplateTypeParmDecl>(ParamD))
       which = 0;
-    else if ((ParamD = Param.dyn_cast<NonTypeTemplateParmDecl*>()))
+    else if (isa<NonTypeTemplateParmDecl>(ParamD))
       which = 1;
     else {
-      ParamD = Param.get<TemplateTemplateParmDecl*>();
       which = 2;
     }
     
@@ -5121,6 +5126,27 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
     return;
   }
 
+  case Sema::TDK_InvalidExplicitArguments:
+    assert(ParamD && "no parameter found for invalid explicit arguments");    
+    if (ParamD->getDeclName())
+      S.Diag(Fn->getLocation(), 
+             diag::note_ovl_candidate_explicit_arg_mismatch_named)
+        << ParamD->getDeclName();
+    else {
+      int index = 0;
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ParamD))
+        index = TTP->getIndex();
+      else if (NonTypeTemplateParmDecl *NTTP
+                                  = dyn_cast<NonTypeTemplateParmDecl>(ParamD))
+        index = NTTP->getIndex();
+      else
+        index = cast<TemplateTemplateParmDecl>(ParamD)->getIndex();
+      S.Diag(Fn->getLocation(), 
+             diag::note_ovl_candidate_explicit_arg_mismatch_unnamed)
+        << (index + 1);
+    }
+    return;
+      
   case Sema::TDK_TooManyArguments:
   case Sema::TDK_TooFewArguments:
     DiagnoseArityMismatch(S, Cand, NumArgs);
@@ -5131,7 +5157,6 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
   case Sema::TDK_InstantiationDepth:
   case Sema::TDK_SubstitutionFailure:
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_InvalidExplicitArguments:
   case Sema::TDK_FailedOverloadResolution:
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_deduction);
     return;
