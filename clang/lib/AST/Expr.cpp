@@ -976,6 +976,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return true;
   }
   case CompoundAssignOperatorClass:
+  case VAArgExprClass:
     return false;
 
   case ConditionalOperatorClass: {

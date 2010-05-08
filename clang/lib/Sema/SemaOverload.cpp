@@ -2910,6 +2910,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From,
 /// TryContextuallyConvertToBool - Attempt to contextually convert the
 /// expression From to bool (C++0x [conv]p3).
 ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
+  // FIXME: This is pretty broken.
   return TryImplicitConversion(From, Context.BoolTy,
                                // FIXME: Are these flags correct?
                                /*SuppressUserConversions=*/false,

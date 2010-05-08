@@ -110,3 +110,11 @@ void *some_function(void);
 void t10() {
   (void*) some_function(); //expected-warning {{expression result unused; should this cast be to 'void'?}}
 }
+
+void f(int i, ...) {
+    __builtin_va_list ap;
+    
+    __builtin_va_start(ap, i);
+    __builtin_va_arg(ap, int);
+    __builtin_va_end(ap);
+}
