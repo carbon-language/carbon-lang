@@ -341,7 +341,7 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
       
   case Sema::TDK_Inconsistent:
   case Sema::TDK_InconsistentQuals:
-    delete static_cast<DFIParamWithArguments*>(Data);
+    // FIXME: Destroy the data?
     Data = 0;
     break;
 
@@ -459,12 +459,6 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 }
 
 void OverloadCandidateSet::clear() {
-  // 
-  for (iterator C = begin(), CEnd = end(); C != CEnd; ++C) {
-    if (C->FailureKind == ovl_fail_bad_deduction)
-      C->DeductionFailure.Destroy();
-  }
-       
   inherited::clear();
   Functions.clear();
 }
