@@ -189,6 +189,10 @@ static void Cleanup() {
   LeaveCriticalSection(&CriticalSection);
 }
 
+void llvm::sys::RunInterruptHandlers() {
+  Cleanup();
+}
+
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   try {
     Cleanup();

@@ -20,6 +20,10 @@
 namespace llvm {
 namespace sys {
 
+  /// This function runs all the registered interrupt handlers, including the
+  /// removal of files registered by RemoveFileOnSignal.
+  void RunInterruptHandlers();
+
   /// This function registers signal handlers to ensure that if a signal gets
   /// delivered that the named file is removed.
   /// @brief Remove a file if a fatal signal occurs.

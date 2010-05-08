@@ -152,7 +152,9 @@ static RETSIGTYPE SignalHandler(int Sig) {
     CallBacksToRun[i].first(CallBacksToRun[i].second);
 }
 
-
+void llvm::sys::RunInterruptHandlers() {
+  SignalHandler(SIGINT);
+}
 
 void llvm::sys::SetInterruptFunction(void (*IF)()) {
   SignalsMutex.acquire();
