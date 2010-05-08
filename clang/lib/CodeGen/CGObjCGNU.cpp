@@ -1670,7 +1670,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::LinkOnceAnyLinkage,
+        true, llvm::GlobalValue::LinkOnceODRLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr"+iter->first.first+"."+MangleSelectorTypes(iter->first.second));
     // If selectors are defined as an opaque type, cast the pointer to this
@@ -1688,7 +1688,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::LinkOnceAnyLinkage,
+        true, llvm::GlobalValue::LinkOnceODRLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr"+iter->getKey());
     // If selectors are defined as an opaque type, cast the pointer to this
