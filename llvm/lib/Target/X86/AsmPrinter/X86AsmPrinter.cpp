@@ -598,14 +598,28 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // Output linker support code for dllexported globals on windows.
     if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
       OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
-      for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
-        OutStreamer.EmitRawText("\t.ascii \" -export:" +
-                                Twine(DLLExportedGlobals[i]->getName()) +
-                                ",data\"");
+      SmallString<128> name;
+      for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i) {
+        if (Subtarget->isTargetWindows())
+          name = " /EXPORT:";
+        else
+          name = " -export:";
+        name += DLLExportedGlobals[i]->getName();
+        if (Subtarget->isTargetWindows())
+          name += ",DATA";
+        else
+        name += ",data";
+        OutStreamer.EmitBytes(name, 0);
+      }
 
-      for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
-        OutStreamer.EmitRawText("\t.ascii \" -export:" +
-                                Twine(DLLExportedFns[i]->getName()) + "\"");
+      for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i) {
+        if (Subtarget->isTargetWindows())
+          name = " /EXPORT:";
+        else
+          name = " -export:";
+        name += DLLExportedFns[i]->getName();
+        OutStreamer.EmitBytes(name, 0);
+      }
     }
   }
 
