@@ -125,6 +125,7 @@ namespace {
     void VisitCXXTypeidExpr(CXXTypeidExpr *E);
     void VisitCXXThisExpr(CXXThisExpr *E);
     void VisitCXXThrowExpr(CXXThrowExpr *E);
+    void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
   };
 }
 
@@ -934,9 +935,23 @@ void PCHStmtWriter::VisitCXXThisExpr(CXXThisExpr *E) {
 }
 
 void PCHStmtWriter::VisitCXXThrowExpr(CXXThrowExpr *E) {
+  VisitExpr(E);
   Writer.AddSourceLocation(E->getThrowLoc(), Record);
   Writer.WriteSubStmt(E->getSubExpr());
   Code = pch::EXPR_CXX_THROW;
+}
+
+void PCHStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getUsedLocation(), Record);
+  if (E->isExprStored()) {
+    Record.push_back(1);
+    Writer.WriteSubStmt(E->getExpr());
+  } else {
+    Record.push_back(0);
+  }
+
+  Code = pch::EXPR_CXX_DEFAULT_ARG;
 }
 
 

@@ -5,7 +5,7 @@
 typedef __typeof__(static_cast<void *>(0)) static_cast_result;
 
 // CXXDynamicCastExpr
-struct Base { virtual void f(); };
+struct Base { virtual void f(int x = 492); };
 struct Derived : Base { void g(); };
 Base *base_ptr;
 typedef __typeof__(dynamic_cast<Derived *>(base_ptr)) dynamic_cast_result;
@@ -31,7 +31,7 @@ typedef __typeof__(nullptr) cxx_null_ptr_result;
 
 void foo(Derived *P) {
   // CXXMemberCallExpr
-  P->f();
+  P->f(12);
 }
 
 
@@ -46,10 +46,13 @@ typedef __typeof__(typeid(2))*   typeid_result2;
 
 void Derived::g() {
   // CXXThisExpr
-  f();        // Implicit
-  this->f();  // Explicit
+  f(2);        // Implicit
+  this->f(1);  // Explicit
   
   // CXXThrowExpr
   throw;
   throw 42;
+  
+  // CXXDefaultArgExpr
+  f();
 }

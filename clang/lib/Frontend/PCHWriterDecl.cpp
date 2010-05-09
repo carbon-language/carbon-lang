@@ -416,7 +416,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isDeclaredInCondition());
   Record.push_back(D->isExceptionVariable());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
-  Record.push_back(D->getInit()? 1 : 0);
+  Record.push_back(D->getInit() ? 1 : 0);
   if (D->getInit())
     Writer.AddStmt(D->getInit());
   Code = pch::DECL_VAR;
@@ -445,7 +445,8 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       D->getStorageClass() == 0 &&
       !D->hasCXXDirectInitializer() && // Can params have this ever?
       D->getObjCDeclQualifier() == 0 &&
-      !D->hasInheritedDefaultArg())
+      !D->hasInheritedDefaultArg() &&
+      D->getInit() == 0)  // No default expr.
     AbbrevToUse = Writer.getParmVarDeclAbbrev();
 
   // Check things we know are true of *every* PARM_VAR_DECL, which is more than
@@ -456,7 +457,6 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   assert(!D->isDeclaredInCondition() && "PARM_VAR_DECL can't be in condition");
   assert(!D->isExceptionVariable() && "PARM_VAR_DECL can't be exception var");
   assert(D->getPreviousDeclaration() == 0 && "PARM_VAR_DECL can't be redecl");
-  assert(D->getInit() == 0 && "PARM_VAR_DECL never has init");
 }
 
 void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {

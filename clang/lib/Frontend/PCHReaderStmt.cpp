@@ -129,6 +129,7 @@ namespace {
     unsigned VisitCXXTypeidExpr(CXXTypeidExpr *E);
     unsigned VisitCXXThisExpr(CXXThisExpr *E);
     unsigned VisitCXXThrowExpr(CXXThrowExpr *E);
+    unsigned VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
   };
 }
 
@@ -532,7 +533,6 @@ unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   E->setSubExpr(cast<Expr>(StmtStack.back()));
   E->setCastKind((CastExpr::CastKind)Record[Idx++]);
-
   return 1;
 }
 
@@ -1004,6 +1004,7 @@ unsigned PCHStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   }
   
   // typeid(42+2)
+  E->setExprOperand(cast<Expr>(StmtStack.back()));
   return 1;
 }
 
@@ -1017,8 +1018,19 @@ unsigned PCHStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
 unsigned PCHStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
   VisitExpr(E);
   E->setThrowLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   return 1;
 }
+
+unsigned PCHStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
+  VisitExpr(E);
+  E->setUsedLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  bool HasStoredExpr = Record[Idx++];
+  if (!HasStoredExpr) return 0;
+  E->setExpr(cast<Expr>(StmtStack.back()));
+  return 1;  // Read it.
+}
+
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1380,6 +1392,9 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_CXX_THROW:
       S = new (Context) CXXThrowExpr(Empty);
+      break;
+    case pch::EXPR_CXX_DEFAULT_ARG:
+      S = new (Context) CXXDefaultArgExpr(Empty);
       break;
     }
 

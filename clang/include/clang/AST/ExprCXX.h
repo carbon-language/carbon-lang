@@ -351,6 +351,11 @@ public:
     return static_cast<Expr*>(Operand.get<Stmt *>());
   }
   
+  void setExprOperand(Expr *E) {
+    assert(!isTypeOperand() && "Cannot call getExprOperand for typeid(type)");
+    Operand = E;
+  }
+  
   virtual SourceRange getSourceRange() const { return Range; }
   void setSourceRange(SourceRange R) { Range = R; }
   
@@ -471,8 +476,7 @@ protected:
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
-    : Expr(SC, SubExpr->getType(), false, false), Param(param, true), Loc(Loc)
-  {
+    : Expr(SC, SubExpr->getType(), false, false), Param(param, true), Loc(Loc) {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
   
@@ -480,6 +484,9 @@ protected:
   virtual void DoDestroy(ASTContext &C);
   
 public:
+  CXXDefaultArgExpr(EmptyShell Empty) : Expr(CXXDefaultArgExprClass, Empty) {}
+
+  
   // Param is the parameter whose default argument is used by this
   // expression.
   static CXXDefaultArgExpr *Create(ASTContext &C, SourceLocation Loc,
@@ -498,6 +505,9 @@ public:
   const ParmVarDecl *getParam() const { return Param.getPointer(); }
   ParmVarDecl *getParam() { return Param.getPointer(); }
 
+  /// isExprStored - Return true if this expression owns the expression.
+  bool isExprStored() const { return Param.getInt(); }
+  
   // Retrieve the actual argument to the function call.
   const Expr *getExpr() const { 
     if (Param.getInt())
@@ -509,10 +519,16 @@ public:
       return *reinterpret_cast<Expr **> (this + 1);
     return getParam()->getDefaultArg(); 
   }
+  
+  void setExpr(Expr *E) {
+    Param.setInt(true);
+    Param.setPointer((ParmVarDecl*)E);
+  }
 
   /// \brief Retrieve the location where this default argument was actually 
   /// used.
   SourceLocation getUsedLocation() const { return Loc; }
+  void setUsedLocation(SourceLocation L) { Loc = L; }
   
   virtual SourceRange getSourceRange() const {
     // Default argument expressions have no representation in the
