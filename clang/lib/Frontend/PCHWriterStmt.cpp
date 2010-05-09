@@ -122,6 +122,7 @@ namespace {
     void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     void VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
+    void VisitCXXTypeidExpr(CXXTypeidExpr *E);
   };
 }
 
@@ -909,6 +910,18 @@ void PCHStmtWriter::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_CXX_NULL_PTR_LITERAL;
+}
+
+void PCHStmtWriter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceRange(E->getSourceRange(), Record);
+  if (E->isTypeOperand()) {
+    Writer.AddTypeSourceInfo(E->getTypeOperandSourceInfo(), Record);
+    Code = pch::EXPR_CXX_TYPEID_TYPE;
+  } else {
+    Writer.WriteSubStmt(E->getExprOperand());
+    Code = pch::EXPR_CXX_TYPEID_EXPR;
+  }
 }
 
 //===----------------------------------------------------------------------===//

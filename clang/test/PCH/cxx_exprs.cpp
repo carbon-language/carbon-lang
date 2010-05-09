@@ -33,3 +33,7 @@ static_assert(!false_value, "false_value is false");
 
 // CXXNullPtrLiteralExpr
 cxx_null_ptr_result null_ptr = nullptr;
+
+// CXXTypeidExpr
+typeid_result1 typeid_1 = 0;
+typeid_result2 typeid_2 = 0;

@@ -746,8 +746,9 @@ namespace clang {
       EXPR_CXX_FUNCTIONAL_CAST,
       // \brief A CXXBoolLiteralExpr record.
       EXPR_CXX_BOOL_LITERAL,
-      // \brief A CXXNullPtrLiteralExpr record.
-      EXPR_CXX_NULL_PTR_LITERAL
+      EXPR_CXX_NULL_PTR_LITERAL,  // CXXNullPtrLiteralExpr
+      EXPR_CXX_TYPEID_EXPR,       // CXXTypeidExpr (of expr).
+      EXPR_CXX_TYPEID_TYPE        // CXXTypeidExpr (of type).
     };
 
     /// \brief The kinds of designators that can occur in a

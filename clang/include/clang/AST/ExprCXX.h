@@ -321,6 +321,14 @@ public:
         Operand->isTypeDependent() || Operand->isValueDependent()),
       Operand(Operand), Range(R) { }
 
+  CXXTypeidExpr(EmptyShell Empty, bool isExpr)
+    : Expr(CXXTypeidExprClass, Empty) {
+    if (isExpr)
+      Operand = (Expr*)0;
+    else
+      Operand = (TypeSourceInfo*)0;
+  }
+  
   bool isTypeOperand() const { return Operand.is<TypeSourceInfo *>(); }
   
   /// \brief Retrieves the type operand of this typeid() expression after
@@ -332,15 +340,20 @@ public:
     assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
     return Operand.get<TypeSourceInfo *>();
   }
+
+  void setTypeOperandSourceInfo(TypeSourceInfo *TSI) {
+    assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
+    Operand = TSI;
+  }
   
-  Expr* getExprOperand() const {
+  Expr *getExprOperand() const {
     assert(!isTypeOperand() && "Cannot call getExprOperand for typeid(type)");
     return static_cast<Expr*>(Operand.get<Stmt *>());
   }
-
-  virtual SourceRange getSourceRange() const {
-    return Range;
-  }
+  
+  virtual SourceRange getSourceRange() const { return Range; }
+  void setSourceRange(SourceRange R) { Range = R; }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXTypeidExprClass;
   }

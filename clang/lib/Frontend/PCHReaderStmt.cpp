@@ -126,6 +126,7 @@ namespace {
     unsigned VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
     unsigned VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     unsigned VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
+    unsigned VisitCXXTypeidExpr(CXXTypeidExpr *E);
   };
 }
 
@@ -992,6 +993,19 @@ unsigned PCHStmtReader::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
   return 0;
 }
 
+unsigned PCHStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+  VisitExpr(E);
+  E->setSourceRange(Reader.ReadSourceRange(Record, Idx));
+  if (E->isTypeOperand()) { // typeid(int)
+    E->setTypeOperandSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+    return 0;
+  }
+  
+  // typeid(42+2)
+  return 1;
+}
+
+
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
 // expression they are stored in. To evaluate expressions, we
@@ -1340,6 +1354,12 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
 
     case pch::EXPR_CXX_NULL_PTR_LITERAL:
       S = new (Context) CXXNullPtrLiteralExpr(Empty);
+      break;
+    case pch::EXPR_CXX_TYPEID_EXPR:
+      S = new (Context) CXXTypeidExpr(Empty, true);
+      break;
+    case pch::EXPR_CXX_TYPEID_TYPE:
+      S = new (Context) CXXTypeidExpr(Empty, false);
       break;
     }
 

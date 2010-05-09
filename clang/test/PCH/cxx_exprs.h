@@ -1,5 +1,6 @@
 // Header for PCH test cxx_exprs.cpp
 
+
 // CXXStaticCastExpr
 typedef __typeof__(static_cast<void *>(0)) static_cast_result;
 
@@ -32,3 +33,13 @@ void foo(Derived *P) {
   // CXXMemberCallExpr
   P->f();
 }
+
+
+// FIXME: This is a hack until <typeinfo> works completely.
+namespace std {
+  class type_info {};
+}
+
+// CXXTypeidExpr - Both expr and type forms.
+typedef __typeof__(typeid(int))* typeid_result1;
+typedef __typeof__(typeid(2))*   typeid_result2;
