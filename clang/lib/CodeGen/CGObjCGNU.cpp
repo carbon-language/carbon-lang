@@ -237,7 +237,17 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
 }
 static std::string MangleSelectorTypes(const std::string &TypeString) {
   std::string Mangled = TypeString;
+  // Simple mangling to avoid breaking when we mix JIT / static code.
+  // Not part of the ABI, subject to change without notice.
   std::replace(Mangled.begin(), Mangled.end(), '@', '_');
+  std::replace(Mangled.begin(), Mangled.end(), ':', 'J');
+  std::replace(Mangled.begin(), Mangled.end(), '*', 'e');
+  std::replace(Mangled.begin(), Mangled.end(), '#', 'E');
+  std::replace(Mangled.begin(), Mangled.end(), ':', 'j');
+  std::replace(Mangled.begin(), Mangled.end(), '(', 'g');
+  std::replace(Mangled.begin(), Mangled.end(), ')', 'G');
+  std::replace(Mangled.begin(), Mangled.end(), '[', 'h');
+  std::replace(Mangled.begin(), Mangled.end(), ']', 'H');
   return Mangled;
 }
 
@@ -1670,9 +1680,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::LinkOnceODRLinkage,
-        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr"+iter->first.first+"."+MangleSelectorTypes(iter->first.second));
+      true, llvm::GlobalValue::LinkOnceODRLinkage,
+      llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
+      MangleSelectorTypes(".objc_sel_ptr"+iter->first.first+"."+
+         iter->first.second));
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
@@ -1688,9 +1699,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::LinkOnceODRLinkage,
-        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr"+iter->getKey());
+      true, llvm::GlobalValue::LinkOnceODRLinkage,
+      llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
+      MangleSelectorTypes(std::string(".objc_sel_ptr")+iter->getKey().str()));
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
