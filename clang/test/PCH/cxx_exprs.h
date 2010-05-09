@@ -6,7 +6,7 @@ typedef __typeof__(static_cast<void *>(0)) static_cast_result;
 
 // CXXDynamicCastExpr
 struct Base { virtual void f(); };
-struct Derived : Base { };
+struct Derived : Base { void g(); };
 Base *base_ptr;
 typedef __typeof__(dynamic_cast<Derived *>(base_ptr)) dynamic_cast_result;
 
@@ -43,3 +43,13 @@ namespace std {
 // CXXTypeidExpr - Both expr and type forms.
 typedef __typeof__(typeid(int))* typeid_result1;
 typedef __typeof__(typeid(2))*   typeid_result2;
+
+void Derived::g() {
+  // CXXThisExpr
+  f();        // Implicit
+  this->f();  // Explicit
+  
+  // CXXThrowExpr
+  throw;
+  throw 42;
+}

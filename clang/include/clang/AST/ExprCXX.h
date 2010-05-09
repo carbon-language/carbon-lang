@@ -387,6 +387,11 @@ public:
            Type->isDependentType(), Type->isDependentType()),
       Loc(L), Implicit(isImplicit) { }
 
+  CXXThisExpr(EmptyShell Empty) : Expr(CXXThisExprClass, Empty) {}
+
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   bool isImplicit() const { return Implicit; }
@@ -415,6 +420,8 @@ public:
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
     Expr(CXXThrowExprClass, Ty, false, false), Op(expr), ThrowLoc(l) {}
+  CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
+
   const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
   Expr *getSubExpr() { return cast_or_null<Expr>(Op); }
   void setSubExpr(Expr *E) { Op = E; }

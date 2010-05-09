@@ -127,6 +127,8 @@ namespace {
     unsigned VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     unsigned VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
     unsigned VisitCXXTypeidExpr(CXXTypeidExpr *E);
+    unsigned VisitCXXThisExpr(CXXThisExpr *E);
+    unsigned VisitCXXThrowExpr(CXXThrowExpr *E);
   };
 }
 
@@ -1005,6 +1007,18 @@ unsigned PCHStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
+  VisitExpr(E);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setImplicit(Record[Idx++]);
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
+  VisitExpr(E);
+  E->setThrowLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1360,6 +1374,12 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_CXX_TYPEID_TYPE:
       S = new (Context) CXXTypeidExpr(Empty, false);
+      break;
+    case pch::EXPR_CXX_THIS:
+      S = new (Context) CXXThisExpr(Empty);
+      break;
+    case pch::EXPR_CXX_THROW:
+      S = new (Context) CXXThrowExpr(Empty);
       break;
     }
 
