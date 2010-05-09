@@ -1189,8 +1189,10 @@ Sema::SubstituteExplicitTemplateArguments(
                                 ExplicitTemplateArgs,
                                 true,
                                 Builder) || Trap.hasErrorOccurred()) {
-    Info.Param = makeTemplateParameter(TemplateParams->getParam(
-                                                    Builder.structuredSize()));
+    unsigned Index = Builder.structuredSize();
+    if (Index >= TemplateParams->size())
+      Index = TemplateParams->size() - 1;
+    Info.Param = makeTemplateParameter(TemplateParams->getParam(Index));
     return TDK_InvalidExplicitArguments;
   }
 
