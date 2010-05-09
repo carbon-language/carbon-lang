@@ -423,7 +423,7 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
       return false;
   }
 
-  const ASTRecordLayout &Info = Context.getASTRecordLayout(RD);
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // Check bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -433,12 +433,12 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
     if (I->isVirtual())
       continue;
 
-    const CXXRecordDecl *Base =
+    const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
+    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
 
-    if (!canPlaceRecordAtOffset(Base, Offset + BaseClassOffset))
+    if (!canPlaceRecordAtOffset(BaseDecl, Offset + BaseOffset))
       return false;
   }
 
@@ -448,7 +448,7 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
        I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
 
-    uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
+    uint64_t FieldOffset = Layout.getFieldOffset(FieldNo);
 
     if (!canPlaceFieldAtOffset(FD, Offset + FieldOffset))
       return false;
