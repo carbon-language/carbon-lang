@@ -88,9 +88,12 @@ public:
 /// the object argument).
 class CXXMemberCallExpr : public CallExpr {
 public:
-  CXXMemberCallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
+  CXXMemberCallExpr(ASTContext &C, Expr *fn, Expr **args, unsigned numargs,
                     QualType t, SourceLocation rparenloc)
     : CallExpr(C, CXXMemberCallExprClass, fn, args, numargs, t, rparenloc) {}
+
+  CXXMemberCallExpr(ASTContext &C, EmptyShell Empty)
+    : CallExpr(C, CXXMemberCallExprClass, Empty) { }
 
   /// getImplicitObjectArgument - Retrieves the implicit object
   /// argument for the member call. For example, in "x.f(5)", this

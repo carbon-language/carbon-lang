@@ -1304,6 +1304,10 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
     case pch::EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(*Context, Empty);
       break;
+
+    case pch::EXPR_CXX_MEMBER_CALL:
+      S = new (Context) CXXMemberCallExpr(*Context, Empty);
+      break;
         
     case pch::EXPR_CXX_CONSTRUCT:
       S = new (Context) CXXConstructExpr(Empty, *Context,

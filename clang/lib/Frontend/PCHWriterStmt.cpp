@@ -112,6 +112,7 @@ namespace {
 
     // C++ Statements
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    void VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
     void VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
@@ -846,6 +847,11 @@ void PCHStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
   Code = pch::EXPR_CXX_OPERATOR_CALL;
+}
+
+void PCHStmtWriter::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  VisitCallExpr(E);
+  Code = pch::EXPR_CXX_MEMBER_CALL;
 }
 
 void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {

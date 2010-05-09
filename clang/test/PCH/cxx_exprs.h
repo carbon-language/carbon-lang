@@ -27,3 +27,8 @@ const bool false_value = false;
 
 // CXXNullPtrLiteralExpr
 typedef __typeof__(nullptr) cxx_null_ptr_result;
+
+void foo(Derived *P) {
+  // CXXMemberCallExpr
+  P->f();
+}

@@ -730,6 +730,8 @@ namespace clang {
 
       /// \brief A CXXOperatorCallExpr record.
       EXPR_CXX_OPERATOR_CALL,
+      /// \brief A CXXMemberCallExpr record.
+      EXPR_CXX_MEMBER_CALL,
       /// \brief A CXXConstructExpr record.
       EXPR_CXX_CONSTRUCT,
       // \brief A CXXStaticCastExpr record.
