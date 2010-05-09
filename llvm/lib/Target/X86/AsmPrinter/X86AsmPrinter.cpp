@@ -580,34 +580,32 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.EndCOFFSymbolDef();
     }
 
-    if (Subtarget->isTargetCygMing()) {
-      // Necessary for dllexport support
-      std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
+    // Necessary for dllexport support
+    std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
-      const TargetLoweringObjectFileCOFF &TLOFCOFF =
-        static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+    const TargetLoweringObjectFileCOFF &TLOFCOFF =
+      static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
 
-      for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (I->hasDLLExportLinkage())
-          DLLExportedFns.push_back(Mang->getSymbol(I));
+    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (I->hasDLLExportLinkage())
+        DLLExportedFns.push_back(Mang->getSymbol(I));
 
-      for (Module::const_global_iterator I = M.global_begin(),
-             E = M.global_end(); I != E; ++I)
-        if (I->hasDLLExportLinkage())
-          DLLExportedGlobals.push_back(Mang->getSymbol(I));
+    for (Module::const_global_iterator I = M.global_begin(),
+           E = M.global_end(); I != E; ++I)
+      if (I->hasDLLExportLinkage())
+        DLLExportedGlobals.push_back(Mang->getSymbol(I));
 
-      // Output linker support code for dllexported globals on windows.
-      if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
-        OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
-        for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
-          OutStreamer.EmitRawText("\t.ascii \" -export:" +
-                                  Twine(DLLExportedGlobals[i]->getName()) +
-                                  ",data\"");
+    // Output linker support code for dllexported globals on windows.
+    if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
+      OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
+      for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
+        OutStreamer.EmitRawText("\t.ascii \" -export:" +
+                                Twine(DLLExportedGlobals[i]->getName()) +
+                                ",data\"");
 
-        for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
-          OutStreamer.EmitRawText("\t.ascii \" -export:" +
-                                  Twine(DLLExportedFns[i]->getName()) + "\"");
-      }
+      for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
+        OutStreamer.EmitRawText("\t.ascii \" -export:" +
+                                Twine(DLLExportedFns[i]->getName()) + "\"");
     }
   }
 
