@@ -31,6 +31,7 @@ bool MCSectionCOFF::ShouldOmitSectionDirective(StringRef Name,
 void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                          raw_ostream &OS) const {
   
+  // standard sections don't require the '.section'
   if (ShouldOmitSectionDirective(SectionName, MAI)) {
     OS << '\t' << getSectionName() << '\n';
     return;
