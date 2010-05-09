@@ -74,7 +74,7 @@ public:
     /// It always has FnScope and DeclScope set as well.
     ObjCMethodScope = 0x400,
     
-    /// ElseScope - This scoep corresponds to an 'else' scope of an if/then/else
+    /// ElseScope - This scope corresponds to an 'else' scope of an if/then/else
     /// statement.
     ElseScope = 0x800
   };
