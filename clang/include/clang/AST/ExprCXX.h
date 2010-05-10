@@ -882,10 +882,15 @@ public:
                        SourceLocation rParenLoc ) :
     Expr(CXXZeroInitValueExprClass, ty, false, false),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+  explicit CXXZeroInitValueExpr(EmptyShell Shell)
+    : Expr(CXXZeroInitValueExprClass, Shell) { }
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
+  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+  
   /// @brief Whether this initialization expression was
   /// implicitly-generated.
   bool isImplicit() const {
@@ -946,6 +951,11 @@ public:
              Expr **constructorArgs, unsigned numConsArgs,
              FunctionDecl *operatorDelete, QualType ty,
              SourceLocation startLoc, SourceLocation endLoc);
+  explicit CXXNewExpr(EmptyShell Shell)
+    : Expr(CXXNewExprClass, Shell), SubExprs(0) { }
+
+  void AllocateArgsArray(ASTContext &C, bool isArray, unsigned numPlaceArgs,
+                         unsigned numConsArgs);
   
   virtual void DoDestroy(ASTContext &C);
 
@@ -955,8 +965,11 @@ public:
   }
 
   FunctionDecl *getOperatorNew() const { return OperatorNew; }
+  void setOperatorNew(FunctionDecl *D) { OperatorNew = D; }
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
+  void setOperatorDelete(FunctionDecl *D) { OperatorDelete = D; }
   CXXConstructorDecl *getConstructor() const { return Constructor; }
+  void setConstructor(CXXConstructorDecl *D) { Constructor = D; }
 
   bool isArray() const { return Array; }
   Expr *getArraySize() {
@@ -977,8 +990,11 @@ public:
   }
 
   bool isGlobalNew() const { return GlobalNew; }
+  void setGlobalNew(bool V) { GlobalNew = V; }
   bool isParenTypeId() const { return ParenTypeId; }
+  void setParenTypeId(bool V) { ParenTypeId = V; }
   bool hasInitializer() const { return Initializer; }
+  void setHasInitializer(bool V) { Initializer = V; }
 
   unsigned getNumConstructorArgs() const { return NumConstructorArgs; }
   Expr *getConstructorArg(unsigned i) {
@@ -1018,7 +1034,21 @@ public:
   const_arg_iterator constructor_arg_end() const {
     return SubExprs + Array + getNumPlacementArgs() + getNumConstructorArgs();
   }
+  
+  typedef Stmt **raw_arg_iterator;
+  raw_arg_iterator raw_arg_begin() { return SubExprs; }
+  raw_arg_iterator raw_arg_end() {
+    return SubExprs + Array + getNumPlacementArgs() + getNumConstructorArgs();
+  }
+  const_arg_iterator raw_arg_begin() const { return SubExprs; }
+  const_arg_iterator raw_arg_end() const { return constructor_arg_end(); }
 
+  
+  SourceLocation getStartLoc() const { return StartLoc; }
+  void setStartLoc(SourceLocation L) { StartLoc = L; }
+  SourceLocation getEndLoc() const { return EndLoc; }
+  void setEndLoc(SourceLocation L) { EndLoc = L; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(StartLoc, EndLoc);
   }

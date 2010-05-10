@@ -132,6 +132,9 @@ namespace {
     unsigned VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     unsigned VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
     
+    unsigned VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+    unsigned VisitCXXNewExpr(CXXNewExpr *E);
+    
     unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
 }
@@ -1041,6 +1044,42 @@ unsigned PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+  VisitExpr(E);
+  E->setTypeBeginLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
+  VisitExpr(E);
+  E->setGlobalNew(Record[Idx++]);
+  E->setParenTypeId(Record[Idx++]);
+  E->setHasInitializer(Record[Idx++]);
+  bool isArray = Record[Idx++];
+  unsigned NumPlacementArgs = Record[Idx++];
+  unsigned NumCtorArgs = Record[Idx++];
+  E->setOperatorNew(cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setOperatorDelete(
+                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setConstructor(
+               cast_or_null<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  
+  E->AllocateArgsArray(*Reader.getContext(), isArray, NumPlacementArgs,
+                       NumCtorArgs);
+
+  // Install all the subexpressions.
+  unsigned TotalSubExprs = E->raw_arg_end()-E->raw_arg_begin();
+  unsigned SSIdx = StmtStack.size()-TotalSubExprs;
+  for (CXXNewExpr::raw_arg_iterator I = E->raw_arg_begin(),e = E->raw_arg_end();
+       I != e; ++I)
+    *I = StmtStack[SSIdx++];
+  
+  return TotalSubExprs;
+}
+
 
 unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
@@ -1422,6 +1461,14 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
     case pch::EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;
+
+    case pch::EXPR_CXX_ZERO_INIT_VALUE:
+      S = new (Context) CXXZeroInitValueExpr(Empty);
+      break;
+    case pch::EXPR_CXX_NEW:
+      S = new (Context) CXXNewExpr(Empty);
+      break;
+        
         
     case pch::EXPR_CXX_EXPR_WITH_TEMPORARIES:
       S = new (Context) CXXExprWithTemporaries(Empty);

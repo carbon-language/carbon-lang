@@ -128,6 +128,9 @@ namespace {
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
     
+    void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+    void VisitCXXNewExpr(CXXNewExpr *E);
+    
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
 }
@@ -964,6 +967,34 @@ void PCHStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   Code = pch::EXPR_CXX_BIND_TEMPORARY;
 }
 
+void PCHStmtWriter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_CXX_ZERO_INIT_VALUE;
+}
+
+void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->isGlobalNew());
+  Record.push_back(E->isParenTypeId());
+  Record.push_back(E->hasInitializer());
+  Record.push_back(E->isArray());
+  Record.push_back(E->getNumPlacementArgs());
+  Record.push_back(E->getNumConstructorArgs());
+  Writer.AddDeclRef(E->getOperatorNew(), Record);
+  Writer.AddDeclRef(E->getOperatorDelete(), Record);
+  Writer.AddDeclRef(E->getConstructor(), Record);
+  Writer.AddSourceLocation(E->getStartLoc(), Record);
+  Writer.AddSourceLocation(E->getEndLoc(), Record);
+  for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), e = E->raw_arg_end();
+       I != e; ++I)
+    Writer.WriteSubStmt(*I);
+  
+  Code = pch::EXPR_CXX_NEW;
+}
+
+
 void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
   Record.push_back(E->getNumTemporaries());
@@ -1019,8 +1050,13 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
 
   Writer.Code = pch::STMT_NULL_PTR;
   Writer.Visit(S);
-  assert(Writer.Code != pch::STMT_NULL_PTR &&
-         "Unhandled expression writing PCH file");
+  
+#ifndef NDEBUG
+  if (Writer.Code == pch::STMT_NULL_PTR) {
+    S->dump();
+    assert(0 && "Unhandled sub statement writing PCH file");
+  }
+#endif
   Stream.EmitRecord(Writer.Code, Record);
 }
 

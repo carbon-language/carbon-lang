@@ -92,12 +92,11 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        SourceLocation startLoc, SourceLocation endLoc)
   : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
     GlobalNew(globalNew), ParenTypeId(parenTypeId),
-    Initializer(initializer), Array(arraySize), NumPlacementArgs(numPlaceArgs),
-    NumConstructorArgs(numConsArgs), OperatorNew(operatorNew),
+    Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
     StartLoc(startLoc), EndLoc(endLoc) {
-  unsigned TotalSize = Array + NumPlacementArgs + NumConstructorArgs;
-  SubExprs = new (C) Stmt*[TotalSize];
+      
+  AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;
   if (Array)
     SubExprs[i++] = arraySize;
@@ -105,8 +104,19 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
     SubExprs[i++] = placementArgs[j];
   for (unsigned j = 0; j < NumConstructorArgs; ++j)
     SubExprs[i++] = constructorArgs[j];
-  assert(i == TotalSize);
 }
+
+void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
+                                   unsigned numPlaceArgs, unsigned numConsArgs){
+  assert(SubExprs == 0 && "SubExprs already allocated");
+  Array = isArray;
+  NumPlacementArgs = numPlaceArgs;
+  NumConstructorArgs = numConsArgs; 
+  
+  unsigned TotalSize = Array + NumPlacementArgs + NumConstructorArgs;
+  SubExprs = new (C) Stmt*[TotalSize];
+}
+
 
 void CXXNewExpr::DoDestroy(ASTContext &C) {
   DestroyChildren(C);

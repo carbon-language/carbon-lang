@@ -5,8 +5,8 @@
 typedef __typeof__(static_cast<void *>(0)) static_cast_result;
 
 // CXXDynamicCastExpr
-struct Base { virtual void f(int x = 492); ~Base(); };
-struct Derived : Base { void g(); };
+struct Base { Base(int); virtual void f(int x = 492); ~Base(); };
+struct Derived : Base { Derived(); void g(); };
 Base *base_ptr;
 typedef __typeof__(dynamic_cast<Derived *>(base_ptr)) dynamic_cast_result;
 
@@ -46,6 +46,9 @@ typedef __typeof__(typeid(2))*   typeid_result2;
 
 Derived foo();
 
+Derived::Derived() : Base(4) {
+}
+
 void Derived::g() {
   // CXXThisExpr
   f(2);        // Implicit
@@ -60,6 +63,21 @@ void Derived::g() {
   
   const Derived &X = foo();
   
+  // FIXME: How do I make a CXXBindReferenceExpr, CXXConstructExpr? 
   
-  // FIXME: CXXBindReferenceExpr ?
+  int A = int(0.5);  // CXXFunctionalCastExpr
+  A = int();         // CXXZeroInitValueExpr
+  
+  new Base(4);       // CXXNewExpr
+  
 }
+
+
+// FIXME: The comment on CXXTemporaryObjectExpr is broken, this doesn't make
+// one.
+struct CtorStruct { CtorStruct(int, float); };
+
+CtorStruct create_CtorStruct() {
+  return CtorStruct(1, 3.14f); // CXXTemporaryObjectExpr
+};
+
