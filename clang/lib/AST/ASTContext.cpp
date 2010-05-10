@@ -110,9 +110,6 @@ ASTContext::~ASTContext() {
   if (GlobalNestedNameSpecifier)
     GlobalNestedNameSpecifier->Destroy(*this);
 
-  // Deallocate the memory associated with the DeclarationNameTable.
-  DeclarationNames.DoDestroy(*this);
-
   TUDecl->Destroy(*this);
 }
 

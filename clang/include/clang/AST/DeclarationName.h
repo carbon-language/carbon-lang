@@ -314,6 +314,7 @@ inline bool operator>=(DeclarationName LHS, DeclarationName RHS) {
 /// retrieved using its member functions (e.g.,
 /// getCXXConstructorName).
 class DeclarationNameTable {
+  ASTContext &Ctx;
   void *CXXSpecialNamesImpl; // Actually a FoldingSet<CXXSpecialName> *
   CXXOperatorIdName *CXXOperatorNames; // Operator names
   void *CXXLiteralOperatorNames; // Actually a CXXOperatorIdName*
@@ -324,10 +325,6 @@ class DeclarationNameTable {
 public:
   DeclarationNameTable(ASTContext &C);
   ~DeclarationNameTable();
-
-  /// Free all memory allocated associated with this DeclarationTable that
-  //  is used allocated using the specified ASTContext object.
-  void DoDestroy(ASTContext &C);
 
   /// getIdentifier - Create a declaration name that is a simple
   /// identifier.
