@@ -578,8 +578,9 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
           return TC_Success;
         }
       }
-      else if (CStyle && DestType->isObjCObjectPointerType()) {
-        // allow c-style cast of objective-c pointers as they are pervasive.
+      else if (DestType->isObjCObjectPointerType()) {
+        // allow both c-style cast and static_cast of objective-c pointers as 
+        // they are pervasive.
         Kind = CastExpr::CK_AnyPointerToObjCPointerCast;
         return TC_Success;
       }
