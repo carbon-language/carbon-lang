@@ -542,9 +542,9 @@ CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
 
 void CXXExprWithTemporaries::setNumTemporaries(unsigned N) {
   assert(Temps == 0 && "Cannot resize with this");
+  NumTemps = N;
   // FIXME: This is a memory leak in disable free mode.
   Temps = new CXXTemporary*[NumTemps];
-  NumTemps = N;
 }
 
 
