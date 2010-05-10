@@ -11,10 +11,11 @@
 // classes.
 //
 //===----------------------------------------------------------------------===//
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
-#include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -383,12 +384,12 @@ void DeclarationName::dump() const {
   llvm::errs() << '\n';
 }
 
-DeclarationNameTable::DeclarationNameTable() {
+DeclarationNameTable::DeclarationNameTable(ASTContext &C) {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
   CXXLiteralOperatorNames = new llvm::FoldingSet<CXXLiteralOperatorIdName>;
 
   // Initialize the overloaded operator names.
-  CXXOperatorNames = new CXXOperatorIdName[NUM_OVERLOADED_OPERATORS];
+  CXXOperatorNames = new (C) CXXOperatorIdName[NUM_OVERLOADED_OPERATORS];
   for (unsigned Op = 0; Op < NUM_OVERLOADED_OPERATORS; ++Op) {
     CXXOperatorNames[Op].ExtraKindOrNumArgs
       = Op + DeclarationNameExtra::CXXConversionFunction;
@@ -421,7 +422,12 @@ DeclarationNameTable::~DeclarationNameTable() {
 
   delete SpecialNames;
   delete LiteralNames;
-  delete [] CXXOperatorNames;
+}
+
+void DeclarationNameTable::DoDestroy(ASTContext &C) {
+  if (C.FreeMemory) {
+    C.Deallocate(CXXOperatorNames);
+  }
 }
 
 DeclarationName

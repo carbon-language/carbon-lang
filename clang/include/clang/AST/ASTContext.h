@@ -1294,6 +1294,7 @@ private:
   // but we include it here so that ASTContext can quickly deallocate them.
   llvm::PointerIntPair<StoredDeclsMap*,1> LastSDM;
   friend class DeclContext;
+  friend class DeclarationNameTable;
   void ReleaseDeclContextMaps();
 };
   

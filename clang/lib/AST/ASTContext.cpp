@@ -46,7 +46,9 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
   SourceMgr(SM), LangOpts(LOpts), FreeMemory(FreeMem), Target(t),
   Idents(idents), Selectors(sels),
-  BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts),
+  BuiltinInfo(builtins),
+  DeclarationNames(*this),
+  ExternalSource(0), PrintingPolicy(LOpts),
   LastSDM(0, 0) {
   ObjCIdRedefinitionType = QualType();
   ObjCClassRedefinitionType = QualType();
@@ -107,6 +109,9 @@ ASTContext::~ASTContext() {
 
   if (GlobalNestedNameSpecifier)
     GlobalNestedNameSpecifier->Destroy(*this);
+
+  // Deallocate the memory associated with the DeclarationNameTable.
+  DeclarationNames.DoDestroy(*this);
 
   TUDecl->Destroy(*this);
 }
