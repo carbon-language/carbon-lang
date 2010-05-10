@@ -564,8 +564,20 @@ public:
   const CXXDestructorDecl *getDestructor() const { return Destructor; }
 };
 
-/// CXXBindTemporaryExpr - Represents binding an expression to a temporary,
-/// so its destructor can be called later.
+/// \brief Represents binding an expression to a temporary.
+///
+/// This ensures the destructor is called for the temporary. It should only be
+/// needed for non-POD, non-trivially destructable class types. For example:
+///
+/// \code
+///   struct S {
+///     S() { }  // User defined constructor makes S non-POD.
+///     ~S() { } // User defined destructor makes it non-trivial.
+///   };
+///   void test() {
+///     const S &s_ref = S(); // Requires a CXXBindTemporaryExpr.
+///   }
+/// \endcode
 class CXXBindTemporaryExpr : public Expr {
   CXXTemporary *Temp;
 
