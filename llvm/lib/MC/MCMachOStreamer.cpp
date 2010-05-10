@@ -31,6 +31,9 @@ private:
   MCAssembler Assembler;
   MCSectionData *CurSectionData;
 
+  /// Track the current atom for each section.
+  DenseMap<const MCSectionData*, MCSymbolData*> CurrentAtomMap;
+
 private:
   MCFragment *getCurrentFragment() const {
     assert(CurSectionData && "No current section!");
@@ -46,8 +49,15 @@ private:
   MCDataFragment *getOrCreateDataFragment() const {
     MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
     if (!F)
-      F = new MCDataFragment(CurSectionData);
+      F = createDataFragment();
     return F;
+  }
+
+  /// Create a new data fragment in the current section.
+  MCDataFragment *createDataFragment() const {
+    MCDataFragment *DF = new MCDataFragment(CurSectionData);
+    DF->setAtom(CurrentAtomMap.lookup(CurSectionData));
+    return DF;
   }
 
 public:
@@ -159,12 +169,23 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(CurSection && "Cannot emit before setting section!");
 
+  MCSymbolData &SD = Assembler.getOrCreateSymbolData(*Symbol);
+
+  // Update the current atom map, if necessary.
+  bool MustCreateFragment = false;
+  if (Assembler.isSymbolLinkerVisible(&SD)) {
+    CurrentAtomMap[CurSectionData] = &SD;
+
+    // We have to create a new fragment, fragments cannot span atoms.
+    MustCreateFragment = true;
+  }
+
   // FIXME: This is wasteful, we don't necessarily need to create a data
   // fragment. Instead, we should mark the symbol as pointing into the data
   // fragment if it exists, otherwise we should just queue the label and set its
   // fragment pointer when we emit the next fragment.
-  MCDataFragment *F = getOrCreateDataFragment();
-  MCSymbolData &SD = Assembler.getOrCreateSymbolData(*Symbol);
+  MCDataFragment *F =
+    MustCreateFragment ? createDataFragment() : getOrCreateDataFragment();
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
   SD.setFragment(F);
   SD.setOffset(F->getContents().size());
@@ -302,6 +323,8 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   MCFragment *F = new MCZeroFillFragment(Size, ByteAlignment, &SectData);
   SD.setFragment(F);
+  if (Assembler.isSymbolLinkerVisible(&SD))
+    F->setAtom(&SD);
 
   Symbol->setSection(*Section);
 
@@ -336,8 +359,10 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                            unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
-                      false /* EmitNops */, CurSectionData);
+  MCFragment *F = new MCAlignFragment(ByteAlignment, Value, ValueSize,
+                                      MaxBytesToEmit, /*EmitNops=*/false,
+                                      CurSectionData);
+  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > CurSectionData->getAlignment())
@@ -348,8 +373,9 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                         unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
-                      true /* EmitNops */, CurSectionData);
+  MCFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
+                                      /*EmitNops=*/true, CurSectionData);
+  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > CurSectionData->getAlignment())
@@ -358,7 +384,8 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 
 void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
-  new MCOrgFragment(*Offset, Value, CurSectionData);
+  MCFragment *F = new MCOrgFragment(*Offset, Value, CurSectionData);
+  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
@@ -401,6 +428,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // are going to often know that we can never fully resolve a fixup.
   if (Assembler.getBackend().MayNeedRelaxation(Inst, AsmFixups)) {
     MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
+    IF->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
     // Add the fixups and data.
     //

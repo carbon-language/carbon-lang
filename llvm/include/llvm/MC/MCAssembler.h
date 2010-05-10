@@ -32,6 +32,7 @@ class MCObjectWriter;
 class MCSection;
 class MCSectionData;
 class MCSymbol;
+class MCSymbolData;
 class MCValue;
 class TargetAsmBackend;
 
@@ -78,6 +79,11 @@ private:
   /// Parent - The data for the section this fragment is in.
   MCSectionData *Parent;
 
+  /// Atom - The atom this fragment is in, as represented by it's defining
+  /// symbol. Atom's are only used by backends which set
+  /// \see MCAsmBackend::hasReliableSymbolDifference().
+  MCSymbolData *Atom;
+
   /// @name Assembler Backend Data
   /// @{
   //
@@ -109,6 +115,9 @@ public:
 
   MCSectionData *getParent() const { return Parent; }
   void setParent(MCSectionData *Value) { Parent = Value; }
+
+  MCSymbolData *getAtom() const { return Atom; }
+  void setAtom(MCSymbolData *Value) { Atom = Value; }
 
   unsigned getOrdinal() const { return Ordinal; }
   void setOrdinal(unsigned Value) { Ordinal = Value; }

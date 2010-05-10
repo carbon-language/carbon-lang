@@ -133,17 +133,13 @@ void MCAsmLayout::setSectionFileSize(MCSectionData *SD, uint64_t Value) {
   SD->FileSize = Value;
 }
 
-  /// @}
-
 /* *** */
 
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 }
 
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
-  : Kind(_Kind),
-    Parent(_Parent),
-    EffectiveSize(~UINT64_C(0))
+  : Kind(_Kind), Parent(_Parent), Atom(0), EffectiveSize(~UINT64_C(0))
 {
   if (Parent)
     Parent->getFragmentList().push_back(this);
