@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g %s -fblocks -S -o /dev/null
+// RUN: %clang_cc1 -g %s -fblocks -S -o %t
 // Radar 7959934
 
 @interface NSObject {
