@@ -329,7 +329,7 @@ public:
   /// InstrIsPHI - Check if an instruction is a PHI.
   ///
   static MachineInstr *InstrIsPHI(MachineInstr *I) {
-    if (I->isPHI())
+    if (I && I->isPHI())
       return I;
     return 0;
   }
