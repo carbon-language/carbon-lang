@@ -48,12 +48,8 @@ struct EvalInfo {
   /// EvalResult - Contains information about the evaluation.
   Expr::EvalResult &EvalResult;
 
-  /// AnyLValue - Stack based LValue results are not discarded.
-  bool AnyLValue;
-
-  EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult,
-           bool anylvalue = false)
-    : Ctx(ctx), EvalResult(evalresult), AnyLValue(anylvalue) {}
+  EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult)
+    : Ctx(ctx), EvalResult(evalresult) {}
 };
 
 namespace {
@@ -110,6 +106,24 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 // Misc utilities
 //===----------------------------------------------------------------------===//
 
+static bool IsGlobalLValue(LValue &Value) {
+  const Expr *E = Value.Base;
+  if (!E) return true;
+
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (isa<FunctionDecl>(DRE->getDecl()))
+      return true;
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+      return VD->hasGlobalStorage();
+    return false;
+  }
+
+  if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(E))
+    return CLE->isFileScope();
+
+  return true;
+}
+
 static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
   const Expr* Base = Value.Base;
 
@@ -120,10 +134,12 @@ static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
     return true;
   }
 
+  // Require the base expression to be a global l-value.
+  if (!IsGlobalLValue(Value)) return false;
+
   // We have a non-null base expression.  These are generally known to
   // be true, but if it'a decl-ref to a weak symbol it can be null at
   // runtime.
-
   Result = true;
 
   const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
@@ -338,8 +354,6 @@ bool LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
   if (isa<FunctionDecl>(E->getDecl())) {
     return Success(E);
   } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
-    if (!Info.AnyLValue && !VD->hasGlobalStorage())
-      return false;
     if (!VD->getType()->isReferenceType())
       return Success(E);
     // FIXME: Check whether VD might be overridden!
@@ -351,8 +365,6 @@ bool LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
 }
 
 bool LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-  if (!Info.AnyLValue && !E->isFileScope())
-    return false;
   return Success(E);
 }
 
@@ -921,6 +933,8 @@ public:
 private:
   CharUnits GetAlignOfExpr(const Expr *E);
   CharUnits GetAlignOfType(QualType T);
+  static QualType GetObjectType(const Expr *E);
+  bool TryEvaluateBuiltinObjectSize(CallExpr *E);
   // FIXME: Missing: array subscript of vector, member of vector
 };
 } // end anonymous namespace
@@ -1038,36 +1052,55 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
   return -1;
 }
 
+/// Retrieves the "underlying object type" of the given expression,
+/// as used by __builtin_object_size.
+QualType IntExprEvaluator::GetObjectType(const Expr *E) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+      return VD->getType();
+  } else if (isa<CompoundLiteralExpr>(E)) {
+    return E->getType();
+  }
+
+  return QualType();
+}
+
+bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(CallExpr *E) {
+  // TODO: Perhaps we should let LLVM lower this?
+  LValue Base;
+  if (!EvaluatePointer(E->getArg(0), Base, Info))
+    return false;
+
+  // If we can prove the base is null, lower to zero now.
+  const Expr *LVBase = Base.getLValueBase();
+  if (!LVBase) return Success(0, E);
+
+  QualType T = GetObjectType(LVBase);
+  if (T.isNull() ||
+      T->isIncompleteType() ||
+      !T->isObjectType() ||
+      T->isVariablyModifiedType() ||
+      T->isDependentType())
+    return false;
+
+  CharUnits Size = Info.Ctx.getTypeSizeInChars(T);
+  CharUnits Offset = Base.getLValueOffset();
+
+  if (!Offset.isNegative() && Offset <= Size)
+    Size -= Offset;
+  else
+    Size = CharUnits::Zero();
+  return Success(Size.getQuantity(), E);
+}
+
 bool IntExprEvaluator::VisitCallExpr(CallExpr *E) {
   switch (E->isBuiltinCall(Info.Ctx)) {
   default:
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
 
   case Builtin::BI__builtin_object_size: {
-    const Expr *Arg = E->getArg(0)->IgnoreParens();
-    Expr::EvalResult Base;
-    
-    // TODO: Perhaps we should let LLVM lower this?
-    if (Arg->EvaluateAsAny(Base, Info.Ctx)
-        && Base.Val.getKind() == APValue::LValue
-        && !Base.HasSideEffects)
-      if (const Expr *LVBase = Base.Val.getLValueBase())
-        if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVBase)) {
-          if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
-            if (!VD->getType()->isIncompleteType()
-                && VD->getType()->isObjectType()
-                && !VD->getType()->isVariablyModifiedType()
-                && !VD->getType()->isDependentType()) {
-              CharUnits Size = Info.Ctx.getTypeSizeInChars(VD->getType());
-              CharUnits Offset = Base.Val.getLValueOffset();
-              if (!Offset.isNegative() && Offset <= Size)
-                Size -= Offset;
-              else
-                Size = CharUnits::Zero();
-              return Success(Size.getQuantity(), E);
-            }
-          }
-        }
+    if (TryEvaluateBuiltinObjectSize(E))
+      return true;
 
     // If evaluating the argument has side-effects we can't determine
     // the size of the object and lower it to unknown now.
@@ -2137,7 +2170,13 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 // Top level Expr::Evaluate method.
 //===----------------------------------------------------------------------===//
 
-static bool Evaluate(const Expr *E, EvalInfo &Info) {
+/// Evaluate - Return true if this is a constant which we can fold using
+/// any crazy technique (that has nothing to do with language standards) that
+/// we want to.  If this function returns true, it returns the folded constant
+/// in Result.
+bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
+  const Expr *E = this;
+  EvalInfo Info(Ctx, Result);
   if (E->getType()->isVectorType()) {
     if (!EvaluateVector(E, Info.EvalResult.Val, Info))
       return false;
@@ -2147,6 +2186,8 @@ static bool Evaluate(const Expr *E, EvalInfo &Info) {
   } else if (E->getType()->hasPointerRepresentation()) {
     LValue LV;
     if (!EvaluatePointer(E, LV, Info))
+      return false;
+    if (!IsGlobalLValue(LV))
       return false;
     LV.moveInto(Info.EvalResult.Val);
   } else if (E->getType()->isRealFloatingType()) {
@@ -2166,20 +2207,6 @@ static bool Evaluate(const Expr *E, EvalInfo &Info) {
   return true;
 }
 
-/// Evaluate - Return true if this is a constant which we can fold using
-/// any crazy technique (that has nothing to do with language standards) that
-/// we want to.  If this function returns true, it returns the folded constant
-/// in Result.
-bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
-  EvalInfo Info(Ctx, Result);
-  return ::Evaluate(this, Info);
-}
-
-bool Expr::EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const {
-  EvalInfo Info(Ctx, Result, true);
-  return ::Evaluate(this, Info);
-}
-
 bool Expr::EvaluateAsBooleanCondition(bool &Result, ASTContext &Ctx) const {
   EvalResult Scratch;
   EvalInfo Info(Ctx, Scratch);
@@ -2191,18 +2218,9 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
   LValue LV;
-  if (EvaluateLValue(this, LV, Info) && !Result.HasSideEffects) {
-    LV.moveInto(Result.Val);
-    return true;
-  }
-  return false;
-}
-
-bool Expr::EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const {
-  EvalInfo Info(Ctx, Result, true);
-
-  LValue LV;
-  if (EvaluateLValue(this, LV, Info) && !Result.HasSideEffects) {
+  if (EvaluateLValue(this, LV, Info) &&
+      !Result.HasSideEffects &&
+      IsGlobalLValue(LV)) {
     LV.moveInto(Result.Val);
     return true;
   }

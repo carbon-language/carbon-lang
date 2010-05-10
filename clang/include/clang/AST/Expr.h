@@ -255,10 +255,6 @@ public:
   /// in Result.
   bool Evaluate(EvalResult &Result, ASTContext &Ctx) const;
 
-  /// EvaluateAsAny - The same as Evaluate, except that it also succeeds on
-  /// stack based objects.
-  bool EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const;
-
   /// EvaluateAsBooleanCondition - Return true if this is a constant
   /// which we we can fold and convert to a boolean condition using
   /// any crazy technique that we want to.
@@ -281,10 +277,6 @@ public:
   /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue
   /// with link time known address.
   bool EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const;
-
-  /// EvaluateAsAnyLValue - The same as EvaluateAsLValue, except that it
-  /// also succeeds on stack based, immutable address lvalues.
-  bool EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const;
 
   /// \brief Enumeration used to describe how \c isNullPointerConstant()
   /// should cope with value-dependent expressions.
