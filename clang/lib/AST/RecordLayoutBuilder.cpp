@@ -375,7 +375,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // If we have an empty base class, try to place it at offset 0.
-  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
+  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0, /*CheckVBases=*/false)) {
     // We were able to place the class at offset 0.
     UpdateEmptyClassOffsets(RD, 0);
 
@@ -391,7 +391,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
 
   // Try to place the base.
   while (true) {
-    if (canPlaceRecordAtOffset(RD, Offset))
+    if (canPlaceRecordAtOffset(RD, Offset, /*CheckVBases=*/false))
       break;
 
     Offset += BaseAlign;
@@ -412,8 +412,10 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   return Offset;
 }
 
-bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
-                                                    uint64_t Offset) const {
+bool 
+ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
+                                               uint64_t Offset, 
+                                               bool CheckVBases) const {
   // Look for an empty class with the same type at the same offset.
   for (EmptyClassOffsetsTy::const_iterator I =
          EmptyClassOffsets.lower_bound(Offset),
@@ -438,7 +440,8 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
 
     uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
 
-    if (!canPlaceRecordAtOffset(BaseDecl, Offset + BaseOffset))
+    if (!canPlaceRecordAtOffset(BaseDecl, Offset + BaseOffset,
+                                /*CheckVBases=*/false))
       return false;
   }
 
@@ -454,7 +457,10 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
       return false;
   }
 
-  // FIXME: virtual bases.
+  if (CheckVBases) {
+    // FIXME: virtual bases.
+  }
+
   return true;
 }
 
@@ -463,7 +469,7 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
   QualType T = FD->getType();
   if (const RecordType *RT = T->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-      return canPlaceRecordAtOffset(RD, Offset);
+      return canPlaceRecordAtOffset(RD, Offset, /*CheckVBases=*/true);
   }
 
   if (const ConstantArrayType *AT = Context.getAsConstantArrayType(T)) {
@@ -480,7 +486,7 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
     uint64_t NumElements = Context.getConstantArrayElementCount(AT);
     uint64_t ElementOffset = Offset;
     for (uint64_t I = 0; I != NumElements; ++I) {
-      if (!canPlaceRecordAtOffset(RD, ElementOffset))
+      if (!canPlaceRecordAtOffset(RD, ElementOffset, /*CheckVBases=*/true))
         return false;
 
       ElementOffset += Layout.getSize();

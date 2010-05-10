@@ -140,7 +140,8 @@ class ASTRecordLayoutBuilder {
   /// or a field) can be placed at the given offset. 
   /// Returns false if placing the record will result in two components 
   /// (direct or indirect) of the same type having the same offset.
-  bool canPlaceRecordAtOffset(const CXXRecordDecl *RD, uint64_t Offset) const;
+  bool canPlaceRecordAtOffset(const CXXRecordDecl *RD, uint64_t Offset,
+                              bool CheckVBases) const;
 
   /// canPlaceFieldAtOffset - Return whether a field can be placed at the given
   /// offset.
