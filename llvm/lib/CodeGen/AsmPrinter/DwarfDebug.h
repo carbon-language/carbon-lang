@@ -82,8 +82,8 @@ class DwarfDebug {
   // Attributes used to construct specific Dwarf sections.
   //
 
-  /// ModuleCU - All DIEs are inserted in ModuleCU.
-  CompileUnit *ModuleCU;
+  CompileUnit *FirstCU;
+  DenseMap <const MDNode *, CompileUnit *> CUMap;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
@@ -506,10 +506,17 @@ private:
   /// maps as well.
   unsigned GetOrCreateSourceID(StringRef DirName, StringRef FileName);
 
+  /// constructCompileUnit - Create new CompileUnit for the given 
+  /// metadata node with tag DW_TAG_compile_unit.
   void constructCompileUnit(const MDNode *N);
 
+  /// getCompielUnit - Get CompileUnit DIE.
+  CompileUnit *getCompileUnit(const MDNode *N) const;
+
+  /// constructGlobalVariableDIE - Construct global variable DIE.
   void constructGlobalVariableDIE(const MDNode *N);
 
+  /// construct SubprogramDIE - Construct subprogram DIE.
   void constructSubprogramDIE(const MDNode *N);
 
   // FIXME: This should go away in favor of complex addresses.

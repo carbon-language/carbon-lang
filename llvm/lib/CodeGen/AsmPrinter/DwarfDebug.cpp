@@ -326,7 +326,7 @@ DbgScope::~DbgScope() {
 }
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-  : Asm(A), MMI(Asm->MMI), ModuleCU(0),
+  : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), 
     CurrentFnDbgScope(0), PrevLabel(NULL) {
   NextStringPoolNumber = 0;
@@ -881,22 +881,23 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   } else if (Context.isNameSpace()) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
     ContextDIE->addChild(Die);
-  } else if (DIE *ContextDIE = ModuleCU->getDIE(Context))
+  } else if (DIE *ContextDIE = getCompileUnit(Context)->getDIE(Context))
     ContextDIE->addChild(Die);
   else 
-    ModuleCU->addDie(Die);
+    getCompileUnit(Context)->addDie(Die);
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *DwarfDebug::getOrCreateTypeDIE(DIType Ty) {
-  DIE *TyDIE = ModuleCU->getDIE(Ty);
+  CompileUnit *TypeCU = getCompileUnit(Ty);
+  DIE *TyDIE = TypeCU->getDIE(Ty);
   if (TyDIE)
     return TyDIE;
 
   // Create new type.
   TyDIE = new DIE(dwarf::DW_TAG_base_type);
-  ModuleCU->insertDIE(Ty, TyDIE);
+  TypeCU->insertDIE(Ty, TyDIE);
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType())
@@ -916,7 +917,8 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
     return;
 
   // Check for pre-existence.
-  DIEEntry *Entry = ModuleCU->getDIEEntry(Ty);
+  CompileUnit *TypeCU = getCompileUnit(Ty);
+  DIEEntry *Entry = TypeCU->getDIEEntry(Ty);
   // If it exists then use the existing value.
   if (Entry) {
     Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
@@ -928,7 +930,7 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
 
   // Set up proxy.
   Entry = createDIEEntry(Buffer);
-  ModuleCU->insertDIEEntry(Ty, Entry);
+  TypeCU->insertDIEEntry(Ty, Entry);
 
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
 }
@@ -1123,15 +1125,16 @@ void DwarfDebug::constructArrayTypeDIE(DIE &Buffer,
   DIArray Elements = CTy->getTypeArray();
 
   // Get an anonymous type for index type.
-  DIE *IdxTy = ModuleCU->getIndexTyDie();
+  CompileUnit *TheCU = getCompileUnit(*CTy);
+  DIE *IdxTy = TheCU->getIndexTyDie();
   if (!IdxTy) {
     // Construct an anonymous type for index type.
     IdxTy = new DIE(dwarf::DW_TAG_base_type);
     addUInt(IdxTy, dwarf::DW_AT_byte_size, 0, sizeof(int32_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
             dwarf::DW_ATE_signed);
-    ModuleCU->addDie(IdxTy);
-    ModuleCU->setIndexTyDie(IdxTy);
+    TheCU->addDie(IdxTy);
+    TheCU->setIndexTyDie(IdxTy);
   }
 
   // Add subranges to array type.
@@ -1265,7 +1268,8 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
 
 /// createSubprogramDIE - Create new DIE using SP.
 DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
-  DIE *SPDie = ModuleCU->getDIE(SP);
+  CompileUnit *SPCU = getCompileUnit(SP);
+  DIE *SPDie = SPCU->getDIE(SP);
   if (SPDie)
     return SPDie;
 
@@ -1338,7 +1342,7 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     addUInt(SPDie, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  ModuleCU->insertDIE(SP, SPDie);
+  SPCU->insertDIE(SP, SPDie);
 
   return SPDie;
 }
@@ -1388,7 +1392,8 @@ static bool isSubprogramContext(const MDNode *Context) {
 /// If there are global variables in this scope then create and insert
 /// DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
-  DIE *SPDie = ModuleCU->getDIE(SPNode);
+  CompileUnit *SPCU = getCompileUnit(SPNode);
+  DIE *SPDie = SPCU->getDIE(SPNode);
   assert(SPDie && "Unable to find subprogram DIE!");
   DISubprogram SP(SPNode);
   
@@ -1419,7 +1424,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
     SPDie = new DIE(dwarf::DW_TAG_subprogram);
     addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4, 
                 SPDeclDie);
-    ModuleCU->addDie(SPDie);
+    SPCU->addDie(SPDie);
   }
   
   addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
@@ -1508,7 +1513,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
 
   DISubprogram InlinedSP = getDISubprogram(DS);
-  DIE *OriginDIE = ModuleCU->getDIE(InlinedSP);
+  CompileUnit *TheCU = getCompileUnit(InlinedSP);
+  DIE *OriginDIE = TheCU->getDIE(InlinedSP);
   assert(OriginDIE && "Unable to find Origin DIE!");
   addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, OriginDIE);
@@ -1530,7 +1536,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
     I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
 
   DILocation DL(Scope->getInlinedAt());
-  addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, ModuleCU->getID());
+  addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, TheCU->getID());
   addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
   return ScopeDIE;
@@ -1571,7 +1577,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   if (AbsDIE) {
     DIScope DS(Scope->getScopeNode());
     DISubprogram InlinedSP = getDISubprogram(DS);
-    DIE *OriginSPDIE = ModuleCU->getDIE(InlinedSP);
+    DIE *OriginSPDIE = getCompileUnit(InlinedSP)->getDIE(InlinedSP);
     (void) OriginSPDIE;
     assert(OriginSPDIE && "Unable to find Origin DIE for the SP!");
     DIE *AbsDIE = DV->getAbstractVariable()->getDIE();
@@ -1660,8 +1666,9 @@ void DwarfDebug::addPubTypes(DISubprogram SP) {
     DICompositeType CATy = getDICompositeType(ATy);
     if (DIDescriptor(CATy).Verify() && !CATy.getName().empty()
         && !CATy.isForwardDecl()) {
-      if (DIEEntry *Entry = ModuleCU->getDIEEntry(CATy))
-        ModuleCU->addGlobalType(CATy.getName(), Entry->getEntry());
+      CompileUnit *TheCU = getCompileUnit(CATy);
+      if (DIEEntry *Entry = TheCU->getDIEEntry(CATy))
+        TheCU->addGlobalType(CATy.getName(), Entry->getEntry());
     }
   }
 }
@@ -1677,7 +1684,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
     ScopeDIE = constructInlinedScopeDIE(Scope);
   else if (DS.isSubprogram()) {
     if (Scope->isAbstractScope())
-      ScopeDIE = ModuleCU->getDIE(DS);
+      ScopeDIE = getCompileUnit(DS)->getDIE(DS);
     else
       ScopeDIE = updateSubprogramScopeDIE(DS);
   }
@@ -1747,11 +1754,12 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName){
 
 /// getOrCreateNameSpace - Create a DIE for DINameSpace.
 DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace NS) {
-  DIE *NDie = ModuleCU->getDIE(NS);
+  CompileUnit *TheCU = getCompileUnit(NS);
+  DIE *NDie = TheCU->getDIE(NS);
   if (NDie)
     return NDie;
   NDie = new DIE(dwarf::DW_TAG_namespace);
-  ModuleCU->insertDIE(NS, NDie);
+  TheCU->insertDIE(NS, NDie);
   if (!NS.getName().empty())
     addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
   addSourceLine(NDie, &NS);
@@ -1759,12 +1767,10 @@ DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace NS) {
   return NDie;
 }
 
+/// constructCompileUnit - Create new CompileUnit for the given 
+/// metadata node with tag DW_TAG_compile_unit.
 void DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
-  // Use first compile unit marked as isMain as the compile unit for this
-  // module.
-  if (ModuleCU || !DIUnit.isMain())
-    return;
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
   unsigned ID = GetOrCreateSourceID(Dir, FN);
@@ -1797,11 +1803,43 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
     addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
             dwarf::DW_FORM_data1, RVer);
 
-  assert(!ModuleCU &&
-         "ModuleCU assigned since the top of constructCompileUnit");
-  ModuleCU = new CompileUnit(ID, Die);
+  CompileUnit *NewCU = new CompileUnit(ID, Die);
+  if (!FirstCU)
+    FirstCU = NewCU;
+  CUMap.insert(std::make_pair(N, NewCU));
 }
 
+/// getCompielUnit - Get CompileUnit DIE.
+CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
+  assert (N && "Invalid DwarfDebug::getCompileUnit argument!");
+  DIDescriptor D(N);
+  const MDNode *CUNode = NULL;
+  if (D.isCompileUnit())
+    CUNode = N;
+  else if (D.isSubprogram())
+    CUNode = DISubprogram(N).getCompileUnit();
+  else if (D.isType())
+    CUNode = DIType(N).getCompileUnit();
+  else if (D.isGlobalVariable())
+    CUNode = DIGlobalVariable(N).getCompileUnit();
+  else if (D.isVariable())
+    CUNode = DIVariable(N).getCompileUnit();
+  else if (D.isNameSpace())
+    CUNode = DINameSpace(N).getCompileUnit();
+  else if (D.isFile())
+    CUNode = DIFile(N).getCompileUnit();
+  else
+    return FirstCU;
+
+  DenseMap<const MDNode *, CompileUnit *>::const_iterator I
+    = CUMap.find(CUNode);
+  if (I == CUMap.end())
+    return FirstCU;
+  return I->second;
+}
+
+
+/// constructGlobalVariableDIE - Construct global variable DIE.
 void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
   DIGlobalVariable DI_GV(N);
 
@@ -1810,7 +1848,8 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     return;
 
   // Check for pre-existence.
-  if (ModuleCU->getDIE(DI_GV))
+  CompileUnit *TheCU = getCompileUnit(N);
+  if (TheCU->getDIE(DI_GV))
     return;
 
   DIE *VariableDie = createGlobalVariableDIE(DI_GV);
@@ -1818,7 +1857,7 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     return;
 
   // Add to map.
-  ModuleCU->insertDIE(N, VariableDie);
+  TheCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
   DIDescriptor GVContext = DI_GV.getContext();
@@ -1837,7 +1876,7 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
              Asm->Mang->getSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
     addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-    ModuleCU->addDie(VariableSpecDIE);
+    TheCU->addDie(VariableSpecDIE);
   } else {
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
@@ -1848,23 +1887,25 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
   addToContextOwner(VariableDie, GVContext);
   
   // Expose as global. FIXME - need to check external flag.
-  ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
+  TheCU->addGlobal(DI_GV.getName(), VariableDie);
 
   DIType GTy = DI_GV.getType();
   if (GTy.isCompositeType() && !GTy.getName().empty()
       && !GTy.isForwardDecl()) {
-    DIEEntry *Entry = ModuleCU->getDIEEntry(GTy);
+    DIEEntry *Entry = TheCU->getDIEEntry(GTy);
     assert(Entry && "Missing global type!");
-    ModuleCU->addGlobalType(GTy.getName(), Entry->getEntry());
+    TheCU->addGlobalType(GTy.getName(), Entry->getEntry());
   }
   return;
 }
 
+/// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(const MDNode *N) {
   DISubprogram SP(N);
 
   // Check for pre-existence.
-  if (ModuleCU->getDIE(N))
+  CompileUnit *TheCU = getCompileUnit(N);
+  if (TheCU->getDIE(N))
     return;
 
   if (!SP.isDefinition())
@@ -1875,13 +1916,13 @@ void DwarfDebug::constructSubprogramDIE(const MDNode *N) {
   DIE *SubprogramDie = createSubprogramDIE(SP);
 
   // Add to map.
-  ModuleCU->insertDIE(N, SubprogramDie);
+  TheCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
   addToContextOwner(SubprogramDie, SP.getContext());
 
   // Expose as global.
-  ModuleCU->addGlobal(SP.getName(), SubprogramDie);
+  TheCU->addGlobal(SP.getName(), SubprogramDie);
 
   return;
 }
@@ -1955,7 +1996,7 @@ void DwarfDebug::beginModule(Module *M) {
 /// endModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfDebug::endModule() {
-  if (!ModuleCU) return;
+  if (!FirstCU) return;
 
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
@@ -1969,7 +2010,7 @@ void DwarfDebug::endModule() {
     DIE *SPDie = CI->first;
     const MDNode *N = dyn_cast_or_null<MDNode>(CI->second);
     if (!N) continue;
-    DIE *NDie = ModuleCU->getDIE(N);
+    DIE *NDie = getCompileUnit(N)->getDIE(N);
     if (!NDie) continue;
     addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
   }
@@ -2030,8 +2071,10 @@ void DwarfDebug::endModule() {
   // Emit info into a debug str section.
   emitDebugStr();
   
-  delete ModuleCU;
-  ModuleCU = NULL;  // Reset for the next Module, if any.
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I)
+    delete I->second;
+  FirstCU = NULL;  // Reset for the next Module, if any.
 }
 
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
@@ -2670,14 +2713,18 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
 /// computeSizeAndOffsets - Compute the size and offset of all the DIEs.
 ///
 void DwarfDebug::computeSizeAndOffsets() {
-  // Compute size of compile unit header.
-  static unsigned Offset =
-    sizeof(int32_t) + // Length of Compilation Unit Info
-    sizeof(int16_t) + // DWARF version number
-    sizeof(int32_t) + // Offset Into Abbrev. Section
-    sizeof(int8_t);   // Pointer Size (in bytes)
-
-  computeSizeAndOffset(ModuleCU->getCUDie(), Offset, true);
+  unsigned PrevOffset = 0;
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    // Compute size of compile unit header.
+    static unsigned Offset = PrevOffset +
+      sizeof(int32_t) + // Length of Compilation Unit Info
+      sizeof(int16_t) + // DWARF version number
+      sizeof(int32_t) + // Offset Into Abbrev. Section
+      sizeof(int8_t);   // Pointer Size (in bytes)
+    computeSizeAndOffset(I->second->getCUDie(), Offset, true);
+    PrevOffset = Offset;
+  }
 }
 
 /// EmitSectionSym - Switch to the specified MCSection and emit an assembler
@@ -2798,37 +2845,41 @@ void DwarfDebug::emitDebugInfo() {
   // Start debug info section.
   Asm->OutStreamer.SwitchSection(
                             Asm->getObjFileLowering().getDwarfInfoSection());
-  DIE *Die = ModuleCU->getCUDie();
-
-  // Emit the compile units header.
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_begin",
-                                                ModuleCU->getID()));
-
-  // Emit size of content not including length itself
-  unsigned ContentSize = Die->getSize() +
-    sizeof(int16_t) + // DWARF version number
-    sizeof(int32_t) + // Offset Into Abbrev. Section
-    sizeof(int8_t) +  // Pointer Size (in bytes)
-    sizeof(int32_t);  // FIXME - extra pad for gdb bug.
-
-  Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
-  Asm->EmitInt32(ContentSize);
-  Asm->OutStreamer.AddComment("DWARF version number");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
-  Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
-                         DwarfAbbrevSectionSym);
-  Asm->OutStreamer.AddComment("Address Size (in bytes)");
-  Asm->EmitInt8(Asm->getTargetData().getPointerSize());
-
-  emitDIE(Die);
-  // FIXME - extra padding for gdb bug.
-  Asm->OutStreamer.AddComment("4 extra padding bytes for GDB");
-  Asm->EmitInt8(0);
-  Asm->EmitInt8(0);
-  Asm->EmitInt8(0);
-  Asm->EmitInt8(0);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_end", ModuleCU->getID()));
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    DIE *Die = TheCU->getCUDie();
+    
+    // Emit the compile units header.
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_begin",
+                                                  TheCU->getID()));
+    
+    // Emit size of content not including length itself
+    unsigned ContentSize = Die->getSize() +
+      sizeof(int16_t) + // DWARF version number
+      sizeof(int32_t) + // Offset Into Abbrev. Section
+      sizeof(int8_t) +  // Pointer Size (in bytes)
+      sizeof(int32_t);  // FIXME - extra pad for gdb bug.
+    
+    Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
+    Asm->EmitInt32(ContentSize);
+    Asm->OutStreamer.AddComment("DWARF version number");
+    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
+    Asm->EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
+                           DwarfAbbrevSectionSym);
+    Asm->OutStreamer.AddComment("Address Size (in bytes)");
+    Asm->EmitInt8(Asm->getTargetData().getPointerSize());
+    
+    emitDIE(Die);
+    // FIXME - extra padding for gdb bug.
+    Asm->OutStreamer.AddComment("4 extra padding bytes for GDB");
+    Asm->EmitInt8(0);
+    Asm->EmitInt8(0);
+    Asm->EmitInt8(0);
+    Asm->EmitInt8(0);
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_end", TheCU->getID()));
+  }
 }
 
 /// emitAbbreviations - Emit the abbreviation section.
@@ -3153,91 +3204,99 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfDebug::emitDebugPubNames() {
-  // Start the dwarf pubnames section.
-  Asm->OutStreamer.SwitchSection(
-                          Asm->getObjFileLowering().getDwarfPubNamesSection());
-
-  Asm->OutStreamer.AddComment("Length of Public Names Info");
-  Asm->EmitLabelDifference(
-                 Asm->GetTempSymbol("pubnames_end", ModuleCU->getID()),
-                 Asm->GetTempSymbol("pubnames_begin", ModuleCU->getID()), 4);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin",
-                                                ModuleCU->getID()));
-
-  Asm->OutStreamer.AddComment("DWARF Version");
-  Asm->EmitInt16(dwarf::DWARF_VERSION); 
-
-  Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()), 
-                         DwarfInfoSectionSym);
-
-  Asm->OutStreamer.AddComment("Compilation Unit Length");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
-                           Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                           4);
-
-  const StringMap<DIE*> &Globals = ModuleCU->getGlobals();
-  for (StringMap<DIE*>::const_iterator
-         GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
-    const char *Name = GI->getKeyData();
-    DIE *Entity = GI->second;
-
-    Asm->OutStreamer.AddComment("DIE offset");
-    Asm->EmitInt32(Entity->getOffset());
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    // Start the dwarf pubnames section.
+    Asm->OutStreamer.SwitchSection(
+      Asm->getObjFileLowering().getDwarfPubNamesSection());
     
-    if (Asm->isVerbose())
-      Asm->OutStreamer.AddComment("External Name");
-    Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
+    Asm->OutStreamer.AddComment("Length of Public Names Info");
+    Asm->EmitLabelDifference(
+      Asm->GetTempSymbol("pubnames_end", TheCU->getID()),
+      Asm->GetTempSymbol("pubnames_begin", TheCU->getID()), 4);
+    
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin",
+                                                  TheCU->getID()));
+    
+    Asm->OutStreamer.AddComment("DWARF Version");
+    Asm->EmitInt16(dwarf::DWARF_VERSION); 
+    
+    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
+    Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin", TheCU->getID()), 
+                           DwarfInfoSectionSym);
+    
+    Asm->OutStreamer.AddComment("Compilation Unit Length");
+    Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", TheCU->getID()),
+                             Asm->GetTempSymbol("info_begin", TheCU->getID()),
+                             4);
+    
+    const StringMap<DIE*> &Globals = TheCU->getGlobals();
+    for (StringMap<DIE*>::const_iterator
+           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      DIE *Entity = GI->second;
+      
+      Asm->OutStreamer.AddComment("DIE offset");
+      Asm->EmitInt32(Entity->getOffset());
+      
+      if (Asm->isVerbose())
+        Asm->OutStreamer.AddComment("External Name");
+      Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
+    }
+    
+    Asm->OutStreamer.AddComment("End Mark");
+    Asm->EmitInt32(0);
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end",
+                                                TheCU->getID()));
   }
-
-  Asm->OutStreamer.AddComment("End Mark");
-  Asm->EmitInt32(0);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end",
-                                                ModuleCU->getID()));
 }
 
 void DwarfDebug::emitDebugPubTypes() {
-  // Start the dwarf pubnames section.
-  Asm->OutStreamer.SwitchSection(
-                          Asm->getObjFileLowering().getDwarfPubTypesSection());
-  Asm->OutStreamer.AddComment("Length of Public Types Info");
-  Asm->EmitLabelDifference(
-                    Asm->GetTempSymbol("pubtypes_end", ModuleCU->getID()),
-                    Asm->GetTempSymbol("pubtypes_begin", ModuleCU->getID()), 4);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_begin",
-                                                ModuleCU->getID()));
-
-  if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
-
-  Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                         DwarfInfoSectionSym);
-
-  Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", ModuleCU->getID()),
-                           Asm->GetTempSymbol("info_begin", ModuleCU->getID()),
-                           4);
-
-  const StringMap<DIE*> &Globals = ModuleCU->getGlobalTypes();
-  for (StringMap<DIE*>::const_iterator
-         GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
-    const char *Name = GI->getKeyData();
-    DIE * Entity = GI->second;
-
-    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
-    Asm->EmitInt32(Entity->getOffset());
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    // Start the dwarf pubnames section.
+    Asm->OutStreamer.SwitchSection(
+      Asm->getObjFileLowering().getDwarfPubTypesSection());
+    Asm->OutStreamer.AddComment("Length of Public Types Info");
+    Asm->EmitLabelDifference(
+      Asm->GetTempSymbol("pubtypes_end", TheCU->getID()),
+      Asm->GetTempSymbol("pubtypes_begin", TheCU->getID()), 4);
     
-    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("External Name");
-    Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_begin",
+                                                  TheCU->getID()));
+    
+    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
+    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    
+    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
+    Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin", TheCU->getID()),
+                           DwarfInfoSectionSym);
+    
+    Asm->OutStreamer.AddComment("Compilation Unit Length");
+    Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", TheCU->getID()),
+                             Asm->GetTempSymbol("info_begin", TheCU->getID()),
+                             4);
+    
+    const StringMap<DIE*> &Globals = TheCU->getGlobalTypes();
+    for (StringMap<DIE*>::const_iterator
+           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      DIE * Entity = GI->second;
+      
+      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
+      Asm->EmitInt32(Entity->getOffset());
+      
+      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("External Name");
+      Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
+    }
+    
+    Asm->OutStreamer.AddComment("End Mark");
+    Asm->EmitInt32(0); 
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_end",
+                                                  TheCU->getID()));
   }
-
-  Asm->OutStreamer.AddComment("End Mark");
-  Asm->EmitInt32(0); 
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_end",
-                                                ModuleCU->getID()));
 }
 
 /// emitDebugStr - Emit visible names into a debug str section.
@@ -3335,7 +3394,7 @@ void DwarfDebug::emitDebugInlineInfo() {
   if (!Asm->MAI->doesDwarfUsesInlineInfoSection())
     return;
 
-  if (!ModuleCU)
+  if (!FirstCU)
     return;
 
   Asm->OutStreamer.SwitchSection(
