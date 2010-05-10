@@ -1530,15 +1530,21 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     Ty = getOrCreateType(VD->getType(), Unit);
 
   // Get location information.
+  unsigned Line = 0;
+  unsigned Column = 0;
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(VD->getLocation());
-  unsigned Line = 0;
-  if (!PLoc.isInvalid())
+  if (PLoc.isInvalid())
+    // If variable location is invalid then try current location.
+    PLoc = SM.getPresumedLoc(CurLoc);
+  if (!PLoc.isInvalid()) {
     Line = PLoc.getLine();
-  else
-    // If variable location is invalid, use current location to find 
-    // corresponding file info.
+    Column = PLoc.getColumn();
+  }
+  else {
+    // If current location is also invalid, then use main compile unit.
     Unit = getOrCreateFile(CurLoc);
+  }
 
   CharUnits offset = CGF->BlockDecls[VD];
   llvm::SmallVector<llvm::Value *, 9> addr;
@@ -1570,7 +1576,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
   
   llvm::MDNode *Scope = RegionStack.back();
-  Call->setDebugLoc(llvm::DebugLoc::get(Line, PLoc.getColumn(), Scope));
+  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
