@@ -33,7 +33,7 @@ namespace {
 
   private:
     bool FormsRegSequence(MachineInstr *MI,
-                          unsigned FirstOpnd, unsigned NumRegs);
+                          unsigned FirstOpnd, unsigned NumRegs) const;
     bool PreAllocNEONRegisters(MachineBasicBlock &MBB);
   };
 
@@ -338,18 +338,22 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
   return false;
 }
 
-bool NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
-                                        unsigned FirstOpnd, unsigned NumRegs) {
-  MachineInstr *RegSeq = 0;
-  unsigned LastSrcReg = 0;
-  unsigned LastSubIdx = 0;
-  for (unsigned R = 0; R < NumRegs; ++R) {
-    MachineOperand &MO = MI->getOperand(FirstOpnd + R);
-    assert(MO.isReg() && MO.getSubReg() == 0 && "unexpected operand");
-    unsigned VirtReg = MO.getReg();
-    assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
-           "expected a virtual register");
-    if (MO.isDef()) {
+bool
+NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
+                                   unsigned FirstOpnd, unsigned NumRegs) const {
+  MachineOperand &FMO = MI->getOperand(FirstOpnd);
+  assert(FMO.isReg() && FMO.getSubReg() == 0 && "unexpected operand");
+  unsigned VirtReg = FMO.getReg();
+  assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+         "expected a virtual register");
+  if (FMO.isDef()) {
+    MachineInstr *RegSeq = 0;
+    for (unsigned R = 0; R < NumRegs; ++R) {
+      const MachineOperand &MO = MI->getOperand(FirstOpnd + R);
+      assert(MO.isReg() && MO.getSubReg() == 0 && "unexpected operand");
+      unsigned VirtReg = MO.getReg();
+      assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+             "expected a virtual register");
       // Feeding into a REG_SEQUENCE.
       if (!MRI->hasOneNonDBGUse(VirtReg))
         return false;
@@ -359,25 +363,45 @@ bool NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
       if (RegSeq && RegSeq != UseMI)
         return false;
       RegSeq = UseMI;
-    } else {
-      // Extracting from a Q or QQ register.
-      MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
-      if (!DefMI || !DefMI->isExtractSubreg())
-        return false;
-      VirtReg = DefMI->getOperand(1).getReg();
-      if (LastSrcReg && LastSrcReg != VirtReg)
-        return false;
-      const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-      if (NumRegs == 2) {
-        if (RC != ARM::QPRRegisterClass)
-          return false;
-      } else if (RC != ARM::QQPRRegisterClass)
-          return false;
-      unsigned SubIdx = DefMI->getOperand(2).getImm();
-      if (LastSubIdx && LastSubIdx != SubIdx-1)
-        return false;
-      LastSubIdx = SubIdx;
     }
+
+    // Make sure trailing operands of REG_SEQUENCE are undef.
+    unsigned NumExps = (RegSeq->getNumOperands() - 1) / 2;
+    for (unsigned i = NumRegs * 2 + 1; i < NumExps; i += 2) {
+      const MachineOperand &MO = RegSeq->getOperand(i);
+      unsigned VirtReg = MO.getReg();
+      MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
+      if (!DefMI || !DefMI->isImplicitDef())
+        return false;
+    }
+    return true;
+  }
+
+  unsigned LastSrcReg = 0;
+  unsigned LastSubIdx = 0;
+  for (unsigned R = 0; R < NumRegs; ++R) {
+    const MachineOperand &MO = MI->getOperand(FirstOpnd + R);
+    assert(MO.isReg() && MO.getSubReg() == 0 && "unexpected operand");
+    unsigned VirtReg = MO.getReg();
+    assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+           "expected a virtual register");
+    // Extracting from a Q or QQ register.
+    MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
+    if (!DefMI || !DefMI->isExtractSubreg())
+      return false;
+    VirtReg = DefMI->getOperand(1).getReg();
+    if (LastSrcReg && LastSrcReg != VirtReg)
+      return false;
+    const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
+    if (NumRegs == 2) {
+      if (RC != ARM::QPRRegisterClass)
+        return false;
+    } else if (RC != ARM::QQPRRegisterClass)
+      return false;
+    unsigned SubIdx = DefMI->getOperand(2).getImm();
+    if (LastSubIdx && LastSubIdx != SubIdx-1)
+      return false;
+    LastSubIdx = SubIdx;
   }
   return true;
 }

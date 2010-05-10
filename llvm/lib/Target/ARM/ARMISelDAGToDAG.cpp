@@ -1044,7 +1044,40 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     const SDValue Ops[] = { MemAddr, Align, Pred, Reg0, Chain };
     std::vector<EVT> ResTys(NumVecs, VT);
     ResTys.push_back(MVT::Other);
-    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
+    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
+    if (!llvm::ModelWithRegSequence() || NumVecs < 2)
+      return VLd;
+
+    assert(NumVecs <= 4);
+    SDValue V0 = SDValue(VLd, 0);
+    SDValue V1 = SDValue(VLd, 1);
+    SDValue RegSeq;
+
+    if (NumVecs == 2)
+      RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+    else {
+      SDValue V2 = SDValue(VLd, 2);
+      SDValue V3 = (NumVecs == 3)
+          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+          : SDValue(VLd, 3);
+      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+    }
+
+    SDValue D0 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, VT, RegSeq);
+    ReplaceUses(SDValue(N, 0), D0);
+    SDValue D1 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, VT, RegSeq);
+    ReplaceUses(SDValue(N, 1), D1);
+
+    if (NumVecs > 2) {
+      SDValue D2 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, VT, RegSeq);
+      ReplaceUses(SDValue(N, 2), D2);
+    }
+    if (NumVecs > 3) {
+      SDValue D3 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, VT, RegSeq);
+      ReplaceUses(SDValue(N, 3), D3);
+    }
+    ReplaceUses(SDValue(N, NumVecs), SDValue(VLd, NumVecs));
+    return NULL;
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
