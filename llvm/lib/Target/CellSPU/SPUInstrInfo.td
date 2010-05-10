@@ -655,7 +655,7 @@ def SFHvec:
 def SFHr16:
     RRForm<0b00010010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
       "sfh\t$rT, $rA, $rB", IntegerOp,
-      [(set R16C:$rT, (sub R16C:$rA, R16C:$rB))]>;
+      [(set R16C:$rT, (sub R16C:$rB, R16C:$rA))]>;
 
 def SFHIvec:
     RI10Form<0b10110000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -670,11 +670,11 @@ def SFHIr16 : RI10Form<0b10110000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
 def SFvec : RRForm<0b00000010000, (outs VECREG:$rT),
                                   (ins VECREG:$rA, VECREG:$rB),
   "sf\t$rT, $rA, $rB", IntegerOp,
-  [(set (v4i32 VECREG:$rT), (sub (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+  [(set (v4i32 VECREG:$rT), (sub (v4i32 VECREG:$rB), (v4i32 VECREG:$rA)))]>;
 
 def SFr32 : RRForm<0b00000010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
   "sf\t$rT, $rA, $rB", IntegerOp,
-  [(set R32C:$rT, (sub R32C:$rA, R32C:$rB))]>;
+  [(set R32C:$rT, (sub R32C:$rB, R32C:$rA))]>;
 
 def SFIvec:
     RI10Form<0b00110000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
