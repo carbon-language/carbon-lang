@@ -49,6 +49,7 @@ public:
   enum FileType { AsmFile, ObjectFile, CFile };
 
   static GCC *create(std::string &Message,
+                     const std::string &GCCBinary,
                      const std::vector<std::string> *Args);
 
   /// ExecuteProgram - Execute the program specified by "ProgramFile" (which is
@@ -87,9 +88,11 @@ public:
 class AbstractInterpreter {
 public:
   static CBE *createCBE(const char *Argv0, std::string &Message,
+                        const std::string              &GCCBinary,
                         const std::vector<std::string> *Args = 0,
                         const std::vector<std::string> *GCCArgs = 0);
   static LLC *createLLC(const char *Argv0, std::string &Message,
+                        const std::string              &GCCBinary,
                         const std::vector<std::string> *Args = 0,
                         const std::vector<std::string> *GCCArgs = 0,
                         bool UseIntegratedAssembler = false);
@@ -187,19 +190,16 @@ public:
 class LLC : public AbstractInterpreter {
   std::string LLCPath;               // The path to the LLC executable.
   std::vector<std::string> ToolArgs; // Extra args to pass to LLC.
-  std::vector<std::string> gccArgs;  // Extra args to pass to GCC.
   GCC *gcc;
   bool UseIntegratedAssembler;
 public:
   LLC(const std::string &llcPath, GCC *Gcc,
       const std::vector<std::string> *Args,
-      const std::vector<std::string> *GCCArgs,
       bool useIntegratedAssembler)
     : LLCPath(llcPath), gcc(Gcc),
       UseIntegratedAssembler(useIntegratedAssembler) {
     ToolArgs.clear();
     if (Args) ToolArgs = *Args;
-    if (GCCArgs) gccArgs = *GCCArgs;
   }
   ~LLC() { delete gcc; }
 

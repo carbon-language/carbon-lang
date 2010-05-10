@@ -118,6 +118,10 @@ namespace {
                cl::desc("<safe-tool arguments>..."),
                cl::ZeroOrMore, cl::PositionalEatsArgs);
 
+  cl::opt<std::string>
+  GCCBinary("gcc", cl::init("gcc"), 
+              cl::desc("The gcc binary to use. (default 'gcc')"));
+
   cl::list<std::string>
   GCCToolArgv("gcc-tool-args", cl::Positional,
               cl::desc("<gcc-tool arguments>..."),
@@ -143,8 +147,8 @@ bool BugDriver::initializeExecutionEnvironment() {
   case AutoPick:
     InterpreterSel = RunCBE;
     Interpreter =
-      AbstractInterpreter::createCBE(getToolName(), Message, &ToolArgv,
-                                     &GCCToolArgv);
+      AbstractInterpreter::createCBE(getToolName(), Message, GCCBinary,
+                                     &ToolArgv, &GCCToolArgv);
     if (!Interpreter) {
       InterpreterSel = RunJIT;
       Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
@@ -153,7 +157,8 @@ bool BugDriver::initializeExecutionEnvironment() {
     if (!Interpreter) {
       InterpreterSel = RunLLC;
       Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
-                                                   &ToolArgv, &GCCToolArgv);
+                                                   GCCBinary, &ToolArgv, 
+                                                   &GCCToolArgv);
     }
     if (!Interpreter) {
       InterpreterSel = RunLLI;
@@ -173,7 +178,8 @@ bool BugDriver::initializeExecutionEnvironment() {
   case RunLLCIA:
   case LLC_Safe:
     Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
-                                                 &ToolArgv, &GCCToolArgv,
+                                                 GCCBinary, &ToolArgv, 
+                                                 &GCCToolArgv,
                                                  InterpreterSel == RunLLCIA);
     break;
   case RunJIT:
@@ -183,7 +189,8 @@ bool BugDriver::initializeExecutionEnvironment() {
   case RunCBE:
   case CBE_bug:
     Interpreter = AbstractInterpreter::createCBE(getToolName(), Message,
-                                                 &ToolArgv, &GCCToolArgv);
+                                                 GCCBinary, &ToolArgv, 
+                                                 &GCCToolArgv);
     break;
   case Custom:
     Interpreter = AbstractInterpreter::createCustom(Message, CustomExecCommand);
@@ -209,6 +216,7 @@ bool BugDriver::initializeExecutionEnvironment() {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
       SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
+                                                       GCCBinary, 
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -219,6 +227,7 @@ bool BugDriver::initializeExecutionEnvironment() {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
       SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
+                                                       GCCBinary, 
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -230,6 +239,7 @@ bool BugDriver::initializeExecutionEnvironment() {
         InterpreterSel != RunCBE) {
       SafeInterpreterSel = RunCBE;
       SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
+                                                       GCCBinary,
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -239,6 +249,7 @@ bool BugDriver::initializeExecutionEnvironment() {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
       SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
+                                                       GCCBinary, 
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -251,13 +262,13 @@ bool BugDriver::initializeExecutionEnvironment() {
   case RunLLCIA:
     SafeToolArgs.push_back("--relocation-model=pic");
     SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
-                                                     &SafeToolArgs,
+                                                     GCCBinary, &SafeToolArgs,
                                                      &GCCToolArgv,
                                                 SafeInterpreterSel == RunLLCIA);
     break;
   case RunCBE:
     SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
-                                                     &SafeToolArgs,
+                                                     GCCBinary, &SafeToolArgs,
                                                      &GCCToolArgv);
     break;
   case Custom:
@@ -271,7 +282,7 @@ bool BugDriver::initializeExecutionEnvironment() {
   }
   if (!SafeInterpreter) { outs() << Message << "\nExiting.\n"; exit(1); }
   
-  gcc = GCC::create(Message, &GCCToolArgv);
+  gcc = GCC::create(Message, GCCBinary, &GCCToolArgv);
   if (!gcc) { outs() << Message << "\nExiting.\n"; exit(1); }
 
   // If there was an error creating the selected interpreter, quit with error.

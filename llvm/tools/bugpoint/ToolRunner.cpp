@@ -413,7 +413,6 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
-  GCCArgs.insert(GCCArgs.end(), gccArgs.begin(), gccArgs.end());
 
   // Assuming LLC worked, compile the result with GCC and run it.
   return gcc->ExecuteProgram(OutputAsmFile.str(), Args, FileKind,
@@ -425,6 +424,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 ///
 LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     std::string &Message,
+                                    const std::string &GCCBinary,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs,
                                     bool UseIntegratedAssembler) {
@@ -436,12 +436,12 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
   }
 
   Message = "Found llc: " + LLCPath + "\n";
-  GCC *gcc = GCC::create(Message, GCCArgs);
+  GCC *gcc = GCC::create(Message, GCCBinary, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
     exit(1);
   }
-  return new LLC(LLCPath, gcc, Args, GCCArgs, UseIntegratedAssembler);
+  return new LLC(LLCPath, gcc, Args, UseIntegratedAssembler);
 }
 
 //===---------------------------------------------------------------------===//
@@ -593,6 +593,7 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
 ///
 CBE *AbstractInterpreter::createCBE(const char *Argv0,
                                     std::string &Message,
+                                    const std::string &GCCBinary, 
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
   sys::Path LLCPath =
@@ -604,7 +605,7 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
   }
 
   Message = "Found llc: " + LLCPath.str() + "\n";
-  GCC *gcc = GCC::create(Message, GCCArgs);
+  GCC *gcc = GCC::create(Message, GCCBinary, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
     exit(1);
@@ -852,10 +853,11 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 /// create - Try to find the `gcc' executable
 ///
 GCC *GCC::create(std::string &Message,
+                 const std::string &GCCBinary,
                  const std::vector<std::string> *Args) {
-  sys::Path GCCPath = sys::Program::FindProgramByName("gcc");
+  sys::Path GCCPath = sys::Program::FindProgramByName(GCCBinary);
   if (GCCPath.isEmpty()) {
-    Message = "Cannot find `gcc' in executable directory or PATH!\n";
+    Message = "Cannot find `"+ GCCBinary +"' in executable directory or PATH!\n";
     return 0;
   }
 
