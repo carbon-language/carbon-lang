@@ -432,8 +432,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // that at this point, there should be exactly one value number in it.
       assert((PartReDef || interval.containsOneValue()) &&
              "Unexpected 2-addr liveint!");
-      unsigned NumVals = interval.getNumValNums();
-      SlotIndex DefIndex = interval.getValNumInfo(NumVals-1)->def.getDefIndex();
+      SlotIndex DefIndex = interval.getValNumInfo(0)->def.getDefIndex();
       SlotIndex RedefIndex = MIIdx.getDefIndex();
       if (MO.isEarlyClobber())
         RedefIndex = MIIdx.getUseIndex();
