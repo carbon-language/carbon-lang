@@ -523,7 +523,7 @@ CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
   : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()),
     SubExpr(subexpr), Temps(0), NumTemps(0) {
-  if (NumTemps) {
+  if (numtemps) {
     setNumTemporaries(numtemps);
     for (unsigned i = 0; i != numtemps; ++i)
       Temps[i] = temps[i];
