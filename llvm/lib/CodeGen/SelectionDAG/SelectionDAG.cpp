@@ -5428,6 +5428,8 @@ const EVT *SDNode::getValueTypeList(EVT VT) {
     sys::SmartScopedLock<true> Lock(*VTMutex);
     return &(*EVTs->insert(VT).first);
   } else {
+    assert(VT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
+           "Value type out of range!");
     return &SimpleVTArray->VTs[VT.getSimpleVT().SimpleTy];
   }
 }
