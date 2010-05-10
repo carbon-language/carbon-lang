@@ -266,6 +266,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addQRTypeForNEON(MVT::v4i32);
     addQRTypeForNEON(MVT::v2i64);
 
+    // Map v4i64 to QQ registers but do not make the type legal for any
+    // operations. v4i64 is only used for REG_SEQUENCE to load / store quad
+    // D registers.
+    addRegisterClass(MVT::v4i64, ARM::QQPRRegisterClass);
+
     // v2f64 is legal so that QR subregs can be extracted as f64 elements, but
     // neither Neon nor VFP support any arithmetic operations on it.
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);

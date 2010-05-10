@@ -360,7 +360,7 @@ bool NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
         return false;
       RegSeq = UseMI;
     } else {
-      // Extracting from a Q register.
+      // Extracting from a Q or QQ register.
       MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
       if (!DefMI || !DefMI->isExtractSubreg())
         return false;
@@ -368,8 +368,11 @@ bool NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
       if (LastSrcReg && LastSrcReg != VirtReg)
         return false;
       const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-      if (RC != ARM::QPRRegisterClass)
-        return false;
+      if (NumRegs == 2) {
+        if (RC != ARM::QPRRegisterClass)
+          return false;
+      } else if (RC != ARM::QQPRRegisterClass)
+          return false;
       unsigned SubIdx = DefMI->getOperand(2).getImm();
       if (LastSubIdx && LastSubIdx != SubIdx-1)
         return false;

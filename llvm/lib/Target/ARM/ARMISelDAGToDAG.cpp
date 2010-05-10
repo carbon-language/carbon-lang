@@ -172,9 +172,17 @@ private:
                                             char ConstraintCode,
                                             std::vector<SDValue> &OutOps);
 
-  /// PairDRegs - Insert a pair of double registers into an implicit def to
-  /// form a quad register.
+  /// PairDRegs - Form a quad register from a pair of D registers.
+  ///
   SDNode *PairDRegs(EVT VT, SDValue V0, SDValue V1);
+
+  /// PairDRegs - Form a quad register pair from a pair of Q registers.
+  ///
+  SDNode *PairQRegs(EVT VT, SDValue V0, SDValue V1);
+
+  /// QuadDRegs - Form a quad register pair from a quad of D registers.
+  ///
+  SDNode *QuadDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
 };
 }
 
@@ -942,8 +950,8 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDNode *N) {
   return NULL;
 }
 
-/// PairDRegs - Insert a pair of double registers into an implicit def to
-/// form a quad register.
+/// PairDRegs - Form a quad register from a pair of D registers.
+///
 SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
@@ -958,6 +966,29 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
                                         VT, Undef, V0, SubReg0);
   return CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG, dl,
                                 VT, SDValue(Pair, 0), V1, SubReg1);
+}
+
+/// PairDRegs - Form a quad register pair from a pair of Q registers.
+///
+SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
+  DebugLoc dl = V0.getNode()->getDebugLoc();
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::QSUBREG_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::QSUBREG_1, MVT::i32);
+  const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
+  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
+}
+
+/// QuadDRegs - Form a octo register from a quad of D registers.
+///
+SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
+                                   SDValue V2, SDValue V3) {
+  DebugLoc dl = V0.getNode()->getDebugLoc();
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
+  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::DSUBREG_2, MVT::i32);
+  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::DSUBREG_3, MVT::i32);
+  const SDValue Ops[] = { V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3 };
+  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
 
 /// GetNEONSubregVT - Given a type for a 128-bit NEON vector, return the type
@@ -1028,9 +1059,24 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     Chain = SDValue(VLd, 2 * NumVecs);
 
     // Combine the even and odd subregs to produce the result.
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-      SDNode *Q = PairDRegs(VT, SDValue(VLd, 2*Vec), SDValue(VLd, 2*Vec+1));
-      ReplaceUses(SDValue(N, Vec), SDValue(Q, 0));
+    if (llvm::ModelWithRegSequence()) {
+      if (NumVecs == 1) {
+        SDNode *Q = PairDRegs(VT, SDValue(VLd, 0), SDValue(VLd, 1));
+        ReplaceUses(SDValue(N, 0), SDValue(Q, 0));
+      } else {
+        SDValue QQ = SDValue(QuadDRegs(MVT::v4i64,
+                                       SDValue(VLd, 0), SDValue(VLd, 1),
+                                       SDValue(VLd, 2), SDValue(VLd, 3)), 0);
+        SDValue Q0 = CurDAG->getTargetExtractSubreg(ARM::QSUBREG_0, dl, VT, QQ);
+        SDValue Q1 = CurDAG->getTargetExtractSubreg(ARM::QSUBREG_1, dl, VT, QQ);
+        ReplaceUses(SDValue(N, 0), Q0);
+        ReplaceUses(SDValue(N, 1), Q1);
+      }
+    } else {
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+        SDNode *Q = PairDRegs(VT, SDValue(VLd, 2*Vec), SDValue(VLd, 2*Vec+1));
+        ReplaceUses(SDValue(N, Vec), SDValue(Q, 0));
+      }
     }
   } else {
     // Otherwise, quad registers are loaded with two separate instructions,
@@ -1118,17 +1164,40 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // Quad registers are directly supported for VST1 and VST2,
     // storing pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+    if (llvm::ModelWithRegSequence() && NumVecs == 2) {
+      // First extract the quad D registers.
+      SDValue Q0 = N->getOperand(3);
+      SDValue Q1 = N->getOperand(4);
+
+      // Form a QQ register.
+      SDValue QQ = SDValue(PairQRegs(MVT::v4i64, Q0, Q1), 0);
+
+      // Now extract the D registers back out.
       Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                   N->getOperand(Vec+3)));
+                                                   QQ));
       Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                   N->getOperand(Vec+3)));
+                                                   QQ));
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, RegVT,
+                                                   QQ));
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, RegVT,
+                                                   QQ));
+      Ops.push_back(Pred);
+      Ops.push_back(Reg0); // predicate register
+      Ops.push_back(Chain);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 5 + 4);
+    } else {
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+                                                     N->getOperand(Vec+3)));
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+                                                     N->getOperand(Vec+3)));
+      }
+      Ops.push_back(Pred);
+      Ops.push_back(Reg0); // predicate register
+      Ops.push_back(Chain);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(),
+                                    5 + 2 * NumVecs);
     }
-    Ops.push_back(Pred);
-    Ops.push_back(Reg0); // predicate register
-    Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(),
-                                  5 + 2 * NumVecs);
   }
 
   // Otherwise, quad registers are stored with two separate instructions,
