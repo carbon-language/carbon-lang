@@ -36,7 +36,7 @@ protected:
   }
 
 public:
-  DefaultDOTGraphTraits (bool simple=false) : IsSimple (simple) {}
+  explicit DefaultDOTGraphTraits(bool simple=false) : IsSimple (simple) {}
 
   /// getGraphName - Return the label for the graph as a whole.  Printed at the
   /// top of the graph.
