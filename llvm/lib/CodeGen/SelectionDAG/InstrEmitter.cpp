@@ -532,10 +532,10 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
     if (i & 1) {
       unsigned SubIdx = cast<ConstantSDNode>(Op)->getZExtValue();
       unsigned SubReg = getVR(Node->getOperand(i-1), VRBaseMap);
-    const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
-    const TargetRegisterClass *SRC =
-      getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
-    assert(SRC == RC && "Invalid subregister index in REG_SEQUENCE");
+      const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
+      const TargetRegisterClass *SRC =
+        getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
+      assert(SRC == RC && "Invalid subregister index in REG_SEQUENCE");
     }
 #endif
     AddOperand(MI, Op, i+1, &II, VRBaseMap);
