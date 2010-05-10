@@ -691,9 +691,6 @@ public:
   // ConstantExpr class, because they will attempt to fold the constant
   // expression into something simpler if possible.
 
-  /// Cast constant expr
-  ///
-
   /// getAlignOf constant expr - computes the alignment of a type in a target
   /// independent way (Note: the return type is an i64).
   static Constant *getAlignOf(const Type* Ty);
