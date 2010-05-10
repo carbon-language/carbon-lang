@@ -1536,7 +1536,9 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   if (!PLoc.isInvalid())
     Line = PLoc.getLine();
   else
-    Unit = llvm::DIFile();
+    // If variable location is invalid, use current location to find 
+    // corresponding file info.
+    Unit = getOrCreateFile(CurLoc);
 
   CharUnits offset = CGF->BlockDecls[VD];
   llvm::SmallVector<llvm::Value *, 9> addr;
