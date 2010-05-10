@@ -59,6 +59,20 @@ static bool isFixupKindRIPRel(unsigned Kind) {
     Kind == X86::reloc_riprel_4byte_movq_load;
 }
 
+static bool doesSymbolRequireExternRelocation(MCSymbolData *SD) {
+  // Undefined symbols are always extern.
+  if (SD->Symbol->isUndefined())
+    return true;
+
+  // References to weak definitions require external relocation entries; the
+  // definition may not always be the one in the same object file.
+  if (SD->getFlags() & SF_WeakDefinition)
+    return true;
+
+  // Otherwise, we can use an internal relocation.
+  return false;
+}
+
 namespace {
 
 class MachObjectWriterImpl {
@@ -754,18 +768,14 @@ public:
       const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
       MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
 
-      // Both references to undefined symbols and references to Weak Definitions
-      // get external relocation entries.  This is so the static and then the
-      // the dynamic linker can resolve them to the actual definition that will
-      // be used.  And in the case of Weak Definitions a reference to one will
-      // not always be to the definition in the same object file.
-      if (Symbol->isUndefined() || (SD->getFlags() & SF_WeakDefinition)) {
+      // Check whether we need an external or internal relocation.
+      if (doesSymbolRequireExternRelocation(SD)) {
         IsExtern = 1;
         Index = SD->getIndex();
-        // In the case of a Weak Definition the FixedValue needs to be set to
-        // to not have the address of the symbol.  In the case of an undefined
-        // symbol you can't call getSymbolAddress().
-        if (SD->getFlags() & SF_WeakDefinition)
+        // For external relocations, make sure to offset the fixup value to
+        // compensate for the addend of the symbol address, if it was
+        // undefined. This occurs with weak definitions, for example.
+        if (!SD->Symbol->isUndefined())
           FixedValue -= Layout.getSymbolAddress(SD);
         Value = 0;
       } else {
