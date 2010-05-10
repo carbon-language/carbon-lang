@@ -114,7 +114,7 @@ public:
       : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
 
     FullExprArg &operator=(const FullExprArg& Other) {
-      Expr = ExprArg(move(const_cast<FullExprArg&>(Other).Expr));
+      Expr.operator=(move(const_cast<FullExprArg&>(Other).Expr));
       return *this;
     }
 
@@ -134,13 +134,6 @@ public:
     explicit FullExprArg(ExprArg expr)
       : Expr(move(expr)) {}
 
-#if defined(_MSC_VER)
-    // Last tested with Visual Studio 2008.
-    // Visual C++ complains about the operator= above, claiming that Expr
-    // is not accessible.
-  public:
-#endif
-    
     ExprArg Expr;
   };
 
