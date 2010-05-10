@@ -740,15 +740,24 @@ public:
 
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
+    // Differences always require scattered relocations.
+    if (Target.getSymB())
+        return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                         Target, FixedValue);
+
+    // Get the symbol data, if any.
+    MCSymbolData *SD = 0;
+    if (Target.getSymA())
+      SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+
+    // If this is an internal relocation with an offset, it also needs a
+    // scattered relocation entry.
     uint32_t Offset = Target.getConstant();
     if (IsPCRel)
       Offset += 1 << Log2Size;
-    if (Target.getSymB() ||
-        (Target.getSymA() && !Target.getSymA()->getSymbol().isUndefined() &&
-         Offset)) {
-      RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,Target,FixedValue);
-      return;
-    }
+    if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
+      return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                       Target, FixedValue);
 
     // See <reloc.h>.
     uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
@@ -765,9 +774,6 @@ public:
       Type = RIT_Vanilla;
       Value = 0;
     } else {
-      const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
-      MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
-
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
         IsExtern = 1;
