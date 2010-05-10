@@ -89,6 +89,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       MachineInstr *MI = &*I;
       ++I;
       if (MI->isImplicitDef()) {
+        if (MI->getOperand(0).getSubReg())
+          continue;
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
