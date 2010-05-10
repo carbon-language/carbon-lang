@@ -447,6 +447,14 @@ else
   endif
 endif
 
+# Support makefile variable to disable any kind of timestamp/non-deterministic
+# info from being used in the build.
+ifeq ($(ENABLE_TIMESTAMPS),1)
+  DOTDIR_TIMESTAMP_COMMAND := $(DATE)
+else
+  DOTDIR_TIMESTAMP_COMMAND := echo 'Created.'
+endif
+
 ifeq ($(HOST_OS),MingW)
   # Work around PR4957
   CPP.Defines += -D__NO_CTYPE_INLINE
@@ -779,7 +787,7 @@ $(DESTDIR)$(PROJ_bindir) $(DESTDIR)$(PROJ_libdir) $(DESTDIR)$(PROJ_includedir) $
 # To create other directories, as needed, and timestamp their creation
 %/.dir:
 	$(Verb) $(MKDIR) $* > /dev/null
-	$(Verb) $(DATE) > $@
+	$(Verb) $(DOTDIR_TIMESTAMP_COMMAND) > $@
 
 .PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
 .PRECIOUS: $(LLVMLibDir)/.dir $(LLVMToolDir)/.dir $(LLVMExmplDir)/.dir

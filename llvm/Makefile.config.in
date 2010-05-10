@@ -270,6 +270,9 @@ ENABLE_SHARED := @ENABLE_SHARED@
 # Use -fvisibility-inlines-hidden?
 ENABLE_VISIBILITY_INLINES_HIDDEN := @ENABLE_VISIBILITY_INLINES_HIDDEN@
 
+# Do we want to allow timestamping information into builds?
+ENABLE_TIMESTAMPS := @ENABLE_TIMESTAMPS@
+
 # This option tells the Makefiles to produce verbose output.
 # It essentially prints the commands that make is executing
 #VERBOSE = 1

@@ -1170,7 +1170,9 @@ public:
     std::string CPU = sys::getHostCPUName();
     if (CPU == "generic") CPU = "(unknown)";
     OS << ".\n"
+#if (ENABLE_TIMESTAMPS == 1)
        << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
+#endif
        << "  Host: " << sys::getHostTriple() << '\n'
        << "  Host CPU: " << CPU << '\n'
        << '\n'

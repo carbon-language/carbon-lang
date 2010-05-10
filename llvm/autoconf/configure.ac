@@ -525,6 +525,20 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-shared. Use "yes" or "no"]) ;;
 esac
 
+dnl Enable embedding timestamp information into build.
+AC_ARG_ENABLE(timestamps,
+  AS_HELP_STRING([--enable-timestamps],
+                 [Enable embedding timestamp information in build (default is YES)]),,
+                 enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_TIMESTAMPS,[1]) ;;
+  no)  AC_SUBST(ENABLE_TIMESTAMPS,[0]) ;;
+  default) AC_SUBST(ENABLE_TIMESTAMPS,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-timestamps. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([ENABLE_TIMESTAMPS],$ENABLE_TIMESTAMPS,
+                   [Define if timestamp information (e.g., __DATE___) is allowed])
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
