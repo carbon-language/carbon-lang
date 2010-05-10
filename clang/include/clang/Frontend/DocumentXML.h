@@ -114,6 +114,7 @@ private:
   void addPtrAttribute(const char* pName, const NamedDecl* D);
   void addPtrAttribute(const char* pName, const DeclContext* D);
   void addPtrAttribute(const char* pName, const NamespaceDecl* D);    // disambiguation
+  void addPtrAttribute(const char* pName, const NestedNameSpecifier* N);
   void addPtrAttribute(const char* pName, const LabelStmt* L);
   void addPtrAttribute(const char* pName, const char* text);
 

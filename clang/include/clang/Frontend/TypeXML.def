@@ -61,6 +61,10 @@
 #  define CONTEXT_ATTRIBUTE_XML( FN )  ATTRIBUTE_XML(FN, "context")
 #endif
 
+NODE_XML(Type, "FIXME_Type")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_XML(getTypeClassName(), "unhandled_type_name")
+END_NODE_XML
 
 NODE_XML(QualType, "CvQualifiedType")
   ID_ATTRIBUTE_XML
@@ -240,6 +244,10 @@ END_NODE_XML
 NODE_XML(QualifiedNameType, "QualifiedNameType")
   ID_ATTRIBUTE_XML
   TYPE_ATTRIBUTE_XML(getNamedType())
+END_NODE_XML
+
+NODE_XML(InjectedClassNameType, "InjectedClassNameType")
+  ID_ATTRIBUTE_XML
 END_NODE_XML
 
 NODE_XML(DependentNameType, "DependentNameType")

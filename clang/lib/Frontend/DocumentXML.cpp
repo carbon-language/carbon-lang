@@ -199,6 +199,35 @@ void DocumentXML::addPtrAttribute(const char* pAttributeName,
 }
 
 //---------------------------------------------------------
+void DocumentXML::addPtrAttribute(const char* pAttributeName,
+                                  const NestedNameSpecifier* pNNS) {
+  switch (pNNS->getKind()) {
+  case NestedNameSpecifier::Identifier: {
+    IdentifierInfo *ii = pNNS->getAsIdentifier();
+    // FIXME how should we handle those ?
+    addPtrAttribute(pAttributeName, ii->getName().data());
+    break;
+  }
+  case NestedNameSpecifier::Namespace: {
+    addPtrAttribute(pAttributeName, pNNS->getAsNamespace());
+    break;
+  }
+  case NestedNameSpecifier::TypeSpec: {
+    addPtrAttribute(pAttributeName, pNNS->getAsType());
+    break;
+  }
+  case NestedNameSpecifier::TypeSpecWithTemplate: {
+    addPtrAttribute(pAttributeName, pNNS->getAsType());
+    break;
+  }
+  case NestedNameSpecifier::Global: {
+    addPtrAttribute(pAttributeName, "::");
+    break;
+  }
+  }
+}
+
+//---------------------------------------------------------
 void DocumentXML::addTypeRecursively(const QualType& pType)
 {
   if (addToMap(Types, pType))

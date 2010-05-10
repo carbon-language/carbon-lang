@@ -47,11 +47,38 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
 
   void addSubNodes(CXXRecordDecl* RD) {
     addSubNodes(cast<RecordDecl>(RD));
-    for (CXXRecordDecl::method_iterator i = RD->method_begin(),
-                                        e = RD->method_end(); i != e; ++i) {
-      Visit(*i);
-      Doc.toParent();
+
+    if (RD->isDefinition()) {
+      Doc.addAttribute("num_bases", RD->getNumBases());
+
+      for (CXXRecordDecl::base_class_iterator 
+             base = RD->bases_begin(),
+             bend = RD->bases_end();
+           base != bend;
+           ++base) {
+        Doc.addSubNode("Base");
+        Doc.addAttribute("id", base->getType());
+        AccessSpecifier as = base->getAccessSpecifierAsWritten();
+        const char* as_name = "";
+        switch(as) {
+        case AS_none:      as_name = ""; break;
+        case AS_public:    as_name = "public"; break;
+        case AS_protected: as_name = "protected"; break;
+        case AS_private:   as_name = "private"; break;
+        }
+        Doc.addAttributeOptional("access", as_name);
+        Doc.addAttribute("is_virtual", base->isVirtual());
+        Doc.toParent();
+      }
+
+      for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+             e = RD->method_end(); i != e; ++i) {
+        Visit(*i);
+        Doc.toParent();
+      }
+
     }
+
   }
 
   void addSubNodes(EnumDecl* ED) {
@@ -80,6 +107,18 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
   void addSubNodes(ParmVarDecl* argDecl) {
     if (argDecl->getDefaultArg())
       Doc.PrintStmt(argDecl->getDefaultArg());
+  }
+
+  void addSubNodes(NamespaceDecl* ns) {
+
+    for (DeclContext::decl_iterator 
+           d    = ns->decls_begin(), 
+           dend = ns->decls_end();
+         d != dend;
+         ++d) {
+      Visit(*d);
+      Doc.toParent();
+    }
   }
 
   void addSpecialAttribute(const char* pName, EnumDecl* ED) {

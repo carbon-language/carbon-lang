@@ -84,6 +84,7 @@
 
 NODE_XML(Decl, "FIXME_Decl")
   ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclKindName(), "unhandled_decl_name")
 END_NODE_XML
 
 NODE_XML(FunctionDecl, "Function")
@@ -106,7 +107,7 @@ NODE_XML(FunctionDecl, "Function")
   SUB_NODE_FN_BODY_XML
 END_NODE_XML
 
-NODE_XML(CXXMethodDecl, "CXXMethodDecl")
+NODE_XML(CXXMethodDecl, "CXXMethod")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getDeclContext(), "context")
@@ -116,6 +117,79 @@ NODE_XML(CXXMethodDecl, "CXXMethodDecl")
   ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
   ATTRIBUTE_OPT_XML(isStatic(), "static")
   ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
+  ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
+	  ENUM_XML(AS_none,      "")
+	  ENUM_XML(AS_public,    "public")
+	  ENUM_XML(AS_protected, "protected")
+	  ENUM_XML(AS_private,   "private")
+  END_ENUM_XML
+  ATTRIBUTE_XML(getNumParams(), "num_args")
+  SUB_NODE_SEQUENCE_XML(ParmVarDecl)
+  SUB_NODE_FN_BODY_XML
+END_NODE_XML
+
+NODE_XML(CXXConstructorDecl, "CXXConstructor")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+  TYPE_ATTRIBUTE_XML(getType()->getAs<FunctionType>()->getResultType())
+  ATTRIBUTE_XML(getType()->getAs<FunctionType>(), "function_type")
+  ATTRIBUTE_OPT_XML(isExplicit(), "is_explicit")
+  ATTRIBUTE_OPT_XML(isDefaultConstructor(), "is_default_ctor")
+  ATTRIBUTE_OPT_XML(isCopyConstructor(), "is_copy_ctor")
+  ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
+  ATTRIBUTE_OPT_XML(isStatic(), "static")
+  ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
+  ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
+	  ENUM_XML(AS_none,      "")
+	  ENUM_XML(AS_public,    "public")
+	  ENUM_XML(AS_protected, "protected")
+	  ENUM_XML(AS_private,   "private")
+  END_ENUM_XML
+  ATTRIBUTE_XML(getNumParams(), "num_args")
+  SUB_NODE_SEQUENCE_XML(ParmVarDecl)
+  SUB_NODE_FN_BODY_XML
+END_NODE_XML
+
+NODE_XML(CXXDestructorDecl, "CXXDestructor")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+  TYPE_ATTRIBUTE_XML(getType()->getAs<FunctionType>()->getResultType())
+  ATTRIBUTE_XML(getType()->getAs<FunctionType>(), "function_type")
+  ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
+  ATTRIBUTE_OPT_XML(isStatic(), "static")
+  ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
+  ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
+	  ENUM_XML(AS_none,      "")
+	  ENUM_XML(AS_public,    "public")
+	  ENUM_XML(AS_protected, "protected")
+	  ENUM_XML(AS_private,   "private")
+  END_ENUM_XML
+  ATTRIBUTE_XML(getNumParams(), "num_args")
+  SUB_NODE_SEQUENCE_XML(ParmVarDecl)
+  SUB_NODE_FN_BODY_XML
+END_NODE_XML
+
+NODE_XML(CXXConversionDecl, "CXXConversion")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+  TYPE_ATTRIBUTE_XML(getType()->getAs<FunctionType>()->getResultType())
+  ATTRIBUTE_XML(getType()->getAs<FunctionType>(), "function_type")
+  ATTRIBUTE_OPT_XML(isExplicit(), "is_explicit")
+  ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
+  ATTRIBUTE_OPT_XML(isStatic(), "static")
+  ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
+  ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
+	  ENUM_XML(AS_none,      "")
+	  ENUM_XML(AS_public,    "public")
+	  ENUM_XML(AS_protected, "protected")
+	  ENUM_XML(AS_private,   "private")
+  END_ENUM_XML
   ATTRIBUTE_XML(getNumParams(), "num_args")
   SUB_NODE_SEQUENCE_XML(ParmVarDecl)
   SUB_NODE_FN_BODY_XML
@@ -126,6 +200,7 @@ NODE_XML(NamespaceDecl, "Namespace")
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getDeclContext(), "context")
   ATTRIBUTE_XML(getNameAsString(), "name")
+  SUB_NODE_SEQUENCE_XML(DeclContext)
 END_NODE_XML
 
 NODE_XML(UsingDirectiveDecl, "UsingDirective")
@@ -189,6 +264,12 @@ NODE_XML(FieldDecl, "Field")
   ATTRIBUTE_XML(getNameAsString(), "name")
   TYPE_ATTRIBUTE_XML(getType())
   ATTRIBUTE_OPT_XML(isMutable(), "mutable")
+  ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
+	  ENUM_XML(AS_none,      "")
+	  ENUM_XML(AS_public,    "public")
+	  ENUM_XML(AS_protected, "protected")
+	  ENUM_XML(AS_private,   "private")
+  END_ENUM_XML
   ATTRIBUTE_OPT_XML(isBitField(), "bitfield")
   SUB_NODE_OPT_XML(Expr)                                      // init expr of a bit field
 END_NODE_XML
@@ -237,6 +318,35 @@ NODE_XML(LinkageSpecDecl, "LinkageSpec")
   END_ENUM_XML
 END_NODE_XML
 
+NODE_XML(TemplateDecl, "Template")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+END_NODE_XML
+
+NODE_XML(TemplateTypeParmDecl, "TemplateTypeParm")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+END_NODE_XML
+
+NODE_XML(UsingShadowDecl, "UsingShadow")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getTargetDecl(), "target_decl")
+  ATTRIBUTE_XML(getUsingDecl(), "using_decl")
+END_NODE_XML
+
+NODE_XML(UsingDecl, "Using")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getTargetNestedNameDecl(), "target_nested_namespace_decl")
+  ATTRIBUTE_XML(isTypeName(), "is_typename")
+END_NODE_XML
 
 //===----------------------------------------------------------------------===//
 #undef NODE_XML
