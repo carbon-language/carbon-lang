@@ -275,7 +275,7 @@ public:
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
     } else {
-      P->assignPassManager(activeStack);
+      P->assignPassManager(activeStack, PMT_FunctionPassManager);
     }
 
   }
@@ -418,7 +418,7 @@ public:
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
     } else {
-      P->assignPassManager(activeStack);
+      P->assignPassManager(activeStack, PMT_ModulePassManager);
     }
   }
 
@@ -1270,20 +1270,30 @@ FunctionPassManager::~FunctionPassManager() {
   delete FPM;
 }
 
+/// addImpl - Add a pass to the queue of passes to run, without
+/// checking whether to add a printer pass.
+void FunctionPassManager::addImpl(Pass *P) {
+  FPM->add(P);
+}
+
 /// add - Add a pass to the queue of passes to run.  This passes
 /// ownership of the Pass to the PassManager.  When the
 /// PassManager_X is destroyed, the pass will be destroyed as well, so
 /// there is no need to delete the pass. (TODO delete passes.)
 /// This implies that all passes MUST be allocated with 'new'.
 void FunctionPassManager::add(Pass *P) { 
-  if (ShouldPrintBeforePass(P))
-    add(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
-                             + P->getPassName() + " ***"));
-  FPM->add(P);
+  // If this is a not a function pass, don't add a printer for it.
+  if (P->getPassKind() == PT_Function)
+    if (ShouldPrintBeforePass(P))
+      addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
+                                   + P->getPassName() + " ***"));
 
-  if (ShouldPrintAfterPass(P))
-    add(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
-                             + P->getPassName() + " ***"));
+  addImpl(P);
+
+  if (P->getPassKind() == PT_Function)
+    if (ShouldPrintAfterPass(P))
+      addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
+                                   + P->getPassName() + " ***"));
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep
@@ -1588,20 +1598,26 @@ PassManager::~PassManager() {
   delete PM;
 }
 
+/// addImpl - Add a pass to the queue of passes to run, without
+/// checking whether to add a printer pass.
+void PassManager::addImpl(Pass *P) {
+  PM->add(P);
+}
+
 /// add - Add a pass to the queue of passes to run.  This passes ownership of
 /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
 /// will be destroyed as well, so there is no need to delete the pass.  This
 /// implies that all passes MUST be allocated with 'new'.
 void PassManager::add(Pass *P) {
   if (ShouldPrintBeforePass(P))
-    add(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
-                             + P->getPassName() + " ***"));
+    addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
+                                 + P->getPassName() + " ***"));
 
-  PM->add(P);
+  addImpl(P);
 
   if (ShouldPrintAfterPass(P))
-    add(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
-                             + P->getPassName() + " ***"));
+    addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
+                                 + P->getPassName() + " ***"));
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
@@ -1764,7 +1780,7 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    BBP->assignPassManager(PMS);
+    BBP->assignPassManager(PMS, PreferredType);
 
     // [4] Push new manager into PMS
     PMS.push(BBP);
