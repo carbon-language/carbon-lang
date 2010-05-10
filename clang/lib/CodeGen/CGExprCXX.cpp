@@ -261,7 +261,16 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
     if (ClassDecl->hasTrivialCopyAssignment()) {
       assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
              "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
-      llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+      LValue LV = EmitLValue(E->getArg(0));
+      llvm::Value *This;
+      if (LV.isPropertyRef()) {
+        RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
+        assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
+        This = RV.getAggregateAddr();
+      }
+      else
+        This = LV.getAddress();
+      
       llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
       QualType Ty = E->getType();
       EmitAggregateCopy(This, Src, Ty);
