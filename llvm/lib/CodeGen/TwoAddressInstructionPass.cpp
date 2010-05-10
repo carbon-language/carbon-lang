@@ -1179,5 +1179,6 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
     MI->eraseFromParent();
   }
 
+  RegSequences.clear();
   return true;
 }
