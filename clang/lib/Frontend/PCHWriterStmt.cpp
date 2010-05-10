@@ -126,6 +126,9 @@ namespace {
     void VisitCXXThisExpr(CXXThisExpr *E);
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
+    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
+    
+    void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
 }
 
@@ -954,6 +957,23 @@ void PCHStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   Code = pch::EXPR_CXX_DEFAULT_ARG;
 }
 
+void PCHStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+  VisitExpr(E);
+  Writer.AddCXXTemporary(E->getTemporary(), Record);
+  Writer.WriteSubStmt(E->getSubExpr());
+  Code = pch::EXPR_CXX_BIND_TEMPORARY;
+}
+
+void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumTemporaries());
+  for (unsigned i = 0, e = E->getNumTemporaries(); i != e; ++i)
+    Writer.AddCXXTemporary(E->getTemporary(i), Record);
+  
+  Writer.WriteSubStmt(E->getSubExpr());
+  Code = pch::EXPR_CXX_EXPR_WITH_TEMPORARIES;
+}
+
 
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation
@@ -1021,8 +1041,12 @@ void PCHWriter::FlushStmts() {
 
     Writer.Code = pch::STMT_NULL_PTR;
     Writer.Visit(S);
-    assert(Writer.Code != pch::STMT_NULL_PTR &&
-           "Unhandled expression writing PCH file");
+#ifndef NDEBUG
+    if (Writer.Code == pch::STMT_NULL_PTR) {
+      S->dump();
+      assert(0 && "Unhandled expression writing PCH file");
+    }
+#endif
     Stream.EmitRecord(Writer.Code, Record);
 
     assert(N == StmtsToEmit.size() &&

@@ -2974,6 +2974,12 @@ std::string PCHReader::ReadString(const RecordData &Record, unsigned &Idx) {
   return Result;
 }
 
+CXXTemporary *PCHReader::ReadCXXTemporary(const RecordData &Record,
+                                          unsigned &Idx) {
+  CXXDestructorDecl *Decl = cast<CXXDestructorDecl>(GetDecl(Record[Idx++]));
+  return CXXTemporary::Create(*Context, Decl);
+}
+
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
   return Diag(SourceLocation(), DiagID);
 }

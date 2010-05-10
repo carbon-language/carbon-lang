@@ -580,11 +580,15 @@ protected:
   virtual void DoDestroy(ASTContext &C);
 
 public:
+  CXXBindTemporaryExpr(EmptyShell Empty)
+    : Expr(CXXBindTemporaryExprClass, Empty), Temp(0), SubExpr(0) {}
+  
   static CXXBindTemporaryExpr *Create(ASTContext &C, CXXTemporary *Temp,
                                       Expr* SubExpr);
 
   CXXTemporary *getTemporary() { return Temp; }
   const CXXTemporary *getTemporary() const { return Temp; }
+  void setTemporary(CXXTemporary *T) { Temp = T; }
 
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
@@ -611,8 +615,8 @@ public:
 /// const int &i = 10;
 ///
 /// a bind reference expression is inserted to indicate that 10 is bound to
-/// a reference. (Ans also that a temporary needs to be created to hold the
-/// value).
+/// a reference, and that a temporary needs to be created to hold the
+/// value.
 class CXXBindReferenceExpr : public Expr {
   // SubExpr - The expression being bound.
   Stmt *SubExpr;
@@ -1658,17 +1662,27 @@ protected:
   virtual void DoDestroy(ASTContext &C);
 
 public:
+  CXXExprWithTemporaries(EmptyShell Empty)
+    : Expr(CXXExprWithTemporariesClass, Empty),
+      SubExpr(0), Temps(0), NumTemps(0) {}
+                         
   static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
                                         CXXTemporary **Temps, 
                                         unsigned NumTemps);
 
   unsigned getNumTemporaries() const { return NumTemps; }
+  void setNumTemporaries(unsigned N);
+    
   CXXTemporary *getTemporary(unsigned i) {
     assert(i < NumTemps && "Index out of range");
     return Temps[i];
   }
   const CXXTemporary *getTemporary(unsigned i) const {
     return const_cast<CXXExprWithTemporaries*>(this)->getTemporary(i);
+  }
+  void setTemporary(unsigned i, CXXTemporary *T) {
+    assert(i < NumTemps && "Index out of range");
+    Temps[i] = T;
   }
 
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }

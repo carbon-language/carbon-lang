@@ -2241,6 +2241,10 @@ void PCHWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
   Record.push_back(SID);
 }
 
+void PCHWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
+  AddDeclRef(Temp->getDestructor(), Record);
+}
+
 void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                                        RecordData &Record) {
   switch (Arg.getArgument().getKind()) {

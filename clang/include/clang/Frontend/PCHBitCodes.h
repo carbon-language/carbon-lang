@@ -751,7 +751,10 @@ namespace clang {
       EXPR_CXX_TYPEID_TYPE,       // CXXTypeidExpr (of type).
       EXPR_CXX_THIS,              // CXXThisExpr
       EXPR_CXX_THROW,             // CXXThrowExpr
-      EXPR_CXX_DEFAULT_ARG        // CXXDefaultArgExpr
+      EXPR_CXX_DEFAULT_ARG,       // CXXDefaultArgExpr
+      EXPR_CXX_BIND_TEMPORARY,    // CXXBindTemporaryExpr
+      
+      EXPR_CXX_EXPR_WITH_TEMPORARIES // CXXExprWithTemporaries
     };
 
     /// \brief The kinds of designators that can occur in a

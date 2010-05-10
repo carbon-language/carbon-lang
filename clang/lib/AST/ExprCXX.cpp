@@ -520,15 +520,23 @@ void CXXConstructExpr::DoDestroy(ASTContext &C) {
 CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
                                                CXXTemporary **temps,
                                                unsigned numtemps)
-: Expr(CXXExprWithTemporariesClass, subexpr->getType(),
+  : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()),
-  SubExpr(subexpr), Temps(0), NumTemps(numtemps) {
-  if (NumTemps > 0) {
-    Temps = new CXXTemporary*[NumTemps];
-    for (unsigned i = 0; i < NumTemps; ++i)
+    SubExpr(subexpr), Temps(0), NumTemps(0) {
+  if (NumTemps) {
+    setNumTemporaries(numtemps);
+    for (unsigned i = 0; i != numtemps; ++i)
       Temps[i] = temps[i];
   }
 }
+
+void CXXExprWithTemporaries::setNumTemporaries(unsigned N) {
+  assert(Temps == 0 && "Cannot resize with this");
+  // FIXME: This is a memory leak in disable free mode.
+  Temps = new CXXTemporary*[NumTemps];
+  NumTemps = N;
+}
+
 
 CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
                                                        Expr *SubExpr,
@@ -544,6 +552,7 @@ void CXXExprWithTemporaries::DoDestroy(ASTContext &C) {
 }
 
 CXXExprWithTemporaries::~CXXExprWithTemporaries() {
+  // FIXME: This is a memory leak in disable free mode.
   delete[] Temps;
 }
 

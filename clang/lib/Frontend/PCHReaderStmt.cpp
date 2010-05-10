@@ -130,6 +130,9 @@ namespace {
     unsigned VisitCXXThisExpr(CXXThisExpr *E);
     unsigned VisitCXXThrowExpr(CXXThrowExpr *E);
     unsigned VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
+    unsigned VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
+    
+    unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
 }
 
@@ -1028,7 +1031,27 @@ unsigned PCHStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   bool HasStoredExpr = Record[Idx++];
   if (!HasStoredExpr) return 0;
   E->setExpr(cast<Expr>(StmtStack.back()));
-  return 1;  // Read it.
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+  VisitExpr(E);
+  E->setTemporary(Reader.ReadCXXTemporary(Record, Idx));
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
+  return 1;
+}
+
+
+unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+  VisitExpr(E);
+  unsigned NumTemps = Record[Idx++];
+  if (NumTemps) {
+    E->setNumTemporaries(NumTemps);
+    for (unsigned i = 0; i != NumTemps; ++i)
+      E->setTemporary(i, Reader.ReadCXXTemporary(Record, Idx));
+  }
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
+  return 1;
 }
 
 
@@ -1395,6 +1418,13 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_CXX_DEFAULT_ARG:
       S = new (Context) CXXDefaultArgExpr(Empty);
+      break;
+    case pch::EXPR_CXX_BIND_TEMPORARY:
+      S = new (Context) CXXBindTemporaryExpr(Empty);
+      break;
+        
+    case pch::EXPR_CXX_EXPR_WITH_TEMPORARIES:
+      S = new (Context) CXXExprWithTemporaries(Empty);
       break;
     }
 
