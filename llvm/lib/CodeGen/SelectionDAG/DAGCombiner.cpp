@@ -760,12 +760,18 @@ SDValue DAGCombiner::PromoteIntBinOp(SDValue Op) {
 
     bool Replace1 = false;
     SDValue N1 = Op.getOperand(1);
-    SDValue NN1 = PromoteOperand(N1, PVT, Replace1);
-    if (NN1.getNode() == 0)
-      return SDValue();
+    SDValue NN1;
+    if (N0 == N1)
+      NN1 = NN0;
+    else {
+      NN1 = PromoteOperand(N1, PVT, Replace1);
+      if (NN1.getNode() == 0)
+        return SDValue();
+    }
 
     AddToWorkList(NN0.getNode());
-    AddToWorkList(NN1.getNode());
+    if (NN1.getNode())
+      AddToWorkList(NN1.getNode());
 
     if (Replace0)
       ReplaceLoadWithPromotedLoad(N0.getNode(), NN0.getNode());
