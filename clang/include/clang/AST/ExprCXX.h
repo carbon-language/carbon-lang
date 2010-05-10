@@ -1696,7 +1696,7 @@ class CXXExprWithTemporaries : public Expr {
   CXXTemporary **Temps;
   unsigned NumTemps;
 
-  CXXExprWithTemporaries(Expr *SubExpr, CXXTemporary **Temps,
+  CXXExprWithTemporaries(ASTContext &C, Expr *SubExpr, CXXTemporary **Temps,
                          unsigned NumTemps);
   ~CXXExprWithTemporaries();
 
@@ -1713,7 +1713,7 @@ public:
                                         unsigned NumTemps);
 
   unsigned getNumTemporaries() const { return NumTemps; }
-  void setNumTemporaries(unsigned N);
+  void setNumTemporaries(ASTContext &C, unsigned N);
     
   CXXTemporary *getTemporary(unsigned i) {
     assert(i < NumTemps && "Index out of range");

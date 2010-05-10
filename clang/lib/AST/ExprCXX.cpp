@@ -527,24 +527,24 @@ void CXXConstructExpr::DoDestroy(ASTContext &C) {
   C.Deallocate(this);
 }
 
-CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
+CXXExprWithTemporaries::CXXExprWithTemporaries(ASTContext &C,
+                                               Expr *subexpr,
                                                CXXTemporary **temps,
                                                unsigned numtemps)
   : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()),
     SubExpr(subexpr), Temps(0), NumTemps(0) {
   if (numtemps) {
-    setNumTemporaries(numtemps);
+    setNumTemporaries(C, numtemps);
     for (unsigned i = 0; i != numtemps; ++i)
       Temps[i] = temps[i];
   }
 }
 
-void CXXExprWithTemporaries::setNumTemporaries(unsigned N) {
+void CXXExprWithTemporaries::setNumTemporaries(ASTContext &C, unsigned N) {
   assert(Temps == 0 && "Cannot resize with this");
   NumTemps = N;
-  // FIXME: This is a memory leak in disable free mode.
-  Temps = new CXXTemporary*[NumTemps];
+  Temps = new (C) CXXTemporary*[NumTemps];
 }
 
 
@@ -552,19 +552,18 @@ CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
                                                        Expr *SubExpr,
                                                        CXXTemporary **Temps,
                                                        unsigned NumTemps) {
-  return new (C) CXXExprWithTemporaries(SubExpr, Temps, NumTemps);
+  return new (C) CXXExprWithTemporaries(C, SubExpr, Temps, NumTemps);
 }
 
 void CXXExprWithTemporaries::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
+  if (Temps)
+    C.Deallocate(Temps);
   this->~CXXExprWithTemporaries();
   C.Deallocate(this);
 }
 
-CXXExprWithTemporaries::~CXXExprWithTemporaries() {
-  // FIXME: This is a memory leak in disable free mode.
-  delete[] Temps;
-}
+CXXExprWithTemporaries::~CXXExprWithTemporaries() {}
 
 // CXXBindTemporaryExpr
 Stmt::child_iterator CXXBindTemporaryExpr::child_begin() {

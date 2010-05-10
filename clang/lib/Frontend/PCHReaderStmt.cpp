@@ -1085,7 +1085,7 @@ unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
   unsigned NumTemps = Record[Idx++];
   if (NumTemps) {
-    E->setNumTemporaries(NumTemps);
+    E->setNumTemporaries(*Reader.getContext(), NumTemps);
     for (unsigned i = 0; i != NumTemps; ++i)
       E->setTemporary(i, Reader.ReadCXXTemporary(Record, Idx));
   }
