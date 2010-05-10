@@ -677,11 +677,16 @@ void SlotTracker::processFunction() {
       if (!I->getType()->isVoidTy() && !I->hasName())
         CreateFunctionSlot(I);
       
-      // Intrinsics can directly use metadata.
-      if (isa<IntrinsicInst>(I))
-        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-          if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
-            CreateMetadataSlot(N);
+      // Intrinsics can directly use metadata.  We allow direct calls to any
+      // llvm.foo function here, because the target may not be linked into the
+      // optimizer.
+      if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+        if (Function *F = CI->getCalledFunction())
+          if (F->getName().startswith("llvm."))
+            for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+              if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
+                CreateMetadataSlot(N);
+      }
 
       // Process metadata attached with this instruction.
       I->getAllMetadata(MDForInst);
