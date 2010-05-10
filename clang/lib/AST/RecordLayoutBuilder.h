@@ -151,7 +151,8 @@ class ASTRecordLayoutBuilder {
   /// or a field) has been placed at the given offset. Will update the
   /// EmptyClassOffsets map if the class is empty or has any empty bases or
   /// fields.
-  void UpdateEmptyClassOffsets(const CXXRecordDecl *RD, uint64_t Offset);
+  void UpdateEmptyClassOffsets(const CXXRecordDecl *RD, uint64_t Offset,
+                               bool UpdateVBases);
 
   /// UpdateEmptyClassOffsets - Called after a field has been placed at the 
   /// given offset.

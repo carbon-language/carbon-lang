@@ -377,7 +377,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   // If we have an empty base class, try to place it at offset 0.
   if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0, /*CheckVBases=*/false)) {
     // We were able to place the class at offset 0.
-    UpdateEmptyClassOffsets(RD, 0);
+    UpdateEmptyClassOffsets(RD, 0, /*UpdateVBases=*/false);
 
     Size = std::max(Size, Layout.getSize());
 
@@ -408,7 +408,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
-  UpdateEmptyClassOffsets(RD, Offset);
+  UpdateEmptyClassOffsets(RD, Offset, /*UpdateVBases=*/false);
   return Offset;
 }
 
@@ -497,7 +497,8 @@ bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
 }
 
 void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
-                                                     uint64_t Offset) {
+                                                     uint64_t Offset,
+                                                     bool UpdateVBases) {
   if (RD->isEmpty())
     EmptyClassOffsets.insert(std::make_pair(Offset, RD));
 
@@ -515,7 +516,8 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     uint64_t BaseClassOffset = Layout.getBaseClassOffset(Base);
-    UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset);
+    UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset,
+                            /*UpdateVBases=*/false);
   }
 
   // Update fields.
@@ -528,7 +530,9 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
     UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
   }
 
-  // FIXME: Update virtual bases.
+  if (UpdateVBases) {
+    // FIXME: Update virtual bases.
+  }
 }
 
 void
@@ -538,7 +542,7 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
 
   if (const RecordType *RT = T->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      UpdateEmptyClassOffsets(RD, Offset);
+      UpdateEmptyClassOffsets(RD, Offset, /*UpdateVBases=*/true);
       return;
     }
   }
@@ -558,7 +562,7 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
     uint64_t ElementOffset = Offset;
 
     for (uint64_t I = 0; I != NumElements; ++I) {
-      UpdateEmptyClassOffsets(RD, ElementOffset);
+      UpdateEmptyClassOffsets(RD, ElementOffset, /*UpdateVBases=*/true);
       ElementOffset += Info.getSize();
     }
   }
