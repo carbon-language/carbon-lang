@@ -58,11 +58,13 @@ namespace {
 
     // Everything we know about a live virtual register.
     struct LiveReg {
-      MachineInstr *LastUse; // Last instr to use reg.
-      unsigned PhysReg;      // Currently held here.
-      unsigned LastOpNum;    // OpNum on LastUse.
+      MachineInstr *LastUse;    // Last instr to use reg.
+      unsigned PhysReg;         // Currently held here.
+      unsigned short LastOpNum; // OpNum on LastUse.
+      bool Dirty;               // Register needs spill.
 
-      LiveReg(unsigned p=0) : LastUse(0), PhysReg(p), LastOpNum(0) {
+      LiveReg(unsigned p=0) : LastUse(0), PhysReg(p), LastOpNum(0),
+                              Dirty(false) {
         assert(p && "Don't create LiveRegs without a PhysReg");
       }
     };
@@ -99,11 +101,6 @@ namespace {
     // UsedInInstr - BitVector of physregs that are used in the current
     // instruction, and so cannot be allocated.
     BitVector UsedInInstr;
-
-    // PhysRegDirty - A bit is set for each physreg that holds a dirty virtual
-    // register. Bits for physregs that are not mapped to a virtual register are
-    // invalid.
-    BitVector PhysRegDirty;
 
     // ReservedRegs - vector of reserved physical registers.
     BitVector ReservedRegs;
@@ -200,15 +197,15 @@ void RAFast::spillVirtReg(MachineBasicBlock &MBB,
          "Spilling a physical register is illegal!");
   LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
   assert(i != LiveVirtRegs.end() && "Spilling unmapped virtual register");
-  const LiveReg &LR = i->second;
+  LiveReg &LR = i->second;
   assert(PhysRegState[LR.PhysReg] == VirtReg && "Broken RegState mapping");
 
   // If this physreg is used by the instruction, we want to kill it on the
   // instruction, not on the spill.
   bool spillKill = isKill && LR.LastUse != MI;
 
-  if (PhysRegDirty.test(LR.PhysReg)) {
-    PhysRegDirty.reset(LR.PhysReg);
+  if (LR.Dirty) {
+    LR.Dirty = false;
     DEBUG(dbgs() << "  Spilling register " << TRI->getName(LR.PhysReg)
       << " containing %reg" << VirtReg);
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
@@ -219,11 +216,11 @@ void RAFast::spillVirtReg(MachineBasicBlock &MBB,
     ++NumStores;   // Update statistics
 
     if (spillKill)
-      i->second.LastUse = 0; // Don't kill register again
+      LR.LastUse = 0; // Don't kill register again
     else if (!isKill) {
       MachineInstr *Spill = llvm::prior(MI);
-      i->second.LastUse = Spill;
-      i->second.LastOpNum = Spill->findRegisterUseOperandIdx(LR.PhysReg);
+      LR.LastUse = Spill;
+      LR.LastOpNum = Spill->findRegisterUseOperandIdx(LR.PhysReg);
     }
   }
 
@@ -236,7 +233,7 @@ void RAFast::spillAll(MachineBasicBlock &MBB, MachineInstr *MI) {
   SmallVector<unsigned, 16> Dirty;
   for (LiveRegMap::iterator i = LiveVirtRegs.begin(),
        e = LiveVirtRegs.end(); i != e; ++i)
-    if (PhysRegDirty.test(i->second.PhysReg))
+    if (i->second.Dirty)
       Dirty.push_back(i->first);
   for (unsigned i = 0, e = Dirty.size(); i != e; ++i)
     spillVirtReg(MBB, MI, Dirty[i], false);
@@ -351,10 +348,8 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
       continue;
     default:
       // Grab the first spillable register we meet.
-      if (!BestReg && !UsedInInstr.test(PhysReg)) {
-        BestReg = PhysReg;
-        BestCost = PhysRegDirty.test(PhysReg) ? spillCost : 1;
-      }
+      if (!BestReg && !UsedInInstr.test(PhysReg))
+        BestReg = PhysReg, BestCost = spillCost;
       continue;
     }
   }
@@ -388,7 +383,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
           Cost++;
           break;
         default:
-          Cost += PhysRegDirty.test(Alias) ? spillCost : 1;
+          Cost += spillCost;
           break;
         }
       }
@@ -450,11 +445,12 @@ unsigned RAFast::defineVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
   if (i == LiveVirtRegs.end())
     i = allocVirtReg(MBB, MI, VirtReg);
-  i->second.LastUse = MI;
-  i->second.LastOpNum = OpNum;
-  UsedInInstr.set(i->second.PhysReg);
-  PhysRegDirty.set(i->second.PhysReg);
-  return i->second.PhysReg;
+  LiveReg &LR = i->second;
+  LR.LastUse = MI;
+  LR.LastOpNum = OpNum;
+  LR.Dirty = true;
+  UsedInInstr.set(LR.PhysReg);
+  return LR.PhysReg;
 }
 
 /// reloadVirtReg - Make sure VirtReg is available in a physreg and return it.
@@ -465,7 +461,6 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
   if (i == LiveVirtRegs.end()) {
     i = allocVirtReg(MBB, MI, VirtReg);
-    PhysRegDirty.reset(i->second.PhysReg);
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DEBUG(dbgs() << "  Reloading %reg" << VirtReg << " into "
@@ -473,10 +468,11 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     TII->loadRegFromStackSlot(MBB, MI, i->second.PhysReg, FrameIndex, RC, TRI);
     ++NumLoads;
   }
-  i->second.LastUse = MI;
-  i->second.LastOpNum = OpNum;
-  UsedInInstr.set(i->second.PhysReg);
-  return i->second.PhysReg;
+  LiveReg &LR = i->second;
+  LR.LastUse = MI;
+  LR.LastOpNum = OpNum;
+  UsedInInstr.set(LR.PhysReg);
+  return LR.PhysReg;
 }
 
 /// reservePhysReg - Mark PhysReg as reserved. This is very similar to
@@ -534,7 +530,6 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   PhysRegState.assign(TRI->getNumRegs(), regDisabled);
   assert(LiveVirtRegs.empty() && "Mapping not cleared form last block?");
-  PhysRegDirty.reset();
 
   MachineBasicBlock::iterator MII = MBB.begin();
 
@@ -562,7 +557,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
             break;
           default:
             dbgs() << "=%reg" << PhysRegState[Reg];
-            if (PhysRegDirty.test(Reg))
+            if (LiveVirtRegs[PhysRegState[Reg]].Dirty)
               dbgs() << "*";
             assert(LiveVirtRegs[PhysRegState[Reg]].PhysReg == Reg &&
                    "Bad inverse map");
@@ -727,7 +722,6 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
 
-  PhysRegDirty.resize(TRI->getNumRegs());
   UsedInInstr.resize(TRI->getNumRegs());
   ReservedRegs = TRI->getReservedRegs(*MF);
 
