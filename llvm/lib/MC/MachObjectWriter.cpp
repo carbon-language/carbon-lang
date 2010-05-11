@@ -584,7 +584,7 @@ public:
         // Add the local offset, if needed.
         if (Base != &SD)
           Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
-      } else {
+      } else if (Symbol->isInSection()) {
         // The index is the section ordinal (1-based).
         Index = SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
@@ -592,6 +592,9 @@ public:
 
         if (IsPCRel)
           Value -= Address + (1 << Log2Size);
+      } else {
+        report_fatal_error("unsupported relocation of undefined symbol '" +
+                           Symbol->getName() + "'");
       }
 
       MCSymbolRefExpr::VariantKind Modifier = Target.getSymA()->getKind();
