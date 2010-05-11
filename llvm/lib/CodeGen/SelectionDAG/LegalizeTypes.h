@@ -32,7 +32,7 @@ namespace llvm {
 /// involves promoting small sizes to large sizes or splitting up large values
 /// into small values.
 ///
-class VISIBILITY_HIDDEN DAGTypeLegalizer {
+class LLVM_LIBRARY_VISIBILITY DAGTypeLegalizer {
   const TargetLowering &TLI;
   SelectionDAG &DAG;
 public:

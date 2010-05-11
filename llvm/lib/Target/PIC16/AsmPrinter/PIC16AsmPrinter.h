@@ -29,7 +29,7 @@
 #include <string>
 
 namespace llvm {
-  class VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
+  class LLVM_LIBRARY_VISIBILITY PIC16AsmPrinter : public AsmPrinter {
   public:
     explicit PIC16AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
   private:

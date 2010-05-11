@@ -26,7 +26,7 @@ namespace llvm {
 
   /// MSP430MCInstLower - This class is used to lower an MachineInstr
   /// into an MCInst.
-class VISIBILITY_HIDDEN MSP430MCInstLower {
+class LLVM_LIBRARY_VISIBILITY MSP430MCInstLower {
   MCContext &Ctx;
   Mangler &Mang;
 

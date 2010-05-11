@@ -26,7 +26,7 @@ namespace llvm {
   //class ARMSubtarget;
   
 /// ARMMCInstLower - This class is used to lower an MachineInstr into an MCInst.
-class VISIBILITY_HIDDEN ARMMCInstLower {
+class LLVM_LIBRARY_VISIBILITY ARMMCInstLower {
   MCContext &Ctx;
   Mangler &Mang;
   AsmPrinter &Printer;

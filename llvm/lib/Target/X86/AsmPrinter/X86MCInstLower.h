@@ -25,7 +25,7 @@ namespace llvm {
   class X86Subtarget;
   
 /// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
-class VISIBILITY_HIDDEN X86MCInstLower {
+class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
   MCContext &Ctx;
   Mangler *Mang;
   X86AsmPrinter &AsmPrinter;

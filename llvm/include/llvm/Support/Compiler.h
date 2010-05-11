@@ -15,12 +15,21 @@
 #ifndef LLVM_SUPPORT_COMPILER_H
 #define LLVM_SUPPORT_COMPILER_H
 
-// The VISIBILITY_HIDDEN macro, used for marking classes with the GCC-specific
-// visibility("hidden") attribute.
+/// LLVM_LIBRARY_VISIBILITY - If a class marked with this attribute is linked
+/// into a shared library, then the class should be private to the library and
+/// not accessible from outside it.  Can also be used to mark variables and
+/// functions, making them private to any shared library they are linked into.
+
+/// LLVM_GLOBAL_VISIBILITY - If a class marked with this attribute is linked
+/// into a shared library, then the class will be accessible from outside the
+/// the library.  Can also be used to mark variables and functions, making them
+/// accessible from outside any shared library they are linked into.
 #if (__GNUC__ >= 4) && !defined(__MINGW32__) && !defined(__CYGWIN__)
-#define VISIBILITY_HIDDEN __attribute__ ((visibility("hidden")))
+#define LLVM_LIBRARY_VISIBILITY __attribute__ ((visibility("hidden")))
+#define LLVM_GLOBAL_VISIBILITY __attribute__ ((visibility("default")))
 #else
-#define VISIBILITY_HIDDEN
+#define LLVM_LIBRARY_VISIBILITY
+#define LLVM_GLOBAL_VISIBILITY
 #endif
 
 #if (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))

@@ -26,7 +26,7 @@ using namespace llvm;
 
 namespace {
 
-class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
+class LLVM_LIBRARY_VISIBILITY PIC16DAGToDAGISel : public SelectionDAGISel {
 
   /// TM - Keep a reference to PIC16TargetMachine.
   const PIC16TargetMachine &TM;

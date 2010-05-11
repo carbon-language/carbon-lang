@@ -31,7 +31,7 @@ class MCInst;
 class MCStreamer;
 class MCSymbol;
 
-class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
+class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
  public:
   explicit X86AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
