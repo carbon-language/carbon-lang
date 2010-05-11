@@ -1,0 +1,500 @@
+// -*- C++ -*-
+//===--------------------------- future -----------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_FUTURE
+#define _LIBCPP_FUTURE
+
+/*
+    future synopsis
+
+namespace std
+{
+
+enum class future_errc
+{
+    broken_promise,
+    future_already_retrieved,
+    promise_already_satisfied,
+    no_state
+};
+
+enum class launch
+{
+    any,
+    async,
+    sync
+};
+
+enum class future_status
+{
+    ready,
+    timeout,
+    deferred
+};
+
+template <> struct is_error_code_enum<future_errc> : public true_type { };
+error_code make_error_code(future_errc e);
+error_condition make_error_condition(future_errc e);
+
+const error_category& future_category();
+
+class future_error
+    : public logic_error
+{
+public:
+    future_error(error_code ec);  // exposition only
+
+    const error_code& code() const throw();
+    const char*       what() const throw();
+};
+
+template <class R>
+class promise
+{
+public:
+    promise();
+    template <class Allocator>
+        promise(allocator_arg_t, const Allocator& a);
+    promise(promise&& rhs);
+    promise(const promise& rhs) = delete;
+    ~promise();
+
+    // assignment
+    promise& operator=(promise&& rhs);
+    promise& operator=(const promise& rhs) = delete;
+    void swap(promise& other);
+
+    // retrieving the result
+    future<R> get_future();
+
+    // setting the result
+    void set_value(const R& r);
+    void set_value(R&& r);
+    void set_exception(exception_ptr p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit(const R& r);
+    void set_value_at_thread_exit(R&& r);
+    void set_exception_at_thread_exit(exception_ptr p);
+};
+
+template <class R>
+class promise<R&>
+{
+public:
+    promise();
+    template <class Allocator>
+        promise(allocator_arg_t, const Allocator& a);
+    promise(promise&& rhs);
+    promise(const promise& rhs) = delete;
+    ~promise();
+
+    // assignment
+    promise& operator=(promise&& rhs);
+    promise& operator=(const promise& rhs) = delete;
+    void swap(promise& other);
+
+    // retrieving the result
+    future<R> get_future();
+
+    // setting the result
+    void set_value(R& r);
+    void set_exception(exception_ptr p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit(R&);
+    void set_exception_at_thread_exit(exception_ptr p);
+};
+
+template <>
+class promise<void>
+{
+public:
+    promise();
+    template <class Allocator>
+        promise(allocator_arg_t, const Allocator& a);
+    promise(promise&& rhs);
+    promise(const promise& rhs) = delete;
+    ~promise();
+
+    // assignment
+    promise& operator=(promise&& rhs);
+    promise& operator=(const promise& rhs) = delete;
+    void swap(promise& other);
+
+    // retrieving the result
+    future<R> get_future();
+
+    // setting the result
+    void set_value();
+    void set_exception(exception_ptr p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit();
+    void set_exception_at_thread_exit(exception_ptr p);
+};
+
+template <class R> void swap(promise<R>& x, promise<R>& y);
+
+template <class R, class Alloc>
+    struct uses_allocator<promise<R>, Alloc> : public true_type {};
+
+template <class R>
+class future
+{
+public:
+    future();
+    future(future&&);
+    future(const future& rhs) = delete;
+    ~future();
+    future& operator=(const future& rhs) = delete;
+    future& operator=(future&&);
+
+    // retrieving the value
+    R get();
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class R>
+class future<R&>
+{
+public:
+    future();
+    future(future&&);
+    future(const future& rhs) = delete;
+    ~future();
+    future& operator=(const future& rhs) = delete;
+    future& operator=(future&&);
+
+    // retrieving the value
+    R& get();
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <>
+class future<void>
+{
+public:
+    future();
+    future(future&&);
+    future(const future& rhs) = delete;
+    ~future();
+    future& operator=(const future& rhs) = delete;
+    future& operator=(future&&);
+
+    // retrieving the value
+    void get();
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class R>
+class shared_future
+{
+public:
+    shared_future();
+    shared_future(const shared_future& rhs);
+    shared_future(future<R>&&);
+    shared_future(shared_future&& rhs);
+    ~shared_future();
+    shared_future& operator=(const shared_future& rhs);
+    shared_future& operator=(shared_future&& rhs);
+
+    // retrieving the value
+    const R& get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class R>
+class shared_future<R&>
+{
+public:
+    shared_future();
+    shared_future(const shared_future& rhs);
+    shared_future(future<R>&&);
+    shared_future(shared_future&& rhs);
+    ~shared_future();
+    shared_future& operator=(const shared_future& rhs);
+    shared_future& operator=(shared_future&& rhs);
+
+    // retrieving the value
+    R& get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <>
+class shared_future<void>
+{
+public:
+    shared_future();
+    shared_future(const shared_future& rhs);
+    shared_future(future<R>&&);
+    shared_future(shared_future&& rhs);
+    ~shared_future();
+    shared_future& operator=(const shared_future& rhs);
+    shared_future& operator=(shared_future&& rhs);
+
+    // retrieving the value
+    void get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class R>
+class atomic_future
+{
+public:
+    atomic_future();
+    atomic_future(const atomic_future& rhs);
+    atomic_future(future<R>&&);
+    ~atomic_future();
+    atomic_future& operator=(const atomic_future& rhs);
+
+    // retrieving the value
+    const R& get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class R>
+class atomic_future<R&>
+{
+public:
+    atomic_future();
+    atomic_future(const atomic_future& rhs);
+    atomic_future(future<R>&&);
+    ~atomic_future();
+    atomic_future& operator=(const atomic_future& rhs);
+
+    // retrieving the value
+    R& get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <>
+class atomic_future<void>
+{
+public:
+    atomic_future();
+    atomic_future(const atomic_future& rhs);
+    atomic_future(future<R>&&);
+    ~atomic_future();
+    atomic_future& operator=(const atomic_future& rhs);
+
+    // retrieving the value
+    void get() const;
+
+    // functions to check state
+    bool valid() const;
+
+    void wait() const;
+    template <class Rep, class Period>
+        future_status
+        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+        future_status
+        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+};
+
+template <class F, class... Args>
+  future<typename result_of<F(Args...)>::type>
+  async(F&& f, Args&&... args);
+
+template <class F, class... Args>
+  future<typename result_of<F(Args...)>::type>
+  async(launch policy, F&& f, Args&&... args);
+
+template <class> class packaged_task;	// undefined
+
+template <class R, class... ArgTypes>
+class packaged_task<R(ArgTypes...)>
+{
+public:
+    typedef R result_type;
+
+    // construction and destruction
+    packaged_task();
+    template <class F>
+        explicit packaged_task(F f);
+    template <class F, class Allocator>
+        explicit packaged_task(allocator_arg_t, const Allocator& a, F f);
+    explicit packaged_task(R(*f)(ArgTypes...));
+    template <class F>
+        explicit packaged_task(F&& f);
+    template <class F, class Allocator>
+        explicit packaged_task(allocator_arg_t, const Allocator& a, F&& f);
+    ~packaged_task();
+
+    // no copy
+    packaged_task(packaged_task&) = delete;
+    packaged_task& operator=(packaged_task&) = delete;
+
+    // move support
+    packaged_task(packaged_task&& other);
+    packaged_task& operator=(packaged_task&& other);
+    void swap(packaged_task& other);
+
+    explicit operator bool() const;
+
+    // result retrieval
+    future<R> get_future();
+
+    // execution
+    void operator()(ArgTypes... );
+    void make_ready_at_thread_exit(ArgTypes...);
+
+    void reset();
+};
+
+template <class R>
+  void swap(packaged_task<R(ArgTypes...)&, packaged_task<R(ArgTypes...)>&);
+
+template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
+
+}  // std
+
+*/
+
+#include <__config>
+#include <system_error>
+
+#pragma GCC system_header
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+
+//enum class future_errc
+struct future_errc
+{
+enum _ {
+    broken_promise,
+    future_already_retrieved,
+    promise_already_satisfied,
+    no_state
+};
+
+    _ __v_;
+
+    future_errc(_ __v) : __v_(__v) {}
+    operator int() const {return __v_;}
+
+};
+
+//enum class launch
+struct launch
+{
+enum _ {
+    any,
+    async,
+    sync
+};
+
+    _ __v_;
+
+    launch(_ __v) : __v_(__v) {}
+    operator int() const {return __v_;}
+
+};
+
+//enum class future_status
+struct future_status
+{
+enum _ {
+    ready,
+    timeout,
+    deferred
+};
+
+    _ __v_;
+
+    future_status(_ __v) : __v_(__v) {}
+    operator int() const {return __v_;}
+
+};
+
+_LIBCPP_END_NAMESPACE_STD
+
+#endif  // _LIBCPP_FUTURE
