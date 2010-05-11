@@ -59,7 +59,7 @@ private:
 protected:
   ProgramPoint(const void* P, Kind k, const LocationContext *l,
                const void *tag = 0)
-    : Data(P, NULL), K(k), L(l), Tag(tag) {}
+    : Data(P, static_cast<const void*>(NULL)), K(k), L(l), Tag(tag) {}
 
   ProgramPoint(const void* P1, const void* P2, Kind k, const LocationContext *l,
                const void *tag = 0)

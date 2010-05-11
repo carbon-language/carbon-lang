@@ -811,12 +811,12 @@ DeclContext::lookup(DeclarationName Name) {
     buildLookup(this);
 
     if (!LookupPtr)
-      return lookup_result(0, 0);
+      return lookup_result(lookup_iterator(0), lookup_iterator(0));
   }
 
   StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
   if (Pos == LookupPtr->end())
-    return lookup_result(0, 0);
+    return lookup_result(lookup_iterator(0), lookup_iterator(0));
   return Pos->second.getLookupResult(getParentASTContext());
 }
 

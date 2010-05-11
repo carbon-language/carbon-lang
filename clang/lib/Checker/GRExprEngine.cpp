@@ -1970,7 +1970,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
 //===----------------------------------------------------------------------===//
 
 static std::pair<const void*,const void*> EagerlyAssumeTag
-  = std::pair<const void*,const void*>(&EagerlyAssumeTag,0);
+  = std::pair<const void*,const void*>(&EagerlyAssumeTag,static_cast<void*>(0));
 
 void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
                                      Expr *Ex) {

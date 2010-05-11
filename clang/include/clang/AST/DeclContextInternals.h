@@ -156,7 +156,8 @@ public:
   /// represents.
   DeclContext::lookup_result getLookupResult(ASTContext &Context) {
     if (isNull())
-      return DeclContext::lookup_result(0, 0);
+      return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
+                                        DeclContext::lookup_iterator(0));
 
     if (hasDeclarationIDs())
       materializeDecls(Context);
