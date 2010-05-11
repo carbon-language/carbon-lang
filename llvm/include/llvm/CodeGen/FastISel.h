@@ -106,7 +106,7 @@ public:
   /// getRegForGEPIndex - This is a wrapper around getRegForValue that also
   /// takes care of truncating or sign-extending the given getelementptr
   /// index value.
-  unsigned getRegForGEPIndex(const Value *V);
+  std::pair<unsigned, bool> getRegForGEPIndex(const Value *V);
 
   virtual ~FastISel();
 
@@ -142,7 +142,8 @@ protected:
   ///
   virtual unsigned FastEmit_r(MVT VT,
                               MVT RetVT,
-                              unsigned Opcode, unsigned Op0);
+                              unsigned Opcode,
+                              unsigned Op0, bool Op0IsKill);
 
   /// FastEmit_rr - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -151,7 +152,8 @@ protected:
   virtual unsigned FastEmit_rr(MVT VT,
                                MVT RetVT,
                                unsigned Opcode,
-                               unsigned Op0, unsigned Op1);
+                               unsigned Op0, bool Op0IsKill,
+                               unsigned Op1, bool Op1IsKill);
 
   /// FastEmit_ri - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -160,7 +162,8 @@ protected:
   virtual unsigned FastEmit_ri(MVT VT,
                                MVT RetVT,
                                unsigned Opcode,
-                               unsigned Op0, uint64_t Imm);
+                               unsigned Op0, bool Op0IsKill,
+                               uint64_t Imm);
 
   /// FastEmit_rf - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -169,7 +172,8 @@ protected:
   virtual unsigned FastEmit_rf(MVT VT,
                                MVT RetVT,
                                unsigned Opcode,
-                               unsigned Op0, const ConstantFP *FPImm);
+                               unsigned Op0, bool Op0IsKill,
+                               const ConstantFP *FPImm);
 
   /// FastEmit_rri - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -178,7 +182,9 @@ protected:
   virtual unsigned FastEmit_rri(MVT VT,
                                 MVT RetVT,
                                 unsigned Opcode,
-                                unsigned Op0, unsigned Op1, uint64_t Imm);
+                                unsigned Op0, bool Op0IsKill,
+                                unsigned Op1, bool Op1IsKill,
+                                uint64_t Imm);
 
   /// FastEmit_ri_ - This method is a wrapper of FastEmit_ri. It first tries
   /// to emit an instruction with an immediate operand using FastEmit_ri.
@@ -186,8 +192,8 @@ protected:
   /// FastEmit_rr instead.
   unsigned FastEmit_ri_(MVT VT,
                         unsigned Opcode,
-                        unsigned Op0, uint64_t Imm,
-                        MVT ImmType);
+                        unsigned Op0, bool Op0IsKill,
+                        uint64_t Imm, MVT ImmType);
   
   /// FastEmit_rf_ - This method is a wrapper of FastEmit_rf. It first tries
   /// to emit an instruction with an immediate operand using FastEmit_rf.
@@ -195,8 +201,8 @@ protected:
   /// FastEmit_rr instead.
   unsigned FastEmit_rf_(MVT VT,
                         unsigned Opcode,
-                        unsigned Op0, const ConstantFP *FPImm,
-                        MVT ImmType);
+                        unsigned Op0, bool Op0IsKill,
+                        const ConstantFP *FPImm, MVT ImmType);
   
   /// FastEmit_i - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
@@ -225,35 +231,40 @@ protected:
   ///
   unsigned FastEmitInst_r(unsigned MachineInstOpcode,
                           const TargetRegisterClass *RC,
-                          unsigned Op0);
+                          unsigned Op0, bool Op0IsKill);
 
   /// FastEmitInst_rr - Emit a MachineInstr with two register operands
   /// and a result register in the given register class.
   ///
   unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
-                           unsigned Op0, unsigned Op1);
+                           unsigned Op0, bool Op0IsKill,
+                           unsigned Op1, bool Op1IsKill);
 
   /// FastEmitInst_ri - Emit a MachineInstr with two register operands
   /// and a result register in the given register class.
   ///
   unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
-                           unsigned Op0, uint64_t Imm);
+                           unsigned Op0, bool Op0IsKill,
+                           uint64_t Imm);
 
   /// FastEmitInst_rf - Emit a MachineInstr with two register operands
   /// and a result register in the given register class.
   ///
   unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
-                           unsigned Op0, const ConstantFP *FPImm);
+                           unsigned Op0, bool Op0IsKill,
+                           const ConstantFP *FPImm);
 
   /// FastEmitInst_rri - Emit a MachineInstr with two register operands,
   /// an immediate, and a result register in the given register class.
   ///
   unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC,
-                            unsigned Op0, unsigned Op1, uint64_t Imm);
+                            unsigned Op0, bool Op0IsKill,
+                            unsigned Op1, bool Op1IsKill,
+                            uint64_t Imm);
   
   /// FastEmitInst_i - Emit a MachineInstr with a single immediate
   /// operand, and a result register in the given register class.
@@ -264,12 +275,13 @@ protected:
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
   /// from a specified index of a superregister to a specified type.
   unsigned FastEmitInst_extractsubreg(MVT RetVT,
-                                      unsigned Op0, uint32_t Idx);
+                                      unsigned Op0, bool Op0IsKill,
+                                      uint32_t Idx);
 
   /// FastEmitZExtFromI1 - Emit MachineInstrs to compute the value of Op
   /// with all but the least significant bit set to zero.
   unsigned FastEmitZExtFromI1(MVT VT,
-                              unsigned Op);
+                              unsigned Op0, bool Op0IsKill);
 
   /// FastEmitBranch - Emit an unconditional branch to the given block,
   /// unless it is the immediate (fall-through) successor, and update
@@ -317,6 +329,9 @@ private:
   /// called when the value isn't already available in a register and must
   /// be materialized with new instructions.
   unsigned materializeRegForValue(const Value *V, MVT VT);
+
+  /// hasTrivialKill - Test whether the given value has exactly one use.
+  bool hasTrivialKill(const Value *V) const;
 };
 
 }

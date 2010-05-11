@@ -324,7 +324,8 @@ bool X86FastISel::X86FastEmitStore(EVT VT, const Value *Val,
 bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, EVT DstVT,
                                     unsigned Src, EVT SrcVT,
                                     unsigned &ResultReg) {
-  unsigned RR = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc, Src);
+  unsigned RR = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc,
+                           Src, /*TODO: Kill=*/false);
   
   if (RR != 0) {
     ResultReg = RR;
@@ -416,7 +417,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
                    (S == 1 || S == 2 || S == 4 || S == 8)) {
           // Scaled-index addressing.
           Scale = S;
-          IndexReg = getRegForGEPIndex(Op);
+          IndexReg = getRegForGEPIndex(Op).first;
           if (IndexReg == 0)
             return false;
         } else
@@ -802,7 +803,7 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
     unsigned ResultReg = getRegForValue(I->getOperand(0));
     if (ResultReg == 0) return false;
     // Set the high bits to zero.
-    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg);
+    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
     if (ResultReg == 0) return false;
     UpdateValueMap(I, ResultReg);
     return true;
@@ -1133,7 +1134,8 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
 
   // Then issue an extract_subreg.
   unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
-                                                  CopyReg, X86::SUBREG_8BIT);
+                                                  CopyReg, /*Kill=*/true,
+                                                  X86::SUBREG_8BIT);
   if (!ResultReg)
     return false;
 
@@ -1436,7 +1438,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     }
     case CCValAssign::BCvt: {
       unsigned BC = FastEmit_r(ArgVT.getSimpleVT(), VA.getLocVT().getSimpleVT(),
-                               ISD::BIT_CONVERT, Arg);
+                               ISD::BIT_CONVERT, Arg, /*TODO: Kill=*/false);
       assert(BC != 0 && "Failed to emit a bitcast!");
       Arg = BC;
       ArgVT = VA.getLocVT();
