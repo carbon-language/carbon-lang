@@ -39,5 +39,5 @@ namespace N {
 }
 using namespace N;
 
-template struct X1<int>; // expected-error{{must occur in}}
-template void f1(int); // expected-error{{must occur in}}
+template struct X1<int>; // expected-warning{{must occur in}}
+template void f1(int); // expected-warning{{must occur in}}

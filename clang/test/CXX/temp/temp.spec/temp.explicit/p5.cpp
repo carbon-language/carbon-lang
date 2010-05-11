@@ -11,7 +11,7 @@ template class Z<int>; // expected-error{{explicit instantiation of non-template
 // FIXME: This example from the standard is wrong; note posted to CWG reflector
 // on 10/27/2009
 using N::Y; 
-template class Y<int>; // expected-error{{must occur in}}
+template class Y<int>; // expected-warning{{must occur in}}
 
 template class N::Y<char*>; 
 template void N::Y<double>::mf();

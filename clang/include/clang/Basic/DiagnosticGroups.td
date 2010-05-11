@@ -26,6 +26,7 @@ def : DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
+def : DiagGroup<"c++0x-compat">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
 def : DiagGroup<"declaration-after-statement">;

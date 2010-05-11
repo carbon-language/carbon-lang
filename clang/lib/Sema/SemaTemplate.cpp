@@ -4544,10 +4544,16 @@ static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
   if (S.getLangOptions().CPlusPlus0x && 
       !CurContext->Encloses(ExpectedContext)) {
     if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ExpectedContext))
-      S.Diag(InstLoc, diag::err_explicit_instantiation_out_of_scope)
+      S.Diag(InstLoc, 
+             S.getLangOptions().CPlusPlus0x? 
+                 diag::err_explicit_instantiation_out_of_scope
+               : diag::warn_explicit_instantiation_out_of_scope_0x)
         << D << NS;
     else
-      S.Diag(InstLoc, diag::err_explicit_instantiation_must_be_global)
+      S.Diag(InstLoc, 
+             S.getLangOptions().CPlusPlus0x?
+                 diag::err_explicit_instantiation_must_be_global
+               : diag::warn_explicit_instantiation_out_of_scope_0x)
         << D;
     S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
     return;
@@ -4564,7 +4570,10 @@ static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
   if (CurContext->Equals(ExpectedContext))
     return;
   
-  S.Diag(InstLoc, diag::err_explicit_instantiation_unqualified_wrong_namespace)
+  S.Diag(InstLoc, 
+         S.getLangOptions().CPlusPlus0x?
+             diag::err_explicit_instantiation_unqualified_wrong_namespace
+           : diag::warn_explicit_instantiation_unqualified_wrong_namespace_0x)
     << D << ExpectedContext;
   S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
 }

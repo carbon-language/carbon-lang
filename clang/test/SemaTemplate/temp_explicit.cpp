@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wc++0x-compat %s
 //
 // Tests explicit instantiation of templates.
 template<typename T, typename U = T> class X0 { };
@@ -125,3 +125,27 @@ template <> // expected-warning{{extraneous template parameter list}}
 template <>
 struct Foo<int>::Bar<void>
 {};
+
+namespace N1 {
+
+  template<typename T> struct X7 { }; // expected-note{{here}}
+
+  namespace Inner {
+    template<typename T> struct X8 { };
+  }
+
+  template struct X7<int>;
+  template struct Inner::X8<int>;
+}
+
+template<typename T> struct X9 { }; // expected-note{{here}}
+
+template struct ::N1::Inner::X8<float>;
+
+namespace N2 {
+  using namespace N1;
+
+  template struct X7<double>; // expected-warning{{must occur in namespace}}
+
+  template struct X9<float>; // expected-warning{{must occur in the global}}
+}
