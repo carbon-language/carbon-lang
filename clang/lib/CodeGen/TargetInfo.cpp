@@ -130,6 +130,30 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     return 0;
 
   const Type *Found = 0;
+  
+  // If this is a C++ record, check the bases first.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
+           e = CXXRD->bases_end(); i != e; ++i) {
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      // Ignore empty records.
+      if (Base->isEmpty())
+        continue;
+
+      // If we already found an element then this isn't a single-element struct.
+      if (Found)
+        return 0;
+
+      // If this is non-empty and not a single element struct, the composite
+      // cannot be a single element struct.
+      Found = isSingleElementStruct(i->getType(), Context);
+      if (!Found)
+        return 0;
+    }
+  }
+
+  // Check for single element.
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
     const FieldDecl *FD = *i;
