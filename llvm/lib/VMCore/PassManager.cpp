@@ -1444,8 +1444,16 @@ bool FPPassManager::runOnFunction(Function &F) {
 bool FPPassManager::runOnModule(Module &M) {
   bool Changed = doInitialization(M);
 
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    Function &F = *I;
+    if (F.isMaterializable()) {
+      std::string errstr;
+      if (F.Materialize(&errstr))
+        report_fatal_error("Error reading bitcode file: " + Twine(errstr));
+    }
+
     runOnFunction(*I);
+  }
 
   return doFinalization(M) || Changed;
 }
