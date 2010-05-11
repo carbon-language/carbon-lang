@@ -1,6 +1,9 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -n -triple x86_64-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
 
 // These examples are taken from <mach-o/x86_64/reloc.h>.
+
+        .data
+        .long 0
 
         .text
 _foo:
@@ -55,7 +58,13 @@ L2_0:
 L2_1:        
 _f3:
         addl L2_1 - L2_0, %eax
-
+        
+        .data
+L4:     
+        .long 0
+        .text
+        movl L4(%rip), %eax
+        
 // CHECK: ('cputype', 16777223)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
@@ -69,120 +78,22 @@ _f3:
 // CHECK:   ('size', 312)
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 215)
+// CHECK:   ('vm_size', 229)
 // CHECK:   ('file_offset', 448)
-// CHECK:   ('file_size', 215)
+// CHECK:   ('file_size', 229)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
 // CHECK:   ('num_sections', 3)
 // CHECK:   ('flags', 0)
 // CHECK:   ('sections', [
 // CHECK:     # Section 0
-// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 191)
-// CHECK:     ('offset', 448)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 664)
-// CHECK:     ('num_reloc', 27)
-// CHECK:     ('flags', 0x80000400)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0xa5),
-// CHECK:      ('word-1', 0x5e000003)),
-// CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0xa5),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 2
-// CHECK:     (('word-0', 0x9d),
-// CHECK:      ('word-1', 0x5e000003)),
-// CHECK:     # Relocation 3
-// CHECK:     (('word-0', 0x9d),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 4
-// CHECK:     (('word-0', 0x95),
-// CHECK:      ('word-1', 0xe000003)),
-// CHECK:     # Relocation 5
-// CHECK:     (('word-0', 0x8d),
-// CHECK:      ('word-1', 0xe000003)),
-// CHECK:     # Relocation 6
-// CHECK:     (('word-0', 0x79),
-// CHECK:      ('word-1', 0x8d000003)),
-// CHECK:     # Relocation 7
-// CHECK:     (('word-0', 0x71),
-// CHECK:      ('word-1', 0x7d000003)),
-// CHECK:     # Relocation 8
-// CHECK:     (('word-0', 0x69),
-// CHECK:      ('word-1', 0x6d000003)),
-// CHECK:     # Relocation 9
-// CHECK:     (('word-0', 0x63),
-// CHECK:      ('word-1', 0x1d000003)),
-// CHECK:     # Relocation 10
-// CHECK:     (('word-0', 0x5c),
-// CHECK:      ('word-1', 0x1d000003)),
-// CHECK:     # Relocation 11
-// CHECK:     (('word-0', 0x55),
-// CHECK:      ('word-1', 0x5c000002)),
-// CHECK:     # Relocation 12
-// CHECK:     (('word-0', 0x55),
-// CHECK:      ('word-1', 0xc000000)),
-// CHECK:     # Relocation 13
-// CHECK:     (('word-0', 0x4d),
-// CHECK:      ('word-1', 0x5e000002)),
-// CHECK:     # Relocation 14
-// CHECK:     (('word-0', 0x4d),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 15
-// CHECK:     (('word-0', 0x45),
-// CHECK:      ('word-1', 0x5e000002)),
-// CHECK:     # Relocation 16
-// CHECK:     (('word-0', 0x45),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 17
-// CHECK:     (('word-0', 0x3d),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 18
-// CHECK:     (('word-0', 0x35),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 19
-// CHECK:     (('word-0', 0x2d),
-// CHECK:      ('word-1', 0x8d000000)),
-// CHECK:     # Relocation 20
-// CHECK:     (('word-0', 0x26),
-// CHECK:      ('word-1', 0x6d000000)),
-// CHECK:     # Relocation 21
-// CHECK:     (('word-0', 0x20),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 22
-// CHECK:     (('word-0', 0x1a),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 23
-// CHECK:     (('word-0', 0x14),
-// CHECK:      ('word-1', 0x4d000000)),
-// CHECK:     # Relocation 24
-// CHECK:     (('word-0', 0xe),
-// CHECK:      ('word-1', 0x3d000000)),
-// CHECK:     # Relocation 25
-// CHECK:     (('word-0', 0x7),
-// CHECK:      ('word-1', 0x2d000000)),
-// CHECK:     # Relocation 26
-// CHECK:     (('word-0', 0x2),
-// CHECK:      ('word-1', 0x2d000000)),
-// CHECK:   ])
-// CHECK:   ('_section_data', '\xc3\xe8\x00\x00\x00\x00\xe8\x04\x00\x00\x00H\x8b\x05\x00\x00\x00\x00\xff5\x00\x00\x00\x00\x8b\x05\x00\x00\x00\x00\x8b\x05\x04\x00\x00\x00\xc6\x05\xff\xff\xff\xff\x12\xc7\x05\xfc\xff\xff\xffxV4\x12\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00H\x8d\x05,\x00\x00\x00H\x8d\x05\x14\x00\x00\x00\x83\x05\x13\x00\x00\x00\x06f\x81\x05\x12\x00\x00\x00\xf4\x01\x81\x05\x10\x00\x00\x00\xf4\x01\x00\x00\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90,\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\xe4\xff\xff\xff\xff\xff\xff\xff\xd4\xff\xff\xff\xff\xff\xff\xff,\x00\x00\x00\x00\x00\x00\x00\x83\xc0\x00\x03\x04%\x03\x00\x00\x00')
-// CHECK:     # Section 1
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 191)
-// CHECK:     ('size', 8)
-// CHECK:     ('offset', 639)
+// CHECK:     ('address', 0)
+// CHECK:     ('size', 16)
+// CHECK:     ('offset', 448)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 880)
+// CHECK:     ('reloc_offset', 680)
 // CHECK:     ('num_reloc', 2)
 // CHECK:     ('flags', 0x0)
 // CHECK:     ('reserved1', 0)
@@ -191,21 +102,122 @@ _f3:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0x4),
+// CHECK:     (('word-0', 0x8),
 // CHECK:      ('word-1', 0x4d000000)),
 // CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0x0),
+// CHECK:     (('word-0', 0x4),
 // CHECK:      ('word-1', 0x4d000007)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x04\x00\x00\x00\x04\x00\x00\x00')
+// CHECK:   ('_section_data', '\x00\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:     # Section 1
+// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:     ('address', 16)
+// CHECK:     ('size', 197)
+// CHECK:     ('offset', 464)
+// CHECK:     ('alignment', 0)
+// CHECK:     ('reloc_offset', 696)
+// CHECK:     ('num_reloc', 28)
+// CHECK:     ('flags', 0x80000400)
+// CHECK:     ('reserved1', 0)
+// CHECK:     ('reserved2', 0)
+// CHECK:     ('reserved3', 0)
+// CHECK:    ),
+// CHECK:   ('_relocations', [
+// CHECK:     # Relocation 0
+// CHECK:     (('word-0', 0xc1),
+// CHECK:      ('word-1', 0x15000001)),
+// CHECK:     # Relocation 1
+// CHECK:     (('word-0', 0xa5),
+// CHECK:      ('word-1', 0x5e000003)),
+// CHECK:     # Relocation 2
+// CHECK:     (('word-0', 0xa5),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 3
+// CHECK:     (('word-0', 0x9d),
+// CHECK:      ('word-1', 0x5e000003)),
+// CHECK:     # Relocation 4
+// CHECK:     (('word-0', 0x9d),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 5
+// CHECK:     (('word-0', 0x95),
+// CHECK:      ('word-1', 0xe000003)),
+// CHECK:     # Relocation 6
+// CHECK:     (('word-0', 0x8d),
+// CHECK:      ('word-1', 0xe000003)),
+// CHECK:     # Relocation 7
+// CHECK:     (('word-0', 0x79),
+// CHECK:      ('word-1', 0x8d000003)),
+// CHECK:     # Relocation 8
+// CHECK:     (('word-0', 0x71),
+// CHECK:      ('word-1', 0x7d000003)),
+// CHECK:     # Relocation 9
+// CHECK:     (('word-0', 0x69),
+// CHECK:      ('word-1', 0x6d000003)),
+// CHECK:     # Relocation 10
+// CHECK:     (('word-0', 0x63),
+// CHECK:      ('word-1', 0x1d000003)),
+// CHECK:     # Relocation 11
+// CHECK:     (('word-0', 0x5c),
+// CHECK:      ('word-1', 0x1d000003)),
+// CHECK:     # Relocation 12
+// CHECK:     (('word-0', 0x55),
+// CHECK:      ('word-1', 0x5c000002)),
+// CHECK:     # Relocation 13
+// CHECK:     (('word-0', 0x55),
+// CHECK:      ('word-1', 0xc000000)),
+// CHECK:     # Relocation 14
+// CHECK:     (('word-0', 0x4d),
+// CHECK:      ('word-1', 0x5e000002)),
+// CHECK:     # Relocation 15
+// CHECK:     (('word-0', 0x4d),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 16
+// CHECK:     (('word-0', 0x45),
+// CHECK:      ('word-1', 0x5e000002)),
+// CHECK:     # Relocation 17
+// CHECK:     (('word-0', 0x45),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 18
+// CHECK:     (('word-0', 0x3d),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 19
+// CHECK:     (('word-0', 0x35),
+// CHECK:      ('word-1', 0xe000000)),
+// CHECK:     # Relocation 20
+// CHECK:     (('word-0', 0x2d),
+// CHECK:      ('word-1', 0x8d000000)),
+// CHECK:     # Relocation 21
+// CHECK:     (('word-0', 0x26),
+// CHECK:      ('word-1', 0x6d000000)),
+// CHECK:     # Relocation 22
+// CHECK:     (('word-0', 0x20),
+// CHECK:      ('word-1', 0x1d000000)),
+// CHECK:     # Relocation 23
+// CHECK:     (('word-0', 0x1a),
+// CHECK:      ('word-1', 0x1d000000)),
+// CHECK:     # Relocation 24
+// CHECK:     (('word-0', 0x14),
+// CHECK:      ('word-1', 0x4d000000)),
+// CHECK:     # Relocation 25
+// CHECK:     (('word-0', 0xe),
+// CHECK:      ('word-1', 0x3d000000)),
+// CHECK:     # Relocation 26
+// CHECK:     (('word-0', 0x7),
+// CHECK:      ('word-1', 0x2d000000)),
+// CHECK:     # Relocation 27
+// CHECK:     (('word-0', 0x2),
+// CHECK:      ('word-1', 0x2d000000)),
+// CHECK:   ])
+// CHECK:   ('_section_data', '\xc3\xe8\x00\x00\x00\x00\xe8\x04\x00\x00\x00H\x8b\x05\x00\x00\x00\x00\xff5\x00\x00\x00\x00\x8b\x05\x00\x00\x00\x00\x8b\x05\x04\x00\x00\x00\xc6\x05\xff\xff\xff\xff\x12\xc7\x05\xfc\xff\xff\xffxV4\x12\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00H\x8d\x05,\x00\x00\x00H\x8d\x05\x14\x00\x00\x00\x83\x05\x13\x00\x00\x00\x06f\x81\x05\x12\x00\x00\x00\xf4\x01\x81\x05\x10\x00\x00\x00\xf4\x01\x00\x00\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90,\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\xe4\xff\xff\xff\xff\xff\xff\xff\xd4\xff\xff\xff\xff\xff\xff\xff,\x00\x00\x00\x00\x00\x00\x00\x83\xc0\x00\x03\x04%\x03\x00\x00\x00\x8b\x057\xff\xff\xff')
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__debug_frame\x00\x00\x00')
 // CHECK:     ('segment_name', '__DWARF\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 199)
+// CHECK:     ('address', 213)
 // CHECK:     ('size', 16)
-// CHECK:     ('offset', 647)
+// CHECK:     ('offset', 661)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 896)
+// CHECK:     ('reloc_offset', 920)
 // CHECK:     ('num_reloc', 2)
 // CHECK:     ('flags', 0x2000000)
 // CHECK:     ('reserved1', 0)
@@ -218,66 +230,66 @@ _f3:
 // CHECK:      ('word-1', 0xe000006)),
 // CHECK:     # Relocation 1
 // CHECK:     (('word-0', 0x0),
-// CHECK:      ('word-1', 0x6000001)),
+// CHECK:      ('word-1', 0x6000002)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xad\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', '\xbd\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 912)
+// CHECK:   ('symoff', 936)
 // CHECK:   ('nsyms', 8)
-// CHECK:   ('stroff', 1040)
+// CHECK:   ('stroff', 1064)
 // CHECK:   ('strsize', 48)
 // CHECK:   ('_string_data', '\x00_foobar\x00_ext_foo\x00_foo\x00_baz\x00_bar\x00_prev\x00_f2\x00_f3\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
 // CHECK:    (('n_strx', 18)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 0)
+// CHECK:     ('n_value', 16)
 // CHECK:     ('_string', '_foo')
 // CHECK:    ),
 // CHECK:     # Symbol 1
 // CHECK:    (('n_strx', 23)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 1)
+// CHECK:     ('n_value', 17)
 // CHECK:     ('_string', '_baz')
 // CHECK:    ),
 // CHECK:     # Symbol 2
 // CHECK:    (('n_strx', 28)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 61)
+// CHECK:     ('n_value', 77)
 // CHECK:     ('_string', '_bar')
 // CHECK:    ),
 // CHECK:     # Symbol 3
 // CHECK:    (('n_strx', 33)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 129)
+// CHECK:     ('n_value', 145)
 // CHECK:     ('_string', '_prev')
 // CHECK:    ),
 // CHECK:     # Symbol 4
 // CHECK:    (('n_strx', 39)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 181)
+// CHECK:     ('n_value', 197)
 // CHECK:     ('_string', '_f2')
 // CHECK:    ),
 // CHECK:     # Symbol 5
 // CHECK:    (('n_strx', 43)
 // CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 1)
+// CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 184)
+// CHECK:     ('n_value', 200)
 // CHECK:     ('_string', '_f3')
 // CHECK:    ),
 // CHECK:     # Symbol 6

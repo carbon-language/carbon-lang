@@ -479,6 +479,7 @@ public:
 
     // See <reloc.h>.
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
+    uint32_t FixupAddress = Layout.getFragmentAddress(Fragment) + Fixup.Offset;
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -591,7 +592,7 @@ public:
         Value += Layout.getSymbolAddress(&SD);
 
         if (IsPCRel)
-          Value -= FixupOffset + (1 << Log2Size);
+          Value -= FixupAddress + (1 << Log2Size);
       } else {
         report_fatal_error("unsupported relocation of undefined symbol '" +
                            Symbol->getName() + "'");
