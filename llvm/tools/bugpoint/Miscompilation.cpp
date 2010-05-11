@@ -126,7 +126,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  Module *PrefixOutput = ParseInputFile(BitcodeResult, BD.getContext());
+  OwningPtr<Module> PrefixOutput(ParseInputFile(BitcodeResult,
+                                                BD.getContext()));
   if (PrefixOutput == 0) {
     errs() << BD.getToolName() << ": Error reading bitcode file '"
            << BitcodeResult << "'!\n";
@@ -142,7 +143,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
-  Module *OriginalInput = BD.swapProgramIn(PrefixOutput);
+  OwningPtr<Module> OriginalInput(BD.swapProgramIn(PrefixOutput.take()));
   if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
@@ -157,13 +158,13 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     return InternalError;
   if (Diff) {
     outs() << " nope.\n";
-    delete OriginalInput;     // We pruned down the original input...
     return KeepSuffix;
   }
 
   // Otherwise, we must not be running the bad pass anymore.
   outs() << " yup.\n";      // No miscompilation!
-  delete BD.swapProgramIn(OriginalInput); // Restore orig program & free test
+  // Restore orig program & free test.
+  delete BD.swapProgramIn(OriginalInput.take());
   return NoFailure;
 }
 
@@ -222,15 +223,14 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
   }
   delete M2;   // We are done with this module.
 
-  Module *OldProgram = BD.swapProgramIn(M1);
+  OwningPtr<Module> OldProgram(BD.swapProgramIn(M1));
 
   // Execute the program.  If it does not match the expected output, we must
   // return true.
   bool Broken = BD.diffProgram("", "", false, &Error);
   if (!Error.empty()) {
     // Delete the linked module & restore the original
-    BD.swapProgramIn(OldProgram);
-    delete M1;
+    delete BD.swapProgramIn(OldProgram.take());
   }
   return Broken;
 }
