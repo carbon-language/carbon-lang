@@ -55,7 +55,6 @@ namespace llvm {
   class TargetData;
   class TargetMachine;
   class TargetRegisterClass;
-  class TargetSubtarget;
   class TargetLoweringObjectFile;
   class Value;
 
