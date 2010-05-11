@@ -1,7 +1,7 @@
 // -*- C++ -*-
 //===--------------------------- future -----------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -388,7 +388,7 @@ template <class F, class... Args>
   future<typename result_of<F(Args...)>::type>
   async(launch policy, F&& f, Args&&... args);
 
-template <class> class packaged_task;	// undefined
+template <class> class packaged_task; // undefined
 
 template <class R, class... ArgTypes>
 class packaged_task<R(ArgTypes...)>

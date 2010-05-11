@@ -1,7 +1,7 @@
 // -*- C++ -*-
 //===--------------------------- stdbool.h --------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -31,13 +31,13 @@ Macros:
 
 #ifndef __cplusplus
 
-#define	bool	_Bool
+#define bool _Bool
 #if __STDC_VERSION__ < 199901L && __GNUC__ < 3
-typedef	int	_Bool;
+typedef int _Bool;
 #endif
 
-#define	false	(bool)0
-#define	true	(bool)1
+#define false (bool)0
+#define true (bool)1
 
 #endif /* !__cplusplus */
 

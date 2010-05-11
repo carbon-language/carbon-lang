@@ -1,7 +1,7 @@
 // -*- C++ -*-
 //===----------------------------------------------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -179,7 +179,7 @@ __stdinbuf<_CharT>::pbackfail(int_type __c)
     while (__enxt > __extbuf)
         if (ungetc(*--__enxt, __file_) == EOF)
             return traits_type::eof();
-	return traits_type::not_eof(__c);
+ return traits_type::not_eof(__c);
 }
 
 // __stdoutbuf

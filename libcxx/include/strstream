@@ -1,7 +1,7 @@
 // -*- C++ -*-
 //===--------------------------- strstream --------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -37,7 +37,7 @@ public:
 
     void freeze(bool freezefl = true);
     char* str();
-    int	pcount() const;
+    int pcount() const;
 
 protected:
     virtual int_type overflow (int_type c = EOF);
@@ -76,7 +76,7 @@ public:
     char *str();
 
 private:
-    strstreambuf sb;	// exposition only
+    strstreambuf sb; // exposition only
 };
 
 class ostrstream
@@ -94,7 +94,7 @@ public:
     int pcount() const;
 
 private:
-    strstreambuf sb;	// exposition only
+    strstreambuf sb; // exposition only
 };
 
 class strstream
@@ -120,7 +120,7 @@ public:
     char* str();
 
 private:
-    strstreambuf sb;	// exposition only
+    strstreambuf sb; // exposition only
 };
 
 }  // std
@@ -160,7 +160,7 @@ public:
 
     void freeze(bool __freezefl = true);
     char* str();
-    int	pcount() const;
+    int pcount() const;
 
 protected:
     virtual int_type overflow (int_type __c = EOF);
@@ -272,7 +272,7 @@ public:
     int pcount() const  {return __sb_.pcount();}
 
 private:
-    strstreambuf __sb_;	// exposition only
+    strstreambuf __sb_; // exposition only
 };
 
 class strstream
@@ -324,7 +324,7 @@ public:
     char* str()        {return __sb_.str();}
 
 private:
-    strstreambuf __sb_;	// exposition only
+    strstreambuf __sb_; // exposition only
 };
 
 _LIBCPP_END_NAMESPACE_STD

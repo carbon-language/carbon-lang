@@ -1,7 +1,7 @@
 // -*- C++ -*-
 //===------------------------ type_traits ---------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -116,7 +116,7 @@ namespace std
     template <class Base, class Derived> struct is_base_of;
     template <class From, class To> struct is_convertible;
     template <class From, class To> struct is_explicitly_convertible;
-    template <class T> struct underlying_type;
+    template <class T> struct underlying_type;
     
     // Alignment properties and transformations:
     template <class T> struct alignment_of;
