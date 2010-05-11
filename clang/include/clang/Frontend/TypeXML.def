@@ -211,20 +211,11 @@ NODE_XML(RecordType, "Record")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_XML(getDecl()->getNameAsString(), "name")   // string
   ATTRIBUTE_ENUM_XML(getDecl()->getTagKind(), "kind")
-    ENUM_XML(TagDecl::TK_struct, "struct")
-    ENUM_XML(TagDecl::TK_union, "union")
-    ENUM_XML(TagDecl::TK_class, "class")
+    ENUM_XML(TTK_Struct, "struct")
+    ENUM_XML(TTK_Union, "union")
+    ENUM_XML(TTK_Class, "class")
   END_ENUM_XML
   CONTEXT_ATTRIBUTE_XML(getDecl()->getDeclContext())
-END_NODE_XML
-
-NODE_XML(ElaboratedType, "Elaborated")
-  ID_ATTRIBUTE_XML
-  ATTRIBUTE_ENUM_XML(getTagKind(), "kind")
-    ENUM_XML(ElaboratedType::TK_struct, "struct")
-    ENUM_XML(ElaboratedType::TK_union, "union")
-    ENUM_XML(ElaboratedType::TK_class, "class")
-  END_ENUM_XML
 END_NODE_XML
 
 NODE_XML(EnumType, "Enum")
@@ -241,8 +232,16 @@ NODE_XML(TemplateSpecializationType, "TemplateSpecializationType")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 
-NODE_XML(QualifiedNameType, "QualifiedNameType")
+NODE_XML(ElaboratedType, "ElaboratedType")
   ID_ATTRIBUTE_XML
+  ATTRIBUTE_ENUM_XML(getKeyword(), "keyword")
+    ENUM_XML(ETK_None, "none")
+    ENUM_XML(ETK_Typename, "typename")
+    ENUM_XML(ETK_Struct, "struct")
+    ENUM_XML(ETK_Union, "union")
+    ENUM_XML(ETK_Class, "class")
+    ENUM_XML(ETK_Enum, "enum")
+  END_ENUM_XML
   TYPE_ATTRIBUTE_XML(getNamedType())
 END_NODE_XML
 

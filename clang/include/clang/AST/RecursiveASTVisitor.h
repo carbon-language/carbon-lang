@@ -567,14 +567,6 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitElaboratedType(ElaboratedType *T) {
-    if (Visit(T->getUnderlyingType()))
-      return true;
-    
-    return getDerived().VisitType(T);
-  }
-
-  template<typename Derived>
   bool RecursiveASTVisitor<Derived>::VisitTemplateTypeParmType(
                                                       TemplateTypeParmType *T) {
     return getDerived().VisitType(T);
@@ -603,12 +595,13 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitQualifiedNameType(
-                                                        QualifiedNameType *T) {
-    if (getDerived().VisitNestedNameSpecifier(T->getQualifier()) ||
-        Visit(T->getNamedType()))
+  bool RecursiveASTVisitor<Derived>::VisitElaboratedType(ElaboratedType *T) {
+    if (T->getQualifier() &&
+        getDerived().VisitNestedNameSpecifier(T->getQualifier()))
       return true;
-    
+    if (Visit(T->getNamedType()))
+      return true;
+
     return getDerived().VisitType(T);
   }
 

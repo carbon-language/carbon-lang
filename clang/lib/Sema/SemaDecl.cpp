@@ -191,7 +191,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       T = Context.getTypeDeclType(TD);
     
     if (SS)
-      T = getQualifiedNameType(*SS, T);
+      T = getElaboratedType(ETK_None, *SS, T);
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
     T = Context.getObjCInterfaceType(IDecl);
@@ -223,10 +223,11 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   if (R.getResultKind() == LookupResult::Found)
     if (const TagDecl *TD = R.getAsSingle<TagDecl>()) {
       switch (TD->getTagKind()) {
-      case TagDecl::TK_struct: return DeclSpec::TST_struct;
-      case TagDecl::TK_union:  return DeclSpec::TST_union;
-      case TagDecl::TK_class:  return DeclSpec::TST_class;
-      case TagDecl::TK_enum:   return DeclSpec::TST_enum;
+      default:         return DeclSpec::TST_unspecified;
+      case TTK_Struct: return DeclSpec::TST_struct;
+      case TTK_Union:  return DeclSpec::TST_union;
+      case TTK_Class:  return DeclSpec::TST_class;
+      case TTK_Enum:   return DeclSpec::TST_enum;
       }
     }
 
@@ -4845,38 +4846,38 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 ///
 /// \returns true if the new tag kind is acceptable, false otherwise.
 bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
-                                        TagDecl::TagKind NewTag,
+                                        TagTypeKind NewTag,
                                         SourceLocation NewTagLoc,
                                         const IdentifierInfo &Name) {
   // C++ [dcl.type.elab]p3:
   //   The class-key or enum keyword present in the
   //   elaborated-type-specifier shall agree in kind with the
-  //   declaration to which the name in theelaborated-type-specifier
+  //   declaration to which the name in the elaborated-type-specifier
   //   refers. This rule also applies to the form of
   //   elaborated-type-specifier that declares a class-name or
   //   friend class since it can be construed as referring to the
   //   definition of the class. Thus, in any
   //   elaborated-type-specifier, the enum keyword shall be used to
-  //   refer to an enumeration (7.2), the union class-keyshall be
+  //   refer to an enumeration (7.2), the union class-key shall be
   //   used to refer to a union (clause 9), and either the class or
   //   struct class-key shall be used to refer to a class (clause 9)
   //   declared using the class or struct class-key.
-  TagDecl::TagKind OldTag = Previous->getTagKind();
+  TagTypeKind OldTag = Previous->getTagKind();
   if (OldTag == NewTag)
     return true;
 
-  if ((OldTag == TagDecl::TK_struct || OldTag == TagDecl::TK_class) &&
-      (NewTag == TagDecl::TK_struct || NewTag == TagDecl::TK_class)) {
+  if ((OldTag == TTK_Struct || OldTag == TTK_Class) &&
+      (NewTag == TTK_Struct || NewTag == TTK_Class)) {
     // Warn about the struct/class tag mismatch.
     bool isTemplate = false;
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Previous))
       isTemplate = Record->getDescribedClassTemplate();
 
     Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
-      << (NewTag == TagDecl::TK_class)
+      << (NewTag == TTK_Class)
       << isTemplate << &Name
       << FixItHint::CreateReplacement(SourceRange(NewTagLoc),
-                              OldTag == TagDecl::TK_class? "class" : "struct");
+                              OldTag == TTK_Class? "class" : "struct");
     Diag(Previous->getLocation(), diag::note_previous_use);
     return true;
   }
@@ -4898,7 +4899,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
          "Nameless record must be a definition!");
 
   OwnedDecl = false;
-  TagDecl::TagKind Kind = TagDecl::getTagKindForTypeSpec(TagSpec);
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
 
   // FIXME: Check explicit specializations more carefully.
   bool isExplicitSpecialization = false;
@@ -4922,7 +4923,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       } else {
         // The "template<>" header is extraneous.
         Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
-          << ElaboratedType::getNameForTagKind(Kind) << Name;
+          << TypeWithKeyword::getTagTypeKindName(Kind) << Name;
         isExplicitSpecialization = true;
       }
     }
@@ -5141,8 +5142,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // struct or something similar.
         if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind, KWLoc, *Name)) {
           bool SafeToContinue
-            = (PrevTagDecl->getTagKind() != TagDecl::TK_enum &&
-               Kind != TagDecl::TK_enum);
+            = (PrevTagDecl->getTagKind() != TTK_Enum &&
+               Kind != TTK_Enum);
           if (SafeToContinue)
             Diag(KWLoc, diag::err_use_with_wrong_tag)
               << Name
@@ -5296,7 +5297,7 @@ CreateNewDecl:
   // PrevDecl.
   TagDecl *New;
 
-  if (Kind == TagDecl::TK_enum) {
+  if (Kind == TTK_Enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
     New = EnumDecl::Create(Context, SearchDC, Loc, Name, KWLoc,
@@ -5331,7 +5332,7 @@ CreateNewDecl:
     New->setQualifierInfo(NNS, SS.getRange());
   }
 
-  if (Kind != TagDecl::TK_enum) {
+  if (Kind != TTK_Enum) {
     // Handle #pragma pack: if the #pragma pack stack has non-default
     // alignment, make up a packed attribute for this decl. These
     // attributes are checked when the ASTContext lays out the

@@ -601,7 +601,8 @@ namespace {
       
     /// \brief Check for tag mismatches when instantiating an
     /// elaborated type.
-    QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag);
+    QualType RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+                                   NestedNameSpecifier *NNS, QualType T);
 
     Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
@@ -719,8 +720,9 @@ VarDecl *TemplateInstantiator::RebuildObjCExceptionDecl(VarDecl *ExceptionDecl,
 }
 
 QualType
-TemplateInstantiator::RebuildElaboratedType(QualType T,
-                                            ElaboratedType::TagKind Tag) {
+TemplateInstantiator::RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+                                            NestedNameSpecifier *NNS,
+                                            QualType T) {
   if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl* TD = TT->getDecl();
 
@@ -732,16 +734,20 @@ TemplateInstantiator::RebuildElaboratedType(QualType T,
 
     // TODO: should we even warn on struct/class mismatches for this?  Seems
     // like it's likely to produce a lot of spurious errors.
-    if (!SemaRef.isAcceptableTagRedeclaration(TD, Tag, TagLocation, *Id)) {
-      SemaRef.Diag(TagLocation, diag::err_use_with_wrong_tag)
-        << Id
-        << FixItHint::CreateReplacement(SourceRange(TagLocation),
-                                        TD->getKindName());
-      SemaRef.Diag(TD->getLocation(), diag::note_previous_use);
+    if (Keyword != ETK_None && Keyword != ETK_Typename) {
+      TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForKeyword(Keyword);
+      if (!SemaRef.isAcceptableTagRedeclaration(TD, Kind, TagLocation, *Id)) {
+        SemaRef.Diag(TagLocation, diag::err_use_with_wrong_tag)
+          << Id
+          << FixItHint::CreateReplacement(SourceRange(TagLocation),
+                                          TD->getKindName());
+        SemaRef.Diag(TD->getLocation(), diag::note_previous_use);
+      }
     }
   }
 
-  return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(T, Tag);
+  return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(Keyword,
+                                                                    NNS, T);
 }
 
 Sema::OwningExprResult 

@@ -1349,7 +1349,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName);
-      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+      RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -1394,7 +1394,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName);
-      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+      RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -2426,7 +2426,7 @@ void RewriteObjC::SynthMsgSendFunctionDecl() {
 void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+  RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                       SourceLocation(),
                                       &Context->Idents.get("objc_super"));
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -2475,7 +2475,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent =
     &Context->Idents.get("objc_msgSendSuper_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+  RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                       SourceLocation(),
                                       &Context->Idents.get("objc_super"));
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -2625,7 +2625,7 @@ bool RewriteObjC::isSuperReceiver(Expr *recExpr) {
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
 QualType RewriteObjC::getSuperStructType() {
   if (!SuperStructDecl) {
-    SuperStructDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+    SuperStructDecl = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                          SourceLocation(),
                                          &Context->Idents.get("objc_super"));
     QualType FieldTypes[2];
@@ -2651,7 +2651,7 @@ QualType RewriteObjC::getSuperStructType() {
 
 QualType RewriteObjC::getConstantStringStructType() {
   if (!ConstantStringDecl) {
-    ConstantStringDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+    ConstantStringDecl = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                             SourceLocation(),
                          &Context->Idents.get("__NSConstantStringImpl"));
     QualType FieldTypes[4];
@@ -4573,7 +4573,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FT);
   // FTP will be null for closures that don't take arguments.
 
-  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+  RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                       SourceLocation(),
                                       &Context->Idents.get("__block_impl"));
   QualType PtrBlock = Context->getPointerType(Context->getTagDeclType(RD));
@@ -5245,7 +5245,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       RewriteByRefString(RecName, Name, ND);
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str() 
                                                 + sizeof("struct"));
-      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+      RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                           SourceLocation(), II);
       assert(RD && "SynthBlockInitExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));

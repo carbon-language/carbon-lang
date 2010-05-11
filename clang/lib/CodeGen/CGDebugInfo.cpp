@@ -1154,14 +1154,11 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::Decltype:
       T = cast<DecltypeType>(T)->getUnderlyingType();
       break;
-    case Type::QualifiedName:
-      T = cast<QualifiedNameType>(T)->getNamedType();
+    case Type::Elaborated:
+      T = cast<ElaboratedType>(T)->getNamedType();
       break;
     case Type::SubstTemplateTypeParm:
       T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
-      break;
-    case Type::Elaborated:
-      T = cast<ElaboratedType>(T)->getUnderlyingType();
       break;
     }
     
@@ -1253,7 +1250,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
   case Type::TemplateSpecialization:
   case Type::Elaborated:
-  case Type::QualifiedName:
   case Type::SubstTemplateTypeParm:
   case Type::TypeOfExpr:
   case Type::TypeOf:

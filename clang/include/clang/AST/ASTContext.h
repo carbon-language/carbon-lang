@@ -96,11 +96,10 @@ class ASTContext {
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   llvm::FoldingSet<SubstTemplateTypeParmType> SubstTemplateTypeParmTypes;
   llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
-  llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
+  llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
   llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
-  llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
@@ -613,8 +612,9 @@ public:
                                     const TemplateArgumentListInfo &Args,
                                     QualType Canon = QualType());
 
-  QualType getQualifiedNameType(NestedNameSpecifier *NNS,
-                                QualType NamedType);
+  QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
+                             NestedNameSpecifier *NNS,
+                             QualType NamedType);
   QualType getDependentNameType(ElaboratedTypeKeyword Keyword,
                                 NestedNameSpecifier *NNS,
                                 const IdentifierInfo *Name,
@@ -623,8 +623,6 @@ public:
                                 NestedNameSpecifier *NNS,
                                 const TemplateSpecializationType *TemplateId,
                                 QualType Canon = QualType());
-  QualType getElaboratedType(QualType UnderlyingType,
-                             ElaboratedType::TagKind Tag);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                                 ObjCProtocolDecl **Protocols = 0,

@@ -213,12 +213,6 @@ void PCHTypeWriter::VisitEnumType(const EnumType *T) {
   Code = pch::TYPE_ENUM;
 }
 
-void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
-  Writer.AddTypeRef(T->getUnderlyingType(), Record);
-  Record.push_back(T->getTagKind());
-  Code = pch::TYPE_ELABORATED;
-}
-
 void
 PCHTypeWriter::VisitSubstTemplateTypeParmType(
                                         const SubstTemplateTypeParmType *T) {
@@ -234,9 +228,12 @@ PCHTypeWriter::VisitTemplateSpecializationType(
   assert(false && "Cannot serialize template specialization types");
 }
 
-void PCHTypeWriter::VisitQualifiedNameType(const QualifiedNameType *T) {
-  // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize qualified name types");
+void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
+  Writer.AddTypeRef(T->getNamedType(), Record);
+  Record.push_back(T->getKeyword());
+  // FIXME: Serialize the qualifier (C++ only)
+  assert(T->getQualifier() == 0 && "Cannot serialize qualified name types");
+  Code = pch::TYPE_ELABORATED;
 }
 
 void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
@@ -383,9 +380,6 @@ void TypeLocWriter::VisitRecordTypeLoc(RecordTypeLoc TL) {
 void TypeLocWriter::VisitEnumTypeLoc(EnumTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
-void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getNameLoc(), Record);
-}
 void TypeLocWriter::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
@@ -401,7 +395,7 @@ void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
     Writer.AddTemplateArgumentLoc(TL.getArgLoc(i), Record);
 }
-void TypeLocWriter::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {

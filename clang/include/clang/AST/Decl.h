@@ -1648,11 +1648,7 @@ class TagDecl
   : public TypeDecl, public DeclContext, public Redeclarable<TagDecl> {
 public:
   // This is really ugly.
-  typedef ElaboratedType::TagKind TagKind;
-  static const TagKind TK_struct = ElaboratedType::TK_struct;
-  static const TagKind TK_union = ElaboratedType::TK_union;
-  static const TagKind TK_class = ElaboratedType::TK_class;
-  static const TagKind TK_enum = ElaboratedType::TK_enum;
+  typedef TagTypeKind TagKind;
 
 private:
   // FIXME: This can be packed into the bitfields in Decl.
@@ -1703,7 +1699,8 @@ protected:
           TagDecl *PrevDecl, SourceLocation TKL = SourceLocation())
     : TypeDecl(DK, DC, L, Id), DeclContext(DK), TagKeywordLoc(TKL),
       TypedefDeclOrQualifier((TypedefDecl*) 0) {
-    assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
+    assert((DK != Enum || TK == TTK_Enum) &&
+           "EnumDecl not matched with TTK_Enum");
     TagDeclKind = TK;
     IsDefinition = false;
     IsEmbeddedInDeclarator = false;
@@ -1776,13 +1773,8 @@ public:
   void setDefinition(bool V) { IsDefinition = V; }
 
   const char *getKindName() const {
-    return ElaboratedType::getNameForTagKind(getTagKind());
+    return TypeWithKeyword::getTagTypeKindName(getTagKind());
   }
-
-  /// getTagKindForTypeSpec - Converts a type specifier (DeclSpec::TST)
-  /// into a tag kind.  It is an error to provide a type specifier
-  /// which *isn't* a tag kind here.
-  static TagKind getTagKindForTypeSpec(unsigned TypeSpec);
 
   TagKind getTagKind() const {
     return TagKind(TagDeclKind);
@@ -1790,10 +1782,10 @@ public:
 
   void setTagKind(TagKind TK) { TagDeclKind = TK; }
 
-  bool isStruct() const { return getTagKind() == TK_struct; }
-  bool isClass()  const { return getTagKind() == TK_class; }
-  bool isUnion()  const { return getTagKind() == TK_union; }
-  bool isEnum()   const { return getTagKind() == TK_enum; }
+  bool isStruct() const { return getTagKind() == TTK_Struct; }
+  bool isClass()  const { return getTagKind() == TTK_Class; }
+  bool isUnion()  const { return getTagKind() == TTK_Union; }
+  bool isEnum()   const { return getTagKind() == TTK_Enum; }
 
   TypedefDecl *getTypedefForAnonDecl() const {
     return hasExtInfo() ? 0 : TypedefDeclOrQualifier.get<TypedefDecl*>();
@@ -1852,7 +1844,7 @@ class EnumDecl : public TagDecl {
 
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL)
-    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
+    : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
       IntegerType = QualType();
     }
 public:

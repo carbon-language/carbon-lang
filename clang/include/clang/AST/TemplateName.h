@@ -188,7 +188,7 @@ const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 /// declaration for "vector". The QualifiedTemplateName class is only
 /// used to provide "sugar" for template names that were expressed
 /// with a qualified name, and has no semantic meaning. In this
-/// manner, it is to TemplateName what QualifiedNameType is to Type,
+/// manner, it is to TemplateName what ElaboratedType is to Type,
 /// providing extra syntactic sugar for downstream clients.
 class QualifiedTemplateName : public llvm::FoldingSetNode {
   /// \brief The nested name specifier that qualifies the template name.

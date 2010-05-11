@@ -461,7 +461,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 
   if (BaseType->isDependentType())
     return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
-                                Class->getTagKind() == RecordDecl::TK_class,
+                                Class->getTagKind() == TTK_Class,
                                 Access, BaseType);
 
   // Base specifiers must be record types.
@@ -505,7 +505,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   
   // Create the base specifier.
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
-                              Class->getTagKind() == RecordDecl::TK_class,
+                              Class->getTagKind() == TTK_Class,
                               Access, BaseType);
 }
 
@@ -1191,7 +1191,7 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
           static_cast<NestedNameSpecifier*>(SS.getScopeRep());
 
         // FIXME: preserve source range information
-        BaseType = Context.getQualifiedNameType(Qualifier, BaseType);
+        BaseType = Context.getElaboratedType(ETK_None, Qualifier, BaseType);
       }
     }
   }

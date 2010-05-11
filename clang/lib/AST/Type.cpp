@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -764,36 +765,105 @@ bool Type::isSpecifierType() const {
   case TemplateTypeParm:
   case SubstTemplateTypeParm:
   case TemplateSpecialization:
-  case QualifiedName:
+  case Elaborated:
   case DependentName:
   case ObjCInterface:
   case ObjCObjectPointer:
-  case Elaborated:
     return true;
   default:
     return false;
   }
 }
 
-bool Type::isElaboratedTypeSpecifier() const {
-  if (getTypeClass() == Elaborated)
-    return true;
-  
-  if (const DependentNameType *Dependent = dyn_cast<DependentNameType>(this)) {
-    switch (Dependent->getKeyword()) {
-    case ETK_None:
-    case ETK_Typename:
-      return false;
-        
-    case ETK_Class:
-    case ETK_Struct:
-    case ETK_Union:
-    case ETK_Enum:
-      return true;
-    }
+TypeWithKeyword::~TypeWithKeyword() {
+}
+
+ElaboratedTypeKeyword
+TypeWithKeyword::getKeywordForTypeSpec(unsigned TypeSpec) {
+  switch (TypeSpec) {
+  default: return ETK_None;
+  case TST_typename: return ETK_Typename;
+  case TST_class: return ETK_Class;
+  case TST_struct: return ETK_Struct;
+  case TST_union: return ETK_Union;
+  case TST_enum: return ETK_Enum;
   }
-  
-  return false;
+}
+
+TagTypeKind
+TypeWithKeyword::getTagTypeKindForTypeSpec(unsigned TypeSpec) {
+  switch(TypeSpec) {
+  case TST_class: return TTK_Class;
+  case TST_struct: return TTK_Struct;
+  case TST_union: return TTK_Union;
+  case TST_enum: return TTK_Enum;
+  default: llvm_unreachable("Type specifier is not a tag type kind.");
+  }
+}
+
+ElaboratedTypeKeyword
+TypeWithKeyword::getKeywordForTagTypeKind(TagTypeKind Kind) {
+  switch (Kind) {
+  case TTK_Class: return ETK_Class;
+  case TTK_Struct: return ETK_Struct;
+  case TTK_Union: return ETK_Union;
+  case TTK_Enum: return ETK_Enum;
+  }
+  llvm_unreachable("Unknown tag type kind.");
+}
+
+TagTypeKind
+TypeWithKeyword::getTagTypeKindForKeyword(ElaboratedTypeKeyword Keyword) {
+  switch (Keyword) {
+  case ETK_Class: return TTK_Class;
+  case ETK_Struct: return TTK_Struct;
+  case ETK_Union: return TTK_Union;
+  case ETK_Enum: return TTK_Enum;
+  case ETK_None: // Fall through.
+  case ETK_Typename:
+    llvm_unreachable("Elaborated type keyword is not a tag type kind.");
+  }
+  llvm_unreachable("Unknown elaborated type keyword.");
+}
+
+bool
+TypeWithKeyword::KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword) {
+  switch (Keyword) {
+  case ETK_None:
+  case ETK_Typename:
+    return false;
+  case ETK_Class:
+  case ETK_Struct:
+  case ETK_Union:
+  case ETK_Enum:
+    return true;
+  }
+  llvm_unreachable("Unknown elaborated type keyword.");
+}
+
+const char*
+TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
+  switch (Keyword) {
+  default: llvm_unreachable("Unknown elaborated type keyword.");
+  case ETK_None: return "";
+  case ETK_Typename: return "typename";
+  case ETK_Class:  return "class";
+  case ETK_Struct: return "struct";
+  case ETK_Union:  return "union";
+  case ETK_Enum:   return "enum";
+  }
+}
+
+bool Type::isElaboratedTypeSpecifier() const {
+  ElaboratedTypeKeyword Keyword;
+  if (const ElaboratedType *Elab = dyn_cast<ElaboratedType>(this))
+    Keyword = Elab->getKeyword();
+  else if (const DependentNameType *DepName = dyn_cast<DependentNameType>(this))
+    Keyword = DepName->getKeyword();
+  else
+    return false;
+
+  return TypeWithKeyword::KeywordIsTagTypeKind(Keyword);
 }
 
 const char *Type::getTypeClassName() const {

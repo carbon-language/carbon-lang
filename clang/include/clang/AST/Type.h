@@ -92,7 +92,7 @@ namespace clang {
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
   class Type;
-  class QualifiedNameType;
+  class ElaboratedType;
   struct PrintingPolicy;
 
   template <typename> class CanQual;  
@@ -2264,68 +2264,6 @@ public:
   static bool classof(const EnumType *) { return true; }
 };
 
-/// ElaboratedType - A non-canonical type used to represents uses of
-/// elaborated type specifiers in C++.  For example:
-///
-///   void foo(union MyUnion);
-///            ^^^^^^^^^^^^^
-///
-/// At the moment, for efficiency we do not create elaborated types in
-/// C, since outside of typedefs all references to structs would
-/// necessarily be elaborated.
-class ElaboratedType : public Type, public llvm::FoldingSetNode {
-public:
-  enum TagKind {
-    TK_struct,
-    TK_union,
-    TK_class,
-    TK_enum
-  };
-
-private:
-  /// The tag that was used in this elaborated type specifier.
-  TagKind Tag;
-
-  /// The underlying type.
-  QualType UnderlyingType;
-
-  explicit ElaboratedType(QualType Ty, TagKind Tag, QualType Canon)
-    : Type(Elaborated, Canon, Canon->isDependentType()),
-      Tag(Tag), UnderlyingType(Ty) { }
-  friend class ASTContext;   // ASTContext creates these.
-
-public:
-  TagKind getTagKind() const { return Tag; }
-  QualType getUnderlyingType() const { return UnderlyingType; }
-
-  /// \brief Remove a single level of sugar.
-  QualType desugar() const { return getUnderlyingType(); }
-
-  /// \brief Returns whether this type directly provides sugar.
-  bool isSugared() const { return true; }
-
-  static const char *getNameForTagKind(TagKind Kind) {
-    switch (Kind) {
-    default: assert(0 && "Unknown TagKind!");
-    case TK_struct: return "struct";
-    case TK_union:  return "union";
-    case TK_class:  return "class";
-    case TK_enum:   return "enum";
-    }
-  }
-
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getUnderlyingType(), getTagKind());
-  }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType T, TagKind Tag) {
-    ID.AddPointer(T.getAsOpaquePtr());
-    ID.AddInteger(Tag);
-  }
-
-  static bool classof(const ElaboratedType*) { return true; }
-  static bool classof(const Type *T) { return T->getTypeClass() == Elaborated; }
-};
-
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   unsigned Depth : 15;
   unsigned Index : 16;
@@ -2592,46 +2530,116 @@ public:
   static bool classof(const InjectedClassNameType *T) { return true; }
 };
 
+/// \brief The kind of a tag type.
+enum TagTypeKind {
+  /// \brief The "struct" keyword.
+  TTK_Struct,
+  /// \brief The "union" keyword.
+  TTK_Union,
+  /// \brief The "class" keyword.
+  TTK_Class,
+  /// \brief The "enum" keyword.
+  TTK_Enum
+};
+
 /// \brief The elaboration keyword that precedes a qualified type name or
 /// introduces an elaborated-type-specifier.
 enum ElaboratedTypeKeyword {
-  /// \brief No keyword precedes the qualified type name.
-  ETK_None,
-  /// \brief The "typename" keyword precedes the qualified type name, e.g.,
-  /// \c typename T::type.
-  ETK_Typename,
-  /// \brief The "class" keyword introduces the elaborated-type-specifier.
-  ETK_Class,
   /// \brief The "struct" keyword introduces the elaborated-type-specifier.
   ETK_Struct,
   /// \brief The "union" keyword introduces the elaborated-type-specifier.
   ETK_Union,
+  /// \brief The "class" keyword introduces the elaborated-type-specifier.
+  ETK_Class,
   /// \brief The "enum" keyword introduces the elaborated-type-specifier.
-  ETK_Enum
+  ETK_Enum,
+  /// \brief The "typename" keyword precedes the qualified type name, e.g.,
+  /// \c typename T::type.
+  ETK_Typename,
+  /// \brief No keyword precedes the qualified type name.
+  ETK_None
 };
-  
-/// \brief Represents a type that was referred to via a qualified
-/// name, e.g., N::M::type.
+
+/// A helper class for Type nodes having an ElaboratedTypeKeyword.
+/// The keyword in stored in the free bits of the base class.
+/// Also provides a few static helpers for converting and printing
+/// elaborated type keyword and tag type kind enumerations.
+class TypeWithKeyword : public Type {
+  /// Keyword - Encodes an ElaboratedTypeKeyword enumeration constant.
+  unsigned Keyword : 3;
+
+protected:
+  TypeWithKeyword(ElaboratedTypeKeyword Keyword, TypeClass tc,
+                  QualType Canonical, bool dependent)
+    : Type(tc, Canonical, dependent), Keyword(Keyword) {}
+
+public:
+  virtual ~TypeWithKeyword(); // pin vtable to Type.cpp
+
+  ElaboratedTypeKeyword getKeyword() const {
+    return static_cast<ElaboratedTypeKeyword>(Keyword);
+  }
+
+  /// getKeywordForTypeSpec - Converts a type specifier (DeclSpec::TST)
+  /// into an elaborated type keyword.
+  static ElaboratedTypeKeyword getKeywordForTypeSpec(unsigned TypeSpec);
+
+  /// getTagTypeKindForTypeSpec - Converts a type specifier (DeclSpec::TST)
+  /// into a tag type kind.  It is an error to provide a type specifier
+  /// which *isn't* a tag kind here.
+  static TagTypeKind getTagTypeKindForTypeSpec(unsigned TypeSpec);
+
+  /// getKeywordForTagDeclKind - Converts a TagTypeKind into an
+  /// elaborated type keyword.
+  static ElaboratedTypeKeyword getKeywordForTagTypeKind(TagTypeKind Tag);
+
+  /// getTagTypeKindForKeyword - Converts an elaborated type keyword into
+  // a TagTypeKind. It is an error to provide an elaborated type keyword
+  /// which *isn't* a tag kind here.
+  static TagTypeKind getTagTypeKindForKeyword(ElaboratedTypeKeyword Keyword);
+
+  static bool KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword);
+
+  static const char *getKeywordName(ElaboratedTypeKeyword Keyword);
+
+  static const char *getTagTypeKindName(TagTypeKind Kind) {
+    return getKeywordName(getKeywordForTagTypeKind(Kind));
+  }
+
+  class CannotCastToThisType {};
+  static CannotCastToThisType classof(const Type *);
+};
+
+/// \brief Represents a type that was referred to using an elaborated type
+/// keyword, e.g., struct S, or via a qualified name, e.g., N::M::type,
+/// or both.
 ///
 /// This type is used to keep track of a type name as written in the
-/// source code, including any nested-name-specifiers. The type itself
-/// is always "sugar", used to express what was written in the source
-/// code but containing no additional semantic information.
-class QualifiedNameType : public Type, public llvm::FoldingSetNode {
+/// source code, including tag keywords and any nested-name-specifiers.
+/// The type itself is always "sugar", used to express what was written
+/// in the source code but containing no additional semantic information.
+class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
+
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
   /// \brief The type that this qualified name refers to.
   QualType NamedType;
 
-  QualifiedNameType(NestedNameSpecifier *NNS, QualType NamedType,
-                    QualType CanonType)
-    : Type(QualifiedName, CanonType, NamedType->isDependentType()),
-      NNS(NNS), NamedType(NamedType) { }
+  ElaboratedType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
+                 QualType NamedType, QualType CanonType)
+    : TypeWithKeyword(Keyword, Elaborated, CanonType,
+                      NamedType->isDependentType()),
+      NNS(NNS), NamedType(NamedType) {
+    assert(!(Keyword == ETK_None && NNS == 0) &&
+           "ElaboratedType cannot have elaborated type keyword "
+           "and name qualifier both null.");
+  }
 
   friend class ASTContext;  // ASTContext creates these
 
 public:
+
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
@@ -2645,19 +2653,20 @@ public:
   bool isSugared() const { return true; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, NNS, NamedType);
+    Profile(ID, getKeyword(), NNS, NamedType);
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
-                      QualType NamedType) {
+  static void Profile(llvm::FoldingSetNodeID &ID, ElaboratedTypeKeyword Keyword,
+                      NestedNameSpecifier *NNS, QualType NamedType) {
+    ID.AddInteger(Keyword);
     ID.AddPointer(NNS);
     NamedType.Profile(ID);
   }
 
   static bool classof(const Type *T) {
-    return T->getTypeClass() == QualifiedName;
+    return T->getTypeClass() == Elaborated;
   }
-  static bool classof(const QualifiedNameType *T) { return true; }
+  static bool classof(const ElaboratedType *T) { return true; }
 };
 
 /// \brief Represents a qualified type name for which the type name is
@@ -2669,10 +2678,8 @@ public:
 /// typename-specifier), "class", "struct", "union", or "enum" (for a 
 /// dependent elaborated-type-specifier), or nothing (in contexts where we
 /// know that we must be referring to a type, e.g., in a base class specifier).
-class DependentNameType : public Type, public llvm::FoldingSetNode {
-  /// \brief The keyword used to elaborate this type.
-  ElaboratedTypeKeyword Keyword;
-  
+class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
+
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
@@ -2684,16 +2691,16 @@ class DependentNameType : public Type, public llvm::FoldingSetNode {
 
   DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS, 
                     const IdentifierInfo *Name, QualType CanonType)
-    : Type(DependentName, CanonType, true), 
-      Keyword(Keyword), NNS(NNS), Name(Name) {
+    : TypeWithKeyword(Keyword, DependentName, CanonType, true),
+      NNS(NNS), Name(Name) {
     assert(NNS->isDependent() &&
            "DependentNameType requires a dependent nested-name-specifier");
   }
 
   DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
                     const TemplateSpecializationType *Ty, QualType CanonType)
-    : Type(DependentName, CanonType, true), 
-      Keyword(Keyword), NNS(NNS), Name(Ty) {
+    : TypeWithKeyword(Keyword, DependentName, CanonType, true),
+      NNS(NNS), Name(Ty) {
     assert(NNS->isDependent() &&
            "DependentNameType requires a dependent nested-name-specifier");
   }
@@ -2701,9 +2708,7 @@ class DependentNameType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these
 
 public:
-  /// \brief Retrieve the keyword used to elaborate this type.
-  ElaboratedTypeKeyword getKeyword() const { return Keyword; }
-  
+
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
@@ -2727,7 +2732,7 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Keyword, NNS, Name);
+    Profile(ID, getKeyword(), NNS, Name);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, ElaboratedTypeKeyword Keyword,

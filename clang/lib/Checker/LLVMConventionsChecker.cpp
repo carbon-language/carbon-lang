@@ -47,7 +47,7 @@ static bool InStdNamespace(const Decl *D) {
 }
 
 static bool IsStdString(QualType T) {
-  if (const QualifiedNameType *QT = T->getAs<QualifiedNameType>())
+  if (const ElaboratedType *QT = T->getAs<ElaboratedType>())
     T = QT->getNamedType();
 
   const TypedefType *TT = T->getAs<TypedefType>();

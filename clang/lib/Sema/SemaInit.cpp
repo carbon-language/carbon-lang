@@ -2742,8 +2742,8 @@ static void TryValueInitialization(Sema &S,
       //    without a user-provided constructor, then the object is
       //    zero-initialized and, if T’s implicitly-declared default
       //    constructor is non-trivial, that constructor is called.
-      if ((ClassDecl->getTagKind() == TagDecl::TK_class ||
-           ClassDecl->getTagKind() == TagDecl::TK_struct) &&
+      if ((ClassDecl->getTagKind() == TTK_Class ||
+           ClassDecl->getTagKind() == TTK_Struct) &&
           !ClassDecl->hasTrivialConstructor()) {
         Sequence.AddZeroInitializationStep(Entity.getType());
         return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);        

@@ -626,10 +626,6 @@ ASTContext::getTypeInfo(const Type *T) {
     return getTypeInfo(cast<SubstTemplateTypeParmType>(T)->
                        getReplacementType().getTypePtr());
 
-  case Type::Elaborated:
-    return getTypeInfo(cast<ElaboratedType>(T)->getUnderlyingType()
-                         .getTypePtr());
-
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
     if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
@@ -652,8 +648,8 @@ ASTContext::getTypeInfo(const Type *T) {
     return getTypeInfo(cast<DecltypeType>(T)->getUnderlyingExpr()->getType()
                         .getTypePtr());
 
-  case Type::QualifiedName:
-    return getTypeInfo(cast<QualifiedNameType>(T)->getNamedType().getTypePtr());
+  case Type::Elaborated:
+    return getTypeInfo(cast<ElaboratedType>(T)->getNamedType().getTypePtr());
 
   case Type::TemplateSpecialization:
     assert(getCanonicalType(T) != T &&
@@ -1890,29 +1886,28 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
 }
 
 QualType
-ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
-                                 QualType NamedType) {
+ASTContext::getElaboratedType(ElaboratedTypeKeyword Keyword,
+                              NestedNameSpecifier *NNS,
+                              QualType NamedType) {
   llvm::FoldingSetNodeID ID;
-  QualifiedNameType::Profile(ID, NNS, NamedType);
+  ElaboratedType::Profile(ID, Keyword, NNS, NamedType);
 
   void *InsertPos = 0;
-  QualifiedNameType *T
-    = QualifiedNameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  ElaboratedType *T = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
 
   QualType Canon = NamedType;
   if (!Canon.isCanonical()) {
     Canon = getCanonicalType(NamedType);
-    QualifiedNameType *CheckT
-      = QualifiedNameTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(!CheckT && "Qualified name canonical type broken");
+    ElaboratedType *CheckT = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckT && "Elaborated canonical type broken");
     (void)CheckT;
   }
 
-  T = new (*this) QualifiedNameType(NNS, NamedType, Canon);
+  T = new (*this) ElaboratedType(Keyword, NNS, NamedType, Canon);
   Types.push_back(T);
-  QualifiedNameTypes.InsertNode(T, InsertPos);
+  ElaboratedTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 
@@ -1986,30 +1981,6 @@ ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
   T = new (*this) DependentNameType(Keyword, NNS, TemplateId, Canon);
   Types.push_back(T);
   DependentNameTypes.InsertNode(T, InsertPos);
-  return QualType(T, 0);
-}
-
-QualType
-ASTContext::getElaboratedType(QualType UnderlyingType,
-                              ElaboratedType::TagKind Tag) {
-  llvm::FoldingSetNodeID ID;
-  ElaboratedType::Profile(ID, UnderlyingType, Tag);
-
-  void *InsertPos = 0;
-  ElaboratedType *T = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
-  if (T)
-    return QualType(T, 0);
-
-  QualType Canon = UnderlyingType;
-  if (!Canon.isCanonical()) {
-    Canon = getCanonicalType(Canon);
-    ElaboratedType *CheckT = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(!CheckT && "Elaborated canonical type is broken"); (void)CheckT;
-  }
-
-  T = new (*this) ElaboratedType(UnderlyingType, Tag, Canon);
-  Types.push_back(T);
-  ElaboratedTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 
@@ -2813,7 +2784,7 @@ CreateRecordDecl(ASTContext &Ctx, RecordDecl::TagKind TK, DeclContext *DC,
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl =
-      CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+      CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get("NSConstantString"));
     CFConstantStringTypeDecl->startDefinition();
 
@@ -2855,7 +2826,7 @@ void ASTContext::setCFConstantStringType(QualType T) {
 QualType ASTContext::getNSConstantStringType() {
   if (!NSConstantStringTypeDecl) {
     NSConstantStringTypeDecl =
-    CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+    CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                      &Idents.get("__builtin_NSString"));
     NSConstantStringTypeDecl->startDefinition();
     
@@ -2894,7 +2865,7 @@ void ASTContext::setNSConstantStringType(QualType T) {
 QualType ASTContext::getObjCFastEnumerationStateType() {
   if (!ObjCFastEnumerationStateTypeDecl) {
     ObjCFastEnumerationStateTypeDecl =
-      CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+      CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get("__objcFastEnumerationState"));
     ObjCFastEnumerationStateTypeDecl->startDefinition();
 
@@ -2929,7 +2900,7 @@ QualType ASTContext::getBlockDescriptorType() {
 
   RecordDecl *T;
   // FIXME: Needs the FlagAppleBlock bit.
-  T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+  T = CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get("__block_descriptor"));
   T->startDefinition();
   
@@ -2974,7 +2945,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() {
 
   RecordDecl *T;
   // FIXME: Needs the FlagAppleBlock bit.
-  T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+  T = CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get("__block_descriptor_withcopydispose"));
   T->startDefinition();
   
@@ -3046,7 +3017,7 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
   llvm::raw_svector_ostream(Name) << "__Block_byref_" <<
                                   ++UniqueBlockByRefTypeID << '_' << DeclName;
   RecordDecl *T;
-  T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+  T = CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get(Name.str()));
   T->startDefinition();
   QualType Int32Ty = IntTy;
@@ -3097,7 +3068,7 @@ QualType ASTContext::getBlockParmType(
   llvm::raw_svector_ostream(Name) << "__block_literal_"
                                   << ++UniqueBlockParmTypeID;
   RecordDecl *T;
-  T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+  T = CreateRecordDecl(*this, TTK_Struct, TUDecl, SourceLocation(),
                        &Idents.get(Name.str()));
   T->startDefinition();
   QualType FieldTypes[] = {

@@ -672,8 +672,8 @@ bool ResultBuilder::IsClassOrStruct(NamedDecl *ND) const {
     ND = ClassTemplate->getTemplatedDecl();
   
   if (RecordDecl *RD = dyn_cast<RecordDecl>(ND))
-    return RD->getTagKind() == TagDecl::TK_class ||
-    RD->getTagKind() == TagDecl::TK_struct;
+    return RD->getTagKind() == TTK_Class ||
+    RD->getTagKind() == TTK_Struct;
   
   return false;
 }
@@ -685,7 +685,7 @@ bool ResultBuilder::IsUnion(NamedDecl *ND) const {
     ND = ClassTemplate->getTemplatedDecl();
   
   if (RecordDecl *RD = dyn_cast<RecordDecl>(ND))
-    return RD->getTagKind() == TagDecl::TK_union;
+    return RD->getTagKind() == TTK_Union;
   
   return false;
 }

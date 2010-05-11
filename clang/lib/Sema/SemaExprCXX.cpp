@@ -1173,7 +1173,7 @@ void Sema::DeclareGlobalNewDelete() {
   if (!StdBadAlloc) {
     // The "std::bad_alloc" class has not yet been declared, so build it
     // implicitly.
-    StdBadAlloc = CXXRecordDecl::Create(Context, TagDecl::TK_class, 
+    StdBadAlloc = CXXRecordDecl::Create(Context, TTK_Class, 
                                         StdNamespace, 
                                         SourceLocation(), 
                                       &PP.getIdentifierTable().get("bad_alloc"), 

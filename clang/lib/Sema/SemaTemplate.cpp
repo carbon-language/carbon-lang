@@ -739,8 +739,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (CheckTemplateDeclScope(S, TemplateParams))
     return true;
 
-  TagDecl::TagKind Kind = TagDecl::getTagKindForTypeSpec(TagSpec);
-  assert(Kind != TagDecl::TK_enum && "can't build template of enumerated type");
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+  assert(Kind != TTK_Enum && "can't build template of enumerated type");
 
   // There is no such thing as an unnamed class template.
   if (!Name) {
@@ -1568,7 +1568,7 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
   QualType Type = GetTypeFromParser(TypeResult.get(), &DI);
 
   // Verify the tag specifier.
-  TagDecl::TagKind TagKind = TagDecl::getTagKindForTypeSpec(TagSpec);
+  TagTypeKind TagKind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
 
   if (const RecordType *RT = Type->getAs<RecordType>()) {
     RecordDecl *D = RT->getDecl();
@@ -1584,7 +1584,9 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
     }
   }
 
-  QualType ElabType = Context.getElaboratedType(Type, TagKind);
+  ElaboratedTypeKeyword Keyword
+    = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
+  QualType ElabType = Context.getElaboratedType(Keyword, /*NNS=*/0, Type);
 
   return ElabType.getAsOpaquePtr();
 }
@@ -3664,13 +3666,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Check that the specialization uses the same tag kind as the
   // original template.
-  TagDecl::TagKind Kind;
-  switch (TagSpec) {
-  default: assert(0 && "Unknown tag type!");
-  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
-  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
-  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
-  }
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+  assert(Kind != TTK_Enum && "Invalid enum tag in class template spec!");
   if (!isAcceptableTagRedeclaration(ClassTemplate->getTemplatedDecl(),
                                     Kind, KWLoc,
                                     *ClassTemplate->getIdentifier())) {
@@ -4621,13 +4618,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   // Check that the specialization uses the same tag kind as the
   // original template.
-  TagDecl::TagKind Kind;
-  switch (TagSpec) {
-  default: assert(0 && "Unknown tag type!");
-  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
-  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
-  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
-  }
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+  assert(Kind != TTK_Enum &&
+         "Invalid enum tag in class template explicit instantiation!");
   if (!isAcceptableTagRedeclaration(ClassTemplate->getTemplatedDecl(),
                                     Kind, KWLoc,
                                     *ClassTemplate->getIdentifier())) {
@@ -5173,23 +5166,16 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (!NNS)
     return true;
 
-  ElaboratedTypeKeyword Keyword = ETK_None;
-  switch (TagDecl::getTagKindForTypeSpec(TagSpec)) {
-  case TagDecl::TK_struct: Keyword = ETK_Struct; break;
-  case TagDecl::TK_class: Keyword = ETK_Class; break;
-  case TagDecl::TK_union: Keyword = ETK_Union; break;
-  case TagDecl::TK_enum: Keyword = ETK_Enum; break;
-  }
-  assert(Keyword != ETK_None && "Invalid tag kind!");
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
 
   if (TUK == TUK_Declaration || TUK == TUK_Definition) {
     Diag(NameLoc, diag::err_dependent_tag_decl)
-      << (TUK == TUK_Definition) << TagDecl::getTagKindForTypeSpec(TagSpec)
-      << SS.getRange();
+      << (TUK == TUK_Definition) << Kind << SS.getRange();
     return true;
   }
-  
-  return Context.getDependentNameType(Keyword, NNS, Name).getAsOpaquePtr();
+
+  ElaboratedTypeKeyword Kwd = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
+  return Context.getDependentNameType(Kwd, NNS, Name).getAsOpaquePtr();
 }
 
 static void FillTypeLoc(DependentNameTypeLoc TL,
@@ -5199,7 +5185,7 @@ static void FillTypeLoc(DependentNameTypeLoc TL,
   TL.setNameLoc(TypenameLoc);
 }
 
-static void FillTypeLoc(QualifiedNameTypeLoc TL,
+static void FillTypeLoc(ElaboratedTypeLoc TL,
                         SourceLocation TypenameLoc,
                         SourceRange QualifierRange) {
   // FIXME: typename, qualifier range
@@ -5225,7 +5211,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     // FIXME: fill inner type loc
     FillTypeLoc(TL, TypenameLoc, SS.getRange());
   } else {
-    QualifiedNameTypeLoc TL = cast<QualifiedNameTypeLoc>(TSI->getTypeLoc());
+    ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
     FillTypeLoc(TL, TypenameLoc, SS.getRange());
   }
@@ -5245,14 +5231,11 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 
   if (computeDeclContext(SS, false)) {
     // If we can compute a declaration context, then the "typename"
-    // keyword was superfluous. Just build a QualifiedNameType to keep
+    // keyword was superfluous. Just build an ElaboratedType to keep
     // track of the nested-name-specifier.
-
-    // FIXME: Note that the QualifiedNameType had the "typename" keyword!
-    
-    T = Context.getQualifiedNameType(NNS, T);
+    T = Context.getElaboratedType(ETK_Typename, NNS, T);
     TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
-    QualifiedNameTypeLoc TL = cast<QualifiedNameTypeLoc>(TSI->getTypeLoc());
+    ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
     FillTypeLoc(TL, TypenameLoc, SS.getRange());
     return CreateLocInfoType(T, TSI).getAsOpaquePtr();
@@ -5309,10 +5292,10 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
-      // We found a type. Build a QualifiedNameType, since the
-      // typename-specifier was just sugar. FIXME: Tell
-      // QualifiedNameType that it has a "typename" prefix.
-      return Context.getQualifiedNameType(NNS, Context.getTypeDeclType(Type));
+      // We found a type. Build an ElaboratedType, since the
+      // typename-specifier was just sugar.
+      return Context.getElaboratedType(ETK_Typename, NNS,
+                                       Context.getTypeDeclType(Type));
     }
 
     DiagID = diag::err_typename_nested_not_type;
@@ -5391,9 +5374,10 @@ namespace {
 
     /// \brief Transforms a typename type by determining whether the type now
     /// refers to a member of the current instantiation, and then
-    /// type-checking and building a QualifiedNameType (when possible).
-    QualType TransformDependentNameType(TypeLocBuilder &TLB, DependentNameTypeLoc TL, 
-                                   QualType ObjectType);
+    /// type-checking and building an ElaboratedType (when possible).
+    QualType TransformDependentNameType(TypeLocBuilder &TLB,
+                                        DependentNameTypeLoc TL,
+                                        QualType ObjectType);
   };
 }
 
@@ -5422,7 +5406,7 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
     Result = QualType(T, 0);
 
   // Rebuild the typename type, which will probably turn into a
-  // QualifiedNameType.
+  // ElaboratedType.
   else if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
     QualType NewTemplateId
       = TransformType(QualType(TemplateId, 0));
@@ -5471,7 +5455,7 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
 /// Here, the type "typename X<T>::pointer" will be created as a DependentNameType,
 /// since we do not know that we can look into X<T> when we parsed the type.
 /// This function will rebuild the type, performing the lookup of "pointer"
-/// in X<T> and returning a QualifiedNameType whose canonical type is the same
+/// in X<T> and returning an ElaboratedType whose canonical type is the same
 /// as the canonical type of T*, allowing the return types of the out-of-line
 /// definition and the declaration to match.
 TypeSourceInfo *Sema::RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,

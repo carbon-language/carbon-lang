@@ -2165,8 +2165,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       return QualType();
     }
     unsigned Tag = Record[1];
-    return Context->getElaboratedType(GetType(Record[0]),
-                                      (ElaboratedType::TagKind) Tag);
+    // FIXME: Deserialize the qualifier (C++ only)
+    return Context->getElaboratedType((ElaboratedTypeKeyword) Tag,
+                                      /* NNS */ 0,
+                                      GetType(Record[0]));
   }
 
   case pch::TYPE_OBJC_INTERFACE: {
@@ -2334,9 +2336,6 @@ void TypeLocReader::VisitRecordTypeLoc(RecordTypeLoc TL) {
 void TypeLocReader::VisitEnumTypeLoc(EnumTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
 void TypeLocReader::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -2354,7 +2353,7 @@ void TypeLocReader::VisitTemplateSpecializationTypeLoc(
         Reader.GetTemplateArgumentLocInfo(TL.getTypePtr()->getArg(i).getKind(),
                                           Record, Idx));
 }
-void TypeLocReader::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {

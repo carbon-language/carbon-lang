@@ -23,7 +23,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Basic/Specifiers.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -1518,16 +1518,6 @@ TagDecl* TagDecl::getDefinition() const {
       return *R;
 
   return 0;
-}
-
-TagDecl::TagKind TagDecl::getTagKindForTypeSpec(unsigned TypeSpec) {
-  switch (TypeSpec) {
-  default: llvm_unreachable("unexpected type specifier");
-  case DeclSpec::TST_struct: return TK_struct;
-  case DeclSpec::TST_class: return TK_class;
-  case DeclSpec::TST_union: return TK_union;
-  case DeclSpec::TST_enum: return TK_enum;
-  }
 }
 
 void TagDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,

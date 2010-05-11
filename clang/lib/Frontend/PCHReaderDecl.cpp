@@ -865,7 +865,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(), 0);
     break;
   case pch::DECL_RECORD:
-    D = RecordDecl::Create(*Context, TagDecl::TK_struct, 0, SourceLocation(),
+    D = RecordDecl::Create(*Context, TTK_Struct, 0, SourceLocation(),
                            0, SourceLocation(), 0);
     break;
   case pch::DECL_ENUM_CONSTANT:
@@ -913,7 +913,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                             DeclarationName());
     break;
   case pch::DECL_CXX_RECORD:
-    D = CXXRecordDecl::Create(*Context, TagDecl::TK_struct, 0,
+    D = CXXRecordDecl::Create(*Context, TTK_Struct, 0,
                               SourceLocation(), 0, SourceLocation(), 0);
     break;
   case pch::DECL_CXX_METHOD:

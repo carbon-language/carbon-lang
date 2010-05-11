@@ -137,7 +137,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 
     data().VBases[I] =
       CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
-                       VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
+                       VBaseClassDecl->getTagKind() == TTK_Class,
                        VBases[I]->getAccessSpecifier(), VBaseType);
   }
 }

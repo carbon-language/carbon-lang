@@ -40,11 +40,11 @@ BlockScopeInfo::~BlockScopeInfo() { }
 
 static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
   if (C.getLangOptions().CPlusPlus)
-    return CXXRecordDecl::Create(C, TagDecl::TK_struct,
+    return CXXRecordDecl::Create(C, TTK_Struct,
                                  C.getTranslationUnitDecl(),
                                  SourceLocation(), &C.Idents.get(Name));
 
-  return RecordDecl::Create(C, TagDecl::TK_struct,
+  return RecordDecl::Create(C, TTK_Struct,
                             C.getTranslationUnitDecl(),
                             SourceLocation(), &C.Idents.get(Name));
 }

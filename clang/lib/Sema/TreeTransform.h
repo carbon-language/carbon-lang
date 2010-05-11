@@ -492,11 +492,6 @@ public:
     return SemaRef.Context.getTypeDeclType(Enum);
   }
 
-  /// \brief Build a new elaborated type.
-  QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag) {
-    return SemaRef.Context.getElaboratedType(T, Tag);
-  }
-
   /// \brief Build a new typeof(expr) type.
   ///
   /// By default, performs semantic analysis when building the typeof type.
@@ -525,11 +520,12 @@ public:
 
   /// \brief Build a new qualified name type.
   ///
-  /// By default, builds a new QualifiedNameType type from the
-  /// nested-name-specifier and the named type. Subclasses may override
-  /// this routine to provide different behavior.
-  QualType RebuildQualifiedNameType(NestedNameSpecifier *NNS, QualType Named) {
-    return SemaRef.Context.getQualifiedNameType(NNS, Named);
+  /// By default, builds a new ElaboratedType type from the keyword,
+  /// the nested-name-specifier and the named type.
+  /// Subclasses may override this routine to provide different behavior.
+  QualType RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+                                 NestedNameSpecifier *NNS, QualType Named) {
+    return SemaRef.Context.getElaboratedType(Keyword, NNS, Named);
   }
 
   /// \brief Build a new typename type that refers to a template-id.
@@ -548,9 +544,8 @@ public:
         return SemaRef.Context.getDependentNameType(Keyword, NNS,
                                           cast<TemplateSpecializationType>(T));
     }
-    
-    // FIXME: Handle elaborated-type-specifiers separately.
-    return SemaRef.Context.getQualifiedNameType(NNS, T);
+
+    return SemaRef.Context.getElaboratedType(Keyword, NNS, T);
   }
 
   /// \brief Build a new typename type that refers to an identifier.
@@ -571,19 +566,11 @@ public:
         return SemaRef.Context.getDependentNameType(Keyword, NNS, Id);
     }
 
-    TagDecl::TagKind Kind = TagDecl::TK_enum;
-    switch (Keyword) {
-      case ETK_None:
-        // Fall through.
-      case ETK_Typename:
-        return SemaRef.CheckTypenameType(Keyword, NNS, *Id, SR);
-        
-      case ETK_Class: Kind = TagDecl::TK_class; break;
-      case ETK_Struct: Kind = TagDecl::TK_struct; break;
-      case ETK_Union: Kind = TagDecl::TK_union; break;
-      case ETK_Enum: Kind = TagDecl::TK_enum; break;
-    }
-    
+    if (Keyword == ETK_None || Keyword == ETK_Typename)
+      return SemaRef.CheckTypenameType(Keyword, NNS, *Id, SR);
+
+    TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForKeyword(Keyword);
+
     // We had a dependent elaborated-type-specifier that as been transformed
     // into a non-dependent elaborated-type-specifier. Find the tag we're
     // referring to.
@@ -619,7 +606,7 @@ public:
         << Kind << Id << DC;
       return QualType();
     }
-    
+
     // FIXME: Terrible location information
     if (!SemaRef.isAcceptableTagRedeclaration(Tag, Kind, SR.getEnd(), *Id)) {
       SemaRef.Diag(SR.getBegin(), diag::err_use_with_wrong_tag) << Id;
@@ -629,8 +616,7 @@ public:
 
     // Build the elaborated-type-specifier type.
     QualType T = SemaRef.Context.getTypeDeclType(Tag);
-    T = SemaRef.Context.getQualifiedNameType(NNS, T);
-    return SemaRef.Context.getElaboratedType(T, Kind);
+    return SemaRef.Context.getElaboratedType(Keyword, NNS, T);
   }
 
   /// \brief Build a new nested-name-specifier given the prefix and an
@@ -3146,31 +3132,6 @@ QualType TreeTransform<Derived>::TransformEnumType(TypeLocBuilder &TLB,
   return Result;
 }
 
-template <typename Derived>
-QualType TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
-                                                         ElaboratedTypeLoc TL,
-                                                       QualType ObjectType) {
-  ElaboratedType *T = TL.getTypePtr();
-
-  // FIXME: this should be a nested type.
-  QualType Underlying = getDerived().TransformType(T->getUnderlyingType());
-  if (Underlying.isNull())
-    return QualType();
-
-  QualType Result = TL.getType();
-  if (getDerived().AlwaysRebuild() ||
-      Underlying != T->getUnderlyingType()) {
-    Result = getDerived().RebuildElaboratedType(Underlying, T->getTagKind());
-    if (Result.isNull())
-      return QualType();
-  }
-
-  ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-  NewTL.setNameLoc(TL.getNameLoc());
-
-  return Result;
-}
-
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformInjectedClassNameType(
                                          TypeLocBuilder &TLB,
@@ -3275,16 +3236,20 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::TransformQualifiedNameType(TypeLocBuilder &TLB,
-                                                   QualifiedNameTypeLoc TL,
-                                                   QualType ObjectType) {
-  QualifiedNameType *T = TL.getTypePtr();
-  NestedNameSpecifier *NNS
-    = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
-                                                SourceRange(),
-                                                ObjectType);
-  if (!NNS)
-    return QualType();
+TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
+                                                ElaboratedTypeLoc TL,
+                                                QualType ObjectType) {
+  ElaboratedType *T = TL.getTypePtr();
+
+  NestedNameSpecifier *NNS = 0;
+  // NOTE: the qualifier in an ElaboratedType is optional.
+  if (T->getQualifier() != 0) {
+    NNS = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
+                                                    SourceRange(),
+                                                    ObjectType);
+    if (!NNS)
+      return QualType();
+  }
 
   QualType Named = getDerived().TransformType(T->getNamedType());
   if (Named.isNull())
@@ -3294,12 +3259,12 @@ TreeTransform<Derived>::TransformQualifiedNameType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       NNS != T->getQualifier() ||
       Named != T->getNamedType()) {
-    Result = getDerived().RebuildQualifiedNameType(NNS, Named);
+    Result = getDerived().RebuildElaboratedType(T->getKeyword(), NNS, Named);
     if (Result.isNull())
       return QualType();
   }
 
-  QualifiedNameTypeLoc NewTL = TLB.push<QualifiedNameTypeLoc>(Result);
+  ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
 
   return Result;

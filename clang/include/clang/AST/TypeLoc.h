@@ -1231,18 +1231,12 @@ class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeType> {
 };
 
-// FIXME: location of the tag keyword.
-class ElaboratedTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                           ElaboratedTypeLoc,
-                                                           ElaboratedType> {
-};
-
 // FIXME: locations for the nested name specifier;  at the very least,
 // a SourceRange.
-class QualifiedNameTypeLoc :
+class ElaboratedTypeLoc :
     public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                     QualifiedNameTypeLoc,
-                                     QualifiedNameType> {
+                                     ElaboratedTypeLoc,
+                                     ElaboratedType> {
 };
 
 // FIXME: locations for the typename keyword and nested name specifier.

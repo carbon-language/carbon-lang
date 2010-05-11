@@ -283,12 +283,11 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
 
     // In C++, make an ElaboratedType.
     if (TheSema.getLangOptions().CPlusPlus) {
-      TagDecl::TagKind Tag
-        = TagDecl::getTagKindForTypeSpec(DS.getTypeSpecType());
-      Result = TheSema.getQualifiedNameType(DS.getTypeSpecScope(), Result);
-      Result = Context.getElaboratedType(Result, Tag);
+      ElaboratedTypeKeyword Keyword
+        = ElaboratedType::getKeywordForTypeSpec(DS.getTypeSpecType());
+      Result = TheSema.getElaboratedType(Keyword, DS.getTypeSpecScope(),
+                                         Result);
     }
-
     if (D->isInvalidDecl())
       TheDeclarator.setInvalidType(true);
     break;
@@ -995,10 +994,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     case Declarator::MemberContext:
       switch (cast<TagDecl>(CurContext)->getTagKind()) {
-      case TagDecl::TK_enum: assert(0 && "unhandled tag kind"); break;
-      case TagDecl::TK_struct: Error = 1; /* Struct member */ break;
-      case TagDecl::TK_union:  Error = 2; /* Union member */ break;
-      case TagDecl::TK_class:  Error = 3; /* Class member */ break;
+      case TTK_Enum: assert(0 && "unhandled tag kind"); break;
+      case TTK_Struct: Error = 1; /* Struct member */ break;
+      case TTK_Union:  Error = 2; /* Union member */ break;
+      case TTK_Class:  Error = 3; /* Class member */ break;
       }
       break;
     case Declarator::CXXCatchContext:
@@ -1301,7 +1300,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         case NestedNameSpecifier::TypeSpecWithTemplate:
           ClsType = QualType(NNS->getAsType(), 0);
           if (NNSPrefix)
-            ClsType = Context.getQualifiedNameType(NNSPrefix, ClsType);
+            ClsType = Context.getElaboratedType(ETK_None, NNSPrefix, ClsType);
           break;
         }
       } else {
@@ -2082,15 +2081,21 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                              std::make_pair(SourceLocation(), PDiag(0)));
 }
 
-/// \brief Retrieve a version of the type 'T' that is qualified by the
-/// nested-name-specifier contained in SS.
-QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {
-  if (!SS.isSet() || SS.isInvalid() || T.isNull())
+/// \brief Retrieve a version of the type 'T' that is elaborated by Keyword
+/// and qualified by the nested-name-specifier contained in SS.
+QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
+                                 const CXXScopeSpec &SS, QualType T) {
+  if (T.isNull())
     return T;
-
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  return Context.getQualifiedNameType(NNS, T);
+  NestedNameSpecifier *NNS;
+  if (SS.isSet() && !SS.isInvalid())
+    NNS = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  else {
+    if (Keyword == ETK_None)
+      return T;
+    NNS = 0;
+  }
+  return Context.getElaboratedType(Keyword, NNS, T);
 }
 
 QualType Sema::BuildTypeofExprType(Expr *E) {

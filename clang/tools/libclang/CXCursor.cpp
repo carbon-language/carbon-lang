@@ -60,10 +60,10 @@ static CXCursorKind GetCursorKind(Decl *D) {
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {
-          case TagDecl::TK_struct: return CXCursor_StructDecl;
-          case TagDecl::TK_class:  return CXCursor_ClassDecl;
-          case TagDecl::TK_union:  return CXCursor_UnionDecl;
-          case TagDecl::TK_enum:   return CXCursor_EnumDecl;
+          case TTK_Struct: return CXCursor_StructDecl;
+          case TTK_Class:  return CXCursor_ClassDecl;
+          case TTK_Union:  return CXCursor_UnionDecl;
+          case TTK_Enum:   return CXCursor_EnumDecl;
         }
       }
 

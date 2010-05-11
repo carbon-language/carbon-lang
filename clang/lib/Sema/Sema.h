@@ -768,7 +768,8 @@ public:
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            unsigned DiagID);
 
-  QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
+  QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
+                             const CXXScopeSpec &SS, QualType T);
 
   QualType BuildTypeofExprType(Expr *E);
   QualType BuildDecltypeType(Expr *E);

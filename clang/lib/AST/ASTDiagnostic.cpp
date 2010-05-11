@@ -50,12 +50,6 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
       QT = cast<ElaboratedType>(Ty)->desugar();
       continue;
     }
-    
-    // ...or a qualified name type...
-    if (isa<QualifiedNameType>(Ty)) {
-      QT = cast<QualifiedNameType>(Ty)->desugar();
-      continue;
-    }
 
     // ...or a substituted template type parameter.
     if (isa<SubstTemplateTypeParmType>(Ty)) {

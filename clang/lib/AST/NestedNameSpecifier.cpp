@@ -145,14 +145,14 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
     InnerPolicy.SuppressScope = true;
 
     // Nested-name-specifiers are intended to contain minimally-qualified
-    // types. An actual QualifiedNameType will not occur, since we'll store
+    // types. An actual ElaboratedType will not occur, since we'll store
     // just the type that is referred to in the nested-name-specifier (e.g.,
     // a TypedefType, TagType, etc.). However, when we are dealing with
     // dependent template-id types (e.g., Outer<T>::template Inner<U>),
     // the type requires its own nested-name-specifier for uniqueness, so we
     // suppress that nested-name-specifier during printing.
-    assert(!isa<QualifiedNameType>(T) &&
-           "Qualified name type in nested-name-specifier");
+    assert(!isa<ElaboratedType>(T) &&
+           "Elaborated type in nested-name-specifier");
     if (const TemplateSpecializationType *SpecType
           = dyn_cast<TemplateSpecializationType>(T)) {
       // Print the template name without its corresponding

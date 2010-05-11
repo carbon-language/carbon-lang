@@ -68,11 +68,10 @@ namespace {
     // FIXME: DependentDecltypeType
     QualType VisitRecordType(RecordType *T);
     QualType VisitEnumType(EnumType *T);
-    QualType VisitElaboratedType(ElaboratedType *T);
     // FIXME: TemplateTypeParmType
     // FIXME: SubstTemplateTypeParmType
     // FIXME: TemplateSpecializationType
-    QualType VisitQualifiedNameType(QualifiedNameType *T);
+    QualType VisitElaboratedType(ElaboratedType *T);
     // FIXME: DependentNameType
     QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
@@ -532,19 +531,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                   cast<TagType>(T2)->getDecl()))
       return false;
     break;
-      
-  case Type::Elaborated: {
-    const ElaboratedType *Elab1 = cast<ElaboratedType>(T1);
-    const ElaboratedType *Elab2 = cast<ElaboratedType>(T2);
-    if (Elab1->getTagKind() != Elab2->getTagKind())
-      return false;
-    if (!IsStructurallyEquivalent(Context, 
-                                  Elab1->getUnderlyingType(),
-                                  Elab2->getUnderlyingType()))
-      return false;
-    break;
-  }
-   
+
   case Type::TemplateTypeParm: {
     const TemplateTypeParmType *Parm1 = cast<TemplateTypeParmType>(T1);
     const TemplateTypeParmType *Parm2 = cast<TemplateTypeParmType>(T2);
@@ -594,16 +581,19 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     break;
   }
       
-  case Type::QualifiedName: {
-    const QualifiedNameType *Qual1 = cast<QualifiedNameType>(T1);
-    const QualifiedNameType *Qual2 = cast<QualifiedNameType>(T2);
+  case Type::Elaborated: {
+    const ElaboratedType *Elab1 = cast<ElaboratedType>(T1);
+    const ElaboratedType *Elab2 = cast<ElaboratedType>(T2);
+    // CHECKME: what if a keyword is ETK_None or ETK_typename ?
+    if (Elab1->getKeyword() != Elab2->getKeyword())
+      return false;
     if (!IsStructurallyEquivalent(Context, 
-                                  Qual1->getQualifier(), 
-                                  Qual2->getQualifier()))
+                                  Elab1->getQualifier(), 
+                                  Elab2->getQualifier()))
       return false;
     if (!IsStructurallyEquivalent(Context,
-                                  Qual1->getNamedType(),
-                                  Qual2->getNamedType()))
+                                  Elab1->getNamedType(),
+                                  Elab2->getNamedType()))
       return false;
     break;
   }
@@ -1293,24 +1283,20 @@ QualType ASTNodeImporter::VisitEnumType(EnumType *T) {
 }
 
 QualType ASTNodeImporter::VisitElaboratedType(ElaboratedType *T) {
-  QualType ToUnderlyingType = Importer.Import(T->getUnderlyingType());
-  if (ToUnderlyingType.isNull())
-    return QualType();
-
-  return Importer.getToContext().getElaboratedType(ToUnderlyingType,
-                                                   T->getTagKind());
-}
-
-QualType ASTNodeImporter::VisitQualifiedNameType(QualifiedNameType *T) {
-  NestedNameSpecifier *ToQualifier = Importer.Import(T->getQualifier());
-  if (!ToQualifier)
-    return QualType();
+  NestedNameSpecifier *ToQualifier = 0;
+  // Note: the qualifier in an ElaboratedType is optional.
+  if (T->getQualifier()) {
+    ToQualifier = Importer.Import(T->getQualifier());
+    if (!ToQualifier)
+      return QualType();
+  }
 
   QualType ToNamedType = Importer.Import(T->getNamedType());
   if (ToNamedType.isNull())
     return QualType();
 
-  return Importer.getToContext().getQualifiedNameType(ToQualifier, ToNamedType);
+  return Importer.getToContext().getElaboratedType(T->getKeyword(),
+                                                   ToQualifier, ToNamedType);
 }
 
 QualType ASTNodeImporter::VisitObjCInterfaceType(ObjCInterfaceType *T) {

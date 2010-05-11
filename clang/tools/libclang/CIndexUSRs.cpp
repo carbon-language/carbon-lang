@@ -314,10 +314,10 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   VisitDeclContext(D->getDeclContext());
 
   switch (D->getTagKind()) {
-    case TagDecl::TK_struct: Out << "@S"; break;
-    case TagDecl::TK_class:  Out << "@C"; break;
-    case TagDecl::TK_union:  Out << "@U"; break;
-    case TagDecl::TK_enum:   Out << "@E"; break;
+    case TTK_Struct: Out << "@S"; break;
+    case TTK_Class:  Out << "@C"; break;
+    case TTK_Union:  Out << "@U"; break;
+    case TTK_Enum:   Out << "@E"; break;
   }
 
   Out << '@';
