@@ -680,18 +680,8 @@ private:
   void FinishLayout(MCAsmLayout &Layout);
 
 public:
-  /// Find the symbol which defines the atom containing given address, inside
-  /// the given section, or null if there is no such symbol.
-  //
-  // FIXME-PERF: Eliminate this, it is very slow.
-  const MCSymbolData *getAtomForAddress(const MCAsmLayout &Layout,
-                                        const MCSectionData *Section,
-                                        uint64_t Address) const;
-
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
-  //
-  // FIXME-PERF: Eliminate this, it is very slow.
   const MCSymbolData *getAtom(const MCAsmLayout &Layout,
                               const MCSymbolData *Symbol) const;
 

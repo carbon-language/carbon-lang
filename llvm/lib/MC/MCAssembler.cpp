@@ -49,8 +49,8 @@ STATISTIC(SectionLayouts, "Number of section layouts");
 
 void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
   // We shouldn't have to do anything special to support negative slides, and it
-  // is a perfectly valid thing to do as long as other parts of the system are
-  // can guarantee convergence.
+  // is a perfectly valid thing to do as long as other parts of the system can
+  // guarantee convergence.
   assert(SlideAmount >= 0 && "Negative slides not yet supported");
 
   // Update the layout by simply recomputing the layout for the entire
@@ -287,36 +287,6 @@ bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
     SD->getFragment()->getParent()->getSection());
 }
 
-// FIXME-PERF: This routine is really slow.
-const MCSymbolData *MCAssembler::getAtomForAddress(const MCAsmLayout &Layout,
-                                                   const MCSectionData *Section,
-                                                   uint64_t Address) const {
-  const MCSymbolData *Best = 0;
-  uint64_t BestAddress = 0;
-
-  for (MCAssembler::const_symbol_iterator it = symbol_begin(),
-         ie = symbol_end(); it != ie; ++it) {
-    // Ignore non-linker visible symbols.
-    if (!isSymbolLinkerVisible(it))
-      continue;
-
-    // Ignore symbols not in the same section.
-    if (!it->getFragment() || it->getFragment()->getParent() != Section)
-      continue;
-
-    // Otherwise, find the closest symbol preceding this address (ties are
-    // resolved in favor of the last defined symbol).
-    uint64_t SymbolAddress = Layout.getSymbolAddress(it);
-    if (SymbolAddress <= Address && (!Best || SymbolAddress >= BestAddress)) {
-      Best = it;
-      BestAddress = SymbolAddress;
-    }
-  }
-
-  return Best;
-}
-
-// FIXME-PERF: This routine is really slow.
 const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
                                          const MCSymbolData *SD) const {
   // Linker visible symbols define atoms.
@@ -327,9 +297,8 @@ const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
   if (!SD->getFragment())
     return 0;
 
-  // Otherwise, search by address.
-  return getAtomForAddress(Layout, SD->getFragment()->getParent(),
-                           Layout.getSymbolAddress(SD));
+  // Otherwise, return the atom for the containing fragment.
+  return SD->getFragment()->getAtom();
 }
 
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
@@ -370,8 +339,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
       // symbol) that the fixup value is relative to.
       const MCSymbolData *BaseSymbol = 0;
       if (IsPCRel) {
-        BaseSymbol = getAtomForAddress(
-          Layout, DF->getParent(), Layout.getFragmentAddress(DF)+Fixup.Offset);
+        BaseSymbol = DF->getAtom();
         if (!BaseSymbol)
           IsResolved = false;
       }
@@ -837,6 +805,7 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       //
       // FIXME: Add MCAsmLayout utility for this.
       DF->setParent(IF->getParent());
+      DF->setAtom(IF->getAtom());
       DF->setOrdinal(IF->getOrdinal());
       Layout.setFragmentOffset(DF, Layout.getFragmentOffset(IF));
       Layout.setFragmentEffectiveSize(DF, Layout.getFragmentEffectiveSize(IF));
