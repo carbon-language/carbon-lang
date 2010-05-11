@@ -1672,11 +1672,12 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 
   case CastExpr::CK_NoOp: {
     LValue LV = EmitLValue(E->getSubExpr());
-    // FIXME. assign a meaningfull cast kind.
     if (LV.isPropertyRef()) {
-      RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getSubExpr()->getType());
-      llvm::Value *V = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
-      return LValue::MakeAddr(V, MakeQualifiers(E->getSubExpr()->getType()));
+      QualType QT = E->getSubExpr()->getType();
+      RValue RV = EmitLoadOfPropertyRefLValue(LV, QT);
+      assert(!RV.isScalar() && "EmitCastLValue - scalar cast of property ref");
+      llvm::Value *V = RV.getAggregateAddr();
+      return LValue::MakeAddr(V, MakeQualifiers(QT));
     }
     return LV;
   }
