@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=armv5-unknown-linux-gnueabi -O0 -regalloc=local
+; RUN: llc < %s -mtriple=armv5-unknown-linux-gnueabi -O0 -regalloc=fast
 ; PR4100
 @.str = external constant [30 x i8]		; <[30 x i8]*> [#uses=1]
 
