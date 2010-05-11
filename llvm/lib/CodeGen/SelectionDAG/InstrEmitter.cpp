@@ -297,15 +297,22 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   }
 
   // If this value has only one use, that use is a kill. This is a
-  // conservative approximation. Tied operands are never killed, so we need
-  // to check that. And that means we need to determine the index of the
-  // operand.
-  unsigned Idx = MI->getNumOperands();
-  while (Idx > 0 &&
-         MI->getOperand(Idx-1).isReg() && MI->getOperand(Idx-1).isImplicit())
-    --Idx;
-  bool isTied = MI->getDesc().getOperandConstraint(Idx, TOI::TIED_TO) != -1;
-  bool isKill = Op.hasOneUse() && !isTied && !IsDebug;
+  // conservative approximation. InstrEmitter does trivial coalescing
+  // with CopyFromReg nodes, so don't emit kill flags for them.
+  // Tied operands are never killed, so we need to check that. And that
+  // means we need to determine the index of the operand.
+  bool isKill = Op.hasOneUse() &&
+                Op.getNode()->getOpcode() != ISD::CopyFromReg &&
+                !IsDebug;
+  if (isKill) {
+    unsigned Idx = MI->getNumOperands();
+    while (Idx > 0 &&
+           MI->getOperand(Idx-1).isReg() && MI->getOperand(Idx-1).isImplicit())
+      --Idx;
+    bool isTied = MI->getDesc().getOperandConstraint(Idx, TOI::TIED_TO) != -1;
+    if (isTied)
+      isKill = false;
+  }
 
   MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef,
                                            false/*isImp*/, isKill,
