@@ -791,8 +791,8 @@ def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
 }
 
 // A5.4 Permanently UNDEFINED instructions.
-def TRAP : AI<(outs), (ins), MiscFrm, NoItinerary, "trap", "",
-              [/* For disassembly only; pattern left blank */]>,
+let isBarrier = 1, isTerminator = 1 in
+def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary, "trap", [(trap)]>,
            Requires<[IsARM]> {
   let Inst{27-25} = 0b011;
   let Inst{24-20} = 0b11111;

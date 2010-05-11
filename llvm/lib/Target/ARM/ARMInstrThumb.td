@@ -417,9 +417,10 @@ def tSVC : T1pI<(outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc", []>,
 }
 }
 
-// A8.6.16 B: Encoding T1 -- for disassembly only
+// A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1110 then UNDEFINED
-def tTRAP : T1I<(outs), (ins), IIC_Br, "trap", []>, Encoding16 {
+let isBarrier = 1, isTerminator = 1 in
+def tTRAP : TI<(outs), (ins), IIC_Br, "trap", [(trap)]>, Encoding16 {
   let Inst{15-12} = 0b1101;
   let Inst{11-8} = 0b1110;
 }

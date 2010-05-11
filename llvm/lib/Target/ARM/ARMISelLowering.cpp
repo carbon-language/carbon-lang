@@ -384,6 +384,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
 
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
+
   // Use the default implementation.
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
   setOperationAction(ISD::VAARG,              MVT::Other, Expand);
