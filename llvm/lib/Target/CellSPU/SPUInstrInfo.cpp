@@ -467,6 +467,9 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (isUncondBranch(LastInst)) {
+      // Check for jump tables
+      if (!LastInst->getOperand(0).isMBB())
+        return true;
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     } else if (isCondBranch(LastInst)) {
