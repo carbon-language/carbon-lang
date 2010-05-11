@@ -478,7 +478,7 @@ public:
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
     // See <reloc.h>.
-    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -547,7 +547,7 @@ public:
       Type = RIT_X86_64_Unsigned;
 
       MachRelocationEntry MRE;
-      MRE.Word0 = Address;
+      MRE.Word0 = FixupOffset;
       MRE.Word1 = ((Index     <<  0) |
                    (IsPCRel   << 24) |
                    (Log2Size  << 25) |
@@ -591,7 +591,7 @@ public:
         Value += Layout.getSymbolAddress(&SD);
 
         if (IsPCRel)
-          Value -= Address + (1 << Log2Size);
+          Value -= FixupOffset + (1 << Log2Size);
       } else {
         report_fatal_error("unsupported relocation of undefined symbol '" +
                            Symbol->getName() + "'");
@@ -662,7 +662,7 @@ public:
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
-    MRE.Word0 = Address;
+    MRE.Word0 = FixupOffset;
     MRE.Word1 = ((Index     <<  0) |
                  (IsPCRel   << 24) |
                  (Log2Size  << 25) |
@@ -676,7 +676,7 @@ public:
                                  const MCFragment *Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
-    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned Type = RIT_Vanilla;
@@ -721,10 +721,10 @@ public:
     }
 
     MachRelocationEntry MRE;
-    MRE.Word0 = ((Address   <<  0) |
-                 (Type      << 24) |
-                 (Log2Size  << 28) |
-                 (IsPCRel   << 30) |
+    MRE.Word0 = ((FixupOffset <<  0) |
+                 (Type        << 24) |
+                 (Log2Size    << 28) |
+                 (IsPCRel     << 30) |
                  RF_Scattered);
     MRE.Word1 = Value;
     Relocations[Fragment->getParent()].push_back(MRE);
@@ -763,7 +763,7 @@ public:
                                        Target, FixedValue);
 
     // See <reloc.h>.
-    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -798,7 +798,7 @@ public:
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
-    MRE.Word0 = Address;
+    MRE.Word0 = FixupOffset;
     MRE.Word1 = ((Index     <<  0) |
                  (IsPCRel   << 24) |
                  (Log2Size  << 25) |
