@@ -7,7 +7,8 @@ class Base { // expected-error {{cannot define the implicit default assignment o
 };
 
 class X  : Base {  // // expected-error {{cannot define the implicit default assignment operator for 'X', because non-static const member 'cint' can't use default assignment operator}} \
-// expected-note{{assignment operator for 'Base' first required here}}
+// expected-note{{assignment operator for 'Base' first required here}} \
+  // expected-note{{implicit default copy assignment operator}}
 public: 
   X();
   const int cint;  // expected-note {{declared here}}
@@ -28,7 +29,8 @@ Z z2;
 
 // Test1
 void f(X x, const X cx) {
-  x = cx; // expected-note{{assignment operator for 'X' first required here}}
+  x = cx; // expected-note{{assignment operator for 'X' first required here}} \
+  // expected-note{{implicit default copy assignment operator}}
   x = cx;
   z1 = z2;
 }
@@ -84,7 +86,9 @@ public:
 E1 e1, e2;
 
 void j() {
-  e1 = e2; // expected-note{{assignment operator for 'E1' first required here}}
+  // FIXME: duplicated!
+  e1 = e2; // expected-note{{assignment operator for 'E1' first required here}} \
+  // expected-note{{implicit default copy assignment operator}}
 }
 
 namespace ProtectedCheck {
@@ -101,7 +105,8 @@ namespace ProtectedCheck {
     X x;
   };
 
-  void f(Z z) { z = z; } // 
+  void f(Z z) { z = z; }  // expected-note{{implicit default copy assignment operator}}
+
 }
 
 namespace MultiplePaths {

@@ -4146,7 +4146,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, Constructor);
-  if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false)) {
+  ErrorTrap Trap(*this);
+  if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
@@ -4162,14 +4164,16 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
 
+  if (Destructor->isInvalidDecl())
+    return;
+
   ImplicitlyDefinedFunctionScope Scope(*this, Destructor);
 
+  ErrorTrap Trap(*this);
   MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
                                          Destructor->getParent());
 
-  // FIXME: If CheckDestructor fails, we should emit a note about where the
-  // implicit destructor was needed.
-  if (CheckDestructor(Destructor)) {
+  if (CheckDestructor(Destructor) || Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXDestructor << Context.getTagDeclType(ClassDecl);
 
@@ -4396,6 +4400,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   CopyAssignOperator->setUsed();
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyAssignOperator);
+  ErrorTrap Trap(*this);
 
   // C++0x [class.copy]p30:
   //   The implicitly-defined or explicitly-defaulted copy assignment operator
@@ -4619,6 +4624,13 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
   }
 
+  if (Trap.hasErrorOccurred()) {
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+      << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
+    CopyAssignOperator->setInvalidDecl();
+    return;
+  }
+
   if (Invalid) {
     CopyAssignOperator->setInvalidDecl();
     return;
@@ -4642,8 +4654,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyConstructor);
+  ErrorTrap Trap(*this);
 
-  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false)) {
+  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
     CopyConstructor->setInvalidDecl();
@@ -6068,10 +6082,30 @@ void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
     return;
 
   TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
-  if (kind == TSK_ImplicitInstantiation)
-    ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
-  else
+  if (kind == TSK_ImplicitInstantiation) {
+    CXXRecordDecl *CanonRD = cast<CXXRecordDecl>(RD->getCanonicalDecl());
+    if (UnmarkedClassesRequiringVtable.insert(CanonRD))
+      ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
+  } else
     MarkVirtualMembersReferenced(Loc, RD);
+}
+
+void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc, 
+                                             CXXRecordDecl *RD) {
+  if (RD->isDependentContext() || !RD->isDynamicClass())
+    return;
+
+  if (RD->getTemplateSpecializationKind() != TSK_ImplicitInstantiation)
+    return;
+
+  // Classes with a key function will be dealt with when we see the
+  // definition of the key function.
+  if (Context.getKeyFunction(RD))
+    return;
+
+  CXXRecordDecl *CanonRD = cast<CXXRecordDecl>(RD->getCanonicalDecl());
+  if (UnmarkedClassesRequiringVtable.insert(CanonRD))
+    ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
 }
 
 bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
@@ -6082,6 +6116,15 @@ bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
     CXXRecordDecl *RD = ClassesWithUnmarkedVirtualMembers.back().first;
     SourceLocation Loc = ClassesWithUnmarkedVirtualMembers.back().second;
     ClassesWithUnmarkedVirtualMembers.pop_back();
+
+    // If an implicitly-instantiated class doesn't require a vtable,
+    // don't mark its virtual members as referenced.
+    if (RD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation) {
+      CXXRecordDecl *CanonRD = cast<CXXRecordDecl>(RD->getCanonicalDecl());
+      if (!UnmarkedClassesRequiringVtable.count(CanonRD))
+        continue;
+    }
+
     MarkVirtualMembersReferenced(Loc, RD);
   }
   
