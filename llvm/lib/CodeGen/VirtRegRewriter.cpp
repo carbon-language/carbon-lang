@@ -2425,7 +2425,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         // eliminate this or else the undef marker is lost and it will
         // confuses the scavenger. This is extremely rare.
         unsigned Src, Dst, SrcSR, DstSR;
-        if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst &&
+        if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) &&
+            Src == Dst && SrcSR == DstSR &&
             !MI.findRegisterUseOperand(Src)->isUndef()) {
           ++NumDCE;
           DEBUG(dbgs() << "Removing now-noop copy: " << MI);
@@ -2514,7 +2515,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         // instruction before considering the dest reg to be changed.
         {
           unsigned Src, Dst, SrcSR, DstSR;
-          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
+          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) &&
+              Src == Dst && SrcSR == DstSR) {
             ++NumDCE;
             DEBUG(dbgs() << "Removing now-noop copy: " << MI);
             InvalidateKills(MI, TRI, RegKills, KillOps);

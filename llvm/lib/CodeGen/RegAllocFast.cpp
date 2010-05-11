@@ -583,7 +583,8 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
     unsigned SrcCopyPhysReg = 0U;
     bool isCopy = TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg,
                                    SrcCopySubReg, DstCopySubReg);
-    if (isCopy && TargetRegisterInfo::isVirtualRegister(SrcCopyReg))
+    if (isCopy && SrcCopySubReg == 0 && DstCopySubReg == 0 &&
+        TargetRegisterInfo::isVirtualRegister(SrcCopyReg))
       SrcCopyPhysReg = getVirt2PhysRegMapSlot(SrcCopyReg);
 
     // Loop over the implicit uses, making sure they don't get reallocated.
