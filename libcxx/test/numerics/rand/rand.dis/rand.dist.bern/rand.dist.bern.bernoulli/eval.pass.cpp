@@ -19,7 +19,7 @@
 int main()
 {
     {
-        typedef std::uniform_int_distribution<> D;
+        typedef std::bernoulli_distribution D;
         typedef std::minstd_rand0 G;
         G g;
         D d(.75);

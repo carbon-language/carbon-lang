@@ -3820,5 +3820,3 @@ void* align(size_t, size_t, void*&, size_t&);
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_MEMORY
-
-// hh 060228 Created

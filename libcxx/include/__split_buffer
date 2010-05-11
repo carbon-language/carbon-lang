@@ -642,5 +642,3 @@ __split_buffer<_Tp, _Allocator>::emplace_back(_Args&&... __args)
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_SPLIT_BUFFER
-
-// hh 080222 Created

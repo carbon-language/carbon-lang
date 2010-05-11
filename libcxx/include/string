@@ -3539,5 +3539,3 @@ extern template
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_STRING
-
-// hh 060525 Created
