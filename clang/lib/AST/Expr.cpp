@@ -156,13 +156,24 @@ void DeclRefExpr::computeDependence() {
   //  (VD) - a constant with integral or enumeration type and is
   //         initialized with an expression that is value-dependent.
   else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if (Var->getType()->isIntegralType() &&
+    if (Var->getType()->isIntegralType() && !Var->isStaticDataMember() &&
         Var->getType().getCVRQualifiers() == Qualifiers::Const) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent())
           ValueDependent = true;
-    }
-  }
+    } 
+    // (VD) - FIXME: Missing from the standard: 
+    //      -  a member function or a static data member of the current 
+    //         instantiation
+    else if (Var->isStaticDataMember() && 
+               Var->getDeclContext()->isDependentContext())
+      ValueDependent = true;
+  } 
+  // (VD) - FIXME: Missing from the standard: 
+  //      -  a member function or a static data member of the current 
+  //         instantiation
+  else if (isa<CXXMethodDecl>(D) && D->getDeclContext()->isDependentContext())
+    ValueDependent = true;
   //  (TD)  - a nested-name-specifier or a qualified-id that names a
   //          member of an unknown specialization.
   //        (handled by DependentScopeDeclRefExpr)

@@ -975,6 +975,10 @@ static bool isDependent(const TemplateArgument &Arg) {
     return Arg.getAsTemplate().isDependent();
       
   case TemplateArgument::Declaration:
+    if (DeclContext *DC = dyn_cast<DeclContext>(Arg.getAsDecl()))
+      return DC->isDependentContext();
+    return Arg.getAsDecl()->getDeclContext()->isDependentContext();
+
   case TemplateArgument::Integral:
     // Never dependent
     return false;
@@ -984,7 +988,13 @@ static bool isDependent(const TemplateArgument &Arg) {
             Arg.getAsExpr()->isValueDependent());
 
   case TemplateArgument::Pack:
-    assert(0 && "FIXME: Implement!");
+    for (TemplateArgument::pack_iterator P = Arg.pack_begin(), 
+                                      PEnd = Arg.pack_end();
+         P != PEnd; ++P) {
+      if (isDependent(*P))
+        return true;
+    }
+
     return false;
   }
 

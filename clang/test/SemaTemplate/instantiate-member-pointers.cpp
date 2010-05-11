@@ -53,3 +53,15 @@ void accept_X4(X4<Member>);
 void test_accept_X4(X4<&Y::x> x4) {
   accept_X4(x4);
 }
+
+namespace ValueDepMemberPointer {
+  template <void (*)()> struct instantiate_function {};
+  template <typename T> struct S {
+    static void instantiate();
+    typedef instantiate_function<&S::instantiate> x; // expected-note{{instantiation}}
+  };
+  template <typename T> void S<T>::instantiate() {
+    int a[(int)sizeof(T)-42]; // expected-error{{array size is negative}}
+  }
+  S<int> s; 
+}
