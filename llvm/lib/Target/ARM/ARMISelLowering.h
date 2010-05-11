@@ -236,7 +236,7 @@ namespace llvm {
                                               std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
 
-    virtual const ARMSubtarget* getSubtarget() const {
+    const ARMSubtarget* getSubtarget() const {
       return Subtarget;
     }
 

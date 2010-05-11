@@ -563,7 +563,7 @@ namespace llvm {
       return !X86ScalarSSEf64 || VT == MVT::f80;
     }
     
-    virtual const X86Subtarget* getSubtarget() const {
+    const X86Subtarget* getSubtarget() const {
       return Subtarget;
     }
 
