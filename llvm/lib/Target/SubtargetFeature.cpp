@@ -370,32 +370,14 @@ void SubtargetFeatures::getDefaultSubtargetFeatures(const std::string &CPU,
                                                     const Triple& Triple) {
   setCPU(CPU);
 
-  const char *Attrs = 0;
-
-  switch (Triple.getVendor()) {
-  case Triple::Apple:
-    switch (Triple.getArch()) {
-    case Triple::ppc:   // powerpc-apple-*
-      Attrs = "altivec";
-      break;
-    case Triple::ppc64: // powerpc64-apple-*
-      Attrs = "64bit,altivec";
-      break;
-    default:
-      break;
+  if (Triple.getVendor() == Triple::Apple) {
+    if (Triple.getArch() == Triple::ppc) {
+      // powerpc-apple-*
+      AddFeature("altivec");
+    } else if (Triple.getArch() == Triple::ppc64) {
+      // powerpc64-apple-*
+      AddFeature("64bit");
+      AddFeature("altivec");
     }
-    break;
-  default:
-    break;
-  }
-
-  if (!Attrs) return;
-
-  StringRef SR(Attrs);
-
-  while (!SR.empty()) {
-    std::pair<StringRef, StringRef> Res = SR.split(',');
-    AddFeature(Res.first);
-    SR = Res.second;
   }
 }
