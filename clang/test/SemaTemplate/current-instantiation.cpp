@@ -151,3 +151,16 @@ struct X1 {
     X1<T*>::a = b;
   }
 };
+
+namespace ConstantInCurrentInstantiation {
+  template<typename T>
+  struct X {
+    static const int value = 2;
+    static int array[value];
+  };
+
+  template<typename T> const int X<T>::value;
+
+  template<typename T>
+  int X<T>::array[X<T>::value] = { 1, 2 };
+}
