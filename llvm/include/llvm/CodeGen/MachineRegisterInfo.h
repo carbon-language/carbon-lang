@@ -229,11 +229,18 @@ public:
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUsed(unsigned Reg) { UsedPhysRegs[Reg] = true; }
-  
+
+  /// addPhysRegsUsed - Mark the specified registers used in this function.
+  /// This should only be called during and after register allocation.
+  void addPhysRegsUsed(const BitVector &Regs) { UsedPhysRegs |= Regs; }
+
   /// setPhysRegUnused - Mark the specified register unused in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUnused(unsigned Reg) { UsedPhysRegs[Reg] = false; }
-  
+
+  /// closePhysRegsUsed - Expand UsedPhysRegs to its transitive closure over
+  /// subregisters. That means that if R is used, so are all subregisters.
+  void closePhysRegsUsed(const TargetRegisterInfo&);
 
   //===--------------------------------------------------------------------===//
   // LiveIn/LiveOut Management

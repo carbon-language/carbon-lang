@@ -267,6 +267,15 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
     EntryMBB->addLiveIn(I->first);
 }
 
+void MachineRegisterInfo::closePhysRegsUsed(const TargetRegisterInfo &TRI) {
+  for (int i = UsedPhysRegs.find_first(); i >= 0;
+       i = UsedPhysRegs.find_next(i))
+         for (const unsigned *SS = TRI.getSubRegisters(i);
+              unsigned SubReg = *SS; ++SS)
+           if (SubReg > i)
+             UsedPhysRegs.set(SubReg);
+}
+
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {
   for (use_iterator I = use_begin(Reg), E = use_end(); I != E; ++I)

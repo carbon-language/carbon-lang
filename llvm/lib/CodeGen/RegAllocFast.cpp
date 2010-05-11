@@ -370,11 +370,9 @@ unsigned RAFast::allocVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
       if (PhysRegState[BestReg] != regDisabled)
         spillVirtReg(MBB, MI, PhysRegState[BestReg], true);
       else {
-        MF->getRegInfo().setPhysRegUsed(BestReg);
         // Make sure all aliases are disabled.
         for (const unsigned *AS = TRI->getAliasSet(BestReg);
              unsigned Alias = *AS; ++AS) {
-          MF->getRegInfo().setPhysRegUsed(Alias);
           switch (PhysRegState[Alias]) {
           case regDisabled:
             continue;
@@ -443,6 +441,7 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 /// defineVirtReg except the physreg is reverved instead of allocated.
 void RAFast::reservePhysReg(MachineBasicBlock &MBB, MachineInstr *MI,
                             unsigned PhysReg) {
+  UsedInInstr.set(PhysReg);
   switch (unsigned VirtReg = PhysRegState[PhysReg]) {
   case regDisabled:
     break;
@@ -460,6 +459,7 @@ void RAFast::reservePhysReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // This is a disabled register, disable all aliases.
   for (const unsigned *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
+    UsedInInstr.set(Alias);
     switch (unsigned VirtReg = PhysRegState[Alias]) {
     case regDisabled:
     case regFree:
@@ -474,10 +474,8 @@ void RAFast::reservePhysReg(MachineBasicBlock &MBB, MachineInstr *MI,
       break;
     }
     PhysRegState[Alias] = regDisabled;
-    MF->getRegInfo().setPhysRegUsed(Alias);
   }
   PhysRegState[PhysReg] = regReserved;
-  MF->getRegInfo().setPhysRegUsed(PhysReg);
 }
 
 // setPhysReg - Change MO the refer the PhysReg, considering subregs.
@@ -611,6 +609,8 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       killPhysReg(PhysKills[i]);
     PhysKills.clear();
 
+    MF->getRegInfo().addPhysRegsUsed(UsedInInstr);
+
     // Track registers defined by instruction - early clobbers at this point.
     UsedInInstr.reset();
     for (unsigned i = 0, e = PhysDefs.size(); i != e; ++i) {
@@ -658,6 +658,8 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = PhysKills.size(); i != e; ++i)
       killPhysReg(PhysKills[i]);
     PhysKills.clear();
+
+    MF->getRegInfo().addPhysRegsUsed(UsedInInstr);
   }
 
   // Spill all physical registers holding virtual registers now.
@@ -692,6 +694,9 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB)
     AllocateBasicBlock(*MBB);
+
+  // Make sure the set of used physregs is closed under subreg operations.
+  MF->getRegInfo().closePhysRegsUsed(*TRI);
 
   StackSlotForVirtReg.clear();
   return true;

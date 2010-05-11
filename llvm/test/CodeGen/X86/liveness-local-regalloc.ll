@@ -1,4 +1,5 @@
 ; RUN: llc < %s -O3 -regalloc=local -mtriple=x86_64-apple-darwin10
+; RUN: llc < %s -O3 -regalloc=fast -mtriple=x86_64-apple-darwin10
 ; <rdar://problem/7755473>
 
 %0 = type { i32, i8*, i8*, %1*, i8*, i64, i64, i32, i32, i32, i32, [1024 x i8] }
