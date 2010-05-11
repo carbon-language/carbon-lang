@@ -82,7 +82,8 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
               Subtarget.getStackAlignment(),
               (Subtarget.isTargetWin64() ? -40 :
                (Subtarget.is64Bit() ? -8 : -4))),
-    InstrInfo(*this), JITInfo(*this), TLInfo(*this), ELFWriterInfo(*this) {
+    InstrInfo(*this), JITInfo(*this), TLInfo(*this), TSInfo(*this),
+    ELFWriterInfo(*this) {
   DefRelocModel = getRelocationModel();
       
   // If no relocation model was picked, default as appropriate for the target.

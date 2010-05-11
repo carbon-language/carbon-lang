@@ -31,6 +31,7 @@ BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,
     DataLayout("e-p:32:32-i64:32-f64:32-n32"),
     Subtarget(TT, FS),
     TLInfo(*this),
+    TSInfo(*this),
     InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 4, 0) {
 }

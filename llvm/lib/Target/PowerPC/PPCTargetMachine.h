@@ -19,6 +19,7 @@
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
+#include "PPCSelectionDAGInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 
@@ -35,6 +36,7 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCFrameInfo        FrameInfo;
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
+  PPCSelectionDAGInfo TSInfo;
   InstrItineraryData  InstrItins;
 
 public:
@@ -46,6 +48,9 @@ public:
   virtual       PPCJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const PPCTargetLowering *getTargetLowering() const { 
    return &TLInfo;
+  }
+  virtual const PPCSelectionDAGInfo* getSelectionDAGInfo() const {
+    return &TSInfo;
   }
   virtual const PPCRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();

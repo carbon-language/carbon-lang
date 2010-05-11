@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class BlackfinTargetMachine;
+
 class BlackfinSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  BlackfinSelectionDAGInfo();
+  explicit BlackfinSelectionDAGInfo(const BlackfinTargetMachine &TM);
   ~BlackfinSelectionDAGInfo();
 };
 

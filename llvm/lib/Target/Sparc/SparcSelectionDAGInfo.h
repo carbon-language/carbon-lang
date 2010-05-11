@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class SparcTargetMachine;
+
 class SparcSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  SparcSelectionDAGInfo();
+  explicit SparcSelectionDAGInfo(const SparcTargetMachine &TM);
   ~SparcSelectionDAGInfo();
 };
 

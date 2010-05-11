@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "blackfin-selectiondag-info"
-#include "BlackfinSelectionDAGInfo.h"
+#include "BlackfinTargetMachine.h"
 using namespace llvm;
 
-BlackfinSelectionDAGInfo::BlackfinSelectionDAGInfo() {
+BlackfinSelectionDAGInfo::BlackfinSelectionDAGInfo(
+                                              const BlackfinTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 BlackfinSelectionDAGInfo::~BlackfinSelectionDAGInfo() {

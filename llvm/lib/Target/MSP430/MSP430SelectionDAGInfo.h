@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class MSP430TargetMachine;
+
 class MSP430SelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  MSP430SelectionDAGInfo();
+  explicit MSP430SelectionDAGInfo(const MSP430TargetMachine &TM);
   ~MSP430SelectionDAGInfo();
 };
 

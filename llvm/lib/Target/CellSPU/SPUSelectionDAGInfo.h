@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class SPUTargetMachine;
+
 class SPUSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  SPUSelectionDAGInfo();
+  explicit SPUSelectionDAGInfo(const SPUTargetMachine &TM);
   ~SPUSelectionDAGInfo();
 };
 

@@ -23,6 +23,7 @@
 #include "X86JITInfo.h"
 #include "X86Subtarget.h"
 #include "X86ISelLowering.h"
+#include "X86SelectionDAGInfo.h"
 
 namespace llvm {
   
@@ -35,6 +36,7 @@ class X86TargetMachine : public LLVMTargetMachine {
   X86InstrInfo      InstrInfo;
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
+  X86SelectionDAGInfo TSInfo;
   X86ELFWriterInfo  ELFWriterInfo;
   Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 
@@ -53,6 +55,9 @@ public:
   virtual const X86Subtarget     *getSubtargetImpl() const{ return &Subtarget; }
   virtual const X86TargetLowering *getTargetLowering() const { 
     return &TLInfo;
+  }
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+    return &TSInfo;
   }
   virtual const X86RegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();

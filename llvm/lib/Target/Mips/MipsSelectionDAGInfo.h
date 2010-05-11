@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class MipsTargetMachine;
+
 class MipsSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  MipsSelectionDAGInfo();
+  explicit MipsSelectionDAGInfo(const MipsTargetMachine &TM);
   ~MipsSelectionDAGInfo();
 };
 

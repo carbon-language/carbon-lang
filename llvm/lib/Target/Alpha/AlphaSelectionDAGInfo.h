@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class AlphaTargetMachine;
+
 class AlphaSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  AlphaSelectionDAGInfo();
+  explicit AlphaSelectionDAGInfo(const AlphaTargetMachine &TM);
   ~AlphaSelectionDAGInfo();
 };
 

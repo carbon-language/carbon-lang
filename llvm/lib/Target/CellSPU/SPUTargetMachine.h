@@ -17,6 +17,7 @@
 #include "SPUSubtarget.h"
 #include "SPUInstrInfo.h"
 #include "SPUISelLowering.h"
+#include "SPUSelectionDAGInfo.h"
 #include "SPUFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -34,6 +35,7 @@ class SPUTargetMachine : public LLVMTargetMachine {
   SPUInstrInfo        InstrInfo;
   SPUFrameInfo        FrameInfo;
   SPUTargetLowering   TLInfo;
+  SPUSelectionDAGInfo TSInfo;
   InstrItineraryData  InstrItins;
 public:
   SPUTargetMachine(const Target &T, const std::string &TT,
@@ -59,6 +61,10 @@ public:
 
   virtual const SPUTargetLowering *getTargetLowering() const { 
    return &TLInfo;
+  }
+
+  virtual const SPUSelectionDAGInfo* getSelectionDAGInfo() const {
+    return &TSInfo;
   }
 
   virtual const SPURegisterInfo *getRegisterInfo() const {

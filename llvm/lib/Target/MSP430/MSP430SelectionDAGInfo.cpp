@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "msp430-selectiondag-info"
-#include "MSP430SelectionDAGInfo.h"
+#include "MSP430TargetMachine.h"
 using namespace llvm;
 
-MSP430SelectionDAGInfo::MSP430SelectionDAGInfo() {
+MSP430SelectionDAGInfo::MSP430SelectionDAGInfo(const MSP430TargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 MSP430SelectionDAGInfo::~MSP430SelectionDAGInfo() {

@@ -34,7 +34,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT,
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, is64bit),
     DataLayout(Subtarget.getDataLayout()),
-     TLInfo(*this), InstrInfo(Subtarget),
+     TLInfo(*this), TSInfo(*this), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 

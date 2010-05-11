@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "alpha-selectiondag-info"
-#include "AlphaSelectionDAGInfo.h"
+#include "AlphaTargetMachine.h"
 using namespace llvm;
 
-AlphaSelectionDAGInfo::AlphaSelectionDAGInfo() {
+AlphaSelectionDAGInfo::AlphaSelectionDAGInfo(const AlphaTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 AlphaSelectionDAGInfo::~AlphaSelectionDAGInfo() {

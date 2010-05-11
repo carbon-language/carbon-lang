@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mblaze-selectiondag-info"
-#include "MBlazeSelectionDAGInfo.h"
+#include "MBlazeTargetMachine.h"
 using namespace llvm;
 
-MBlazeSelectionDAGInfo::MBlazeSelectionDAGInfo() {
+MBlazeSelectionDAGInfo::MBlazeSelectionDAGInfo(const MBlazeTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 MBlazeSelectionDAGInfo::~MBlazeSelectionDAGInfo() {

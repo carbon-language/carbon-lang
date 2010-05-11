@@ -42,6 +42,7 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
     InstrInfo(*this),
     FrameInfo(*this),
     TLInfo(*this),
+    TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
   // For the time being, use static relocations, since there's really no
   // support for PIC yet.

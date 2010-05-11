@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "xcore-selectiondag-info"
-#include "XCoreSelectionDAGInfo.h"
+#include "XCoreTargetMachine.h"
 using namespace llvm;
 
-XCoreSelectionDAGInfo::XCoreSelectionDAGInfo() {
+XCoreSelectionDAGInfo::XCoreSelectionDAGInfo(const XCoreTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 XCoreSelectionDAGInfo::~XCoreSelectionDAGInfo() {

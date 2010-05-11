@@ -62,7 +62,8 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32-n32") :
                std::string("e-p:32:32-f64:64:64-i64:64:64-n32")),
-    TLInfo(*this) {
+    TLInfo(*this),
+    TSInfo(*this) {
 }
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
@@ -76,7 +77,8 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32-n32") :
                std::string("e-p:32:32-f64:64:64-i64:64:64-"
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32-n32")),
-    TLInfo(*this) {
+    TLInfo(*this),
+    TSInfo(*this) {
 }
 
 

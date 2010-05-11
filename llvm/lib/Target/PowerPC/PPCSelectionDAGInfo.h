@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class PPCTargetMachine;
+
 class PPCSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  PPCSelectionDAGInfo();
+  explicit PPCSelectionDAGInfo(const PPCTargetMachine &TM);
   ~PPCSelectionDAGInfo();
 };
 

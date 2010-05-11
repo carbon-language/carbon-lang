@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class SystemZTargetMachine;
+
 class SystemZSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  SystemZSelectionDAGInfo();
+  explicit SystemZSelectionDAGInfo(const SystemZTargetMachine &TM);
   ~SystemZSelectionDAGInfo();
 };
 

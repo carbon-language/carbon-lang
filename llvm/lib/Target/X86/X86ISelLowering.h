@@ -743,23 +743,6 @@ namespace llvm {
     void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,
                                  SelectionDAG &DAG, unsigned NewOp) const;
 
-    SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
-                                    SDValue Chain,
-                                    SDValue Dst, SDValue Src,
-                                    SDValue Size, unsigned Align,
-                                    bool isVolatile,
-                                    const Value *DstSV,
-                                    uint64_t DstSVOff) const;
-    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
-                                    SDValue Chain,
-                                    SDValue Dst, SDValue Src,
-                                    SDValue Size, unsigned Align,
-                                    bool isVolatile, bool AlwaysInline,
-                                    const Value *DstSV,
-                                    uint64_t DstSVOff,
-                                    const Value *SrcSV,
-                                    uint64_t SrcSVOff) const;
-    
     /// Utility function to emit string processing sse4.2 instructions
     /// that return in xmm0.
     /// This takes the instruction to expand, the associated machine basic

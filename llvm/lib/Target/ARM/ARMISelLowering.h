@@ -301,15 +301,6 @@ namespace llvm {
     SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) const;
 
-    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
-                                      SDValue Chain,
-                                      SDValue Dst, SDValue Src,
-                                      SDValue Size, unsigned Align,
-                                      bool isVolatile, bool AlwaysInline,
-                                      const Value *DstSV,
-                                      uint64_t DstSVOff,
-                                      const Value *SrcSV,
-                                      uint64_t SrcSVOff) const;
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,

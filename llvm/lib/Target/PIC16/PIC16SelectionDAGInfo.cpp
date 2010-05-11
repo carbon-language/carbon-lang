@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pic16-selectiondag-info"
-#include "PIC16SelectionDAGInfo.h"
+#include "PIC16TargetMachine.h"
 using namespace llvm;
 
-PIC16SelectionDAGInfo::PIC16SelectionDAGInfo() {
+PIC16SelectionDAGInfo::PIC16SelectionDAGInfo(const PIC16TargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 PIC16SelectionDAGInfo::~PIC16SelectionDAGInfo() {

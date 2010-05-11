@@ -18,10 +18,40 @@
 
 namespace llvm {
 
+class X86TargetLowering;
+class X86TargetMachine;
+class X86Subtarget;
+
 class X86SelectionDAGInfo : public TargetSelectionDAGInfo {
+  /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+  /// make the right decision when generating code for different targets.
+  const X86Subtarget *Subtarget;
+
+  const X86TargetLowering &TLI;
+
 public:
-  X86SelectionDAGInfo();
+  explicit X86SelectionDAGInfo(const X86TargetMachine &TM);
   ~X86SelectionDAGInfo();
+
+  virtual
+  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+                                  SDValue Chain,
+                                  SDValue Dst, SDValue Src,
+                                  SDValue Size, unsigned Align,
+                                  bool isVolatile,
+                                  const Value *DstSV,
+                                  uint64_t DstSVOff) const;
+
+  virtual
+  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
+                                  SDValue Chain,
+                                  SDValue Dst, SDValue Src,
+                                  SDValue Size, unsigned Align,
+                                  bool isVolatile, bool AlwaysInline,
+                                  const Value *DstSV,
+                                  uint64_t DstSVOff,
+                                  const Value *SrcSV,
+                                  uint64_t SrcSVOff) const;
 };
 
 }

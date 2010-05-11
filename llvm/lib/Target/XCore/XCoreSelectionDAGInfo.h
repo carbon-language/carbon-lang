@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class XCoreTargetMachine;
+
 class XCoreSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  XCoreSelectionDAGInfo();
+  explicit XCoreSelectionDAGInfo(const XCoreTargetMachine &TM);
   ~XCoreSelectionDAGInfo();
 };
 

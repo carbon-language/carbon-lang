@@ -12,9 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-TargetSelectionDAGInfo::TargetSelectionDAGInfo() {
+TargetSelectionDAGInfo::TargetSelectionDAGInfo(const TargetMachine &TM)
+  : TD(TM.getTargetData()) {
 }
 
 TargetSelectionDAGInfo::~TargetSelectionDAGInfo() {

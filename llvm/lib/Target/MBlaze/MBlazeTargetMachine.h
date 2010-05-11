@@ -17,6 +17,7 @@
 #include "MBlazeSubtarget.h"
 #include "MBlazeInstrInfo.h"
 #include "MBlazeISelLowering.h"
+#include "MBlazeSelectionDAGInfo.h"
 #include "MBlazeIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -31,6 +32,7 @@ namespace llvm {
     MBlazeInstrInfo       InstrInfo;
     TargetFrameInfo     FrameInfo;
     MBlazeTargetLowering  TLInfo;
+    MBlazeSelectionDAGInfo TSInfo;
     MBlazeIntrinsicInfo IntrinsicInfo;
   public:
     MBlazeTargetMachine(const Target &T, const std::string &TT,
@@ -53,6 +55,9 @@ namespace llvm {
 
     virtual const MBlazeTargetLowering *getTargetLowering() const
     { return &TLInfo; }
+
+    virtual const MBlazeSelectionDAGInfo* getSelectionDAGInfo() const
+    { return &TSInfo; }
 
     const TargetIntrinsicInfo *getIntrinsicInfo() const
     { return &IntrinsicInfo; }

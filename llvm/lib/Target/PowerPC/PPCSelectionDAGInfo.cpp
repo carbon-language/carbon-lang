@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "powerpc-selectiondag-info"
-#include "PPCSelectionDAGInfo.h"
+#include "PPCTargetMachine.h"
 using namespace llvm;
 
-PPCSelectionDAGInfo::PPCSelectionDAGInfo() {
+PPCSelectionDAGInfo::PPCSelectionDAGInfo(const PPCTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 PPCSelectionDAGInfo::~PPCSelectionDAGInfo() {

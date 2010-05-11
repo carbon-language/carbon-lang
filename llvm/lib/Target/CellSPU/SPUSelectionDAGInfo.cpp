@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "cellspu-selectiondag-info"
-#include "SPUSelectionDAGInfo.h"
+#include "SPUTargetMachine.h"
 using namespace llvm;
 
-SPUSelectionDAGInfo::SPUSelectionDAGInfo() {
+SPUSelectionDAGInfo::SPUSelectionDAGInfo(const SPUTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 SPUSelectionDAGInfo::~SPUSelectionDAGInfo() {

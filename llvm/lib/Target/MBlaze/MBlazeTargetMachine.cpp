@@ -39,7 +39,7 @@ MBlazeTargetMachine(const Target &T, const std::string &TT,
              "f64:32:32-v64:32:32-v128:32:32-n32"),
   InstrInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
-  TLInfo(*this) {
+  TLInfo(*this), TSInfo(*this) {
   if (getRelocationModel() == Reloc::Default) {
       setRelocationModel(Reloc::Static);
   }

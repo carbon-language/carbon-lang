@@ -28,7 +28,8 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, const std::string &TT,
                "i16:16:32-i32:32:32-i64:32:32-n32"),
     InstrInfo(),
     FrameInfo(*this),
-    TLInfo(*this) {
+    TLInfo(*this),
+    TSInfo(*this) {
 }
 
 bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,

@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-selectiondag-info"
-#include "MipsSelectionDAGInfo.h"
+#include "MipsTargetMachine.h"
 using namespace llvm;
 
-MipsSelectionDAGInfo::MipsSelectionDAGInfo() {
+MipsSelectionDAGInfo::MipsSelectionDAGInfo(const MipsTargetMachine &TM)
+  : TargetSelectionDAGInfo(TM) {
 }
 
 MipsSelectionDAGInfo::~MipsSelectionDAGInfo() {

@@ -18,9 +18,11 @@
 
 namespace llvm {
 
+class MBlazeTargetMachine;
+
 class MBlazeSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  MBlazeSelectionDAGInfo();
+  explicit MBlazeSelectionDAGInfo(const MBlazeTargetMachine &TM);
   ~MBlazeSelectionDAGInfo();
 };
 

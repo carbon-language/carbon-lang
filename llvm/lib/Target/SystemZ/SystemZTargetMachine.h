@@ -17,6 +17,7 @@
 
 #include "SystemZInstrInfo.h"
 #include "SystemZISelLowering.h"
+#include "SystemZSelectionDAGInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
 #include "llvm/Target/TargetData.h"
@@ -32,6 +33,7 @@ class SystemZTargetMachine : public LLVMTargetMachine {
   const TargetData        DataLayout;       // Calculates type size & alignment
   SystemZInstrInfo        InstrInfo;
   SystemZTargetLowering   TLInfo;
+  SystemZSelectionDAGInfo TSInfo;
 
   // SystemZ does not have any call stack frame, therefore not having
   // any SystemZ specific FrameInfo class.
@@ -51,6 +53,10 @@ public:
 
   virtual const SystemZTargetLowering *getTargetLowering() const {
     return &TLInfo;
+  }
+
+  virtual const SystemZSelectionDAGInfo* getSelectionDAGInfo() const {
+    return &TSInfo;
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
