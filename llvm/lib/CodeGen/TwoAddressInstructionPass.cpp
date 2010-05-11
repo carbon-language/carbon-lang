@@ -1164,6 +1164,8 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
       llvm_unreachable(0);
     }
+
+    SmallSet<unsigned, 4> Seen;
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
       unsigned SrcReg = MI->getOperand(i).getReg();
       if (MI->getOperand(i).getSubReg() ||
@@ -1171,6 +1173,23 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
         llvm_unreachable(0);
       }
+
+      if (!Seen.insert(SrcReg)) {
+        // REG_SEQUENCE cannot have duplicated operands. Add a copy.
+        const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
+        unsigned NewReg = MRI->createVirtualRegister(RC);
+        bool Emitted =
+          TII->copyRegToReg(*MI->getParent(), MI, NewReg, SrcReg, RC, RC,
+                            MI->getDebugLoc());
+        (void)Emitted;
+        assert(Emitted && "Unable to issue a copy instruction!\n");
+        MI->getOperand(i).setReg(NewReg);
+        MI->getOperand(i).setIsKill();
+      }
+    }
+
+    for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
+      unsigned SrcReg = MI->getOperand(i).getReg();
       unsigned SrcIdx = MI->getOperand(i+1).getImm();
       UpdateRegSequenceSrcs(SrcReg, DstReg, SrcIdx, MRI);
     }
