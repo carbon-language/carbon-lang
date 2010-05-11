@@ -272,7 +272,7 @@ void MachineRegisterInfo::closePhysRegsUsed(const TargetRegisterInfo &TRI) {
        i = UsedPhysRegs.find_next(i))
          for (const unsigned *SS = TRI.getSubRegisters(i);
               unsigned SubReg = *SS; ++SS)
-           if (SubReg > i)
+           if (SubReg > unsigned(i))
              UsedPhysRegs.set(SubReg);
 }
 
