@@ -253,8 +253,8 @@ files passed on the command line. You can use B<--show-suites> to display the
 discovered test suites at startup.
 
 Once a test suite is discovered, its config file is loaded. Config files
-themselves are just Python modules which will be executed. When the config file
-is executed, two important global variables are predefined:
+themselves are Python modules which will be executed. When the config file is
+executed, two important global variables are predefined:
 
 =over
 
