@@ -300,8 +300,9 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
         }
 
         // construct LTModule, hand over ownership of module and target
-        const std::string FeatureStr =
-           SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple));
+        SubtargetFeatures Features;
+        Features.getDefaultSubtargetFeatures("" /* cpu */, llvm::Triple(Triple));
+        std::string FeatureStr = Features.getString();
         _target = march->createTargetMachine(Triple, FeatureStr);
     }
     return false;

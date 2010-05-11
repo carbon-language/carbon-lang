@@ -108,9 +108,10 @@ public:
   // Dump feature info.
   void dump() const;
 
-  /// Retrieve a formatted string of the default features for
-  /// the specified target triple.
-  static std::string getDefaultSubtargetFeatures(const Triple &Triple);
+  /// Retrieve a formatted string of the default features for the specified
+  /// target triple.
+  void getDefaultSubtargetFeatures(const std::string &CPU,
+                                   const Triple& Triple);
 };
 
 } // End namespace llvm
