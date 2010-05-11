@@ -24,7 +24,7 @@ class TargetData;
 class TargetMachine;
 
 //===----------------------------------------------------------------------===//
-/// TargetSelectionDAGLowering - Targets can subclass this to parameterize the
+/// TargetSelectionDAGInfo - Targets can subclass this to parameterize the
 /// SelectionDAG lowering and instruction selection process.
 ///
 class TargetSelectionDAGInfo {
