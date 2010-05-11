@@ -166,7 +166,7 @@ void DeclRefExpr::computeDependence() {
     //      -  a member function or a static data member of the current 
     //         instantiation
     else if (Var->isStaticDataMember() && 
-               Var->getDeclContext()->isDependentContext())
+             Var->getDeclContext()->isDependentContext())
       ValueDependent = true;
   } 
   // (VD) - FIXME: Missing from the standard: 
