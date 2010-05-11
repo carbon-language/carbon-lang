@@ -1049,14 +1049,16 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
       return VLd;
 
     assert(NumVecs <= 4);
+    SDValue RegSeq;
     SDValue V0 = SDValue(VLd, 0);
     SDValue V1 = SDValue(VLd, 1);
-    SDValue RegSeq;
 
+    // Form a REG_SEQUENCE to force register allocation.
     if (NumVecs == 2)
       RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
     else {
       SDValue V2 = SDValue(VLd, 2);
+      // If it's a vld3, form a quad D-register but discard the last part.
       SDValue V3 = (NumVecs == 3)
           ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
           : SDValue(VLd, 3);
@@ -1183,12 +1185,44 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   Ops.push_back(Align);
 
   if (is64BitVector) {
-    unsigned Opc = DOpcodes[OpcodeIndex];
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(N->getOperand(Vec+3));
+    if (llvm::ModelWithRegSequence() && NumVecs >= 2) {
+      assert(NumVecs <= 4);
+      SDValue RegSeq;
+      SDValue V0 = N->getOperand(0+3);
+      SDValue V1 = N->getOperand(1+3);
+
+      // Form a REG_SEQUENCE to force register allocation.
+      if (NumVecs == 2)
+        RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+      else {
+        SDValue V2 = N->getOperand(2+3);
+        // If it's a vld3, form a quad D-register and leave the last part as 
+        // an undef.
+        SDValue V3 = (NumVecs == 3)
+          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+          : N->getOperand(3+3);
+        RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+      }
+
+      // Now extract the D registers back out.
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, VT,
+                                                   RegSeq));
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, VT,
+                                                   RegSeq));
+      if (NumVecs > 2)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, VT,
+                                                     RegSeq));
+      if (NumVecs > 3)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, VT,
+                                                     RegSeq));
+    } else {
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+        Ops.push_back(N->getOperand(Vec+3));
+    }
     Ops.push_back(Pred);
     Ops.push_back(Reg0); // predicate register
     Ops.push_back(Chain);
+    unsigned Opc = DOpcodes[OpcodeIndex];
     return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+5);
   }
 
@@ -1198,7 +1232,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // storing pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
     if (llvm::ModelWithRegSequence() && NumVecs == 2) {
-      // First extract the quad D registers.
+      // First extract the pair of Q registers.
       SDValue Q0 = N->getOperand(3);
       SDValue Q1 = N->getOperand(4);
 

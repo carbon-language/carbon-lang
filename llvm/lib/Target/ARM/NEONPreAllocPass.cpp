@@ -392,15 +392,19 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
     VirtReg = DefMI->getOperand(1).getReg();
     if (LastSrcReg && LastSrcReg != VirtReg)
       return false;
+    LastSrcReg = VirtReg;
     const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-    if (NumRegs == 2) {
-      if (RC != ARM::QPRRegisterClass)
-        return false;
-    } else if (RC != ARM::QQPRRegisterClass)
+    if (RC != ARM::QPRRegisterClass && RC != ARM::QQPRRegisterClass)
       return false;
     unsigned SubIdx = DefMI->getOperand(2).getImm();
-    if (LastSubIdx && LastSubIdx != SubIdx-1)
-      return false;
+    if (LastSubIdx) {
+      if (LastSubIdx != SubIdx-1)
+        return false;
+    } else {
+      // Must start from arm_dsubreg_0 or arm_qsubreg_0.
+      if (SubIdx != ARM::DSUBREG_0 && SubIdx != ARM::QSUBREG_0)
+        return false;
+    }
     LastSubIdx = SubIdx;
   }
   return true;
