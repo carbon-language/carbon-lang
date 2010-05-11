@@ -2563,18 +2563,10 @@ public:
   llvm::SmallVector<std::pair<CXXRecordDecl *, SourceLocation>, 4>
     ClassesWithUnmarkedVirtualMembers;
 
-  /// \brief Contains the set of classes with unmarked virtual members
-  /// that require a vtable.
-  llvm::SmallPtrSet<CXXRecordDecl *, 4> UnmarkedClassesRequiringVtable;
-
   /// MaybeMarkVirtualMembersReferenced - If the passed in method is the
   /// key function of the record decl, will mark virtual member functions as
   /// referenced.
   void MaybeMarkVirtualMembersReferenced(SourceLocation Loc, CXXMethodDecl *MD);
-
-  /// \brief If the given class does not have a key function, mark its
-  /// virtual members as referenced.
-  void MaybeMarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD);
 
   /// MarkVirtualMembersReferenced - Will mark all virtual members of the given
   /// CXXRecordDecl referenced.
@@ -3576,24 +3568,6 @@ public:
     /// \brief Determine whether any SFINAE errors have been trapped.
     bool hasErrorOccurred() const {
       return SemaRef.NumSFINAEErrors > PrevSFINAEErrors;
-    }
-  };
-
-  /// \brief RAII class that determines when any errors have occurred
-  /// between the time the instance was created and the time it was
-  /// queried.
-  class ErrorTrap {
-    Sema &SemaRef;
-    unsigned PrevErrors;
-
-  public:
-    explicit ErrorTrap(Sema &SemaRef)
-      : SemaRef(SemaRef), PrevErrors(SemaRef.getDiagnostics().getNumErrors()) {}
-
-    /// \brief Determine whether any errors have occurred since this
-    /// object instance was created.
-    bool hasErrorOccurred() const {
-      return SemaRef.getDiagnostics().getNumErrors() > PrevErrors;
     }
   };
 

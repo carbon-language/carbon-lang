@@ -53,26 +53,3 @@ T *HasOutOfLineKey<T>::f(float *fp) {
 }
 
 HasOutOfLineKey<int> out_of_line;
-
-namespace std {
-  class type_info;
-}
-
-namespace PR7114 {
-  class A { virtual ~A(); }; // expected-note{{declared private here}}
-
-  template<typename T>
-  class B {
-  public:
-    class Inner : public A { }; // expected-error{{base class 'PR7114::A' has private destructor}}
-    static Inner i;
-    static const unsigned value = sizeof(i) == 4;
-  };
-
-  int f() { return B<int>::value; }
-
-  void test_typeid(B<float>::Inner bfi) {
-    (void)typeid(bfi); // expected-note{{implicit default destructor}}
-  }
-}
-

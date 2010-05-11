@@ -97,7 +97,7 @@ namespace test2 {
   A A::foo; // okay
   
   class B : A { }; // expected-error {{base class 'test2::A' has private constructor}}
-  B b; // expected-note{{implicit default constructor}}
+  B b;
   
   class C : virtual A { 
   public:
@@ -105,7 +105,7 @@ namespace test2 {
   };
 
   class D : C { }; // expected-error {{inherited virtual base class 'test2::A' has private constructor}}
-  D d; // expected-note{{implicit default constructor}}
+  D d;
 }
 
 // Implicit destructor calls.
@@ -143,15 +143,13 @@ namespace test3 {
   };
 
   class Derived3 : // expected-error 2 {{inherited virtual base class 'Base<2>' has private destructor}} \
-                   // expected-error 2 {{inherited virtual base class 'Base<3>' has private destructor}} \
-    // expected-note 2{{implicit default constructor}}
+                   // expected-error 2 {{inherited virtual base class 'Base<3>' has private destructor}}
     Base<0>,  // expected-error 2 {{base class 'Base<0>' has private destructor}}
     virtual Base<1>, // expected-error 2 {{base class 'Base<1>' has private destructor}}
     Base2, // expected-error 2 {{base class 'test3::Base2' has private destructor}}
     virtual Base3
-  {}; 
-  Derived3 d3; // expected-note {{implicit default constructor}}\
-               // expected-note{{implicit default destructor}}}
+  {};
+  Derived3 d3;
 }
 
 // Conversion functions.
@@ -207,13 +205,13 @@ namespace test5 {
   class Test1 { A a; }; // expected-error {{private member}}
   void test1() {
     Test1 a;
-    a = Test1(); // expected-note{{implicit default copy}}
+    a = Test1();
   }
 
   class Test2 : A {}; // expected-error {{private member}}
   void test2() {
     Test2 a;
-    a = Test2(); // expected-note{{implicit default copy}}
+    a = Test2();
   }
 }
 
@@ -226,12 +224,12 @@ namespace test6 {
 
   class Test1 { A a; }; // expected-error {{field of type 'test6::A' has private copy constructor}}
   void test1(const Test1 &t) {
-    Test1 a = t; // expected-note{{implicit default copy}}
+    Test1 a = t;
   }
 
   class Test2 : A {}; // expected-error {{base class 'test6::A' has private copy constructor}}
   void test2(const Test2 &t) {
-    Test2 a = t; // expected-note{{implicit default copy}}
+    Test2 a = t;
   }
 }
 

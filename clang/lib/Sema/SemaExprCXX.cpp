@@ -287,7 +287,7 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
   if (T->getAs<RecordType>() &&
       RequireCompleteType(TypeidLoc, T, diag::err_incomplete_typeid))
     return ExprError();
-
+  
   return Owned(new (Context) CXXTypeidExpr(TypeInfoType.withConst(),
                                            Operand,
                                            SourceRange(TypeidLoc, RParenLoc)));
@@ -314,10 +314,8 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       //   When typeid is applied to an expression other than an lvalue of a
       //   polymorphic class type [...] [the] expression is an unevaluated
       //   operand. [...]
-      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid) {
+      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
         isUnevaluatedOperand = false;
-        MaybeMarkVirtualMembersReferenced(TypeidLoc, RecordD);
-      }
     }
     
     // C++ [expr.typeid]p4:
@@ -447,14 +445,6 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   if (Res.isInvalid())
     return true;
   E = Res.takeAs<Expr>();
-
-  if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
-    // If we're throwing a polymorphic class, we need to make sure
-    // there is a vtable.
-    MaybeMarkVirtualMembersReferenced(ThrowLoc, 
-                                      cast<CXXRecordDecl>(RecordTy->getDecl()));
-  }
-
   return false;
 }
 
