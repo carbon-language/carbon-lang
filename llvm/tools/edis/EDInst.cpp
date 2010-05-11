@@ -81,7 +81,9 @@ unsigned EDInst::instID() {
 
 bool EDInst::isBranch() {
   if (ThisInstInfo)
-    return ThisInstInfo->instructionType == kInstructionTypeBranch;
+    return 
+      ThisInstInfo->instructionType == kInstructionTypeBranch ||
+      ThisInstInfo->instructionType == kInstructionTypeCall;
   else
     return false;
 }

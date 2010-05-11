@@ -314,6 +314,11 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
   }
   
   outs() << " ";
+    
+  if (EDInstIsBranch(inst))
+    outs() << "<br> ";
+  if (EDInstIsMove(inst))
+    outs() << "<mov> ";
   
   int numOperands = EDNumOperands(inst);
   
