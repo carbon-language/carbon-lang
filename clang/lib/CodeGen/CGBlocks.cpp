@@ -813,7 +813,9 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
                                                        llvm::APInt(32, 
                                                          Pad.getQuantity()),
                                                        ArrayType::Normal, 0);
-    ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
+    ValueDecl *PadDecl = VarDecl::Create(getContext(), 
+                                         getContext().getTranslationUnitDecl(),
+                                         SourceLocation(),
                                          0, QualType(PadTy), 0,
                                          VarDecl::None, VarDecl::None);
     Expr *E;
