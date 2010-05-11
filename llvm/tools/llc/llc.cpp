@@ -312,74 +312,33 @@ int main(int argc, char **argv) {
   bool DisableVerify = true;
 #endif
 
-  // If this target requires addPassesToEmitWholeFile, do it now.  This is
-  // used by strange things like the C backend.
-  if (Target.WantsWholeFile()) {
-    PassManager PM;
+  // Build up all of the passes that we want to do to the module.
+  PassManager PM;
 
-    // Add the target data from the target machine, if it exists, or the module.
-    if (const TargetData *TD = Target.getTargetData())
-      PM.add(new TargetData(*TD));
-    else
-      PM.add(new TargetData(&mod));
+  // Add the target data from the target machine, if it exists, or the module.
+  if (const TargetData *TD = Target.getTargetData())
+    PM.add(new TargetData(*TD));
+  else
+    PM.add(new TargetData(&mod));
 
-    if (!NoVerify)
-      PM.add(createVerifierPass());
+  if (!NoVerify)
+    PM.add(createVerifierPass());
 
-    // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl,
-                                        DisableVerify)) {
-      errs() << argv[0] << ": target does not support generation of this"
-             << " file type!\n";
-      if (Out != &fouts()) delete Out;
-      // And the Out file is empty and useless, so remove it now.
-      sys::Path(OutputFilename).eraseFromDisk();
-      return 1;
-    }
-    PM.run(mod);
-  } else {
-    // Build up all of the passes that we want to do to the module.
-    FunctionPassManager Passes(M.get());
+  // Override default to generate verbose assembly.
+  Target.setAsmVerbosityDefault(true);
 
-    // Add the target data from the target machine, if it exists, or the module.
-    if (const TargetData *TD = Target.getTargetData())
-      Passes.add(new TargetData(*TD));
-    else
-      Passes.add(new TargetData(&mod));
-
-#ifndef NDEBUG
-    if (!NoVerify)
-      Passes.add(createVerifierPass());
-#endif
-
-    // Override default to generate verbose assembly.
-    Target.setAsmVerbosityDefault(true);
-
-    if (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl,
-                                   DisableVerify)) {
-      errs() << argv[0] << ": target does not support generation of this"
-             << " file type!\n";
-      if (Out != &fouts()) delete Out;
-      // And the Out file is empty and useless, so remove it now.
-      sys::Path(OutputFilename).eraseFromDisk();
-      return 1;
-    }
-
-    Passes.doInitialization();
-
-    // Run our queue of passes all at once now, efficiently.
-    // TODO: this could lazily stream functions out of the module.
-    for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
-      if (!I->isDeclaration()) {
-        if (DisableRedZone)
-          I->addFnAttr(Attribute::NoRedZone);
-        if (NoImplicitFloats)
-          I->addFnAttr(Attribute::NoImplicitFloat);
-        Passes.run(*I);
-      }
-
-    Passes.doFinalization();
+  // Ask the target to add backend passes as necessary.
+  if (Target.addPassesToEmitFile(PM, *Out, FileType, OLvl,
+                                 DisableVerify)) {
+    errs() << argv[0] << ": target does not support generation of this"
+           << " file type!\n";
+    if (Out != &fouts()) delete Out;
+    // And the Out file is empty and useless, so remove it now.
+    sys::Path(OutputFilename).eraseFromDisk();
+    return 1;
   }
+
+  PM.run(mod);
 
   // Delete the ostream if it's not a stdout stream
   if (Out != &fouts()) delete Out;

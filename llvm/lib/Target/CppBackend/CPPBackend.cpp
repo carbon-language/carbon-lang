@@ -2007,11 +2007,11 @@ char CppWriter::ID = 0;
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool CPPTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
-                                                formatted_raw_ostream &o,
-                                                CodeGenFileType FileType,
-                                                CodeGenOpt::Level OptLevel,
-                                                bool DisableVerify) {
+bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
+                                           formatted_raw_ostream &o,
+                                           CodeGenFileType FileType,
+                                           CodeGenOpt::Level OptLevel,
+                                           bool DisableVerify) {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
   PM.add(new CppWriter(o));
   return false;

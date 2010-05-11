@@ -26,12 +26,11 @@ struct CPPTargetMachine : public TargetMachine {
                    const std::string &FS)
     : TargetMachine(T) {}
 
-  virtual bool WantsWholeFile() const { return true; }
-  virtual bool addPassesToEmitWholeFile(PassManager &PM,
-                                        formatted_raw_ostream &Out,
-                                        CodeGenFileType FileType,
-                                        CodeGenOpt::Level OptLevel,
-                                        bool DisableVerify);
+  virtual bool addPassesToEmitFile(PassManagerBase &PM,
+                                   formatted_raw_ostream &Out,
+                                   CodeGenFileType FileType,
+                                   CodeGenOpt::Level OptLevel,
+                                   bool DisableVerify);
 
   virtual const TargetData *getTargetData() const { return 0; }
 };

@@ -225,17 +225,6 @@ public:
                                           bool = true) {
     return true;
   }
-
-  /// addPassesToEmitWholeFile - This method can be implemented by targets that 
-  /// require having the entire module at once.  This is not recommended, do not
-  /// use this.
-  virtual bool WantsWholeFile() const { return false; }
-  virtual bool addPassesToEmitWholeFile(PassManager &, formatted_raw_ostream &,
-                                        CodeGenFileType,
-                                        CodeGenOpt::Level,
-                                        bool = true) {
-    return true;
-  }
 };
 
 /// LLVMTargetMachine - This class describes a target machine that is
