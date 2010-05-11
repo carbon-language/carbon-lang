@@ -25,7 +25,7 @@ namespace toolchains {
 /// Generic_GCC - A tool chain using the 'gcc' command to perform
 /// all subcommands; this relies on gcc translating the majority of
 /// command line options.
-class VISIBILITY_HIDDEN Generic_GCC : public ToolChain {
+class LLVM_LIBRARY_VISIBILITY Generic_GCC : public ToolChain {
 protected:
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
@@ -44,7 +44,7 @@ public:
 };
 
 /// Darwin - The base Darwin tool chain.
-class VISIBILITY_HIDDEN Darwin : public ToolChain {
+class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
   /// Whether the information on the target has been initialized.
@@ -193,7 +193,7 @@ public:
 };
 
 /// DarwinClang - The Darwin toolchain used by Clang.
-class VISIBILITY_HIDDEN DarwinClang : public Darwin {
+class LLVM_LIBRARY_VISIBILITY DarwinClang : public Darwin {
 public:
   DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
               const unsigned (&DarwinVersion)[3]);
@@ -211,7 +211,7 @@ public:
 };
 
 /// DarwinGCC - The Darwin toolchain used by GCC.
-class VISIBILITY_HIDDEN DarwinGCC : public Darwin {
+class LLVM_LIBRARY_VISIBILITY DarwinGCC : public Darwin {
   /// GCC version to use.
   unsigned GCCVersion[3];
 
@@ -236,7 +236,7 @@ public:
 };
 
 /// Darwin_Generic_GCC - Generic Darwin tool chain using gcc.
-class VISIBILITY_HIDDEN Darwin_Generic_GCC : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY Darwin_Generic_GCC : public Generic_GCC {
 public:
   Darwin_Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
     : Generic_GCC(Host, Triple) {}
@@ -244,35 +244,35 @@ public:
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
 };
 
-class VISIBILITY_HIDDEN AuroraUX : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
 public:
   AuroraUX(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class VISIBILITY_HIDDEN OpenBSD : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_GCC {
 public:
   OpenBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class VISIBILITY_HIDDEN FreeBSD : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_GCC {
 public:
   FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class VISIBILITY_HIDDEN DragonFly : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_GCC {
 public:
   DragonFly(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class VISIBILITY_HIDDEN Linux : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY Linux : public Generic_GCC {
 public:
   Linux(const HostInfo &Host, const llvm::Triple& Triple);
 };
@@ -280,7 +280,7 @@ public:
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
-class VISIBILITY_HIDDEN TCEToolChain : public ToolChain {
+class LLVM_LIBRARY_VISIBILITY TCEToolChain : public ToolChain {
 public:
   TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple);
   ~TCEToolChain();
