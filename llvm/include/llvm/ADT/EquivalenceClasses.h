@@ -191,7 +191,7 @@ public:
   /// insert - Insert a new value into the union/find set, ignoring the request
   /// if the value already exists.
   iterator insert(const ElemTy &Data) {
-    return TheMapping.insert(Data).first;
+    return TheMapping.insert(ECValue(Data)).first;
   }
 
   /// findLeader - Given a value in the set, return a member iterator for the

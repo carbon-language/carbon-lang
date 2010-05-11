@@ -28,6 +28,8 @@ namespace llvm {
       : Records(R), TargetOnly(T) {}
 
     void run(raw_ostream &OS);
+
+    void EmitPrefix(raw_ostream &OS);
     
     void EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints, 
                       raw_ostream &OS);
@@ -50,6 +52,7 @@ namespace llvm {
                             raw_ostream &OS);
     void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
                                       raw_ostream &OS);
+    void EmitSuffix(raw_ostream &OS);
   };
 
 } // End llvm namespace

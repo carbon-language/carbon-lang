@@ -2899,7 +2899,7 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
       // instead of at the end, so that it can be used for other expansions.
       if (IDom == Inst->getParent() &&
           (!BetterPos || DT.dominates(BetterPos, Inst)))
-        BetterPos = next(BasicBlock::iterator(Inst));
+        BetterPos = llvm::next(BasicBlock::iterator(Inst));
     }
     if (!AllDominate)
       break;

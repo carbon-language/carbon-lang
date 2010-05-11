@@ -861,7 +861,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
     // Find the nearest store that has a lower than this load. 
     StoresByIndexTy::iterator I = 
       std::lower_bound(StoresByIndex.begin(), StoresByIndex.end(),
-                       std::pair<unsigned, StoreInst*>(LoadIdx, 0),
+                       std::pair<unsigned, StoreInst*>(LoadIdx, static_cast<StoreInst*>(0)),
                        StoreIndexSearchPredicate());
     
     // If there is no store before this load, then we can't promote this load.

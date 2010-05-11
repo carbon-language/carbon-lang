@@ -451,9 +451,9 @@ private:
         // reg.
         MachineBasicBlock *useMBB = useInst->getParent();
         MachineBasicBlock::iterator useItr(useInst);
-        tii->copyRegToReg(*useMBB, next(useItr), li->reg, newVReg, trc, trc,
+        tii->copyRegToReg(*useMBB, llvm::next(useItr), li->reg, newVReg, trc, trc,
                           DebugLoc());
-        MachineInstr *copyMI = next(useItr);
+        MachineInstr *copyMI = llvm::next(useItr);
         copyMI->addRegisterKilled(newVReg, tri);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
 
