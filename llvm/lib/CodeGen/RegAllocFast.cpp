@@ -584,9 +584,9 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (!MO.isReg()) continue;
         unsigned Reg = MO.getReg();
         if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-        LiveRegMap::iterator i = LiveVirtRegs.find(Reg);
-        if (i != LiveVirtRegs.end())
-          setPhysReg(MO, i->second.PhysReg);
+        LiveRegMap::iterator it = LiveVirtRegs.find(Reg);
+        if (it != LiveVirtRegs.end())
+          setPhysReg(MO, it->second.PhysReg);
         else
           MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
       }
