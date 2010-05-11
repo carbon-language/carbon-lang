@@ -389,6 +389,8 @@ void SubtargetFeatures::getDefaultSubtargetFeatures(const std::string &CPU,
     break;
   }
 
+  if (!Attrs) return;
+
   StringRef SR(Attrs);
 
   while (!SR.empty()) {
