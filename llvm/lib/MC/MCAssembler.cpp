@@ -459,11 +459,9 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
     // Unless this section is virtual (where we are allowed to adjust the offset
     // freely), the padding goes in the previous section.
     if (!IsVirtual) {
-      // Find the previous non-virtual section.
-      iterator it = &SD;
-      assert(it != begin() && "Invalid initial section address!");
-      for (--it; getBackend().isVirtualSection(it->getSection()); --it) ;
-      Layout.setSectionFileSize(&*it, Layout.getSectionFileSize(&*it) + Pad);
+      assert(SectionOrderIndex && "Invalid initial section address!");
+      MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
+      Layout.setSectionFileSize(Prev, Layout.getSectionFileSize(Prev) + Pad);
     }
 
     StartAddress += Pad;
