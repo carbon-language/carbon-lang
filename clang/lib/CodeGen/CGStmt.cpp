@@ -30,7 +30,10 @@ using namespace CodeGen;
 
 void CodeGenFunction::EmitStopPoint(const Stmt *S) {
   if (CGDebugInfo *DI = getDebugInfo()) {
-    DI->setLocation(S->getLocStart());
+    if (isa<DeclStmt>(S))
+      DI->setLocation(S->getLocEnd());
+    else
+      DI->setLocation(S->getLocStart());
     DI->EmitStopPoint(CurFn, Builder);
   }
 }
