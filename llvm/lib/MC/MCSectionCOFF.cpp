@@ -47,4 +47,30 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
   if (getCharacteristics() & MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE)
     OS << 'n';
   OS << "\"\n";
+  
+  if (getCharacteristics() & MCSectionCOFF::IMAGE_SCN_LNK_COMDAT) {
+    switch (Selection) {
+      default:
+        assert (0 && "unsupported COFF selection type");
+        break;
+      case IMAGE_COMDAT_SELECT_NODUPLICATES:
+        OS << "\t.linkonce one_only\n";
+        break;
+      case IMAGE_COMDAT_SELECT_ANY:
+        OS << "\t.linkonce discard\n";
+        break;
+      case IMAGE_COMDAT_SELECT_SAME_SIZE:
+        OS << "\t.linkonce same_size\n";
+        break;
+      case IMAGE_COMDAT_SELECT_EXACT_MATCH:
+        OS << "\t.linkonce same_contents\n";
+        break;
+      // ".linkonce largest" is not documented as being an option.
+      // It seems odd that a link attribute designed essentially for PE/COFF
+      // wouldn't support all the options (at least as of binutils 2.20)
+    //case IMAGE_COMDAT_SELECT_LARGEST:
+    //  OS << "\t.linkonce largest\n";
+    //  break;
+    }
+  }
 }

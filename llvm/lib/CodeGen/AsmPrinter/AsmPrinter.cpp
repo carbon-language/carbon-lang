@@ -208,13 +208,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
     } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-      // FIXME: linkonce should be a section attribute, handled by COFF Section
-      // assignment.
-      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
-      // .linkonce discard
-      // FIXME: It would be nice to use .linkonce samesize for non-common
-      // globals.
-      OutStreamer.EmitRawText(StringRef(LinkOnce));
+      //NOTE: linkonce is handling by the section the symbol was assigned to
     } else {
       // .weak _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
