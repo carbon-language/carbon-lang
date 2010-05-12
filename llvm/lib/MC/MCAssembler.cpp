@@ -498,7 +498,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // the Count bytes.  Then if that did not fill any bytes or there are any
     // bytes left to fill use the the Value and ValueSize to fill the rest.
     // If we are aligning with nops, ask that target to emit the right data.
-    if (AF.getEmitNops()) {
+    if (AF.hasEmitNops()) {
       if (!Asm.getBackend().WriteNopData(Count, OW))
         report_fatal_error("unable to write nop sequence of " +
                           Twine(Count) + " bytes");

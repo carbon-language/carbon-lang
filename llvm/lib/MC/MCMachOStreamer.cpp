@@ -323,8 +323,7 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   // Emit an align fragment if necessary.
   if (ByteAlignment != 1)
-    new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, /*EmitNops=*/false,
-                        &SectData);
+    new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, &SectData);
 
   MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
   SD.setFragment(F);
@@ -365,8 +364,7 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   MCFragment *F = new MCAlignFragment(ByteAlignment, Value, ValueSize,
-                                      MaxBytesToEmit, /*EmitNops=*/false,
-                                      CurSectionData);
+                                      MaxBytesToEmit, CurSectionData);
   F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
   // Update the maximum alignment on the current section if necessary.
@@ -378,8 +376,9 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                         unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  MCFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
-                                      /*EmitNops=*/true, CurSectionData);
+  MCAlignFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
+                                           CurSectionData);
+  F->setEmitNops(true);
   F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
   // Update the maximum alignment on the current section if necessary.
