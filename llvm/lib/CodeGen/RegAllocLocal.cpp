@@ -50,6 +50,7 @@ namespace {
   private:
     const TargetMachine *TM;
     MachineFunction *MF;
+    MachineRegisterInfo *MRI;
     const TargetRegisterInfo *TRI;
     const TargetInstrInfo *TII;
 
@@ -506,10 +507,15 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                      SmallSet<unsigned, 4> &ReloadedRegs,
                                      unsigned PhysReg) {
   unsigned VirtReg = MI->getOperand(OpNum).getReg();
+  unsigned SubIdx = MI->getOperand(OpNum).getSubReg();
 
   // If the virtual register is already available, just update the instruction
   // and return.
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
+    if (SubIdx) {
+      PR = TRI->getSubReg(PR, SubIdx);
+      MI->getOperand(OpNum).setSubReg(0);
+    }
     MI->getOperand(OpNum).setReg(PR);  // Assign the input register
     if (!MI->isDebugValue()) {
       // Do not do these for DBG_VALUE as they can affect codegen.
@@ -547,7 +553,12 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   ++NumLoads;    // Update statistics
 
   MF->getRegInfo().setPhysRegUsed(PhysReg);
-  MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
+  // Assign the input register.
+  if (SubIdx) {
+    MI->getOperand(OpNum).setSubReg(0);
+    MI->getOperand(OpNum).setReg(TRI->getSubReg(PhysReg, SubIdx));
+  } else
+    MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
   getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
 
   if (!ReloadedRegs.insert(PhysReg)) {
@@ -626,7 +637,6 @@ static bool precedes(MachineBasicBlock::iterator A,
 /// ComputeLocalLiveness - Computes liveness of registers within a basic
 /// block, setting the killed/dead flags as appropriate.
 void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   // Keep track of the most recently seen previous use or def of each reg, 
   // so that we can update them with dead/kill markers.
   DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
@@ -672,18 +682,26 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       //   - A def followed by a def is dead
       //   - A use followed by a def is a kill
       if (!MO.isReg() || !MO.getReg() || !MO.isDef()) continue;
-      
+
+      unsigned SubIdx = MO.getSubReg();
       DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
         last = LastUseDef.find(MO.getReg());
       if (last != LastUseDef.end()) {
         // Check if this is a two address instruction.  If so, then
         // the def does not kill the use.
-        if (last->second.first == I &&
-            I->isRegTiedToUseOperand(i))
+        if (last->second.first == I && I->isRegTiedToUseOperand(i))
           continue;
         
         MachineOperand &lastUD =
                     last->second.first->getOperand(last->second.second);
+        if (SubIdx && lastUD.getSubReg() != SubIdx)
+          // Partial re-def, the last def is not dead.
+          // %reg1024:5<def> =
+          // %reg1024:6<def> =
+          // or 
+          // %reg1024:5<def> = op %reg1024, 5
+          continue;
+
         if (lastUD.isDef())
           lastUD.setIsDead(true);
         else
@@ -732,8 +750,8 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // it wouldn't have been otherwise.  Nullify the DBG_VALUEs when that
       // happens.
       bool UsedByDebugValueOnly = false;
-      for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-             UE = MRI.reg_end(); UI != UE; ++UI) {
+      for (MachineRegisterInfo::reg_iterator UI = MRI->reg_begin(MO.getReg()),
+             UE = MRI->reg_end(); UI != UE; ++UI) {
         // Two cases:
         // - used in another block
         // - used in the same block before it is defined (loop)
@@ -755,8 +773,8 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       }
 
       if (UsedByDebugValueOnly)
-        for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-             UE = MRI.reg_end(); UI != UE; ++UI)
+        for (MachineRegisterInfo::reg_iterator UI = MRI->reg_begin(MO.getReg()),
+             UE = MRI->reg_end(); UI != UE; ++UI)
           if (UI->isDebugValue() &&
               (UI->getParent() != &MBB ||
                (MO.isDef() && precedes(&*UI, MI))))
@@ -878,6 +896,10 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
                  std::make_pair((MachineInstr*)0, 0);
           DEBUG(dbgs() << "  Assigning " << TRI->getName(DestPhysReg)
                        << " to %reg" << DestVirtReg << "\n");
+          if (unsigned DestSubIdx = MO.getSubReg()) {
+            MO.setSubReg(0);
+            DestPhysReg = TRI->getSubReg(DestPhysReg, DestSubIdx);
+          }
           MO.setReg(DestPhysReg);  // Assign the earlyclobber register
         } else {
           unsigned Reg = MO.getReg();
@@ -1073,6 +1095,11 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
       DEBUG(dbgs() << "  Assigning " << TRI->getName(DestPhysReg)
                    << " to %reg" << DestVirtReg << "\n");
+
+      if (unsigned DestSubIdx = MO.getSubReg()) {
+        MO.setSubReg(0);
+        DestPhysReg = TRI->getSubReg(DestPhysReg, DestSubIdx);
+      }
       MO.setReg(DestPhysReg);  // Assign the output register
     }
 
@@ -1165,6 +1192,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
 bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(dbgs() << "Machine Function\n");
   MF = &Fn;
+  MRI = &Fn.getRegInfo();
   TM = &Fn.getTarget();
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
