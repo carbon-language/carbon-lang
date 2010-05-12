@@ -3572,6 +3572,24 @@ public:
     }
   };
 
+  /// \brief RAII class that determines when any errors have occurred
+  /// between the time the instance was created and the time it was
+  /// queried.
+  class ErrorTrap {
+    Sema &SemaRef;
+    unsigned PrevErrors;
+
+  public:
+    explicit ErrorTrap(Sema &SemaRef)
+      : SemaRef(SemaRef), PrevErrors(SemaRef.getDiagnostics().getNumErrors()) {}
+
+    /// \brief Determine whether any errors have occurred since this
+    /// object instance was created.
+    bool hasErrorOccurred() const {
+      return SemaRef.getDiagnostics().getNumErrors() > PrevErrors;
+    }
+  };
+
   /// \brief A stack-allocated class that identifies which local
   /// variable declaration instantiations are present in this scope.
   ///

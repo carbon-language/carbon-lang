@@ -101,7 +101,8 @@ namespace ProtectedCheck {
     X x;
   };
 
-  void f(Z z) { z = z; } // 
+  void f(Z z) { z = z; }  // expected-note{{implicit default copy assignment operator}}
+
 }
 
 namespace MultiplePaths {

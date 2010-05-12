@@ -4146,12 +4146,15 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, Constructor);
-  if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false)) {
+  ErrorTrap Trap(*this);
+  if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
   } else {
     Constructor->setUsed();
+    MaybeMarkVirtualMembersReferenced(CurrentLocation, Constructor);
   }
 }
 
@@ -4162,14 +4165,16 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
 
+  if (Destructor->isInvalidDecl())
+    return;
+
   ImplicitlyDefinedFunctionScope Scope(*this, Destructor);
 
+  ErrorTrap Trap(*this);
   MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
                                          Destructor->getParent());
 
-  // FIXME: If CheckDestructor fails, we should emit a note about where the
-  // implicit destructor was needed.
-  if (CheckDestructor(Destructor)) {
+  if (CheckDestructor(Destructor) || Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXDestructor << Context.getTagDeclType(ClassDecl);
 
@@ -4178,6 +4183,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   }
 
   Destructor->setUsed();
+  MaybeMarkVirtualMembersReferenced(CurrentLocation, Destructor);
 }
 
 /// \brief Builds a statement that copies the given entity from \p From to
@@ -4396,6 +4402,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   CopyAssignOperator->setUsed();
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyAssignOperator);
+  ErrorTrap Trap(*this);
 
   // C++0x [class.copy]p30:
   //   The implicitly-defined or explicitly-defaulted copy assignment operator
@@ -4616,6 +4623,12 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       Invalid = true;
     else {
       Statements.push_back(Return.takeAs<Stmt>());
+
+      if (Trap.hasErrorOccurred()) {
+        Diag(CurrentLocation, diag::note_member_synthesized_at) 
+          << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
+        Invalid = true;
+      }
     }
   }
 
@@ -4628,6 +4641,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                             /*isStmtExpr=*/false);
   assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
+
+  MaybeMarkVirtualMembersReferenced(CurrentLocation, CopyAssignOperator);
 }
 
 void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
@@ -4642,8 +4657,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyConstructor);
+  ErrorTrap Trap(*this);
 
-  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false)) {
+  if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
     CopyConstructor->setInvalidDecl();
@@ -4653,6 +4670,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                                MultiStmtArg(*this, 0, 0), 
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
+    MaybeMarkVirtualMembersReferenced(CurrentLocation, CopyConstructor);
   }
   
   CopyConstructor->setUsed();
