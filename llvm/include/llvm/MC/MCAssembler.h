@@ -293,17 +293,21 @@ class MCFillFragment : public MCFragment {
   /// Value - Value to use for filling bytes.
   int64_t Value;
 
-  /// ValueSize - The size (in bytes) of \arg Value to use when filling.
+  /// ValueSize - The size (in bytes) of \arg Value to use when filling, or 0 if
+  /// this is a virtual fill fragment.
   unsigned ValueSize;
 
-  /// Count - The number of copies of \arg Value to insert.
-  uint64_t Count;
+  /// Size - The number of bytes to insert.
+  uint64_t Size;
 
 public:
-  MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Count,
+  MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Size,
                  MCSectionData *SD = 0)
     : MCFragment(FT_Fill, SD),
-      Value(_Value), ValueSize(_ValueSize), Count(_Count) {}
+      Value(_Value), ValueSize(_ValueSize), Size(_Size) {
+    assert((!ValueSize || (Size % ValueSize) == 0) &&
+           "Fill size must be a multiple of the value size!");
+  }
 
   /// @name Accessors
   /// @{
@@ -312,7 +316,7 @@ public:
 
   unsigned getValueSize() const { return ValueSize; }
 
-  uint64_t getCount() const { return Count; }
+  uint64_t getSize() const { return Size; }
 
   /// @}
 

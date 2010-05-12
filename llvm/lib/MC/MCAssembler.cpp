@@ -395,7 +395,7 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
-    EffectiveSize = FF.getValueSize() * FF.getCount();
+    EffectiveSize = FF.getSize();
     break;
   }
 
@@ -534,7 +534,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
-    for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
+    for (uint64_t i = 0, e = FF.getSize() / FF.getValueSize(); i != e; ++i) {
       switch (FF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
@@ -876,7 +876,7 @@ void MCFillFragment::dump() {
   this->MCFragment::dump();
   OS << "\n       ";
   OS << " Value:" << getValue() << " ValueSize:" << getValueSize()
-     << " Count:" << getCount() << ">";
+     << " Size:" << getSize() << ">";
 }
 
 void MCInstFragment::dump() {
