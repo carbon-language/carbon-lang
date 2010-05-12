@@ -67,6 +67,9 @@ class ShLexer:
             elif c == '"':
                 self.eat()
                 str += self.lex_arg_quoted('"')
+            elif c == "'":
+                self.eat()
+                str += self.lex_arg_quoted("'")
             elif not self.win32Escapes and c == '\\':
                 # Outside of a string, '\\' escapes everything.
                 self.eat()
@@ -287,6 +290,10 @@ class TestShParse(unittest.TestCase):
                          Pipeline([Command(['echo', 'hello'], [])], False))
         self.assertEqual(self.parse('echo ""'),
                          Pipeline([Command(['echo', ''], [])], False))
+        self.assertEqual(self.parse("""echo -DFOO='a'"""),
+                         Pipeline([Command(['echo', '-DFOO=a'], [])], False))
+        self.assertEqual(self.parse('echo -DFOO="a"'),
+                         Pipeline([Command(['echo', '-DFOO=a'], [])], False))
 
     def test_redirection(self):
         self.assertEqual(self.parse('echo hello > c'),
