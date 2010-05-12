@@ -571,6 +571,11 @@ public:
   /// setFlags - Set the (implementation defined) symbol flags.
   void setFlags(uint32_t Value) { Flags = Value; }
 
+  /// modifyFlags - Modify the flags via a mask
+  void modifyFlags(uint32_t Value, uint32_t Mask) {
+    Flags = (Flags & ~Mask) | Value;
+  }
+
   /// getIndex - Get the (implementation defined) index.
   uint64_t getIndex() const { return Index; }
 
