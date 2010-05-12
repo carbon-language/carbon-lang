@@ -1135,10 +1135,11 @@ static void UpdateRegSequenceSrcs(unsigned SrcReg,
                                   unsigned DstReg, unsigned SrcIdx,
                                   MachineRegisterInfo *MRI) {
   for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-         UE = MRI->reg_end(); RI != UE; ) {
+         RE = MRI->reg_end(); RI != RE; ) {
     MachineOperand &MO = RI.getOperand();
     ++RI;
     MO.setReg(DstReg);
+    assert(MO.getSubReg() == 0);
     MO.setSubReg(SrcIdx);
   }
 }
