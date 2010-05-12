@@ -11,17 +11,6 @@ void f(int x) {
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
-// CHECK: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 (Definition)
-// CHECK: <invalid loc>:0:0: TypedefDecl=__uint128_t:0:0 (Definition)
-// CHECK: <invalid loc>:91:16: StructDecl=__va_list_tag:91:16 (Definition)
-// CHECK: <invalid loc>:91:42: FieldDecl=gp_offset:91:42 (Definition)
-// CHECK: <invalid loc>:91:63: FieldDecl=fp_offset:91:63 (Definition)
-// CHECK: <invalid loc>:91:81: FieldDecl=overflow_arg_area:91:81 (Definition)
-// CHECK: <invalid loc>:91:107: FieldDecl=reg_save_area:91:107 (Definition)
-// CHECK: <invalid loc>:91:123: TypedefDecl=__va_list_tag:91:123 (Definition)
-// CHECK: <invalid loc>:91:159: TypedefDecl=__builtin_va_list:91:159 (Definition)
-// CHECK: <invalid loc>:91:145: TypeRef=__va_list_tag:91:123
-// CHECK: <invalid loc>:91:177: UnexposedExpr=
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
 // CHECK: load-stmts.cpp:2:16: FieldDecl=a:2:16 (Definition) Extent=[2:16 - 2:17]
