@@ -103,7 +103,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       MI.eraseFromParent();
       Modified = true;
     }
-    // FIXME: expand t2MOVi32imm
     }
     MBBI = NMBBI;
   }
