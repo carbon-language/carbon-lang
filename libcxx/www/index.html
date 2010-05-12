@@ -72,7 +72,8 @@
       to how they are implemented.  For example, it is generally accepted that
       building std::string using the "short string optimization" instead of
       using Copy On Write (COW) is a superior approach for multicore
-      machines.  Breaking ABI compatibility with old versions of the library was
+      machines (particularly in C++'0x, which has rvalue references).  Breaking
+      ABI compatibility with old versions of the library was
       determined to be critical to achieving the performance goals of
       libc++.</p></li>
       
