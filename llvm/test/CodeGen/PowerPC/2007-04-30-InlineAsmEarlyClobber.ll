@@ -1,8 +1,14 @@
-; RUN: llc < %s | grep {subfc r3,r5,r4}
-; RUN: llc < %s | grep {subfze r4,r6}
-; RUN: llc < %s -regalloc=local | grep {subfc r6,r5,r4}
-; RUN: llc < %s -regalloc=local | grep {subfze r3,r3}
+; RUN: llc < %s | FileCheck %s
+; RUN: llc < %s -regalloc=local | FileCheck -check-prefix=LOCAL %s
+; RUN: llc < %s -regalloc=fast | FileCheck -check-prefix=FAST %s
 ; The first argument of subfc must not be the same as any other register.
+
+; CHECK: subfc r3,r5,r4
+; CHECK: subfze r4,r6
+; LOCAL: subfc r6,r5,r4
+; LOCAL: subfze r3,r3
+; FAST: subfc r9,r8,r7
+; FAST: subfze r10,r6
 
 ; PR1357
 
