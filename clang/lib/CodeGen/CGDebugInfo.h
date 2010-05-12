@@ -208,6 +208,13 @@ private:
   /// getVTableName - Get vtable name for the given Class.
   llvm::StringRef getVTableName(const CXXRecordDecl *Decl);
 
+  /// getLineNumber - Get line number for the location. If location is invalid
+  /// then use current location.
+  unsigned getLineNumber(SourceLocation Loc);
+
+  /// getColumnNumber - Get column number for the location. If location is 
+  /// invalid then use current location.
+  unsigned getColumnNumber(SourceLocation Loc);
 };
 } // namespace CodeGen
 } // namespace clang
