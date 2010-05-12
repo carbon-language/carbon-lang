@@ -2011,6 +2011,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Recursive)
     PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
 
+  EnterExpressionEvaluationContext EvalContext(*this, 
+                                               Action::PotentiallyEvaluated);
   ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
 
   // Introduce a new scope where local variable instantiations will be
