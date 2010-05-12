@@ -9,7 +9,23 @@
 }
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:10:5 %s | FileCheck %s
+// From <rdar://problem/7971430>, the 'barType' referenced in the ivar
+// declarations should be annotated as TypeRefs.
+typedef int * barType;
+@interface Bar
+{
+    barType iVar;
+    barType iVar1, iVar2;
+}
+@end
+@implementation Bar
+- (void) method
+{
+    barType local = iVar;
+}
+@end
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:27:1 %s | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -57,3 +73,41 @@
 // CHECK: Punctuation: "}" [9:1 - 9:2] UnexposedStmt=
 // CHECK: Punctuation: "@" [10:1 - 10:2] ObjCImplementationDecl=Foo:5:1 (Definition)
 // CHECK: Keyword: "end" [10:2 - 10:5]
+// CHECK: Keyword: "typedef" [14:1 - 14:8]
+// CHECK: Keyword: "int" [14:9 - 14:12]
+// CHECK: Punctuation: "*" [14:13 - 14:14]
+// CHECK: Identifier: "barType" [14:15 - 14:22] TypedefDecl=barType:14:15 (Definition)
+// CHECK: Punctuation: ";" [14:22 - 14:23]
+// CHECK: Punctuation: "@" [15:1 - 15:2] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Keyword: "interface" [15:2 - 15:11] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Identifier: "Bar" [15:12 - 15:15] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Punctuation: "{" [16:1 - 16:2] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Identifier: "barType" [17:5 - 17:12] TypeRef=barType:14:15
+// CHECK: Identifier: "iVar" [17:13 - 17:17] ObjCIvarDecl=iVar:17:13 (Definition)
+// CHECK: Punctuation: ";" [17:17 - 17:18] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Identifier: "barType" [18:5 - 18:12] TypeRef=barType:14:15
+// CHECK: Identifier: "iVar1" [18:13 - 18:18] ObjCIvarDecl=iVar1:18:13 (Definition)
+// CHECK: Punctuation: "," [18:18 - 18:19] ObjCIvarDecl=iVar2:18:20 (Definition)
+// CHECK: Identifier: "iVar2" [18:20 - 18:25] ObjCIvarDecl=iVar2:18:20 (Definition)
+// CHECK: Punctuation: ";" [18:25 - 18:26] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Punctuation: "}" [19:1 - 19:2] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Punctuation: "@" [20:1 - 20:2] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Keyword: "end" [20:2 - 20:5] ObjCInterfaceDecl=Bar:15:12
+// CHECK: Punctuation: "@" [21:1 - 21:2] ObjCImplementationDecl=Bar:21:1 (Definition)
+// CHECK: Keyword: "implementation" [21:2 - 21:16] ObjCImplementationDecl=Bar:21:1 (Definition)
+// CHECK: Identifier: "Bar" [21:17 - 21:20] ObjCImplementationDecl=Bar:21:1 (Definition)
+// CHECK: Punctuation: "-" [22:1 - 22:2] ObjCInstanceMethodDecl=method:22:1 (Definition)
+// CHECK: Punctuation: "(" [22:3 - 22:4] ObjCInstanceMethodDecl=method:22:1 (Definition)
+// CHECK: Keyword: "void" [22:4 - 22:8] ObjCInstanceMethodDecl=method:22:1 (Definition)
+// CHECK: Punctuation: ")" [22:8 - 22:9] ObjCInstanceMethodDecl=method:22:1 (Definition)
+// CHECK: Identifier: "method" [22:10 - 22:16] ObjCInstanceMethodDecl=method:22:1 (Definition)
+// CHECK: Punctuation: "{" [23:1 - 23:2] UnexposedStmt=
+// CHECK: Identifier: "barType" [24:5 - 24:12] TypeRef=barType:14:15
+// CHECK: Identifier: "local" [24:13 - 24:18] VarDecl=local:24:13 (Definition)
+// CHECK: Punctuation: "=" [24:19 - 24:20] VarDecl=local:24:13 (Definition)
+// CHECK: Identifier: "iVar" [24:21 - 24:25] MemberRefExpr=iVar:17:13
+// CHECK: Punctuation: ";" [24:25 - 24:26] UnexposedStmt=
+// CHECK: Punctuation: "}" [25:1 - 25:2] UnexposedStmt=
+// CHECK: Punctuation: "@" [26:1 - 26:2] ObjCImplementationDecl=Bar:21:1 (Definition)
+// CHECK: Keyword: "end" [26:2 - 26:5]
+

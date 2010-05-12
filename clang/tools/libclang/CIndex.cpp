@@ -2426,11 +2426,30 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
 
   CXSourceRange cursorExtent = clang_getCursorExtent(cursor);
   SourceRange cursorRange = cxloc::translateCXSourceRange(cursorExtent);
-
+  
   if (cursorRange.isInvalid())
     return CXChildVisit_Continue;
-
+  
   SourceLocation L = SourceLocation::getFromRawEncoding(Loc.int_data);
+
+  // Adjust the annotated range based specific declarations.
+  const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
+  if (cursorK >= CXCursor_FirstDecl && cursorK <= CXCursor_LastDecl) {
+    if (const DeclaratorDecl *DD =
+        dyn_cast<DeclaratorDecl>(cxcursor::getCursorDecl(cursor))) {
+      if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
+        TypeLoc TL = TI->getTypeLoc();
+        SourceLocation TLoc = TL.getFullSourceRange().getBegin();
+        unsigned col1 = SrcMgr.getSpellingColumnNumber(L);
+        unsigned col2 = SrcMgr.getSpellingColumnNumber(TLoc);
+        
+        if (TLoc.isValid()) {
+          assert(SrcMgr.isBeforeInTranslationUnit(TLoc, L));
+          cursorRange.setBegin(TLoc);
+        }
+      }
+    }
+  }
 
   const enum CXCursorKind K = clang_getCursorKind(parent);
   const CXCursor updateC =
@@ -2441,6 +2460,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   while (MoreTokens()) {
     const unsigned I = NextToken();
     SourceLocation TokLoc = GetTokenLoc(I);
+    unsigned col3 = SrcMgr.getSpellingColumnNumber(TokLoc);
     switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
       case RangeBefore:
         Cursors[I] = updateC;
