@@ -29,6 +29,9 @@ typedef int * barType;
 // currently stored, causing most of the tokens to be falsely annotated.
 // Since there are no source ranges for attributes, we currently don't
 // annotate them.
+#define IBOutlet __attribute__((iboutlet))
+#define IBAction void)__attribute__((ibaction)
+
 @interface IBActionTests
 - (IBAction) actionMethod:(id)arg;
 - (void)foo:(int)x;
@@ -56,7 +59,7 @@ extern int ibaction_test(void);
 @property IBOutlet int * aPropOutlet;
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:58:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:58:1 %s | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -141,113 +144,113 @@ extern int ibaction_test(void);
 // CHECK: Punctuation: "}" [25:1 - 25:2] UnexposedStmt=
 // CHECK: Punctuation: "@" [26:1 - 26:2] ObjCImplementationDecl=Bar:21:1 (Definition)
 // CHECK: Keyword: "end" [26:2 - 26:5]
-// CHECK: Punctuation: "@" [32:1 - 32:2] ObjCInterfaceDecl=IBActionTests:32:12
-// CHECK: Keyword: "interface" [32:2 - 32:11] ObjCInterfaceDecl=IBActionTests:32:12
-// CHECK: Identifier: "IBActionTests" [32:12 - 32:25] ObjCInterfaceDecl=IBActionTests:32:12
-// CHECK: Punctuation: "-" [33:1 - 33:2] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Punctuation: "(" [33:3 - 33:4] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Identifier: "IBAction" [33:4 - 33:12] macro instantiation=IBAction
-// CHECK: Punctuation: ")" [33:12 - 33:13] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Identifier: "actionMethod" [33:14 - 33:26] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Punctuation: ":" [33:26 - 33:27] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Punctuation: "(" [33:27 - 33:28] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Identifier: "id" [33:28 - 33:30] TypeRef=id:0:0
-// CHECK: Punctuation: ")" [33:30 - 33:31] ParmDecl=arg:33:31 (Definition)
-// CHECK: Identifier: "arg" [33:31 - 33:34] ParmDecl=arg:33:31 (Definition)
-// CHECK: Punctuation: ";" [33:34 - 33:35] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Punctuation: "-" [34:1 - 34:2] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Punctuation: "(" [34:3 - 34:4] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Keyword: "void" [34:4 - 34:8] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Punctuation: ")" [34:8 - 34:9] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Identifier: "foo" [34:9 - 34:12] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Punctuation: ":" [34:12 - 34:13] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Punctuation: "(" [34:13 - 34:14] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Keyword: "int" [34:14 - 34:17] ParmDecl=x:34:18 (Definition)
-// CHECK: Punctuation: ")" [34:17 - 34:18] ParmDecl=x:34:18 (Definition)
-// CHECK: Identifier: "x" [34:18 - 34:19] ParmDecl=x:34:18 (Definition)
-// CHECK: Punctuation: ";" [34:19 - 34:20] ObjCInstanceMethodDecl=foo::34:1
-// CHECK: Punctuation: "@" [35:1 - 35:2] ObjCInterfaceDecl=IBActionTests:32:12
-// CHECK: Keyword: "end" [35:2 - 35:5] ObjCInterfaceDecl=IBActionTests:32:12
-// CHECK: Keyword: "extern" [36:1 - 36:7]
-// CHECK: Keyword: "int" [36:8 - 36:11] FunctionDecl=ibaction_test:36:12
-// CHECK: Identifier: "ibaction_test" [36:12 - 36:25] FunctionDecl=ibaction_test:36:12
-// CHECK: Punctuation: "(" [36:25 - 36:26] FunctionDecl=ibaction_test:36:12
-// CHECK: Keyword: "void" [36:26 - 36:30] FunctionDecl=ibaction_test:36:12
-// CHECK: Punctuation: ")" [36:30 - 36:31] FunctionDecl=ibaction_test:36:12
-// CHECK: Punctuation: ";" [36:31 - 36:32]
-// CHECK: Punctuation: "@" [37:1 - 37:2] ObjCImplementationDecl=IBActionTests:37:1 (Definition)
-// CHECK: Keyword: "implementation" [37:2 - 37:16] ObjCImplementationDecl=IBActionTests:37:1 (Definition)
-// CHECK: Identifier: "IBActionTests" [37:17 - 37:30] ObjCImplementationDecl=IBActionTests:37:1 (Definition)
-// CHECK: Punctuation: "-" [38:1 - 38:2] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Punctuation: "(" [38:3 - 38:4] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Identifier: "IBAction" [38:4 - 38:12] macro instantiation=IBAction
-// CHECK: Punctuation: ")" [38:12 - 38:13] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Identifier: "actionMethod" [38:14 - 38:26] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Punctuation: ":" [38:26 - 38:27] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Punctuation: "(" [38:27 - 38:28] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Identifier: "id" [38:28 - 38:30] TypeRef=id:0:0
-// CHECK: Punctuation: ")" [38:30 - 38:31] ParmDecl=arg:38:31 (Definition)
-// CHECK: Identifier: "arg" [38:31 - 38:34] ParmDecl=arg:38:31 (Definition)
-// CHECK: Punctuation: "{" [39:1 - 39:2] UnexposedStmt=
-// CHECK: Identifier: "ibaction_test" [40:5 - 40:18] DeclRefExpr=ibaction_test:36:12
-// CHECK: Punctuation: "(" [40:18 - 40:19] CallExpr=ibaction_test:36:12
-// CHECK: Punctuation: ")" [40:19 - 40:20] CallExpr=ibaction_test:36:12
-// CHECK: Punctuation: ";" [40:20 - 40:21] UnexposedStmt=
-// CHECK: Punctuation: "[" [41:5 - 41:6] ObjCMessageExpr=foo::34:1
-// CHECK: Identifier: "self" [41:6 - 41:10] DeclRefExpr=self:0:0
-// CHECK: Identifier: "foo" [41:11 - 41:14] ObjCMessageExpr=foo::34:1
-// CHECK: Punctuation: ":" [41:14 - 41:15] ObjCMessageExpr=foo::34:1
-// CHECK: Literal: "0" [41:15 - 41:16] UnexposedExpr=
-// CHECK: Punctuation: "]" [41:16 - 41:17] ObjCMessageExpr=foo::34:1
-// CHECK: Punctuation: ";" [41:17 - 41:18] UnexposedStmt=
-// CHECK: Punctuation: "}" [42:1 - 42:2] UnexposedStmt=
-// CHECK: Punctuation: "-" [43:1 - 43:2] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Punctuation: "(" [43:3 - 43:4] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Keyword: "void" [43:4 - 43:8] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Punctuation: ")" [43:8 - 43:9] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Identifier: "foo" [43:10 - 43:13] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Punctuation: ":" [43:13 - 43:14] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Punctuation: "(" [43:14 - 43:15] ObjCInstanceMethodDecl=foo::43:1 (Definition)
-// CHECK: Keyword: "int" [43:15 - 43:18] ParmDecl=x:43:19 (Definition)
-// CHECK: Punctuation: ")" [43:18 - 43:19] ParmDecl=x:43:19 (Definition)
-// CHECK: Identifier: "x" [43:19 - 43:20] ParmDecl=x:43:19 (Definition)
-// CHECK: Punctuation: "{" [44:1 - 44:2] UnexposedStmt=
-// CHECK: Punctuation: "(" [45:3 - 45:4] UnexposedExpr=x:43:19
-// CHECK: Keyword: "void" [45:4 - 45:8] UnexposedExpr=x:43:19
-// CHECK: Punctuation: ")" [45:8 - 45:9] UnexposedExpr=x:43:19
-// CHECK: Identifier: "x" [45:10 - 45:11] DeclRefExpr=x:43:19
-// CHECK: Punctuation: ";" [45:11 - 45:12] UnexposedStmt=
-// CHECK: Punctuation: "}" [46:1 - 46:2] UnexposedStmt=
-// CHECK: Punctuation: "@" [47:1 - 47:2] ObjCImplementationDecl=IBActionTests:37:1 (Definition)
-// CHECK: Keyword: "end" [47:2 - 47:5]
-// CHECK: Punctuation: "@" [51:1 - 51:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Keyword: "interface" [51:2 - 51:11] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutletTests" [51:12 - 51:25] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "{" [52:1 - 52:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [53:5 - 53:13] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
-// CHECK: Keyword: "char" [53:14 - 53:18] ObjCIvarDecl=anOutlet:53:21 (Definition)
-// CHECK: Punctuation: "*" [53:19 - 53:20] ObjCIvarDecl=anOutlet:53:21 (Definition)
-// CHECK: Identifier: "anOutlet" [53:21 - 53:29] ObjCIvarDecl=anOutlet:53:21 (Definition)
-// CHECK: Punctuation: ";" [53:29 - 53:30] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "}" [54:1 - 54:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "-" [55:1 - 55:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "(" [55:3 - 55:4] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBAction" [55:4 - 55:12] macro instantiation=IBAction
-// CHECK: Punctuation: ")" [55:12 - 55:13] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "actionMethod" [55:14 - 55:26] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ":" [55:26 - 55:27] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "(" [55:27 - 55:28] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "id" [55:28 - 55:30] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ")" [55:30 - 55:31] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "arg" [55:31 - 55:34] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "@" [56:1 - 56:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Keyword: "property" [56:2 - 56:10] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
-// CHECK: Keyword: "int" [56:20 - 56:23] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "*" [56:24 - 56:25] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "aPropOutlet" [56:26 - 56:37] ObjCPropertyDecl=aPropOutlet:56:26
-// CHECK: Punctuation: ";" [56:37 - 56:38] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "@" [57:1 - 57:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Keyword: "end" [57:2 - 57:5] ObjCInterfaceDecl=IBOutletTests:51:12
+// CHECK: Punctuation: "#" [32:1 - 32:2] preprocessing directive=
+// CHECK: Identifier: "define" [32:2 - 32:8] preprocessing directive=
+// CHECK: Identifier: "IBOutlet" [32:9 - 32:17] macro definition=IBOutlet
+// CHECK: Keyword: "__attribute__" [32:18 - 32:31] preprocessing directive=
+// CHECK: Punctuation: "(" [32:31 - 32:32] preprocessing directive=
+// CHECK: Punctuation: "(" [32:32 - 32:33] preprocessing directive=
+// CHECK: Identifier: "iboutlet" [32:33 - 32:41] preprocessing directive=
+// CHECK: Punctuation: ")" [32:41 - 32:42] preprocessing directive=
+// CHECK: Punctuation: ")" [32:42 - 32:43] preprocessing directive=
+// CHECK: Punctuation: "#" [33:1 - 33:2] preprocessing directive=
+// CHECK: Identifier: "define" [33:2 - 33:8] preprocessing directive=
+// CHECK: Identifier: "IBAction" [33:9 - 33:17] macro definition=IBAction
+// CHECK: Keyword: "void" [33:18 - 33:22] preprocessing directive=
+// CHECK: Punctuation: ")" [33:22 - 33:23] preprocessing directive=
+// CHECK: Keyword: "__attribute__" [33:23 - 33:36] preprocessing directive=
+// CHECK: Punctuation: "(" [33:36 - 33:37] preprocessing directive=
+// CHECK: Punctuation: "(" [33:37 - 33:38] preprocessing directive=
+// CHECK: Identifier: "ibaction" [33:38 - 33:46] preprocessing directive=
+// CHECK: Punctuation: ")" [33:46 - 33:47] preprocessing directive=
+// CHECK: Punctuation: "@" [35:1 - 35:2] ObjCInterfaceDecl=IBActionTests:35:12
+// CHECK: Keyword: "interface" [35:2 - 35:11] ObjCInterfaceDecl=IBActionTests:35:12
+// CHECK: Identifier: "IBActionTests" [35:12 - 35:25] ObjCInterfaceDecl=IBActionTests:35:12
+// CHECK: Punctuation: "-" [36:1 - 36:2] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Punctuation: "(" [36:3 - 36:4] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Identifier: "IBAction" [36:4 - 36:12] macro instantiation=IBAction:33:9
+// CHECK: Punctuation: ")" [36:12 - 36:13] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Identifier: "actionMethod" [36:14 - 36:26] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Punctuation: ":" [36:26 - 36:27] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Punctuation: "(" [36:27 - 36:28] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Identifier: "id" [36:28 - 36:30] TypeRef=id:0:0
+// CHECK: Punctuation: ")" [36:30 - 36:31] ParmDecl=arg:36:31 (Definition)
+// CHECK: Identifier: "arg" [36:31 - 36:34] ParmDecl=arg:36:31 (Definition)
+// CHECK: Punctuation: ";" [36:34 - 36:35] ObjCInstanceMethodDecl=actionMethod::36:1
+// CHECK: Punctuation: "-" [37:1 - 37:2] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Punctuation: "(" [37:3 - 37:4] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Keyword: "void" [37:4 - 37:8] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Punctuation: ")" [37:8 - 37:9] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Identifier: "foo" [37:9 - 37:12] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Punctuation: ":" [37:12 - 37:13] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Punctuation: "(" [37:13 - 37:14] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Keyword: "int" [37:14 - 37:17] ParmDecl=x:37:18 (Definition)
+// CHECK: Punctuation: ")" [37:17 - 37:18] ParmDecl=x:37:18 (Definition)
+// CHECK: Identifier: "x" [37:18 - 37:19] ParmDecl=x:37:18 (Definition)
+// CHECK: Punctuation: ";" [37:19 - 37:20] ObjCInstanceMethodDecl=foo::37:1
+// CHECK: Punctuation: "@" [38:1 - 38:2] ObjCInterfaceDecl=IBActionTests:35:12
+// CHECK: Keyword: "end" [38:2 - 38:5] ObjCInterfaceDecl=IBActionTests:35:12
+// CHECK: Keyword: "extern" [39:1 - 39:7]
+// CHECK: Keyword: "int" [39:8 - 39:11] FunctionDecl=ibaction_test:39:12
+// CHECK: Identifier: "ibaction_test" [39:12 - 39:25] FunctionDecl=ibaction_test:39:12
+// CHECK: Punctuation: "(" [39:25 - 39:26] FunctionDecl=ibaction_test:39:12
+// CHECK: Keyword: "void" [39:26 - 39:30] FunctionDecl=ibaction_test:39:12
+// CHECK: Punctuation: ")" [39:30 - 39:31] FunctionDecl=ibaction_test:39:12
+// CHECK: Punctuation: ";" [39:31 - 39:32]
+// CHECK: Punctuation: "@" [40:1 - 40:2] ObjCImplementationDecl=IBActionTests:40:1 (Definition)
+// CHECK: Keyword: "implementation" [40:2 - 40:16] ObjCImplementationDecl=IBActionTests:40:1 (Definition)
+// CHECK: Identifier: "IBActionTests" [40:17 - 40:30] ObjCImplementationDecl=IBActionTests:40:1 (Definition)
+// CHECK: Punctuation: "-" [41:1 - 41:2] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Punctuation: "(" [41:3 - 41:4] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Identifier: "IBAction" [41:4 - 41:12] macro instantiation=IBAction:33:9
+// CHECK: Punctuation: ")" [41:12 - 41:13] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Identifier: "actionMethod" [41:14 - 41:26] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Punctuation: ":" [41:26 - 41:27] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Punctuation: "(" [41:27 - 41:28] ObjCInstanceMethodDecl=actionMethod::41:1 (Definition)
+// CHECK: Identifier: "id" [41:28 - 41:30] TypeRef=id:0:0
+// CHECK: Punctuation: ")" [41:30 - 41:31] ParmDecl=arg:41:31 (Definition)
+// CHECK: Identifier: "arg" [41:31 - 41:34] ParmDecl=arg:41:31 (Definition)
+// CHECK: Punctuation: "{" [42:1 - 42:2] UnexposedStmt=
+// CHECK: Identifier: "ibaction_test" [43:5 - 43:18] DeclRefExpr=ibaction_test:39:12
+// CHECK: Punctuation: "(" [43:18 - 43:19] CallExpr=ibaction_test:39:12
+// CHECK: Punctuation: ")" [43:19 - 43:20] CallExpr=ibaction_test:39:12
+// CHECK: Punctuation: ";" [43:20 - 43:21] UnexposedStmt=
+// CHECK: Punctuation: "[" [44:5 - 44:6] ObjCMessageExpr=foo::37:1
+// CHECK: Identifier: "self" [44:6 - 44:10] DeclRefExpr=self:0:0
+// CHECK: Identifier: "foo" [44:11 - 44:14] ObjCMessageExpr=foo::37:1
+// CHECK: Punctuation: ":" [44:14 - 44:15] ObjCMessageExpr=foo::37:1
+// CHECK: Literal: "0" [44:15 - 44:16] UnexposedExpr=
+// CHECK: Punctuation: "]" [44:16 - 44:17] ObjCMessageExpr=foo::37:1
+// CHECK: Punctuation: ";" [44:17 - 44:18] UnexposedStmt=
+// CHECK: Punctuation: "}" [45:1 - 45:2] UnexposedStmt=
+// CHECK: Punctuation: "-" [46:1 - 46:2] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Punctuation: "(" [46:3 - 46:4] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Keyword: "void" [46:4 - 46:8] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Punctuation: ")" [46:8 - 46:9] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Identifier: "foo" [46:10 - 46:13] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Punctuation: ":" [46:13 - 46:14] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Punctuation: "(" [46:14 - 46:15] ObjCInstanceMethodDecl=foo::46:1 (Definition)
+// CHECK: Keyword: "int" [46:15 - 46:18] ParmDecl=x:46:19 (Definition)
+// CHECK: Punctuation: ")" [46:18 - 46:19] ParmDecl=x:46:19 (Definition)
+// CHECK: Identifier: "x" [46:19 - 46:20] ParmDecl=x:46:19 (Definition)
+// CHECK: Punctuation: "{" [47:1 - 47:2] UnexposedStmt=
+// CHECK: Punctuation: "(" [48:3 - 48:4] UnexposedExpr=x:46:19
+// CHECK: Keyword: "void" [48:4 - 48:8] UnexposedExpr=x:46:19
+// CHECK: Punctuation: ")" [48:8 - 48:9] UnexposedExpr=x:46:19
+// CHECK: Identifier: "x" [48:10 - 48:11] DeclRefExpr=x:46:19
+// CHECK: Punctuation: ";" [48:11 - 48:12] UnexposedStmt=
+// CHECK: Punctuation: "}" [49:1 - 49:2] UnexposedStmt=
+// CHECK: Punctuation: "@" [50:1 - 50:2] ObjCImplementationDecl=IBActionTests:40:1 (Definition)
+// CHECK: Keyword: "end" [50:2 - 50:5]
+// CHECK: Punctuation: "@" [54:1 - 54:2] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Keyword: "interface" [54:2 - 54:11] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Identifier: "IBOutletTests" [54:12 - 54:25] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Punctuation: "{" [55:1 - 55:2] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Identifier: "IBOutlet" [56:5 - 56:13] macro instantiation=IBOutlet:32:9
+// CHECK: Keyword: "char" [56:14 - 56:18] ObjCIvarDecl=anOutlet:56:21 (Definition)
+// CHECK: Punctuation: "*" [56:19 - 56:20] ObjCIvarDecl=anOutlet:56:21 (Definition)
+// CHECK: Identifier: "anOutlet" [56:21 - 56:29] ObjCIvarDecl=anOutlet:56:21 (Definition)
+// CHECK: Punctuation: ";" [56:29 - 56:30] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Punctuation: "}" [57:1 - 57:2] ObjCInterfaceDecl=IBOutletTests:54:12
+// CHECK: Punctuation: "-" [58:1 - 58:2] ObjCInterfaceDecl=IBOutletTests:54:12
 
