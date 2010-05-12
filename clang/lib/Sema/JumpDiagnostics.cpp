@@ -72,6 +72,8 @@ private:
                             LabelStmt *Target, unsigned TargetScope);
   void CheckJump(Stmt *From, Stmt *To,
                  SourceLocation DiagLoc, unsigned JumpDiag);
+
+  unsigned GetDeepestCommonScope(unsigned A, unsigned B);
 };
 } // end anonymous namespace
 
@@ -87,6 +89,23 @@ JumpScopeChecker::JumpScopeChecker(Stmt *Body, Sema &s) : S(s) {
   // Check that all jumps we saw are kosher.
   VerifyJumps();
   VerifyIndirectJumps();
+}
+
+/// GetDeepestCommonScope - Finds the innermost scope enclosing the
+/// two scopes.
+unsigned JumpScopeChecker::GetDeepestCommonScope(unsigned A, unsigned B) {
+  while (A != B) {
+    // Inner scopes are created after outer scopes and therefore have
+    // higher indices.
+    if (A < B) {
+      assert(Scopes[B].ParentScope < B);
+      B = Scopes[B].ParentScope;
+    } else {
+      assert(Scopes[A].ParentScope < A);
+      A = Scopes[A].ParentScope;
+    }
+  }
+  return A;
 }
 
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
@@ -299,17 +318,25 @@ void JumpScopeChecker::VerifyJumps() {
   }
 }
 
-/// VerifyIndirectJumps - Verify whether any possible indirect jump might
-/// cross a protection boundary.
+/// VerifyIndirectJumps - Verify whether any possible indirect jump
+/// might cross a protection boundary.  Unlike direct jumps, indirect
+/// jumps count cleanups as protection boundaries:  since there's no
+/// way to know where the jump is going, we can't implicitly run the
+/// right cleanups the way we can with direct jumps.
 ///
-/// An indirect jump is "trivial" if it bypasses no initializations
-/// and no teardowns.  More formally, the jump from A to B is trivial
-/// if the path out from A to DCA(A,B) is trivial and the path in from
-/// DCA(A,B) to B is trivial, where DCA(A,B) is the deepest common
-/// ancestor of A and B.
+/// Thus, an indirect jump is "trivial" if it bypasses no
+/// initializations and no teardowns.  More formally, an indirect jump
+/// from A to B is trivial if the path out from A to DCA(A,B) is
+/// trivial and the path in from DCA(A,B) to B is trivial, where
+/// DCA(A,B) is the deepest common ancestor of A and B.
+/// Jump-triviality is transitive but asymmetric.
+///
 /// A path in is trivial if none of the entered scopes have an InDiag.
 /// A path out is trivial is none of the exited scopes have an OutDiag.
-/// Jump-triviality is transitive but asymmetric.
+///
+/// Under these definitions, this function checks that the indirect
+/// jump between A and B is trivial for every indirect goto statement A
+/// and every label B whose address was taken in the function.
 void JumpScopeChecker::VerifyIndirectJumps() {
   if (IndirectJumps.empty()) return;
 
@@ -321,9 +348,9 @@ void JumpScopeChecker::VerifyIndirectJumps() {
     return;
   }
 
-  // Build a vector of source scopes.  This serves to unique source
-  // scopes as well as to eliminate redundant lookups into
-  // LabelAndGotoScopes.
+  // Collect a single representative of every scope containing an
+  // indirect goto.  For most code bases, this substantially cuts
+  // down on the number of jump sites we'll have to consider later.
   typedef std::pair<unsigned, IndirectGotoStmt*> JumpScope;
   llvm::SmallVector<JumpScope, 32> JumpScopes;
   {
@@ -343,7 +370,9 @@ void JumpScopeChecker::VerifyIndirectJumps() {
       JumpScopes.push_back(*I);
   }
 
-  // Find a representative label from each protection scope.
+  // Collect a single representative of every scope containing a
+  // label whose address was taken somewhere in the function.
+  // For most code bases, there will be only one such scope.
   llvm::DenseMap<unsigned, LabelStmt*> TargetScopes;
   for (llvm::SmallVectorImpl<LabelStmt*>::iterator
          I = IndirectJumpTargets.begin(), E = IndirectJumpTargets.end();
@@ -356,6 +385,14 @@ void JumpScopeChecker::VerifyIndirectJumps() {
     if (!Target) Target = TheLabel;
   }
 
+  // For each target scope, make sure it's trivially reachable from
+  // every scope containing a jump site.
+  //
+  // A path between scopes always consists of exitting zero or more
+  // scopes, then entering zero or more scopes.  We build a set of
+  // of scopes S from which the target scope can be trivially
+  // entered, then verify that every jump scope can be trivially
+  // exitted to reach a scope in S.
   llvm::BitVector Reachable(Scopes.size(), false);
   for (llvm::DenseMap<unsigned,LabelStmt*>::iterator
          TI = TargetScopes.begin(), TE = TargetScopes.end(); TI != TE; ++TI) {
@@ -365,7 +402,8 @@ void JumpScopeChecker::VerifyIndirectJumps() {
     Reachable.reset();
 
     // Mark all the enclosing scopes from which you can safely jump
-    // into the target scope.
+    // into the target scope.  'Min' will end up being the index of
+    // the shallowest such scope.
     unsigned Min = TargetScope;
     while (true) {
       Reachable.set(Min);
@@ -373,7 +411,7 @@ void JumpScopeChecker::VerifyIndirectJumps() {
       // Don't go beyond the outermost scope.
       if (Min == 0) break;
 
-      // Don't go further if we couldn't trivially enter this scope.
+      // Stop if we can't trivially enter the current scope.
       if (Scopes[Min].InDiag) break;
 
       Min = Scopes[Min].ParentScope;
@@ -386,7 +424,10 @@ void JumpScopeChecker::VerifyIndirectJumps() {
       unsigned Scope = I->first;
 
       // Walk out the "scope chain" for this scope, looking for a scope
-      // we've marked reachable.
+      // we've marked reachable.  For well-formed code this amortizes
+      // to O(JumpScopes.size() / Scopes.size()):  we only iterate
+      // when we see something unmarked, and in well-formed code we
+      // mark everything we iterate past.
       bool IsReachable = false;
       while (true) {
         if (Reachable.test(Scope)) {
@@ -416,6 +457,7 @@ void JumpScopeChecker::VerifyIndirectJumps() {
   }
 }
 
+/// Diagnose an indirect jump which is known to cross scopes.
 void JumpScopeChecker::DiagnoseIndirectJump(IndirectGotoStmt *Jump,
                                             unsigned JumpScope,
                                             LabelStmt *Target,
@@ -425,25 +467,17 @@ void JumpScopeChecker::DiagnoseIndirectJump(IndirectGotoStmt *Jump,
   S.Diag(Jump->getGotoLoc(), diag::warn_indirect_goto_in_protected_scope);
   S.Diag(Target->getIdentLoc(), diag::note_indirect_goto_target);
 
-  // Collect everything in the target scope chain.
-  llvm::DenseSet<unsigned> TargetScopeChain;
-  for (unsigned SI = TargetScope; SI != 0; SI = Scopes[SI].ParentScope)
-    TargetScopeChain.insert(SI);
-  TargetScopeChain.insert(0);
+  unsigned Common = GetDeepestCommonScope(JumpScope, TargetScope);
 
-  // Walk out the scopes containing the indirect goto until we find a
-  // common ancestor with the target label.
-  unsigned Common = JumpScope;
-  while (!TargetScopeChain.count(Common)) {
-    // FIXME: this isn't necessarily a problem!  Not every protected
-    // scope requires destruction.
-    S.Diag(Scopes[Common].Loc, Scopes[Common].OutDiag);
-    Common = Scopes[Common].ParentScope;
-  }
+  // Walk out the scope chain until we reach the common ancestor.
+  for (unsigned I = JumpScope; I != Common; I = Scopes[I].ParentScope)
+    if (Scopes[I].OutDiag)
+      S.Diag(Scopes[I].Loc, Scopes[I].OutDiag);
 
   // Now walk into the scopes containing the label whose address was taken.
-  for (unsigned SI = TargetScope; SI != Common; SI = Scopes[SI].ParentScope)
-    S.Diag(Scopes[SI].Loc, Scopes[SI].InDiag);
+  for (unsigned I = TargetScope; I != Common; I = Scopes[I].ParentScope)
+    if (Scopes[I].InDiag)
+      S.Diag(Scopes[I].Loc, Scopes[I].InDiag);
 }
 
 /// CheckJump - Validate that the specified jump statement is valid: that it is
@@ -459,45 +493,18 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
   // Common case: exactly the same scope, which is fine.
   if (FromScope == ToScope) return;
 
-  // The only valid mismatch jump case happens when the jump is more deeply
-  // nested inside the jump target.  Do a quick scan to see if the jump is valid
-  // because valid code is more common than invalid code.
-  unsigned TestScope = Scopes[FromScope].ParentScope;
-  while (TestScope != ~0U) {
-    // If we found the jump target, then we're jumping out of our current scope,
-    // which is perfectly fine.
-    if (TestScope == ToScope) return;
+  unsigned CommonScope = GetDeepestCommonScope(FromScope, ToScope);
 
-    // Otherwise, scan up the hierarchy.
-    TestScope = Scopes[TestScope].ParentScope;
-  }
+  // It's okay to jump out from a nested scope.
+  if (CommonScope == ToScope) return;
 
-  // If we get here, then either we have invalid code or we're jumping in
-  // past some cleanup blocks.  It may seem strange to have a declaration
-  // with a trivial constructor and a non-trivial destructor, but it's
-  // possible.
+  // Pull out (and reverse) any scopes we might need to diagnose skipping.
+  llvm::SmallVector<unsigned, 10> ToScopes;
+  for (unsigned I = ToScope; I != CommonScope; I = Scopes[I].ParentScope)
+    if (Scopes[I].InDiag)
+      ToScopes.push_back(I);
 
-  // Eliminate the common prefix of the jump and the target.  Start by
-  // linearizing both scopes, reversing them as we go.
-  std::vector<unsigned> FromScopes, ToScopes;
-  for (TestScope = FromScope; TestScope != ~0U;
-       TestScope = Scopes[TestScope].ParentScope)
-    FromScopes.push_back(TestScope);
-  for (TestScope = ToScope; TestScope != ~0U;
-       TestScope = Scopes[TestScope].ParentScope)
-    ToScopes.push_back(TestScope);
-
-  // Remove any common entries (such as the top-level function scope).
-  while (!FromScopes.empty() && (FromScopes.back() == ToScopes.back())) {
-    FromScopes.pop_back();
-    ToScopes.pop_back();
-  }
-
-  // Ignore any cleanup blocks on the way in.
-  while (!ToScopes.empty()) {
-    if (Scopes[ToScopes.back()].InDiag) break;
-    ToScopes.pop_back();
-  }
+  // If the only scopes present are cleanup scopes, we're okay.
   if (ToScopes.empty()) return;
 
   S.Diag(DiagLoc, JumpDiag);
