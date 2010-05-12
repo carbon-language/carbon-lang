@@ -90,6 +90,14 @@ public:
     return false;
   }
 
+  /// isSectionAtomizable - Check whether the given section can be split into
+  /// atoms.
+  ///
+  /// \see MCAssembler::isSymbolLinkerVisible().
+  virtual bool isSectionAtomizable(const MCSection &Section) const {
+    return true;
+  }
+
   /// isVirtualSection - Check whether the given section is "virtual", that is
   /// has no actual object file contents.
   virtual bool isVirtualSection(const MCSection &Section) const = 0;

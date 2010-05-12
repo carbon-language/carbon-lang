@@ -297,6 +297,12 @@ const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
   if (!SD->getFragment())
     return 0;
 
+  // Non-linker visible symbols in sections which can't be atomized have no
+  // defining atom.
+  if (!getBackend().isSectionAtomizable(
+        SD->getFragment()->getParent()->getSection()))
+    return 0;
+
   // Otherwise, return the atom for the containing fragment.
   return SD->getFragment()->getAtom();
 }
