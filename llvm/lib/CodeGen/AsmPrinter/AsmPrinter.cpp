@@ -205,10 +205,10 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
       // .weak_definition _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
-    } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
+    } else if (MAI->getLinkOnceDirective() != 0) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-      //NOTE: linkonce is handling by the section the symbol was assigned to
+      //NOTE: linkonce is handled by the section the symbol was assigned to.
     } else {
       // .weak _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
