@@ -1754,20 +1754,20 @@ def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
 def err_goto_into_protected_scope : Error<"illegal goto into protected scope">;
 def err_switch_into_protected_scope : Error<
   "illegal switch case into protected scope">;
-def err_indirect_goto_in_protected_scope : Warning<
-  "illegal indirect goto in protected scope, unknown effect on scopes">,
-    InGroup<DiagGroup<"label-address-scope">>;
-def err_addr_of_label_in_protected_scope : Warning<
-  "address taken of label in protected scope, jump to it would have "
-  "unknown effect on scope">, InGroup<DiagGroup<"label-address-scope">>;
+def err_indirect_goto_without_addrlabel : Error<
+  "indirect goto in function with no address-of-label expressions">;
+def warn_indirect_goto_in_protected_scope : Warning<
+  "indirect goto might cross protected scopes">,
+  InGroup<DiagGroup<"label-address-scope">>;
+def note_indirect_goto_target : Note<"possible target of indirect goto">;
 def note_protected_by_variable_init : Note<
   "jump bypasses variable initialization">;
+def note_protected_by_cleanup : Note<
+  "jump bypasses initialization of variable with __attribute__((cleanup))">;
 def note_protected_by_vla_typedef : Note<
   "jump bypasses initialization of VLA typedef">;
 def note_protected_by_vla : Note<
   "jump bypasses initialization of variable length array">;
-def note_protected_by_cleanup : Note<
-  "jump bypasses initialization of declaration with __attribute__((cleanup))">;
 def note_protected_by_objc_try : Note<
   "jump bypasses initialization of @try block">;
 def note_protected_by_objc_catch : Note<
@@ -1782,6 +1782,25 @@ def note_protected_by_cxx_catch : Note<
   "jump bypasses initialization of catch block">;
 def note_protected_by___block : Note<
   "jump bypasses setup of __block variable">;
+
+def note_exits_cleanup : Note<
+  "jump exits scope of variable with __attribute__((cleanup))">;
+def note_exits_dtor : Note<
+  "jump exits scope of variable with non-trivial destructor">;
+def note_exits___block : Note<
+  "jump exits scope of __block variable">;
+def note_exits_objc_try : Note<
+  "jump exits @try block">;
+def note_exits_objc_catch : Note<
+  "jump exits @catch block">;
+def note_exits_objc_finally : Note<
+  "jump exits @finally block">;
+def note_exits_objc_synchronized : Note<
+  "jump exits @synchronized block">;
+def note_exits_cxx_try : Note<
+  "jump exits try block">;
+def note_exits_cxx_catch : Note<
+  "jump exits catch block">;
 
 def err_func_returning_array_function : Error<
   "function cannot return %select{array|function}0 type %1">;

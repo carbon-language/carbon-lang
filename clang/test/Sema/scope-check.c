@@ -133,20 +133,20 @@ int test8(int x) {
 void test9(int n, void *P) {
   int Y;
   int Z = 4;
-  goto *P;  // ok.
+  goto *P;  // expected-warning {{indirect goto might cross protected scopes}}
 
 L2: ;
-  int a[n]; // expected-note 2 {{jump bypasses initialization of variable length array}}
+  int a[n]; // expected-note {{jump bypasses initialization of variable length array}}
 
-L3:
+L3:         // expected-note {{possible target of indirect goto}}
 L4:  
-  goto *P;  // expected-warning {{illegal indirect goto in protected scope, unknown effect on scopes}}
+  goto *P;
   goto L3;  // ok
   goto L4;  // ok
   
   void *Ptrs[] = {
-    &&L2,   // Ok.
-    &&L3   // expected-warning {{address taken of label in protected scope, jump to it would have unknown effect on scope}}
+    &&L2,
+    &&L3
   };
 }
 
@@ -193,3 +193,9 @@ void test12(int n) {
   };
 }
 
+void test13(int n, void *p) {
+  int vla[n];
+  goto *p;
+ a0: ;
+  static void *ps[] = { &&a0 };
+}
