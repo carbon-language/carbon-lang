@@ -966,16 +966,17 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm:$src), addr:$dst)]>;
 
-def MOV8o8a : Ii8 <0xA0, RawFrm, (outs), (ins offset8:$src),
+/// moffs8, moffs16, moffs32 and moffs64 versions of moves.  The immediate is a
+/// 32-bit offset from the PC.
+def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|%al, $src}", []>;
-def MOV16o16a : Ii16 <0xA1, RawFrm, (outs), (ins offset16:$src),
+def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
                       "mov{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|%eax, $src}", []>;
-
-def MOV8ao8 : Ii8 <0xA2, RawFrm, (outs offset8:$dst), (ins),
+def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, %al}", []>;
-def MOV16ao16 : Ii16 <0xA3, RawFrm, (outs offset16:$dst), (ins),
+def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
                       "mov{w}\t{%ax, $dst|$dst, %ax}", []>, OpSize;
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, %eax}", []>;
