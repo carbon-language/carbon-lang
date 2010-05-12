@@ -359,20 +359,14 @@ class MCZeroFillFragment : public MCFragment {
   /// Size - The size of this fragment.
   uint64_t Size;
 
-  /// Alignment - The alignment for this fragment.
-  unsigned Alignment;
-
 public:
-  MCZeroFillFragment(uint64_t _Size, unsigned _Alignment, MCSectionData *SD = 0)
-    : MCFragment(FT_ZeroFill, SD),
-      Size(_Size), Alignment(_Alignment) {}
+  MCZeroFillFragment(uint64_t _Size, MCSectionData *SD = 0)
+    : MCFragment(FT_ZeroFill, SD), Size(_Size) {}
 
   /// @name Accessors
   /// @{
 
   uint64_t getSize() const { return Size; }
-
-  unsigned getAlignment() const { return Alignment; }
 
   /// @}
 

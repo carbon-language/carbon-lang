@@ -421,16 +421,7 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
   }
 
   case MCFragment::FT_ZeroFill: {
-    MCZeroFillFragment &ZFF = cast<MCZeroFillFragment>(F);
-
-    // Align the fragment offset; it is safe to adjust the offset freely since
-    // this is only in virtual sections.
-    //
-    // FIXME: We shouldn't be doing this here.
-    Address = RoundUpToAlignment(Address, ZFF.getAlignment());
-    Layout.setFragmentOffset(&F, Address - StartAddress);
-
-    EffectiveSize = ZFF.getSize();
+    EffectiveSize = cast<MCZeroFillFragment>(F).getSize();
     break;
   }
   }
@@ -497,6 +488,8 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   case MCFragment::FT_Align: {
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
     uint64_t Count = FragmentSize / AF.getValueSize();
+
+    assert(AF.getValueSize() && "Invalid virtual align in concrete fragment!");
 
     // FIXME: This error shouldn't actually occur (the front end should emit
     // multiple .align directives to enforce the semantics it wants), but is
@@ -912,7 +905,7 @@ void MCZeroFillFragment::dump() {
   OS << "<MCZeroFillFragment ";
   this->MCFragment::dump();
   OS << "\n       ";
-  OS << " Size:" << getSize() << " Alignment:" << getAlignment() << ">";
+  OS << " Size:" << getSize() << ">";
 }
 
 void MCSectionData::dump() {

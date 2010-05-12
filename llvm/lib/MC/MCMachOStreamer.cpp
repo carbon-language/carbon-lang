@@ -321,7 +321,12 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   MCSymbolData &SD = Assembler.getOrCreateSymbolData(*Symbol);
 
-  MCFragment *F = new MCZeroFillFragment(Size, ByteAlignment, &SectData);
+  // Emit an align fragment if necessary.
+  if (ByteAlignment != 1)
+    new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, /*EmitNops=*/false,
+                        &SectData);
+
+  MCFragment *F = new MCZeroFillFragment(Size, &SectData);
   SD.setFragment(F);
   if (Assembler.isSymbolLinkerVisible(&SD))
     F->setAtom(&SD);
