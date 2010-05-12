@@ -183,8 +183,10 @@ class OneCommandPerFileTest:
             self.createTempInput(tmp, test)
             tmp.flush()
             cmd.append(tmp.name)
-        else:
+        elif hasattr(test, 'source_path'):
             cmd.append(test.source_path)
+        else:
+            cmd.append(test.getSourcePath())
 
         out, err, exitCode = TestRunner.executeCommand(cmd)
 
