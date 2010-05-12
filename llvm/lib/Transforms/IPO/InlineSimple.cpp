@@ -49,6 +49,9 @@ namespace {
       CA.growCachedCostInfo(Caller, Callee);
     }
     virtual bool doInitialization(CallGraph &CG);
+    void releaseMemory() {
+      CA.clear();
+    }
   };
 }
 

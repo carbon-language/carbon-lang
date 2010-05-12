@@ -455,6 +455,11 @@ InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
   else
     CallerMetrics.NumInsts = 0;
   
-  // We are not updating the argumentweights. We have already determined that
+  // We are not updating the argument weights. We have already determined that
   // Caller is a fairly large function, so we accept the loss of precision.
+}
+
+/// clear - empty the cache of inline costs
+void InlineCostAnalyzer::clear() {
+  CachedFunctionInfo.clear();
 }

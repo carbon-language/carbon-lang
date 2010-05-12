@@ -198,6 +198,9 @@ namespace llvm {
     /// has been inlined. If Callee is NULL it means a dead call has been
     /// eliminated.
     void growCachedCostInfo(Function* Caller, Function* Callee);
+
+    /// clear - empty the cache of inline costs
+    void clear();
   };
 
   /// callIsSmall - If a call is likely to lower to a single target instruction,
