@@ -675,7 +675,60 @@ template<class IntType = int>
     class poisson_distribution;
 
 template<class RealType = double>
-    class exponential_distribution;
+class exponential_distribution
+{
+public:
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef exponential_distribution distribution_type;
+
+        explicit param_type(RealType lambda = 1.0);
+
+        RealType lambda() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructors and reset functions
+    explicit exponential_distribution(RealType lambda = 1.0);
+    explicit exponential_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    RealType lambda() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const exponential_distribution& x,
+                           const exponential_distribution& y);
+    friend bool operator!=(const exponential_distribution& x,
+                           const exponential_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const exponential_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               exponential_distribution& x);
+};
 
 template<class RealType = double>
     class gamma_distribution;
@@ -727,6 +780,7 @@ template<class RealType = double>
 #include <string>
 #include <istream>
 #include <ostream>
+#include <cmath>
 
 #pragma GCC system_header
 
@@ -2460,6 +2514,8 @@ seed_seq::generate(_RandomAccessIterator __first, _RandomAccessIterator __last)
     }
 }
 
+// generate_canonical
+
 template<class _RealType, size_t __bits, class _URNG>
 _RealType
 generate_canonical(_URNG& __g)
@@ -2599,6 +2655,8 @@ __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
     return _S;
 }
 
+// uniform_int_distribution
+
 template<class _IntType = int>
 class uniform_int_distribution
 {
@@ -2716,6 +2774,8 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     return __is;
 }
 
+// uniform_real_distribution
+
 template<class _RealType = double>
 class uniform_real_distribution
 {
@@ -2817,6 +2877,8 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     return __is;
 }
 
+// bernoulli_distribution
+
 class bernoulli_distribution
 {
 public:
@@ -2904,6 +2966,8 @@ operator>>(basic_istream<_CharT, _Traits>& __is, bernoulli_distribution& __x)
         __x.param(param_type(__p));
     return __is;
 }
+
+// binomial_distribution
 
 template<class _IntType = int>
 class binomial_distribution
@@ -3004,6 +3068,106 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __t >> __p;
     if (!__is.fail())
         __x.param(param_type(__t, __p));
+    return __is;
+}
+
+// exponential_distribution
+
+template<class _RealType = double>
+class exponential_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        result_type __lambda_;
+    public:
+        typedef exponential_distribution distribution_type;
+
+        explicit param_type(result_type __lambda = 1) : __lambda_(__lambda) {}
+
+        result_type lambda() const {return __lambda_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__lambda_ == __y.__lambda_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructors and reset functions
+    explicit exponential_distribution(result_type __lambda = 1)
+        : __p_(param_type(__lambda)) {}
+    explicit exponential_distribution(const param_type& __p) : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type lambda() const {return __p_.lambda();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return 0;}
+    result_type max() const
+        {return -std::log(1-std::nextafter(result_type(1), result_type(-1))) /
+                 __p_.lambda();}
+
+    friend bool operator==(const exponential_distribution& __x,
+                           const exponential_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const exponential_distribution& __x,
+                           const exponential_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template <class _RealType>
+template<class _URNG>
+_RealType
+exponential_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    return -_STD::log
+                  (
+                      result_type(1) -
+                      _STD::generate_canonical<result_type,
+                                       numeric_limits<result_type>::digits>(__g)
+                  )
+                  / __p.lambda();
+}
+
+template <class _CharT, class _Traits, class _RealType>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const exponential_distribution<_RealType>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    return __os << __x.lambda();
+}
+
+template <class _CharT, class _Traits, class _RealType>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           exponential_distribution<_RealType>& __x)
+{
+    typedef exponential_distribution<_RealType> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __lambda;
+    __is >> __lambda;
+    if (!__is.fail())
+        __x.param(param_type(__lambda));
     return __is;
 }
 
