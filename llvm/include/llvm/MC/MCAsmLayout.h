@@ -10,6 +10,8 @@
 #ifndef LLVM_MC_MCASMLAYOUT_H
 #define LLVM_MC_MCASMLAYOUT_H
 
+#include "llvm/ADT/SmallVector.h"
+
 namespace llvm {
 class MCAssembler;
 class MCFragment;
@@ -24,11 +26,18 @@ class MCSymbolData;
 /// efficiently compute the exact addresses of any symbol in the assembly file,
 /// even during the relaxation process.
 class MCAsmLayout {
+public:
+  typedef llvm::SmallVectorImpl<MCSectionData*>::const_iterator const_iterator;
+  typedef llvm::SmallVectorImpl<MCSectionData*>::iterator iterator;
+
 private:
   MCAssembler &Assembler;
 
+  /// List of sections in layout order.
+  llvm::SmallVector<MCSectionData*, 16> SectionOrder;
+
 public:
-  MCAsmLayout(MCAssembler &_Assembler) : Assembler(_Assembler) {}
+  MCAsmLayout(MCAssembler &_Assembler);
 
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
@@ -38,6 +47,16 @@ public:
   /// the delta from the old size.
   void UpdateForSlide(MCFragment *F, int SlideAmount);
 
+  /// @name Section Access (in layout order)
+  /// @{
+
+  iterator begin() { return SectionOrder.begin(); }
+  const_iterator begin() const { return SectionOrder.begin(); }
+
+  iterator end() {return SectionOrder.end();}
+  const_iterator end() const {return SectionOrder.end();}
+
+  /// @}
   /// @name Fragment Layout Data
   /// @{
 

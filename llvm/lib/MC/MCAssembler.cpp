@@ -47,6 +47,16 @@ STATISTIC(SectionLayouts, "Number of section layouts");
 
 /* *** */
 
+MCAsmLayout::MCAsmLayout(MCAssembler &Asm) : Assembler(Asm) {
+  // Compute the section layout order. Virtual sections must go last.
+  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
+    if (!Asm.getBackend().isVirtualSection(it->getSection()))
+      SectionOrder.push_back(&*it);
+  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
+    if (Asm.getBackend().isVirtualSection(it->getSection()))
+      SectionOrder.push_back(&*it);
+}
+
 void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
   // We shouldn't have to do anything special to support negative slides, and it
   // is a perfectly valid thing to do as long as other parts of the system can
@@ -59,24 +69,10 @@ void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
   // FIXME-PERF: This is O(N^2), but will be eliminated once we get smarter.
 
   // Layout the concrete sections and fragments.
-  MCAssembler &Asm = getAssembler();
   uint64_t Address = 0;
-  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
-    // Skip virtual sections.
-    if (Asm.getBackend().isVirtualSection(it->getSection()))
-      continue;
-
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
     // Layout the section fragments and its size.
-    Address = Asm.LayoutSection(*it, *this, Address);
-  }
-
-  // Layout the virtual sections.
-  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
-    if (!Asm.getBackend().isVirtualSection(it->getSection()))
-      continue;
-
-    // Layout the section fragments and its size.
-    Address = Asm.LayoutSection(*it, *this, Address);
+    Address = getAssembler().LayoutSection(**it, *this, Address);
   }
 }
 
@@ -711,22 +707,10 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
 
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    // Skip virtual sections.
-    if (getBackend().isVirtualSection(it->getSection()))
-      continue;
-
+  for (MCAsmLayout::iterator it = Layout.begin(),
+         ie = Layout.end(); it != ie; ++it) {
     // Layout the section fragments and its size.
-    Address = LayoutSection(*it, Layout, Address);
-  }
-
-  // Layout the virtual sections.
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    if (!getBackend().isVirtualSection(it->getSection()))
-      continue;
-
-    // Layout the section fragments and its size.
-    Address = LayoutSection(*it, Layout, Address);
+    Address = LayoutSection(**it, Layout, Address);
   }
 
   // Scan for fragments that need relaxation.
