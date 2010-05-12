@@ -591,7 +591,11 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
       }
     }
   }
-
+  // Allow arbitray objective-c pointer conversion with static casts.
+  if (SrcType->isObjCObjectPointerType() &&
+      DestType->isObjCObjectPointerType())
+    return TC_Success;
+  
   // We tried everything. Everything! Nothing works! :-(
   return TC_NotApplicable;
 }
