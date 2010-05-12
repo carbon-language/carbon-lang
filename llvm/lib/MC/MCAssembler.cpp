@@ -534,6 +534,9 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
+
+    assert(FF.getValueSize() && "Invalid virtual align in concrete fragment!");
+
     for (uint64_t i = 0, e = FF.getSize() / FF.getValueSize(); i != e; ++i) {
       switch (FF.getValueSize()) {
       default:
@@ -578,6 +581,26 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
   // Ignore virtual sections.
   if (getBackend().isVirtualSection(SD->getSection())) {
     assert(SectionFileSize == 0 && "Invalid size for section!");
+
+    // Check that contents are only things legal inside a virtual section.
+    for (MCSectionData::const_iterator it = SD->begin(),
+           ie = SD->end(); it != ie; ++it) {
+      switch (it->getKind()) {
+      default:
+        assert(0 && "Invalid fragment in virtual section!");
+      case MCFragment::FT_Align:
+        assert(!cast<MCAlignFragment>(it)->getValueSize() &&
+               "Invalid align in virtual section!");
+        break;
+      case MCFragment::FT_Fill:
+        assert(!cast<MCFillFragment>(it)->getValueSize() &&
+               "Invalid fill in virtual section!");
+        break;
+      case MCFragment::FT_ZeroFill:
+        break;
+      }
+    }
+
     return;
   }
 
