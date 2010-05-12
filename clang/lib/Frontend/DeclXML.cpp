@@ -49,7 +49,8 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
     addSubNodes(cast<RecordDecl>(RD));
 
     if (RD->isDefinition()) {
-      Doc.addAttribute("num_bases", RD->getNumBases());
+      // FIXME: This breaks XML generation
+      //Doc.addAttribute("num_bases", RD->getNumBases());
 
       for (CXXRecordDecl::base_class_iterator 
              base = RD->bases_begin(),

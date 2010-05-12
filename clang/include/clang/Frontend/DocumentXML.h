@@ -146,12 +146,23 @@ inline void DocumentXML::initialize(ASTContext &Context) {
 //---------------------------------------------------------
 template<class T>
 inline void DocumentXML::addAttribute(const char* pName, const T& value) {
-  Out << ' ' << pName << "=\"" << value << "\"";
+  std::string repr;
+  {
+    llvm::raw_string_ostream buf(repr);
+    buf << value;
+    buf.flush();
+  }
+  
+  Out << ' ' << pName << "=\"" 
+      << DocumentXML::escapeString(repr.c_str(), repr.size())
+      << "\"";
 }
 
 //---------------------------------------------------------
 inline void DocumentXML::addPtrAttribute(const char* pName, const char* text) {
-  Out << ' ' << pName << "=\"" << text << "\"";
+  Out << ' ' << pName << "=\"" 
+      << DocumentXML::escapeString(text, strlen(text))
+      << "\"";
 }
 
 //---------------------------------------------------------
