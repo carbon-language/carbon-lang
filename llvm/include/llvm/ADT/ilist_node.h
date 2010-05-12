@@ -49,6 +49,56 @@ class ilist_node : private ilist_half_node<NodeTy> {
   void setNext(NodeTy *N) { Next = N; }
 protected:
   ilist_node() : Next(0) {}
+
+public:
+  /// @name Adjacent Node Accessors
+  /// @{
+
+  /// \brief Get the previous node, or 0 for the list head.
+  NodeTy *getPrevNode() {
+    NodeTy *Prev = this->getPrev();
+
+    // Check for sentinel.
+    if (!Prev->getNext())
+      return 0;
+
+    return Prev;
+  }
+
+  /// \brief Get the previous node, or 0 for the list head.
+  const NodeTy *getPrevNode() const {
+    NodeTy *Prev = this->getPrev();
+
+    // Check for sentinel.
+    if (!Prev->getNext())
+      return 0;
+
+    return Prev;
+  }
+
+  /// \brief Get the next node, or 0 for the list tail.
+  NodeTy *getNextNode() {
+    NodeTy *Next = getNext();
+
+    // Check for sentinel.
+    if (!Next->getNext())
+      return 0;
+
+    return Next;
+  }
+
+  /// \brief Get the next node, or 0 for the list tail.
+  const NodeTy *getNextNode() const {
+    NodeTy *Next = getNext();
+
+    // Check for sentinel.
+    if (!Next->getNext())
+      return 0;
+
+    return Next;
+  }
+
+  /// @}
 };
 
 } // End llvm namespace
