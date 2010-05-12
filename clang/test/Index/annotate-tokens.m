@@ -224,7 +224,7 @@ extern int ibaction_test(void);
 // CHECK: Keyword: "interface" [51:2 - 51:11] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Identifier: "IBOutletTests" [51:12 - 51:25] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "{" [52:1 - 52:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [53:5 - 53:13] macro instantiation=IBOutlet:132:9
+// CHECK: Identifier: "IBOutlet" [53:5 - 53:13] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
 // CHECK: Keyword: "char" [53:14 - 53:18] ObjCIvarDecl=anOutlet:53:21 (Definition)
 // CHECK: Punctuation: "*" [53:19 - 53:20] ObjCIvarDecl=anOutlet:53:21 (Definition)
 // CHECK: Identifier: "anOutlet" [53:21 - 53:29] ObjCIvarDecl=anOutlet:53:21 (Definition)
