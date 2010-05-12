@@ -2440,9 +2440,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
         TypeLoc TL = TI->getTypeLoc();
         SourceLocation TLoc = TL.getFullSourceRange().getBegin();
-        unsigned col1 = SrcMgr.getSpellingColumnNumber(L);
-        unsigned col2 = SrcMgr.getSpellingColumnNumber(TLoc);
-        
         if (TLoc.isValid()) {
           assert(SrcMgr.isBeforeInTranslationUnit(TLoc, L));
           cursorRange.setBegin(TLoc);
@@ -2460,7 +2457,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   while (MoreTokens()) {
     const unsigned I = NextToken();
     SourceLocation TokLoc = GetTokenLoc(I);
-    unsigned col3 = SrcMgr.getSpellingColumnNumber(TokLoc);
     switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
       case RangeBefore:
         Cursors[I] = updateC;
