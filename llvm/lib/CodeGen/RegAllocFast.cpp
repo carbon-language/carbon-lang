@@ -182,9 +182,9 @@ void RAFast::killVirtReg(unsigned VirtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "killVirtReg needs a virtual register");
   DEBUG(dbgs() << "  Killing %reg" << VirtReg << "\n");
-  LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
-  if (i != LiveVirtRegs.end())
-    killVirtReg(i);
+  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
+  if (lri != LiveVirtRegs.end())
+    killVirtReg(lri);
 }
 
 /// spillVirtReg - This method spills the value specified by VirtReg into the
@@ -195,9 +195,9 @@ void RAFast::spillVirtReg(MachineBasicBlock &MBB,
                           unsigned VirtReg, bool isKill) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Spilling a physical register is illegal!");
-  LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
-  assert(i != LiveVirtRegs.end() && "Spilling unmapped virtual register");
-  LiveReg &LR = i->second;
+  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
+  assert(lri != LiveVirtRegs.end() && "Spilling unmapped virtual register");
+  LiveReg &LR = lri->second;
   assert(PhysRegState[LR.PhysReg] == VirtReg && "Broken RegState mapping");
 
   // If this physreg is used by the instruction, we want to kill it on the
@@ -225,7 +225,7 @@ void RAFast::spillVirtReg(MachineBasicBlock &MBB,
   }
 
   if (isKill)
-    killVirtReg(i);
+    killVirtReg(lri);
 }
 
 /// spillAll - Spill all dirty virtregs without killing them.
@@ -442,10 +442,10 @@ unsigned RAFast::defineVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                unsigned OpNum, unsigned VirtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
-  LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
-  if (i == LiveVirtRegs.end())
-    i = allocVirtReg(MBB, MI, VirtReg);
-  LiveReg &LR = i->second;
+  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
+  if (lri == LiveVirtRegs.end())
+    lri = allocVirtReg(MBB, MI, VirtReg);
+  LiveReg &LR = lri->second;
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
   LR.Dirty = true;
@@ -458,17 +458,18 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                unsigned OpNum, unsigned VirtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
-  LiveRegMap::iterator i = LiveVirtRegs.find(VirtReg);
-  if (i == LiveVirtRegs.end()) {
-    i = allocVirtReg(MBB, MI, VirtReg);
+  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
+  if (lri == LiveVirtRegs.end()) {
+    lri = allocVirtReg(MBB, MI, VirtReg);
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DEBUG(dbgs() << "  Reloading %reg" << VirtReg << " into "
-                 << TRI->getName(i->second.PhysReg) << "\n");
-    TII->loadRegFromStackSlot(MBB, MI, i->second.PhysReg, FrameIndex, RC, TRI);
+                 << TRI->getName(lri->second.PhysReg) << "\n");
+    TII->loadRegFromStackSlot(MBB, MI, lri->second.PhysReg, FrameIndex, RC,
+                              TRI);
     ++NumLoads;
   }
-  LiveReg &LR = i->second;
+  LiveReg &LR = lri->second;
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
   UsedInInstr.set(LR.PhysReg);
@@ -584,9 +585,9 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (!MO.isReg()) continue;
         unsigned Reg = MO.getReg();
         if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-        LiveRegMap::iterator it = LiveVirtRegs.find(Reg);
-        if (it != LiveVirtRegs.end())
-          setPhysReg(MO, it->second.PhysReg);
+        LiveRegMap::iterator lri = LiveVirtRegs.find(Reg);
+        if (lri != LiveVirtRegs.end())
+          setPhysReg(MO, lri->second.PhysReg);
         else
           MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
       }
