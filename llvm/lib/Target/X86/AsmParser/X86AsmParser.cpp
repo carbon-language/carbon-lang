@@ -673,6 +673,8 @@ X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
   bool MatchW = MatchInstructionImpl(Operands, Inst);
   Tmp[Base.size()] = 'l';
   bool MatchL = MatchInstructionImpl(Operands, Inst);
+  Tmp[Base.size()] = 'q';
+  bool MatchQ = MatchInstructionImpl(Operands, Inst);
 
   // Restore the old token.
   Op->setTokenValue(Base);
@@ -680,7 +682,7 @@ X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
   // If exactly one matched, then we treat that as a successful match (and the
   // instruction will already have been filled in correctly, since the failing
   // matches won't have modified it).
-  if (MatchB + MatchW + MatchL == 2)
+  if (MatchB + MatchW + MatchL + MatchQ == 3)
     return false;
 
   // Otherwise, the match failed.

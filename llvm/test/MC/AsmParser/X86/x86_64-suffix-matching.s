@@ -4,3 +4,7 @@
         add $0, %eax
 // CHECK: addb $255, %al
         add $0xFF, %al
+// CHECK: orq %rax, %rdx
+        or %rax, %rdx
+// CHECK: shlq $3, %rax
+        shl $3, %rax
