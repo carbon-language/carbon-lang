@@ -846,7 +846,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     unsigned SrcCopyReg, DstCopyReg, SrcCopySubReg, DstCopySubReg;
     unsigned SrcCopyPhysReg = 0U;
     bool isCopy = TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg, 
-                                   SrcCopySubReg, DstCopySubReg);
+                                   SrcCopySubReg, DstCopySubReg) &&
+      SrcCopySubReg == DstCopySubReg;
     if (isCopy && TargetRegisterInfo::isVirtualRegister(SrcCopyReg))
       SrcCopyPhysReg = getVirt2PhysRegMapSlot(SrcCopyReg);
 
@@ -1154,7 +1155,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // the register scavenger.  See pr4100.)
     if (TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg,
                          SrcCopySubReg, DstCopySubReg) &&
-        SrcCopyReg == DstCopyReg && DeadDefs.empty())
+        SrcCopyReg == DstCopyReg && SrcCopySubReg == DstCopySubReg &&
+        DeadDefs.empty())
       MBB.erase(MI);
   }
 
