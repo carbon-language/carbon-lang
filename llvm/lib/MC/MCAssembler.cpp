@@ -396,9 +396,14 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
   // Set the aligned section address.
   Layout.setSectionAddress(&SD, StartAddress);
 
-  uint64_t Address = StartAddress;
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
+
+    // Compute the fragment start address.
+    uint64_t Address = StartAddress;
+    if (MCFragment *Prev = F.getPrevNode())
+      Address = (Layout.getFragmentAddress(Prev) +
+                 Layout.getFragmentEffectiveSize(Prev));
 
     ++stats::FragmentLayouts;
 
@@ -464,15 +469,16 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
     }
 
     Layout.setFragmentEffectiveSize(&F, EffectiveSize);
-    Address += EffectiveSize;
   }
 
   // Set the section sizes.
-  Layout.setSectionSize(&SD, Address - StartAddress);
-  if (IsVirtual)
-    Layout.setSectionFileSize(&SD, 0);
-  else
-    Layout.setSectionFileSize(&SD, Address - StartAddress);
+  uint64_t Size = 0;
+  if (!SD.getFragmentList().empty()) {
+    MCFragment *F = &SD.getFragmentList().back();
+    Size = Layout.getFragmentOffset(F) + Layout.getFragmentEffectiveSize(F);
+  }
+  Layout.setSectionSize(&SD, Size);
+  Layout.setSectionFileSize(&SD, IsVirtual ? 0 : Size);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
