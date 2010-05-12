@@ -121,8 +121,9 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn);
     void AllocateBasicBlock(MachineBasicBlock &MBB);
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
-    void killVirtReg(unsigned VirtReg);
+    void addKillFlag(LiveRegMap::iterator i);
     void killVirtReg(LiveRegMap::iterator i);
+    void killVirtReg(unsigned VirtReg);
     void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                       unsigned VirtReg, bool isKill);
     void killPhysReg(unsigned PhysReg);
@@ -161,20 +162,27 @@ int RAFast::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
   return FrameIdx;
 }
 
-/// killVirtReg - Mark virtreg as no longer available.
-void RAFast::killVirtReg(LiveRegMap::iterator i) {
-  assert(i != LiveVirtRegs.end() && "Killing unmapped virtual register");
-  unsigned VirtReg = i->first;
-  const LiveReg &LR = i->second;
-  assert(PhysRegState[LR.PhysReg] == VirtReg && "Broken RegState mapping");
-  PhysRegState[LR.PhysReg] = regFree;
+/// addKillFlag - Set kill flags on last use of a virtual register.
+void RAFast::addKillFlag(LiveRegMap::iterator lri) {
+  assert(lri != LiveVirtRegs.end() && "Killing unmapped virtual register");
+  const LiveReg &LR = lri->second;
   if (LR.LastUse) {
     MachineOperand &MO = LR.LastUse->getOperand(LR.LastOpNum);
-    if (MO.isUse()) MO.setIsKill();
-    else            MO.setIsDead();
-    DEBUG(dbgs() << "  - last seen here: " << *LR.LastUse);
+    if (MO.isDef())
+      MO.setIsDead();
+    else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
+      MO.setIsKill();
+    DEBUG(dbgs() << "  %reg" << lri->first << " killed: " << *LR.LastUse);
   }
-  LiveVirtRegs.erase(i);
+}
+
+/// killVirtReg - Mark virtreg as no longer available.
+void RAFast::killVirtReg(LiveRegMap::iterator lri) {
+  addKillFlag(lri);
+  const LiveReg &LR = lri->second;
+  assert(PhysRegState[LR.PhysReg] == lri->first && "Broken RegState mapping");
+  PhysRegState[LR.PhysReg] = regFree;
+  LiveVirtRegs.erase(lri);
 }
 
 /// killVirtReg - Mark virtreg as no longer available.
@@ -445,6 +453,8 @@ unsigned RAFast::defineVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
   if (lri == LiveVirtRegs.end())
     lri = allocVirtReg(MBB, MI, VirtReg);
+  else
+    addKillFlag(lri); // Kill before redefine.
   LiveReg &LR = lri->second;
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
