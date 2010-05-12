@@ -978,12 +978,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fmath-errno");
 
+  // Explicitly error on some things we know we don't support and can't just
+  // ignore.
+  types::ID InputType = Inputs[0].getType();
   Arg *Unsupported;
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
       (Unsupported = Args.getLastArg(options::OPT_iframework)) ||
       (Unsupported = Args.getLastArg(options::OPT_fshort_enums)))
     D.Diag(clang::diag::err_drv_clang_unsupported)
       << Unsupported->getOption().getName();
+
+  if (types::isCXX(InputType) &&
+      getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
+      getToolChain().getTriple().getArch() == llvm::Triple::x86) {
+    if ((Unsupported = Args.getLastArg(options::OPT_fapple_kext)))
+      D.Diag(clang::diag::err_drv_clang_unsupported_opt_cxx_darwin_i386)
+        << Unsupported->getOption().getName();
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_P);
@@ -1011,7 +1022,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // preprocessor.
   //
   // FIXME: Support -fpreprocessed
-  types::ID InputType = Inputs[0].getType();
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
     AddPreprocessingOptions(D, Args, CmdArgs, Output, Inputs);
 
