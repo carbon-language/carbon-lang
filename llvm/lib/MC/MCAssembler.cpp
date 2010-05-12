@@ -394,8 +394,7 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
     break;
 
   case MCFragment::FT_Fill: {
-    MCFillFragment &FF = cast<MCFillFragment>(F);
-    EffectiveSize = FF.getSize();
+    EffectiveSize = cast<MCFillFragment>(F).getSize();
     break;
   }
 
@@ -417,11 +416,6 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
                          "' (at offset '" + Twine(FragmentOffset) + "'");
 
     EffectiveSize = Offset;
-    break;
-  }
-
-  case MCFragment::FT_ZeroFill: {
-    EffectiveSize = cast<MCZeroFillFragment>(F).getSize();
     break;
   }
   }
@@ -562,11 +556,6 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
     break;
   }
-
-  case MCFragment::FT_ZeroFill: {
-    assert(0 && "Invalid zero fill fragment in concrete section!");
-    break;
-  }
   }
 
   assert(OW->getStream().tell() - Start == FragmentSize);
@@ -595,8 +584,6 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
       case MCFragment::FT_Fill:
         assert(!cast<MCFillFragment>(it)->getValueSize() &&
                "Invalid fill in virtual section!");
-        break;
-      case MCFragment::FT_ZeroFill:
         break;
       }
     }
@@ -920,15 +907,6 @@ void MCOrgFragment::dump() {
   this->MCFragment::dump();
   OS << "\n       ";
   OS << " Offset:" << getOffset() << " Value:" << getValue() << ">";
-}
-
-void MCZeroFillFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCZeroFillFragment ";
-  this->MCFragment::dump();
-  OS << "\n       ";
-  OS << " Size:" << getSize() << ">";
 }
 
 void MCSectionData::dump() {

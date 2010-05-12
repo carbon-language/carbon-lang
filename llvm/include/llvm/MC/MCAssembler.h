@@ -69,8 +69,7 @@ public:
     FT_Data,
     FT_Fill,
     FT_Inst,
-    FT_Org,
-    FT_ZeroFill
+    FT_Org
   };
 
 private:
@@ -353,31 +352,6 @@ public:
     return F->getKind() == MCFragment::FT_Org;
   }
   static bool classof(const MCOrgFragment *) { return true; }
-
-  virtual void dump();
-};
-
-/// MCZeroFillFragment - Represent data which has a fixed size and alignment,
-/// but requires no physical space in the object file.
-class MCZeroFillFragment : public MCFragment {
-  /// Size - The size of this fragment.
-  uint64_t Size;
-
-public:
-  MCZeroFillFragment(uint64_t _Size, MCSectionData *SD = 0)
-    : MCFragment(FT_ZeroFill, SD), Size(_Size) {}
-
-  /// @name Accessors
-  /// @{
-
-  uint64_t getSize() const { return Size; }
-
-  /// @}
-
-  static bool classof(const MCFragment *F) {
-    return F->getKind() == MCFragment::FT_ZeroFill;
-  }
-  static bool classof(const MCZeroFillFragment *) { return true; }
 
   virtual void dump();
 };
