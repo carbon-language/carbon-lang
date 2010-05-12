@@ -243,7 +243,7 @@ extern int ibaction_test(void);
 // CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "@" [56:1 - 56:2] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Keyword: "property" [56:2 - 56:10] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet:132:9
+// CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
 // CHECK: Keyword: "int" [56:20 - 56:23] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "*" [56:24 - 56:25] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Identifier: "aPropOutlet" [56:26 - 56:37] ObjCPropertyDecl=aPropOutlet:56:26
