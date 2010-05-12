@@ -217,7 +217,8 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
            ((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported"));
     O << '#' << Op.getImm();
   } else {
-    assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
+    if (Modifier && Modifier[0] != 0 && strcmp(Modifier, "call") != 0)
+      llvm_unreachable("Unsupported modifier");
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << *Op.getExpr();
   }

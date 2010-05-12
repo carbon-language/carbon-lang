@@ -39,6 +39,10 @@ void MCExpr::print(raw_ostream &OS) const {
     const MCSymbolRefExpr &SRE = cast<MCSymbolRefExpr>(*this);
     const MCSymbol &Sym = SRE.getSymbol();
 
+    if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_HI16 ||
+	SRE.getKind() == MCSymbolRefExpr::VK_ARM_LO16)
+      OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
+
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
     if (Sym.getName()[0] == '$')
@@ -46,7 +50,9 @@ void MCExpr::print(raw_ostream &OS) const {
     else
       OS << Sym;
 
-    if (SRE.getKind() != MCSymbolRefExpr::VK_None)
+    if (SRE.getKind() != MCSymbolRefExpr::VK_None &&
+	SRE.getKind() != MCSymbolRefExpr::VK_ARM_HI16 &&
+	SRE.getKind() != MCSymbolRefExpr::VK_ARM_LO16)
       OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
 
     return;
@@ -169,6 +175,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PLT: return "PLT";
   case VK_TLSGD: return "TLSGD";
   case VK_TPOFF: return "TPOFF";
+  case VK_ARM_HI16: return ":upper16:";
+  case VK_ARM_LO16: return ":lower16:";
   }
 }
 
