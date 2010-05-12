@@ -992,9 +992,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Special case debug options to only pass -g to clang. This is
   // wrong.
   Args.ClaimAllArgs(options::OPT_g_Group);
-  Arg *Garg = Args.getLastArg(options::OPT_g_Group);
-  if (Garg && Garg != Args.getLastArg(options::OPT_g0))
-    CmdArgs.push_back("-g");
+  if (Arg *A = Args.getLastArg(options::OPT_g_Group))
+    if (!A->getOption().matches(options::OPT_g0))
+      CmdArgs.push_back("-g");
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);
