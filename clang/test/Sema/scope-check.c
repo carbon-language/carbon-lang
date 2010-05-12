@@ -19,7 +19,7 @@ void test3clean(int*);
 
 int test3() {
   goto L;            // expected-error{{illegal goto into protected scope}}
-int a __attribute((cleanup(test3clean))); // expected-note {{jump bypasses initialization of declaration with __attribute__((cleanup))}}
+int a __attribute((cleanup(test3clean))); // expected-note {{jump bypasses initialization of variable with __attribute__((cleanup))}}
 L:
   return a;
 }
