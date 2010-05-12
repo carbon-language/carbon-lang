@@ -362,6 +362,82 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   return IsResolved;
 }
 
+void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
+  uint64_t StartAddress = Layout.getSectionAddress(F.getParent());
+
+  // Get the fragment start address.
+  uint64_t Address = StartAddress;
+  MCSectionData::iterator it = &F;
+  if (MCFragment *Prev = F.getPrevNode())
+    Address = (StartAddress + Layout.getFragmentOffset(Prev) +
+               Layout.getFragmentEffectiveSize(Prev));
+
+  ++stats::FragmentLayouts;
+
+  uint64_t FragmentOffset = Address - StartAddress;
+  Layout.setFragmentOffset(&F, FragmentOffset);
+
+  // Evaluate fragment size.
+  uint64_t EffectiveSize = 0;
+  switch (F.getKind()) {
+  case MCFragment::FT_Align: {
+    MCAlignFragment &AF = cast<MCAlignFragment>(F);
+
+    EffectiveSize = OffsetToAlignment(Address, AF.getAlignment());
+    if (EffectiveSize > AF.getMaxBytesToEmit())
+      EffectiveSize = 0;
+    break;
+  }
+
+  case MCFragment::FT_Data:
+    EffectiveSize = cast<MCDataFragment>(F).getContents().size();
+    break;
+
+  case MCFragment::FT_Fill: {
+    MCFillFragment &FF = cast<MCFillFragment>(F);
+    EffectiveSize = FF.getValueSize() * FF.getCount();
+    break;
+  }
+
+  case MCFragment::FT_Inst:
+    EffectiveSize = cast<MCInstFragment>(F).getInstSize();
+    break;
+
+  case MCFragment::FT_Org: {
+    MCOrgFragment &OF = cast<MCOrgFragment>(F);
+
+    int64_t TargetLocation;
+    if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
+      report_fatal_error("expected assembly-time absolute expression");
+
+    // FIXME: We need a way to communicate this error.
+    int64_t Offset = TargetLocation - FragmentOffset;
+    if (Offset < 0)
+      report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
+                         "' (at offset '" + Twine(FragmentOffset) + "'");
+
+    EffectiveSize = Offset;
+    break;
+  }
+
+  case MCFragment::FT_ZeroFill: {
+    MCZeroFillFragment &ZFF = cast<MCZeroFillFragment>(F);
+
+    // Align the fragment offset; it is safe to adjust the offset freely since
+    // this is only in virtual sections.
+    //
+    // FIXME: We shouldn't be doing this here.
+    Address = RoundUpToAlignment(Address, ZFF.getAlignment());
+    Layout.setFragmentOffset(&F, Address - StartAddress);
+
+    EffectiveSize = ZFF.getSize();
+    break;
+  }
+  }
+
+  Layout.setFragmentEffectiveSize(&F, EffectiveSize);
+}
+
 void MCAssembler::LayoutSection(MCAsmLayout &Layout,
                                 unsigned SectionOrderIndex) {
   MCSectionData &SD = *Layout.getSectionOrder()[SectionOrderIndex];
@@ -396,80 +472,8 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
   // Set the aligned section address.
   Layout.setSectionAddress(&SD, StartAddress);
 
-  for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
-    MCFragment &F = *it;
-
-    // Compute the fragment start address.
-    uint64_t Address = StartAddress;
-    if (MCFragment *Prev = F.getPrevNode())
-      Address = (Layout.getFragmentAddress(Prev) +
-                 Layout.getFragmentEffectiveSize(Prev));
-
-    ++stats::FragmentLayouts;
-
-    uint64_t FragmentOffset = Address - StartAddress;
-    Layout.setFragmentOffset(&F, FragmentOffset);
-
-    // Evaluate fragment size.
-    uint64_t EffectiveSize = 0;
-    switch (F.getKind()) {
-    case MCFragment::FT_Align: {
-      MCAlignFragment &AF = cast<MCAlignFragment>(F);
-
-      EffectiveSize = OffsetToAlignment(Address, AF.getAlignment());
-      if (EffectiveSize > AF.getMaxBytesToEmit())
-        EffectiveSize = 0;
-      break;
-    }
-
-    case MCFragment::FT_Data:
-      EffectiveSize = cast<MCDataFragment>(F).getContents().size();
-      break;
-
-    case MCFragment::FT_Fill: {
-      MCFillFragment &FF = cast<MCFillFragment>(F);
-      EffectiveSize = FF.getValueSize() * FF.getCount();
-      break;
-    }
-
-    case MCFragment::FT_Inst:
-      EffectiveSize = cast<MCInstFragment>(F).getInstSize();
-      break;
-
-    case MCFragment::FT_Org: {
-      MCOrgFragment &OF = cast<MCOrgFragment>(F);
-
-      int64_t TargetLocation;
-      if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
-        report_fatal_error("expected assembly-time absolute expression");
-
-      // FIXME: We need a way to communicate this error.
-      int64_t Offset = TargetLocation - FragmentOffset;
-      if (Offset < 0)
-        report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
-                          "' (at offset '" + Twine(FragmentOffset) + "'");
-
-      EffectiveSize = Offset;
-      break;
-    }
-
-    case MCFragment::FT_ZeroFill: {
-      MCZeroFillFragment &ZFF = cast<MCZeroFillFragment>(F);
-
-      // Align the fragment offset; it is safe to adjust the offset freely since
-      // this is only in virtual sections.
-      //
-      // FIXME: We shouldn't be doing this here.
-      Address = RoundUpToAlignment(Address, ZFF.getAlignment());
-      Layout.setFragmentOffset(&F, Address - StartAddress);
-
-      EffectiveSize = ZFF.getSize();
-      break;
-    }
-    }
-
-    Layout.setFragmentEffectiveSize(&F, EffectiveSize);
-  }
+  for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it)
+    LayoutFragment(Layout, *it);
 
   // Set the section sizes.
   uint64_t Size = 0;

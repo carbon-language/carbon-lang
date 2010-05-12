@@ -668,6 +668,11 @@ private:
   bool FragmentNeedsRelaxation(const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
+  /// LayoutFragment - Performs layout of the given \arg Fragment; assuming that
+  /// the previous fragment has already been layed out correctly, and the parent
+  /// section has been initialized.
+  void LayoutFragment(MCAsmLayout &Layout, MCFragment &Fragment);
+
   /// LayoutSection - Performs layout of the section referenced by the given
   /// \arg SectionOrderIndex. The layout assumes that the previous section has
   /// already been layed out correctly.
