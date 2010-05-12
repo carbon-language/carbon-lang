@@ -11,8 +11,26 @@ void f(int x) {
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
-// CHECK: load-stmts.cpp:3:6: UnexposedStmt= Extent=[4:3 - 5:4]
-// CHECK: load-stmts.cpp:3:6: UnexposedStmt= Extent=[4:8 - 4:16]
+// CHECK: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 (Definition)
+// CHECK: <invalid loc>:0:0: TypedefDecl=__uint128_t:0:0 (Definition)
+// CHECK: <invalid loc>:91:16: StructDecl=__va_list_tag:91:16 (Definition)
+// CHECK: <invalid loc>:91:42: FieldDecl=gp_offset:91:42 (Definition)
+// CHECK: <invalid loc>:91:63: FieldDecl=fp_offset:91:63 (Definition)
+// CHECK: <invalid loc>:91:81: FieldDecl=overflow_arg_area:91:81 (Definition)
+// CHECK: <invalid loc>:91:107: FieldDecl=reg_save_area:91:107 (Definition)
+// CHECK: <invalid loc>:91:123: TypedefDecl=__va_list_tag:91:123 (Definition)
+// CHECK: <invalid loc>:91:159: TypedefDecl=__builtin_va_list:91:159 (Definition)
+// CHECK: <invalid loc>:91:145: TypeRef=__va_list_tag:91:123
+// CHECK: <invalid loc>:91:177: UnexposedExpr=
+// CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
+// CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
+// CHECK: load-stmts.cpp:2:16: FieldDecl=a:2:16 (Definition) Extent=[2:16 - 2:17]
+// CHECK: load-stmts.cpp:2:19: FieldDecl=b:2:19 (Definition) Extent=[2:19 - 2:20]
+// CHECK: load-stmts.cpp:3:6: FunctionDecl=f:3:6 (Definition) Extent=[3:6 - 11:2]
+// CHECK: load-stmts.cpp:3:12: ParmDecl=x:3:12 (Definition) Extent=[3:8 - 3:13]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[3:15 - 11:2]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[4:3 - 5:4]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[4:8 - 4:16]
 // CHECK: load-stmts.cpp:4:10: VarDecl=y:4:10 (Definition) Extent=[4:8 - 4:15]
 // CHECK: load-stmts.cpp:4:8: TypeRef=T:1:13 Extent=[4:8 - 4:9]
 // CHECK: load-stmts.cpp:4:14: DeclRefExpr=x:3:12 Extent=[4:14 - 4:15]
@@ -23,29 +41,30 @@ void f(int x) {
 // CHECK: load-stmts.cpp:4:19: DeclRefExpr=z:4:19 Extent=[4:19 - 4:20]
 // CHECK: load-stmts.cpp:4:26: UnexposedExpr= Extent=[4:26 - 4:29]
 // CHECK: load-stmts.cpp:4:28: DeclRefExpr=x:3:12 Extent=[4:28 - 4:29]
-// CHECK: load-stmts.cpp:4:19: UnexposedStmt= Extent=[4:31 - 5:4]
-// CHECK: load-stmts.cpp:4:19: UnexposedStmt= Extent=[6:3 - 6:22]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[4:31 - 5:4]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[6:3 - 6:22]
 // CHECK: load-stmts.cpp:6:10: VarDecl=z2:6:10 (Definition) Extent=[6:7 - 6:17]
 // CHECK: load-stmts.cpp:6:7: TypeRef=T:1:13 Extent=[6:7 - 6:8]
 // CHECK: load-stmts.cpp:6:15: UnexposedExpr= Extent=[6:15 - 6:17]
 // CHECK: load-stmts.cpp:6:16: DeclRefExpr=x:3:12 Extent=[6:16 - 6:17]
 // CHECK: load-stmts.cpp:6:10: UnexposedExpr=z2:6:10 Extent=[6:10 - 6:12]
 // CHECK: load-stmts.cpp:6:10: DeclRefExpr=z2:6:10 Extent=[6:10 - 6:12]
-// CHECK: load-stmts.cpp:6:10: UnexposedStmt= Extent=[6:19 - 6:22]
-// CHECK: load-stmts.cpp:6:10: UnexposedStmt= Extent=[7:3 - 7:25]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[6:19 - 6:22]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[7:3 - 7:25]
 // CHECK: load-stmts.cpp:7:13: VarDecl=z3:7:13 (Definition) Extent=[7:10 - 7:20]
 // CHECK: load-stmts.cpp:7:10: TypeRef=T:1:13 Extent=[7:10 - 7:11]
 // CHECK: load-stmts.cpp:7:18: UnexposedExpr= Extent=[7:18 - 7:20]
 // CHECK: load-stmts.cpp:7:19: DeclRefExpr=x:3:12 Extent=[7:19 - 7:20]
 // CHECK: load-stmts.cpp:7:13: UnexposedExpr=z3:7:13 Extent=[7:13 - 7:15]
 // CHECK: load-stmts.cpp:7:13: DeclRefExpr=z3:7:13 Extent=[7:13 - 7:15]
-// CHECK: load-stmts.cpp:7:13: UnexposedStmt= Extent=[7:22 - 7:25]
-// CHECK: load-stmts.cpp:7:13: UnexposedStmt= Extent=[8:3 - 10:4]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[7:22 - 7:25]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[8:3 - 10:4]
 // CHECK: load-stmts.cpp:8:13: VarDecl=z4:8:13 (Definition) Extent=[8:11 - 8:19]
 // CHECK: load-stmts.cpp:8:11: TypeRef=T:1:13 Extent=[8:11 - 8:12]
 // CHECK: load-stmts.cpp:8:18: DeclRefExpr=x:3:12 Extent=[8:18 - 8:19]
 // CHECK: load-stmts.cpp:8:13: DeclRefExpr=z4:8:13 Extent=[8:13 - 8:15]
-// CHECK: load-stmts.cpp:8:13: UnexposedStmt= Extent=[8:21 - 10:4]
-// CHECK: load-stmts.cpp:8:13: UnexposedStmt= Extent=[9:3 - 9:17]
-// CHECK: load-stmts.cpp:8:13: UnexposedStmt= Extent=[9:12 - 9:17]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[8:21 - 10:4]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:3 - 9:17]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:12 - 9:17]
 // CHECK: load-stmts.cpp:9:8: UnexposedExpr= Extent=[9:8 - 9:10]
+

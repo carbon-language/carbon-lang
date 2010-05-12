@@ -1794,7 +1794,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
   
-  if (!getCursorDecl(C))
+  if (C.kind < CXCursor_FirstDecl || C.kind > CXCursor_LastDecl)
     return clang_getNullLocation();
 
   Decl *D = getCursorDecl(C);
@@ -1860,7 +1860,7 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
     return cxloc::translateSourceRange(getCursorContext(C), R);
   }
   
-  if (!getCursorDecl(C))
+  if (C.kind < CXCursor_FirstDecl || C.kind > CXCursor_LastDecl)
     return clang_getNullRange();
 
   Decl *D = getCursorDecl(C);
