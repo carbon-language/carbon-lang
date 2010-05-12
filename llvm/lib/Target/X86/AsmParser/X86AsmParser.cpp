@@ -622,31 +622,6 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
-/// LowerMOffset - Lower an 'moffset' form of an instruction, which just has a
-/// imm operand, to having "rm" or "mr" operands with the offset in the disp
-/// field.
-static void LowerMOffset(MCInst &Inst, unsigned Opc, unsigned RegNo,
-                         bool isMR) {
-  MCOperand Disp = Inst.getOperand(0);
-
-  // Start over with an empty instruction.
-  Inst = MCInst();
-  Inst.setOpcode(Opc);
-  
-  if (isMR)
-    Inst.addOperand(MCOperand::CreateReg(RegNo));
-  
-  // Add the mem operand.
-  Inst.addOperand(MCOperand::CreateReg(0));  // Segment
-  Inst.addOperand(MCOperand::CreateImm(1));  // Scale
-  Inst.addOperand(MCOperand::CreateReg(0));  // IndexReg
-  Inst.addOperand(Disp);                     // Displacement
-  Inst.addOperand(MCOperand::CreateReg(0));  // BaseReg
- 
-  if (!isMR)
-    Inst.addOperand(MCOperand::CreateReg(RegNo));
-}
-
 // FIXME: Custom X86 cleanup function to implement a temporary hack to handle
 // matching INCL/DECL correctly for x86_64. This needs to be replaced by a
 // proper mechanism for supporting (ambiguous) feature dependent instructions.
@@ -662,14 +637,6 @@ void X86ATTAsmParser::InstructionCleanup(MCInst &Inst) {
   case X86::INC16m: Inst.setOpcode(X86::INC64_16m); break;
   case X86::INC32r: Inst.setOpcode(X86::INC64_32r); break;
   case X86::INC32m: Inst.setOpcode(X86::INC64_32m); break;
-      
-  // moffset instructions are x86-32 only.
-  case X86::MOV8o8a:   LowerMOffset(Inst, X86::MOV8rm , X86::AL , false); break;
-  case X86::MOV16o16a: LowerMOffset(Inst, X86::MOV16rm, X86::AX , false); break;
-  case X86::MOV32o32a: LowerMOffset(Inst, X86::MOV32rm, X86::EAX, false); break;
-  case X86::MOV8ao8:   LowerMOffset(Inst, X86::MOV8mr , X86::AL , true); break;
-  case X86::MOV16ao16: LowerMOffset(Inst, X86::MOV16mr, X86::AX , true); break;
-  case X86::MOV32ao32: LowerMOffset(Inst, X86::MOV32mr, X86::EAX, true); break;
   }
 }
 

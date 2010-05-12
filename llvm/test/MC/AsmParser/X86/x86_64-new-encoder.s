@@ -69,10 +69,3 @@ stosq
 stosl
 // CHECK: stosl
 // CHECK:   encoding: [0xab]
-
-
-// Not moffset forms of moves, they are x86-32 only! rdar://7947184
-movb	0, %al    // CHECK: movb 0, %al # encoding: [0x8a,0x04,0x25,A,A,A,A]
-movw	0, %ax    // CHECK: movw 0, %ax # encoding: [0x66,0x8b,0x04,0x25,A,A,A,A]
-movl	0, %eax   // CHECK: movl 0, %eax # encoding: [0x8b,0x04,0x25,A,A,A,A]
-
