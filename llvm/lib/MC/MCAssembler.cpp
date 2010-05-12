@@ -68,12 +68,9 @@ void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
   //
   // FIXME-PERF: This is O(N^2), but will be eliminated once we get smarter.
 
-  // Layout the concrete sections and fragments.
-  uint64_t Address = 0;
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    // Layout the section fragments and its size.
-    Address = getAssembler().LayoutSection(**it, *this, Address);
-  }
+  // Layout the sections in order.
+  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i)
+    getAssembler().LayoutSection(*this, i);
 }
 
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
@@ -365,12 +362,19 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   return IsResolved;
 }
 
-uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
-                                    MCAsmLayout &Layout,
-                                    uint64_t StartAddress) {
+void MCAssembler::LayoutSection(MCAsmLayout &Layout,
+                                unsigned SectionOrderIndex) {
+  MCSectionData &SD = *Layout.getSectionOrder()[SectionOrderIndex];
   bool IsVirtual = getBackend().isVirtualSection(SD.getSection());
 
   ++stats::SectionLayouts;
+
+  // Get the section start address.
+  uint64_t StartAddress = 0;
+  if (SectionOrderIndex) {
+    MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
+    StartAddress = Layout.getSectionAddress(Prev) + Layout.getSectionSize(Prev);
+  }
 
   // Align this section if necessary by adding padding bytes to the previous
   // section. It is safe to adjust this out-of-band, because no symbol or
@@ -469,8 +473,6 @@ uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
     Layout.setSectionFileSize(&SD, 0);
   else
     Layout.setSectionFileSize(&SD, Address - StartAddress);
-
-  return Address;
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -705,13 +707,9 @@ bool MCAssembler::FragmentNeedsRelaxation(const MCInstFragment *IF,
 bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
 
-  // Layout the concrete sections and fragments.
-  uint64_t Address = 0;
-  for (MCAsmLayout::iterator it = Layout.begin(),
-         ie = Layout.end(); it != ie; ++it) {
-    // Layout the section fragments and its size.
-    Address = LayoutSection(**it, Layout, Address);
-  }
+  // Layout the sections in order.
+  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i)
+    LayoutSection(Layout, i);
 
   // Scan for fragments that need relaxation.
   bool WasRelaxed = false;

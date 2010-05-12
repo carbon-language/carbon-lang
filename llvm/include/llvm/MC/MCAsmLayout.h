@@ -50,11 +50,12 @@ public:
   /// @name Section Access (in layout order)
   /// @{
 
-  iterator begin() { return SectionOrder.begin(); }
-  const_iterator begin() const { return SectionOrder.begin(); }
-
-  iterator end() {return SectionOrder.end();}
-  const_iterator end() const {return SectionOrder.end();}
+  llvm::SmallVectorImpl<MCSectionData*> &getSectionOrder() {
+    return SectionOrder;
+  }
+  const llvm::SmallVectorImpl<MCSectionData*> &getSectionOrder() const {
+    return SectionOrder;
+  }
 
   /// @}
   /// @name Fragment Layout Data
