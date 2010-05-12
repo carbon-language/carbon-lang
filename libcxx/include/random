@@ -686,16 +686,16 @@ public:
     public:
         typedef exponential_distribution distribution_type;
 
-        explicit param_type(RealType lambda = 1.0);
+        explicit param_type(result_type lambda = 1.0);
 
-        RealType lambda() const;
+        result_type lambda() const;
 
         friend bool operator==(const param_type& x, const param_type& y);
         friend bool operator!=(const param_type& x, const param_type& y);
     };
 
     // constructors and reset functions
-    explicit exponential_distribution(RealType lambda = 1.0);
+    explicit exponential_distribution(result_type lambda = 1.0);
     explicit exponential_distribution(const param_type& parm);
     void reset();
 
@@ -704,7 +704,7 @@ public:
     template<class URNG> result_type operator()(URNG& g, const param_type& parm);
 
     // property functions
-    RealType lambda() const;
+    result_type lambda() const;
 
     param_type param() const;
     void param(const param_type& parm);
@@ -740,7 +740,62 @@ template<class RealType = double>
     class extreme_value_distribution;
 
 template<class RealType = double>
-    class normal_distribution;
+class normal_distribution
+{
+public:
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef normal_distribution distribution_type;
+
+        explicit param_type(result_type mean = 0, result_type stddev = 1);
+
+        result_type mean() const;
+        result_type stddev() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructors and reset functions
+    explicit normal_distribution(result_type mean = 0, result_type stddev = 1);
+    explicit normal_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    result_type mean() const;
+    result_type stddev() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const normal_distribution& x,
+                           const normal_distribution& y);
+    friend bool operator!=(const normal_distribution& x,
+                           const normal_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const normal_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               normal_distribution& x);
+};
 
 template<class RealType = double>
     class lognormal_distribution;
@@ -3168,6 +3223,155 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __lambda;
     if (!__is.fail())
         __x.param(param_type(__lambda));
+    return __is;
+}
+
+// normal_distribution
+
+template<class _RealType = double>
+class normal_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        result_type __mean_;
+        result_type __stddev_;
+    public:
+        typedef normal_distribution distribution_type;
+
+        explicit param_type(result_type __mean = 0, result_type __stddev = 1)
+            : __mean_(__mean), __stddev_(__stddev) {}
+
+        result_type mean() const {return __mean_;}
+        result_type stddev() const {return __stddev_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__mean_ == __y.__mean_ && __x.__stddev_ == __y.__stddev_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+    result_type _V_;
+    bool _V_hot_;
+
+public:
+    // constructors and reset functions
+    explicit normal_distribution(result_type __mean = 0, result_type __stddev = 1)
+        : __p_(param_type(__mean, __stddev)), _V_hot_(false) {}
+    explicit normal_distribution(const param_type& __p)
+        : __p_(__p), _V_hot_(false) {}
+    void reset() {_V_hot_ = false;}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type mean() const {return __p_.mean();}
+    result_type stddev() const {return __p_.stddev();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return -numeric_limits<result_type>::infinity();}
+    result_type max() const {return numeric_limits<result_type>::infinity();}
+
+    friend bool operator==(const normal_distribution& __x,
+                           const normal_distribution& __y)
+        {return __x.__p_ == __y.__p_ && __x._V_hot_ == __y._V_hot_ &&
+                (!__x._V_hot_ || __x._V_ == __y._V_);}
+    friend bool operator!=(const normal_distribution& __x,
+                           const normal_distribution& __y)
+            {return !(__x == __y);}
+
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_ostream<_CharT, _Traits>&
+    operator<<(basic_ostream<_CharT, _Traits>& __os,
+               const normal_distribution<_RT>& __x);
+    
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_istream<_CharT, _Traits>&
+    operator>>(basic_istream<_CharT, _Traits>& __is,
+               normal_distribution<_RT>& __x);
+};
+
+template <class _RealType>
+template<class _URNG>
+_RealType
+normal_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    result_type _U;
+    if (_V_hot_)
+    {
+        _V_hot_ = false;
+        _U = _V_;
+    }
+    else
+    {
+        uniform_real_distribution<result_type> _Uni(-1, 1);
+        result_type __u;
+        result_type __v;
+        result_type __s;
+        do
+        {
+            __u = _Uni(__g);
+            __v = _Uni(__g);
+            __s = __u * __u + __v * __v;
+        } while (__s > 1 || __s == 0);
+        result_type _F = _STD::sqrt(-2 * _STD::log(__s) / __s);
+        _V_ = __v * _F;
+        _V_hot_ = true;
+        _U = __u * _F;
+    }
+    return _U * __p.stddev() + __p.mean();
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const normal_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    __os << __x.mean() << __sp << __x.stddev() << __sp << __x._V_hot_;
+    if (__x._V_hot_)
+        __os << __sp << __x._V_;
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           normal_distribution<_RT>& __x)
+{
+    typedef normal_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __mean;
+    result_type __stddev;
+    result_type _V = 0;
+    bool _V_hot = false;
+    __is >> __mean >> __stddev >> _V_hot;
+    if (_V_hot)
+        __is >> _V;
+    if (!__is.fail())
+    {
+        __x.param(param_type(__mean, __stddev));
+        __x._V_hot_ = _V_hot;
+        __x._V_ = _V;
+    }
     return __is;
 }
 
