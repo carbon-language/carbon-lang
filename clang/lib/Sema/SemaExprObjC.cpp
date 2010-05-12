@@ -976,6 +976,16 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
           ImpCastExprToType(Receiver, Context.getObjCIdType(),
                             CastExpr::CK_IntegralToPointer);
         ReceiverType = Receiver->getType();
+      } 
+      else if (!PerformContextuallyConvertToObjCId(Receiver)) {
+        return BuildInstanceMessage(Owned(Receiver),
+                                    ReceiverType,
+                                    SuperLoc,
+                                    Sel,
+                                    Method,
+                                    LBracLoc, 
+                                    RBracLoc,
+                                    move(ArgsIn));
       } else {
         // Reject other random receiver types (e.g. structs).
         Diag(Loc, diag::err_bad_receiver_type)

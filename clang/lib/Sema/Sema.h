@@ -1162,6 +1162,9 @@ public:
   ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
   bool PerformContextuallyConvertToBool(Expr *&From);
 
+  ImplicitConversionSequence TryContextuallyConvertToObjCId(Expr *From);
+  bool PerformContextuallyConvertToObjCId(Expr *&From);
+
   bool PerformObjectMemberConversion(Expr *&From,
                                      NestedNameSpecifier *Qualifier,
                                      NamedDecl *FoundDecl,

@@ -2931,6 +2931,27 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
                   << From->getType() << From->getSourceRange();
   return true;
 }
+  
+/// TryContextuallyConvertToObjCId - Attempt to contextually convert the
+/// expression From to 'id'.
+ImplicitConversionSequence Sema::TryContextuallyConvertToObjCId(Expr *From) {
+  QualType Ty = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
+    return TryImplicitConversion(From, Ty,
+                                 // FIXME: Are these flags correct?
+                                 /*SuppressUserConversions=*/false,
+                                 /*AllowExplicit=*/true,
+                                 /*InOverloadResolution=*/false);
+}
+  
+/// PerformContextuallyConvertToObjCId - Perform a contextual conversion
+/// of the expression From to 'id'.
+bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
+  QualType Ty = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
+  ImplicitConversionSequence ICS = TryContextuallyConvertToObjCId(From);
+  if (!ICS.isBad())
+    return PerformImplicitConversion(From, Ty, ICS, AA_Converting);
+  return true;
+}
 
 /// AddOverloadCandidate - Adds the given function to the set of
 /// candidate functions, using the given function call arguments.  If
