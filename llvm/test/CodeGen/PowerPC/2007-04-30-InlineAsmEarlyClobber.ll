@@ -7,8 +7,8 @@
 ; CHECK: subfze r4,r6
 ; LOCAL: subfc r6,r5,r4
 ; LOCAL: subfze r3,r3
-; FAST: subfc r9,r8,r7
-; FAST: subfze r10,r6
+; FAST: subfc r3,r5,r4
+; FAST: subfze r4,r6
 
 ; PR1357
 
