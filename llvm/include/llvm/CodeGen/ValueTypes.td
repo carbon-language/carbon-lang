@@ -47,15 +47,16 @@ def v8i32  : ValueType<256, 23>;   //  8 x i32 vector value
 def v1i64  : ValueType<64 , 24>;   //  1 x i64 vector value
 def v2i64  : ValueType<128, 25>;   //  2 x i64 vector value
 def v4i64  : ValueType<256, 26>;   //  4 x f64 vector value
+def v8i64  : ValueType<512, 27>;   //  4 x f64 vector value
 
-def v2f32  : ValueType<64,  27>;   //  2 x f32 vector value
-def v4f32  : ValueType<128, 28>;   //  4 x f32 vector value
-def v8f32  : ValueType<256, 29>;   //  8 x f32 vector value
-def v2f64  : ValueType<128, 30>;   //  2 x f64 vector value
-def v4f64  : ValueType<256, 31>;   //  4 x f64 vector value
+def v2f32  : ValueType<64,  28>;   //  2 x f32 vector value
+def v4f32  : ValueType<128, 29>;   //  4 x f32 vector value
+def v8f32  : ValueType<256, 30>;   //  8 x f32 vector value
+def v2f64  : ValueType<128, 31>;   //  2 x f64 vector value
+def v4f64  : ValueType<256, 32>;   //  4 x f64 vector value
 
-def FlagVT : ValueType<0  , 32>;   // Pre-RA sched glue
-def isVoid : ValueType<0  , 33>;   // Produces no value
+def FlagVT : ValueType<0  , 33>;   // Pre-RA sched glue
+def isVoid : ValueType<0  , 34>;   // Produces no value
 
 def MetadataVT: ValueType<0, 250>; // Metadata
 

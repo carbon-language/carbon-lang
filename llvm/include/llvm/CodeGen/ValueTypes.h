@@ -63,19 +63,20 @@ namespace llvm {
       v1i64          =  24,   //  1 x i64
       v2i64          =  25,   //  2 x i64
       v4i64          =  26,   //  4 x i64
+      v8i64          =  27,   //  8 x i64
 
-      v2f32          =  27,   //  2 x f32
-      v4f32          =  28,   //  4 x f32
-      v8f32          =  29,   //  8 x f32
-      v2f64          =  30,   //  2 x f64
-      v4f64          =  31,   //  4 x f64
+      v2f32          =  28,   //  2 x f32
+      v4f32          =  29,   //  4 x f32
+      v8f32          =  30,   //  8 x f32
+      v2f64          =  31,   //  2 x f64
+      v4f64          =  32,   //  4 x f64
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
-      Flag           =  32,   // This glues nodes together during pre-RA sched
+      Flag           =  33,   // This glues nodes together during pre-RA sched
 
-      isVoid         =  33,   // This has no value
+      isVoid         =  34,   // This has no value
 
       LAST_VALUETYPE =  34,   // This always remains at the end of the list.
 
@@ -140,7 +141,7 @@ namespace llvm {
     bool isInteger() const {
       return ((SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
                SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
-               (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v4i64));
+               (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
     }
 
     /// isVector - Return true if this is a vector value type.
@@ -192,7 +193,8 @@ namespace llvm {
       case v8i32: return i32;
       case v1i64:
       case v2i64:
-      case v4i64: return i64;
+      case v4i64:
+      case v8i64: return i64;
       case v2f32:
       case v4f32:
       case v8f32: return f32;
@@ -211,6 +213,7 @@ namespace llvm {
       case v8i8 :
       case v8i16:
       case v8i32:
+      case v8i64:
       case v8f32: return 8;
       case v4i8:
       case v4i16:
@@ -269,6 +272,7 @@ namespace llvm {
       case v4i64:
       case v8f32:
       case v4f64: return 256;
+      case v8i64: return 512;
       }
     }
     
@@ -332,6 +336,7 @@ namespace llvm {
         if (NumElements == 1)  return MVT::v1i64;
         if (NumElements == 2)  return MVT::v2i64;
         if (NumElements == 4)  return MVT::v4i64;
+        if (NumElements == 8)  return MVT::v8i64;
         break;
       case MVT::f32:
         if (NumElements == 2)  return MVT::v2f32;
@@ -468,10 +473,15 @@ namespace llvm {
 
     /// is256BitVector - Return true if this is a 256-bit vector type.
     inline bool is256BitVector() const {
-      return isSimple() ?
-             (V==MVT::v8f32 || V==MVT::v4f64 || V==MVT::v32i8 ||
-              V==MVT::v16i16 || V==MVT::v8i32 || V==MVT::v4i64) : 
-            isExtended256BitVector();
+      return isSimple()
+        ? (V==MVT::v8f32 || V==MVT::v4f64 || V==MVT::v32i8 ||
+           V==MVT::v16i16 || V==MVT::v8i32 || V==MVT::v4i64)
+        : isExtended256BitVector();
+    }
+
+    /// is512BitVector - Return true if this is a 512-bit vector type.
+    inline bool is512BitVector() const {
+      return isSimple() ? (V == MVT::v8i64) : isExtended512BitVector();
     }
 
     /// isOverloaded - Return true if this is an overloaded type for TableGen.
@@ -668,6 +678,7 @@ namespace llvm {
     bool isExtended64BitVector() const;
     bool isExtended128BitVector() const;
     bool isExtended256BitVector() const;
+    bool isExtended512BitVector() const;
     EVT getExtendedVectorElementType() const;
     unsigned getExtendedVectorNumElements() const;
     unsigned getExtendedSizeInBits() const;
