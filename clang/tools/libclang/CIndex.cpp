@@ -2489,10 +2489,9 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
         TypeLoc TL = TI->getTypeLoc();
         SourceLocation TLoc = TL.getFullSourceRange().getBegin();
-        if (TLoc.isValid()) {
-          assert(SrcMgr.isBeforeInTranslationUnit(TLoc, L));
+        if (TLoc.isValid() && 
+            SrcMgr.isBeforeInTranslationUnit(TLoc, L))
           cursorRange.setBegin(TLoc);
-        }
       }
     }
   }
