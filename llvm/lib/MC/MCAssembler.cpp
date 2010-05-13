@@ -116,10 +116,6 @@ void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
 }
 
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
-  // Empty sections have no size.
-  if (SD->getFragmentList().empty())
-    return 0;
-
   // Otherwise, the size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
   return getFragmentOffset(&F) + getFragmentEffectiveSize(&F);
@@ -135,10 +131,6 @@ uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
 }
 
 uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
-  // Empty sections have no size.
-  if (SD->getFragmentList().empty())
-    return 0;
-
   // The logical size is the address space size minus any tail padding.
   uint64_t Size = getSectionAddressSize(SD);
   const MCAlignFragment *AF =
@@ -611,6 +603,15 @@ void MCAssembler::Finish() {
   unsigned SectionIndex = 0;
   unsigned FragmentIndex = 0;
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
+    // Create dummy fragments to eliminate any empty sections, this simplifies
+    // layout.
+    if (it->getFragmentList().empty()) {
+      unsigned ValueSize = 1;
+      if (getBackend().isVirtualSection(it->getSection()))
+        ValueSize = 1;
+      new MCFillFragment(0, 1, 0, it);
+    }
+
     it->setOrdinal(SectionIndex++);
 
     for (MCSectionData::iterator it2 = it->begin(),
