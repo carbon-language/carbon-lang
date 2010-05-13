@@ -84,27 +84,6 @@ public:
   /// \brief Set the computed address of the given section.
   void setSectionAddress(MCSectionData *SD, uint64_t Value);
 
-  /// \brief Get the data size of the given section, as emitted to the object
-  /// file. This may include additional padding, or be 0 for virtual sections.
-  uint64_t getSectionFileSize(const MCSectionData *SD) const;
-
-  /// \brief Set the data size of the given section.
-  void setSectionFileSize(MCSectionData *SD, uint64_t Value);
-
-  /// \brief Get the address space size of the given section, as it effects
-  /// layout. This may differ from the size reported by \see getSectionSize() by
-  /// not including section tail padding.
-  uint64_t getSectionAddressSize(const MCSectionData *SD) const;
-
-  /// \brief Set the address space size of the given section.
-  void setSectionAddressSize(MCSectionData *SD, uint64_t Value);
-
-  /// \brief Get the logical data size of the given section.
-  uint64_t getSectionSize(const MCSectionData *SD) const;
-
-  /// \brief Set the logical data size of the given section.
-  void setSectionSize(MCSectionData *SD, uint64_t Value);
-
   /// @}
   /// @name Utility Functions
   /// @{
@@ -112,6 +91,18 @@ public:
   /// \brief Get the address of the given fragment, as computed in the current
   /// layout.
   uint64_t getFragmentAddress(const MCFragment *F) const;
+
+  /// \brief Get the address space size of the given section, as it effects
+  /// layout. This may differ from the size reported by \see getSectionSize() by
+  /// not including section tail padding.
+  uint64_t getSectionAddressSize(const MCSectionData *SD) const;
+
+  /// \brief Get the data size of the given section, as emitted to the object
+  /// file. This may include additional padding, or be 0 for virtual sections.
+  uint64_t getSectionFileSize(const MCSectionData *SD) const;
+
+  /// \brief Get the logical data size of the given section.
+  uint64_t getSectionSize(const MCSectionData *SD) const;
 
   /// \brief Get the address of the given symbol, as computed in the current
   /// layout.

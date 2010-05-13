@@ -110,28 +110,38 @@ void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
   SD->Address = Value;
 }
 
-uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
-  assert(SD->Size != ~UINT64_C(0) && "File size not set!");
-  return SD->Size;
-}
-void MCAsmLayout::setSectionSize(MCSectionData *SD, uint64_t Value) {
-  SD->Size = Value;
+uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
+  // Empty sections have no size.
+  if (SD->getFragmentList().empty())
+    return 0;
+
+  // Otherwise, the size is the last fragment's end offset.
+  const MCFragment &F = SD->getFragmentList().back();
+  return getFragmentOffset(&F) + getFragmentEffectiveSize(&F);
 }
 
 uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
-  assert(SD->FileSize != ~UINT64_C(0) && "File size not set!");
-  return SD->FileSize;
-}
-void MCAsmLayout::setSectionFileSize(MCSectionData *SD, uint64_t Value) {
-  SD->FileSize = Value;
+  // Virtual sections have no file size.
+  if (getAssembler().getBackend().isVirtualSection(SD->getSection()))
+    return 0;
+
+  // Otherwise, the file size is the same as the address space size.
+  return getSectionAddressSize(SD);
 }
 
-uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
-  assert(SD->AddressSize != ~UINT64_C(0) && "Address size not set!");
-  return SD->AddressSize;
-}
-void MCAsmLayout::setSectionAddressSize(MCSectionData *SD, uint64_t Value) {
-  SD->AddressSize = Value;
+uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
+  // Empty sections have no size.
+  if (SD->getFragmentList().empty())
+    return 0;
+
+  // The logical size is the address space size minus any tail padding.
+  uint64_t Size = getSectionAddressSize(SD);
+  const MCAlignFragment *AF =
+    dyn_cast<MCAlignFragment>(&(SD->getFragmentList().back()));
+  if (AF && AF->hasOnlyAlignAddress())
+    Size -= getFragmentEffectiveSize(AF);
+
+  return Size;
 }
 
 /* *** */
@@ -157,9 +167,6 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
     Alignment(1),
     Address(~UINT64_C(0)),
-    Size(~UINT64_C(0)),
-    AddressSize(~UINT64_C(0)),
-    FileSize(~UINT64_C(0)),
     HasInstructions(false)
 {
   if (A)
@@ -438,7 +445,6 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
 void MCAssembler::LayoutSection(MCAsmLayout &Layout,
                                 unsigned SectionOrderIndex) {
   MCSectionData &SD = *Layout.getSectionOrder()[SectionOrderIndex];
-  bool IsVirtual = getBackend().isVirtualSection(SD.getSection());
 
   ++stats::SectionLayouts;
 
@@ -458,25 +464,6 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it)
     LayoutFragment(Layout, *it);
-
-  // Set the section sizes.
-  uint64_t Size = 0;
-  if (!SD.getFragmentList().empty()) {
-    MCFragment *F = &SD.getFragmentList().back();
-    Size = Layout.getFragmentOffset(F) + Layout.getFragmentEffectiveSize(F);
-  }
-  Layout.setSectionAddressSize(&SD, Size);
-  Layout.setSectionFileSize(&SD, IsVirtual ? 0 : Size);
-
-  // Handle OnlyAlignAddress bit.
-  if (!SD.getFragmentList().empty()) {
-    MCAlignFragment *AF =
-      dyn_cast<MCAlignFragment>(&SD.getFragmentList().back());
-    if (AF && AF->hasOnlyAlignAddress())
-      Size -= Layout.getFragmentEffectiveSize(AF);
-  }
-
-  Layout.setSectionSize(&SD, Size);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -948,8 +935,7 @@ void MCSectionData::dump() {
 
   OS << "<MCSectionData";
   OS << " Alignment:" << getAlignment() << " Address:" << Address
-     << " Size:" << Size << " AddressSize:" << AddressSize
-     << " FileSize:" << FileSize << " Fragments:[\n      ";
+     << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();

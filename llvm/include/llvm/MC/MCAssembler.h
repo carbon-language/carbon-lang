@@ -404,17 +404,6 @@ private:
   /// initialized.
   uint64_t Address;
 
-  /// Size - The logical size of this section. This is ~0 until initialized.
-  uint64_t Size;
-
-  /// AddressSize - The address space size used by this section. This is ~0
-  /// until initialized.
-  uint64_t AddressSize;
-
-  /// FileSize - The size of this section in the object file. This is ~0 until
-  /// initialized.
-  uint64_t FileSize;
-
   /// HasInstructions - Whether this section has had instructions emitted into
   /// it.
   unsigned HasInstructions : 1;
