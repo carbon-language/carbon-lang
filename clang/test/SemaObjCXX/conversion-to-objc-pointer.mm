@@ -28,20 +28,19 @@ private:
 @end
 
 @interface TFoo : NSObject
-
 - (void) foo;
 @end
 
 @implementation TFoo
-
-- (void) foo
-	{}
+- (void) foo {}
 @end
 
 @interface TBar : NSObject
+- (void) foo;
 @end
 
 @implementation TBar 
+- (void) foo {}
 @end
 
 int main () {

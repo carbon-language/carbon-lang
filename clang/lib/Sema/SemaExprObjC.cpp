@@ -977,7 +977,12 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
                             CastExpr::CK_IntegralToPointer);
         ReceiverType = Receiver->getType();
       } 
-      else if (!PerformContextuallyConvertToObjCId(Receiver)) {
+      else if (getLangOptions().CPlusPlus &&
+               !PerformContextuallyConvertToObjCId(Receiver)) {
+        if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Receiver)) {
+          Receiver = ICE->getSubExpr();
+          ReceiverType = Receiver->getType();
+        }
         return BuildInstanceMessage(Owned(Receiver),
                                     ReceiverType,
                                     SuperLoc,
