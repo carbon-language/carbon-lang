@@ -202,12 +202,14 @@ public:
       }
       unsigned I = VT.getSimpleVT().SimpleTy;
       assert(I<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
-      return (LegalizeAction)((ValueTypeActions[I>>4] >> ((2*I) & 31)) & 3);
+      unsigned Mask = (unsigned)MVT::MAX_ALLOWED_VALUETYPE-1;
+      return (LegalizeAction)((ValueTypeActions[I>>4] >> ((2*I) & Mask)) & 3);
     }
     void setTypeAction(EVT VT, LegalizeAction Action) {
       unsigned I = VT.getSimpleVT().SimpleTy;
       assert(I<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
-      ValueTypeActions[I>>4] |= Action << ((I*2) & 31);
+      unsigned Mask = (unsigned)MVT::MAX_ALLOWED_VALUETYPE-1;
+      ValueTypeActions[I>>4] |= Action << ((I*2) & Mask);
     }
   };
   
@@ -360,9 +362,9 @@ public:
            (unsigned)VT.getSimpleVT().SimpleTy < sizeof(OpActions[0][0])*8 &&
            "Table isn't big enough!");
     unsigned I = (unsigned) VT.getSimpleVT().SimpleTy;
-    unsigned J = I & 31;
+    unsigned J = I & ((unsigned)MVT::MAX_ALLOWED_VALUETYPE-1);
     I = I >> 5;
-    return (LegalizeAction)((OpActions[I][Op] >> (J*2) ) & 3);
+    return (LegalizeAction)((OpActions[I][Op] >> (J*2)) & 3);
   }
 
   /// isOperationLegalOrCustom - Return true if the specified operation is
@@ -987,7 +989,7 @@ protected:
   void setOperationAction(unsigned Op, MVT VT,
                           LegalizeAction Action) {
     unsigned I = (unsigned)VT.SimpleTy;
-    unsigned J = I & 31;
+    unsigned J = I & ((unsigned)MVT::MAX_ALLOWED_VALUETYPE - 1);
     I = I >> 5;
     OpActions[I][Op] &= ~(uint64_t(3UL) << (J*2));
     OpActions[I][Op] |= (uint64_t)Action << (J*2);
