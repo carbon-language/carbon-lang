@@ -738,8 +738,10 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
              "Instructions with different phys regs are not identical!");
 
       if (MO.isReg() && MO.isDef() &&
-          !TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
+          !TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
         RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
+        RegInfo->clearKillFlags(Dup->getOperand(i).getReg());
+      }
     }
     MI->eraseFromParent();
     ++NumCSEed;
@@ -783,6 +785,15 @@ void MachineLICM::Hoist(MachineInstr *MI) {
   if (!EliminateCSE(MI, CI)) {
     // Otherwise, splice the instruction to the preheader.
     CurPreheader->splice(CurPreheader->getFirstTerminator(),MI->getParent(),MI);
+
+    // Clear the kill flags of any register this instruction defines,
+    // since they may need to be live throughout the entire loop
+    // rather than just live for part of it.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isDef() && !MO.isDead())
+        RegInfo->clearKillFlags(MO.getReg());
+    }
 
     // Add to the CSE map.
     if (CI != CSEMap.end())

@@ -938,6 +938,16 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
   return true;
 }
 
+/// clearKillInfo - Clears kill flags on all operands.
+///
+void MachineInstr::clearKillInfo() {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (MO.isReg() && MO.isUse())
+      MO.setIsKill(false);
+  }
+}
+
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
 ///
 void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {

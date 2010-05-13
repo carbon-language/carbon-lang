@@ -314,5 +314,10 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // Move the instruction.
   SuccToSinkTo->splice(InsertPos, ParentBlock, MI,
                        ++MachineBasicBlock::iterator(MI));
+
+  // Conservatively, clear any kill flags, since it's possible that
+  // they are no longer correct.
+  MI->clearKillInfo();
+
   return true;
 }

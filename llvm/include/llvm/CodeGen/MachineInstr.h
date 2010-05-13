@@ -302,6 +302,10 @@ public:
   /// reference if DefOpIdx is not null.
   bool isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx = 0) const;
 
+  /// clearKillInfo - Clears kill flags on all operands.
+  ///
+  void clearKillInfo();
+
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
   void copyKillDeadInfo(const MachineInstr *MI);
