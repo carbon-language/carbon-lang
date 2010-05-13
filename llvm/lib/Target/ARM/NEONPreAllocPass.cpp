@@ -344,6 +344,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
   MachineOperand &FMO = MI->getOperand(FirstOpnd);
   assert(FMO.isReg() && FMO.getSubReg() == 0 && "unexpected operand");
   unsigned VirtReg = FMO.getReg();
+  (void)VirtReg;
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "expected a virtual register");
   if (FMO.isDef()) {
