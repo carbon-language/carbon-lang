@@ -731,7 +731,62 @@ public:
 };
 
 template<class RealType = double>
-    class gamma_distribution;
+class gamma_distribution
+{
+public:
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef gamma_distribution distribution_type;
+
+        explicit param_type(result_type alpha = 1, result_type beta = 1);
+
+        result_type alpha() const;
+        result_type beta() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructors and reset functions
+    explicit gamma_distribution(result_type alpha = 1, result_type beta = 1);
+    explicit gamma_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    result_type alpha() const;
+    result_type beta() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const gamma_distribution& x,
+                           const gamma_distribution& y);
+    friend bool operator!=(const gamma_distribution& x,
+                           const gamma_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const gamma_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               gamma_distribution& x);
+};
 
 template<class RealType = double>
     class weibull_distribution;
@@ -3226,6 +3281,138 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     return __is;
 }
 
+// gamma_distribution
+
+template<class _RealType = double>
+class gamma_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        result_type __alpha_;
+        result_type __beta_;
+    public:
+        typedef gamma_distribution distribution_type;
+
+        explicit param_type(result_type __alpha = 1, result_type __beta = 1)
+            : __alpha_(__alpha), __beta_(__beta) {}
+
+        result_type alpha() const {return __alpha_;}
+        result_type beta() const {return __beta_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__alpha_ == __y.__alpha_ && __x.__beta_ == __y.__beta_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructors and reset functions
+    explicit gamma_distribution(result_type __alpha = 1, result_type __beta = 1)
+        : __p_(param_type(__alpha, __beta)) {}
+    explicit gamma_distribution(const param_type& __p)
+        : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type alpha() const {return __p_.alpha();}
+    result_type beta() const {return __p_.beta();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return 0;}
+    result_type max() const {return numeric_limits<result_type>::infinity();} 
+
+    friend bool operator==(const gamma_distribution& __x,
+                           const gamma_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const gamma_distribution& __x,
+                           const gamma_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template <class _RealType>
+template<class _URNG>
+_RealType
+gamma_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    result_type __a = __p_.alpha();
+    if (__a == 1)
+        return exponential_distribution<result_type>(1/__p_.beta())(__g);
+    else if (__a > 1)
+    {
+        const result_type __b = __a - 1;
+        const result_type __c = 3 * __a - result_type(0.75);
+        uniform_real_distribution<result_type> __gen(0, 1);
+        result_type __x;
+        while (true)
+        {
+            const result_type __u = __gen(__g);
+            const result_type __v = __gen(__g);
+            const result_type __w = __u * (1 - __u);
+            if (__w =! 0)
+            {
+                const result_type __y = _STD::sqrt(__c / __w) *
+                                        (__u - result_type(0.5));
+                __x = __b + __y;
+                if (__x >= 0)
+                {
+                    const result_type __z = 64 * __w * __w * __w * __v * __v;
+                    if (__z <= 1 - 2 * __y * __y / __x)
+                        break;
+                    if (_STD::log(__z) <= 2 * (__b * _STD::log(__x / __b) - __y))
+                        break;
+                }
+            }
+        }
+        return __x * __p_.beta();
+    }
+    // else __a < 1
+    return 0; // temp!!!
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const gamma_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    __os << __x.alpha() << __sp << __x.beta();
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           gamma_distribution<_RT>& __x)
+{
+    typedef gamma_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __alpha;
+    result_type __beta;
+    __is >> __alpha >> __beta;
+    if (!__is.fail())
+        __x.param(param_type(__alpha, __beta));
+    return __is;
+}
 // normal_distribution
 
 template<class _RealType = double>
@@ -3288,7 +3475,7 @@ public:
                 (!__x._V_hot_ || __x._V_ == __y._V_);}
     friend bool operator!=(const normal_distribution& __x,
                            const normal_distribution& __y)
-            {return !(__x == __y);}
+        {return !(__x == __y);}
 
     template <class _CharT, class _Traits, class _RT>
     friend

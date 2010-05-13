@@ -35,7 +35,7 @@ int main()
         typedef std::minstd_rand G;
         G g;
         D d(5, 4);
-        const int N = 1000;
+        const int N = 10000;
         std::vector<D::result_type> u;
         for (int i = 0; i < N; ++i)
             u.push_back(d(g));
@@ -48,6 +48,6 @@ int main()
         D::result_type x_mean = d.mean();
         D::result_type x_var = sqr(d.stddev());
         assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(var - x_var) / x_var < 0.02);
     }
 }
