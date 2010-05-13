@@ -562,11 +562,9 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
                                    const MCAsmLayout &Layout,
                                    MCObjectWriter *OW) const {
-  uint64_t SectionFileSize = Layout.getSectionFileSize(SD);
-
   // Ignore virtual sections.
   if (getBackend().isVirtualSection(SD->getSection())) {
-    assert(SectionFileSize == 0 && "Invalid size for section!");
+    assert(Layout.getSectionFileSize(SD) == 0 && "Invalid size for section!");
 
     // Check that contents are only things legal inside a virtual section.
     for (MCSectionData::const_iterator it = SD->begin(),
@@ -595,7 +593,7 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
          ie = SD->end(); it != ie; ++it)
     WriteFragmentData(*this, Layout, *it, OW);
 
-  assert(OW->getStream().tell() - Start == SectionFileSize);
+  assert(OW->getStream().tell() - Start == Layout.getSectionFileSize(SD));
 }
 
 void MCAssembler::Finish() {
