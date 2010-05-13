@@ -38,17 +38,6 @@ void FunctionScopeInfo::Clear(unsigned NumErrors) {
 
 BlockScopeInfo::~BlockScopeInfo() { }
 
-static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
-  if (C.getLangOptions().CPlusPlus)
-    return CXXRecordDecl::Create(C, TTK_Struct,
-                                 C.getTranslationUnitDecl(),
-                                 SourceLocation(), &C.Idents.get(Name));
-
-  return RecordDecl::Create(C, TTK_Struct,
-                            C.getTranslationUnitDecl(),
-                            SourceLocation(), &C.Idents.get(Name));
-}
-
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
