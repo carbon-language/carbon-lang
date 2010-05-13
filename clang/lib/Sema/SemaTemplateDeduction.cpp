@@ -482,14 +482,20 @@ DeduceTemplateArguments(Sema &S,
 
     //     T *
     case Type::Pointer: {
-      const PointerType *PointerArg = Arg->getAs<PointerType>();
-      if (!PointerArg)
+      QualType PointeeType;
+      if (const PointerType *PointerArg = Arg->getAs<PointerType>()) {
+        PointeeType = PointerArg->getPointeeType();
+      } else if (const ObjCObjectPointerType *PointerArg
+                   = Arg->getAs<ObjCObjectPointerType>()) {
+        PointeeType = PointerArg->getPointeeType();
+      } else {
         return Sema::TDK_NonDeducedMismatch;
+      }
 
       unsigned SubTDF = TDF & (TDF_IgnoreQualifiers | TDF_DerivedClass);
       return DeduceTemplateArguments(S, TemplateParams,
                                    cast<PointerType>(Param)->getPointeeType(),
-                                     PointerArg->getPointeeType(),
+                                     PointeeType,
                                      Info, Deduced, SubTDF);
     }
 
