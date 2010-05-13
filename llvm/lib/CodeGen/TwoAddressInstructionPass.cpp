@@ -1175,17 +1175,36 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         llvm_unreachable(0);
       }
 
-      if (!Seen.insert(SrcReg)) {
-        // REG_SEQUENCE cannot have duplicated operands. Add a copy.
+      MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
+      if (!Seen.insert(SrcReg) || MI->getParent() != DefMI->getParent()) {
+        // REG_SEQUENCE cannot have duplicated operands, add a copy.
+        // Also add an copy if the source if live-in the block. We don't want
+        // to end up with a partial-redef of a livein, e.g.
+        // BB0:
+        // reg1051:10<def> =
+        // ...
+        // BB1:
+        // ... = reg1051:10
+        // BB2:
+        // reg1051:9<def> =
+        // LiveIntervalAnalysis won't like it.
         const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
         unsigned NewReg = MRI->createVirtualRegister(RC);
+        MachineBasicBlock::iterator InsertLoc = MI;
         bool Emitted =
-          TII->copyRegToReg(*MI->getParent(), MI, NewReg, SrcReg, RC, RC,
+          TII->copyRegToReg(*MI->getParent(), InsertLoc, NewReg, SrcReg, RC, RC,
                             MI->getDebugLoc());
         (void)Emitted;
         assert(Emitted && "Unable to issue a copy instruction!\n");
         MI->getOperand(i).setReg(NewReg);
-        MI->getOperand(i).setIsKill();
+        if (MI->getOperand(i).isKill()) {
+          MachineBasicBlock::iterator CopyMI = prior(InsertLoc);
+          MachineOperand *KillMO = CopyMI->findRegisterUseOperand(SrcReg);
+          KillMO->setIsKill();
+          if (LV)
+            // Update live variables
+            LV->replaceKillInstruction(SrcReg, MI, &*CopyMI);
+        }
       }
     }
 
