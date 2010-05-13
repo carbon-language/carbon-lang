@@ -1,4 +1,16 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o %t
+// RUN: FileCheck --check-prefix=CHECK-1 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-2 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-3 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-4 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-5 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-6 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-7 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-8 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-9 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-10 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-11 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-12 %s < %t
 
 namespace {
   struct A {
@@ -73,7 +85,7 @@ extern template struct F<int>;
 
 void use_F(F<char> &fc) {
   F<int> fi;
-  (void)fi;
+  fi.foo();
   F<long> fl;
   (void)fl;
   fc.foo();
@@ -81,71 +93,71 @@ void use_F(F<char> &fc) {
 
 // B has a key function that is not defined in this translation unit so its vtable
 // has external linkage.
-// CHECK: @_ZTV1B = external constant
+// CHECK-1: @_ZTV1B = external constant
 
 // C has no key function, so its vtable should have weak_odr linkage.
-// CHECK: @_ZTV1C = weak_odr constant
-// CHECK: @_ZTS1C = weak_odr constant
-// CHECK: @_ZTI1C = weak_odr constant
+// CHECK-2: @_ZTV1C = weak_odr constant
+// CHECK-2: @_ZTS1C = weak_odr constant
+// CHECK-2: @_ZTI1C = weak_odr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
-// CHECK: @_ZTV1D = constant
-// CHECK: @_ZTS1D = constant
-// CHECK: @_ZTI1D = constant
+// CHECK-3: @_ZTV1D = constant
+// CHECK-3: @_ZTS1D = constant
+// CHECK-3: @_ZTI1D = constant
 
 // E<char> is an explicit specialization with a key function defined
 // in this translation unit, so its vtable should have external
 // linkage.
-// CHECK: @_ZTV1EIcE = constant
-// CHECK: @_ZTS1EIcE = constant
-// CHECK: @_ZTI1EIcE = constant
+// CHECK-4: @_ZTV1EIcE = constant
+// CHECK-4: @_ZTS1EIcE = constant
+// CHECK-4: @_ZTI1EIcE = constant
 
 // E<short> is an explicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
-// CHECK: @_ZTV1EIsE = weak_odr constant
-// CHECK: @_ZTS1EIsE = weak_odr constant
-// CHECK: @_ZTI1EIsE = weak_odr constant
+// CHECK-5: @_ZTV1EIsE = weak_odr constant
+// CHECK-5: @_ZTS1EIsE = weak_odr constant
+// CHECK-5: @_ZTI1EIsE = weak_odr constant
 
 // F<short> is an explicit template instantiation without a key
 // function, so its vtable should have weak_odr linkage
-// CHECK: @_ZTV1FIsE = weak_odr constant
-// CHECK: @_ZTS1FIsE = weak_odr constant
-// CHECK: @_ZTI1FIsE = weak_odr constant
+// CHECK-6: @_ZTV1FIsE = weak_odr constant
+// CHECK-6: @_ZTS1FIsE = weak_odr constant
+// CHECK-6: @_ZTI1FIsE = weak_odr constant
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
-// CHECK: @_ZTV1EIlE = weak_odr constant
-// CHECK: @_ZTS1EIlE = weak_odr constant
-// CHECK: @_ZTI1EIlE = weak_odr constant
+// CHECK-7: @_ZTV1EIlE = weak_odr constant
+// CHECK-7: @_ZTS1EIlE = weak_odr constant
+// CHECK-7: @_ZTI1EIlE = weak_odr constant
 
 // F<long> is an implicit template instantiation with no key function,
 // so its vtable should have weak_odr linkage.
-// CHECK: @_ZTV1FIlE = weak_odr constant
-// CHECK: @_ZTS1FIlE = weak_odr constant
-// CHECK: @_ZTI1FIlE = weak_odr constant
+// CHECK-8: @_ZTV1FIlE = weak_odr constant
+// CHECK-8: @_ZTS1FIlE = weak_odr constant
+// CHECK-8: @_ZTI1FIlE = weak_odr constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
-// CHECK: @_ZTV1FIiE = external constant
+// CHECK-9: @_ZTV1FIiE = external constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiated, so we should only reference
 // its vtable, not define it.
-// CHECK: @_ZTV1EIiE = external constant
+// CHECK-10: @_ZTV1EIiE = external constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
 // internal linkage.
-// CHECK: @"_ZTV3$_0" = internal constant
-// CHECK: @"_ZTS3$_0" = internal constant
-// CHECK: @"_ZTI3$_0" = internal constant
+// CHECK-11: @"_ZTV3$_0" = internal constant
+// CHECK-11: @"_ZTS3$_0" = internal constant
+// CHECK-11: @"_ZTI3$_0" = internal constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.
-// CHECK: @_ZTVN12_GLOBAL__N_11AE = internal constant
-// CHECK: @_ZTSN12_GLOBAL__N_11AE = internal constant
-// CHECK: @_ZTIN12_GLOBAL__N_11AE = internal constant
+// CHECK-12: @_ZTVN12_GLOBAL__N_11AE = internal constant
+// CHECK-12: @_ZTSN12_GLOBAL__N_11AE = internal constant
+// CHECK-12: @_ZTIN12_GLOBAL__N_11AE = internal constant
 
 

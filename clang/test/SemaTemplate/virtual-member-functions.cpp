@@ -3,7 +3,7 @@
 namespace PR5557 {
 template <class T> struct A {
   A();
-  virtual void anchor(); // expected-note{{instantiation}}
+  virtual void anchor();
   virtual int a(T x);
 };
 template<class T> A<T>::A() {}
@@ -14,7 +14,7 @@ template<class T> int A<T>::a(T x) {
 }
 
 void f(A<int> x) {
-  x.anchor();
+  x.anchor(); // expected-note{{instantiation}}
 }
 
 template<typename T>
@@ -43,7 +43,7 @@ template struct Derived<int>; // expected-note {{in instantiation of member func
 
 template<typename T>
 struct HasOutOfLineKey {
-  HasOutOfLineKey() { } // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::f' requested here}}
+  HasOutOfLineKey() { } 
   virtual T *f(float *fp);
 };
 
@@ -52,4 +52,35 @@ T *HasOutOfLineKey<T>::f(float *fp) {
   return fp; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'float *'}}
 }
 
-HasOutOfLineKey<int> out_of_line;
+HasOutOfLineKey<int> out_of_line; // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::f' requested here}}
+
+namespace std {
+  class type_info;
+}
+
+namespace PR7114 {
+  class A { virtual ~A(); }; // expected-note{{declared private here}}
+
+  template<typename T>
+  class B {
+  public:
+    class Inner : public A { }; // expected-error{{base class 'PR7114::A' has private destructor}}
+    static Inner i;
+    static const unsigned value = sizeof(i) == 4;
+  };
+
+  int f() { return B<int>::value; }
+
+  void test_typeid(B<float>::Inner bfi) {
+    (void)typeid(bfi); // expected-note{{implicit default destructor}}
+  }
+
+  template<typename T>
+  struct X : A {
+    void f() { }
+  };
+
+  void test_X(X<int> xi, X<float> xf) {
+    xi.f();
+  }
+}

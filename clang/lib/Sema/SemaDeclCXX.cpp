@@ -735,6 +735,18 @@ void Sema::BuildBasePathArray(const CXXBasePaths &Paths,
     BasePathArray.push_back(Path[I].Base);
 }
 
+/// \brief Determine whether the given base path includes a virtual
+/// base class.
+bool Sema::BasePathInvolvesVirtualBase(const CXXBaseSpecifierArray &BasePath) {
+  for (CXXBaseSpecifierArray::iterator B = BasePath.begin(), 
+                                    BEnd = BasePath.end();
+       B != BEnd; ++B)
+    if ((*B)->isVirtual())
+      return true;
+
+  return false;
+}
+
 /// CheckDerivedToBaseConversion - Check whether the Derived-to-Base
 /// conversion (where Derived and Base are class types) is
 /// well-formed, meaning that the conversion is unambiguous (and
@@ -2466,6 +2478,9 @@ void Sema::CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record) {
       }
     }
   }
+
+  if (Record->isDynamicClass())
+    DynamicClasses.push_back(Record);
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
@@ -4154,7 +4169,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     Constructor->setInvalidDecl();
   } else {
     Constructor->setUsed();
-    MaybeMarkVirtualMembersReferenced(CurrentLocation, Constructor);
+    MarkVTableUsed(CurrentLocation, ClassDecl);
   }
 }
 
@@ -4183,7 +4198,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   }
 
   Destructor->setUsed();
-  MaybeMarkVirtualMembersReferenced(CurrentLocation, Destructor);
+  MarkVTableUsed(CurrentLocation, ClassDecl);
 }
 
 /// \brief Builds a statement that copies the given entity from \p From to
@@ -4641,8 +4656,6 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                             /*isStmtExpr=*/false);
   assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
-
-  MaybeMarkVirtualMembersReferenced(CurrentLocation, CopyAssignOperator);
 }
 
 void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
@@ -4670,7 +4683,6 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                                MultiStmtArg(*this, 0, 0), 
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
-    MaybeMarkVirtualMembersReferenced(CurrentLocation, CopyConstructor);
   }
   
   CopyConstructor->setUsed();
@@ -6019,90 +6031,120 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   return Dcl;
 }
 
-static bool needsVTable(CXXMethodDecl *MD, ASTContext &Context) {
-  // Ignore dependent types.
-  if (MD->isDependentContext())
-    return false;
-
-  // Ignore declarations that are not definitions.
-  if (!MD->isThisDeclarationADefinition())
-    return false;
-
-  CXXRecordDecl *RD = MD->getParent();
-
-  // Ignore classes without a vtable.
-  if (!RD->isDynamicClass())
-    return false;
-
-  switch (MD->getParent()->getTemplateSpecializationKind()) {
-  case TSK_Undeclared:
-  case TSK_ExplicitSpecialization:
-    // Classes that aren't instantiations of templates don't need their
-    // virtual methods marked until we see the definition of the key 
-    // function.
-    break;
-
-  case TSK_ImplicitInstantiation:
-    // This is a constructor of a class template; mark all of the virtual
-    // members as referenced to ensure that they get instantiatied.
-    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
-      return true;
-    break;
-
-  case TSK_ExplicitInstantiationDeclaration:
-    return false;
-
-  case TSK_ExplicitInstantiationDefinition:
-    // This is method of a explicit instantiation; mark all of the virtual
-    // members as referenced to ensure that they get instantiatied.
-    return true;
-  }
-
-  // Consider only out-of-line definitions of member functions. When we see
-  // an inline definition, it's too early to compute the key function.
-  if (!MD->isOutOfLine())
-    return false;
-
-  const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-
-  // If there is no key function, we will need a copy of the vtable.
-  if (!KeyFunction)
-    return true;
-
-  // If this is the key function, we need to mark virtual members.
-  if (KeyFunction->getCanonicalDecl() == MD->getCanonicalDecl())
-    return true;
-
-  return false;
-}
-
-void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
-                                             CXXMethodDecl *MD) {
-  CXXRecordDecl *RD = MD->getParent();
-
-  // We will need to mark all of the virtual members as referenced to build the
-  // vtable.
-  if (!needsVTable(MD, Context))
+void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
+                          bool DefinitionRequired) {
+  // Ignore any vtable uses in unevaluated operands or for classes that do
+  // not have a vtable.
+  if (!Class->isDynamicClass() || Class->isDependentContext() ||
+      CurContext->isDependentContext() ||
+      ExprEvalContexts.back().Context == Unevaluated)
     return;
 
-  TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
-  if (kind == TSK_ImplicitInstantiation)
-    ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
+  // Try to insert this class into the map.
+  Class = cast<CXXRecordDecl>(Class->getCanonicalDecl());
+  std::pair<llvm::DenseMap<CXXRecordDecl *, bool>::iterator, bool>
+    Pos = VTablesUsed.insert(std::make_pair(Class, DefinitionRequired));
+  if (!Pos.second) {
+    Pos.first->second = Pos.first->second || DefinitionRequired;
+    return;
+  }
+
+  // Local classes need to have their virtual members marked
+  // immediately. For all other classes, we mark their virtual members
+  // at the end of the translation unit.
+  if (Class->isLocalClass())
+    MarkVirtualMembersReferenced(Loc, Class);
   else
-    MarkVirtualMembersReferenced(Loc, RD);
+    VTableUses.push_back(std::make_pair(Class, Loc));
 }
 
-bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
-  if (ClassesWithUnmarkedVirtualMembers.empty())
+bool Sema::DefineUsedVTables() {
+  // If any dynamic classes have their key function defined within
+  // this translation unit, then those vtables are considered "used" and must
+  // be emitted.
+  for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
+    if (const CXXMethodDecl *KeyFunction
+                             = Context.getKeyFunction(DynamicClasses[I])) {
+      const FunctionDecl *Definition = 0;
+      if (KeyFunction->getBody(Definition) && !Definition->isInlined() &&
+          !Definition->isImplicit())
+        MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
+    }
+  }
+
+  if (VTableUses.empty())
     return false;
   
-  while (!ClassesWithUnmarkedVirtualMembers.empty()) {
-    CXXRecordDecl *RD = ClassesWithUnmarkedVirtualMembers.back().first;
-    SourceLocation Loc = ClassesWithUnmarkedVirtualMembers.back().second;
-    ClassesWithUnmarkedVirtualMembers.pop_back();
-    MarkVirtualMembersReferenced(Loc, RD);
+  // Note: The VTableUses vector could grow as a result of marking
+  // the members of a class as "used", so we check the size each
+  // time through the loop and prefer indices (with are stable) to
+  // iterators (which are not).
+  for (unsigned I = 0; I != VTableUses.size(); ++I) {
+    CXXRecordDecl *Class
+      = cast_or_null<CXXRecordDecl>(VTableUses[I].first)->getDefinition();
+    if (!Class)
+      continue;
+
+    SourceLocation Loc = VTableUses[I].second;
+
+    // If this class has a key function, but that key function is
+    // defined in another translation unit, we don't need to emit the
+    // vtable even though we're using it.
+    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(Class);
+    if (KeyFunction && !KeyFunction->getBody()) {
+      switch (KeyFunction->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ExplicitSpecialization:
+      case TSK_ExplicitInstantiationDeclaration:
+        // The key function is in another translation unit.
+        continue;
+
+      case TSK_ExplicitInstantiationDefinition:
+      case TSK_ImplicitInstantiation:
+        // We will be instantiating the key function.
+        break;
+      }
+    } else if (!KeyFunction) {
+      // If we have a class with no key function that is the subject
+      // of an explicit instantiation declaration, suppress the
+      // vtable; it will live with the explicit instantiation
+      // definition.
+      bool IsExplicitInstantiationDeclaration
+        = Class->getTemplateSpecializationKind()
+                                      == TSK_ExplicitInstantiationDeclaration;
+      for (TagDecl::redecl_iterator R = Class->redecls_begin(),
+                                 REnd = Class->redecls_end();
+           R != REnd; ++R) {
+        TemplateSpecializationKind TSK
+          = cast<CXXRecordDecl>(*R)->getTemplateSpecializationKind();
+        if (TSK == TSK_ExplicitInstantiationDeclaration)
+          IsExplicitInstantiationDeclaration = true;
+        else if (TSK == TSK_ExplicitInstantiationDefinition) {
+          IsExplicitInstantiationDeclaration = false;
+          break;
+        }
+      }
+
+      if (IsExplicitInstantiationDeclaration)
+        continue;
+    }
+
+    // Mark all of the virtual members of this class as referenced, so
+    // that we can build a vtable. Then, tell the AST consumer that a
+    // vtable for this class is required.
+    MarkVirtualMembersReferenced(Loc, Class);
+    CXXRecordDecl *Canonical = cast<CXXRecordDecl>(Class->getCanonicalDecl());
+    Consumer.HandleVTable(Class, VTablesUsed[Canonical]);
+
+    // Optionally warn if we're emitting a weak vtable.
+    if (Class->getLinkage() == ExternalLinkage &&
+        Class->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
+      if (!KeyFunction || (KeyFunction->getBody() && KeyFunction->isInlined()))
+        Diag(Class->getLocation(), diag::warn_weak_vtable) << Class;
+    }
   }
-  
+  VTableUses.clear();
+
   return true;
 }
 

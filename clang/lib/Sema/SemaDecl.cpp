@@ -4575,12 +4575,14 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       WP.disableCheckFallThrough();
     }
 
-    if (!FD->isInvalidDecl())
+    if (!FD->isInvalidDecl()) {
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
-
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FD))
-      MaybeMarkVirtualMembersReferenced(Method->getLocation(), Method);
-
+      
+      // If this is a constructor, we need a vtable.
+      if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(FD))
+        MarkVTableUsed(FD->getLocation(), Constructor->getParent());
+    }
+    
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
@@ -5447,37 +5449,6 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagD,
          "Broken injected-class-name");
 }
 
-// Traverses the class and any nested classes, making a note of any 
-// dynamic classes that have no key function so that we can mark all of
-// their virtual member functions as "used" at the end of the translation
-// unit. This ensures that all functions needed by the vtable will get
-// instantiated/synthesized.
-static void 
-RecordDynamicClassesWithNoKeyFunction(Sema &S, CXXRecordDecl *Record,
-                                      SourceLocation Loc) {
-  // We don't look at dependent or undefined classes.
-  if (Record->isDependentContext() || !Record->isDefinition())
-    return;
-  
-  if (Record->isDynamicClass()) {
-    const CXXMethodDecl *KeyFunction = S.Context.getKeyFunction(Record);
-  
-    if (!KeyFunction)
-      S.ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record,
-                                                                   Loc));
-
-    if ((!KeyFunction || (KeyFunction->getBody() && KeyFunction->isInlined()))
-        && Record->getLinkage() == ExternalLinkage)
-      S.Diag(Record->getLocation(), diag::warn_weak_vtable) << Record;
-  }
-  for (DeclContext::decl_iterator D = Record->decls_begin(), 
-                               DEnd = Record->decls_end();
-       D != DEnd; ++D) {
-    if (CXXRecordDecl *Nested = dyn_cast<CXXRecordDecl>(*D))
-      RecordDynamicClassesWithNoKeyFunction(S, Nested, Loc);
-  }
-}
-
 void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
                                     SourceLocation RBraceLoc) {
   AdjustDeclIfTemplate(TagD);
@@ -5489,10 +5460,6 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
 
   // Exit this scope of this tag's definition.
   PopDeclContext();
-
-  if (isa<CXXRecordDecl>(Tag) && !Tag->getLexicalDeclContext()->isRecord())
-    RecordDynamicClassesWithNoKeyFunction(*this, cast<CXXRecordDecl>(Tag),
-                                          RBraceLoc);
                                           
   // Notify the consumer that we've defined a tag.
   Consumer.HandleTagDeclDefinition(Tag);

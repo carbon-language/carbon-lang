@@ -164,6 +164,18 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
     }
   }
 
+  // If this is a derived-to-base cast to a through a virtual base, we
+  // need a vtable.
+  if (Kind == CastExpr::CK_DerivedToBase && 
+      BasePathInvolvesVirtualBase(BasePath)) {
+    QualType T = Expr->getType();
+    if (const PointerType *Pointer = T->getAs<PointerType>())
+      T = Pointer->getPointeeType();
+    if (const RecordType *RecordTy = T->getAs<RecordType>())
+      MarkVTableUsed(Expr->getLocStart(), 
+                     cast<CXXRecordDecl>(RecordTy->getDecl()));
+  }
+
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind && BasePath.empty()) {
       ImpCast->setType(Ty);
@@ -199,10 +211,10 @@ void Sema::ActOnEndOfTranslationUnit() {
     // template instantiations earlier.
     PerformPendingImplicitInstantiations();
     
-    /// If ProcessPendingClassesWithUnmarkedVirtualMembers ends up marking 
-    /// any virtual member functions it might lead to more pending template
+    /// If DefinedUsedVTables ends up marking any virtual member
+    /// functions it might lead to more pending template
     /// instantiations, which is why we need to loop here.
-    if (!ProcessPendingClassesWithUnmarkedVirtualMembers())
+    if (!DefineUsedVTables())
       break;
   }
   

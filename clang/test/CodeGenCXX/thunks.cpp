@@ -88,6 +88,7 @@ void C::f() { }
 
 // This is from Test5:
 // CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+// CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
 
 // Check that the thunk gets internal linkage.
 namespace {
@@ -106,7 +107,6 @@ struct C : A, B {
   virtual void f();
 };
 
-// CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
 void C::f() { }
 
 }

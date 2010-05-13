@@ -314,8 +314,12 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       //   When typeid is applied to an expression other than an lvalue of a
       //   polymorphic class type [...] [the] expression is an unevaluated
       //   operand. [...]
-      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
+      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid) {
         isUnevaluatedOperand = false;
+
+        // We require a vtable to query the type at run time.
+        MarkVTableUsed(TypeidLoc, RecordD);
+      }
     }
     
     // C++ [expr.typeid]p4:
@@ -445,6 +449,12 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   if (Res.isInvalid())
     return true;
   E = Res.takeAs<Expr>();
+
+  // If we are throwing a polymorphic class type or pointer thereof,
+  // exception handling will make use of the vtable.
+  if (const RecordType *RecordTy = Ty->getAs<RecordType>())
+    MarkVTableUsed(ThrowLoc, cast<CXXRecordDecl>(RecordTy->getDecl()));
+    
   return false;
 }
 
@@ -1802,17 +1812,24 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
   }
 
-  case ICK_Derived_To_Base:
+  case ICK_Derived_To_Base: {
+    CXXBaseSpecifierArray BasePath;
     if (CheckDerivedToBaseConversion(From->getType(), 
                                      ToType.getNonReferenceType(),
                                      From->getLocStart(),
-                                     From->getSourceRange(), 0,
+                                     From->getSourceRange(), 
+                                     &BasePath,
                                      IgnoreBaseAccess))
       return true;
+
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      CastExpr::CK_DerivedToBase);
+                      CastExpr::CK_DerivedToBase, 
+                      /*isLvalue=*/(From->getType()->isRecordType() &&
+                                    From->isLvalue(Context) == Expr::LV_Valid),
+                      BasePath);
     break;
-      
+  }
+
   default:
     assert(false && "Improper second standard conversion");
     break;

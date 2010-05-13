@@ -180,6 +180,10 @@ namespace {
       Gen->CompleteTentativeDefinition(D);
     }
 
+    virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {
+      Gen->HandleVTable(RD, DefinitionRequired);
+    }
+
     static void InlineAsmDiagHandler(const llvm::SMDiagnostic &SM,void *Context,
                                      unsigned LocCookie) {
       SourceLocation Loc = SourceLocation::getFromRawEncoding(LocCookie);

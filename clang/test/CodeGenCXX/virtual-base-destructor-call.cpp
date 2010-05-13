@@ -49,3 +49,4 @@ int main() {
 //  CHECK: define linkonce_odr void @_ZN13basic_istreamIcED2Ev
 //  CHECK-NOT: call
 //  CHECK: }
+

@@ -21,9 +21,9 @@ C::C() { }  // expected-note {{implicit default destructor for 'C' first require
 
 struct D : A { // expected-error {{no suitable member 'operator delete' in 'D'}}
   void operator delete(void *, int); // expected-note {{'operator delete' declared here}}
-}; // expected-note {{implicit default destructor for 'D' first required here}}
+}; 
 
 void f() {
-  new D; 
+  new D; // expected-note {{implicit default destructor for 'D' first required here}}
 }
 

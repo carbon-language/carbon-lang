@@ -272,9 +272,6 @@ class CodeGenVTables {
   /// EmitThunk - Emit a single thunk.
   void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk);
   
-  /// EmitThunks - Emit the associated thunks for the given global decl.
-  void EmitThunks(GlobalDecl GD);
-  
   /// ComputeVTableRelatedInformation - Compute and store all vtable related
   /// information (vtable layout, vbase offset offsets, thunks etc) for the
   /// given record decl.
@@ -349,11 +346,10 @@ public:
                              VTableAddressPointsMapTy& AddressPoints);
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
-  
-  // EmitVTableRelatedData - Will emit any thunks that the global decl might
-  // have, as well as the vtable itself if the global decl is the key function.
-  void EmitVTableRelatedData(GlobalDecl GD);
 
+  /// EmitThunks - Emit the associated thunks for the given global decl.
+  void EmitThunks(GlobalDecl GD);
+    
   /// GenerateClassData - Generate all the class data required to be generated
   /// upon definition of a KeyFunction.  This includes the vtable, the
   /// rtti data structure and the VTT.

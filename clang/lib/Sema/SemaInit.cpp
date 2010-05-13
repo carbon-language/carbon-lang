@@ -3540,6 +3540,15 @@ InitializationSequence::Perform(Sema &S,
                                          &BasePath, IgnoreBaseAccess))
         return S.ExprError();
         
+      if (S.BasePathInvolvesVirtualBase(BasePath)) {
+        QualType T = SourceType;
+        if (const PointerType *Pointer = T->getAs<PointerType>())
+          T = Pointer->getPointeeType();
+        if (const RecordType *RecordTy = T->getAs<RecordType>())
+          S.MarkVTableUsed(CurInitExpr->getLocStart(), 
+                           cast<CXXRecordDecl>(RecordTy->getDecl()));
+      }
+
       CurInit = S.Owned(new (S.Context) ImplicitCastExpr(Step->Type,
                                                     CastExpr::CK_DerivedToBase,
                                                     (Expr*)CurInit.release(),

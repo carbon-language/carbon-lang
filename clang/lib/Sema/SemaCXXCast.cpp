@@ -388,6 +388,12 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
         return;
         
     Kind = CastExpr::CK_DerivedToBase;
+
+    // If we are casting to or through a virtual base class, we need a
+    // vtable.
+    if (Self.BasePathInvolvesVirtualBase(BasePath))
+      Self.MarkVTableUsed(OpRange.getBegin(), 
+                          cast<CXXRecordDecl>(SrcRecord->getDecl()));
     return;
   }
 
@@ -398,6 +404,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_polymorphic)
       << SrcPointee.getUnqualifiedType() << SrcExpr->getSourceRange();
   }
+  Self.MarkVTableUsed(OpRange.getBegin(), 
+                      cast<CXXRecordDecl>(SrcRecord->getDecl()));
 
   // Done. Everything else is run-time checks.
   Kind = CastExpr::CK_Dynamic;

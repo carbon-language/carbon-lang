@@ -2560,27 +2560,38 @@ public:
   void MarkBaseAndMemberDestructorsReferenced(SourceLocation Loc,
                                               CXXRecordDecl *Record);
 
-  /// ClassesWithUnmarkedVirtualMembers - Contains record decls whose virtual
-  /// members need to be marked as referenced at the end of the translation
-  /// unit. It will contain polymorphic classes that do not have a key
-  /// function or have a key function that has been defined.
-  llvm::SmallVector<std::pair<CXXRecordDecl *, SourceLocation>, 4>
-    ClassesWithUnmarkedVirtualMembers;
+  /// \brief The list of classes whose vtables have been used within
+  /// this translation unit, and the source locations at which the
+  /// first use occurred.
+  llvm::SmallVector<std::pair<CXXRecordDecl *, SourceLocation>, 16> 
+    VTableUses;
 
-  /// MaybeMarkVirtualMembersReferenced - If the passed in method is the
-  /// key function of the record decl, will mark virtual member functions as
-  /// referenced.
-  void MaybeMarkVirtualMembersReferenced(SourceLocation Loc, CXXMethodDecl *MD);
+  /// \brief The set of classes whose vtables have been used within
+  /// this translation unit, and a bit that will be true if the vtable is
+  /// required to be emitted (otherwise, it should be emitted only if needed
+  /// by code generation).
+  llvm::DenseMap<CXXRecordDecl *, bool> VTablesUsed;
+
+  /// \brief A list of all of the dynamic classes in this translation
+  /// unit.
+  llvm::SmallVector<CXXRecordDecl *, 16> DynamicClasses;
+
+  /// \brief Note that the vtable for the given class was used at the
+  /// given location.
+  void MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
+                      bool DefinitionRequired = false);
 
   /// MarkVirtualMembersReferenced - Will mark all virtual members of the given
   /// CXXRecordDecl referenced.
   void MarkVirtualMembersReferenced(SourceLocation Loc,
                                     const CXXRecordDecl *RD);
 
-  /// ProcessPendingClassesWithUnmarkedVirtualMembers - Will process classes
-  /// that might need to have their virtual members marked as referenced.
-  /// Returns false if no work was done.
-  bool ProcessPendingClassesWithUnmarkedVirtualMembers();
+  /// \brief Define all of the vtables that have been used in this
+  /// translation unit and reference any virtual members used by those
+  /// vtables.
+  ///
+  /// \returns true if any work was done, false otherwise.
+  bool DefineUsedVTables();
 
   void AddImplicitlyDeclaredMembersToClass(Scope *S, CXXRecordDecl *ClassDecl);
 
@@ -2663,6 +2674,8 @@ public:
   // FIXME: I don't like this name.
   void BuildBasePathArray(const CXXBasePaths &Paths,
                           CXXBaseSpecifierArray &BasePath);
+
+  bool BasePathInvolvesVirtualBase(const CXXBaseSpecifierArray &BasePath);
 
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range,

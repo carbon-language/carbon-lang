@@ -7503,17 +7503,19 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
     }
 
-    MaybeMarkVirtualMembersReferenced(Loc, Constructor);
+    MarkVTableUsed(Loc, Constructor->getParent());
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     if (Destructor->isImplicit() && !Destructor->isUsed())
       DefineImplicitDestructor(Loc, Destructor);
-
+    if (Destructor->isVirtual())
+      MarkVTableUsed(Loc, Destructor->getParent());
   } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
     if (MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
       if (!MethodDecl->isUsed())
         DefineImplicitCopyAssignment(Loc, MethodDecl);
-    }
+    } else if (MethodDecl->isVirtual())
+      MarkVTableUsed(Loc, MethodDecl->getParent());
   }
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of

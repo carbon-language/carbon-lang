@@ -1221,24 +1221,14 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // Exit the scope of this instantiation.
   SavedContext.pop();
 
-  // If this is a polymorphic C++ class without a key function, we'll
-  // have to mark all of the virtual members to allow emission of a vtable
-  // in this translation unit.
-  if (Instantiation->isDynamicClass() &&
-      !Context.getKeyFunction(Instantiation)) {
-    // Local classes need to have their methods instantiated immediately in
-    // order to have the correct instantiation scope.
-    if (Instantiation->isLocalClass()) {
-      MarkVirtualMembersReferenced(PointOfInstantiation,
-                                   Instantiation);
-    } else {
-      ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Instantiation,
-                                                       PointOfInstantiation));
-    }
-  }
-
-  if (!Invalid)
+  if (!Invalid) {
     Consumer.HandleTagDeclDefinition(Instantiation);
+
+    // Always emit the vtable for an explicit instantiation definition
+    // of a polymorphic class template specialization.
+    if (TSK == TSK_ExplicitInstantiationDefinition)
+      MarkVTableUsed(PointOfInstantiation, Instantiation, true);
+  }
 
   return Invalid;
 }
@@ -1263,6 +1253,12 @@ Sema::InstantiateClassTemplateSpecialization(
       // declaration (C++0x [temp.explicit]p10); go ahead and perform the
       // explicit instantiation.
       ClassTemplateSpec->setSpecializationKind(TSK);
+      
+      // If this is an explicit instantiation definition, mark the
+      // vtable as used.
+      if (TSK == TSK_ExplicitInstantiationDefinition)
+        MarkVTableUsed(PointOfInstantiation, ClassTemplateSpec, true);
+
       return false;
     }
     

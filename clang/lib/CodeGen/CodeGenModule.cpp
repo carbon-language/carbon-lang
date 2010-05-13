@@ -727,8 +727,9 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  Context.getSourceManager(),
                                  "Generating code for declaration");
   
-  if (isa<CXXMethodDecl>(D))
-    getVTables().EmitVTableRelatedData(GD);
+  if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+    if (Method->isVirtual())
+      getVTables().EmitThunks(GD);
 
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     return EmitCXXConstructor(CD, GD.getCtorType());
@@ -982,6 +983,11 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
 
   // The tentative definition is the only definition.
   EmitGlobalVarDefinition(D);
+}
+
+void CodeGenModule::EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired) {
+  if (DefinitionRequired)
+    getVTables().GenerateClassData(getVTableLinkage(Class), Class);
 }
 
 llvm::GlobalVariable::LinkageTypes 

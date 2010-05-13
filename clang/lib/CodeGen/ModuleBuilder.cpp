@@ -89,6 +89,13 @@ namespace {
 
       Builder->EmitTentativeDefinition(D);
     }
+
+    virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {
+      if (Diags.hasErrorOccurred())
+        return;
+
+      Builder->EmitVTable(RD, DefinitionRequired);
+    }
   };
 }
 

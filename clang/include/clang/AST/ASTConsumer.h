@@ -16,6 +16,7 @@
 
 namespace clang {
   class ASTContext;
+  class CXXRecordDecl;
   class DeclGroupRef;
   class TagDecl;
   class HandleTagDeclDefinition;
@@ -67,6 +68,17 @@ public:
   /// declaration remains a tentative definition and has not been
   /// modified by the introduction of an implicit zero initializer.
   virtual void CompleteTentativeDefinition(VarDecl *D) {}
+
+  /// \brief Callback involved at the end of a translation unit to
+  /// notify the consumer that a vtable for the given C++ class is
+  /// required.
+  ///
+  /// \param RD The class whose vtable was used.
+  ///
+  /// \param DefinitionRequired Whether a definition of this vtable is
+  /// required in this translation unit; otherwise, it is only needed if
+  /// it was actually used.
+  virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {}
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}

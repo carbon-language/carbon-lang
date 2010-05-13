@@ -422,6 +422,8 @@ public:
 
   void EmitTentativeDefinition(const VarDecl *D);
 
+  void EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired);
+
   enum GVALinkage {
     GVA_Internal,
     GVA_C99Inline,

@@ -9,6 +9,7 @@ struct B {
 
 void B::f() { }
 
+// CHECK: define i64 @_ZN1D1gEv(%struct.B* %this)
 // CHECK: declare void @_ZN1B1gEv()
 
 struct C;
@@ -24,7 +25,6 @@ struct C {
   int a;
 };
 
-// CHECK: define i64 @_ZN1D1gEv(%struct.B* %this)
 C D::g() {
   return C();
 }

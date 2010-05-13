@@ -4597,7 +4597,6 @@ static bool ScopeSpecifierHasTemplateId(const CXXScopeSpec &SS) {
 }
 
 // Explicit instantiation of a class template specialization
-// FIXME: Implement extern template semantics
 Sema::DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation ExternLoc,
@@ -4760,7 +4759,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                               Specialization->getDefinition());
   if (!Def)
     InstantiateClassTemplateSpecialization(TemplateNameLoc, Specialization, TSK);
-  
+  else if (TSK == TSK_ExplicitInstantiationDefinition)
+    MarkVTableUsed(TemplateNameLoc, Specialization, true);
+
   // Instantiate the members of this class template specialization.
   Def = cast_or_null<ClassTemplateSpecializationDecl>(
                                        Specialization->getDefinition());
@@ -4894,6 +4895,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // Instantiate all of the members of the class.
   InstantiateClassMembers(NameLoc, RecordDef,
                           getTemplateInstantiationArgs(Record), TSK);
+
+  if (TSK == TSK_ExplicitInstantiationDefinition)
+    MarkVTableUsed(NameLoc, RecordDef, true);
 
   // FIXME: We don't have any representation for explicit instantiations of
   // member classes. Such a representation is not needed for compilation, but it

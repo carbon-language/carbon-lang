@@ -18,4 +18,14 @@ void f() {
   struct A {
     virtual void f() { }
   };
+
+  A *a;
+  a->f();
+}
+
+// Use the vtables
+void uses(A &a, B<int> &b, C &c) {
+  a.f();
+  b.f();
+  c.f();
 }
