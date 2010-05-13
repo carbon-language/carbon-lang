@@ -108,6 +108,11 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 
 // Pseudo 256-bit registers to represent pairs of Q registers. These should
 // never be present in the emitted code.
+// These are used for NEON load / store instructions, e.g. vld4, vst3.
+// NOTE: It's possible to define more QQ registers since technical the
+// starting D register number doesn't have to be multiple of 4. e.g. 
+// D1, D2, D3, D4 would be a legal quad. But that would make the sub-register
+// stuffs very messy.
 def QQ0 : ARMReg<0, "qq0", [Q0,  Q1]>;
 def QQ1 : ARMReg<1, "qq1", [Q2,  Q3]>;
 def QQ2 : ARMReg<2, "qq2", [Q4,  Q5]>;
