@@ -19,32 +19,14 @@
 
 using namespace clang;
 
-/// Determines whether we should have an a.k.a. clause when
-/// pretty-printing a type.  There are three main criteria:
-///
-/// 1) Some types provide very minimal sugar that doesn't impede the
-///    user's understanding --- for example, elaborated type
-///    specifiers.  If this is all the sugar we see, we don't want an
-///    a.k.a. clause.
-/// 2) Some types are technically sugared but are much more familiar
-///    when seen in their sugared form --- for example, va_list,
-///    vector types, and the magic Objective C types.  We don't
-///    want to desugar these, even if we do produce an a.k.a. clause.
-/// 3) Some types may have already been desugared previously in this diagnostic.
-///    if this is the case, doing another "aka" would just be clutter.
-///
-static bool ShouldAKA(ASTContext &Context, QualType QT,
-                      const Diagnostic::ArgumentValue *PrevArgs,
-                      unsigned NumPrevArgs,
-                      QualType &DesugaredQT) {
-  QualType InputTy = QT;
-  
-  bool AKA = false;
-  QualifierCollector Qc;
-  
+// Returns a desugared version of the QualType, and marks ShouldAKA as true
+// whenever we remove significant sugar from the type.
+static QualType Desugar(ASTContext &Context, QualType QT, bool &ShouldAKA) {
+  QualifierCollector QC;
+
   while (true) {
-    const Type *Ty = Qc.strip(QT);
-    
+    const Type *Ty = QC.strip(QT);
+
     // Don't aka just because we saw an elaborated type...
     if (isa<ElaboratedType>(Ty)) {
       QT = cast<ElaboratedType>(Ty)->desugar();
@@ -56,22 +38,22 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
       QT = cast<SubstTemplateTypeParmType>(Ty)->desugar();
       continue;
     }
-    
+
     // Don't desugar template specializations. 
     if (isa<TemplateSpecializationType>(Ty))
       break;
-    
+
     // Don't desugar magic Objective-C types.
     if (QualType(Ty,0) == Context.getObjCIdType() ||
         QualType(Ty,0) == Context.getObjCClassType() ||
         QualType(Ty,0) == Context.getObjCSelType() ||
         QualType(Ty,0) == Context.getObjCProtoType())
       break;
-    
+
     // Don't desugar va_list.
     if (QualType(Ty,0) == Context.getBuiltinVaListType())
       break;
-    
+
     // Otherwise, do a single-step desugar.
     QualType Underlying;
     bool IsSugar = false;
@@ -88,50 +70,56 @@ break; \
 }
 #include "clang/AST/TypeNodes.def"
     }
-    
+
     // If it wasn't sugared, we're done.
     if (!IsSugar)
       break;
-    
+
     // If the desugared type is a vector type, we don't want to expand
     // it, it will turn into an attribute mess. People want their "vec4".
     if (isa<VectorType>(Underlying))
       break;
-    
+
     // Don't desugar through the primary typedef of an anonymous type.
     if (isa<TagType>(Underlying) && isa<TypedefType>(QT))
       if (cast<TagType>(Underlying)->getDecl()->getTypedefForAnonDecl() ==
           cast<TypedefType>(QT)->getDecl())
         break;
-    
-    // Otherwise, we're tearing through something opaque; note that
-    // we'll eventually need an a.k.a. clause and keep going.
-    AKA = true;
+
+    // Record that we actually looked through an opaque type here.
+    ShouldAKA = true;
     QT = Underlying;
-    continue;
   }
-  
-  // If we never tore through opaque sugar, don't print aka.
-  if (!AKA) return false;
-  
-  // If we did, check to see if we already desugared this type in this
-  // diagnostic.  If so, don't do it again.
-  for (unsigned i = 0; i != NumPrevArgs; ++i) {
-    // TODO: Handle ak_declcontext case.
-    if (PrevArgs[i].first == Diagnostic::ak_qualtype) {
-      void *Ptr = (void*)PrevArgs[i].second;
-      QualType PrevTy(QualType::getFromOpaquePtr(Ptr));
-      if (PrevTy == InputTy)
-        return false;
-    }
+
+  // If we have a pointer-like type, desugar the pointee as well.
+  // FIXME: Handle other pointer-like types.
+  if (const PointerType *Ty = QT->getAs<PointerType>()) {
+      QT = Context.getPointerType(Desugar(Context, Ty->getPointeeType(),
+                                          ShouldAKA));
+  } else if (const LValueReferenceType *Ty = QT->getAs<LValueReferenceType>()) {
+      QT = Context.getLValueReferenceType(Desugar(Context, Ty->getPointeeType(),
+                                                  ShouldAKA));
   }
-  
-  DesugaredQT = Qc.apply(QT);
-  return true;
+
+  return QC.apply(QT);
 }
 
 /// \brief Convert the given type to a string suitable for printing as part of 
-/// a diagnostic. 
+/// a diagnostic.
+///
+/// There are three main criteria when determining whether we should have an
+/// a.k.a. clause when pretty-printing a type:
+///
+/// 1) Some types provide very minimal sugar that doesn't impede the
+///    user's understanding --- for example, elaborated type
+///    specifiers.  If this is all the sugar we see, we don't want an
+///    a.k.a. clause.
+/// 2) Some types are technically sugared but are much more familiar
+///    when seen in their sugared form --- for example, va_list,
+///    vector types, and the magic Objective C types.  We don't
+///    want to desugar these, even if we do produce an a.k.a. clause.
+/// 3) Some types may have already been desugared previously in this diagnostic.
+///    if this is the case, doing another "aka" would just be clutter.
 ///
 /// \param Context the context in which the type was allocated
 /// \param Ty the type to print
@@ -141,18 +129,35 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
                               unsigned NumPrevArgs) {
   // FIXME: Playing with std::string is really slow.
   std::string S = Ty.getAsString(Context.PrintingPolicy);
-  
+
+  // Check to see if we already desugared this type in this
+  // diagnostic.  If so, don't do it again.
+  bool Repeated = false;
+  for (unsigned i = 0; i != NumPrevArgs; ++i) {
+    // TODO: Handle ak_declcontext case.
+    if (PrevArgs[i].first == Diagnostic::ak_qualtype) {
+      void *Ptr = (void*)PrevArgs[i].second;
+      QualType PrevTy(QualType::getFromOpaquePtr(Ptr));
+      if (PrevTy == Ty) {
+        Repeated = true;
+        break;
+      }
+    }
+  }
+
   // Consider producing an a.k.a. clause if removing all the direct
   // sugar gives us something "significantly different".
-  
-  QualType DesugaredTy;
-  if (ShouldAKA(Context, Ty, PrevArgs, NumPrevArgs, DesugaredTy)) {
-    S = "'"+S+"' (aka '";
-    S += DesugaredTy.getAsString(Context.PrintingPolicy);
-    S += "')";
-    return S;
+  if (!Repeated) {
+    bool ShouldAKA = false;
+    QualType DesugaredTy = Desugar(Context, Ty, ShouldAKA);
+    if (ShouldAKA) {
+      S = "'"+S+"' (aka '";
+      S += DesugaredTy.getAsString(Context.PrintingPolicy);
+      S += "')";
+      return S;
+    }
   }
-  
+
   S = "'" + S + "'";
   return S;
 }
