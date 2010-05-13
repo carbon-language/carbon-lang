@@ -36,3 +36,17 @@ namespace test1 {
     while (condition()) {}
   }
 }
+
+
+// <rdar://problem/7880658> - This test case previously had a false "missing return"
+// warning.
+struct R7880658 {
+  R7880658 &operator++();
+  bool operator==(const R7880658 &) const;
+  bool operator!=(const R7880658 &) const;
+};
+
+void f_R7880658(R7880658 f, R7880658 l) {  // no-warning
+  for (; f != l; ++f) {
+  }
+}
