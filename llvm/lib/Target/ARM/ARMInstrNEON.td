@@ -2796,6 +2796,7 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 
 //   VMOV     : Vector Move (Register)
 
+let neverHasSideEffects = 1 in {
 def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
                      N3RegFrm, IIC_VMOVD, "vmov", "$dst, $src", "", []>;
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
@@ -2805,6 +2806,7 @@ def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
 // be expanded after register allocation is completed.
 def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
                 NoItinerary, "@ vmov\t$dst, $src", []>;
+} // neverHasSideEffects
 
 //   VMOV     : Vector Move (Immediate)
 
