@@ -1344,22 +1344,18 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
 ///  ::= .zerofill segname , sectname [, identifier , size_expression [
 ///      , align_expression ]]
 bool AsmParser::ParseDirectiveDarwinZerofill() {
-  // FIXME: Handle quoted names here.
-
-  if (Lexer.isNot(AsmToken::Identifier))
+  StringRef Segment;
+  if (ParseIdentifier(Segment))
     return TokError("expected segment name after '.zerofill' directive");
-  StringRef Segment = getTok().getString();
-  Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
   Lex();
- 
-  if (Lexer.isNot(AsmToken::Identifier))
+
+  StringRef Section;
+  if (ParseIdentifier(Section))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
-  StringRef Section = getTok().getString();
-  Lex();
 
   // If this is the end of the line all that was wanted was to create the
   // the section but with no symbol.
@@ -1375,13 +1371,13 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
     return TokError("unexpected token in directive");
   Lex();
 
-  if (Lexer.isNot(AsmToken::Identifier))
+  SMLoc IDLoc = Lexer.getLoc();
+  StringRef IDStr;
+  if (ParseIdentifier(IDStr))
     return TokError("expected identifier in directive");
   
   // handle the identifier as the key symbol.
-  SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = CreateSymbol(getTok().getString());
-  Lex();
+  MCSymbol *Sym = CreateSymbol(IDStr);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
