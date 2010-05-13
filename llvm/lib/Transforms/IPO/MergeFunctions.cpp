@@ -94,7 +94,7 @@ namespace {
 
   private:
     bool isEquivalentGEP(const GetElementPtrInst *GEP1,
-			 const GetElementPtrInst *GEP2);
+                         const GetElementPtrInst *GEP2);
 
     bool equals(const BasicBlock *BB1, const BasicBlock *BB2);
     bool equals(const Function *F, const Function *G);
@@ -355,7 +355,7 @@ bool MergeFunctions::compare(const Value *V1, const Value *V2) {
   if (Domain1 != Domain2)
     if (Domain1 != LHS && Domain1 != RHS)
       if (Domain2 != LHS && Domain2 != RHS)
-	return false;
+        return false;
 
   IDMap &Map1 = Domains[Domain1];
   unsigned long &ID1 = Map1[V1];
@@ -383,10 +383,10 @@ bool MergeFunctions::equals(const BasicBlock *BB1, const BasicBlock *BB2) {
       const GetElementPtrInst *GEP2 = cast<GetElementPtrInst>(GI);
 
       if (!compare(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
-	return false;
+        return false;
 
       if (!isEquivalentGEP(GEP1, GEP2))
-	return false;
+        return false;
     } else {
       if (!isEquivalentOperation(FI, GI))
         return false;
@@ -395,8 +395,8 @@ bool MergeFunctions::equals(const BasicBlock *BB1, const BasicBlock *BB2) {
         Value *OpF = FI->getOperand(i);
         Value *OpG = GI->getOperand(i);
 
-	if (!compare(OpF, OpG))
-	  return false;
+        if (!compare(OpF, OpG))
+          return false;
 
         if (OpF->getValueID() != OpG->getValueID() ||
             !isEquivalentType(OpF->getType(), OpG->getType()))
@@ -472,7 +472,7 @@ bool MergeFunctions::equals(const Function *F, const Function *G) {
     assert(FTI->getNumSuccessors() == GTI->getNumSuccessors());
     for (unsigned i = 0, e = FTI->getNumSuccessors(); i != e; ++i) {
       if (!VisitedBBs.insert(FTI->getSuccessor(i)))
-	continue;
+        continue;
       FBBs.push_back(FTI->getSuccessor(i));
       GBBs.push_back(GTI->getSuccessor(i));
     }
