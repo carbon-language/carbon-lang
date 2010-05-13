@@ -133,6 +133,15 @@ bool MachineRegisterInfo::hasOneNonDBGUse(unsigned RegNo) const {
   return ++UI == use_nodbg_end();
 }
 
+/// clearKillFlags - Iterate over all the uses of the given register and
+/// clear the kill flag from the MachineOperand. This function is used by
+/// optimization passes which extend register lifetimes and need only
+/// preserve conservative kill flag information.
+void MachineRegisterInfo::clearKillFlags(unsigned Reg) const {
+  for (use_iterator UI = use_begin(Reg), UE = use_end(); UI != UE; ++UI)
+    UI.getOperand().setIsKill(false);
+}
+
 bool MachineRegisterInfo::isLiveIn(unsigned Reg) const {
   for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
     if (I->first == Reg || I->second == Reg)

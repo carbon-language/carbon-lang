@@ -162,6 +162,12 @@ public:
   /// register or null if none is found.  This assumes that the code is in SSA
   /// form, so there should only be one definition.
   MachineInstr *getVRegDef(unsigned Reg) const;
+
+  /// clearKillFlags - Iterate over all the uses of the given register and
+  /// clear the kill flag from the MachineOperand. This function is used by
+  /// optimization passes which extend register lifetimes and need only
+  /// preserve conservative kill flag information.
+  void clearKillFlags(unsigned Reg) const;
   
 #ifndef NDEBUG
   void dumpUses(unsigned RegNo) const;

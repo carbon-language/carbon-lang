@@ -112,6 +112,7 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
       DEBUG(dbgs() << "Coalescing: " << *DefMI);
       DEBUG(dbgs() << "*** to: " << *MI);
       MO.setReg(SrcReg);
+      MRI->clearKillFlags(SrcReg);
       if (NewRC != SRC)
         MRI->setRegClass(SrcReg, NewRC);
       DefMI->eraseFromParent();
@@ -365,8 +366,10 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
 
     // Actually perform the elimination.
     if (DoCSE) {
-      for (unsigned i = 0, e = CSEPairs.size(); i != e; ++i)
+      for (unsigned i = 0, e = CSEPairs.size(); i != e; ++i) {
         MRI->replaceRegWith(CSEPairs[i].first, CSEPairs[i].second);
+        MRI->clearKillFlags(CSEPairs[i].second);
+      }
       MI->eraseFromParent();
       ++NumCSEs;
     } else {
