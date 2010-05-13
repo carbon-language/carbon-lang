@@ -1593,7 +1593,8 @@ private:
   /// non-legal value types are not described here.
   /// This array is accessed using VT.getSimpleVT(), so it is subject to
   /// the MVT::MAX_ALLOWED_VALUETYPE * 2 bits.
-  uint64_t OpActions[MVT::MAX_ALLOWED_VALUETYPE/(sizeof(uint64_t)*4)][ISD::BUILTIN_OP_END];
+  uint64_t OpActions[MVT::MAX_ALLOWED_VALUETYPE/(sizeof(uint64_t)*4)]
+                    [ISD::BUILTIN_OP_END];
   
   /// LoadExtActions - For each load of load extension type and each value type,
   /// keep a LegalizeAction that indicates how instruction selection should deal
