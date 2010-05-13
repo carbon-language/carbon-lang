@@ -957,3 +957,13 @@ void pr6938_b() {
   }) == 0) {
   }
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7979430> - The CFG for code containing an empty
+//  @synchronized block was previously broken (and would crash the analyzer).
+//===----------------------------------------------------------------------===//
+
+void r7979430(id x) {
+  @synchronized(x) {}
+}
+

@@ -1223,9 +1223,8 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
       return 0;
 
     Block = 0;
+    Succ = SyncBlock;
   }
-
-  Succ = SyncBlock;
 
   // Inline the sync expression.
   return addStmt(S->getSynchExpr());
