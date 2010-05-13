@@ -461,7 +461,7 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
 struct WarningOption {
   const char  *Name;
   const short *Members;
-  const char  *SubGroups;
+  const short *SubGroups;
 };
 
 #define GET_DIAG_ARRAYS
@@ -491,9 +491,9 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
   }
 
   // Enable/disable all subgroups along with this one.
-  if (const char *SubGroups = Group->SubGroups) {
-    for (; *SubGroups != (char)-1; ++SubGroups)
-      MapGroupMembers(&OptionTable[(unsigned char)*SubGroups], Mapping, Diags);
+  if (const short *SubGroups = Group->SubGroups) {
+    for (; *SubGroups != (short)-1; ++SubGroups)
+      MapGroupMembers(&OptionTable[(short)*SubGroups], Mapping, Diags);
   }
 }
 
