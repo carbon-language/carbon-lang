@@ -650,6 +650,12 @@ private:
   bool FragmentNeedsRelaxation(const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
+  /// Compute the effective fragment size assuming it is layed out at the given
+  /// \arg SectionAddress and \arg FragmentOffset.
+  uint64_t ComputeFragmentSize(MCAsmLayout &Layout, const MCFragment &F,
+                               uint64_t SectionAddress,
+                               uint64_t FragmentOffset) const;
+
   /// LayoutFragment - Performs layout of the given \arg Fragment; assuming that
   /// the previous fragment has already been layed out correctly, and the parent
   /// section has been initialized.

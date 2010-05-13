@@ -375,6 +375,57 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   return IsResolved;
 }
 
+uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
+                                          const MCFragment &F,
+                                          uint64_t SectionAddress,
+                                          uint64_t FragmentOffset) const {
+  switch (F.getKind()) {
+  case MCFragment::FT_Data:
+    return cast<MCDataFragment>(F).getContents().size();
+  case MCFragment::FT_Fill:
+    return cast<MCFillFragment>(F).getSize();
+  case MCFragment::FT_Inst:
+    return cast<MCInstFragment>(F).getInstSize();
+
+  case MCFragment::FT_Align: {
+    const MCAlignFragment &AF = cast<MCAlignFragment>(F);
+
+    assert((!AF.hasOnlyAlignAddress() || !AF.getNextNode()) &&
+           "Invalid OnlyAlignAddress bit, not the last fragment!");
+
+    uint64_t Size = OffsetToAlignment(SectionAddress + FragmentOffset,
+                                      AF.getAlignment());
+
+    // Honor MaxBytesToEmit.
+    if (Size > AF.getMaxBytesToEmit())
+      return 0;
+
+    return Size;
+  }
+
+  case MCFragment::FT_Org: {
+    const MCOrgFragment &OF = cast<MCOrgFragment>(F);
+
+    // FIXME: We should compute this sooner, we don't want to recurse here, and
+    // we would like to be more functional.
+    int64_t TargetLocation;
+    if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
+      report_fatal_error("expected assembly-time absolute expression");
+
+    // FIXME: We need a way to communicate this error.
+    int64_t Offset = TargetLocation - FragmentOffset;
+    if (Offset < 0)
+      report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
+                         "' (at offset '" + Twine(FragmentOffset) + "'");
+
+    return Offset;
+  }
+  }
+
+  assert(0 && "invalid fragment kind");
+  return 0;
+}
+
 void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
   uint64_t StartAddress = Layout.getSectionAddress(F.getParent());
 
@@ -391,51 +442,8 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
   Layout.setFragmentOffset(&F, FragmentOffset);
 
   // Evaluate fragment size.
-  uint64_t EffectiveSize = 0;
-  switch (F.getKind()) {
-  case MCFragment::FT_Align: {
-    MCAlignFragment &AF = cast<MCAlignFragment>(F);
-
-    assert((!AF.hasOnlyAlignAddress() || !AF.getNextNode()) &&
-           "Invalid OnlyAlignAddress bit, not the last fragment!");
-
-    EffectiveSize = OffsetToAlignment(Address, AF.getAlignment());
-    if (EffectiveSize > AF.getMaxBytesToEmit())
-      EffectiveSize = 0;
-    break;
-  }
-
-  case MCFragment::FT_Data:
-    EffectiveSize = cast<MCDataFragment>(F).getContents().size();
-    break;
-
-  case MCFragment::FT_Fill: {
-    EffectiveSize = cast<MCFillFragment>(F).getSize();
-    break;
-  }
-
-  case MCFragment::FT_Inst:
-    EffectiveSize = cast<MCInstFragment>(F).getInstSize();
-    break;
-
-  case MCFragment::FT_Org: {
-    MCOrgFragment &OF = cast<MCOrgFragment>(F);
-
-    int64_t TargetLocation;
-    if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
-      report_fatal_error("expected assembly-time absolute expression");
-
-    // FIXME: We need a way to communicate this error.
-    int64_t Offset = TargetLocation - FragmentOffset;
-    if (Offset < 0)
-      report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
-                         "' (at offset '" + Twine(FragmentOffset) + "'");
-
-    EffectiveSize = Offset;
-    break;
-  }
-  }
-
+  uint64_t EffectiveSize = ComputeFragmentSize(Layout, F, StartAddress,
+                                               FragmentOffset);
   Layout.setFragmentEffectiveSize(&F, EffectiveSize);
 }
 
