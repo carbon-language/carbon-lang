@@ -442,7 +442,7 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
 
   ++stats::SectionLayouts;
 
-  // Get the section start address.
+  // Compute the section start address.
   uint64_t StartAddress = 0;
   if (SectionOrderIndex) {
     MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
@@ -450,22 +450,10 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
                     Layout.getSectionAddressSize(Prev));
   }
 
-  // Align this section if necessary by adding padding bytes to the previous
-  // section. It is safe to adjust this out-of-band, because no symbol or
-  // fragment is allowed to point past the end of the section at any time.
-  if (uint64_t Pad = OffsetToAlignment(StartAddress, SD.getAlignment())) {
-    // Unless this section is virtual (where we are allowed to adjust the offset
-    // freely), the padding goes in the previous section.
-    if (!IsVirtual) {
-      assert(SectionOrderIndex && "Invalid initial section address!");
-      MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
-      Layout.setSectionFileSize(Prev, Layout.getSectionFileSize(Prev) + Pad);
-    }
+  // Honor the section alignment requirements.
+  StartAddress = RoundUpToAlignment(StartAddress, SD.getAlignment());
 
-    StartAddress += Pad;
-  }
-
-  // Set the aligned section address.
+  // Set the section address.
   Layout.setSectionAddress(&SD, StartAddress);
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it)
@@ -587,7 +575,6 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
                                    const MCAsmLayout &Layout,
                                    MCObjectWriter *OW) const {
-  uint64_t SectionSize = Layout.getSectionSize(SD);
   uint64_t SectionFileSize = Layout.getSectionFileSize(SD);
 
   // Ignore virtual sections.
@@ -621,10 +608,6 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
          ie = SD->end(); it != ie; ++it)
     WriteFragmentData(*this, Layout, *it, OW);
 
-  // Add section padding.
-  assert(SectionFileSize >= SectionSize && "Invalid section sizes!");
-  OW->WriteZeros(SectionFileSize - SectionSize);
-
   assert(OW->getStream().tell() - Start == SectionFileSize);
 }
 
@@ -645,8 +628,34 @@ void MCAssembler::Finish() {
       it2->setOrdinal(FragmentIndex++);
   }
 
-  // Layout until everything fits.
+  // Create the layout object.
   MCAsmLayout Layout(*this);
+
+  // Insert additional align fragments for concrete sections to explicitly pad
+  // the previous section to match their alignment requirements. This is for
+  // 'gas' compatibility, it shouldn't strictly be necessary.
+  //
+  // FIXME: This may be Mach-O specific.
+  for (unsigned i = 1, e = Layout.getSectionOrder().size(); i < e; ++i) {
+    MCSectionData *SD = Layout.getSectionOrder()[i];
+
+    // Ignore sections without alignment requirements.
+    unsigned Align = SD->getAlignment();
+    if (Align <= 1)
+      continue;
+
+    // Ignore virtual sections, they don't cause file size modifications.
+    if (getBackend().isVirtualSection(SD->getSection()))
+      continue;
+
+    // Otherwise, create a new align fragment at the end of the previous
+    // section.
+    MCAlignFragment *AF = new MCAlignFragment(Align, 0, 1, Align,
+                                              Layout.getSectionOrder()[i - 1]);
+    AF->setOnlyAlignAddress(true);
+  }
+
+  // Layout until everything fits.
   while (LayoutOnce(Layout))
     continue;
 
