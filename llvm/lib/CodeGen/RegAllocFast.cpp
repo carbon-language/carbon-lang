@@ -487,7 +487,7 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 }
 
 /// reservePhysReg - Mark PhysReg as reserved. This is very similar to
-/// defineVirtReg except the physreg is reverved instead of allocated.
+/// defineVirtReg except the physreg is reserved instead of allocated.
 void RAFast::reservePhysReg(MachineBasicBlock &MBB, MachineInstr *MI,
                             unsigned PhysReg) {
   UsedInInstr.set(PhysReg);
@@ -623,6 +623,16 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg) ||
           ReservedRegs.test(Reg)) continue;
       if (MO.isUse()) {
+#ifndef NDEBUG
+        // We are using a physreg directly. It had better not be clobbered by a
+        // virtreg.
+        assert(PhysRegState[Reg] <= regReserved && "Using clobbered physreg");
+        if (PhysRegState[Reg] == regDisabled)
+          for (const unsigned *AS = TRI->getAliasSet(Reg);
+               unsigned Alias = *AS; ++AS)
+            assert(PhysRegState[Alias] <= regReserved &&
+                   "Physreg alias was clobbered");
+#endif
         PhysKills.push_back(Reg); // Any clean physreg use is a kill.
         UsedInInstr.set(Reg);
       } else if (MO.isEarlyClobber()) {
