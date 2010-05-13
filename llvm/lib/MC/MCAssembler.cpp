@@ -598,27 +598,6 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - pre-layout\n--\n";
       dump(); });
 
-  // Assign section and fragment ordinals, all subsequent backend code is
-  // responsible for updating these in place.
-  unsigned SectionIndex = 0;
-  unsigned FragmentIndex = 0;
-  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
-    // Create dummy fragments to eliminate any empty sections, this simplifies
-    // layout.
-    if (it->getFragmentList().empty()) {
-      unsigned ValueSize = 1;
-      if (getBackend().isVirtualSection(it->getSection()))
-        ValueSize = 1;
-      new MCFillFragment(0, 1, 0, it);
-    }
-
-    it->setOrdinal(SectionIndex++);
-
-    for (MCSectionData::iterator it2 = it->begin(),
-           ie2 = it->end(); it2 != ie2; ++it2)
-      it2->setOrdinal(FragmentIndex++);
-  }
-
   // Create the layout object.
   MCAsmLayout Layout(*this);
 
@@ -644,6 +623,27 @@ void MCAssembler::Finish() {
     MCAlignFragment *AF = new MCAlignFragment(Align, 0, 1, Align,
                                               Layout.getSectionOrder()[i - 1]);
     AF->setOnlyAlignAddress(true);
+  }
+
+  // Assign section and fragment ordinals, all subsequent backend code is
+  // responsible for updating these in place.
+  unsigned SectionIndex = 0;
+  unsigned FragmentIndex = 0;
+  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
+    // Create dummy fragments to eliminate any empty sections, this simplifies
+    // layout.
+    if (it->getFragmentList().empty()) {
+      unsigned ValueSize = 1;
+      if (getBackend().isVirtualSection(it->getSection()))
+        ValueSize = 1;
+      new MCFillFragment(0, 1, 0, it);
+    }
+
+    it->setOrdinal(SectionIndex++);
+
+    for (MCSectionData::iterator it2 = it->begin(),
+           ie2 = it->end(); it2 != ie2; ++it2)
+      it2->setOrdinal(FragmentIndex++);
   }
 
   // Layout until everything fits.
