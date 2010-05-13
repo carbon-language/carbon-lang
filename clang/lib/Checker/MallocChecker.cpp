@@ -182,7 +182,10 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
     return state;
 
   SymbolRef Sym = ArgVal.getAsLocSymbol();
-  assert(Sym);
+
+  // Various cases could lead to non-symbol values here.
+  if (!Sym)
+    return state;
 
   const RefState *RS = state->get<RegionState>(Sym);
 
