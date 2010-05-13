@@ -620,10 +620,9 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 static bool IsARMArchitecture(std::vector<std::string> Args) {
   for (std::vector<std::string>::const_iterator
          I = Args.begin(), E = Args.end(); I != E; ++I) {
-    StringRef S(*I);
-    if (!S.equals_lower("-arch")) {
+    if (StringRef(*I).equals_lower("-arch")) {
       ++I;
-      if (I != E && !S.substr(0, strlen("arm")).equals_lower("arm"))
+      if (I != E && StringRef(*I).substr(0, strlen("arm")).equals_lower("arm"))
         return true;
     }
   }
