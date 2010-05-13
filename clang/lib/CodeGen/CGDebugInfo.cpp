@@ -64,7 +64,14 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
   // Check namespace.
   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
     return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
-  
+
+  if (const RecordDecl *RDecl = dyn_cast<RecordDecl>(Context)) {
+    if (!RDecl->isDependentType()) {
+      llvm::DIType Ty = getOrCreateType(CGM.getContext().getTypeDeclType(RDecl), 
+                                        llvm::DIFile(CompileUnit));
+      return llvm::DIDescriptor(Ty);
+    }
+  }
   return CompileUnit;
 }
 
@@ -1567,11 +1574,13 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                            ArrayType::Normal, 0);
   }
   llvm::StringRef DeclName = D->getName();
+  llvm::StringRef LinkageName;
+  if (D->getDeclContext() && isa<FunctionDecl>(D->getDeclContext()))
+    LinkageName = Var->getName();
   llvm::DIDescriptor DContext = 
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
-  DebugFactory.CreateGlobalVariable(DContext, DeclName,
-                                    DeclName, llvm::StringRef(), Unit, LineNo,
-                                    getOrCreateType(T, Unit),
+  DebugFactory.CreateGlobalVariable(DContext, DeclName, DeclName, LinkageName,
+                                    Unit, LineNo, getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
 }
