@@ -57,9 +57,12 @@
 using namespace llvm;
 
 bool FastISel::hasTrivialKill(const Value *V) const {
-  // Don't consider constants or arguments to have trivial kills.
+  // Don't consider constants or arguments to have trivial kills. Only
+  // instructions with a single use in the same basic block.
   const Instruction *I = dyn_cast<Instruction>(V);
-  return I && I->hasOneUse();
+  return I &&
+         I->hasOneUse() &&
+         cast<Instruction>(I->use_begin())->getParent() == I->getParent();
 }
 
 unsigned FastISel::getRegForValue(const Value *V) {
