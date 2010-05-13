@@ -59,6 +59,7 @@ namespace {
 
 namespace options {
   static bool generate_api_file = false;
+  static std::string bc_path;
   static const char *as_path = NULL;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed 
@@ -80,6 +81,14 @@ namespace options {
                    "Discarding %s", opt);
       } else {
         as_path = strdup(opt + 3);
+      }
+    } else if(llvm::StringRef(opt).startswith("also-emit-llvm=")) {
+      const char *path = opt + strlen("also-emit-llvm=");
+      if (bc_path != "") {
+        (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
+                   "Discarding %s", opt);
+      } else {
+        bc_path = path;
       }
     } else {
       // Save this option to pass to the code generator.
@@ -374,6 +383,11 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
   }
 
+  if (options::bc_path != "") {
+    bool err = lto_codegen_write_merged_modules(cg, options::bc_path.c_str());
+    if (err)
+      (*message)(LDPL_FATAL, "Failed to write the output file.");
+  }
   size_t bufsize = 0;
   const char *buffer = static_cast<const char *>(lto_codegen_compile(cg,
                                                                      &bufsize));
