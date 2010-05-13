@@ -392,6 +392,9 @@ private:
   /// Ordinal - The section index in the assemblers section list.
   unsigned Ordinal;
 
+  /// LayoutOrder - The index of this section in the layout order.
+  unsigned LayoutOrder;
+
   /// Alignment - The maximum alignment seen in this section.
   unsigned Alignment;
 
@@ -425,6 +428,9 @@ public:
 
   unsigned getOrdinal() const { return Ordinal; }
   void setOrdinal(unsigned Value) { Ordinal = Value; }
+
+  unsigned getLayoutOrder() const { return LayoutOrder; }
+  void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
   /// @name Fragment Access
   /// @{

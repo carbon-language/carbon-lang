@@ -601,6 +601,10 @@ void MCAssembler::Finish() {
   // Create the layout object.
   MCAsmLayout Layout(*this);
 
+  // Assign layout order indices.
+  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i)
+    Layout.getSectionOrder()[i]->setLayoutOrder(i);
+
   // Insert additional align fragments for concrete sections to explicitly pad
   // the previous section to match their alignment requirements. This is for
   // 'gas' compatibility, it shouldn't strictly be necessary.
