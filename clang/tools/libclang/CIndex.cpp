@@ -1167,8 +1167,6 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    RemappedFiles.size(),
                                    /*CaptureDiagnostics=*/true));
 
-    // FIXME: Until we have broader testing, just drop the entire AST if we
-    // encountered an error.
     if (NumErrors != Diags->getNumErrors()) {
       // Make sure to check that 'Unit' is non-NULL.
       if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
