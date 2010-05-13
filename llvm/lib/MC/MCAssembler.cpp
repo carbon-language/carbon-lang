@@ -69,8 +69,7 @@ void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
   // FIXME-PERF: This is O(N^2), but will be eliminated once we get smarter.
 
   // Layout the sections in order.
-  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i)
-    getAssembler().LayoutSection(*this, i);
+  LayoutFile();
 }
 
 void MCAsmLayout::FragmentReplaced(MCFragment *Src, MCFragment *Dst) {
@@ -426,49 +425,52 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
   return 0;
 }
 
-void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
-  uint64_t StartAddress = Layout.getSectionAddress(F.getParent());
+void MCAsmLayout::LayoutFile() {
+  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i)
+    LayoutSection(getSectionOrder()[i]);
+}
+
+void MCAsmLayout::LayoutFragment(MCFragment *F) {
+  uint64_t StartAddress = getSectionAddress(F->getParent());
 
   // Get the fragment start address.
   uint64_t Address = StartAddress;
-  MCSectionData::iterator it = &F;
-  if (MCFragment *Prev = F.getPrevNode())
-    Address = (StartAddress + Layout.getFragmentOffset(Prev) +
-               Layout.getFragmentEffectiveSize(Prev));
+  MCSectionData::iterator it = F;
+  if (MCFragment *Prev = F->getPrevNode())
+    Address = (StartAddress + getFragmentOffset(Prev) +
+               getFragmentEffectiveSize(Prev));
 
   ++stats::FragmentLayouts;
 
-  uint64_t FragmentOffset = Address - StartAddress;
-  Layout.setFragmentOffset(&F, FragmentOffset);
+  // Compute fragment offset and size.
+  uint64_t Offset = Address - StartAddress;
+  uint64_t EffectiveSize =
+    getAssembler().ComputeFragmentSize(*this, *F, StartAddress, Offset);
 
-  // Evaluate fragment size.
-  uint64_t EffectiveSize = ComputeFragmentSize(Layout, F, StartAddress,
-                                               FragmentOffset);
-  Layout.setFragmentEffectiveSize(&F, EffectiveSize);
+  setFragmentOffset(F, Offset);
+  setFragmentEffectiveSize(F, EffectiveSize);
 }
 
-void MCAssembler::LayoutSection(MCAsmLayout &Layout,
-                                unsigned SectionOrderIndex) {
-  MCSectionData &SD = *Layout.getSectionOrder()[SectionOrderIndex];
+void MCAsmLayout::LayoutSection(MCSectionData *SD) {
+  unsigned SectionOrderIndex = SD->getLayoutOrder();
 
   ++stats::SectionLayouts;
 
   // Compute the section start address.
   uint64_t StartAddress = 0;
   if (SectionOrderIndex) {
-    MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
-    StartAddress = (Layout.getSectionAddress(Prev) +
-                    Layout.getSectionAddressSize(Prev));
+    MCSectionData *Prev = getSectionOrder()[SectionOrderIndex - 1];
+    StartAddress = getSectionAddress(Prev) + getSectionAddressSize(Prev);
   }
 
   // Honor the section alignment requirements.
-  StartAddress = RoundUpToAlignment(StartAddress, SD.getAlignment());
+  StartAddress = RoundUpToAlignment(StartAddress, SD->getAlignment());
 
   // Set the section address.
-  Layout.setSectionAddress(&SD, StartAddress);
+  setSectionAddress(SD, StartAddress);
 
-  for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it)
-    LayoutFragment(Layout, *it);
+  for (MCSectionData::iterator it = SD->begin(), ie = SD->end(); it != ie; ++it)
+    LayoutFragment(it);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -754,8 +756,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
 
   // Layout the sections in order.
-  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i)
-    LayoutSection(Layout, i);
+  Layout.LayoutFile();
 
   // Scan for fragments that need relaxation.
   bool WasRelaxed = false;

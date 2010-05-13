@@ -50,6 +50,18 @@ public:
   /// \brief Update the layout because a fragment has been replaced.
   void FragmentReplaced(MCFragment *Src, MCFragment *Dst);
 
+  /// \brief Perform a full layout.
+  void LayoutFile();
+
+  /// \brief Perform layout for a single fragment, assuming that the previous
+  /// fragment has already been layed out correctly, and the parent section has
+  /// been initialized.
+  void LayoutFragment(MCFragment *Fragment);
+
+  /// \brief Performs layout for a single section, assuming that the previous
+  /// section has already been layed out correctly.
+  void LayoutSection(MCSectionData *SD);
+
   /// @name Section Access (in layout order)
   /// @{
 
