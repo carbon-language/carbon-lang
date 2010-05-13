@@ -29,6 +29,7 @@ namespace {
     ARMExpandPseudo() : MachineFunctionPass(&ID) {}
 
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -128,6 +129,31 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       TransferImpOps(MI, LO16, HI16);
       MI.eraseFromParent();
       Modified = true;
+      break;
+    }
+
+    case ARM::VMOVQQ: {
+      unsigned DstReg = MI.getOperand(0).getReg();
+      bool DstIsDead = MI.getOperand(0).isDead();
+      unsigned EvenDst = TRI->getSubReg(DstReg, ARM::QSUBREG_0);
+      unsigned OddDst  = TRI->getSubReg(DstReg, ARM::QSUBREG_1);
+      unsigned SrcReg = MI.getOperand(1).getReg();
+      bool SrcIsKill = MI.getOperand(1).isKill();
+      unsigned EvenSrc = TRI->getSubReg(SrcReg, ARM::QSUBREG_0);
+      unsigned OddSrc  = TRI->getSubReg(SrcReg, ARM::QSUBREG_1);
+      MachineInstrBuilder Even =
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                               TII->get(ARM::VMOVQ))
+                       .addReg(EvenDst, getDefRegState(true) | getDeadRegState(DstIsDead))
+                       .addReg(EvenSrc, getKillRegState(SrcIsKill)));
+      MachineInstrBuilder Odd =
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                               TII->get(ARM::VMOVQ))
+                       .addReg(OddDst, getDefRegState(true) | getDeadRegState(DstIsDead))
+                       .addReg(OddSrc, getKillRegState(SrcIsKill)));
+      TransferImpOps(MI, Even, Odd);
+      MI.eraseFromParent();
+      Modified = true;
     }
     }
     MBBI = NMBBI;
@@ -138,6 +164,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 
 bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getRegisterInfo();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;
