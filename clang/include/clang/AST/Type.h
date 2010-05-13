@@ -1733,6 +1733,8 @@ public:
 /// class of FunctionNoProtoType and FunctionProtoType.
 ///
 class FunctionType : public Type {
+  virtual void ANCHOR(); // Key function for FunctionType.
+  
   /// SubClassData - This field is owned by the subclass, put here to pack
   /// tightly with the ivars in Type.
   bool SubClassData : 1;

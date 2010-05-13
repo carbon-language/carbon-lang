@@ -27,6 +27,8 @@
 #include <algorithm>
 using namespace clang;
 
+void Expr::ANCHOR() {} // key function for Expr class.
+
 /// isKnownToHaveBooleanValue - Return true if this is an integer expression
 /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
 /// but also int expressions which are produced by things like comparisons in

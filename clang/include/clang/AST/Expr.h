@@ -51,6 +51,7 @@ typedef UsuallyTinyPtrVector<const CXXBaseSpecifier> CXXBaseSpecifierArray;
 class Expr : public Stmt {
   QualType TR;
 
+  virtual void ANCHOR(); // key function.
 protected:
   /// TypeDependent - Whether this expression is type-dependent
   /// (C++ [temp.dep.expr]).
