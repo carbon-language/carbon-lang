@@ -67,7 +67,7 @@ public:
 
   /// \brief Get the previous node, or 0 for the list head.
   const NodeTy *getPrevNode() const {
-    NodeTy *Prev = this->getPrev();
+    const NodeTy *Prev = this->getPrev();
 
     // Check for sentinel.
     if (!Prev->getNext())
@@ -89,7 +89,7 @@ public:
 
   /// \brief Get the next node, or 0 for the list tail.
   const NodeTy *getNextNode() const {
-    NodeTy *Next = getNext();
+    const NodeTy *Next = getNext();
 
     // Check for sentinel.
     if (!Next->getNext())

@@ -34,6 +34,11 @@ TEST(ilistTest, Basic) {
   EXPECT_EQ(2, List.back().Value);
   EXPECT_EQ(2, List.front().getNextNode()->Value);
   EXPECT_EQ(1, List.back().getPrevNode()->Value);
+
+  const ilist<Node> &ConstList = List;
+  EXPECT_EQ(2, ConstList.back().Value);
+  EXPECT_EQ(2, ConstList.front().getNextNode()->Value);
+  EXPECT_EQ(1, ConstList.back().getPrevNode()->Value);
 }
 
 }
