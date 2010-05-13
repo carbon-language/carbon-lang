@@ -47,6 +47,9 @@ public:
   /// the delta from the old size.
   void UpdateForSlide(MCFragment *F, int SlideAmount);
 
+  /// \brief Update the layout because a fragment has been replaced.
+  void FragmentReplaced(MCFragment *Src, MCFragment *Dst);
+
   /// @name Section Access (in layout order)
   /// @{
 

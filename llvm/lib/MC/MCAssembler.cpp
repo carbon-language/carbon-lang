@@ -73,6 +73,11 @@ void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
     getAssembler().LayoutSection(*this, i);
 }
 
+void MCAsmLayout::FragmentReplaced(MCFragment *Src, MCFragment *Dst) {
+  Dst->Offset = Src->Offset;
+  Dst->EffectiveSize = Src->EffectiveSize;
+}
+
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
   assert(F->getParent() && "Missing section()!");
   return getSectionAddress(F->getParent()) + getFragmentOffset(F);
@@ -818,13 +823,10 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       SD.getFragmentList().insert(it2, DF);
 
       // Update the data fragments layout data.
-      //
-      // FIXME: Add MCAsmLayout utility for this.
       DF->setParent(IF->getParent());
       DF->setAtom(IF->getAtom());
       DF->setOrdinal(IF->getOrdinal());
-      Layout.setFragmentOffset(DF, Layout.getFragmentOffset(IF));
-      Layout.setFragmentEffectiveSize(DF, Layout.getFragmentEffectiveSize(IF));
+      Layout.FragmentReplaced(IF, DF);
 
       // Copy in the data and the fixups.
       DF->getContents().append(IF->getCode().begin(), IF->getCode().end());
