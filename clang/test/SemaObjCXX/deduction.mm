@@ -21,4 +21,8 @@ namespace test0 {
   void test(NSString *S) {
     RetainPtr<NSString*> ptr(S);
   }
+
+  void test(id S) {
+    RetainPtr<id> ptr(S);
+  }
 }

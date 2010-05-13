@@ -2445,16 +2445,24 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
     return QualType();
 
   QualType Result = TL.getType();
-  if (PointeeType->isObjCInterfaceType()) {
+  if (PointeeType->isObjCInterfaceType() ||
+      PointeeType->isSpecificBuiltinType(BuiltinType::ObjCId)) {
     // A dependent pointer type 'T *' has is being transformed such
     // that an Objective-C class type is being replaced for 'T'. The
     // resulting pointer type is an ObjCObjectPointerType, not a
     // PointerType.
-    const ObjCInterfaceType *IFace = PointeeType->getAs<ObjCInterfaceType>();
+    ObjCProtocolDecl **Protocols = 0;
+    unsigned NumProtocols = 0;
+
+    if (const ObjCInterfaceType *IFace
+          = PointeeType->getAs<ObjCInterfaceType>()) {
+      Protocols = const_cast<ObjCProtocolDecl**>(IFace->qual_begin());
+      NumProtocols = IFace->getNumProtocols();
+    }
+
     Result = SemaRef.Context.getObjCObjectPointerType(PointeeType,
-                                              const_cast<ObjCProtocolDecl **>(
-                                                           IFace->qual_begin()),
-                                              IFace->getNumProtocols());
+                                                      Protocols,
+                                                      NumProtocols);
     
     ObjCObjectPointerTypeLoc NewT = TLB.push<ObjCObjectPointerTypeLoc>(Result);   
     NewT.setStarLoc(TL.getSigilLoc());       
