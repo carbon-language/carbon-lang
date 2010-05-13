@@ -239,7 +239,7 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
     
     const std::vector<std::string> &SubGroups = I->second.SubGroups;
     if (!SubGroups.empty()) {
-      OS << "static const char DiagSubGroup" << I->second.IDNo << "[] = { ";
+      OS << "static const short DiagSubGroup" << I->second.IDNo << "[] = { ";
       for (unsigned i = 0, e = SubGroups.size(); i != e; ++i) {
         std::map<std::string, GroupInfo>::iterator RI =
           DiagsInGroup.find(SubGroups[i]);
