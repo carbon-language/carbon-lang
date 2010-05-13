@@ -1038,6 +1038,11 @@ namespace {
       Out << ");";
       nl(Out);
     }
+    if (GV->isThreadLocal()) {
+      printCppName(GV);
+      Out << "->setThreadLocal(true);";
+      nl(Out);
+    }
     if (is_inline) {
       out(); Out << "}"; nl(Out);
     }
