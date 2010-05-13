@@ -126,6 +126,14 @@ void MCAsmLayout::setSectionFileSize(MCSectionData *SD, uint64_t Value) {
   SD->FileSize = Value;
 }
 
+uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
+  assert(SD->AddressSize != ~UINT64_C(0) && "Address size not set!");
+  return SD->AddressSize;
+}
+void MCAsmLayout::setSectionAddressSize(MCSectionData *SD, uint64_t Value) {
+  SD->AddressSize = Value;
+}
+
 /* *** */
 
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
@@ -150,6 +158,7 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
     Alignment(1),
     Address(~UINT64_C(0)),
     Size(~UINT64_C(0)),
+    AddressSize(~UINT64_C(0)),
     FileSize(~UINT64_C(0)),
     HasInstructions(false)
 {
@@ -434,7 +443,8 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
   uint64_t StartAddress = 0;
   if (SectionOrderIndex) {
     MCSectionData *Prev = Layout.getSectionOrder()[SectionOrderIndex - 1];
-    StartAddress = Layout.getSectionAddress(Prev) + Layout.getSectionSize(Prev);
+    StartAddress = (Layout.getSectionAddress(Prev) +
+                    Layout.getSectionAddressSize(Prev));
   }
 
   // Align this section if necessary by adding padding bytes to the previous
@@ -465,6 +475,7 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
     Size = Layout.getFragmentOffset(F) + Layout.getFragmentEffectiveSize(F);
   }
   Layout.setSectionSize(&SD, Size);
+  Layout.setSectionAddressSize(&SD, Size);
   Layout.setSectionFileSize(&SD, IsVirtual ? 0 : Size);
 }
 
@@ -837,9 +848,7 @@ void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCFragment " << (void*) this << " Offset:" << Offset
-     << " EffectiveSize:" << EffectiveSize;
-
-  OS << ">";
+     << " EffectiveSize:" << EffectiveSize << ">";
 }
 
 void MCAlignFragment::dump() {
@@ -914,8 +923,8 @@ void MCSectionData::dump() {
 
   OS << "<MCSectionData";
   OS << " Alignment:" << getAlignment() << " Address:" << Address
-     << " Size:" << Size << " FileSize:" << FileSize
-     << " Fragments:[\n      ";
+     << " Size:" << Size << " AddressSize:" << AddressSize
+     << " FileSize:" << FileSize << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();

@@ -91,10 +91,18 @@ public:
   /// \brief Set the data size of the given section.
   void setSectionFileSize(MCSectionData *SD, uint64_t Value);
 
-  /// \brief Get the actual data size of the given section.
+  /// \brief Get the address space size of the given section, as it effects
+  /// layout. This may differ from the size reported by \see getSectionSize() by
+  /// not including section tail padding.
+  uint64_t getSectionAddressSize(const MCSectionData *SD) const;
+
+  /// \brief Set the address space size of the given section.
+  void setSectionAddressSize(MCSectionData *SD, uint64_t Value);
+
+  /// \brief Get the logical data size of the given section.
   uint64_t getSectionSize(const MCSectionData *SD) const;
 
-  /// \brief Set the actual data size of the given section.
+  /// \brief Set the logical data size of the given section.
   void setSectionSize(MCSectionData *SD, uint64_t Value);
 
   /// @}
