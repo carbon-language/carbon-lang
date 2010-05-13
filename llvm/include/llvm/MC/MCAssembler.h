@@ -258,12 +258,19 @@ class MCAlignFragment : public MCFragment {
   /// target dependent.
   bool EmitNops : 1;
 
+  /// OnlyAlignAddress - Flag to indicate that this align is only used to adjust
+  /// the address space size of a section and that it should not be included as
+  /// part of the section size. This flag can only be used on the last fragment
+  /// in a section.
+  bool OnlyAlignAddress : 1;
+
 public:
   MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
                   unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
-      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
+      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false),
+      OnlyAlignAddress(false) {}
 
   /// @name Accessors
   /// @{
@@ -278,6 +285,9 @@ public:
 
   bool hasEmitNops() const { return EmitNops; }
   void setEmitNops(bool Value) { EmitNops = Value; }
+
+  bool hasOnlyAlignAddress() const { return OnlyAlignAddress; }
+  void setOnlyAlignAddress(bool Value) { OnlyAlignAddress = Value; }
 
   /// @}
 

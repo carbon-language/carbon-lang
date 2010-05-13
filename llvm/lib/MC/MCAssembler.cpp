@@ -392,6 +392,9 @@ void MCAssembler::LayoutFragment(MCAsmLayout &Layout, MCFragment &F) {
   case MCFragment::FT_Align: {
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
 
+    assert((!AF.hasOnlyAlignAddress() || !AF.getNextNode()) &&
+           "Invalid OnlyAlignAddress bit, not the last fragment!");
+
     EffectiveSize = OffsetToAlignment(Address, AF.getAlignment());
     if (EffectiveSize > AF.getMaxBytesToEmit())
       EffectiveSize = 0;
@@ -474,9 +477,18 @@ void MCAssembler::LayoutSection(MCAsmLayout &Layout,
     MCFragment *F = &SD.getFragmentList().back();
     Size = Layout.getFragmentOffset(F) + Layout.getFragmentEffectiveSize(F);
   }
-  Layout.setSectionSize(&SD, Size);
   Layout.setSectionAddressSize(&SD, Size);
   Layout.setSectionFileSize(&SD, IsVirtual ? 0 : Size);
+
+  // Handle OnlyAlignAddress bit.
+  if (!SD.getFragmentList().empty()) {
+    MCAlignFragment *AF =
+      dyn_cast<MCAlignFragment>(&SD.getFragmentList().back());
+    if (AF && AF->hasOnlyAlignAddress())
+      Size -= Layout.getFragmentEffectiveSize(AF);
+  }
+
+  Layout.setSectionSize(&SD, Size);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -856,6 +868,10 @@ void MCAlignFragment::dump() {
 
   OS << "<MCAlignFragment ";
   this->MCFragment::dump();
+  if (hasEmitNops())
+    OS << " (emit nops)";
+  if (hasOnlyAlignAddress())
+    OS << " (only align section)";
   OS << "\n       ";
   OS << " Alignment:" << getAlignment()
      << " Value:" << getValue() << " ValueSize:" << getValueSize()
