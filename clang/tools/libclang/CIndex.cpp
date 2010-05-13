@@ -239,6 +239,27 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \param R a half-open source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R);
 
+  class SetParentRAII {
+    CXCursor &Parent;
+    Decl *&StmtParent;
+    CXCursor OldParent;
+
+  public:
+    SetParentRAII(CXCursor &Parent, Decl *&StmtParent, CXCursor NewParent)
+      : Parent(Parent), StmtParent(StmtParent), OldParent(Parent)
+    {
+      Parent = NewParent;
+      if (clang_isDeclaration(Parent.kind))
+        StmtParent = getCursorDecl(Parent);
+    }
+
+    ~SetParentRAII() {
+      Parent = OldParent;
+      if (clang_isDeclaration(Parent.kind))
+        StmtParent = getCursorDecl(Parent);
+    }
+  };
+
 public:
   CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData,
                 unsigned MaxPCHLevel,
@@ -316,8 +337,10 @@ public:
   // FIXME: LabelStmt label?
   bool VisitIfStmt(IfStmt *S);
   bool VisitSwitchStmt(SwitchStmt *S);
+  bool VisitCaseStmt(CaseStmt *S);
   bool VisitWhileStmt(WhileStmt *S);
   bool VisitForStmt(ForStmt *S);
+//  bool VisitSwitchCase(SwitchCase *S);
 
   // Expression visitors
   bool VisitBlockExpr(BlockExpr *B);
@@ -436,26 +459,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 
   // Set the Parent field to Cursor, then back to its old value once we're
   // done.
-  class SetParentRAII {
-    CXCursor &Parent;
-    Decl *&StmtParent;
-    CXCursor OldParent;
-
-  public:
-    SetParentRAII(CXCursor &Parent, Decl *&StmtParent, CXCursor NewParent)
-      : Parent(Parent), StmtParent(StmtParent), OldParent(Parent)
-    {
-      Parent = NewParent;
-      if (clang_isDeclaration(Parent.kind))
-        StmtParent = getCursorDecl(Parent);
-    }
-
-    ~SetParentRAII() {
-      Parent = OldParent;
-      if (clang_isDeclaration(Parent.kind))
-        StmtParent = getCursorDecl(Parent);
-    }
-  } SetParent(Parent, StmtParent, Cursor);
+  SetParentRAII SetParent(Parent, StmtParent, Cursor);
 
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
@@ -888,11 +892,58 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
 bool CursorVisitor::VisitStmt(Stmt *S) {
   for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
        Child != ChildEnd; ++Child) {
-    if (*Child && Visit(MakeCXCursor(*Child, StmtParent, TU)))
-      return true;
+    if (Stmt *C = *Child)
+      if (Visit(MakeCXCursor(C, StmtParent, TU)))
+        return true;
   }
 
   return false;
+}
+
+bool CursorVisitor::VisitCaseStmt(CaseStmt *S) {
+  // Specially handle CaseStmts because they can be nested, e.g.:
+  //
+  //    case 1:
+  //    case 2:
+  //
+  // In this case the second CaseStmt is the child of the first.  Walking
+  // these recursively can blow out the stack.
+  CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
+  while (true) {
+    // Set the Parent field to Cursor, then back to its old value once we're
+    //   done.
+    SetParentRAII SetParent(Parent, StmtParent, Cursor);
+
+    if (Stmt *LHS = S->getLHS())
+      if (Visit(MakeCXCursor(LHS, StmtParent, TU)))
+        return true;
+    if (Stmt *RHS = S->getRHS())
+      if (Visit(MakeCXCursor(RHS, StmtParent, TU)))
+        return true;
+    if (Stmt *SubStmt = S->getSubStmt()) {
+      if (!isa<CaseStmt>(SubStmt))
+        return Visit(MakeCXCursor(SubStmt, StmtParent, TU));
+
+      // Specially handle 'CaseStmt' so that we don't blow out the stack.
+      CaseStmt *CS = cast<CaseStmt>(SubStmt);
+      Cursor = MakeCXCursor(CS, StmtParent, TU);
+      if (RegionOfInterest.isValid()) {
+        SourceRange Range = CS->getSourceRange();
+        if (Range.isInvalid() || CompareRegionOfInterest(Range))
+          return false;
+      }
+
+      switch (Visitor(Cursor, Parent, ClientData)) {
+        case CXChildVisit_Break: return true;
+        case CXChildVisit_Continue: return false;
+        case CXChildVisit_Recurse:
+          // Perform tail-recursion manually.
+          S = CS;
+          continue;
+      }
+    }
+    return false;
+  }
 }
 
 bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {

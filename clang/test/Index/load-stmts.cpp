@@ -54,6 +54,6 @@ void f(int x) {
 // CHECK: load-stmts.cpp:8:13: DeclRefExpr=z4:8:13 Extent=[8:13 - 8:15]
 // CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[8:21 - 10:4]
 // CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:3 - 9:17]
-// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:12 - 9:17]
 // CHECK: load-stmts.cpp:9:8: UnexposedExpr= Extent=[9:8 - 9:10]
+// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:12 - 9:17]
 
