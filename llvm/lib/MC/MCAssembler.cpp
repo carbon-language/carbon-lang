@@ -77,18 +77,38 @@ bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
 }
 
 void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
-  // We shouldn't have to do anything special to support negative slides, and it
-  // is a perfectly valid thing to do as long as other parts of the system can
-  // guarantee convergence.
-  assert(SlideAmount >= 0 && "Negative slides not yet supported");
+  // If this fragment wasn't already up-to-date, we don't need to do anything.
+  if (!isFragmentUpToDate(F))
+    return;
 
-  // Update the layout by simply recomputing the layout for the entire
-  // file. This is trivially correct, but very slow.
-  //
-  // FIXME-PERF: This is O(N^2), but will be eliminated once we get smarter.
+  // Otherwise, reset the last valid fragment to the predecessor of the
+  // invalidated fragment.
+  LastValidFragment = F->getPrevNode();
+  if (!LastValidFragment) {
+    unsigned Index = F->getParent()->getLayoutOrder();
+    if (Index != 0) {
+      MCSectionData *Prev = getSectionOrder()[Index - 1];
+      LastValidFragment = &(Prev->getFragmentList().back());
+    }
+  }
+}
 
-  // Layout the sections in order.
-  LayoutFile();
+void MCAsmLayout::EnsureValid(const MCFragment *F) const {
+  // Advance the layout position until the fragment is up-to-date.
+  while (!isFragmentUpToDate(F)) {
+    // Advance to the next fragment.
+    MCFragment *Cur = LastValidFragment;
+    if (Cur)
+      Cur = Cur->getNextNode();
+    if (!Cur) {
+      unsigned NextIndex = 0;
+      if (LastValidFragment)
+        NextIndex = LastValidFragment->getParent()->getLayoutOrder() + 1;
+      Cur = SectionOrder[NextIndex]->begin();
+    }
+
+    const_cast<MCAsmLayout*>(this)->LayoutFragment(Cur);
+  }
 }
 
 void MCAsmLayout::FragmentReplaced(MCFragment *Src, MCFragment *Dst) {
@@ -105,11 +125,13 @@ uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
 }
 
 uint64_t MCAsmLayout::getFragmentEffectiveSize(const MCFragment *F) const {
+  EnsureValid(F);
   assert(F->EffectiveSize != ~UINT64_C(0) && "Address not set!");
   return F->EffectiveSize;
 }
 
 uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
+  EnsureValid(F);
   assert(F->Offset != ~UINT64_C(0) && "Address not set!");
   return F->Offset;
 }
@@ -120,6 +142,7 @@ uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
 }
 
 uint64_t MCAsmLayout::getSectionAddress(const MCSectionData *SD) const {
+  EnsureValid(SD->begin());
   assert(SD->Address != ~UINT64_C(0) && "Address not set!");
   return SD->Address;
 }
@@ -436,18 +459,11 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
 }
 
 void MCAsmLayout::LayoutFile() {
-  // Initialize the first section and set the valid fragment layout point.
+  // Initialize the first section and set the valid fragment layout point. All
+  // actual layout computations are done lazily.
   LastValidFragment = 0;
   if (!getSectionOrder().empty())
     getSectionOrder().front()->Address = 0;
-
-  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i) {
-    MCSectionData *SD = getSectionOrder()[i];
-
-    for (MCSectionData::iterator it = SD->begin(),
-           ie = SD->end(); it != ie; ++it)
-      LayoutFragment(it);
-  }
 }
 
 void MCAsmLayout::LayoutFragment(MCFragment *F) {

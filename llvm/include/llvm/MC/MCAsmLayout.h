@@ -41,6 +41,10 @@ private:
   /// lower ordinal will be up to date.
   mutable MCFragment *LastValidFragment;
 
+  /// \brief Make sure that the layout for the given fragment is valid, lazily
+  /// computing it if necessary.
+  void EnsureValid(const MCFragment *F) const;
+
   bool isSectionUpToDate(const MCSectionData *SD) const;
   bool isFragmentUpToDate(const MCFragment *F) const;
 
