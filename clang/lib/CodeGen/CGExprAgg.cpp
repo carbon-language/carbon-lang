@@ -178,7 +178,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
-  if (!DestPtr) {
+  if (!DestPtr && E->getCastKind() != CastExpr::CK_Dynamic) {
     Visit(E->getSubExpr());
     return;
   }
@@ -186,6 +186,20 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   switch (E->getCastKind()) {
   default: assert(0 && "Unhandled cast kind!");
 
+  case CastExpr::CK_Dynamic: {
+    assert(isa<CXXDynamicCastExpr>(E) && "CK_Dynamic without a dynamic_cast?");
+    LValue LV = CGF.EmitCheckedLValue(E->getSubExpr());
+    // FIXME: Do we also need to handle property references here?
+    if (LV.isSimple())
+      CGF.EmitDynamicCast(LV.getAddress(), cast<CXXDynamicCastExpr>(E));
+    else
+      CGF.CGM.ErrorUnsupported(E, "non-simple lvalue dynamic_cast");
+    
+    if (DestPtr)
+      CGF.CGM.ErrorUnsupported(E, "lvalue dynamic_cast with a destination");      
+    break;
+  }
+      
   case CastExpr::CK_ToUnion: {
     // GCC union extension
     QualType PtrTy =
