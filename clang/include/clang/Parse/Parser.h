@@ -1351,6 +1351,8 @@ private:
                                AttributeList *AttrList = 0,
                                bool RequiresArg = false);
   void ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
+                                             IdentifierInfo *FirstIdent,
+                                             SourceLocation FirstIdentLoc,
                                              Declarator &D);
   void ParseBracketDeclarator(Declarator &D);
 

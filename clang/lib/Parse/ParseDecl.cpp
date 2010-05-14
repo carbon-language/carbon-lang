@@ -2937,9 +2937,16 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         Diag(Tok, diag::err_argument_required_after_attribute);
         delete AttrList;
       }
+      
       // Identifier list.  Note that '(' identifier-list ')' is only allowed for
-      // normal declarators, not for abstract-declarators.
-      return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
+      // normal declarators, not for abstract-declarators.  Get the first
+      // identifier.
+      IdentifierInfo *FirstIdent = Tok.getIdentifierInfo();
+      SourceLocation FirstIdentLoc = Tok.getLocation();
+      ConsumeToken();  // eat the first identifier.
+
+      return ParseFunctionDeclaratorIdentifierList(LParenLoc, FirstIdent,
+                                                   FirstIdentLoc, D);
     }
   }
 
@@ -3122,13 +3129,16 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
 /// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
 /// we found a K&R-style identifier list instead of a type argument list.  The
-/// current token is known to be the first identifier in the list.
+/// first identifier has already been consumed, and the current token is the
+/// token right after it.
 ///
 ///       identifier-list: [C99 6.7.5]
 ///         identifier
 ///         identifier-list ',' identifier
 ///
 void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
+                                                   IdentifierInfo *FirstIdent,
+                                                   SourceLocation FirstIdentLoc,
                                                    Declarator &D) {
   // Build up an array of information about the parsed arguments.
   llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
@@ -3139,16 +3149,13 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // to be abstract.  In abstract-declarators, identifier lists are not valid:
   // diagnose this.
   if (!D.getIdentifier())
-    Diag(Tok, diag::ext_ident_list_in_param);
+    Diag(FirstIdentLoc, diag::ext_ident_list_in_param);
 
-  // Tok is known to be the first identifier in the list.  Remember this
-  // identifier in ParamInfo.
-  ParamsSoFar.insert(Tok.getIdentifierInfo());
-  ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
-                                                 Tok.getLocation(),
+  // The first identifier was already read, and is known to be the first
+  // identifier in the list.  Remember this identifier in ParamInfo.
+  ParamsSoFar.insert(FirstIdent);
+  ParamInfo.push_back(DeclaratorChunk::ParamInfo(FirstIdent, FirstIdentLoc,
                                                  DeclPtrTy()));
-
-  ConsumeToken();  // eat the first identifier.
 
   while (Tok.is(tok::comma)) {
     // Eat the comma.
