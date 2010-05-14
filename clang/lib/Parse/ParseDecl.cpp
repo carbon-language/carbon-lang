@@ -2941,12 +2941,29 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // Identifier list.  Note that '(' identifier-list ')' is only allowed for
       // normal declarators, not for abstract-declarators.  Get the first
       // identifier.
-      IdentifierInfo *FirstIdent = Tok.getIdentifierInfo();
-      SourceLocation FirstIdentLoc = Tok.getLocation();
+      Token FirstTok = Tok;
       ConsumeToken();  // eat the first identifier.
-
-      return ParseFunctionDeclaratorIdentifierList(LParenLoc, FirstIdent,
-                                                   FirstIdentLoc, D);
+      
+      // Identifier lists follow a really simple grammar: the identifiers can
+      // be followed *only* by a ", moreidentifiers" or ")".  However, K&R
+      // identifier lists are really rare in the brave new modern world, and it
+      // is very common for someone to typo a type in a non-k&r style list.  If
+      // we are presented with something like: "void foo(intptr x, float y)",
+      // we don't want to start parsing the function declarator as though it is
+      // a K&R style declarator just because intptr is an invalid type.
+      //
+      // To handle this, we check to see if the token after the first identifier
+      // is a "," or ")".  Only if so, do we parse it as an identifier list.
+      if (Tok.is(tok::comma) || Tok.is(tok::r_paren))
+        return ParseFunctionDeclaratorIdentifierList(LParenLoc,
+                                                   FirstTok.getIdentifierInfo(),
+                                                     FirstTok.getLocation(), D);
+      
+      // If we get here, the code is invalid.  Push the first identifier back
+      // into the token stream and parse the first argument as an (invalid)
+      // normal argument declarator.
+      PP.EnterToken(Tok);
+      Tok = FirstTok;
     }
   }
 

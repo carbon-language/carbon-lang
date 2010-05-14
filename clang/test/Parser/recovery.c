@@ -73,3 +73,8 @@ void foo() {
   int X;
   X = 4 // expected-error{{expected ';' after expression}}
 }
+
+
+// rdar://7980651
+typedef int intptr_t;  // expected-note {{'intptr_t' declared here}}
+void bar(intptr y);     // expected-error {{unknown type name 'intptr'; did you mean 'intptr_t'?}}
