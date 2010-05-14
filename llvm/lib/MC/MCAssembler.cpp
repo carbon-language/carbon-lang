@@ -414,10 +414,13 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
 }
 
 void MCAsmLayout::LayoutFile() {
+  // Initialize the first section.
+  if (!getSectionOrder().empty())
+    getSectionOrder().front()->Address = 0;
+
   for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i) {
     MCSectionData *SD = getSectionOrder()[i];
 
-    LayoutSection(SD);
     for (MCSectionData::iterator it = SD->begin(),
            ie = SD->end(); it != ie; ++it)
       LayoutFragment(it);
@@ -440,6 +443,13 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   F->Offset = Address - StartAddress;
   F->EffectiveSize = getAssembler().ComputeFragmentSize(*this, *F, StartAddress,
                                                         F->Offset);
+
+  // If this is the last fragment in a section, update the next section address.
+  if (!F->getNextNode()) {
+    unsigned NextIndex = F->getParent()->getLayoutOrder() + 1;
+    if (NextIndex != getSectionOrder().size())
+      LayoutSection(getSectionOrder()[NextIndex]);
+  }
 }
 
 void MCAsmLayout::LayoutSection(MCSectionData *SD) {
