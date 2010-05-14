@@ -78,7 +78,7 @@ public:
   /// Write the object file.
   ///
   /// This routine is called by the assembler after layout and relaxation is
-  /// complete, fixups have been evaluate and applied, and relocations
+  /// complete, fixups have been evaluated and applied, and relocations
   /// generated.
   virtual void WriteObject(const MCAssembler &Asm,
                            const MCAsmLayout &Layout) = 0;
