@@ -37,6 +37,7 @@ using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
+STATISTIC(NumCopies, "Number of copies coalesced");
 
 static RegisterRegAlloc
   localRegAlloc("local", "local register allocator",
@@ -1156,8 +1157,10 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     if (TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg,
                          SrcCopySubReg, DstCopySubReg) &&
         SrcCopyReg == DstCopyReg && SrcCopySubReg == DstCopySubReg &&
-        DeadDefs.empty())
+        DeadDefs.empty()) {
+      ++NumCopies;
       MBB.erase(MI);
+    }
   }
 
   MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
