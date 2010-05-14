@@ -21,7 +21,9 @@ clang_disposeTranslationUnit
 clang_enableStackTraces
 clang_equalCursors
 clang_equalLocations
+clang_equalTypes
 clang_formatDiagnostic
+clang_getCanonicalType
 clang_getCString
 clang_getClangVersion
 clang_getCompletionChunkCompletionString
@@ -37,6 +39,7 @@ clang_getCursorLinkage
 clang_getCursorLocation
 clang_getCursorReferenced
 clang_getCursorSpelling
+clang_getCursorType
 clang_getCursorUSR
 clang_getDefinitionSpellingAndExtent
 clang_getDiagnostic
@@ -58,6 +61,7 @@ clang_getNullLocation
 clang_getNullRange
 clang_getNumCompletionChunks
 clang_getNumDiagnostics
+clang_getPointeeType
 clang_getRange
 clang_getRangeEnd
 clang_getRangeStart
@@ -67,6 +71,8 @@ clang_getTokenLocation
 clang_getTokenSpelling
 clang_getTranslationUnitCursor
 clang_getTranslationUnitSpelling
+clang_getTypeDeclaration
+clang_getTypeKindSpelling
 clang_isCursorDefinition
 clang_isDeclaration
 clang_isExpression

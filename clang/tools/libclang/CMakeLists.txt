@@ -26,6 +26,7 @@ add_clang_library(libclang
   CIndexUSRs.cpp
   CIndexer.cpp
   CXCursor.cpp
+  CXTypes.cpp
   ../../include/clang-c/Index.h
 )
 set_target_properties(libclang PROPERTIES OUTPUT_NAME clang)

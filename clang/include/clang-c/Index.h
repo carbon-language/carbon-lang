@@ -1024,6 +1024,124 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
  */
 
 /**
+ * \defgroup CINDEX_TYPES Type information for CXCursors
+ *
+ * @{
+ */
+
+/**
+ * \brief Describes the kind of type
+ */
+enum CXTypeKind {
+  /**
+   * \brief Reprents an invalid type (e.g., where no type is available).
+   */
+  CXType_Invalid = 0,
+
+  /**
+   * \brief A type whose specific kind is not exposed via this
+   * interface.
+   */
+  CXType_Unexposed = 1,
+
+  /* Builtin types */
+  CXType_Void = 2,
+  CXType_Bool = 3,
+  CXType_Char_U = 4,
+  CXType_UChar = 5,
+  CXType_Char16 = 6,
+  CXType_Char32 = 7,
+  CXType_UShort = 8,
+  CXType_UInt = 9,
+  CXType_ULong = 10,
+  CXType_ULongLong = 11,
+  CXType_UInt128 = 12,
+  CXType_Char_S = 13,
+  CXType_SChar = 14,
+  CXType_WChar = 15,
+  CXType_Short = 16,
+  CXType_Int = 17,
+  CXType_Long = 18,
+  CXType_LongLong = 19,
+  CXType_Int128 = 20,
+  CXType_Float = 21,
+  CXType_Double = 22,
+  CXType_LongDouble = 23,
+  CXType_NullPtr = 24,
+  CXType_Overload = 25,
+  CXType_Dependent = 26,
+  CXType_ObjCId = 27,
+  CXType_ObjCClass = 28,
+  CXType_ObjCSel = 29,
+  CXType_FirstBuiltin = CXType_Void,
+  CXType_LastBuiltin  = CXType_ObjCSel,
+
+  CXType_Complex = 100,
+  CXType_Pointer = 101,
+  CXType_BlockPointer = 102,
+  CXType_LValueReference = 103,
+  CXType_RValueReference = 104,
+  CXType_Record = 105,
+  CXType_Enum = 106,
+  CXType_Typedef = 107,
+  CXType_ObjCInterface = 108,
+  CXType_ObjCObjectPointer = 109
+};
+
+/**
+ * \brief The type of an element in the abstract syntax tree.
+ *
+ */
+typedef struct {
+  enum CXTypeKind kind;
+  void *data[2];
+} CXType;
+
+/**
+ * \brief Retrieve the type of a CXCursor (if any).
+ */
+CINDEX_LINKAGE CXType clang_getCursorType(CXCursor C);
+
+/**
+ * \determine Determine whether two CXTypes represent the same type.
+ *
+ * \returns non-zero if the CXTypes represent the same type and 
+            zero otherwise.
+ */
+CINDEX_LINKAGE unsigned clang_equalTypes(CXType A, CXType B);
+
+/**
+ * \brief Return the canonical type for a CXType.
+ *
+ * Clang's type system explicitly models typedefs and all the ways
+ * a specific type can be represented.  The canonical type is the underlying
+ * type with all the "sugar" removed.  For example, if 'T' is a typedef
+ * for 'int', the canonical type for 'T' would be 'int'.
+ */
+CINDEX_LINKAGE CXType clang_getCanonicalType(CXType T);
+
+/**
+ * \brief For pointer types, returns the type of the pointee.
+ *
+ */
+CINDEX_LINKAGE CXType clang_getPointeeType(CXType T);
+
+/**
+ * \brief Return the cursor for the declaration of the given type.
+ */
+CINDEX_LINKAGE CXCursor clang_getTypeDeclaration(CXType T);
+
+
+/**
+ * \brief Retrieve the spelling of a given CXTypeKind.
+ */
+CINDEX_LINKAGE CXString clang_getTypeKindSpelling(enum CXTypeKind K);
+
+/**
+ * @}
+ */
+
+/**
  * \defgroup CINDEX_CURSOR_TRAVERSAL Traversing the AST with cursors
  *
  * These routines provide the ability to traverse the abstract syntax tree

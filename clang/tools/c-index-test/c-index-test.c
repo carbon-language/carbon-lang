@@ -447,6 +447,31 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 }
 
 /******************************************************************************/
+/* Typekind testing.                                                          */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
+                                             CXClientData d) {
+
+  if (!clang_isInvalid(clang_getCursorKind(cursor))) {
+    CXType T = clang_getCursorType(cursor);
+    CXType CT = clang_getCanonicalType(T);
+    CXString S = clang_getTypeKindSpelling(T.kind);
+    PrintCursor(cursor);
+    printf(" typekind=%s", clang_getCString(S));
+    if (!clang_equalTypes(T, CT)) {
+      CXString CS = clang_getTypeKindSpelling(CT.kind);
+      printf(" [canonical=%s]", clang_getCString(CS));
+      clang_disposeString(CS);
+    }
+    clang_disposeString(S);
+    printf("\n");
+  }
+  return CXChildVisit_Recurse;
+}
+
+
+/******************************************************************************/
 /* Loading ASTs/source.                                                       */
 /******************************************************************************/
 
@@ -1179,6 +1204,7 @@ static void print_usage(void) {
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
     "       c-index-test -test-inclusion-stack-tu <AST file>\n"
     "       c-index-test -test-print-linkage-source {<args>}*\n"
+    "       c-index-test -test-print-typekind {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n\n"
     " <symbol filter> values:\n%s",
@@ -1223,6 +1249,9 @@ int main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-linkage-source") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all", PrintLinkage,
                                     NULL);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-typekind") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all",
+                                    PrintTypeKind, 0);
   else if (argc > 1 && strcmp(argv[1], "-print-usr") == 0) {
     if (argc > 2)
       return print_usrs(argv + 2, argv + argc);
