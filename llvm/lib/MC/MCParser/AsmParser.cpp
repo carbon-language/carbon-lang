@@ -1316,7 +1316,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     return Error(SizeLoc, "invalid '.comm' or '.lcomm' directive size, can't "
                  "be less than zero");
 
-  // NOTE: The alignment in the directive is a power of 2 value, the assember
+  // NOTE: The alignment in the directive is a power of 2 value, the assembler
   // may internally end up wanting an alignment in bytes.
   // FIXME: Diagnose overflow.
   if (Pow2Alignment < 0)
@@ -1406,7 +1406,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
     return Error(SizeLoc, "invalid '.zerofill' directive size, can't be less "
                  "than zero");
 
-  // NOTE: The alignment in the directive is a power of 2 value, the assember
+  // NOTE: The alignment in the directive is a power of 2 value, the assembler
   // may internally end up wanting an alignment in bytes.
   // FIXME: Diagnose overflow.
   if (Pow2Alignment < 0)
