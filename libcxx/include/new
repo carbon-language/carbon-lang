@@ -65,7 +65,7 @@ class _LIBCPP_EXCEPTION_ABI bad_alloc
     : public exception
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY bad_alloc() throw() {}
+	bad_alloc() throw();
     virtual ~bad_alloc() throw();
     virtual const char* what() const throw();
 };
@@ -74,12 +74,12 @@ class _LIBCPP_EXCEPTION_ABI bad_array_new_length
     : public bad_alloc
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY bad_array_new_length() throw() {}
+    bad_array_new_length() throw();
     virtual ~bad_array_new_length() throw();
     virtual const char* what() const throw();
 };
 
-void __throw_bad_alloc();
+void __throw_bad_alloc();  // not in C++ spec
 
 struct nothrow_t {};
 extern _LIBCPP_VISIBLE const nothrow_t nothrow;

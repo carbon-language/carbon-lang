@@ -63,17 +63,11 @@ public:
 
 #pragma GCC system_header
 
-#pragma GCC visibility push(default)
-
-namespace __cxxabiv1
-{
-    class __class_type_info;
-}
 
 namespace std  // purposefully not using versioning namespace
 {
 
-class type_info 
+class _LIBCPP_EXCEPTION_ABI type_info 
 {
     type_info& operator=(const type_info&);
     type_info(const type_info&);
@@ -98,32 +92,29 @@ public:
     bool operator!=(const type_info& __arg) const
         {return !operator==(__arg);}
 
-    virtual bool __is_pointer_p() const;
-    virtual bool __is_function_p() const;
-    virtual bool __do_catch(const type_info*, void**, unsigned) const;
-    virtual bool __do_upcast(const __cxxabiv1::__class_type_info*, void**) const;
 };
 
-class bad_cast
+class _LIBCPP_EXCEPTION_ABI bad_cast
     : public exception 
 {
 public:
-    bad_cast() throw() {}
+    bad_cast() throw();
     virtual ~bad_cast() throw();
     virtual const char* what() const throw();
 };
 
-class bad_typeid
+class _LIBCPP_EXCEPTION_ABI bad_typeid
     : public exception 
 {
 public:
-    bad_typeid () throw() { }
+    bad_typeid() throw();
     virtual ~bad_typeid() throw();
     virtual const char* what() const throw();
 };
 
+
 }  // std
 
-#pragma GCC visibility pop
+
 
 #endif  // __LIBCPP_TYPEINFO
