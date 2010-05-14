@@ -33,7 +33,8 @@ namespace {
 
   private:
     bool FormsRegSequence(MachineInstr *MI,
-                          unsigned FirstOpnd, unsigned NumRegs) const;
+                          unsigned FirstOpnd, unsigned NumRegs,
+                          unsigned Offset, unsigned Stride) const;
     bool PreAllocNEONRegisters(MachineBasicBlock &MBB);
   };
 
@@ -340,13 +341,16 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
 
 bool
 NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
-                                   unsigned FirstOpnd, unsigned NumRegs) const {
+                                   unsigned FirstOpnd, unsigned NumRegs,
+                                   unsigned Offset, unsigned Stride) const {
   MachineOperand &FMO = MI->getOperand(FirstOpnd);
   assert(FMO.isReg() && FMO.getSubReg() == 0 && "unexpected operand");
   unsigned VirtReg = FMO.getReg();
   (void)VirtReg;
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "expected a virtual register");
+
+  unsigned LastSubIdx = 0;
   if (FMO.isDef()) {
     MachineInstr *RegSeq = 0;
     for (unsigned R = 0; R < NumRegs; ++R) {
@@ -363,13 +367,28 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
         return false;
       if (RegSeq && RegSeq != UseMI)
         return false;
+      unsigned OpIdx = 1 + (Offset + R * Stride) * 2;
+      if (UseMI->getOperand(OpIdx).getReg() != VirtReg)
+        llvm_unreachable("Malformed REG_SEQUENCE instruction!");
+      unsigned SubIdx = UseMI->getOperand(OpIdx + 1).getImm();
+      if (LastSubIdx) {
+        if (LastSubIdx != SubIdx-Stride)
+          return false;
+      } else {
+        // Must start from arm_dsubreg_0 or arm_qsubreg_0.
+        if (SubIdx != (ARM::DSUBREG_0+Offset) &&
+            SubIdx != (ARM::QSUBREG_0+Offset))
+          return false;
+      }
       RegSeq = UseMI;
+      LastSubIdx = SubIdx;
     }
 
-    // Make sure trailing operands of REG_SEQUENCE are undef.
-    unsigned NumExps = (RegSeq->getNumOperands() - 1) / 2;
-    for (unsigned i = NumRegs * 2 + 1; i < NumExps; i += 2) {
-      const MachineOperand &MO = RegSeq->getOperand(i);
+    // In the case of vld3, etc., make sure the trailing operand of
+    // REG_SEQUENCE is an undef.
+    if (NumRegs == 3) {
+      unsigned OpIdx = 1 + (Offset + 3 * Stride) * 2;
+      const MachineOperand &MO = RegSeq->getOperand(OpIdx);
       unsigned VirtReg = MO.getReg();
       MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
       if (!DefMI || !DefMI->isImplicitDef())
@@ -379,7 +398,6 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
   }
 
   unsigned LastSrcReg = 0;
-  unsigned LastSubIdx = 0;
   SmallVector<unsigned, 4> SubIds;
   for (unsigned R = 0; R < NumRegs; ++R) {
     const MachineOperand &MO = MI->getOperand(FirstOpnd + R);
@@ -400,11 +418,12 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
       return false;
     unsigned SubIdx = DefMI->getOperand(2).getImm();
     if (LastSubIdx) {
-      if (LastSubIdx != SubIdx-1)
+      if (LastSubIdx != SubIdx-Stride)
         return false;
     } else {
       // Must start from arm_dsubreg_0 or arm_qsubreg_0.
-      if (SubIdx != ARM::DSUBREG_0 && SubIdx != ARM::QSUBREG_0)
+      if (SubIdx != (ARM::DSUBREG_0+Offset) &&
+          SubIdx != (ARM::QSUBREG_0+Offset))
         return false;
     }
     SubIds.push_back(SubIdx);
@@ -447,7 +466,7 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
     if (!isNEONMultiRegOp(MI->getOpcode(), FirstOpnd, NumRegs, Offset, Stride))
       continue;
     if (llvm::ModelWithRegSequence() &&
-        FormsRegSequence(MI, FirstOpnd, NumRegs))
+        FormsRegSequence(MI, FirstOpnd, NumRegs, Offset, Stride))
       continue;
 
     MachineBasicBlock::iterator NextI = llvm::next(MBBI);
