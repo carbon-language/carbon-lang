@@ -290,8 +290,8 @@ public:
   /// expansions going on at the time.
   PreprocessorLexer *getCurrentLexer() const { return CurPPLexer; }
 
-  /// getCurrentFileLexer - Return the current file lexer being lexed from.  Note
-  /// that this ignores any potentially active macro expansions and _Pragma
+  /// getCurrentFileLexer - Return the current file lexer being lexed from.
+  /// Note that this ignores any potentially active macro expansions and _Pragma
   /// expansions going on at the time.
   PreprocessorLexer *getCurrentFileLexer() const;
 
@@ -753,9 +753,9 @@ public:
   ///    #include FOO
   /// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
   ///
-  /// This code concatenates and consumes tokens up to the '>' token.  It returns
-  /// false if the > was found, otherwise it returns true if it finds and consumes
-  /// the EOM marker.
+  /// This code concatenates and consumes tokens up to the '>' token.  It
+  /// returns false if the > was found, otherwise it returns true if it finds
+  /// and consumes the EOM marker.
   bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer);
 
 private:
@@ -900,8 +900,6 @@ private:
   // Macro handling.
   void HandleDefineDirective(Token &Tok);
   void HandleUndefDirective(Token &Tok);
-  // HandleAssertDirective(Token &Tok);
-  // HandleUnassertDirective(Token &Tok);
 
   // Conditional Inclusion.
   void HandleIfdefDirective(Token &Tok, bool isIfndef,
