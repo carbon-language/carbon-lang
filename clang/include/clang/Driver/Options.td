@@ -330,6 +330,7 @@ def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">, Group<f_Group>;
 def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">, Group<f_Group>;
 def fno_unit_at_a_time : Flag<"-fno-unit-at-a-time">, Group<f_Group>;
 def fno_unwind_tables : Flag<"-fno-unwind-tables">, Group<f_Group>;
+def fno_verbose_asm : Flag<"-fno-verbose-asm">, Group<f_Group>;
 def fno_working_directory : Flag<"-fno-working-directory">, Group<f_Group>;
 def fno_zero_initialized_in_bss : Flag<"-fno-zero-initialized-in-bss">, Group<f_Group>;
 def fobjc_abi_version_EQ : Joined<"-fobjc-abi-version=">, Group<f_Group>;

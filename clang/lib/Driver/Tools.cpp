@@ -910,8 +910,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss))
     CmdArgs.push_back("-mno-zero-initialized-in-bss");
-  if (Args.hasArg(options::OPT_dA) || Args.hasArg(options::OPT_fverbose_asm))
+
+  // Decide whether to use verbose asm. Verbose assembly is the default on
+  // toolchains which have the integrated assembler on by default.
+  bool IsVerboseAsmDefault = getToolChain().IsIntegratedAssemblerDefault();
+  if (Args.hasFlag(options::OPT_fverbose_asm, options::OPT_fno_verbose_asm,
+                   IsVerboseAsmDefault) || 
+      Args.hasArg(options::OPT_dA))
     CmdArgs.push_back("-masm-verbose");
+
   if (Args.hasArg(options::OPT_fdebug_pass_structure)) {
     CmdArgs.push_back("-mdebug-pass");
     CmdArgs.push_back("Structure");
