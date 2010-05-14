@@ -26,7 +26,7 @@
 using namespace llvm;
 
 CriticalAntiDepBreaker::
-CriticalAntiDepBreaker(MachineFunction& MFi) : 
+CriticalAntiDepBreaker(MachineFunction& MFi) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
@@ -172,7 +172,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
     const TargetRegisterClass *NewRC = 0;
-    
+
     if (i < MI->getDesc().getNumOperands())
       NewRC = MI->getDesc().OpInfo[i].getRegClass(TRI);
 
@@ -422,7 +422,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
     // breaking anti-dependence edges that aren't going to significantly
     // impact the overall schedule. There are a limited number of registers
     // and we want to save them for the important edges.
-    // 
+    //
     // TODO: Instructions with multiple defs could have multiple
     // anti-dependencies. The current code here only knows how to break one
     // edge per instruction. Note that we'd have to be able to break all of
