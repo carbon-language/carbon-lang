@@ -48,7 +48,7 @@
 // RUN: grep '"gcc::Compile", inputs: \[".*bindings.c"\], output: "bindings.s"' %t
 
 // Darwin bindings
-// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-bindings %s 2> %t
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -no-integrated-as -ccc-print-bindings %s 2> %t
 // RUN: grep '"clang", inputs: \[".*bindings.c"\], output: ".*\.s"' %t
 // RUN: grep '"darwin::Assemble", inputs: \[".*\.s"\], output: ".*\.o"' %t
 // RUN: grep '"darwin::Link", inputs: \[".*\.o"\], output: "a.out"' %t
