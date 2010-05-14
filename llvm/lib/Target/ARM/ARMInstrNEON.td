@@ -2816,9 +2816,12 @@ def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
                      N3RegFrm, IIC_VMOVD, "vmov", "$dst, $src", "", []>;
 
-// Pseudo vector move instruction for QQ (a pair of Q) registers. This should
+// Pseudo vector move instructions for QQ and QQQQ registers. This should
 // be expanded after register allocation is completed.
 def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
+                NoItinerary, "@ vmov\t$dst, $src", []>;
+
+def  VMOVQQQQ : PseudoInst<(outs QQQQPR:$dst), (ins QQQQPR:$src),
                 NoItinerary, "@ vmov\t$dst, $src", []>;
 } // neverHasSideEffects
 

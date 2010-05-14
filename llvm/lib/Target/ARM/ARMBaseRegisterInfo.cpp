@@ -279,10 +279,14 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return &ARM::QPR_VFP2RegClass;
     }
 
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
-    if (B == &ARM::SPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
-    return &ARM::QQPR_VFP2RegClass;
+    if (A->getSize() == 32) {
+      if (B == &ARM::SPR_8RegClass)
+        return 0;  // Do not allow coalescing!
+      return &ARM::QQPR_VFP2RegClass;
+    }
+
+    assert(A->getSize() == 64 && "Expecting a QQQQ register class!");
+    return 0;  // Do not allow coalescing!
   }
   case 5:
   case 6:
@@ -293,26 +297,55 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       if (B == &ARM::DPR_VFP2RegClass)
         return &ARM::QPR_VFP2RegClass;
       if (B == &ARM::DPR_8RegClass)
-        return &ARM::QPR_8RegClass;
+        return 0;  // Do not allow coalescing!
       return A;
     }
 
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
-    if (B == &ARM::DPR_VFP2RegClass)
-      return &ARM::QQPR_VFP2RegClass;
-    if (B == &ARM::DPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
+    if (A->getSize() == 32) {
+      if (B == &ARM::DPR_VFP2RegClass)
+        return &ARM::QQPR_VFP2RegClass;
+      if (B == &ARM::DPR_8RegClass)
+        return 0;  // Do not allow coalescing!
+      return A;
+    }
+
+    assert(A->getSize() == 64 && "Expecting a QQQQ register class!");
+    if (B != &ARM::DPRRegClass)
+      return 0;  // Do not allow coalescing!
     return A;
   }
   case 9:
-  case 10: {
+  case 10:
+  case 11:
+  case 12: {
+    // D sub-registers of QQQQ registers.
+    if (A->getSize() == 64 && B == &ARM::DPRRegClass)
+      return A;
+    return 0;  // Do not allow coalescing!
+  }
+
+  case 13:
+  case 14: {
     // Q sub-registers.
-    assert(A->getSize() == 32 && "Expecting a QQ register class!");
-    if (B == &ARM::QPR_VFP2RegClass)
-      return &ARM::QQPR_VFP2RegClass;
-    if (B == &ARM::QPR_8RegClass)
-      return &ARM::QQPR_8RegClass;
-    return A;
+    if (A->getSize() == 32) {
+      if (B == &ARM::QPR_VFP2RegClass)
+        return &ARM::QQPR_VFP2RegClass;
+      if (B == &ARM::QPR_8RegClass)
+        return 0;  // Do not allow coalescing!
+      return A;
+    }
+
+    assert(A->getSize() == 64 && "Expecting a QQQQ register class!");
+    if (B == &ARM::QPRRegClass)
+      return A;
+    return 0;  // Do not allow coalescing!
+  }
+  case 15:
+  case 16: {
+    // Q sub-registers of QQQQ registers.
+    if (A->getSize() == 64 && B == &ARM::QPRRegClass)
+      return A;
+    return 0;  // Do not allow coalescing!
   }
   }
   return 0;
