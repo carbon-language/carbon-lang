@@ -56,3 +56,16 @@ movb	0, %al    // CHECK: movb 0, %al  # encoding: [0xa0,A,A,A,A]
 movw	0, %ax    // CHECK: movw 0, %ax  # encoding: [0x66,0xa1,A,A,A,A]
 movl	0, %eax   // CHECK: movl 0, %eax  # encoding: [0xa1,A,A,A,A]
 
+// rdar://7973775
+into
+// CHECK: into
+// CHECK:  encoding: [0xce]
+int3
+// CHECK: int3
+// CHECK:  encoding: [0xcc]
+int $4
+// CHECK: int $4
+// CHECK:  encoding: [0xcd,0x04]
+int $255
+// CHECK: int $255
+// CHECK:  encoding: [0xcd,0xff]
