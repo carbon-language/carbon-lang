@@ -836,7 +836,7 @@ class br_fcc<bits<6> opc, string asmstr>
     !strconcat(asmstr, " $R,$dst"),  s_fbr>;
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
-let Ra = 31 in
+let Ra = 31, isBarrier = 1 in
 def BR : BFormD<0x30, "br $$31,$DISP", [(br bb:$DISP)], s_ubr>;
 
 def COND_BRANCH_I : BFormN<0, (ins u64imm:$opc, GPRC:$R, target:$dst), 
