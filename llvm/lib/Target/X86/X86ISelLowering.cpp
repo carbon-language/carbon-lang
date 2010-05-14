@@ -7988,8 +7988,14 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   MachineOperand& dest1Oper = bInstr->getOperand(0);
   MachineOperand& dest2Oper = bInstr->getOperand(1);
   MachineOperand* argOpers[2 + X86AddrNumOperands];
-  for (int i=0; i < 2 + X86AddrNumOperands; ++i)
+  for (int i=0; i < 2 + X86AddrNumOperands; ++i) {
     argOpers[i] = &bInstr->getOperand(i+2);
+
+    // We use some of the operands multiple times, so conservatively just
+    // clear any kill flags that might be present.
+    if (argOpers[i]->isReg() && argOpers[i]->isUse())
+      argOpers[i]->setIsKill(false);
+  }
 
   // x86 address has 5 operands: base, index, scale, displacement, and segment.
   int lastAddrIndx = X86AddrNumOperands - 1; // [0,3]
