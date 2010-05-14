@@ -80,6 +80,12 @@ DebugMod("postra-sched-debugmod",
                       cl::desc("Debug control MBBs that are scheduled"),
                       cl::init(0), cl::Hidden);
 
+static cl::opt<bool>
+EnablePostRADbgValue("post-RA-dbg-value",
+                     cl::desc("Enable processing of dbg_value in post-RA"),
+                     cl::init(false), cl::Hidden);
+
+
 AntiDepBreaker::~AntiDepBreaker() { }
 
 namespace {
@@ -269,11 +275,14 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     // scheduler has some sort of problem with DebugValue instructions that
     // causes an assertion in LeaksContext.h to fail occasionally.  Just
     // remove all those instructions for now.
-    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-         I != E; ) {
-      MachineInstr *MI = &*I++;
-      if (MI->isDebugValue())
-        MI->eraseFromParent();
+    if (!EnablePostRADbgValue) {
+      DEBUG(dbgs() << "*** Maintaining DbgValues in PostRAScheduler\n");
+      for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+           I != E; ) {
+        MachineInstr *MI = &*I++;
+        if (MI->isDebugValue())
+          MI->eraseFromParent();
+      }
     }
 
     // Schedule each sequence of instructions not interrupted by a label
