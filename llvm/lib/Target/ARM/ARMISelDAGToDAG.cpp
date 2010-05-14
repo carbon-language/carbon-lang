@@ -1312,33 +1312,76 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
 
   // Otherwise, quad registers are stored with two separate instructions,
   // where one stores the even registers and the other stores the odd registers.
+  if (llvm::ModelWithRegSequence()) {
+    assert(NumVecs <= 4);
 
-  Ops.push_back(Reg0); // post-access address offset
+    // Form the QQQQ REG_SEQUENCE.
+    SDValue V[8];
+    for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
+      V[i]   = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+                                              N->getOperand(Vec+3));
+      V[i+1] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+                                              N->getOperand(Vec+3));
+    }
+    if (NumVecs == 3)
+      V[6] = V[7] =
+        SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,RegVT), 0);
+    SDValue RegSeq = SDValue(OctoDRegs(MVT::v8i64, V[0], V[1], V[2], V[3],
+                                       V[4], V[5], V[6], V[7]), 0);
 
-  // Store the even subregs.
-  for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                 N->getOperand(Vec+3)));
-  Ops.push_back(Pred);
-  Ops.push_back(Reg0); // predicate register
-  Ops.push_back(Chain);
-  unsigned Opc = QOpcodes0[OpcodeIndex];
-  SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+6);
-  Chain = SDValue(VStA, 1);
+    // Store the even D registers.
+    Ops.push_back(Reg0); // post-access address offset
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0+Vec*2, dl,
+                                                   RegVT, RegSeq));
+    Ops.push_back(Pred);
+    Ops.push_back(Reg0); // predicate register
+    Ops.push_back(Chain);
+    unsigned Opc = QOpcodes0[OpcodeIndex];
+    SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                          MVT::Other, Ops.data(), NumVecs+6);
+    Chain = SDValue(VStA, 1);
 
-  // Store the odd subregs.
-  Ops[0] = SDValue(VStA, 0); // MemAddr
-  for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-    Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                N->getOperand(Vec+3));
-  Ops[NumVecs+5] = Chain;
-  Opc = QOpcodes1[OpcodeIndex];
-  SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+6);
-  Chain = SDValue(VStB, 1);
-  ReplaceUses(SDValue(N, 0), Chain);
-  return NULL;
+    // Store the odd D registers.
+    Ops[0] = SDValue(VStA, 0); // MemAddr
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1+Vec*2, dl,
+                                                  RegVT, RegSeq);
+    Ops[NumVecs+5] = Chain;
+    Opc = QOpcodes1[OpcodeIndex];
+    SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                          MVT::Other, Ops.data(), NumVecs+6);
+    Chain = SDValue(VStB, 1);
+    ReplaceUses(SDValue(N, 0), Chain);
+    return NULL;
+  } else {
+    Ops.push_back(Reg0); // post-access address offset
+
+    // Store the even subregs.
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+                                                   N->getOperand(Vec+3)));
+    Ops.push_back(Pred);
+    Ops.push_back(Reg0); // predicate register
+    Ops.push_back(Chain);
+    unsigned Opc = QOpcodes0[OpcodeIndex];
+    SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                          MVT::Other, Ops.data(), NumVecs+6);
+    Chain = SDValue(VStA, 1);
+
+    // Store the odd subregs.
+    Ops[0] = SDValue(VStA, 0); // MemAddr
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+                                                  N->getOperand(Vec+3));
+    Ops[NumVecs+5] = Chain;
+    Opc = QOpcodes1[OpcodeIndex];
+    SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                          MVT::Other, Ops.data(), NumVecs+6);
+    Chain = SDValue(VStB, 1);
+    ReplaceUses(SDValue(N, 0), Chain);
+    return NULL;
+  }
 }
 
 SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
