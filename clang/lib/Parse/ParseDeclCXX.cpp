@@ -87,6 +87,14 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
 
   SourceLocation LBrace = ConsumeBrace();
 
+  if (CurScope->isClassScope() || CurScope->isTemplateParamScope() || 
+      CurScope->isInObjcMethodScope() || CurScope->getBlockParent() || 
+      CurScope->getFnParent()) {
+    Diag(LBrace, diag::err_namespace_nonnamespace_scope);
+    SkipUntil(tok::r_brace, false);
+    return DeclPtrTy();
+  }
+
   // Enter a scope for the namespace.
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
