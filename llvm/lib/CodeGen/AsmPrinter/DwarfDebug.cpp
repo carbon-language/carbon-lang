@@ -2175,6 +2175,7 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
         DbgVariable *ArgVar = new DbgVariable(DV, MInsn, NULL);
         CurrentFnDbgScope->addVariable(ArgVar);
         DbgValueStartMap[MInsn] = ArgVar;
+        Processed.insert(DV);
         continue;
       }
 
