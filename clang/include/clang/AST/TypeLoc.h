@@ -269,6 +269,16 @@ public:
     return TypeClass::classof(Ty);
   }
 
+  static bool classof(const TypeLoc *TL) {
+    return Derived::classofType(TL->getTypePtr());
+  }
+  static bool classof(const UnqualTypeLoc *TL) {
+    return Derived::classofType(TL->getTypePtr());
+  }
+  static bool classof(const Derived *TL) {
+    return true;
+  }
+
   TypeLoc getNextTypeLoc() const {
     return getNextTypeLoc(asDerived()->getInnerType());
   }
@@ -1231,18 +1241,75 @@ class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeType> {
 };
 
-// FIXME: locations for the nested name specifier;  at the very least,
-// a SourceRange.
-class ElaboratedTypeLoc :
-    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                     ElaboratedTypeLoc,
-                                     ElaboratedType> {
+// FIXME: locations for the nested name specifier should be put in
+// NestedNameSpecifier
+struct ElaboratedLocInfo {
+  SourceLocation KeywordLoc;
 };
 
-// FIXME: locations for the typename keyword and nested name specifier.
-class DependentNameTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                         DependentNameTypeLoc,
-                                                         DependentNameType> {
+class ElaboratedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                 ElaboratedTypeLoc,
+                                                 ElaboratedType,
+                                                 ElaboratedLocInfo> {
+public:
+  SourceLocation getKeywordLoc() const {
+    return this->getLocalData()->KeywordLoc;
+  }
+  void setKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->KeywordLoc = Loc;
+  }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getKeywordLoc(), getKeywordLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setKeywordLoc(Loc);
+  }
+
+  TypeLoc getNamedTypeLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  QualType getInnerType() const {
+    return getTypePtr()->getNamedType();
+  }
+};
+
+// FIXME: locations for the nested name specifier should be put in
+// NestedNameSpecifier
+struct DependentNameLocInfo {
+  SourceLocation KeywordLoc;
+  SourceLocation NameLoc;
+};
+
+class DependentNameTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                    DependentNameTypeLoc,
+                                                    DependentNameType,
+                                                    DependentNameLocInfo> {
+public:
+  SourceLocation getKeywordLoc() const {
+    return this->getLocalData()->KeywordLoc;
+  }
+  void setKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->KeywordLoc = Loc;
+  }
+
+  SourceLocation getNameLoc() const {
+    return this->getLocalData()->NameLoc;
+  }
+  void setNameLoc(SourceLocation Loc) {
+    this->getLocalData()->NameLoc = Loc;
+  }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getKeywordLoc(), getNameLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setKeywordLoc(Loc);
+    setNameLoc(Loc);
+  }
 };
 
 }
