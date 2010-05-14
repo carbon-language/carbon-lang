@@ -248,6 +248,15 @@ public:
     SourceLocation DiagLoc;
 
     EvalResult() : HasSideEffects(false), Diag(0), DiagExpr(0) {}
+
+    // isGlobalLValue - Return true if the evaluated lvalue expression
+    // is global.
+    bool isGlobalLValue() const;
+    // hasSideEffects - Return true if the evaluated expression has
+    // side effects.
+    bool hasSideEffects() const {
+      return HasSideEffects;
+    }
   };
 
   /// Evaluate - Return true if this is a constant which we can fold using
@@ -278,6 +287,9 @@ public:
   /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue
   /// with link time known address.
   bool EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const;
+
+  /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue.
+  bool EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const;
 
   /// \brief Enumeration used to describe how \c isNullPointerConstant()
   /// should cope with value-dependent expressions.

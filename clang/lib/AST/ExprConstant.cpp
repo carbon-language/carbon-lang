@@ -106,8 +106,7 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 // Misc utilities
 //===----------------------------------------------------------------------===//
 
-static bool IsGlobalLValue(LValue &Value) {
-  const Expr *E = Value.Base;
+static bool IsGlobalLValue(const Expr* E) {
   if (!E) return true;
 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
@@ -135,7 +134,7 @@ static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
   }
 
   // Require the base expression to be a global l-value.
-  if (!IsGlobalLValue(Value)) return false;
+  if (!IsGlobalLValue(Base)) return false;
 
   // We have a non-null base expression.  These are generally known to
   // be true, but if it'a decl-ref to a weak symbol it can be null at
@@ -2187,7 +2186,7 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
     LValue LV;
     if (!EvaluatePointer(E, LV, Info))
       return false;
-    if (!IsGlobalLValue(LV))
+    if (!IsGlobalLValue(LV.Base))
       return false;
     LV.moveInto(Info.EvalResult.Val);
   } else if (E->getType()->isRealFloatingType()) {
@@ -2220,7 +2219,18 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
   LValue LV;
   if (EvaluateLValue(this, LV, Info) &&
       !Result.HasSideEffects &&
-      IsGlobalLValue(LV)) {
+      IsGlobalLValue(LV.Base)) {
+    LV.moveInto(Result.Val);
+    return true;
+  }
+  return false;
+}
+
+bool Expr::EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result);
+
+  LValue LV;
+  if (EvaluateLValue(this, LV, Info)) {
     LV.moveInto(Result.Val);
     return true;
   }
@@ -2249,6 +2259,12 @@ APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
 
   return EvalResult.Val.getInt();
 }
+
+ bool Expr::EvalResult::isGlobalLValue() const {
+   assert(Val.isLValue());
+   return IsGlobalLValue(Val.getLValueBase());
+ }
+
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
 /// an integer constant expression.
