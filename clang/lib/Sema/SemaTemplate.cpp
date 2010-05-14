@@ -5184,18 +5184,16 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
 static void FillTypeLoc(DependentNameTypeLoc TL,
                         SourceLocation TypenameLoc,
-                        SourceRange QualifierRange,
-                        SourceLocation NameLoc) {
-  // FIXME: qualifier range
-  TL.setKeywordLoc(TypenameLoc);
-  TL.setNameLoc(NameLoc);
+                        SourceRange QualifierRange) {
+  // FIXME: typename, qualifier range
+  TL.setNameLoc(TypenameLoc);
 }
 
 static void FillTypeLoc(ElaboratedTypeLoc TL,
                         SourceLocation TypenameLoc,
                         SourceRange QualifierRange) {
-  // FIXME: qualifier range and inner locations.
-  TL.setKeywordLoc(TypenameLoc);
+  // FIXME: typename, qualifier range
+  TL.setNameLoc(TypenameLoc);
 }
 
 Sema::TypeResult
@@ -5215,7 +5213,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   if (isa<DependentNameType>(T)) {
     DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
-    FillTypeLoc(TL, TypenameLoc, SS.getRange(), IdLoc);
+    FillTypeLoc(TL, TypenameLoc, SS.getRange());
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
@@ -5251,7 +5249,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
   // FIXME: fill inner type loc
-  FillTypeLoc(TL, TypenameLoc, SS.getRange(), TemplateLoc);
+  FillTypeLoc(TL, TypenameLoc, SS.getRange());
   return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 
@@ -5428,41 +5426,13 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
   } else
     Result = getDerived().RebuildDependentNameType(T->getKeyword(),
                                                    NNS, T->getIdentifier(),
-                                                   TL.getSourceRange());
+                                                  SourceRange(TL.getNameLoc()));
 
   if (Result.isNull())
     return QualType();
 
-  if (const ElaboratedType* ElabT = Result->getAs<ElaboratedType>()) {
-    QualType NamedT = ElabT->getNamedType();
-    if (isa<TypedefType>(NamedT)) {
-      TypedefTypeLoc NamedTLoc = TLB.push<TypedefTypeLoc>(NamedT);
-      NamedTLoc.setNameLoc(TL.getNameLoc());
-    }
-    else if (isa<RecordType>(NamedT)) {
-      RecordTypeLoc NamedTLoc = TLB.push<RecordTypeLoc>(NamedT);
-      NamedTLoc.setNameLoc(TL.getNameLoc());
-    }
-    else if (isa<EnumType>(NamedT)) {
-      EnumTypeLoc NamedTLoc = TLB.push<EnumTypeLoc>(NamedT);
-      NamedTLoc.setNameLoc(TL.getNameLoc());
-    }
-    else if (isa<TemplateSpecializationType>(NamedT)) {
-      TemplateSpecializationTypeLoc NamedTLoc
-        = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
-      // FIXME: fill locations
-      NamedTLoc.initializeLocal(SourceLocation());
-    }
-    else
-      llvm_unreachable("Unexpected type");
-    ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
-  }
-  else {
-    DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setNameLoc(TL.getNameLoc());
-  }
+  DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
   return Result;
 }
 

@@ -1455,15 +1455,9 @@ namespace {
         return;
       }
 
-      TypeLoc OldTL = TInfo->getTypeLoc();
-      if (TInfo->getType()->getAs<ElaboratedType>()) {
-        ElaboratedTypeLoc ElabTL = cast<ElaboratedTypeLoc>(OldTL);
-        TemplateSpecializationTypeLoc NamedTL =
-          cast<TemplateSpecializationTypeLoc>(ElabTL.getNamedTypeLoc());
-        TL.copy(NamedTL);
-      }
-      else
-        TL.copy(cast<TemplateSpecializationTypeLoc>(OldTL));
+      TemplateSpecializationTypeLoc OldTL =
+        cast<TemplateSpecializationTypeLoc>(TInfo->getTypeLoc());
+      TL.copy(OldTL);
     }
     void VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
       assert(DS.getTypeSpecType() == DeclSpec::TST_typeofExpr);
@@ -1494,23 +1488,6 @@ namespace {
           TL.setBuiltinLoc(DS.getTypeSpecWidthLoc());
       }
     }
-    void VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-      ElaboratedTypeKeyword Keyword
-        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      TL.setKeywordLoc(Keyword != ETK_None
-                       ? DS.getTypeSpecTypeLoc()
-                       : SourceLocation());
-      Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
-    }
-    void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-      ElaboratedTypeKeyword Keyword
-        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      TL.setKeywordLoc(Keyword != ETK_None
-                       ? DS.getTypeSpecTypeLoc()
-                       : SourceLocation());
-      TL.setNameLoc(DS.getTypeSpecTypeLoc());
-    }
-
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
       TL.initialize(DS.getTypeSpecTypeLoc());
