@@ -761,10 +761,6 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   // context as well as walking through the scopes.
 
   for (; S; S = S->getParent()) {
-    DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
-    if (Ctx && Ctx->isTransparentContext())
-      continue;
-
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
@@ -778,21 +774,57 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       }
     }
 
-    // If we have a context, and it's not a context stashed in the
-    // template parameter scope for an out-of-line definition, also
-    // look into that context.
-    if (Ctx && !(Found && S && S->isTemplateParamScope())) {
-      assert(Ctx->isFileContext() &&
-             "We should have been looking only at file context here already.");
-
-      // Look into context considering using-directives.
-      if (CppNamespaceLookup(*this, R, Context, Ctx, UDirs))
-        Found = true;
-    }
-
-    if (Found) {
+    if (Found && S->isTemplateParamScope()) {
       R.resolveKind();
       return true;
+    }
+
+    DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
+    if (!Ctx && S->isTemplateParamScope() && OutsideOfTemplateParamDC &&
+        S->getParent() && !S->getParent()->isTemplateParamScope()) {
+      // We've just searched the last template parameter scope and
+      // found nothing, so look into the the contexts between the
+      // lexical and semantic declaration contexts returned by
+      // findOuterContext(). This implements the name lookup behavior
+      // of C++ [temp.local]p8.
+      Ctx = OutsideOfTemplateParamDC;
+      OutsideOfTemplateParamDC = 0;
+    }
+    
+    if (Ctx) {
+      DeclContext *OuterCtx;
+      bool SearchAfterTemplateScope;
+      llvm::tie(OuterCtx, SearchAfterTemplateScope) = findOuterContext(S);
+      if (SearchAfterTemplateScope)
+        OutsideOfTemplateParamDC = OuterCtx;
+
+      for (; Ctx && !Ctx->Equals(OuterCtx); Ctx = Ctx->getLookupParent()) {
+        // We do not directly look into transparent contexts, since
+        // those entities will be found in the nearest enclosing
+        // non-transparent context.
+        if (Ctx->isTransparentContext())
+          continue;
+        
+        // If we have a context, and it's not a context stashed in the
+        // template parameter scope for an out-of-line definition, also
+        // look into that context.
+        if (!(Found && S && S->isTemplateParamScope())) {
+          assert(Ctx->isFileContext() &&
+              "We should have been looking only at file context here already.");
+          
+          // Look into context considering using-directives.
+          if (CppNamespaceLookup(*this, R, Context, Ctx, UDirs))
+            Found = true;
+        }
+        
+        if (Found) {
+          R.resolveKind();
+          return true;
+        }
+        
+        if (R.isForRedeclaration() && !Ctx->isTransparentContext())
+          return false;
+      }
     }
 
     if (R.isForRedeclaration() && Ctx && !Ctx->isTransparentContext())

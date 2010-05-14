@@ -228,3 +228,19 @@ namespace test3 {
     A::execute(path); // expected-error {{incomplete type 'test3::A' named in nested name specifier}}
   }
 }
+
+namespace PR7133 {
+  namespace A {
+    class Foo;
+  }
+
+  namespace A {
+    namespace B {
+      bool foo(Foo &);
+    }
+  }
+
+  bool A::B::foo(Foo &) {
+    return false;
+  }
+}

@@ -64,3 +64,10 @@ namespace test1 {
   template <class T>
   T pair<T>::* const pair<T>::mem_array[2] = { &pair<T>::x, &pair<T>::y };
 }
+
+typedef int T;
+namespace N1 {
+  template<typename T> T f0();
+}
+
+template<typename T> T N1::f0() { }
