@@ -738,12 +738,6 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   return LValue::MakeAddr(Temp, Q);
 }
 
-void CodeGenFunction::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
-  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
-
-  EmitMemSetToZero(DestPtr, Ty);
-}
-
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty,
                                         bool isVolatile) {

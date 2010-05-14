@@ -724,8 +724,6 @@ public:
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy, bool isVolatile=false);
 
-  void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
-
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.
   void StartBlock(const char *N);
