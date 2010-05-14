@@ -782,7 +782,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
                << "********** Function: "
                << ((Value*)Fn.getFunction())->getName() << '\n');
   if (VerifyFastRegalloc)
-    Fn.verify();
+    Fn.verify(this, true);
   MF = &Fn;
   MRI = &MF->getRegInfo();
   TM = &Fn.getTarget();
