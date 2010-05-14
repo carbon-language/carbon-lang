@@ -102,7 +102,7 @@ int SystemZRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
   Offset += StackSize - TFI.getOffsetOfLocalArea();
 
   // Skip the register save area if we generated the stack frame.
-  if (StackSize || MFI->adjustsStack())
+  if (StackSize || MFI->hasCalls())
     Offset -= TFI.getOffsetOfLocalArea();
 
   return Offset;
@@ -163,14 +163,14 @@ SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   for (unsigned i = 0, e = array_lengthof(HighFPRs); i != e; ++i)
     HighFPRsUsed |= MRI.isPhysRegUsed(HighFPRs[i]);
 
-  if (FFI->adjustsStack())
+  if (FFI->hasCalls())
     /* FIXME: function is varargs */
     /* FIXME: function grabs RA */
     /* FIXME: function calls eh_return */
     MRI.setPhysRegUsed(SystemZ::R14D);
 
   if (HighFPRsUsed ||
-      FFI->adjustsStack() ||
+      FFI->hasCalls() ||
       FFI->getObjectIndexEnd() != 0 || // Contains automatic variables
       FFI->hasVarSizedObjects() // Function calls dynamic alloca's
       /* FIXME: function is varargs */)
@@ -234,7 +234,7 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
     DL = MBBI->getDebugLoc();
 
   // adjust stack pointer: R15 -= numbytes
-  if (StackSize || MFI->adjustsStack()) {
+  if (StackSize || MFI->hasCalls()) {
     assert(MF.getRegInfo().isPhysRegUsed(SystemZ::R15D) &&
            "Invalid stack frame calculation!");
     emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
@@ -286,7 +286,7 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
   // During callee-saved restores emission stack frame was not yet finialized
   // (and thus - the stack size was unknown). Tune the offset having full stack
   // size in hands.
-  if (StackSize || MFI->adjustsStack()) {
+  if (StackSize || MFI->hasCalls()) {
     assert((MBBI->getOpcode() == SystemZ::MOV64rmm ||
             MBBI->getOpcode() == SystemZ::MOV64rm) &&
            "Expected to see callee-save register restore code");
