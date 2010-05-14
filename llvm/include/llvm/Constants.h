@@ -923,7 +923,11 @@ DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantExpr, Constant)
 /// UndefValue - 'undef' values are things that do not have specified contents.
 /// These are used for a variety of purposes, including global variable
 /// initializers and operands to instructions.  'undef' values can occur with
-/// any type.
+/// any first-class type.
+///
+/// Undef values aren't exactly constants; if they have multiple uses, they
+/// can appear to have different bit patterns at each use. See
+/// LangRef.html#undefvalues for details.
 ///
 class UndefValue : public Constant {
   friend struct ConstantCreator<UndefValue, Type, char>;
@@ -954,6 +958,7 @@ public:
     return V->getValueID() == UndefValueVal;
   }
 };
+
 } // End llvm namespace
 
 #endif
