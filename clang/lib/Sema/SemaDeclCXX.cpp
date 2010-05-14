@@ -6066,8 +6066,7 @@ bool Sema::DefineUsedVTables() {
     if (const CXXMethodDecl *KeyFunction
                              = Context.getKeyFunction(DynamicClasses[I])) {
       const FunctionDecl *Definition = 0;
-      if (KeyFunction->getBody(Definition) && !Definition->isInlined() &&
-          !Definition->isImplicit())
+      if (KeyFunction->getBody(Definition))
         MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
     }
   }
