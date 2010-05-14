@@ -193,6 +193,9 @@ public:
   DbgVariable *getAbstractVariable() const { return AbstractVar; }
   void setDIE(DIE *D)                      { TheDIE = D; }
   DIE *getDIE()                      const { return TheDIE; }
+  bool hasLocation()                       { 
+    return DbgValueMInsn || FrameIndex != ~0U; 
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -1632,16 +1635,18 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
       MachineLocation Location;
       unsigned FrameReg;
       const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-      int Offset = RI->getFrameIndexReference(*Asm->MF, DV->getFrameIndex(),
-                                              FrameReg);
-      Location.set(FrameReg, Offset);
-      
-      if (VD.hasComplexAddress())
-        addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-      else if (VD.isBlockByrefVariable())
-        addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-      else
-        addAddress(VariableDie, dwarf::DW_AT_location, Location);
+      if (DV->hasLocation()) {
+        int Offset = RI->getFrameIndexReference(*Asm->MF, DV->getFrameIndex(),
+                                                FrameReg);
+        Location.set(FrameReg, Offset);
+        
+        if (VD.hasComplexAddress())
+          addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+        else if (VD.isBlockByrefVariable())
+          addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+        else
+          addAddress(VariableDie, dwarf::DW_AT_location, Location);
+      }
     }
   }
 
@@ -2122,14 +2127,15 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
 }
 
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
-void DwarfDebug::collectVariableInfo() {
+void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
   const LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
-
+  SmallPtrSet<const MDNode *, 16> Processed;
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
     const MDNode *Var = VI->first;
     if (!Var) continue;
+    Processed.insert(Var);
     DIVariable DV(Var);
     const std::pair<unsigned, DebugLoc> &VP = VI->second;
 
@@ -2184,12 +2190,27 @@ void DwarfDebug::collectVariableInfo() {
       if (Scope == 0)
         continue;
 
+      Processed.insert(DV);
       DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn, DL);
       DbgVariable *RegVar = new DbgVariable(DV, MInsn, AbsDbgVariable);
       DbgValueStartMap[MInsn] = RegVar;
       Scope->addVariable(RegVar);
     }
   }
+
+  // Collect info for variables that were optimized out.
+  if (NamedMDNode *NMD = 
+      MF->getFunction()->getParent()->getNamedMetadata("llvm.dbg.lv")) {
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
+      if (!Processed.insert(DV))
+        continue;
+      DbgScope *Scope = DbgScopeMap.lookup(DV.getContext());
+      if (Scope)
+        Scope->addVariable(new DbgVariable(DV, ~0U, NULL));
+    }
+  }
+
 }
 
 /// beginScope - Process beginning of a scope.
@@ -2542,7 +2563,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo()) return;
   if (!extractScopeInformation()) return;
   
-  collectVariableInfo();
+  collectVariableInfo(MF);
 
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());

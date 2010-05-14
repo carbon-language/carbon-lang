@@ -545,7 +545,7 @@ private:
   bool extractScopeInformation();
   
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
-  void collectVariableInfo();
+  void collectVariableInfo(const MachineFunction *);
   
 public:
   //===--------------------------------------------------------------------===//
