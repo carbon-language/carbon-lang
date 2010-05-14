@@ -20,8 +20,6 @@ extern "C" int printf(const char *str...);
 void test1() {
   test1_B* bp = (test1_B*)&test1_d;
   test1_A* ap = &test1_d;
-  // This throws
-  //  test1_D&  dr = dynamic_cast<D&>(*bp);
   test1_D* dp = dynamic_cast<test1_D*>(bp);
   S(dp == 0, 1);
   ap = dynamic_cast<test1_A*>(bp);
