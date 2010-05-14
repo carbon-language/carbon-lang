@@ -57,11 +57,23 @@
 using namespace llvm;
 
 bool FastISel::hasTrivialKill(const Value *V) const {
-  // Don't consider constants or arguments to have trivial kills. Only
-  // instructions with a single use in the same basic block.
+  // Don't consider constants or arguments to have trivial kills.
   const Instruction *I = dyn_cast<Instruction>(V);
-  return I &&
-         I->hasOneUse() &&
+  if (!I)
+    return false;
+
+  // No-op casts are trivially coalesced by fast-isel.
+  if (const CastInst *Cast = dyn_cast<CastInst>(I))
+    if (Cast->isNoopCast(TD.getIntPtrType(Cast->getContext())) &&
+        !hasTrivialKill(Cast->getOperand(0)))
+      return false;
+
+  // Only instructions with a single use in the same basic block are considered
+  // to have trivial kills.
+  return I->hasOneUse() &&
+         !(I->getOpcode() == Instruction::BitCast ||
+           I->getOpcode() == Instruction::PtrToInt ||
+           I->getOpcode() == Instruction::IntToPtr) &&
          cast<Instruction>(I->use_begin())->getParent() == I->getParent();
 }
 
