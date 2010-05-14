@@ -663,12 +663,18 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // First scan.
     // Mark physreg uses and early clobbers as used.
+    // Find the end of the virtreg operands
+    unsigned VirtOpEnd = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
-      if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg) ||
-          ReservedRegs.test(Reg)) continue;
+      if (!Reg) continue;
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        VirtOpEnd = i+1;
+        continue;
+      }
+      if (ReservedRegs.test(Reg)) continue;
       if (MO.isUse()) {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
@@ -677,11 +683,10 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
 
-
     // Second scan.
     // Allocate virtreg uses and early clobbers.
     // Collect VirtKills
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    for (unsigned i = 0; i != VirtOpEnd; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
