@@ -603,6 +603,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
     reservePhysReg(MBB, MII, *I);
 
   SmallVector<unsigned, 8> VirtKills, PhysKills, PhysDefs;
+  SmallVector<MachineInstr*, 32> Coalesced;
 
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
@@ -706,8 +707,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
       if (MO.isUse()) {
         unsigned PhysReg = reloadVirtReg(MBB, MI, i, Reg, CopyDst);
-        if (CopySrc == Reg)
-          CopySrc = PhysReg;
+        CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
         setPhysReg(MO, PhysReg);
         if (MO.isKill())
           VirtKills.push_back(Reg);
@@ -757,11 +757,12 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
           PhysKills.push_back(Reg);
         continue;
       }
-      if (MO.isDead())
-        VirtKills.push_back(Reg);
       unsigned PhysReg = defineVirtReg(MBB, MI, i, Reg, CopySrc);
-      if (CopyDst == Reg)
-        CopyDst = PhysReg;
+      if (MO.isDead()) {
+        VirtKills.push_back(Reg);
+        CopyDst = 0; // cancel coalescing;
+      } else
+        CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
       setPhysReg(MO, PhysReg);
     }
 
@@ -783,7 +784,12 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     MRI->addPhysRegsUsed(UsedInInstr);
 
-    DEBUG(dbgs() << "<< " << *MI);
+    if (CopyDst && CopyDst == CopySrc && CopyDstSub == CopySrcSub) {
+      DEBUG(dbgs() << "-- coalescing: " << *MI);
+      Coalesced.push_back(MI);
+    } else {
+      DEBUG(dbgs() << "<< " << *MI);
+    }
   }
 
   // Spill all physical registers holding virtual registers now.
@@ -794,6 +800,11 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
        i != e; ++i)
     spillVirtReg(MBB, MI, i, true);
   LiveVirtRegs.clear();
+
+  // Erase all the coalesced copies. We are delaying it until now because
+  // LiveVirtsRegs might refer to the instrs.
+  for (unsigned i = 0, e = Coalesced.size(); i != e; ++i)
+    MBB.erase(Coalesced[i]);
 
   DEBUG(MBB.dump());
 }
