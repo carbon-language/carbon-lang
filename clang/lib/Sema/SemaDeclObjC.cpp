@@ -938,7 +938,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // Check and see if properties declared in the interface have either 1)
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
-  if (isa<ObjCInterfaceDecl>(CDecl))
+  if (isa<ObjCInterfaceDecl>(CDecl) && !LangOpts.ObjCNonFragileABI2)
     DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
   llvm::DenseSet<Selector> ClsMap;
@@ -1433,6 +1433,8 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setAtEndRange(AtEnd);
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
+      if (LangOpts.ObjCNonFragileABI2)
+        DefaultSynthesizeProperties(S, IC, IDecl);
       ImplMethodsVsClassMethods(S, IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
       if (LangOpts.ObjCNonFragileABI2)

@@ -802,6 +802,47 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
   }
 }
 
+/// CollectClassPropertyImplementations - This routine collects list of
+/// properties to be implemented in the class. This includes, class's
+/// and its conforming protocols' properties.
+static void CollectClassPropertyImplementations(ObjCContainerDecl *CDecl,
+                llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap) {
+  if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
+    for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
+         E = IDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      PropMap[Prop->getIdentifier()] = Prop;
+    }
+    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
+         E = IDecl->protocol_end(); PI != E; ++PI)
+      CollectClassPropertyImplementations((*PI), PropMap);
+  }
+  else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      PropMap[Prop->getIdentifier()] = Prop;
+    }
+    // scan through protocol's protocols.
+    for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+         E = PDecl->protocol_end(); PI != E; ++PI)
+      CollectClassPropertyImplementations((*PI), PropMap);
+  }
+}
+
+/// CollectSuperClassPropertyImplementations - This routine collects list of
+/// properties to be implemented in super class(s) and also coming from their
+/// conforming protocols.
+static void CollectSuperClassPropertyImplementations(ObjCInterfaceDecl *CDecl,
+                llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap) {
+  if (ObjCInterfaceDecl *SDecl = CDecl->getSuperClass()) {
+    while (SDecl) {
+      CollectClassPropertyImplementations(SDecl, PropMap);
+      SDecl = SDecl->getSuperClass();
+    }
+  }
+}
+
 /// ProtocolConformsToSuperClass - Returns true if class's given protocol
 /// conforms to one of its super class's protocols.
 bool Sema::ProtocolConformsToSuperClass(const ObjCInterfaceDecl *IDecl,
@@ -868,6 +909,34 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
   return 0;
 }
 
+/// DefaultSynthesizeProperties - This routine default synthesizes all
+/// properties which must be synthesized in class's @implementation.
+void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
+                                        ObjCInterfaceDecl *IDecl) {
+  
+  llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
+  CollectClassPropertyImplementations(IDecl, PropMap);
+  if (PropMap.empty())
+    return;
+  llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> SuperPropMap;
+  CollectSuperClassPropertyImplementations(IDecl, SuperPropMap);
+  
+  for (llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>::iterator
+       P = PropMap.begin(), E = PropMap.end(); P != E; ++P) {
+    ObjCPropertyDecl *Prop = P->second;
+    // If property to be implemented in the super class, ignore.
+    if (SuperPropMap[Prop->getIdentifier()])
+      continue;
+    // Is there a matching propery synthesize/dynamic?
+    if (Prop->isInvalidDecl() ||
+        Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
+        IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier()))
+      continue;
+    ActOnPropertyImplDecl(S, IMPDecl->getLocation(), IMPDecl->getLocation(),
+                          true, DeclPtrTy::make(IMPDecl),
+                          Prop->getIdentifier(), Prop->getIdentifier());
+  }    
+}
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
@@ -891,14 +960,6 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
         Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
         PropImplMap.count(Prop))
       continue;
-    if (LangOpts.ObjCNonFragileABI2 && !isa<ObjCCategoryImplDecl>(IMPDecl)) {
-      ActOnPropertyImplDecl(S, IMPDecl->getLocation(),
-                            IMPDecl->getLocation(),
-                            true, DeclPtrTy::make(IMPDecl),
-                            Prop->getIdentifier(),
-                            Prop->getIdentifier());
-      continue;
-    }
     if (!InsMap.count(Prop->getGetterName())) {
       Diag(Prop->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?

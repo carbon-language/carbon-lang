@@ -1542,6 +1542,11 @@ public:
                                        ObjCContainerDecl *CDecl,
                                        const llvm::DenseSet<Selector>& InsMap);
 
+  /// DefaultSynthesizeProperties - This routine default synthesizes all 
+  /// properties which must be synthesized in class's @implementation.
+  void DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
+                                    ObjCInterfaceDecl *IDecl);
+  
   /// CollectImmediateProperties - This routine collects all properties in
   /// the class and its conforming protocols; but not those it its super class.
   void CollectImmediateProperties(ObjCContainerDecl *CDecl,
