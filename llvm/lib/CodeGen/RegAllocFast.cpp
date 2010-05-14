@@ -108,8 +108,8 @@ namespace {
     // instruction, and so cannot be allocated.
     BitVector UsedInInstr;
 
-    // ReservedRegs - vector of reserved physical registers.
-    BitVector ReservedRegs;
+    // Allocatable - vector of allocatable physical registers.
+    BitVector Allocatable;
 
     // atEndOfBlock - This flag is set after allocating all instructions in a
     // block, before emitting final spills. When it is set, LiveRegMap is no
@@ -394,7 +394,8 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || UsedInInstr.test(Hint)))
+               !RC->contains(Hint) || UsedInInstr.test(Hint)) ||
+               !Allocatable.test(Hint))
     Hint = 0;
 
   // If there is no hint, peek at the first use of this register.
@@ -404,7 +405,8 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
     // Copy to physreg -> use physreg as hint.
     if (TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
         SrcReg == VirtReg && TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-        RC->contains(DstReg) && !UsedInInstr.test(DstReg)) {
+        RC->contains(DstReg) && !UsedInInstr.test(DstReg) &&
+        Allocatable.test(DstReg)) {
       Hint = DstReg;
       DEBUG(dbgs() << "%reg" << VirtReg << " gets hint from " << MI);
     }
@@ -413,7 +415,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
   // Take hint when possible.
   if (Hint) {
     assert(RC->contains(Hint) && !UsedInInstr.test(Hint) &&
-           "Invalid hint should have been cleared");
+           Allocatable.test(Hint) && "Invalid hint should have been cleared");
     switch(PhysRegState[Hint]) {
     case regDisabled:
     case regReserved:
@@ -674,7 +676,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
         VirtOpEnd = i+1;
         continue;
       }
-      if (ReservedRegs.test(Reg)) continue;
+      if (!Allocatable.test(Reg)) continue;
       if (MO.isUse()) {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
@@ -729,7 +731,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
       unsigned Reg = MO.getReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        if (ReservedRegs.test(Reg)) continue;
+        if (!Allocatable.test(Reg)) continue;
         definePhysReg(MBB, MI, Reg, (MO.isImplicit() || MO.isDead()) ?
                                     regFree : regReserved);
         continue;
@@ -797,7 +799,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   TII = TM->getInstrInfo();
 
   UsedInInstr.resize(TRI->getNumRegs());
-  ReservedRegs = TRI->getReservedRegs(*MF);
+  Allocatable = TRI->getAllocatableSet(*MF);
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
