@@ -609,37 +609,37 @@ public:
               Type = RIT_X86_64_GOTLoad;
             else
               Type = RIT_X86_64_GOT;
-          } else if (Modifier != MCSymbolRefExpr::VK_None)
+          } else if (Modifier != MCSymbolRefExpr::VK_None) {
             report_fatal_error("unsupported symbol modifier in relocation");
-          else
+          } else {
             Type = RIT_X86_64_Signed;
+
+            // The Darwin x86_64 relocation format has a problem where it cannot
+            // encode an address (L<foo> + <constant>) which is outside the atom
+            // containing L<foo>. Generally, this shouldn't occur but it does
+            // happen when we have a RIPrel instruction with data following the
+            // relocation entry (e.g., movb $012, L0(%rip)). Even with the PCrel
+            // adjustment Darwin x86_64 uses, the offset is still negative and
+            // the linker has no way to recognize this.
+            //
+            // To work around this, Darwin uses several special relocation types
+            // to indicate the offsets. However, the specification or
+            // implementation of these seems to also be incomplete; they should
+            // adjust the addend as well based on the actual encoded instruction
+            // (the additional bias), but instead appear to just look at the
+            // final offset.
+            switch (-(Target.getConstant() + (1LL << Log2Size))) {
+            case 1: Type = RIT_X86_64_Signed1; break;
+            case 2: Type = RIT_X86_64_Signed2; break;
+            case 4: Type = RIT_X86_64_Signed4; break;
+            }
+          }
         } else {
           if (Modifier != MCSymbolRefExpr::VK_None)
             report_fatal_error("unsupported symbol modifier in branch "
                               "relocation");
 
           Type = RIT_X86_64_Branch;
-        }
-
-        // The Darwin x86_64 relocation format has a problem where it cannot
-        // encode an address (L<foo> + <constant>) which is outside the atom
-        // containing L<foo>. Generally, this shouldn't occur but it does happen
-        // when we have a RIPrel instruction with data following the relocation
-        // entry (e.g., movb $012, L0(%rip)). Even with the PCrel adjustment
-        // Darwin x86_64 uses, the offset is still negative and the linker has
-        // no way to recognize this.
-        //
-        // To work around this, Darwin uses several special relocation types to
-        // indicate the offsets. However, the specification or implementation of
-        // these seems to also be incomplete; they should adjust the addend as
-        // well based on the actual encoded instruction (the additional bias),
-        // but instead appear to just look at the final offset.
-        if (IsRIPRel) {
-          switch (-(Target.getConstant() + (1LL << Log2Size))) {
-          case 1: Type = RIT_X86_64_Signed1; break;
-          case 2: Type = RIT_X86_64_Signed2; break;
-          case 4: Type = RIT_X86_64_Signed4; break;
-          }
         }
       } else {
         if (Modifier == MCSymbolRefExpr::VK_GOT) {
