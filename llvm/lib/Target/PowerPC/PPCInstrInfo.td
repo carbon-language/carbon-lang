@@ -862,7 +862,6 @@ def STFDX : XForm_28<31, 727, (outs), (ins F8RC:$frS, memrr:$dst),
                      [(store F8RC:$frS, xaddr:$dst)]>;
 }
 
-let isBarrier = 1 in
 def SYNC : XForm_24_sync<31, 598, (outs), (ins),
                         "sync", LdStSync,
                         [(int_ppc_sync)]>;
