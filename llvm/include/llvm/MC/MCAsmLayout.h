@@ -36,6 +36,14 @@ private:
   /// List of sections in layout order.
   llvm::SmallVector<MCSectionData*, 16> SectionOrder;
 
+  /// The last fragment which was layed out, or 0 if nothing has been layed
+  /// out. Fragments are always layed out in order, so all fragments with a
+  /// lower ordinal will be up to date.
+  mutable MCFragment *LastValidFragment;
+
+  bool isSectionUpToDate(const MCSectionData *SD) const;
+  bool isFragmentUpToDate(const MCFragment *F) const;
+
 public:
   MCAsmLayout(MCAssembler &_Assembler);
 

@@ -47,7 +47,9 @@ STATISTIC(SectionLayouts, "Number of section layouts");
 
 /* *** */
 
-MCAsmLayout::MCAsmLayout(MCAssembler &Asm) : Assembler(Asm) {
+MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
+  : Assembler(Asm), LastValidFragment(0)
+ {
   // Compute the section layout order. Virtual sections must go last.
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
     if (!Asm.getBackend().isVirtualSection(it->getSection()))
@@ -55,6 +57,23 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm) : Assembler(Asm) {
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
     if (Asm.getBackend().isVirtualSection(it->getSection()))
       SectionOrder.push_back(&*it);
+}
+
+bool MCAsmLayout::isSectionUpToDate(const MCSectionData *SD) const {
+  // The first section is always up-to-date.
+  unsigned Index = SD->getLayoutOrder();
+  if (!Index)
+    return true;
+
+  // Otherwise, sections are always implicitly computed when the preceeding
+  // fragment is layed out.
+  const MCSectionData *Prev = getSectionOrder()[Index - 1];
+  return isFragmentUpToDate(&(Prev->getFragmentList().back()));
+}
+
+bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
+  return (LastValidFragment &&
+          F->getLayoutOrder() <= LastValidFragment->getLayoutOrder());
 }
 
 void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
@@ -73,6 +92,9 @@ void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
 }
 
 void MCAsmLayout::FragmentReplaced(MCFragment *Src, MCFragment *Dst) {
+  if (LastValidFragment == Src)
+    LastValidFragment = Dst;
+
   Dst->Offset = Src->Offset;
   Dst->EffectiveSize = Src->EffectiveSize;
 }
@@ -414,7 +436,8 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
 }
 
 void MCAsmLayout::LayoutFile() {
-  // Initialize the first section.
+  // Initialize the first section and set the valid fragment layout point.
+  LastValidFragment = 0;
   if (!getSectionOrder().empty())
     getSectionOrder().front()->Address = 0;
 
@@ -428,21 +451,32 @@ void MCAsmLayout::LayoutFile() {
 }
 
 void MCAsmLayout::LayoutFragment(MCFragment *F) {
-  uint64_t StartAddress = getSectionAddress(F->getParent());
+  MCFragment *Prev = F->getPrevNode();
 
-  // Get the fragment start address.
-  uint64_t Address = StartAddress;
-  MCSectionData::iterator it = F;
-  if (MCFragment *Prev = F->getPrevNode())
-    Address = (StartAddress + getFragmentOffset(Prev) +
-               getFragmentEffectiveSize(Prev));
+  // We should never try to recompute something which is up-to-date.
+  assert(!isFragmentUpToDate(F) && "Attempt to recompute up-to-date fragment!");
+  // We should never try to compute the fragment layout if the section isn't
+  // up-to-date.
+  assert(isSectionUpToDate(F->getParent()) &&
+         "Attempt to compute fragment before it's section!");
+  // We should never try to compute the fragment layout if it's predecessor
+  // isn't up-to-date.
+  assert((!Prev || isFragmentUpToDate(Prev)) &&
+         "Attempt to compute fragment before it's predecessor!");
 
   ++stats::FragmentLayouts;
+
+  // Compute the fragment start address.
+  uint64_t StartAddress = F->getParent()->Address;
+  uint64_t Address = StartAddress;
+  if (Prev)
+    Address += Prev->Offset + Prev->EffectiveSize;
 
   // Compute fragment offset and size.
   F->Offset = Address - StartAddress;
   F->EffectiveSize = getAssembler().ComputeFragmentSize(*this, *F, StartAddress,
                                                         F->Offset);
+  LastValidFragment = F;
 
   // If this is the last fragment in a section, update the next section address.
   if (!F->getNextNode()) {
