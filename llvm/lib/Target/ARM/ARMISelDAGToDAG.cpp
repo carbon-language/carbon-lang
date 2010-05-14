@@ -968,7 +968,7 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
                                 VT, SDValue(Pair, 0), V1, SubReg1);
 }
 
-/// PairDRegs - Form a quad register pair from a pair of Q registers.
+/// PairQRegs - Form 4 consecutive D registers from a pair of Q registers.
 ///
 SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
@@ -978,7 +978,7 @@ SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
 }
 
-/// QuadDRegs - Form a octo register from a quad of D registers.
+/// QuadDRegs - Form 4 consecutive D registers.
 ///
 SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
