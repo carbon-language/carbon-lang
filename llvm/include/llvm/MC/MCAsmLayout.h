@@ -58,8 +58,9 @@ public:
   /// been initialized.
   void LayoutFragment(MCFragment *Fragment);
 
-  /// \brief Performs layout for a single section, assuming that the previous
-  /// section has already been layed out correctly.
+  /// \brief Performs initial layout for a single section, assuming that the
+  /// previous section (including its fragments) has already been layed out
+  /// correctly.
   void LayoutSection(MCSectionData *SD);
 
   /// @name Section Access (in layout order)
@@ -80,14 +81,8 @@ public:
   /// current layout.
   uint64_t getFragmentEffectiveSize(const MCFragment *F) const;
 
-  /// \brief Set the effective size of the given fragment.
-  void setFragmentEffectiveSize(MCFragment *F, uint64_t Value);
-
   /// \brief Get the offset of the given fragment inside its containing section.
   uint64_t getFragmentOffset(const MCFragment *F) const;
-
-  /// \brief Set the offset of the given fragment inside its containing section.
-  void setFragmentOffset(MCFragment *F, uint64_t Value);
 
   /// @}
   /// @name Section Layout Data
@@ -95,9 +90,6 @@ public:
 
   /// \brief Get the computed address of the given section.
   uint64_t getSectionAddress(const MCSectionData *SD) const;
-
-  /// \brief Set the computed address of the given section.
-  void setSectionAddress(MCSectionData *SD, uint64_t Value);
 
   /// @}
   /// @name Utility Functions

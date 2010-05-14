@@ -87,17 +87,9 @@ uint64_t MCAsmLayout::getFragmentEffectiveSize(const MCFragment *F) const {
   return F->EffectiveSize;
 }
 
-void MCAsmLayout::setFragmentEffectiveSize(MCFragment *F, uint64_t Value) {
-  F->EffectiveSize = Value;
-}
-
 uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
   assert(F->Offset != ~UINT64_C(0) && "Address not set!");
   return F->Offset;
-}
-
-void MCAsmLayout::setFragmentOffset(MCFragment *F, uint64_t Value) {
-  F->Offset = Value;
 }
 
 uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
@@ -110,12 +102,8 @@ uint64_t MCAsmLayout::getSectionAddress(const MCSectionData *SD) const {
   return SD->Address;
 }
 
-void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
-  SD->Address = Value;
-}
-
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
-  // Otherwise, the size is the last fragment's end offset.
+  // The size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
   return getFragmentOffset(&F) + getFragmentEffectiveSize(&F);
 }
@@ -426,8 +414,14 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
 }
 
 void MCAsmLayout::LayoutFile() {
-  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i)
-    LayoutSection(getSectionOrder()[i]);
+  for (unsigned i = 0, e = getSectionOrder().size(); i != e; ++i) {
+    MCSectionData *SD = getSectionOrder()[i];
+
+    LayoutSection(SD);
+    for (MCSectionData::iterator it = SD->begin(),
+           ie = SD->end(); it != ie; ++it)
+      LayoutFragment(it);
+  }
 }
 
 void MCAsmLayout::LayoutFragment(MCFragment *F) {
@@ -443,12 +437,9 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   ++stats::FragmentLayouts;
 
   // Compute fragment offset and size.
-  uint64_t Offset = Address - StartAddress;
-  uint64_t EffectiveSize =
-    getAssembler().ComputeFragmentSize(*this, *F, StartAddress, Offset);
-
-  setFragmentOffset(F, Offset);
-  setFragmentEffectiveSize(F, EffectiveSize);
+  F->Offset = Address - StartAddress;
+  F->EffectiveSize = getAssembler().ComputeFragmentSize(*this, *F, StartAddress,
+                                                        F->Offset);
 }
 
 void MCAsmLayout::LayoutSection(MCSectionData *SD) {
@@ -467,10 +458,7 @@ void MCAsmLayout::LayoutSection(MCSectionData *SD) {
   StartAddress = RoundUpToAlignment(StartAddress, SD->getAlignment());
 
   // Set the section address.
-  setSectionAddress(SD, StartAddress);
-
-  for (MCSectionData::iterator it = SD->begin(), ie = SD->end(); it != ie; ++it)
-    LayoutFragment(it);
+  SD->Address = StartAddress;
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
