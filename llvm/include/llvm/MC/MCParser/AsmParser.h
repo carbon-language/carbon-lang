@@ -136,6 +136,7 @@ private:
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
+  bool ParseDirectiveDarwinTBSS(); // Darwin specific ".tbss"
 
   // Darwin specific ".subsections_via_symbols"
   bool ParseDirectiveDarwinSubsectionsViaSymbols();

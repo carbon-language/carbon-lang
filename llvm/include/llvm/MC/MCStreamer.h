@@ -188,6 +188,14 @@ namespace llvm {
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0,unsigned ByteAlignment = 0) = 0;
 
+    /// EmitTBSSSymbol - Emit a thread local bss (.tbss) symbol.
+    ///
+    /// @param Symbol - The thread local common symbol to emit.
+    /// @param Size - The size of the symbol.
+    /// @param ByteAlignment - The alignment of the thread local common symbol
+    /// if non-zero.  This must be a power of 2 on some targets.
+    virtual void EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
+                                unsigned ByteAlignment = 0) = 0;
     /// @}
     /// @name Generating Data
     /// @{

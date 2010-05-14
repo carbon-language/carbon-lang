@@ -703,6 +703,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveDarwinSymbolDesc();
     if (IDVal == ".lsym")
       return ParseDirectiveDarwinLsym();
+    if (IDVal == ".tbss")
+      return ParseDirectiveDarwinTBSS();
 
     if (IDVal == ".subsections_via_symbols")
       return ParseDirectiveDarwinSubsectionsViaSymbols();
@@ -1424,6 +1426,61 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
                                        SectionKind::getBSS()),
                    Sym, Size, 1 << Pow2Alignment);
 
+  return false;
+}
+
+/// ParseDirectiveDarwinTBSS
+///  ::= .tbss identifier, size, align
+bool AsmParser::ParseDirectiveDarwinTBSS() {
+  SMLoc IDLoc = Lexer.getLoc();
+  StringRef Name;
+  if (ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+  
+  // Demangle the name output.  The trailing characters are guaranteed to be
+  // $tlv$init so just strip that off.
+  StringRef DemName = Name.substr(0, Name.size() - strlen("$tlv$init"));
+  
+  // Handle the identifier as the key symbol.
+  MCSymbol *Sym = CreateSymbol(DemName);
+
+  if (Lexer.isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  int64_t Size;
+  SMLoc SizeLoc = Lexer.getLoc();
+  if (ParseAbsoluteExpression(Size))
+    return true;
+
+  int64_t Pow2Alignment = 0;
+  SMLoc Pow2AlignmentLoc;
+  if (Lexer.is(AsmToken::Comma)) {
+    Lex();
+    Pow2AlignmentLoc = Lexer.getLoc();
+    if (ParseAbsoluteExpression(Pow2Alignment))
+      return true;
+  }
+  
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.tbss' directive");
+  
+  Lex();
+
+  if (Size < 0)
+    return Error(SizeLoc, "invalid '.tbss' directive size, can't be less than"
+                 "zero");
+
+  // FIXME: Diagnose overflow.
+  if (Pow2Alignment < 0)
+    return Error(Pow2AlignmentLoc, "invalid '.tbss' alignment, can't be less"
+                 "than zero");
+
+  if (!Sym->isUndefined())
+    return Error(IDLoc, "invalid symbol redefinition");
+  
+  Out.EmitTBSSSymbol(Sym, Size, Pow2Alignment ? 1 << Pow2Alignment : 0);
+  
   return false;
 }
 
