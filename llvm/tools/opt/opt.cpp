@@ -268,7 +268,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 };
 
 char BasicBlockPassPrinter::ID = 0;
-inline void addPass(PassManager &PM, Pass *P) {
+inline void addPass(PassManagerBase &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
 
@@ -281,7 +281,7 @@ inline void addPass(PassManager &PM, Pass *P) {
 /// duplicates llvm-gcc behaviour.
 ///
 /// OptLevel - Optimization Level
-void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
+void AddOptimizationPasses(PassManagerBase &MPM, PassManagerBase &FPM,
                            unsigned OptLevel) {
   createStandardFunctionPasses(&FPM, OptLevel);
 
@@ -305,7 +305,7 @@ void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
                              InliningPass);
 }
 
-void AddStandardCompilePasses(PassManager &PM) {
+void AddStandardCompilePasses(PassManagerBase &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
@@ -328,7 +328,7 @@ void AddStandardCompilePasses(PassManager &PM) {
                              InliningPass);
 }
 
-void AddStandardLinkPasses(PassManager &PM) {
+void AddStandardLinkPasses(PassManagerBase &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
   // If the -strip-debug command line option was specified, do it.
@@ -422,9 +422,9 @@ int main(int argc, char **argv) {
   if (TD)
     Passes.add(TD);
 
-  OwningPtr<FunctionPassManager> FPasses;
+  OwningPtr<PassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-    FPasses.reset(new FunctionPassManager(M.get()));
+    FPasses.reset(new PassManager());
     if (TD)
       FPasses->add(new TargetData(*TD));
   }
@@ -521,12 +521,8 @@ int main(int argc, char **argv) {
   if (OptLevelO3)
     AddOptimizationPasses(Passes, *FPasses, 3);
 
-  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-    FPasses->doInitialization();
-    for (Module::iterator I = M.get()->begin(), E = M.get()->end();
-         I != E; ++I)
-      FPasses->run(*I);
-  }
+  if (OptLevelO1 || OptLevelO2 || OptLevelO3)
+    FPasses->run(*M.get());
 
   // Check that the module is well formed on completion of optimization
   if (!NoVerify && !VerifyEach)
