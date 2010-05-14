@@ -53,7 +53,9 @@ recognized by GCC. Their use can be conditioned using preprocessor macros
     <li><a href="#cocoa_mem">Cocoa &amp; Core Foundation Memory Management Annotations</a>
     <ul>
       <li><a href="#attr_ns_returns_retained">Attribute 'ns_returns_retained'</a></li>
+      <li><a href="#attr_ns_returns_not_retained">Attribute 'ns_returns_not_retained'</a></li>
       <li><a href="#attr_cf_returns_retained">Attribute 'cf_returns_retained'</a></li>
+      <li><a href="#attr_cf_returns_not_retained">Attribute 'cf_returns_not_retained'</a></li>
     </ul>
     </li>
   </ul>
@@ -190,6 +192,36 @@ use 'cf_returns_retained'.</p>
 
 <img src="images/example_ns_returns_retained.png">
 
+<h4 id="attr_ns_returns_not_retained">Attribute 'ns_returns_not_retained'
+(Clang-specific)</h4>
+
+<p>The 'ns_returns_not_retained' attribute is the complement of '<a
+href="#attr_ns_returns_retained">ns_returns_retained</a>'. Where a function or
+method may appear to obey the Cocoa conventions and return a retained Cocoa
+object, this attribute can be used to indicate that the object reference
+returned should not be considered as an &quot;owning&quot; reference being
+returned to the caller.</p>
+
+<p>Usage is identical to <a
+href="#attr_ns_returns_retained">ns_returns_retained</a>.  When using the
+attribute, be sure to declare it within the proper macro that checks for
+its availability, as it is not available in earlier versions of the analyzer:</p>
+
+<pre class="code_example">
+<span class="command">$ cat test.m</span>
+#ifndef __has_feature      // Optional.
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+
+#ifndef NS_RETURNS_NOT_RETAINED
+#if __has_feature(attribute_ns_returns_not_retained)
+<span class="code_highlight">#define NS_RETURNS_NOT_RETAINED __attribute__((ns_returns_not_retained))</span>
+#else
+#define NS_RETURNS_NOT_RETAINED
+#endif
+#endif
+</pre>
+
 <h4 id="attr_cf_returns_retained">Attribute 'cf_returns_retained'
 (Clang-specific)</h4>
 
@@ -287,6 +319,36 @@ which indicates a leak that occurs <em>only</em> when using garbage
 collection:</p>
 
 <img src="images/example_cf_returns_retained_gc.png">
+
+<h4 id="attr_cf_returns_not_retained">Attribute 'cf_returns_not_retained'
+(Clang-specific)</h4>
+
+<p>The 'cf_returns_not_retained' attribute is the complement of '<a
+href="#attr_cf_returns_retained">cf_returns_retained</a>'. Where a function or
+method may appear to obey the Core Foundation or Cocoa conventions and return
+a retained Core Foundation object, this attribute can be used to indicate that
+the object reference returned should not be considered as an
+&quot;owning&quot; reference being returned to the caller.</p>
+
+<p>Usage is identical to <a
+href="#attr_cf_returns_retained">cf_returns_retained</a>.  When using the
+attribute, be sure to declare it within the proper macro that checks for
+its availability, as it is not available in earlier versions of the analyzer:</p>
+
+<pre class="code_example">
+<span class="command">$ cat test.m</span>
+#ifndef __has_feature      // Optional.
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+
+#ifndef CF_RETURNS_NOT_RETAINED
+#if __has_feature(attribute_cf_returns_not_retained)
+<span class="code_highlight">#define CF_RETURNS_NOT_RETAINED __attribute__((cf_returns_not_retained))</span>
+#else
+#define CF_RETURNS_NOT_RETAINED
+#endif
+#endif
+</pre>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h2 id="custom_assertions">Custom Assertion Handlers</h2>
