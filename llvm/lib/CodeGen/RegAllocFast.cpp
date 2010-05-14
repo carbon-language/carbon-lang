@@ -673,10 +673,6 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
-
-      // FIXME: For now, don't trust kill flags
-      if (MO.isUse()) MO.setIsKill(false);
-
       unsigned Reg = MO.getReg();
       if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg) ||
           ReservedRegs.test(Reg)) continue;
