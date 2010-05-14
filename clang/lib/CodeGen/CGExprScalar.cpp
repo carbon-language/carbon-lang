@@ -186,7 +186,7 @@ public:
   Value *VisitInitListExpr(InitListExpr *E);
 
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return CGF.CGM.EmitNullConstant(E->getType());
   }
   Value *VisitCastExpr(CastExpr *E) {
     // Make sure to evaluate VLA bounds now so that we have them for later.

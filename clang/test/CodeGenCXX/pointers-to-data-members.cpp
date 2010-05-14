@@ -85,3 +85,20 @@ namespace Comparisons {
     if (0 == a) { }
   }
 }
+
+namespace ValueInit {
+
+struct A {
+  int A::*a;
+
+  char c;
+
+  A();
+};
+
+// CHECK: define void @_ZN9ValueInit1AC2Ev
+// CHECK: store i64 -1, i64*
+// CHECK: ret void
+A::A() : a() {}
+
+}
