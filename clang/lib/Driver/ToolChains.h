@@ -56,7 +56,7 @@ class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
 
   /// Whether we are targetting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
-  
+
   /// The OS version we are targetting.
   mutable unsigned TargetVersion[3];
 
@@ -158,6 +158,11 @@ public:
       return !isIPhoneOSVersionLT(3);
     else
       return !isMacosxVersionLT(10, 6);
+  }
+  virtual bool IsIntegratedAssemblerDefault() const {
+    // Default integrated assembler to on for x86.
+    return (getTriple().getArch() == llvm::Triple::x86 ||
+            getTriple().getArch() == llvm::Triple::x86_64);
   }
   virtual bool IsObjCNonFragileABIDefault() const {
     // Non-fragile ABI is default for everything but i386.

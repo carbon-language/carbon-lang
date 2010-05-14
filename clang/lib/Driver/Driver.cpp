@@ -902,9 +902,16 @@ static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
   // See if we should look for a compiler with an integrated assembler. We match
   // bottom up, so what we are actually looking for is an assembler job with a
   // compiler input.
-  if (C.getArgs().hasArg(options::OPT_integrated_as,
+
+  // FIXME: This doesn't belong here, but ideally we will support static soon
+  // anyway.
+  bool HasStatic = (C.getArgs().hasArg(options::OPT_mkernel) ||
+                    C.getArgs().hasArg(options::OPT_static) ||
+                    C.getArgs().hasArg(options::OPT_fapple_kext));
+  bool IsIADefault = (TC->IsIntegratedAssemblerDefault() && !HasStatic);
+  if (C.getArgs().hasFlag(options::OPT_integrated_as,
                          options::OPT_no_integrated_as,
-                         TC->IsIntegratedAssemblerDefault()) &&
+                         IsIADefault) &&
       !C.getArgs().hasArg(options::OPT_save_temps) &&
       isa<AssembleJobAction>(JA) &&
       Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin())) {
