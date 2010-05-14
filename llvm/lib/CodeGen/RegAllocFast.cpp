@@ -768,11 +768,20 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Spill all physical registers holding virtual registers now.
   atEndOfBlock = true;
-  DEBUG(dbgs() << "Killing live registers at end of block.\n");
   MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
-  for (LiveRegMap::iterator i = LiveVirtRegs.begin(), e = LiveVirtRegs.end();
-       i != e; ++i)
-    spillVirtReg(MBB, MI, i, true);
+  if (MI != MBB.end() && MI->getDesc().isReturn()) {
+    // This is a return block, kill all virtual registers.
+    DEBUG(dbgs() << "Killing live registers at end of return block.\n");
+    for (LiveRegMap::iterator i = LiveVirtRegs.begin(), e = LiveVirtRegs.end();
+         i != e; ++i)
+      killVirtReg(i);
+  } else {
+    // This is a normal block, spill any dirty virtregs.
+    DEBUG(dbgs() << "Spilling live registers at end of block.\n");
+    for (LiveRegMap::iterator i = LiveVirtRegs.begin(), e = LiveVirtRegs.end();
+        i != e; ++i)
+      spillVirtReg(MBB, MI, i, true);
+  }
   LiveVirtRegs.clear();
 
   // Erase all the coalesced copies. We are delaying it until now because
