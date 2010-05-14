@@ -198,6 +198,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64_TC:$dst, i32imm:$offset,
                                            variable_ops),
                        "#TC_RETURN $dst $offset", []>;
+  let mayLoad = 1 in
   def TCRETURNmi64 : I<0, Pseudo, (outs), 
                        (ins i64mem_TC:$dst, i32imm:$offset, variable_ops),
                        "#TC_RETURN $dst $offset", []>;
@@ -208,6 +209,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64_TC:$dst, variable_ops),
                      "jmp{q}\t{*}$dst  # TAILCALL", []>;
 
+  let mayLoad = 1 in
   def TAILJMPm64 : I<0xFF, MRM4m, (outs), (ins i64mem_TC:$dst, variable_ops),
                      "jmp{q}\t{*}$dst  # TAILCALL", []>;
 }
@@ -241,6 +243,7 @@ def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
 
 def POPCNT64rr : RI<0xB8, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                     "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
+let mayLoad = 1 in
 def POPCNT64rm : RI<0xB8, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                     "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
 
@@ -1720,11 +1723,13 @@ def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
 
 def XADD64rr  : RI<0xC1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                    "xadd{q}\t{$src, $dst|$dst, $src}", []>, TB;
+let mayLoad = 1, mayStore = 1 in
 def XADD64rm  : RI<0xC1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                    "xadd{q}\t{$src, $dst|$dst, $src}", []>, TB;
                    
 def CMPXCHG64rr  : RI<0xB1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                       "cmpxchg{q}\t{$src, $dst|$dst, $src}", []>, TB;
+let mayLoad = 1, mayStore = 1 in
 def CMPXCHG64rm  : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                       "cmpxchg{q}\t{$src, $dst|$dst, $src}", []>, TB;
                       
@@ -1736,7 +1741,7 @@ def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
                   "xchg{q}\t{$src, %rax|%rax, $src}", []>;
 
 // Optimized codegen when the non-memory output is not used.
-let Defs = [EFLAGS] in {
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1 in {
 // FIXME: Use normal add / sub instructions and add lock prefix dynamically.
 def LOCK_ADD64mr : RI<0x03, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                       "lock\n\t"
