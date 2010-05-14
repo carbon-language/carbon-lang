@@ -83,3 +83,7 @@ struct s4_0 { float x; };
 struct s4_1 { float x; };
 struct s4_2 : s4_0, s4_1 { };
 s4_2 f4() { return s4_2(); }
+
+// CHECK: define i32 @_Z2f5v()
+struct s5 { s5(); int &x; };
+s5 f5() { return s5(); }

@@ -188,7 +188,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 }
 
 static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
-  if (!Ty->getAs<BuiltinType>() && !Ty->isAnyPointerType() &&
+  if (!Ty->getAs<BuiltinType>() && !Ty->hasPointerRepresentation() &&
       !Ty->isAnyComplexType() && !Ty->isEnumeralType() &&
       !Ty->isBlockPointerType())
     return false;
@@ -388,7 +388,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   }
 
   // If this is a builtin, pointer, enum, or complex type, it is ok.
-  if (Ty->getAs<BuiltinType>() || Ty->isAnyPointerType() || 
+  if (Ty->getAs<BuiltinType>() || Ty->hasPointerRepresentation() ||
       Ty->isAnyComplexType() || Ty->isEnumeralType() ||
       Ty->isBlockPointerType())
     return true;
