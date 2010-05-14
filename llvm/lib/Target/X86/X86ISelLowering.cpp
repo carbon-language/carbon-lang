@@ -5272,7 +5272,7 @@ GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
   }
 
   // TLSADDR will be codegen'ed as call. Inform MFI that function has calls.
-  MFI->setHasCalls(true);
+  MFI->setAdjustsStack(true);
 
   SDValue Flag = Chain.getValue(1);
   return DAG.getCopyFromReg(Chain, dl, ReturnReg, PtrVT, Flag);

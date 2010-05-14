@@ -277,7 +277,7 @@ namespace llvm {
       return true;
     if (NoFramePointerElimNonLeaf) {
       const MachineFrameInfo *MFI = MF.getFrameInfo();
-      return MFI->hasCalls();
+      return MFI->adjustsStack();
     }
     return false;
   }

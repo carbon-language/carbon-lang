@@ -111,7 +111,7 @@ BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
 bool BlackfinRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) ||
-    MFI->hasCalls() || MFI->hasVarSizedObjects();
+    MFI->adjustsStack() || MFI->hasVarSizedObjects();
 }
 
 bool BlackfinRegisterInfo::
@@ -394,7 +394,7 @@ void BlackfinRegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   if (!hasFP(MF)) {
-    assert(!MFI->hasCalls() &&
+    assert(!MFI->adjustsStack() &&
            "FP elimination on a non-leaf function is not supported");
     adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, -FrameSize);
     return;
@@ -435,7 +435,7 @@ void BlackfinRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert(FrameSize%4 == 0 && "Misaligned frame size");
 
   if (!hasFP(MF)) {
-    assert(!MFI->hasCalls() &&
+    assert(!MFI->adjustsStack() &&
            "FP elimination on a non-leaf function is not supported");
     adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, FrameSize);
     return;

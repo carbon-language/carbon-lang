@@ -155,7 +155,7 @@ void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
     CPUBitmask |= (1 << MBlazeRegisterInfo::
                 getRegisterNumbering(RI.getFrameRegister(*MF)));
 
-  if (MFI->hasCalls())
+  if (MFI->adjustsStack())
     CPUBitmask |= (1 << MBlazeRegisterInfo::
                 getRegisterNumbering(RI.getRARegister()));
 

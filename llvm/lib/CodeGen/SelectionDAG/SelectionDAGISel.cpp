@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -603,6 +604,19 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     delete Scheduler;
   } else {
     delete Scheduler;
+  }
+
+  // Determine if there are any calls in this machine function.
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  if (!MFI->hasCalls()) {
+    for (MachineBasicBlock::iterator
+           I = BB->begin(), E = BB->end(); I != E; ++I) {
+      const TargetInstrDesc &TID = TM.getInstrInfo()->get(I->getOpcode());
+      if (I->isInlineAsm() || (TID.isCall() && !TID.isReturn())) {
+        MFI->setHasCalls(true);
+        break;
+      }
+    }
   }
 
   // Free the SelectionDAG state, now that we're finished with it.

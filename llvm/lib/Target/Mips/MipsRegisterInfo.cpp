@@ -288,7 +288,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
 
   // Stack locations for FP and RA. If only one of them is used, 
   // the space must be allocated for both, otherwise no space at all.
-  if (hasFP(MF) || MFI->hasCalls()) {
+  if (hasFP(MF) || MFI->adjustsStack()) {
     // FP stack location
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true), 
                          StackOffset);
@@ -302,7 +302,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
     MipsFI->setRAStackOffset(StackOffset);
     StackOffset += RegSize;
 
-    if (MFI->hasCalls())
+    if (MFI->adjustsStack())
       TopCPUSavedRegOff += RegSize;
   }
 
@@ -407,7 +407,7 @@ emitPrologue(MachineFunction &MF) const
   unsigned StackSize = MFI->getStackSize();
 
   // No need to allocate space on the stack.
-  if (StackSize == 0 && !MFI->hasCalls()) return;
+  if (StackSize == 0 && !MFI->adjustsStack()) return;
 
   int FPOffset = MipsFI->getFPStackOffset();
   int RAOffset = MipsFI->getRAStackOffset();
@@ -425,7 +425,7 @@ emitPrologue(MachineFunction &MF) const
 
   // Save the return address only if the function isnt a leaf one.
   // sw  $ra, stack_loc($sp)
-  if (MFI->hasCalls()) { 
+  if (MFI->adjustsStack()) { 
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
         .addReg(Mips::RA).addImm(RAOffset).addReg(Mips::SP);
   }
@@ -477,7 +477,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 
   // Restore the return address only if the function isnt a leaf one.
   // lw  $ra, stack_loc($sp)
-  if (MFI->hasCalls()) { 
+  if (MFI->adjustsStack()) { 
     BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::RA)
       .addImm(RAOffset).addReg(Mips::SP);
   }

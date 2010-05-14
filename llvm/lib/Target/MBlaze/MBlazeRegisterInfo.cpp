@@ -220,7 +220,7 @@ void MBlazeRegisterInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
     StackOffset += RegSize;
   }
 
-  if (MFI->hasCalls()) {
+  if (MFI->adjustsStack()) {
     MBlazeFI->setRAStackOffset(0);
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
@@ -311,8 +311,8 @@ emitPrologue(MachineFunction &MF) const {
   unsigned StackSize = MFI->getStackSize();
 
   // No need to allocate space on the stack.
-  if (StackSize == 0 && !MFI->hasCalls()) return;
-  if (StackSize < 28 && MFI->hasCalls()) StackSize = 28;
+  if (StackSize == 0 && !MFI->adjustsStack()) return;
+  if (StackSize < 28 && MFI->adjustsStack()) StackSize = 28;
 
   int FPOffset = MBlazeFI->getFPStackOffset();
   int RAOffset = MBlazeFI->getRAStackOffset();
@@ -323,7 +323,7 @@ emitPrologue(MachineFunction &MF) const {
 
   // Save the return address only if the function isnt a leaf one.
   // swi  R15, R1, stack_loc
-  if (MFI->hasCalls()) {
+  if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::SWI))
         .addReg(MBlaze::R15).addImm(RAOffset).addReg(MBlaze::R1);
   }
@@ -366,14 +366,14 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 
   // Restore the return address only if the function isnt a leaf one.
   // lwi R15, R1, stack_loc
-  if (MFI->hasCalls()) {
+  if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::LWI), MBlaze::R15)
       .addImm(RAOffset).addReg(MBlaze::R1);
   }
 
   // Get the number of bytes from FrameInfo
   int StackSize = (int) MFI->getStackSize();
-  if (StackSize < 28 && MFI->hasCalls()) StackSize = 28;
+  if (StackSize < 28 && MFI->adjustsStack()) StackSize = 28;
 
   // adjust stack.
   // addi R1, R1, imm

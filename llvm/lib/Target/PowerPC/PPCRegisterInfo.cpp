@@ -1009,7 +1009,7 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   if (!DisableRedZone &&
       FrameSize <= 224 &&                          // Fits in red zone.
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
-      !MFI->hasCalls() &&                          // No calls.
+      !MFI->adjustsStack() &&                      // No calls.
       (!ALIGN_STACK || MaxAlign <= TargetAlign)) { // No special alignment.
     // No need for frame
     MFI->setStackSize(0);

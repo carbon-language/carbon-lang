@@ -469,7 +469,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
          && "SPURegisterInfo::emitPrologue: FrameSize not aligned");
 
   // the "empty" frame size is 16 - just the register scavenger spill slot
-  if (FrameSize > 16 || MFI->hasCalls()) {
+  if (FrameSize > 16 || MFI->adjustsStack()) {
     FrameSize = -(FrameSize + SPUFrameInfo::minStackSize());
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
@@ -569,7 +569,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
          && "SPURegisterInfo::emitEpilogue: FrameSize not aligned");
 
   // the "empty" frame size is 16 - just the register scavenger spill slot
-  if (FrameSize > 16 || MFI->hasCalls()) {
+  if (FrameSize > 16 || MFI->adjustsStack()) {
     FrameSize = FrameSize + SPUFrameInfo::minStackSize();
     if (isInt<10>(FrameSize + LinkSlotOffset)) {
       // Reload $lr, adjust $sp by required amount

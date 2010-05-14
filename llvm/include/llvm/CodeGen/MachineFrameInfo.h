@@ -152,8 +152,12 @@ class MachineFrameInfo {
   ///
   unsigned MaxAlignment;
 
-  /// HasCalls - Set to true if this function has any function calls.  This is
-  /// only valid during and after prolog/epilog code insertion.
+  /// AdjustsStack - Set to true if this function adjusts the stack -- e.g.,
+  /// when calling another function. This is only valid during and after
+  /// prolog/epilog code insertion.
+  bool AdjustsStack;
+
+  /// HasCalls - Set to true if this function has any function calls.
   bool HasCalls;
 
   /// StackProtectorIdx - The frame index for the stack protector.
@@ -189,6 +193,7 @@ public:
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
+    AdjustsStack = false;
     HasCalls = false;
     StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
@@ -313,9 +318,13 @@ public:
   ///
   void setMaxAlignment(unsigned Align) { MaxAlignment = Align; }
 
-  /// hasCalls - Return true if the current function has no function calls.
-  /// This is only valid during or after prolog/epilog code emission.
-  ///
+  /// AdjustsStack - Return true if this function adjusts the stack -- e.g.,
+  /// when calling another function. This is only valid during and after
+  /// prolog/epilog code insertion.
+  bool adjustsStack() const { return AdjustsStack; }
+  void setAdjustsStack(bool V) { AdjustsStack = V; }
+
+  /// hasCalls - Return true if the current function has any function calls.
   bool hasCalls() const { return HasCalls; }
   void setHasCalls(bool V) { HasCalls = V; }
 

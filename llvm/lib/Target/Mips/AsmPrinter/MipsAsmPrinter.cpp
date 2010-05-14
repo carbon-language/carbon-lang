@@ -145,7 +145,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
     CPUBitmask |= (1 << MipsRegisterInfo::
                 getRegisterNumbering(RI.getFrameRegister(*MF)));
   
-  if (MFI->hasCalls()) 
+  if (MFI->adjustsStack()) 
     CPUBitmask |= (1 << MipsRegisterInfo::
                 getRegisterNumbering(RI.getRARegister()));
 

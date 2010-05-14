@@ -543,7 +543,7 @@ ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
 ///
 bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return ((DisableFramePointerElim(MF) && MFI->hasCalls())||
+  return ((DisableFramePointerElim(MF) && MFI->adjustsStack())||
           needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken());
@@ -571,7 +571,7 @@ needsStackRealignment(const MachineFunction &MF) const {
 bool ARMBaseRegisterInfo::
 cannotEliminateFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  if (DisableFramePointerElim(MF) && MFI->hasCalls())
+  if (DisableFramePointerElim(MF) && MFI->adjustsStack())
     return true;
   return MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken()
     || needsStackRealignment(MF);

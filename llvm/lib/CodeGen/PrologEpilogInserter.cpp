@@ -58,8 +58,9 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
   FrameConstantRegMap.clear();
 
-  // Calculate the MaxCallFrameSize and HasCalls variables for the function's
-  // frame information. Also eliminates call frame pseudo instructions.
+  // Calculate the MaxCallFrameSize and AdjustsStack variables for the
+  // function's frame information. Also eliminates call frame pseudo
+  // instructions.
   calculateCallsInformation(Fn);
 
   // Allow the target machine to make some adjustments to the function
@@ -91,8 +92,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Add prolog and epilog code to the function.  This function is required
   // to align the stack frame as necessary for any stack variables or
-  // called functions.  Because of this, calculateCalleeSavedRegisters
-  // must be called before this function in order to set the HasCalls
+  // called functions.  Because of this, calculateCalleeSavedRegisters()
+  // must be called before this function in order to set the AdjustsStack
   // and MaxCallFrameSize variables.
   if (!F->hasFnAttr(Attribute::Naked))
     insertPrologEpilogCode(Fn);
@@ -126,7 +127,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 #endif
 
-/// calculateCallsInformation - Calculate the MaxCallFrameSize and HasCalls
+/// calculateCallsInformation - Calculate the MaxCallFrameSize and AdjustsStack
 /// variables for the function's frame information and eliminate call frame
 /// pseudo instructions.
 void PEI::calculateCallsInformation(MachineFunction &Fn) {
@@ -134,7 +135,7 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
   MachineFrameInfo *MFI = Fn.getFrameInfo();
 
   unsigned MaxCallFrameSize = 0;
-  bool HasCalls = MFI->hasCalls();
+  bool AdjustsStack = MFI->adjustsStack();
 
   // Get the function call frame set-up and tear-down instruction opcode
   int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
@@ -154,15 +155,15 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
                " instructions should have a single immediate argument!");
         unsigned Size = I->getOperand(0).getImm();
         if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
-        HasCalls = true;
+        AdjustsStack = true;
         FrameSDOps.push_back(I);
       } else if (I->isInlineAsm()) {
         // An InlineAsm might be a call; assume it is to get the stack frame
         // aligned correctly for calls.
-        HasCalls = true;
+        AdjustsStack = true;
       }
 
-  MFI->setHasCalls(HasCalls);
+  MFI->setAdjustsStack(AdjustsStack);
   MFI->setMaxCallFrameSize(MaxCallFrameSize);
 
   for (std::vector<MachineBasicBlock::iterator>::iterator
@@ -577,7 +578,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // If we have reserved argument space for call sites in the function
     // immediately on entry to the current function, count it as part of the
     // overall stack size.
-    if (MFI->hasCalls() && RegInfo->hasReservedCallFrame(Fn))
+    if (MFI->adjustsStack() && RegInfo->hasReservedCallFrame(Fn))
       Offset += MFI->getMaxCallFrameSize();
 
     // Round up the size to a multiple of the alignment.  If the function has
@@ -586,13 +587,14 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // otherwise, for leaf functions, align to the TransientStackAlignment
     // value.
     unsigned StackAlign;
-    if (MFI->hasCalls() || MFI->hasVarSizedObjects() ||
+    if (MFI->adjustsStack() || MFI->hasVarSizedObjects() ||
         (RegInfo->needsStackRealignment(Fn) && MFI->getObjectIndexEnd() != 0))
       StackAlign = TFI.getStackAlignment();
     else
       StackAlign = TFI.getTransientStackAlignment();
-    // If the frame pointer is eliminated, all frame offsets will be relative
-    // to SP not FP; align to MaxAlign so this works.
+
+    // If the frame pointer is eliminated, all frame offsets will be relative to
+    // SP not FP. Align to MaxAlign so this works.
     StackAlign = std::max(StackAlign, MaxAlign);
     unsigned AlignMask = StackAlign - 1;
     Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
@@ -601,7 +603,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(Offset - LocalAreaOffset);
 }
-
 
 /// insertPrologEpilogCode - Scan the function for modified callee saved
 /// registers, insert spill code for these callee saved registers, then add
@@ -620,7 +621,6 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
       TRI->emitEpilogue(Fn, *I);
   }
 }
-
 
 /// replaceFrameIndices - Replace all MO_FrameIndex operands with physical
 /// register references and actual offsets.
