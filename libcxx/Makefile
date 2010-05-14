@@ -19,8 +19,8 @@ clean::
 
 installhdrs::
 
-	mkdir -p $(DSTROOT)/usr/include/c++/v1
-	cp $(SRCDIRS)/include/* $(DSTROOT)/usr/include/c++/v1/
+	mkdir -p $(DSTROOT)/usr/include/c++/v1/ext
+	cp -r $(SRCDIRS)/include/* $(DSTROOT)/usr/include/c++/v1/
 	chown -R root:wheel $(DSTROOT)/usr/include
 	chmod 755 $(DSTROOT)/usr/include/c++/v1
 	chmod 644 $(DSTROOT)/usr/include/c++/v1/*
@@ -31,7 +31,7 @@ install:: installhdrs $(DESTDIR)
 	ditto lib/libc++.1.dylib $(SYMROOT)/usr/lib/libc++.1.dylib
 	cd lib && dsymutil -o $(SYMROOT)/libc++.1.dylib.dSYM  $(SYMROOT)/usr/lib/libc++.1.dylib
 	mkdir -p $(DSTROOT)/usr/lib
-	strip -u -r -x -S -o $(DSTROOT)/usr/lib/libc++.1.dylib $(SYMROOT)/usr/lib/libc++.1.dylib
+	strip -S -o $(DSTROOT)/usr/lib/libc++.1.dylib $(SYMROOT)/usr/lib/libc++.1.dylib
 	cd $(DSTROOT)/usr/lib && ln -s libc++.1.dylib libc++.dylib
 	
 	
