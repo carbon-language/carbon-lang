@@ -40,6 +40,7 @@ static cl::opt<bool> VerifyFastRegalloc("verify-fast-regalloc", cl::Hidden,
 
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
+STATISTIC(NumCopies, "Number of copies coalesced");
 
 static RegisterRegAlloc
   fastRegAlloc("fast", "fast register allocator", createFastRegisterAllocator);
@@ -771,6 +772,7 @@ void RAFast::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // LiveVirtsRegs might refer to the instrs.
   for (unsigned i = 0, e = Coalesced.size(); i != e; ++i)
     MBB.erase(Coalesced[i]);
+  NumCopies += Coalesced.size();
 
   DEBUG(MBB.dump());
 }
