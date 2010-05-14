@@ -65,7 +65,7 @@ class InstrEmitter {
                           unsigned IIOpNum,
                           const TargetInstrDesc *II,
                           DenseMap<SDValue, unsigned> &VRBaseMap,
-                          bool IsDebug = false);
+                          bool IsDebug, bool IsClone, bool IsCloned);
 
   /// AddOperand - Add the specified operand to the specified machine instr.  II
   /// specifies the instruction information for the node, and IIOpNum is the
@@ -75,11 +75,12 @@ class InstrEmitter {
                   unsigned IIOpNum,
                   const TargetInstrDesc *II,
                   DenseMap<SDValue, unsigned> &VRBaseMap,
-                  bool IsDebug = false);
+                  bool IsDebug, bool IsClone, bool IsCloned);
 
   /// EmitSubregNode - Generate machine code for subreg nodes.
   ///
-  void EmitSubregNode(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap);
+  void EmitSubregNode(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap,
+                      bool IsClone, bool IsCloned);
 
   /// EmitCopyToRegClassNode - Generate machine code for COPY_TO_REGCLASS nodes.
   /// COPY_TO_REGCLASS is just a normal copy, except that the destination
@@ -90,7 +91,8 @@ class InstrEmitter {
 
   /// EmitRegSequence - Generate machine code for REG_SEQUENCE nodes.
   ///
-  void EmitRegSequence(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap);
+  void EmitRegSequence(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap,
+                       bool IsClone, bool IsCloned);
 public:
   /// CountResults - The results of target nodes have register or immediate
   /// operands first, then an optional chain, and optional flag operands
