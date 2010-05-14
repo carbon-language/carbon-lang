@@ -672,7 +672,60 @@ template<class IntType = int>
     class negative_binomial_distribution;
 
 template<class IntType = int>
-    class poisson_distribution;
+class poisson_distribution
+{
+public:
+    // types
+    typedef IntType result_type;
+
+    class param_type
+    {
+    public:
+        typedef poisson_distribution distribution_type;
+
+        explicit param_type(double mean = 1.0);
+
+        double mean() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructors and reset functions
+    explicit poisson_distribution(double mean = 1.0);
+    explicit poisson_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    double mean() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const poisson_distribution& x,
+                           const poisson_distribution& y);
+    friend bool operator!=(const poisson_distribution& x,
+                           const poisson_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const poisson_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               poisson_distribution& x);
+};
 
 template<class RealType = double>
 class exponential_distribution
@@ -3178,6 +3231,149 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __t >> __p;
     if (!__is.fail())
         __x.param(param_type(__t, __p));
+    return __is;
+}
+
+// poisson_distribution
+
+template<class _IntType = int>
+class poisson_distribution
+{
+public:
+    // types
+    typedef _IntType result_type;
+
+    class param_type
+    {
+        double __mean_;
+        double __sq_;
+        double __alxm_;
+        double __g_;
+    public:
+        typedef poisson_distribution distribution_type;
+
+        explicit param_type(double __mean = 1.0);
+
+        double mean() const {return __mean_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__mean_ == __y.__mean_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+
+        friend class poisson_distribution;
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructors and reset functions
+    explicit poisson_distribution(double __mean = 1.0) : __p_(__mean) {}
+    explicit poisson_distribution(const param_type& __p) : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    double mean() const {return __p_.mean();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return 0;}
+    result_type max() const {return numeric_limits<result_type>::max();}
+
+    friend bool operator==(const poisson_distribution& __x,
+                           const poisson_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const poisson_distribution& __x,
+                           const poisson_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template<class _IntType>
+poisson_distribution<_IntType>::param_type::param_type(double __mean)
+    : __mean_(__mean)
+{
+    if (__mean_ < 12.0)
+    {
+        __g_ = _STD::exp(-__mean_);
+        __alxm_ = 0;
+        __sq_ = 0;
+    }
+    else
+    {
+        __sq_ = _STD::sqrt(2.0 * __mean_);
+        __alxm_ = _STD::log(__mean_);
+        __g_ = __mean_ * __alxm_ - _STD::lgamma(__mean_ + 1);
+    }
+}
+
+template <class _IntType>
+template<class _URNG>
+_IntType
+poisson_distribution<_IntType>::operator()(_URNG& __g, const param_type& __p)
+{
+    result_type __x;
+    uniform_real_distribution<double> __gen;
+    if (__p.__mean_ < 12.0)
+    {
+        __x = result_type(~0);
+        double __t = 1;
+        do
+        {
+            ++__x;
+            __t *= __gen(__g);
+        } while (__t > __p.__g_);
+    }
+    else
+    {
+        double __t;
+        const double __pi = 3.14159265358979323846264338328;
+        do
+        {
+            double _X;
+            double __y;
+            do
+            {
+                __y = _STD::tan(__pi * __gen(__g));
+                _X = __p.__sq_ * __y + __p.__mean_;
+            } while (_X < 0);
+            __x = static_cast<result_type>(_X);
+            __t = 0.9 * (1 + __y * __y) * _STD::exp(__x * __p.__alxm_ -
+                                            _STD::lgamma(__x + 1.0) - __p.__g_);
+        } while (__gen(__g) > __t);
+    }
+    return __x;
+}
+
+template <class _CharT, class _Traits, class _IntType>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const poisson_distribution<_IntType>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    return __os << __x.mean();
+}
+
+template <class _CharT, class _Traits, class _IntType>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           poisson_distribution<_IntType>& __x)
+{
+    typedef poisson_distribution<_IntType> _Eng;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    double __mean;
+    __is >> __mean;
+    if (!__is.fail())
+        __x.param(param_type(__mean));
     return __is;
 }
 
