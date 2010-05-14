@@ -1575,7 +1575,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   }
   llvm::StringRef DeclName = D->getName();
   llvm::StringRef LinkageName;
-  if (D->getDeclContext() && isa<FunctionDecl>(D->getDeclContext()))
+  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext()))
     LinkageName = Var->getName();
   llvm::DIDescriptor DContext = 
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
