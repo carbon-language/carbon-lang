@@ -35,6 +35,9 @@
 #include <algorithm>
 using namespace llvm;
 
+static cl::opt<bool> VerifyFastRegalloc("verify-fast-regalloc", cl::Hidden,
+    cl::desc("Verify machine code before fast regalloc"));
+
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
 
@@ -778,6 +781,8 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(dbgs() << "********** FAST REGISTER ALLOCATION **********\n"
                << "********** Function: "
                << ((Value*)Fn.getFunction())->getName() << '\n');
+  if (VerifyFastRegalloc)
+    Fn.verify();
   MF = &Fn;
   MRI = &MF->getRegInfo();
   TM = &Fn.getTarget();
