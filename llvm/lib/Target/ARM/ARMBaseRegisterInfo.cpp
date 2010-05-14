@@ -351,6 +351,123 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   return 0;
 }
 
+bool
+ARMBaseRegisterInfo::canCombinedSubRegIndex(const TargetRegisterClass *RC,
+                                          SmallVectorImpl<unsigned> &SubIndices,
+                                          unsigned &NewSubIdx) const {
+
+  unsigned Size = RC->getSize() * 8;
+  if (Size < 6)
+    return 0;
+
+  NewSubIdx = 0;  // Whole register.
+  unsigned NumRegs = SubIndices.size();
+  if (NumRegs == 8) {
+    // 8 D registers -> 1 QQQQ register.
+    return (Size == 512 &&
+            SubIndices[0] == ARM::DSUBREG_0 &&
+            SubIndices[1] == ARM::DSUBREG_1 &&
+            SubIndices[2] == ARM::DSUBREG_2 &&
+            SubIndices[3] == ARM::DSUBREG_3 &&
+            SubIndices[4] == ARM::DSUBREG_4 &&
+            SubIndices[5] == ARM::DSUBREG_5 &&
+            SubIndices[6] == ARM::DSUBREG_6 &&
+            SubIndices[7] == ARM::DSUBREG_7);
+  } else if (NumRegs == 4) {
+    if (SubIndices[0] == ARM::QSUBREG_0) {
+      // 4 Q registers -> 1 QQQQ register.
+      return (Size == 512 &&
+              SubIndices[1] == ARM::QSUBREG_1 &&
+              SubIndices[2] == ARM::QSUBREG_2 &&
+              SubIndices[3] == ARM::QSUBREG_3);
+    } else if (SubIndices[0] == ARM::DSUBREG_0) {
+      // 4 D registers -> 1 QQ register.
+      if (Size >= 256 &&
+          SubIndices[1] == ARM::DSUBREG_1 &&
+          SubIndices[2] == ARM::DSUBREG_2 &&
+          SubIndices[3] == ARM::DSUBREG_3) {
+        if (Size == 512)
+          NewSubIdx = ARM::QQSUBREG_0;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::DSUBREG_4) {
+      // 4 D registers -> 1 QQ register (2nd).
+      if (Size == 512 &&
+          SubIndices[1] == ARM::DSUBREG_5 &&
+          SubIndices[2] == ARM::DSUBREG_6 &&
+          SubIndices[3] == ARM::DSUBREG_7) {
+        NewSubIdx = ARM::QQSUBREG_1;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::SSUBREG_0) {
+      // 4 S registers -> 1 Q register.
+      if (Size >= 128 &&
+          SubIndices[1] == ARM::SSUBREG_1 &&
+          SubIndices[2] == ARM::SSUBREG_2 &&
+          SubIndices[3] == ARM::SSUBREG_3) {
+        if (Size >= 256)
+          NewSubIdx = ARM::QSUBREG_0;
+        return true;
+      }
+    }
+  } else if (NumRegs == 2) {
+    if (SubIndices[0] == ARM::QSUBREG_0) {
+      // 2 Q registers -> 1 QQ register.
+      if (Size >= 256 && SubIndices[1] == ARM::QSUBREG_1) {
+        if (Size == 512)
+          NewSubIdx = ARM::QQSUBREG_0;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::QSUBREG_2) {
+      // 2 Q registers -> 1 QQ register (2nd).
+      if (Size == 512 && SubIndices[1] == ARM::QSUBREG_3) {
+        NewSubIdx = ARM::QQSUBREG_1;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::DSUBREG_0) {
+      // 2 D registers -> 1 Q register.
+      if (Size >= 128 && SubIndices[1] == ARM::DSUBREG_1) {
+        if (Size >= 256)
+          NewSubIdx = ARM::QSUBREG_0;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::DSUBREG_2) {
+      // 2 D registers -> 1 Q register (2nd).
+      if (Size >= 256 && SubIndices[1] == ARM::DSUBREG_3) {
+        NewSubIdx = ARM::QSUBREG_1;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::DSUBREG_4) {
+      // 2 D registers -> 1 Q register (3rd).
+      if (Size == 512 && SubIndices[1] == ARM::DSUBREG_5) {
+        NewSubIdx = ARM::QSUBREG_2;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::DSUBREG_6) {
+      // 2 D registers -> 1 Q register (3rd).
+      if (Size == 512 && SubIndices[1] == ARM::DSUBREG_7) {
+        NewSubIdx = ARM::QSUBREG_3;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::SSUBREG_0) {
+      // 2 S registers -> 1 D register.
+      if (SubIndices[1] == ARM::SSUBREG_1) {
+        if (Size >= 128)
+          NewSubIdx = ARM::DSUBREG_0;
+        return true;
+      }
+    } else if (SubIndices[0] == ARM::SSUBREG_2) {
+      // 2 S registers -> 1 D register (2nd).
+      if (Size >= 128 && SubIndices[1] == ARM::SSUBREG_3) {
+        NewSubIdx = ARM::DSUBREG_1;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
 const TargetRegisterClass *
 ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return ARM::GPRRegisterClass;

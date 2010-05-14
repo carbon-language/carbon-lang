@@ -465,6 +465,10 @@ def arm_qsubreg_1 : PatLeaf<(i32 14)>;
 def arm_qsubreg_2 : PatLeaf<(i32 15)>;
 def arm_qsubreg_3 : PatLeaf<(i32 16)>;
 
+def arm_qqsubreg_0 : PatLeaf<(i32 17)>;
+def arm_qqsubreg_1 : PatLeaf<(i32 18)>;
+
+
 // S sub-registers of D registers.
 def : SubRegSet<1, [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
                     D8,  D9,  D10, D11, D12, D13, D14, D15],
@@ -552,3 +556,10 @@ def : SubRegSet<15, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
                     [Q2,    Q6,    Q10,   Q14]>;
 def : SubRegSet<16, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
                     [Q3,    Q7,    Q11,   Q15]>;
+
+// QQ sub-registers of QQQQQQQQ registers.
+def : SubRegSet<17, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
+                    [QQ0,   QQ2,   QQ4,   QQ6]>;
+def : SubRegSet<18, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
+                    [QQ1,   QQ3,   QQ5,   QQ7]>;
+

@@ -81,6 +81,15 @@ public:
   getMatchingSuperRegClass(const TargetRegisterClass *A,
                            const TargetRegisterClass *B, unsigned Idx) const;
 
+  /// canCombinedSubRegIndex - Given a register class and a list of sub-register
+  /// indices, return true if it's possible to combine the sub-register indices
+  /// into one that corresponds to a larger sub-register. Return the new sub-
+  /// register index by reference. Note the new index by be zero if the given
+  /// sub-registers combined to form the whole register.
+  virtual bool canCombinedSubRegIndex(const TargetRegisterClass *RC,
+                                      SmallVectorImpl<unsigned> &SubIndices,
+                                      unsigned &NewSubIdx) const;
+
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
   std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>

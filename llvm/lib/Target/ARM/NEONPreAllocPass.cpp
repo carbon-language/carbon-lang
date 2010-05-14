@@ -414,7 +414,9 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
       return false;
     LastSrcReg = VirtReg;
     const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-    if (RC != ARM::QPRRegisterClass && RC != ARM::QQPRRegisterClass)
+    if (RC != ARM::QPRRegisterClass &&
+        RC != ARM::QQPRRegisterClass &&
+        RC != ARM::QQQQPRRegisterClass)
       return false;
     unsigned SubIdx = DefMI->getOperand(2).getImm();
     if (LastSubIdx) {
@@ -432,7 +434,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
 
   // FIXME: Update the uses of EXTRACT_SUBREG from REG_SEQUENCE is
   // currently required for correctness. e.g.
-  // 	%reg1041;<def> = REG_SEQUENCE %reg1040<kill>, 5, %reg1035<kill>, 6
+  //  %reg1041;<def> = REG_SEQUENCE %reg1040<kill>, 5, %reg1035<kill>, 6
   //  %reg1042<def> = EXTRACT_SUBREG %reg1041, 6
   //  %reg1043<def> = EXTRACT_SUBREG %reg1041, 5
   //  VST1q16 %reg1025<kill>, 0, %reg1043<kill>, %reg1042<kill>,

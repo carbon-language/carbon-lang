@@ -28,6 +28,7 @@ class BitVector;
 class MachineFunction;
 class MachineMove;
 class RegScavenger;
+template<class T> class SmallVectorImpl;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer
@@ -476,6 +477,17 @@ public:
     for (const unsigned *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
       if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
         return SR;
+    return 0;
+  }
+
+  /// canCombinedSubRegIndex - Given a register class and a list of sub-register
+  /// indices, return true if it's possible to combine the sub-register indices
+  /// into one that corresponds to a larger sub-register. Return the new sub-
+  /// register index by reference. Note the new index by be zero if the given
+  /// sub-registers combined to form the whole register.
+  virtual bool canCombinedSubRegIndex(const TargetRegisterClass *RC,
+                                      SmallVectorImpl<unsigned> &SubIndices,
+                                      unsigned &NewSubIdx) const {
     return 0;
   }
 
