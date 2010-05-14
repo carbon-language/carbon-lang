@@ -53,6 +53,17 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   }
   
   SourceMgr SrcMgr;
+
+  // Ensure the buffer is newline terminated.
+  char *TmpString = 0;
+  if (Str.back() != '\n') {
+    TmpString = new char[Str.size() + 2];
+    memcpy(TmpString, Str.data(), Str.size());
+    TmpString[Str.size()] = '\n';
+    TmpString[Str.size() + 1] = 0;
+    isNullTerminated = true;
+    Str = TmpString;
+  }
   
   // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
@@ -84,6 +95,9 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
                        /*NoFinalize*/ true);
   if (Res && !HasDiagHandler)
     report_fatal_error("Error parsing inline asm\n");
+
+  if (TmpString)
+    delete[] TmpString;
 }
 
 
