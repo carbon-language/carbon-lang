@@ -599,10 +599,6 @@ void MCAssembler::Finish() {
   // Create the layout object.
   MCAsmLayout Layout(*this);
 
-  // Assign layout order indices.
-  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i)
-    Layout.getSectionOrder()[i]->setLayoutOrder(i);
-
   // Insert additional align fragments for concrete sections to explicitly pad
   // the previous section to match their alignment requirements. This is for
   // 'gas' compatibility, it shouldn't strictly be necessary.
@@ -627,10 +623,8 @@ void MCAssembler::Finish() {
     AF->setOnlyAlignAddress(true);
   }
 
-  // Assign section and fragment ordinals, all subsequent backend code is
-  // responsible for updating these in place.
+  // Create dummy fragments and assign section ordinals.
   unsigned SectionIndex = 0;
-  unsigned FragmentIndex = 0;
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
@@ -642,10 +636,17 @@ void MCAssembler::Finish() {
     }
 
     it->setOrdinal(SectionIndex++);
+  }
 
-    for (MCSectionData::iterator it2 = it->begin(),
-           ie2 = it->end(); it2 != ie2; ++it2)
-      it2->setOrdinal(FragmentIndex++);
+  // Assign layout order indices to sections and fragments.
+  unsigned FragmentIndex = 0;
+  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
+    MCSectionData *SD = Layout.getSectionOrder()[i];
+    SD->setLayoutOrder(i);
+
+    for (MCSectionData::iterator it2 = SD->begin(),
+           ie2 = SD->end(); it2 != ie2; ++it2)
+      it2->setLayoutOrder(FragmentIndex++);
   }
 
   // Layout until everything fits.
@@ -827,7 +828,7 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       // Update the data fragments layout data.
       DF->setParent(IF->getParent());
       DF->setAtom(IF->getAtom());
-      DF->setOrdinal(IF->getOrdinal());
+      DF->setLayoutOrder(IF->getLayoutOrder());
       Layout.FragmentReplaced(IF, DF);
 
       // Copy in the data and the fixups.
@@ -857,8 +858,8 @@ raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
 void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
-  OS << "<MCFragment " << (void*) this << " Offset:" << Offset
-     << " EffectiveSize:" << EffectiveSize << ">";
+  OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
+     << " Offset:" << Offset << " EffectiveSize:" << EffectiveSize << ">";
 }
 
 void MCAlignFragment::dump() {

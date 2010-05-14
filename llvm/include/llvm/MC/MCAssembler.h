@@ -96,9 +96,9 @@ private:
   /// initialized.
   uint64_t EffectiveSize;
 
-  /// Ordinal - The global index of this fragment. This is the index across all
-  /// sections, not just the parent section.
-  unsigned Ordinal;
+  /// LayoutOrder - The global layout order of this fragment. This is the index
+  /// across all fragments in the file, not just within the section.
+  unsigned LayoutOrder;
 
   /// @}
 
@@ -118,8 +118,8 @@ public:
   MCSymbolData *getAtom() const { return Atom; }
   void setAtom(MCSymbolData *Value) { Atom = Value; }
 
-  unsigned getOrdinal() const { return Ordinal; }
-  void setOrdinal(unsigned Value) { Ordinal = Value; }
+  unsigned getLayoutOrder() const { return LayoutOrder; }
+  void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
   static bool classof(const MCFragment *O) { return true; }
 
