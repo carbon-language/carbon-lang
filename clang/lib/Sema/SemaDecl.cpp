@@ -5329,9 +5329,13 @@ CreateNewDecl:
 
   // Maybe add qualifier info.
   if (SS.isNotEmpty()) {
-    NestedNameSpecifier *NNS
-      = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-    New->setQualifierInfo(NNS, SS.getRange());
+    if (SS.isSet()) {
+      NestedNameSpecifier *NNS
+        = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+      New->setQualifierInfo(NNS, SS.getRange());
+    }
+    else
+      Invalid = true;
   }
 
   if (Kind != TTK_Enum) {
