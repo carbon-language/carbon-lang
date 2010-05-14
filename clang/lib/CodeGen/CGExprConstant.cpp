@@ -984,32 +984,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   return C;
 }
 
-static bool containsPointerToDataMember(CodeGenTypes &Types, QualType T) {
-  // No need to check for member pointers when not compiling C++.
-  if (!Types.getContext().getLangOptions().CPlusPlus)
-    return false;
-  
-  T = Types.getContext().getBaseElementType(T);
-  
-  if (const RecordType *RT = T->getAs<RecordType>()) {
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    
-    // FIXME: It would be better if there was a way to explicitly compute the
-    // record layout instead of converting to a type.
-    Types.ConvertTagDeclType(RD);
-    
-    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
-    return Layout.containsPointerToDataMember();
-  }
-    
-  if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
-    return !MPT->getPointeeType()->isFunctionType();
-  
-  return false;
-}
-
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
-  if (!containsPointerToDataMember(getTypes(), T))
+  if (!getTypes().ContainsPointerToDataMember(T))
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
     
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {

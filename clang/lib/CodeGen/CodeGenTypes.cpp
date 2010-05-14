@@ -467,3 +467,27 @@ CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) const {
   assert(Layout && "Unable to find record layout information for type");
   return *Layout;
 }
+
+bool CodeGenTypes::ContainsPointerToDataMember(QualType T) {
+  // No need to check for member pointers when not compiling C++.
+  if (!Context.getLangOptions().CPlusPlus)
+    return false;
+  
+  T = Context.getBaseElementType(T);
+  
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    
+    // FIXME: It would be better if there was a way to explicitly compute the
+    // record layout instead of converting to a type.
+    ConvertTagDeclType(RD);
+    
+    const CGRecordLayout &Layout = getCGRecordLayout(RD);
+    return Layout.containsPointerToDataMember();
+  }
+  
+  if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
+    return !MPT->getPointeeType()->isFunctionType();
+  
+  return false;
+}
