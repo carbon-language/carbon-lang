@@ -87,3 +87,12 @@ s4_2 f4() { return s4_2(); }
 // CHECK: define i32 @_Z2f5v()
 struct s5 { s5(); int &x; };
 s5 f5() { return s5(); }
+
+// CHECK: define i32 @_Z4f6_0M2s6i(i32 %a)
+// CHECK: define i64 @_Z4f6_1M2s6FivE(%{{.*}} byval %a)
+// FIXME: It would be nice to avoid byval on the previous case.
+struct s6 {};
+typedef int s6::* s6_mdp;
+typedef int (s6::*s6_mfp)();
+s6_mdp f6_0(s6_mdp a) { return a; }
+s6_mfp f6_1(s6_mfp a) { return a; }

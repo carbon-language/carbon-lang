@@ -387,10 +387,11 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
     return true;
   }
 
-  // If this is a builtin, pointer, enum, or complex type, it is ok.
+  // If this is a builtin, pointer, enum, complex type, member pointer, or
+  // member function pointer it is ok.
   if (Ty->getAs<BuiltinType>() || Ty->hasPointerRepresentation() ||
       Ty->isAnyComplexType() || Ty->isEnumeralType() ||
-      Ty->isBlockPointerType())
+      Ty->isBlockPointerType() || Ty->isMemberPointerType())
     return true;
 
   // Arrays are treated like records.
