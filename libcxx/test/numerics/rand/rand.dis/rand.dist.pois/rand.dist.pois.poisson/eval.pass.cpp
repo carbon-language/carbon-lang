@@ -72,7 +72,7 @@ int main()
         typedef std::minstd_rand G;
         G g;
         D d(20);
-        const int N = 10000;
+        const int N = 100000;
         std::vector<double> u;
         for (int i = 0; i < N; ++i)
             u.push_back(d(g));

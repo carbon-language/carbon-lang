@@ -78,7 +78,7 @@ int main()
         G g;
         D d(2);
         P p(20);
-        const int N = 10000;
+        const int N = 100000;
         std::vector<double> u;
         for (int i = 0; i < N; ++i)
             u.push_back(d(g, p));
