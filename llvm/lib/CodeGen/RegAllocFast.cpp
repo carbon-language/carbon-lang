@@ -132,6 +132,8 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn);
     void AllocateBasicBlock(MachineBasicBlock &MBB);
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
+    bool isLastUseOfLocalReg(MachineOperand&);
+
     void addKillFlag(LiveRegMap::iterator i);
     void killVirtReg(LiveRegMap::iterator i);
     void killVirtReg(unsigned VirtReg);
@@ -172,6 +174,26 @@ int RAFast::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
   // Assign the slot.
   StackSlotForVirtReg[VirtReg] = FrameIdx;
   return FrameIdx;
+}
+
+/// isLastUseOfLocalReg - Return true if MO is the only remaining reference to
+/// its virtual register, and it is guaranteed to be a block-local register.
+///
+bool RAFast::isLastUseOfLocalReg(MachineOperand &MO) {
+  // Check for non-debug uses or defs following MO.
+  // This is the most likely way to fail - fast path it.
+  MachineOperand *i = &MO;
+  while ((i = i->getNextOperandForReg()))
+    if (!i->isDebug())
+      return false;
+
+  // If the register has ever been spilled or reloaded, we conservatively assume
+  // it is a global register used in multiple blocks.
+  if (StackSlotForVirtReg[MO.getReg()] != -1)
+    return false;
+
+  // Check that the use/def chain has exactly one operand - MO.
+  return &MRI->reg_nodbg_begin(MO.getReg()).getOperand() == &MO;
 }
 
 /// addKillFlag - Set kill flags on last use of a virtual register.
@@ -566,6 +588,15 @@ unsigned RAFast::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     TII->loadRegFromStackSlot(MBB, MI, lri->second.PhysReg, FrameIndex, RC,
                               TRI);
     ++NumLoads;
+  } else if (lri->second.Dirty) {
+    MachineOperand &MO = MI->getOperand(OpNum);
+    if (isLastUseOfLocalReg(MO)) {
+      DEBUG(dbgs() << "Killing last use: " << MO << "\n");
+      MO.setIsKill();
+    } else if (MO.isKill()) {
+      DEBUG(dbgs() << "Clearing dubious kill: " << MO << "\n");
+      MO.setIsKill(false);
+    }
   }
   LiveReg &LR = lri->second;
   LR.LastUse = MI;
