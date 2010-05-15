@@ -240,6 +240,10 @@ namespace llvm {
       return Subtarget;
     }
 
+    /// getRegClassFor - Return the register class that should be used for the
+    /// specified value type.
+    virtual TargetRegisterClass *getRegClassFor(EVT VT) const;
+
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 

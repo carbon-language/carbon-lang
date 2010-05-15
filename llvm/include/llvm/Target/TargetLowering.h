@@ -155,8 +155,8 @@ public:
   }
 
   /// getRegClassFor - Return the register class that should be used for the
-  /// specified value type.  This may only be called on legal types.
-  TargetRegisterClass *getRegClassFor(EVT VT) const {
+  /// specified value type.
+  virtual TargetRegisterClass *getRegClassFor(EVT VT) const {
     assert(VT.isSimple() && "getRegClassFor called on illegal type!");
     TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
     assert(RC && "This value type is not natively supported!");

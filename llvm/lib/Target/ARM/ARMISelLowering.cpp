@@ -266,13 +266,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addQRTypeForNEON(MVT::v4i32);
     addQRTypeForNEON(MVT::v2i64);
 
-    // Map v4i64 to QQ registers but do not make the type legal for any
-    // operations. Similarly map v8i64 to QQQQ registers. v4i64 and v8i64 are
-    // only used for REG_SEQUENCE to load / store 4 to 8 consecutive
-    // D registers.
-    addRegisterClass(MVT::v4i64, ARM::QQPRRegisterClass);
-    addRegisterClass(MVT::v8i64, ARM::QQQQPRRegisterClass);
-
     // v2f64 is legal so that QR subregs can be extracted as f64 elements, but
     // neither Neon nor VFP support any arithmetic operations on it.
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);
@@ -584,6 +577,19 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FMAX:          return "ARMISD::FMAX";
   case ARMISD::FMIN:          return "ARMISD::FMIN";
   }
+}
+
+/// getRegClassFor - Return the register class that should be used for the
+/// specified value type.
+TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
+  // Map v4i64 to QQ registers but do not make the type legal. Similarly map
+  // v8i64 to QQQQ registers. v4i64 and v8i64 are only used for REG_SEQUENCE to
+  // load / store 4 to 8 consecutive D registers.
+  if (VT == MVT::v4i64)
+    return ARM::QQPRRegisterClass;
+  else if (VT == MVT::v8i64)
+    return ARM::QQQQPRRegisterClass;
+  return TargetLowering::getRegClassFor(VT);
 }
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.
