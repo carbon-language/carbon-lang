@@ -659,7 +659,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     DtorTy = getContext().getBaseElementType(Array);
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {      
-      if (!ClassDecl->hasTrivialDestructor() && !NRVO) {
+      if (!ClassDecl->hasTrivialDestructor()) {
         // Note: We suppress the destructor call when this is an NRVO variable.
         llvm::Value *Loc = DeclPtr;
         if (isByRef)
@@ -693,7 +693,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           }
         } else {
-          {
+          if (!NRVO) {
+            // We don't call the destructor along the normal edge if we're
+            // applying the NRVO.
             DelayedCleanupBlock Scope(*this);
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
                                   Loc);
@@ -701,6 +703,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             // Make sure to jump to the exit block.
             EmitBranch(Scope.getCleanupExitBlock());
           }
+          
           if (Exceptions) {
             EHCleanupBlock Cleanup(*this);
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
