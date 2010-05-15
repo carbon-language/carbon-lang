@@ -1334,7 +1334,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   }
   const QualType ElementType = PT ? PT->getPointeeType() : OPT->getPointeeType();
   // Handle interface types, which are not represented with a concrete type.
-  if (const ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(ElementType)) {
+  if (const ObjCObjectType *OIT = ElementType->getAs<ObjCObjectType>()) {
     llvm::Value *InterfaceSize =
       llvm::ConstantInt::get(Idx->getType(),
           CGF.getContext().getTypeSizeInChars(OIT).getQuantity());
@@ -1402,8 +1402,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
 
     // Handle interface types, which are not represented with a concrete type.
-    if (const ObjCInterfaceType *OIT =
-        dyn_cast<ObjCInterfaceType>(LHSElementType)) {
+    if (const ObjCObjectType *OIT = LHSElementType->getAs<ObjCObjectType>()) {
       llvm::Value *InterfaceSize =
         llvm::ConstantInt::get(Idx->getType(),
                                CGF.getContext().

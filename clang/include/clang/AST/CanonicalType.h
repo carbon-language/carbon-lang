@@ -643,6 +643,24 @@ struct CanProxyAdaptor<TemplateTypeParmType>
 };
 
 template<>
+struct CanProxyAdaptor<ObjCObjectType>
+  : public CanProxyBase<ObjCObjectType> {
+  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getBaseType)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(const ObjCInterfaceDecl *,
+                                      getInterface)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isObjCUnqualifiedId)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isObjCUnqualifiedClass)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isObjCQualifiedId)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isObjCQualifiedClass)
+
+  typedef ObjCObjectPointerType::qual_iterator qual_iterator;
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(qual_iterator, qual_begin)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(qual_iterator, qual_end)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, qual_empty)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getNumProtocols)
+};
+
+template<>
 struct CanProxyAdaptor<ObjCObjectPointerType>
   : public CanProxyBase<ObjCObjectPointerType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getPointeeType)

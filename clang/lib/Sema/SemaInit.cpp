@@ -624,7 +624,7 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
   } else if (DeclType->isReferenceType()) {
     CheckReferenceType(Entity, IList, DeclType, Index,
                        StructuredList, StructuredIndex);
-  } else if (DeclType->isObjCInterfaceType()) {
+  } else if (DeclType->isObjCObjectType()) {
     SemaRef.Diag(IList->getLocStart(), diag::err_init_objc_class)
       << DeclType;
     hadError = true;

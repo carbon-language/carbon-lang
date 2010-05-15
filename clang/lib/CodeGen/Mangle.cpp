@@ -1206,6 +1206,12 @@ void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
   mangleSourceName(T->getDecl()->getIdentifier());
 }
 
+void CXXNameMangler::mangleType(const ObjCObjectType *T) {
+  // FIXME: do we allow overloading by different protocols?
+  // If so, we need to mangle them in here.
+  mangleType(T->getBaseType());
+}
+
 void CXXNameMangler::mangleType(const BlockPointerType *T) {
   Out << "U13block_pointer";
   mangleType(T->getPointeeType());

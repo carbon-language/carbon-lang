@@ -87,8 +87,9 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   }
   // Create the built-in typedef for 'id'.
   if (Context.getObjCIdType().isNull()) {
-    QualType IdT = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
-    TypeSourceInfo *IdInfo = Context.getTrivialTypeSourceInfo(IdT);
+    QualType T = Context.getObjCObjectType(Context.ObjCBuiltinIdTy, 0, 0);
+    T = Context.getObjCObjectPointerType(T);
+    TypeSourceInfo *IdInfo = Context.getTrivialTypeSourceInfo(T);
     TypedefDecl *IdTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("id"), IdInfo);
@@ -98,9 +99,9 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   }
   // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
-    QualType ClassType
-      = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy);
-    TypeSourceInfo *ClassInfo = Context.getTrivialTypeSourceInfo(ClassType);
+    QualType T = Context.getObjCObjectType(Context.ObjCBuiltinClassTy, 0, 0);
+    T = Context.getObjCObjectPointerType(T);
+    TypeSourceInfo *ClassInfo = Context.getTrivialTypeSourceInfo(T);
     TypedefDecl *ClassTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("Class"), ClassInfo);

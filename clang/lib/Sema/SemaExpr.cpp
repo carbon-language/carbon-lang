@@ -294,7 +294,7 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
 bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
   DefaultArgumentPromotion(Expr);
 
-  if (Expr->getType()->isObjCInterfaceType() &&
+  if (Expr->getType()->isObjCObjectType() &&
       DiagRuntimeBehavior(Expr->getLocStart(),
         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
           << Expr->getType() << CT))
@@ -2040,7 +2040,7 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     return true;
 
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
-  if (LangOpts.ObjCNonFragileABI && exprType->isObjCInterfaceType()) {
+  if (LangOpts.ObjCNonFragileABI && exprType->isObjCObjectType()) {
     Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
       << exprType << isSizeof << ExprRange;
     return true;
@@ -2316,7 +2316,7 @@ Sema::CreateBuiltinArraySubscriptExpr(ExprArg Base, SourceLocation LLoc,
     return ExprError();
 
   // Diagnose bad cases where we step over interface counts.
-  if (ResultType->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+  if (ResultType->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
     Diag(LLoc, diag::err_subscript_nonfragile_interface)
       << ResultType << BaseExpr->getSourceRange();
     return ExprError();
@@ -2924,7 +2924,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       // Handle the following exceptional case PObj->isa.
       if (const ObjCObjectPointerType *OPT =
           BaseType->getAs<ObjCObjectPointerType>()) {
-        if (OPT->getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
+        if (OPT->getObjectType()->isObjCId() &&
             MemberName.getAsIdentifierInfo()->isStr("isa"))
           return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
                                                  Context.getObjCClassType()));
@@ -3048,8 +3048,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     }
   }
 
-  // Handle field access to simple records.  This also handles access
-  // to fields of the ObjC 'id' struct.
+  // Handle field access to simple records.
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     if (LookupMemberExprInRecord(*this, R, BaseExpr->getSourceRange(),
                                  RTy, OpLoc, SS))
@@ -3060,14 +3059,14 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
   // (*Obj).ivar.
   if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
-      (!IsArrow && BaseType->isObjCInterfaceType())) {
+      (!IsArrow && BaseType->isObjCObjectType())) {
     const ObjCObjectPointerType *OPT = BaseType->getAs<ObjCObjectPointerType>();
-    const ObjCInterfaceType *IFaceT =
-      OPT ? OPT->getInterfaceType() : BaseType->getAs<ObjCInterfaceType>();
-    if (IFaceT) {
+    ObjCInterfaceDecl *IDecl =
+      OPT ? OPT->getInterfaceDecl()
+          : BaseType->getAs<ObjCObjectType>()->getInterface();
+    if (IDecl) {
       IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
-      ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
       ObjCInterfaceDecl *ClassDeclared;
       ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
 
@@ -3180,7 +3179,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
   // Handle the following exceptional case (*Obj).isa.
   if (!IsArrow &&
-      BaseType->isSpecificBuiltinType(BuiltinType::ObjCId) &&
+      BaseType->isObjCObjectType() &&
+      BaseType->getAs<ObjCObjectType>()->isObjCId() &&
       MemberName.getAsIdentifierInfo()->isStr("isa"))
     return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
                                            Context.getObjCClassType()));
@@ -5064,7 +5064,7 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
           return QualType();
       }
       // Diagnose bad cases where we step over interface counts.
-      if (PointeeTy->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+      if (PointeeTy->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
         Diag(Loc, diag::err_arithmetic_nonfragile_interface)
           << PointeeTy << PExp->getSourceRange();
         return QualType();
@@ -5140,7 +5140,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       return QualType();
 
     // Diagnose bad cases where we step over interface counts.
-    if (lpointee->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+    if (lpointee->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
       Diag(Loc, diag::err_arithmetic_nonfragile_interface)
         << lpointee << lex->getSourceRange();
       return QualType();
@@ -5907,7 +5907,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
                              << ResType))
       return QualType();
     // Diagnose bad cases where we step over interface counts.
-    else if (PointeeTy->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+    else if (PointeeTy->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
       Diag(OpLoc, diag::err_arithmetic_nonfragile_interface)
         << PointeeTy << Op->getSourceRange();
       return QualType();
@@ -7021,7 +7021,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     QualType RetTy = T.getTypePtr()->getAs<FunctionType>()->getResultType();
 
     // Do not allow returning a objc interface by-value.
-    if (RetTy->isObjCInterfaceType()) {
+    if (RetTy->isObjCObjectType()) {
       Diag(ParamInfo.getSourceRange().getBegin(),
            diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
       return;
@@ -7093,7 +7093,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   QualType RetTy = T->getAs<FunctionType>()->getResultType();
 
   // Do not allow returning a objc interface by-value.
-  if (RetTy->isObjCInterfaceType()) {
+  if (RetTy->isObjCObjectType()) {
     Diag(ParamInfo.getSourceRange().getBegin(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
   } else if (!RetTy->isDependentType())

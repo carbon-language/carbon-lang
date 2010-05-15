@@ -2621,8 +2621,8 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
       Dst.Add(Pred);
       return;
     }
-    else if (T->isObjCInterfaceType()) {
-      // Some code tries to take the sizeof an ObjCInterfaceType, relying that
+    else if (T->getAs<ObjCObjectType>()) {
+      // Some code tries to take the sizeof an ObjCObjectType, relying that
       // the compiler has laid out its representation.  Just report Unknown
       // for these.
       Dst.Add(Pred);

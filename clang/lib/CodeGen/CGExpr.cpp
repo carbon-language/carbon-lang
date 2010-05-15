@@ -309,8 +309,7 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), AmountVal);
     if (!isa<llvm::FunctionType>(PT->getElementType())) {
       QualType PTEE = ValTy->getPointeeType();
-      if (const ObjCInterfaceType *OIT =
-          dyn_cast<ObjCInterfaceType>(PTEE)) {
+      if (const ObjCObjectType *OIT = PTEE->getAs<ObjCObjectType>()) {
         // Handle interface types, which are not represented with a concrete
         // type.
         int size = getContext().getTypeSize(OIT) / 8;
@@ -1371,8 +1370,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                              llvm::ConstantInt::get(Idx->getType(),
                                  BaseTypeSize.getQuantity()));
     Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
-  } else if (const ObjCInterfaceType *OIT =
-             dyn_cast<ObjCInterfaceType>(E->getType())) {
+  } else if (const ObjCObjectType *OIT =
+               E->getType()->getAs<ObjCObjectType>()) {
     llvm::Value *InterfaceSize =
       llvm::ConstantInt::get(Idx->getType(),
           getContext().getTypeSizeInChars(OIT).getQuantity());

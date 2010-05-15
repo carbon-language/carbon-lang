@@ -2047,14 +2047,14 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
          I != E; ++I)
       AddObjCProperties(*I, true, CurContext, Results);
   } else if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
-             (!IsArrow && BaseType->isObjCInterfaceType())) {
+             (!IsArrow && BaseType->isObjCObjectType())) {
     // Objective-C instance variable access.
     ObjCInterfaceDecl *Class = 0;
     if (const ObjCObjectPointerType *ObjCPtr
                                     = BaseType->getAs<ObjCObjectPointerType>())
       Class = ObjCPtr->getInterfaceDecl();
     else
-      Class = BaseType->getAs<ObjCInterfaceType>()->getDecl();
+      Class = BaseType->getAs<ObjCObjectType>()->getInterface();
     
     // Add all ivars from this class and its superclasses.
     if (Class) {
@@ -2911,9 +2911,9 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
   ObjCInterfaceDecl *IFace = 0;
   switch (Msg->getReceiverKind()) {
   case ObjCMessageExpr::Class:
-    if (const ObjCInterfaceType *IFaceType
-                           = Msg->getClassReceiver()->getAs<ObjCInterfaceType>())
-      IFace = IFaceType->getDecl();
+    if (const ObjCObjectType *ObjType
+                           = Msg->getClassReceiver()->getAs<ObjCObjectType>())
+      IFace = ObjType->getInterface();
     break;
 
   case ObjCMessageExpr::Instance: {
@@ -2994,9 +2994,9 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
     if ((CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(ND))) {
       // "super" names an interface. Use it.
     } else if (TypeDecl *TD = dyn_cast_or_null<TypeDecl>(ND)) {
-      if (const ObjCInterfaceType *Iface
-            = Context.getTypeDeclType(TD)->getAs<ObjCInterfaceType>())
-        CDecl = Iface->getDecl();
+      if (const ObjCObjectType *Iface
+            = Context.getTypeDeclType(TD)->getAs<ObjCObjectType>())
+        CDecl = Iface->getInterface();
     } else if (ND && isa<UnresolvedUsingTypenameDecl>(ND)) {
       // "super" names an unresolved type; we can't be more specific.
     } else {
@@ -3030,8 +3030,8 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
   if (Receiver) {
     QualType T = GetTypeFromParser(Receiver, 0);
     if (!T.isNull()) 
-      if (const ObjCInterfaceType *Interface = T->getAs<ObjCInterfaceType>())
-        CDecl = Interface->getDecl();
+      if (const ObjCObjectType *Interface = T->getAs<ObjCObjectType>())
+        CDecl = Interface->getInterface();
   }
 
   // Add all of the factory methods in this Objective-C class, its protocols,

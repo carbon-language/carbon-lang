@@ -623,6 +623,17 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   template<typename Derived>
   bool RecursiveASTVisitor<Derived>::VisitObjCInterfaceType(
                                                         ObjCInterfaceType *T) {
+    return getDerived().VisitObjCObjectType(T);
+  }
+
+  template<typename Derived>
+  bool RecursiveASTVisitor<Derived>::VisitObjCObjectType(ObjCObjectType *T) {
+    // We have to watch out here because an ObjCInterfaceType's base
+    // type is itself.
+    if (T->getBaseType().getTypePtr() != T)
+      if (Visit(T->getBaseType()))
+        return true;
+
     return getDerived().VisitType(T);
   }
 

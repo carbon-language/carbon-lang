@@ -74,6 +74,7 @@ namespace {
     QualType VisitElaboratedType(ElaboratedType *T);
     // FIXME: DependentNameType
     QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
+    QualType VisitObjCObjectType(ObjCObjectType *T);
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
                             
     // Importing declarations
@@ -632,12 +633,22 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     if (!IsStructurallyEquivalent(Context, 
                                   Iface1->getDecl(), Iface2->getDecl()))
       return false;
-    if (Iface1->getNumProtocols() != Iface2->getNumProtocols())
+    break;
+  }
+
+  case Type::ObjCObject: {
+    const ObjCObjectType *Obj1 = cast<ObjCObjectType>(T1);
+    const ObjCObjectType *Obj2 = cast<ObjCObjectType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  Obj1->getBaseType(),
+                                  Obj2->getBaseType()))
       return false;
-    for (unsigned I = 0, N = Iface1->getNumProtocols(); I != N; ++I) {
+    if (Obj1->getNumProtocols() != Obj2->getNumProtocols())
+      return false;
+    for (unsigned I = 0, N = Obj1->getNumProtocols(); I != N; ++I) {
       if (!IsStructurallyEquivalent(Context,
-                                    Iface1->getProtocol(I),
-                                    Iface2->getProtocol(I)))
+                                    Obj1->getProtocol(I),
+                                    Obj2->getProtocol(I)))
         return false;
     }
     break;
@@ -650,14 +661,6 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                   Ptr1->getPointeeType(),
                                   Ptr2->getPointeeType()))
       return false;
-    if (Ptr1->getNumProtocols() != Ptr2->getNumProtocols())
-      return false;
-    for (unsigned I = 0, N = Ptr1->getNumProtocols(); I != N; ++I) {
-      if (!IsStructurallyEquivalent(Context,
-                                    Ptr1->getProtocol(I),
-                                    Ptr2->getProtocol(I)))
-        return false;
-    }
     break;
   }
       
@@ -1305,8 +1308,16 @@ QualType ASTNodeImporter::VisitObjCInterfaceType(ObjCInterfaceType *T) {
   if (!Class)
     return QualType();
 
+  return Importer.getToContext().getObjCInterfaceType(Class);
+}
+
+QualType ASTNodeImporter::VisitObjCObjectType(ObjCObjectType *T) {
+  QualType ToBaseType = Importer.Import(T->getBaseType());
+  if (ToBaseType.isNull())
+    return QualType();
+
   llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
-  for (ObjCInterfaceType::qual_iterator P = T->qual_begin(), 
+  for (ObjCObjectType::qual_iterator P = T->qual_begin(), 
                                      PEnd = T->qual_end();
        P != PEnd; ++P) {
     ObjCProtocolDecl *Protocol
@@ -1316,9 +1327,9 @@ QualType ASTNodeImporter::VisitObjCInterfaceType(ObjCInterfaceType *T) {
     Protocols.push_back(Protocol);
   }
 
-  return Importer.getToContext().getObjCInterfaceType(Class,
-                                                      Protocols.data(),
-                                                      Protocols.size());
+  return Importer.getToContext().getObjCObjectType(ToBaseType,
+                                                   Protocols.data(),
+                                                   Protocols.size());
 }
 
 QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
@@ -1326,20 +1337,7 @@ QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
   if (ToPointeeType.isNull())
     return QualType();
 
-  llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
-  for (ObjCObjectPointerType::qual_iterator P = T->qual_begin(), 
-                                         PEnd = T->qual_end();
-       P != PEnd; ++P) {
-    ObjCProtocolDecl *Protocol
-      = dyn_cast_or_null<ObjCProtocolDecl>(Importer.Import(*P));
-    if (!Protocol)
-      return QualType();
-    Protocols.push_back(Protocol);
-  }
-
-  return Importer.getToContext().getObjCObjectPointerType(ToPointeeType,
-                                                          Protocols.data(),
-                                                          Protocols.size());
+  return Importer.getToContext().getObjCObjectPointerType(ToPointeeType);
 }
 
 //----------------------------------------------------------------------------

@@ -173,6 +173,9 @@ CXCursor clang_getTypeDeclaration(CXType CT) {
     case Type::Typedef:
       D = cast<TypedefType>(TP)->getDecl();
       break;
+    case Type::ObjCObject:
+      D = cast<ObjCObjectType>(TP)->getInterface();
+      break;
     case Type::ObjCInterface:
       D = cast<ObjCInterfaceType>(TP)->getDecl();
       break;

@@ -1543,16 +1543,12 @@ bool Sema::FunctionArgTypesAreEqual(FunctionProtoType*  OldType,
                PTFr->getPointeeType()->isObjCQualifiedClassType()))
             continue;
       }
-      else if (ToType->isObjCObjectPointerType() &&
-               FromType->isObjCObjectPointerType()) {
-        QualType ToInterfaceTy = ToType->getPointeeType();
-        QualType FromInterfaceTy = FromType->getPointeeType();
-        if (const ObjCInterfaceType *OITTo =
-            ToInterfaceTy->getAs<ObjCInterfaceType>())
-          if (const ObjCInterfaceType *OITFr =
-              FromInterfaceTy->getAs<ObjCInterfaceType>())
-            if (OITTo->getDecl() == OITFr->getDecl())
-              continue;
+      else if (const ObjCObjectPointerType *PTTo =
+                 ToType->getAs<ObjCObjectPointerType>()) {
+        if (const ObjCObjectPointerType *PTFr = 
+              FromType->getAs<ObjCObjectPointerType>())
+          if (PTTo->getInterfaceDecl() == PTFr->getInterfaceDecl())
+            continue;
       }
       return false;  
     }
@@ -2141,8 +2137,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
 
     // Objective-C++: If one interface is more specific than the
     // other, it is the better one.
-    const ObjCInterfaceType* FromIface1 = FromPointee1->getAs<ObjCInterfaceType>();
-    const ObjCInterfaceType* FromIface2 = FromPointee2->getAs<ObjCInterfaceType>();
+    const ObjCObjectType* FromIface1 = FromPointee1->getAs<ObjCObjectType>();
+    const ObjCObjectType* FromIface2 = FromPointee2->getAs<ObjCObjectType>();
     if (FromIface1 && FromIface1) {
       if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
         return ImplicitConversionSequence::Better;
@@ -2348,10 +2344,10 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     QualType ToPointee2
       = ToType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
-    const ObjCInterfaceType* FromIface1 = FromPointee1->getAs<ObjCInterfaceType>();
-    const ObjCInterfaceType* FromIface2 = FromPointee2->getAs<ObjCInterfaceType>();
-    const ObjCInterfaceType* ToIface1 = ToPointee1->getAs<ObjCInterfaceType>();
-    const ObjCInterfaceType* ToIface2 = ToPointee2->getAs<ObjCInterfaceType>();
+    const ObjCObjectType* FromIface1 = FromPointee1->getAs<ObjCObjectType>();
+    const ObjCObjectType* FromIface2 = FromPointee2->getAs<ObjCObjectType>();
+    const ObjCObjectType* ToIface1 = ToPointee1->getAs<ObjCObjectType>();
+    const ObjCObjectType* ToIface2 = ToPointee2->getAs<ObjCObjectType>();
 
     //   -- conversion of C* to B* is better than conversion of C* to A*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
@@ -2935,8 +2931,8 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
 /// TryContextuallyConvertToObjCId - Attempt to contextually convert the
 /// expression From to 'id'.
 ImplicitConversionSequence Sema::TryContextuallyConvertToObjCId(Expr *From) {
-  QualType Ty = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
-    return TryImplicitConversion(From, Ty,
+  QualType Ty = Context.getObjCIdType();
+  return TryImplicitConversion(From, Ty,
                                  // FIXME: Are these flags correct?
                                  /*SuppressUserConversions=*/false,
                                  /*AllowExplicit=*/true,
@@ -2946,7 +2942,7 @@ ImplicitConversionSequence Sema::TryContextuallyConvertToObjCId(Expr *From) {
 /// PerformContextuallyConvertToObjCId - Perform a contextual conversion
 /// of the expression From to 'id'.
 bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
-  QualType Ty = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
+  QualType Ty = Context.getObjCIdType();
   ImplicitConversionSequence ICS = TryContextuallyConvertToObjCId(From);
   if (!ICS.isBad())
     return PerformImplicitConversion(From, Ty, ICS, AA_Converting);

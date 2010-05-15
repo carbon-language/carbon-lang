@@ -322,6 +322,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                            true);
   }
 
+  case Type::ObjCObject:
+    return ConvertTypeRecursive(cast<ObjCObjectType>(Ty).getBaseType());
+
   case Type::ObjCInterface: {
     // Objective-C interfaces are always opaque (outside of the
     // runtime, which can do whatever it likes); we never refine

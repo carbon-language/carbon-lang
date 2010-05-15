@@ -30,7 +30,7 @@ using namespace clang;
 Sema::OwningStmtResult Sema::ActOnExprStmt(FullExprArg expr) {
   Expr *E = expr->takeAs<Expr>();
   assert(E && "ActOnExprStmt(): missing expression");
-  if (E->getType()->isObjCInterfaceType()) {
+  if (E->getType()->isObjCObjectType()) {
     if (LangOpts.ObjCNonFragileABI)
       Diag(E->getLocEnd(), diag::err_indirection_requires_nonfragile_object)
              << E->getType();

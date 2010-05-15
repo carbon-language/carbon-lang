@@ -26,3 +26,33 @@ namespace test0 {
     RetainPtr<id> ptr(S);
   }
 }
+
+@class Test1Class;
+@protocol Test1Protocol;
+namespace test1 {
+  template <typename T> struct RemovePointer {
+    typedef T type;
+  };
+  template <typename T> struct RemovePointer<T*> {
+    typedef T type;
+  };
+  template <typename A, typename B> struct is_same {};
+  template <typename A> struct is_same<A,A> {
+    static void foo();
+  };
+  template <typename T> struct tester {
+    void test() {
+      is_same<T, typename RemovePointer<T>::type*>::foo(); // expected-error 2 {{no member named 'foo'}}
+    }
+  };
+
+  template struct tester<id>;
+  template struct tester<id<Test1Protocol> >;
+  template struct tester<Class>;
+  template struct tester<Class<Test1Protocol> >;
+  template struct tester<Test1Class*>;
+  template struct tester<Test1Class<Test1Protocol>*>;
+
+  template struct tester<Test1Class>; // expected-note {{in instantiation}}
+  template struct tester<Test1Class<Test1Protocol> >; // expected-note {{in instantiation}}
+}

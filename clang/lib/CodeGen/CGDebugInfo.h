@@ -80,6 +80,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const TagType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const RecordType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
+  llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const EnumType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const VectorType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DIFile F);

@@ -345,45 +345,41 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
-ObjCInterfaceType::ObjCInterfaceType(QualType Canonical,
-                                     ObjCInterfaceDecl *D,
-                                     ObjCProtocolDecl **Protos, unsigned NumP) :
-  Type(ObjCInterface, Canonical, /*Dependent=*/false),
-  Decl(D), NumProtocols(NumP)
-{
-  if (NumProtocols)
-    memcpy(reinterpret_cast<ObjCProtocolDecl**>(this + 1), Protos, 
-           NumProtocols * sizeof(*Protos));
-}
-
 void ObjCInterfaceType::Destroy(ASTContext& C) {
   this->~ObjCInterfaceType();
   C.Deallocate(this);
 }
 
-const ObjCInterfaceType *Type::getAsObjCQualifiedInterfaceType() const {
-  // There is no sugar for ObjCInterfaceType's, just return the canonical
+ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
+                               ObjCProtocolDecl * const *Protocols,
+                               unsigned NumProtocols)
+  : Type(ObjCObject, Canonical, false),
+    NumProtocols(NumProtocols),
+    BaseType(Base) {
+  assert(this->NumProtocols == NumProtocols &&
+         "bitfield overflow in protocol count");
+  if (NumProtocols)
+    memcpy(getProtocolStorage(), Protocols,
+           NumProtocols * sizeof(ObjCProtocolDecl*));
+}
+
+void ObjCObjectTypeImpl::Destroy(ASTContext& C) {
+  this->~ObjCObjectTypeImpl();
+  C.Deallocate(this);
+}
+
+const ObjCObjectType *Type::getAsObjCQualifiedInterfaceType() const {
+  // There is no sugar for ObjCObjectType's, just return the canonical
   // type pointer if it is the right class.  There is no typedef information to
   // return and these cannot be Address-space qualified.
-  if (const ObjCInterfaceType *OIT = getAs<ObjCInterfaceType>())
-    if (OIT->getNumProtocols())
-      return OIT;
+  if (const ObjCObjectType *T = getAs<ObjCObjectType>())
+    if (T->getNumProtocols() && T->getInterface())
+      return T;
   return 0;
 }
 
 bool Type::isObjCQualifiedInterfaceType() const {
   return getAsObjCQualifiedInterfaceType() != 0;
-}
-
-ObjCObjectPointerType::ObjCObjectPointerType(QualType Canonical, QualType T,
-                                             ObjCProtocolDecl **Protos,
-                                             unsigned NumP) :
-  Type(ObjCObjectPointer, Canonical, /*Dependent=*/false),
-  PointeeType(T), NumProtocols(NumP)
-{
-  if (NumProtocols)
-    memcpy(reinterpret_cast<ObjCProtocolDecl **>(this + 1), Protos, 
-           NumProtocols * sizeof(*Protos));
 }
 
 void ObjCObjectPointerType::Destroy(ASTContext& C) {
@@ -638,6 +634,8 @@ bool Type::isIncompleteType() const {
   case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;
+  case ObjCObject:
+    return cast<ObjCObjectType>(this)->getBaseType()->isIncompleteType();
   case ObjCInterface:
     // ObjC interfaces are incomplete if they are @class, not @interface.
     return cast<ObjCInterfaceType>(this)->getDecl()->isForwardDecl();
@@ -768,7 +766,8 @@ bool Type::isSpecifierType() const {
   case Elaborated:
   case DependentName:
   case ObjCInterface:
-  case ObjCObjectPointer:
+  case ObjCObject:
+  case ObjCObjectPointer: // FIXME: object pointers aren't really specifiers
     return true;
   default:
     return false;
@@ -953,17 +952,8 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
           getExtInfo());
 }
 
-void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
-                                    QualType OIT, 
-                                    ObjCProtocolDecl * const *protocols,
-                                    unsigned NumProtocols) {
-  ID.AddPointer(OIT.getAsOpaquePtr());
-  for (unsigned i = 0; i != NumProtocols; i++)
-    ID.AddPointer(protocols[i]);
-}
-
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getPointeeType(), qual_begin(), getNumProtocols());
+  Profile(ID, getPointeeType());
 }
 
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
@@ -1163,17 +1153,17 @@ QualType QualifierCollector::apply(const Type *T) const {
   return Context->getQualifiedType(T, *this);
 }
 
-void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
-                                         const ObjCInterfaceDecl *Decl,
-                                         ObjCProtocolDecl * const *protocols,
-                                         unsigned NumProtocols) {
-  ID.AddPointer(Decl);
+void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID,
+                                 QualType BaseType,
+                                 ObjCProtocolDecl * const *Protocols,
+                                 unsigned NumProtocols) {
+  ID.AddPointer(BaseType.getAsOpaquePtr());
   for (unsigned i = 0; i != NumProtocols; i++)
-    ID.AddPointer(protocols[i]);
+    ID.AddPointer(Protocols[i]);
 }
 
-void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getDecl(), qual_begin(), getNumProtocols());
+void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getBaseType(), qual_begin(), getNumProtocols());
 }
 
 Linkage Type::getLinkage() const { 
@@ -1244,7 +1234,7 @@ Linkage FunctionProtoType::getLinkage() const {
   return L;
 }
 
-Linkage ObjCInterfaceType::getLinkage() const {
+Linkage ObjCObjectType::getLinkage() const {
   return ExternalLinkage;
 }
 

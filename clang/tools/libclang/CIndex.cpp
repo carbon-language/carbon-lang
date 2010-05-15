@@ -317,6 +317,7 @@ public:
   bool VisitTagTypeLoc(TagTypeLoc TL);
   // FIXME: TemplateTypeParmTypeLoc doesn't provide any location information
   bool VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
+  bool VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL);
   bool VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
   bool VisitPointerTypeLoc(PointerTypeLoc TL);
   bool VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL);
@@ -811,6 +812,13 @@ bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   if (Visit(MakeCursorObjCClassRef(TL.getIFaceDecl(), TL.getNameLoc(), TU)))
     return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
+  if (TL.hasBaseTypeAsWritten() && Visit(TL.getBaseLoc()))
+    return true;
+
   for (unsigned I = 0, N = TL.getNumProtocols(); I != N; ++I) {
     if (Visit(MakeCursorObjCProtocolRef(TL.getProtocol(I), TL.getProtocolLoc(I),
                                         TU)))
@@ -821,19 +829,7 @@ bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
-  if (TL.hasBaseTypeAsWritten() && Visit(TL.getBaseTypeLoc()))
-    return true;
-
-  if (TL.hasProtocolsAsWritten()) {
-    for (unsigned I = 0, N = TL.getNumProtocols(); I != N; ++I) {
-      if (Visit(MakeCursorObjCProtocolRef(TL.getProtocol(I),
-                                          TL.getProtocolLoc(I),
-                                          TU)))
-        return true;
-    }
-  }
-
-  return false;
+  return Visit(TL.getPointeeLoc());
 }
 
 bool CursorVisitor::VisitPointerTypeLoc(PointerTypeLoc TL) {

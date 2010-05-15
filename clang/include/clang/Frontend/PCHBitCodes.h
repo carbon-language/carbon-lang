@@ -415,7 +415,9 @@ namespace clang {
       /// \brief An UnresolvedUsingType record.
       TYPE_UNRESOLVED_USING         = 26,
       /// \brief An InjectedClassNameType record.
-      TYPE_INJECTED_CLASS_NAME      = 27
+      TYPE_INJECTED_CLASS_NAME      = 27,
+      /// \brief An ObjCObjectType record.
+      TYPE_OBJC_OBJECT              = 28
     };
 
     /// \brief The type IDs for special types constructed by semantic

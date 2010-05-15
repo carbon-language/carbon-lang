@@ -2445,31 +2445,15 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
     return QualType();
 
   QualType Result = TL.getType();
-  if (PointeeType->isObjCInterfaceType() ||
-      PointeeType->isSpecificBuiltinType(BuiltinType::ObjCId)) {
+  if (PointeeType->getAs<ObjCObjectType>()) {
     // A dependent pointer type 'T *' has is being transformed such
     // that an Objective-C class type is being replaced for 'T'. The
     // resulting pointer type is an ObjCObjectPointerType, not a
     // PointerType.
-    ObjCProtocolDecl **Protocols = 0;
-    unsigned NumProtocols = 0;
-
-    if (const ObjCInterfaceType *IFace
-          = PointeeType->getAs<ObjCInterfaceType>()) {
-      Protocols = const_cast<ObjCProtocolDecl**>(IFace->qual_begin());
-      NumProtocols = IFace->getNumProtocols();
-    }
-
-    Result = SemaRef.Context.getObjCObjectPointerType(PointeeType,
-                                                      Protocols,
-                                                      NumProtocols);
+    Result = SemaRef.Context.getObjCObjectPointerType(PointeeType);
     
-    ObjCObjectPointerTypeLoc NewT = TLB.push<ObjCObjectPointerTypeLoc>(Result);   
-    NewT.setStarLoc(TL.getSigilLoc());       
-    NewT.setHasProtocolsAsWritten(false);
-    NewT.setLAngleLoc(SourceLocation());
-    NewT.setRAngleLoc(SourceLocation());
-    NewT.setHasBaseTypeAsWritten(true);
+    ObjCObjectPointerTypeLoc NewT = TLB.push<ObjCObjectPointerTypeLoc>(Result);
+    NewT.setStarLoc(TL.getStarLoc());
     return Result;
   }
                                                             
@@ -3327,6 +3311,17 @@ TreeTransform<Derived>::TransformObjCInterfaceType(TypeLocBuilder &TLB,
                                                    ObjCInterfaceTypeLoc TL,
                                                    QualType ObjectType) {
   // ObjCInterfaceType is never dependent.
+  TLB.pushFullCopy(TL);
+  return TL.getType();
+}
+
+template<typename Derived>
+QualType
+TreeTransform<Derived>::TransformObjCObjectType(TypeLocBuilder &TLB,
+                                                ObjCObjectTypeLoc TL,
+                                                QualType ObjectType) {
+  // ObjCObjectType is never dependent.
+  TLB.pushFullCopy(TL);
   return TL.getType();
 }
 
@@ -3336,6 +3331,7 @@ TreeTransform<Derived>::TransformObjCObjectPointerType(TypeLocBuilder &TLB,
                                                ObjCObjectPointerTypeLoc TL,
                                                        QualType ObjectType) {
   // ObjCObjectPointerType is never dependent.
+  TLB.pushFullCopy(TL);
   return TL.getType();
 }
 

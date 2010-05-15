@@ -2552,7 +2552,8 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
         // is a call to a class method whose type we can resolve.  In such
         // cases, promote the return type to XXX* (where XXX is the class).
         const ObjCInterfaceDecl *D = ME->getReceiverInterface();
-        return !D ? RetTy : Ctx.getPointerType(Ctx.getObjCInterfaceType(D));
+        return !D ? RetTy :
+                    Ctx.getObjCObjectPointerType(Ctx.getObjCInterfaceType(D));
       }
 
   return RetTy;

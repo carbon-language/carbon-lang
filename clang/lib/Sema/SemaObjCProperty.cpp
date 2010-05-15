@@ -199,19 +199,16 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   // gc'able conforms to NSCopying protocol
   if (getLangOptions().getGCMode() != LangOptions::NonGC &&
       isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
-    if (T->isObjCObjectPointerType()) {
-      QualType InterfaceTy = T->getPointeeType();
-      if (const ObjCInterfaceType *OIT =
-          InterfaceTy->getAs<ObjCInterfaceType>()) {
-        ObjCInterfaceDecl *IDecl = OIT->getDecl();
-        if (IDecl)
-          if (ObjCProtocolDecl* PNSCopying =
-              LookupProtocol(&Context.Idents.get("NSCopying"), AtLoc))
-            if (IDecl->ClassImplementsProtocol(PNSCopying, true))
-              Diag(AtLoc, diag::warn_implements_nscopying) << PropertyId;
-      }
+    if (const ObjCObjectPointerType *ObjPtrTy =
+          T->getAs<ObjCObjectPointerType>()) {
+      ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
+      if (IDecl)
+        if (ObjCProtocolDecl* PNSCopying =
+            LookupProtocol(&Context.Idents.get("NSCopying"), AtLoc))
+          if (IDecl->ClassImplementsProtocol(PNSCopying, true))
+            Diag(AtLoc, diag::warn_implements_nscopying) << PropertyId;
     }
-  if (T->isObjCInterfaceType())
+  if (T->isObjCObjectType())
     Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
 
   DeclContext *DC = cast<DeclContext>(CDecl);

@@ -722,10 +722,8 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 
   // Find the class to which we are sending this message.
   ObjCInterfaceDecl *Class = 0;
-  if (const ObjCInterfaceType *ClassType
-                                 = ReceiverType->getAs<ObjCInterfaceType>())
-    Class = ClassType->getDecl();
-  else {
+  const ObjCObjectType *ClassType = ReceiverType->getAs<ObjCObjectType>();
+  if (!ClassType || !(Class = ClassType->getInterface())) {
     Diag(Loc, diag::err_invalid_receiver_class_message)
       << ReceiverType;
     return ExprError();

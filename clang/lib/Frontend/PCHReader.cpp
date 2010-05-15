@@ -2174,21 +2174,23 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   case pch::TYPE_OBJC_INTERFACE: {
     unsigned Idx = 0;
     ObjCInterfaceDecl *ItfD = cast<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
+    return Context->getObjCInterfaceType(ItfD);
+  }
+
+  case pch::TYPE_OBJC_OBJECT: {
+    unsigned Idx = 0;
+    QualType Base = GetType(Record[Idx++]);
     unsigned NumProtos = Record[Idx++];
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCInterfaceType(ItfD, Protos.data(), NumProtos);
+    return Context->getObjCObjectType(Base, Protos.data(), NumProtos);    
   }
 
   case pch::TYPE_OBJC_OBJECT_POINTER: {
     unsigned Idx = 0;
-    QualType OIT = GetType(Record[Idx++]);
-    unsigned NumProtos = Record[Idx++];
-    llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
-    for (unsigned I = 0; I != NumProtos; ++I)
-      Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCObjectPointerType(OIT, Protos.data(), NumProtos);
+    QualType Pointee = GetType(Record[Idx++]);
+    return Context->getObjCObjectPointerType(Pointee);
   }
 
   case pch::TYPE_SUBST_TEMPLATE_TYPE_PARM: {
@@ -2364,6 +2366,9 @@ void TypeLocReader::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
+  TL.setHasBaseTypeAsWritten(Record[Idx++]);
   TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
@@ -2371,13 +2376,6 @@ void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
 }
 void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TL.setHasBaseTypeAsWritten(Record[Idx++]);
-  TL.setHasProtocolsAsWritten(Record[Idx++]);
-  if (TL.hasProtocolsAsWritten())
-    for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
-      TL.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 TypeSourceInfo *PCHReader::GetTypeSourceInfo(const RecordData &Record,

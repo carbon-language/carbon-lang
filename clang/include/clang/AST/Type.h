@@ -755,6 +755,9 @@ public:
   };
 
 private:
+  Type(const Type&);           // DO NOT IMPLEMENT.
+  void operator=(const Type&); // DO NOT IMPLEMENT.
+
   QualType CanonicalType;
 
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
@@ -765,9 +768,9 @@ private:
   /// subclasses can pack their bitfields into the same word.
   bool Dependent : 1;
 
-  Type(const Type&);           // DO NOT IMPLEMENT.
-  void operator=(const Type&); // DO NOT IMPLEMENT.
 protected:
+  enum { BitsRemainingInType = 23 };
+
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool dependent)
@@ -879,7 +882,7 @@ public:
   bool isObjCObjectPointerType() const;         // Pointer to *any* ObjC object.
   // FIXME: change this to 'raw' interface type, so we can used 'interface' type
   // for the common case.
-  bool isObjCInterfaceType() const;             // NSString or NSString<foo>
+  bool isObjCObjectType() const;                // NSString or typeof(*(id)0)
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
   bool isObjCQualifiedClassType() const;        // Class<foo>
@@ -920,7 +923,7 @@ public:
   // for object declared using an interface.
   const ObjCObjectPointerType *getAsObjCInterfacePointerType() const;
   const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
-  const ObjCInterfaceType *getAsObjCQualifiedInterfaceType() const;
+  const ObjCObjectType *getAsObjCQualifiedInterfaceType() const;
   const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
 
   /// \brief Retrieves the CXXRecordDecl that this type refers to, either
@@ -934,10 +937,6 @@ public:
   // There are some specializations of this member template listed
   // immediately following this class.
   template <typename T> const T *getAs() const;
-
-  /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
-  /// interface, return the interface type, otherwise return null.
-  const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
 
   /// getArrayElementTypeNoTypeQual - If this is an array type, return the
   /// element type of the array, potentially with type qualifiers missing.
@@ -2750,64 +2749,183 @@ public:
   static bool classof(const DependentNameType *T) { return true; }
 };
 
-/// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
-/// object oriented design.  They basically correspond to C++ classes.  There
-/// are two kinds of interface types, normal interfaces like "NSString" and
-/// qualified interfaces, which are qualified with a protocol list like
-/// "NSString<NSCopyable, NSAmazing>".
-class ObjCInterfaceType : public Type, public llvm::FoldingSetNode {
-  ObjCInterfaceDecl *Decl;
+/// ObjCObjectType - Represents a class type in Objective C.
+/// Every Objective C type is a combination of a base type and a
+/// list of protocols.
+///
+/// Given the following declarations:
+///   @class C;
+///   @protocol P;
+///
+/// 'C' is an ObjCInterfaceType C.  It is sugar for an ObjCObjectType
+/// with base C and no protocols.
+///
+/// 'C<P>' is an ObjCObjectType with base C and protocol list [P].
+///
+/// 'id' is a TypedefType which is sugar for an ObjCPointerType with
+/// base BuiltinType::ObjCIdType and no protocols.
+///
+/// 'id<P>' is an ObjCPointerType with base BuiltinType::ObjCIdType
+/// and protocol list [P].  Eventually this should get its own sugar
+/// class to better represent the source.
+class ObjCObjectType : public Type {
+  // Pad the bit count up so that NumProtocols is 2-byte aligned
+  unsigned : BitsRemainingInType - 16;
 
-  /// \brief The number of protocols stored after the ObjCInterfaceType node.
-  /// The list of protocols is sorted on protocol name. No protocol is enterred 
-  /// more than once.
-  unsigned NumProtocols;
+  /// \brief The number of protocols stored after the
+  /// ObjCObjectPointerType node.
+  ///
+  /// In the canonical object type, these are sorted alphabetically
+  /// and uniqued.
+  unsigned NumProtocols : 16;
 
-  ObjCInterfaceType(QualType Canonical, ObjCInterfaceDecl *D,
-                    ObjCProtocolDecl **Protos, unsigned NumP);
-  friend class ASTContext;  // ASTContext creates these.
+  /// Either a BuiltinType or an InterfaceType or sugar for either.
+  QualType BaseType;
+
+  ObjCProtocolDecl * const *getProtocolStorage() const {
+    return const_cast<ObjCObjectType*>(this)->getProtocolStorage();
+  }
+
+  ObjCProtocolDecl **getProtocolStorage();
+
+protected:
+  ObjCObjectType(QualType Canonical, QualType Base, 
+                 ObjCProtocolDecl * const *Protocols, unsigned NumProtocols);
+
+  enum Nonce_ObjCInterface { Nonce_ObjCInterface };
+  ObjCObjectType(enum Nonce_ObjCInterface)
+    : Type(ObjCInterface, QualType(), false),
+      NumProtocols(0),
+      BaseType(QualType(this_(), 0)) {}
+
 public:
-  void Destroy(ASTContext& C);
+  QualType getBaseType() const { return BaseType; }
 
-  ObjCInterfaceDecl *getDecl() const { return Decl; }
+  bool isObjCId() const {
+    return getBaseType()->isSpecificBuiltinType(BuiltinType::ObjCId);
+  }
+  bool isObjCClass() const {
+    return getBaseType()->isSpecificBuiltinType(BuiltinType::ObjCClass);
+  }
+  bool isObjCUnqualifiedId() const { return qual_empty() && isObjCId(); }
+  bool isObjCUnqualifiedClass() const { return qual_empty() && isObjCClass(); }
+  bool isObjCUnqualifiedIdOrClass() const {
+    if (!qual_empty()) return false;
+    if (const BuiltinType *T = getBaseType()->getAs<BuiltinType>())
+      return T->getKind() == BuiltinType::ObjCId ||
+             T->getKind() == BuiltinType::ObjCClass;
+    return false;
+  }
+  bool isObjCQualifiedId() const { return !qual_empty() && isObjCId(); }
+  bool isObjCQualifiedClass() const { return !qual_empty() && isObjCClass(); }
+
+  /// Gets the interface declaration for this object type, if the base type
+  /// really is an interface.
+  ObjCInterfaceDecl *getInterface() const;
+
+  typedef ObjCProtocolDecl * const *qual_iterator;
+
+  qual_iterator qual_begin() const { return getProtocolStorage(); }
+  qual_iterator qual_end() const { return qual_begin() + getNumProtocols(); }
+
+  bool qual_empty() const { return getNumProtocols() == 0; }
 
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
   unsigned getNumProtocols() const { return NumProtocols; }
 
-  /// \brief Retrieve the Ith protocol.
+  /// \brief Fetch a protocol by index.
   ObjCProtocolDecl *getProtocol(unsigned I) const {
     assert(I < getNumProtocols() && "Out-of-range protocol access");
     return qual_begin()[I];
   }
   
-  /// qual_iterator and friends: this provides access to the (potentially empty)
-  /// list of protocols qualifying this interface.
-  typedef ObjCProtocolDecl*  const * qual_iterator;
-  qual_iterator qual_begin() const {
-    return reinterpret_cast<qual_iterator>(this + 1);
-  }
-  qual_iterator qual_end() const   {
-    return qual_begin() + NumProtocols;
-  }
-  bool qual_empty() const { return NumProtocols == 0; }
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  Linkage getLinkage() const; // key function
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ObjCObject ||
+           T->getTypeClass() == ObjCInterface;
+  }
+  static bool classof(const ObjCObjectType *) { return true; }
+};
+
+/// ObjCObjectTypeImpl - A class providing a concrete implementation
+/// of ObjCObjectType, so as to not increase the footprint of
+/// ObjCInterfaceType.  Code outside of ASTContext and the core type
+/// system should not reference this type.
+class ObjCObjectTypeImpl : public ObjCObjectType, public llvm::FoldingSetNode {
+  friend class ASTContext;
+
+  // If anyone adds fields here, ObjCObjectType::getProtocolStorage()
+  // will need to be modified.
+
+  ObjCObjectTypeImpl(QualType Canonical, QualType Base, 
+                     ObjCProtocolDecl * const *Protocols,
+                     unsigned NumProtocols)
+    : ObjCObjectType(Canonical, Base, Protocols, NumProtocols) {}
+
+public:
+  void Destroy(ASTContext& C); // key function
+
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      const ObjCInterfaceDecl *Decl,
-                      ObjCProtocolDecl * const *protocols, 
-                      unsigned NumProtocols);
+                      QualType Base,
+                      ObjCProtocolDecl *const *protocols, 
+                      unsigned NumProtocols);  
+};
 
-  virtual Linkage getLinkage() const;
+inline ObjCProtocolDecl **ObjCObjectType::getProtocolStorage() {
+  return reinterpret_cast<ObjCProtocolDecl**>(
+            static_cast<ObjCObjectTypeImpl*>(this) + 1);
+}
+
+/// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
+/// object oriented design.  They basically correspond to C++ classes.  There
+/// are two kinds of interface types, normal interfaces like "NSString" and
+/// qualified interfaces, which are qualified with a protocol list like
+/// "NSString<NSCopyable, NSAmazing>".
+class ObjCInterfaceType : public ObjCObjectType {
+  ObjCInterfaceDecl *Decl;
+
+  ObjCInterfaceType(const ObjCInterfaceDecl *D)
+    : ObjCObjectType(Nonce_ObjCInterface),
+      Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  void Destroy(ASTContext& C); // key function
+
+  ObjCInterfaceDecl *getDecl() const { return Decl; }
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCInterface;
   }
   static bool classof(const ObjCInterfaceType *) { return true; }
+
+  // Nonsense to "hide" certain members of ObjCObjectType within this
+  // class.  People asking for protocols on an ObjCInterfaceType are
+  // not going to get what they want: ObjCInterfaceTypes are
+  // guaranteed to have no protocols.
+  enum {
+    qual_iterator,
+    qual_begin,
+    qual_end,
+    getNumProtocols,
+    getProtocol
+  };
 };
+
+inline ObjCInterfaceDecl *ObjCObjectType::getInterface() const {
+  if (const ObjCInterfaceType *T =
+        getBaseType()->getAs<ObjCInterfaceType>())
+    return T->getDecl();
+  return 0;
+}
 
 /// ObjCObjectPointerType - Used to represent 'id', 'Interface *', 'id <p>',
 /// and 'Interface <p> *'.
@@ -2817,15 +2935,9 @@ public:
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType; // A builtin or interface type.
 
-  /// \brief The number of protocols stored after the ObjCObjectPointerType 
-  /// node.
-  ///
-  /// The list of protocols is sorted on protocol name. No protocol is enterred 
-  /// more than once.
-  unsigned NumProtocols;
-
-  ObjCObjectPointerType(QualType Canonical, QualType T,
-                        ObjCProtocolDecl **Protos, unsigned NumP);
+  ObjCObjectPointerType(QualType Canonical, QualType Pointee)
+    : Type(ObjCObjectPointer, Canonical, false),
+      PointeeType(Pointee) {}
   friend class ASTContext;  // ASTContext creates these.
 
 public:
@@ -2838,8 +2950,12 @@ public:
   //   For example: typedef NSObject T; T *var;
   QualType getPointeeType() const { return PointeeType; }
 
+  const ObjCObjectType *getObjectType() const {
+    return PointeeType->getAs<ObjCObjectType>();
+  }
+
   const ObjCInterfaceType *getInterfaceType() const {
-    return PointeeType->getAs<ObjCInterfaceType>();
+    return getObjectType()->getBaseType()->getAs<ObjCInterfaceType>();
   }
   /// getInterfaceDecl - returns an interface decl for user-defined types.
   ObjCInterfaceDecl *getInterfaceDecl() const {
@@ -2847,45 +2963,42 @@ public:
   }
   /// isObjCIdType - true for "id".
   bool isObjCIdType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-           !NumProtocols;
+    return getObjectType()->isObjCUnqualifiedId();
   }
   /// isObjCClassType - true for "Class".
   bool isObjCClassType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
-           !NumProtocols;
+    return getObjectType()->isObjCUnqualifiedClass();
   }
   
   /// isObjCQualifiedIdType - true for "id <p>".
   bool isObjCQualifiedIdType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-           NumProtocols;
+    return getObjectType()->isObjCQualifiedId();
   }
   /// isObjCQualifiedClassType - true for "Class <p>".
   bool isObjCQualifiedClassType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
-           NumProtocols;
+    return getObjectType()->isObjCQualifiedClass();
   }
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.
-  typedef ObjCProtocolDecl*  const * qual_iterator;
+  typedef ObjCObjectType::qual_iterator qual_iterator;
 
   qual_iterator qual_begin() const {
-    return reinterpret_cast<qual_iterator> (this + 1);
+    return getObjectType()->qual_begin();
   }
-  qual_iterator qual_end() const   {
-    return qual_begin() + NumProtocols;
+  qual_iterator qual_end() const {
+    return getObjectType()->qual_end();
   }
-  bool qual_empty() const { return NumProtocols == 0; }
+  bool qual_empty() const { return getObjectType()->qual_empty(); }
 
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
-  unsigned getNumProtocols() const { return NumProtocols; }
+  unsigned getNumProtocols() const {
+    return getObjectType()->getNumProtocols();
+  }
 
   /// \brief Retrieve the Ith protocol.
   ObjCProtocolDecl *getProtocol(unsigned I) const {
-    assert(I < getNumProtocols() && "Out-of-range protocol access");
-    return qual_begin()[I];
+    return getObjectType()->getProtocol(I);
   }
   
   bool isSugared() const { return false; }
@@ -2894,9 +3007,9 @@ public:
   virtual Linkage getLinkage() const;
 
   void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
-                      ObjCProtocolDecl *const *protocols, 
-                      unsigned NumProtocols);
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType T) {
+    ID.AddPointer(T.getAsOpaquePtr());
+  }
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCObjectPointer;
   }
@@ -3135,12 +3248,6 @@ inline QualType QualType::getNonReferenceType() const {
     return *this;
 }
 
-inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
-  if (const PointerType *PT = getAs<PointerType>())
-    return PT->getPointeeType()->getAs<ObjCInterfaceType>();
-  return 0;
-}
-
 inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType);
 }
@@ -3207,8 +3314,8 @@ inline bool Type::isExtVectorType() const {
 inline bool Type::isObjCObjectPointerType() const {
   return isa<ObjCObjectPointerType>(CanonicalType);
 }
-inline bool Type::isObjCInterfaceType() const {
-  return isa<ObjCInterfaceType>(CanonicalType);
+inline bool Type::isObjCObjectType() const {
+  return isa<ObjCObjectType>(CanonicalType);
 }
 inline bool Type::isObjCQualifiedIdType() const {
   if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
@@ -3257,13 +3364,11 @@ inline bool Type::isOverloadableType() const {
 
 inline bool Type::hasPointerRepresentation() const {
   return (isPointerType() || isReferenceType() || isBlockPointerType() ||
-          isObjCInterfaceType() || isObjCObjectPointerType() ||
-          isObjCQualifiedInterfaceType() || isNullPtrType());
+          isObjCObjectPointerType() || isNullPtrType());
 }
 
 inline bool Type::hasObjCPointerRepresentation() const {
-  return (isObjCInterfaceType() || isObjCObjectPointerType() ||
-          isObjCQualifiedInterfaceType());
+  return isObjCObjectPointerType();
 }
 
 /// Insertion operator for diagnostics.  This allows sending QualType's into a

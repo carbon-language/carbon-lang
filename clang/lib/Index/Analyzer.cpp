@@ -180,7 +180,7 @@ public:
       if (IsInstanceMethod)
         return false;
 
-      MsgD = Msg->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+      MsgD = Msg->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
       break;
     }
 
@@ -189,7 +189,7 @@ public:
       if (IsInstanceMethod)
         return false;
 
-      MsgD = Msg->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+      MsgD = Msg->getSuperType()->getAs<ObjCObjectType>()->getInterface();
       break;
 
     case ObjCMessageExpr::SuperInstance:
@@ -292,12 +292,12 @@ public:
         
       case ObjCMessageExpr::Class:
         CanBeClassMethod = true;
-        MsgD = Msg->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+        MsgD = Msg->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
         break;
 
       case ObjCMessageExpr::SuperClass:
         CanBeClassMethod = true;
-        MsgD = Msg->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+        MsgD = Msg->getSuperType()->getAs<ObjCObjectType>()->getInterface();
         break;
 
       case ObjCMessageExpr::SuperInstance:

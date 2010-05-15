@@ -834,6 +834,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   return RealDecl;
 }
 
+/// CreateType - get objective-c object type.
+llvm::DIType CGDebugInfo::CreateType(const ObjCObjectType *Ty,
+                                     llvm::DIFile Unit) {
+  // Ignore protocols.
+  return getOrCreateType(Ty->getBaseType(), Unit);
+}
+
 /// CreateType - get objective-c interface type.
 llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                      llvm::DIFile Unit) {
@@ -1210,6 +1217,8 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     return CreateType(cast<VectorType>(Ty), Unit);
   case Type::ObjCObjectPointer:
     return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
+  case Type::ObjCObject:
+    return CreateType(cast<ObjCObjectType>(Ty), Unit);
   case Type::ObjCInterface:
     return CreateType(cast<ObjCInterfaceType>(Ty), Unit);
   case Type::Builtin: return CreateType(cast<BuiltinType>(Ty), Unit);

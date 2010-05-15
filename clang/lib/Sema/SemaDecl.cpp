@@ -2719,7 +2719,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   QualType T = NewVD->getType();
 
-  if (T->isObjCInterfaceType()) {
+  if (T->isObjCObjectType()) {
     Diag(NewVD->getLocation(), diag::err_statically_allocated_object);
     return NewVD->setInvalidDecl();
   }
@@ -2937,7 +2937,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     D.setInvalidType();
 
   // Do not allow returning a objc interface by-value.
-  if (R->getAs<FunctionType>()->getResultType()->isObjCInterfaceType()) {
+  if (R->getAs<FunctionType>()->getResultType()->isObjCObjectType()) {
     Diag(D.getIdentifierLoc(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0
       << R->getAs<FunctionType>()->getResultType();
@@ -4330,7 +4330,7 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC,
 
   // Parameter declarators cannot be interface types. All ObjC objects are
   // passed by reference.
-  if (T->isObjCInterfaceType()) {
+  if (T->isObjCObjectType()) {
     Diag(NameLoc,
          diag::err_object_cannot_be_passed_returned_by_value) << 1 << T;
     New->setInvalidDecl();
@@ -6146,7 +6146,7 @@ void Sema::ActOnFields(Scope* S,
       }
       if (Record && FDTTy->getDecl()->hasObjectMember())
         Record->setHasObjectMember(true);
-    } else if (FDTy->isObjCInterfaceType()) {
+    } else if (FDTy->isObjCObjectType()) {
       /// A field cannot be an Objective-c object
       Diag(FD->getLocation(), diag::err_statically_allocated_object);
       FD->setInvalidDecl();

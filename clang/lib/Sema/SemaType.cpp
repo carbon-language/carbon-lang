@@ -162,9 +162,10 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy,
-                                                (ObjCProtocolDecl**)PQ,
-                                                DS.getNumProtocolQualifiers());
+      Result = Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
+                                         (ObjCProtocolDecl**)PQ,
+                                         DS.getNumProtocolQualifiers());
+      Result = Context.getObjCObjectPointerType(Result);
       break;
     }
     
@@ -299,28 +300,28 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     Result = TheSema.GetTypeFromParser(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      if (const ObjCInterfaceType *
-            Interface = Result->getAs<ObjCInterfaceType>()) {
-        // It would be nice if protocol qualifiers were only stored with the
-        // ObjCObjectPointerType. Unfortunately, this isn't possible due
-        // to the following typedef idiom (which is uncommon, but allowed):
-        //
-        // typedef Foo<P> T;
-        // static void func() {
-        //   Foo<P> *yy;
-        //   T *zz;
-        // }
-        Result = Context.getObjCInterfaceType(Interface->getDecl(),
-                                              (ObjCProtocolDecl**)PQ,
-                                              DS.getNumProtocolQualifiers());
-      } else if (Result->isObjCIdType())
+      if (const ObjCObjectType *ObjT = Result->getAs<ObjCObjectType>()) {
+        // Silently drop any existing protocol qualifiers.
+        // TODO: determine whether that's the right thing to do.
+        if (ObjT->getNumProtocols())
+          Result = ObjT->getBaseType();
+
+        if (DS.getNumProtocolQualifiers())
+          Result = Context.getObjCObjectType(Result,
+                                             (ObjCProtocolDecl**) PQ,
+                                             DS.getNumProtocolQualifiers());
+      } else if (Result->isObjCIdType()) {
         // id<protocol-list>
-        Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy,
-                        (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
-      else if (Result->isObjCClassType()) {
+        Result = Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
+                                           (ObjCProtocolDecl**) PQ,
+                                           DS.getNumProtocolQualifiers());
+        Result = Context.getObjCObjectPointerType(Result);
+      } else if (Result->isObjCClassType()) {
         // Class<protocol-list>
-        Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy,
-                        (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
+        Result = Context.getObjCObjectType(Context.ObjCBuiltinClassTy,
+                                           (ObjCProtocolDecl**) PQ,
+                                           DS.getNumProtocolQualifiers());
+        Result = Context.getObjCObjectPointerType(Result);
       } else {
         TheSema.Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
           << DS.getSourceRange();
@@ -503,7 +504,7 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
     Qs.removeRestrict();
   }
 
-  assert(!T->isObjCInterfaceType() && "Should build ObjCObjectPointerType");
+  assert(!T->isObjCObjectType() && "Should build ObjCObjectPointerType");
 
   // Build the pointer type.
   return Context.getQualifiedType(Context.getPointerType(T), Qs);
@@ -658,7 +659,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     // array, accept it as a GNU extension: C99 6.7.2.1p2.
     if (EltTy->getDecl()->hasFlexibleArrayMember())
       Diag(Loc, diag::ext_flexible_array_in_array) << T;
-  } else if (T->isObjCInterfaceType()) {
+  } else if (T->isObjCObjectType()) {
     Diag(Loc, diag::err_objc_array_of_interfaces) << T;
     return QualType();
   }
@@ -1055,13 +1056,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         D.setInvalidType(true);
         // Build the type anyway.
       }
-      if (getLangOptions().ObjC1 && T->isObjCInterfaceType()) {
-        const ObjCInterfaceType *OIT = T->getAs<ObjCInterfaceType>();
-        T = Context.getObjCObjectPointerType(T,
-                                         const_cast<ObjCProtocolDecl **>(
-                                           OIT->qual_begin()),
-                                         OIT->getNumProtocols(),
-                                         DeclType.Ptr.TypeQuals);
+      if (getLangOptions().ObjC1 && T->getAs<ObjCObjectType>()) {
+        T = Context.getObjCObjectPointerType(T);
+        T = Context.getCVRQualifiedType(T, DeclType.Ptr.TypeQuals);
         break;
       }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
@@ -1400,7 +1397,18 @@ namespace {
     }
     void VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeLoc());
+    }
+    void VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
+      // Handle the base type, which might not have been written explicitly.
+      if (DS.getTypeSpecType() == DeclSpec::TST_unspecified) {
+        TL.setHasBaseTypeAsWritten(false);
+        TL.getBaseLoc().initialize(SourceLocation());
+      } else {
+        TL.setHasBaseTypeAsWritten(true);
+        Visit(TL.getBaseLoc());
+      }
 
+      // Protocol qualifiers.
       if (DS.getProtocolQualifiers()) {
         assert(TL.getNumProtocols() > 0);
         assert(TL.getNumProtocols() == DS.getNumProtocolQualifiers());
@@ -1415,34 +1423,8 @@ namespace {
       }
     }
     void VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
-      assert(TL.getNumProtocols() == DS.getNumProtocolQualifiers());
-
       TL.setStarLoc(SourceLocation());
-
-      if (DS.getProtocolQualifiers()) {
-        assert(TL.getNumProtocols() > 0);
-        assert(TL.getNumProtocols() == DS.getNumProtocolQualifiers());
-        TL.setHasProtocolsAsWritten(true);
-        TL.setLAngleLoc(DS.getProtocolLAngleLoc());
-        TL.setRAngleLoc(DS.getSourceRange().getEnd());
-        for (unsigned i = 0, e = DS.getNumProtocolQualifiers(); i != e; ++i)
-          TL.setProtocolLoc(i, DS.getProtocolLocs()[i]);
-
-      } else {
-        assert(TL.getNumProtocols() == 0);
-        TL.setHasProtocolsAsWritten(false);
-        TL.setLAngleLoc(SourceLocation());
-        TL.setRAngleLoc(SourceLocation());
-      }
-
-      // This might not have been written with an inner type.
-      if (DS.getTypeSpecType() == DeclSpec::TST_unspecified) {
-        TL.setHasBaseTypeAsWritten(false);
-        TL.getBaseTypeLoc().initialize(SourceLocation());
-      } else {
-        TL.setHasBaseTypeAsWritten(true);
-        Visit(TL.getBaseTypeLoc());
-      }
+      Visit(TL.getPointeeLoc());
     }
     void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
       TypeSourceInfo *TInfo = 0;
@@ -1515,10 +1497,6 @@ namespace {
     void VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::Pointer);
       TL.setStarLoc(Chunk.Loc);
-      TL.setHasBaseTypeAsWritten(true);
-      TL.setHasProtocolsAsWritten(false);
-      TL.setLAngleLoc(SourceLocation());
-      TL.setRAngleLoc(SourceLocation());
     }
     void VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::MemberPointer);

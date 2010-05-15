@@ -98,7 +98,7 @@ class ASTContext {
   llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
-  llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
+  llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
@@ -624,16 +624,15 @@ public:
                                 const TemplateSpecializationType *TemplateId,
                                 QualType Canon = QualType());
 
-  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
-                                ObjCProtocolDecl **Protocols = 0,
-                                unsigned NumProtocols = 0);
+  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 
-  /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for the
-  /// given interface decl and the conforming protocol list.
-  QualType getObjCObjectPointerType(QualType OIT,
-                                    ObjCProtocolDecl **ProtocolList = 0,
-                                    unsigned NumProtocols = 0,
-                                    unsigned Quals = 0);
+  QualType getObjCObjectType(QualType Base,
+                             ObjCProtocolDecl * const *Protocols,
+                             unsigned NumProtocols);
+
+  /// getObjCObjectPointerType - Return a ObjCObjectPointerType type
+  /// for the given ObjCObjectType.
+  QualType getObjCObjectPointerType(QualType OIT);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);
@@ -1182,8 +1181,8 @@ public:
   // Check the safety of assignment from LHS to RHS
   bool canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
                                const ObjCObjectPointerType *RHSOPT);
-  bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
-                               const ObjCInterfaceType *RHS);
+  bool canAssignObjCInterfaces(const ObjCObjectType *LHS,
+                               const ObjCObjectType *RHS);
   bool canAssignObjCInterfacesInBlockPointer(
                                           const ObjCObjectPointerType *LHSOPT,
                                           const ObjCObjectPointerType *RHSOPT);

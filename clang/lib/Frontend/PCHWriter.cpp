@@ -244,20 +244,21 @@ void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
 
 void PCHTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
+  Code = pch::TYPE_OBJC_INTERFACE;
+}
+
+void PCHTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
+  Writer.AddTypeRef(T->getBaseType(), Record);
   Record.push_back(T->getNumProtocols());
-  for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
+  for (ObjCObjectType::qual_iterator I = T->qual_begin(),
        E = T->qual_end(); I != E; ++I)
     Writer.AddDeclRef(*I, Record);
-  Code = pch::TYPE_OBJC_INTERFACE;
+  Code = pch::TYPE_OBJC_OBJECT;
 }
 
 void
 PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Record.push_back(T->getNumProtocols());
-  for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
-       E = T->qual_end(); I != E; ++I)
-    Writer.AddDeclRef(*I, Record);
   Code = pch::TYPE_OBJC_OBJECT_POINTER;
 }
 
@@ -406,6 +407,9 @@ void TypeLocWriter::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
 }
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
+  Record.push_back(TL.hasBaseTypeAsWritten());
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
   for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
@@ -413,13 +417,6 @@ void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
 }
 void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   Writer.AddSourceLocation(TL.getStarLoc(), Record);
-  Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
-  Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
-  Record.push_back(TL.hasBaseTypeAsWritten());
-  Record.push_back(TL.hasProtocolsAsWritten());
-  if (TL.hasProtocolsAsWritten())
-    for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
-      Writer.AddSourceLocation(TL.getProtocolLoc(i), Record);
 }
 
 //===----------------------------------------------------------------------===//

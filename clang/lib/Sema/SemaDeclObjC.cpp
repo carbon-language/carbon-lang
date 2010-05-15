@@ -142,8 +142,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
         // typedef. If we do, get the underlying class type.
         if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
           QualType T = TDecl->getUnderlyingType();
-          if (T->isObjCInterfaceType()) {
-            if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl())
+          if (T->isObjCObjectType()) {
+            if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface())
               SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
           }
         }
@@ -210,8 +210,8 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
                                        LookupOrdinaryName, ForRedeclaration);
   if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
-    if (T->isObjCInterfaceType()) {
-      if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl()) {
+    if (T->isObjCObjectType()) {
+      if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface()) {
         ClassName = IDecl->getIdentifier();
         CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
                                   LookupOrdinaryName, ForRedeclaration);
@@ -1024,15 +1024,15 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       //
       // FIXME: Make an extension?
       TypedefDecl *TDD = dyn_cast<TypedefDecl>(PrevDecl);
-      if (!TDD || !isa<ObjCInterfaceType>(TDD->getUnderlyingType())) {
+      if (!TDD || !TDD->getUnderlyingType()->isObjCObjectType()) {
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      } else if (TDD) {
+      } else {
         // a forward class declaration matching a typedef name of a class refers
         // to the underlying class.
-        if (ObjCInterfaceType * OI =
-              dyn_cast<ObjCInterfaceType>(TDD->getUnderlyingType()))
-          PrevDecl = OI->getDecl();
+        if (const ObjCObjectType *OI =
+              TDD->getUnderlyingType()->getAs<ObjCObjectType>())
+          PrevDecl = OI->getInterface();
       }
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
@@ -1532,7 +1532,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
 
     // Methods cannot return interface types. All ObjC objects are
     // passed by reference.
-    if (resultDeclType->isObjCInterfaceType()) {
+    if (resultDeclType->isObjCObjectType()) {
       Diag(MethodLoc, diag::err_object_cannot_be_passed_returned_by_value)
         << 0 << resultDeclType;
       return DeclPtrTy();
@@ -1570,7 +1570,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
                             ArgInfo[i].Name, ArgType, DI,
                             VarDecl::None, VarDecl::None, 0);
 
-    if (ArgType->isObjCInterfaceType()) {
+    if (ArgType->isObjCObjectType()) {
       Diag(ArgInfo[i].NameLoc,
            diag::err_object_cannot_be_passed_returned_by_value)
         << 1 << ArgType;
@@ -1594,7 +1594,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     else
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
       ArgType = adjustParameterType(ArgType);
-    if (ArgType->isObjCInterfaceType()) {
+    if (ArgType->isObjCObjectType()) {
       Diag(Param->getLocation(),
            diag::err_object_cannot_be_passed_returned_by_value)
       << 1 << ArgType;

@@ -596,23 +596,35 @@ void TypePrinter::PrintObjCInterface(const ObjCInterfaceType *T,
                                      std::string &S) { 
   if (!S.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     S = ' ' + S;
-  
+
   std::string ObjCQIString = T->getDecl()->getNameAsString();
-  if (T->getNumProtocols()) {
-    ObjCQIString += '<';
-    bool isFirst = true;
-    for (ObjCInterfaceType::qual_iterator I = T->qual_begin(), 
-                                          E = T->qual_end(); 
-         I != E; ++I) {
-      if (isFirst)
-        isFirst = false;
-      else
-        ObjCQIString += ',';
-      ObjCQIString += (*I)->getNameAsString();
-    }
-    ObjCQIString += '>';
-  }
   S = ObjCQIString + S;
+}
+
+void TypePrinter::PrintObjCObject(const ObjCObjectType *T,
+                                  std::string &S) {
+  if (T->qual_empty())
+    return Print(T->getBaseType(), S);
+
+  std::string tmp;
+  Print(T->getBaseType(), tmp);
+  tmp += '<';
+  bool isFirst = true;
+  for (ObjCObjectType::qual_iterator
+         I = T->qual_begin(), E = T->qual_end(); I != E; ++I) {
+    if (isFirst)
+      isFirst = false;
+    else
+      tmp += ',';
+    tmp += (*I)->getNameAsString();
+  }
+  tmp += '>';
+
+  if (!S.empty()) {
+    tmp += ' ';
+    tmp += S;
+  }
+  std::swap(tmp, S);
 }
 
 void TypePrinter::PrintObjCObjectPointer(const ObjCObjectPointerType *T, 
