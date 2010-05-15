@@ -264,9 +264,11 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
       LValue LV = EmitLValue(E->getArg(0));
       llvm::Value *This;
       if (LV.isPropertyRef()) {
-        RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
-        assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
-        This = RV.getAggregateAddr();
+        llvm::Value *AggLoc  = CreateMemTemp(E->getArg(0)->getType());
+        EmitAggExpr(E->getArg(1), AggLoc, false /*VolatileDest*/);
+        EmitObjCPropertySet(LV.getPropertyRefExpr(),
+                            RValue::getAggregate(AggLoc, false /*VolatileDest*/));
+        return RValue::getAggregate(0, false);
       }
       else
         This = LV.getAddress();
@@ -285,9 +287,11 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   LValue LV = EmitLValue(E->getArg(0));
   llvm::Value *This;
   if (LV.isPropertyRef()) {
-    RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
-    assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
-    This = RV.getAggregateAddr();
+    llvm::Value *AggLoc  = CreateMemTemp(E->getArg(0)->getType());
+    EmitAggExpr(E->getArg(1), AggLoc, false /*VolatileDest*/);
+    EmitObjCPropertySet(LV.getPropertyRefExpr(),
+                        RValue::getAggregate(AggLoc, false /*VolatileDest*/));
+    return RValue::getAggregate(0, false);
   }
   else
     This = LV.getAddress();
