@@ -93,6 +93,20 @@ public:
   /// specified register (it may be live-in).
   bool reg_empty(unsigned RegNo) const { return reg_begin(RegNo) == reg_end(); }
 
+  /// reg_nodbg_iterator/reg_nodbg_begin/reg_nodbg_end - Walk all defs and uses
+  /// of the specified register, skipping those marked as Debug.
+  typedef defusechain_iterator<true,true,true> reg_nodbg_iterator;
+  reg_nodbg_iterator reg_nodbg_begin(unsigned RegNo) const {
+    return reg_nodbg_iterator(getRegUseDefListHead(RegNo));
+  }
+  static reg_nodbg_iterator reg_nodbg_end() { return reg_nodbg_iterator(0); }
+
+  /// reg_nodbg_empty - Return true if the only instructions using or defining
+  /// Reg are Debug instructions.
+  bool reg_nodbg_empty(unsigned RegNo) const {
+    return reg_nodbg_begin(RegNo) == reg_nodbg_end();
+  }
+
   /// def_iterator/def_begin/def_end - Walk all defs of the specified register.
   typedef defusechain_iterator<false,true,false> def_iterator;
   def_iterator def_begin(unsigned RegNo) const {
