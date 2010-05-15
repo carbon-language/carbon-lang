@@ -1073,7 +1073,6 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     if (!llvm::ModelWithRegSequence() || NumVecs < 2)
       return VLd;
 
-    assert(NumVecs <= 4);
     SDValue RegSeq;
     SDValue V0 = SDValue(VLd, 0);
     SDValue V1 = SDValue(VLd, 1);
@@ -1229,7 +1228,6 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
 
   if (is64BitVector) {
     if (llvm::ModelWithRegSequence() && NumVecs >= 2) {
-      assert(NumVecs <= 4);
       SDValue RegSeq;
       SDValue V0 = N->getOperand(0+3);
       SDValue V1 = N->getOperand(1+3);
@@ -1313,8 +1311,6 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   // Otherwise, quad registers are stored with two separate instructions,
   // where one stores the even registers and the other stores the odd registers.
   if (llvm::ModelWithRegSequence()) {
-    assert(NumVecs <= 4);
-
     // Form the QQQQ REG_SEQUENCE.
     SDValue V[8];
     for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
@@ -1460,8 +1456,34 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
 
   std::vector<EVT> ResTys(NumVecs, RegVT);
   ResTys.push_back(MVT::Other);
-  SDNode *VLdLn =
-    CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), NumVecs+6);
+  SDNode *VLdLn = CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(),NumVecs+6);
+
+  if (llvm::ModelWithRegSequence() && is64BitVector) {
+    SDValue RegSeq;
+    SDValue V0 = SDValue(VLdLn, 0);
+    SDValue V1 = SDValue(VLdLn, 1);
+
+    // Form a REG_SEQUENCE to force register allocation.
+    if (NumVecs == 2) {
+      RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+    } else {
+      SDValue V2 = SDValue(VLdLn, 2);
+      // If it's a vld3, form a quad D-register but discard the last part.
+      SDValue V3 = (NumVecs == 3)
+          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+          : SDValue(VLdLn, 3);
+      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+    }
+
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+      SDValue D = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0+Vec, dl, VT,
+                                                 RegSeq);
+      ReplaceUses(SDValue(N, Vec), D);
+    }
+    ReplaceUses(SDValue(N, NumVecs), SDValue(VLdLn, NumVecs));
+    return NULL;
+  }
+
   // For a 64-bit vector load to D registers, nothing more needs to be done.
   if (is64BitVector)
     return VLdLn;
