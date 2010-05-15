@@ -1310,8 +1310,9 @@ _mm_movemask_pd(__m128d a)
   return __builtin_ia32_movmskpd(a);
 }
 
-#define _mm_shuffle_pd(a, b, i) (__builtin_shufflevector((a), (b), (i) & 1, \
-                                                         (((i) & 2) >> 1) + 2))
+#define _mm_shuffle_pd(a, b, i) \
+  (__builtin_shufflevector((__m128d)(a), (__m128d)(b), (i) & 1, \
+                                                       (((i) & 2) >> 1) + 2))
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_castpd_ps(__m128d in)
