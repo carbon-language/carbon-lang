@@ -1207,8 +1207,8 @@ void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
 }
 
 void CXXNameMangler::mangleType(const ObjCObjectType *T) {
-  // FIXME: do we allow overloading by different protocols?
-  // If so, we need to mangle them in here.
+  // We don't allow overloading by different protocol qualification,
+  // so mangling them isn't necessary.
   mangleType(T->getBaseType());
 }
 
