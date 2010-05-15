@@ -1634,7 +1634,7 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
   // overflow a float. This expression behaves like 10^d for small d, but is
   // more tempered for large d. At d=200 we get 6.7e33 which leaves a bit of
   // headroom before overflow.
-  float lc = powf(1 + (100.0f / (loopDepth+10)), (float)loopDepth);
+  float lc = std::pow(1 + (100.0f / (loopDepth+10)), (float)loopDepth);
 
   return (isDef + isUse) * lc;
 }

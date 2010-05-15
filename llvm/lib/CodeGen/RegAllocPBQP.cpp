@@ -489,7 +489,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       // did, but none of their definitions would prevent us from coalescing.
       // We're good to go with the coalesce.
 
-      float cBenefit = powf(10.0f, loopInfo->getLoopDepth(mbb)) / 5.0;
+      float cBenefit = std::pow(10.0f, (float)loopInfo->getLoopDepth(mbb)) / 5.0;
 
       coalescesFound[RegPair(srcReg, dstReg)] = cBenefit;
       coalescesFound[RegPair(dstReg, srcReg)] = cBenefit;

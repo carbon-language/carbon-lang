@@ -715,7 +715,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           case Instruction::FDiv: 
             GV.FloatVal = LHS.FloatVal / RHS.FloatVal; break;
           case Instruction::FRem: 
-            GV.FloatVal = ::fmodf(LHS.FloatVal,RHS.FloatVal); break;
+            GV.FloatVal = std::fmod(LHS.FloatVal,RHS.FloatVal); break;
         }
         break;
       case Type::DoubleTyID:
@@ -730,7 +730,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           case Instruction::FDiv: 
             GV.DoubleVal = LHS.DoubleVal / RHS.DoubleVal; break;
           case Instruction::FRem: 
-            GV.DoubleVal = ::fmod(LHS.DoubleVal,RHS.DoubleVal); break;
+            GV.DoubleVal = std::fmod(LHS.DoubleVal,RHS.DoubleVal); break;
         }
         break;
       case Type::X86_FP80TyID:
