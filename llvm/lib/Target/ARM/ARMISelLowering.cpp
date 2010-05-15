@@ -463,6 +463,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // ARMISD::VMOVRRD  - No need to call setTargetDAGCombine
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::SUB);
+  setTargetDAGCombine(ISD::MUL);
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
   setSchedulingPreference(SchedulingForRegPressure);
@@ -3584,6 +3585,75 @@ static SDValue PerformSUBCombine(SDNode *N,
   return SDValue();
 }
 
+static SDValue PerformMULCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const ARMSubtarget *Subtarget) {
+  SelectionDAG &DAG = DCI.DAG;
+
+  if (Subtarget->isThumb1Only())
+    return SDValue();
+
+  if (DAG.getMachineFunction().
+      getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+    return SDValue();
+
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  if (VT != MVT::i32)
+    return SDValue();
+
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!C)
+    return SDValue();
+
+  uint64_t MulAmt = C->getZExtValue();
+  unsigned ShiftAmt = CountTrailingZeros_64(MulAmt);
+  ShiftAmt = ShiftAmt & (32 - 1);
+  SDValue V = N->getOperand(0);
+  DebugLoc DL = N->getDebugLoc();
+  SDValue NewAdd;
+
+  // FIXME: Handle arbitrary powers of 2.
+  switch (MulAmt >> ShiftAmt) {
+  case 3: // 2 + 1
+    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
+                         V, DAG.getNode(ISD::SHL, DL, VT,
+                                        V, DAG.getConstant(1, MVT::i32)));
+   break;
+  case 5: // 4 + 1
+    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
+                         V, DAG.getNode(ISD::SHL, DL, VT,
+                                        V, DAG.getConstant(2, MVT::i32)));
+    break;
+  case 7: // 8 - 1
+    NewAdd = DAG.getNode(ISD::SUB, DL, VT,
+                         DAG.getNode(ISD::SHL, DL, VT,
+                                     V, DAG.getConstant(3, MVT::i32)),
+                         V);
+    break;
+  case 9: // 8 + 1
+    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
+                         V, DAG.getNode(ISD::SHL, DL, VT,
+                                        V, DAG.getConstant(3, MVT::i32)));
+    break;
+  default: return SDValue();
+  }
+
+  if (ShiftAmt != 0) {
+    SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAdd,
+                                   DAG.getConstant(ShiftAmt, MVT::i32));
+    // Do not add new nodes to DAG combiner worklist.
+    DCI.CombineTo(N, NewShift, false);
+    return SDValue();
+  }
+
+  // Do not add new nodes to DAG combiner worklist.
+  DCI.CombineTo(N, NewAdd, false);
+  return SDValue();
+}
+
 /// PerformVMOVRRDCombine - Target-specific dag combine xforms for
 /// ARMISD::VMOVRRD.
 static SDValue PerformVMOVRRDCombine(SDNode *N,
@@ -3970,6 +4040,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::ADD:        return PerformADDCombine(N, DCI);
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
+  case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
