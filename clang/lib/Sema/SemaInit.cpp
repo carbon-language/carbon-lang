@@ -1984,6 +1984,26 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   return 0;
 }
 
+bool InitializedEntity::allowsNRVO() const {
+  switch (getKind()) {
+  case EK_Result:
+  case EK_Exception:
+    return LocAndNRVO.NRVO;
+    
+  case EK_Variable:
+  case EK_Parameter:
+  case EK_Member:
+  case EK_New:
+  case EK_Temporary:
+  case EK_Base:
+  case EK_ArrayElement:
+  case EK_VectorElement:
+    break;
+  }
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization sequence
 //===----------------------------------------------------------------------===//
@@ -3242,9 +3262,9 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   //       directly into the target of the omitted copy/move
   // 
   // Note that the other three bullets are handled elsewhere. Copy
-  // elision for return statements and throw expressions are (FIXME:
-  // not yet) handled as part of constructor initialization, while
-  // copy elision for exception handlers is handled by the run-time.
+  // elision for return statements and throw expressions are handled as part
+  // of constructor initialization, while copy elision for exception handlers 
+  // is handled by the run-time.
   bool Elidable = CurInitExpr->isTemporaryObject() &&
      S.Context.hasSameUnqualifiedType(T, CurInitExpr->getType());
   SourceLocation Loc;
@@ -3737,7 +3757,7 @@ InitializationSequence::Perform(Sema &S,
       unsigned NumArgs = Args.size();
       CXXConstructorDecl *Constructor
         = cast<CXXConstructorDecl>(Step->Function.Function);
-
+      
       // Build a call to the selected constructor.
       ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
       SourceLocation Loc = Kind.getLocation();
@@ -3774,11 +3794,21 @@ InitializationSequence::Perform(Sema &S,
             CXXConstructExpr::CK_VirtualBase : 
             CXXConstructExpr::CK_NonVirtualBase;
         }    
-        CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
-                                          Constructor, 
-                                          move_arg(ConstructorArgs),
-                                          ConstructorInitRequiresZeroInit,
-                                          ConstructKind);
+        
+        // If the entity allows NRVO, mark the construction as elidable
+        // unconditionally.
+        if (Entity.allowsNRVO())
+          CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
+                                            Constructor, /*Elidable=*/true,
+                                            move_arg(ConstructorArgs),
+                                            ConstructorInitRequiresZeroInit,
+                                            ConstructKind);
+        else
+          CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
+                                            Constructor, 
+                                            move_arg(ConstructorArgs),
+                                            ConstructorInitRequiresZeroInit,
+                                            ConstructKind);
       }
       if (CurInit.isInvalid())
         return S.ExprError();

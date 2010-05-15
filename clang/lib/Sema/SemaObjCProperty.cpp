@@ -445,8 +445,9 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
                                       SelfExpr, true, true);
       OwningExprResult Res = 
         PerformCopyInitialization(InitializedEntity::InitializeResult(
-                                  SourceLocation(),
-                                  getterMethod->getResultType()),
+                                    SourceLocation(),
+                                    getterMethod->getResultType(),
+                                    /*NRVO=*/false),
                                   SourceLocation(),
                                   Owned(IvarRefExpr));
       if (!Res.isInvalid()) {

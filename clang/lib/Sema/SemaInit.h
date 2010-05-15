@@ -85,11 +85,16 @@ private:
     /// the VarDecl, ParmVarDecl, or FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
     
-    /// \brief When Kind == EK_Result, EK_Exception, or EK_New, the
-    /// location of the 'return', 'throw', or 'new' keyword,
-    /// respectively. When Kind == EK_Temporary, the location where
-    /// the temporary is being created.
-    unsigned Location;
+    struct {
+      /// \brief When Kind == EK_Result, EK_Exception, or EK_New, the
+      /// location of the 'return', 'throw', or 'new' keyword,
+      /// respectively. When Kind == EK_Temporary, the location where
+      /// the temporary is being created.
+      unsigned Location;
+      
+      /// \brief Whether the 
+      bool NRVO;
+    } LocAndNRVO;
     
     /// \brief When Kind == EK_Base, the base specifier that provides the 
     /// base class. The lower bit specifies whether the base is an inherited
@@ -116,8 +121,13 @@ private:
   /// \brief Create the initialization entity for the result of a
   /// function, throwing an object, performing an explicit cast, or
   /// initializing a parameter for which there is no declaration.
-  InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type)
-    : Kind(Kind), Parent(0), Type(Type), Location(Loc.getRawEncoding()) { }
+  InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type,
+                    bool NRVO = false)
+    : Kind(Kind), Parent(0), Type(Type)
+  {
+    LocAndNRVO.Location = Loc.getRawEncoding();
+    LocAndNRVO.NRVO = NRVO;
+  }
   
   /// \brief Create the initialization entity for a member subobject.
   InitializedEntity(FieldDecl *Member, const InitializedEntity *Parent) 
@@ -152,14 +162,14 @@ public:
 
   /// \brief Create the initialization entity for the result of a function.
   static InitializedEntity InitializeResult(SourceLocation ReturnLoc,
-                                            QualType Type) {
-    return InitializedEntity(EK_Result, ReturnLoc, Type);
+                                            QualType Type, bool NRVO) {
+    return InitializedEntity(EK_Result, ReturnLoc, Type, NRVO);
   }
 
   /// \brief Create the initialization entity for an exception object.
   static InitializedEntity InitializeException(SourceLocation ThrowLoc,
-                                               QualType Type) {
-    return InitializedEntity(EK_Exception, ThrowLoc, Type);
+                                               QualType Type, bool NRVO) {
+    return InitializedEntity(EK_Exception, ThrowLoc, Type, NRVO);
   }
 
   /// \brief Create the initialization entity for an object allocated via new.
@@ -208,6 +218,10 @@ public:
   /// initialized.
   DeclaratorDecl *getDecl() const;
 
+  /// \brief Determine whether this initialization allows the named return 
+  /// value optimization, which also applies to thrown objects.
+  bool allowsNRVO() const;
+                                  
   /// \brief Retrieve the base specifier.
   CXXBaseSpecifier *getBaseSpecifier() const {
     assert(getKind() == EK_Base && "Not a base specifier");
@@ -224,14 +238,14 @@ public:
   /// the result of a function call.
   SourceLocation getReturnLoc() const {
     assert(getKind() == EK_Result && "No 'return' location!");
-    return SourceLocation::getFromRawEncoding(Location);
+    return SourceLocation::getFromRawEncoding(LocAndNRVO.Location);
   }
   
   /// \brief Determine the location of the 'throw' keyword when initializing
   /// an exception object.
   SourceLocation getThrowLoc() const {
     assert(getKind() == EK_Exception && "No 'throw' location!");
-    return SourceLocation::getFromRawEncoding(Location);
+    return SourceLocation::getFromRawEncoding(LocAndNRVO.Location);
   }
 
   /// \brief If this is already the initializer for an array or vector

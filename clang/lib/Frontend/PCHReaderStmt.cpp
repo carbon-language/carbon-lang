@@ -956,6 +956,7 @@ unsigned PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   E->setRequiresZeroInitialization(Record[Idx++]);
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
+  E->setConstructionKind((CXXConstructExpr::ConstructionKind)Record[Idx++]);
   return E->getNumArgs();
 }
 

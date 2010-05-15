@@ -873,6 +873,7 @@ void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Record.push_back(E->getNumArgs());
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     Writer.WriteSubStmt(E->getArg(I));
+  Record.push_back(E->getConstructionKind()); // FIXME: stable encoding
   Code = pch::EXPR_CXX_CONSTRUCT;
 }
 

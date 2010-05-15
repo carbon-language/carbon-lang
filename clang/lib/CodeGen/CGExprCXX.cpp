@@ -321,11 +321,13 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
       return;
   }
   // Code gen optimization to eliminate copy constructor and return
-  // its first argument instead.
+  // its first argument instead, if in fact that argument is a temporary 
+  // object.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
-    const Expr *Arg = E->getArg(0)->getTemporaryObject();
-    EmitAggExpr(Arg, Dest, false);
-    return;
+    if (const Expr *Arg = E->getArg(0)->getTemporaryObject()) {
+      EmitAggExpr(Arg, Dest, false);
+      return;
+    }
   }
   if (Array) {
     QualType BaseElementTy = getContext().getBaseElementType(Array);
