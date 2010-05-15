@@ -145,13 +145,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
   } else if (!UseSoftFloat) {
-    if (X86ScalarSSEf64) {
-      // We have an impenetrably clever algorithm for ui64->double only.
-      setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
-    }
+    // We have an algorithm for SSE2->double, and we turn this into a
+    // 64-bit FILD followed by conditional FADD for other targets.
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Custom);
     // We have an algorithm for SSE2, and we turn this into a 64-bit
     // FILD for other targets.
-    setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Custom);
   }
 
   // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
@@ -5462,7 +5461,7 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
 }
 
 SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
-                                     SDValue StackSlot,
+                                     SDValue StackSlot, 
                                      SelectionDAG &DAG) const {
   // Build the FILD
   DebugLoc dl = Op.getDebugLoc();
@@ -5636,35 +5635,72 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   SDValue N0 = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
 
-  // Now not UINT_TO_FP is legal (it's marked custom), dag combiner won't
+  // Since UINT_TO_FP is legal (it's marked custom), dag combiner won't
   // optimize it to a SINT_TO_FP when the sign bit is known zero. Perform
   // the optimization here.
   if (DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(), N0);
 
   EVT SrcVT = N0.getValueType();
-  if (SrcVT == MVT::i64) {
-    // We only handle SSE2 f64 target here; caller can expand the rest.
-    if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
-      return SDValue();
-
+  EVT DstVT = Op.getValueType();
+  if (SrcVT == MVT::i64 && DstVT == MVT::f64 && X86ScalarSSEf64)
     return LowerUINT_TO_FP_i64(Op, DAG);
-  } else if (SrcVT == MVT::i32 && X86ScalarSSEf64) {
+  else if (SrcVT == MVT::i32 && X86ScalarSSEf64)
     return LowerUINT_TO_FP_i32(Op, DAG);
-  }
-
-  assert(SrcVT == MVT::i32 && "Unknown UINT_TO_FP to lower!");
 
   // Make a 64-bit buffer, and use it to build an FILD.
   SDValue StackSlot = DAG.CreateStackTemporary(MVT::i64);
-  SDValue WordOff = DAG.getConstant(4, getPointerTy());
-  SDValue OffsetSlot = DAG.getNode(ISD::ADD, dl,
-                                   getPointerTy(), StackSlot, WordOff);
-  SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
+  if (SrcVT == MVT::i32) {
+    SDValue WordOff = DAG.getConstant(4, getPointerTy());
+    SDValue OffsetSlot = DAG.getNode(ISD::ADD, dl,
+                                     getPointerTy(), StackSlot, WordOff);
+    SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
+                                  StackSlot, NULL, 0, false, false, 0);
+    SDValue Store2 = DAG.getStore(Store1, dl, DAG.getConstant(0, MVT::i32),
+                                  OffsetSlot, NULL, 0, false, false, 0);
+    SDValue Fild = BuildFILD(Op, MVT::i64, Store2, StackSlot, DAG);
+    return Fild;
+  }
+
+  assert(SrcVT == MVT::i64 && "Unexpected type in UINT_TO_FP");
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
                                 StackSlot, NULL, 0, false, false, 0);
-  SDValue Store2 = DAG.getStore(Store1, dl, DAG.getConstant(0, MVT::i32),
-                                OffsetSlot, NULL, 0, false, false, 0);
-  return BuildFILD(Op, MVT::i64, Store2, StackSlot, DAG);
+  // For i64 source, we need to add the appropriate power of 2 if the input
+  // was negative.  This is the same as the optimization in
+  // DAGTypeLegalizer::ExpandIntOp_UNIT_TO_FP, and for it to be safe here,
+  // we must be careful to do the computation in x87 extended precision, not
+  // in SSE. (The generic code can't know it's OK to do this, or how to.)
+  SDVTList Tys = DAG.getVTList(MVT::f80, MVT::Other);
+  SDValue Ops[] = { Store, StackSlot, DAG.getValueType(MVT::i64) };
+  SDValue Fild = DAG.getNode(X86ISD::FILD, dl, Tys, Ops, 3);
+
+  APInt FF(32, 0x5F800000ULL);
+
+  // Check whether the sign bit is set.
+  SDValue SignSet = DAG.getSetCC(dl, getSetCCResultType(MVT::i64),
+                                 Op.getOperand(0), DAG.getConstant(0, MVT::i64),
+                                 ISD::SETLT);
+
+  // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.
+  SDValue FudgePtr = DAG.getConstantPool(
+                             ConstantInt::get(*DAG.getContext(), FF.zext(64)),
+                                         getPointerTy());
+
+  // Get a pointer to FF if the sign bit was set, or to 0 otherwise.
+  SDValue Zero = DAG.getIntPtrConstant(0);
+  SDValue Four = DAG.getIntPtrConstant(4);
+  SDValue Offset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(), SignSet,
+                               Zero, Four);
+  FudgePtr = DAG.getNode(ISD::ADD, dl, getPointerTy(), FudgePtr, Offset);
+
+  // Load the value out, extending it from f32 to f80.
+  // FIXME: Avoid the extend by constructing the right constant pool?
+  SDValue Fudge = DAG.getExtLoad(ISD::EXTLOAD, dl, MVT::f80, DAG.getEntryNode(),
+                                 FudgePtr, PseudoSourceValue::getConstantPool(),
+                                 0, MVT::f32, false, false, 4);
+  // Extend everything to 80 bits to force it to be done on x87.
+  SDValue Add = DAG.getNode(ISD::FADD, dl, MVT::f80, Fild, Fudge);
+  return DAG.getNode(ISD::FP_ROUND, dl, DstVT, Add, DAG.getIntPtrConstant(0));
 }
 
 std::pair<SDValue,SDValue> X86TargetLowering::
