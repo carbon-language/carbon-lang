@@ -1320,8 +1320,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
                                               N->getOperand(Vec+3));
     }
     if (NumVecs == 3)
-      V[6] = V[7] =
-        SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,RegVT), 0);
+      V[6] = V[7] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                   dl, RegVT), 0);
+
     SDValue RegSeq = SDValue(OctoDRegs(MVT::v8i64, V[0], V[1], V[2], V[3],
                                        V[4], V[5], V[6], V[7]), 0);
 
@@ -1458,28 +1459,52 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   ResTys.push_back(MVT::Other);
   SDNode *VLdLn = CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(),NumVecs+6);
 
-  if (llvm::ModelWithRegSequence() && is64BitVector) {
-    SDValue RegSeq;
-    SDValue V0 = SDValue(VLdLn, 0);
-    SDValue V1 = SDValue(VLdLn, 1);
-
+  if (llvm::ModelWithRegSequence()) {
     // Form a REG_SEQUENCE to force register allocation.
-    if (NumVecs == 2) {
-      RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
-    } else {
-      SDValue V2 = SDValue(VLdLn, 2);
-      // If it's a vld3, form a quad D-register but discard the last part.
-      SDValue V3 = (NumVecs == 3)
+    SDValue RegSeq;
+    if (is64BitVector) {
+      SDValue V0 = SDValue(VLdLn, 0);
+      SDValue V1 = SDValue(VLdLn, 1);
+      if (NumVecs == 2) {
+        RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+      } else {
+        SDValue V2 = SDValue(VLdLn, 2);
+        // If it's a vld3, form a quad D-register but discard the last part.
+        SDValue V3 = (NumVecs == 3)
           ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
           : SDValue(VLdLn, 3);
-      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+        RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+      }
+    } else {
+      // For 128-bit vectors, take the 64-bit results of the load and insert them
+      // as subregs into the result.
+      SDValue V[8];
+      for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
+        if (SubregIdx == ARM::DSUBREG_0) {
+          V[i]   = SDValue(VLdLn, Vec);
+          V[i+1] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                  dl, RegVT), 0);
+        } else {
+          V[i]   = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                  dl, RegVT), 0);
+          V[i+1] = SDValue(VLdLn, Vec);
+        }
+      }
+      if (NumVecs == 3)
+        V[6] = V[7] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                     dl, RegVT), 0);
+
+      if (NumVecs == 2)
+        RegSeq = SDValue(QuadDRegs(MVT::v4i64, V[0], V[1], V[2], V[3]), 0);
+      else
+        RegSeq = SDValue(OctoDRegs(MVT::v8i64, V[0], V[1], V[2], V[3],
+                                   V[4], V[5], V[6], V[7]), 0);
     }
 
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-      SDValue D = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0+Vec, dl, VT,
-                                                 RegSeq);
-      ReplaceUses(SDValue(N, Vec), D);
-    }
+    unsigned SubIdx = is64BitVector ? ARM::DSUBREG_0 : ARM::QSUBREG_0;
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      ReplaceUses(SDValue(N, Vec),
+                  CurDAG->getTargetExtractSubreg(SubIdx+Vec, dl, VT, RegSeq));
     ReplaceUses(SDValue(N, NumVecs), SDValue(VLdLn, NumVecs));
     return NULL;
   }
