@@ -454,7 +454,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def  = RedefIndex;
-      OldValNo->setCopy(0);
+      if (!PartReDef)
+        OldValNo->setCopy(0);
+      else {
+        // A re-def may be a copy. e.g. %reg1030:6<def> = VMOVD %reg1026, ...
+        unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+        if (tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
+          OldValNo->setCopy(&*mi);
+      }
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
