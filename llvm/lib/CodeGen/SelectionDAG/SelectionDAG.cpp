@@ -2627,7 +2627,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     }
     break;
   case ISD::AND:
-    assert(VT.isInteger() && N1.getValueType() == N2.getValueType() &&
+    assert(VT.isInteger() && "This operator does not apply to FP types!");
+    assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
     // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
     // worth handling here.
@@ -2640,7 +2641,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   case ISD::XOR:
   case ISD::ADD:
   case ISD::SUB:
-    assert(VT.isInteger() && N1.getValueType() == N2.getValueType() &&
+    assert(VT.isInteger() && "This operator does not apply to FP types!");
+    assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
     // (X ^|+- 0) -> X.  This commonly occurs when legalizing i64 values, so
     // it's worth handling here.
@@ -2655,7 +2657,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   case ISD::SDIV:
   case ISD::SREM:
     assert(VT.isInteger() && "This operator does not apply to FP types!");
-    // fall through
+    assert(N1.getValueType() == N2.getValueType() &&
+           N1.getValueType() == VT && "Binary operator types must match!");
+    break;
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
@@ -2678,6 +2682,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
             return N1;
       }
     }
+    assert(VT.isFloatingPoint() && "This operator only applies to FP types!");
     assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
     break;
