@@ -25,3 +25,11 @@ void f2(f2_s1 a0) { }
 struct s3_0 {};
 struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
+
+// CHECK: define i64 @_Z4f4_0M2s4i(i64)
+// CHECK: define [[i64_i64_ty]] @_Z4f4_1M2s4FivE([[i64_i64_ty]])
+struct s4 {};
+typedef int s4::* s4_mdp;
+typedef int (s4::*s4_mfp)();
+s4_mdp f4_0(s4_mdp a) { return a; }
+s4_mfp f4_1(s4_mfp a) { return a; }

@@ -853,6 +853,11 @@ void X86_64ABIInfo::classify(QualType Ty,
     classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);
   } else if (Ty->hasPointerRepresentation()) {
     Current = Integer;
+  } else if (Ty->isMemberPointerType()) {
+    if (Ty->isMemberFunctionPointerType())
+      Lo = Hi = Integer;
+    else
+      Current = Integer;
   } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 32) {
