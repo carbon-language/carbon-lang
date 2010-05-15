@@ -8,6 +8,12 @@ Configs := Debug Release Profile Static
 # and the resulting lib will just have generic versions for anything unknown.
 UniversalArchs := $(RC_ARCHS)
 
+ifeq (,$(SDKROOT))
+else
+	CC.Release := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
+	CC.Static  := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
+endif
+
 
 CFLAGS := -Wall -Os -fomit-frame-pointer -g
 CFLAGS.Static := $(CFLAGS) -static 
