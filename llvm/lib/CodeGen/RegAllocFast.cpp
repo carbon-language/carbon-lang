@@ -416,8 +416,8 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineBasicBlock &MBB,
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || UsedInInstr.test(Hint)) ||
-               !Allocatable.test(Hint))
+               !RC->contains(Hint) || UsedInInstr.test(Hint) ||
+               !Allocatable.test(Hint)))
     Hint = 0;
 
   // If there is no hint, peek at the first use of this register.
