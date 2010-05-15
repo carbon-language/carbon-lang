@@ -1090,7 +1090,8 @@ static const VarDecl *getNRVOCandidate(ASTContext &Ctx, QualType RetType,
     return 0;
   
   if (VD->getKind() == Decl::Var && VD->hasLocalStorage() && 
-      !VD->getType()->isReferenceType() && !VD->getType().isVolatileQualified())
+      !VD->getType()->isReferenceType() && !VD->hasAttr<BlocksAttr>() &&
+      !VD->getType().isVolatileQualified())
     return VD;
   
   return 0;

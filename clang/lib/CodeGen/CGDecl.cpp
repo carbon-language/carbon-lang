@@ -398,16 +398,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   CharUnits Align = CharUnits::Zero();
   bool IsSimpleConstantInitializer = false;
 
+  bool NRVO = false;
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
-      
+      NRVO = getContext().getLangOptions().ElideConstructors && 
+             D.isNRVOVariable();
       // If this value is an array or struct, is POD, and if the initializer is
-      // a staticly determinable constant, try to optimize it.
+      // a staticly determinable constant, try to optimize it (unless the NRVO
+      // is already optimizing this).
       if (D.getInit() && !isByRef &&
           (Ty->isArrayType() || Ty->isRecordType()) &&
           Ty->isPODType() &&
-          D.getInit()->isConstantInitializer(getContext())) {
+          D.getInit()->isConstantInitializer(getContext()) && !NRVO) {
         // If this variable is marked 'const', emit the value as a global.
         if (CGM.getCodeGenOpts().MergeAllConstants &&
             Ty.isConstant(getContext())) {
@@ -418,19 +421,29 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         IsSimpleConstantInitializer = true;
       }
       
-      // A normal fixed sized variable becomes an alloca in the entry block.
+      // A normal fixed sized variable becomes an alloca in the entry block,
+      // unless it's an NRVO variable.
       const llvm::Type *LTy = ConvertTypeForMem(Ty);
-      if (isByRef)
-        LTy = BuildByRefType(&D);
-      llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
-      Alloc->setName(D.getNameAsString());
+      
+      if (NRVO) {
+        // The named return value optimization: allocate this variable in the
+        // return slot, so that we can elide the copy when returning this
+        // variable (C++0x [class.copy]p34).
+        DeclPtr = ReturnValue;
+      } else {
+        if (isByRef)
+          LTy = BuildByRefType(&D);
+        
+        llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
+        Alloc->setName(D.getNameAsString());
 
-      Align = getContext().getDeclAlign(&D);
-      if (isByRef)
-        Align = std::max(Align, 
-            CharUnits::fromQuantity(Target.getPointerAlign(0) / 8));
-      Alloc->setAlignment(Align.getQuantity());
-      DeclPtr = Alloc;
+        Align = getContext().getDeclAlign(&D);
+        if (isByRef)
+          Align = std::max(Align, 
+              CharUnits::fromQuantity(Target.getPointerAlign(0) / 8));
+        Alloc->setAlignment(Align.getQuantity());
+        DeclPtr = Alloc;
+      }
     } else {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
@@ -645,13 +658,14 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   while (const ArrayType *Array = getContext().getAsArrayType(DtorTy))
     DtorTy = getContext().getBaseElementType(Array);
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
-    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      llvm::Value *Loc = DeclPtr;
-      if (isByRef)
-        Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
-                                      D.getNameAsString());
-      
-      if (!ClassDecl->hasTrivialDestructor()) {
+    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {      
+      if (!ClassDecl->hasTrivialDestructor() && !NRVO) {
+        // Note: We suppress the destructor call when this is an NRVO variable.
+        llvm::Value *Loc = DeclPtr;
+        if (isByRef)
+          Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
+                                        D.getNameAsString());
+        
         const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
         
