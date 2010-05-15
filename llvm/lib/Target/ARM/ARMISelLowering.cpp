@@ -585,10 +585,12 @@ TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
   // Map v4i64 to QQ registers but do not make the type legal. Similarly map
   // v8i64 to QQQQ registers. v4i64 and v8i64 are only used for REG_SEQUENCE to
   // load / store 4 to 8 consecutive D registers.
-  if (VT == MVT::v4i64)
-    return ARM::QQPRRegisterClass;
-  else if (VT == MVT::v8i64)
-    return ARM::QQQQPRRegisterClass;
+  if (Subtarget->hasNEON()) {
+    if (VT == MVT::v4i64)
+      return ARM::QQPRRegisterClass;
+    else if (VT == MVT::v8i64)
+      return ARM::QQQQPRRegisterClass;
+  }
   return TargetLowering::getRegClassFor(VT);
 }
 
