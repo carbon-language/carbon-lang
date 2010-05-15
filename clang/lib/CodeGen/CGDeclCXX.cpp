@@ -321,7 +321,11 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   EmitBlock(InitCheckBlock);
 
-  if (ThreadsafeStatics) {
+  // Variables used when coping with thread-safe statics and exceptions.
+  llvm::BasicBlock *SavedLandingPad = 0;
+  llvm::BasicBlock *Abort = 0;
+  
+  if (ThreadsafeStatics) {    
     // Call __cxa_guard_acquire.
     V = Builder.CreateCall(getGuardAcquireFn(*this), GuardVariable);
                
@@ -330,14 +334,13 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     Builder.CreateCondBr(Builder.CreateIsNotNull(V, "tobool"),
                          InitBlock, EndBlock);
   
-    EmitBlock(InitBlock);
-
     if (Exceptions) {
-      EHCleanupBlock Cleanup(*this);
-    
-      // Call __cxa_guard_abort.
-      Builder.CreateCall(getGuardAbortFn(*this), GuardVariable);
+      SavedLandingPad = getInvokeDest();
+      Abort = createBasicBlock("guard.abort");
+      setInvokeDest(Abort);
     }
+    
+    EmitBlock(InitBlock);
   }
 
   if (D.getType()->isReferenceType()) {
@@ -353,7 +356,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   if (ThreadsafeStatics) {
     // Call __cxa_guard_release.
-    Builder.CreateCall(getGuardReleaseFn(*this), GuardVariable);
+    Builder.CreateCall(getGuardReleaseFn(*this), GuardVariable);    
   } else {
     llvm::Value *One = 
       llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 1);
@@ -363,6 +366,21 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   // Register the call to the destructor.
   if (!D.getType()->isReferenceType())
     EmitDeclDestroy(*this, D, GV);
+  
+  if (ThreadsafeStatics && Exceptions) {
+    // If an exception is thrown during initialization, call __cxa_guard_abort
+    // along the exceptional edge.
+    EmitBranch(EndBlock);
+    
+    EmitBlock(Abort);
+    
+    // Call __cxa_guard_abort along the exceptional edge.
+    Builder.CreateCall(getGuardAbortFn(*this), GuardVariable);
+    setInvokeDest(SavedLandingPad);
+    
+    // Rethrow the current exception.
+    EmitRethrow();
+  }    
   
   EmitBlock(EndBlock);
 }
