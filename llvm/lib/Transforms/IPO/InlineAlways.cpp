@@ -54,6 +54,9 @@ namespace {
       return removeDeadFunctions(CG, &NeverInline); 
     }
     virtual bool doInitialization(CallGraph &CG);
+    void releaseMemory() {
+      CA.clear();
+    }
   };
 }
 
