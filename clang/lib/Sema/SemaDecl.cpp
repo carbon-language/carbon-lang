@@ -4548,6 +4548,38 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   return DeclPtrTy::make(FD);
 }
 
+/// \brief Given the set of return statements within a function body,
+/// compute the variables that are subject to the named return value 
+/// optimization.
+///
+/// Each of the variables that is subject to the named return value 
+/// optimization will be marked as NRVO variables in the AST, and any
+/// return statement that has a marked NRVO variable as its NRVO candidate can
+/// use the named return value optimization.
+///
+/// This function applies a very simplistic algorithm for NRVO: if every return
+/// statement in the function has the same NRVO candidate, that candidate is
+/// the NRVO variable.
+///
+/// FIXME: Employ a smarter algorithm that accounts for multiple return 
+/// statements and the lifetimes of the NRVO candidates. We should be able to
+/// find a maximal set of NRVO variables.
+static void ComputeNRVO(Stmt *Body, ReturnStmt **Returns, unsigned NumReturns) {
+  const VarDecl *NRVOCandidate = 0;
+  for (unsigned I = 0; I != NumReturns; ++I) {
+    if (!Returns[I]->getNRVOCandidate())
+      return;
+    
+    if (!NRVOCandidate)
+      NRVOCandidate = Returns[I]->getNRVOCandidate();
+    else if (NRVOCandidate != Returns[I]->getNRVOCandidate())
+      return;
+  }
+  
+  if (NRVOCandidate)
+    const_cast<VarDecl*>(NRVOCandidate)->setNRVOVariable(true);
+}
+
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   return ActOnFinishFunctionBody(D, move(BodyArg), false);
 }
@@ -4581,6 +4613,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       // If this is a constructor, we need a vtable.
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(FD))
         MarkVTableUsed(FD->getLocation(), Constructor->getParent());
+      
+      ComputeNRVO(Body, FunctionScopes.back()->Returns.data(),
+                  FunctionScopes.back()->Returns.size());
     }
     
     assert(FD == getCurFunctionDecl() && "Function parsing confused");

@@ -1096,9 +1096,15 @@ public:
 class ReturnStmt : public Stmt {
   Stmt *RetExpr;
   SourceLocation RetLoc;
+  const VarDecl *NRVOCandidate;
+  
 public:
-  ReturnStmt(SourceLocation RL, Expr *E = 0) : Stmt(ReturnStmtClass),
-    RetExpr((Stmt*) E), RetLoc(RL) {}
+  ReturnStmt(SourceLocation RL)
+    : Stmt(ReturnStmtClass), RetExpr(0), NRVOCandidate(0) { }
+
+  ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
+    : Stmt(ReturnStmtClass), RetExpr((Stmt*) E), RetLoc(RL),
+      NRVOCandidate(NRVOCandidate) {}
 
   /// \brief Build an empty return expression.
   explicit ReturnStmt(EmptyShell Empty) : Stmt(ReturnStmtClass, Empty) { }
@@ -1110,6 +1116,14 @@ public:
   SourceLocation getReturnLoc() const { return RetLoc; }
   void setReturnLoc(SourceLocation L) { RetLoc = L; }
 
+  /// \brief Retrieve the variable that might be used for the named return
+  /// value optimization.
+  ///
+  /// The optimization itself can only be performed if the variable is
+  /// also marked as an NRVO object.
+  const VarDecl *getNRVOCandidate() const { return NRVOCandidate; }
+  void setNRVOCandidate(const VarDecl *Var) { NRVOCandidate = Var; }
+  
   virtual SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {

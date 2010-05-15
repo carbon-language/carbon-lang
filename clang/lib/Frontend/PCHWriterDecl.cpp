@@ -415,6 +415,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isDeclaredInCondition());
   Record.push_back(D->isExceptionVariable());
+  Record.push_back(D->isNRVOVariable());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getInit() ? 1 : 0);
   if (D->getInit())
@@ -683,6 +684,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // hasCXXDirectInitializer
   Abv->Add(BitCodeAbbrevOp(0));                       // isDeclaredInCondition
   Abv->Add(BitCodeAbbrevOp(0));                       // isExceptionVariable
+  Abv->Add(BitCodeAbbrevOp(0));                       // isNRVOVariable
   Abv->Add(BitCodeAbbrevOp(0));                       // PrevDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
   // ParmVarDecl

@@ -435,6 +435,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setCXXDirectInitializer(Record[Idx++]);
   VD->setDeclaredInCondition(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
+  VD->setNRVOVariable(Record[Idx++]);
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   if (Record[Idx++])

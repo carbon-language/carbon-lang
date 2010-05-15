@@ -275,6 +275,7 @@ void PCHStmtWriter::VisitReturnStmt(ReturnStmt *S) {
   VisitStmt(S);
   Writer.WriteSubStmt(S->getRetValue());
   Writer.AddSourceLocation(S->getReturnLoc(), Record);
+  Writer.AddDeclRef(S->getNRVOCandidate(), Record);
   Code = pch::STMT_RETURN;
 }
 

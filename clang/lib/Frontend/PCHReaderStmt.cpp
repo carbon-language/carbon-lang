@@ -291,6 +291,7 @@ unsigned PCHStmtReader::VisitReturnStmt(ReturnStmt *S) {
   VisitStmt(S);
   S->setRetValue(cast_or_null<Expr>(StmtStack.back()));
   S->setReturnLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setNRVOCandidate(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   return 1;
 }
 

@@ -255,7 +255,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
         if (PID->getGetterCXXConstructor()) {
           ReturnStmt *Stmt = 
             new (getContext()) ReturnStmt(SourceLocation(), 
-                                          PID->getGetterCXXConstructor());
+                                          PID->getGetterCXXConstructor(),
+                                          0);
           EmitReturnStmt(*Stmt);
         }
         else {

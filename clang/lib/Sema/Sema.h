@@ -134,6 +134,11 @@ struct FunctionScopeInfo {
   /// block.
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
 
+  /// \brief The list of return statements that occur within the function or
+  /// block, if there is any chance of applying the named return value
+  /// optimization.
+  llvm::SmallVector<ReturnStmt *, 4> Returns;
+  
   FunctionScopeInfo(unsigned NumErrors)
     : IsBlockInfo(false), NeedsScopeChecking(false),
       NumErrorsAtStartOfFunction(NumErrors) { }

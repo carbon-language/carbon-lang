@@ -33,6 +33,7 @@ void FunctionScopeInfo::Clear(unsigned NumErrors) {
   NeedsScopeChecking = false;
   LabelMap.clear();
   SwitchStack.clear();
+  Returns.clear();
   NumErrorsAtStartOfFunction = NumErrors;
 }
 

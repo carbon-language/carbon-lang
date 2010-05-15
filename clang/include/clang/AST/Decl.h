@@ -519,6 +519,10 @@ private:
   /// or an Objective-C @catch statement.
   bool ExceptionVar : 1;
   
+  /// \brief Whether this local variable could be allocated in the return
+  /// slot of its function, enabling the named return value optimization (NRVO).
+  bool NRVOVariable : 1;
+  
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
@@ -526,7 +530,7 @@ protected:
           StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false), ExceptionVar(false) {
+      DeclaredInCondition(false), ExceptionVar(false), NRVOVariable(false) {
     SClass = SC;
     SClassAsWritten = SCAsWritten;
   }
@@ -868,6 +872,19 @@ public:
     return ExceptionVar;
   }
   void setExceptionVariable(bool EV) { ExceptionVar = EV; }
+  
+  /// \brief Determine whether this local variable can be used with the named
+  /// return value optimization (NRVO).
+  ///
+  /// The named return value optimization (NRVO) works by marking certain
+  /// non-volatile local variables of class type as NRVO objects. These
+  /// locals can be allocated within the return slot of their containing
+  /// function, in which case there is no need to copy the object to the
+  /// return slot when returning from the function. Within the function body,
+  /// each return that returns the NRVO object will have this variable as its
+  /// NRVO candidate.
+  bool isNRVOVariable() const { return NRVOVariable; }
+  void setNRVOVariable(bool NRVO) { NRVOVariable = NRVO; }
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
