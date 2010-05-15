@@ -17,7 +17,6 @@ X test0() {
   // CHECK: ret void
   // CHECK-EH: ret void
   return x;
-  // CHECK-EH: ehcleanup:
   // CHECK-EH: invoke void @_ZN1XD1Ev
 }
 
@@ -30,7 +29,6 @@ X test1(bool B) {
   if (B)
     return (x);
   return x;
-  // CHECK-EH: ehcleanup:
   // CHECK-EH: invoke void @_ZN1XD1Ev
 }
 
@@ -52,7 +50,6 @@ X test2(bool B) {
   // CHECK: call void @_ZN1XD1Ev
   // CHECK: call void @_ZN1XD1Ev
   // CHECK: ret void
-  // CHECK-EH: ehcleanup:
   // CHECK-EH: invoke void @_ZN1XD1Ev
   // CHECK-EH: invoke void @_ZN1XD1Ev
 }
