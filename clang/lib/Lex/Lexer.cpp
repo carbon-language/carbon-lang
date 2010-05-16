@@ -1141,7 +1141,8 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   unsigned char C = getCharAndSize(CurPtr, CharSize);
   CurPtr += CharSize;
   if (C == 0 && CurPtr == BufferEnd+1) {
-    if (!isLexingRawMode())
+    if (!isLexingRawMode() &&
+        !PP->isCodeCompletionFile(FileLoc))
       Diag(BufferPtr, diag::err_unterminated_block_comment);
     --CurPtr;
 
@@ -1224,7 +1225,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
           Diag(CurPtr-1, diag::warn_nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      if (!isLexingRawMode())
+      if (!isLexingRawMode() && !PP->isCodeCompletionFile(FileLoc))
         Diag(BufferPtr, diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
