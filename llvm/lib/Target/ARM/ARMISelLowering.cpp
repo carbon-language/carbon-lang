@@ -3613,44 +3613,31 @@ static SDValue PerformMULCombine(SDNode *N,
   ShiftAmt = ShiftAmt & (32 - 1);
   SDValue V = N->getOperand(0);
   DebugLoc DL = N->getDebugLoc();
-  SDValue NewAdd;
 
-  // FIXME: Handle arbitrary powers of 2.
-  switch (MulAmt >> ShiftAmt) {
-  case 3: // 2 + 1
-    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
-                         V, DAG.getNode(ISD::SHL, DL, VT,
-                                        V, DAG.getConstant(1, MVT::i32)));
-   break;
-  case 5: // 4 + 1
-    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
-                         V, DAG.getNode(ISD::SHL, DL, VT,
-                                        V, DAG.getConstant(2, MVT::i32)));
-    break;
-  case 7: // 8 - 1
-    NewAdd = DAG.getNode(ISD::SUB, DL, VT,
-                         DAG.getNode(ISD::SHL, DL, VT,
-                                     V, DAG.getConstant(3, MVT::i32)),
-                         V);
-    break;
-  case 9: // 8 + 1
-    NewAdd = DAG.getNode(ISD::ADD, DL, VT,
-                         V, DAG.getNode(ISD::SHL, DL, VT,
-                                        V, DAG.getConstant(3, MVT::i32)));
-    break;
-  default: return SDValue();
-  }
-
-  if (ShiftAmt != 0) {
-    SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAdd,
-                                   DAG.getConstant(ShiftAmt, MVT::i32));
-    // Do not add new nodes to DAG combiner worklist.
-    DCI.CombineTo(N, NewShift, false);
+  SDValue Res;
+  MulAmt >>= ShiftAmt;
+  if (isPowerOf2_32(MulAmt - 1)) {
+    // (mul x, 2^N + 1) => (add (shl x, N), x)
+    Res = DAG.getNode(ISD::ADD, DL, VT,
+                      V, DAG.getNode(ISD::SHL, DL, VT,
+                                     V, DAG.getConstant(Log2_32(MulAmt-1),
+                                                        MVT::i32)));
+  } else if (isPowerOf2_32(MulAmt + 1)) {
+    // (mul x, 2^N - 1) => (sub (shl x, N), x)
+    Res = DAG.getNode(ISD::SUB, DL, VT,
+                      DAG.getNode(ISD::SHL, DL, VT,
+                                  V, DAG.getConstant(Log2_32(MulAmt+1),
+                                                     MVT::i32)),
+                                                     V);
+  } else
     return SDValue();
-  }
+
+  if (ShiftAmt != 0)
+    Res = DAG.getNode(ISD::SHL, DL, VT, Res,
+                      DAG.getConstant(ShiftAmt, MVT::i32));
 
   // Do not add new nodes to DAG combiner worklist.
-  DCI.CombineTo(N, NewAdd, false);
+  DCI.CombineTo(N, Res, false);
   return SDValue();
 }
 
