@@ -254,7 +254,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
       if (Args[i]->isTypeDependent())
         continue;
 
-      IsError |= DefaultVariadicArgumentPromotion(Args[i], VariadicMethod);
+      IsError |= DefaultVariadicArgumentPromotion(Args[i], VariadicMethod, 0);
     }
   } else {
     // Check for extra arguments to non-variadic methods.

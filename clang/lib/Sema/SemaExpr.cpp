@@ -279,10 +279,9 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
   // If this is a 'float' (CVR qualified or typedef) promote to double.
-  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
-    if (BT->getKind() == BuiltinType::Float)
-      return ImpCastExprToType(Expr, Context.DoubleTy,
-                               CastExpr::CK_FloatingCast);
+  if (Ty->isSpecificBuiltinType(BuiltinType::Float))
+    return ImpCastExprToType(Expr, Context.DoubleTy,
+                             CastExpr::CK_FloatingCast);
 
   UsualUnaryConversions(Expr);
 }
@@ -291,9 +290,16 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
 /// will warn if the resulting type is not a POD type, and rejects ObjC
 /// interfaces passed by value.  This returns true if the argument type is
 /// completely illegal.
-bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
+bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT,
+                                            FunctionDecl *FDecl) {
   DefaultArgumentPromotion(Expr);
 
+  // __builtin_va_start takes the second argument as a "varargs" argument, but
+  // it doesn't actually do anything with it.  It doesn't need to be non-pod
+  // etc.
+  if (FDecl && FDecl->getBuiltinID() == Builtin::BI__builtin_va_start)
+    return false;
+  
   if (Expr->getType()->isObjCObjectType() &&
       DiagRuntimeBehavior(Expr->getLocStart(),
         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
@@ -3478,9 +3484,9 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
   // If this is a variadic call, handle args passed through "...".
   if (CallType != VariadicDoesNotApply) {
     // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = ArgIx; i < NumArgs; i++) {
+    for (unsigned i = ArgIx; i != NumArgs; ++i) {
       Expr *Arg = Args[i];
-      Invalid |= DefaultVariadicArgumentPromotion(Arg, CallType);
+      Invalid |= DefaultVariadicArgumentPromotion(Arg, CallType, FDecl);
       AllArgs.push_back(Arg);
     }
   }

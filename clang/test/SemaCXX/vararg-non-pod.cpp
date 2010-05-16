@@ -88,3 +88,12 @@ void test_typeid(Base &base) {
   (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'Base' through variadic function; call will abort at runtime}}
   (void)typeid(eat_base(base)); // okay
 }
+
+
+// rdar://7985267 - Shouldn't warn, doesn't actually use __builtin_va_start is
+// magic.
+
+void t6(Foo somearg, ... ) {
+  __builtin_va_start(0/*valist*/, somearg);
+}
+

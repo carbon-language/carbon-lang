@@ -7054,7 +7054,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
       Expr *Arg = Args[i];
-      IsError |= DefaultVariadicArgumentPromotion(Arg, VariadicMethod);
+      IsError |= DefaultVariadicArgumentPromotion(Arg, VariadicMethod, 0);
       TheCall->setArg(i + 1, Arg);
     }
   }
