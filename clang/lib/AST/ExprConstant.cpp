@@ -355,6 +355,10 @@ bool LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
   } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
     if (!VD->getType()->isReferenceType())
       return Success(E);
+    // Reference parameters can refer to anything even if they have an
+    // "initializer" in the form of a default argument.
+    if (isa<ParmVarDecl>(VD))
+      return false;
     // FIXME: Check whether VD might be overridden!
     if (const Expr *Init = VD->getAnyInitializer())
       return Visit(const_cast<Expr *>(Init));

@@ -155,3 +155,16 @@ void f0(s1 a) { s1 b = a; }
 // CHECK: load
 // CHECK: ret
 const int &f2() { return 0; }
+
+// Don't constant fold const reference parameters with default arguments to
+// their default arguments.
+namespace N1 {
+  const int foo = 1;
+  // CHECK: @_ZN2N14test
+  int test(const int& arg = foo) {
+    // Ensure this array is on the stack where we can set values instead of
+    // being a global constant.
+    // CHECK: %args_array = alloca
+    const int* const args_array[] = { &arg };
+  }
+}
