@@ -180,6 +180,8 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(CallingConv::ID CC,
 
   if (CC == CallingConv::X86_FastCall)
     return CC_X86_32_FastCall;
+  else if (CC == CallingConv::X86_ThisCall)
+    return CC_X86_32_ThisCall;
   else if (CC == CallingConv::Fast)
     return CC_X86_32_FastCC;
   else if (CC == CallingConv::GHC)

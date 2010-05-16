@@ -307,6 +307,20 @@ def CC_X86_32_FastCall : CallingConv<[
   CCDelegateTo<CC_X86_32_Common>
 ]>;
 
+def CC_X86_32_ThisCall : CallingConv<[
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+
+  // The 'nest' parameter, if any, is passed in EAX.
+  CCIfNest<CCAssignToReg<[EAX]>>,
+
+  // The first integer argument is passed in ECX
+  CCIfType<[i32], CCAssignToReg<[ECX]>>,
+
+  // Otherwise, same as everything else.
+  CCDelegateTo<CC_X86_32_Common>
+]>;
+
 def CC_X86_32_FastCC : CallingConv<[
   // Handles byval parameters.  Note that we can't rely on the delegation
   // to CC_X86_32_Common for this because that happens after code that

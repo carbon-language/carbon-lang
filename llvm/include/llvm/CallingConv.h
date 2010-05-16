@@ -74,7 +74,12 @@ namespace CallingConv {
     ARM_AAPCS_VFP = 68,
 
     /// MSP430_INTR - Calling convention used for MSP430 interrupt routines.
-    MSP430_INTR = 69
+    MSP430_INTR = 69,
+
+    /// X86_ThisCall - Similar to X86_StdCall. Passes first argument in ECX,
+    /// others via stack. Callee is responsible for stack cleaning. MSVC uses
+    /// this by default for methods in its ABI.
+    X86_ThisCall = 70
   };
 } // End CallingConv namespace
 

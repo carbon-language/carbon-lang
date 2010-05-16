@@ -278,6 +278,8 @@ std::string MSILWriter::getConvModopt(CallingConv::ID CallingConvID) {
     return "modopt([mscorlib]System.Runtime.CompilerServices.CallConvFastcall) ";
   case CallingConv::X86_StdCall:
     return "modopt([mscorlib]System.Runtime.CompilerServices.CallConvStdcall) ";
+  case CallingConv::X86_ThisCall:
+    return "modopt([mscorlib]System.Runtime.CompilerServices.CallConvThiscall) ";
   default:
     errs() << "CallingConvID = " << CallingConvID << '\n';
     llvm_unreachable("Unsupported calling convention");

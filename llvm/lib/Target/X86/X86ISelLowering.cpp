@@ -1383,6 +1383,8 @@ bool X86TargetLowering::IsCalleePop(bool IsVarArg,
     return !Subtarget->is64Bit();
   case CallingConv::X86_FastCall:
     return !Subtarget->is64Bit();
+  case CallingConv::X86_ThisCall:
+    return !Subtarget->is64Bit();
   case CallingConv::Fast:
     return GuaranteedTailCallOpt;
   case CallingConv::GHC:
@@ -1404,6 +1406,8 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(CallingConv::ID CC) const {
 
   if (CC == CallingConv::X86_FastCall)
     return CC_X86_32_FastCall;
+  else if (CC == CallingConv::X86_ThisCall)
+    return CC_X86_32_ThisCall;
   else if (CC == CallingConv::Fast)
     return CC_X86_32_FastCC;
   else if (CC == CallingConv::GHC)
@@ -1595,7 +1599,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    if (Is64Bit || CallConv != CallingConv::X86_FastCall) {
+    if (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
+                    CallConv != CallingConv::X86_ThisCall)) {
       FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(1, StackSize,
                                                             true, false));
     }
@@ -1715,7 +1720,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   if (!Is64Bit) {
     // RegSaveFrameIndex is X86-64 only.
     FuncInfo->setRegSaveFrameIndex(0xAAAAAAA);
-    if (CallConv == CallingConv::X86_FastCall)
+    if (CallConv == CallingConv::X86_FastCall ||
+        CallConv == CallingConv::X86_ThisCall)
       // fastcc functions can't have varargs.
       FuncInfo->setVarArgsFrameIndex(0xAAAAAAA);
   }
@@ -7119,6 +7125,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
       break;
     }
     case CallingConv::X86_FastCall:
+    case CallingConv::X86_ThisCall:
     case CallingConv::Fast:
       // Pass 'nest' parameter in EAX.
       // Must be kept in sync with X86CallingConv.td

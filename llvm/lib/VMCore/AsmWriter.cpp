@@ -1573,6 +1573,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::Cold:         Out << "coldcc "; break;
   case CallingConv::X86_StdCall:  Out << "x86_stdcallcc "; break;
   case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break;
+  case CallingConv::X86_ThisCall: Out << "x86_thiscallcc "; break;
   case CallingConv::ARM_APCS:     Out << "arm_apcscc "; break;
   case CallingConv::ARM_AAPCS:    Out << "arm_aapcscc "; break;
   case CallingConv::ARM_AAPCS_VFP:Out << "arm_aapcs_vfpcc "; break;
@@ -1845,6 +1846,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
+    case CallingConv::X86_ThisCall: Out << " x86_thiscallcc"; break;
     case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
@@ -1897,6 +1899,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
+    case CallingConv::X86_ThisCall: Out << " x86_thiscallcc"; break;
     case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
