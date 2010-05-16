@@ -3434,9 +3434,7 @@ public:
     void param(const param_type& __p) {__p_ = __p;}
 
     result_type min() const {return 0;}
-    result_type max() const
-        {return -std::log(1-std::nextafter(result_type(1), result_type(-1))) /
-                 __p_.lambda();}
+    result_type max() const {return numeric_limits<result_type>::infinity();}
 
     friend bool operator==(const exponential_distribution& __x,
                            const exponential_distribution& __y)

@@ -23,6 +23,6 @@ int main()
         typedef std::exponential_distribution<> D;
         D d(.25);
         D::result_type m = d.max();
-        assert(146 < m && m < 147);
+        assert(m == std::numeric_limits<D::result_type>::infinity());
     }
 }

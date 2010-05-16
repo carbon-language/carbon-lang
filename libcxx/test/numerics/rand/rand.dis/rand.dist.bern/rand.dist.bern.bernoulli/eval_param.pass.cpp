@@ -42,13 +42,29 @@ int main()
         double mean = std::accumulate(u.begin(), u.end(),
                                               double(0)) / u.size();
         double var = 0;
+        double skew = 0;
+        double kurtosis = 0;
         for (int i = 0; i < u.size(); ++i)
-            var += sqr(u[i] - mean);
+        {
+            double d = (u[i] - mean);
+            double d2 = sqr(d);
+            var += d2;
+            skew += d * d2;
+            kurtosis += d2 * d2;
+        }
         var /= u.size();
+        double dev = std::sqrt(var);
+        skew /= u.size() * dev * var;
+        kurtosis /= u.size() * var * var;
+        kurtosis -= 3;
         double x_mean = p.p();
         double x_var = p.p()*(1-p.p());
+        double x_skew = (1 - 2 * p.p())/std::sqrt(x_var);
+        double x_kurtosis = (6 * sqr(p.p()) - 6 * p.p() + 1)/x_var;
         assert(std::abs(mean - x_mean) / x_mean < 0.01);
         assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(skew - x_skew) / x_skew < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
     }
     {
         typedef std::bernoulli_distribution D;
@@ -64,12 +80,28 @@ int main()
         double mean = std::accumulate(u.begin(), u.end(),
                                               double(0)) / u.size();
         double var = 0;
+        double skew = 0;
+        double kurtosis = 0;
         for (int i = 0; i < u.size(); ++i)
-            var += sqr(u[i] - mean);
+        {
+            double d = (u[i] - mean);
+            double d2 = sqr(d);
+            var += d2;
+            skew += d * d2;
+            kurtosis += d2 * d2;
+        }
         var /= u.size();
+        double dev = std::sqrt(var);
+        skew /= u.size() * dev * var;
+        kurtosis /= u.size() * var * var;
+        kurtosis -= 3;
         double x_mean = p.p();
         double x_var = p.p()*(1-p.p());
+        double x_skew = (1 - 2 * p.p())/std::sqrt(x_var);
+        double x_kurtosis = (6 * sqr(p.p()) - 6 * p.p() + 1)/x_var;
         assert(std::abs(mean - x_mean) / x_mean < 0.01);
         assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(skew - x_skew) / x_skew < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
     }
 }

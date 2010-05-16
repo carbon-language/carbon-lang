@@ -35,20 +35,39 @@ int main()
         typedef std::minstd_rand G;
         G g;
         D d(0.5);
-        const int N = 100000;
+        const int N = 1000000;
         std::vector<D::result_type> u;
         for (int i = 0; i < N; ++i)
-            u.push_back(d(g));
-        D::result_type mean = std::accumulate(u.begin(), u.end(),
-                                              D::result_type(0)) / u.size();
-        D::result_type var = 0;
+        {
+            D::result_type v = d(g);
+            assert(d.min() < v);
+            u.push_back(v);
+        }
+        double mean = std::accumulate(u.begin(), u.end(), 0.0) / u.size();
+        double var = 0;
+        double skew = 0;
+        double kurtosis = 0;
         for (int i = 0; i < u.size(); ++i)
-            var += sqr(u[i] - mean);
+        {
+            double d = (u[i] - mean);
+            double d2 = sqr(d);
+            var += d2;
+            skew += d * d2;
+            kurtosis += d2 * d2;
+        }
         var /= u.size();
-        D::result_type x_mean = d.n();
-        D::result_type x_var = 2*d.n();
-        assert(std::abs(mean - x_mean) / x_mean < 0.02);
-        assert(std::abs(var - x_var) / x_var < 0.02);
+        double dev = std::sqrt(var);
+        skew /= u.size() * dev * var;
+        kurtosis /= u.size() * var * var;
+        kurtosis -= 3;
+        double x_mean = d.n();
+        double x_var = 2 * d.n();
+        double x_skew = std::sqrt(8 / d.n());
+        double x_kurtosis = 12 / d.n();
+        assert(std::abs(mean - x_mean) / x_mean < 0.01);
+        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(skew - x_skew) / x_skew < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
     }
     {
         typedef std::chi_squared_distribution<> D;
@@ -56,40 +75,78 @@ int main()
         typedef std::minstd_rand G;
         G g;
         D d(1);
-        const int N = 100000;
+        const int N = 1000000;
         std::vector<D::result_type> u;
         for (int i = 0; i < N; ++i)
-            u.push_back(d(g));
-        D::result_type mean = std::accumulate(u.begin(), u.end(),
-                                              D::result_type(0)) / u.size();
-        D::result_type var = 0;
+        {
+            D::result_type v = d(g);
+            assert(d.min() < v);
+            u.push_back(v);
+        }
+        double mean = std::accumulate(u.begin(), u.end(), 0.0) / u.size();
+        double var = 0;
+        double skew = 0;
+        double kurtosis = 0;
         for (int i = 0; i < u.size(); ++i)
-            var += sqr(u[i] - mean);
+        {
+            double d = (u[i] - mean);
+            double d2 = sqr(d);
+            var += d2;
+            skew += d * d2;
+            kurtosis += d2 * d2;
+        }
         var /= u.size();
-        D::result_type x_mean = d.n();
-        D::result_type x_var = 2*d.n();
-        assert(std::abs(mean - x_mean) / x_mean < 0.02);
-        assert(std::abs(var - x_var) / x_var < 0.02);
+        double dev = std::sqrt(var);
+        skew /= u.size() * dev * var;
+        kurtosis /= u.size() * var * var;
+        kurtosis -= 3;
+        double x_mean = d.n();
+        double x_var = 2 * d.n();
+        double x_skew = std::sqrt(8 / d.n());
+        double x_kurtosis = 12 / d.n();
+        assert(std::abs(mean - x_mean) / x_mean < 0.01);
+        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(skew - x_skew) / x_skew < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
     }
     {
         typedef std::chi_squared_distribution<> D;
         typedef D::param_type P;
-        typedef std::minstd_rand G;
+        typedef std::mt19937 G;
         G g;
         D d(2);
-        const int N = 100000;
+        const int N = 1000000;
         std::vector<D::result_type> u;
         for (int i = 0; i < N; ++i)
-            u.push_back(d(g));
-        D::result_type mean = std::accumulate(u.begin(), u.end(),
-                                              D::result_type(0)) / u.size();
-        D::result_type var = 0;
+        {
+            D::result_type v = d(g);
+            assert(d.min() < v);
+            u.push_back(v);
+        }
+        double mean = std::accumulate(u.begin(), u.end(), 0.0) / u.size();
+        double var = 0;
+        double skew = 0;
+        double kurtosis = 0;
         for (int i = 0; i < u.size(); ++i)
-            var += sqr(u[i] - mean);
+        {
+            double d = (u[i] - mean);
+            double d2 = sqr(d);
+            var += d2;
+            skew += d * d2;
+            kurtosis += d2 * d2;
+        }
         var /= u.size();
-        D::result_type x_mean = d.n();
-        D::result_type x_var = 2*d.n();
-        assert(std::abs(mean - x_mean) / x_mean < 0.02);
-        assert(std::abs(var - x_var) / x_var < 0.02);
+        double dev = std::sqrt(var);
+        skew /= u.size() * dev * var;
+        kurtosis /= u.size() * var * var;
+        kurtosis -= 3;
+        double x_mean = d.n();
+        double x_var = 2 * d.n();
+        double x_skew = std::sqrt(8 / d.n());
+        double x_kurtosis = 12 / d.n();
+        assert(std::abs(mean - x_mean) / x_mean < 0.01);
+        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs(skew - x_skew) / x_skew < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
     }
 }
