@@ -1128,7 +1128,12 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
+
+ifdef LOADABLE_MODULE
+DestSharedLib = $(DESTDIR)$(PROJ_libdir)/$(LIBRARYNAME)$(SHLIBEXT)
+else
 DestSharedLib = $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+endif
 
 install-local:: $(DestSharedLib)
 

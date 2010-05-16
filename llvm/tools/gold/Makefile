@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-LIBRARYNAME = libLLVMgold
+LIBRARYNAME = LLVMgold
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/gold.exports
 
