@@ -73,7 +73,8 @@ public:
   void AddDelimitedPaths(llvm::StringRef String);
 
   // AddDefaultCIncludePaths - Add paths that should always be searched.
-  void AddDefaultCIncludePaths(const llvm::Triple &triple);
+  void AddDefaultCIncludePaths(const llvm::Triple &triple,
+                               const HeaderSearchOptions &HSOpts);
 
   // AddDefaultCPlusPlusIncludePaths -  Add paths that should be searched when
   //  compiling c++.
@@ -83,7 +84,7 @@ public:
   ///  that e.g. stdio.h is found.
   void AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                     const llvm::Triple &triple,
-                                    bool UseStandardCXXIncludes);
+                                    const HeaderSearchOptions &HSOpts);
 
   /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
@@ -382,8 +383,22 @@ static bool getWindowsSDKDir(std::string &path) {
   return(false);
 }
 
-void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
+void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
+                                            const HeaderSearchOptions &HSOpts) {
   // FIXME: temporary hack: hard-coded paths.
+  AddPath("/usr/local/include", System, true, false, false);
+
+  // Builtin includes use #include_next directives and should be positioned
+  // just prior C include dirs.
+  if (HSOpts.UseBuiltinIncludes) {
+    // Ignore the sys root, we *always* look for clang headers relative to
+    // supplied path.
+    llvm::sys::Path P(HSOpts.ResourceDir);
+    P.appendComponent("include");
+    AddPath(P.str(), System, false, false, false, /*IgnoreSysRoot=*/ true);
+  }
+
+  // Add dirs specified via 'configure --with-c-include-dirs'.
   llvm::StringRef CIncludeDirs(C_INCLUDE_DIRS);
   if (CIncludeDirs != "") {
     llvm::SmallVector<llvm::StringRef, 5> dirs;
@@ -480,7 +495,6 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
     break;
   }
 
-  AddPath("/usr/local/include", System, true, false, false);
   AddPath("/usr/include", System, false, false, false);
 }
 
@@ -666,11 +680,11 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                     const llvm::Triple &triple,
-                                                  bool UseStandardCXXIncludes) {
-  if (Lang.CPlusPlus && UseStandardCXXIncludes)
+                                            const HeaderSearchOptions &HSOpts) {
+  if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes)
     AddDefaultCPlusPlusIncludePaths(triple);
 
-  AddDefaultCIncludePaths(triple);
+  AddDefaultCIncludePaths(triple, HSOpts);
 
   // Add the default framework include paths on Darwin.
   if (triple.getOS() == llvm::Triple::Darwin) {
@@ -828,21 +842,8 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   else
     Init.AddDelimitedPaths(HSOpts.CEnvIncPath);
 
-  if (HSOpts.UseBuiltinIncludes) {
-    // Ignore the sys root, we *always* look for clang headers relative to
-    // supplied path.
-    llvm::sys::Path P(HSOpts.ResourceDir);
-    P.appendComponent("include");
-    Init.AddPath(P.str(), System, false, false, false, /*IgnoreSysRoot=*/ true);
-  }
-
   if (HSOpts.UseStandardIncludes)
-    Init.AddDefaultSystemIncludePaths(Lang, Triple, 
-                                      HSOpts.UseStandardCXXIncludes);
-
-  if (HSOpts.UseStandardIncludes)
-    Init.AddDefaultSystemIncludePaths(Lang, Triple, 
-                                      HSOpts.UseStandardCXXIncludes);
+    Init.AddDefaultSystemIncludePaths(Lang, Triple, HSOpts);
 
   Init.Realize();
 }
