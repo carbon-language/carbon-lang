@@ -217,10 +217,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (!X86ScalarSSEf64) {
     setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
-    if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::BIT_CONVERT      , MVT::f64  , Expand);
-      setOperationAction(ISD::BIT_CONVERT      , MVT::i64  , Expand);
-    }
   }
 
   // Scalar integer divide and remainder are lowered to use operations that
