@@ -589,8 +589,12 @@ ifeq ($(TARGET_OS),Darwin)
 endif
 
 ifdef SHARED_LIBRARY
+ifneq ($(HOST_OS),Darwin)
+  LD.Flags += $(RPATH) -Wl,'$$ORIGIN'
+else
 ifneq ($(DARWIN_MAJVERS),4)
   LD.Flags += $(RPATH) -Wl,$(LibDir)
+endif
 endif
 endif
 
