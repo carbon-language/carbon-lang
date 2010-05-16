@@ -559,7 +559,7 @@ class SubstTemplateTypeParmTypeLoc :
 struct ObjCProtocolListLocInfo {
   SourceLocation LAngleLoc;
   SourceLocation RAngleLoc;
-  bool HasBaseType;
+  bool HasBaseTypeAsWritten;
 };
 
 // A helper class for defining ObjC TypeLocs that can qualified with
@@ -610,11 +610,11 @@ public:
   }
   
   bool hasBaseTypeAsWritten() const {
-    return getLocalData()->HasBaseType;
+    return getLocalData()->HasBaseTypeAsWritten;
   }
 
   void setHasBaseTypeAsWritten(bool HasBaseType) {
-    getLocalData()->HasBaseType = HasBaseType;
+    getLocalData()->HasBaseTypeAsWritten = HasBaseType;
   }
 
   TypeLoc getBaseLoc() const {
@@ -626,6 +626,7 @@ public:
   }
 
   void initializeLocal(SourceLocation Loc) {
+    setHasBaseTypeAsWritten(true);
     setLAngleLoc(Loc);
     setRAngleLoc(Loc);
     for (unsigned i = 0, e = getNumProtocols(); i != e; ++i)
