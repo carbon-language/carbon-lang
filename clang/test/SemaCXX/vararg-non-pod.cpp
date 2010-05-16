@@ -94,6 +94,7 @@ void test_typeid(Base &base) {
 // magic.
 
 void t6(Foo somearg, ... ) {
-  __builtin_va_start(0/*valist*/, somearg);
+  __builtin_va_list list;
+  __builtin_va_start(list, somearg);
 }
 
