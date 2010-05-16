@@ -656,12 +656,12 @@ PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def ADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary,
-           "@ ADJCALLSTACKUP $amt1",
+           "${:comment} ADJCALLSTACKUP $amt1",
            [(ARMcallseq_end timm:$amt1, timm:$amt2)]>;
 
 def ADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
-           "@ ADJCALLSTACKDOWN $amt",
+           "${:comment} ADJCALLSTACKDOWN $amt",
            [(ARMcallseq_start timm:$amt)]>;
 }
 
@@ -795,7 +795,7 @@ def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
 // binutils
 let isBarrier = 1, isTerminator = 1 in
 def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary, 
-               ".long 0xe7ffdefe @ trap", [(trap)]>,
+               ".long 0xe7ffdefe ${:comment} trap", [(trap)]>,
            Requires<[IsARM]> {
   let Inst{27-25} = 0b011;
   let Inst{24-20} = 0b11111;
@@ -2533,12 +2533,12 @@ let Defs =
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src, GPR:$val),
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
-                               "str\tsp, [$src, #+8] @ eh_setjmp begin\n\t"
+                               "str\tsp, [$src, #+8] ${:comment} eh_setjmp begin\n\t"
                                "add\t$val, pc, #8\n\t"
                                "str\t$val, [$src, #+4]\n\t"
                                "mov\tr0, #0\n\t"
                                "add\tpc, pc, #0\n\t"
-                               "mov\tr0, #1 @ eh_setjmp end", "",
+                               "mov\tr0, #1 ${:comment} eh_setjmp end", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                            Requires<[IsARM, HasVFP2]>;
 }
@@ -2548,12 +2548,12 @@ let Defs =
   def Int_eh_sjlj_setjmp_nofp : XI<(outs), (ins GPR:$src, GPR:$val),
                                    AddrModeNone, SizeSpecial, IndexModeNone,
                                    Pseudo, NoItinerary,
-                                   "str\tsp, [$src, #+8] @ eh_setjmp begin\n\t"
+                                   "str\tsp, [$src, #+8] ${:comment} eh_setjmp begin\n\t"
                                    "add\t$val, pc, #8\n\t"
                                    "str\t$val, [$src, #+4]\n\t"
                                    "mov\tr0, #0\n\t"
                                    "add\tpc, pc, #0\n\t"
-                                   "mov\tr0, #1 @ eh_setjmp end", "",
+                                   "mov\tr0, #1 ${:comment} eh_setjmp end", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                                 Requires<[IsARM, NoVFP]>;
 }

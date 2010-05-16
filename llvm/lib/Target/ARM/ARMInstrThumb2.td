@@ -888,11 +888,11 @@ def t2UDIV : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALUi,
 // Pseudo instruction that will expand into a t2SUBrSPi + a copy.
 let usesCustomInserter = 1 in { // Expanded after instruction selection.
 def t2SUBrSPi_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                   NoItinerary, "@ sub.w\t$dst, $sp, $imm", []>;
+                   NoItinerary, "${:comment} sub.w\t$dst, $sp, $imm", []>;
 def t2SUBrSPi12_ : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
-                   NoItinerary, "@ subw\t$dst, $sp, $imm", []>;
+                   NoItinerary, "${:comment} subw\t$dst, $sp, $imm", []>;
 def t2SUBrSPs_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
-                   NoItinerary, "@ sub\t$dst, $sp, $rhs", []>;
+                   NoItinerary, "${:comment} sub\t$dst, $sp, $rhs", []>;
 } // usesCustomInserter
 
 
@@ -2394,13 +2394,13 @@ let Defs =
     D31 ] in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins GPR:$src, tGPR:$val),
                                AddrModeNone, SizeSpecial, NoItinerary,
-                               "str\t$val, [$src, #8]\t@ begin eh.setjmp\n"
+                               "str\t$val, [$src, #8]\t${:comment} begin eh.setjmp\n"
                                "\tmov\t$val, pc\n"
                                "\tadds\t$val, #9\n"
                                "\tstr\t$val, [$src, #4]\n"
                                "\tmovs\tr0, #0\n"
                                "\tb\t1f\n"
-                               "\tmovs\tr0, #1\t@ end eh.setjmp\n"
+                               "\tmovs\tr0, #1\t${:comment} end eh.setjmp\n"
                                "1:", "",
                           [(set R0, (ARMeh_sjlj_setjmp GPR:$src, tGPR:$val))]>,
                              Requires<[IsThumb2, HasVFP2]>;
@@ -2410,13 +2410,13 @@ let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR ] in {
   def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins GPR:$src, tGPR:$val),
                                AddrModeNone, SizeSpecial, NoItinerary,
-                               "str\t$val, [$src, #8]\t@ begin eh.setjmp\n"
+                               "str\t$val, [$src, #8]\t${:comment} begin eh.setjmp\n"
                                "\tmov\t$val, pc\n"
                                "\tadds\t$val, #9\n"
                                "\tstr\t$val, [$src, #4]\n"
                                "\tmovs\tr0, #0\n"
                                "\tb\t1f\n"
-                               "\tmovs\tr0, #1\t@ end eh.setjmp\n"
+                               "\tmovs\tr0, #1\t${:comment} end eh.setjmp\n"
                                "1:", "",
                           [(set R0, (ARMeh_sjlj_setjmp GPR:$src, tGPR:$val))]>,
                                   Requires<[IsThumb2, NoVFP]>;
@@ -2688,7 +2688,7 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // scheduling.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                   NoItinerary, "@ ldr.w\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
+                   NoItinerary, "${:comment} ldr.w\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;
