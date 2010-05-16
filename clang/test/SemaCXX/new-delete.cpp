@@ -245,6 +245,9 @@ namespace Test1 {
 
 void f() {
   (void)new int[10](1, 2); // expected-error {{array 'new' cannot have initialization arguments}}
+  
+  typedef int T[10];
+  (void)new T(1, 2); // expected-error {{array 'new' cannot have initialization arguments}}
 }
 
 template<typename T>

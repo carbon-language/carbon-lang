@@ -760,7 +760,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
 
   // Array 'new' can't have any initializers.
-  if (NumConsArgs && ArraySize) {
+  if (NumConsArgs && (ResultType->isArrayType() || ArraySize)) {
     SourceRange InitRange(ConsArgs[0]->getLocStart(),
                           ConsArgs[NumConsArgs - 1]->getLocEnd());
     
