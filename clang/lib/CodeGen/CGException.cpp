@@ -239,23 +239,19 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
   }
 }
 
-void CodeGenFunction::EmitRethrow() {
-  if (getInvokeDest()) {
-    llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
-    Builder.CreateInvoke(getReThrowFn(*this), Cont, getInvokeDest())
-    ->setDoesNotReturn();
-    EmitBlock(Cont);
-  } else
-    Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
-  Builder.CreateUnreachable();
-  
-  // Clear the insertion point to indicate we are in unreachable code.
-  Builder.ClearInsertionPoint();
-}
-
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   if (!E->getSubExpr()) {
-    EmitRethrow();
+    if (getInvokeDest()) {
+      llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
+      Builder.CreateInvoke(getReThrowFn(*this), Cont, getInvokeDest())
+        ->setDoesNotReturn();
+      EmitBlock(Cont);
+    } else
+      Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
+    Builder.CreateUnreachable();
+
+    // Clear the insertion point to indicate we are in unreachable code.
+    Builder.ClearInsertionPoint();
     return;
   }
 
@@ -566,7 +562,6 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
         // FIXME: we need to do this sooner so that the EH region for the
         // cleanup doesn't start until after the ctor completes, use a decl
         // init?
-        // FIXME: Alternatively, can we just elide this copy entirely?
         CopyObject(*this, CatchParam->getType().getNonReferenceType(),
                    WasPointer, WasPointerReference, ExcObject,
                    GetAddrOfLocalVar(CatchParam));

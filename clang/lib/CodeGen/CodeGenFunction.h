@@ -1258,8 +1258,7 @@ public:
                                     bool IsInitializer = false);
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
-  void EmitRethrow();
-  
+
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
