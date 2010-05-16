@@ -54,8 +54,13 @@ static void CheckUnreachable(Sema &S, AnalysisContext &AC) {
 // Check for missing return value.
 //===----------------------------------------------------------------------===//
 
-enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
-  AlwaysFallThrough = 2, NeverFallThroughOrReturn = 3 };
+enum ControlFlowKind {
+  UnknownFallThrough,
+  NeverFallThrough,
+  MaybeFallThrough,
+  AlwaysFallThrough,
+  NeverFallThroughOrReturn
+};
 
 /// CheckFallThrough - Check that we don't fall off the end of a
 /// Statement that should return a value.
@@ -68,9 +73,7 @@ enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
 /// will return.
 static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
   CFG *cfg = AC.getCFG();
-  if (cfg == 0)
-    // FIXME: This should be NeverFallThrough
-    return NeverFallThroughOrReturn;
+  if (cfg == 0) return UnknownFallThrough;
 
   // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
@@ -290,6 +293,9 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
   // FIXME: Function try block
   if (const CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
     switch (CheckFallThrough(AC)) {
+      case UnknownFallThrough:
+        break;
+
       case MaybeFallThrough:
         if (HasNoReturn)
           S.Diag(Compound->getRBracLoc(),
