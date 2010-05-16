@@ -184,6 +184,10 @@ private:
   ///
   SDNode *QuadDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
 
+  /// QuadQRegs - Form 4 consecutive Q registers.
+  ///
+  SDNode *QuadQRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+
   /// OctoDRegs - Form 8 consecutive D registers.
   ///
   SDNode *OctoDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3,
@@ -996,6 +1000,19 @@ SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
 
+/// QuadQRegs - Form 4 consecutive Q registers.
+///
+SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
+                                   SDValue V2, SDValue V3) {
+  DebugLoc dl = V0.getNode()->getDebugLoc();
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::QSUBREG_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::QSUBREG_1, MVT::i32);
+  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::QSUBREG_2, MVT::i32);
+  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::QSUBREG_3, MVT::i32);
+  const SDValue Ops[] = { V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3 };
+  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
+}
+
 /// OctoDRegs - Form 8 consecutive D registers.
 ///
 SDNode *ARMDAGToDAGISel::OctoDRegs(EVT VT, SDValue V0, SDValue V1,
@@ -1401,11 +1418,13 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   // Quad registers are handled by load/store of subregs. Find the subreg info.
   unsigned NumElts = 0;
   int SubregIdx = 0;
+  bool Even = false;
   EVT RegVT = VT;
   if (!is64BitVector) {
     RegVT = GetNEONSubregVT(VT);
     NumElts = RegVT.getVectorNumElements();
     SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+    Even = Lane < NumElts;
   }
 
   unsigned OpcodeIndex;
@@ -1432,8 +1451,35 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   unsigned Opc = 0;
   if (is64BitVector) {
     Opc = DOpcodes[OpcodeIndex];
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(N->getOperand(Vec+3));
+    if (llvm::ModelWithRegSequence()) {
+      SDValue RegSeq;
+      SDValue V0 = N->getOperand(0+3);
+      SDValue V1 = N->getOperand(1+3);
+      if (NumVecs == 2) {
+        RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+      } else {
+        SDValue V2 = N->getOperand(2+3);
+        SDValue V3 = (NumVecs == 3)
+          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+          : N->getOperand(3+3);
+        RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+      }
+
+      // Now extract the D registers back out.
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, VT,
+                                                   RegSeq));
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, VT,
+                                                   RegSeq));
+      if (NumVecs > 2)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, VT,
+                                                     RegSeq));
+      if (NumVecs > 3)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, VT,
+                                                     RegSeq));
+    } else {
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+        Ops.push_back(N->getOperand(Vec+3));
+    }
   } else {
     // Check if this is loading the even or odd subreg of a Q register.
     if (Lane < NumElts) {
@@ -1442,10 +1488,32 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
       Lane -= NumElts;
       Opc = QOpcodes1[OpcodeIndex];
     }
-    // Extract the subregs of the input vector.
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
-                                                   N->getOperand(Vec+3)));
+
+    if (llvm::ModelWithRegSequence()) {
+      SDValue RegSeq;
+      SDValue V0 = N->getOperand(0+3);
+      SDValue V1 = N->getOperand(1+3);
+      if (NumVecs == 2) {
+        RegSeq = SDValue(PairQRegs(MVT::v4i64, V0, V1), 0);
+      } else {
+        SDValue V2 = N->getOperand(2+3);
+        SDValue V3 = (NumVecs == 3)
+          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+          : N->getOperand(3+3);
+        RegSeq = SDValue(QuadQRegs(MVT::v8i64, V0, V1, V2, V3), 0);
+      }
+
+      // Extract the subregs of the input vector.
+      unsigned SubIdx = Even ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(SubIdx+Vec*2, dl, RegVT,
+                                                     RegSeq));
+    } else {
+      // Extract the subregs of the input vector.
+      for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+        Ops.push_back(CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                     N->getOperand(Vec+3)));
+    }
   }
   Ops.push_back(getI32Imm(Lane));
   Ops.push_back(Pred);
@@ -1480,7 +1548,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
       // as subregs into the result.
       SDValue V[8];
       for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
-        if (SubregIdx == ARM::DSUBREG_0) {
+        if (Even) {
           V[i]   = SDValue(VLdLn, Vec);
           V[i+1] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                   dl, RegVT), 0);
