@@ -24,6 +24,8 @@ void* operator new(size_t, int*); // expected-note 3 {{candidate}}
 void* operator new(size_t, float*); // expected-note 3 {{candidate}}
 void* operator new(size_t, S); // expected-note 2 {{candidate}}
 
+struct foo { };
+
 void good_news()
 {
   int *pi = new int;
@@ -43,6 +45,14 @@ void good_news()
   pi = new (S(1.0f, 2)) int;
   
   (void)new int[true];
+
+  // PR7147
+  typedef int a[2];
+  foo* f1 = new foo;
+  foo* f2 = new foo[2];
+  typedef foo x[2];
+  typedef foo y[2][2];
+  x* f3 = new y;
 }
 
 struct abstract {

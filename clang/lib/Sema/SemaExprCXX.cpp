@@ -680,10 +680,19 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (CheckAllocatedType(AllocType, TypeLoc, TypeRange))
     return ExprError();
 
-  QualType ResultType = Context.getPointerType(AllocType);
+  // Per C++0x [expr.new]p5, the type being constructed may be a
+  // typedef of an array type.
+  if (!ArraySizeE.get()) {
+    if (const ConstantArrayType *Array
+                              = Context.getAsConstantArrayType(AllocType)) {
+      ArraySizeE = Owned(new (Context) IntegerLiteral(Array->getSize(),
+                                                      Context.getSizeType(),
+                                                      TypeRange.getEnd()));
+      AllocType = Array->getElementType();
+    }
+  }
 
-  // That every array dimension except the first is constant was already
-  // checked by the type check above.
+  QualType ResultType = Context.getPointerType(AllocType);
 
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
