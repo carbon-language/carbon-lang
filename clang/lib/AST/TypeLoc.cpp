@@ -92,9 +92,20 @@ namespace {
 /// recursively, as if the entire tree had been written in the
 /// given location.
 void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
-  do {
-    TypeLocInitializer(Loc).Visit(TL);
-  } while ((TL = TL.getNextTypeLoc()));
+  while (true) {
+    switch (TL.getTypeLocClass()) {
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT)        \
+    case CLASS: {                     \
+      CLASS##TypeLoc TLCasted = cast<CLASS##TypeLoc>(TL); \
+      TLCasted.initializeLocal(Loc);  \
+      TL = TLCasted.getNextTypeLoc(); \
+      if (!TL) return;                \
+      continue;                       \
+    }
+#include "clang/AST/TypeLocNodes.def"
+    }
+  }
 }
 
 namespace {
