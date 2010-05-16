@@ -929,6 +929,7 @@ public:
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
 
+  llvm::Constant *getUnwindResumeOrRethrowFn();
   struct CXXTryStmtInfo {
     llvm::BasicBlock *SavedLandingPad;
     llvm::BasicBlock *HandlerBlock;

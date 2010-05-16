@@ -100,17 +100,17 @@ static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
 }
 
-static llvm::Constant *getUnwindResumeOrRethrowFn(CodeGenFunction &CGF) {
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
   std::vector<const llvm::Type*> Args(1, Int8PtrTy);
 
   const llvm::FunctionType *FTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), Args,
+    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()), Args,
                             false);
 
-  if (CGF.CGM.getLangOptions().SjLjExceptions)
-    return CGF.CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
-  return CGF.CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
+  if (CGM.getLangOptions().SjLjExceptions)
+    return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
+  return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
 }
 
 static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
@@ -397,7 +397,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 
   if (Proto->getNumExceptions()) {
     EmitBlock(Unwind);
-    Builder.CreateCall(getUnwindResumeOrRethrowFn(*this),
+    Builder.CreateCall(getUnwindResumeOrRethrowFn(),
                        Builder.CreateLoad(RethrowPtr));
     Builder.CreateUnreachable();
   }
@@ -631,12 +631,12 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
   // here.
   if (getInvokeDest()) {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
-    Builder.CreateInvoke(getUnwindResumeOrRethrowFn(*this), Cont,
+    Builder.CreateInvoke(getUnwindResumeOrRethrowFn(), Cont,
                          getInvokeDest(),
                          Builder.CreateLoad(RethrowPtr));
     EmitBlock(Cont);
   } else
-    Builder.CreateCall(getUnwindResumeOrRethrowFn(*this),
+    Builder.CreateCall(getUnwindResumeOrRethrowFn(),
                        Builder.CreateLoad(RethrowPtr));
 
   Builder.CreateUnreachable();
@@ -687,11 +687,11 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
   // Rethrow the exception.
   if (CGF.getInvokeDest()) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-    CGF.Builder.CreateInvoke(getUnwindResumeOrRethrowFn(CGF), Cont,
+    CGF.Builder.CreateInvoke(CGF.getUnwindResumeOrRethrowFn(), Cont,
                              CGF.getInvokeDest(), Exc);
     CGF.EmitBlock(Cont);
   } else
-    CGF.Builder.CreateCall(getUnwindResumeOrRethrowFn(CGF), Exc);
+    CGF.Builder.CreateCall(CGF.getUnwindResumeOrRethrowFn(), Exc);
   CGF.Builder.CreateUnreachable();
 
   // Resume inserting where we started, but put the new cleanup
