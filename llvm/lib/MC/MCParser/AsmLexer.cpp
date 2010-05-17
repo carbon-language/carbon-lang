@@ -132,11 +132,6 @@ AsmToken AsmLexer::LexLineComment() {
 ///   Decimal integer: [1-9][0-9]*
 /// TODO: FP literal.
 AsmToken AsmLexer::LexDigit() {
-  if (*CurPtr == ':')
-    return ReturnError(TokStart, "FIXME: local label not implemented");
-  if (*CurPtr == 'f' || *CurPtr == 'b')
-    return ReturnError(TokStart, "FIXME: directional label not implemented");
-  
   // Decimal integer: [1-9][0-9]*
   if (CurPtr[-1] != '0') {
     while (isdigit(*CurPtr))
@@ -158,6 +153,13 @@ AsmToken AsmLexer::LexDigit() {
   
   if (*CurPtr == 'b') {
     ++CurPtr;
+    // See if we actually have "0b" as part of something like "jmp 0b\n"
+    if (CurPtr[0] == '\n') {
+      --CurPtr;
+      StringRef Result(TokStart, CurPtr - TokStart);
+      ++CurPtr;
+      return AsmToken(AsmToken::Integer, Result, 0);
+    }
     const char *NumStart = CurPtr;
     while (CurPtr[0] == '0' || CurPtr[0] == '1')
       ++CurPtr;

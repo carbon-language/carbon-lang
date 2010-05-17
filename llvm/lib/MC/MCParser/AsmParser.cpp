@@ -214,11 +214,28 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     Res = MCSymbolRefExpr::Create(Sym, Variant, getContext());
     return false;
   }
-  case AsmToken::Integer:
-    Res = MCConstantExpr::Create(getTok().getIntVal(), getContext());
+  case AsmToken::Integer: {
+    SMLoc Loc = getTok().getLoc();
+    int64_t IntVal = getTok().getIntVal();
+    Res = MCConstantExpr::Create(IntVal, getContext());
     EndLoc = Lexer.getLoc();
     Lex(); // Eat token.
+    // Look for 'b' or 'f' following an Integer as a directional label
+    if (Lexer.getKind() == AsmToken::Identifier) {
+      StringRef IDVal = getTok().getString();
+      if (IDVal == "f" || IDVal == "b"){
+        MCSymbol *Sym = Ctx.GetDirectionalLocalSymbol(IntVal,
+                                                      IDVal == "f" ? 1 : 0);
+        Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+                                      getContext());
+        if(IDVal == "b" && Sym->isUndefined())
+          return Error(Loc, "invalid reference to undefined symbol");
+        EndLoc = Lexer.getLoc();
+        Lex(); // Eat identifier.
+      }
+    }
     return false;
+  }
   case AsmToken::Dot: {
     // This is a '.' reference, which references the current PC.  Emit a
     // temporary label to the streamer and refer to it.
@@ -422,7 +439,25 @@ bool AsmParser::ParseStatement() {
   AsmToken ID = getTok();
   SMLoc IDLoc = ID.getLoc();
   StringRef IDVal;
-  if (ParseIdentifier(IDVal)) {
+  int64_t LocalLabelVal = -1;
+  // GUESS allow an integer followed by a ':' as a directional local label
+  if (Lexer.is(AsmToken::Integer)) {
+    LocalLabelVal = getTok().getIntVal();
+    if (LocalLabelVal < 0) {
+      if (!TheCondState.Ignore)
+        return TokError("unexpected token at start of statement");
+      IDVal = "";
+    }
+    else {
+      IDVal = getTok().getString();
+      Lex(); // Consume the integer token to be used as an identifier token.
+      if (Lexer.getKind() != AsmToken::Colon) {
+	  if (!TheCondState.Ignore)
+	    return TokError("unexpected token at start of statement");
+      }
+    }
+  }
+  else if (ParseIdentifier(IDVal)) {
     if (!TheCondState.Ignore)
       return TokError("unexpected token at start of statement");
     IDVal = "";
@@ -459,7 +494,11 @@ bool AsmParser::ParseStatement() {
     // FIXME: Diagnostics. Note the location of the definition as a label.
     // FIXME: This doesn't diagnose assignment to a symbol which has been
     // implicitly marked as external.
-    MCSymbol *Sym = CreateSymbol(IDVal);
+    MCSymbol *Sym;
+    if (LocalLabelVal == -1)
+      Sym = CreateSymbol(IDVal);
+    else
+      Sym = Ctx.CreateDirectionalLocalSymbol(LocalLabelVal);
     if (!Sym->isUndefined() || Sym->isVariable())
       return Error(IDLoc, "invalid symbol redefinition");
     

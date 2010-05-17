@@ -20,6 +20,7 @@ namespace llvm {
   class MCExpr;
   class MCSection;
   class MCSymbol;
+  class MCLabel;
   class StringRef;
   class Twine;
   class MCSectionMachO;
@@ -43,6 +44,15 @@ namespace llvm {
     /// NextUniqueID - The next ID to dole out to an unnamed assembler temporary
     /// symbol.
     unsigned NextUniqueID;
+
+    /// Instances of directional local labels.
+    DenseMap<unsigned, MCLabel *> Instances;
+    /// NextInstance() creates the next instance of the directional local label
+    /// for the LocalLabelVal and adds it to the map if needed.
+    unsigned NextInstance(int64_t LocalLabelVal);
+    /// GetInstance() gets the current instance of the directional local label
+    /// for the LocalLabelVal and adds it to the map if needed.
+    unsigned GetInstance(int64_t LocalLabelVal);
     
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -63,6 +73,14 @@ namespace llvm {
     /// CreateTempSymbol - Create and return a new assembler temporary symbol
     /// with a unique but unspecified name.
     MCSymbol *CreateTempSymbol();
+
+    /// CreateDirectionalLocalSymbol - Create the defintion of a directional
+    /// local symbol for numbered label (used for "1:" defintions).
+    MCSymbol *CreateDirectionalLocalSymbol(int64_t LocalLabelVal);
+
+    /// GetDirectionalLocalSymbol - Create and return a directional local
+    /// symbol for numbered label (used for "1b" or 1f" references).
+    MCSymbol *GetDirectionalLocalSymbol(int64_t LocalLabelVal, int bORf);
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @p Name.  If it exists, return it.  If not, create a forward
