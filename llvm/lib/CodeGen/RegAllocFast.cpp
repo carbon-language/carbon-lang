@@ -118,6 +118,11 @@ namespace {
     // not be erased.
     bool isBulkSpilling;
 
+    enum {
+      spillClean = 1,
+      spillDirty = 100,
+      spillImpossible = ~0u
+    };
   public:
     virtual const char *getPassName() const {
       return "Fast Register Allocator";
@@ -144,6 +149,7 @@ namespace {
 
     void usePhysReg(MachineOperand&);
     void definePhysReg(MachineInstr *MI, unsigned PhysReg, RegState NewState);
+    unsigned calcSpillCost(unsigned PhysReg) const;
     void assignVirtToPhysReg(LiveRegEntry &LRE, unsigned PhysReg);
     void allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint);
     LiveRegMap::iterator defineVirtReg(MachineInstr *MI, unsigned OpNum,
@@ -369,6 +375,44 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 }
 
 
+// calcSpillCost - Return the cost of spilling clearing out PhysReg and
+// aliases so it is free for allocation.
+// Returns 0 when PhysReg is free or disabled with all aliases disabled - it
+// can be allocated directly.
+// Returns spillImpossible when PhysReg or an alias can't be spilled.
+unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
+  switch (unsigned VirtReg = PhysRegState[PhysReg]) {
+  case regDisabled:
+    break;
+  case regFree:
+    return 0;
+  case regReserved:
+    return spillImpossible;
+  default:
+    return LiveVirtRegs.lookup(VirtReg).Dirty ? spillDirty : spillClean;
+  }
+
+  // This is a disabled register, add up const of aliases.
+  unsigned Cost = 0;
+  for (const unsigned *AS = TRI->getAliasSet(PhysReg);
+       unsigned Alias = *AS; ++AS) {
+    switch (unsigned VirtReg = PhysRegState[Alias]) {
+    case regDisabled:
+      break;
+    case regFree:
+      ++Cost;
+      break;
+    case regReserved:
+      return spillImpossible;
+    default:
+      Cost += LiveVirtRegs.lookup(VirtReg).Dirty ? spillDirty : spillClean;
+      break;
+    }
+  }
+  return Cost;
+}
+
+
 /// assignVirtToPhysReg - This method updates local state so that we know
 /// that PhysReg is the proper container for VirtReg now.  The physical
 /// register must not be used for anything else when this is called.
@@ -383,15 +427,12 @@ void RAFast::assignVirtToPhysReg(LiveRegEntry &LRE, unsigned PhysReg) {
 
 /// allocVirtReg - Allocate a physical register for VirtReg.
 void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
-  const unsigned SpillCost = 100;
   const unsigned VirtReg = LRE.first;
 
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Can only allocate virtual registers");
 
   const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-  TargetRegisterClass::iterator AOB = RC->allocation_order_begin(*MF);
-  TargetRegisterClass::iterator AOE = RC->allocation_order_end(*MF);
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
@@ -403,107 +444,44 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
   if (Hint) {
     assert(RC->contains(Hint) && !UsedInInstr.test(Hint) &&
            Allocatable.test(Hint) && "Invalid hint should have been cleared");
-    switch(PhysRegState[Hint]) {
-    case regDisabled:
-    case regReserved:
-      break;
+    switch(calcSpillCost(Hint)) {
     default:
-      spillVirtReg(MI, PhysRegState[Hint]);
+      definePhysReg(MI, Hint, regFree);
       // Fall through.
-    case regFree:
+    case 0:
       return assignVirtToPhysReg(LRE, Hint);
+    case spillImpossible:
+      break;
     }
   }
 
+  TargetRegisterClass::iterator AOB = RC->allocation_order_begin(*MF);
+  TargetRegisterClass::iterator AOE = RC->allocation_order_end(*MF);
+
   // First try to find a completely free register.
-  unsigned BestCost = 0, BestReg = 0;
-  bool hasDisabled = false;
   for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
     unsigned PhysReg = *I;
-    switch(PhysRegState[PhysReg]) {
-    case regDisabled:
-      hasDisabled = true;
-    case regReserved:
-      continue;
-    case regFree:
-      if (!UsedInInstr.test(PhysReg))
-        return assignVirtToPhysReg(LRE, PhysReg);
-      continue;
-    default:
-      // Grab the first spillable register we meet.
-      if (!BestReg && !UsedInInstr.test(PhysReg))
-        BestReg = PhysReg, BestCost = SpillCost;
-      continue;
-    }
+    if (PhysRegState[PhysReg] == regFree && !UsedInInstr.test(PhysReg))
+      return assignVirtToPhysReg(LRE, PhysReg);
   }
 
   DEBUG(dbgs() << "Allocating %reg" << VirtReg << " from " << RC->getName()
-               << " candidate=" << TRI->getName(BestReg) << "\n");
+               << "\n");
 
-  // Try to extend the working set for RC if there were any disabled registers.
-  if (hasDisabled && (!BestReg || BestCost >= SpillCost)) {
-    for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
-      unsigned PhysReg = *I;
-      if (PhysRegState[PhysReg] != regDisabled || UsedInInstr.test(PhysReg))
-        continue;
-
-      // Calculate the cost of bringing PhysReg into the working set.
-      unsigned Cost=0;
-      bool Impossible = false;
-      for (const unsigned *AS = TRI->getAliasSet(PhysReg);
-      unsigned Alias = *AS; ++AS) {
-        if (UsedInInstr.test(Alias)) {
-          Impossible = true;
-          break;
-        }
-        switch (PhysRegState[Alias]) {
-        case regDisabled:
-          break;
-        case regReserved:
-          Impossible = true;
-          break;
-        case regFree:
-          Cost++;
-          break;
-        default:
-          Cost += SpillCost;
-          break;
-        }
-      }
-      if (Impossible) continue;
-      DEBUG(dbgs() << "- candidate " << TRI->getName(PhysReg)
-        << " cost=" << Cost << "\n");
-      if (!BestReg || Cost < BestCost) {
-        BestReg = PhysReg;
-        BestCost = Cost;
-        if (Cost < SpillCost) break;
-      }
+  unsigned BestReg = 0, BestCost = spillImpossible;
+  for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
+    unsigned Cost = calcSpillCost(*I);
+    if (Cost < BestCost) {
+      BestReg = *I;
+      BestCost = Cost;
+      if (Cost == 0) break;
     }
   }
 
   if (BestReg) {
     // BestCost is 0 when all aliases are already disabled.
-    if (BestCost) {
-      if (PhysRegState[BestReg] != regDisabled)
-        spillVirtReg(MI, PhysRegState[BestReg]);
-      else {
-        // Make sure all aliases are disabled.
-        for (const unsigned *AS = TRI->getAliasSet(BestReg);
-             unsigned Alias = *AS; ++AS) {
-          switch (PhysRegState[Alias]) {
-          case regDisabled:
-            continue;
-          case regFree:
-            PhysRegState[Alias] = regDisabled;
-            break;
-          default:
-            spillVirtReg(MI, PhysRegState[Alias]);
-            PhysRegState[Alias] = regDisabled;
-            break;
-          }
-        }
-      }
-    }
+    if (BestCost)
+      definePhysReg(MI, BestReg, regFree);
     return assignVirtToPhysReg(LRE, BestReg);
   }
 
