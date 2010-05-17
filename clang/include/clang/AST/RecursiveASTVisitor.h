@@ -40,14 +40,17 @@ return static_cast<Derived*>(this)->Visit ## NAME(static_cast<CLASS*>(Var))
    *
    * Clients of this visitor should subclass the visitor (providing themselves
    * as the template argument, using the curiously recurring template pattern)
-   * and override any of the Visit* methods for declaration, type, statement, 
-   * expression, or other AST nodes where the visitor should customize 
-   * behavior. Returning "true" from one of these overridden functions will
-   * abort the traversal.
+   * and override any of the Visit* methods for declaration, type, statement,
+   * expression, or other AST nodes where the visitor should customize
+   * behavior.  Returning "true" from one of these overridden functions will
+   * abort the entire traversal.  An overridden Visit* method will not descend
+   * further into the AST for that node unless Base::Visit* is called.
    */
   template<typename Derived>
   class RecursiveASTVisitor {
   public:
+    typedef RecursiveASTVisitor<Derived> Base;
+
     /// \brief Return a reference to the derived class.
     Derived &getDerived() { return *static_cast<Derived*>(this); }
     
