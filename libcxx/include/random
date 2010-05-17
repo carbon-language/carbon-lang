@@ -989,7 +989,6 @@ public:
     result_type min() const;
     result_type max() const;
 
-
     friend bool operator==(const weibull_distribution& x,
                            const weibull_distribution& y);
     friend bool operator!=(const weibull_distribution& x,
@@ -1009,7 +1008,62 @@ public:
 };
 
 template<class RealType = double>
-    class extreme_value_distribution;
+class extreme_value_distribution
+{
+public:
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef extreme_value_distribution distribution_type;
+
+        explicit param_type(result_type a = 0, result_type b = 1);
+
+        result_type a() const;
+        result_type b() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructor and reset functions
+    explicit extreme_value_distribution(result_type a = 0, result_type b = 1);
+    explicit extreme_value_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    result_type a() const;
+    result_type b() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const extreme_value_distribution& x,
+                           const extreme_value_distribution& y);
+    friend bool operator!=(const extreme_value_distribution& x,
+                           const extreme_value_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const extreme_value_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               extreme_value_distribution& x);
+};
 
 template<class RealType = double>
 class normal_distribution
@@ -4041,6 +4095,106 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
            weibull_distribution<_RT>& __x)
 {
     typedef weibull_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __a;
+    result_type __b;
+    __is >> __a >> __b;
+    if (!__is.fail())
+        __x.param(param_type(__a, __b));
+    return __is;
+}
+
+template<class _RealType = double>
+class extreme_value_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        result_type __a_;
+        result_type __b_;
+    public:
+        typedef extreme_value_distribution distribution_type;
+
+        explicit param_type(result_type __a = 0, result_type __b = 1)
+            : __a_(__a), __b_(__b) {}
+
+        result_type a() const {return __a_;}
+        result_type b() const {return __b_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__a_ == __y.__a_ && __x.__b_ == __y.__b_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructor and reset functions
+    explicit extreme_value_distribution(result_type __a = 0, result_type __b = 1)
+        : __p_(param_type(__a, __b)) {}
+    explicit extreme_value_distribution(const param_type& __p)
+        : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type a() const {return __p_.a();}
+    result_type b() const {return __p_.b();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return -numeric_limits<result_type>::infinity();}
+    result_type max() const {return numeric_limits<result_type>::infinity();}
+
+    friend bool operator==(const extreme_value_distribution& __x,
+                           const extreme_value_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const extreme_value_distribution& __x,
+                           const extreme_value_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template<class _RealType>
+template<class _URNG>
+_RealType
+extreme_value_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    return __p.a() - __p.b() *
+         _STD::log(-_STD::log(1-uniform_real_distribution<result_type>()(__g)));
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const extreme_value_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    __os << __x.a() << __sp << __x.b();
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           extreme_value_distribution<_RT>& __x)
+{
+    typedef extreme_value_distribution<_RT> _Eng;
     typedef typename _Eng::result_type result_type;
     typedef typename _Eng::param_type param_type;
     __save_flags<_CharT, _Traits> _(__is);
