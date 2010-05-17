@@ -3715,6 +3715,11 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
+  // gcc just blithely ignores member pointers.
+  // TODO: maybe there should be a mangling for these
+  if (T->getAs<MemberPointerType>())
+    return;
+
   assert(0 && "@encode for type not implemented!");
 }
 

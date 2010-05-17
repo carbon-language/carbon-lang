@@ -2,7 +2,7 @@
 
 // CHECK: v17@0:8{vector<float, float, float>=}16
 // CHECK: {vector<float, float, float>=}
-
+// CHECK: v24@0:816
 
 template <typename T1, typename T2, typename T3> struct vector {
     vector(T1,T2,T3);
@@ -35,5 +35,17 @@ typedef vector< float, float, float > vector3f;
  SceneNode *sn;
  vector3f VF3(1.0, 1.0, 1.0);
  [sn setPosition:VF3];
+}
+@end
+
+
+class Int3 { int x, y, z; };
+
+// Enforce @encoding for member pointers.
+@interface MemPtr {}
+- (void) foo: (int (Int3::*)) member;
+@end
+@implementation MemPtr
+- (void) foo: (int (Int3::*)) member {
 }
 @end
