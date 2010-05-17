@@ -736,9 +736,20 @@ void RAFast::AllocateBasicBlock() {
         UsedInInstr.set(Alias);
     }
 
+    unsigned DefOpEnd = MI->getNumOperands();
+    if (TID.isCall()) {
+      // Spill all virtregs before a call. This serves two purposes: 1. If an
+      // exception is thrown, the landing pad is going to expect to find registers
+      // in their spill slots, and 2. we don't have to wade through all the
+      // <imp-def> operands on the call instruction.
+      DefOpEnd = VirtOpEnd;
+      DEBUG(dbgs() << "  Spilling remaining registers before call.\n");
+      spillAll(MI);
+    }
+
     // Third scan.
     // Allocate defs and collect dead defs.
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    for (unsigned i = 0; i != DefOpEnd; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !MO.isDef() || !MO.getReg()) continue;
       unsigned Reg = MO.getReg();
@@ -756,12 +767,6 @@ void RAFast::AllocateBasicBlock() {
       } else
         CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
       setPhysReg(MO, PhysReg);
-    }
-
-    // Spill all dirty virtregs before a call, in case of an exception.
-    if (TID.isCall()) {
-      DEBUG(dbgs() << "  Spilling remaining registers before call.\n");
-      spillAll(MI);
     }
 
     // Process virtreg deads.
