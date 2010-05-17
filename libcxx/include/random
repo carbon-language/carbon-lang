@@ -666,7 +666,60 @@ public:
 };
 
 template<class IntType = int>
-    class geometric_distribution;
+class geometric_distribution
+{
+public:
+    // types
+    typedef IntType result_type;
+
+    class param_type
+    {
+    public:
+        typedef geometric_distribution distribution_type;
+
+        explicit param_type(double p = 0.5);
+
+        double p() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructors and reset functions
+    explicit geometric_distribution(double p = 0.5);
+    explicit geometric_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    double p() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const geometric_distribution& x,
+                           const geometric_distribution& y);
+    friend bool operator!=(const geometric_distribution& x,
+                           const geometric_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const geometric_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               geometric_distribution& x);
+};
 
 template<class IntType = int>
 class negative_binomial_distribution
@@ -4266,6 +4319,89 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __k >> __p;
     if (!__is.fail())
         __x.param(param_type(__k, __p));
+    return __is;
+}
+
+// geometric_distribution
+
+template<class _IntType = int>
+class geometric_distribution
+{
+public:
+    // types
+    typedef _IntType result_type;
+
+    class param_type
+    {
+        double __p_;
+    public:
+        typedef geometric_distribution distribution_type;
+
+        explicit param_type(double __p = 0.5) : __p_(__p) {}
+
+        double p() const {return __p_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__p_ == __y.__p_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructors and reset functions
+    explicit geometric_distribution(double __p = 0.5) : __p_(__p) {}
+    explicit geometric_distribution(const param_type& __p) : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p)
+        {return negative_binomial_distribution<result_type>(1, __p.p())(__g);}
+
+    // property functions
+    double p() const {return __p_.p();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return 0;}
+    result_type max() const {return numeric_limits<result_type>::max();}
+
+    friend bool operator==(const geometric_distribution& __x,
+                           const geometric_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const geometric_distribution& __x,
+                           const geometric_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template <class _CharT, class _Traits, class _IntType>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const geometric_distribution<_IntType>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    return __os << __x.p();
+}
+
+template <class _CharT, class _Traits, class _IntType>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           geometric_distribution<_IntType>& __x)
+{
+    typedef geometric_distribution<_IntType> _Eng;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    double __p;
+    __is >> __p;
+    if (!__is.fail())
+        __x.param(param_type(__p));
     return __is;
 }
 
