@@ -1,8 +1,9 @@
-// RUN: %clang_cc1 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm-only %s
 
 void p(const char*, ...);
 
 @interface Root
++(int) maxValue;
 -(int) conformsTo: (id) x;
 @end
 
@@ -47,4 +48,10 @@ int main() {
   Pbool([P1 conformsTo: P3]);
 
   return 0;
+}
+
+// rdar://problem/7992749
+typedef Root<P1> P1Object;
+int test10() {
+  return [P1Object maxValue];
 }

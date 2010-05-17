@@ -64,10 +64,11 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     break;
 
   case ObjCMessageExpr::Class: {
-    const ObjCInterfaceType *IFace
-      = E->getClassReceiver()->getAs<ObjCInterfaceType>();
-    assert(IFace && "Invalid Objective-C class message send");
-    OID = IFace->getDecl();
+    const ObjCObjectType *ObjTy
+      = E->getClassReceiver()->getAs<ObjCObjectType>();
+    assert(ObjTy && "Invalid Objective-C class message send");
+    OID = ObjTy->getInterface();
+    assert(OID && "Invalid Objective-C class message send");
     Receiver = Runtime.GetClass(Builder, OID);
     isClassMessage = true;
     break;
