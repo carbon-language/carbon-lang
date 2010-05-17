@@ -1436,13 +1436,9 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
   StringRef Name;
   if (ParseIdentifier(Name))
     return TokError("expected identifier in directive");
-  
-  // Demangle the name output.  The trailing characters are guaranteed to be
-  // $tlv$init so just strip that off.
-  StringRef DemName = Name.substr(0, Name.size() - strlen("$tlv$init"));
-  
+    
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(DemName);
+  MCSymbol *Sym = CreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");

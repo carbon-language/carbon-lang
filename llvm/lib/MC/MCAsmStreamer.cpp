@@ -363,14 +363,13 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   EmitEOL();
 }
 
-// .tbss sym$tlv$init, size, align
+// .tbss sym, size, align
+// This depends that the symbol has already been mangled from the original,
+// e.g. _a.
 void MCAsmStreamer::EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
                                    unsigned ByteAlignment) {
   assert(Symbol != NULL && "Symbol shouldn't be NULL!");
-  OS << ".tbss ";
-  
-  // This is a mach-o specific directive and the name requires some mangling.
-  OS << *Symbol << "$tlv$init, " << Size;
+  OS << ".tbss " << *Symbol << ", " << Size;
   
   // Output align if we have it.
   if (ByteAlignment != 0) OS << ", " << Log2_32(ByteAlignment);

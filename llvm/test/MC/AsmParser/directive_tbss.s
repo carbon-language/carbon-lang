@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+# RUN: llvm-mc -triple i386-unknown-darwin %s | FileCheck %s
 
 # CHECK: .tbss _a$tlv$init, 4
 # CHECK: .tbss _b$tlv$init, 4, 3
