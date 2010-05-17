@@ -563,6 +563,7 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
   bool New;
   tie(LRI, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
   LiveReg &LR = LRI->second;
+  MachineOperand &MO = MI->getOperand(OpNum);
   if (New) {
     allocVirtReg(MI, *LRI, Hint);
     const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
@@ -572,7 +573,6 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
     TII->loadRegFromStackSlot(*MBB, MI, LR.PhysReg, FrameIndex, RC, TRI);
     ++NumLoads;
   } else if (LR.Dirty) {
-    MachineOperand &MO = MI->getOperand(OpNum);
     if (isLastUseOfLocalReg(MO)) {
       DEBUG(dbgs() << "Killing last use: " << MO << "\n");
       MO.setIsKill();
@@ -580,6 +580,13 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
       DEBUG(dbgs() << "Clearing dubious kill: " << MO << "\n");
       MO.setIsKill(false);
     }
+  } else if (MO.isKill()) {
+    // We must remove kill flags from uses of reloaded registers because the
+    // register would be killed immediately, and there might be a second use:
+    //   %foo = OR %x<kill>, %x
+    // This would cause a second reload of %x into a different register.
+    DEBUG(dbgs() << "Clearing clean kill: " << MO << "\n");
+    MO.setIsKill(false);
   }
   assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
@@ -630,7 +637,7 @@ void RAFast::AllocateBasicBlock() {
          E = MBB->livein_end(); I != E; ++I)
     definePhysReg(MII, *I, regReserved);
 
-  SmallVector<unsigned, 8> VirtKills, PhysDefs;
+  SmallVector<unsigned, 8> PhysECs;
   SmallVector<MachineInstr*, 32> Coalesced;
 
   // Otherwise, sequentially allocate each instruction in the MBB.
@@ -694,7 +701,7 @@ void RAFast::AllocateBasicBlock() {
 
     // Track registers used by instruction.
     UsedInInstr.reset();
-    PhysDefs.clear();
+    PhysECs.clear();
 
     // First scan.
     // Mark physreg uses and early clobbers as used.
@@ -714,7 +721,7 @@ void RAFast::AllocateBasicBlock() {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
         definePhysReg(MI, Reg, MO.isDead() ? regFree : regReserved);
-        PhysDefs.push_back(Reg);
+        PhysECs.push_back(Reg);
       }
     }
 
@@ -730,25 +737,20 @@ void RAFast::AllocateBasicBlock() {
         unsigned PhysReg = reloadVirtReg(MI, i, Reg, CopyDst);
         CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
         if (setPhysReg(MO, PhysReg))
-          VirtKills.push_back(Reg);
+          killVirtReg(Reg);
       } else if (MO.isEarlyClobber()) {
         unsigned PhysReg = defineVirtReg(MI, i, Reg, 0);
         setPhysReg(MO, PhysReg);
-        PhysDefs.push_back(PhysReg);
+        PhysECs.push_back(PhysReg);
       }
     }
-
-    // Process virtreg kills
-    for (unsigned i = 0, e = VirtKills.size(); i != e; ++i)
-      killVirtReg(VirtKills[i]);
-    VirtKills.clear();
 
     MRI->addPhysRegsUsed(UsedInInstr);
 
     // Track registers defined by instruction - early clobbers at this point.
     UsedInInstr.reset();
-    for (unsigned i = 0, e = PhysDefs.size(); i != e; ++i) {
-      unsigned PhysReg = PhysDefs[i];
+    for (unsigned i = 0, e = PhysECs.size(); i != e; ++i) {
+      unsigned PhysReg = PhysECs[i];
       UsedInInstr.set(PhysReg);
       for (const unsigned *AS = TRI->getAliasSet(PhysReg);
             unsigned Alias = *AS; ++AS)
@@ -781,16 +783,11 @@ void RAFast::AllocateBasicBlock() {
       }
       unsigned PhysReg = defineVirtReg(MI, i, Reg, CopySrc);
       if (setPhysReg(MO, PhysReg)) {
-        VirtKills.push_back(Reg);
+        killVirtReg(Reg);
         CopyDst = 0; // cancel coalescing;
       } else
         CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
     }
-
-    // Process virtreg deads.
-    for (unsigned i = 0, e = VirtKills.size(); i != e; ++i)
-      killVirtReg(VirtKills[i]);
-    VirtKills.clear();
 
     MRI->addPhysRegsUsed(UsedInInstr);
 
