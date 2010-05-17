@@ -414,7 +414,7 @@ void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // Scan for values.
-  for (unsigned i = 0; i != Inst.getNumOperands(); ++i)
+  for (unsigned i = Inst.getNumOperands(); i--; )
     if (Inst.getOperand(i).isExpr())
       AddValueSymbols(Inst.getOperand(i).getExpr());
 
