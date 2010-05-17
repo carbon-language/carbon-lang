@@ -73,12 +73,11 @@ namespace {
       bool Dirty;               // Register needs spill.
 
       LiveReg(unsigned p=0) : LastUse(0), PhysReg(p), LastOpNum(0),
-                              Dirty(false) {
-        assert(p && "Don't create LiveRegs without a PhysReg");
-      }
+                              Dirty(false) {}
     };
 
     typedef DenseMap<unsigned, LiveReg> LiveRegMap;
+    typedef LiveRegMap::value_type LiveRegEntry;
 
     // LiveVirtRegs - This map contains entries for each virtual register
     // that is currently available in a physical register.
@@ -137,7 +136,7 @@ namespace {
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
     bool isLastUseOfLocalReg(MachineOperand&);
 
-    void addKillFlag(LiveRegMap::iterator i);
+    void addKillFlag(const LiveReg&);
     void killVirtReg(LiveRegMap::iterator i);
     void killVirtReg(unsigned VirtReg);
     void spillVirtReg(MachineBasicBlock::iterator MI, LiveRegMap::iterator i,
@@ -147,14 +146,12 @@ namespace {
 
     void usePhysReg(MachineOperand&);
     void definePhysReg(MachineInstr *MI, unsigned PhysReg, RegState NewState);
-    LiveRegMap::iterator assignVirtToPhysReg(unsigned VirtReg,
-                                             unsigned PhysReg);
-    LiveRegMap::iterator allocVirtReg(MachineInstr *MI, unsigned VirtReg,
-                                      unsigned Hint);
-    unsigned defineVirtReg(MachineInstr *MI, unsigned OpNum, unsigned VirtReg,
-                           unsigned Hint);
-    unsigned reloadVirtReg(MachineInstr *MI,
-                           unsigned OpNum, unsigned VirtReg, unsigned Hint);
+    void assignVirtToPhysReg(LiveRegEntry &LRE, unsigned PhysReg);
+    void allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint);
+    unsigned defineVirtReg(MachineInstr *MI, unsigned OpNum,
+                           unsigned VirtReg, unsigned Hint);
+    unsigned reloadVirtReg(MachineInstr *MI, unsigned OpNum,
+                           unsigned VirtReg, unsigned Hint);
     void spillAll(MachineInstr *MI);
     void setPhysReg(MachineOperand &MO, unsigned PhysReg);
   };
@@ -199,21 +196,18 @@ bool RAFast::isLastUseOfLocalReg(MachineOperand &MO) {
 }
 
 /// addKillFlag - Set kill flags on last use of a virtual register.
-void RAFast::addKillFlag(LiveRegMap::iterator lri) {
-  assert(lri != LiveVirtRegs.end() && "Killing unmapped virtual register");
-  const LiveReg &LR = lri->second;
-  if (LR.LastUse) {
-    MachineOperand &MO = LR.LastUse->getOperand(LR.LastOpNum);
-    if (MO.isDef())
-      MO.setIsDead();
-    else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
-      MO.setIsKill();
-  }
+void RAFast::addKillFlag(const LiveReg &LR) {
+  if (!LR.LastUse) return;
+  MachineOperand &MO = LR.LastUse->getOperand(LR.LastOpNum);
+  if (MO.isDef())
+    MO.setIsDead();
+  else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
+    MO.setIsKill();
 }
 
 /// killVirtReg - Mark virtreg as no longer available.
 void RAFast::killVirtReg(LiveRegMap::iterator lri) {
-  addKillFlag(lri);
+  addKillFlag(lri->second);
   const LiveReg &LR = lri->second;
   assert(PhysRegState[LR.PhysReg] == lri->first && "Broken RegState mapping");
   PhysRegState[LR.PhysReg] = regFree;
@@ -392,19 +386,19 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 /// that PhysReg is the proper container for VirtReg now.  The physical
 /// register must not be used for anything else when this is called.
 ///
-RAFast::LiveRegMap::iterator
-RAFast::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
-  DEBUG(dbgs() << "Assigning %reg" << VirtReg << " to "
+void RAFast::assignVirtToPhysReg(LiveRegEntry &LRE, unsigned PhysReg) {
+  DEBUG(dbgs() << "Assigning %reg" << LRE.first << " to "
                << TRI->getName(PhysReg) << "\n");
-  PhysRegState[PhysReg] = VirtReg;
-  return LiveVirtRegs.insert(std::make_pair(VirtReg, PhysReg)).first;
+  PhysRegState[PhysReg] = LRE.first;
+  assert(!LRE.second.PhysReg && "Already assigned a physreg");
+  LRE.second.PhysReg = PhysReg;
 }
 
 /// allocVirtReg - Allocate a physical register for VirtReg.
-RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
-                                                  unsigned VirtReg,
-                                                  unsigned Hint) {
+void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
   const unsigned spillCost = 100;
+  const unsigned VirtReg = LRE.first;
+
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Can only allocate virtual registers");
 
@@ -444,7 +438,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
       spillVirtReg(MI, PhysRegState[Hint], true);
       // Fall through.
     case regFree:
-      return assignVirtToPhysReg(VirtReg, Hint);
+      return assignVirtToPhysReg(LRE, Hint);
     }
   }
 
@@ -460,7 +454,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
       continue;
     case regFree:
       if (!UsedInInstr.test(PhysReg))
-        return assignVirtToPhysReg(VirtReg, PhysReg);
+        return assignVirtToPhysReg(LRE, PhysReg);
       continue;
     default:
       // Grab the first spillable register we meet.
@@ -537,7 +531,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
         }
       }
     }
-    return assignVirtToPhysReg(VirtReg, BestReg);
+    return assignVirtToPhysReg(LRE, BestReg);
   }
 
   // Nothing we can do.
@@ -550,7 +544,6 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
     MI->print(Msg, TM);
   }
   report_fatal_error(Msg.str());
-  return LiveVirtRegs.end();
 }
 
 /// defineVirtReg - Allocate a register for VirtReg and mark it as dirty.
@@ -558,12 +551,15 @@ unsigned RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
                                unsigned VirtReg, unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
-  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
-  if (lri == LiveVirtRegs.end())
-    lri = allocVirtReg(MI, VirtReg, Hint);
-  else
-    addKillFlag(lri); // Kill before redefine.
+  LiveRegMap::iterator lri;
+  bool New;
+  tie(lri, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
   LiveReg &LR = lri->second;
+  if (New)
+    allocVirtReg(MI, *lri, Hint);
+  else
+    addKillFlag(LR); // Kill before redefine.
+  assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
   LR.Dirty = true;
@@ -576,17 +572,19 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
                                unsigned VirtReg, unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
-  LiveRegMap::iterator lri = LiveVirtRegs.find(VirtReg);
-  if (lri == LiveVirtRegs.end()) {
-    lri = allocVirtReg(MI, VirtReg, Hint);
+  LiveRegMap::iterator lri;
+  bool New;
+  tie(lri, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
+  LiveReg &LR = lri->second;
+  if (New) {
+    allocVirtReg(MI, *lri, Hint);
     const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DEBUG(dbgs() << "Reloading %reg" << VirtReg << " into "
-                 << TRI->getName(lri->second.PhysReg) << "\n");
-    TII->loadRegFromStackSlot(*MBB, MI, lri->second.PhysReg, FrameIndex, RC,
-                              TRI);
+                 << TRI->getName(LR.PhysReg) << "\n");
+    TII->loadRegFromStackSlot(*MBB, MI, LR.PhysReg, FrameIndex, RC, TRI);
     ++NumLoads;
-  } else if (lri->second.Dirty) {
+  } else if (LR.Dirty) {
     MachineOperand &MO = MI->getOperand(OpNum);
     if (isLastUseOfLocalReg(MO)) {
       DEBUG(dbgs() << "Killing last use: " << MO << "\n");
@@ -596,7 +594,7 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
       MO.setIsKill(false);
     }
   }
-  LiveReg &LR = lri->second;
+  assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
   UsedInInstr.set(LR.PhysReg);
