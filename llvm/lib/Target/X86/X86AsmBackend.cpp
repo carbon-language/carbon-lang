@@ -222,7 +222,8 @@ public:
   bool isVirtualSection(const MCSection &Section) const {
     const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
     return (SMO.getType() == MCSectionMachO::S_ZEROFILL ||
-            SMO.getType() == MCSectionMachO::S_GB_ZEROFILL);
+            SMO.getType() == MCSectionMachO::S_GB_ZEROFILL ||
+            SMO.getType() == MCSectionMachO::S_THREAD_LOCAL_ZEROFILL);
   }
 };
 
