@@ -136,3 +136,9 @@ namespace pr6629 {
     };
   };
 }
+
+namespace PR7153 {
+  class EnclosingClass {
+    struct A { } mutable *member;
+  };
+}
