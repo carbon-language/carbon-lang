@@ -35,9 +35,6 @@
 #include <algorithm>
 using namespace llvm;
 
-static cl::opt<bool> VerifyFastRegalloc("verify-fast-regalloc", cl::Hidden,
-    cl::desc("Verify machine code before fast regalloc"));
-
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
 STATISTIC(NumCopies, "Number of copies coalesced");
@@ -269,8 +266,10 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
 void RAFast::spillAll(MachineInstr *MI) {
   if (LiveVirtRegs.empty()) return;
   isBulkSpilling = true;
-  for (LiveRegMap::iterator i = LiveVirtRegs.begin(),
-       e = LiveVirtRegs.end(); i != e; ++i)
+  // The LiveRegMap is keyed by an unsigned (the virtreg number), so the order
+  // of spilling here is deterministic, if arbitrary.
+  for (LiveRegMap::iterator i = LiveVirtRegs.begin(), e = LiveVirtRegs.end();
+       i != e; ++i)
     spillVirtReg(MI, i);
   LiveVirtRegs.clear();
   isBulkSpilling = false;
@@ -796,8 +795,6 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(dbgs() << "********** FAST REGISTER ALLOCATION **********\n"
                << "********** Function: "
                << ((Value*)Fn.getFunction())->getName() << '\n');
-  if (VerifyFastRegalloc)
-    Fn.verify(this, true);
   MF = &Fn;
   MRI = &MF->getRegInfo();
   TM = &Fn.getTarget();
