@@ -40,7 +40,7 @@ private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
                SectionKind K, bool isExplicit)
-    : MCSection(K), SectionName(Section), Type(type), Flags(flags), 
+    : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
       IsExplicit(isExplicit) {}
   ~MCSectionELF();
 public:
@@ -178,6 +178,11 @@ public:
   virtual bool isBaseAddressKnownZero() const {
     return (getFlags() & SHF_ALLOC) == 0;
   }
+
+  static bool classof(const MCSection *S) {
+    return S->getVariant() == SV_ELF;
+  }
+  static bool classof(const MCSectionELF *) { return true; }
 };
 
 } // end namespace llvm

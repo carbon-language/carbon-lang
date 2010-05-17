@@ -73,7 +73,7 @@ ENTRY(0 /*FIXME*/,           S_ATTR_LOC_RELOC)
 
 MCSectionMachO::MCSectionMachO(StringRef Segment, StringRef Section,
                                unsigned TAA, unsigned reserved2, SectionKind K)
-  : MCSection(K), TypeAndAttributes(TAA), Reserved2(reserved2) {
+  : MCSection(SV_MachO, K), TypeAndAttributes(TAA), Reserved2(reserved2) {
   assert(Segment.size() <= 16 && Section.size() <= 16 &&
          "Segment or section string too long");
   for (unsigned i = 0; i != 16; ++i) {

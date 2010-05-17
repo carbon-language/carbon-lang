@@ -35,8 +35,8 @@ namespace llvm {
     friend class MCContext;
     MCSectionCOFF(StringRef Section, unsigned Characteristics,
                   int Selection, SectionKind K)
-      : MCSection(K), SectionName(Section), Characteristics(Characteristics),
-        Selection (Selection) {
+      : MCSection(SV_COFF, K), SectionName(Section),
+        Characteristics(Characteristics), Selection (Selection) {
       assert ((Characteristics & 0x00F00000) == 0 &&
         "alignment must not be set upon section creation");
     }
@@ -103,6 +103,11 @@ namespace llvm {
     
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
+
+    static bool classof(const MCSection *S) {
+      return S->getVariant() == SV_COFF;
+    }
+    static bool classof(const MCSectionCOFF *) { return true; }
   };
 
 } // end namespace llvm

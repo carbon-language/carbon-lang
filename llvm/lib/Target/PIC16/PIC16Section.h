@@ -44,7 +44,8 @@ namespace llvm {
     unsigned Size;
     
     PIC16Section(StringRef name, SectionKind K, StringRef addr, int color)
-      : MCSection(K), Name(name), Address(addr), Color(color), Size(0) {
+      : MCSection(SV_PIC16, K), Name(name), Address(addr),
+        Color(color), Size(0) {
     }
     
   public:
@@ -86,6 +87,11 @@ namespace llvm {
     /// to a section.
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
+
+    static bool classof(const MCSection *S) {
+      return S->getVariant() == SV_PIC16;
+    }
+    static bool classof(const PIC16Section *) { return true; }
   };
 
 } // end namespace llvm

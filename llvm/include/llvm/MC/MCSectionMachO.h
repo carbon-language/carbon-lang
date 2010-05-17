@@ -165,6 +165,11 @@ public:
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                     raw_ostream &OS) const;
+
+  static bool classof(const MCSection *S) {
+    return S->getVariant() == SV_MachO;
+  }
+  static bool classof(const MCSectionMachO *) { return true; }
 };
 
 } // end namespace llvm

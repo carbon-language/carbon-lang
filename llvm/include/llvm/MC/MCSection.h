@@ -17,6 +17,7 @@
 #include <string>
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/SectionKind.h"
+#include "llvm/Support/Casting.h"
 
 namespace llvm {
   class MCContext;
@@ -27,15 +28,27 @@ namespace llvm {
   /// section in the current translation unit.  The MCContext class uniques and
   /// creates these.
   class MCSection {
+  public:
+    enum SectionVariant {
+      SV_COFF = 0,
+      SV_ELF,
+      SV_MachO,
+      SV_PIC16
+    };
+
+  private:
     MCSection(const MCSection&);      // DO NOT IMPLEMENT
     void operator=(const MCSection&); // DO NOT IMPLEMENT
   protected:
-    MCSection(SectionKind K) : Kind(K) {}
+    MCSection(SectionVariant V, SectionKind K) : Variant(V), Kind(K) {}
+    SectionVariant Variant;
     SectionKind Kind;
   public:
     virtual ~MCSection();
 
     SectionKind getKind() const { return Kind; }
+
+    SectionVariant getVariant() const { return Variant; }
     
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const = 0;
@@ -47,6 +60,8 @@ namespace llvm {
     virtual bool isBaseAddressKnownZero() const {
       return false;
     }
+
+    static bool classof(const MCSection *) { return true; }
   };
   
 } // end namespace llvm
