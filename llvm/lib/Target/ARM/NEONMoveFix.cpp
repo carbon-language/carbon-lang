@@ -118,7 +118,7 @@ bool NEONMoveFixPass::runOnMachineFunction(MachineFunction &Fn) {
   ARMFunctionInfo *AFI = Fn.getInfo<ARMFunctionInfo>();
   const TargetMachine &TM = Fn.getTarget();
 
-  if (AFI->isThumbFunction())
+  if (AFI->isThumb1OnlyFunction())
     return false;
 
   TRI = TM.getRegisterInfo();
