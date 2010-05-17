@@ -139,6 +139,11 @@ namespace pr6629 {
 
 namespace PR7153 {
   class EnclosingClass {
+  public:
     struct A { } mutable *member;
   };
+ 
+  void f(const EnclosingClass &ec) {
+    ec.member = 0;
+  }
 }
