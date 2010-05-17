@@ -229,6 +229,41 @@ bb14:                                             ; preds = %bb6
   ret i32 0
 }
 
+%0 = type { %1, %1, %1, %1 }
+%1 = type { %2 }
+%2 = type { <4 x float> }
+%3 = type { %0, %1 }
+
+; PR7157
+define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
+; CHECK:        t9:
+; CHECK:        vldr.64
+; CHECK-NEXT:   vstmia r0, {d0,d1}
+; CHECK-NEXT:   vmov.i8 d1
+; CHECK-NEXT:   vstmia r0, {d0,d1}
+  %3 = bitcast double 0.000000e+00 to <2 x float> ; <<2 x float>> [#uses=2]
+  %4 = shufflevector <2 x float> %3, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
+  store <4 x float> %4, <4 x float>* undef, align 16
+  %5 = shufflevector <2 x float> %3, <2 x float> zeroinitializer, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
+  store <4 x float> %5, <4 x float>* undef, align 16
+  br label %8
+
+; <label>:6                                       ; preds = %8
+  br i1 undef, label %7, label %10
+
+; <label>:7                                       ; preds = %6
+  br label %8
+
+; <label>:8                                       ; preds = %7, %2
+  br i1 undef, label %6, label %9
+
+; <label>:9                                       ; preds = %8
+  ret float undef
+
+; <label>:10                                      ; preds = %6
+  ret float 9.990000e+02
+}
+
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly

@@ -134,6 +134,7 @@ namespace {
     /// of the de-ssa process. This replaces sources of REG_SEQUENCE as
     /// sub-register references of the register defined by REG_SEQUENCE.
     bool EliminateRegSequences();
+
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass(&ID) {}
@@ -1216,6 +1217,17 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
   }
 }
 
+static bool HasOtherRegSequenceUses(unsigned Reg, MachineInstr *RegSeq,
+                                    MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    if (UseMI != RegSeq && UseMI->isRegSequence())
+      return true;
+  }
+  return false;
+}
+
 /// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
 /// of the de-ssa process. This replaces sources of REG_SEQUENCE as
 /// sub-register references of the register defined by REG_SEQUENCE. e.g.
@@ -1261,7 +1273,9 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       if (DefMI->isExtractSubreg())
         RealSrcs.push_back(DefMI->getOperand(1).getReg());
 
-      if (!Seen.insert(SrcReg) || MI->getParent() != DefMI->getParent()) {
+      if (!Seen.insert(SrcReg) ||
+          MI->getParent() != DefMI->getParent() ||
+          HasOtherRegSequenceUses(SrcReg, MI, MRI)) {
         // REG_SEQUENCE cannot have duplicated operands, add a copy.
         // Also add an copy if the source if live-in the block. We don't want
         // to end up with a partial-redef of a livein, e.g.
