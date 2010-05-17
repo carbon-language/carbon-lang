@@ -5,6 +5,10 @@
 sym_ref_def_A:
 sym_ref_def_C:  
         .reference sym_ref_def_C
+        .reference sym_ref_def_D
+        .globl sym_ref_def_D
+        .globl sym_ref_def_E
+        .reference sym_ref_def_E
         
         .weak_reference sym_weak_ref_A
         .weak_reference sym_weak_ref_def_A
@@ -16,12 +20,22 @@ sym_weak_ref_def_B:
         .globl sym_weak_def_A
         .weak_definition sym_weak_def_A        
 sym_weak_def_A:
+sym_weak_def_B:
+        .weak_definition sym_weak_def_B
+        .globl sym_weak_def_B
+        .weak_definition sym_weak_def_C
+sym_weak_def_C:
+        .globl sym_weak_def_C
 
         .lazy_reference sym_lazy_ref_A
         .lazy_reference sym_lazy_ref_B
 sym_lazy_ref_B:
 sym_lazy_ref_C:
         .lazy_reference sym_lazy_ref_C
+        .lazy_reference sym_lazy_ref_D
+        .globl sym_lazy_ref_D
+        .globl sym_lazy_ref_E
+        .lazy_reference sym_lazy_ref_E
 
         .private_extern sym_private_ext_A
         .private_extern sym_private_ext_B
@@ -30,6 +44,8 @@ sym_private_ext_C:
         .private_extern sym_private_ext_C
         .private_extern sym_private_ext_D
         .globl sym_private_ext_D
+        .globl sym_private_ext_E
+        .private_extern sym_private_ext_E
 
         .no_dead_strip sym_no_dead_strip_A
 
@@ -39,7 +55,7 @@ sym_private_ext_C:
 
         .desc sym_desc_flags,0x47
 sym_desc_flags:
-
+        
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
@@ -73,6 +89,8 @@ sym_desc_flags:
 // CHECK:     ('reserved1', 0)
 // CHECK:     ('reserved2', 0)
 // CHECK:    ),
+// CHECK:   ('_relocations', [
+// CHECK:   ])
 // CHECK:     # Section 1
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -86,19 +104,21 @@ sym_desc_flags:
 // CHECK:     ('reserved1', 0)
 // CHECK:     ('reserved2', 0)
 // CHECK:    ),
+// CHECK:   ('_relocations', [
+// CHECK:   ])
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
 // CHECK:   ('symoff', 324)
-// CHECK:   ('nsyms', 16)
-// CHECK:   ('stroff', 516)
-// CHECK:   ('strsize', 260)
-// CHECK:   ('_string_data', '\x00sym_ref_A\x00sym_weak_ref_A\x00sym_weak_def_A\x00sym_lazy_ref_A\x00sym_private_ext_A\x00sym_private_ext_B\x00sym_private_ext_C\x00sym_private_ext_D\x00sym_no_dead_strip_A\x00sym_ref_def_A\x00sym_ref_def_C\x00sym_weak_ref_def_A\x00sym_weak_ref_def_B\x00sym_lazy_ref_B\x00sym_lazy_ref_C\x00sym_desc_flags\x00\x00')
+// CHECK:   ('nsyms', 23)
+// CHECK:   ('stroff', 600)
+// CHECK:   ('strsize', 368)
+// CHECK:   ('_string_data', '\x00sym_ref_A\x00sym_ref_def_D\x00sym_ref_def_E\x00sym_weak_ref_A\x00sym_weak_def_A\x00sym_weak_def_B\x00sym_weak_def_C\x00sym_lazy_ref_A\x00sym_lazy_ref_D\x00sym_lazy_ref_E\x00sym_private_ext_A\x00sym_private_ext_B\x00sym_private_ext_C\x00sym_private_ext_D\x00sym_private_ext_E\x00sym_no_dead_strip_A\x00sym_ref_def_A\x00sym_ref_def_C\x00sym_weak_ref_def_A\x00sym_weak_ref_def_B\x00sym_lazy_ref_B\x00sym_lazy_ref_C\x00sym_desc_flags\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 148)
+// CHECK:    (('n_strx', 254)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 32)
@@ -106,7 +126,7 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_ref_def_A')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 162)
+// CHECK:    (('n_strx', 268)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 32)
@@ -114,15 +134,15 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_ref_def_C')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 176)
+// CHECK:    (('n_strx', 282)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
-// CHECK:     ('n_desc', 0)
+// CHECK:     ('n_desc', 64)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_weak_ref_def_A')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 195)
+// CHECK:    (('n_strx', 301)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -130,7 +150,7 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_weak_ref_def_B')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 214)
+// CHECK:    (('n_strx', 320)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 32)
@@ -138,7 +158,7 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_lazy_ref_B')
 // CHECK:    ),
 // CHECK:     # Symbol 5
-// CHECK:    (('n_strx', 229)
+// CHECK:    (('n_strx', 335)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 32)
@@ -146,15 +166,15 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_lazy_ref_C')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 244)
+// CHECK:    (('n_strx', 350)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
+// CHECK:     ('n_desc', 64)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_desc_flags')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 74)
+// CHECK:    (('n_strx', 162)
 // CHECK:     ('n_type', 0x1f)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -162,7 +182,7 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_private_ext_B')
 // CHECK:    ),
 // CHECK:     # Symbol 8
-// CHECK:    (('n_strx', 92)
+// CHECK:    (('n_strx', 180)
 // CHECK:     ('n_type', 0x1f)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -170,7 +190,7 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_private_ext_C')
 // CHECK:    ),
 // CHECK:     # Symbol 9
-// CHECK:    (('n_strx', 26)
+// CHECK:    (('n_strx', 54)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 128)
@@ -178,38 +198,78 @@ sym_desc_flags:
 // CHECK:     ('_string', 'sym_weak_def_A')
 // CHECK:    ),
 // CHECK:     # Symbol 10
-// CHECK:    (('n_strx', 41)
+// CHECK:    (('n_strx', 69)
+// CHECK:     ('n_type', 0xf)
+// CHECK:     ('n_sect', 2)
+// CHECK:     ('n_desc', 128)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_weak_def_B')
+// CHECK:    ),
+// CHECK:     # Symbol 11
+// CHECK:    (('n_strx', 84)
+// CHECK:     ('n_type', 0xf)
+// CHECK:     ('n_sect', 2)
+// CHECK:     ('n_desc', 128)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_weak_def_C')
+// CHECK:    ),
+// CHECK:     # Symbol 12
+// CHECK:    (('n_strx', 99)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 33)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_lazy_ref_A')
 // CHECK:    ),
-// CHECK:     # Symbol 11
-// CHECK:    (('n_strx', 128)
+// CHECK:     # Symbol 13
+// CHECK:    (('n_strx', 114)
+// CHECK:     ('n_type', 0x1)
+// CHECK:     ('n_sect', 0)
+// CHECK:     ('n_desc', 32)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_lazy_ref_D')
+// CHECK:    ),
+// CHECK:     # Symbol 14
+// CHECK:    (('n_strx', 129)
+// CHECK:     ('n_type', 0x1)
+// CHECK:     ('n_sect', 0)
+// CHECK:     ('n_desc', 33)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_lazy_ref_E')
+// CHECK:    ),
+// CHECK:     # Symbol 15
+// CHECK:    (('n_strx', 234)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 32)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_no_dead_strip_A')
 // CHECK:    ),
-// CHECK:     # Symbol 12
-// CHECK:    (('n_strx', 56)
+// CHECK:     # Symbol 16
+// CHECK:    (('n_strx', 144)
 // CHECK:     ('n_type', 0x11)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_private_ext_A')
 // CHECK:    ),
-// CHECK:     # Symbol 13
-// CHECK:    (('n_strx', 110)
+// CHECK:     # Symbol 17
+// CHECK:    (('n_strx', 198)
 // CHECK:     ('n_type', 0x11)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_private_ext_D')
 // CHECK:    ),
-// CHECK:     # Symbol 14
+// CHECK:     # Symbol 18
+// CHECK:    (('n_strx', 216)
+// CHECK:     ('n_type', 0x11)
+// CHECK:     ('n_sect', 0)
+// CHECK:     ('n_desc', 0)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_private_ext_E')
+// CHECK:    ),
+// CHECK:     # Symbol 19
 // CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
@@ -217,8 +277,24 @@ sym_desc_flags:
 // CHECK:     ('n_value', 0)
 // CHECK:     ('_string', 'sym_ref_A')
 // CHECK:    ),
-// CHECK:     # Symbol 15
+// CHECK:     # Symbol 20
 // CHECK:    (('n_strx', 11)
+// CHECK:     ('n_type', 0x1)
+// CHECK:     ('n_sect', 0)
+// CHECK:     ('n_desc', 32)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_ref_def_D')
+// CHECK:    ),
+// CHECK:     # Symbol 21
+// CHECK:    (('n_strx', 25)
+// CHECK:     ('n_type', 0x1)
+// CHECK:     ('n_sect', 0)
+// CHECK:     ('n_desc', 32)
+// CHECK:     ('n_value', 0)
+// CHECK:     ('_string', 'sym_ref_def_E')
+// CHECK:    ),
+// CHECK:     # Symbol 22
+// CHECK:    (('n_strx', 39)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 64)
@@ -233,9 +309,9 @@ sym_desc_flags:
 // CHECK:   ('ilocalsym', 0)
 // CHECK:   ('nlocalsym', 7)
 // CHECK:   ('iextdefsym', 7)
-// CHECK:   ('nextdefsym', 3)
-// CHECK:   ('iundefsym', 10)
-// CHECK:   ('nundefsym', 6)
+// CHECK:   ('nextdefsym', 5)
+// CHECK:   ('iundefsym', 12)
+// CHECK:   ('nundefsym', 11)
 // CHECK:   ('tocoff', 0)
 // CHECK:   ('ntoc', 0)
 // CHECK:   ('modtaboff', 0)

@@ -192,8 +192,14 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setFragment(F);
   SD.setOffset(F->getContents().size());
 
-  // This causes the reference type and weak reference flags to be cleared.
-  SD.setFlags(SD.getFlags() & ~(SF_WeakReference | SF_ReferenceTypeMask));
+  // This causes the reference type flag to be cleared. Darwin 'as' was "trying"
+  // to clear the weak reference and weak definition bits too, but the
+  // implementation was buggy. For now we just try to match 'as', for
+  // diffability.
+  //
+  // FIXME: Cleanup this code, these bits should be emitted based on semantic
+  // properties, not on the order of definition, etc.
+  SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
   
   Symbol->setSection(*CurSection);
 }
@@ -257,6 +263,13 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
   case MCSA_Global:
     SD.setExternal(true);
+    // This effectively clears the undefined lazy bit, in Darwin 'as', although
+    // it isn't very consistent because it implements this as part of symbol
+    // lookup.
+    //
+    // FIXME: Cleanup this code, these bits should be emitted based on semantic
+    // properties, not on the order of definition, etc.
+    SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeUndefinedLazy);
     break;
 
   case MCSA_LazyReference:
