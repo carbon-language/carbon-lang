@@ -2763,6 +2763,7 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
     return 0;
   CXXMethodDecl *D = dyn_cast<CXXMethodDecl>(cxcursor::getCursorDecl(C));
   return (D && D->isStatic()) ? 1 : 0;
+}
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
