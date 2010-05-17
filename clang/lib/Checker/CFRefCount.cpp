@@ -618,11 +618,11 @@ public:
       break;
 
     case ObjCMessageExpr::Class:
-      OD = ME->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+      OD = ME->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
       break;
 
     case ObjCMessageExpr::SuperClass:
-      OD = ME->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+      OD = ME->getSuperType()->getAs<ObjCObjectType>()->getInterface();
       break;
     }
 

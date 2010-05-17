@@ -1911,13 +1911,13 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
         sawIdTypedCatch = true;
-      } else if (t->isObjCObjectPointerType()) {
-        QualType InterfaceTy = t->getPointeeType();
-        const ObjCInterfaceType *cls = // Should be a pointer to a class.
-          InterfaceTy->getAs<ObjCInterfaceType>();
-        if (cls) {
+      } else if (const ObjCObjectPointerType *Ptr =
+                   t->getAs<ObjCObjectPointerType>()) {
+        // Should be a pointer to a class.
+        ObjCInterfaceDecl *IDecl = Ptr->getObjectType()->getInterface();
+        if (IDecl) {
           buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
-          buf += cls->getDecl()->getNameAsString();
+          buf += IDecl->getNameAsString();
           buf += "\"), (struct objc_object *)_caught)) { ";
           ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
         }
@@ -2811,7 +2811,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     llvm::SmallVector<Expr*, 8> ClsExprs;
     QualType argType = Context->getPointerType(Context->CharTy);
     ObjCInterfaceDecl *Class
-      = Exp->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+      = Exp->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
     IdentifierInfo *clsName = Class->getIdentifier();
     ClsExprs.push_back(StringLiteral::Create(*Context,
                                              clsName->getNameStart(),

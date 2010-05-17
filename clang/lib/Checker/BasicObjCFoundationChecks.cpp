@@ -521,11 +521,11 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   ObjCInterfaceDecl *Class = 0;
   switch (ME->getReceiverKind()) {
   case ObjCMessageExpr::Class:
-    Class = ME->getClassReceiver()->getAs<ObjCInterfaceType>()->getDecl();
+    Class = ME->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
     break;
 
   case ObjCMessageExpr::SuperClass:
-    Class = ME->getSuperType()->getAs<ObjCInterfaceType>()->getDecl();
+    Class = ME->getSuperType()->getAs<ObjCObjectType>()->getInterface();
     break;
 
   case ObjCMessageExpr::Instance:

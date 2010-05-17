@@ -129,11 +129,11 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
   if (!PT)
     return false;
 
-  const ObjCInterfaceType *ClsT =PT->getPointeeType()->getAs<ObjCInterfaceType>();
-  if (!ClsT)
+  ObjCInterfaceDecl *Cls = PT->getObjectType()->getInterface();
+  if (!Cls)
     return false;
 
-  IdentifierInfo* ClsName = ClsT->getDecl()->getIdentifier();
+  IdentifierInfo* ClsName = Cls->getIdentifier();
 
   // FIXME: Should we walk the chain of classes?
   return ClsName == &Ctx.Idents.get("NSString") ||

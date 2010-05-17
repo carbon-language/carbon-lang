@@ -2701,12 +2701,12 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       }
 
       assert(OPT && "Unexpected non-object pointer type in @catch");
-      QualType T = OPT->getPointeeType();
-      const ObjCInterfaceType *ObjCType = T->getAs<ObjCInterfaceType>();
-      assert(ObjCType && "Catch parameter must have Objective-C type!");
+      const ObjCObjectType *ObjTy = OPT->getObjectType();
+      ObjCInterfaceDecl *IDecl = ObjTy->getInterface();
+      assert(IDecl && "Catch parameter must have Objective-C type!");
 
       // Check if the @catch block matches the exception object.
-      llvm::Value *Class = EmitClassRef(CGF.Builder, ObjCType->getDecl());
+      llvm::Value *Class = EmitClassRef(CGF.Builder, IDecl);
 
       llvm::Value *Match =
         CGF.Builder.CreateCall2(ObjCTypes.getExceptionMatchFn(),
@@ -5096,12 +5096,12 @@ CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
 /// @encode
 ///
 LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
-  CodeGen::CodeGenFunction &CGF,
-  QualType ObjectTy,
-  llvm::Value *BaseValue,
-  const ObjCIvarDecl *Ivar,
-  unsigned CVRQualifiers) {
-  const ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCInterfaceType>()->getDecl();
+                                               CodeGen::CodeGenFunction &CGF,
+                                               QualType ObjectTy,
+                                               llvm::Value *BaseValue,
+                                               const ObjCIvarDecl *Ivar,
+                                               unsigned CVRQualifiers) {
+  ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCObjectType>()->getInterface();
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   EmitIvarOffset(CGF, ID, Ivar));
 }

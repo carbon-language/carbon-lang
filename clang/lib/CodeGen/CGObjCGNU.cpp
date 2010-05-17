@@ -1939,11 +1939,11 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         const ObjCObjectPointerType *OPT =
           CatchDecl->getType()->getAs<ObjCObjectPointerType>();
         assert(OPT && "Invalid @catch type.");
-        const ObjCInterfaceType *IT =
-          OPT->getPointeeType()->getAs<ObjCInterfaceType>();
-        assert(IT && "Invalid @catch type.");
+        const ObjCInterfaceDecl *IDecl =
+          OPT->getObjectType()->getInterface();
+        assert(IDecl && "Invalid @catch type.");
         llvm::Value *EHType =
-          MakeConstantString(IT->getDecl()->getNameAsString());
+          MakeConstantString(IDecl->getNameAsString());
         ESelArgs.push_back(EHType);
       }
     }
