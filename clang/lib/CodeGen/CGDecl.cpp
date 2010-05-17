@@ -399,6 +399,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   bool IsSimpleConstantInitializer = false;
 
   bool NRVO = false;
+  llvm::Value *NRVOFlag = 0;
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
@@ -430,6 +431,21 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         // return slot, so that we can elide the copy when returning this
         // variable (C++0x [class.copy]p34).
         DeclPtr = ReturnValue;
+        
+        if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
+          if (!cast<CXXRecordDecl>(RecordTy->getDecl())->hasTrivialDestructor()) {
+            // Create a flag that is used to indicate when the NRVO was applied
+            // to this variable. Set it to zero to indicate that NRVO was not 
+            // applied.
+            const llvm::Type *BoolTy = llvm::Type::getInt1Ty(VMContext);
+            llvm::Value *Zero = llvm::ConstantInt::get(BoolTy, 0);
+            NRVOFlag = CreateTempAlloca(BoolTy, "nrvo");            
+            Builder.CreateStore(Zero, NRVOFlag);
+            
+            // Record the NRVO flag for this variable.
+            NRVOFlags[&D] = NRVOFlag;
+          }
+        }
       } else {
         if (isByRef)
           LTy = BuildByRefType(&D);
@@ -660,7 +676,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {      
       if (!ClassDecl->hasTrivialDestructor()) {
-        // Note: We suppress the destructor call when this is an NRVO variable.
+        // Note: We suppress the destructor call when the corresponding NRVO
+        // flag has been set.
         llvm::Value *Loc = DeclPtr;
         if (isByRef)
           Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
@@ -693,10 +710,21 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           }
         } else {
-          if (!NRVO) {
+          {
+            // Normal destruction. 
+            DelayedCleanupBlock Scope(*this);
+
+            if (NRVO) {
+              // If we exited via NRVO, we skip the destructor call.
+              llvm::BasicBlock *NoNRVO = createBasicBlock("nrvo.unused");
+              Builder.CreateCondBr(Builder.CreateLoad(NRVOFlag, "nrvo.val"),
+                                   Scope.getCleanupExitBlock(),
+                                   NoNRVO);
+              EmitBlock(NoNRVO);
+            }
+            
             // We don't call the destructor along the normal edge if we're
             // applying the NRVO.
-            DelayedCleanupBlock Scope(*this);
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
                                   Loc);
 

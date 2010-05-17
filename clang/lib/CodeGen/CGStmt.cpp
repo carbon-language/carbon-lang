@@ -612,6 +612,14 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     // Apply the named return value optimization for this return statement,
     // which means doing nothing: the appropriate result has already been
     // constructed into the NRVO variable.
+    
+    // If there is an NRVO flag for this variable, set it to 1 into indicate
+    // that the cleanup code should not destroy the variable.
+    if (llvm::Value *NRVOFlag = NRVOFlags[S.getNRVOCandidate()]) {
+      const llvm::Type *BoolTy = llvm::Type::getInt1Ty(VMContext);
+      llvm::Value *One = llvm::ConstantInt::get(BoolTy, 1);
+      Builder.CreateStore(One, NRVOFlag);
+    }
   } else if (!ReturnValue) {
     // Make sure not to return anything, but evaluate the expression
     // for side effects.

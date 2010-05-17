@@ -107,6 +107,11 @@ public:
 
   bool Exceptions;
   bool CatchUndefined;
+  
+  /// \brief A mapping from NRVO variables to the flags used to indicate
+  /// when the NRVO has been applied to this variable.
+  llvm::DenseMap<const VarDecl *, llvm::Value *> NRVOFlags;
+  
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
