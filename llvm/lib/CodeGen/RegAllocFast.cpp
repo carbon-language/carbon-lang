@@ -267,6 +267,7 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
 
 /// spillAll - Spill all dirty virtregs without killing them.
 void RAFast::spillAll(MachineInstr *MI) {
+  if (LiveVirtRegs.empty()) return;
   isBulkSpilling = true;
   for (LiveRegMap::iterator i = LiveVirtRegs.begin(),
        e = LiveVirtRegs.end(); i != e; ++i)
@@ -471,17 +472,15 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
   unsigned BestReg = 0, BestCost = spillImpossible;
   for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
     unsigned Cost = calcSpillCost(*I);
-    if (Cost < BestCost) {
-      BestReg = *I;
-      BestCost = Cost;
-      if (Cost == 0) break;
-    }
+    // Cost is 0 when all aliases are already disabled.
+    if (Cost == 0)
+      return assignVirtToPhysReg(LRE, *I);
+    if (Cost < BestCost)
+      BestReg = *I, BestCost = Cost;
   }
 
   if (BestReg) {
-    // BestCost is 0 when all aliases are already disabled.
-    if (BestCost)
-      definePhysReg(MI, BestReg, regFree);
+    definePhysReg(MI, BestReg, regFree);
     return assignVirtToPhysReg(LRE, BestReg);
   }
 
