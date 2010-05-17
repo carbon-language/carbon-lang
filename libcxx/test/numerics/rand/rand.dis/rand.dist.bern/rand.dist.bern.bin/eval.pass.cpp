@@ -14,8 +14,6 @@
 
 // template<class _URNG> result_type operator()(_URNG& g);
 
-#include <iostream>
-
 #include <random>
 #include <numeric>
 #include <vector>

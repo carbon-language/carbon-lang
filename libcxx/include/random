@@ -669,7 +669,62 @@ template<class IntType = int>
     class geometric_distribution;
 
 template<class IntType = int>
-    class negative_binomial_distribution;
+class negative_binomial_distribution
+{
+public:
+    // types
+    typedef IntType result_type;
+
+    class param_type
+    {
+    public:
+        typedef negative_binomial_distribution distribution_type;
+
+        explicit param_type(result_type k = 1, double p = 0.5);
+
+        result_type k() const;
+        double p() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructor and reset functions
+    explicit negative_binomial_distribution(result_type k = 1, double p = 0.5);
+    explicit negative_binomial_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    result_type k() const;
+    double p() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const negative_binomial_distribution& x,
+                           const negative_binomial_distribution& y);
+    friend bool operator!=(const negative_binomial_distribution& x,
+                           const negative_binomial_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const negative_binomial_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               negative_binomial_distribution& x);
+};
 
 template<class IntType = int>
 class poisson_distribution
@@ -4095,6 +4150,122 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __alpha >> __beta;
     if (!__is.fail())
         __x.param(param_type(__alpha, __beta));
+    return __is;
+}
+
+// negative_binomial_distribution
+
+template<class _IntType = int>
+class negative_binomial_distribution
+{
+public:
+    // types
+    typedef _IntType result_type;
+
+    class param_type
+    {
+        result_type __k_;
+        double __p_;
+    public:
+        typedef negative_binomial_distribution distribution_type;
+
+        explicit param_type(result_type __k = 1, double __p = 0.5)
+            : __k_(__k), __p_(__p) {}
+
+        result_type k() const {return __k_;}
+        double p() const {return __p_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__k_ == __y.__k_ && __x.__p_ == __y.__p_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructor and reset functions
+    explicit negative_binomial_distribution(result_type __k = 1, double __p = 0.5)
+        : __p_(__k, __p) {}
+    explicit negative_binomial_distribution(const param_type& __p) : __p_(__p) {}
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type k() const {return __p_.k();}
+    double p() const {return __p_.p();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return 0;}
+    result_type max() const {return numeric_limits<result_type>::max();}
+
+    friend bool operator==(const negative_binomial_distribution& __x,
+                           const negative_binomial_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const negative_binomial_distribution& __x,
+                           const negative_binomial_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template <class _IntType>
+template<class _URNG>
+_IntType
+negative_binomial_distribution<_IntType>::operator()(_URNG& __urng, const param_type& __pr)
+{
+    result_type __k = __pr.k();
+    double __p = __pr.p();
+    if (__k <= 21 * __p)
+    {
+        bernoulli_distribution __gen(__p);
+        result_type __f = 0;
+        result_type __s = 0;
+        while (__s < __k)
+        {
+            if (__gen(__urng))
+                ++__s;
+            else
+                ++__f;
+        }
+        return __f;
+    }
+    return poisson_distribution<result_type>(gamma_distribution<double>
+                                            (__k, (1-__p)/__p)(__urng))(__urng);
+}
+
+template <class _CharT, class _Traits, class _IntType>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const negative_binomial_distribution<_IntType>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    return __os << __x.k() << __sp << __x.p();
+}
+
+template <class _CharT, class _Traits, class _IntType>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           negative_binomial_distribution<_IntType>& __x)
+{
+    typedef negative_binomial_distribution<_IntType> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __k;
+    double __p;
+    __is >> __k >> __p;
+    if (!__is.fail())
+        __x.param(param_type(__k, __p));
     return __is;
 }
 
