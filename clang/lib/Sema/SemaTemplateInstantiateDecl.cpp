@@ -217,6 +217,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
 
+  InstantiateAttrs(D, Typedef);
 
   Typedef->setAccess(D->getAccess());
   Owner->addDecl(Typedef);
