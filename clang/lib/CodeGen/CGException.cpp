@@ -128,12 +128,13 @@ static llvm::Constant *getPersonalityFn(CodeGenModule &CGM) {
   LangOptions Opts = CGM.getLangOptions();
   if (Opts.CPlusPlus)
      PersonalityFnName = "__gxx_personality_v0";
-  else if (Opts.ObjC1)
+  else if (Opts.ObjC1) {
     if (Opts.NeXTRuntime) {
       if (Opts.ObjCNonFragileABI)
         PersonalityFnName = "__gcc_personality_v0";
-    } else 
+    } else
       PersonalityFnName = "__gnu_objc_personality_v0";
+  }
 
   llvm::Constant *Personality =
   CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty(
