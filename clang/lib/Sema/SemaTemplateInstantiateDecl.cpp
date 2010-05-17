@@ -2000,7 +2000,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       Diag(Function->getLocation(), diag::err_redefinition) 
         << Function->getDeclName();
       Diag(Definition->getLocation(), diag::note_previous_definition);
-    }
+      Function->setInvalidDecl();
+    }    
     
     // We have an explicit instantiation (which already occurred) and an
     // implicit instantiation. Return without complaint.
@@ -2027,11 +2028,38 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       if (PatternDecl)
         Diag(PatternDecl->getLocation(), 
              diag::note_explicit_instantiation_here);
+      Function->setInvalidDecl();
     }
       
     return;
   }
 
+  // If this is an instantiation of friend function defined within a class
+  // template or class template specialization or member class thereof, 
+  // determine whether there were multiple instantiations of its lexical class.
+  if (PatternDecl->getFriendObjectKind() != Decl::FOK_None) {
+    for (FunctionDecl::redecl_iterator R = Function->redecls_begin(),
+                                    REnd = Function->redecls_end();
+         R != REnd; ++R) {
+      if (*R != Function && 
+          ((*R)->getFriendObjectKind() != Decl::FOK_None)) {
+        if (const FunctionDecl *RPattern
+                                    = (*R)->getTemplateInstantiationPattern())
+          if (RPattern->getBody(RPattern)) {
+            InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
+            if (Inst)
+              return;  
+            
+            Diag(Function->getLocation(), diag::err_redefinition) 
+              << Function->getDeclName();
+            Diag((*R)->getLocation(), diag::note_previous_definition);
+            Function->setInvalidDecl();
+            return;
+          }
+      }
+    }
+  }
+  
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
   //   have the effect of suppressing the implicit instantiation of the entity
