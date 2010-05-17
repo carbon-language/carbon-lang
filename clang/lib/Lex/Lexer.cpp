@@ -1422,6 +1422,7 @@ static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd) {
     if (RestOfBuffer[Pos-1] != '\r' &&
         RestOfBuffer[Pos-1] != '\n') {
       RestOfBuffer = RestOfBuffer.substr(Pos+7);
+      Pos = RestOfBuffer.find(">>>>>>>");
       continue;
     }
     return RestOfBuffer.data()+Pos;
@@ -1451,7 +1452,7 @@ bool Lexer::IsStartOfConflictMarker(const char *CurPtr) {
   
   // Check to see if there is a >>>>>>> somewhere in the buffer at the start of
   // a line to terminate this conflict marker.
-  if (FindConflictEnd(CurPtr+7, BufferEnd)) {
+  if (FindConflictEnd(CurPtr, BufferEnd)) {
     // We found a match.  We are really in a conflict marker.
     // Diagnose this, and ignore to the end of line.
     Diag(CurPtr, diag::err_conflict_marker);

@@ -4,7 +4,7 @@
 // PR5238
 
 // diff3 style
-<<<<<<< .mine             // expected-error {{version control conflict marker in file}}
+<<<<<<< .mine      // expected-error {{version control conflict marker in file}}
 int x = 4;
 |||||||
 int x = 123;
@@ -13,7 +13,7 @@ float x = 17;
 >>>>>>> .r91107
 
 // normal style.
-<<<<<<< .mine             // expected-error {{version control conflict marker in file}}
+<<<<<<< .mine     // expected-error {{version control conflict marker in file}}
 typedef int y;
 =======
 typedef struct foo *y;
@@ -21,6 +21,7 @@ typedef struct foo *y;
 
 ;
 y b;
+
 
 int foo() {
   y a = x;
