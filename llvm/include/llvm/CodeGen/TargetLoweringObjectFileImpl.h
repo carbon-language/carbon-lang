@@ -84,18 +84,22 @@ public:
 
 
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
-  /// TLSDataSection - Section directive for Thread Local data.
+  /// TLSDataSection - Section for thread local data.
   ///
   const MCSection *TLSDataSection;        // Defaults to ".tdata".
 
-  /// TLSBSSSection - Section directive for Thread Local uninitialized data.
+  /// TLSBSSSection - Section for thread local uninitialized data.
   ///
   const MCSection *TLSBSSSection;         // Defaults to ".tbss".
   
-  /// TLSTLVSection - Section directive for Thread Local structure infomation.
+  /// TLSTLVSection - Section for thread local structure infomation.
   /// Contains the source code name of the variable, visibility and a pointer
   /// to the initial value (.tdata or .tbss).
   const MCSection *TLSTLVSection;         // Defaults to ".tlv".
+  
+  /// TLSThreadInitSection - Section for thread local data initialization
+  /// functions.
+  const MCSection *TLSThreadInitSection;  // Defaults to ".thread_init_func".
   
   const MCSection *CStringSection;
   const MCSection *UStringSection;

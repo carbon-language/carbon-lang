@@ -623,6 +623,16 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSectionSwitch("__OBJC", "__selector_strs",
                                          MCSectionMachO::S_CSTRING_LITERALS);
     
+    if (IDVal == ".tdata")
+      return ParseDirectiveSectionSwitch("__DATA", "__thread_data",
+                                        MCSectionMachO::S_THREAD_LOCAL_REGULAR);
+    if (IDVal == ".tlv")
+      return ParseDirectiveSectionSwitch("__DATA", "__thread_vars",
+                                      MCSectionMachO::S_THREAD_LOCAL_VARIABLES);
+    if (IDVal == ".thread_init_func")
+      return ParseDirectiveSectionSwitch("__DATA", "__thread_init",
+                        MCSectionMachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS);
+    
     // Assembler features
     if (IDVal == ".set")
       return ParseDirectiveSet();

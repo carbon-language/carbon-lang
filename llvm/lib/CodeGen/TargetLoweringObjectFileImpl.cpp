@@ -475,6 +475,12 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
     = getContext().getMachOSection("__DATA", "__thread_vars",
                                    MCSectionMachO::S_THREAD_LOCAL_VARIABLES,
                                    SectionKind::getDataRel());
+                                   
+  TLSThreadInitSection
+    = getContext().getMachOSection("__DATA", "__thread_init",
+                          MCSectionMachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS,
+                          SectionKind::getDataRel());
+                                   
   CStringSection // .cstring
     = getContext().getMachOSection("__TEXT", "__cstring", 
                                    MCSectionMachO::S_CSTRING_LITERALS,
