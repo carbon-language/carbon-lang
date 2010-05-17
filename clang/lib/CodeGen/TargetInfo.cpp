@@ -253,23 +253,6 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
   return true;
 }
 
-static bool typeContainsSSEVector(const RecordDecl *RD, ASTContext &Context) {
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-    const FieldDecl *FD = *i;
-
-    if (FD->getType()->isVectorType() &&
-        Context.getTypeSize(FD->getType()) >= 128)
-      return true;
-
-    if (const RecordType* RT = FD->getType()->getAs<RecordType>())
-      if (typeContainsSSEVector(RT->getDecl(), Context))
-        return true;
-  }
-
-  return false;
-}
-
 namespace {
 /// DefaultABIInfo - The default implementation for ABI specific
 /// details. This implementation provides information which results in
