@@ -185,6 +185,50 @@ entry:
   ret void
 }
 
+; PR7156
+define arm_aapcs_vfpcc i32 @t8() nounwind {
+; CHECK: t8:
+; CHECK: vrsqrte.f32 q0, q0
+bb.nph55.bb.nph55.split_crit_edge:
+  br label %bb3
+
+bb3:                                              ; preds = %bb3, %bb.nph55.bb.nph55.split_crit_edge
+  br i1 undef, label %bb5, label %bb3
+
+bb5:                                              ; preds = %bb3
+  br label %bb.i25
+
+bb.i25:                                           ; preds = %bb.i25, %bb5
+  %0 = shufflevector <2 x float> undef, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
+  %1 = call <4 x float> @llvm.arm.neon.vrsqrte.v4f32(<4 x float> %0) nounwind ; <<4 x float>> [#uses=1]
+  %2 = fmul <4 x float> %1, undef                 ; <<4 x float>> [#uses=1]
+  %3 = fmul <4 x float> undef, %2                 ; <<4 x float>> [#uses=1]
+  %tmp26.i = bitcast <4 x float> %3 to <2 x double> ; <<2 x double>> [#uses=1]
+  %4 = extractelement <2 x double> %tmp26.i, i32 0 ; <double> [#uses=1]
+  %5 = bitcast double %4 to <2 x float>           ; <<2 x float>> [#uses=1]
+  %6 = extractelement <2 x float> %5, i32 1       ; <float> [#uses=1]
+  store float %6, float* undef, align 4
+  br i1 undef, label %bb6, label %bb.i25
+
+bb6:                                              ; preds = %bb.i25
+  br i1 undef, label %bb7, label %bb14
+
+bb7:                                              ; preds = %bb6
+  br label %bb.i49
+
+bb.i49:                                           ; preds = %bb.i49, %bb7
+  br i1 undef, label %bb.i19, label %bb.i49
+
+bb.i19:                                           ; preds = %bb.i19, %bb.i49
+  br i1 undef, label %exit, label %bb.i19
+
+exit:          ; preds = %bb.i19
+  unreachable
+
+bb14:                                             ; preds = %bb6
+  ret i32 0
+}
+
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly
@@ -208,5 +252,7 @@ declare %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8*, <8 x i8>, <8
 declare %struct.__neon_int16x8x2_t @llvm.arm.neon.vld2lane.v8i16(i8*, <8 x i16>, <8 x i16>, i32) nounwind readonly
 
 declare void @llvm.arm.neon.vst2.v4i32(i8*, <4 x i32>, <4 x i32>) nounwind
+
+declare <4 x float> @llvm.arm.neon.vrsqrte.v4f32(<4 x float>) nounwind readnone
 
 declare void @llvm.trap() nounwind

@@ -1238,6 +1238,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       llvm_unreachable(0);
     }
 
+    bool IsImpDef = true;
     SmallVector<unsigned, 4> RealSrcs;
     SmallSet<unsigned, 4> Seen;
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
@@ -1253,6 +1254,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         DefMI->eraseFromParent();
         continue;
       }
+      IsImpDef = false;
 
       // Remember EXTRACT_SUBREG sources. These might be candidate for
       // coalescing.
@@ -1297,8 +1299,15 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI);
     }
 
-    DEBUG(dbgs() << "Eliminated: " << *MI);
-    MI->eraseFromParent();
+    if (IsImpDef) {
+      DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");
+      MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
+      for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
+        MI->RemoveOperand(j);      
+    } else {
+      DEBUG(dbgs() << "Eliminated: " << *MI);
+      MI->eraseFromParent();
+    }
 
     // Try coalescing some EXTRACT_SUBREG instructions.
     CoalesceExtSubRegs(RealSrcs, DstReg);
