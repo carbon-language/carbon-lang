@@ -3,6 +3,7 @@
 
 %struct.int16x8_t = type { <8 x i16> }
 %struct.int32x4_t = type { <4 x i32> }
+%struct.__neon_int8x8x2_t = type { <8 x i8>, <8 x i8> }
 %struct.__neon_int8x8x3_t = type { <8 x i8>,  <8 x i8>,  <8 x i8> }
 %struct.__neon_int16x8x2_t = type { <8 x i16>, <8 x i16> }
 %struct.__neon_int32x4x2_t = type { <4 x i32>, <4 x i32> }
@@ -149,11 +150,50 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
   ret <8 x i16> %tmp5
 }
 
+define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
+; CHECK:        t6:
+; CHECK:        vldr.64
+; CHECK:        vmov d1, d0
+; CHECK-NEXT:   vld2.8 {d0[1], d1[1]}
+  %tmp1 = load <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
+  %tmp2 = call %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1) ; <%struct.__neon_int8x8x2_t> [#uses=2]
+  %tmp3 = extractvalue %struct.__neon_int8x8x2_t %tmp2, 0 ; <<8 x i8>> [#uses=1]
+  %tmp4 = extractvalue %struct.__neon_int8x8x2_t %tmp2, 1 ; <<8 x i8>> [#uses=1]
+  %tmp5 = add <8 x i8> %tmp3, %tmp4               ; <<8 x i8>> [#uses=1]
+  ret <8 x i8> %tmp5
+}
+
+define arm_apcscc void @t7(i32* %iptr, i32* %optr) nounwind {
+entry:
+; CHECK:        t7:
+; CHECK:        vld2.32
+; CHECK:        vst2.32
+; CHECK:        vld1.32 {d0, d1},
+; CHECK:        vmov q1, q0
+; CHECK-NOT:    vmov
+; CHECK:        vuzp.32 q0, q1
+; CHECK:        vst1.32
+  %0 = bitcast i32* %iptr to i8*                  ; <i8*> [#uses=2]
+  %1 = tail call %struct.__neon_int32x4x2_t @llvm.arm.neon.vld2.v4i32(i8* %0) ; <%struct.__neon_int32x4x2_t> [#uses=2]
+  %tmp57 = extractvalue %struct.__neon_int32x4x2_t %1, 0 ; <<4 x i32>> [#uses=1]
+  %tmp60 = extractvalue %struct.__neon_int32x4x2_t %1, 1 ; <<4 x i32>> [#uses=1]
+  %2 = bitcast i32* %optr to i8*                  ; <i8*> [#uses=2]
+  tail call void @llvm.arm.neon.vst2.v4i32(i8* %2, <4 x i32> %tmp57, <4 x i32> %tmp60)
+  %3 = tail call <4 x i32> @llvm.arm.neon.vld1.v4i32(i8* %0) ; <<4 x i32>> [#uses=1]
+  %4 = shufflevector <4 x i32> %3, <4 x i32> undef, <4 x i32> <i32 0, i32 2, i32 0, i32 2> ; <<4 x i32>> [#uses=1]
+  tail call void @llvm.arm.neon.vst1.v4i32(i8* %2, <4 x i32> %4)
+  ret void
+}
+
+declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
+
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly
 
 declare <4 x i32> @llvm.arm.neon.vmovls.v4i32(<4 x i16>) nounwind readnone
 
 declare <4 x i16> @llvm.arm.neon.vshiftn.v4i16(<4 x i32>, <4 x i32>) nounwind readnone
+
+declare void @llvm.arm.neon.vst1.v4i32(i8*, <4 x i32>) nounwind
 
 declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>) nounwind
 
@@ -162,6 +202,8 @@ declare void @llvm.arm.neon.vst3.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>) nounwin
 declare %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8*) nounwind readonly
 
 declare %struct.__neon_int32x4x2_t @llvm.arm.neon.vld2.v4i32(i8*) nounwind readonly
+
+declare %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8*, <8 x i8>, <8 x i8>, i32) nounwind readonly
 
 declare %struct.__neon_int16x8x2_t @llvm.arm.neon.vld2lane.v8i16(i8*, <8 x i16>, <8 x i16>, i32) nounwind readonly
 

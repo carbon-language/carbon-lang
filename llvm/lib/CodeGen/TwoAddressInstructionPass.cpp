@@ -128,6 +128,8 @@ namespace {
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
 
+    void CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs, unsigned DstReg);
+
     /// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
     /// of the de-ssa process. This replaces sources of REG_SEQUENCE as
     /// sub-register references of the register defined by REG_SEQUENCE.
@@ -1132,7 +1134,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 }
 
 static void UpdateRegSequenceSrcs(unsigned SrcReg,
-                                  unsigned DstReg, unsigned SrcIdx,
+                                  unsigned DstReg, unsigned SubIdx,
                                   MachineRegisterInfo *MRI) {
   for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
          RE = MRI->reg_end(); RI != RE; ) {
@@ -1140,7 +1142,77 @@ static void UpdateRegSequenceSrcs(unsigned SrcReg,
     ++RI;
     MO.setReg(DstReg);
     assert(MO.getSubReg() == 0);
-    MO.setSubReg(SrcIdx);
+    MO.setSubReg(SubIdx);
+  }
+}
+
+/// CoalesceExtSubRegs - If a number of sources of the REG_SEQUENCE are
+/// EXTRACT_SUBREG from the same register and to the same virtual register
+/// with different sub-register indices, attempt to combine the
+/// EXTRACT_SUBREGs and pre-coalesce them. e.g.
+/// %reg1026<def> = VLDMQ %reg1025<kill>, 260, pred:14, pred:%reg0
+/// %reg1029:6<def> = EXTRACT_SUBREG %reg1026, 6
+/// %reg1029:5<def> = EXTRACT_SUBREG %reg1026<kill>, 5
+/// Since D subregs 5, 6 can combine to a Q register, we can coalesce
+/// reg1026 to reg1029.
+void
+TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
+                                              unsigned DstReg) {
+  SmallSet<unsigned, 4> Seen;
+  for (unsigned i = 0, e = Srcs.size(); i != e; ++i) {
+    unsigned SrcReg = Srcs[i];
+    if (!Seen.insert(SrcReg))
+      continue;
+
+    // If there are no other uses than extract_subreg which feed into
+    // the reg_sequence, then we might be able to coalesce them.
+    bool CanCoalesce = true;
+    SmallVector<unsigned, 4> SubIndices;
+    for (MachineRegisterInfo::use_nodbg_iterator
+           UI = MRI->use_nodbg_begin(SrcReg),
+           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
+      MachineInstr *UseMI = &*UI;
+      if (!UseMI->isExtractSubreg() ||
+          UseMI->getOperand(0).getReg() != DstReg) {
+        CanCoalesce = false;
+        break;
+      }
+      SubIndices.push_back(UseMI->getOperand(2).getImm());
+    }
+
+    if (!CanCoalesce || SubIndices.size() < 2)
+      continue;
+
+    std::sort(SubIndices.begin(), SubIndices.end());
+    unsigned NewSubIdx = 0;
+    if (TRI->canCombinedSubRegIndex(MRI->getRegClass(SrcReg), SubIndices,
+                                    NewSubIdx)) {
+      bool Proceed = true;
+      if (NewSubIdx)
+        for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+               RE = MRI->reg_end(); RI != RE; ) {
+          MachineOperand &MO = RI.getOperand();
+          ++RI;
+          // FIXME: If the sub-registers do not combine to the whole
+          // super-register, i.e. NewSubIdx != 0, and any of the use has a
+          // sub-register index, then abort the coalescing attempt.
+          if (MO.getSubReg()) {
+            Proceed = false;
+            break;
+          }
+          MO.setReg(DstReg);
+          MO.setSubReg(NewSubIdx);
+        }
+      if (Proceed)
+        for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+               RE = MRI->reg_end(); RI != RE; ) {
+          MachineOperand &MO = RI.getOperand();
+          ++RI;
+          MO.setReg(DstReg);
+          if (NewSubIdx)
+            MO.setSubReg(NewSubIdx);
+        }
+      }
   }
 }
 
@@ -1221,50 +1293,15 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
 
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
       unsigned SrcReg = MI->getOperand(i).getReg();
-      unsigned SrcIdx = MI->getOperand(i+1).getImm();
-      UpdateRegSequenceSrcs(SrcReg, DstReg, SrcIdx, MRI);
+      unsigned SubIdx = MI->getOperand(i+1).getImm();
+      UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI);
     }
 
     DEBUG(dbgs() << "Eliminated: " << *MI);
     MI->eraseFromParent();
 
     // Try coalescing some EXTRACT_SUBREG instructions.
-    Seen.clear();
-    for (unsigned i = 0, e = RealSrcs.size(); i != e; ++i) {
-      unsigned SrcReg = RealSrcs[i];
-      if (!Seen.insert(SrcReg))
-        continue;
-
-      // If there are no other uses than extract_subreg which feed into
-      // the reg_sequence, then we might be able to coalesce them.
-      bool CanCoalesce = true;
-      SmallVector<unsigned, 4> SubIndices;
-      for (MachineRegisterInfo::use_nodbg_iterator
-             UI = MRI->use_nodbg_begin(SrcReg),
-             UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-        MachineInstr *UseMI = &*UI;
-        if (!UseMI->isExtractSubreg() ||
-            UseMI->getOperand(0).getReg() != DstReg) {
-          CanCoalesce = false;
-          break;
-        }
-        SubIndices.push_back(UseMI->getOperand(2).getImm());
-      }
-
-      if (!CanCoalesce)
-        continue;
-
-      // %reg1026<def> = VLDMQ %reg1025<kill>, 260, pred:14, pred:%reg0
-      // %reg1029:6<def> = EXTRACT_SUBREG %reg1026, 6
-      // %reg1029:5<def> = EXTRACT_SUBREG %reg1026<kill>, 5
-      // Since D subregs 5, 6 can combine to a Q register, we can coalesce
-      // reg1026 to reg1029.
-      std::sort(SubIndices.begin(), SubIndices.end());
-      unsigned NewSubIdx = 0;
-      if (TRI->canCombinedSubRegIndex(MRI->getRegClass(SrcReg), SubIndices,
-                                      NewSubIdx))
-        UpdateRegSequenceSrcs(SrcReg, DstReg, NewSubIdx, MRI);
-    }
+    CoalesceExtSubRegs(RealSrcs, DstReg);
   }
 
   RegSequences.clear();
