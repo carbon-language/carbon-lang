@@ -2139,7 +2139,8 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
     FieldDecl *Field = *I;
-    
+    if (Field->isInvalidDecl())
+      continue;
     QualType FieldType = Context.getBaseElementType(Field->getType());
     
     const RecordType* RT = FieldType->getAs<RecordType>();
