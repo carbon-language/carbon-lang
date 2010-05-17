@@ -381,6 +381,8 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 // can be allocated directly.
 // Returns spillImpossible when PhysReg or an alias can't be spilled.
 unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
+  if (UsedInInstr.test(PhysReg))
+    return spillImpossible;
   switch (unsigned VirtReg = PhysRegState[PhysReg]) {
   case regDisabled:
     break;
@@ -396,6 +398,8 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   unsigned Cost = 0;
   for (const unsigned *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
+    if (UsedInInstr.test(Alias))
+      return spillImpossible;
     switch (unsigned VirtReg = PhysRegState[Alias]) {
     case regDisabled:
       break;
@@ -436,14 +440,11 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || UsedInInstr.test(Hint) ||
-               !Allocatable.test(Hint)))
+               !RC->contains(Hint) || !Allocatable.test(Hint)))
     Hint = 0;
 
   // Take hint when possible.
   if (Hint) {
-    assert(RC->contains(Hint) && !UsedInInstr.test(Hint) &&
-           Allocatable.test(Hint) && "Invalid hint should have been cleared");
     switch(calcSpillCost(Hint)) {
     default:
       definePhysReg(MI, Hint, regFree);
@@ -470,7 +471,6 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 
   unsigned BestReg = 0, BestCost = spillImpossible;
   for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
-    if (UsedInInstr.test(*I)) continue;
     unsigned Cost = calcSpillCost(*I);
     // Cost is 0 when all aliases are already disabled.
     if (Cost == 0)
