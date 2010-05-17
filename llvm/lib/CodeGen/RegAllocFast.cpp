@@ -471,6 +471,7 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 
   unsigned BestReg = 0, BestCost = spillImpossible;
   for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
+    if (UsedInInstr.test(*I)) continue;
     unsigned Cost = calcSpillCost(*I);
     // Cost is 0 when all aliases are already disabled.
     if (Cost == 0)
