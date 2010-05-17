@@ -1178,10 +1178,8 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 
   Lex();
 
-  if (!HasFillExpr) {
-    // FIXME: Sometimes fill with nop.
+  if (!HasFillExpr)
     FillExpr = 0;
-  }
 
   // Compute alignment in bytes.
   if (IsPow2) {
@@ -1209,14 +1207,21 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     }
   }
 
-  // FIXME: hard code the parser to use EmitCodeAlignment for text when using
-  // the TextAlignFillValue.
-  if(Out.getCurrentSection()->getKind().isText() && 
-     Lexer.getMAI().getTextAlignFillValue() == FillExpr)
+  // Check whether we should use optimal code alignment for this .align
+  // directive.
+  //
+  // FIXME: This should be using a target hook.
+  bool UseCodeAlign = false;
+  if (const MCSectionMachO *S = dyn_cast<MCSectionMachO>(
+        Out.getCurrentSection()))
+      UseCodeAlign = S->hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+  if ((!HasFillExpr || Lexer.getMAI().getTextAlignFillValue() == FillExpr) &&
+      ValueSize == 1 && UseCodeAlign) {
     Out.EmitCodeAlignment(Alignment, MaxBytesToFill);
-  else
+  } else {
     // FIXME: Target specific behavior about how the "extra" bytes are filled.
     Out.EmitValueToAlignment(Alignment, FillExpr, ValueSize, MaxBytesToFill);
+  }
 
   return false;
 }

@@ -150,24 +150,31 @@
         .align 4, 0x90
         ret
 
+        # Only the .text sections gets optimal nops.
+	.section	__TEXT,__const
+f0:
+        .byte 0
+	.align	4, 0x90
+        .long 0
+
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
 // CHECK: ('num_load_commands', 1)
-// CHECK: ('load_commands_size', 124)
+// CHECK: ('load_commands_size', 296)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
 // CHECK:  (('command', 1)
-// CHECK:   ('size', 124)
+// CHECK:   ('size', 192)
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 337)
-// CHECK:   ('file_offset', 152)
-// CHECK:   ('file_size', 337)
+// CHECK:   ('vm_size', 372)
+// CHECK:   ('file_offset', 324)
+// CHECK:   ('file_size', 372)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
-// CHECK:   ('num_sections', 1)
+// CHECK:   ('num_sections', 2)
 // CHECK:   ('flags', 0)
 // CHECK:   ('sections', [
 // CHECK:     # Section 0
@@ -175,7 +182,7 @@
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 337)
-// CHECK:     ('offset', 152)
+// CHECK:     ('offset', 324)
 // CHECK:     ('alignment', 4)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -186,6 +193,65 @@
 // CHECK:   ('_relocations', [
 // CHECK:   ])
 // CHECK:   ('_section_data', '\xc3\x90\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3f\x90\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\x0f\x1f\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3\x0f\x1f@\x00\xc3\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\x0f\x1fD\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\xc3\xc3f\x0f\x1fD\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\xc3\x0f\x1f\x80\x00\x00\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3\xc3\xc3\xc3f\x0f\x1f\x84\x00\x00\x00\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3\xc3\xc3\xc3f\x0f\x1f\x84\x00\x00\x00\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3\xc3\x0f\x1fD\x00\x00f\x0f\x1fD\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3\xc3f\x0f\x1fD\x00\x00f\x0f\x1fD\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\xc3f\x0f\x1fD\x00\x00\x0f\x1f\x80\x00\x00\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\xc3\x0f\x1f\x80\x00\x00\x00\x00\x0f\x1f\x80\x00\x00\x00\x00\xc3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc3\x0f\x1f\x80\x00\x00\x00\x00\x0f\x1f\x84\x00\x00\x00\x00\x00\xc3')
+// CHECK:     # Section 1
+// CHECK:    (('section_name', '__const\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:     ('address', 352)
+// CHECK:     ('size', 20)
+// CHECK:     ('offset', 676)
+// CHECK:     ('alignment', 4)
+// CHECK:     ('reloc_offset', 0)
+// CHECK:     ('num_reloc', 0)
+// CHECK:     ('flags', 0x0)
+// CHECK:     ('reserved1', 0)
+// CHECK:     ('reserved2', 0)
+// CHECK:    ),
+// CHECK:   ('_relocations', [
+// CHECK:   ])
+// CHECK:   ('_section_data', '\x00\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x00\x00\x00\x00')
+// CHECK:   ])
+// CHECK:  ),
+// CHECK:   # Load Command 1
+// CHECK:  (('command', 2)
+// CHECK:   ('size', 24)
+// CHECK:   ('symoff', 696)
+// CHECK:   ('nsyms', 1)
+// CHECK:   ('stroff', 708)
+// CHECK:   ('strsize', 4)
+// CHECK:   ('_string_data', '\x00f0\x00')
+// CHECK:   ('_symbols', [
+// CHECK:     # Symbol 0
+// CHECK:    (('n_strx', 1)
+// CHECK:     ('n_type', 0xe)
+// CHECK:     ('n_sect', 2)
+// CHECK:     ('n_desc', 0)
+// CHECK:     ('n_value', 352)
+// CHECK:     ('_string', 'f0')
+// CHECK:    ),
+// CHECK:   ])
+// CHECK:  ),
+// CHECK:   # Load Command 2
+// CHECK:  (('command', 11)
+// CHECK:   ('size', 80)
+// CHECK:   ('ilocalsym', 0)
+// CHECK:   ('nlocalsym', 1)
+// CHECK:   ('iextdefsym', 1)
+// CHECK:   ('nextdefsym', 0)
+// CHECK:   ('iundefsym', 1)
+// CHECK:   ('nundefsym', 0)
+// CHECK:   ('tocoff', 0)
+// CHECK:   ('ntoc', 0)
+// CHECK:   ('modtaboff', 0)
+// CHECK:   ('nmodtab', 0)
+// CHECK:   ('extrefsymoff', 0)
+// CHECK:   ('nextrefsyms', 0)
+// CHECK:   ('indirectsymoff', 0)
+// CHECK:   ('nindirectsyms', 0)
+// CHECK:   ('extreloff', 0)
+// CHECK:   ('nextrel', 0)
+// CHECK:   ('locreloff', 0)
+// CHECK:   ('nlocrel', 0)
+// CHECK:   ('_indirect_symbols', [
 // CHECK:   ])
 // CHECK:  ),
 // CHECK: ])
