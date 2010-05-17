@@ -724,24 +724,25 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
          I != E; ++I) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
         if (!I->getOperand(i).isFI()) continue;
-
-        const TargetInstrDesc &Desc = TII.get(I->getOpcode());
-        unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
-        if (AddrMode == ARMII::AddrMode3 ||
-            AddrMode == ARMII::AddrModeT2_i8)
-          return (1 << 8) - 1;
-
-        if (AddrMode == ARMII::AddrMode5 ||
-            AddrMode == ARMII::AddrModeT2_i8s4)
+        switch (I->getDesc().TSFlags & ARMII::AddrModeMask) {
+        case ARMII::AddrMode3:
+        case ARMII::AddrModeT2_i8:
+          Limit = std::min(Limit, (1U << 8) - 1);
+          break;
+        case ARMII::AddrMode5:
+        case ARMII::AddrModeT2_i8s4:
           Limit = std::min(Limit, ((1U << 8) - 1) * 4);
-
-        if (AddrMode == ARMII::AddrModeT2_i12 && hasFP(MF))
-          // When the stack offset is negative, we will end up using
-          // the i8 instructions instead.
-          return (1 << 8) - 1;
-
-        if (AddrMode == ARMII::AddrMode6)
+          break;
+        case ARMII::AddrModeT2_i12:
+          if (hasFP(MF)) Limit = std::min(Limit, (1U << 8) - 1);
+          break;
+        case ARMII::AddrMode6:
+          // Addressing mode 6 (load/store) instructions can't encode an
+          // immediate offset for stack references.
           return 0;
+        default:
+          break;
+        }
         break; // At most one FI per instruction
       }
     }
