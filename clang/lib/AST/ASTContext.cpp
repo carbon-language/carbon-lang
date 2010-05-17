@@ -2335,26 +2335,35 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
 QualType ASTContext::getUnqualifiedArrayType(QualType T,
                                              Qualifiers &Quals) {
   Quals = T.getQualifiers();
-  if (!isa<ArrayType>(T)) {
+  const ArrayType *AT = getAsArrayType(T);
+  if (!AT) {
     return T.getUnqualifiedType();
   }
 
-  const ArrayType *AT = cast<ArrayType>(T);
   QualType Elt = AT->getElementType();
   QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);
   if (Elt == UnqualElt)
     return T;
 
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T)) {
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
     return getConstantArrayType(UnqualElt, CAT->getSize(),
                                 CAT->getSizeModifier(), 0);
   }
 
-  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(T)) {
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     return getIncompleteArrayType(UnqualElt, IAT->getSizeModifier(), 0);
   }
 
-  const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(T);
+  if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT)) {
+    return getVariableArrayType(UnqualElt,
+                                VAT->getSizeExpr() ?
+                                VAT->getSizeExpr()->Retain() : 0,
+                                VAT->getSizeModifier(),
+                                VAT->getIndexTypeCVRQualifiers(),
+                                VAT->getBracketsRange());
+  }
+
+  const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(AT);
   return getDependentSizedArrayType(UnqualElt, DSAT->getSizeExpr()->Retain(),
                                     DSAT->getSizeModifier(), 0,
                                     SourceRange());

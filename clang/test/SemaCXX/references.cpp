@@ -115,3 +115,18 @@ void test10() {
   int &c = ev.x; // expected-error{{non-const reference cannot bind to vector element}}
   const int &d = ev.x;
 }
+
+namespace PR7149 {
+  template<typename T> struct X0
+  {
+    T& first;
+    X0(T& p1) : first(p1) { }
+  };
+
+
+  void f()
+  {
+    int p1[1];
+    X0< const int[1]> c(p1);
+  }
+}
