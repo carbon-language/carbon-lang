@@ -1009,6 +1009,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     Params[P]->setOwningFunction(Function);
   Function->setParams(Params.data(), Params.size());
 
+  SourceLocation InstantiateAtPOI;
   if (TemplateParams) {
     // Our resulting instantiation is actually a function template, since we
     // are substituting only the outer template parameters. For example, given
@@ -1047,6 +1048,23 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     // TODO: should we remember this connection regardless of whether
     // the friend declaration provided a body?
     Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
+    if (!SemaRef.getLangOptions().CPlusPlus0x) {
+      // C++03 [temp.friend]p4:
+      //   When a function is defined in a friend function declaration in a 
+      //   class template, the function is defined at each instantiation of the
+      //   class template. The function is defined even if it is never used.
+      if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Owner)) {
+        if (ClassTemplateSpecializationDecl *Spec 
+                        = dyn_cast<ClassTemplateSpecializationDecl>(Record))
+          InstantiateAtPOI = Spec->getPointOfInstantiation();
+        else if (MemberSpecializationInfo *MSInfo 
+                                      = Record->getMemberSpecializationInfo())
+          InstantiateAtPOI = MSInfo->getPointOfInstantiation();
+      }
+      
+      if (InstantiateAtPOI.isInvalid())
+        InstantiateAtPOI = Function->getLocation();        
+    }
   }
     
   if (InitFunctionInstantiation(Function, D))
@@ -1132,6 +1150,11 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (Function->isOverloadedOperator() && !DC->isRecord() &&
       PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
     PrincipalDecl->setNonMemberOperator();
+
+  // If we need to instantiate this function now (because it is a C++98/03 
+  // friend function defined inside a class template), do so.
+  if (InstantiateAtPOI.isValid())
+    SemaRef.MarkDeclarationReferenced(InstantiateAtPOI, Function);
 
   return Function;
 }
