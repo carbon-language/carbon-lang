@@ -167,6 +167,19 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
         }
       }
     }
+    // FIXME: Remove this hack once temporaries and their destructors are
+    // modeled correctly by the CFG.
+    if (CXXExprWithTemporaries *E = dyn_cast<CXXExprWithTemporaries>(S)) {
+      for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I) {
+        const FunctionDecl *FD = E->getTemporary(I)->getDestructor();
+        if (FD->hasAttr<NoReturnAttr>() ||
+            FD->getType()->getAs<FunctionType>()->getNoReturnAttr()) {
+          NoReturnEdge = true;
+          HasFakeEdge = true;
+          break;
+        }
+      }
+    }
     // FIXME: Add noreturn message sends.
     if (NoReturnEdge == false)
       HasPlainEdge = true;
