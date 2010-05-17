@@ -119,7 +119,28 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), false);
 
-  return CGF.CGM.CreateRuntimeFunction(FTy, "_ZSt9terminatev");
+  return CGF.CGM.CreateRuntimeFunction(FTy, 
+      CGF.CGM.getLangOptions().CPlusPlus ? "_ZSt9terminatev" : "abort");
+}
+
+static llvm::Constant *getPersonalityFn(CodeGenModule &CGM) {
+  const char *PersonalityFnName = "__gcc_personality_v0";
+  LangOptions Opts = CGM.getLangOptions();
+  if (Opts.CPlusPlus)
+     PersonalityFnName = "__gxx_personality_v0";
+  else if (Opts.ObjC1)
+    if (Opts.NeXTRuntime) {
+      if (Opts.ObjCNonFragileABI)
+        PersonalityFnName = "__gcc_personality_v0";
+    } else 
+      PersonalityFnName = "__gnu_objc_personality_v0";
+
+  llvm::Constant *Personality =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty(
+                                                        CGM.getLLVMContext()),
+                                                    true),
+      PersonalityFnName);
+  return llvm::ConstantExpr::getBitCast(Personality, CGM.PtrToInt8Ty);
 }
 
 // Emits an exception expression into the given location.  This
@@ -324,12 +345,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
   if (!Proto->hasExceptionSpec())
     return;
 
-  llvm::Constant *Personality =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
-                                                      (VMContext),
-                                                      true),
-                              "__gxx_personality_v0");
-  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+  llvm::Constant *Personality = getPersonalityFn(CGM);
   llvm::Value *llvm_eh_exception =
     CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
   llvm::Value *llvm_eh_selector =
@@ -444,12 +460,7 @@ CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S) {
 void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
                                      CXXTryStmtInfo TryInfo) {
   // Pointer to the personality function
-  llvm::Constant *Personality =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
-                                                      (VMContext),
-                                                      true),
-                              "__gxx_personality_v0");
-  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+  llvm::Constant *Personality = getPersonalityFn(CGM);
   llvm::Value *llvm_eh_exception =
     CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
   llvm::Value *llvm_eh_selector =
@@ -654,12 +665,7 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
  
   // The libstdc++ personality function.
   // TODO: generalize to work with other libraries.
-  llvm::Constant *Personality =
-    CGF.CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
-                                                          (CGF.VMContext),
-                                                          true),
-                                  "__gxx_personality_v0");
-  Personality = llvm::ConstantExpr::getBitCast(Personality, CGF.PtrToInt8Ty);
+  llvm::Constant *Personality = getPersonalityFn(CGF.CGM);
 
   // %exception = call i8* @llvm.eh.exception()
   //   Magic intrinsic which tells gives us a handle to the caught
@@ -715,12 +721,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   llvm::BasicBlock::iterator SavedInsertPoint = Builder.GetInsertPoint();
   Builder.ClearInsertionPoint();
 
-  llvm::Constant *Personality =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
-                                                      (VMContext),
-                                                      true),
-                              "__gxx_personality_v0");
-  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+  llvm::Constant *Personality = getPersonalityFn(CGM);
   llvm::Value *llvm_eh_exception =
     CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
   llvm::Value *llvm_eh_selector =
