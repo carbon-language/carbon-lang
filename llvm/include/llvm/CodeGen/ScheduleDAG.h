@@ -34,7 +34,6 @@ namespace llvm {
   class SDNode;
   class TargetInstrInfo;
   class TargetInstrDesc;
-  class TargetLowering;
   class TargetMachine;
   class TargetRegisterClass;
   template<class Graph> class GraphWriter;
@@ -456,7 +455,6 @@ namespace llvm {
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
-    const TargetLowering *TLI;            // Target lowering info
     MachineFunction &MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
