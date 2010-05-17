@@ -151,7 +151,7 @@ namespace {
     unsigned reloadVirtReg(MachineInstr *MI, unsigned OpNum,
                            unsigned VirtReg, unsigned Hint);
     void spillAll(MachineInstr *MI);
-    void setPhysReg(MachineOperand &MO, unsigned PhysReg);
+    bool setPhysReg(MachineOperand &MO, unsigned PhysReg);
   };
   char RAFast::ID = 0;
 }
@@ -589,12 +589,32 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
 }
 
 // setPhysReg - Change MO the refer the PhysReg, considering subregs.
-void RAFast::setPhysReg(MachineOperand &MO, unsigned PhysReg) {
-  if (unsigned Idx = MO.getSubReg()) {
-    MO.setReg(PhysReg ? TRI->getSubReg(PhysReg, Idx) : 0);
-    MO.setSubReg(0);
-  } else
+// This may invalidate MO if it is necessary to add implicit kills for a
+// superregister.
+// Return tru if MO kills its register.
+bool RAFast::setPhysReg(MachineOperand &MO, unsigned PhysReg) {
+  if (!MO.getSubReg()) {
     MO.setReg(PhysReg);
+    return MO.isKill() || MO.isDead();
+  }
+
+  // Handle subregister index.
+  MO.setReg(PhysReg ? TRI->getSubReg(PhysReg, MO.getSubReg()) : 0);
+  MO.setSubReg(0);
+  if (MO.isUse()) {
+    if (MO.isKill()) {
+      MO.getParent()->addRegisterKilled(PhysReg, TRI, true);
+      return true;
+    }
+    return false;
+  }
+  // A subregister def implicitly defines the whole physreg.
+  if (MO.isDead()) {
+    MO.getParent()->addRegisterDead(PhysReg, TRI, true);
+    return true;
+  }
+  MO.getParent()->addRegisterDefined(PhysReg, TRI);
+  return false;
 }
 
 void RAFast::AllocateBasicBlock() {
@@ -709,8 +729,7 @@ void RAFast::AllocateBasicBlock() {
       if (MO.isUse()) {
         unsigned PhysReg = reloadVirtReg(MI, i, Reg, CopyDst);
         CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
-        setPhysReg(MO, PhysReg);
-        if (MO.isKill())
+        if (setPhysReg(MO, PhysReg))
           VirtKills.push_back(Reg);
       } else if (MO.isEarlyClobber()) {
         unsigned PhysReg = defineVirtReg(MI, i, Reg, 0);
@@ -761,12 +780,11 @@ void RAFast::AllocateBasicBlock() {
         continue;
       }
       unsigned PhysReg = defineVirtReg(MI, i, Reg, CopySrc);
-      if (MO.isDead()) {
+      if (setPhysReg(MO, PhysReg)) {
         VirtKills.push_back(Reg);
         CopyDst = 0; // cancel coalescing;
       } else
         CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
-      setPhysReg(MO, PhysReg);
     }
 
     // Process virtreg deads.
