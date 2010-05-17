@@ -1341,6 +1341,24 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
  */
 
 /**
+ * \defgroup CINDEX_CPP C++ AST introspection
+ *
+ * The routines in this group provide access information in the ASTs specific
+ * to C++ language features.
+ *
+ * @{
+ */
+
+/**
+ * \brief Determine if a C++ member function is declared 'static'.
+ */
+CINDEX_LINKAGE unsigned clang_CXXMethod_isStatic(CXCursor C);
+
+/**
+ * @}
+ */
+
+/**
  * \defgroup CINDEX_LEX Token extraction and manipulation
  *
  * The routines in this group provide access to the tokens within a

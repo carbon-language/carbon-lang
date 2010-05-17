@@ -1,3 +1,4 @@
+clang_CXXMethod_isStatic
 clang_annotateTokens
 clang_codeComplete
 clang_codeCompleteGetDiagnostic
@@ -23,8 +24,8 @@ clang_equalCursors
 clang_equalLocations
 clang_equalTypes
 clang_formatDiagnostic
-clang_getCanonicalType
 clang_getCString
+clang_getCanonicalType
 clang_getClangVersion
 clang_getCompletionChunkCompletionString
 clang_getCompletionChunkKind

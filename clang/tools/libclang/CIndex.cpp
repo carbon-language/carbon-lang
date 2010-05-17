@@ -2752,6 +2752,19 @@ CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
 }
 } // end: extern "C"
 
+
+//===----------------------------------------------------------------------===//
+// C++ AST instrospection.
+//===----------------------------------------------------------------------===//
+
+extern "C" {
+unsigned clang_CXXMethod_isStatic(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+  CXXMethodDecl *D = dyn_cast<CXXMethodDecl>(cxcursor::getCursorDecl(C));
+  return (D && D->isStatic()) ? 1 : 0;
+} // end: extern "C"
+
 //===----------------------------------------------------------------------===//
 // CXString Operations.
 //===----------------------------------------------------------------------===//
