@@ -273,13 +273,14 @@ namespace llvm {
   /// DisableFramePointerElim - This returns true if frame pointer elimination
   /// optimization should be disabled for the given machine function.
   bool DisableFramePointerElim(const MachineFunction &MF) {
-    if (NoFramePointerElim)
-      return true;
+    // Check to see if we should eliminate non-leaf frame pointers and then
+    // check to see if we should eliminate all frame pointers.
     if (NoFramePointerElimNonLeaf) {
       const MachineFrameInfo *MFI = MF.getFrameInfo();
       return MFI->hasCalls();
     }
-    return false;
+
+    return NoFramePointerElim;
   }
 
   /// LessPreciseFPMAD - This flag return true when -enable-fp-mad option

@@ -233,6 +233,24 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     }
   }
 
+  // Determine if there are any calls in this machine function.
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  if (!MFI->hasCalls()) {
+    for (MachineFunction::const_iterator
+           I = MF->begin(), E = MF->end(); I != E; ++I) {
+      const MachineBasicBlock *MBB = I;
+      for (MachineBasicBlock::const_iterator
+             II = MBB->begin(), IE = MBB->end(); II != IE; ++II) {
+        const TargetInstrDesc &TID = TM.getInstrInfo()->get(II->getOpcode());
+        if (II->isInlineAsm() || (TID.isCall() && !TID.isReturn())) {
+          MFI->setHasCalls(true);
+          goto done;
+        }
+      }
+    }
+  done:;
+  }
+
   // Release function-specific state. SDB and CurDAG are already cleared
   // at this point.
   FuncInfo->clear();
@@ -606,19 +624,6 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     delete Scheduler;
   }
 
-  // Determine if there are any calls in this machine function.
-  MachineFrameInfo *MFI = MF->getFrameInfo();
-  if (!MFI->hasCalls()) {
-    for (MachineBasicBlock::iterator
-           I = BB->begin(), E = BB->end(); I != E; ++I) {
-      const TargetInstrDesc &TID = TM.getInstrInfo()->get(I->getOpcode());
-      if (I->isInlineAsm() || (TID.isCall() && !TID.isReturn())) {
-        MFI->setHasCalls(true);
-        break;
-      }
-    }
-  }
-
   // Free the SelectionDAG state, now that we're finished with it.
   CurDAG->clear();
 
@@ -676,6 +681,7 @@ void SelectionDAGISel::DoInstructionSelection() {
     
     CurDAG->setRoot(Dummy.getValue());
   }    
+
   DEBUG(errs() << "===== Instruction selection ends:\n");
 
   PostprocessISelDAG();
