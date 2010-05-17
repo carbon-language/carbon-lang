@@ -1039,8 +1039,17 @@ public:
 
     UndeducedAuto, // In C++0x, this represents the type of an auto variable
                    // that has not been deduced yet.
-    ObjCId,    // This represents the ObjC 'id' type.
-    ObjCClass, // This represents the ObjC 'Class' type.
+
+    /// The primitive Objective C 'id' type.  The type pointed to by the
+    /// user-visible 'id' type.  Only ever shows up in an AST as the base
+    /// type of an ObjCObjectType.
+    ObjCId,
+
+    /// The primitive Objective C 'Class' type.  The type pointed to by the
+    /// user-visible 'Class' type.  Only ever shows up in an AST as the
+    /// base type of an ObjCObjectType.
+    ObjCClass,
+
     ObjCSel    // This represents the ObjC 'SEL' type.
   };
 private:
@@ -2762,18 +2771,23 @@ public:
 ///
 /// 'C<P>' is an ObjCObjectType with base C and protocol list [P].
 ///
-/// 'id' is a TypedefType which is sugar for an ObjCPointerType with
-/// base BuiltinType::ObjCIdType and no protocols.
+/// 'id' is a TypedefType which is sugar for an ObjCPointerType whose
+/// pointee is an ObjCObjectType with base BuiltinType::ObjCIdType
+/// and no protocols.
 ///
-/// 'id<P>' is an ObjCPointerType with base BuiltinType::ObjCIdType
-/// and protocol list [P].  Eventually this should get its own sugar
-/// class to better represent the source.
+/// 'id<P>' is an ObjCPointerType whose pointee is an ObjCObjecType
+/// with base BuiltinType::ObjCIdType and protocol list [P].  Eventually
+/// this should get its own sugar class to better represent the source.
 class ObjCObjectType : public Type {
   // Pad the bit count up so that NumProtocols is 2-byte aligned
   unsigned : BitsRemainingInType - 16;
 
   /// \brief The number of protocols stored after the
   /// ObjCObjectPointerType node.
+  ///
+  /// These protocols are those written directly on the type.  If
+  /// protocol qualifiers ever become additive, the iterators will
+  /// get kindof complicated.
   ///
   /// In the canonical object type, these are sorted alphabetically
   /// and uniqued.
@@ -2799,6 +2813,12 @@ protected:
       BaseType(QualType(this_(), 0)) {}
 
 public:
+  /// getBaseType - Gets the base type of this object type.  This is
+  /// always (possibly sugar for) one of:
+  ///  - the 'id' builtin type (as opposed to the 'id' type visible to the
+  ///    user, which is a typedef for an ObjCPointerType)
+  ///  - the 'Class' builtin type (same caveat)
+  ///  - an ObjCObjectType (currently always an ObjCInterfaceType)
   QualType getBaseType() const { return BaseType; }
 
   bool isObjCId() const {
@@ -2887,6 +2907,14 @@ inline ObjCProtocolDecl **ObjCObjectType::getProtocolStorage() {
 /// are two kinds of interface types, normal interfaces like "NSString" and
 /// qualified interfaces, which are qualified with a protocol list like
 /// "NSString<NSCopyable, NSAmazing>".
+///
+/// ObjCInterfaceType guarantees the following properties when considered
+/// as a subtype of its superclass, ObjCObjectType:
+///   - There are no protocol qualifiers.  To reinforce this, code which
+///     tries to invoke the protocol methods via an ObjCInterfaceType will
+///     fail to compile.
+///   - It is its own base type.  That is, if T is an ObjCInterfaceType*,
+///     T->getBaseType() == QualType(T, 0).
 class ObjCInterfaceType : public ObjCObjectType {
   ObjCInterfaceDecl *Decl;
 
@@ -2897,6 +2925,7 @@ class ObjCInterfaceType : public ObjCObjectType {
 public:
   void Destroy(ASTContext& C); // key function
 
+  /// getDecl - Get the declaration of this interface.
   ObjCInterfaceDecl *getDecl() const { return Decl; }
 
   bool isSugared() const { return false; }
@@ -2927,13 +2956,17 @@ inline ObjCInterfaceDecl *ObjCObjectType::getInterface() const {
   return 0;
 }
 
-/// ObjCObjectPointerType - Used to represent 'id', 'Interface *', 'id <p>',
-/// and 'Interface <p> *'.
+/// ObjCObjectPointerType - Used to represent a pointer to an
+/// Objective C object.  These are constructed from pointer
+/// declarators when the pointee type is an ObjCObjectType (or sugar
+/// for one).  In addition, the 'id' and 'Class' types are typedefs
+/// for these, and the protocol-qualified types 'id<P>' and 'Class<P>'
+/// are translated into these.
 ///
-/// Duplicate protocols are removed and protocol list is canonicalized to be in
-/// alphabetical order.
+/// Pointers to pointers to Objective C objects are still PointerTypes;
+/// only the first level of pointer gets it own type implementation.
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
-  QualType PointeeType; // A builtin or interface type.
+  QualType PointeeType;
 
   ObjCObjectPointerType(QualType Canonical, QualType Pointee)
     : Type(ObjCObjectPointer, Canonical, false),
@@ -2943,43 +2976,80 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
 public:
   void Destroy(ASTContext& C);
 
-  // Get the pointee type. Pointee will either be:
-  // - a built-in type (for 'id' and 'Class').
-  // - an interface type (for user-defined types).
-  // - a TypedefType whose canonical type is an interface (as in 'T' below).
-  //   For example: typedef NSObject T; T *var;
+  /// getPointeeType - Gets the type pointed to by this ObjC pointer.
+  /// The result will always be an ObjCObjectType or sugar thereof.
   QualType getPointeeType() const { return PointeeType; }
 
+  /// getObjCObjectType - Gets the type pointed to by this ObjC
+  /// pointer.  This method always returns non-null.
+  ///
+  /// This method is equivalent to getPointeeType() except that
+  /// it discards any typedefs (or other sugar) between this
+  /// type and the "outermost" object type.  So for:
+  ///   @class A; @protocol P; @protocol Q;
+  ///   typedef A<P> AP;
+  ///   typedef A A1;
+  ///   typedef A1<P> A1P;
+  ///   typedef A1P<Q> A1PQ;
+  /// For 'A*', getObjectType() will return 'A'.
+  /// For 'A<P>*', getObjectType() will return 'A<P>'.
+  /// For 'AP*', getObjectType() will return 'A<P>'.
+  /// For 'A1*', getObjectType() will return 'A'.
+  /// For 'A1<P>*', getObjectType() will return 'A1<P>'.
+  /// For 'A1P*', getObjectType() will return 'A1<P>'.
+  /// For 'A1PQ*', getObjectType() will return 'A1<Q>', because
+  ///   adding protocols to a protocol-qualified base discards the
+  ///   old qualifiers (for now).  But if it didn't, getObjectType()
+  ///   would return 'A1P<Q>' (and we'd have to make iterating over
+  ///   qualifiers more complicated).
   const ObjCObjectType *getObjectType() const {
     return PointeeType->getAs<ObjCObjectType>();
   }
 
+  /// getInterfaceType - If this pointer points to an Objective C
+  /// @interface type, gets the type for that interface.  Any protocol
+  /// qualifiers on the interface are ignored.
+  ///
+  /// \return null if the base type for this pointer is 'id' or 'Class'
   const ObjCInterfaceType *getInterfaceType() const {
     return getObjectType()->getBaseType()->getAs<ObjCInterfaceType>();
   }
-  /// getInterfaceDecl - returns an interface decl for user-defined types.
+
+  /// getInterfaceDecl - If this pointer points to an Objective @interface
+  /// type, gets the declaration for that interface.
+  ///
+  /// \return null if the base type for this pointer is 'id' or 'Class'
   ObjCInterfaceDecl *getInterfaceDecl() const {
-    return getInterfaceType() ? getInterfaceType()->getDecl() : 0;
+    return getObjectType()->getInterface();
   }
-  /// isObjCIdType - true for "id".
+
+  /// isObjCIdType - True if this is equivalent to the 'id' type, i.e. if
+  /// its object type is the primitive 'id' type with no protocols.
   bool isObjCIdType() const {
     return getObjectType()->isObjCUnqualifiedId();
   }
-  /// isObjCClassType - true for "Class".
+
+  /// isObjCClassType - True if this is equivalent to the 'Class' type,
+  /// i.e. if its object tive is the primitive 'Class' type with no protocols.
   bool isObjCClassType() const {
     return getObjectType()->isObjCUnqualifiedClass();
   }
   
-  /// isObjCQualifiedIdType - true for "id <p>".
+  /// isObjCQualifiedIdType - True if this is equivalent to 'id<P>' for some
+  /// non-empty set of protocols.
   bool isObjCQualifiedIdType() const {
     return getObjectType()->isObjCQualifiedId();
   }
-  /// isObjCQualifiedClassType - true for "Class <p>".
+
+  /// isObjCQualifiedClassType - True if this is equivalent to 'Class<P>' for
+  /// some non-empty set of protocols.
   bool isObjCQualifiedClassType() const {
     return getObjectType()->isObjCQualifiedClass();
   }
-  /// qual_iterator and friends: this provides access to the (potentially empty)
-  /// list of protocols qualifying this interface.
+
+  /// An iterator over the qualifiers on the object type.  Provided
+  /// for convenience.  This will always iterate over the full set of
+  /// protocols on a type, not just those provided directly.
   typedef ObjCObjectType::qual_iterator qual_iterator;
 
   qual_iterator qual_begin() const {
@@ -2990,13 +3060,14 @@ public:
   }
   bool qual_empty() const { return getObjectType()->qual_empty(); }
 
-  /// getNumProtocols - Return the number of qualifying protocols in this
-  /// interface type, or 0 if there are none.
+  /// getNumProtocols - Return the number of qualifying protocols on
+  /// the object type.
   unsigned getNumProtocols() const {
     return getObjectType()->getNumProtocols();
   }
 
-  /// \brief Retrieve the Ith protocol.
+  /// \brief Retrieve a qualifying protocol by index on the object
+  /// type.
   ObjCProtocolDecl *getProtocol(unsigned I) const {
     return getObjectType()->getProtocol(I);
   }
@@ -3006,7 +3077,9 @@ public:
 
   virtual Linkage getLinkage() const;
 
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getPointeeType());
+  }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType T) {
     ID.AddPointer(T.getAsOpaquePtr());
   }

@@ -952,10 +952,6 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
           getExtInfo());
 }
 
-void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getPointeeType());
-}
-
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
 /// potentially looking through *all* consequtive typedefs.  This returns the
 /// sum of the type qualifiers, so if you have:
