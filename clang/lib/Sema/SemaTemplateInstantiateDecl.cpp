@@ -1983,11 +1983,29 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->isInvalidDecl())
     return;
 
-  assert(!Function->getBody() && "Already instantiated!");
-
   // Never instantiate an explicit specialization.
   if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
     return;
+
+  const FunctionDecl *Definition = 0;
+  if (Function->getBody(Definition)) {
+    // We are trying to instantiate a friend function specialization inside
+    // a class template, but there is already another (non-template) definition
+    // of the same function.
+    if (Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
+      InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
+      if (Inst)
+        return;  
+      
+      Diag(Function->getLocation(), diag::err_redefinition) 
+        << Function->getDeclName();
+      Diag(Definition->getLocation(), diag::note_previous_definition);
+    }
+    
+    // We have an explicit instantiation (which already occurred) and an
+    // implicit instantiation. Return without complaint.
+    return;
+  }
   
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = Function->getTemplateInstantiationPattern();
@@ -2680,8 +2698,7 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
                                             Context.getSourceManager(),
                                            "instantiating function definition");
 
-      if (!Function->getBody())
-        InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
+      InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
       continue;
     }
 

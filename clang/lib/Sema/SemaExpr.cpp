@@ -7527,7 +7527,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of
     // class templates.
-    if (!Function->getBody() && Function->isImplicitlyInstantiable()) {
+    if (Function->isImplicitlyInstantiable()) {
       bool AlreadyInstantiated = false;
       if (FunctionTemplateSpecializationInfo *SpecInfo
                                 = Function->getTemplateSpecializationInfo()) {

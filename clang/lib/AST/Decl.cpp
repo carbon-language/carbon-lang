@@ -1219,9 +1219,8 @@ FunctionDecl::setInstantiationOfMemberFunction(FunctionDecl *FD,
 }
 
 bool FunctionDecl::isImplicitlyInstantiable() const {
-  // If this function already has a definition or is invalid, it can't be
-  // implicitly instantiated.
-  if (isInvalidDecl() || getBody())
+  // If the function is invalid, it can't be implicitly instantiated.
+  if (isInvalidDecl())
     return false;
   
   switch (getTemplateSpecializationKind()) {
