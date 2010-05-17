@@ -1176,7 +1176,8 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
       QualType T = Func->getType();
       QualType NoProtoType = T;
       if (const FunctionProtoType *Proto = T->getAs<FunctionProtoType>())
-        NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
+        NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType(),
+                                                     Proto->getExtInfo());
       return BuildDeclRefExpr(Func, NoProtoType, NameLoc, &SS);
     }
   }

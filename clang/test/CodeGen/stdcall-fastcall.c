@@ -31,3 +31,9 @@ int main(void) {
     return 0;
 }
 
+// PR7117
+void __attribute((stdcall)) f5(foo) int foo; {}
+void f6(void) {
+  f5(0);
+  // CHECK: call x86_stdcallcc void (...)* bitcast
+}
