@@ -37,7 +37,8 @@ using namespace llvm;
 
 static cl::opt<bool>
 UseRegSeq("neon-reg-sequence", cl::Hidden,
-          cl::desc("Use reg_sequence to model ld / st of multiple neon regs"));
+          cl::desc("Use reg_sequence to model ld / st of multiple neon regs"),
+          cl::init(true));
 
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
