@@ -189,6 +189,9 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     std::pair<StringRef, StringRef> Split = getTok().getIdentifier().split('@');
     MCSymbol *Sym = CreateSymbol(Split.first);
 
+    // Mark the symbol as used in an expression.
+    Sym->setUsedInExpr(true);
+
     // Lookup the symbol variant if used.
     MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
     if (Split.first.size() != getTok().getIdentifier().size())
@@ -788,7 +791,9 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
     //
     // FIXME: Diagnostics. Note the location of the definition as a label.
     // FIXME: Diagnose assignment to protected identifier (e.g., register name).
-    if (!Sym->isUndefined() && !Sym->isAbsolute())
+    if (Sym->isUndefined() && !Sym->isUsedInExpr())
+      ; // Allow redefinitions of undefined symbols only used in directives.
+    else if (!Sym->isUndefined() && !Sym->isAbsolute())
       return Error(EqualLoc, "redefinition of '" + Name + "'");
     else if (!Sym->isVariable())
       return Error(EqualLoc, "invalid assignment to '" + Name + "'");
@@ -799,6 +804,8 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
     Sym = CreateSymbol(Name);
 
   // FIXME: Handle '.'.
+
+  Sym->setUsedInExpr(true);
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value);
