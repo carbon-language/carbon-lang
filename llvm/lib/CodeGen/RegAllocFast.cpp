@@ -399,20 +399,6 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
                !Allocatable.test(Hint)))
     Hint = 0;
 
-  // If there is no hint, peek at the first use of this register.
-  if (!Hint && !MRI->use_nodbg_empty(VirtReg)) {
-    MachineInstr &MI = *MRI->use_nodbg_begin(VirtReg);
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    // Copy to physreg -> use physreg as hint.
-    if (TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-        SrcReg == VirtReg && TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-        RC->contains(DstReg) && !UsedInInstr.test(DstReg) &&
-        Allocatable.test(DstReg)) {
-      Hint = DstReg;
-      DEBUG(dbgs() << "%reg" << VirtReg << " gets hint from " << MI);
-    }
-  }
-
   // Take hint when possible.
   if (Hint) {
     assert(RC->contains(Hint) && !UsedInInstr.test(Hint) &&
@@ -543,9 +529,18 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
   bool New;
   tie(LRI, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
   LiveReg &LR = LRI->second;
-  if (New)
+  if (New) {
+    // If there is no hint, peek at the only use of this register.
+    if ((!Hint || !TargetRegisterInfo::isPhysicalRegister(Hint)) &&
+        MRI->hasOneNonDBGUse(VirtReg)) {
+      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+      // It's a copy, use the destination register as a hint.
+      if (TII->isMoveInstr(*MRI->use_nodbg_begin(VirtReg),
+                           SrcReg, DstReg, SrcSubReg, DstSubReg))
+        Hint = DstReg;
+    }
     allocVirtReg(MI, *LRI, Hint);
-  else
+  } else
     addKillFlag(LR); // Kill before redefine.
   assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
