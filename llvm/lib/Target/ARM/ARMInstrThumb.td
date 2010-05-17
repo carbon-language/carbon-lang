@@ -423,7 +423,7 @@ def tSVC : T1pI<(outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc", []>,
 // binutils
 let isBarrier = 1, isTerminator = 1 in
 def tTRAP : TI<(outs), (ins), IIC_Br, 
-               ".word 0xdefe ${:comment} trap", [(trap)]>, Encoding16 {
+               ".short 0xdefe ${:comment} trap", [(trap)]>, Encoding16 {
   let Inst{15-12} = 0b1101;
   let Inst{11-8} = 0b1110;
 }
