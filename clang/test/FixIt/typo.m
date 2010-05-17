@@ -1,17 +1,18 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
-// RUN: cp %s %t
-// RUN: %clang_cc1 -fsyntax-only -fixit %t || true
-// RUN: %clang_cc1 -fsyntax-only -pedantic -Werror -x objective-c %t
-// XFAIL: *
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
+// RUN: %clang -E -P %s -o %t
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t || true
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
 
 @interface NSString // expected-note{{'NSString' declared here}}
 + (int)method:(int)x;
 @end
 
+#ifdef NON_FIXITS
 void test() {
   // FIXME: not providing fix-its
   NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
 }
+#endif
 
 @protocol P1
 @optional
@@ -80,18 +81,22 @@ void test2(Collide *a) {
   a->vale = 17; // expected-error{{'Collide' does not have a member named 'vale'; did you mean 'value'?}}
 }
 
+#ifdef NON_FIXITS
 @interface Derived : Collid // expected-error{{cannot find interface declaration for 'Collid', superclass of 'Derived'; did you mean 'Collide'?}}
 @end
+#endif
 
+#ifdef NON_FIXITS
 @protocol NetworkSocket // expected-note{{'NetworkSocket' declared here}}
 - (int)send:(void*)buffer bytes:(int)bytes;
 @end
 
 @interface IPv6 <Network_Socket> // expected-error{{cannot find protocol declaration for 'Network_Socket'; did you mean 'NetworkSocket'?}}
 @end
+#endif
 
 @interface Super
-- (int)method;
+- (int)method; // expected-note{{using}}
 @end
 
 @interface Sub : Super
@@ -112,29 +117,19 @@ void test2(Collide *a) {
 @property (retain) id ivar;
 @end
 
+#ifdef NON_FIXITS
 @interface User <Proto>
-- (void)method;
+- (void)method; // expected-note{{also found}}
 @end
 
 @implementation User
 @synthesize ivar;
 
 - (void)method {
-    [ivar method]; // Test that we don't correct 'ivar' to 'Ivar'
+  // Test that we don't correct 'ivar' to 'Ivar'  e
+  [ivar method]; // expected-warning{{multiple methods named 'method' found}}
 }
 @end
+#endif
 
-@interface User2
-@end
 
-@interface User2 (Cat) < Proto>
-- (void)method;
-@end
-
-@implementation User2 (Cat)
-@synthesize ivar;
-
-- (void)method {
-    [ivar method]; // Test that we don't correct 'ivar' to 'Ivar'
-}
-@end
