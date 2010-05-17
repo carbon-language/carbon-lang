@@ -146,10 +146,10 @@ namespace {
     void definePhysReg(MachineInstr *MI, unsigned PhysReg, RegState NewState);
     void assignVirtToPhysReg(LiveRegEntry &LRE, unsigned PhysReg);
     void allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint);
-    unsigned defineVirtReg(MachineInstr *MI, unsigned OpNum,
-                           unsigned VirtReg, unsigned Hint);
-    unsigned reloadVirtReg(MachineInstr *MI, unsigned OpNum,
-                           unsigned VirtReg, unsigned Hint);
+    LiveRegMap::iterator defineVirtReg(MachineInstr *MI, unsigned OpNum,
+                                       unsigned VirtReg, unsigned Hint);
+    LiveRegMap::iterator reloadVirtReg(MachineInstr *MI, unsigned OpNum,
+                                       unsigned VirtReg, unsigned Hint);
     void spillAll(MachineInstr *MI);
     bool setPhysReg(MachineOperand &MO, unsigned PhysReg);
   };
@@ -534,8 +534,9 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 }
 
 /// defineVirtReg - Allocate a register for VirtReg and mark it as dirty.
-unsigned RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
-                               unsigned VirtReg, unsigned Hint) {
+RAFast::LiveRegMap::iterator
+RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
+                      unsigned VirtReg, unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
   LiveRegMap::iterator LRI;
@@ -551,12 +552,13 @@ unsigned RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
   LR.LastOpNum = OpNum;
   LR.Dirty = true;
   UsedInInstr.set(LR.PhysReg);
-  return LR.PhysReg;
+  return LRI;
 }
 
 /// reloadVirtReg - Make sure VirtReg is available in a physreg and return it.
-unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
-                               unsigned VirtReg, unsigned Hint) {
+RAFast::LiveRegMap::iterator
+RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
+                      unsigned VirtReg, unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
   LiveRegMap::iterator LRI;
@@ -592,7 +594,7 @@ unsigned RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
   UsedInInstr.set(LR.PhysReg);
-  return LR.PhysReg;
+  return LRI;
 }
 
 // setPhysReg - Change MO the refer the PhysReg, considering subregs.
@@ -734,12 +736,14 @@ void RAFast::AllocateBasicBlock() {
       unsigned Reg = MO.getReg();
       if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
       if (MO.isUse()) {
-        unsigned PhysReg = reloadVirtReg(MI, i, Reg, CopyDst);
+        LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, CopyDst);
+        unsigned PhysReg = LRI->second.PhysReg;
         CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
         if (setPhysReg(MO, PhysReg))
-          killVirtReg(Reg);
+          killVirtReg(LRI);
       } else if (MO.isEarlyClobber()) {
-        unsigned PhysReg = defineVirtReg(MI, i, Reg, 0);
+        LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
+        unsigned PhysReg = LRI->second.PhysReg;
         setPhysReg(MO, PhysReg);
         PhysECs.push_back(PhysReg);
       }
@@ -781,9 +785,10 @@ void RAFast::AllocateBasicBlock() {
                                regFree : regReserved);
         continue;
       }
-      unsigned PhysReg = defineVirtReg(MI, i, Reg, CopySrc);
+      LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, CopySrc);
+      unsigned PhysReg = LRI->second.PhysReg;
       if (setPhysReg(MO, PhysReg)) {
-        killVirtReg(Reg);
+        killVirtReg(LRI);
         CopyDst = 0; // cancel coalescing;
       } else
         CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
