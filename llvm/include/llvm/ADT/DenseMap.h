@@ -79,13 +79,14 @@ public:
   typedef DenseMapIterator<KeyT, ValueT,
                            KeyInfoT, ValueInfoT, true> const_iterator;
   inline iterator begin() {
-     return iterator(Buckets, Buckets+NumBuckets);
+    // When the map is empty, avoid the overhead of AdvancePastEmptyBuckets().
+    return empty() ? end() : iterator(Buckets, Buckets+NumBuckets);
   }
   inline iterator end() {
     return iterator(Buckets+NumBuckets, Buckets+NumBuckets);
   }
   inline const_iterator begin() const {
-    return const_iterator(Buckets, Buckets+NumBuckets);
+    return empty() ? end() : const_iterator(Buckets, Buckets+NumBuckets);
   }
   inline const_iterator end() const {
     return const_iterator(Buckets+NumBuckets, Buckets+NumBuckets);
