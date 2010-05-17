@@ -96,3 +96,21 @@ typedef int s6::* s6_mdp;
 typedef int (s6::*s6_mfp)();
 s6_mdp f6_0(s6_mdp a) { return a; }
 s6_mfp f6_1(s6_mfp a) { return a; }
+
+// CHECK: define double @_Z2f7v()
+struct s7_0 { unsigned : 0; };
+struct s7_1 { double x; };
+struct s7 : s7_0, s7_1 { };
+s7 f7() { return s7(); }
+
+// CHECK: define void @_Z2f8v(%struct.s8* sret %agg.result)
+struct s8_0 { };
+struct s8_1 { double x; };
+struct s8 { s8_0 a; s8_1 b; };
+s8 f8() { return s8(); }
+
+// CHECK: define void @_Z2f9v(%struct.s9* sret %agg.result)
+struct s9_0 { unsigned : 0; };
+struct s9_1 { double x; };
+struct s9 { s9_0 a; s9_1 b; };
+s9 f9() { return s9(); }

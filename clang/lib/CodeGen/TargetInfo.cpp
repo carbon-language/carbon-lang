@@ -71,6 +71,17 @@ static bool isEmptyField(ASTContext &Context, const FieldDecl *FD,
     while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
       FT = AT->getElementType();
 
+  const RecordType *RT = FT->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  // C++ record fields are never empty, at least in the Itanium ABI.
+  //
+  // FIXME: We should use a predicate for whether this behavior is true in the
+  // current ABI.
+  if (isa<CXXRecordDecl>(RT->getDecl()))
+    return false;
+
   return isEmptyRecord(Context, FT, AllowArrays);
 }
 
@@ -84,6 +95,14 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
   const RecordDecl *RD = RT->getDecl();
   if (RD->hasFlexibleArrayMember())
     return false;
+
+  // If this is a C++ record, check the bases first.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
+    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
+           e = CXXRD->bases_end(); i != e; ++i)
+      if (!isEmptyRecord(Context, i->getType(), true))
+        return false;
+
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i)
     if (!isEmptyField(Context, *i, AllowArrays))
@@ -135,10 +154,8 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
     for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
            e = CXXRD->bases_end(); i != e; ++i) {
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Ignore empty records.
-      if (Base->isEmpty())
+      if (isEmptyRecord(Context, i->getType(), true))
         continue;
 
       // If we already found an element then this isn't a single-element struct.
