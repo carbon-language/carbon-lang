@@ -2862,6 +2862,7 @@ def vmovImm64 : PatLeaf<(build_vector), [{
 // Note: Some of the cmode bits in the following VMOV instructions need to
 // be encoded based on the immed values.
 
+let isReMaterializable = 1 in {
 def VMOVv8i8  : N1ModImm<1, 0b000, 0b1110, 0, 0, 0, 1, (outs DPR:$dst),
                          (ins h8imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i8", "$dst, $SIMM", "",
@@ -2897,6 +2898,7 @@ def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$dst),
                          (ins h64imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v2i64 vmovImm64:$SIMM))]>;
+} // isReMaterializable
 
 //   VMOV     : Vector Get Lane (move scalar to ARM core register)
 
