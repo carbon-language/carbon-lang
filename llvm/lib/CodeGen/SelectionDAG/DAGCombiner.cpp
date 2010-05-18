@@ -5284,10 +5284,6 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
     SDValue Offset;
     ISD::MemIndexedMode AM = ISD::UNINDEXED;
     if (TLI.getPostIndexedAddressParts(N, Op, BasePtr, Offset, AM, DAG)) {
-      if (Ptr == Offset && Op->getOpcode() == ISD::ADD)
-        std::swap(BasePtr, Offset);
-      if (Ptr != BasePtr)
-        continue;
       // Don't create a indexed load / store with zero offset.
       if (isa<ConstantSDNode>(Offset) &&
           cast<ConstantSDNode>(Offset)->isNullValue())

@@ -4407,9 +4407,11 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
   bool isSEXTLoad = false;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     VT  = LD->getMemoryVT();
+    Ptr = LD->getBasePtr();
     isSEXTLoad = LD->getExtensionType() == ISD::SEXTLOAD;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     VT  = ST->getMemoryVT();
+    Ptr = ST->getBasePtr();
   } else
     return false;
 
@@ -4417,12 +4419,24 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
   bool isLegal = false;
   if (Subtarget->isThumb2())
     isLegal = getT2IndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
-                                        isInc, DAG);
+                                       isInc, DAG);
   else
     isLegal = getARMIndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
   if (!isLegal)
     return false;
+
+  if (Ptr != Base) {
+    // Swap base ptr and offset to catch more post-index load / store when
+    // it's legal. In Thumb2 mode, offset must be an immediate.
+    if (Ptr == Offset && Op->getOpcode() == ISD::ADD &&
+        !Subtarget->isThumb2())
+      std::swap(Base, Offset);
+
+    // Post-indexed load / store update the base pointer.
+    if (Ptr != Base)
+      return false;
+  }
 
   AM = isInc ? ISD::POST_INC : ISD::POST_DEC;
   return true;
