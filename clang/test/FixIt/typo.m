@@ -136,7 +136,7 @@ double *isupper(int);
 @end
 
 @implementation User
-@synthesize ivar; // expected-error{{synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar}}
+@synthesize ivar;
 
 - (void)method {
   // Test that we don't correct 'ivar' to 'Ivar'  e
