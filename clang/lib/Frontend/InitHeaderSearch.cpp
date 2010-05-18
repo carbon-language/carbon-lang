@@ -324,10 +324,14 @@ static bool getSystemRegistryString(const char*, const char*, char*, size_t) {
   // Get Visual Studio installation directory.
 static bool getVisualStudioDir(std::string &path) {
   char vsIDEInstallDir[256];
+  char vsExpressIDEInstallDir[256];
   // Try the Windows registry first.
   bool hasVCDir = getSystemRegistryString(
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
     "InstallDir", vsIDEInstallDir, sizeof(vsIDEInstallDir) - 1);
+  bool hasVCExpressDir = getSystemRegistryString(
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VCExpress\\$VERSION",
+    "InstallDir", vsExpressIDEInstallDir, sizeof(vsExpressIDEInstallDir) - 1);
     // If we have both vc80 and vc90, pick version we were compiled with. 
   if (hasVCDir && vsIDEInstallDir[0]) {
     char *p = (char*)strstr(vsIDEInstallDir, "\\Common7\\IDE");
@@ -336,25 +340,43 @@ static bool getVisualStudioDir(std::string &path) {
     path = vsIDEInstallDir;
     return(true);
   }
+  else if (hasVCExpressDir && vsExpressIDEInstallDir[0]) {
+    char *p = (char*)strstr(vsExpressIDEInstallDir, "\\Common7\\IDE");
+    if (p)
+      *p = '\0';
+    path = vsExpressIDEInstallDir;
+    return(true);
+  }
   else {
     // Try the environment.
+    const char* vs100comntools = getenv("VS100COMNTOOLS");
     const char* vs90comntools = getenv("VS90COMNTOOLS");
     const char* vs80comntools = getenv("VS80COMNTOOLS");
     const char* vscomntools = NULL;
-      // If we have both vc80 and vc90, pick version we were compiled with. 
-    if (vs90comntools && vs80comntools) {
-      #if (_MSC_VER >= 1500)  // VC90
-          vscomntools = vs90comntools;
-      #elif (_MSC_VER == 1400) // VC80
-          vscomntools = vs80comntools;
-      #else
-          vscomntools = vs90comntools;
-      #endif
+
+    // Try to find the version that we were compiled with 
+    if(false) {}
+    #if (_MSC_VER >= 1600)  // VC100
+    else if(vs100comntools) {
+      vscomntools = vs100comntools;
     }
+    #elif (_MSC_VER == 1500) // VC80
+    else if(vs90comntools) {
+      vscomntools = vs90comntools;
+    }
+    #elif (_MSC_VER == 1400) // VC80
+    else if(vs80comntools) {
+      vscomntools = vs80comntools;
+    }
+    #endif
+    // Otherwise find any version we can
+    else if (vs100comntools)
+      vscomntools = vs100comntools;
     else if (vs90comntools)
       vscomntools = vs90comntools;
     else if (vs80comntools)
       vscomntools = vs80comntools;
+
     if (vscomntools && *vscomntools) {
       char *p = const_cast<char *>(strstr(vscomntools, "\\Common7\\Tools"));
       if (p)
@@ -425,6 +447,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       }
       else {
           // Default install paths.
+        AddPath("C:/Program Files/Microsoft Visual Studio 10.0/VC/include",
+          System, false, false, false);
         AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
           System, false, false, false);
         AddPath(
