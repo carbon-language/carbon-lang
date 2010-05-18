@@ -2598,9 +2598,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     switch (MI->getOpcode()) {
     default: return NULL;
     case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
-    case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
-    case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
-    case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
+    case X86::TEST16rr: NewOpc = X86::CMP16ri8; break;
+    case X86::TEST32rr: NewOpc = X86::CMP32ri8; break;
+    case X86::TEST64rr: NewOpc = X86::CMP64ri8; break;
     }
     // Change to CMPXXri r, 0 first.
     MI->setDesc(get(NewOpc));
@@ -2808,16 +2808,22 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   switch (DataMI->getOpcode()) {
   default: break;
   case X86::CMP64ri32:
+  case X86::CMP64ri8:
   case X86::CMP32ri:
+  case X86::CMP32ri8:
   case X86::CMP16ri:
+  case X86::CMP16ri8:
   case X86::CMP8ri: {
     MachineOperand &MO0 = DataMI->getOperand(0);
     MachineOperand &MO1 = DataMI->getOperand(1);
     if (MO1.getImm() == 0) {
       switch (DataMI->getOpcode()) {
       default: break;
+      case X86::CMP64ri8:
       case X86::CMP64ri32: NewOpc = X86::TEST64rr; break;
+      case X86::CMP32ri8:
       case X86::CMP32ri:   NewOpc = X86::TEST32rr; break;
+      case X86::CMP16ri8:
       case X86::CMP16ri:   NewOpc = X86::TEST16rr; break;
       case X86::CMP8ri:    NewOpc = X86::TEST8rr; break;
       }
