@@ -2529,9 +2529,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     switch (MI->getOpcode()) {
     default: return NULL;
     case X86::TEST8rr:  NewOpc = X86::CMP8ri; RCSize = 1; break;
-    case X86::TEST16rr: NewOpc = X86::CMP16ri; RCSize = 2; break;
-    case X86::TEST32rr: NewOpc = X86::CMP32ri; RCSize = 4; break;
-    case X86::TEST64rr: NewOpc = X86::CMP64ri32; RCSize = 8; break;
+    case X86::TEST16rr: NewOpc = X86::CMP16ri8; RCSize = 2; break;
+    case X86::TEST32rr: NewOpc = X86::CMP32ri8; RCSize = 4; break;
+    case X86::TEST64rr: NewOpc = X86::CMP64ri8; RCSize = 8; break;
     }
     // Check if it's safe to fold the load. If the size of the object is
     // narrower than the load width, then it's not.
