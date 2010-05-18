@@ -4,7 +4,6 @@ typedef long long longlong16 __attribute__ ((__vector_size__ (16)));
 typedef char char16_e __attribute__ ((__ext_vector_type__ (16)));
 typedef long long longlong16_e __attribute__ ((__ext_vector_type__ (2)));
 
-#if 1
 // Test overloading and function calls with vector types.
 void f0(char16);
 
@@ -25,7 +24,8 @@ void f1_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
   f1(ll16e); // expected-error{{call to 'f1' is ambiguous}}
 }
 
-void f2(char16_e); // expected-note{{no known conversion from 'longlong16_e' to 'char16_e' for 1st argument}}
+void f2(char16_e); // expected-note{{no known conversion from 'longlong16_e' to 'char16_e' for 1st argument}} \
+       // expected-note{{candidate function not viable: no known conversion from 'convertible_to<longlong16_e>' to 'char16_e' for 1st argument}}
 
 void f2_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
   f2(c16);
@@ -35,7 +35,6 @@ void f2_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
   f2('a');
   f2(17);
 }
-#endif
 
 // Test the conditional operator with vector types.
 void conditional(bool Cond, char16 c16, longlong16 ll16, char16_e c16e, 
@@ -99,4 +98,25 @@ void casts(longlong16 ll16, longlong16_e ll16e) {
   (void)reinterpret_cast<char16_e>(ll16e);
   (void)reinterpret_cast<longlong16>(ll16e);
   (void)reinterpret_cast<longlong16_e>(ll16e);
+}
+
+template<typename T>
+struct convertible_to {
+  operator T() const;
+};
+
+void test_implicit_conversions(char16 c16, longlong16 ll16, char16_e c16e, 
+                               longlong16_e ll16e,
+                               convertible_to<char16> to_c16, 
+                               convertible_to<longlong16> to_ll16, 
+                               convertible_to<char16_e> to_c16e, 
+                               convertible_to<longlong16_e> to_ll16e) {
+  f0(to_c16);
+  f0(to_ll16);
+  f0(to_c16e);
+  f0(to_ll16e);
+  f2(to_c16);
+  f2(to_ll16);
+  f2(to_c16e);
+  f2(to_ll16e); // expected-error{{no matching function}}
 }
