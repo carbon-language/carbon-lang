@@ -304,9 +304,7 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    // FIXME: cast<> support!
-    const MCSectionMachO &Section =
-      static_cast<const MCSectionMachO&>(SD.getSection());
+    const MCSectionMachO &Section = cast<MCSectionMachO>(SD.getSection());
     WriteBytes(Section.getSectionName(), 16);
     WriteBytes(Section.getSegmentName(), 16);
     if (Is64Bit) {
@@ -819,9 +817,8 @@ public:
     // Bind non lazy symbol pointers first.
     for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
            ie = Asm.indirect_symbol_end(); it != ie; ++it) {
-      // FIXME: cast<> support!
       const MCSectionMachO &Section =
-        static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+        cast<MCSectionMachO>(it->SectionData->getSection());
 
       if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
         continue;
@@ -832,9 +829,8 @@ public:
     // Then lazy symbol pointers and symbol stubs.
     for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
            ie = Asm.indirect_symbol_end(); it != ie; ++it) {
-      // FIXME: cast<> support!
       const MCSectionMachO &Section =
-        static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+        cast<MCSectionMachO>(it->SectionData->getSection());
 
       if (Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
           Section.getType() != MCSectionMachO::S_SYMBOL_STUBS)
