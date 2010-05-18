@@ -301,6 +301,16 @@ void RALocal::storeVirtReg(MachineBasicBlock &MBB,
   DEBUG(dbgs() << " to stack slot #" << FrameIndex);
   TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC, TRI);
   ++NumStores;   // Update statistics
+
+  // Mark the spill instruction as last use if we're not killing the register.
+  if (!isKill) {
+    MachineInstr *Spill = llvm::prior(I);
+    int OpNum = Spill->findRegisterUseOperandIdx(PhysReg);
+    if (OpNum < 0)
+      getVirtRegLastUse(VirtReg) = std::make_pair((MachineInstr*)0, 0);
+    else
+      getVirtRegLastUse(VirtReg) = std::make_pair(Spill, OpNum);
+  }
 }
 
 /// spillVirtReg - This method spills the value specified by PhysReg into the
