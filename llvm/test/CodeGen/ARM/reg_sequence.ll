@@ -264,6 +264,44 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
   ret float 9.990000e+02
 }
 
+; PR7162
+define arm_aapcs_vfpcc i32 @t10() nounwind {
+entry:
+; CHECK: t10:
+; CHECK: vmov.i32 q1, #0x3F000000
+; CHECK: vdup.32 q0, d0[0]
+; CHECK: vmov d0, d1
+; CHECK: vmla.f32 q0, q0, d0[0]
+  %0 = shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
+  %1 = insertelement <4 x float> %0, float undef, i32 1 ; <<4 x float>> [#uses=1]
+  %2 = insertelement <4 x float> %1, float undef, i32 2 ; <<4 x float>> [#uses=1]
+  %3 = insertelement <4 x float> %2, float undef, i32 3 ; <<4 x float>> [#uses=1]
+  %tmp54.i = bitcast <4 x float> %3 to <2 x double> ; <<2 x double>> [#uses=1]
+  %4 = extractelement <2 x double> %tmp54.i, i32 1 ; <double> [#uses=1]
+  %5 = bitcast double %4 to <2 x float>           ; <<2 x float>> [#uses=1]
+  %6 = shufflevector <2 x float> %5, <2 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
+  %7 = fmul <4 x float> undef, %6                 ; <<4 x float>> [#uses=1]
+  %8 = fadd <4 x float> %7, undef                 ; <<4 x float>> [#uses=1]
+  %9 = fadd <4 x float> %8, undef                 ; <<4 x float>> [#uses=1]
+  %10 = shufflevector <4 x float> undef, <4 x float> %9, <4 x i32> <i32 0, i32 1, i32 2, i32 7> ; <<4 x float>> [#uses=1]
+  %11 = fmul <4 x float> %10, <float 5.000000e-01, float 5.000000e-01, float 5.000000e-01, float 5.000000e-01> ; <<4 x float>> [#uses=1]
+  %12 = shufflevector <4 x float> %11, <4 x float> undef, <4 x i32> <i32 3, i32 undef, i32 undef, i32 undef> ; <<4 x float>> [#uses=1]
+  %13 = shufflevector <4 x float> %12, <4 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
+  %14 = fmul <4 x float> %13, undef               ; <<4 x float>> [#uses=1]
+  %15 = fadd <4 x float> undef, %14               ; <<4 x float>> [#uses=1]
+  %16 = shufflevector <4 x float> undef, <4 x float> %15, <4 x i32> <i32 0, i32 1, i32 6, i32 3> ; <<4 x float>> [#uses=1]
+  %17 = fmul <4 x float> %16, undef               ; <<4 x float>> [#uses=1]
+  %18 = extractelement <4 x float> %17, i32 2     ; <float> [#uses=1]
+  store float %18, float* undef, align 4
+  br i1 undef, label %exit, label %bb14
+
+exit:          ; preds = %bb.i19
+  unreachable
+
+bb14:                                             ; preds = %bb6
+  ret i32 0
+}
+
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly

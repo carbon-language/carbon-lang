@@ -545,16 +545,18 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
   const TargetInstrDesc &II = TII->get(TargetOpcode::REG_SEQUENCE);
   for (unsigned i = 0; i != NumOps; ++i) {
     SDValue Op = Node->getOperand(i);
-#ifndef NDEBUG
     if (i & 1) {
       unsigned SubIdx = cast<ConstantSDNode>(Op)->getZExtValue();
       unsigned SubReg = getVR(Node->getOperand(i-1), VRBaseMap);
       const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
       const TargetRegisterClass *SRC =
-        getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
-      assert(SRC == RC && "Invalid subregister index in REG_SEQUENCE");
+        TRI->getMatchingSuperRegClass(RC, TRC, SubIdx);
+      //getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
+      if (!SRC)
+        llvm_unreachable("Invalid subregister index in REG_SEQUENCE");
+      if (SRC != RC)
+        MRI->setRegClass(NewVReg, SRC);
     }
-#endif
     AddOperand(MI, Op, i+1, &II, VRBaseMap, /*IsDebug=*/false,
                IsClone, IsCloned);
   }
