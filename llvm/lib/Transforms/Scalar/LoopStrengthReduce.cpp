@@ -107,7 +107,7 @@ namespace {
 class RegUseTracker {
   typedef DenseMap<const SCEV *, RegSortData> RegUsesTy;
 
-  RegUsesTy RegUses;
+  RegUsesTy RegUsesMap;
   SmallVector<const SCEV *, 16> RegSequence;
 
 public:
@@ -132,7 +132,7 @@ public:
 void
 RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
   std::pair<RegUsesTy::iterator, bool> Pair =
-    RegUses.insert(std::make_pair(Reg, RegSortData()));
+    RegUsesMap.insert(std::make_pair(Reg, RegSortData()));
   RegSortData &RSD = Pair.first->second;
   if (Pair.second)
     RegSequence.push_back(Reg);
@@ -142,9 +142,9 @@ RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
 
 bool
 RegUseTracker::isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const {
-  if (!RegUses.count(Reg)) return false;
+  if (!RegUsesMap.count(Reg)) return false;
   const SmallBitVector &UsedByIndices =
-    RegUses.find(Reg)->second.UsedByIndices;
+    RegUsesMap.find(Reg)->second.UsedByIndices;
   int i = UsedByIndices.find_first();
   if (i == -1) return false;
   if ((size_t)i != LUIdx) return true;
@@ -152,13 +152,13 @@ RegUseTracker::isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const {
 }
 
 const SmallBitVector &RegUseTracker::getUsedByIndices(const SCEV *Reg) const {
-  RegUsesTy::const_iterator I = RegUses.find(Reg);
-  assert(I != RegUses.end() && "Unknown register!");
+  RegUsesTy::const_iterator I = RegUsesMap.find(Reg);
+  assert(I != RegUsesMap.end() && "Unknown register!");
   return I->second.UsedByIndices;
 }
 
 void RegUseTracker::clear() {
-  RegUses.clear();
+  RegUsesMap.clear();
   RegSequence.clear();
 }
 
