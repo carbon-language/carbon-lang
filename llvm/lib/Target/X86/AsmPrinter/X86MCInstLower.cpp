@@ -329,7 +329,17 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     LowerSubReg32_Op0(OutMI, X86::MOV32r0);   // MOV64r0 -> MOV32r0
     LowerUnaryToTwoAddr(OutMI, X86::XOR32rr); // MOV32r0 -> XOR32rr
     break;
-      
+    
+  // CALL64pcrel32 - This instruction has register inputs modeled as normal
+  // uses instead of implicit uses.  As such, truncate off all but the first
+  // operand (the callee).  FIXME: Change isel.
+  case X86::CALL64pcrel32: {
+    MCOperand Saved = OutMI.getOperand(0);
+    OutMI = MCInst();
+    OutMI.setOpcode(X86::CALL64pcrel32);
+    OutMI.addOperand(Saved);
+    break;
+  }
       
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because
