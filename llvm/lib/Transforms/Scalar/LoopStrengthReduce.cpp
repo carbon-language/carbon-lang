@@ -942,6 +942,7 @@ public:
                                       AllFixupsOutsideLoop(true) {}
 
   bool InsertFormula(const Formula &F);
+  void DeleteFormula(Formula &F);
 
   void check() const;
 
@@ -977,6 +978,12 @@ bool LSRUse::InsertFormula(const Formula &F) {
   Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
 
   return true;
+}
+
+/// DeleteFormula - Remove the given formula from this use's list.
+void LSRUse::DeleteFormula(Formula &F) {
+  std::swap(F, Formulae.back());
+  Formulae.pop_back();
 }
 
 void LSRUse::print(raw_ostream &OS) const {
@@ -2631,8 +2638,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 #ifndef NDEBUG
         Changed = true;
 #endif
-        std::swap(F, LU.Formulae.back());
-        LU.Formulae.pop_back();
+        LU.DeleteFormula(F);
         --FIdx;
         --NumForms;
         continue;
@@ -2728,8 +2734,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
         Formula &F = LU.Formulae[i];
         if (!F.referencesReg(Best)) {
           DEBUG(dbgs() << "  Deleting "; F.print(dbgs()); dbgs() << '\n');
-          std::swap(LU.Formulae.back(), F);
-          LU.Formulae.pop_back();
+          LU.DeleteFormula(F);
           --e;
           --i;
           assert(e != 0 && "Use has no formulae left! Is Regs inconsistent?");
