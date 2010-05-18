@@ -326,6 +326,13 @@ void Formula::print(raw_ostream &OS) const {
     if (!First) OS << " + "; else First = false;
     OS << "reg(" << **I << ')';
   }
+  if (AM.HasBaseReg && BaseRegs.empty()) {
+    if (!First) OS << " + "; else First = false;
+    OS << "**error: HasBaseReg**";
+  } else if (!AM.HasBaseReg && !BaseRegs.empty()) {
+    if (!First) OS << " + "; else First = false;
+    OS << "**error: !HasBaseReg**";
+  }
   if (AM.Scale != 0) {
     if (!First) OS << " + "; else First = false;
     OS << AM.Scale << "*reg(";
