@@ -275,7 +275,7 @@ namespace llvm {
   bool DisableFramePointerElim(const MachineFunction &MF) {
     // Check to see if we should eliminate non-leaf frame pointers and then
     // check to see if we should eliminate all frame pointers.
-    if (NoFramePointerElimNonLeaf) {
+    if (NoFramePointerElimNonLeaf && !NoFramePointerElim) {
       const MachineFrameInfo *MFI = MF.getFrameInfo();
       return MFI->hasCalls();
     }
