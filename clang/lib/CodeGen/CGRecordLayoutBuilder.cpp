@@ -81,8 +81,13 @@ private:
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);
 
-  /// LayoutBases - layout the bases and vtable pointer of a record decl.
-  void LayoutBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout);
+  /// LayoutNonVirtualBase - layout a single non-virtual base.
+  void LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
+                            uint64_t BaseOffset);
+  
+  /// LayoutNonVirtualBases - layout the non-virtual bases of a record decl.
+  void LayoutNonVirtualBases(const CXXRecordDecl *RD, 
+                             const ASTRecordLayout &Layout);
 
   /// LayoutField - layout a single field. Returns false if the operation failed
   /// because the current struct is not packed.
@@ -435,18 +440,60 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     AppendPadding(Layout.getSize() / 8, Align);
 }
 
-void CGRecordLayoutBuilder::LayoutBases(const CXXRecordDecl *RD,
-                                        const ASTRecordLayout &Layout) {
-  // Check if we need to add a vtable pointer.
-  if (RD->isDynamicClass() && !Layout.getPrimaryBase()) {
-    const llvm::Type *FunctionType =
-      llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
-                              /*isVarArg=*/true);
-    const llvm::Type *VTableTy = FunctionType->getPointerTo();
+void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
+                                                 uint64_t BaseOffset) {
+  const ASTRecordLayout &Layout = 
+    Types.getContext().getASTRecordLayout(BaseDecl);
 
-    assert(NextFieldOffsetInBytes == 0 &&
-           "VTable pointer must come first!");
-    AppendField(NextFieldOffsetInBytes, VTableTy->getPointerTo());
+  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
+
+  if (BaseDecl->isEmpty()) {
+    // FIXME: Lay out empty bases.
+    return;
+  }
+
+  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
+  AppendPadding(BaseOffset / 8, 1);
+  AppendBytes(NonVirtualSize / 8);
+}
+
+void
+CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
+                                             const ASTRecordLayout &Layout) {
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+
+  // Check if we need to add a vtable pointer.
+  if (RD->isDynamicClass()) {
+    if (!PrimaryBase) {
+      const llvm::Type *FunctionType =
+        llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
+                                /*isVarArg=*/true);
+      const llvm::Type *VTableTy = FunctionType->getPointerTo();
+
+      assert(NextFieldOffsetInBytes == 0 &&
+             "VTable pointer must come first!");
+      AppendField(NextFieldOffsetInBytes, VTableTy->getPointerTo());
+    } else {
+      // FIXME: Handle a virtual primary base.
+      if (!Layout.getPrimaryBaseWasVirtual())
+        LayoutNonVirtualBase(PrimaryBase, 0);
+    }
+  }
+
+  // Layout the non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // We've already laid out the primary base.
+    if (BaseDecl == PrimaryBase && !Layout.getPrimaryBaseWasVirtual())
+      continue;
+
+    LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffset(BaseDecl));
   }
 }
 
@@ -457,7 +504,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
-    LayoutBases(RD, Layout);
+    LayoutNonVirtualBases(RD, Layout);
 
   unsigned FieldNo = 0;
 
