@@ -154,7 +154,7 @@ AsmToken AsmLexer::LexDigit() {
   if (*CurPtr == 'b') {
     ++CurPtr;
     // See if we actually have "0b" as part of something like "jmp 0b\n"
-    if (CurPtr[0] == '\n') {
+    if (!isdigit(CurPtr[0])) {
       --CurPtr;
       StringRef Result(TokStart, CurPtr - TokStart);
       return AsmToken(AsmToken::Integer, Result, 0);
