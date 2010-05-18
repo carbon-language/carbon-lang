@@ -35,6 +35,21 @@ namespace ZeroInit {
       int A::*pa;
     } s;
   } ss;
+  
+  struct A {
+    int A::*a;
+    int b;
+  };
+
+  struct B {
+    A a[10];
+    char c;
+    int B::*b;
+  };
+
+  struct C : A, B { int j; };
+  // CHECK: @_ZN8ZeroInit1cE = global %"struct.ZeroInit::C" { [16 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00", [176 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i32 0, [4 x i8] zeroinitializer }
+  C c;
 }
 
 // PR5674
@@ -102,3 +117,4 @@ struct A {
 A::A() : a() {}
 
 }
+

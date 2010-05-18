@@ -118,6 +118,7 @@ private:
   /// CheckForPointerToDataMember - Check if the given type contains a pointer
   /// to data member.
   void CheckForPointerToDataMember(QualType T);
+  void CheckForPointerToDataMember(const CXXRecordDecl *RD);
 
 public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
@@ -456,6 +457,8 @@ void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
     return;
   }
 
+  CheckForPointerToDataMember(BaseDecl);
+
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendPadding(BaseOffset / 8, 1);
   
@@ -618,15 +621,24 @@ void CGRecordLayoutBuilder::CheckForPointerToDataMember(QualType T) {
   } else if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
-    // FIXME: It would be better if there was a way to explicitly compute the
-    // record layout instead of converting to a type.
-    Types.ConvertTagDeclType(RD);
-
-    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
-
-    if (Layout.containsPointerToDataMember())
-      ContainsPointerToDataMember = true;
+    return CheckForPointerToDataMember(RD);
   }
+}
+
+void
+CGRecordLayoutBuilder::CheckForPointerToDataMember(const CXXRecordDecl *RD) {
+  // This record already contains a member pointer.
+  if (ContainsPointerToDataMember)
+    return;
+
+  // FIXME: It would be better if there was a way to explicitly compute the
+  // record layout instead of converting to a type.
+  Types.ConvertTagDeclType(RD);
+  
+  const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
+  
+  if (Layout.containsPointerToDataMember())
+    ContainsPointerToDataMember = true;
 }
 
 CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {

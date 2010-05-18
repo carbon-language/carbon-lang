@@ -984,6 +984,79 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   return C;
 }
 
+static void
+FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
+                             std::vector<llvm::Constant *> &Elements,
+                             uint64_t StartOffset) {
+  assert(StartOffset % 8 == 0 && "StartOffset not byte aligned!");
+
+  if (!CGM.getTypes().ContainsPointerToDataMember(T))
+    return;
+
+  if (const ConstantArrayType *CAT = 
+        CGM.getContext().getAsConstantArrayType(T)) {
+    QualType ElementTy = CAT->getElementType();
+    uint64_t ElementSize = CGM.getContext().getTypeSize(ElementTy);
+    
+    for (uint64_t I = 0, E = CAT->getSize().getZExtValue(); I != E; ++I) {
+      FillInNullDataMemberPointers(CGM, ElementTy, Elements,
+                                   StartOffset + I * ElementSize);
+    }
+  } else if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+
+    // Go through all bases and fill in any null pointer to data members.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+      assert(!I->isVirtual() && "Should not see virtual bases here!");
+      
+      const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      
+      // Ignore empty bases.
+      if (BaseDecl->isEmpty())
+        continue;
+      
+      // Ignore bases that don't have any pointer to data members.
+      if (!CGM.getTypes().ContainsPointerToDataMember(BaseDecl))
+        continue;
+
+      uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
+      FillInNullDataMemberPointers(CGM, I->getType(),
+                                   Elements, StartOffset + BaseOffset);
+    }
+    
+    // Visit all fields.
+    unsigned FieldNo = 0;
+    for (RecordDecl::field_iterator I = RD->field_begin(),
+         E = RD->field_end(); I != E; ++I, ++FieldNo) {
+      QualType FieldType = I->getType();
+      
+      if (!CGM.getTypes().ContainsPointerToDataMember(FieldType))
+        continue;
+
+      uint64_t FieldOffset = StartOffset + Layout.getFieldOffset(FieldNo);
+      FillInNullDataMemberPointers(CGM, FieldType, Elements, FieldOffset);
+    }
+  } else {
+    assert(T->isMemberPointerType() && "Should only see member pointers here!");
+    assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
+           "Should only see pointers to data members here!");
+  
+    uint64_t StartIndex = StartOffset / 8;
+    uint64_t EndIndex = StartIndex + CGM.getContext().getTypeSize(T) / 8;
+
+    llvm::Constant *NegativeOne =
+      llvm::ConstantInt::get(llvm::Type::getInt8Ty(CGM.getLLVMContext()),
+                             -1ULL, /*isSigned=*/true);
+
+    // Fill in the null data member pointer.
+    for (uint64_t I = StartIndex; I != EndIndex; ++I)
+      Elements[I] = NegativeOne;
+  }
+}
+
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   if (!getTypes().ContainsPointerToDataMember(T))
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
@@ -1005,21 +1078,60 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
 
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    assert(!RD->getNumBases() && 
-           "FIXME: Handle zero-initializing structs with bases and "
-           "pointers to data members.");
     const llvm::StructType *STy =
       cast<llvm::StructType>(getTypes().ConvertTypeForMem(T));
     unsigned NumElements = STy->getNumElements();
     std::vector<llvm::Constant *> Elements(NumElements);
 
+    const CGRecordLayout &Layout = getTypes().getCGRecordLayout(RD);
+    
+    // Go through all bases and fill in any null pointer to data members.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+      assert(!I->isVirtual() && "Should not see virtual bases here!");
+
+      const CXXRecordDecl *BaseDecl = 
+        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+      // Ignore empty bases.
+      if (BaseDecl->isEmpty())
+        continue;
+
+      // Ignore bases that don't have any pointer to data members.
+      if (!getTypes().ContainsPointerToDataMember(BaseDecl))
+        continue;
+
+      // Currently, all bases are arrays of i8. Figure out how many elements
+      // this base array has.
+      unsigned BaseFieldNo = Layout.getNonVirtualBaseLLVMFieldNo(BaseDecl);
+      const llvm::ArrayType *BaseArrayTy =
+        cast<llvm::ArrayType>(STy->getElementType(BaseFieldNo));
+      
+      unsigned NumBaseElements = BaseArrayTy->getNumElements();
+      std::vector<llvm::Constant *> BaseElements(NumBaseElements);
+      
+      // Now fill in null data member pointers.
+      FillInNullDataMemberPointers(*this, I->getType(), BaseElements, 0);
+      
+      // Now go through all other elements and zero them out.
+      if (NumBaseElements) {
+        llvm::Constant *Zero =
+          llvm::ConstantInt::get(llvm::Type::getInt8Ty(getLLVMContext()), 0);
+        
+        for (unsigned I = 0; I != NumBaseElements; ++I) {
+          if (!BaseElements[I])
+            BaseElements[I] = Zero;
+        }
+      }
+      
+      Elements[BaseFieldNo] = llvm::ConstantArray::get(BaseArrayTy, 
+                                                       BaseElements);
+    }
+      
     for (RecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I) {
       const FieldDecl *FD = *I;
-      
-      const CGRecordLayout &RL =
-        getTypes().getCGRecordLayout(FD->getParent());
-      unsigned FieldNo = RL.getLLVMFieldNo(FD);
+      unsigned FieldNo = Layout.getLLVMFieldNo(FD);
       Elements[FieldNo] = EmitNullConstant(FD->getType());
     }
     
@@ -1032,6 +1144,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     return llvm::ConstantStruct::get(STy, Elements);
   }
 
+  assert(T->isMemberPointerType() && "Should only see member pointers here!");
   assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
          "Should only see pointers to data members here!");
   
