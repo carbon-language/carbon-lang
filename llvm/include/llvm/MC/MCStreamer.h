@@ -190,12 +190,13 @@ namespace llvm {
 
     /// EmitTBSSSymbol - Emit a thread local bss (.tbss) symbol.
     ///
+    /// @param Section - The thread local common section.
     /// @param Symbol - The thread local common symbol to emit.
     /// @param Size - The size of the symbol.
     /// @param ByteAlignment - The alignment of the thread local common symbol
     /// if non-zero.  This must be a power of 2 on some targets.
-    virtual void EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
-                                unsigned ByteAlignment = 0) = 0;
+    virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                                uint64_t Size, unsigned ByteAlignment = 0) = 0;
     /// @}
     /// @name Generating Data
     /// @{

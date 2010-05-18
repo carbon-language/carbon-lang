@@ -126,8 +126,8 @@ public:
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
 
-  virtual void EmitTBSSSymbol (MCSymbol *Symbol, uint64_t Size,
-                               unsigned ByteAlignment = 0);
+  virtual void EmitTBSSSymbol (const MCSection *Section, MCSymbol *Symbol,
+                               uint64_t Size, unsigned ByteAlignment = 0);
                                
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
@@ -366,13 +366,16 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 // .tbss sym, size, align
 // This depends that the symbol has already been mangled from the original,
 // e.g. _a.
-void MCAsmStreamer::EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
-                                   unsigned ByteAlignment) {
+void MCAsmStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                                   uint64_t Size, unsigned ByteAlignment) {
   assert(Symbol != NULL && "Symbol shouldn't be NULL!");
+  // Instead of using the Section we'll just use the shortcut.
+  // This is a mach-o specific directive and section.
   OS << ".tbss " << *Symbol << ", " << Size;
   
-  // Output align if we have it.
-  if (ByteAlignment != 0) OS << ", " << Log2_32(ByteAlignment);
+  // Output align if we have it.  We default to 1 so don't bother printing
+  // that.
+  if (ByteAlignment > 1) OS << ", " << Log2_32(ByteAlignment);
   
   EmitEOL();
 }

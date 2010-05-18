@@ -1536,7 +1536,10 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
   if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
   
-  Out.EmitTBSSSymbol(Sym, Size, Pow2Alignment ? 1 << Pow2Alignment : 0);
+  Out.EmitTBSSSymbol(Ctx.getMachOSection("__DATA", "__thread_bss",
+                                        MCSectionMachO::S_THREAD_LOCAL_ZEROFILL,
+                                        0, SectionKind::getThreadBSS()),
+                     Sym, Size, 1 << Pow2Alignment);
   
   return false;
 }
