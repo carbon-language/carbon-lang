@@ -1241,6 +1241,8 @@ public:
   void GenerateAllReuseFormulae();
 
   void FilterOutUndesirableDedicatedRegisters();
+
+  size_t EstimateSearchSpaceComplexity() const;
   void NarrowSearchSpaceUsingHeuristics();
 
   void SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
@@ -2665,34 +2667,36 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         });
 }
 
+// This is a rough guess that seems to work fairly well.
+static const size_t ComplexityLimit = UINT16_MAX;
+
+/// EstimateSearchSpaceComplexity - Estimate the worst-case number of
+/// solutions the solver might have to consider. It almost never considers
+/// this many solutions because it prune the search space, but the pruning
+/// isn't always sufficient.
+size_t LSRInstance::EstimateSearchSpaceComplexity() const {
+  uint32_t Power = 1;
+  for (SmallVectorImpl<LSRUse>::const_iterator I = Uses.begin(),
+       E = Uses.end(); I != E; ++I) {
+    size_t FSize = I->Formulae.size();
+    if (FSize >= ComplexityLimit) {
+      Power = ComplexityLimit;
+      break;
+    }
+    Power *= FSize;
+    if (Power >= ComplexityLimit)
+      break;
+  }
+  return Power;
+}
+
 /// NarrowSearchSpaceUsingHeuristics - If there are an extraordinary number of
 /// formulae to choose from, use some rough heuristics to prune down the number
 /// of formulae. This keeps the main solver from taking an extraordinary amount
 /// of time in some worst-case scenarios.
 void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
-  // This is a rough guess that seems to work fairly well.
-  const size_t Limit = UINT16_MAX;
-
   SmallPtrSet<const SCEV *, 4> Taken;
-  for (;;) {
-    // Estimate the worst-case number of solutions we might consider. We almost
-    // never consider this many solutions because we prune the search space,
-    // but the pruning isn't always sufficient.
-    uint32_t Power = 1;
-    for (SmallVectorImpl<LSRUse>::const_iterator I = Uses.begin(),
-         E = Uses.end(); I != E; ++I) {
-      size_t FSize = I->Formulae.size();
-      if (FSize >= Limit) {
-        Power = Limit;
-        break;
-      }
-      Power *= FSize;
-      if (Power >= Limit)
-        break;
-    }
-    if (Power < Limit)
-      break;
-
+  while (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
     // Ok, we have too many of formulae on our hands to conveniently handle.
     // Use a rough heuristic to thin out the list.
     DEBUG(dbgs() << "The search space is too complex.\n");
