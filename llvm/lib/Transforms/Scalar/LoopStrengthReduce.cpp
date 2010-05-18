@@ -2695,6 +2695,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
 
     // Ok, we have too many of formulae on our hands to conveniently handle.
     // Use a rough heuristic to thin out the list.
+    DEBUG(dbgs() << "The search space is too complex.\n");
 
     // Pick the register which is used by the most LSRUses, which is likely
     // to be a good reuse register candidate.
