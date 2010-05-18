@@ -118,6 +118,16 @@ operator delete[] (void* ptr, const std::nothrow_t&) throw ()
 namespace std
 {
 
+const nothrow_t nothrow = {};
+
+new_handler
+set_new_handler(new_handler handler) throw()
+{
+    new_handler r = __new_handler;
+    __new_handler = handler;
+    return r;
+}
+
 bad_alloc::bad_alloc() throw() 
 { 
 }
