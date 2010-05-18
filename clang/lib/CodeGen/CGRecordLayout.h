@@ -168,6 +168,10 @@ private:
   /// field no. This info is populated by record builder.
   llvm::DenseMap<const FieldDecl *, CGBitFieldInfo> BitFields;
 
+  // FIXME: Maybe we could use a CXXBaseSpecifier as the key and use a single
+  // map for both virtual and non virtual bases.
+  llvm::DenseMap<const CXXRecordDecl *, unsigned> NonVirtualBaseFields;
+
   /// Whether one of the fields in this record layout is a pointer to data
   /// member, or a struct that contains pointer to data member.
   bool ContainsPointerToDataMember : 1;
@@ -192,6 +196,11 @@ public:
     assert(!FD->isBitField() && "Invalid call for bit-field decl!");
     assert(FieldInfo.count(FD) && "Invalid field for record!");
     return FieldInfo.lookup(FD);
+  }
+
+  unsigned getNonVirtualBaseLLVMFieldNo(const CXXRecordDecl *RD) const {
+    assert(NonVirtualBaseFields.count(RD) && "Invalid non-virtual base!");
+    return NonVirtualBaseFields.lookup(RD);
   }
 
   /// \brief Return the BitFieldInfo that corresponds to the field FD.

@@ -42,6 +42,9 @@ public:
   typedef std::pair<const FieldDecl *, CGBitFieldInfo> LLVMBitFieldInfo;
   llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
 
+  typedef std::pair<const CXXRecordDecl *, unsigned> LLVMBaseInfo;
+  llvm::SmallVector<LLVMBaseInfo, 16> LLVMNonVirtualBases;
+  
   /// ContainsPointerToDataMember - Whether one of the fields in this record
   /// layout is a pointer to data member, or a struct that contains pointer to
   /// data member.
@@ -148,6 +151,7 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   FieldTypes.clear();
   LLVMFields.clear();
   LLVMBitFields.clear();
+  LLVMNonVirtualBases.clear();
 
   LayoutFields(D);
 }
@@ -454,6 +458,10 @@ void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
 
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendPadding(BaseOffset / 8, 1);
+  
+  // Append the base field.
+  LLVMNonVirtualBases.push_back(LLVMBaseInfo(BaseDecl, FieldTypes.size()));
+
   AppendBytes(NonVirtualSize / 8);
 }
 
@@ -633,13 +641,17 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   CGRecordLayout *RL =
     new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
 
+  // Add all the non-virtual base field numbers.
+  RL->NonVirtualBaseFields.insert(Builder.LLVMNonVirtualBases.begin(),
+                                  Builder.LLVMNonVirtualBases.end());
+
   // Add all the field numbers.
-  for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i)
-    RL->FieldInfo.insert(Builder.LLVMFields[i]);
+  RL->FieldInfo.insert(Builder.LLVMFields.begin(),
+                       Builder.LLVMFields.end());
 
   // Add bitfield info.
-  for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i)
-    RL->BitFields.insert(Builder.LLVMBitFields[i]);
+  RL->BitFields.insert(Builder.LLVMBitFields.begin(),
+                       Builder.LLVMBitFields.end());
 
   // Dump the layout, if requested.
   if (getContext().getLangOptions().DumpRecordLayouts) {
