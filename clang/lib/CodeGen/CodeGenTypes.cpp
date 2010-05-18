@@ -481,16 +481,21 @@ bool CodeGenTypes::ContainsPointerToDataMember(QualType T) {
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     
-    // FIXME: It would be better if there was a way to explicitly compute the
-    // record layout instead of converting to a type.
-    ConvertTagDeclType(RD);
-    
-    const CGRecordLayout &Layout = getCGRecordLayout(RD);
-    return Layout.containsPointerToDataMember();
+    return ContainsPointerToDataMember(RD);
   }
   
   if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
     return !MPT->getPointeeType()->isFunctionType();
   
   return false;
+}
+
+bool CodeGenTypes::ContainsPointerToDataMember(const CXXRecordDecl *RD) {
+  
+  // FIXME: It would be better if there was a way to explicitly compute the
+  // record layout instead of converting to a type.
+  ConvertTagDeclType(RD);
+  
+  const CGRecordLayout &Layout = getCGRecordLayout(RD);
+  return Layout.containsPointerToDataMember();
 }
