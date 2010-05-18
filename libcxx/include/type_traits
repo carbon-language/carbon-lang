@@ -395,7 +395,7 @@ template <class _Tp> struct add_volatile {typedef typename __add_volatile<_Tp>::
 
 // add_cv
 
-template <class T> struct add_cv {typedef typename add_const<typename add_volatile<T>::type>::type type;};
+template <class _Tp> struct add_cv {typedef typename add_const<typename add_volatile<_Tp>::type>::type type;};
 
 // remove_reference
 
@@ -1154,86 +1154,86 @@ forward(_Up&& __t)
 
 #else  // _LIBCPP_MOVE
 
-template <class T>
+template <class _Tp>
 class __rv
 {
-    typedef typename remove_reference<T>::type Trr;
-    Trr& t_;
+    typedef typename remove_reference<_Tp>::type _Trr;
+    _Trr& t_;
 public:
-    Trr* operator->() {return &t_;}
-    explicit __rv(Trr& t) : t_(t) {}
+    _Trr* operator->() {return &t_;}
+    explicit __rv(_Trr& __t) : t_(__t) {}
 };
 
-template <class T>
+template <class _Tp>
 inline
 typename enable_if
 <
-    !is_convertible<T, __rv<T> >::value,
-    T&
+    !is_convertible<_Tp, __rv<_Tp> >::value,
+    _Tp&
 >::type
-move(T& t)
+move(_Tp& __t)
 {
-    return t;
+    return __t;
 }
 
-template <class T>
+template <class _Tp>
 inline
 typename enable_if
 <
-    is_convertible<T, __rv<T> >::value,
-    T
+    is_convertible<_Tp, __rv<_Tp> >::value,
+    _Tp
 >::type
-move(T& t)
+move(_Tp& __t)
 {
-    return T(__rv<T>(t));
+    return _Tp(__rv<_Tp>(__t));
 }
 
-template <class T, class U>
+template <class _Tp, class _Up>
 inline
 typename enable_if
 <
-    !is_convertible<T, __rv<T> >::value,
-    typename add_lvalue_reference<T>::type
+    !is_convertible<_Tp, __rv<_Tp> >::value,
+    typename add_lvalue_reference<_Tp>::type
 >::type
-forward(U& t)
+forward(_Up& __t)
 {
-    return t;
+    return __t;
 }
 
-template <class T, class U>
+template <class _Tp, class _Up>
 inline
 typename enable_if
 <
-    !is_convertible<T, __rv<T> >::value,
-    typename add_lvalue_reference<T>::type
+    !is_convertible<_Tp, __rv<_Tp> >::value,
+    typename add_lvalue_reference<_Tp>::type
 >::type
-forward(const U& t)
+forward(const _Up& __t)
 {
-    return t;
+    return __t;
 }
 
-template <class T, class U>
+template <class _Tp, class _Up>
 inline
 typename enable_if
 <
-    is_convertible<T, __rv<T> >::value,
-    T
+    is_convertible<_Tp, __rv<_Tp> >::value,
+    _Tp
 >::type
-forward(U& t)
+forward(_Up& __t)
 {
-    return T(__rv<T>(t));
+    return _Tp(__rv<_Tp>(__t));
 }
 
-template <class T, class U>
+template <class _Tp, class _Up>
 inline
 typename enable_if
 <
-    is_convertible<T, __rv<T> >::value,
-    T
+    is_convertible<_Tp, __rv<_Tp> >::value,
+    _Tp
 >::type
-forward(const U& t)
+forward(const _Up& __t)
 {
-    return T(__rv<T>(t));
+    return _Tp(__rv<_Tp>(__t));
 }
 
 #endif  // _LIBCPP_MOVE

@@ -57,13 +57,13 @@ struct nullptr_t
 
     _LIBCPP_ALWAYS_INLINE operator int __nat::*() const {return 0;}
 
-    template <class T>
+    template <class _Tp>
         _LIBCPP_ALWAYS_INLINE 
-        operator T* () const {return 0;}
+        operator _Tp* () const {return 0;}
 
-    template <class T, class U>
+    template <class _Tp, class _Up>
         _LIBCPP_ALWAYS_INLINE 
-        operator T U::* () const {return 0;}
+        operator _Tp _Up::* () const {return 0;}
 
     friend _LIBCPP_ALWAYS_INLINE bool operator==(nullptr_t, nullptr_t) {return true;}
     friend _LIBCPP_ALWAYS_INLINE bool operator!=(nullptr_t, nullptr_t) {return false;}

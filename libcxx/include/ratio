@@ -239,7 +239,7 @@ public:
 template <intmax_t _Num, intmax_t _Den> const intmax_t ratio<_Num, _Den>::num;
 template <intmax_t _Num, intmax_t _Den> const intmax_t ratio<_Num, _Den>::den;
 
-template <class T>                      struct __is_ratio                     : false_type {};
+template <class _Tp>                    struct __is_ratio                     : false_type {};
 template <intmax_t _Num, intmax_t _Den> struct __is_ratio<ratio<_Num, _Den> > : true_type  {};
 
 typedef ratio<1LL, 1000000000000000000LL> atto;

@@ -264,7 +264,7 @@ namespace chrono
 
 template <class _Rep, class _Period = ratio<1> > class duration;
 
-template <class T>
+template <class _Tp>
 struct __is_duration : false_type {};
 
 template <class _Rep, class _Period>
