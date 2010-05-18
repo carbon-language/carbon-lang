@@ -73,33 +73,17 @@ MCSymbol *MCContext::CreateTempSymbol() {
 }
 
 unsigned MCContext::NextInstance(int64_t LocalLabelVal) {
-  unsigned Instance;
-  MCLabel *Label;
-  Label = Instances[LocalLabelVal];
-  if (Label) {
-    Instance = Label->incInstance();
-  }
-  else {
-    Instance = 1;
-    Label = new MCLabel(Instance);
-    Instances[LocalLabelVal] = Label;
-  }
-  return Instance;
+  MCLabel *&Label = Instances[LocalLabelVal];
+  if (!Label)
+    Label = new (*this) MCLabel(0);
+  return Label->incInstance();
 }
 
 unsigned MCContext::GetInstance(int64_t LocalLabelVal) {
-  int Instance;
-  MCLabel *Label;
-  Label = Instances[LocalLabelVal];
-  if (Label) {
-    Instance = Label->getInstance();
-  }
-  else {
-    Instance = 0;
-    Label = new MCLabel(Instance);
-    Instances[LocalLabelVal] = Label;
-  }
-  return Instance;
+  MCLabel *&Label = Instances[LocalLabelVal];
+  if (!Label)
+    Label = new (*this) MCLabel(0);
+  return Label->getInstance();
 }
 
 MCSymbol *MCContext::CreateDirectionalLocalSymbol(int64_t LocalLabelVal) {
