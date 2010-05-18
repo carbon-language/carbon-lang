@@ -112,6 +112,7 @@ class RegUseTracker {
 
 public:
   void CountRegister(const SCEV *Reg, size_t LUIdx);
+  void DropRegister(const SCEV *Reg, size_t LUIdx);
 
   bool isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const;
 
@@ -138,6 +139,15 @@ RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
     RegSequence.push_back(Reg);
   RSD.UsedByIndices.resize(std::max(RSD.UsedByIndices.size(), LUIdx + 1));
   RSD.UsedByIndices.set(LUIdx);
+}
+
+void
+RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
+  RegUsesTy::iterator It = RegUsesMap.find(Reg);
+  assert(It != RegUsesMap.end());
+  RegSortData &RSD = It->second;
+  assert(RSD.UsedByIndices.size() > LUIdx);
+  RSD.UsedByIndices.reset(LUIdx);
 }
 
 bool
@@ -943,6 +953,7 @@ public:
 
   bool InsertFormula(const Formula &F);
   void DeleteFormula(Formula &F);
+  void RecomputeRegs(size_t LUIdx, RegUseTracker &Reguses);
 
   void check() const;
 
@@ -984,6 +995,24 @@ bool LSRUse::InsertFormula(const Formula &F) {
 void LSRUse::DeleteFormula(Formula &F) {
   std::swap(F, Formulae.back());
   Formulae.pop_back();
+}
+
+/// RecomputeRegs - Recompute the Regs field, and update RegUses.
+void LSRUse::RecomputeRegs(size_t LUIdx, RegUseTracker &RegUses) {
+  // Now that we've filtered out some formulae, recompute the Regs set.
+  SmallPtrSet<const SCEV *, 4> OldRegs = Regs;
+  Regs.clear();
+  for (size_t FIdx = 0, NumForms = Formulae.size(); FIdx != NumForms; ++FIdx) {
+    Formula &F = Formulae[FIdx];
+    if (F.ScaledReg) Regs.insert(F.ScaledReg);
+    Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
+  }
+
+  // Update the RegTracker.
+  for (SmallPtrSet<const SCEV *, 4>::iterator I = OldRegs.begin(),
+       E = OldRegs.end(); I != E; ++I)
+    if (!Regs.count(*I))
+      RegUses.DropRegister(*I, LUIdx);
 }
 
 void LSRUse::print(raw_ostream &OS) const {
@@ -2609,6 +2638,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
     FormulaSorter Sorter(L, LU, SE, DT);
     DEBUG(dbgs() << "Filtering for use "; LU.print(dbgs()); dbgs() << "\n");
 
+    bool Any = false;
     for (size_t FIdx = 0, NumForms = LU.Formulae.size();
          FIdx != NumForms; ++FIdx) {
       Formula &F = LU.Formulae[FIdx];
@@ -2643,18 +2673,13 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         LU.DeleteFormula(F);
         --FIdx;
         --NumForms;
+        Any = true;
         continue;
       }
     }
 
-    // Now that we've filtered out some formulae, recompute the Regs set.
-    LU.Regs.clear();
-    for (size_t FIdx = 0, NumForms = LU.Formulae.size();
-         FIdx != NumForms; ++FIdx) {
-      Formula &F = LU.Formulae[FIdx];
-      if (F.ScaledReg) LU.Regs.insert(F.ScaledReg);
-      LU.Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
-    }
+    if (Any)
+      LU.RecomputeRegs(LUIdx, RegUses);
 
     // Reset this to prepare for the next use.
     BestFormulae.clear();
@@ -2727,14 +2752,11 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
 
     // In any use with formulae which references this register, delete formulae
     // which don't reference it.
-    for (SmallVectorImpl<LSRUse>::iterator I = Uses.begin(),
-         E = Uses.end(); I != E; ++I) {
-      LSRUse &LU = *I;
+    for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
+      LSRUse &LU = Uses[LUIdx];
       if (!LU.Regs.count(Best)) continue;
 
-      // Clear out the set of used regs; it will be recomputed.
-      LU.Regs.clear();
-
+      bool Any = false;
       for (size_t i = 0, e = LU.Formulae.size(); i != e; ++i) {
         Formula &F = LU.Formulae[i];
         if (!F.referencesReg(Best)) {
@@ -2742,13 +2764,14 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
           LU.DeleteFormula(F);
           --e;
           --i;
+          Any = true;
           assert(e != 0 && "Use has no formulae left! Is Regs inconsistent?");
           continue;
         }
-
-        if (F.ScaledReg) LU.Regs.insert(F.ScaledReg);
-        LU.Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
       }
+
+      if (Any)
+        LU.RecomputeRegs(LUIdx, RegUses);
     }
 
     DEBUG(dbgs() << "After pre-selection:\n";
