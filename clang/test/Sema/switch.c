@@ -24,36 +24,37 @@ void foo(int X) {
 
 void test3(void) { 
   // empty switch;
-  switch (0); 
+  switch (0); // expected-warning {{no case matching constant switch condition '0'}}
 }
 
 extern int g();
 
 void test4()
 {
-  switch (1) {
+  int cond;
+  switch (cond) {
   case 0 && g():
   case 1 || g():
     break;
   }
 
-  switch(1)  {
+  switch(cond)  {
   case g(): // expected-error {{expression is not an integer constant expression}}
   case 0 ... g(): // expected-error {{expression is not an integer constant expression}}
     break;
   }
   
-  switch (1) {
+  switch (cond) {
   case 0 && g() ... 1 || g():
     break;
   }
   
-  switch (1) {
+  switch (cond) {
   case g() && 0: // expected-error {{expression is not an integer constant expression}} // expected-note {{subexpression not valid in an integer constant expression}}
     break;
   }
   
-  switch (1) {
+  switch (cond) {
   case 0 ... g() || 1: // expected-error {{expression is not an integer constant expression}} // expected-note {{subexpression not valid in an integer constant expression}}
     break;
   }
@@ -68,7 +69,7 @@ void test5(int z) {
 } 
 
 void test6() {
-  const char ch = 'a';
+  char ch = 'a';
   switch(ch) {
     case 1234:  // expected-warning {{overflow converting case value}}
       break;
@@ -259,5 +260,20 @@ void f1(unsigned x) {
   switch (x) {
   case -1: break;
   default: break;
+  }
+}
+
+void test15() {
+  int i = 0;
+  switch (1) { // expected-warning {{no case matching constant switch condition '1'}}
+  case 0: i = 0; break;
+  case 2: i++; break;
+  }
+}
+
+void test16() {
+  const char c = '5';
+  switch (c) { // expected-warning {{no case matching constant switch condition '53'}}
+  case '6': return;
   }
 }

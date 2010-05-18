@@ -17,7 +17,7 @@ void f() {
 
 int a() {
   const int t=t; // expected-note {{subexpression not valid}}
-  switch(1) {
+  switch(1) { // expected-warning {{no case matching constant switch condition '1'}}
     case t:; // expected-error {{not an integer constant expression}}
   }
 }

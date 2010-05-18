@@ -57,8 +57,8 @@ template <int itval, Enum etval> struct C {
     i10 = sizeof(Struct),
     i11 = true? 1 + cval * Struct::sval ^ itval / (int)1.5 - sizeof(Struct) : 0
     ;
-  void f() {
-    switch(0) {
+  void f(int cond) {
+    switch(cond) {
     case    0 + 1:
     case  100 + eval:
     case  200 + cval:

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum %s
 
 void test() {
   bool x = true;
@@ -39,4 +39,21 @@ struct C; // expected-note{{forward declaration}}
 void x3(C &c) {
   switch (c) { // expected-error{{incomplete class type}}
   }
+}
+
+namespace test3 {
+  enum En { A, B, C };
+  template <En how> void foo() {
+    int x = 0, y = 5;
+
+    switch (how) { //expected-warning {{no case matching constant switch condition '2'}}
+    case A: x *= y; break;
+    case B: x += y; break;
+    // No case for C, but it's okay because we have a constant condition.
+    }
+  }
+
+  template void foo<A>();
+  template void foo<B>();
+  template void foo<C>(); //expected-note {{in instantiation}}
 }

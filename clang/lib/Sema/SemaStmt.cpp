@@ -567,6 +567,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   }
     
   Expr *CondExpr = SS->getCond();
+  Expr *CondExprBeforePromotion = CondExpr;
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);
 
@@ -675,16 +676,38 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   }
 
   if (!HasDependentValue) {
+    // If we don't have a default statement, check whether the
+    // condition is constant.
+    llvm::APSInt ConstantCondValue;
+    bool HasConstantCond = false;
+    bool ShouldCheckConstantCond = false;
+    if (!HasDependentValue && !TheDefaultStmt) {
+      Expr::EvalResult Result;
+      HasConstantCond = CondExprBeforePromotion->Evaluate(Result, Context);
+      if (HasConstantCond) {
+        assert(Result.Val.isInt() && "switch condition evaluated to non-int");
+        ConstantCondValue = Result.Val.getInt();
+        ShouldCheckConstantCond = true;
+
+        assert(ConstantCondValue.getBitWidth() == CondWidth &&
+               ConstantCondValue.isSigned() == CondIsSigned);
+      }
+    }
+
     // Sort all the scalar case values so we can easily detect duplicates.
     std::stable_sort(CaseVals.begin(), CaseVals.end(), CmpCaseVals);
 
     if (!CaseVals.empty()) {
-      for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
-        if (CaseVals[i].first == CaseVals[i+1].first) {
+      for (unsigned i = 0, e = CaseVals.size(); i != e; ++i) {
+        if (ShouldCheckConstantCond &&
+            CaseVals[i].first == ConstantCondValue)
+          ShouldCheckConstantCond = false;
+
+        if (i != 0 && CaseVals[i].first == CaseVals[i-1].first) {
           // If we have a duplicate, report it.
-          Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
-               diag::err_duplicate_case) << CaseVals[i].first.toString(10);
           Diag(CaseVals[i].second->getLHS()->getLocStart(),
+               diag::err_duplicate_case) << CaseVals[i].first.toString(10);
+          Diag(CaseVals[i-1].second->getLHS()->getLocStart(),
                diag::note_duplicate_case_prev);
           // FIXME: We really want to remove the bogus case stmt from the
           // substmt, but we have no way to do this right now.
@@ -703,6 +726,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       // Scan the ranges, computing the high values and removing empty ranges.
       std::vector<llvm::APSInt> HiVals;
       for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
+        llvm::APSInt &LoVal = CaseRanges[i].first;
         CaseStmt *CR = CaseRanges[i].second;
         Expr *Hi = CR->getRHS();
         llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
@@ -718,7 +742,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         CR->setRHS(Hi);
 
         // If the low value is bigger than the high value, the case is empty.
-        if (CaseRanges[i].first > HiVal) {
+        if (LoVal > HiVal) {
           Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
             << SourceRange(CR->getLHS()->getLocStart(),
                            CR->getRHS()->getLocEnd());
@@ -726,6 +750,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           --i, --e;
           continue;
         }
+
+        if (ShouldCheckConstantCond &&
+            LoVal <= ConstantCondValue &&
+            ConstantCondValue <= HiVal)
+          ShouldCheckConstantCond = false;
+
         HiVals.push_back(HiVal);
       }
 
@@ -779,18 +809,32 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       }
     }
 
-    // Check to see if switch is over an Enum and handles all of its 
-    // values  
+    // Complain if we have a constant condition and we didn't find a match.
+    if (!CaseListIsErroneous && ShouldCheckConstantCond) {
+      // TODO: it would be nice if we printed enums as enums, chars as
+      // chars, etc.
+      Diag(CondExpr->getExprLoc(), diag::warn_missing_case_for_condition)
+        << ConstantCondValue.toString(10)
+        << CondExpr->getSourceRange();
+    }
+
+    // Check to see if switch is over an Enum and handles all of its
+    // values.  We don't need to do this if there's a default
+    // statement or if we have a constant condition.
+    //
+    // TODO: we might want to check whether case values are out of the
+    // enum even if we don't want to check whether all cases are handled.
     const EnumType* ET = CondTypeBeforePromotion->getAs<EnumType>();
     // If switch has default case, then ignore it.
-    if (!CaseListIsErroneous && !TheDefaultStmt && ET) {
+    if (!CaseListIsErroneous && !TheDefaultStmt && !HasConstantCond && ET) {
       const EnumDecl *ED = ET->getDecl();
       typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64> EnumValsTy;
       EnumValsTy EnumVals;
 
-      // Gather all enum values, set their type and sort them, allowing easier comparison 
-      // with CaseVals.
-      for (EnumDecl::enumerator_iterator EDI = ED->enumerator_begin(); EDI != ED->enumerator_end(); EDI++) {
+      // Gather all enum values, set their type and sort them,
+      // allowing easier comparison with CaseVals.
+      for (EnumDecl::enumerator_iterator EDI = ED->enumerator_begin();
+             EDI != ED->enumerator_end(); EDI++) {
         llvm::APSInt Val = (*EDI)->getInitVal();
         if(Val.getBitWidth() < CondWidth)
           Val.extend(CondWidth);
@@ -798,30 +842,36 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         EnumVals.push_back(std::make_pair(Val, (*EDI)));
       }
       std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
-      EnumValsTy::iterator EIend = std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
+      EnumValsTy::iterator EIend =
+        std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
       // See which case values aren't in enum 
       EnumValsTy::const_iterator EI = EnumVals.begin();
-      for (CaseValsTy::const_iterator CI = CaseVals.begin(); CI != CaseVals.end(); CI++) {
+      for (CaseValsTy::const_iterator CI = CaseVals.begin();
+             CI != CaseVals.end(); CI++) {
         while (EI != EIend && EI->first < CI->first)
           EI++;
         if (EI == EIend || EI->first > CI->first)
-            Diag(CI->second->getLHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+            Diag(CI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
+              << ED->getDeclName();
       }
       // See which of case ranges aren't in enum
       EI = EnumVals.begin();
-      for (CaseRangesTy::const_iterator RI = CaseRanges.begin(); RI != CaseRanges.end() && EI != EIend; RI++) {
+      for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
+             RI != CaseRanges.end() && EI != EIend; RI++) {
         while (EI != EIend && EI->first < RI->first)
           EI++;
         
         if (EI == EIend || EI->first != RI->first) {
-          Diag(RI->second->getLHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+          Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
+            << ED->getDeclName();
         }
 
         llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
         while (EI != EIend && EI->first < Hi)
           EI++;
         if (EI == EIend || EI->first != Hi)
-          Diag(RI->second->getRHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+          Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
+            << ED->getDeclName();
       }
       //Check which enum vals aren't in switch
       CaseValsTy::const_iterator CI = CaseVals.begin();
@@ -844,7 +894,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         }
 
         if (RI == CaseRanges.end() || EI->first < RI->first)
-          Diag(CondExpr->getExprLoc(), diag::warn_missing_cases) << EI->second->getDeclName();
+          Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
+            << EI->second->getDeclName();
       }
     }
   }
