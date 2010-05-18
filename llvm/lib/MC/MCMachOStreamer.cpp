@@ -216,6 +216,7 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   // FIXME: Lift context changes into super class.
+  Assembler.getOrCreateSymbolData(*Symbol);
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 

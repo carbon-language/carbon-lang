@@ -185,6 +185,7 @@ class MachObjectWriterImpl {
 
   llvm::DenseMap<const MCSectionData*,
                  std::vector<MachRelocationEntry> > Relocations;
+  llvm::DenseMap<const MCSectionData*, unsigned> IndirectSymBase;
 
   /// @}
   /// @name Symbol Table Data
@@ -325,7 +326,7 @@ public:
     Write32(NumRelocations ? RelocationsStart : 0);
     Write32(NumRelocations);
     Write32(Flags);
-    Write32(0); // reserved1
+    Write32(IndirectSymBase.lookup(&SD)); // reserved1
     Write32(Section.getStubSize()); // reserved2
     if (Is64Bit)
       Write32(0); // reserved3
@@ -815,26 +816,36 @@ public:
     // FIXME: Revisit this when the dust settles.
 
     // Bind non lazy symbol pointers first.
+    unsigned IndirectIndex = 0;
     for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
-           ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+           ie = Asm.indirect_symbol_end(); it != ie; ++it, ++IndirectIndex) {
       const MCSectionMachO &Section =
         cast<MCSectionMachO>(it->SectionData->getSection());
 
       if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
         continue;
 
+      // Initialize the section indirect symbol base, if necessary.
+      if (!IndirectSymBase.count(it->SectionData))
+        IndirectSymBase[it->SectionData] = IndirectIndex;
+      
       Asm.getOrCreateSymbolData(*it->Symbol);
     }
 
     // Then lazy symbol pointers and symbol stubs.
+    IndirectIndex = 0;
     for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
-           ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+           ie = Asm.indirect_symbol_end(); it != ie; ++it, ++IndirectIndex) {
       const MCSectionMachO &Section =
         cast<MCSectionMachO>(it->SectionData->getSection());
 
       if (Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
           Section.getType() != MCSectionMachO::S_SYMBOL_STUBS)
         continue;
+
+      // Initialize the section indirect symbol base, if necessary.
+      if (!IndirectSymBase.count(it->SectionData))
+        IndirectSymBase[it->SectionData] = IndirectIndex;
 
       // Set the symbol type to undefined lazy, but only on construction.
       //
