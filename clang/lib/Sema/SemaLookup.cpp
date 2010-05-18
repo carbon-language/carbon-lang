@@ -2684,7 +2684,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       Consumer.addKeywordResult(Context, "typeof");
   }
   
-  if (WantCXXNamedCasts) {
+  if (WantCXXNamedCasts && getLangOptions().CPlusPlus) {
     Consumer.addKeywordResult(Context, "const_cast");
     Consumer.addKeywordResult(Context, "dynamic_cast");
     Consumer.addKeywordResult(Context, "reinterpret_cast");
@@ -2814,6 +2814,25 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
         BestIvarOrPropertyDecl = 0;
         FoundIvarOrPropertyDecl = false;
         Consumer.clear_decls();
+      } else if (CTC == CTC_ObjCMessageReceiver &&
+                 (*Consumer.keyword_begin())->isStr("super")) {
+        // In an Objective-C message send, give the "super" keyword a slight
+        // edge over entities not in function or method scope.
+        for (TypoCorrectionConsumer::iterator I = Consumer.begin(), 
+                                           IEnd = Consumer.end();
+             I != IEnd; ++I) {
+          if ((*I)->getDeclName() == BestName) {
+            if ((*I)->getDeclContext()->isFunctionOrMethod())
+              return DeclarationName();
+          }
+        }
+        
+        // Everything found was outside a function or method; the 'super'
+        // keyword takes precedence.
+        BestIvarOrPropertyDecl = 0;
+        FoundIvarOrPropertyDecl = false;
+        Consumer.clear_decls();        
+        BestName = *Consumer.keyword_begin();
       } else {
         // Name collision; we will not correct typos.
         return DeclarationName();

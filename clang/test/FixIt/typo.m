@@ -111,7 +111,6 @@ void test2(Collide *a) {
   
 @end
 
-#ifdef NON_FIXITS
 double *isupper(int);
 
 @interface Sub2 : Super
@@ -120,10 +119,9 @@ double *isupper(int);
 
 @implementation Sub2
 - (int)method2 {
-  return [supper method2]; // expected-error{{use of undeclared identifier 'supper'}}
+  return [supper method2]; // expected-error{{unknown receiver 'supper'; did you mean 'super'?}}
 }
 @end
-#endif
 
 @interface Ivar
 @end
@@ -138,7 +136,7 @@ double *isupper(int);
 @end
 
 @implementation User
-@synthesize ivar;
+@synthesize ivar; // expected-error{{synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar}}
 
 - (void)method {
   // Test that we don't correct 'ivar' to 'Ivar'  e
