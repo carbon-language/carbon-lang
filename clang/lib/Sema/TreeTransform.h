@@ -344,7 +344,7 @@ public:
   OwningStmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
   OwningExprResult Transform##Node(Node *E);
-#define ABSTRACT(Stmt)
+#define ABSTRACT_STMT(Stmt)
 #include "clang/AST/StmtNodes.inc"
 
   /// \brief Build a new pointer type given its pointee type.
@@ -1958,7 +1958,7 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
 
   // Transform expressions by calling TransformExpr.
 #define STMT(Node, Parent)
-#define ABSTRACT(Stmt)
+#define ABSTRACT_STMT(Stmt)
 #define EXPR(Node, Parent) case Stmt::Node##Class:
 #include "clang/AST/StmtNodes.inc"
     {
@@ -1982,7 +1982,7 @@ Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
   switch (E->getStmtClass()) {
     case Stmt::NoStmtClass: break;
 #define STMT(Node, Parent) case Stmt::Node##Class: break;
-#define ABSTRACT(Stmt)
+#define ABSTRACT_STMT(Stmt)
 #define EXPR(Node, Parent)                                              \
     case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(E));
 #include "clang/AST/StmtNodes.inc"

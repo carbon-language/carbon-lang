@@ -240,7 +240,7 @@ DISPATCH(UnaryOperator, UnaryOperator, S);    \
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (S->getStmtClass()) {
     case Stmt::NoStmtClass: break;
-#define ABSTRACT(STMT)
+#define ABSTRACT_STMT(STMT)
 #define STMT(CLASS, PARENT)                              \
 case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
 #include "clang/AST/StmtNodes.inc"
