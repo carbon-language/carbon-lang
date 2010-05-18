@@ -126,8 +126,8 @@ public:
   }
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
-  virtual void EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
-                              unsigned ByteAlignment = 0);
+  virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                              uint64_t Size, unsigned ByteAlignment = 0);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitGPRel32Value(const MCExpr *Value) {
@@ -353,9 +353,11 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
     SectData.setAlignment(ByteAlignment);
 }
 
-void MCMachOStreamer::EmitTBSSSymbol(MCSymbol *Symbol, uint64_t Size,
-                                     unsigned ByteAlignment) {
-  assert(false && "Implement me!");
+// This should always be called with the thread local bss section.
+void MCMachOStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                                     uint64_t Size, unsigned ByteAlignment) {
+  EmitZerofill(Section, Symbol, Size, ByteAlignment);
+  return;
 }
 
 void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
