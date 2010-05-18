@@ -37,7 +37,8 @@ typedef ChildMap::const_iterator ChildIterator;
 // Called recursively to ensure that nodes remain contiguous
 static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
                                                   raw_ostream &OS,
-                                                  Record *Base) {
+                                                  Record *Base,
+						  bool Root = true) {
   std::string BaseName = macroName(Base->getName());
 
   ChildIterator i = Tree.lower_bound(Base), e = Tree.upper_bound(Base);
@@ -59,14 +60,15 @@ static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
     OS << "#endif\n";
 
     if (Abstract)
-      OS << "ABSTRACT(" << NodeName << "(" << R->getName() << ", "
+      OS << "ABSTRACT_STMT(" << NodeName << "(" << R->getName() << ", "
           << Base->getName() << "))\n";
     else
       OS << NodeName << "(" << R->getName() << ", "
           << Base->getName() << ")\n";
 
     if (Tree.find(R) != Tree.end()) {
-      const std::pair<Record *, Record *> &Result = EmitStmtNode(Tree, OS, R);
+      const std::pair<Record *, Record *> &Result
+        = EmitStmtNode(Tree, OS, R, false);
       if (!First && Result.first)
         First = Result.first;
       if (Result.second)
@@ -83,32 +85,35 @@ static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
     OS << "#undef " << NodeName << "\n\n";
   }
 
-  assert(!First == !Last && "Got a first or last node, but not the other");
-
   if (First) {
-    OS << "#ifndef FIRST_" << BaseName << "\n";
-    OS << "#  define FIRST_" << BaseName << "(CLASS)\n";
-    OS << "#endif\n";
-    OS << "#ifndef LAST_" << BaseName << "\n";
-    OS << "#  define LAST_" << BaseName << "(CLASS)\n";
-    OS << "#endif\n\n";
-
-    OS << "FIRST_" << BaseName << "(" << First->getName() << ")\n";
-    OS << "LAST_" << BaseName << "(" << Last->getName() << ")\n\n";
+    assert (Last && "Got a first node but not a last node for a range!");
+    if (Root)
+      OS << "LAST_STMT_RANGE(";
+    else
+      OS << "STMT_RANGE(";
+ 
+    OS << Base->getName() << ", " << First->getName() << ", "
+       << Last->getName() << ")\n\n";
   }
-
-  OS << "#undef FIRST_" << BaseName << "\n";
-  OS << "#undef LAST_" << BaseName << "\n\n";
 
   return std::make_pair(First, Last);
 }
 
 void ClangStmtNodesEmitter::run(raw_ostream &OS) {
   // Write the preamble
-  OS << "#ifndef ABSTRACT\n";
-  OS << "#  define ABSTRACT(Stmt) Stmt\n";
+  OS << "#ifndef ABSTRACT_STMT\n";
+  OS << "#  define ABSTRACT_STMT(Stmt) Stmt\n";
+  OS << "#endif\n";
+
+  OS << "#ifndef STMT_RANGE\n";
+  OS << "#  define STMT_RANGE(Base, First, Last)\n";
   OS << "#endif\n\n";
 
+  OS << "#ifndef LAST_STMT_RANGE\n";
+  OS << "#  define LAST_STMT_RANGE(Base, First, Last) "
+          "STMT_RANGE(Base, First, Last)\n";
+  OS << "#endif\n\n";
+ 
   // Emit statements
   const std::vector<Record*> Stmts = Records.getAllDerivedDefinitions("Stmt");
 
@@ -130,5 +135,7 @@ void ClangStmtNodesEmitter::run(raw_ostream &OS) {
   EmitStmtNode(Tree, OS, &Stmt);
 
   OS << "#undef STMT\n";
-  OS << "#undef ABSTRACT\n";
+  OS << "#undef STMT_RANGE\n";
+  OS << "#undef LAST_STMT_RANGE\n";
+  OS << "#undef ABSTRACT_STMT\n";
 }
