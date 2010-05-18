@@ -142,10 +142,10 @@ public:
                                  unsigned char Value = 0);
   
   virtual void EmitFileDirective(StringRef Filename) {
-    errs() << "FIXME: MCMachoStreamer:EmitFileDirective not implemented\n";
+    report_fatal_error("unsupported directive: '.file'");
   }
   virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
-    errs() << "FIXME: MCMachoStreamer:EmitDwarfFileDirective not implemented\n";
+    report_fatal_error("unsupported directive: '.file'");
   }
   
   virtual void EmitInstruction(const MCInst &Inst);
