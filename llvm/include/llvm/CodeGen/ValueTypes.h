@@ -78,7 +78,7 @@ namespace llvm {
 
       isVoid         =  34,   // This has no value
 
-      LAST_VALUETYPE =  34,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  35,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // EVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
