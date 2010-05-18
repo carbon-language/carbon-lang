@@ -52,6 +52,8 @@ GetConversionCategory(ImplicitConversionKind Kind) {
     ICC_Conversion,
     ICC_Conversion,
     ICC_Conversion,
+    ICC_Conversion,
+    ICC_Conversion,
     ICC_Conversion
   };
   return Category[(int)Kind];
@@ -71,6 +73,8 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Promotion,
     ICR_Promotion,
     ICR_Promotion,
+    ICR_Conversion,
+    ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
@@ -102,12 +106,14 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Floating conversion",
     "Complex conversion",
     "Floating-integral conversion",
-    "Complex-real conversion",
     "Pointer conversion",
     "Pointer-to-member conversion",
     "Boolean conversion",
     "Compatible-types conversion",
-    "Derived-to-base conversion"
+    "Derived-to-base conversion",
+    "Vector conversion",
+    "Vector splat",
+    "Complex-real conversion"
   };
   return Name[Kind];
 }
@@ -773,6 +779,48 @@ static bool IsNoReturnConversion(ASTContext &Context, QualType FromType,
   ResultTy = FromType;
   return true;
 }
+ 
+/// \brief Determine whether the conversion from FromType to ToType is a valid
+/// vector conversion.
+///
+/// \param ICK Will be set to the vector conversion kind, if this is a vector
+/// conversion.
+static bool IsVectorConversion(ASTContext &Context, QualType FromType, 
+                               QualType ToType, ImplicitConversionKind &ICK) {  
+  // We need at least one of these types to be a vector type to have a vector
+  // conversion.
+  if (!ToType->isVectorType() && !FromType->isVectorType())
+    return false;
+
+  // Identical types require no conversions.
+  if (Context.hasSameUnqualifiedType(FromType, ToType))
+    return false;
+
+  // There are no conversions between extended vector types, only identity.
+  if (ToType->isExtVectorType()) {
+    // There are no conversions between extended vector types other than the
+    // identity conversion.
+    if (FromType->isExtVectorType())
+      return false;
+   
+    // Vector splat from any arithmetic type to a vector.
+    if (!FromType->isVectorType() && FromType->isArithmeticType()) {
+      ICK = ICK_Vector_Splat;
+      return true;
+    }
+  }
+  
+  // If lax vector conversions are permitted and the vector types are of the
+  // same size, we can perform the conversion.
+  if (Context.getLangOptions().LaxVectorConversions &&
+      FromType->isVectorType() && ToType->isVectorType() &&
+      Context.getTypeSize(FromType) == Context.getTypeSize(ToType)) {
+    ICK = ICK_Vector_Conversion;
+    return true;
+  }
+  
+  return false;
+}
   
 /// IsStandardConversion - Determines whether there is a standard
 /// conversion sequence (C++ [conv], C++ [over.ics.scs]) from the
@@ -895,6 +943,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // For overloading in C, this can also be a "compatible-type"
   // conversion.
   bool IncompatibleObjC = false;
+  ImplicitConversionKind SecondICK = ICK_Identity;
   if (Context.hasSameUnqualifiedType(FromType, ToType)) {
     // The unqualified versions of the types are the same: there's no
     // conversion to do.
@@ -956,10 +1005,14 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Boolean conversions (C++ 4.12).
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
+  } else if (IsVectorConversion(Context, FromType, ToType, SecondICK)) {
+    SCS.Second = SecondICK;
+    FromType = ToType.getUnqualifiedType();
   } else if (!getLangOptions().CPlusPlus &&
              Context.typesAreCompatible(ToType, FromType)) {
     // Compatible conversions (Clang extension for C function overloading)
     SCS.Second = ICK_Compatible_Conversion;
+    FromType = ToType.getUnqualifiedType();
   } else if (IsNoReturnConversion(Context, FromType, ToType, FromType)) {
     // Treat a conversion that strips "noreturn" as an identity conversion.
     SCS.Second = ICK_NoReturn_Adjustment;

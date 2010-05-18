@@ -1777,10 +1777,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       ImpCastExprToType(From, ToType, CastExpr::CK_FloatingToIntegral);
     break;
 
-  case ICK_Complex_Real:
-    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
-    break;
-
   case ICK_Compatible_Conversion:
     ImpCastExprToType(From, ToType, CastExpr::CK_NoOp);
     break;
@@ -1841,7 +1837,23 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
   }
 
-  default:
+  case ICK_Vector_Conversion:
+    ImpCastExprToType(From, ToType, CastExpr::CK_BitCast);
+    break;
+
+  case ICK_Vector_Splat:
+    ImpCastExprToType(From, ToType, CastExpr::CK_VectorSplat);
+    break;
+      
+  case ICK_Complex_Real:
+    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
+    break;
+      
+  case ICK_Lvalue_To_Rvalue:
+  case ICK_Array_To_Pointer:
+  case ICK_Function_To_Pointer:
+  case ICK_Qualification:
+  case ICK_Num_Conversion_Kinds:
     assert(false && "Improper second standard conversion");
     break;
   }
@@ -1864,7 +1876,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
       
   default:
-    assert(false && "Improper second standard conversion");
+    assert(false && "Improper third standard conversion");
     break;
   }
 
@@ -2255,6 +2267,10 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //      is of that type.
   if (Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy))
     return LTy;
+
+  // Extension: conditional operator involving vector types.
+  if (LTy->isVectorType() || RTy->isVectorType()) 
+    return CheckVectorOperands(QuestionLoc, LHS, RHS);
 
   //   -- The second and third operands have arithmetic or enumeration type;
   //      the usual arithmetic conversions are performed to bring them to a

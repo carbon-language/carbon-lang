@@ -62,6 +62,8 @@ namespace clang {
     ICK_Boolean_Conversion,    ///< Boolean conversions (C++ 4.12)
     ICK_Compatible_Conversion, ///< Conversions between compatible types in C99
     ICK_Derived_To_Base,       ///< Derived-to-base (C++ [over.best.ics])
+    ICK_Vector_Conversion,     ///< Vector conversions
+    ICK_Vector_Splat,          ///< A vector splat from an arithmetic type
     ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds
   };
