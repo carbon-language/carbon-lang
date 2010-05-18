@@ -1049,23 +1049,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     // TODO: should we remember this connection regardless of whether
     // the friend declaration provided a body?
     Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
-    if (!SemaRef.getLangOptions().CPlusPlus0x) {
-      // C++03 [temp.friend]p4:
-      //   When a function is defined in a friend function declaration in a 
-      //   class template, the function is defined at each instantiation of the
-      //   class template. The function is defined even if it is never used.
-      if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Owner)) {
-        if (ClassTemplateSpecializationDecl *Spec 
-                        = dyn_cast<ClassTemplateSpecializationDecl>(Record))
-          InstantiateAtPOI = Spec->getPointOfInstantiation();
-        else if (MemberSpecializationInfo *MSInfo 
-                                      = Record->getMemberSpecializationInfo())
-          InstantiateAtPOI = MSInfo->getPointOfInstantiation();
-      }
-      
-      if (InstantiateAtPOI.isInvalid())
-        InstantiateAtPOI = Function->getLocation();        
-    }
   }
     
   if (InitFunctionInstantiation(Function, D))
@@ -1146,16 +1129,43 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
     PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
     DC->makeDeclVisibleInContext(PrincipalDecl, /*Recoverable=*/ false);
+    
+    if (!SemaRef.getLangOptions().CPlusPlus0x &&
+        D->isThisDeclarationADefinition()) {
+      // Check for a function body.
+      const FunctionDecl *Definition = 0;
+      if (Function->getBody(Definition) &&
+          Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
+        SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
+          << Function->getDeclName();
+        SemaRef.Diag(Definition->getLocation(), diag::note_previous_definition);
+        Function->setInvalidDecl();        
+      } 
+      // Check for redefinitions due to other instantiations of this or
+      // a similar friend function.
+      else for (FunctionDecl::redecl_iterator R = Function->redecls_begin(),
+                                           REnd = Function->redecls_end();
+                R != REnd; ++R) {
+        if (*R != Function && 
+            ((*R)->getFriendObjectKind() != Decl::FOK_None)) {
+          if (const FunctionDecl *RPattern
+              = (*R)->getTemplateInstantiationPattern())
+            if (RPattern->getBody(RPattern)) {
+              SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
+                << Function->getDeclName();
+              SemaRef.Diag((*R)->getLocation(), diag::note_previous_definition);
+              Function->setInvalidDecl();
+              break;
+            }
+        }
+      }
+    }
+      
   }
 
   if (Function->isOverloadedOperator() && !DC->isRecord() &&
       PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
     PrincipalDecl->setNonMemberOperator();
-
-  // If we need to instantiate this function now (because it is a C++98/03 
-  // friend function defined inside a class template), do so.
-  if (InstantiateAtPOI.isValid())
-    SemaRef.MarkDeclarationReferenced(InstantiateAtPOI, Function);
 
   return Function;
 }
@@ -1981,34 +1991,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          FunctionDecl *Function,
                                          bool Recursive,
                                          bool DefinitionRequired) {
-  if (Function->isInvalidDecl())
+  if (Function->isInvalidDecl() || Function->getBody())
     return;
 
   // Never instantiate an explicit specialization.
   if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
     return;
 
-  const FunctionDecl *Definition = 0;
-  if (Function->getBody(Definition)) {
-    // We are trying to instantiate a friend function specialization inside
-    // a class template, but there is already another (non-template) definition
-    // of the same function.
-    if (Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
-      InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
-      if (Inst)
-        return;  
-      
-      Diag(Function->getLocation(), diag::err_redefinition) 
-        << Function->getDeclName();
-      Diag(Definition->getLocation(), diag::note_previous_definition);
-      Function->setInvalidDecl();
-    }    
-    
-    // We have an explicit instantiation (which already occurred) and an
-    // implicit instantiation. Return without complaint.
-    return;
-  }
-  
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = Function->getTemplateInstantiationPattern();
   Stmt *Pattern = 0;
@@ -2035,32 +2024,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     return;
   }
 
-  // If this is an instantiation of friend function defined within a class
-  // template or class template specialization or member class thereof, 
-  // determine whether there were multiple instantiations of its lexical class.
-  if (PatternDecl->getFriendObjectKind() != Decl::FOK_None) {
-    for (FunctionDecl::redecl_iterator R = Function->redecls_begin(),
-                                    REnd = Function->redecls_end();
-         R != REnd; ++R) {
-      if (*R != Function && 
-          ((*R)->getFriendObjectKind() != Decl::FOK_None)) {
-        if (const FunctionDecl *RPattern
-                                    = (*R)->getTemplateInstantiationPattern())
-          if (RPattern->getBody(RPattern)) {
-            InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
-            if (Inst)
-              return;  
-            
-            Diag(Function->getLocation(), diag::err_redefinition) 
-              << Function->getDeclName();
-            Diag((*R)->getLocation(), diag::note_previous_definition);
-            Function->setInvalidDecl();
-            return;
-          }
-      }
-    }
-  }
-  
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
   //   have the effect of suppressing the implicit instantiation of the entity
