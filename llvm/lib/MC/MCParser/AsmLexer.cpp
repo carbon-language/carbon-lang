@@ -157,7 +157,6 @@ AsmToken AsmLexer::LexDigit() {
     if (CurPtr[0] == '\n') {
       --CurPtr;
       StringRef Result(TokStart, CurPtr - TokStart);
-      ++CurPtr;
       return AsmToken(AsmToken::Integer, Result, 0);
     }
     const char *NumStart = CurPtr;

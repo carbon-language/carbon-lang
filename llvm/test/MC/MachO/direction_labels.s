@@ -1,12 +1,15 @@
 // RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
 
 direction_labels:
-10:	nop
-	jmp 10b
-	nop
-	jmp 11f
-11:	nop
-	ret
+10:     nop
+        jmp 10b
+        nop
+	jne 0f
+0:	nop
+	jne 0b
+        jmp 11f
+11:     nop
+        ret
 
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
@@ -20,9 +23,9 @@ direction_labels:
 // CHECK:   ('size', 124)
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 8)
+// CHECK:   ('vm_size', 13)
 // CHECK:   ('file_offset', 256)
-// CHECK:   ('file_size', 8)
+// CHECK:   ('file_size', 13)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
 // CHECK:   ('num_sections', 1)
@@ -32,7 +35,7 @@ direction_labels:
 // CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
-// CHECK:     ('size', 8)
+// CHECK:     ('size', 13)
 // CHECK:     ('offset', 256)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
@@ -43,15 +46,15 @@ direction_labels:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x90\xeb\xfd\x90\xeb\x00\x90\xc3')
+// CHECK:   ('_section_data', '\x90\xeb\xfd\x90u\x00\x90u\xfd\xeb\x00\x90\xc3')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 264)
+// CHECK:   ('symoff', 272)
 // CHECK:   ('nsyms', 1)
-// CHECK:   ('stroff', 276)
+// CHECK:   ('stroff', 284)
 // CHECK:   ('strsize', 20)
 // CHECK:   ('_string_data', '\x00direction_labels\x00\x00\x00')
 // CHECK:   ('_symbols', [
