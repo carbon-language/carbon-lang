@@ -280,7 +280,8 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     // The argument must be an integer constant expression.
     Expr *Ex = static_cast<Expr *>(*I);
     llvm::APSInt ArgNum(32);
-    if (!Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
+    if (Ex->isTypeDependent() || Ex->isValueDependent() ||
+        !Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
         << "nonnull" << Ex->getSourceRange();
       return;
@@ -560,7 +561,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() > 0) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
-    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+    if (E->isTypeDependent() || E->isValueDependent() ||
+        !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
         << "constructor" << 1 << E->getSourceRange();
       return;
@@ -589,7 +591,8 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() > 0) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
-    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+    if (E->isTypeDependent() || E->isValueDependent() ||
+        !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
         << "destructor" << 1 << E->getSourceRange();
       return;
@@ -745,7 +748,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() > 0) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
-    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+    if (E->isTypeDependent() || E->isValueDependent() ||
+        !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
        << "sentinel" << 1 << E->getSourceRange();
       return;
@@ -763,7 +767,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() > 1) {
     Expr *E = static_cast<Expr *>(Attr.getArg(1));
     llvm::APSInt Idx(32);
-    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+    if (E->isTypeDependent() || E->isValueDependent() ||
+        !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
         << "sentinel" << 2 << E->getSourceRange();
       return;
@@ -924,7 +929,8 @@ static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
   for (unsigned i = 0; i < 3; ++i) {
     Expr *E = static_cast<Expr *>(Attr.getArg(i));
     llvm::APSInt ArgNum(32);
-    if (!E->isIntegerConstantExpr(ArgNum, S.Context)) {
+    if (E->isTypeDependent() || E->isValueDependent() ||
+        !E->isIntegerConstantExpr(ArgNum, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
         << "reqd_work_group_size" << E->getSourceRange();
       return;
@@ -1076,7 +1082,8 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // checks for the 2nd argument
   Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Idx(32);
-  if (!IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
+  if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
+      !IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
     << "format" << 2 << IdxExpr->getSourceRange();
     return;
@@ -1198,7 +1205,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // checks for the 2nd argument
   Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Idx(32);
-  if (!IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
+  if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
+      !IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
       << "format" << 2 << IdxExpr->getSourceRange();
     return;
@@ -1261,7 +1269,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the 3rd argument
   Expr *FirstArgExpr = static_cast<Expr *>(Attr.getArg(1));
   llvm::APSInt FirstArg(32);
-  if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
+  if (FirstArgExpr->isTypeDependent() || FirstArgExpr->isValueDependent() ||
+      !FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
       << "format" << 3 << FirstArgExpr->getSourceRange();
     return;
@@ -1403,7 +1412,8 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Alignment(32);
-  if (!alignmentExpr->isIntegerConstantExpr(Alignment, S.Context)) {
+  if (alignmentExpr->isTypeDependent() || alignmentExpr->isValueDependent() ||
+      !alignmentExpr->isIntegerConstantExpr(Alignment, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
       << "aligned" << alignmentExpr->getSourceRange();
     return;
@@ -1680,7 +1690,8 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt NumParams(32);
-  if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
+  if (NumParamsExpr->isTypeDependent() || NumParamsExpr->isValueDependent() ||
+      !NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
       << "regparm" << NumParamsExpr->getSourceRange();
     return;

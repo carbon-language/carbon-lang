@@ -678,7 +678,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       T = Context.getVariableArrayType(T, 0, ASM, Quals, Brackets);
     else
       T = Context.getIncompleteArrayType(T, ASM, Quals);
-  } else if (ArraySize->isValueDependent()) {
+  } else if (ArraySize->isTypeDependent() || ArraySize->isValueDependent()) {
     T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
              (!T->isDependentType() && !T->isIncompleteType() &&
@@ -1691,7 +1691,8 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   }
   Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt addrSpace(32);
-  if (!ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
+  if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
+      !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int)
       << ASArgExpr->getSourceRange();
     Attr.setInvalid();
@@ -1797,7 +1798,8 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     llvm::APSInt NumParams(32);
 
     // The warning is emitted elsewhere
-    if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context))
+    if (NumParamsExpr->isTypeDependent() || NumParamsExpr->isValueDependent() ||
+        !NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context))
       return false;
 
     Type = S.Context.getRegParmType(Type, NumParams.getZExtValue());
@@ -1883,7 +1885,8 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
-  if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
+  if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
+      !sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
       << "vector_size" << sizeExpr->getSourceRange();
     Attr.setInvalid();
