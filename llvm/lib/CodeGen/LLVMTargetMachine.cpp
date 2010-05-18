@@ -65,6 +65,10 @@ static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
     cl::desc("Print LLVM IR input to isel pass"));
 static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
+static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
+    cl::desc("Show encoding in .s output"));
+static cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
+    cl::desc("Show instruction structure in .s output"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
@@ -131,10 +135,18 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI);
+
+    // Create a code emitter if asked to show the encoding.
+    //
+    // FIXME: These are currently leaked.
+    MCCodeEmitter *MCE = 0;
+    if (ShowMCEncoding)
+      MCE = getTarget().createCodeEmitter(*this, *Context);
+
     AsmStreamer.reset(createAsmStreamer(*Context, Out,
                                         getTargetData()->isLittleEndian(),
                                         getVerboseAsm(), InstPrinter,
-                                        /*codeemitter*/0));
+                                        MCE, ShowMCInst));
     break;
   }
   case CGFT_ObjectFile: {
