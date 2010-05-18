@@ -1042,7 +1042,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     CanonTo = Context.getCanonicalType(ToType);
     if (CanonFrom.getLocalUnqualifiedType() 
                                        == CanonTo.getLocalUnqualifiedType() &&
-        CanonFrom.getLocalCVRQualifiers() != CanonTo.getLocalCVRQualifiers()) {
+        (CanonFrom.getLocalCVRQualifiers() != CanonTo.getLocalCVRQualifiers()
+         || CanonFrom.getObjCGCAttr() != CanonTo.getObjCGCAttr())) {
       FromType = ToType;
       CanonFrom = CanonTo;
     }

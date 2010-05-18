@@ -383,7 +383,16 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
 
     // Check that type of property and its ivar are type compatible.
     if (PropType != IvarType) {
-      if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
+      bool compat = false;
+      if (isa<ObjCObjectPointerType>(PropType) 
+            && isa<ObjCObjectPointerType>(IvarType))
+        compat = 
+          Context.canAssignObjCInterfaces(
+                                  PropType->getAs<ObjCObjectPointerType>(),
+                                  IvarType->getAs<ObjCObjectPointerType>());
+      else 
+        compat = (CheckAssignmentConstraints(PropType, IvarType) == Compatible);
+      if (!compat) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
           << property->getDeclName() << PropType
           << Ivar->getDeclName() << IvarType;
