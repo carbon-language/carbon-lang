@@ -837,8 +837,13 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
                     UseMI->isRegTiedToDefOperand(&O-&UseMI->getOperand(0))))
           UseMI->addRegisterKilled(DstReg, tri_, true);
       }
-      DEBUG(dbgs() << "\t\tupdated: " << li_->getInstructionIndex(UseMI)
-                   << "\t" << *UseMI);
+
+      DEBUG({
+          dbgs() << "\t\tupdated: ";
+          if (!UseMI->isDebugValue())
+            dbgs() << li_->getInstructionIndex(UseMI) << "\t";
+          dbgs() << *UseMI;
+        });
       continue;
     }
 
@@ -853,8 +858,12 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       O.setSubReg(SubIdx);
     O.setReg(DstReg);
 
-    DEBUG(dbgs() << "\t\tupdated: " << li_->getInstructionIndex(UseMI)
-                 << "\t" << *UseMI);
+    DEBUG({
+        dbgs() << "\t\tupdated: ";
+        if (!UseMI->isDebugValue())
+          dbgs() << li_->getInstructionIndex(UseMI) << "\t";
+        dbgs() << *UseMI;
+      });
 
     // After updating the operand, check if the machine instruction has
     // become a copy. If so, update its val# information.
