@@ -2598,6 +2598,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
   for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
     LSRUse &LU = Uses[LUIdx];
     FormulaSorter Sorter(L, LU, SE, DT);
+    DEBUG(dbgs() << "Filtering for use "; LU.print(dbgs()); dbgs() << "\n");
 
     for (size_t FIdx = 0, NumForms = LU.Formulae.size();
          FIdx != NumForms; ++FIdx) {
@@ -2623,9 +2624,9 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         Formula &Best = LU.Formulae[P.first->second];
         if (Sorter.operator()(F, Best))
           std::swap(F, Best);
-        DEBUG(dbgs() << "Filtering out "; F.print(dbgs());
+        DEBUG(dbgs() << "  Filtering out formula "; F.print(dbgs());
               dbgs() << "\n"
-                        "  in favor of "; Best.print(dbgs());
+                        "    in favor of formula "; Best.print(dbgs());
               dbgs() << '\n');
 #ifndef NDEBUG
         Changed = true;
