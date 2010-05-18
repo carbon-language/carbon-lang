@@ -2572,10 +2572,11 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
                J = NewF.BaseRegs.begin(), JE = NewF.BaseRegs.end();
                J != JE; ++J)
             if (const SCEVConstant *C = dyn_cast<SCEVConstant>(*J))
-              if (C->getValue()->getValue().isNegative() !=
-                    (NewF.AM.BaseOffs < 0) &&
-                  C->getValue()->getValue().abs()
-                    .ule(abs64(NewF.AM.BaseOffs)))
+              if ((C->getValue()->getValue() + NewF.AM.BaseOffs).abs().slt(
+                   abs64(NewF.AM.BaseOffs)) &&
+                  (C->getValue()->getValue() +
+                   NewF.AM.BaseOffs).countTrailingZeros() >=
+                   CountTrailingZeros_64(NewF.AM.BaseOffs))
                 goto skip_formula;
 
           // Ok, looks good.
