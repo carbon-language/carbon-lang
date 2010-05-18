@@ -983,7 +983,9 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // C++ 5.2.11p5: For a const_cast involving pointers to data members [...]
   //   the rules for const_cast are the same as those used for pointers.
 
-  if (!DestType->isPointerType() && !DestType->isMemberPointerType()) {
+  if (!DestType->isPointerType() &&
+      !DestType->isMemberPointerType() &&
+      !DestType->isObjCObjectPointerType()) {
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
     // The status of rvalue references isn't entirely clear, but it looks like

@@ -1619,6 +1619,16 @@ bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
     T2 = T2MPType->getPointeeType();
     return true;
   }
+
+  if (getLangOptions().ObjC1) {
+    const ObjCObjectPointerType *T1OPType = T1->getAs<ObjCObjectPointerType>(),
+                                *T2OPType = T2->getAs<ObjCObjectPointerType>();
+    if (T1OPType && T2OPType) {
+      T1 = T1OPType->getPointeeType();
+      T2 = T2OPType->getPointeeType();
+      return true;
+    }
+  }
   return false;
 }
 
