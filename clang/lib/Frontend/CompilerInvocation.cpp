@@ -798,6 +798,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     Args.hasArg(OPT_analyzer_experimental_internal_checks);
   Opts.TrimGraph = Args.hasArg(OPT_trim_egraph);
   Opts.MaxNodes = getLastArgIntValue(Args, OPT_analyzer_max_nodes,150000,Diags);
+  Opts.MaxLoop = getLastArgIntValue(Args, OPT_analyzer_max_loop, 3, Diags);
   Opts.InlineCall = Args.hasArg(OPT_analyzer_inline_call);
 }
 

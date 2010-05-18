@@ -1017,9 +1017,8 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
 bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
-
   return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
-                          B->getBlockID()) < 3;
+                          B->getBlockID()) < AMgr.getMaxLoop();
 }
 
 //===----------------------------------------------------------------------===//

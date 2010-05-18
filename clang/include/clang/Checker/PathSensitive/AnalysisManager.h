@@ -37,7 +37,11 @@ class AnalysisManager : public BugReporterData {
 
   enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
 
+  // The maximum number of exploded nodes the analyzer will generate.
   unsigned MaxNodes;
+
+  // The maximum number of times the analyzer will go through a loop.
+  unsigned MaxLoop;
 
   bool VisualizeEGDot;
   bool VisualizeEGUbi;
@@ -59,12 +63,13 @@ public:
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, unsigned maxnodes,
+                  unsigned maxloop,
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
                   bool inlinecall)
 
     : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
-      AScope(ScopeDecl), MaxNodes(maxnodes),
+      AScope(ScopeDecl), MaxNodes(maxnodes), MaxLoop(maxloop),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall) {}
   
@@ -109,6 +114,8 @@ public:
   }
 
   unsigned getMaxNodes() const { return MaxNodes; }
+
+  unsigned getMaxLoop() const { return MaxLoop; }
 
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
 

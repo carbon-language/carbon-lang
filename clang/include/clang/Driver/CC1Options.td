@@ -99,6 +99,8 @@ def analyzer_inline_call : Flag<"-analyzer-inline-call">,
   HelpText<"Experimental transfer function inlining callees when its definition is available.">;
 def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate">;
+def analyzer_max_loop : Separate<"-analyzer-max-loop">,
+  HelpText<"The maximum number of times the analyzer will go through a loop">;
 
 //===----------------------------------------------------------------------===//
 // CodeGen Options

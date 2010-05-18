@@ -61,6 +61,7 @@ public:
   AnalysisDiagClients AnalysisDiagOpt;
   std::string AnalyzeSpecificFunction;
   unsigned MaxNodes;
+  unsigned MaxLoop;
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
