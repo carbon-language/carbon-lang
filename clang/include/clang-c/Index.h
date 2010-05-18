@@ -1355,6 +1355,12 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
 CINDEX_LINKAGE unsigned clang_CXXMethod_isStatic(CXCursor C);
 
 /**
+ * \brief Determine if a given struct/class/enum declaration is a definition
+ *   or just a forward declaration.
+ */
+CINDEX_LINKAGE unsigned clang_isTagDeclDefinition(CXCursor C);
+
+/**
  * @}
  */
 
