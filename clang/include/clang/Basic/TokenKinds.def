@@ -336,6 +336,7 @@ KEYWORD(__declspec                  , KEYALL)
 KEYWORD(__cdecl                     , KEYALL)
 KEYWORD(__stdcall                   , KEYALL)
 KEYWORD(__fastcall                  , KEYALL)
+KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
 
 // Altivec Extension.
@@ -372,6 +373,7 @@ ALIAS("_asm"         , asm        , KEYMS)
 ALIAS("_cdecl"       , __cdecl    , KEYMS)
 ALIAS("_fastcall"    , __fastcall , KEYMS)
 ALIAS("_stdcall"     , __stdcall  , KEYMS)
+ALIAS("_thiscall"    , __thiscall , KEYMS)
 
 //===----------------------------------------------------------------------===//
 // Objective-C @-preceeded keywords.

@@ -919,6 +919,7 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   case CC_C: return "cdecl";
   case CC_X86StdCall: return "stdcall";
   case CC_X86FastCall: return "fastcall";
+  case CC_X86ThisCall: return "thiscall";
   }
 }
 

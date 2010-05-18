@@ -763,6 +763,7 @@ Attr *PCHReader::ReadAttributes() {
     UNSIGNED_ATTR(Regparm);
     STRING_ATTR(Section);
     SIMPLE_ATTR(StdCall);
+    SIMPLE_ATTR(ThisCall);
     SIMPLE_ATTR(TransparentUnion);
     SIMPLE_ATTR(Unavailable);
     SIMPLE_ATTR(Unused);

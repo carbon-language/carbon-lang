@@ -1825,6 +1825,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
   case AttributeList::AT_cdecl: CC = CC_C; break;
   case AttributeList::AT_fastcall: CC = CC_X86FastCall; break;
   case AttributeList::AT_stdcall: CC = CC_X86StdCall; break;
+  case AttributeList::AT_thiscall: CC = CC_X86ThisCall; break;
   default: llvm_unreachable("unexpected attribute kind"); return false;
   }
 
@@ -1949,6 +1950,7 @@ void ProcessTypeAttributeList(Sema &S, QualType &Result,
     case AttributeList::AT_cdecl:
     case AttributeList::AT_fastcall:
     case AttributeList::AT_stdcall:
+    case AttributeList::AT_thiscall:
     case AttributeList::AT_regparm:
       // Don't process these on the DeclSpec.
       if (IsDeclSpec ||

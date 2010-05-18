@@ -86,6 +86,7 @@ public:
     Section,
     Sentinel,
     StdCall,
+    ThisCall,
     TransparentUnion,
     Unavailable,
     Unused,
@@ -457,6 +458,7 @@ public:
 
 DEF_SIMPLE_ATTR(FastCall);
 DEF_SIMPLE_ATTR(StdCall);
+DEF_SIMPLE_ATTR(ThisCall);
 DEF_SIMPLE_ATTR(CDecl);
 DEF_SIMPLE_ATTR(TransparentUnion);
 DEF_SIMPLE_ATTR(ObjCNSObject);

@@ -38,6 +38,7 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   default: return llvm::CallingConv::C;
   case CC_X86StdCall: return llvm::CallingConv::X86_StdCall;
   case CC_X86FastCall: return llvm::CallingConv::X86_FastCall;
+  case CC_X86ThisCall: return llvm::CallingConv::X86_ThisCall;
   }
 }
 
@@ -96,6 +97,9 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 
   if (D->hasAttr<FastCallAttr>())
     return CC_X86FastCall;
+
+  if (D->hasAttr<ThisCallAttr>())
+    return CC_X86ThisCall;
 
   return CC_C;
 }

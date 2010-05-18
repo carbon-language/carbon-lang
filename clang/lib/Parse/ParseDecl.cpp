@@ -277,8 +277,8 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
   // Treat these like attributes
   // FIXME: Allow Sema to distinguish between these and real attributes!
   while (Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___stdcall) ||
-         Tok.is(tok::kw___cdecl)    || Tok.is(tok::kw___ptr64) ||
-         Tok.is(tok::kw___w64)) {
+         Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___cdecl)   ||
+         Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64))
@@ -1143,6 +1143,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
+    case tok::kw___thiscall:
       DS.AddAttributes(ParseMicrosoftTypeAttributes());
       continue;
 
@@ -1622,6 +1623,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
+  case tok::kw___thiscall:
     DS.AddAttributes(ParseMicrosoftTypeAttributes());
     return true;
 
@@ -2198,6 +2200,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
+  case tok::kw___thiscall:
   case tok::kw___w64:
   case tok::kw___ptr64:
     return true;
@@ -2304,6 +2307,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
+  case tok::kw___thiscall:
   case tok::kw___w64:
   case tok::kw___ptr64:
   case tok::kw___forceinline:
@@ -2401,6 +2405,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed,
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
+    case tok::kw___thiscall:
       if (GNUAttributesAllowed) {
         DS.AddAttributes(ParseMicrosoftTypeAttributes());
         continue;
@@ -2785,8 +2790,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   }
   // Eat any Microsoft extensions.
   if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
-       Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___w64) ||
-       Tok.is(tok::kw___ptr64)) {
+       Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___fastcall) ||
+       Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64)) {
     AttrList.reset(ParseMicrosoftTypeAttributes(AttrList.take()));
   }
 

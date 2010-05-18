@@ -1654,6 +1654,8 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_stdcall:
     d->addAttr(::new (S.Context) StdCallAttr());
     return;
+  case AttributeList::AT_thiscall:
+    d->addAttr(::new (S.Context) ThisCallAttr());
   case AttributeList::AT_cdecl:
     d->addAttr(::new (S.Context) CDeclAttr());
     return;
@@ -1950,6 +1952,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_stdcall:
   case AttributeList::AT_cdecl:
   case AttributeList::AT_fastcall:
+  case AttributeList::AT_thiscall:
     HandleCallConvAttr(D, Attr, S);
     break;
   default:

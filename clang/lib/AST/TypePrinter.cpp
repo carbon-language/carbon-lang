@@ -295,6 +295,9 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   case CC_X86FastCall:
     S += " __attribute__((fastcall))";
     break;
+  case CC_X86ThisCall:
+    S += " __attribute__((thiscall))";
+    break;
   }
   if (Info.getNoReturn())
     S += " __attribute__((noreturn))";
