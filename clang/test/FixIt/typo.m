@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
 // RUN: %clang -E -P %s -o %t
-// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t || true
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
 
 @interface NSString // expected-note{{'NSString' declared here}}
@@ -97,6 +97,7 @@ void test2(Collide *a) {
 
 @interface Super
 - (int)method; // expected-note{{using}}
+- (int)method2;
 @end
 
 @interface Sub : Super
@@ -109,6 +110,20 @@ void test2(Collide *a) {
 }
   
 @end
+
+#ifdef NON_FIXITS
+double *isupper(int);
+
+@interface Sub2 : Super
+- (int)method2;
+@end
+
+@implementation Sub2
+- (int)method2 {
+  return [supper method2]; // expected-error{{use of undeclared identifier 'supper'}}
+}
+@end
+#endif
 
 @interface Ivar
 @end

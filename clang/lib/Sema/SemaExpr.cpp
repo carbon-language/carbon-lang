@@ -917,7 +917,7 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
 ///
 /// \return false if new lookup candidates were found
 bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
-                               LookupResult &R) {
+                               LookupResult &R, CorrectTypoContext CTC) {
   DeclarationName Name = R.getLookupName();
 
   unsigned diagnostic = diag::err_undeclared_var_use;
@@ -968,7 +968,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
 
   // We didn't find anything, so try to correct for a typo.
   DeclarationName Corrected;
-  if (S && (Corrected = CorrectTypo(R, S, &SS))) {
+  if (S && (Corrected = CorrectTypo(R, S, &SS, false, CTC))) {
     if (!R.empty()) {
       if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
         if (SS.isEmpty())
@@ -1122,7 +1122,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // If this name wasn't predeclared and if this is not a function
     // call, diagnose the problem.
     if (R.empty()) {
-      if (DiagnoseEmptyLookup(S, SS, R))
+      if (DiagnoseEmptyLookup(S, SS, R, CTC_Unknown))
         return ExprError();
 
       assert(!R.empty() &&

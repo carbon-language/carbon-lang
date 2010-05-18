@@ -2612,6 +2612,12 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       WantExpressionKeywords = true;
       WantCXXNamedCasts = true;
       WantRemainingKeywords = true;
+      
+      if (ObjCMethodDecl *Method = getCurMethodDecl())
+        if (Method->getClassInterface() &&
+            Method->getClassInterface()->getSuperClass())
+          Consumer.addKeywordResult(Context, "super");
+      
       break;
   
     case CTC_NoKeywords:

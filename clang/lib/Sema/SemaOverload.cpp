@@ -6002,7 +6002,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
-  if (SemaRef.DiagnoseEmptyLookup(S, SS, R))
+  if (SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression))
     return Destroy(SemaRef, Fn, Args, NumArgs);
 
   assert(!R.empty() && "lookup results empty despite recovery");

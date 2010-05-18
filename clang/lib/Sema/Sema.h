@@ -1811,7 +1811,8 @@ public:
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand);
 
-  bool DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R);
+  bool DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
+                           CorrectTypoContext CTC = CTC_Unknown);
 
   OwningExprResult LookupInObjCMethod(LookupResult &R,
                                       Scope *S,
