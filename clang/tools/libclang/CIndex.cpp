@@ -297,6 +297,7 @@ public:
   bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
+  bool VisitObjCPropertyDecl(ObjCPropertyDecl *PD);
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
   bool VisitObjCImplDecl(ObjCImplDecl *D);
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
@@ -528,7 +529,11 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
 
-    CXCursor Cursor = MakeCXCursor(*I, TU);
+    Decl *D = *I;
+    if (D->getLexicalDeclContext() != DC)
+      continue;
+
+    CXCursor Cursor = MakeCXCursor(D, TU);
 
     if (RegionOfInterest.isValid()) {
       SourceRange Range =
@@ -664,6 +669,40 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
       return true;
 
   return VisitObjCContainerDecl(PID);
+}
+
+bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
+  // FIXME: This implements a workaround with @property declarations also being
+  // installed in the DeclContext for the @interface.  Eventually this code
+  // should be removed.
+  ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(PD->getDeclContext());
+  if (!CDecl || !CDecl->IsClassExtension())
+    return false;
+
+  ObjCInterfaceDecl *ID = CDecl->getClassInterface();
+  if (!ID)
+    return false;
+
+  IdentifierInfo *PropertyId = PD->getIdentifier();
+  ObjCPropertyDecl *prevDecl =
+    ObjCPropertyDecl::findPropertyDecl(cast<DeclContext>(ID), PropertyId);
+
+  if (!prevDecl)
+    return false;
+
+  // Visit synthesized methods since they will be skipped when visiting
+  // the @interface.
+  if (ObjCMethodDecl *MD = prevDecl->getGetterMethodDecl())
+    if (MD->isSynthesized())
+      if (Visit(MakeCXCursor(MD, TU)))
+        return true;
+
+  if (ObjCMethodDecl *MD = prevDecl->getSetterMethodDecl())
+    if (MD->isSynthesized())
+      if (Visit(MakeCXCursor(MD, TU)))
+        return true;
+
+  return false;
 }
 
 bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
@@ -2480,8 +2519,14 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   // Adjust the annotated range based specific declarations.
   const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
   if (cursorK >= CXCursor_FirstDecl && cursorK <= CXCursor_LastDecl) {
-    if (const DeclaratorDecl *DD =
-        dyn_cast<DeclaratorDecl>(cxcursor::getCursorDecl(cursor))) {
+    Decl *D = cxcursor::getCursorDecl(cursor);
+    // Don't visit synthesized ObjC methods, since they have no syntatic
+    // representation in the source.
+    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+      if (MD->isSynthesized())
+        return CXChildVisit_Continue;
+    }
+    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
         TypeLoc TL = TI->getTypeLoc();
         SourceLocation TLoc = TL.getFullSourceRange().getBegin();

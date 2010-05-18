@@ -121,7 +121,7 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
     ObjCPropertyDecl *PDecl =
       CreatePropertyDecl(S, CCPrimary, AtLoc,
                          FD, GetterSel, SetterSel, isAssign, isReadWrite,
-                         Attributes, T, MethodImplKind);
+                         Attributes, T, MethodImplKind, DC);
 
     // A case of continuation class adding a new property in the class. This
     // is not what it was meant for. However, gcc supports it and so should we.
@@ -191,7 +191,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
                                            const bool isReadWrite,
                                            const unsigned Attributes,
                                            QualType T,
-                                           tok::ObjCKeywordKind MethodImplKind){
+                                           tok::ObjCKeywordKind MethodImplKind,
+                                           DeclContext *lexicalDC){
 
   IdentifierInfo *PropertyId = FD.D.getIdentifier();
 
@@ -222,8 +223,11 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
     Diag(prevDecl->getLocation(), diag::note_property_declare);
     PDecl->setInvalidDecl();
   }
-  else
+  else {
     DC->addDecl(PDecl);
+    if (lexicalDC)
+      PDecl->setLexicalDeclContext(lexicalDC);
+  }
 
   if (T->isArrayType() || T->isFunctionType()) {
     Diag(AtLoc, diag::err_property_type) << T;
@@ -1064,6 +1068,11 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                              ObjCMethodDecl::Optional :
                              ObjCMethodDecl::Required);
     CD->addDecl(GetterMethod);
+    // FIXME: Eventually this shouldn't be needed, as the lexical context
+    // and the real context should be the same.
+    if (DeclContext *lexicalDC = property->getLexicalDeclContext())
+      GetterMethod->setLexicalDeclContext(lexicalDC);
+
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation
@@ -1097,6 +1106,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   0);
       SetterMethod->setMethodParams(Context, &Argument, 1, 1);
       CD->addDecl(SetterMethod);
+      // FIXME: Eventually this shouldn't be needed, as the lexical context
+      // and the real context should be the same.
+      if (DeclContext *lexicalDC = property->getLexicalDeclContext())
+        SetterMethod->setLexicalDeclContext(lexicalDC);
     } else
       // A user declared setter will be synthesize when @synthesize of
       // the property with the same name is seen in the @implementation

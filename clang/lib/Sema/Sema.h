@@ -1597,7 +1597,8 @@ public:
                                        const bool isAssign,
                                        const bool isReadWrite,
                                        const unsigned Attributes, QualType T,
-                                       tok::ObjCKeywordKind MethodImplKind);
+                                       tok::ObjCKeywordKind MethodImplKind,
+                                       DeclContext *lexicalDC = 0);
 
   /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
   /// warning) when atomic property has one but not the other user-declared
