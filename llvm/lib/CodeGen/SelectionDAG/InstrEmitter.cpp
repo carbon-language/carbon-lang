@@ -551,11 +551,12 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
       const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
       const TargetRegisterClass *SRC =
         TRI->getMatchingSuperRegClass(RC, TRC, SubIdx);
-      //getSuperRegisterRegClass(TRC, SubIdx, Node->getValueType(0));
       if (!SRC)
         llvm_unreachable("Invalid subregister index in REG_SEQUENCE");
-      if (SRC != RC)
+      if (SRC != RC) {
         MRI->setRegClass(NewVReg, SRC);
+        RC = SRC;
+      }
     }
     AddOperand(MI, Op, i+1, &II, VRBaseMap, /*IsDebug=*/false,
                IsClone, IsCloned);
