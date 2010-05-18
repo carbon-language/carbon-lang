@@ -6344,13 +6344,14 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
           break;
       }
 
-      Ops.push_back(DAG.getNode(N->getOpcode(), LHS.getDebugLoc(),
-                                EltType, LHSOp, RHSOp));
-      AddToWorkList(Ops.back().getNode());
-      assert((Ops.back().getOpcode() == ISD::UNDEF ||
-              Ops.back().getOpcode() == ISD::Constant ||
-              Ops.back().getOpcode() == ISD::ConstantFP) &&
-             "Scalar binop didn't fold!");
+      SDValue FoldOp = DAG.getNode(N->getOpcode(), LHS.getDebugLoc(), EltType,
+                                   LHSOp, RHSOp);
+      if (FoldOp.getOpcode() != ISD::UNDEF &&
+          FoldOp.getOpcode() != ISD::Constant &&
+          FoldOp.getOpcode() != ISD::ConstantFP)
+        break;
+      Ops.push_back(FoldOp);
+      AddToWorkList(FoldOp.getNode());
     }
 
     if (Ops.size() == LHS.getNumOperands()) {
