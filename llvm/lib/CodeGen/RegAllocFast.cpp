@@ -154,7 +154,7 @@ namespace {
     LiveRegMap::iterator reloadVirtReg(MachineInstr *MI, unsigned OpNum,
                                        unsigned VirtReg, unsigned Hint);
     void spillAll(MachineInstr *MI);
-    bool setPhysReg(MachineOperand &MO, unsigned PhysReg);
+    bool setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg);
   };
   char RAFast::ID = 0;
 }
@@ -200,10 +200,17 @@ bool RAFast::isLastUseOfLocalReg(MachineOperand &MO) {
 void RAFast::addKillFlag(const LiveReg &LR) {
   if (!LR.LastUse) return;
   MachineOperand &MO = LR.LastUse->getOperand(LR.LastOpNum);
-  if (MO.isDef())
-    MO.setIsDead();
-  else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
-    MO.setIsKill();
+  if (MO.getReg() == LR.PhysReg) {
+    if (MO.isDef())
+      MO.setIsDead();
+    else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
+      MO.setIsKill();
+  } else {
+    if (MO.isDef())
+      LR.LastUse->addRegisterDead(LR.PhysReg, TRI, true);
+    else
+      LR.LastUse->addRegisterKilled(LR.PhysReg, TRI, true);
+  }
 }
 
 /// killVirtReg - Mark virtreg as no longer available.
@@ -517,8 +524,12 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
         Hint = DstReg;
     }
     allocVirtReg(MI, *LRI, Hint);
-  } else
-    addKillFlag(LR); // Kill before redefine.
+  } else if (LR.LastUse) {
+    // Redefining a live register - kill at the last use, unless it is this
+    // instruction defining VirtReg multiple times.
+    if (LR.LastUse != MI || LR.LastUse->getOperand(LR.LastOpNum).isUse())
+      addKillFlag(LR);
+  }
   assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
   LR.LastOpNum = OpNum;
@@ -569,11 +580,11 @@ RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
   return LRI;
 }
 
-// setPhysReg - Change MO the refer the PhysReg, considering subregs.
-// This may invalidate MO if it is necessary to add implicit kills for a
-// superregister.
-// Return tru if MO kills its register.
-bool RAFast::setPhysReg(MachineOperand &MO, unsigned PhysReg) {
+// setPhysReg - Change operand OpNum in MI the refer the PhysReg, considering
+// subregs. This may invalidate any operand pointers.
+// Return true if the operand kills its register.
+bool RAFast::setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg) {
+  MachineOperand &MO = MI->getOperand(OpNum);
   if (!MO.getSubReg()) {
     MO.setReg(PhysReg);
     return MO.isKill() || MO.isDead();
@@ -584,17 +595,17 @@ bool RAFast::setPhysReg(MachineOperand &MO, unsigned PhysReg) {
   MO.setSubReg(0);
   if (MO.isUse()) {
     if (MO.isKill()) {
-      MO.getParent()->addRegisterKilled(PhysReg, TRI, true);
+      MI->addRegisterKilled(PhysReg, TRI, true);
       return true;
     }
     return false;
   }
   // A subregister def implicitly defines the whole physreg.
   if (MO.isDead()) {
-    MO.getParent()->addRegisterDead(PhysReg, TRI, true);
+    MI->addRegisterDead(PhysReg, TRI, true);
     return true;
   }
-  MO.getParent()->addRegisterDefined(PhysReg, TRI);
+  MI->addRegisterDefined(PhysReg, TRI);
   return false;
 }
 
@@ -611,7 +622,7 @@ void RAFast::AllocateBasicBlock() {
          E = MBB->livein_end(); I != E; ++I)
     definePhysReg(MII, *I, regReserved);
 
-  SmallVector<unsigned, 8> PhysECs;
+  SmallVector<unsigned, 8> PhysECs, VirtDead;
   SmallVector<MachineInstr*, 32> Coalesced;
 
   // Otherwise, sequentially allocate each instruction in the MBB.
@@ -660,7 +671,7 @@ void RAFast::AllocateBasicBlock() {
         if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
         LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
         if (LRI != LiveVirtRegs.end())
-          setPhysReg(MO, LRI->second.PhysReg);
+          setPhysReg(MI, i, LRI->second.PhysReg);
         else
           MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
       }
@@ -711,12 +722,13 @@ void RAFast::AllocateBasicBlock() {
         LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, CopyDst);
         unsigned PhysReg = LRI->second.PhysReg;
         CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
-        if (setPhysReg(MO, PhysReg))
+        if (setPhysReg(MI, i, PhysReg))
           killVirtReg(LRI);
       } else if (MO.isEarlyClobber()) {
+        // Note: defineVirtReg may invalidate MO.
         LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
         unsigned PhysReg = LRI->second.PhysReg;
-        setPhysReg(MO, PhysReg);
+        setPhysReg(MI, i, PhysReg);
         PhysECs.push_back(PhysReg);
       }
     }
@@ -759,12 +771,20 @@ void RAFast::AllocateBasicBlock() {
       }
       LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, CopySrc);
       unsigned PhysReg = LRI->second.PhysReg;
-      if (setPhysReg(MO, PhysReg)) {
-        killVirtReg(LRI);
+      if (setPhysReg(MI, i, PhysReg)) {
+        VirtDead.push_back(Reg);
         CopyDst = 0; // cancel coalescing;
       } else
         CopyDst = (CopyDst == Reg || CopyDst == PhysReg) ? PhysReg : 0;
     }
+
+    // Kill dead defs after the scan to ensure that multiple defs of the same
+    // register are allocated identically. We didn't need to do this for uses
+    // because we are crerating our own kill flags, and they are always at the
+    // last use.
+    for (unsigned i = 0, e = VirtDead.size(); i != e; ++i)
+      killVirtReg(VirtDead[i]);
+    VirtDead.clear();
 
     MRI->addPhysRegsUsed(UsedInInstr);
 
