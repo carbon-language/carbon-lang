@@ -434,10 +434,13 @@ void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
 
     if (ret < 0) {
       // If it's a recoverable error, swallow it and retry the write.
-      // EAGAIN and EWOULDBLOCK are not unambiguously recoverable, but
-      // some programs, such as bjam, assume that their child processes
-      // will treat them as if they are. If you don't want this code to
-      // spin, don't use O_NONBLOCK file descriptors with raw_ostream.
+      //
+      // Ideally we wouldn't ever see EAGAIN or EWOULDBLOCK here, since
+      // raw_ostream isn't designed to do non-blocking I/O. However, some
+      // programs, such as old versions of bjam, have mistakenly used
+      // O_NONBLOCK. For compatibility, emulate blocking semantics by
+      // spinning until the write succeeds. If you don't want spinning,
+      // don't use O_NONBLOCK file descriptors with raw_ostream.
       if (errno == EINTR || errno == EAGAIN
 #ifdef EWOULDBLOCK
           || errno == EWOULDBLOCK
