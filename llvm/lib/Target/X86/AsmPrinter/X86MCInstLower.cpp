@@ -224,6 +224,26 @@ static void LowerUnaryToTwoAddr(MCInst &OutMI, unsigned NewOpc) {
   OutMI.addOperand(OutMI.getOperand(0));
 }
 
+/// \brief Simplify FOO $imm, %{al,ax,eax,rax} to FOO $imm, for instruction with
+/// a short fixed-register form.
+static void SimplifyShortImmForm(MCInst &Inst, unsigned Opcode) {
+  unsigned ImmOp = Inst.getNumOperands() - 1;
+  assert(Inst.getOperand(0).isReg() && Inst.getOperand(ImmOp).isImm() &&
+         ((Inst.getNumOperands() == 3 && Inst.getOperand(1).isReg() &&
+           Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg()) ||
+          Inst.getNumOperands() == 2) && "Unexpected instruction!");
+
+  // Check whether the destination register can be fixed.
+  unsigned Reg = Inst.getOperand(0).getReg();
+  if (Reg != X86::AL && Reg != X86::AX && Reg != X86::EAX && Reg != X86::RAX)
+    return;
+
+  // If so, rewrite the instruction.
+  MCInst New;
+  New.setOpcode(Opcode);
+  New.addOperand(Inst.getOperand(ImmOp));
+  Inst = New;
+}
 
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
@@ -332,6 +352,54 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::JGE_4: OutMI.setOpcode(X86::JGE_1); break;
   case X86::JLE_4: OutMI.setOpcode(X86::JLE_1); break;
   case X86::JG_4:  OutMI.setOpcode(X86::JG_1); break;
+
+  // We don't currently select the correct instruction form for instructions
+  // which have a short %eax, etc. form. Handle this by custom lowering, for
+  // now.
+  //
+  // Note, we are currently not handling the following instructions:
+  // MOV8ao8, MOV8o8a
+  // MOV16ao16, MOV16o16a
+  // MOV32ao32, MOV32o32a
+  // MOV64ao64, MOV64ao8
+  // MOV64o64a, MOV64o8a
+  // XCHG16ar, XCHG32ar, XCHG64ar
+  case X86::ADC8ri:     SimplifyShortImmForm(OutMI, X86::ADC8i8);    break;
+  case X86::ADC16ri:    SimplifyShortImmForm(OutMI, X86::ADC16i16);  break;
+  case X86::ADC32ri:    SimplifyShortImmForm(OutMI, X86::ADC32i32);  break;
+  case X86::ADC64ri32:  SimplifyShortImmForm(OutMI, X86::ADC64i32);  break;
+  case X86::ADD8ri:     SimplifyShortImmForm(OutMI, X86::ADD8i8);    break;
+  case X86::ADD16ri:    SimplifyShortImmForm(OutMI, X86::ADD16i16);  break;
+  case X86::ADD32ri:    SimplifyShortImmForm(OutMI, X86::ADD32i32);  break;
+  case X86::ADD64ri32:  SimplifyShortImmForm(OutMI, X86::ADD64i32);  break;
+  case X86::AND8ri:     SimplifyShortImmForm(OutMI, X86::AND8i8);    break;
+  case X86::AND16ri:    SimplifyShortImmForm(OutMI, X86::AND16i16);  break;
+  case X86::AND32ri:    SimplifyShortImmForm(OutMI, X86::AND32i32);  break;
+  case X86::AND64ri32:  SimplifyShortImmForm(OutMI, X86::AND64i32);  break;
+  case X86::CMP8ri:     SimplifyShortImmForm(OutMI, X86::CMP8i8);    break;
+  case X86::CMP16ri:    SimplifyShortImmForm(OutMI, X86::CMP16i16);  break;
+  case X86::CMP32ri:    SimplifyShortImmForm(OutMI, X86::CMP32i32);  break;
+  case X86::CMP64ri32:  SimplifyShortImmForm(OutMI, X86::CMP64i32);  break;
+  case X86::OR8ri:      SimplifyShortImmForm(OutMI, X86::OR8i8);     break;
+  case X86::OR16ri:     SimplifyShortImmForm(OutMI, X86::OR16i16);   break;
+  case X86::OR32ri:     SimplifyShortImmForm(OutMI, X86::OR32i32);   break;
+  case X86::OR64ri32:   SimplifyShortImmForm(OutMI, X86::OR64i32);   break;
+  case X86::SBB8ri:     SimplifyShortImmForm(OutMI, X86::SBB8i8);    break;
+  case X86::SBB16ri:    SimplifyShortImmForm(OutMI, X86::SBB16i16);  break;
+  case X86::SBB32ri:    SimplifyShortImmForm(OutMI, X86::SBB32i32);  break;
+  case X86::SBB64ri32:  SimplifyShortImmForm(OutMI, X86::SBB64i32);  break;
+  case X86::SUB8ri:     SimplifyShortImmForm(OutMI, X86::SUB8i8);    break;
+  case X86::SUB16ri:    SimplifyShortImmForm(OutMI, X86::SUB16i16);  break;
+  case X86::SUB32ri:    SimplifyShortImmForm(OutMI, X86::SUB32i32);  break;
+  case X86::SUB64ri32:  SimplifyShortImmForm(OutMI, X86::SUB64i32);  break;
+  case X86::TEST8ri:    SimplifyShortImmForm(OutMI, X86::TEST8i8);   break;
+  case X86::TEST16ri:   SimplifyShortImmForm(OutMI, X86::TEST16i16); break;
+  case X86::TEST32ri:   SimplifyShortImmForm(OutMI, X86::TEST32i32); break;
+  case X86::TEST64ri32: SimplifyShortImmForm(OutMI, X86::TEST64i32); break;
+  case X86::XOR8ri:     SimplifyShortImmForm(OutMI, X86::XOR8i8);    break;
+  case X86::XOR16ri:    SimplifyShortImmForm(OutMI, X86::XOR16i16);  break;
+  case X86::XOR32ri:    SimplifyShortImmForm(OutMI, X86::XOR32i32);  break;
+  case X86::XOR64ri32:  SimplifyShortImmForm(OutMI, X86::XOR64i32);  break;
   }
 }
 
