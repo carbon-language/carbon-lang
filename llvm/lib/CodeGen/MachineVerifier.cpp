@@ -635,11 +635,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         // Virtual register.
         const TargetRegisterClass *RC = MRI->getRegClass(Reg);
         if (SubIdx) {
-          if (RC->subregclasses_begin()+SubIdx >= RC->subregclasses_end()) {
+          const TargetRegisterClass *SRC = RC->getSubRegisterRegClass(SubIdx);
+          if (!SRC) {
             report("Invalid subregister index for virtual register", MO, MONum);
+            *OS << "Register class " << RC->getName()
+                << " does not support subreg index " << SubIdx << "\n";
             return;
           }
-          RC = *(RC->subregclasses_begin()+SubIdx);
+          RC = SRC;
         }
         if (const TargetRegisterClass *DRC = TOI.getRegClass(TRI)) {
           if (RC != DRC && !RC->hasSuperClass(DRC)) {
