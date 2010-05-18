@@ -2679,6 +2679,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
       }
     }
 
+    // Now that we've filtered out some formulae, recompute the Regs set.
     if (Any)
       LU.RecomputeRegs(LUIdx, RegUses);
 
