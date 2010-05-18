@@ -1305,7 +1305,7 @@ public:
     class param_type
     {
     public:
-        typedef result_type distribution_type;
+        typedef fisher_f_distribution distribution_type;
 
         explicit param_type(result_type m = 1, result_type n = 1);
 
@@ -1354,7 +1354,60 @@ public:
 };
 
 template<class RealType = double>
-    class student_t_distribution;
+class student_t_distribution
+{
+public:
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef student_t_distribution distribution_type;
+
+        explicit param_type(result_type n = 1);
+
+        result_type n() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructor and reset functions
+    explicit student_t_distribution(result_type n = 1);
+    explicit student_t_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    result_type n() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const student_t_distribution& x,
+                           const student_t_distribution& y);
+    friend bool operator!=(const student_t_distribution& x,
+                           const student_t_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const student_t_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               student_t_distribution& x);
+};
 
 template<class IntType = int>
     class discrete_distribution;
@@ -5120,6 +5173,100 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is >> __m >> __n;
     if (!__is.fail())
         __x.param(param_type(__m, __n));
+    return __is;
+}
+
+template<class _RealType = double>
+class student_t_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        result_type __n_;
+    public:
+        typedef student_t_distribution distribution_type;
+
+        explicit param_type(result_type __n = 1) : __n_(__n) {}
+
+        result_type n() const {return __n_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__n_ == __y.__n_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+    };
+
+private:
+    param_type __p_;
+    normal_distribution<result_type> __nd_;
+
+public:
+    // constructor and reset functions
+    explicit student_t_distribution(result_type __n = 1)
+        : __p_(param_type(__n)) {}
+    explicit student_t_distribution(const param_type& __p)
+        : __p_(__p) {}
+    void reset() {__nd_.reset();}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    result_type n() const {return __p_.n();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {return __p_ = __p;}
+
+    result_type min() const {return -numeric_limits<result_type>::infinity();}
+    result_type max() const {return numeric_limits<result_type>::infinity();}
+
+    friend bool operator==(const student_t_distribution& __x,
+                           const student_t_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const student_t_distribution& __x,
+                           const student_t_distribution& __y)
+        {return !(__x == __y);}
+};
+
+template <class _RealType>
+template<class _URNG>
+_RealType
+student_t_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    gamma_distribution<result_type> __gd(__p.n() * .5, 2);
+    return __nd_(__g) * _STD::sqrt(__p.n()/__gd(__g));
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const student_t_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    __os << __x.n();
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           student_t_distribution<_RT>& __x)
+{
+    typedef student_t_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    result_type __n;
+    __is >> __n;
+    if (!__is.fail())
+        __x.param(param_type(__n));
     return __is;
 }
 
