@@ -239,10 +239,44 @@ static void SimplifyShortImmForm(MCInst &Inst, unsigned Opcode) {
     return;
 
   // If so, rewrite the instruction.
-  MCInst New;
-  New.setOpcode(Opcode);
-  New.addOperand(Inst.getOperand(ImmOp));
-  Inst = New;
+  MCOperand Saved = Inst.getOperand(ImmOp);
+  Inst = MCInst();
+  Inst.setOpcode(Opcode);
+  Inst.addOperand(Saved);
+}
+
+/// \brief Simplify things like MOV32rm to MOV32o32a.
+static void SimplifyShortMoveForm(MCInst &Inst, unsigned Opcode) {
+  bool IsStore = Inst.getOperand(0).isReg() && Inst.getOperand(1).isReg();
+  unsigned AddrBase = IsStore;
+  unsigned RegOp = IsStore ? 0 : 5;
+  unsigned AddrOp = AddrBase + 3;
+  assert(Inst.getNumOperands() == 6 && Inst.getOperand(RegOp).isReg() &&
+         Inst.getOperand(AddrBase + 0).isReg() && // base
+         Inst.getOperand(AddrBase + 1).isImm() && // scale
+         Inst.getOperand(AddrBase + 2).isReg() && // index register
+         (Inst.getOperand(AddrOp).isExpr() ||     // address
+          Inst.getOperand(AddrOp).isImm())&&
+         Inst.getOperand(AddrBase + 4).isReg() && // segment
+         "Unexpected instruction!");
+
+  // Check whether the destination register can be fixed.
+  unsigned Reg = Inst.getOperand(RegOp).getReg();
+  if (Reg != X86::AL && Reg != X86::AX && Reg != X86::EAX && Reg != X86::RAX)
+    return;
+
+  // Check whether this is an absolute address.
+  if (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
+      Inst.getOperand(AddrBase + 2).getReg() != 0 ||
+      Inst.getOperand(AddrBase + 4).getReg() != 0 ||
+      Inst.getOperand(AddrBase + 1).getImm() != 1)
+    return;
+
+  // If so, rewrite the instruction.
+  MCOperand Saved = Inst.getOperand(AddrOp);
+  Inst = MCInst();
+  Inst.setOpcode(Opcode);
+  Inst.addOperand(Saved);
 }
 
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
@@ -370,12 +404,19 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   // now.
   //
   // Note, we are currently not handling the following instructions:
-  // MOV8ao8, MOV8o8a
-  // MOV16ao16, MOV16o16a
-  // MOV32ao32, MOV32o32a
-  // MOV64ao64, MOV64ao8
-  // MOV64o64a, MOV64o8a
+  // MOV64ao8, MOV64o8a
   // XCHG16ar, XCHG32ar, XCHG64ar
+  case X86::MOV8mr_NOREX:
+  case X86::MOV8mr:     SimplifyShortMoveForm(OutMI, X86::MOV8ao8); break;
+  case X86::MOV8rm_NOREX:
+  case X86::MOV8rm:     SimplifyShortMoveForm(OutMI, X86::MOV8o8a); break;
+  case X86::MOV16mr:    SimplifyShortMoveForm(OutMI, X86::MOV16ao16); break;
+  case X86::MOV16rm:    SimplifyShortMoveForm(OutMI, X86::MOV16o16a); break;
+  case X86::MOV32mr:    SimplifyShortMoveForm(OutMI, X86::MOV32ao32); break;
+  case X86::MOV32rm:    SimplifyShortMoveForm(OutMI, X86::MOV32o32a); break;
+  case X86::MOV64mr:    SimplifyShortMoveForm(OutMI, X86::MOV64ao64); break;
+  case X86::MOV64rm:    SimplifyShortMoveForm(OutMI, X86::MOV64o64a); break;
+
   case X86::ADC8ri:     SimplifyShortImmForm(OutMI, X86::ADC8i8);    break;
   case X86::ADC16ri:    SimplifyShortImmForm(OutMI, X86::ADC16i16);  break;
   case X86::ADC32ri:    SimplifyShortImmForm(OutMI, X86::ADC32i32);  break;
