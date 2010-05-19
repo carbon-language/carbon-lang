@@ -200,14 +200,9 @@ bool RAFast::isLastUseOfLocalReg(MachineOperand &MO) {
 void RAFast::addKillFlag(const LiveReg &LR) {
   if (!LR.LastUse) return;
   MachineOperand &MO = LR.LastUse->getOperand(LR.LastOpNum);
-  if (MO.getReg() == LR.PhysReg) {
-    if (MO.isDef())
-      MO.setIsDead();
-    else if (!LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum))
+  if (MO.isUse() && !LR.LastUse->isRegTiedToDefOperand(LR.LastOpNum)) {
+    if (MO.getReg() == LR.PhysReg)
       MO.setIsKill();
-  } else {
-    if (MO.isDef())
-      LR.LastUse->addRegisterDead(LR.PhysReg, TRI, true);
     else
       LR.LastUse->addRegisterKilled(LR.PhysReg, TRI, true);
   }
@@ -513,6 +508,7 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
   bool New;
   tie(LRI, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
   LiveReg &LR = LRI->second;
+  bool PartialRedef = MI->getOperand(OpNum).getSubReg();
   if (New) {
     // If there is no hint, peek at the only use of this register.
     if ((!Hint || !TargetRegisterInfo::isPhysicalRegister(Hint)) &&
@@ -524,7 +520,15 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
         Hint = DstReg;
     }
     allocVirtReg(MI, *LRI, Hint);
-  } else if (LR.LastUse) {
+    // If this is only a partial redefinition, we must reload the other parts.
+    if (PartialRedef && MI->readsVirtualRegister(VirtReg)) {
+      const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
+      int FI = getStackSpaceFor(VirtReg, RC);
+      DEBUG(dbgs() << "Reloading for partial redef: %reg" << VirtReg << "\n");
+      TII->loadRegFromStackSlot(*MBB, MI, LR.PhysReg, FI, RC, TRI);
+      ++NumLoads;
+    }
+  } else if (LR.LastUse && !PartialRedef) {
     // Redefining a live register - kill at the last use, unless it is this
     // instruction defining VirtReg multiple times.
     if (LR.LastUse != MI || LR.LastUse->getOperand(LR.LastOpNum).isUse())
@@ -593,20 +597,14 @@ bool RAFast::setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg) {
   // Handle subregister index.
   MO.setReg(PhysReg ? TRI->getSubReg(PhysReg, MO.getSubReg()) : 0);
   MO.setSubReg(0);
-  if (MO.isUse()) {
-    if (MO.isKill()) {
-      MI->addRegisterKilled(PhysReg, TRI, true);
-      return true;
-    }
-    return false;
-  }
-  // A subregister def implicitly defines the whole physreg.
-  if (MO.isDead()) {
-    MI->addRegisterDead(PhysReg, TRI, true);
+
+  // A kill flag implies killing the full register. Add corresponding super
+  // register kill.
+  if (MO.isKill()) {
+    MI->addRegisterKilled(PhysReg, TRI, true);
     return true;
   }
-  MI->addRegisterDefined(PhysReg, TRI);
-  return false;
+  return MO.isDead();
 }
 
 void RAFast::AllocateBasicBlock() {
