@@ -113,6 +113,7 @@ class RegUseTracker {
 public:
   void CountRegister(const SCEV *Reg, size_t LUIdx);
   void DropRegister(const SCEV *Reg, size_t LUIdx);
+  void DropUse(size_t LUIdx);
 
   bool isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const;
 
@@ -148,6 +149,14 @@ RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
   RegSortData &RSD = It->second;
   assert(RSD.UsedByIndices.size() > LUIdx);
   RSD.UsedByIndices.reset(LUIdx);
+}
+
+void
+RegUseTracker::DropUse(size_t LUIdx) {
+  // Remove the use index from every register's use list.
+  for (RegUsesTy::iterator I = RegUsesMap.begin(), E = RegUsesMap.end();
+       I != E; ++I)
+    I->second.UsedByIndices.reset(LUIdx);
 }
 
 bool
@@ -951,6 +960,7 @@ public:
                                       MaxOffset(INT64_MIN),
                                       AllFixupsOutsideLoop(true) {}
 
+  bool HasFormulaWithSameRegs(const Formula &F) const;
   bool InsertFormula(const Formula &F);
   void DeleteFormula(Formula &F);
   void RecomputeRegs(size_t LUIdx, RegUseTracker &Reguses);
@@ -960,6 +970,16 @@ public:
   void print(raw_ostream &OS) const;
   void dump() const;
 };
+
+/// HasFormula - Test whether this use as a formula which has the same
+/// registers as the given formula.
+bool LSRUse::HasFormulaWithSameRegs(const Formula &F) const {
+  SmallVector<const SCEV *, 2> Key = F.BaseRegs;
+  if (F.ScaledReg) Key.push_back(F.ScaledReg);
+  // Unstable sort by host order ok, because this is only used for uniquifying.
+  std::sort(Key.begin(), Key.end());
+  return Uniquifier.count(Key);
+}
 
 /// InsertFormula - If the given formula has not yet been inserted, add it to
 /// the list, and return true. Return false otherwise.
@@ -995,6 +1015,7 @@ bool LSRUse::InsertFormula(const Formula &F) {
 void LSRUse::DeleteFormula(Formula &F) {
   std::swap(F, Formulae.back());
   Formulae.pop_back();
+  assert(!Formulae.empty() && "LSRUse has no formulae left!");
 }
 
 /// RecomputeRegs - Recompute the Regs field, and update RegUses.
@@ -1134,6 +1155,13 @@ static bool isAlwaysFoldable(int64_t BaseOffs,
   AM.HasBaseReg = HasBaseReg;
   AM.Scale = Kind == LSRUse::ICmpZero ? -1 : 1;
 
+  // Canonicalize a scale of 1 to a base register if the formula doesn't
+  // already have a base register.
+  if (!AM.HasBaseReg && AM.Scale == 1) {
+    AM.Scale = 0;
+    AM.HasBaseReg = true;
+  }
+
   return isLegalUse(AM, Kind, AccessTy, TLI);
 }
 
@@ -1244,11 +1272,14 @@ class LSRInstance {
   UseMapTy UseMap;
 
   bool reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
+                          bool HasBaseReg,
                           LSRUse::KindType Kind, const Type *AccessTy);
 
   std::pair<size_t, int64_t> getUse(const SCEV *&Expr,
                                     LSRUse::KindType Kind,
                                     const Type *AccessTy);
+
+  LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU);
 
 public:
   void InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
@@ -1742,6 +1773,7 @@ LSRInstance::OptimizeLoopTermCond() {
 
 bool
 LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
+                                bool HasBaseReg,
                                 LSRUse::KindType Kind, const Type *AccessTy) {
   int64_t NewMinOffset = LU.MinOffset;
   int64_t NewMaxOffset = LU.MaxOffset;
@@ -1754,12 +1786,12 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
     return false;
   // Conservatively assume HasBaseReg is true for now.
   if (NewOffset < LU.MinOffset) {
-    if (!isAlwaysFoldable(LU.MaxOffset - NewOffset, 0, /*HasBaseReg=*/true,
+    if (!isAlwaysFoldable(LU.MaxOffset - NewOffset, 0, HasBaseReg,
                           Kind, AccessTy, TLI))
       return false;
     NewMinOffset = NewOffset;
   } else if (NewOffset > LU.MaxOffset) {
-    if (!isAlwaysFoldable(NewOffset - LU.MinOffset, 0, /*HasBaseReg=*/true,
+    if (!isAlwaysFoldable(NewOffset - LU.MinOffset, 0, HasBaseReg,
                           Kind, AccessTy, TLI))
       return false;
     NewMaxOffset = NewOffset;
@@ -1798,7 +1830,7 @@ LSRInstance::getUse(const SCEV *&Expr,
     // A use already existed with this base.
     size_t LUIdx = P.first->second;
     LSRUse &LU = Uses[LUIdx];
-    if (reconcileNewOffset(LU, Offset, Kind, AccessTy))
+    if (reconcileNewOffset(LU, Offset, /*HasBaseReg=*/true, Kind, AccessTy))
       // Reuse this use.
       return std::make_pair(LUIdx, Offset);
   }
@@ -1817,6 +1849,40 @@ LSRInstance::getUse(const SCEV *&Expr,
   LU.MinOffset = Offset;
   LU.MaxOffset = Offset;
   return std::make_pair(LUIdx, Offset);
+}
+
+/// FindUseWithFormula - Look for a use distinct from OrigLU which is has
+/// a formula that has the same registers as the given formula.
+LSRUse *
+LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
+                                       const LSRUse &OrigLU) {
+  // Search all uses for the formula. This could be more clever. Ignore
+  // ICmpZero uses because they may contain formulae generated by
+  // GenerateICmpZeroScales, in which case adding fixup offsets may
+  // be invalid.
+  for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
+    LSRUse &LU = Uses[LUIdx];
+    if (&LU != &OrigLU &&
+        LU.Kind != LSRUse::ICmpZero &&
+        LU.Kind == OrigLU.Kind && OrigLU.AccessTy == LU.AccessTy &&
+        LU.HasFormulaWithSameRegs(OrigF)) {
+      for (size_t FIdx = 0, NumForms = LU.Formulae.size();
+           FIdx != NumForms; ++FIdx) {
+        Formula &F = LU.Formulae[FIdx];
+        if (F.BaseRegs == OrigF.BaseRegs &&
+            F.ScaledReg == OrigF.ScaledReg &&
+            F.AM.BaseGV == OrigF.AM.BaseGV &&
+            F.AM.Scale == OrigF.AM.Scale &&
+            LU.Kind) {
+          if (F.AM.BaseOffs == 0)
+            return &LU;
+          break;
+        }
+      }
+    }
+  }
+
+  return 0;
 }
 
 void LSRInstance::CollectInterestingTypesAndFactors() {
@@ -2722,6 +2788,128 @@ size_t LSRInstance::EstimateSearchSpaceComplexity() const {
 /// of formulae. This keeps the main solver from taking an extraordinary amount
 /// of time in some worst-case scenarios.
 void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
+  if (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
+    DEBUG(dbgs() << "The search space is too complex.\n");
+
+    DEBUG(dbgs() << "Narrowing the search space by eliminating formulae "
+                    "which use a superset of registers used by other "
+                    "formulae.\n");
+
+    for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
+      LSRUse &LU = Uses[LUIdx];
+      bool Any = false;
+      for (size_t i = 0, e = LU.Formulae.size(); i != e; ++i) {
+        Formula &F = LU.Formulae[i];
+        for (SmallVectorImpl<const SCEV *>::const_iterator
+             I = F.BaseRegs.begin(), E = F.BaseRegs.end(); I != E; ++I) {
+          if (const SCEVConstant *C = dyn_cast<SCEVConstant>(*I)) {
+            Formula NewF = F;
+            NewF.AM.BaseOffs += C->getValue()->getSExtValue();
+            NewF.BaseRegs.erase(NewF.BaseRegs.begin() +
+                                (I - F.BaseRegs.begin()));
+            if (LU.HasFormulaWithSameRegs(NewF)) {
+              DEBUG(dbgs() << "  Deleting "; F.print(dbgs()); dbgs() << '\n');
+              LU.DeleteFormula(F);
+              --i;
+              --e;
+              Any = true;
+              break;
+            }
+          } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(*I)) {
+            if (GlobalValue *GV = dyn_cast<GlobalValue>(U->getValue()))
+              if (!F.AM.BaseGV) {
+                Formula NewF = F;
+                NewF.AM.BaseGV = GV;
+                NewF.BaseRegs.erase(NewF.BaseRegs.begin() +
+                                    (I - F.BaseRegs.begin()));
+                if (LU.HasFormulaWithSameRegs(NewF)) {
+                  DEBUG(dbgs() << "  Deleting "; F.print(dbgs());
+                        dbgs() << '\n');
+                  LU.DeleteFormula(F);
+                  --i;
+                  --e;
+                  Any = true;
+                  break;
+                }
+              }
+          }
+        }
+      }
+      if (Any)
+        LU.RecomputeRegs(LUIdx, RegUses);
+    }
+
+    DEBUG(dbgs() << "After pre-selection:\n";
+          print_uses(dbgs()));
+  }
+
+  if (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
+    DEBUG(dbgs() << "The search space is too complex.\n");
+
+    DEBUG(dbgs() << "Narrowing the search space by assuming that uses "
+                    "separated by a constant offset will use the same "
+                    "registers.\n");
+
+    for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
+      LSRUse &LU = Uses[LUIdx];
+      for (size_t i = 0, e = LU.Formulae.size(); i != e; ++i) {
+        Formula &F = LU.Formulae[i];
+        if (F.AM.BaseOffs != 0 && F.AM.Scale == 0) {
+          if (LSRUse *LUThatHas = FindUseWithSimilarFormula(F, LU)) {
+            if (reconcileNewOffset(*LUThatHas, F.AM.BaseOffs,
+                                   /*HasBaseReg=*/false,
+                                   LU.Kind, LU.AccessTy)) {
+              DEBUG(dbgs() << "  Deleting use "; LU.print(dbgs());
+                    dbgs() << '\n');
+
+              LUThatHas->AllFixupsOutsideLoop &= LU.AllFixupsOutsideLoop;
+
+              // Delete formulae from the new use which are no longer legal.
+              bool Any = false;
+              for (size_t i = 0, e = LUThatHas->Formulae.size(); i != e; ++i) {
+                Formula &F = LUThatHas->Formulae[i];
+                if (!isLegalUse(F.AM,
+                                LUThatHas->MinOffset, LUThatHas->MaxOffset,
+                                LUThatHas->Kind, LUThatHas->AccessTy, TLI)) {
+                  DEBUG(dbgs() << "  Deleting "; F.print(dbgs());
+                        dbgs() << '\n');
+                  LUThatHas->DeleteFormula(F);
+                  --i;
+                  --e;
+                  Any = true;
+                }
+              }
+              if (Any)
+                LUThatHas->RecomputeRegs(LUThatHas - &Uses.front(), RegUses);
+
+              // Update the relocs to reference the new use.
+              for (size_t i = 0, e = Fixups.size(); i != e; ++i) {
+                if (Fixups[i].LUIdx == LUIdx) {
+                  Fixups[i].LUIdx = LUThatHas - &Uses.front();
+                  Fixups[i].Offset += F.AM.BaseOffs;
+                  DEBUG(errs() << "New fixup has offset "
+                               << Fixups[i].Offset << "\n");
+                }
+                if (Fixups[i].LUIdx == NumUses-1)
+                  Fixups[i].LUIdx = LUIdx;
+              }
+
+              // Delete the old use.
+              std::swap(LU, Uses.back());
+              Uses.pop_back();
+              --LUIdx;
+              --NumUses;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    DEBUG(dbgs() << "After pre-selection:\n";
+          print_uses(dbgs()));
+  }
+
   SmallPtrSet<const SCEV *, 4> Taken;
   while (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
     // Ok, we have too many of formulae on our hands to conveniently handle.
