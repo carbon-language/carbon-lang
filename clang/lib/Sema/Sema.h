@@ -4267,9 +4267,9 @@ public:
                                         SourceLocation questionLoc);
 
   /// type checking for vector binary operators.
-  inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
-  inline QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
-                                             SourceLocation l, bool isRel);
+  QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
+                                      SourceLocation l, bool isRel);
 
   /// type checking unary operators (subroutines of ActOnUnaryOp).
   /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4
