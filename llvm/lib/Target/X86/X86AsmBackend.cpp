@@ -76,6 +76,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   case X86::JG_1:  return X86::JG_4;
   case X86::JLE_1: return X86::JLE_4;
   case X86::JL_1:  return X86::JL_4;
+  case X86::TAILJMP_1:
   case X86::JMP_1: return X86::JMP_4;
   case X86::JNE_1: return X86::JNE_4;
   case X86::JNO_1: return X86::JNO_4;
