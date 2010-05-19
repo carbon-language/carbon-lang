@@ -648,7 +648,6 @@ CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
  */
 enum CXCursorKind {
   /* Declarations */
-  CXCursor_FirstDecl                     = 1,
   /**
    * \brief A declaration whose specific kind is not exposed via this
    * interface.
@@ -707,6 +706,7 @@ enum CXCursorKind {
   /** \brief A linkage specification, e.g. 'extern "C"'. */
   CXCursor_LinkageSpec                   = 23,
 
+  CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
   CXCursor_LastDecl                      = CXCursor_LinkageSpec,
 
   /* References */

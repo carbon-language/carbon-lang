@@ -1585,10 +1585,11 @@ static CXString getDeclSpelling(Decl *D) {
     // ObjCCategoryImplDecl returns the category name.
     return createCXString(CIMP->getIdentifier()->getNameStart());
 
-  if (ND->getIdentifier())
-    return createCXString(ND->getIdentifier()->getNameStart());
-
-  return createCXString("");
+  llvm::SmallString<1024> S;
+  llvm::raw_svector_ostream os(S);
+  ND->printName(os);
+  
+  return createCXString(os.str());
 }
 
 CXString clang_getCursorSpelling(CXCursor C) {
