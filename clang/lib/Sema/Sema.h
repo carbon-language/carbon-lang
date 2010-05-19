@@ -3117,7 +3117,9 @@ public:
   QualType CheckTypenameType(ElaboratedTypeKeyword Keyword,
                              NestedNameSpecifier *NNS,
                              const IdentifierInfo &II,
-                             SourceRange Range);
+                             SourceLocation KeywordLoc,
+                             SourceRange NNSRange,
+                             SourceLocation IILoc);
 
   TypeSourceInfo *RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,
                                                     SourceLocation Loc,

@@ -25,6 +25,8 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
+#include <iostream>
+
 /// \brief Perform adjustment on the parameter type of a function.
 ///
 /// This routine adjusts the given parameter type @p T to the actual
@@ -1437,9 +1439,15 @@ namespace {
         return;
       }
 
-      TemplateSpecializationTypeLoc OldTL =
-        cast<TemplateSpecializationTypeLoc>(TInfo->getTypeLoc());
-      TL.copy(OldTL);
+      TypeLoc OldTL = TInfo->getTypeLoc();
+      if (TInfo->getType()->getAs<ElaboratedType>()) {
+        ElaboratedTypeLoc ElabTL = cast<ElaboratedTypeLoc>(OldTL);
+        TemplateSpecializationTypeLoc NamedTL =
+          cast<TemplateSpecializationTypeLoc>(ElabTL.getNamedTypeLoc());
+        TL.copy(NamedTL);
+      }
+      else
+        TL.copy(cast<TemplateSpecializationTypeLoc>(OldTL));
     }
     void VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
       assert(DS.getTypeSpecType() == DeclSpec::TST_typeofExpr);
@@ -1470,6 +1478,44 @@ namespace {
           TL.setBuiltinLoc(DS.getTypeSpecWidthLoc());
       }
     }
+    void VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
+      ElaboratedTypeKeyword Keyword
+        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
+      if (Keyword == ETK_Typename) {
+        TypeSourceInfo *TInfo = 0;
+        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        if (TInfo) {
+          TL.copy(cast<ElaboratedTypeLoc>(TInfo->getTypeLoc()));
+          return;
+        }
+      }
+      TL.setKeywordLoc(Keyword != ETK_None
+                       ? DS.getTypeSpecTypeLoc()
+                       : SourceLocation());
+      const CXXScopeSpec& SS = DS.getTypeSpecScope();
+      TL.setQualifierRange(SS.isEmpty() ? SourceRange(): SS.getRange());
+      Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
+    }
+    void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
+      ElaboratedTypeKeyword Keyword
+        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
+      if (Keyword == ETK_Typename) {
+        TypeSourceInfo *TInfo = 0;
+        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        if (TInfo) {
+          TL.copy(cast<DependentNameTypeLoc>(TInfo->getTypeLoc()));
+          return;
+        }
+      }
+      TL.setKeywordLoc(Keyword != ETK_None
+                       ? DS.getTypeSpecTypeLoc()
+                       : SourceLocation());
+      const CXXScopeSpec& SS = DS.getTypeSpecScope();
+      TL.setQualifierRange(SS.isEmpty() ? SourceRange() : SS.getRange());
+      // FIXME: load appropriate source location.
+      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+    }
+
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
       TL.initialize(DS.getTypeSpecTypeLoc());
@@ -2081,7 +2127,7 @@ QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
   if (T.isNull())
     return T;
   NestedNameSpecifier *NNS;
-  if (SS.isSet() && !SS.isInvalid())
+  if (SS.isValid())
     NNS = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   else {
     if (Keyword == ETK_None)

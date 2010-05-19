@@ -1136,7 +1136,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
           // specialization, we take it as a type name.
           BaseType = CheckTypenameType(ETK_None,
                                        (NestedNameSpecifier *)SS.getScopeRep(),
-                                       *MemberOrBase, SS.getRange());
+                                       *MemberOrBase, SourceLocation(),
+                                       SS.getRange(), IdLoc);
           if (BaseType.isNull())
             return true;
 

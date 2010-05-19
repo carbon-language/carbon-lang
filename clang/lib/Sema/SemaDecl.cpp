@@ -90,8 +90,9 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         // We know from the grammar that this name refers to a type, so build a
         // DependentNameType node to describe the type.
         return CheckTypenameType(ETK_None,
-                                 (NestedNameSpecifier *)SS->getScopeRep(),
-                                 II, SS->getRange()).getAsOpaquePtr();
+                                 (NestedNameSpecifier *)SS->getScopeRep(), II,
+                                 SourceLocation(), SS->getRange(), NameLoc
+                                 ).getAsOpaquePtr();
       }
       
       return 0;

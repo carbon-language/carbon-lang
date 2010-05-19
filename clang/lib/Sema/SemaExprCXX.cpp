@@ -261,7 +261,8 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
       Range = SourceRange(NameLoc);
     }
 
-    return CheckTypenameType(ETK_None, NNS, II, Range).getAsOpaquePtr();
+    return CheckTypenameType(ETK_None, NNS, II, SourceLocation(),
+                             Range, NameLoc).getAsOpaquePtr();
   }
 
   if (ObjectTypePtr)

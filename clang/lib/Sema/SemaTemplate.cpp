@@ -5184,16 +5184,19 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
 static void FillTypeLoc(DependentNameTypeLoc TL,
                         SourceLocation TypenameLoc,
-                        SourceRange QualifierRange) {
-  // FIXME: typename, qualifier range
-  TL.setNameLoc(TypenameLoc);
+                        SourceRange QualifierRange,
+                        SourceLocation NameLoc) {
+  TL.setKeywordLoc(TypenameLoc);
+  TL.setQualifierRange(QualifierRange);
+  TL.setNameLoc(NameLoc);
 }
 
 static void FillTypeLoc(ElaboratedTypeLoc TL,
                         SourceLocation TypenameLoc,
                         SourceRange QualifierRange) {
-  // FIXME: typename, qualifier range
-  TL.setNameLoc(TypenameLoc);
+  // FIXME: inner locations.
+  TL.setKeywordLoc(TypenameLoc);
+  TL.setQualifierRange(QualifierRange);
 }
 
 Sema::TypeResult
@@ -5205,7 +5208,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     return true;
 
   QualType T = CheckTypenameType(ETK_Typename, NNS, II,
-                                 SourceRange(TypenameLoc, IdLoc));
+                                 TypenameLoc, SS.getRange(), IdLoc);
   if (T.isNull())
     return true;
 
@@ -5213,7 +5216,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   if (isa<DependentNameType>(T)) {
     DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
-    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+    FillTypeLoc(TL, TypenameLoc, SS.getRange(), IdLoc);
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
     // FIXME: fill inner type loc
@@ -5249,7 +5252,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
   // FIXME: fill inner type loc
-  FillTypeLoc(TL, TypenameLoc, SS.getRange());
+  FillTypeLoc(TL, TypenameLoc, SS.getRange(), TemplateLoc);
   return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 
@@ -5258,10 +5261,11 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 QualType
 Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
                         NestedNameSpecifier *NNS, const IdentifierInfo &II,
-                        SourceRange Range) {
+                        SourceLocation KeywordLoc, SourceRange NNSRange,
+                        SourceLocation IILoc) {
   CXXScopeSpec SS;
   SS.setScopeRep(NNS);
-  SS.setRange(Range);
+  SS.setRange(NNSRange);
 
   DeclContext *Ctx = computeDeclContext(SS);
   if (!Ctx) {
@@ -5281,7 +5285,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
     return QualType();
 
   DeclarationName Name(&II);
-  LookupResult Result(*this, Name, Range.getEnd(), LookupOrdinaryName);
+  LookupResult Result(*this, Name, IILoc, LookupOrdinaryName);
   LookupQualifiedName(Result, Ctx);
   unsigned DiagID = 0;
   Decl *Referenced = 0;
@@ -5321,7 +5325,9 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   // If we get here, it's because name lookup did not find a
   // type. Emit an appropriate diagnostic and return an error.
-  Diag(Range.getEnd(), DiagID) << Range << Name << Ctx;
+  SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : NNSRange.getBegin(),
+                        IILoc);
+  Diag(IILoc, DiagID) << FullRange << Name << Ctx;
   if (Referenced)
     Diag(Referenced->getLocation(), diag::note_typename_refers_here)
       << Name;
@@ -5393,7 +5399,7 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
 
   NestedNameSpecifier *NNS
     = TransformNestedNameSpecifier(T->getQualifier(),
-                                   /*FIXME:*/SourceRange(getBaseLocation()),
+                                   TL.getQualifierRange(),
                                    ObjectType);
   if (!NNS)
     return QualType();
@@ -5402,7 +5408,7 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
   // context corresponding to the nested-name-specifier, then this
   // typename type will not change; exit early.
   CXXScopeSpec SS;
-  SS.setRange(SourceRange(getBaseLocation()));
+  SS.setRange(TL.getQualifierRange());
   SS.setScopeRep(NNS);
 
   QualType Result;
@@ -5421,18 +5427,38 @@ CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
         NewTemplateId == QualType(TemplateId, 0))
       Result = QualType(T, 0);
     else
-      Result = getDerived().RebuildDependentNameType(T->getKeyword(), 
+      Result = getDerived().RebuildDependentNameType(T->getKeyword(),
                                                      NNS, NewTemplateId);
   } else
-    Result = getDerived().RebuildDependentNameType(T->getKeyword(),
-                                                   NNS, T->getIdentifier(),
-                                                  SourceRange(TL.getNameLoc()));
+    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
+                                                   T->getIdentifier(),
+                                                   TL.getKeywordLoc(),
+                                                   TL.getQualifierRange(),
+                                                   TL.getNameLoc());
 
   if (Result.isNull())
     return QualType();
 
-  DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
-  NewTL.setNameLoc(TL.getNameLoc());
+  if (const ElaboratedType* ElabT = Result->getAs<ElaboratedType>()) {
+    QualType NamedT = ElabT->getNamedType();
+    if (isa<TemplateSpecializationType>(NamedT)) {
+      TemplateSpecializationTypeLoc NamedTLoc
+        = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
+      // FIXME: fill locations
+      NamedTLoc.initializeLocal(TL.getNameLoc());
+    } else {
+      TLB.pushTypeSpec(NamedT).setNameLoc(TL.getNameLoc());
+    }
+    ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
+    NewTL.setKeywordLoc(TL.getKeywordLoc());
+    NewTL.setQualifierRange(TL.getQualifierRange());
+  }
+  else {
+    DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
+    NewTL.setKeywordLoc(TL.getKeywordLoc());
+    NewTL.setQualifierRange(TL.getQualifierRange());
+    NewTL.setNameLoc(TL.getNameLoc());
+  }
   return Result;
 }
 

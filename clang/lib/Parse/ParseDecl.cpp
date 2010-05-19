@@ -1877,7 +1877,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::kw___attribute))
     Attr.reset(ParseGNUAttributes());
 
-  CXXScopeSpec SS;
+  CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
     if (ParseOptionalCXXScopeSpecifier(SS, 0, false))
       return;

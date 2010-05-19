@@ -2356,12 +2356,15 @@ void TypeLocReader::VisitTemplateSpecializationTypeLoc(
                                           Record, Idx));
 }
 void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setQualifierRange(Reader.ReadSourceRange(Record, Idx));
 }
 void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
+  TL.setKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setQualifierRange(Reader.ReadSourceRange(Record, Idx));
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {

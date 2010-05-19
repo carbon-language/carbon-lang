@@ -269,6 +269,16 @@ public:
     return TypeClass::classof(Ty);
   }
 
+  static bool classof(const TypeLoc *TL) {
+    return Derived::classofType(TL->getTypePtr());
+  }
+  static bool classof(const UnqualTypeLoc *TL) {
+    return Derived::classofType(TL->getTypePtr());
+  }
+  static bool classof(const Derived *TL) {
+    return true;
+  }
+
   TypeLoc getNextTypeLoc() const {
     return getNextTypeLoc(asDerived()->getInnerType());
   }
@@ -1188,18 +1198,110 @@ class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeType> {
 };
 
-// FIXME: locations for the nested name specifier;  at the very least,
-// a SourceRange.
-class ElaboratedTypeLoc :
-    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                     ElaboratedTypeLoc,
-                                     ElaboratedType> {
+struct ElaboratedLocInfo {
+  SourceLocation KeywordLoc;
+  SourceRange QualifierRange;
 };
 
-// FIXME: locations for the typename keyword and nested name specifier.
-class DependentNameTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                         DependentNameTypeLoc,
-                                                         DependentNameType> {
+class ElaboratedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                 ElaboratedTypeLoc,
+                                                 ElaboratedType,
+                                                 ElaboratedLocInfo> {
+public:
+  SourceLocation getKeywordLoc() const {
+    return this->getLocalData()->KeywordLoc;
+  }
+  void setKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->KeywordLoc = Loc;
+  }
+
+  SourceRange getQualifierRange() const {
+    return this->getLocalData()->QualifierRange;
+  }
+  void setQualifierRange(SourceRange Range) {
+    this->getLocalData()->QualifierRange = Range;
+  }
+
+  SourceRange getSourceRange() const {
+    if (getKeywordLoc().isValid())
+      if (getQualifierRange().getEnd().isValid())
+        return SourceRange(getKeywordLoc(), getQualifierRange().getEnd());
+      else
+        return SourceRange(getKeywordLoc());
+    else
+      return getQualifierRange();
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setKeywordLoc(Loc);
+    setQualifierRange(SourceRange(Loc));
+  }
+
+  TypeLoc getNamedTypeLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  QualType getInnerType() const {
+    return getTypePtr()->getNamedType();
+  }
+
+  void copy(ElaboratedTypeLoc Loc) {
+    unsigned size = getFullDataSize();
+    assert(size == Loc.getFullDataSize());
+    memcpy(Data, Loc.Data, size);
+  }
+};
+
+struct DependentNameLocInfo {
+  SourceLocation KeywordLoc;
+  SourceRange QualifierRange;
+  SourceLocation NameLoc;
+};
+
+class DependentNameTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                    DependentNameTypeLoc,
+                                                    DependentNameType,
+                                                    DependentNameLocInfo> {
+public:
+  SourceLocation getKeywordLoc() const {
+    return this->getLocalData()->KeywordLoc;
+  }
+  void setKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->KeywordLoc = Loc;
+  }
+
+  SourceRange getQualifierRange() const {
+    return this->getLocalData()->QualifierRange;
+  }
+  void setQualifierRange(SourceRange Range) {
+    this->getLocalData()->QualifierRange = Range;
+  }
+
+  SourceLocation getNameLoc() const {
+    return this->getLocalData()->NameLoc;
+  }
+  void setNameLoc(SourceLocation Loc) {
+    this->getLocalData()->NameLoc = Loc;
+  }
+
+  SourceRange getSourceRange() const {
+    if (getKeywordLoc().isValid())
+      return SourceRange(getKeywordLoc(), getNameLoc());
+    else
+      return SourceRange(getQualifierRange().getBegin(), getNameLoc());
+  }
+
+  void copy(DependentNameTypeLoc Loc) {
+    unsigned size = getFullDataSize();
+    assert(size == Loc.getFullDataSize());
+    memcpy(Data, Loc.Data, size);
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setKeywordLoc(Loc);
+    setQualifierRange(SourceRange(Loc));
+    setNameLoc(Loc);
+  }
 };
 
 }
