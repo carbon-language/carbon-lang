@@ -179,6 +179,8 @@ class DwarfDebug {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
+  typedef SmallVector<DbgScope *, 2> ScopeVector;
+  SmallPtrSet<const MachineInstr *, 8> InsnsBeginScopeSet;
   SmallPtrSet<const MachineInstr *, 8> InsnsEndScopeSet;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This

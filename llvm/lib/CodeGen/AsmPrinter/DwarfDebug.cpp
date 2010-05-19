@@ -2230,8 +2230,11 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
         Label = recordSourceLine(DL.getLine(), DL.getCol(), 0);
         PrevInstLoc = DL;
         PrevLabel = Label;
-        LabelsBeforeInsn[MI] = Label;
       }
+
+      // If this instruction begins a scope then note down corresponding label.
+      if (InsnsBeginScopeSet.count(MI) != 0)
+        LabelsBeforeInsn[MI] = Label;
     }
 
     return;
@@ -2255,7 +2258,6 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
         Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
         PrevInstLoc = DL;
         PrevLabel = Label;
-        LabelsBeforeInsn[MI] = Label;
       }
       DI->second->setDbgValueLabel(Label);
     }
@@ -2271,9 +2273,11 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
     Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
     PrevInstLoc = DL;
     PrevLabel = Label;
-    LabelsBeforeInsn[MI] = Label;
   }
 
+  // If this instruction begins a scope then note down corresponding label.
+  if (InsnsBeginScopeSet.count(MI) != 0)
+    LabelsBeforeInsn[MI] = Label;
 }
 
 /// endScope - Process end of a scope.
@@ -2531,8 +2535,9 @@ void DwarfDebug::identifyScopeMarkers() {
       continue;
     for (SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin(),
            RE = Ranges.end(); RI != RE; ++RI) {
-      assert(RI->first && "DbgRange does not have first instruction!");
-      assert(RI->second && "DbgRange does not have second instruction!");
+      assert(RI->first && "DbgRange does not have first instruction!");      
+      assert(RI->second && "DbgRange does not have second instruction!");      
+      InsnsBeginScopeSet.insert(RI->first);
       InsnsEndScopeSet.insert(RI->second);
     }
   }
@@ -2626,6 +2631,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Clear debug info
   CurrentFnDbgScope = NULL;
   DeleteContainerSeconds(DbgScopeMap);
+  InsnsBeginScopeSet.clear();
   InsnsEndScopeSet.clear();
   DbgValueStartMap.clear();
   ConcreteScopes.clear();
