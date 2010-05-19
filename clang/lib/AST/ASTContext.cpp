@@ -4661,6 +4661,87 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
   return QualType();
 }
 
+/// mergeObjCGCQualifiers - This routine merges ObjC's GC attribute of 'LHS' and
+/// 'RHS' attributes and returns the merged version; including for function
+/// return types.
+QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
+  QualType LHSCan = getCanonicalType(LHS),
+  RHSCan = getCanonicalType(RHS);
+  // If two types are identical, they are compatible.
+  if (LHSCan == RHSCan)
+    return LHS;
+  if (RHSCan->isFunctionType()) {
+    if (!LHSCan->isFunctionType())
+      return QualType();
+    QualType OldReturnType = 
+      cast<FunctionType>(RHSCan.getTypePtr())->getResultType();
+    QualType NewReturnType =
+      cast<FunctionType>(LHSCan.getTypePtr())->getResultType();
+    QualType ResReturnType = 
+      mergeObjCGCQualifiers(NewReturnType, OldReturnType);
+    if (ResReturnType.isNull())
+      return QualType();
+    if (ResReturnType == NewReturnType || ResReturnType == OldReturnType) {
+      // id foo(); ... __strong id foo(); or: __strong id foo(); ... id foo();
+      // In either case, use OldReturnType to build the new function type.
+      const FunctionType *F = LHS->getAs<FunctionType>();
+      if (const FunctionProtoType *FPT = cast<FunctionProtoType>(F)) {
+        FunctionType::ExtInfo Info = getFunctionExtInfo(LHS);
+        QualType ResultType
+          = getFunctionType(OldReturnType, FPT->arg_type_begin(),
+                                  FPT->getNumArgs(), FPT->isVariadic(),
+                                  FPT->getTypeQuals(),
+                                  FPT->hasExceptionSpec(),
+                                  FPT->hasAnyExceptionSpec(),
+                                  FPT->getNumExceptions(),
+                                  FPT->exception_begin(),
+                                  Info);
+        return ResultType;
+      }
+    }
+    return QualType();
+  }
+  
+  // If the qualifiers are different, the types can still be merged.
+  Qualifiers LQuals = LHSCan.getLocalQualifiers();
+  Qualifiers RQuals = RHSCan.getLocalQualifiers();
+  if (LQuals != RQuals) {
+    // If any of these qualifiers are different, we have a type mismatch.
+    if (LQuals.getCVRQualifiers() != RQuals.getCVRQualifiers() ||
+        LQuals.getAddressSpace() != RQuals.getAddressSpace())
+      return QualType();
+    
+    // Exactly one GC qualifier difference is allowed: __strong is
+    // okay if the other type has no GC qualifier but is an Objective
+    // C object pointer (i.e. implicitly strong by default).  We fix
+    // this by pretending that the unqualified type was actually
+    // qualified __strong.
+    Qualifiers::GC GC_L = LQuals.getObjCGCAttr();
+    Qualifiers::GC GC_R = RQuals.getObjCGCAttr();
+    assert((GC_L != GC_R) && "unequal qualifier sets had only equal elements");
+    
+    if (GC_L == Qualifiers::Weak || GC_R == Qualifiers::Weak)
+      return QualType();
+    
+    if (GC_L == Qualifiers::Strong)
+      return LHS;
+    if (GC_R == Qualifiers::Strong)
+      return RHS;
+    return QualType();
+  }
+  
+  if (LHSCan->isObjCObjectPointerType() && RHSCan->isObjCObjectPointerType()) {
+    QualType LHSBaseQT = LHS->getAs<ObjCObjectPointerType>()->getPointeeType();
+    QualType RHSBaseQT = RHS->getAs<ObjCObjectPointerType>()->getPointeeType();
+    QualType ResQT = mergeObjCGCQualifiers(LHSBaseQT, RHSBaseQT);
+    if (ResQT == LHSBaseQT)
+      return LHS;
+    if (ResQT == RHSBaseQT)
+      return RHS;
+  }
+  return QualType();
+}
+
 //===----------------------------------------------------------------------===//
 //                         Integer Predicates
 //===----------------------------------------------------------------------===//

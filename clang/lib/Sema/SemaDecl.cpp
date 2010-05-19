@@ -1077,10 +1077,18 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       = cast<FunctionType>(OldQType.getTypePtr())->getResultType();
     QualType NewReturnType
       = cast<FunctionType>(NewQType.getTypePtr())->getResultType();
+    QualType ResQT;
     if (OldReturnType != NewReturnType) {
-      Diag(New->getLocation(), diag::err_ovl_diff_return_type);
-      Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-      return true;
+      if (NewReturnType->isObjCObjectPointerType()
+          && OldReturnType->isObjCObjectPointerType())
+        ResQT = Context.mergeObjCGCQualifiers(NewQType, OldQType);
+      if (ResQT.isNull()) {
+        Diag(New->getLocation(), diag::err_ovl_diff_return_type);
+        Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
+        return true;
+      }
+      else
+        NewQType = ResQT;
     }
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
@@ -1364,6 +1372,9 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
         = Context.getCanonicalType(New->getType())->getAs<ArrayType>();
       if (OldArray->getElementType() == NewArray->getElementType())
         MergedT = Old->getType();
+    } else if (New->getType()->isObjCObjectPointerType()
+               && Old->getType()->isObjCObjectPointerType()) {
+        MergedT = Context.mergeObjCGCQualifiers(New->getType(), Old->getType());
     }
   } else {
     MergedT = Context.mergeTypes(New->getType(), Old->getType());

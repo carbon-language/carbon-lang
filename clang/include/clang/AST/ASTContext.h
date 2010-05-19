@@ -1193,6 +1193,8 @@ public:
   // Functions for calculating composite types
   QualType mergeTypes(QualType, QualType, bool OfBlockPointer=false);
   QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false);
+  
+  QualType mergeObjCGCQualifiers(QualType, QualType);
 
   /// UsualArithmeticConversionsType - handles the various conversions
   /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)
