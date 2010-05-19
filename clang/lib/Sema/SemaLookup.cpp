@@ -665,6 +665,8 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   //
   DeclContext *OutsideOfTemplateParamDC = 0;
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
+    DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
@@ -675,10 +677,11 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     }
     if (Found) {
       R.resolveKind();
+      if (S->isClassScope())
+        R.setNamingClass(dyn_cast<CXXRecordDecl>(Ctx));
       return true;
     }
 
-    DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
     if (!Ctx && S->isTemplateParamScope() && OutsideOfTemplateParamDC &&
         S->getParent() && !S->getParent()->isTemplateParamScope()) {
       // We've just searched the last template parameter scope and
