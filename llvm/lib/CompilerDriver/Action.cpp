@@ -67,7 +67,20 @@ namespace {
     argv.push_back(0);  // null terminate list.
 
     // Invoke the program.
-    return sys::Program::ExecuteAndWait(prog, &argv[0], 0, &redirects[0]);
+    int ret = sys::Program::ExecuteAndWait(prog, &argv[0], 0, &redirects[0]);
+
+    if (ret < 0) {
+      const char** B = &argv[0];
+
+      errs() << "Segmentation fault:";
+      while (*B)
+        errs() << ' ' << *(B++);
+      errs() << '\n';
+
+      return 1;
+    }
+
+    return ret;
   }
 
   void print_string (const std::string& str) {
