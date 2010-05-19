@@ -255,3 +255,23 @@ namespace test1 {
     foo(a ? a->x() : 0);
   }
 }
+
+namespace rdar7998817 {
+  class X { 
+    X(X&); // expected-note{{declared private here}}
+
+    struct ref { };
+
+  public:
+    X();
+    X(ref);
+    
+    operator ref();
+  };
+
+  void f(bool B) {
+    X x;
+    (void)(B? x // expected-error{{calling a private constructor of class 'rdar7998817::X'}}
+           : X());
+  }
+}

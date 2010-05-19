@@ -2265,9 +2265,32 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
   //   After those conversions, one of the following shall hold:
   //   -- The second and third operands have the same type; the result
-  //      is of that type.
-  if (Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy))
+  //      is of that type. If the operands have class type, the result
+  //      is a prvalue temporary of the result type, which is
+  //      copy-initialized from either the second operand or the third
+  //      operand depending on the value of the first operand.
+  if (Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy)) {
+    if (LTy->isRecordType()) {
+      // The operands have class type. Make a temporary copy.
+      InitializedEntity Entity = InitializedEntity::InitializeTemporary(LTy);
+      OwningExprResult LHSCopy = PerformCopyInitialization(Entity, 
+                                                           SourceLocation(), 
+                                                           Owned(LHS));
+      if (LHSCopy.isInvalid())
+        return QualType();
+        
+      OwningExprResult RHSCopy = PerformCopyInitialization(Entity, 
+                                                           SourceLocation(), 
+                                                           Owned(RHS));
+      if (RHSCopy.isInvalid())
+        return QualType();
+      
+      LHS = LHSCopy.takeAs<Expr>();
+      RHS = RHSCopy.takeAs<Expr>();
+    }
+
     return LTy;
+  }
 
   // Extension: conditional operator involving vector types.
   if (LTy->isVectorType() || RTy->isVectorType()) 
