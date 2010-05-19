@@ -6024,6 +6024,10 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   SDValue InVal = N->getOperand(1);
   SDValue EltNo = N->getOperand(2);
 
+  // If the inserted element is an UNDEF, just use the input vector.
+  if (InVal.getOpcode() == ISD::UNDEF)
+    return InVec;
+
   // If the invec is a BUILD_VECTOR and if EltNo is a constant, build a new
   // vector with the inserted element.
   if (InVec.getOpcode() == ISD::BUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
