@@ -848,6 +848,7 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
+let neverHasSideEffects = 1 in {
 def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
                     Pseudo, IIC_iALUi,
            !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
@@ -867,6 +868,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                    []> {
     let Inst{25} = 1;
 }
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
@@ -2203,6 +2205,7 @@ def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
+let neverHasSideEffects = 1 in {
 def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
                 IIC_iCMOVr, "mov", "\t$dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2226,6 +2229,7 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
                 RegConstraint<"$false = $dst">, UnaryDP {
   let Inst{25} = 1;
 }
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics

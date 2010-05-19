@@ -875,6 +875,7 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 
 
 // 16-bit movcc in IT blocks for Thumb2.
+let neverHasSideEffects = 1 in {
 def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
               T1Special<{1,0,?,?}>;
@@ -882,9 +883,11 @@ def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
 def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
               T1General<{1,0,0,?,?}>;
+} // neverHasSideEffects
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
+let neverHasSideEffects = 1 in {
 def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
                     "adr$p\t$dst, #$label", []>,
                 T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
@@ -893,6 +896,7 @@ def tLEApcrelJT : T1I<(outs tGPR:$dst),
                       (ins i32imm:$label, nohash_imm:$id, pred:$p),
                       IIC_iALUi, "adr$p\t$dst, #${label}_${id}", []>,
                   T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

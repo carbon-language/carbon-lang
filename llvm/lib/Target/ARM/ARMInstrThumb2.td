@@ -777,6 +777,7 @@ multiclass T2I_bin_rrot_DO<bits<3> opcod, string opc> {
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
+let neverHasSideEffects = 1 in {
 def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
                       "adr$p.w\t$dst, #$label", []> {
   let Inst{31-27} = 0b11110;
@@ -798,6 +799,7 @@ def t2LEApcrelJT : T2XI<(outs GPR:$dst),
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
 }
+} // neverHasSideEffects
 
 // ADD r, sp, {so_imm|i12}
 def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
@@ -2143,6 +2145,7 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
+let neverHasSideEffects = 1 in {
 def t2MOVCCr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true), IIC_iCMOVr,
                    "mov", ".w\t$dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2194,6 +2197,7 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs GPR:$dst),
                              (ins GPR:$false, GPR:$true, i32imm:$rhs),
                              IIC_iCMOVsi, "ror", ".w\t$dst, $true, $rhs", []>,
                  RegConstraint<"$false = $dst">;
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics
