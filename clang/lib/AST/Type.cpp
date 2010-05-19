@@ -1163,23 +1163,40 @@ void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getBaseType(), qual_begin(), getNumProtocols());
 }
 
-Linkage Type::getLinkage() const { 
-  // C++ [basic.link]p8:
-  //   Names not covered by these rules have no linkage.
+/// \brief Determine the linkage of this type.
+Linkage Type::getLinkage() const {
   if (this != CanonicalType.getTypePtr())
     return CanonicalType->getLinkage();
+  
+  if (!LinkageKnown) {
+    CachedLinkage = getLinkageImpl();
+    LinkageKnown = true;
+  }
+  
+  return static_cast<clang::Linkage>(CachedLinkage);
+}
 
+Linkage Type::getLinkageImpl() const { 
+  // C++ [basic.link]p8:
+  //   Names not covered by these rules have no linkage.
   return NoLinkage; 
 }
 
-Linkage BuiltinType::getLinkage() const {
+void Type::ClearLinkageCache() {
+  if (this != CanonicalType.getTypePtr())
+    CanonicalType->ClearLinkageCache();
+  else
+    LinkageKnown = false;
+}
+
+Linkage BuiltinType::getLinkageImpl() const {
   // C++ [basic.link]p8:
   //   A type is said to have linkage if and only if:
   //     - it is a fundamental type (3.9.1); or
   return ExternalLinkage;
 }
 
-Linkage TagType::getLinkage() const {
+Linkage TagType::getLinkageImpl() const {
   // C++ [basic.link]p8:
   //     - it is a class or enumeration type that is named (or has a name for
   //       linkage purposes (7.1.3)) and the name has linkage; or
@@ -1190,39 +1207,39 @@ Linkage TagType::getLinkage() const {
 // C++ [basic.link]p8:
 //   - it is a compound type (3.9.2) other than a class or enumeration, 
 //     compounded exclusively from types that have linkage; or
-Linkage ComplexType::getLinkage() const {
+Linkage ComplexType::getLinkageImpl() const {
   return ElementType->getLinkage();
 }
 
-Linkage PointerType::getLinkage() const {
+Linkage PointerType::getLinkageImpl() const {
   return PointeeType->getLinkage();
 }
 
-Linkage BlockPointerType::getLinkage() const {
+Linkage BlockPointerType::getLinkageImpl() const {
   return PointeeType->getLinkage();
 }
 
-Linkage ReferenceType::getLinkage() const {
+Linkage ReferenceType::getLinkageImpl() const {
   return PointeeType->getLinkage();
 }
 
-Linkage MemberPointerType::getLinkage() const {
+Linkage MemberPointerType::getLinkageImpl() const {
   return minLinkage(Class->getLinkage(), PointeeType->getLinkage());
 }
 
-Linkage ArrayType::getLinkage() const {
+Linkage ArrayType::getLinkageImpl() const {
   return ElementType->getLinkage();
 }
 
-Linkage VectorType::getLinkage() const {
+Linkage VectorType::getLinkageImpl() const {
   return ElementType->getLinkage();
 }
 
-Linkage FunctionNoProtoType::getLinkage() const {
+Linkage FunctionNoProtoType::getLinkageImpl() const {
   return getResultType()->getLinkage();
 }
 
-Linkage FunctionProtoType::getLinkage() const {
+Linkage FunctionProtoType::getLinkageImpl() const {
   Linkage L = getResultType()->getLinkage();
   for (arg_type_iterator A = arg_type_begin(), AEnd = arg_type_end();
        A != AEnd; ++A)
@@ -1231,10 +1248,10 @@ Linkage FunctionProtoType::getLinkage() const {
   return L;
 }
 
-Linkage ObjCObjectType::getLinkage() const {
+Linkage ObjCObjectType::getLinkageImpl() const {
   return ExternalLinkage;
 }
 
-Linkage ObjCObjectPointerType::getLinkage() const {
+Linkage ObjCObjectPointerType::getLinkageImpl() const {
   return ExternalLinkage;
 }

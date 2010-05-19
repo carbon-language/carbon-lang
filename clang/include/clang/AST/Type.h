@@ -768,15 +768,25 @@ private:
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
   bool Dependent : 1;
-
+  
+  /// \brief Whether the linkage of this type is already known.
+  mutable bool LinkageKnown : 1;
+  
+  /// \brief Linkage of this type.
+  mutable unsigned CachedLinkage : 2;
+  
 protected:
-  enum { BitsRemainingInType = 23 };
+  /// \brief Compute the linkage of this type.
+  virtual Linkage getLinkageImpl() const;
+  
+  enum { BitsRemainingInType = 20 };
 
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool dependent)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
-      TC(tc), Dependent(dependent) {}
+      TC(tc), Dependent(dependent), LinkageKnown(false), 
+      CachedLinkage(NoLinkage) {}
   virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;
@@ -977,10 +987,13 @@ public:
   /// set of type specifiers.
   bool isSpecifierType() const;
 
-  const char *getTypeClassName() const;
-
   /// \brief Determine the linkage of this type.
-  virtual Linkage getLinkage() const;
+  Linkage getLinkage() const;
+  
+  /// \brief Note that the linkage is no longer known.
+  void ClearLinkageCache();
+  
+  const char *getTypeClassName() const;
 
   QualType getCanonicalTypeInternal() const {
     return CanonicalType;
@@ -1055,6 +1068,10 @@ public:
   };
 private:
   Kind TypeKind;
+  
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   BuiltinType(Kind K)
     : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent)),
@@ -1082,8 +1099,6 @@ public:
     return TypeKind >= Float && TypeKind <= LongDouble;
   }
 
-  virtual Linkage getLinkage() const;
-
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
 };
@@ -1098,6 +1113,10 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
     ElementType(Element) {
   }
   friend class ASTContext;  // ASTContext creates these.
+
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   QualType getElementType() const { return ElementType; }
 
@@ -1110,8 +1129,6 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Element) {
     ID.AddPointer(Element.getAsOpaquePtr());
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
@@ -1126,6 +1143,10 @@ class PointerType : public Type, public llvm::FoldingSetNode {
     Type(Pointer, CanonicalPtr, Pointee->isDependentType()), PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
+
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
 
   QualType getPointeeType() const { return PointeeType; }
@@ -1139,8 +1160,6 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
@@ -1157,6 +1176,10 @@ class BlockPointerType : public Type, public llvm::FoldingSetNode {
     PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
+  
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
 
   // Get the pointee type. Pointee is required to always be a function type.
@@ -1171,8 +1194,6 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
       ID.AddPointer(Pointee.getAsOpaquePtr());
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == BlockPointer;
@@ -1209,6 +1230,9 @@ protected:
     PointeeType(Referencee), SpelledAsLValue(SpelledAsLValue),
     InnerRef(Referencee->isReferenceType()) {
   }
+  
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   bool isSpelledAsLValue() const { return SpelledAsLValue; }
   bool isInnerRef() const { return InnerRef; }
@@ -1231,8 +1255,6 @@ public:
     ID.AddPointer(Referencee.getAsOpaquePtr());
     ID.AddBoolean(SpelledAsLValue);
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == LValueReference ||
@@ -1290,6 +1312,10 @@ class MemberPointerType : public Type, public llvm::FoldingSetNode {
     PointeeType(Pointee), Class(Cls) {
   }
   friend class ASTContext; // ASTContext creates these.
+  
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
 
   QualType getPointeeType() const { return PointeeType; }
@@ -1307,8 +1333,6 @@ public:
     ID.AddPointer(Pointee.getAsOpaquePtr());
     ID.AddPointer(Class);
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == MemberPointer;
@@ -1351,6 +1375,9 @@ protected:
       ElementType(et), SizeModifier(sm), IndexTypeQuals(tq) {}
 
   friend class ASTContext;  // ASTContext creates these.
+
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const {
@@ -1360,8 +1387,6 @@ public:
     return Qualifiers::fromCVRMask(IndexTypeQuals);
   }
   unsigned getIndexTypeCVRQualifiers() const { return IndexTypeQuals; }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
@@ -1638,6 +1663,9 @@ protected:
     : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType),
       NumElements(nElements), AltiVec(isAltiVec), Pixel(isPixel) {}
   friend class ASTContext;  // ASTContext creates these.
+  
+  virtual Linkage getLinkageImpl() const;
+  
 public:
 
   QualType getElementType() const { return ElementType; }
@@ -1663,8 +1691,6 @@ public:
     ID.AddBoolean(isAltiVec);
     ID.AddBoolean(isPixel);
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector;
@@ -1873,6 +1899,10 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
                    /*Dependent=*/false, Info) {}
   friend class ASTContext;  // ASTContext creates these.
+  
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   // No additional state past what FunctionType provides.
 
@@ -1889,8 +1919,6 @@ public:
     ID.AddInteger(Info.getNoReturn());
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
@@ -1955,6 +1983,9 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
 
   friend class ASTContext;  // ASTContext creates these.
 
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   unsigned getNumArgs() const { return NumArgs; }
   QualType getArgType(unsigned i) const {
@@ -1994,8 +2025,6 @@ public:
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
@@ -2201,6 +2230,8 @@ class TagType : public Type {
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
 
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   TagDecl *getDecl() const { return decl.getPointer(); }
 
@@ -2208,8 +2239,6 @@ public:
   /// defined.
   bool isBeingDefined() const { return decl.getInt(); }
   void setBeingDefined(bool Def) const { decl.setInt(Def? 1 : 0); }
-
-  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
@@ -2813,6 +2842,9 @@ protected:
       NumProtocols(0),
       BaseType(QualType(this_(), 0)) {}
 
+protected:
+  Linkage getLinkageImpl() const; // key function
+  
 public:
   /// getBaseType - Gets the base type of this object type.  This is
   /// always (possibly sugar for) one of:
@@ -2863,8 +2895,6 @@ public:
   
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
-
-  Linkage getLinkage() const; // key function
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCObject ||
@@ -2974,6 +3004,9 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
       PointeeType(Pointee) {}
   friend class ASTContext;  // ASTContext creates these.
 
+protected:
+  virtual Linkage getLinkageImpl() const;
+  
 public:
   void Destroy(ASTContext& C);
 
@@ -3075,8 +3108,6 @@ public:
   
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
-
-  virtual Linkage getLinkage() const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());

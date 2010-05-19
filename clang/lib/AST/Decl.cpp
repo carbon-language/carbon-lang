@@ -1469,6 +1469,12 @@ TagDecl* TagDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }
 
+void TagDecl::setTypedefForAnonDecl(TypedefDecl *TDD) { 
+  TypedefDeclOrQualifier = TDD; 
+  if (TypeForDecl)
+    TypeForDecl->ClearLinkageCache();
+}
+
 void TagDecl::startDefinition() {
   if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
     TagT->decl.setPointer(this);

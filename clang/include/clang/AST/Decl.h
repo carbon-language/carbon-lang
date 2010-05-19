@@ -1807,8 +1807,9 @@ public:
   TypedefDecl *getTypedefForAnonDecl() const {
     return hasExtInfo() ? 0 : TypedefDeclOrQualifier.get<TypedefDecl*>();
   }
-  void setTypedefForAnonDecl(TypedefDecl *TDD) { TypedefDeclOrQualifier = TDD; }
-
+    
+  void setTypedefForAnonDecl(TypedefDecl *TDD);
+    
   NestedNameSpecifier *getQualifier() const {
     return hasExtInfo() ? TypedefDeclOrQualifier.get<ExtInfo*>()->NNS : 0;
   }
