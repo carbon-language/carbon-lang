@@ -31,7 +31,7 @@ namespace {
     DeclContext *Owner;
     const MultiLevelTemplateArgumentList &TemplateArgs;
 
-    bool InstantiateAttrs(Decl *Tmpl, Decl *New);
+    void InstantiateAttrs(Decl *Tmpl, Decl *New);
       
   public:
     typedef Sema::OwningExprResult OwningExprResult;
@@ -143,7 +143,7 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
 }
 
 // FIXME: Is this too simple?
-bool TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
+void TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
   for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr; 
        TmplAttr = TmplAttr->getNext()) {
     
@@ -152,8 +152,6 @@ bool TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
     
     New->addAttr(NewAttr);
   }
-  
-  return false;
 }
 
 Decl *
@@ -179,9 +177,7 @@ TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
                                  D->getQualifier(),
                                  D->getTargetNameLoc(),
                                  D->getNamespace());
-  InstantiateAttrs(D, Inst);  
   Owner->addDecl(Inst);
-
   return Inst;
 }
 
@@ -357,8 +353,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
   Var->setAccess(D->getAccess());
   Var->setUsed(D->isUsed());
-  InstantiateAttrs(D, Var);  
-
+  
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
   bool Redeclaration = false;
@@ -536,8 +531,6 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
   FriendDecl *FD =
     FriendDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
                        cast<NamedDecl>(NewND), D->getFriendLoc());
-  InstantiateAttrs(D, FD);  
-
   FD->setAccess(AS_public);
   Owner->addDecl(FD);
   return FD;
@@ -571,7 +564,6 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
   if (SubstQualifier(D, Enum)) return 0;
-  InstantiateAttrs(D, Enum);
   Owner->addDecl(Enum);
   Enum->startDefinition();
 
@@ -771,8 +763,6 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                                 PrevClassTemplate);
   RecordInst->setDescribedClassTemplate(Inst);
 
-  InstantiateAttrs(D, Inst);
-
   if (isFriend) {
     if (PrevClassTemplate)
       Inst->setAccess(PrevClassTemplate->getAccess());
@@ -881,8 +871,6 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
       !(isFriend && !D->getTemplatedDecl()->isThisDeclarationADefinition()))
     InstTemplate->setInstantiatedFromMemberTemplate(D);
   
-  InstantiateAttrs(D, InstTemplate);
-
   // Make declarations visible in the appropriate context.
   if (!isFriend)
     Owner->addDecl(InstTemplate);
@@ -906,8 +894,6 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner,
                             D->getLocation(), D->getIdentifier(),
                             D->getTagKeywordLoc(), PrevDecl);
-
-  InstantiateAttrs(D, Record);
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(D, Record))
@@ -1436,7 +1422,6 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                  TTPT->getName(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
-  InstantiateAttrs(D, Inst);
 
   if (D->hasDefaultArgument())
     Inst->setDefaultArgument(D->getDefaultArgumentInfo(), false);  
@@ -1480,7 +1465,6 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   if (Invalid)
     Param->setInvalidDecl();
   
-  InstantiateAttrs(D, Param);
   Param->setDefaultArgument(D->getDefaultArgument());
   
   // Introduce this template parameter's instantiation into the instantiation 
@@ -1510,8 +1494,7 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
                                        D->getDepth() - 1, D->getPosition(),
                                        D->getIdentifier(), InstParams);
   Param->setDefaultArgument(D->getDefaultArgument());
-  InstantiateAttrs(D, Param);
-
+  
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
@@ -1529,8 +1512,6 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
                                  D->getIdentLocation(), 
                                  D->getNominatedNamespace(), 
                                  D->getCommonAncestor());
-  InstantiateAttrs(D, Inst);
-
   Owner->addDecl(Inst);
   return Inst;
 }
@@ -1554,7 +1535,6 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
                                        D->getTargetNestedNameDecl(),
                                        D->getDeclName(),
                                        D->isTypeName());
-  InstantiateAttrs(D, NewUD);
 
   CXXScopeSpec SS;
   SS.setScopeRep(D->getTargetNestedNameDecl());
@@ -1635,10 +1615,8 @@ Decl * TemplateDeclInstantiator
                                   D->getDeclName(), 0,
                                   /*instantiation*/ true,
                                   /*typename*/ true, D->getTypenameLoc());
-  if (UD) {
-    InstantiateAttrs(D, UD);
+  if (UD)
     SemaRef.Context.setInstantiatedFromUsingDecl(cast<UsingDecl>(UD), D);
-  }
 
   return UD;
 }
@@ -1662,10 +1640,8 @@ Decl * TemplateDeclInstantiator
                                   D->getDeclName(), 0,
                                   /*instantiation*/ true,
                                   /*typename*/ false, SourceLocation());
-  if (UD) {
-    InstantiateAttrs(D, UD);
+  if (UD)
     SemaRef.Context.setInstantiatedFromUsingDecl(cast<UsingDecl>(UD), D);
-  }
 
   return UD;
 }
@@ -1844,9 +1820,8 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
     return 0;
 
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
-  InstPartialSpec->setTypeAsWritten(WrittenTy);  
-  InstantiateAttrs(PartialSpec, InstPartialSpec);
-
+  InstPartialSpec->setTypeAsWritten(WrittenTy);
+  
   // Add this partial specialization to the set of class template partial
   // specializations.
   ClassTemplate->getPartialSpecializations().InsertNode(InstPartialSpec,
@@ -1910,9 +1885,6 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                     FunctionDecl *Tmpl) {
   if (Tmpl->isDeleted())
     New->setDeleted();
-
-  if (InstantiateAttrs(Tmpl, New))
-    return true;
 
   // If we are performing substituting explicitly-specified template arguments
   // or deduced template arguments into a function template and we reach this

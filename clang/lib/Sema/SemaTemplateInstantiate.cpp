@@ -1036,9 +1036,7 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
                                         OldParm->getStorageClassAsWritten());
   if (!NewParm)
     return 0;
-                  
-  // FIXME: Instantiate attributes
-  
+                                                
   // Mark the (new) default argument as uninstantiated (if any).
   if (OldParm->hasUninstantiatedDefaultArg()) {
     Expr *Arg = OldParm->getUninstantiatedDefaultArg();
