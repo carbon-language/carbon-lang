@@ -430,7 +430,215 @@ void StmtProfiler::VisitBlockDeclRefExpr(BlockDeclRefExpr *S) {
   ID.AddBoolean(S->isConstQualAdded());
 }
 
+static Stmt::StmtClass DecodeOperatorCall(CXXOperatorCallExpr *S,
+                                          UnaryOperator::Opcode &UnaryOp,
+                                          BinaryOperator::Opcode &BinaryOp) {
+  switch (S->getOperator()) {
+  case OO_None:
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+  case OO_Arrow:
+  case OO_Call:
+  case OO_Conditional:
+  case NUM_OVERLOADED_OPERATORS:
+    llvm_unreachable("Invalid operator call kind");
+    return Stmt::ArraySubscriptExprClass;
+      
+  case OO_Plus:
+    if (S->getNumArgs() == 1) {
+      UnaryOp = UnaryOperator::Plus;
+      return Stmt::UnaryOperatorClass;
+    }
+    
+    BinaryOp = BinaryOperator::Add;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_Minus:
+    if (S->getNumArgs() == 1) {
+      UnaryOp = UnaryOperator::Minus;
+      return Stmt::UnaryOperatorClass;
+    }
+    
+    BinaryOp = BinaryOperator::Sub;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Star:
+    if (S->getNumArgs() == 1) {
+      UnaryOp = UnaryOperator::Minus;
+      return Stmt::UnaryOperatorClass;
+    }
+    
+    BinaryOp = BinaryOperator::Sub;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Slash:
+    BinaryOp = BinaryOperator::Div;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_Percent:
+    BinaryOp = BinaryOperator::Rem;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Caret:
+    BinaryOp = BinaryOperator::Xor;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Amp:
+    if (S->getNumArgs() == 1) {
+      UnaryOp = UnaryOperator::AddrOf;
+      return Stmt::UnaryOperatorClass;
+    }
+    
+    BinaryOp = BinaryOperator::And;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_Pipe:
+    BinaryOp = BinaryOperator::Or;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Tilde:
+    UnaryOp = UnaryOperator::Not;
+    return Stmt::UnaryOperatorClass;
+
+  case OO_Exclaim:
+    UnaryOp = UnaryOperator::LNot;
+    return Stmt::UnaryOperatorClass;
+
+  case OO_Equal:
+    BinaryOp = BinaryOperator::Assign;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Less:
+    BinaryOp = BinaryOperator::LT;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_Greater:
+    BinaryOp = BinaryOperator::GT;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_PlusEqual:
+    BinaryOp = BinaryOperator::AddAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_MinusEqual:
+    BinaryOp = BinaryOperator::SubAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_StarEqual:
+    BinaryOp = BinaryOperator::MulAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_SlashEqual:
+    BinaryOp = BinaryOperator::DivAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_PercentEqual:
+    BinaryOp = BinaryOperator::RemAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_CaretEqual:
+    BinaryOp = BinaryOperator::XorAssign;
+    return Stmt::CompoundAssignOperatorClass;
+    
+  case OO_AmpEqual:
+    BinaryOp = BinaryOperator::AndAssign;
+    return Stmt::CompoundAssignOperatorClass;
+    
+  case OO_PipeEqual:
+    BinaryOp = BinaryOperator::OrAssign;
+    return Stmt::CompoundAssignOperatorClass;
+      
+  case OO_LessLess:
+    BinaryOp = BinaryOperator::Shl;
+    return Stmt::BinaryOperatorClass;
+    
+  case OO_GreaterGreater:
+    BinaryOp = BinaryOperator::Shr;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_LessLessEqual:
+    BinaryOp = BinaryOperator::ShlAssign;
+    return Stmt::CompoundAssignOperatorClass;
+    
+  case OO_GreaterGreaterEqual:
+    BinaryOp = BinaryOperator::ShrAssign;
+    return Stmt::CompoundAssignOperatorClass;
+
+  case OO_EqualEqual:
+    BinaryOp = BinaryOperator::EQ;
+    return Stmt::BinaryOperatorClass;
+    
+  case OO_ExclaimEqual:
+    BinaryOp = BinaryOperator::NE;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_LessEqual:
+    BinaryOp = BinaryOperator::LE;
+    return Stmt::BinaryOperatorClass;
+    
+  case OO_GreaterEqual:
+    BinaryOp = BinaryOperator::GE;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_AmpAmp:
+    BinaryOp = BinaryOperator::LAnd;
+    return Stmt::BinaryOperatorClass;
+    
+  case OO_PipePipe:
+    BinaryOp = BinaryOperator::LOr;
+    return Stmt::BinaryOperatorClass;
+
+  case OO_PlusPlus:
+    UnaryOp = S->getNumArgs() == 1? UnaryOperator::PreInc 
+                                  : UnaryOperator::PostInc;
+    return Stmt::UnaryOperatorClass;
+
+  case OO_MinusMinus:
+    UnaryOp = S->getNumArgs() == 1? UnaryOperator::PreDec
+                                  : UnaryOperator::PostDec;
+    return Stmt::UnaryOperatorClass;
+
+  case OO_Comma:
+    BinaryOp = BinaryOperator::Comma;
+    return Stmt::BinaryOperatorClass;
+
+
+  case OO_ArrowStar:
+    BinaryOp = BinaryOperator::PtrMemI;
+    return Stmt::BinaryOperatorClass;
+      
+  case OO_Subscript:
+    return Stmt::ArraySubscriptExprClass;
+  }
+  
+  llvm_unreachable("Invalid overloaded operator expression");
+}
+                               
+
 void StmtProfiler::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *S) {
+  if (S->isTypeDependent()) {
+    // Type-dependent operator calls are profiled like their underlying
+    // syntactic operator.
+    UnaryOperator::Opcode UnaryOp;
+    BinaryOperator::Opcode BinaryOp;
+    Stmt::StmtClass SC = DecodeOperatorCall(S, UnaryOp, BinaryOp);
+    
+    ID.AddInteger(SC);
+    for (unsigned I = 0, N = S->getNumArgs(); I != N; ++I)
+      Visit(S->getArg(I));
+    if (SC == Stmt::UnaryOperatorClass)
+      ID.AddInteger(UnaryOp);
+    else if (SC == Stmt::BinaryOperatorClass || 
+             SC == Stmt::CompoundAssignOperatorClass)
+      ID.AddInteger(BinaryOp);
+    else
+      assert(SC == Stmt::ArraySubscriptExprClass);
+                    
+    return;
+  }
+  
   VisitCallExpr(S);
   ID.AddInteger(S->getOperator());
 }

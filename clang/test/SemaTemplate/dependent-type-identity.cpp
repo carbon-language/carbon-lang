@@ -70,3 +70,19 @@ struct X1 {
   void f8(typename N::X2<U>::template apply<T> *);
   void f8(typename ::Nalias::X2<type>::template apply<U_type> *); // expected-error{{redeclar}}
 };
+
+namespace PR6851 {
+  template <bool v>
+  struct S;
+
+  struct N {
+    template <bool w>
+    S< S<w>::cond && 1 > foo();
+  };
+
+  struct Alien;
+  bool operator&&(const Alien&, const Alien&);
+
+  template <bool w>
+  S< S<w>::cond && 1 > N::foo() { }
+}
