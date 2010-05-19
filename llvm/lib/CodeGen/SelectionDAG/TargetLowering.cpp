@@ -543,7 +543,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;
   BooleanContents = UndefinedBooleanContent;
-  SchedPreferenceInfo = SchedulingForLatency;
+  SchedPreferenceInfo = Sched::Latency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
   IfCvtBlockSizeLimit = 2;

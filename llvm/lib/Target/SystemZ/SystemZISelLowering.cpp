@@ -81,7 +81,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // LLVM's current latency-oriented scheduler can't handle physreg definitions
   // such as SystemZ has with PSW, so set this to the register-pressure
   // scheduler, because it can.
-  setSchedulingPreference(SchedulingForRegPressure);
+  setSchedulingPreference(Sched::RegPressure);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 

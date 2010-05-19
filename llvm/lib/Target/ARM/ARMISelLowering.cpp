@@ -466,7 +466,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::MUL);
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
-  setSchedulingPreference(SchedulingForRegPressure);
+  setSchedulingPreference(Sched::RegPressure);
 
   // FIXME: If-converter should use instruction latency to determine
   // profitability rather than relying on fixed limits.

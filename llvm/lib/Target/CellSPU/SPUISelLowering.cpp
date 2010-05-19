@@ -485,7 +485,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Set pre-RA register scheduler default to BURR, which produces slightly
   // better code than the default (could also be TDRR, but TargetLowering.h
   // needs a mod to support that model):
-  setSchedulingPreference(SchedulingForRegPressure);
+  setSchedulingPreference(Sched::RegPressure);
 }
 
 const char *
