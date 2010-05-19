@@ -3570,7 +3570,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 	  DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
 			N0.getOperand(1),
 			cast<CondCodeSDNode>(N0.getOperand(2))->get());
-	return 	DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(),  VT);
+	return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
       }
     }
 
@@ -3591,9 +3591,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                                       N0.getOperand(0), N0.getOperand(1),
                                  cast<CondCodeSDNode>(N0.getOperand(2))->get()),
                          NegOne, DAG.getConstant(0, VT));
-  }
-  
-  
+  }  
 
   // fold (sext x) -> (zext x) if the sign bit is known zero.
   if ((!LegalOperations || TLI.isOperationLegal(ISD::ZERO_EXTEND, VT)) &&
@@ -3732,8 +3730,48 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     }
   }
 
-  // zext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
   if (N0.getOpcode() == ISD::SETCC) {
+    if (!LegalOperations && VT.isVector()) {
+      // zext(setcc) -> (and (vsetcc), (1, 1, ...) for vectors.
+      // Only do this before legalize for now.
+      EVT N0VT = N0.getOperand(0).getValueType();
+      EVT EltVT = VT.getVectorElementType();
+      SmallVector<SDValue,8> OneOps(VT.getVectorNumElements(),
+                                    DAG.getConstant(1, EltVT));
+      if (VT.getSizeInBits() == N0VT.getSizeInBits()) {
+        // We know that the # elements of the results is the same as the
+        // # elements of the compare (and the # elements of the compare result
+        // for that matter).  Check to see that they are the same size.  If so,
+        // we know that the element size of the sext'd result matches the
+        // element size of the compare operands.
+        return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                           DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+                                         N0.getOperand(1),
+                                 cast<CondCodeSDNode>(N0.getOperand(2))->get()),
+                           DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                                       &OneOps[0], OneOps.size()));
+      } else {
+        // If the desired elements are smaller or larger than the source
+        // elements we can use a matching integer vector type and then
+        // truncate/sign extend
+        EVT MatchingElementType =
+          EVT::getIntegerVT(*DAG.getContext(),
+                            N0VT.getScalarType().getSizeInBits());
+        EVT MatchingVectorType =
+          EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+                           N0VT.getVectorNumElements());
+        SDValue VsetCC =
+          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+                        N0.getOperand(1),
+                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
+        return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                           DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT),
+                           DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                                       &OneOps[0], OneOps.size()));
+      }
+    }
+
+    // zext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
     SDValue SCC =
       SimplifySelectCC(N->getDebugLoc(), N0.getOperand(0), N0.getOperand(1),
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT),
@@ -3889,8 +3927,39 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
 
-  // aext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
   if (N0.getOpcode() == ISD::SETCC) {
+    // aext(setcc) -> sext_in_reg(vsetcc) for vectors.
+    // Only do this before legalize for now.
+    if (VT.isVector() && !LegalOperations) {
+      EVT N0VT = N0.getOperand(0).getValueType();
+        // We know that the # elements of the results is the same as the
+        // # elements of the compare (and the # elements of the compare result
+        // for that matter).  Check to see that they are the same size.  If so,
+        // we know that the element size of the sext'd result matches the
+        // element size of the compare operands.
+      if (VT.getSizeInBits() == N0VT.getSizeInBits())
+	return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+			     N0.getOperand(1),
+			     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+      // If the desired elements are smaller or larger than the source
+      // elements we can use a matching integer vector type and then
+      // truncate/sign extend
+      else {
+	EVT MatchingElementType =
+	  EVT::getIntegerVT(*DAG.getContext(),
+			    N0VT.getScalarType().getSizeInBits());
+	EVT MatchingVectorType =
+	  EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+			   N0VT.getVectorNumElements());
+	SDValue VsetCC =
+	  DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+			N0.getOperand(1),
+			cast<CondCodeSDNode>(N0.getOperand(2))->get());
+	return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
+      }
+    }
+
+    // aext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
     SDValue SCC =
       SimplifySelectCC(N->getDebugLoc(), N0.getOperand(0), N0.getOperand(1),
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT),

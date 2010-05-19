@@ -158,5 +158,18 @@ define <4 x i32> @vacgtQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 	ret <4 x i32> %tmp3
 }
 
+; rdar://7923010
+define <4 x i32> @vcgt_zext(<4 x float>* %A, <4 x float>* %B) nounwind {
+;CHECK: vcgt_zext:
+;CHECK: vcgt.f32 q0
+;CHECK: vmov.i32 q1, #0x1
+;CHECK: vand q0, q0, q1
+	%tmp1 = load <4 x float>* %A
+	%tmp2 = load <4 x float>* %B
+	%tmp3 = fcmp ogt <4 x float> %tmp1, %tmp2
+        %tmp4 = zext <4 x i1> %tmp3 to <4 x i32>
+	ret <4 x i32> %tmp4
+}
+
 declare <2 x i32> @llvm.arm.neon.vacgtd(<2 x float>, <2 x float>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vacgtq(<4 x float>, <4 x float>) nounwind readnone
