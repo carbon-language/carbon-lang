@@ -217,9 +217,6 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   // This is a temporary workaround.
   SUnits.reserve(NumNodes * 2);
   
-  // Check to see if the scheduler cares about latencies.
-  bool UnitLatencies = ForceUnitLatencies();
-
   // Add all nodes in depth first order.
   SmallVector<SDNode*, 64> Worklist;
   SmallPtrSet<SDNode*, 64> Visited;
@@ -282,10 +279,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     N->setNodeId(NodeSUnit->NodeNum);
 
     // Assign the Latency field of NodeSUnit using target-provided information.
-    if (UnitLatencies)
-      NodeSUnit->Latency = 1;
-    else
-      ComputeLatency(NodeSUnit);
+    ComputeLatency(NodeSUnit);
   }
 }
 
@@ -377,6 +371,12 @@ void ScheduleDAGSDNodes::BuildSchedGraph(AliasAnalysis *AA) {
 }
 
 void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
+  // Check to see if the scheduler cares about latencies.
+  if (ForceUnitLatencies()) {
+    SU->Latency = 1;
+    return;
+  }
+
   const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
   
   // Compute the latency for the node.  We use the sum of the latencies for
