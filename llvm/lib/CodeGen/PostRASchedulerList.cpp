@@ -83,7 +83,7 @@ DebugMod("postra-sched-debugmod",
 static cl::opt<bool>
 EnablePostRADbgValue("post-RA-dbg-value",
                      cl::desc("Enable processing of dbg_value in post-RA"),
-                     cl::init(false), cl::Hidden);
+                     cl::init(true), cl::Hidden);
 
 
 AntiDepBreaker::~AntiDepBreaker() { }
