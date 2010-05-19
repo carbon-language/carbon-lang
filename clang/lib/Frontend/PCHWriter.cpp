@@ -1917,6 +1917,12 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::NoThrow:
       break;
 
+    case Attr::IBOutletCollectionKind: {
+      const IBOutletCollectionAttr *ICA = cast<IBOutletCollectionAttr>(Attr);
+      AddDeclRef(ICA->getClass(), Record);
+      break;
+    }
+
     case Attr::NonNull: {
       const NonNullAttr *NonNull = cast<NonNullAttr>(Attr);
       Record.push_back(NonNull->size());

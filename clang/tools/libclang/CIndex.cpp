@@ -1726,6 +1726,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("attribute(ibaction)");
   case CXCursor_IBOutletAttr:
      return createCXString("attribute(iboutlet)");
+  case CXCursor_IBOutletCollectionAttr:
+      return createCXString("attribute(iboutletcollection)");
   case CXCursor_PreprocessingDirective:
     return createCXString("preprocessing directive");
   case CXCursor_MacroDefinition:

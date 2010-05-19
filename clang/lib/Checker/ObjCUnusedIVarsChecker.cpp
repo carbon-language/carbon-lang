@@ -114,7 +114,8 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
     // (b) explicitly marked unused
     // (c) are iboutlets
     if (ID->getAccessControl() != ObjCIvarDecl::Private ||
-        ID->getAttr<UnusedAttr>() || ID->getAttr<IBOutletAttr>())
+        ID->getAttr<UnusedAttr>() || ID->getAttr<IBOutletAttr>() ||
+        ID->getAttr<IBOutletCollectionAttr>())
       continue;
 
     M[ID] = Unused;

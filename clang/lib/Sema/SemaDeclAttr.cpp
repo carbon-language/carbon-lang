@@ -259,6 +259,26 @@ static void HandleIBOutlet(Decl *d, const AttributeList &Attr, Sema &S) {
   S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
 }
 
+static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
+                                     Sema &S) {
+
+  // The iboutletcollection attribute can have zero or one arguments.
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  // The IBOutletCollection attributes only apply to instance variables of
+  // Objective-C classes.
+  if (!(isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d))) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
+    return;
+  }
+
+  // FIXME: Eventually accept the type argument.
+  d->addAttr(::new (S.Context) IBOutletCollectionAttr());
+}
+
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // GCC ignores the nonnull attribute on K&R style function prototypes, so we
   // ignore it as well
@@ -1884,7 +1904,9 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     return;
   switch (Attr.getKind()) {
   case AttributeList::AT_IBAction:            HandleIBAction(D, Attr, S); break;
-  case AttributeList::AT_IBOutlet:            HandleIBOutlet(D, Attr, S); break;
+    case AttributeList::AT_IBOutlet:          HandleIBOutlet(D, Attr, S); break;
+  case AttributeList::AT_IBOutletCollection:
+      HandleIBOutletCollection(D, Attr, S); break;
   case AttributeList::AT_address_space:
   case AttributeList::AT_objc_gc:
   case AttributeList::AT_vector_size:

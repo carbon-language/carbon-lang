@@ -80,6 +80,7 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     default: break;
     case Attr::IBActionKind: return CXCursor_IBActionAttr;
     case Attr::IBOutletKind: return CXCursor_IBOutletAttr;
+    case Attr::IBOutletCollectionKind: return CXCursor_IBOutletCollectionAttr;
   }
 
   return CXCursor_UnexposedAttr;

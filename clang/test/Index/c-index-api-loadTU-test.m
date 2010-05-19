@@ -54,6 +54,18 @@ int main (int argc, const char * argv[]) {
   main(someEnum, (const char **)bee);
 }
 
+// Test attribute traversal.
+#define IBOutlet __attribute__((iboutlet))
+#define IBOutletCollection(ClassName) __attribute__((iboutletcollection))
+#define IBAction void)__attribute__((ibaction)
+
+@interface TestAttributes {
+  IBOutlet char * anOutlet;
+  IBOutletCollection(id) id anOutletCollection;
+}
+- (IBAction) actionMethod:(id)arg;
+@end
+
 // CHECK: c-index-api-loadTU-test.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 12:5]
 // CHECK: c-index-api-loadTU-test.m:6:32: ObjCIvarDecl=myoutlet:6:32 (Definition) Extent=[6:32 - 6:40]
 // CHECK: <invalid loc>:0:0: attribute(iboutlet)=
@@ -123,4 +135,14 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:54:8: DeclRefExpr=someEnum:43:3 Extent=[54:8 - 54:16]
 // CHECK: c-index-api-loadTU-test.m:54:18: UnexposedExpr=bee:47:8 Extent=[54:18 - 54:36]
 // CHECK: c-index-api-loadTU-test.m:54:33: DeclRefExpr=bee:47:8 Extent=[54:33 - 54:36]
+// CHECK: c-index-api-loadTU-test.m:62:12: ObjCInterfaceDecl=TestAttributes:62:12 Extent=[62:1 - 67:5]
+// CHECK: c-index-api-loadTU-test.m:63:19: ObjCIvarDecl=anOutlet:63:19 (Definition) Extent=[63:19 - 63:27]
+// CHECK: <invalid loc>:0:0: attribute(iboutlet)=
+// CHECK: c-index-api-loadTU-test.m:64:29: ObjCIvarDecl=anOutletCollection:64:29 (Definition) Extent=[64:29 - 64:47]
+// CHECK: <invalid loc>:0:0: attribute(iboutletcollection)=
+// CHECK: c-index-api-loadTU-test.m:64:26: TypeRef=id:0:0 Extent=[64:26 - 64:28]
+// CHECK: c-index-api-loadTU-test.m:66:1: ObjCInstanceMethodDecl=actionMethod::66:1 Extent=[66:1 - 66:35]
+// CHECK: <invalid loc>:0:0: attribute(ibaction)=
+// CHECK: c-index-api-loadTU-test.m:66:31: ParmDecl=arg:66:31 (Definition) Extent=[66:28 - 66:34]
+// CHECK: c-index-api-loadTU-test.m:66:28: TypeRef=id:0:0 Extent=[66:28 - 66:30]
 

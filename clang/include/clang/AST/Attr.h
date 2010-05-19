@@ -23,8 +23,9 @@ using llvm::dyn_cast;
 
 namespace clang {
   class ASTContext;
+  class IdentifierInfo;
+  class ObjCInterfaceDecl;
 }
-
 
 // Defined in ASTContext.h
 void *operator new(size_t Bytes, clang::ASTContext &C,
@@ -63,6 +64,7 @@ public:
     GNUInline,
     Hiding,
     IBOutletKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
+    IBOutletCollectionKind, // Clang-specific.
     IBActionKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
     Malloc,
     NoDebug,
@@ -316,6 +318,23 @@ public:
     return A->getKind() == IBOutletKind;
   }
   static bool classof(const IBOutletAttr *A) { return true; }
+};
+
+class IBOutletCollectionAttr : public Attr {
+  const ObjCInterfaceDecl *D;
+public:
+  IBOutletCollectionAttr(const ObjCInterfaceDecl *d = 0)
+    : Attr(IBOutletCollectionKind), D(d) {}
+
+  const ObjCInterfaceDecl *getClass() const { return D; }
+
+  virtual Attr *clone(ASTContext &C) const;
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == IBOutletCollectionKind;
+  }
+  static bool classof(const IBOutletCollectionAttr *A) { return true; }
 };
 
 class IBActionAttr : public Attr {

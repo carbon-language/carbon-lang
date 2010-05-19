@@ -143,6 +143,10 @@ Attr *IBOutletAttr::clone(ASTContext &C) const {
   return ::new (C) IBOutletAttr;
 }
 
+Attr *IBOutletCollectionAttr::clone(ASTContext &C) const {
+  return ::new (C) IBOutletCollectionAttr(D);
+}
+
 Attr *IBActionAttr::clone(ASTContext &C) const {
   return ::new (C) IBActionAttr;
 }

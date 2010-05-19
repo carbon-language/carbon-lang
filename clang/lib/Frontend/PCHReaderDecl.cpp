@@ -726,6 +726,13 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) IBOutletAttr();
       break;
 
+    case Attr::IBOutletCollectionKind: {
+      ObjCInterfaceDecl *D =
+        cast_or_null<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
+      New = ::new (*Context) IBOutletCollectionAttr(D);
+      break;
+    }
+
     SIMPLE_ATTR(Malloc);
     SIMPLE_ATTR(NoDebug);
     SIMPLE_ATTR(NoInline);
