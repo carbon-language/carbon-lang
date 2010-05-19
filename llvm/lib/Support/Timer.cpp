@@ -61,6 +61,10 @@ raw_ostream *llvm::CreateInfoOutputFile() {
   if (OutputFilename == "-")
     return new raw_fd_ostream(1, false); // stdout.
   
+  // Append mode is used because the info output file is opened and closed
+  // each time -stats or -time-passes wants to print output to it. To
+  // compensate for this, the test-suite Makefiles have code to delete the
+  // info output file before running commands which write to it.
   std::string Error;
   raw_ostream *Result = new raw_fd_ostream(OutputFilename.c_str(),
                                            Error, raw_fd_ostream::F_Append);
