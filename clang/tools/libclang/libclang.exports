@@ -81,7 +81,6 @@ clang_isInvalid
 clang_isPreprocessing
 clang_isReference
 clang_isStatement
-clang_isTagDeclDefinition
 clang_isTranslationUnit
 clang_isUnexposed
 clang_setUseExternalASTGeneration

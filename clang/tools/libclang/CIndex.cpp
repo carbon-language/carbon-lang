@@ -2812,14 +2812,6 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   return (D && D->isStatic()) ? 1 : 0;
 }
 
-unsigned clang_isTagDeclDefinition(CXCursor C) {
-  if (!clang_isDeclaration(C.kind))
-    return 0;
-
-  const TagDecl *D = dyn_cast<TagDecl>(cxcursor::getCursorDecl(C));
-  return D && D->isDefinition() ? 1 : 0;
-}
-
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
