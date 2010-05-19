@@ -783,8 +783,13 @@ bool AsmParser::ParseStatement() {
     return false;
   }
 
+  // Canonicalize the opcode to lower case.
+  SmallString<128> Opcode;
+  for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
+    Opcode.push_back(tolower(IDVal[i]));
+  
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
-  bool HadError = getTargetParser().ParseInstruction(IDVal, IDLoc,
+  bool HadError = getTargetParser().ParseInstruction(Opcode.str(), IDLoc,
                                                      ParsedOperands);
   if (!HadError && Lexer.isNot(AsmToken::EndOfStatement))
     HadError = TokError("unexpected token in argument list");

@@ -146,3 +146,8 @@ fadd %st(7)
 
 // CHECK: leal 0, %eax
         leal 0, %eax
+
+// rdar://7986634 - Insensitivity on opcodes.
+// CHECK: int3
+INT3
+
