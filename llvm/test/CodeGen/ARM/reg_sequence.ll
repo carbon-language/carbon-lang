@@ -302,6 +302,23 @@ bb14:                                             ; preds = %bb6
   ret i32 0
 }
 
+; This test crashes the coalescer because live variables were not updated properly.
+define <8 x i8> @t11(i8* %A1, i8* %A2, i8* %A3, i8* %A4, i8* %A5, i8* %A6, i8* %A7, i8* %A8, i8* %B) nounwind {
+  %tmp1d = call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8* %A4) ; <%struct.__neon_int8x8x3_t> [#uses=1]
+  %tmp2d = extractvalue %struct.__neon_int8x8x3_t %tmp1d, 0 ; <<8 x i8>> [#uses=1]
+  %tmp1f = call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8* %A6) ; <%struct.__neon_int8x8x3_t> [#uses=1]
+  %tmp2f = extractvalue %struct.__neon_int8x8x3_t %tmp1f, 0 ; <<8 x i8>> [#uses=1]
+  %tmp2bd = add <8 x i8> zeroinitializer, %tmp2d  ; <<8 x i8>> [#uses=1]
+  %tmp2abcd = mul <8 x i8> zeroinitializer, %tmp2bd ; <<8 x i8>> [#uses=1]
+  %tmp2ef = sub <8 x i8> zeroinitializer, %tmp2f  ; <<8 x i8>> [#uses=1]
+  %tmp2efgh = mul <8 x i8> %tmp2ef, undef         ; <<8 x i8>> [#uses=2]
+  call void @llvm.arm.neon.vst3.v8i8(i8* %A2, <8 x i8> undef, <8 x i8> undef, <8 x i8> %tmp2efgh)
+  %tmp2 = sub <8 x i8> %tmp2efgh, %tmp2abcd       ; <<8 x i8>> [#uses=1]
+  %tmp7 = mul <8 x i8> undef, %tmp2               ; <<8 x i8>> [#uses=1]
+  tail call void @llvm.arm.neon.vst3.v8i8(i8* %B, <8 x i8> undef, <8 x i8> undef, <8 x i8> %tmp7)
+  ret <8 x i8> undef
+}
+
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly

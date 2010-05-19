@@ -1275,9 +1275,10 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
 
       if (!Seen.insert(SrcReg) ||
           MI->getParent() != DefMI->getParent() ||
+          !MI->getOperand(i).isKill() ||
           HasOtherRegSequenceUses(SrcReg, MI, MRI)) {
         // REG_SEQUENCE cannot have duplicated operands, add a copy.
-        // Also add an copy if the source if live-in the block. We don't want
+        // Also add an copy if the source is live-in the block. We don't want
         // to end up with a partial-redef of a livein, e.g.
         // BB0:
         // reg1051:10<def> =
@@ -1287,6 +1288,10 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         // BB2:
         // reg1051:9<def> =
         // LiveIntervalAnalysis won't like it.
+        //
+        // If the REG_SEQUENCE doesn't kill its source, keeping live variables
+        // correctly up to date becomes very difficult. Insert a copy.
+        //
         const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
         unsigned NewReg = MRI->createVirtualRegister(RC);
         MachineBasicBlock::iterator InsertLoc = MI;
