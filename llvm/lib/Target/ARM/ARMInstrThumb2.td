@@ -778,6 +778,7 @@ multiclass T2I_bin_rrot_DO<bits<3> opcod, string opc> {
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 let neverHasSideEffects = 1 in {
+let isReMaterializable = 1 in
 def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
                       "adr$p.w\t$dst, #$label", []> {
   let Inst{31-27} = 0b11110;
