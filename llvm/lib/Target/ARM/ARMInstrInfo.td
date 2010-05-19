@@ -849,23 +849,15 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 let neverHasSideEffects = 1 in {
+let isReMaterializable = 1 in
 def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
                     Pseudo, IIC_iALUi,
-           !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
-                                 "${:private}PCRELL${:uid}+8))\n"),
-                      !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                 "add$p\t$dst, pc, #${:private}PCRELV${:uid}")),
-                   []>;
+                    "adr$p\t$dst, #$label", []>;
 
 def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                            (ins i32imm:$label, nohash_imm:$id, pred:$p),
-          Pseudo, IIC_iALUi,
-   !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, "
-                         "(${label}_${id}-(",
-                                  "${:private}PCRELL${:uid}+8))\n"),
-                       !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                 "add$p\t$dst, pc, #${:private}PCRELV${:uid}")),
-                   []> {
+                      Pseudo, IIC_iALUi,
+                      "adr$p\t$dst, #${label}_${id}", []> {
     let Inst{25} = 1;
 }
 } // neverHasSideEffects
