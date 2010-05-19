@@ -71,7 +71,7 @@ class LitConfig:
         self.bashPath = Util.which('bash', os.pathsep.join(self.path))
         if self.bashPath is None:
             # Check some known paths.
-            for path in ('/bin/bash', '/usr/bin/bash'):
+            for path in ('/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash'):
                 if os.path.exists(path):
                     self.bashPath = path
                     break
