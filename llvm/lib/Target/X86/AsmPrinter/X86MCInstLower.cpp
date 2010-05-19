@@ -379,6 +379,16 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     break;
   }
 
+  // TAILJMPd, TAILJMPd64 - Lower to the correct jump instructions.
+  case X86::TAILJMPd:
+  case X86::TAILJMPd64: {
+    MCOperand Saved = OutMI.getOperand(0);
+    OutMI = MCInst();
+    OutMI.setOpcode(X86::TAILJMP_1);
+    OutMI.addOperand(Saved);
+    break;
+  }
+
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because
   // it does not do relaxation.  For now, translate the large form to the

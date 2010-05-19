@@ -712,6 +712,13 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   let mayLoad = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst, variable_ops),
                    "jmp{l}\t{*}$dst  # TAILCALL", []>;
+
+  // FIXME: This is a hack so that MCInst lowering can preserve the TAILCALL
+  // marker on instructions, while still being able to relax.
+  let isCodeGenOnly = 1 in {
+    def TAILJMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
+                         "jmp\t$dst  # TAILCALL", []>;
+  }
 }
 
 //===----------------------------------------------------------------------===//
