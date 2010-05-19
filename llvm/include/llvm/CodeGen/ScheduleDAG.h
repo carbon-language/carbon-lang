@@ -225,7 +225,6 @@ namespace llvm {
   private:
     SDNode *Node;                       // Representative node.
     MachineInstr *Instr;                // Alternatively, a MachineInstr.
-    MachineInstr *DbgInstr;             // A dbg_value referencing this.
   public:
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
@@ -256,6 +255,8 @@ namespace llvm {
     bool isScheduled      : 1;          // True once scheduled.
     bool isScheduleHigh   : 1;          // True if preferable to schedule high.
     bool isCloned         : 1;          // True if this node has been cloned.
+
+    SmallVector<MachineInstr*, 4> DbgInstrList; // dbg_values referencing this.
   private:
     bool isDepthCurrent   : 1;          // True if Depth is current.
     bool isHeightCurrent  : 1;          // True if Height is current.
@@ -268,7 +269,7 @@ namespace llvm {
     /// SUnit - Construct an SUnit for pre-regalloc scheduling to represent
     /// an SDNode and any nodes flagged to it.
     SUnit(SDNode *node, unsigned nodenum)
-      : Node(node), Instr(0), DbgInstr(0), OrigNode(0), NodeNum(nodenum),
+      : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0),  Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
@@ -280,7 +281,7 @@ namespace llvm {
     /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
     /// a MachineInstr.
     SUnit(MachineInstr *instr, unsigned nodenum)
-      : Node(0), Instr(instr), DbgInstr(0), OrigNode(0), NodeNum(nodenum),
+      : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0), Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
@@ -291,7 +292,7 @@ namespace llvm {
 
     /// SUnit - Construct a placeholder SUnit.
     SUnit()
-      : Node(0), Instr(0), DbgInstr(0), OrigNode(0), NodeNum(~0u),
+      : Node(0), Instr(0), OrigNode(0), NodeNum(~0u),
         NodeQueueId(0), Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
@@ -326,20 +327,6 @@ namespace llvm {
     MachineInstr *getInstr() const {
       assert(!Node && "Reading MachineInstr of SUnit with SDNode!");
       return Instr;
-    }
-
-    /// setDbgInstr - Assign the debug instruction for the SUnit.
-    /// This may be used during post-regalloc scheduling.
-    void setDbgInstr(MachineInstr *MI) {
-      assert(!Node && "Setting debug MachineInstr of SUnit with SDNode!");
-      DbgInstr = MI;
-    }
-
-    /// getDbgInstr - Return the debug MachineInstr for this SUnit.
-    /// This may be used during post-regalloc scheduling.
-    MachineInstr *getDbgInstr() const {
-      assert(!Node && "Reading debug MachineInstr of SUnit with SDNode!");
-      return DbgInstr;
     }
 
     /// addPred - This adds the specified edge as a pred of the current node if
