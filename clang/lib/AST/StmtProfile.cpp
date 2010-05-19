@@ -621,8 +621,8 @@ void StmtProfiler::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *S) {
   if (S->isTypeDependent()) {
     // Type-dependent operator calls are profiled like their underlying
     // syntactic operator.
-    UnaryOperator::Opcode UnaryOp;
-    BinaryOperator::Opcode BinaryOp;
+    UnaryOperator::Opcode UnaryOp = UnaryOperator::Extension;
+    BinaryOperator::Opcode BinaryOp = BinaryOperator::Comma;
     Stmt::StmtClass SC = DecodeOperatorCall(S, UnaryOp, BinaryOp);
     
     ID.AddInteger(SC);
