@@ -480,7 +480,7 @@ def tLDRspi : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
 
 // Special instruction for restore. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
-let canFoldAsLoad = 1, mayLoad = 1 in
+let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1 in
 def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
                     "ldr", "\t$dst, $addr", []>,
                T1LdStSP<{1,?,?}>;
@@ -494,7 +494,8 @@ def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
               T1Encoding<{0,1,0,0,1,?}>; // A6.2 & A8.6.59
 
 // Special LDR for loads from non-pc-relative constpools.
-let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1 in
+let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
+    isReMaterializable = 1 in
 def tLDRcp  : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
                   "ldr", "\t$dst, $addr", []>,
               T1LdStSP<{1,?,?}>;
@@ -531,7 +532,7 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
                    [(store tGPR:$src, t_addrmode_sp:$addr)]>,
               T1LdStSP<{0,?,?}>;
 
-let mayStore = 1 in {
+let mayStore = 1, neverHasSideEffects = 1 in {
 // Special instruction for spill. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
 def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
@@ -544,7 +545,7 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
 //
 
 // These requires base address to be written back or one of the loaded regs.
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def tLDM : T1I<(outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
                IIC_iLoadm,
@@ -557,9 +558,9 @@ def tLDM_UPD : T1It<(outs tGPR:$wb),
                     "ldm${addr:submode}${p}\t$addr!, $dsts",
                     "$addr.addr = $wb", []>,
                T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
-} // mayLoad, hasExtraDefRegAllocReq
+} // mayLoad, neverHasSideEffects = 1, hasExtraDefRegAllocReq
 
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def tSTM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
                     IIC_iStorem,
