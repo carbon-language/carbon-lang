@@ -781,7 +781,30 @@ int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill,
   }
   return -1;
 }
-  
+
+/// readsVirtualRegister - Return true if the MachineInstr reads the specified
+/// virtual register. Take into account that a partial define is a
+/// read-modify-write operation.
+bool MachineInstr::readsVirtualRegister(unsigned Reg) const {
+  bool PartDef = false; // Partial redefine
+  bool FullDef = false; // Full define
+
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = getOperand(i);
+    if (!MO.isReg() || MO.getReg() != Reg)
+      continue;
+    if (MO.isUse())
+      return true;
+    if (MO.getSubReg())
+      PartDef = true;
+    else
+      FullDef = true;
+  }
+  // A partial register definition causes a read unless the full register is
+  // also defined.
+  return PartDef && !FullDef;
+}
+
 /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
 /// the specified register or -1 if it is not found. If isDead is true, defs
 /// that are not dead are skipped. If TargetRegisterInfo is non-null, then it

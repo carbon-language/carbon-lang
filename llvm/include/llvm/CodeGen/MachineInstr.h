@@ -230,9 +230,16 @@ public:
   /// readsRegister - Return true if the MachineInstr reads the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there
   /// is a read of a super-register.
+  /// This does not count partial redefines of virtual registers as reads:
+  ///   %reg1024:6 = OP.
   bool readsRegister(unsigned Reg, const TargetRegisterInfo *TRI = NULL) const {
     return findRegisterUseOperandIdx(Reg, false, TRI) != -1;
   }
+
+  /// readsVirtualRegister - Return true if the MachineInstr reads the specified
+  /// virtual register. Take into account that a partial define is a
+  /// read-modify-write operation.
+  bool readsVirtualRegister(unsigned Reg) const;
 
   /// killsRegister - Return true if the MachineInstr kills the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there is
