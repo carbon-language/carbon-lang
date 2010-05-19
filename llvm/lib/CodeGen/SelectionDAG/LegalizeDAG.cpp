@@ -2523,6 +2523,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     EVT VT = Node->getValueType(0);
     EVT EltVT = VT.getVectorElementType();
+    if (getTypeAction(EltVT) == Promote)
+      EltVT = TLI.getTypeToTransformTo(*DAG.getContext(), EltVT);
     unsigned NumElems = VT.getVectorNumElements();
     SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0; i != NumElems; ++i) {
