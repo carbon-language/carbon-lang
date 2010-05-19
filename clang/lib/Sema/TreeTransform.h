@@ -3252,7 +3252,7 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
     TemplateSpecializationTypeLoc OldNamedTL
       = cast<TemplateSpecializationTypeLoc>(TL.getNamedTypeLoc());
     const TemplateSpecializationType* OldTST
-      = OldNamedTL.getType()->getAs<TemplateSpecializationType>();
+      = OldNamedTL.getType()->template getAs<TemplateSpecializationType>();
     NamedT = TransformTemplateSpecializationType(OldTST, ObjectType);
     if (NamedT.isNull())
       return QualType();
