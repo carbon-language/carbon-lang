@@ -3774,6 +3774,10 @@ class BuiltinCandidateTypeSet  {
   /// used in the built-in candidates.
   TypeSet EnumerationTypes;
 
+  /// \brief The set of vector types that will be used in the built-in 
+  /// candidates.
+  TypeSet VectorTypes;
+  
   /// Sema - The semantic analysis instance where we are building the
   /// candidate type set.
   Sema &SemaRef;
@@ -3815,6 +3819,9 @@ public:
 
   /// enumeration_end - Past the last enumeration type found;
   iterator enumeration_end() { return EnumerationTypes.end(); }
+  
+  iterator vector_begin() { return VectorTypes.begin(); }
+  iterator vector_end() { return VectorTypes.end(); }
 };
 
 /// AddPointerWithMoreQualifiedTypeVariants - Add the pointer type @p Ty to
@@ -3947,6 +3954,8 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       return;
   } else if (Ty->isEnumeralType()) {
     EnumerationTypes.insert(Ty);
+  } else if (Ty->isVectorType()) {
+    VectorTypes.insert(Ty);
   } else if (AllowUserConversions) {
     if (const RecordType *TyRec = Ty->getAs<RecordType>()) {
       if (SemaRef.RequireCompleteType(Loc, Ty, 0)) {
@@ -4111,21 +4120,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
   
   BuiltinCandidateTypeSet CandidateTypes(*this);
-  if (Op == OO_Less || Op == OO_Greater || Op == OO_LessEqual ||
-      Op == OO_GreaterEqual || Op == OO_EqualEqual || Op == OO_ExclaimEqual ||
-      Op == OO_Plus || (Op == OO_Minus && NumArgs == 2) || Op == OO_Equal ||
-      Op == OO_PlusEqual || Op == OO_MinusEqual || Op == OO_Subscript ||
-      Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
-      (Op == OO_Star && NumArgs == 1) || Op == OO_Conditional) {
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-      CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
-                                           OpLoc,
-                                           true,
-                                           (Op == OO_Exclaim ||
-                                            Op == OO_AmpAmp ||
-                                            Op == OO_PipePipe),
-                                           VisibleTypeConversionsQuals);
-  }
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+    CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
+                                         OpLoc,
+                                         true,
+                                         (Op == OO_Exclaim ||
+                                          Op == OO_AmpAmp ||
+                                          Op == OO_PipePipe),
+                                         VisibleTypeConversionsQuals);
 
   bool isComparison = false;
   switch (Op) {
@@ -4289,6 +4291,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       QualType ArithTy = ArithmeticTypes[Arith];
       AddBuiltinCandidate(ArithTy, &ArithTy, Args, 1, CandidateSet);
     }
+      
+    // Extension: We also add these operators for vector types.
+    for (BuiltinCandidateTypeSet::iterator Vec = CandidateTypes.vector_begin(),
+                                        VecEnd = CandidateTypes.vector_end(); 
+         Vec != VecEnd; ++Vec) {
+      QualType VecTy = *Vec;
+      AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
+    }
     break;
 
   case OO_Tilde:
@@ -4302,6 +4312,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       QualType IntTy = ArithmeticTypes[Int];
       AddBuiltinCandidate(IntTy, &IntTy, Args, 1, CandidateSet);
     }
+      
+    // Extension: We also add this operator for vector types.
+    for (BuiltinCandidateTypeSet::iterator Vec = CandidateTypes.vector_begin(),
+                                        VecEnd = CandidateTypes.vector_end(); 
+         Vec != VecEnd; ++Vec) {
+      QualType VecTy = *Vec;
+      AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
+    }      
     break;
 
   case OO_New:
@@ -4458,6 +4476,30 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
+
+    // Extension: Add the binary operators ==, !=, <, <=, >=, >, *, /, and the
+    // conditional operator for vector types.
+    for (BuiltinCandidateTypeSet::iterator Vec1 = CandidateTypes.vector_begin(),
+         Vec1End = CandidateTypes.vector_end(); 
+         Vec1 != Vec1End; ++Vec1)
+      for (BuiltinCandidateTypeSet::iterator 
+           Vec2 = CandidateTypes.vector_begin(),
+           Vec2End = CandidateTypes.vector_end(); 
+           Vec2 != Vec2End; ++Vec2) {
+        QualType LandR[2] = { *Vec1, *Vec2 };
+        QualType Result;
+        if (isComparison)
+          Result = Context.BoolTy;
+        else {
+          if ((*Vec1)->isExtVectorType() || !(*Vec2)->isExtVectorType())
+            Result = *Vec1;
+          else
+            Result = *Vec2;
+        }
+        
+        AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
+      }
+      
     break;
 
   case OO_Percent:
@@ -4513,7 +4555,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          MemPtr != MemPtrEnd; ++MemPtr)
       AddBuiltinAssignmentOperatorCandidates(*this, *MemPtr, Args, 2,
                                              CandidateSet);
-      // Fall through.
+      
+    // Fall through.
 
   case OO_PlusEqual:
   case OO_MinusEqual:
@@ -4588,6 +4631,30 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         }
       }
     }
+      
+    // Extension: Add the binary operators =, +=, -=, *=, /= for vector types.
+    for (BuiltinCandidateTypeSet::iterator Vec1 = CandidateTypes.vector_begin(),
+                                        Vec1End = CandidateTypes.vector_end(); 
+         Vec1 != Vec1End; ++Vec1)
+      for (BuiltinCandidateTypeSet::iterator 
+                Vec2 = CandidateTypes.vector_begin(),
+             Vec2End = CandidateTypes.vector_end(); 
+           Vec2 != Vec2End; ++Vec2) {
+        QualType ParamTypes[2];
+        ParamTypes[1] = *Vec2;
+        // Add this built-in operator as a candidate (VQ is empty).
+        ParamTypes[0] = Context.getLValueReferenceType(*Vec1);
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/Op == OO_Equal);
+        
+        // Add this built-in operator as a candidate (VQ is 'volatile').
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          ParamTypes[0] = Context.getVolatileType(*Vec1);
+          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/Op == OO_Equal);
+        }
+      }
     break;
 
   case OO_PercentEqual:
@@ -4683,7 +4750,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       ParamTypes[0] = ParamTypes[1];
       ParamTypes[1] = *Ptr;
       AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-    }
+    }      
     break;
 
   case OO_ArrowStar:

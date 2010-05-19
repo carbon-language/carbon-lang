@@ -4929,7 +4929,13 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
       if (const VectorType *RV = rhsType->getAs<VectorType>())
         if (LV->getElementType() == RV->getElementType() &&
             LV->getNumElements() == RV->getNumElements()) {
-          return lhsType->isExtVectorType() ? lhsType : rhsType;
+          if (lhsType->isExtVectorType()) {
+            ImpCastExprToType(rex, lhsType, CastExpr::CK_BitCast);
+            return lhsType;
+          } 
+
+          ImpCastExprToType(lex, rhsType, CastExpr::CK_BitCast);
+          return rhsType;
         }
     }
   }

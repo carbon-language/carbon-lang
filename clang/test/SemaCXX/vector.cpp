@@ -101,16 +101,18 @@ void casts(longlong16 ll16, longlong16_e ll16e) {
 }
 
 template<typename T>
-struct convertible_to {
+struct convertible_to { // expected-note 3 {{candidate function (the implicit copy assignment operator)}}
   operator T() const;
 };
 
-void test_implicit_conversions(char16 c16, longlong16 ll16, char16_e c16e, 
-                               longlong16_e ll16e,
+void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16, 
+                               char16_e c16e, longlong16_e ll16e,
                                convertible_to<char16> to_c16, 
                                convertible_to<longlong16> to_ll16, 
                                convertible_to<char16_e> to_c16e, 
-                               convertible_to<longlong16_e> to_ll16e) {
+                               convertible_to<longlong16_e> to_ll16e,
+                               convertible_to<char16&> rto_c16,
+                               convertible_to<char16_e&> rto_c16e) {
   f0(to_c16);
   f0(to_ll16);
   f0(to_c16e);
@@ -119,4 +121,68 @@ void test_implicit_conversions(char16 c16, longlong16 ll16, char16_e c16e,
   f2(to_ll16);
   f2(to_c16e);
   f2(to_ll16e); // expected-error{{no matching function}}
+
+  (void)(c16 == c16e);
+  (void)(c16 == to_c16);
+  (void)+to_c16;
+  (void)-to_c16;
+  (void)~to_c16;
+  (void)(to_c16 == to_c16e);
+  (void)(to_c16 != to_c16e);
+  (void)(to_c16 <  to_c16e);
+  (void)(to_c16 <= to_c16e);
+  (void)(to_c16 >  to_c16e);
+  (void)(to_c16 >= to_c16e);
+  (void)(to_c16 + to_c16);
+  (void)(to_c16 - to_c16);
+  (void)(to_c16 * to_c16);
+  (void)(to_c16 / to_c16);
+  (void)(rto_c16 = to_c16); // expected-error{{no viable overloaded '='}}
+  (void)(rto_c16 += to_c16);
+  (void)(rto_c16 -= to_c16);
+  (void)(rto_c16 *= to_c16);
+  (void)(rto_c16 /= to_c16);
+
+  (void)+to_c16e;
+  (void)-to_c16e;
+  (void)~to_c16e;
+  (void)(to_c16e == to_c16e);
+  (void)(to_c16e != to_c16e);
+  (void)(to_c16e <  to_c16e);
+  (void)(to_c16e <= to_c16e);
+  (void)(to_c16e >  to_c16e);
+  (void)(to_c16e >= to_c16e);
+  (void)(to_c16e + to_c16);
+  (void)(to_c16e - to_c16);
+  (void)(to_c16e * to_c16);
+  (void)(to_c16e / to_c16);
+  (void)(rto_c16e = to_c16); // expected-error{{no viable overloaded '='}}
+  (void)(rto_c16e += to_c16);
+  (void)(rto_c16e -= to_c16);
+  (void)(rto_c16e *= to_c16);
+  (void)(rto_c16e /= to_c16);
+
+  (void)+to_c16;
+  (void)-to_c16;
+  (void)~to_c16;
+  (void)(to_c16 == to_c16e);
+  (void)(to_c16 != to_c16e);
+  (void)(to_c16 <  to_c16e);
+  (void)(to_c16 <= to_c16e);
+  (void)(to_c16 >  to_c16e);
+  (void)(to_c16 >= to_c16e);
+  (void)(to_c16 + to_c16e);
+  (void)(to_c16 - to_c16e);
+  (void)(to_c16 * to_c16e);
+  (void)(to_c16 / to_c16e);
+  (void)(rto_c16 = c16e); // expected-error{{no viable overloaded '='}}
+  (void)(rto_c16 += to_c16e); // expected-error{{expression is not assignable}}
+  (void)(rto_c16 -= to_c16e); // expected-error{{expression is not assignable}}
+  (void)(rto_c16 *= to_c16e); // expected-error{{expression is not assignable}}
+  (void)(rto_c16 /= to_c16e); // expected-error{{expression is not assignable}}
+
+  (void)(Cond? to_c16 : to_c16e);
+  (void)(Cond? to_ll16e : to_ll16);
+  (void)(Cond? to_c16 : to_ll16); // expected-error{{can't convert between vector values of different size}}
+  (void)(Cond? to_c16e : to_ll16e); // expected-error{{can't convert between vector values of different size}}
 }
