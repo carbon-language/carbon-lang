@@ -1077,12 +1077,17 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   // Perform the required lookup.
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
   if (TemplateArgs) {
-    // Lookup the template name again to correctly establish the context in
-    // which it was found. This is really unfortunate as we already did the
-    // lookup to determine that it was a template name in the first place. If
-    // this becomes a performance hit, we can work harder to preserve those
-    // results until we get here but it's likely not worth it.
-    LookupTemplateName(R, S, SS, QualType(), /*EnteringContext=*/false);
+    // Just re-use the lookup done by isTemplateName.
+    DecomposeTemplateName(R, Id);
+
+    // Re-derive the naming class.
+    if (SS.isSet()) {
+      NestedNameSpecifier *Qualifier
+        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+      if (const Type *Ty = Qualifier->getAsType())
+        if (CXXRecordDecl *NamingClass = Ty->getAsCXXRecordDecl())
+          R.setNamingClass(NamingClass);
+    }
   } else {
     bool IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
