@@ -364,11 +364,25 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       
   // TODO: BI__builtin_isinf_sign
   //   isinf_sign(x) -> isinf(x) ? (signbit(x) ? -1 : 1) : 0
-  // TODO: BI__builtin_isnormal
-  //   isnormal(x) -> x != x && fabs(x) < infinity && fabsf(x) >= float_min
-  //   where floatmin is the minimum value for the fp type.  Not sure if this is
-  //   APFloat::getSmallest or getSmallestNormalized.
-      
+
+  case Builtin::BI__builtin_isnormal: {
+    // isnormal(x) --> x == x && fabsf(x) < infinity && fabsf(x) >= float_min
+    Value *V = EmitScalarExpr(E->getArg(0));
+    Value *Eq = Builder.CreateFCmpOEQ(V, V, "iseq");
+
+    Value *Abs = EmitFAbs(*this, V, E->getArg(0)->getType());
+    Value *IsLessThanInf =
+      Builder.CreateFCmpULT(Abs, ConstantFP::getInfinity(V->getType()),"isinf");
+    APFloat Smallest = APFloat::getSmallestNormalized(
+                   getContext().getFloatTypeSemantics(E->getArg(0)->getType()));
+    Value *IsNormal =
+      Builder.CreateFCmpUGE(Abs, ConstantFP::get(V->getContext(), Smallest),
+                            "isnormal");
+    V = Builder.CreateAnd(Eq, IsLessThanInf, "and");
+    V = Builder.CreateAnd(V, IsNormal, "and");
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType())));
+  }
+
   case Builtin::BI__builtin_isfinite: {
     // isfinite(x) --> x == x && fabs(x) != infinity; }
     Value *V = EmitScalarExpr(E->getArg(0));

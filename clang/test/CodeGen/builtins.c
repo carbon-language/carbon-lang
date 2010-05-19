@@ -185,5 +185,13 @@ void test_float_builtins(float F, double D, long double LD) {
   // CHECK: call float @fabsf
   // CHECK: fcmp une float {{.*}}, 0x7FF0000000000000
   // CHECK: and i1 
+
+  res = __builtin_isnormal(F);
+  // CHECK: fcmp oeq float
+  // CHECK: call float @fabsf
+  // CHECK: fcmp ult float {{.*}}, 0x7FF0000000000000
+  // CHECK: fcmp uge float {{.*}}, 0x3810000000000000
+  // CHECK: and i1
+  // CHECK: and i1
 }
 
