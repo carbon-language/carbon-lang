@@ -5867,7 +5867,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
   R.resolveKind();
 
   // Determine the naming class.
-  if (!Old->getNamingClass()) {
+  if (Old->getNamingClass()) {
     CXXRecordDecl *NamingClass 
       = cast_or_null<CXXRecordDecl>(getDerived().TransformDecl(
                                                           Old->getMemberLoc(),
