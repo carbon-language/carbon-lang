@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10  -fobjc-nonfragile-abi -fobjc-gc -emit-llvm -o - %s | FileCheck -check-prefix LP64 %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10  -fobjc-nonfragile-abi -fobjc-gc -emit-llvm -o - %s | FileCheck -check-prefix LP64 %s
 // rdar: // 7849824
 
 struct s {
