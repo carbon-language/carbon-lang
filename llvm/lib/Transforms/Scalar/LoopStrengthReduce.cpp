@@ -2870,8 +2870,9 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
 
     for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
       LSRUse &LU = Uses[LUIdx];
-      for (size_t i = 0, e = LU.Formulae.size(); i != e; ++i) {
-        Formula &F = LU.Formulae[i];
+      for (size_t FIdx = 0, NumForms = LU.Formulae.size();
+           FIdx != NumForms; ++FIdx) {
+        Formula &F = LU.Formulae[FIdx];
         if (F.AM.BaseOffs != 0 && F.AM.Scale == 0) {
           if (LSRUse *LUThatHas = FindUseWithSimilarFormula(F, LU)) {
             if (reconcileNewOffset(*LUThatHas, F.AM.BaseOffs,
