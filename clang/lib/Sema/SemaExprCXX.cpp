@@ -466,10 +466,8 @@ Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
 
-  if (!isa<FunctionDecl>(CurContext))
-    return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
-
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
+  DeclContext *DC = getFunctionLevelDeclContext();
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC))
     if (MD->isInstance())
       return Owned(new (Context) CXXThisExpr(ThisLoc,
                                              MD->getThisType(Context),

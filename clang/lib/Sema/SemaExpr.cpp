@@ -602,7 +602,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     // We've found a member of an anonymous struct/union that is
     // inside a non-anonymous struct/union, so in a well-formed
     // program our base object expression is "this".
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+    DeclContext *DC = getFunctionLevelDeclContext();
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
       if (!MD->isStatic()) {
         QualType AnonFieldType
           = Context.getTagDeclType(
@@ -838,9 +839,10 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
                                             const LookupResult &R) {
   assert(!R.empty() && (*R.begin())->isCXXClassMember());
 
+  DeclContext *DC = SemaRef.getFunctionLevelDeclContext();
   bool isStaticContext =
-    (!isa<CXXMethodDecl>(SemaRef.CurContext) ||
-     cast<CXXMethodDecl>(SemaRef.CurContext)->isStatic());
+    (!isa<CXXMethodDecl>(DC) ||
+     cast<CXXMethodDecl>(DC)->isStatic());
 
   if (R.isUnresolvableResult())
     return isStaticContext ? IMA_Unresolved_StaticContext : IMA_Unresolved;
@@ -880,7 +882,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   // declaring classes, it can't be an implicit member reference (in
   // which case it's an error if any of those members are selected).
   if (IsProvablyNotDerivedFrom(SemaRef,
-                        cast<CXXMethodDecl>(SemaRef.CurContext)->getParent(),
+                               cast<CXXMethodDecl>(DC)->getParent(),
                                Classes))
     return (hasNonInstance ? IMA_Mixed_Unrelated : IMA_Error_Unrelated);
 
@@ -1569,7 +1571,8 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
 
   // If this is known to be an instance access, go ahead and build a
   // 'this' expression now.
-  QualType ThisType = cast<CXXMethodDecl>(CurContext)->getThisType(Context);
+  DeclContext *DC = getFunctionLevelDeclContext();
+  QualType ThisType = cast<CXXMethodDecl>(DC)->getThisType(Context);
   Expr *This = 0; // null signifies implicit access
   if (IsKnownInstance) {
     SourceLocation Loc = R.getNameLoc();

@@ -505,13 +505,14 @@ public:
                                         const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                         CharUnits &Size, CharUnits &Align,
-                      llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
+                      llvm::SmallVectorImpl<const Expr*> &subBlockDeclRefDecls,
                                         bool &subBlockHasCopyDispose);
 
   void BlockForwardSelf();
   llvm::Value *LoadBlockStruct();
 
-  CharUnits AllocateBlockDecl(const BlockDeclRefExpr *E);
+  void AllocateBlockCXXThisPointer(const CXXThisExpr *E);
+  void AllocateBlockDecl(const BlockDeclRefExpr *E);
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
   const llvm::Type *BuildByRefType(const ValueDecl *D);
 

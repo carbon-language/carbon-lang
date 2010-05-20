@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
@@ -419,6 +420,18 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
   }
 
   return CharUnits::fromQuantity(Align / Target.getCharWidth());
+}
+
+std::pair<CharUnits, CharUnits>
+ASTContext::getTypeInfoInChars(const Type *T) {
+  std::pair<uint64_t, unsigned> Info = getTypeInfo(T);
+  return std::make_pair(CharUnits::fromQuantity(Info.first / getCharWidth()),
+                        CharUnits::fromQuantity(Info.second / getCharWidth()));
+}
+
+std::pair<CharUnits, CharUnits>
+ASTContext::getTypeInfoInChars(QualType T) {
+  return getTypeInfoInChars(T.getTypePtr());
 }
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method
@@ -3070,7 +3083,8 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
 
 QualType ASTContext::getBlockParmType(
   bool BlockHasCopyDispose,
-  llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
+  llvm::SmallVectorImpl<const Expr *> &Layout) {
+
   // FIXME: Move up
   static unsigned int UniqueBlockParmTypeID = 0;
   llvm::SmallString<36> Name;
@@ -3107,22 +3121,28 @@ QualType ASTContext::getBlockParmType(
     T->addDecl(Field);
   }
 
-  for (size_t i = 0; i < BlockDeclRefDecls.size(); ++i) {
-    const Expr *E = BlockDeclRefDecls[i];
-    const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
-    clang::IdentifierInfo *Name = 0;
-    if (BDRE) {
-      const ValueDecl *D = BDRE->getDecl();
-      Name = &Idents.get(D->getName());
-    }
-    QualType FieldType = E->getType();
+  for (unsigned i = 0; i < Layout.size(); ++i) {
+    const Expr *E = Layout[i];
 
-    if (BDRE && BDRE->isByRef())
-      FieldType = BuildByRefType(BDRE->getDecl()->getNameAsCString(),
-                                 FieldType);
+    QualType FieldType = E->getType();
+    IdentifierInfo *FieldName = 0;
+    if (isa<CXXThisExpr>(E)) {
+      FieldName = &Idents.get("this");
+    } else if (const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E)) {
+      const ValueDecl *D = BDRE->getDecl();
+      FieldName = D->getIdentifier();
+      if (BDRE->isByRef())
+        FieldType = BuildByRefType(D->getNameAsCString(), FieldType);
+    } else {
+      // Padding.
+      assert(isa<ConstantArrayType>(FieldType) &&
+             isa<DeclRefExpr>(E) &&
+             !cast<DeclRefExpr>(E)->getDecl()->getDeclName() &&
+             "doesn't match characteristics of padding decl");
+    }
 
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
-                                         Name, FieldType, /*TInfo=*/0,
+                                         FieldName, FieldType, /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
     Field->setAccess(AS_public);
     T->addDecl(Field);

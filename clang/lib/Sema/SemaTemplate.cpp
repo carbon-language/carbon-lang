@@ -330,11 +330,13 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                            const TemplateArgumentListInfo *TemplateArgs) {
   NestedNameSpecifier *Qualifier
     = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+
+  DeclContext *DC = getFunctionLevelDeclContext();
     
   if (!isAddressOfOperand &&
-      isa<CXXMethodDecl>(CurContext) &&
-      cast<CXXMethodDecl>(CurContext)->isInstance()) {
-    QualType ThisType = cast<CXXMethodDecl>(CurContext)->getThisType(Context);
+      isa<CXXMethodDecl>(DC) &&
+      cast<CXXMethodDecl>(DC)->isInstance()) {
+    QualType ThisType = cast<CXXMethodDecl>(DC)->getThisType(Context);
     
     // Since the 'this' expression is synthesized, we don't need to
     // perform the double-lookup check.

@@ -110,6 +110,9 @@ static void CollectBlockDeclRefInfo(
     if (!InnerContexts.count(BDRE->getDecl()->getDeclContext()))
       Info.DeclRefs.push_back(BDRE);
   }
+
+  if (isa<CXXThisExpr>(S))
+    Info.CXXThisRef = cast<CXXThisExpr>(S);
 }
 
 /// CanBlockBeGlobal - Given a BlockInfo struct, determines if a block can be
@@ -123,7 +126,8 @@ static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info) {
 /// invoke function.
 static void AllocateAllBlockDeclRefs(const CodeGenFunction::BlockInfo &Info,
                                      CodeGenFunction *CGF) {
-  // FIXME: Also always forward the this pointer in C++ as well.
+  if (Info.CXXThisRef)
+    CGF->AllocateBlockCXXThisPointer(Info.CXXThisRef);
 
   for (size_t i = 0; i < Info.DeclRefs.size(); ++i)
     CGF->AllocateBlockDecl(Info.DeclRefs[i]);
@@ -162,14 +166,14 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __invoke
     CharUnits subBlockSize; 
     CharUnits subBlockAlign;
-    llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
+    llvm::SmallVector<const Expr *, 8> subBlockLayout;
     bool subBlockHasCopyDispose = false;
     llvm::Function *Fn
       = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, CurFuncDecl,
                                                    LocalDeclMap,
                                                    subBlockSize,
                                                    subBlockAlign,
-                                                   subBlockDeclRefDecls,
+                                                   subBlockLayout,
                                                    subBlockHasCopyDispose);
     BlockHasCopyDispose |= subBlockHasCopyDispose;
     Elts[3] = Fn;
@@ -206,7 +210,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     C = llvm::ConstantInt::get(IntTy, 0);
     Elts[2] = C;
 
-    if (subBlockDeclRefDecls.size() == 0) {
+    if (subBlockLayout.empty()) {
       // __descriptor
       Elts[4] = BuildDescriptorBlockDecl(BE, subBlockHasCopyDispose, subBlockSize,
                                          0, 0);
@@ -227,13 +231,13 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       return C;
     }
 
-    std::vector<const llvm::Type *> Types(BlockFields+subBlockDeclRefDecls.size());
+    std::vector<const llvm::Type *> Types(BlockFields+subBlockLayout.size());
     for (int i=0; i<4; ++i)
       Types[i] = Elts[i]->getType();
     Types[4] = PtrToInt8Ty;
 
-    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i) {
-      const Expr *E = subBlockDeclRefDecls[i];
+    for (unsigned i = 0, n = subBlockLayout.size(); i != n; ++i) {
+      const Expr *E = subBlockLayout[i];
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
       if (BDRE && BDRE->isByRef()) {
@@ -248,97 +252,105 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     A->setAlignment(subBlockAlign.getQuantity());
     V = A;
 
-    std::vector<HelperInfo> NoteForHelper(subBlockDeclRefDecls.size());
-    int helpersize = 0;
+    // Build layout / cleanup information for all the data entries in the
+    // layout, and write the enclosing fields into the type.
+    std::vector<HelperInfo> NoteForHelper(subBlockLayout.size());
+    unsigned NumHelpers = 0;
 
     for (unsigned i=0; i<4; ++i)
       Builder.CreateStore(Elts[i], Builder.CreateStructGEP(V, i, "block.tmp"));
 
-    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
-      {
-        // FIXME: Push const down.
-        Expr *E = const_cast<Expr*>(subBlockDeclRefDecls[i]);
-        DeclRefExpr *DR;
-        ValueDecl *VD;
+    for (unsigned i=0; i < subBlockLayout.size(); ++i) {
+      const Expr *E = subBlockLayout[i];
 
-        DR = dyn_cast<DeclRefExpr>(E);
-        // Skip padding.
-        if (DR) continue;
+      // Skip padding.
+      if (isa<DeclRefExpr>(E)) continue;
 
-        BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
-        VD = BDRE->getDecl();
+      llvm::Value* Addr = Builder.CreateStructGEP(V, i+BlockFields, "tmp");
+      HelperInfo &Note = NoteForHelper[NumHelpers++];
 
-        llvm::Value* Addr = Builder.CreateStructGEP(V, i+BlockFields, "tmp");
-        NoteForHelper[helpersize].index = i+5;
-        NoteForHelper[helpersize].RequiresCopying
-          = BlockRequiresCopying(VD->getType());
-        NoteForHelper[helpersize].flag
-          = (VD->getType()->isBlockPointerType()
-             ? BLOCK_FIELD_IS_BLOCK
-             : BLOCK_FIELD_IS_OBJECT);
+      Note.index = i+5;
 
-        if (LocalDeclMap[VD]) {
-          if (BDRE->isByRef()) {
-            NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
-              // FIXME: Someone double check this.
-              (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
-            llvm::Value *Loc = LocalDeclMap[VD];
-            Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
-            Loc = Builder.CreateLoad(Loc);
-            Builder.CreateStore(Loc, Addr);
-            ++helpersize;
-            continue;
-          } else
-            E = new (getContext()) DeclRefExpr (VD,
-                                                VD->getType(), 
-                                                SourceLocation());
-        }
-        if (BDRE->isByRef()) {
-          NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
-            // FIXME: Someone double check this.
-            (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
-          E = new (getContext())
-            UnaryOperator(E, UnaryOperator::AddrOf,
-                          getContext().getPointerType(E->getType()),
-                          SourceLocation());
-        }
-        ++helpersize;
+      if (isa<CXXThisExpr>(E)) {
+        Note.RequiresCopying = false;
+        Note.flag = BLOCK_FIELD_IS_OBJECT;
 
-        RValue r = EmitAnyExpr(E, Addr, false);
-        if (r.isScalar()) {
-          llvm::Value *Loc = r.getScalarVal();
-          const llvm::Type *Ty = Types[i+BlockFields];
-          if  (BDRE->isByRef()) {
-            // E is now the address of the value field, instead, we want the
-            // address of the actual ByRef struct.  We optimize this slightly
-            // compared to gcc by not grabbing the forwarding slot as this must
-            // be done during Block_copy for us, and we can postpone the work
-            // until then.
-            CharUnits offset = BlockDecls[BDRE->getDecl()];
-
-            llvm::Value *BlockLiteral = LoadBlockStruct();
-
-            Loc = Builder.CreateGEP(BlockLiteral,
-                       llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                                           offset.getQuantity()),
-                                    "block.literal");
-            Ty = llvm::PointerType::get(Ty, 0);
-            Loc = Builder.CreateBitCast(Loc, Ty);
-            Loc = Builder.CreateLoad(Loc);
-            // Loc = Builder.CreateBitCast(Loc, Ty);
-          }
-          Builder.CreateStore(Loc, Addr);
-        } else if (r.isComplex())
-          // FIXME: implement
-          ErrorUnsupported(BE, "complex in block literal");
-        else if (r.isAggregate())
-          ; // Already created into the destination
-        else
-          assert (0 && "bad block variable");
-        // FIXME: Ensure that the offset created by the backend for
-        // the struct matches the previously computed offset in BlockDecls.
+        Builder.CreateStore(LoadCXXThis(), Addr);
+        continue;
       }
-    NoteForHelper.resize(helpersize);
+
+      const BlockDeclRefExpr *BDRE = cast<BlockDeclRefExpr>(E);
+      const ValueDecl *VD = BDRE->getDecl();
+      QualType T = VD->getType();
+
+      Note.RequiresCopying = BlockRequiresCopying(T);
+
+      if (BDRE->isByRef()) {
+        Note.flag = BLOCK_FIELD_IS_BYREF;
+        if (T.isObjCGCWeak())
+          Note.flag |= BLOCK_FIELD_IS_WEAK;
+      } else if (T->isBlockPointerType()) {
+        Note.flag = BLOCK_FIELD_IS_BLOCK;
+      } else {
+        Note.flag = BLOCK_FIELD_IS_OBJECT;
+      }
+
+      if (LocalDeclMap[VD]) {
+        if (BDRE->isByRef()) {
+          llvm::Value *Loc = LocalDeclMap[VD];
+          Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
+          Loc = Builder.CreateLoad(Loc);
+          Builder.CreateStore(Loc, Addr);
+          continue;
+        } else {
+          E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
+                                             VD->getType(),
+                                             SourceLocation());
+        }
+      }
+
+      if (BDRE->isByRef()) {
+        E = new (getContext())
+          UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+                        getContext().getPointerType(E->getType()),
+                        SourceLocation());
+      }
+
+      RValue r = EmitAnyExpr(E, Addr, false);
+      if (r.isScalar()) {
+        llvm::Value *Loc = r.getScalarVal();
+        const llvm::Type *Ty = Types[i+BlockFields];
+        if  (BDRE->isByRef()) {
+          // E is now the address of the value field, instead, we want the
+          // address of the actual ByRef struct.  We optimize this slightly
+          // compared to gcc by not grabbing the forwarding slot as this must
+          // be done during Block_copy for us, and we can postpone the work
+          // until then.
+          CharUnits offset = BlockDecls[BDRE->getDecl()];
+
+          llvm::Value *BlockLiteral = LoadBlockStruct();
+
+          Loc = Builder.CreateGEP(BlockLiteral,
+                     llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
+                                                         offset.getQuantity()),
+                                  "block.literal");
+          Ty = llvm::PointerType::get(Ty, 0);
+          Loc = Builder.CreateBitCast(Loc, Ty);
+          Loc = Builder.CreateLoad(Loc);
+          // Loc = Builder.CreateBitCast(Loc, Ty);
+        }
+        Builder.CreateStore(Loc, Addr);
+      } else if (r.isComplex())
+        // FIXME: implement
+        ErrorUnsupported(BE, "complex in block literal");
+      else if (r.isAggregate())
+        ; // Already created into the destination
+      else
+        assert (0 && "bad block variable");
+      // FIXME: Ensure that the offset created by the backend for
+      // the struct matches the previously computed offset in BlockDecls.
+    }
+    NoteForHelper.resize(NumHelpers);
 
     // __descriptor
     llvm::Value *Descriptor = BuildDescriptorBlockDecl(BE,
@@ -487,13 +499,25 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   return EmitCall(FnInfo, Func, ReturnValue, Args);
 }
 
-CharUnits CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
+void CodeGenFunction::AllocateBlockCXXThisPointer(const CXXThisExpr *E) {
+  assert(BlockCXXThisOffset.isZero() && "already computed 'this' pointer");
+
+  // Figure out what the offset is.
+  QualType T = E->getType();
+  std::pair<CharUnits,CharUnits> TypeInfo = getContext().getTypeInfoInChars(T);
+  CharUnits Offset = getBlockOffset(TypeInfo.first, TypeInfo.second);
+
+  BlockCXXThisOffset = Offset;
+  BlockLayout.push_back(E);
+}
+
+void CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
   const ValueDecl *VD = E->getDecl();
-  CharUnits &offset = BlockDecls[VD];
+  CharUnits &Offset = BlockDecls[VD];
 
   // See if we have already allocated an offset for this variable.
-  if (offset.isPositive())
-    return offset;
+  if (!Offset.isZero())
+    return;
 
   // Don't run the expensive check, unless we have to.
   if (!BlockHasCopyDispose)
@@ -501,16 +525,27 @@ CharUnits CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
         || BlockRequiresCopying(E->getType()))
       BlockHasCopyDispose = true;
 
-  // if not, allocate one now.
-  offset = getBlockOffset(E);
+  const ValueDecl *D = cast<ValueDecl>(E->getDecl());
 
-  return offset;
+  CharUnits Size;
+  CharUnits Align;
+
+  if (E->isByRef()) {
+    llvm::tie(Size,Align) =
+      getContext().getTypeInfoInChars(getContext().VoidPtrTy);
+  } else {
+    Size = getContext().getTypeSizeInChars(D->getType());
+    Align = getContext().getDeclAlign(D);
+  }
+
+  Offset = getBlockOffset(Size, Align);
+  BlockLayout.push_back(E);
 }
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   const ValueDecl *VD = E->getDecl();
-  CharUnits offset = AllocateBlockDecl(E);
-  
+  CharUnits offset = BlockDecls[VD];
+  assert(!offset.isZero() && "getting address of unallocated decl");
 
   llvm::Value *BlockLiteral = LoadBlockStruct();
   llvm::Value *V = Builder.CreateGEP(BlockLiteral,
@@ -603,14 +638,14 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   CodeGenFunction::BlockInfo Info(0, n);
   CharUnits subBlockSize; 
   CharUnits subBlockAlign;
-  llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
+  llvm::SmallVector<const Expr *, 8> subBlockLayout;
   bool subBlockHasCopyDispose = false;
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
     = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, 0, LocalDeclMap,
                                                  subBlockSize,
                                                  subBlockAlign,
-                                                 subBlockDeclRefDecls,
+                                                 subBlockLayout,
                                                  subBlockHasCopyDispose);
   assert(subBlockSize == BlockLiteralSize
          && "no imports allowed for global block");
@@ -656,7 +691,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                        CharUnits &Size,
                                        CharUnits &Align,
-                       llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
+                        llvm::SmallVectorImpl<const Expr *> &subBlockLayout,
                                        bool &subBlockHasCopyDispose) {
 
   // Check if we should generate debug info for this block.
@@ -701,11 +736,12 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   IdentifierInfo *II = &CGM.getContext().Idents.get(".block_descriptor");
 
-  // Allocate all BlockDeclRefDecls, so we can calculate the right ParmTy below.
+  // Build the block struct now.
   AllocateAllBlockDeclRefs(Info, this);
 
   QualType ParmTy = getContext().getBlockParmType(BlockHasCopyDispose,
-                                                  BlockDeclRefDecls);
+                                                  BlockLayout);
+
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
     ImplicitParamDecl::Create(getContext(), const_cast<BlockDecl*>(BD),
@@ -738,6 +774,27 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   CurFuncDecl = OuterFuncDecl;
   CurCodeDecl = BD;
 
+  // If we have a C++ 'this' reference, go ahead and force it into
+  // existence now.
+  if (Info.CXXThisRef) {
+    assert(!BlockCXXThisOffset.isZero() &&
+           "haven't yet allocated 'this' reference");
+
+    // TODO: I have a dream that one day this will be typed.
+    llvm::Value *BlockLiteral = LoadBlockStruct();
+    llvm::Value *ThisPtrRaw =
+      Builder.CreateConstInBoundsGEP1_64(BlockLiteral,
+                                         BlockCXXThisOffset.getQuantity(),
+                                         "this.ptr.raw");
+
+    const llvm::Type *Ty =
+      CGM.getTypes().ConvertType(Info.CXXThisRef->getType());
+    Ty = llvm::PointerType::get(Ty, 0);  
+    llvm::Value *ThisPtr = Builder.CreateBitCast(ThisPtrRaw, Ty, "this.ptr");
+
+    CXXThisValue = Builder.CreateLoad(ThisPtr, "this");
+  }
+
   // Save a spot to insert the debug information for all the BlockDeclRefDecls.
   llvm::BasicBlock *entry = Builder.GetInsertBlock();
   llvm::BasicBlock::iterator entry_ptr = Builder.GetInsertPoint();
@@ -754,9 +811,10 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   if (CGDebugInfo *DI = getDebugInfo()) {
     // Emit debug information for all the BlockDeclRefDecls.
-    for (unsigned i = 0, e = BlockDeclRefDecls.size(); i != e; ++i) {
-      if (const BlockDeclRefExpr *BDRE = 
-            dyn_cast<BlockDeclRefExpr>(BlockDeclRefDecls[i])) {
+    // FIXME: also for 'this'
+    for (unsigned i = 0, e = BlockLayout.size(); i != e; ++i) {
+      if (const BlockDeclRefExpr *BDRE =
+            dyn_cast<BlockDeclRefExpr>(BlockLayout[i])) {
         const ValueDecl *D = BDRE->getDecl();
         DI->setLocation(D->getLocation());
         DI->EmitDeclareOfBlockDeclRefVariable(BDRE,
@@ -781,23 +839,13 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   Size = BlockOffset;
   Align = BlockAlign;
-  subBlockDeclRefDecls = BlockDeclRefDecls;
+  subBlockLayout = BlockLayout;
   subBlockHasCopyDispose |= BlockHasCopyDispose;
   return Fn;
 }
 
-CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
-  const ValueDecl *D = dyn_cast<ValueDecl>(BDRE->getDecl());
-
-  CharUnits Size = getContext().getTypeSizeInChars(D->getType());
-  CharUnits Align = getContext().getDeclAlign(D);
-
-  if (BDRE->isByRef()) {
-    Size = getContext().getTypeSizeInChars(getContext().VoidPtrTy);
-    Align = getContext().getTypeAlignInChars(getContext().VoidPtrTy);
-  }
-
-  assert ((Align.isPositive()) && "alignment must be 1 byte or more");
+CharUnits BlockFunction::getBlockOffset(CharUnits Size, CharUnits Align) {
+  assert((Align.isPositive()) && "alignment must be 1 byte or more");
 
   CharUnits OldOffset = BlockOffset;
 
@@ -808,7 +856,6 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
 
   CharUnits Pad = BlockOffset - OldOffset;
   if (Pad.isPositive()) {
-    llvm::ArrayType::get(llvm::Type::getInt8Ty(VMContext), Pad.getQuantity());
     QualType PadTy = getContext().getConstantArrayType(getContext().CharTy,
                                                        llvm::APInt(32, 
                                                          Pad.getQuantity()),
@@ -818,15 +865,13 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
                                          SourceLocation(),
                                          0, QualType(PadTy), 0,
                                          VarDecl::None, VarDecl::None);
-    Expr *E;
-    E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
-                                       SourceLocation());
-    BlockDeclRefDecls.push_back(E);
+    Expr *E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
+                                             SourceLocation());
+    BlockLayout.push_back(E);
   }
-  BlockDeclRefDecls.push_back(BDRE);
 
   BlockOffset += Size;
-  return BlockOffset-Size;
+  return BlockOffset - Size;
 }
 
 llvm::Constant *BlockFunction::

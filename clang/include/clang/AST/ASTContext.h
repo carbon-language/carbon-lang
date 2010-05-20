@@ -482,7 +482,7 @@ public:
   /// This gets the struct used to keep track of pointer to blocks, complete
   /// with captured variables.
   QualType getBlockParmType(bool BlockHasCopyDispose,
-                            llvm::SmallVector<const Expr *, 8> &BDRDs);
+                            llvm::SmallVectorImpl<const Expr *> &Layout);
 
   /// This builds the struct used for __block variables.
   QualType BuildByRefType(const char *DeclName, QualType Ty);
@@ -909,6 +909,9 @@ public:
   /// characters. This method does not work on incomplete types.
   CharUnits getTypeAlignInChars(QualType T);
   CharUnits getTypeAlignInChars(const Type *T);
+
+  std::pair<CharUnits, CharUnits> getTypeInfoInChars(const Type *T);
+  std::pair<CharUnits, CharUnits> getTypeInfoInChars(QualType T);
 
   /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
   /// type for the current target in bits.  This can be different than the ABI
