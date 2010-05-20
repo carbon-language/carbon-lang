@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtarget.h"
 #include "llvm/ADT/DenseMap.h"
@@ -44,6 +45,24 @@ void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb,
   ScheduleDAG::Run(bb, insertPos);
 }
 
+/// NewSUnit - Creates a new SUnit and return a ptr to it.
+///
+SUnit *ScheduleDAGSDNodes::NewSUnit(SDNode *N) {
+#ifndef NDEBUG
+  const SUnit *Addr = 0;
+  if (!SUnits.empty())
+    Addr = &SUnits[0];
+#endif
+  SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
+  assert((Addr == 0 || Addr == &SUnits[0]) &&
+         "SUnits std::vector reallocated on the fly!");
+  SUnits.back().OrigNode = &SUnits.back();
+  SUnit *SU = &SUnits.back();
+  const TargetLowering &TLI = DAG->getTargetLoweringInfo();
+  SU->SchedulingPref = TLI.getSchedulingPreference(N);
+  return SU;
+}
+
 SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SUnit *SU = NewSUnit(Old->getNode());
   SU->OrigNode = Old->OrigNode;
@@ -52,6 +71,7 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SU->isCommutable = Old->isCommutable;
   SU->hasPhysRegDefs = Old->hasPhysRegDefs;
   SU->hasPhysRegClobbers = Old->hasPhysRegClobbers;
+  SU->SchedulingPref = Old->SchedulingPref;
   Old->isCloned = true;
   return SU;
 }

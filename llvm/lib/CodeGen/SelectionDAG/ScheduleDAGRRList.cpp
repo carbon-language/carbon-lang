@@ -1256,8 +1256,10 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
-  bool LStall = SPQ->getCurCycle() < left->getHeight();
-  bool RStall = SPQ->getCurCycle() < right->getHeight();
+  bool LStall = left->SchedulingPref == Sched::Latency &&
+    SPQ->getCurCycle() < left->getHeight();
+  bool RStall = right->SchedulingPref == Sched::Latency &&
+    SPQ->getCurCycle() < right->getHeight();
   // If scheduling one of the node will cause a pipeline stall, delay it.
   // If scheduling either one of the node will cause a pipeline stall, sort them
   // according to their height.

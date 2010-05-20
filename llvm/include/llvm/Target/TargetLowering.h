@@ -149,6 +149,13 @@ public:
     return SchedPreferenceInfo;
   }
 
+  /// getSchedulingPreference - Some scheduler, e.g. hybrid, can switch to
+  /// different scheduling heuristics for different nodes. This function returns
+  /// the preference (or none) for the given node.
+  virtual Sched::Preference getSchedulingPreference(SDNode *N) const {
+    return Sched::None;
+  }
+
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.
   virtual TargetRegisterClass *getRegClassFor(EVT VT) const {

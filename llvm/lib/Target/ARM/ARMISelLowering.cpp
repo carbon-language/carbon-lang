@@ -466,6 +466,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::MUL);
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
+
   setSchedulingPreference(Sched::RegPressure);
 
   // FIXME: If-converter should use instruction latency to determine
@@ -598,6 +599,15 @@ TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
   return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 0 : 1;
+}
+
+Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
+  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+    EVT VT = N->getValueType(i);
+    if (VT.isFloatingPoint() || VT.isVector())
+      return Sched::Latency;
+  }
+  return Sched::RegPressure;
 }
 
 //===----------------------------------------------------------------------===//

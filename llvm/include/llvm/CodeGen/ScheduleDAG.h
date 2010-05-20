@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/GraphTraits.h"
@@ -238,7 +239,7 @@ namespace llvm {
     typedef SmallVector<SDep, 4>::iterator succ_iterator;
     typedef SmallVector<SDep, 4>::const_iterator const_pred_iterator;
     typedef SmallVector<SDep, 4>::const_iterator const_succ_iterator;
-    
+
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
     unsigned short Latency;             // Node latency.
@@ -255,6 +256,7 @@ namespace llvm {
     bool isScheduled      : 1;          // True once scheduled.
     bool isScheduleHigh   : 1;          // True if preferable to schedule high.
     bool isCloned         : 1;          // True if this node has been cloned.
+    Sched::Preference SchedulingPref;   // Scheduling preference.
 
     SmallVector<MachineInstr*, 4> DbgInstrList; // dbg_values referencing this.
   private:
@@ -275,6 +277,7 @@ namespace llvm {
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
+        SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
@@ -287,6 +290,7 @@ namespace llvm {
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
+        SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
@@ -298,6 +302,7 @@ namespace llvm {
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
+        SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
@@ -390,7 +395,7 @@ namespace llvm {
           return true;
       return false;
     }
-    
+
     void dump(const ScheduleDAG *G) const;
     void dumpAll(const ScheduleDAG *G) const;
     void print(raw_ostream &O, const ScheduleDAG *G) const;
