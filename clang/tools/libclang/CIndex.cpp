@@ -48,7 +48,8 @@ using namespace clang::cxstring;
 #define USE_CRASHTRACER
 #include "clang/Analysis/Support/SaveAndRestore.h"
 // Integrate with crash reporter.
-extern "C" const char *__crashreporter_info__;
+static const char *__crashreporter_info__ = 0;
+asm(".desc ___crashreporter_info__, 0x10");
 #define NUM_CRASH_STRINGS 32
 static unsigned crashtracer_counter = 0;
 static unsigned crashtracer_counter_id[NUM_CRASH_STRINGS] = { 0 };
