@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_memmove_collectable %t | grep call | count 3
 // RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
-// RUN: grep objc_memmove_collectable %t | grep call | count 3
+// RUN: grep objc_memmove_collectable %t | grep call | count 4
 
 static int count;
 
@@ -45,4 +45,13 @@ struct type_s get(void)
 void f(const struct type_s *in, struct type_s *out) {
   *out = *in;
 }
+
+#ifdef __cplusplus
+struct Derived : type_s { };
+
+void foo(Derived* src, Derived* dest) {
+        *dest = *src;
+}
+
+#endif
 

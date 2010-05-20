@@ -622,7 +622,13 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
     QualType NewBaseType
       = Context.getCanonicalType(Bases[idx]->getType());
     NewBaseType = NewBaseType.getLocalUnqualifiedType();
-
+    if (!Class->hasObjectMember()) {
+      if (const RecordType *FDTTy = 
+            NewBaseType.getTypePtr()->getAs<RecordType>())
+        if (FDTTy->getDecl()->hasObjectMember())
+          Class->setHasObjectMember(true);
+    }
+    
     if (KnownBaseTypes[NewBaseType]) {
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
