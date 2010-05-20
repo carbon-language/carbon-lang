@@ -310,6 +310,13 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << AlignLog);
     return;
   }
+  
+  // Handle the tbss directive on darwin which is a thread local bss directive
+  // like zerofill.
+  if (GVKind.isThreadBSS() && MAI->hasMachoTBSSDirective()) {
+    OutStreamer.EmitTBSSSymbol(TheSection, GVSym, Size, 1 << AlignLog);
+    return;
+  }
 
   OutStreamer.SwitchSection(TheSection);
 

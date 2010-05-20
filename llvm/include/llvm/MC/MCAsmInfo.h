@@ -303,6 +303,7 @@ namespace llvm {
     // Accessors.
     //
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
+    bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
     bool hasStaticCtorDtorReferenceInStaticMode() const {
       return HasStaticCtorDtorReferenceInStaticMode;
     }

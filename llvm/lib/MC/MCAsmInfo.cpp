@@ -21,6 +21,7 @@ using namespace llvm;
 MCAsmInfo::MCAsmInfo() {
   HasSubsectionsViaSymbols = false;
   HasMachoZeroFillDirective = false;
+  HasMachoTBSSDirective = false;
   HasStaticCtorDtorReferenceInStaticMode = false;
   MaxInstLength = 4;
   PCSymbol = "$";

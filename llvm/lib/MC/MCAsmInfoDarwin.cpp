@@ -35,6 +35,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   WeakRefDirective = "\t.weak_reference ";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill
+  HasMachoTBSSDirective = true; // Uses .tbss
   HasStaticCtorDtorReferenceInStaticMode = true;
   
   HiddenVisibilityAttr = MCSA_PrivateExtern;
