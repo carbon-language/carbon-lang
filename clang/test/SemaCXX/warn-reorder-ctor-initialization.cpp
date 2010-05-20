@@ -120,3 +120,13 @@ namespace test3 {
     };
   };
 }
+
+namespace PR7179 {
+  struct X
+  {
+    struct Y
+    {
+      template <class T> Y(T x) : X(x) { }
+    };
+  };
+}

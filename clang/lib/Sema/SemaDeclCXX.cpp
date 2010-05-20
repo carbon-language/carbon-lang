@@ -2016,9 +2016,7 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
     // If we didn't find this initializer, it must be because we
     // scanned past it on a previous iteration.  That can only
     // happen if we're out of order;  emit a warning.
-    if (IdealIndex == NumIdealInits) {
-      assert(PrevInit && "initializer not found in initializer list");
-
+    if (IdealIndex == NumIdealInits && PrevInit) {
       Sema::SemaDiagnosticBuilder D =
         SemaRef.Diag(PrevInit->getSourceLocation(),
                      diag::warn_initializer_out_of_order);
