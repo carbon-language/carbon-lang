@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple i386-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
 
 @interface PBXTarget 
 {
@@ -10,6 +11,7 @@ PBXTarget * result;
 - Meth;
 @end
 
+extern void foo();
 @implementation PBXTarget
 - Meth {
 	if (_lastKnownTarget != result)

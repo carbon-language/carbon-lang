@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -fobjc-gc -emit-llvm -o %t %s
 
 @interface I {
   __attribute__((objc_gc(strong))) signed long *_documentIDs;

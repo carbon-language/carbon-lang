@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -F '@objc_assign_global' %t  | count 21
 // RUN: grep -F '@objc_assign_ivar' %t  | count 11
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
+// RUN: grep -F '@objc_assign_global' %t  | count 21
+// RUN: grep -F '@objc_assign_ivar' %t  | count 11
 
 
 typedef const struct __CFDictionary * CFDictionaryRef;
@@ -49,9 +52,9 @@ struct_with_ids_t GlobalStructArray[10];
 
 
 // The test cases
-void *rhs = 0;
+void* rhs = 0;
 
-#define ASSIGNTEST(expr, global) expr = rhs
+#define ASSIGNTEST(expr, global) expr = (typeof(expr))rhs
 
 int testGlobals() {
   // Everything in this function generates assign_global intercepts
