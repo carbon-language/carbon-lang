@@ -327,6 +327,7 @@ void TemplateArgumentListBuilder::EndPack() {
 
   AddingToPack = false;
 
+  // FIXME: This is a memory leak!
   StructuredArgs = new TemplateArgument[MaxStructuredArgs];
 
   // First copy the flat entries over to the list  (if any)
