@@ -170,8 +170,8 @@ class MachObjectWriterImpl {
 
     // Support lexicographic sorting.
     bool operator<(const MachSymbolData &RHS) const {
-      const std::string &Name = SymbolData->getSymbol().getName();
-      return Name < RHS.SymbolData->getSymbol().getName();
+      return SymbolData->getSymbol().getName() <
+             RHS.SymbolData->getSymbol().getName();
     }
   };
 
