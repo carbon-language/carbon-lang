@@ -11,6 +11,7 @@
 
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
+#include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/HostInfo.h"
@@ -190,6 +191,16 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
+  // FIXME: This doesn't belong here, but ideally we will support static soon
+  // anyway.
+  bool HasStatic = (C.getArgs().hasArg(options::OPT_mkernel) ||
+                    C.getArgs().hasArg(options::OPT_static) ||
+                    C.getArgs().hasArg(options::OPT_fapple_kext));
+  bool IsIADefault = IsIntegratedAssemblerDefault() && !HasStatic;
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIADefault);
+
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
@@ -203,8 +214,13 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::PrecompileJobClass:
     case Action::CompileJobClass:
       T = new tools::darwin::Compile(*this); break;
-    case Action::AssembleJobClass:
-      T = new tools::darwin::Assemble(*this); break;
+    case Action::AssembleJobClass: {
+      if (UseIntegratedAs)
+        T = new tools::ClangAs(*this);
+      else
+        T = new tools::darwin::Assemble(*this);
+      break;
+    }
     case Action::LinkJobClass:
       T = new tools::darwin::Link(*this); break;
     case Action::LipoJobClass:
