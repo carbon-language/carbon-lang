@@ -50,8 +50,8 @@ static void PrintCurStackTrace(raw_ostream &OS) {
 
 // Integrate with crash reporter.
 #ifdef __APPLE__
-extern "C" const char *__crashreporter_info__;
-const char *__crashreporter_info__ = 0;
+static const char *__crashreporter_info__ = 0;
+asm(".desc ___crashreporter_info__, 0x10");
 #endif
 
 
