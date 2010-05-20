@@ -3109,6 +3109,8 @@ void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
           Solution[i]->print(dbgs());
           dbgs() << '\n';
         });
+
+  assert(Solution.size() == Uses.size() && "Malformed solution!");
 }
 
 /// HoistInsertPosition - Helper for AdjustInsertPositionForExpand. Climb up
@@ -3547,7 +3549,6 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   SmallVector<const Formula *, 8> Solution;
   Solve(Solution);
-  assert(Solution.size() == Uses.size() && "Malformed solution!");
 
   // Release memory that is no longer needed.
   Factors.clear();
