@@ -760,7 +760,13 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // Ignore empty classes in C++.
   if (getContext().getLangOptions().CPlusPlus) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
-      if (cast<CXXRecordDecl>(RT->getDecl())->isEmpty())
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
+      assert((Record->hasTrivialCopyConstructor() || 
+              Record->hasTrivialCopyAssignment() ||
+              /*FIXME!*/getContext().getLangOptions().CPlusPlus) &&
+             "Trying to aggregate-copy a type without a trivial copy "
+             "constructor or assignment operator");
+      if (Record->isEmpty())
         return;
     }
   }
