@@ -131,8 +131,6 @@ public:
   void BeginPack();
   void EndPack();
 
-  void ReleaseArgs();
-
   unsigned flatSize() const {
     return NumFlatArgs;
   }
@@ -165,7 +163,7 @@ class TemplateArgumentList {
   /// \brief The template argument list.
   ///
   /// The integer value will be non-zero to indicate that this
-  /// template argument list does not own the pointer.
+  /// template argument list does own the pointer.
   llvm::PointerIntPair<const TemplateArgument *, 1> FlatArguments;
 
   /// \brief The number of template arguments in this template
@@ -176,6 +174,10 @@ class TemplateArgumentList {
   unsigned NumStructuredArguments;
 
 public:
+  /// TemplateArgumentList - If this constructor is passed "true" for 'TakeArgs'
+  /// it copies them into a locally new[]'d array.  If passed "false", then it
+  /// just references the array passed in.  This is only safe if the builder
+  /// outlives it, but saves a copy.
   TemplateArgumentList(ASTContext &Context,
                        TemplateArgumentListBuilder &Builder,
                        bool TakeArgs);

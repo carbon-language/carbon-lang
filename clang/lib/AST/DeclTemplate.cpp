@@ -353,15 +353,6 @@ void TemplateArgumentListBuilder::EndPack() {
                                                       /*CopyArgs=*/false);
 }
 
-void TemplateArgumentListBuilder::ReleaseArgs() {
-  FlatArgs = 0;
-  NumFlatArgs = 0;
-  MaxFlatArgs = 0;
-  StructuredArgs = 0;
-  NumStructuredArgs = 0;
-  MaxStructuredArgs = 0;
-}
-
 //===----------------------------------------------------------------------===//
 // TemplateArgumentList Implementation
 //===----------------------------------------------------------------------===//
@@ -376,9 +367,23 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
   if (!TakeArgs)
     return;
 
-  if (Builder.getStructuredArguments() == Builder.getFlatArguments())
+  // If this does take ownership of the arguments, then we have to new them
+  // and copy over.
+  TemplateArgument *NewArgs = new TemplateArgument[Builder.flatSize()];
+  std::copy(Builder.getFlatArguments(),
+            Builder.getFlatArguments()+Builder.flatSize(), NewArgs);
+  FlatArguments.setPointer(NewArgs);
+      
+  // Just reuse the structured and flat arguments array if possible.
+  if (Builder.getStructuredArguments() == Builder.getFlatArguments()) {
+    StructuredArguments.setPointer(NewArgs);    
     StructuredArguments.setInt(0);
-  Builder.ReleaseArgs();
+  } else {
+    TemplateArgument *NewSArgs = new TemplateArgument[Builder.flatSize()];
+    std::copy(Builder.getFlatArguments(),
+              Builder.getFlatArguments()+Builder.flatSize(), NewSArgs);
+    StructuredArguments.setPointer(NewSArgs);
+  }
 }
 
 TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList &Other)
@@ -388,7 +393,10 @@ TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList &Other)
     NumStructuredArguments(Other.NumStructuredArguments) { }
 
 TemplateArgumentList::~TemplateArgumentList() {
-  // FIXME: Deallocate template arguments
+  if (FlatArguments.getInt())
+    delete [] FlatArguments.getPointer();
+  if (StructuredArguments.getInt())
+    delete [] StructuredArguments.getPointer();
 }
 
 //===----------------------------------------------------------------------===//
