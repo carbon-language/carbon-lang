@@ -763,7 +763,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
       CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
       assert((Record->hasTrivialCopyConstructor() || 
               Record->hasTrivialCopyAssignment() ||
-              /*FIXME!*/getContext().getLangOptions().CPlusPlus) &&
+              /*FIXME!*/getContext().getLangOptions().ObjC1) &&
              "Trying to aggregate-copy a type without a trivial copy "
              "constructor or assignment operator");
       if (Record->isEmpty())
