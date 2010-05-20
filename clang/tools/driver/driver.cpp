@@ -170,15 +170,28 @@ static void ApplyQAOverride(std::vector<const char*> &Args,
 
 extern int cc1_main(const char **ArgBegin, const char **ArgEnd,
                     const char *Argv0, void *MainAddr);
+extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
+                      const char *Argv0, void *MainAddr);
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
 
-  // Dispatch to cc1_main if appropriate.
-  if (argc > 1 && llvm::StringRef(argv[1]) == "-cc1")
-    return cc1_main(argv+2, argv+argc, argv[0],
-                    (void*) (intptr_t) GetExecutablePath);
+  // Handle -cc1 integrated tools.
+  if (argc > 1 && llvm::StringRef(argv[1]).startswith("-cc1")) {
+    llvm::StringRef Tool = argv[1] + 4;
+
+    if (Tool == "")
+      return cc1_main(argv+2, argv+argc, argv[0],
+                      (void*) (intptr_t) GetExecutablePath);
+    if (Tool == "as")
+      return cc1as_main(argv+2, argv+argc, argv[0],
+                      (void*) (intptr_t) GetExecutablePath);
+
+    // Reject unknown tools.
+    llvm::errs() << "error: unknown integrated tool '" << Tool << "'\n";
+    return 1;
+  }
 
   bool CanonicalPrefixes = true;
   for (int i = 1; i < argc; ++i) {

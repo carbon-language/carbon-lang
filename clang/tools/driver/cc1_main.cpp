@@ -1,4 +1,4 @@
-//===-- cc1_main.cpp - Clang CC1 Driver -----------------------------------===//
+//===-- cc1_main.cpp - Clang CC1 Compiler Frontend ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,7 +43,7 @@ using namespace clang;
 // Main driver
 //===----------------------------------------------------------------------===//
 
-void LLVMErrorHandler(void *UserData, const std::string &Message) {
+static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;

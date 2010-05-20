@@ -26,6 +26,7 @@ set( LLVM_LINK_COMPONENTS
 add_clang_executable(clang
   driver.cpp
   cc1_main.cpp
+  cc1as_main.cpp
   )
 
 if(UNIX)

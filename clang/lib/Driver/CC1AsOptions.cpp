@@ -1,4 +1,4 @@
-//===--- CC1Options.cpp - Clang CC1 Options Table -------------------------===//
+//===--- CC1AsOptions.cpp - Clang Assembler Options Table -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,32 +7,33 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/CC1Options.h"
+#include "clang/Driver/CC1AsOptions.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/OptTable.h"
 using namespace clang;
 using namespace clang::driver;
 using namespace clang::driver::options;
-using namespace clang::driver::cc1options;
+using namespace clang::driver::cc1asoptions;
 
-static const OptTable::Info CC1InfoTable[] = {
+static const OptTable::Info CC1AsInfoTable[] = {
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
     OPT_##GROUP, OPT_##ALIAS },
-#include "clang/Driver/CC1Options.inc"
+#include "clang/Driver/CC1AsOptions.inc"
 };
 
 namespace {
 
-class CC1OptTable : public OptTable {
+class CC1AsOptTable : public OptTable {
 public:
-  CC1OptTable()
-    : OptTable(CC1InfoTable, sizeof(CC1InfoTable) / sizeof(CC1InfoTable[0])) {}
+  CC1AsOptTable()
+    : OptTable(CC1AsInfoTable,
+               sizeof(CC1AsInfoTable) / sizeof(CC1AsInfoTable[0])) {}
 };
 
 }
 
-OptTable *clang::driver::createCC1OptTable() {
-  return new CC1OptTable();
+OptTable *clang::driver::createCC1AsOptTable() {
+  return new CC1AsOptTable();
 }
