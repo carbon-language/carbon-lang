@@ -386,11 +386,15 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
   }
 }
 
-TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList &Other)
-  : FlatArguments(Other.FlatArguments.getPointer(), 1),
-    NumFlatArguments(Other.flat_size()),
-    StructuredArguments(Other.StructuredArguments.getPointer(), 1),
-    NumStructuredArguments(Other.NumStructuredArguments) { }
+/// Produces a shallow copy of the given template argument list.  This
+/// assumes that the input argument list outlives it.  This takes the list as
+/// a pointer to avoid looking like a copy constructor, since this really
+/// really isn't safe to use that way.
+TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList *Other)
+  : FlatArguments(Other->FlatArguments.getPointer(), false),
+    NumFlatArguments(Other->flat_size()),
+    StructuredArguments(Other->StructuredArguments.getPointer(), false),
+    NumStructuredArguments(Other->NumStructuredArguments) { }
 
 TemplateArgumentList::~TemplateArgumentList() {
   if (FlatArguments.getInt())

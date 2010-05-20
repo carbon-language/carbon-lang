@@ -173,6 +173,8 @@ class TemplateArgumentList {
   llvm::PointerIntPair<const TemplateArgument *, 1> StructuredArguments;
   unsigned NumStructuredArguments;
 
+  TemplateArgumentList(const TemplateArgumentList &Other); // DO NOT IMPL
+  void operator=(const TemplateArgumentList &Other); // DO NOT IMPL
 public:
   /// TemplateArgumentList - If this constructor is passed "true" for 'TakeArgs'
   /// it copies them into a locally new[]'d array.  If passed "false", then it
@@ -182,8 +184,11 @@ public:
                        TemplateArgumentListBuilder &Builder,
                        bool TakeArgs);
 
-  /// \brief Produces a shallow copy of the given template argument list
-  TemplateArgumentList(const TemplateArgumentList &Other);
+  /// Produces a shallow copy of the given template argument list.  This
+  /// assumes that the input argument list outlives it.  This takes the list as
+  /// a pointer to avoid looking like a copy constructor, since this really
+  /// really isn't safe to use that way.
+  explicit TemplateArgumentList(const TemplateArgumentList *Other);
   
   ~TemplateArgumentList();
 

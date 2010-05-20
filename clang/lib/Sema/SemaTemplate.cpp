@@ -4349,7 +4349,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   // specialization.
   FD->setFunctionTemplateSpecialization(Specialization->getPrimaryTemplate(),
                          new (Context) TemplateArgumentList(
-                             *Specialization->getTemplateSpecializationArgs()), 
+                             Specialization->getTemplateSpecializationArgs()), 
                                         /*InsertPos=*/0, 
                                     SpecInfo->getTemplateSpecializationKind());
   
