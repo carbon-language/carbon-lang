@@ -1029,8 +1029,9 @@ void LSRUse::RecomputeRegs(size_t LUIdx, RegUseTracker &RegUses) {
   // Now that we've filtered out some formulae, recompute the Regs set.
   SmallPtrSet<const SCEV *, 4> OldRegs = Regs;
   Regs.clear();
-  for (size_t FIdx = 0, NumForms = Formulae.size(); FIdx != NumForms; ++FIdx) {
-    Formula &F = Formulae[FIdx];
+  for (SmallVectorImpl<Formula>::const_iterator I = Formulae.begin(),
+       E = Formulae.end(); I != E; ++I) {
+    const Formula &F = *I;
     if (F.ScaledReg) Regs.insert(F.ScaledReg);
     Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
   }
@@ -1877,9 +1878,9 @@ LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
         LU.Kind != LSRUse::ICmpZero &&
         LU.Kind == OrigLU.Kind && OrigLU.AccessTy == LU.AccessTy &&
         LU.HasFormulaWithSameRegs(OrigF)) {
-      for (size_t FIdx = 0, NumForms = LU.Formulae.size();
-           FIdx != NumForms; ++FIdx) {
-        Formula &F = LU.Formulae[FIdx];
+      for (SmallVectorImpl<Formula>::const_iterator I = LU.Formulae.begin(),
+           E = LU.Formulae.end(); I != E; ++I) {
+        const Formula &F = *I;
         if (F.BaseRegs == OrigF.BaseRegs &&
             F.ScaledReg == OrigF.ScaledReg &&
             F.AM.BaseGV == OrigF.AM.BaseGV &&
@@ -2867,9 +2868,9 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
 
     for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
       LSRUse &LU = Uses[LUIdx];
-      for (size_t FIdx = 0, NumForms = LU.Formulae.size();
-           FIdx != NumForms; ++FIdx) {
-        Formula &F = LU.Formulae[FIdx];
+      for (SmallVectorImpl<Formula>::const_iterator I = LU.Formulae.begin(),
+           E = LU.Formulae.end(); I != E; ++I) {
+        const Formula &F = *I;
         if (F.AM.BaseOffs != 0 && F.AM.Scale == 0) {
           if (LSRUse *LUThatHas = FindUseWithSimilarFormula(F, LU)) {
             if (reconcileNewOffset(*LUThatHas, F.AM.BaseOffs,
@@ -2899,15 +2900,17 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
                 LUThatHas->RecomputeRegs(LUThatHas - &Uses.front(), RegUses);
 
               // Update the relocs to reference the new use.
-              for (size_t i = 0, e = Fixups.size(); i != e; ++i) {
-                if (Fixups[i].LUIdx == LUIdx) {
-                  Fixups[i].LUIdx = LUThatHas - &Uses.front();
-                  Fixups[i].Offset += F.AM.BaseOffs;
+              for (SmallVectorImpl<LSRFixup>::iterator I = Fixups.begin(),
+                   E = Fixups.end(); I != E; ++I) {
+                LSRFixup &Fixup = *I;
+                if (Fixup.LUIdx == LUIdx) {
+                  Fixup.LUIdx = LUThatHas - &Uses.front();
+                  Fixup.Offset += F.AM.BaseOffs;
                   DEBUG(errs() << "New fixup has offset "
-                               << Fixups[i].Offset << '\n');
+                               << Fixup.Offset << '\n');
                 }
-                if (Fixups[i].LUIdx == NumUses-1)
-                  Fixups[i].LUIdx = LUIdx;
+                if (Fixup.LUIdx == NumUses-1)
+                  Fixup.LUIdx = LUIdx;
               }
 
               // Delete the old use.
@@ -3470,10 +3473,11 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   Rewriter.setIVIncInsertPos(L, IVIncInsertPos);
 
   // Expand the new value definitions and update the users.
-  for (size_t i = 0, e = Fixups.size(); i != e; ++i) {
-    size_t LUIdx = Fixups[i].LUIdx;
+  for (SmallVectorImpl<LSRFixup>::const_iterator I = Fixups.begin(),
+       E = Fixups.end(); I != E; ++I) {
+    const LSRFixup &Fixup = *I;
 
-    Rewrite(Fixups[i], *Solution[LUIdx], Rewriter, DeadInsts, P);
+    Rewrite(Fixup, *Solution[Fixup.LUIdx], Rewriter, DeadInsts, P);
 
     Changed = true;
   }
@@ -3502,13 +3506,11 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
         WriteAsOperand(dbgs(), L->getHeader(), /*PrintType=*/false);
         dbgs() << ":\n");
 
-  /// OptimizeShadowIV - If IV is used in a int-to-float cast
-  /// inside the loop then try to eliminate the cast operation.
+  // First, perform some low-level loop optimizations.
   OptimizeShadowIV();
-
-  // Change loop terminating condition to use the postinc iv when possible.
   OptimizeLoopTermCond();
 
+  // Start collecting data and preparing for the solver.
   CollectInterestingTypesAndFactors();
   CollectFixupsAndInitialFormulae();
   CollectLoopInvariantFixupsAndFormulae();
