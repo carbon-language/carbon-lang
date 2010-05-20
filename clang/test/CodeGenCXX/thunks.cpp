@@ -86,10 +86,6 @@ void C::f() { }
 
 }
 
-// This is from Test5:
-// CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
-// CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
-
 // Check that the thunk gets internal linkage.
 namespace {
 
@@ -134,4 +130,49 @@ void f(B b) {
 }
 }
 
+namespace Test6 {
+  struct X {
+    X();
+    X(const X&);
+    X &operator=(const X&);
+    ~X();
+  };
 
+  struct P {
+    P();
+    P(const P&);
+    ~P();
+    X first;
+    X second;
+  };
+
+  P getP();
+
+  struct Base1 {
+    int i;
+
+    virtual X f() { return X(); }
+  };
+
+  struct Base2 {
+    float real;
+
+    virtual X f() { return X(); }
+  };
+
+  struct Thunks : Base1, Base2 {
+    long l;
+
+    virtual X f();
+  };
+
+  // CHECK: define void @_ZThn16_N5Test66Thunks1fEv
+  // CHECK-NOT: memcpy
+  // CHECK: {{call void @_ZN5Test66Thunks1fEv.*sret}}
+  // CHECK: ret void
+  X Thunks::f() { return X(); }
+}
+
+// This is from Test5:
+// CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+// CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(

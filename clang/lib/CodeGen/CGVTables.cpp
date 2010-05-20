@@ -2657,8 +2657,15 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
     CGM.getTypes().getFunctionInfo(ResultType, CallArgs,
                                    FPT->getExtInfo());
   
+  // Determine whether we have a return value slot to use.
+  ReturnValueSlot Slot;
+  if (!ResultType->isVoidType() &&
+      FnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&
+      hasAggregateLLVMType(CurFnInfo->getReturnType()))
+    Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
+  
   // Now emit our call.
-  RValue RV = EmitCall(FnInfo, Callee, ReturnValueSlot(), CallArgs, MD);
+  RValue RV = EmitCall(FnInfo, Callee, Slot, CallArgs, MD);
   
   if (!Thunk.Return.isEmpty()) {
     // Emit the return adjustment.
@@ -2701,7 +2708,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
     RV = RValue::get(ReturnValue);
   }
 
-  if (!ResultType->isVoidType())
+  if (!ResultType->isVoidType() && Slot.isNull())
     EmitReturnOfRValue(RV, ResultType);
 
   FinishFunction();
