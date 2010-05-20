@@ -1102,7 +1102,8 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
 }
 
 // Load, store, and memory fence
-def SFENCE : PSI<0xAE, MRM7r, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>;
+def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,
+             TB, Requires<[HasSSE1]>;
 
 // MXCSR register
 def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),

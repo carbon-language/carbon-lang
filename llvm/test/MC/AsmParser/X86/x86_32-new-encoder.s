@@ -1,5 +1,8 @@
 // RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
 
+	sfence
+// CHECK: sfence
+// CHECK: encoding: [0x0f,0xae,0xf8]
 	lfence
 // CHECK: lfence
 // CHECK: encoding: [0x0f,0xae,0xe8]
