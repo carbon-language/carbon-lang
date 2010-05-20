@@ -230,6 +230,10 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
                                    const CodeGenInstruction &insn,
                                    InstrUID uid)
 {
+  // Ignore "asm parser only" instructions.
+  if (insn.TheDef->getValueAsBit("isAsmParserOnly"))
+    return;
+  
   RecognizableInstr recogInstr(tables, insn, uid);
   
   recogInstr.emitInstructionSpecifier(tables);
