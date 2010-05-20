@@ -2539,7 +2539,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
         TypeLoc TL = TI->getTypeLoc();
-        SourceLocation TLoc = TL.getFullSourceRange().getBegin();
+        SourceLocation TLoc = TL.getSourceRange().getBegin();
         if (TLoc.isValid() && 
             SrcMgr.isBeforeInTranslationUnit(TLoc, L))
           cursorRange.setBegin(TLoc);

@@ -718,7 +718,7 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   }
   
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc
-             : ReceiverTypeInfo->getTypeLoc().getSourceRange().getBegin();
+             : ReceiverTypeInfo->getTypeLoc().getLocalSourceRange().getBegin();
 
   // Find the class to which we are sending this message.
   ObjCInterfaceDecl *Class = 0;

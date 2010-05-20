@@ -27,13 +27,13 @@ namespace {
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT) \
     SourceRange Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc) { \
-      return TyLoc.getSourceRange(); \
+      return TyLoc.getLocalSourceRange(); \
     }
 #include "clang/AST/TypeLocNodes.def"
   };
 }
 
-SourceRange TypeLoc::getSourceRangeImpl(TypeLoc TL) {
+SourceRange TypeLoc::getLocalSourceRangeImpl(TypeLoc TL) {
   if (TL.isNull()) return SourceRange();
   return TypeLocRanger().Visit(TL);
 }
@@ -140,7 +140,7 @@ bool TypeSpecTypeLoc::classof(const TypeLoc *TL) {
 // Reimplemented to account for GNU/C++ extension
 //     typeof unary-expression
 // where there are no parentheses.
-SourceRange TypeOfExprTypeLoc::getSourceRange() const {
+SourceRange TypeOfExprTypeLoc::getLocalSourceRange() const {
   if (getRParenLoc().isValid())
     return SourceRange(getTypeofLoc(), getRParenLoc());
   else

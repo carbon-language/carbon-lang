@@ -69,7 +69,7 @@ SourceRange ASTLocation::getSourceRange() const {
   case N_NamedRef:
     return SourceRange(AsNamedRef().Loc, AsNamedRef().Loc);
   case N_Type:
-    return AsTypeLoc().getSourceRange();
+    return AsTypeLoc().getLocalSourceRange();
   }
   
   return SourceRange();

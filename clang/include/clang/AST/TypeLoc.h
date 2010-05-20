@@ -86,20 +86,20 @@ public:
   }
 
   /// \brief Get the full source range.
-  SourceRange getFullSourceRange() const {
-    SourceLocation End = getSourceRange().getEnd();
+  SourceRange getSourceRange() const {
+    SourceLocation End = getLocalSourceRange().getEnd();
     TypeLoc Cur = *this;
     while (true) {
       TypeLoc Next = Cur.getNextTypeLoc();
       if (Next.isNull()) break;
       Cur = Next;
     }
-    return SourceRange(Cur.getSourceRange().getBegin(), End);
+    return SourceRange(Cur.getLocalSourceRange().getBegin(), End);
   }
 
   /// \brief Get the local source range.
-  SourceRange getSourceRange() const {
-    return getSourceRangeImpl(*this);
+  SourceRange getLocalSourceRange() const {
+    return getLocalSourceRangeImpl(*this);
   }
 
   /// \brief Returns the size of the type source info data block.
@@ -138,7 +138,7 @@ public:
 private:
   static void initializeImpl(TypeLoc TL, SourceLocation Loc);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
-  static SourceRange getSourceRangeImpl(TypeLoc TL);
+  static SourceRange getLocalSourceRangeImpl(TypeLoc TL);
 };
 
 /// \brief Return the TypeLoc for a type source info.
@@ -174,7 +174,7 @@ public:
 /// type qualifiers.
 class QualifiedTypeLoc : public TypeLoc {
 public:
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange();
   }
 
@@ -377,7 +377,7 @@ public:
   void setNameLoc(SourceLocation Loc) {
     this->getLocalData()->NameLoc = Loc;
   }
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getNameLoc(), getNameLoc());
   }
   void initializeLocal(SourceLocation Loc) {
@@ -429,7 +429,7 @@ public:
     return needsExtraLocalData() ? sizeof(WrittenBuiltinSpecs) : 0;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getBuiltinLoc(), getBuiltinLoc());
   }
 
@@ -631,7 +631,7 @@ public:
     return getInnerTypeLoc();
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getLAngleLoc(), getRAngleLoc());
   }
 
@@ -675,7 +675,7 @@ public:
     getLocalData()->NameLoc = Loc;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getNameLoc());
   }
 
@@ -705,7 +705,7 @@ public:
     return this->getInnerTypeLoc();
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getSigilLoc(), getSigilLoc());
   }
 
@@ -848,7 +848,7 @@ public:
     return getInnerTypeLoc();
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getLParenLoc(), getRParenLoc());
   }
 
@@ -921,7 +921,7 @@ public:
     return getInnerTypeLoc();
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getLBracketLoc(), getRBracketLoc());
   }
 
@@ -1026,7 +1026,7 @@ public:
     memcpy(Data, Loc.Data, size);
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getTemplateNameLoc(), getRAngleLoc());
   }
 
@@ -1154,7 +1154,7 @@ public:
       setRParenLoc(range.getEnd());
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     return SourceRange(getTypeofLoc(), getRParenLoc());
   }
 
@@ -1175,7 +1175,7 @@ public:
   // Reimplemented to account for GNU/C++ extension
   //     typeof unary-expression
   // where there are no parentheses.
-  SourceRange getSourceRange() const;
+  SourceRange getLocalSourceRange() const;
 };
 
 class TypeOfTypeLoc
@@ -1222,7 +1222,7 @@ public:
     this->getLocalData()->QualifierRange = Range;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     if (getKeywordLoc().isValid())
       if (getQualifierRange().getEnd().isValid())
         return SourceRange(getKeywordLoc(), getQualifierRange().getEnd());
@@ -1284,7 +1284,7 @@ public:
     this->getLocalData()->NameLoc = Loc;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getLocalSourceRange() const {
     if (getKeywordLoc().isValid())
       return SourceRange(getKeywordLoc(), getNameLoc());
     else

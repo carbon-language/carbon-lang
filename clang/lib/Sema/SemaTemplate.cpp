@@ -1090,7 +1090,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
           DiagnoseDefaultTemplateArgument(*this, TPC, 
                                           NewTypeParm->getLocation(), 
                NewTypeParm->getDefaultArgumentInfo()->getTypeLoc()
-                                                       .getFullSourceRange()))
+                                                       .getSourceRange()))
         NewTypeParm->removeDefaultArgument();
 
       // Merge default arguments for template type parameters.
@@ -2350,17 +2350,17 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   else if (const RecordType *RecordT = Arg->getAs<RecordType>())
     Tag = RecordT;
   if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod()) {
-    SourceRange SR = ArgInfo->getTypeLoc().getFullSourceRange();
+    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
     return Diag(SR.getBegin(), diag::err_template_arg_local_type)
       << QualType(Tag, 0) << SR;
   } else if (Tag && !Tag->getDecl()->getDeclName() &&
            !Tag->getDecl()->getTypedefForAnonDecl()) {
-    SourceRange SR = ArgInfo->getTypeLoc().getFullSourceRange();
+    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
     Diag(SR.getBegin(), diag::err_template_arg_unnamed_type) << SR;
     Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
     return true;
   } else if (Context.hasSameUnqualifiedType(Arg, Context.OverloadTy)) {
-    SourceRange SR = ArgInfo->getTypeLoc().getFullSourceRange();
+    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
     return Diag(SR.getBegin(), diag::err_template_arg_overload_type) << SR;
   }
 

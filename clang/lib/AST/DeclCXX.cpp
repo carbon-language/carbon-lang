@@ -777,7 +777,7 @@ SourceLocation CXXBaseOrMemberInitializer::getSourceLocation() const {
   if (isMemberInitializer())
     return getMemberLocation();
   
-  return getBaseClassLoc().getSourceRange().getBegin();
+  return getBaseClassLoc().getLocalSourceRange().getBegin();
 }
 
 SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {

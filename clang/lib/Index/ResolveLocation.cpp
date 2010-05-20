@@ -51,7 +51,7 @@ protected:
     return CheckRange(D->getSourceRange());
   }
   RangePos CheckRange(Stmt *Node) { return CheckRange(Node->getSourceRange()); }
-  RangePos CheckRange(TypeLoc TL) { return CheckRange(TL.getSourceRange()); }
+  RangePos CheckRange(TypeLoc TL) { return CheckRange(TL.getLocalSourceRange()); }
 
   template <typename T>
   bool isBeforeLocation(T Node) {

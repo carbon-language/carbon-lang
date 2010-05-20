@@ -259,7 +259,7 @@ TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
-  return DefaultArgument->getTypeLoc().getFullSourceRange().getBegin();
+  return DefaultArgument->getTypeLoc().getSourceRange().getBegin();
 }
 
 unsigned TemplateTypeParmDecl::getDepth() const {

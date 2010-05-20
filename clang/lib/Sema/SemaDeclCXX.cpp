@@ -1369,7 +1369,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();
 
-  SourceLocation BaseLoc = BaseTInfo->getTypeLoc().getSourceRange().getBegin();
+  SourceLocation BaseLoc = BaseTInfo->getTypeLoc().getLocalSourceRange().getBegin();
   if (BaseType->isDependentType() || HasDependentArg) {
     // Can't check initialization for a base of dependent type or when
     // any of the arguments are type-dependent expressions.
@@ -1393,7 +1393,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   
   if (!BaseType->isRecordType())
     return Diag(BaseLoc, diag::err_base_init_does_not_name_class)
-             << BaseType << BaseTInfo->getTypeLoc().getSourceRange();
+             << BaseType << BaseTInfo->getTypeLoc().getLocalSourceRange();
 
   // C++ [class.base.init]p2:
   //   [...] Unless the mem-initializer-id names a nonstatic data
@@ -1414,7 +1414,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   //   class, the mem-initializer is ill-formed.
   if (DirectBaseSpec && VirtualBaseSpec)
     return Diag(BaseLoc, diag::err_base_init_direct_and_virtual)
-      << BaseType << BaseTInfo->getTypeLoc().getSourceRange();
+      << BaseType << BaseTInfo->getTypeLoc().getLocalSourceRange();
   // C++ [base.class.init]p2:
   // Unless the mem-initializer-id names a nonstatic data membeer of the
   // constructor's class ot a direst or virtual base of that class, the
@@ -1422,7 +1422,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (!DirectBaseSpec && !VirtualBaseSpec)
     return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
       << BaseType << Context.getTypeDeclType(ClassDecl)
-      << BaseTInfo->getTypeLoc().getSourceRange();
+      << BaseTInfo->getTypeLoc().getLocalSourceRange();
 
   CXXBaseSpecifier *BaseSpec
     = const_cast<CXXBaseSpecifier *>(DirectBaseSpec);
@@ -5504,7 +5504,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
   assert(TSInfo && "NULL TypeSourceInfo for friend type declaration");
   
   QualType T = TSInfo->getType();
-  SourceRange TypeRange = TSInfo->getTypeLoc().getSourceRange();
+  SourceRange TypeRange = TSInfo->getTypeLoc().getLocalSourceRange();
   
   if (!getLangOptions().CPlusPlus0x) {
     // C++03 [class.friend]p2:

@@ -6645,7 +6645,7 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                                   SourceLocation RParenLoc) {
   QualType ArgTy = TInfo->getType();
   bool Dependent = ArgTy->isDependentType();
-  SourceRange TypeRange = TInfo->getTypeLoc().getSourceRange();
+  SourceRange TypeRange = TInfo->getTypeLoc().getLocalSourceRange();
   
   // We must have at least one component that refers to the type, and the first
   // one is known to be a field designator.  Verify that the ArgTy represents

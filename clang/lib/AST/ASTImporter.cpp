@@ -2950,7 +2950,7 @@ TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
     return 0;
 
   return ToContext.getTrivialTypeSourceInfo(T, 
-                        FromTSI->getTypeLoc().getFullSourceRange().getBegin());
+                        FromTSI->getTypeLoc().getSourceRange().getBegin());
 }
 
 Decl *ASTImporter::Import(Decl *FromD) {

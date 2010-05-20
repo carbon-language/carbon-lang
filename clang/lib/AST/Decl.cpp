@@ -536,7 +536,7 @@ SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
     while (true) {
       TypeLoc NextTL = TL.getNextTypeLoc();
       if (!NextTL)
-        return TL.getSourceRange().getBegin();
+        return TL.getLocalSourceRange().getBegin();
       TL = NextTL;
     }
   }
