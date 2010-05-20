@@ -1,4 +1,5 @@
 // RUN: %llvmgcc -mssse3 -S -o - %s | llc -mtriple=x86_64-apple-darwin | FileCheck %s
+// XFAIL: *
 // XTARGET: x86,i386,i686
 
 #include <tmmintrin.h>
