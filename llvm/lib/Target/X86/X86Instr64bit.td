@@ -274,9 +274,9 @@ def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
                       "push{q}\t$imm", []>;
 }
 
-let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1 in
+let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1, neverHasSideEffects=1 in
 def POPFQ    : I<0x9D, RawFrm, (outs), (ins), "popf{q}", []>, REX_W;
-let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1 in
+let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
 def PUSHFQ64   : I<0x9C, RawFrm, (outs), (ins), "pushf{q}", []>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
