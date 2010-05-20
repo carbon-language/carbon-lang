@@ -65,10 +65,10 @@ int main()
         double x_var = p.alpha() * sqr(p.beta());
         double x_skew = 2 / std::sqrt(p.alpha());
         double x_kurtosis = 6 / p.alpha();
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::gamma_distribution<> D;
@@ -106,10 +106,10 @@ int main()
         double x_var = p.alpha() * sqr(p.beta());
         double x_skew = 2 / std::sqrt(p.alpha());
         double x_kurtosis = 6 / p.alpha();
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::gamma_distribution<> D;
@@ -147,9 +147,9 @@ int main()
         double x_var = p.alpha() * sqr(p.beta());
         double x_skew = 2 / std::sqrt(p.alpha());
         double x_kurtosis = 6 / p.alpha();
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
 }

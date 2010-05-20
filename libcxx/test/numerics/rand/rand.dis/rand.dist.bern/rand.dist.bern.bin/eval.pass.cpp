@@ -31,10 +31,10 @@ int main()
 {
     {
         typedef std::binomial_distribution<> D;
-        typedef std::minstd_rand G;
+        typedef std::mt19937_64 G;
         G g;
         D d(5, .75);
-        const int N = 100000;
+        const int N = 1000000;
         std::vector<D::result_type> u;
         for (int i = 0; i < N; ++i)
         {
@@ -64,10 +64,10 @@ int main()
         double x_var = x_mean*(1-d.p());
         double x_skew = (1-2*d.p()) / std::sqrt(x_var);
         double x_kurtosis = (1-6*d.p()*(1-d.p())) / x_var;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.04);
     }
     {
         typedef std::binomial_distribution<> D;
@@ -104,10 +104,10 @@ int main()
         double x_var = x_mean*(1-d.p());
         double x_skew = (1-2*d.p()) / std::sqrt(x_var);
         double x_kurtosis = (1-6*d.p()*(1-d.p())) / x_var;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::binomial_distribution<> D;
@@ -144,10 +144,10 @@ int main()
         double x_var = x_mean*(1-d.p());
         double x_skew = (1-2*d.p()) / std::sqrt(x_var);
         double x_kurtosis = (1-6*d.p()*(1-d.p())) / x_var;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.03);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.03);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.3);
     }
     {
         typedef std::binomial_distribution<> D;
@@ -260,10 +260,10 @@ int main()
         double x_var = x_mean*(1-d.p());
         double x_skew = (1-2*d.p()) / std::sqrt(x_var);
         double x_kurtosis = (1-6*d.p()*(1-d.p())) / x_var;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs(kurtosis - x_kurtosis) < 0.01);
     }
     {
         typedef std::binomial_distribution<> D;
@@ -300,10 +300,10 @@ int main()
         double x_var = x_mean*(1-d.p());
         double x_skew = (1-2*d.p()) / std::sqrt(x_var);
         double x_kurtosis = (1-6*d.p()*(1-d.p())) / x_var;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::binomial_distribution<> D;

@@ -65,10 +65,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -106,10 +106,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -147,10 +147,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -188,10 +188,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -229,10 +229,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -270,10 +270,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -311,10 +311,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -352,10 +352,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -393,10 +393,10 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::uniform_int_distribution<> D;
@@ -445,9 +445,9 @@ int main()
         double x_skew = 0;
         double x_kurtosis = -6. * (sqr((double)d.b() - d.a() + 1) + 1) /
                             (5. * (sqr((double)d.b() - d.a() + 1) - 1));
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
         assert(std::abs(skew - x_skew) < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
 }

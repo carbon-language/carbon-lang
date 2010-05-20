@@ -66,10 +66,10 @@ int main()
         double x_var = x_mean / p.p();
         double x_skew = (2 - p.p()) / std::sqrt((1 - p.p()));
         double x_kurtosis = 6 + sqr(p.p()) / (1 - p.p());
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::geometric_distribution<> D;
@@ -108,10 +108,10 @@ int main()
         double x_var = x_mean / p.p();
         double x_skew = (2 - p.p()) / std::sqrt((1 - p.p()));
         double x_kurtosis = 6 + sqr(p.p()) / (1 - p.p());
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.03);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.03);
     }
     {
         typedef std::geometric_distribution<> D;
@@ -150,9 +150,9 @@ int main()
         double x_var = x_mean / p.p();
         double x_skew = (2 - p.p()) / std::sqrt((1 - p.p()));
         double x_kurtosis = 6 + sqr(p.p()) / (1 - p.p());
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.02);
     }
 }

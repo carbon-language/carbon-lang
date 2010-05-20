@@ -63,10 +63,10 @@ int main()
         double x_var = sqr(d.b()) * 1.644934067;
         double x_skew = 1.139547;
         double x_kurtosis = 12./5;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::extreme_value_distribution<> D;
@@ -102,10 +102,10 @@ int main()
         double x_var = sqr(d.b()) * 1.644934067;
         double x_skew = 1.139547;
         double x_kurtosis = 12./5;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::extreme_value_distribution<> D;
@@ -141,10 +141,10 @@ int main()
         double x_var = sqr(d.b()) * 1.644934067;
         double x_skew = 1.139547;
         double x_kurtosis = 12./5;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
         typedef std::extreme_value_distribution<> D;
@@ -180,9 +180,9 @@ int main()
         double x_var = sqr(d.b()) * 1.644934067;
         double x_skew = 1.139547;
         double x_kurtosis = 12./5;
-        assert(std::abs(mean - x_mean) / x_mean < 0.01);
-        assert(std::abs(var - x_var) / x_var < 0.01);
-        assert(std::abs(skew - x_skew) / x_skew < 0.01);
-        assert(std::abs(kurtosis - x_kurtosis) / x_kurtosis < 0.01);
+        assert(std::abs((mean - x_mean) / x_mean) < 0.01);
+        assert(std::abs((var - x_var) / x_var) < 0.01);
+        assert(std::abs((skew - x_skew) / x_skew) < 0.01);
+        assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
 }

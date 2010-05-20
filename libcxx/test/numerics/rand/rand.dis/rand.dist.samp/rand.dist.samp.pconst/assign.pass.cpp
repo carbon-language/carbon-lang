@@ -9,16 +9,28 @@
 
 // <random>
 
-// typedef minstd_rand0 default_random_engine;
+// template<class RealType = double>
+// class piecewise_constant_distribution
 
-
+// piecewise_constant_distribution& operator=(const piecewise_constant_distribution&);
 
 #include <random>
 #include <cassert>
 
+void
+test1()
+{
+    typedef std::piecewise_constant_distribution<> D;
+    double p[] = {2, 4, 1, 8};
+    double b[] = {2, 4, 5, 8, 9};
+    D d1(b, b+5, p);
+    D d2;
+    assert(d1 != d2);
+    d2 = d1;
+    assert(d1 == d2);
+}
+
 int main()
 {
-    std::default_random_engine e;
-    e.discard(9999);
-    assert(e() == 399268537u);
+    test1();
 }

@@ -371,7 +371,7 @@ typedef subtract_with_carry_engine<uint_fast64_t, 48,  5, 12>     ranlux48_base;
 typedef discard_block_engine<ranlux24_base, 223, 23>                   ranlux24;
 typedef discard_block_engine<ranlux48_base, 389, 11>                   ranlux48;
 typedef shuffle_order_engine<minstd_rand0, 256>                         knuth_b;
-typedef minstd_rand0                                      default_random_engine;
+typedef minstd_rand                                       default_random_engine;
 
 // Generators
 
@@ -1477,7 +1477,79 @@ public:
 };
 
 template<class RealType = double>
-    class piecewise_constant_distribution;
+class piecewise_constant_distribution
+{
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef piecewise_constant_distribution distribution_type;
+
+        param_type();
+        template<class InputIteratorB, class InputIteratorW>
+            param_type(InputIteratorB firstB, InputIteratorB lastB,
+                       InputIteratorW firstW);
+        template<class UnaryOperation>
+            param_type(initializer_list<result_type> bl, UnaryOperation fw);
+        template<class UnaryOperation>
+            param_type(size_t nw, result_type xmin, result_type xmax,
+                       UnaryOperation fw);
+
+        vector<result_type> intervals() const;
+        vector<double> densities() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructor and reset functions
+    piecewise_constant_distribution();
+    template<class InputIteratorB, class InputIteratorW>
+        piecewise_constant_distribution(InputIteratorB firstB,
+                                        InputIteratorB lastB,
+                                        InputIteratorW firstW);
+    template<class UnaryOperation>
+        piecewise_constant_distribution(initializer_list<result_type> bl,
+                                        UnaryOperation fw);
+    template<class UnaryOperation>
+        piecewise_constant_distribution(size_t nw, result_type xmin,
+                                        result_type xmax, UnaryOperation fw);
+    explicit piecewise_constant_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    vector<result_type> intervals() const;
+    vector<double> densities() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const piecewise_constant_distribution& x,
+                           const piecewise_constant_distribution& y);
+    friend bool operator!=(const piecewise_constant_distribution& x,
+                           const piecewise_constant_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const piecewise_constant_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               piecewise_constant_distribution& x);
+};
 
 template<class RealType = double>
     class piecewise_linear_distribution;
@@ -1825,9 +1897,9 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 
 typedef linear_congruential_engine<uint_fast32_t, 16807, 0, 2147483647>
                                                                    minstd_rand0;
-typedef minstd_rand0                                      default_random_engine;
 typedef linear_congruential_engine<uint_fast32_t, 48271, 0, 2147483647>
                                                                     minstd_rand;
+typedef minstd_rand                                       default_random_engine;
 // mersenne_twister_engine
 
 template <class _UIntType, size_t __w, size_t __n, size_t __m, size_t __r,
@@ -3655,7 +3727,8 @@ inline
 bernoulli_distribution::result_type
 bernoulli_distribution::operator()(_URNG& __g, const param_type& __p)
 {
-    return (__g() - __g.min()) < __p.p() * (__g.max() - __g.min() + 1.);
+    uniform_real_distribution<double> __gen;
+    return __gen(__g) < __p.p();
 }
 
 template <class _CharT, class _Traits>
@@ -5535,11 +5608,305 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is.flags(ios_base::dec | ios_base::skipws);
     size_t __n;
     __is >> __n;
-    std::vector<double> __p(__n);
+    vector<double> __p(__n);
     for (size_t __i = 0; __i < __n; ++__i)
         __is >> __p[__i];
     if (!__is.fail())
         swap(__x.__p_.__p_, __p);
+    return __is;
+}
+
+// piecewise_constant_distribution
+
+template<class _RealType = double>
+class piecewise_constant_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        vector<double> __p_;
+        vector<result_type> __b_;
+    public:
+        typedef piecewise_constant_distribution distribution_type;
+
+        param_type();
+        template<class _InputIteratorB, class _InputIteratorW>
+            param_type(_InputIteratorB __fB, _InputIteratorB __lB,
+                       _InputIteratorW __fW);
+        template<class _UnaryOperation>
+            param_type(initializer_list<result_type> __bl, _UnaryOperation __fw);
+        template<class _UnaryOperation>
+            param_type(size_t __nw, result_type __xmin, result_type __xmax,
+                       _UnaryOperation __fw);
+
+        vector<result_type> intervals() const {return __b_;}
+        vector<double> densities() const;
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__p_ == __y.__p_ && __x.__b_ == __y.__b_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+
+    private:
+        void __init();
+
+        friend class piecewise_constant_distribution;
+
+        template <class _CharT, class _Traits, class _RT>
+        friend
+        basic_ostream<_CharT, _Traits>&
+        operator<<(basic_ostream<_CharT, _Traits>& __os,
+                   const piecewise_constant_distribution<_RT>& __x);
+        
+        template <class _CharT, class _Traits, class _RT>
+        friend
+        basic_istream<_CharT, _Traits>&
+        operator>>(basic_istream<_CharT, _Traits>& __is,
+                   piecewise_constant_distribution<_RT>& __x);
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructor and reset functions
+    piecewise_constant_distribution() {}
+    template<class _InputIteratorB, class _InputIteratorW>
+        piecewise_constant_distribution(_InputIteratorB __fB,
+                                        _InputIteratorB __lB,
+                                        _InputIteratorW __fW)
+        : __p_(__fB, __lB, __fW) {}
+
+    template<class _UnaryOperation>
+        piecewise_constant_distribution(initializer_list<result_type> __bl,
+                                        _UnaryOperation __fw)
+        : __p_(__bl, __fw) {}
+
+    template<class _UnaryOperation>
+        piecewise_constant_distribution(size_t __nw, result_type __xmin,
+                                        result_type __xmax, _UnaryOperation __fw)
+        : __p_(__nw, __xmin, __xmax, __fw) {}
+
+    explicit piecewise_constant_distribution(const param_type& __p)
+        : __p_(__p) {}
+
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    vector<result_type> intervals() const {return __p_.intervals();}
+    vector<double> densities() const {return __p_.densities();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return __p_.__b_.front();}
+    result_type max() const {return __p_.__b_.back();}
+
+    friend bool operator==(const piecewise_constant_distribution& __x,
+                           const piecewise_constant_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const piecewise_constant_distribution& __x,
+                           const piecewise_constant_distribution& __y)
+        {return !(__x == __y);}
+
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_ostream<_CharT, _Traits>&
+    operator<<(basic_ostream<_CharT, _Traits>& __os,
+               const piecewise_constant_distribution<_RT>& __x);
+    
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_istream<_CharT, _Traits>&
+    operator>>(basic_istream<_CharT, _Traits>& __is,
+               piecewise_constant_distribution<_RT>& __x);
+};
+
+template<class _RealType>
+void
+piecewise_constant_distribution<_RealType>::param_type::__init()
+{
+    if (!__p_.empty())
+    {
+        if (__p_.size() > 1)
+        {
+            double __s = _STD::accumulate(__p_.begin(), __p_.end(), 0.0);
+            for (_STD::vector<double>::iterator __i = __p_.begin(), __e = __p_.end();
+                                                                       __i < __e; ++__i)
+                *__i /= __s;
+            vector<double> __t(__p_.size() - 1);
+            _STD::partial_sum(__p_.begin(), __p_.end() - 1, __t.begin());
+            swap(__p_, __t);
+        }
+        else
+        {
+            __p_.clear();
+            __p_.shrink_to_fit();
+        }
+    }
+}
+
+template<class _RealType>
+piecewise_constant_distribution<_RealType>::param_type::param_type()
+    : __b_(2)
+{
+    __b_[1] = 1;
+}
+
+template<class _RealType>
+template<class _InputIteratorB, class _InputIteratorW>
+piecewise_constant_distribution<_RealType>::param_type::param_type(
+        _InputIteratorB __fB, _InputIteratorB __lB, _InputIteratorW __fW)
+    : __b_(__fB, __lB)
+{
+    if (__b_.size() < 2)
+    {
+        __b_.resize(2);
+        __b_[0] = 0;
+        __b_[1] = 1;
+    }
+    else
+    {
+        __p_.reserve(__b_.size() - 1);
+        for (size_t __i = 0; __i < __b_.size() - 1; ++__i, ++__fW)
+            __p_.push_back(*__fW);
+        __init();
+    }
+}
+
+template<class _RealType>
+template<class _UnaryOperation>
+piecewise_constant_distribution<_RealType>::param_type::param_type(
+        initializer_list<result_type> __bl, _UnaryOperation __fw)
+    : __b_(__bl.begin(), __bl.end())
+{
+    if (__b_.size() < 2)
+    {
+        __b_.resize(2);
+        __b_[0] = 0;
+        __b_[1] = 1;
+    }
+    else
+    {
+        __p_.reserve(__b_.size() - 1);
+        for (size_t __i = 0; __i < __b_.size() - 1; ++__i)
+            __p_.push_back(__fw((__b_[__i+1] + __b_[__i])*.5));
+        __init();
+    }
+}
+
+template<class _RealType>
+template<class _UnaryOperation>
+piecewise_constant_distribution<_RealType>::param_type::param_type(
+        size_t __nw, result_type __xmin, result_type __xmax, _UnaryOperation __fw)
+    : __b_(__nw == 0 ? 2 : __nw + 1)
+{
+    size_t __n = __b_.size() - 1;
+    result_type __d = (__xmax - __xmin) / __n;
+    __p_.reserve(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+    {
+        __b_[__i] = __xmin + __i * __d;
+        __p_.push_back(__fw(__b_[__i] + __d*.5));
+    }
+    __b_[__n] = __xmax;
+    __init();
+}
+
+template<class _RealType>
+vector<double>
+piecewise_constant_distribution<_RealType>::param_type::densities() const
+{
+    const size_t __n = __b_.size() - 1;
+    vector<double> __d(__n);
+    if (__n == 1)
+        __d[0] = 1/(__b_[1] - __b_[0]);
+    else
+    {
+        __d[0] = __p_[0] / (__b_[1] - __b_[0]);
+        for (size_t __i = 1; __i < __n - 1; ++__i)
+            __d[__i] = (__p_[__i] - __p_[__i-1]) / (__b_[__i+1] - __b_[__i]);
+        __d[__n-1] = (1 - __p_[__n-2]) / (__b_[__n] - __b_[__n-1]);
+    }
+    return __d;
+};
+
+
+template<class _RealType>
+template<class _URNG>
+_RealType
+piecewise_constant_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    typedef uniform_real_distribution<result_type> _Gen;
+    if (__p.__b_.size() == 2)
+        return _Gen(__p.__b_[0], __p.__b_[1])(__g);
+    result_type __u = _Gen()(__g);
+    const vector<double>& __dd = __p.__p_;
+    size_t __k = static_cast<size_t>(_STD::upper_bound(__dd.begin(),
+                          __dd.end(), static_cast<double>(__u)) - __dd.begin());
+    if (__k == 0)
+        return static_cast<result_type>(__u * (__p.__b_[1] - __p.__b_[0]) /
+                                                    __dd[0] + __p.__b_[0]);
+    __u -= __dd[__k-1];
+    if (__k == __dd.size())
+        return static_cast<result_type>(__u * (__p.__b_[__k+1] - __p.__b_[__k]) /
+                                        (1 - __dd[__k-1]) + __p.__b_[__k]);
+    return static_cast<result_type>(__u * (__p.__b_[__k+1] - __p.__b_[__k]) /
+                           (__dd[__k] - __dd[__k-1]) + __p.__b_[__k]);
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const piecewise_constant_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    size_t __n = __x.__p_.__p_.size();
+    __os << __n;
+    for (size_t __i = 0; __i < __n; ++__i)
+        __os << __sp << __x.__p_.__p_[__i];
+    __n = __x.__p_.__b_.size();
+    __os << __sp << __n;
+    for (size_t __i = 0; __i < __n; ++__i)
+        __os << __sp << __x.__p_.__b_[__i];
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           piecewise_constant_distribution<_RT>& __x)
+{
+    typedef piecewise_constant_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    size_t __n;
+    __is >> __n;
+    vector<double> __p(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+        __is >> __p[__i];
+    __is >> __n;
+    vector<result_type> __b(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+        __is >> __b[__i];
+    if (!__is.fail())
+    {
+        swap(__x.__p_.__p_, __p);
+        swap(__x.__p_.__b_, __b);
+    }
     return __is;
 }
 
