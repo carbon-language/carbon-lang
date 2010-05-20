@@ -544,7 +544,9 @@ public:
     /// \brief Overloaded for initialization by constructor failed.
     FK_ConstructorOverloadFailed,
     /// \brief Default-initialization of a 'const' object.
-    FK_DefaultInitOfConst
+    FK_DefaultInitOfConst,
+    /// \brief Initialization of an incomplete type.
+    FK_Incomplete
   };
   
 private:

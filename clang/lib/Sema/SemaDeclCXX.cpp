@@ -1562,6 +1562,9 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                ImplicitInitializerKind ImplicitInitKind,
                                FieldDecl *Field,
                                CXXBaseOrMemberInitializer *&CXXMemberInit) {
+  if (Field->isInvalidDecl())
+    return true;
+
   if (ImplicitInitKind == IIK_Copy) {
     SourceLocation Loc = Constructor->getLocation();
     ParmVarDecl *Param = Constructor->getParamDecl(0);

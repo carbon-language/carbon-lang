@@ -2054,6 +2054,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ReferenceBindingToInitList:
   case FK_InitListBadDestinationType:
   case FK_DefaultInitOfConst:
+  case FK_Incomplete:
     return false;
     
   case FK_ReferenceInitOverloadFailed:
@@ -2649,7 +2650,7 @@ static void TryConstructorInitialization(Sema &S,
 
   // The type we're constructing needs to be complete.
   if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
-    Sequence.SetFailed(InitializationSequence::FK_ConversionFailed);
+    Sequence.SetFailed(InitializationSequence::FK_Incomplete);
     return;
   }
   
@@ -4137,6 +4138,11 @@ bool InitializationSequence::Diagnose(Sema &S,
         << DestType << (bool)DestType->getAs<RecordType>();
     }
     break;
+      
+    case FK_Incomplete:
+      S.RequireCompleteType(Kind.getLocation(), DestType, 
+                            diag::err_init_incomplete_type);
+      break;      
   }
   
   PrintInitLocationNote(S, Entity);
@@ -4214,6 +4220,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       
     case FK_DefaultInitOfConst:
       OS << "default initialization of a const variable";
+      break;
+        
+    case FK_Incomplete:
+      OS << "initialization of incomplete type";
       break;
     }   
     OS << '\n';
