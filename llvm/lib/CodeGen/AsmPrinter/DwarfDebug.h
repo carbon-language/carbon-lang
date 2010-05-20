@@ -170,6 +170,21 @@ class DwarfDebug {
   /// DW_AT_start_scope attribute.
   DenseMap<const MachineInstr *, DbgVariable *> DbgValueStartMap;
 
+  /// DbgVariableToFrameIndexMap - Tracks frame index used to find 
+  /// variable's value.
+  DenseMap<const DbgVariable *, int> DbgVariableToFrameIndexMap;
+
+  /// DbgVariableToDbgInstMap - Maps DbgVariable to corresponding DBG_VALUE
+  /// machine instruction.
+  DenseMap<const DbgVariable *, const MachineInstr *> DbgVariableToDbgInstMap;
+
+  /// DbgVariableLabelsMap - Maps DbgVariable to corresponding MCSymbol.
+  DenseMap<const DbgVariable *, const MCSymbol *> DbgVariableLabelsMap;
+
+  /// VarToAbstractVarMap - Maps DbgVariable with corresponding Abstract
+  /// DbgVariable, if any.
+  DenseMap<const DbgVariable *, const DbgVariable *> VarToAbstractVarMap;
+
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
@@ -306,13 +321,13 @@ private:
                   const MachineLocation &Location);
 
   /// addRegisterAddress - Add register location entry in variable DIE.
-  bool addRegisterAddress(DIE *Die, DbgVariable *DV, const MachineOperand &MO);
+  bool addRegisterAddress(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
 
   /// addConstantValue - Add constant value entry in variable DIE.
-  bool addConstantValue(DIE *Die, DbgVariable *DV, const MachineOperand &MO);
+  bool addConstantValue(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
-  bool addConstantFPValue(DIE *Die, DbgVariable *DV, const MachineOperand &MO);
+  bool addConstantFPValue(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
 
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable
@@ -385,10 +400,7 @@ private:
   DbgScope *getOrCreateAbstractScope(const MDNode *N);
 
   /// findAbstractVariable - Find abstract variable associated with Var.
-  DbgVariable *findAbstractVariable(DIVariable &Var, unsigned FrameIdx, 
-                                    DebugLoc Loc);
-  DbgVariable *findAbstractVariable(DIVariable &Var, const MachineInstr *MI,
-                                    DebugLoc Loc);
+  DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
 
   /// updateSubprogramScopeDIE - Find DIE for the given subprogram and 
   /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
@@ -536,6 +548,16 @@ private:
     return Lines.size();
   }
   
+  /// recordVariableFrameIndex - Record a variable's index.
+  void recordVariableFrameIndex(const DbgVariable *V, int Index);
+
+  /// findVariableFrameIndex - Return true if frame index for the variable
+  /// is found. Update FI to hold value of the index.
+  bool findVariableFrameIndex(const DbgVariable *V, int *FI);
+
+  /// findVariableLabel - Find MCSymbol for the variable.
+  const MCSymbol *findVariableLabel(const DbgVariable *V);
+
   /// identifyScopeMarkers() - Indentify instructions that are marking
   /// beginning of or end of a scope.
   void identifyScopeMarkers();
