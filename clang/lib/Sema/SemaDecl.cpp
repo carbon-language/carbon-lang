@@ -4694,7 +4694,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     // Verify that that gotos and switch cases don't jump into scopes illegally.
     // Verify that that gotos and switch cases don't jump into scopes illegally.
     if (FunctionNeedsScopeChecking() &&
-        !FD->isInvalidDecl() &&
+        !dcl->isInvalidDecl() &&
         !hasAnyErrorsInThisFunction())
       DiagnoseInvalidJumps(Body);
 
