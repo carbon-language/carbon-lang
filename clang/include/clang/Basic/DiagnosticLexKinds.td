@@ -86,7 +86,7 @@ def err_hexconstant_requires_exponent : Error<
   "hexadecimal floating constants require an exponent">;
 def ext_hexconstant_cplusplus : Extension<
   "hexadecimal floating constants are a C99 feature that is incompatible with "
-  "C++0x">, InGroup<DiagGroup<"c++-hex-floats">>;
+  "C++0x">, InGroup<CXXHexFloats>;
 def ext_hexconstant_invalid : Extension<
   "hexadecimal floating constants are a C99 feature">;
 def ext_binary_literal : Extension<

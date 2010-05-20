@@ -26,7 +26,6 @@ def : DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
-def : DiagGroup<"c++0x-compat">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
 def : DiagGroup<"declaration-after-statement">;
@@ -41,6 +40,9 @@ def ExtraTokens : DiagGroup<"extra-tokens">;
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
+def CXXHexFloats : DiagGroup<"c++-hex-floats">;
+
+def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def : DiagGroup<"idiomatic-parentheses">;
 def : DiagGroup<"import">;
