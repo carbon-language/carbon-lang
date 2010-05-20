@@ -1479,6 +1479,13 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
   return Result;
 }
 
+unsigned clang_isFromMainFile(CXSourceLocation loc) {
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(loc.int_data);
+  const SourceManager &SM =
+    *static_cast<const SourceManager*>(loc.ptr_data[0]);
+  return SM.isFromMainFile(Loc) ? 1 : 0;
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//

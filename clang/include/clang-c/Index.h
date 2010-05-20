@@ -343,6 +343,12 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 
 /**
+  * \brief Determine if the source location occurs within the main file
+  * of the translation unit (as opposed to an included header).
+  */
+CINDEX_LINKAGE unsigned clang_isFromMainFile(CXSourceLocation loc);
+
+/**
  * @}
  */
 
