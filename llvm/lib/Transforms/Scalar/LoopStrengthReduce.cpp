@@ -1705,13 +1705,13 @@ LSRInstance::OptimizeLoopTermCond() {
           }
           if (const SCEVConstant *D =
                 dyn_cast_or_null<SCEVConstant>(getExactSDiv(B, A, SE))) {
+            const ConstantInt *C = D->getValue();
             // Stride of one or negative one can have reuse with non-addresses.
-            if (D->getValue()->isOne() ||
-                D->getValue()->isAllOnesValue())
+            if (C->isOne() || C->isAllOnesValue())
               goto decline_post_inc;
             // Avoid weird situations.
-            if (D->getValue()->getValue().getMinSignedBits() >= 64 ||
-                D->getValue()->getValue().isMinSignedValue())
+            if (C->getValue().getMinSignedBits() >= 64 ||
+                C->getValue().isMinSignedValue())
               goto decline_post_inc;
             // Without TLI, assume that any stride might be valid, and so any
             // use might be shared.
@@ -1720,7 +1720,7 @@ LSRInstance::OptimizeLoopTermCond() {
             // Check for possible scaled-address reuse.
             const Type *AccessTy = getAccessType(UI->getUser());
             TargetLowering::AddrMode AM;
-            AM.Scale = D->getValue()->getSExtValue();
+            AM.Scale = C->getSExtValue();
             if (TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
             AM.Scale = -AM.Scale;
@@ -2609,7 +2609,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
 
     // TODO: Use a more targeted data structure.
     for (size_t L = 0, LE = LU.Formulae.size(); L != LE; ++L) {
-      Formula F = LU.Formulae[L];
+      const Formula &F = LU.Formulae[L];
       // Use the immediate in the scaled register.
       if (F.ScaledReg == OrigReg) {
         int64_t Offs = (uint64_t)F.AM.BaseOffs +
@@ -3598,9 +3598,8 @@ void LSRInstance::print_fixups(raw_ostream &OS) const {
   OS << "LSR is examining the following fixup sites:\n";
   for (SmallVectorImpl<LSRFixup>::const_iterator I = Fixups.begin(),
        E = Fixups.end(); I != E; ++I) {
-    const LSRFixup &LF = *I;
     dbgs() << "  ";
-    LF.print(OS);
+    I->print(OS);
     OS << '\n';
   }
 }
