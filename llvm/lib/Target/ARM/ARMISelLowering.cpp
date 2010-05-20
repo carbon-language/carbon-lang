@@ -3022,6 +3022,24 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return GeneratePerfectShuffle(PFEntry, V1, V2, DAG, dl);
   }
 
+  // v2f64 and v2i64 shuffles are just register copies.
+  if (VT == MVT::v2f64 || VT == MVT::v2i64) {
+    // Do the expansion as f64 since i64 is not legal.
+    V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, V1);
+    V2 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, V2);
+    SDValue Val = DAG.getUNDEF(MVT::v2f64);
+    for (unsigned i = 0; i < 2; ++i) {
+      if (ShuffleMask[i] < 0)
+        continue;
+      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
+                                ShuffleMask[i] < 2 ? V1 : V2,
+                                DAG.getConstant(ShuffleMask[i] & 1, MVT::i32));
+      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64, Val,
+                        Elt, DAG.getConstant(i, MVT::i32));
+    }
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
+  }
+
   return SDValue();
 }
 
