@@ -200,6 +200,20 @@ struct X86Operand : public MCParsedAsmOperand {
     return true;
   }
   
+  bool isImmSExt32() const {
+    // Accept immediates which fit in 32 bits when sign extended, and
+    // non-absolute immediates.
+    if (!isImm())
+      return false;
+
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
+      int64_t Value = CE->getValue();
+      return Value == (int64_t) (int32_t) Value;
+    }
+
+    return true;
+  }
+
   bool isMem() const { return Kind == Memory; }
 
   bool isAbsMem() const {
@@ -232,6 +246,12 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   void addImmSExt8Operands(MCInst &Inst, unsigned N) const {
+    // FIXME: Support user customization of the render method.
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addImmSExt32Operands(MCInst &Inst, unsigned N) const {
     // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());

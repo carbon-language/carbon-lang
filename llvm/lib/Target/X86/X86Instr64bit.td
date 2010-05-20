@@ -18,7 +18,9 @@
 //
 
 // 64-bits but only 32 bits are significant.
-def i64i32imm  : Operand<i64>;
+def i64i32imm  : Operand<i64> {
+  let ParserMatchClass = ImmSExt32AsmOperand;
+}
 
 // 64-bits but only 32 bits are significant, and those bits are treated as being
 // pc relative.

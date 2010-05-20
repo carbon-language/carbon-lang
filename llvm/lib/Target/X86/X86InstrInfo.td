@@ -270,9 +270,14 @@ def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
 }
 
+def ImmSExt32AsmOperand : AsmOperandClass {
+  let Name = "ImmSExt32";
+  let SuperClass = ImmAsmOperand;
+}
+
 def ImmSExt8AsmOperand : AsmOperandClass {
   let Name = "ImmSExt8";
-  let SuperClass = ImmAsmOperand;
+  let SuperClass = ImmSExt32AsmOperand;
 }
 
 // A couple of more descriptive operand definitions.
