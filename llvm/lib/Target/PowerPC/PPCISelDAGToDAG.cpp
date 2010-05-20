@@ -712,8 +712,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   if (PPCSubTarget.isGigaProcessor() && OtherCondIdx == -1)
     IntCR = SDValue(CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32, CR7Reg,
                                            CCReg), 0);
-  else
-    IntCR = SDValue(CurDAG->getMachineNode(PPC::MFCR, dl, MVT::i32, CCReg), 0);
+ else
+    IntCR = SDValue(CurDAG->getMachineNode(PPC::MFCRpseud, dl, MVT::i32,
+                                           CR7Reg, CCReg), 0);
   
   SDValue Ops[] = { IntCR, getI32Imm((32-(3-Idx)) & 31),
                       getI32Imm(31), getI32Imm(31) };
@@ -848,7 +849,8 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       return CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32,
                                     N->getOperand(0), InFlag);
     else
-      return CurDAG->getMachineNode(PPC::MFCR, dl, MVT::i32, InFlag);
+      return CurDAG->getMachineNode(PPC::MFCRpseud, dl, MVT::i32,
+                                    N->getOperand(0), InFlag);
   }
     
   case ISD::SDIV: {

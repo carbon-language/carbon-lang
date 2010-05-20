@@ -442,7 +442,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       // issue a MFCR to save all of the CRBits.
       unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ? 
                                                            PPC::R2 : PPC::R0;
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFCR), ScratchReg));
+      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFCRpseud), ScratchReg)
+                               .addReg(SrcReg, getKillRegState(isKill)));
     
       // If the saved register wasn't CR0, shift the bits left so that they are
       // in CR0's slot.

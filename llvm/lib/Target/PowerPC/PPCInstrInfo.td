@@ -1117,14 +1117,17 @@ def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT), (ins),
 def MTCRF : XFXForm_5<31, 144, (outs), (ins crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
-// FIXME:  this Uses all the CR registers.  Marking it as such is 
-// necessary for DeadMachineInstructionElim to do the right thing.
-// However, marking it also exposes PR 2964, and causes crashes in
-// the Local RA because it doesn't like this sequence:
+
+// This is a pseudo for MFCR, which implicitly uses all 8 of its subregisters;
+// declaring that here gives the local register allocator problems with this:
 //  vreg = MCRF  CR0
 //  MFCR  <kill of whatever preg got assigned to vreg>
-// For now DeadMachineInstructionElim is turned off, so don't do the marking.
-def MFCR  : XFXForm_3<31, 19, (outs GPRC:$rT), (ins), "mfcr $rT", SprMFCR>,
+// while not declaring it breaks DeadMachineInstructionElimination.
+// As it turns out, in all cases where we currently use this,
+// we're only interested in one subregister of it.  Represent this in the
+// instruction to keep the register allocator from becoming confused.
+def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
+                       "mfcr $rT ${:comment} $FXM", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
