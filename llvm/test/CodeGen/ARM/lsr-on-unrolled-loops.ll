@@ -384,3 +384,259 @@ bb167:
 bb295:                                          
   ret void
 }
+
+%struct.ct_data_s = type { %union.anon, %union.anon }
+%struct.gz_header = type { i32, i32, i32, i32, i8*, i32, i32, i8*, i32, i8*, i32, i32, i32 }
+%struct.internal_state = type { %struct.z_stream*, i32, i8*, i32, i8*, i32, i32, %struct.gz_header*, i32, i8, i32, i32, i32, i32, i8*, i32, i16*, i16*, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [573 x %struct.ct_data_s], [61 x %struct.ct_data_s], [39 x %struct.ct_data_s], %struct.tree_desc_s, %struct.tree_desc_s, %struct.tree_desc_s, [16 x i16], [573 x i32], i32, i32, [573 x i8], i8*, i32, i32, i16*, i32, i32, i32, i32, i16, i32 }
+%struct.static_tree_desc = type { i32 }
+%struct.tree_desc_s = type { %struct.ct_data_s*, i32, %struct.static_tree_desc* }
+%struct.z_stream = type { i8*, i32, i32, i8*, i32, i32, i8*, %struct.internal_state*, i8* (i8*, i32, i32)*, void (i8*, i8*)*, i8*, i32, i32, i32 }
+%union.anon = type { i16 }
+
+define arm_apcscc i32 @longest_match(%struct.internal_state* %s, i32 %cur_match) nounwind optsize {
+entry:
+  %0 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 31 ; <i32*> [#uses=1]
+  %1 = load i32* %0, align 4                      ; <i32> [#uses=2]
+  %2 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 14 ; <i8**> [#uses=1]
+  %3 = load i8** %2, align 4                      ; <i8*> [#uses=27]
+  %4 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 27 ; <i32*> [#uses=1]
+  %5 = load i32* %4, align 4                      ; <i32> [#uses=17]
+  %6 = getelementptr inbounds i8* %3, i32 %5      ; <i8*> [#uses=1]
+  %7 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 30 ; <i32*> [#uses=1]
+  %8 = load i32* %7, align 4                      ; <i32> [#uses=4]
+  %9 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 36 ; <i32*> [#uses=1]
+  %10 = load i32* %9, align 4                     ; <i32> [#uses=2]
+  %11 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 11 ; <i32*> [#uses=1]
+  %12 = load i32* %11, align 4                    ; <i32> [#uses=2]
+  %13 = add i32 %12, -262                         ; <i32> [#uses=1]
+  %14 = icmp ugt i32 %5, %13                      ; <i1> [#uses=1]
+  br i1 %14, label %bb, label %bb2
+
+bb:                                               ; preds = %entry
+  %15 = add i32 %5, 262                           ; <i32> [#uses=1]
+  %16 = sub i32 %15, %12                          ; <i32> [#uses=1]
+  br label %bb2
+
+bb2:                                              ; preds = %bb, %entry
+  %iftmp.48.0 = phi i32 [ %16, %bb ], [ 0, %entry ] ; <i32> [#uses=1]
+  %17 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 16 ; <i16**> [#uses=1]
+  %18 = load i16** %17, align 4                   ; <i16*> [#uses=1]
+  %19 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 13 ; <i32*> [#uses=1]
+  %20 = load i32* %19, align 4                    ; <i32> [#uses=1]
+  %.sum = add i32 %5, 258                         ; <i32> [#uses=2]
+  %21 = getelementptr inbounds i8* %3, i32 %.sum  ; <i8*> [#uses=1]
+  %22 = add nsw i32 %5, -1                        ; <i32> [#uses=1]
+  %.sum30 = add i32 %22, %8                       ; <i32> [#uses=1]
+  %23 = getelementptr inbounds i8* %3, i32 %.sum30 ; <i8*> [#uses=1]
+  %24 = load i8* %23, align 1                     ; <i8> [#uses=1]
+  %.sum31 = add i32 %8, %5                        ; <i32> [#uses=1]
+  %25 = getelementptr inbounds i8* %3, i32 %.sum31 ; <i8*> [#uses=1]
+  %26 = load i8* %25, align 1                     ; <i8> [#uses=1]
+  %27 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 35 ; <i32*> [#uses=1]
+  %28 = load i32* %27, align 4                    ; <i32> [#uses=1]
+  %29 = lshr i32 %1, 2                            ; <i32> [#uses=1]
+  %30 = icmp ult i32 %8, %28                      ; <i1> [#uses=1]
+  %. = select i1 %30, i32 %1, i32 %29             ; <i32> [#uses=1]
+  %31 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 29 ; <i32*> [#uses=1]
+  %32 = load i32* %31, align 4                    ; <i32> [#uses=4]
+  %33 = icmp ugt i32 %10, %32                     ; <i1> [#uses=1]
+  %nice_match.0.ph = select i1 %33, i32 %32, i32 %10 ; <i32> [#uses=1]
+  %34 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 28 ; <i32*> [#uses=1]
+  %35 = ptrtoint i8* %21 to i32                   ; <i32> [#uses=1]
+  %36 = add nsw i32 %5, 257                       ; <i32> [#uses=1]
+  %tmp81 = add i32 %., -1                         ; <i32> [#uses=1]
+  br label %bb6
+
+bb6:                                              ; preds = %bb24, %bb2
+  %indvar78 = phi i32 [ 0, %bb2 ], [ %indvar.next79, %bb24 ] ; <i32> [#uses=2]
+  %best_len.2 = phi i32 [ %8, %bb2 ], [ %best_len.0, %bb24 ] ; <i32> [#uses=8]
+  %scan_end1.1 = phi i8 [ %24, %bb2 ], [ %scan_end1.0, %bb24 ] ; <i8> [#uses=6]
+  %cur_match_addr.0 = phi i32 [ %cur_match, %bb2 ], [ %90, %bb24 ] ; <i32> [#uses=14]
+  %scan_end.1 = phi i8 [ %26, %bb2 ], [ %scan_end.0, %bb24 ] ; <i8> [#uses=6]
+  %37 = getelementptr inbounds i8* %3, i32 %cur_match_addr.0 ; <i8*> [#uses=1]
+  %.sum32 = add i32 %cur_match_addr.0, %best_len.2 ; <i32> [#uses=1]
+  %38 = getelementptr inbounds i8* %3, i32 %.sum32 ; <i8*> [#uses=1]
+  %39 = load i8* %38, align 1                     ; <i8> [#uses=1]
+  %40 = icmp eq i8 %39, %scan_end.1               ; <i1> [#uses=1]
+  br i1 %40, label %bb7, label %bb23
+
+bb7:                                              ; preds = %bb6
+  %41 = add nsw i32 %best_len.2, -1               ; <i32> [#uses=1]
+  %.sum33 = add i32 %41, %cur_match_addr.0        ; <i32> [#uses=1]
+  %42 = getelementptr inbounds i8* %3, i32 %.sum33 ; <i8*> [#uses=1]
+  %43 = load i8* %42, align 1                     ; <i8> [#uses=1]
+  %44 = icmp eq i8 %43, %scan_end1.1              ; <i1> [#uses=1]
+  br i1 %44, label %bb8, label %bb23
+
+bb8:                                              ; preds = %bb7
+  %45 = load i8* %37, align 1                     ; <i8> [#uses=1]
+  %46 = load i8* %6, align 1                      ; <i8> [#uses=1]
+  %47 = icmp eq i8 %45, %46                       ; <i1> [#uses=1]
+  br i1 %47, label %bb9, label %bb23
+
+bb9:                                              ; preds = %bb8
+  %.sum34 = add i32 %cur_match_addr.0, 1          ; <i32> [#uses=1]
+  %48 = getelementptr inbounds i8* %3, i32 %.sum34 ; <i8*> [#uses=1]
+  %49 = load i8* %48, align 1                     ; <i8> [#uses=1]
+  %.sum88 = add i32 %5, 1                         ; <i32> [#uses=1]
+  %50 = getelementptr inbounds i8* %3, i32 %.sum88 ; <i8*> [#uses=1]
+  %51 = load i8* %50, align 1                     ; <i8> [#uses=1]
+  %52 = icmp eq i8 %49, %51                       ; <i1> [#uses=1]
+  br i1 %52, label %bb10, label %bb23
+
+bb10:                                             ; preds = %bb9
+  %tmp39 = add i32 %cur_match_addr.0, 10          ; <i32> [#uses=1]
+  %tmp41 = add i32 %cur_match_addr.0, 9           ; <i32> [#uses=1]
+  %tmp44 = add i32 %cur_match_addr.0, 8           ; <i32> [#uses=1]
+  %tmp47 = add i32 %cur_match_addr.0, 7           ; <i32> [#uses=1]
+  %tmp50 = add i32 %cur_match_addr.0, 6           ; <i32> [#uses=1]
+  %tmp53 = add i32 %cur_match_addr.0, 5           ; <i32> [#uses=1]
+  %tmp56 = add i32 %cur_match_addr.0, 4           ; <i32> [#uses=1]
+  %tmp59 = add i32 %cur_match_addr.0, 3           ; <i32> [#uses=1]
+  br label %bb11
+
+bb11:                                             ; preds = %bb18, %bb10
+  %indvar = phi i32 [ %indvar.next, %bb18 ], [ 0, %bb10 ] ; <i32> [#uses=2]
+  %tmp = shl i32 %indvar, 3                       ; <i32> [#uses=16]
+  %tmp40 = add i32 %tmp39, %tmp                   ; <i32> [#uses=1]
+  %scevgep = getelementptr i8* %3, i32 %tmp40     ; <i8*> [#uses=1]
+  %tmp42 = add i32 %tmp41, %tmp                   ; <i32> [#uses=1]
+  %scevgep43 = getelementptr i8* %3, i32 %tmp42   ; <i8*> [#uses=1]
+  %tmp45 = add i32 %tmp44, %tmp                   ; <i32> [#uses=1]
+  %scevgep46 = getelementptr i8* %3, i32 %tmp45   ; <i8*> [#uses=1]
+  %tmp48 = add i32 %tmp47, %tmp                   ; <i32> [#uses=1]
+  %scevgep49 = getelementptr i8* %3, i32 %tmp48   ; <i8*> [#uses=1]
+  %tmp51 = add i32 %tmp50, %tmp                   ; <i32> [#uses=1]
+  %scevgep52 = getelementptr i8* %3, i32 %tmp51   ; <i8*> [#uses=1]
+  %tmp54 = add i32 %tmp53, %tmp                   ; <i32> [#uses=1]
+  %scevgep55 = getelementptr i8* %3, i32 %tmp54   ; <i8*> [#uses=1]
+  %tmp60 = add i32 %tmp59, %tmp                   ; <i32> [#uses=1]
+  %scevgep61 = getelementptr i8* %3, i32 %tmp60   ; <i8*> [#uses=1]
+  %tmp62 = add i32 %tmp, 10                       ; <i32> [#uses=1]
+  %.sum89 = add i32 %5, %tmp62                    ; <i32> [#uses=2]
+  %scevgep63 = getelementptr i8* %3, i32 %.sum89  ; <i8*> [#uses=2]
+  %tmp64 = add i32 %tmp, 9                        ; <i32> [#uses=1]
+  %.sum90 = add i32 %5, %tmp64                    ; <i32> [#uses=1]
+  %scevgep65 = getelementptr i8* %3, i32 %.sum90  ; <i8*> [#uses=2]
+  %tmp66 = add i32 %tmp, 8                        ; <i32> [#uses=1]
+  %.sum91 = add i32 %5, %tmp66                    ; <i32> [#uses=1]
+  %scevgep67 = getelementptr i8* %3, i32 %.sum91  ; <i8*> [#uses=2]
+  %tmp6883 = or i32 %tmp, 7                       ; <i32> [#uses=1]
+  %.sum92 = add i32 %5, %tmp6883                  ; <i32> [#uses=1]
+  %scevgep69 = getelementptr i8* %3, i32 %.sum92  ; <i8*> [#uses=2]
+  %tmp7084 = or i32 %tmp, 6                       ; <i32> [#uses=1]
+  %.sum93 = add i32 %5, %tmp7084                  ; <i32> [#uses=1]
+  %scevgep71 = getelementptr i8* %3, i32 %.sum93  ; <i8*> [#uses=2]
+  %tmp7285 = or i32 %tmp, 5                       ; <i32> [#uses=1]
+  %.sum94 = add i32 %5, %tmp7285                  ; <i32> [#uses=1]
+  %scevgep73 = getelementptr i8* %3, i32 %.sum94  ; <i8*> [#uses=2]
+  %tmp7486 = or i32 %tmp, 4                       ; <i32> [#uses=1]
+  %.sum95 = add i32 %5, %tmp7486                  ; <i32> [#uses=1]
+  %scevgep75 = getelementptr i8* %3, i32 %.sum95  ; <i8*> [#uses=2]
+  %tmp7687 = or i32 %tmp, 3                       ; <i32> [#uses=1]
+  %.sum96 = add i32 %5, %tmp7687                  ; <i32> [#uses=1]
+  %scevgep77 = getelementptr i8* %3, i32 %.sum96  ; <i8*> [#uses=2]
+  %53 = load i8* %scevgep77, align 1              ; <i8> [#uses=1]
+  %54 = load i8* %scevgep61, align 1              ; <i8> [#uses=1]
+  %55 = icmp eq i8 %53, %54                       ; <i1> [#uses=1]
+  br i1 %55, label %bb12, label %bb20
+
+bb12:                                             ; preds = %bb11
+  %tmp57 = add i32 %tmp56, %tmp                   ; <i32> [#uses=1]
+  %scevgep58 = getelementptr i8* %3, i32 %tmp57   ; <i8*> [#uses=1]
+  %56 = load i8* %scevgep75, align 1              ; <i8> [#uses=1]
+  %57 = load i8* %scevgep58, align 1              ; <i8> [#uses=1]
+  %58 = icmp eq i8 %56, %57                       ; <i1> [#uses=1]
+  br i1 %58, label %bb13, label %bb20
+
+bb13:                                             ; preds = %bb12
+  %59 = load i8* %scevgep73, align 1              ; <i8> [#uses=1]
+  %60 = load i8* %scevgep55, align 1              ; <i8> [#uses=1]
+  %61 = icmp eq i8 %59, %60                       ; <i1> [#uses=1]
+  br i1 %61, label %bb14, label %bb20
+
+bb14:                                             ; preds = %bb13
+  %62 = load i8* %scevgep71, align 1              ; <i8> [#uses=1]
+  %63 = load i8* %scevgep52, align 1              ; <i8> [#uses=1]
+  %64 = icmp eq i8 %62, %63                       ; <i1> [#uses=1]
+  br i1 %64, label %bb15, label %bb20
+
+bb15:                                             ; preds = %bb14
+  %65 = load i8* %scevgep69, align 1              ; <i8> [#uses=1]
+  %66 = load i8* %scevgep49, align 1              ; <i8> [#uses=1]
+  %67 = icmp eq i8 %65, %66                       ; <i1> [#uses=1]
+  br i1 %67, label %bb16, label %bb20
+
+bb16:                                             ; preds = %bb15
+  %68 = load i8* %scevgep67, align 1              ; <i8> [#uses=1]
+  %69 = load i8* %scevgep46, align 1              ; <i8> [#uses=1]
+  %70 = icmp eq i8 %68, %69                       ; <i1> [#uses=1]
+  br i1 %70, label %bb17, label %bb20
+
+bb17:                                             ; preds = %bb16
+  %71 = load i8* %scevgep65, align 1              ; <i8> [#uses=1]
+  %72 = load i8* %scevgep43, align 1              ; <i8> [#uses=1]
+  %73 = icmp eq i8 %71, %72                       ; <i1> [#uses=1]
+  br i1 %73, label %bb18, label %bb20
+
+bb18:                                             ; preds = %bb17
+  %74 = load i8* %scevgep63, align 1              ; <i8> [#uses=1]
+  %75 = load i8* %scevgep, align 1                ; <i8> [#uses=1]
+  %76 = icmp eq i8 %74, %75                       ; <i1> [#uses=1]
+  %77 = icmp slt i32 %.sum89, %.sum               ; <i1> [#uses=1]
+  %or.cond = and i1 %76, %77                      ; <i1> [#uses=1]
+  %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=1]
+  br i1 %or.cond, label %bb11, label %bb20
+
+bb20:                                             ; preds = %bb18, %bb17, %bb16, %bb15, %bb14, %bb13, %bb12, %bb11
+  %scan.3 = phi i8* [ %scevgep77, %bb11 ], [ %scevgep75, %bb12 ], [ %scevgep73, %bb13 ], [ %scevgep71, %bb14 ], [ %scevgep69, %bb15 ], [ %scevgep67, %bb16 ], [ %scevgep65, %bb17 ], [ %scevgep63, %bb18 ] ; <i8*> [#uses=1]
+  %78 = ptrtoint i8* %scan.3 to i32               ; <i32> [#uses=1]
+  %79 = sub nsw i32 %78, %35                      ; <i32> [#uses=2]
+  %80 = add i32 %79, 258                          ; <i32> [#uses=5]
+  %81 = icmp sgt i32 %80, %best_len.2             ; <i1> [#uses=1]
+  br i1 %81, label %bb21, label %bb23
+
+bb21:                                             ; preds = %bb20
+  store i32 %cur_match_addr.0, i32* %34, align 4
+  %82 = icmp slt i32 %80, %nice_match.0.ph        ; <i1> [#uses=1]
+  br i1 %82, label %bb22, label %bb25
+
+bb22:                                             ; preds = %bb21
+  %.sum37 = add i32 %36, %79                      ; <i32> [#uses=1]
+  %83 = getelementptr inbounds i8* %3, i32 %.sum37 ; <i8*> [#uses=1]
+  %84 = load i8* %83, align 1                     ; <i8> [#uses=1]
+  %.sum38 = add i32 %80, %5                       ; <i32> [#uses=1]
+  %85 = getelementptr inbounds i8* %3, i32 %.sum38 ; <i8*> [#uses=1]
+  %86 = load i8* %85, align 1                     ; <i8> [#uses=1]
+  br label %bb23
+
+bb23:                                             ; preds = %bb22, %bb20, %bb9, %bb8, %bb7, %bb6
+  %best_len.0 = phi i32 [ %best_len.2, %bb6 ], [ %best_len.2, %bb7 ], [ %best_len.2, %bb8 ], [ %best_len.2, %bb9 ], [ %80, %bb22 ], [ %best_len.2, %bb20 ] ; <i32> [#uses=3]
+  %scan_end1.0 = phi i8 [ %scan_end1.1, %bb6 ], [ %scan_end1.1, %bb7 ], [ %scan_end1.1, %bb8 ], [ %scan_end1.1, %bb9 ], [ %84, %bb22 ], [ %scan_end1.1, %bb20 ] ; <i8> [#uses=1]
+  %scan_end.0 = phi i8 [ %scan_end.1, %bb6 ], [ %scan_end.1, %bb7 ], [ %scan_end.1, %bb8 ], [ %scan_end.1, %bb9 ], [ %86, %bb22 ], [ %scan_end.1, %bb20 ] ; <i8> [#uses=1]
+  %87 = and i32 %cur_match_addr.0, %20            ; <i32> [#uses=1]
+  %88 = getelementptr inbounds i16* %18, i32 %87  ; <i16*> [#uses=1]
+  %89 = load i16* %88, align 2                    ; <i16> [#uses=1]
+  %90 = zext i16 %89 to i32                       ; <i32> [#uses=2]
+  %91 = icmp ugt i32 %90, %iftmp.48.0             ; <i1> [#uses=1]
+  br i1 %91, label %bb24, label %bb25
+
+bb24:                                             ; preds = %bb23
+
+; LSR should use count-down iteration to avoid requiring the trip count
+; in a register, and it shouldn't require any reloads here.
+
+; CHECK:      sub.w   r9, r9, #1
+; CHECK-NEXT: cmp.w   r9, #0
+; CHECK-NEXT: bne.w   
+
+  %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]
+  %indvar.next79 = add i32 %indvar78, 1           ; <i32> [#uses=1]
+  br i1 %92, label %bb25, label %bb6
+
+bb25:                                             ; preds = %bb24, %bb23, %bb21
+  %best_len.1 = phi i32 [ %best_len.0, %bb23 ], [ %best_len.0, %bb24 ], [ %80, %bb21 ] ; <i32> [#uses=2]
+  %93 = icmp ugt i32 %best_len.1, %32             ; <i1> [#uses=1]
+  %merge = select i1 %93, i32 %32, i32 %best_len.1 ; <i32> [#uses=1]
+  ret i32 %merge
+}

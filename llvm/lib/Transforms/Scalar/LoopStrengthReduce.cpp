@@ -1997,6 +1997,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
         if (NV == LF.OperandValToReplace) {
           CI->setOperand(1, CI->getOperand(0));
           CI->setOperand(0, NV);
+          NV = CI->getOperand(1);
           Changed = true;
         }
 
