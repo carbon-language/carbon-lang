@@ -467,14 +467,14 @@ static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
       bool Found = false;
       for (SCEVMulExpr::op_iterator I = Mul->op_begin(), E = Mul->op_end();
            I != E; ++I) {
+        const SCEV *S = *I;
         if (!Found)
-          if (const SCEV *Q = getExactSDiv(*I, RHS, SE,
+          if (const SCEV *Q = getExactSDiv(S, RHS, SE,
                                            IgnoreSignificantBits)) {
-            Ops.push_back(Q);
+            S = Q;
             Found = true;
-            continue;
           }
-        Ops.push_back(*I);
+        Ops.push_back(S);
       }
       return Found ? SE.getMulExpr(Ops) : 0;
     }
