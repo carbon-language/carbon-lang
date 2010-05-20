@@ -354,6 +354,13 @@ def MOV64ri32 : RIi32<0xC7, MRM0r, (outs GR64:$dst), (ins i64i32imm:$src),
                       [(set GR64:$dst, i64immSExt32:$src)]>;
 }
 
+// The assembler accepts movq of a 64-bit immediate as an alternate spelling of
+// movabsq.
+let isAsmParserOnly = 1 in {
+def MOV64ri_alt : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
+                    "mov{q}\t{$src, $dst|$dst, $src}", []>;
+}
+
 def MOV64rr_REV : RI<0x8B, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "mov{q}\t{$src, $dst|$dst, $src}", []>;
 
