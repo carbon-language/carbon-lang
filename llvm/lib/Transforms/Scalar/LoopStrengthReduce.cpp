@@ -1777,6 +1777,9 @@ LSRInstance::OptimizeLoopTermCond() {
   }
 }
 
+/// reconcileNewOffset - Determine if the given use can accomodate a fixup
+/// at the given offset and other details. If so, update the use and
+/// return true.
 bool
 LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
                                 LSRUse::KindType Kind, const Type *AccessTy) {
@@ -2026,6 +2029,9 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
   DEBUG(print_fixups(dbgs()));
 }
 
+/// InsertInitialFormula - Insert a formula for the given expression into
+/// the given use, separating out loop-variant portions from loop-invariant
+/// and loop-computable portions.
 void
 LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
   Formula F;
@@ -2034,6 +2040,8 @@ LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
   assert(Inserted && "Initial formula already exists!"); (void)Inserted;
 }
 
+/// InsertSupplementalFormula - Insert a simple single-register formula for
+/// the given expression into the given use.
 void
 LSRInstance::InsertSupplementalFormula(const SCEV *S,
                                        LSRUse &LU, size_t LUIdx) {
@@ -2928,6 +2936,8 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
           print_uses(dbgs()));
   }
 
+  // With all other options exhausted, loop until the system is simple
+  // enough to handle.
   SmallPtrSet<const SCEV *, 4> Taken;
   while (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
     // Ok, we have too many of formulae on our hands to conveniently handle.
@@ -3072,6 +3082,8 @@ retry:
   }
 }
 
+/// Solve - Choose one formula from each use. Return the results in the given
+/// Solution vector.
 void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
   SmallVector<const Formula *, 8> Workspace;
   Cost SolutionCost;
@@ -3206,6 +3218,8 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
   return IP;
 }
 
+/// Expand - Emit instructions for the leading candidate expression for this
+/// LSRUse (this is called "expanding").
 Value *LSRInstance::Expand(const LSRFixup &LF,
                            const Formula &F,
                            BasicBlock::iterator IP,
@@ -3461,6 +3475,8 @@ void LSRInstance::Rewrite(const LSRFixup &LF,
   DeadInsts.push_back(LF.OperandValToReplace);
 }
 
+/// ImplementSolution - Rewrite all the fixup locations with new values,
+/// following the chosen solution.
 void
 LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
                                Pass *P) {
