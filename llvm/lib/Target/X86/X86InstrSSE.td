@@ -2417,6 +2417,10 @@ def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
 def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
+// Pause. This "instruction" is encoded as "rep; nop", so even though it
+// was introduced with SSE2, it's backward compabitle.
+def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
+
 //TODO: custom lower this so as to never even generate the noop
 def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
            (i8 0)), (NOOP)>;
