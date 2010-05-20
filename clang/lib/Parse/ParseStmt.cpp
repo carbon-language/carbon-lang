@@ -754,9 +754,10 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
     // FIXME: This is not optimal recovery, but parsing the body is more
     // dangerous due to the presence of case and default statements, which
     // will have no place to connect back with the switch.
-    if (Tok.is(tok::l_brace))
-      MatchRHSPunctuation(tok::r_brace, ConsumeBrace());
-    else
+    if (Tok.is(tok::l_brace)) {
+      ConsumeBrace();
+      SkipUntil(tok::r_brace, false, false);
+    } else
       SkipUntil(tok::semi);
     return move(Switch);
   }
