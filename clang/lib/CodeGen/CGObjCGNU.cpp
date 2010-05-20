@@ -626,16 +626,16 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
   llvm::BasicBlock *startBB = 0;
   llvm::BasicBlock *messageBB = 0;
-  llvm::BasicBlock *contiueBB = 0;
+  llvm::BasicBlock *continueBB = 0;
 
   if (!isPointerSizedReturn) {
     startBB = Builder.GetInsertBlock();
     messageBB = CGF.createBasicBlock("msgSend");
-    contiueBB = CGF.createBasicBlock("continue");
+    continueBB = CGF.createBasicBlock("continue");
 
     llvm::Value *isNil = Builder.CreateICmpEQ(Receiver, 
             llvm::Constant::getNullValue(Receiver->getType()));
-    Builder.CreateCondBr(isNil, contiueBB, messageBB);
+    Builder.CreateCondBr(isNil, continueBB, messageBB);
     CGF.EmitBlock(messageBB);
   }
 
@@ -730,8 +730,11 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
       0, &call);
   call->setMetadata(msgSendMDKind, node);
 
+
   if (!isPointerSizedReturn) {
-    CGF.EmitBlock(contiueBB);
+    messageBB = CGF.Builder.GetInsertBlock();
+    CGF.Builder.CreateBr(continueBB);
+    CGF.EmitBlock(continueBB);
     if (msgRet.isScalar()) {
       llvm::Value *v = msgRet.getScalarVal();
       llvm::PHINode *phi = Builder.CreatePHI(v->getType());
