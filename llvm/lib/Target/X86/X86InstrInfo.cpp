@@ -1993,12 +1993,12 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     if (SrcReg != X86::EFLAGS)
       return false;
     if (DestRC == &X86::GR64RegClass || DestRC == &X86::GR64_NOSPRegClass) {
-      BuildMI(MBB, MI, DL, get(X86::PUSHFQ64));
+      BuildMI(MBB, MI, DL, get(X86::PUSHF64));
       BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
       return true;
     } else if (DestRC == &X86::GR32RegClass ||
                DestRC == &X86::GR32_NOSPRegClass) {
-      BuildMI(MBB, MI, DL, get(X86::PUSHFD));
+      BuildMI(MBB, MI, DL, get(X86::PUSHF32));
       BuildMI(MBB, MI, DL, get(X86::POP32r), DestReg);
       return true;
     }
@@ -2007,12 +2007,12 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       return false;
     if (SrcRC == &X86::GR64RegClass || DestRC == &X86::GR64_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSH64r)).addReg(SrcReg);
-      BuildMI(MBB, MI, DL, get(X86::POPFQ));
+      BuildMI(MBB, MI, DL, get(X86::POPF64));
       return true;
     } else if (SrcRC == &X86::GR32RegClass ||
                DestRC == &X86::GR32_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSH32r)).addReg(SrcReg);
-      BuildMI(MBB, MI, DL, get(X86::POPFD));
+      BuildMI(MBB, MI, DL, get(X86::POPF32));
       return true;
     }
   }

@@ -535,6 +535,21 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // The various flavors of pushf and popf use Requires<In32BitMode> and
+  // Requires<In64BitMode>, but the assembler doesn't yet implement that.
+  // For now, just do a manual check to prevent silent misencoding.
+  if (Is64Bit) {
+    if (Name == "popfl")
+      return Error(NameLoc, "popfl cannot be encoded in 64-bit mode");
+    else if (Name == "pushfl")
+      return Error(NameLoc, "pushfl cannot be encoded in 64-bit mode");
+  } else {
+    if (Name == "popfq")
+      return Error(NameLoc, "popfq cannot be encoded in 32-bit mode");
+    else if (Name == "pushfq")
+      return Error(NameLoc, "pushfq cannot be encoded in 32-bit mode");
+  }
+
   // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
   // represent alternative syntaxes in the .td file, without requiring
   // instruction duplication.
@@ -547,6 +562,8 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("repe", "rep")
     .Case("repz", "rep")
     .Case("repnz", "repne")
+    .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
+    .Case("popf",  Is64Bit ? "popfq"  : "popfl")
     .Default(Name);
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 

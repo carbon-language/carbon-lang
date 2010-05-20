@@ -75,3 +75,12 @@ int $4
 int $255
 // CHECK: int $255
 // CHECK:  encoding: [0xcd,0xff]
+
+// CHECK: pushfl	# encoding: [0x9c]
+        pushf
+// CHECK: pushfl	# encoding: [0x9c]
+        pushfl
+// CHECK: popfl	        # encoding: [0x9d]
+        popf
+// CHECK: popfl	        # encoding: [0x9d]
+        popfl

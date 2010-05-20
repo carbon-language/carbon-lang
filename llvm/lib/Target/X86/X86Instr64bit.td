@@ -275,9 +275,11 @@ def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
 }
 
 let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1, neverHasSideEffects=1 in
-def POPFQ    : I<0x9D, RawFrm, (outs), (ins), "popf{q}", []>, REX_W;
+def POPF64   : I<0x9D, RawFrm, (outs), (ins), "popfq", []>,
+               Requires<[In64BitMode]>;
 let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
-def PUSHFQ64   : I<0x9C, RawFrm, (outs), (ins), "pushf{q}", []>;
+def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", []>,
+                 Requires<[In64BitMode]>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),

@@ -775,12 +775,14 @@ def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
 }
 
 let Defs = [ESP, EFLAGS], Uses = [ESP], mayLoad = 1, neverHasSideEffects=1 in {
-def POPF     : I<0x9D, RawFrm, (outs), (ins), "popf{w}", []>, OpSize;
-def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popf{l}", []>;
+def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", []>, OpSize;
+def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", []>,
+               Requires<[In32BitMode]>;
 }
 let Defs = [ESP], Uses = [ESP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in {
-def PUSHF    : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", []>, OpSize;
-def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushf{l}", []>;
+def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", []>, OpSize;
+def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", []>,
+               Requires<[In32BitMode]>;
 }
 
 let isTwoAddress = 1 in                               // GR32 = bswap GR32

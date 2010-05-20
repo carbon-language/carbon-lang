@@ -163,6 +163,18 @@
 // CHECK: 	popw	32493
         	popw	0x7eed
 
+// CHECK: 	pushf
+        	pushfl
+
+// CHECK: 	pushfl
+        	pushfl
+
+// CHECK: 	popf
+        	popfl
+
+// CHECK: 	popfl
+        	popfl
+
 // CHECK: 	clc
         	clc
 
