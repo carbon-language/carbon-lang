@@ -73,7 +73,8 @@ namespace CodeGenOpt {
 namespace Sched {
   enum Preference {
     Latency,          // Scheduling for shortest total latency.
-    RegPressure       // Scheduling for lowest register pressure.
+    RegPressure,      // Scheduling for lowest register pressure.
+    Hybrid            // Scheduling for both latency and register pressure.
   };
 }
 

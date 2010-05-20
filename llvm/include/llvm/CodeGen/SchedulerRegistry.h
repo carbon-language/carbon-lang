@@ -73,10 +73,16 @@ ScheduleDAGSDNodes *createBURRListDAGScheduler(SelectionDAGISel *IS,
 ScheduleDAGSDNodes *createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                CodeGenOpt::Level OptLevel);
 
-/// createBURRListDAGScheduler - This creates a bottom up register usage
-/// reduction list scheduler that schedules in source code order when possible.
+/// createBURRListDAGScheduler - This creates a bottom up list scheduler that
+/// schedules nodes in source code order when possible.
 ScheduleDAGSDNodes *createSourceListDAGScheduler(SelectionDAGISel *IS,
                                                  CodeGenOpt::Level OptLevel);
+
+/// createHybridListDAGScheduler - This creates a bottom up hybrid register
+/// usage reduction list scheduler that make use of latency information to
+/// avoid stalls for long latency instructions.
+ScheduleDAGSDNodes *createHybridListDAGScheduler(SelectionDAGISel *IS,
+                                                 CodeGenOpt::Level);
 
 /// createTDListDAGScheduler - This creates a top-down list scheduler with
 /// a hazard recognizer.

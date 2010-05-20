@@ -134,9 +134,11 @@ namespace llvm {
       return createFastDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::Latency)
       return createTDListDAGScheduler(IS, OptLevel);
-    assert(TLI.getSchedulingPreference() == Sched::RegPressure &&
+    if (TLI.getSchedulingPreference() == Sched::RegPressure)
+      return createBURRListDAGScheduler(IS, OptLevel);
+    assert(TLI.getSchedulingPreference() == Sched::Hybrid &&
            "Unknown sched type!");
-    return createBURRListDAGScheduler(IS, OptLevel);
+    return createHybridListDAGScheduler(IS, OptLevel);
   }
 }
 

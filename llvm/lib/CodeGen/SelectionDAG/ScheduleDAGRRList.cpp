@@ -53,6 +53,12 @@ static RegisterScheduler
                          "order when possible",
                          createSourceListDAGScheduler);
 
+static RegisterScheduler
+  hybridListDAGScheduler("hybrid",
+                         "Bottom-up rr list scheduling which avoid stalls for "
+                         "long latency instructions",
+                         createHybridListDAGScheduler);
+
 namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGRRList - The actual register reduction list scheduler
@@ -63,6 +69,10 @@ private:
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
   /// it is top-down.
   bool isBottomUp;
+
+  /// NeedLatency - True if the scheduler will make use of latency information.
+  ///
+  bool NeedLatency;
 
   /// AvailableQueue - The priority queue to use for the available SUnits.
   SchedulingPriorityQueue *AvailableQueue;
@@ -80,9 +90,9 @@ private:
 
 public:
   ScheduleDAGRRList(MachineFunction &mf,
-                    bool isbottomup,
+                    bool isbottomup, bool needlatency,
                     SchedulingPriorityQueue *availqueue)
-    : ScheduleDAGSDNodes(mf), isBottomUp(isbottomup),
+    : ScheduleDAGSDNodes(mf), isBottomUp(isbottomup), NeedLatency(needlatency),
       AvailableQueue(availqueue), Topo(SUnits) {
     }
 
@@ -161,9 +171,11 @@ private:
     return NewNode;
   }
 
-  /// ForceUnitLatencies - Return true, since register-pressure-reducing
-  /// scheduling doesn't need actual latency information.
-  bool ForceUnitLatencies() const { return true; }
+  /// ForceUnitLatencies - Register-pressure-reducing scheduling doesn't
+  /// need actual latency information but the hybrid scheduler does.
+  bool ForceUnitLatencies() const {
+    return !NeedLatency;
+  }
 };
 }  // end anonymous namespace
 
@@ -213,6 +225,12 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
 #endif
   --PredSU->NumSuccsLeft;
 
+  if (!ForceUnitLatencies()) {
+    // Updating predecessor's height. This is now the cycle when the
+    // predecessor can be scheduled without causing a pipeline stall.
+    PredSU->setHeightToAtLeast(SU->getHeight() + PredEdge->getLatency());
+  }
+
   // If all the node's successors are scheduled, this node is ready
   // to be scheduled. Ignore the special EntrySU node.
   if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU) {
@@ -244,10 +262,15 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
-  DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
+  DEBUG(dbgs() << "\n*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
-  assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
+#ifndef NDEBUG
+  if (CurCycle < SU->getHeight())
+    DEBUG(dbgs() << "   Height [" << SU->getHeight() << "] pipeline stall!\n");
+#endif
+
+  // FIXME: Handle noop hazard.
   SU->setHeightToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
@@ -339,6 +362,7 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
       SU->isAvailable = false;
     UnscheduleNodeBottomUp(OldSU);
     --CurCycle;
+    AvailableQueue->setCurCycle(CurCycle);
   }
 
   assert(!SU->isSucc(OldSU) && "Something is wrong!");
@@ -386,7 +410,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
-    DEBUG(dbgs() << "Unfolding SU # " << SU->NodeNum << "\n");
+    DEBUG(dbgs() << "Unfolding SU #" << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
 
     N = NewNodes[1];
@@ -504,7 +528,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     SU = NewSU;
   }
 
-  DEBUG(dbgs() << "Duplicating SU # " << SU->NodeNum << "\n");
+  DEBUG(dbgs() << "    Duplicating SU #" << SU->NodeNum << "\n");
   NewSU = CreateClone(SU);
 
   // New SUnit has the exact same predecessors.
@@ -786,7 +810,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           // Issue copies, these can be expensive cross register class copies.
           SmallVector<SUnit*, 2> Copies;
           InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
-          DEBUG(dbgs() << "Adding an edge from SU #" << TrySU->NodeNum
+          DEBUG(dbgs() << "    Adding an edge from SU #" << TrySU->NodeNum
                        << " to SU #" << Copies.front()->NodeNum << "\n");
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
                               /*Reg=*/0, /*isNormalMemory=*/false,
@@ -795,7 +819,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           NewDef = Copies.back();
         }
 
-        DEBUG(dbgs() << "Adding an edge from SU #" << NewDef->NodeNum
+        DEBUG(dbgs() << "    Adding an edge from SU #" << NewDef->NodeNum
                      << " to SU #" << TrySU->NodeNum << "\n");
         LiveRegDefs[Reg] = NewDef;
         AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
@@ -821,6 +845,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
     if (CurSU)
       ScheduleNodeBottomUp(CurSU, CurCycle);
     ++CurCycle;
+    AvailableQueue->setCurCycle(CurCycle);
   }
 
   // Reverse the order if it is bottom up.
@@ -889,6 +914,7 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGRRList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
+  AvailableQueue->setCurCycle(CurCycle);
 
   // Release any successors of the special Entry node.
   ReleaseSuccessors(&EntrySU);
@@ -911,6 +937,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
     if (CurSU)
       ScheduleNodeTopDown(CurSU, CurCycle);
     ++CurCycle;
+    AvailableQueue->setCurCycle(CurCycle);
   }
   
 #ifndef NDEBUG
@@ -956,6 +983,16 @@ namespace {
     
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
+
+  struct hybrid_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    RegReductionPriorityQueue<hybrid_ls_rr_sort> *SPQ;
+    hybrid_ls_rr_sort(RegReductionPriorityQueue<hybrid_ls_rr_sort> *spq)
+      : SPQ(spq) {}
+    hybrid_ls_rr_sort(const hybrid_ls_rr_sort &RHS)
+      : SPQ(RHS.SPQ) {}
+    
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
 }  // end anonymous namespace
 
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
@@ -991,7 +1028,7 @@ namespace {
   template<class SF>
   class RegReductionPriorityQueue : public SchedulingPriorityQueue {
     PriorityQueue<SUnit*, std::vector<SUnit*>, SF> Queue;
-    unsigned currentQueueId;
+    unsigned CurQueueId;
 
   protected:
     // SUnits - The SUnits for the current graph.
@@ -1007,7 +1044,7 @@ namespace {
   public:
     RegReductionPriorityQueue(const TargetInstrInfo *tii,
                               const TargetRegisterInfo *tri)
-      : Queue(SF(this)), currentQueueId(0),
+      : Queue(SF(this)), CurQueueId(0),
         TII(tii), TRI(tri), scheduleDAG(NULL) {}
     
     void initNodes(std::vector<SUnit> &sunits) {
@@ -1067,14 +1104,14 @@ namespace {
     unsigned getNodeOrdering(const SUnit *SU) const {
       return scheduleDAG->DAG->GetOrdering(SU->getNode());
     }
-    
+
     unsigned size() const { return Queue.size(); }
 
     bool empty() const { return Queue.empty(); }
     
     void push(SUnit *U) {
       assert(!U->NodeQueueId && "Node in the queue already");
-      U->NodeQueueId = ++currentQueueId;
+      U->NodeQueueId = ++CurQueueId;
       Queue.push(U);
     }
 
@@ -1117,6 +1154,9 @@ namespace {
 
   typedef RegReductionPriorityQueue<src_ls_rr_sort>
     SrcRegReductionPriorityQueue;
+
+  typedef RegReductionPriorityQueue<hybrid_ls_rr_sort>
+    HybridBURRPriorityQueue;
 }
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
@@ -1203,7 +1243,7 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 // Source order, otherwise bottom up.
-bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
+bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LOrder = SPQ->getNodeOrdering(left);
   unsigned ROrder = SPQ->getNodeOrdering(right);
 
@@ -1212,6 +1252,23 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
   if ((LOrder || ROrder) && LOrder != ROrder)
     return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
 
+  return BURRSort(left, right, SPQ);
+}
+
+bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
+  bool LStall = SPQ->getCurCycle() < left->getHeight();
+  bool RStall = SPQ->getCurCycle() < right->getHeight();
+  // If scheduling one of the node will cause a pipeline stall, delay it.
+  // If scheduling either one of the node will cause a pipeline stall, sort them
+  // according to their height.
+  // If neither will cause a pipeline stall, try to reduce register pressure.
+  if (LStall) {
+    if (!RStall)
+      return true;
+    if (left->getHeight() != right->getHeight())
+      return left->getHeight() > right->getHeight();
+  } else if (RStall)
+      return false;
   return BURRSort(left, right, SPQ);
 }
 
@@ -1379,8 +1436,8 @@ void RegReductionPriorityQueue<SF>::PrescheduleNodesWithMultipleUses() {
 
     // Ok, the transformation is safe and the heuristics suggest it is
     // profitable. Update the graph.
-    DEBUG(dbgs() << "Prescheduling SU # " << SU->NodeNum
-                 << " next to PredSU # " << PredSU->NodeNum
+    DEBUG(dbgs() << "    Prescheduling SU #" << SU->NodeNum
+                 << " next to PredSU #" << PredSU->NodeNum
                  << " to guide scheduling in the presence of multiple uses\n");
     for (unsigned i = 0; i != PredSU->Succs.size(); ++i) {
       SDep Edge = PredSU->Succs[i];
@@ -1469,7 +1526,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
              (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
              (!SU->isCommutable && SuccSU->isCommutable)) &&
             !scheduleDAG->IsReachable(SuccSU, SU)) {
-          DEBUG(dbgs() << "Adding a pseudo-two-addr edge from SU # "
+          DEBUG(dbgs() << "    Adding a pseudo-two-addr edge from SU #"
                        << SU->NodeNum << " to SU #" << SuccSU->NodeNum << "\n");
           scheduleDAG->AddPred(SU, SDep(SuccSU, SDep::Order, /*Latency=*/0,
                                         /*Reg=*/0, /*isNormalMemory=*/false,
@@ -1563,8 +1620,7 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
-  ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(*IS->MF, true, PQ);
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }
@@ -1577,8 +1633,7 @@ llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   
   TDRegReductionPriorityQueue *PQ = new TDRegReductionPriorityQueue(TII, TRI);
 
-  ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(*IS->MF, false, PQ);
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;
 }
@@ -1591,8 +1646,20 @@ llvm::createSourceListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   
   SrcRegReductionPriorityQueue *PQ = new SrcRegReductionPriorityQueue(TII, TRI);
 
-  ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(*IS->MF, true, PQ);
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, false, PQ);
+  PQ->setScheduleDAG(SD);
+  return SD;  
+}
+
+llvm::ScheduleDAGSDNodes *
+llvm::createHybridListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
+  const TargetMachine &TM = IS->TM;
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  
+  HybridBURRPriorityQueue *PQ = new HybridBURRPriorityQueue(TII, TRI);
+
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, true, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }

@@ -409,7 +409,9 @@ namespace llvm {
   /// implementation to decide.
   /// 
   class SchedulingPriorityQueue {
+    unsigned CurCycle;
   public:
+    SchedulingPriorityQueue() : CurCycle(0) {}
     virtual ~SchedulingPriorityQueue() {}
   
     virtual void initNodes(std::vector<SUnit> &SUnits) = 0;
@@ -433,6 +435,14 @@ namespace llvm {
     virtual void ScheduledNode(SUnit *) {}
 
     virtual void UnscheduledNode(SUnit *) {}
+
+    void setCurCycle(unsigned Cycle) {
+      CurCycle = Cycle;
+    }
+
+    unsigned getCurCycle() const {
+      return CurCycle;
+    }    
   };
 
   class ScheduleDAG {

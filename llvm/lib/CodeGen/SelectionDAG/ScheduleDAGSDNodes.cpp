@@ -347,7 +347,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         const SDep& dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                                OpSU->Latency, PhysReg);
         if (!isChain && !UnitLatencies) {
-          ComputeOperandLatency(OpSU, SU, const_cast<SDep &>(dep));
+          ComputeOperandLatency(OpN, N, i, const_cast<SDep &>(dep));
           ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
         }
 
@@ -378,6 +378,10 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   }
 
   const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  if (InstrItins.isEmpty()) {
+    SU->Latency = 1;
+    return;
+  }
   
   // Compute the latency for the node.  We use the sum of the latencies for
   // all nodes flagged together into this SUnit.
@@ -387,6 +391,37 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
       SU->Latency += InstrItins.
         getStageLatency(TII->get(N->getMachineOpcode()).getSchedClass());
     }
+}
+
+void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
+                                               unsigned OpIdx, SDep& dep) const{
+  // Check to see if the scheduler cares about latencies.
+  if (ForceUnitLatencies())
+    return;
+
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  if (InstrItins.isEmpty())
+    return;
+  
+  if (dep.getKind() != SDep::Data)
+    return;
+
+  unsigned DefIdx = Use->getOperand(OpIdx).getResNo();
+  if (Def->isMachineOpcode() && Use->isMachineOpcode()) {
+    const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
+    if (DefIdx >= II.getNumDefs())
+      return;
+    int DefCycle = InstrItins.getOperandCycle(II.getSchedClass(), DefIdx);
+    if (DefCycle < 0)
+      return;
+    const unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
+    int UseCycle = InstrItins.getOperandCycle(UseClass, OpIdx);
+    if (UseCycle >= 0) {
+      int Latency = DefCycle - UseCycle + 1;
+      if (Latency >= 0)
+        dep.setLatency(Latency);
+    }
+  }
 }
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
