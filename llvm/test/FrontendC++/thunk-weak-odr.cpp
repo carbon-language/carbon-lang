@@ -29,5 +29,5 @@ int g() {
 
 // Thunks should be marked as "weak ODR", not just "weak".
 //
-// CHECK: define weak_odr i32 @_ZThn8_N1C1fEv
-// CHECK: define weak_odr i32 @_ZThn8_N1D1fEv
+// CHECK: define weak_odr i32 @_ZThn{{[48]}}_N1C1fEv
+// CHECK: define weak_odr i32 @_ZThn{{[48]}}_N1D1fEv
