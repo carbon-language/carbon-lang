@@ -677,7 +677,7 @@ namespace llvm {
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
                               StringRef Name,
                               DIFile F, unsigned LineNo,
-                              DIType Ty, bool OptimizedBuild = false);
+                              DIType Ty, bool AlwaysPreserve = false);
 
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.

@@ -1028,7 +1028,7 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                      StringRef Name,
                                      DIFile F,
                                      unsigned LineNo,
-                                     DIType Ty, bool OptimizedBuild) {
+                                     DIType Ty, bool AlwaysPreserve) {
   Value *Elts[] = {
     GetTagConstant(Tag),
     Context,
@@ -1038,7 +1038,10 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     Ty,
   };
   MDNode *Node = MDNode::get(VMContext, &Elts[0], 6);
-  if (OptimizedBuild) {
+  if (AlwaysPreserve) {
+    // The optimizer may remove local variable. If there is an interest
+    // to preserve variable info in such situation then stash it in a
+    // named mdnode.
     NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.lv");
     NMD->addOperand(Node);
   }
