@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -verify -emit-llvm -o - %s | FileCheck %s
 void t1() {
   extern int& a;
   int b = a; 
@@ -166,5 +166,58 @@ namespace N1 {
     // being a global constant.
     // CHECK: %args_array = alloca
     const int* const args_array[] = { &arg };
+  }
+}
+
+// Bind to subobjects while extending the life of the complete object.
+namespace N2 {
+  class X {
+  public:
+    X(const X&);
+    X &operator=(const X&);
+    ~X();
+  };
+
+  struct P {
+    X first;
+  };
+
+  P getP();
+
+  // CHECK: define void @_ZN2N21fEi
+  // CHECK: call void @_ZN2N24getPEv
+  // CHECK: getelementptr inbounds
+  // CHECK: store i32 17
+  // CHECK: call void @_ZN2N21PD1Ev
+  void f(int i) {
+    const X& xr = getP().first;
+    i = 17;
+  }
+
+  struct SpaceWaster {
+    int i, j;
+  };
+
+  struct ReallyHasX {
+    X x;
+  };
+
+  struct HasX : ReallyHasX { };
+
+  struct HasXContainer {
+    HasX has;
+  };
+
+  struct Y : SpaceWaster, HasXContainer { };
+  struct Z : SpaceWaster, Y { };
+
+  Z getZ();
+
+  // CHECK: define void @_ZN2N21gEi
+  // CHECK: call void @_ZN2N24getZEv
+  // FIXME: Not treated as an lvalue!
+  void g(int i) {
+    const X &xr = getZ().has.x;
+    i = 19;    
   }
 }
