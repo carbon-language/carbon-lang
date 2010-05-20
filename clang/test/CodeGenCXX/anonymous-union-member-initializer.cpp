@@ -34,3 +34,21 @@ namespace PR7021 {
     // CHECK: ret void
   }
 }
+
+namespace test2 {
+  struct A {
+    struct {
+      union {
+        int b;
+      };
+    };
+
+    A();
+  };
+
+  A::A() : b(10) { }
+  // CHECK: define void @_ZN5test21AC2Ev(
+  // CHECK-NOT: }
+  // CHECK: store i32 10
+  // CHECK: }
+}

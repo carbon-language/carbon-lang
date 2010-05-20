@@ -1717,6 +1717,81 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   CXXMemberInit = 0;
   return false;
 }
+
+namespace {
+struct BaseAndFieldInfo {
+  Sema &S;
+  CXXConstructorDecl *Ctor;
+  bool AnyErrorsInInits;
+  ImplicitInitializerKind IIK;
+  llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
+  llvm::SmallVector<CXXBaseOrMemberInitializer*, 8> AllToInit;
+
+  BaseAndFieldInfo(Sema &S, CXXConstructorDecl *Ctor, bool ErrorsInInits)
+    : S(S), Ctor(Ctor), AnyErrorsInInits(ErrorsInInits) {
+    // FIXME: Handle implicit move constructors.
+    if (Ctor->isImplicit() && Ctor->isCopyConstructor())
+      IIK = IIK_Copy;
+    else
+      IIK = IIK_Default;
+  }
+};
+}
+
+static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
+                                    FieldDecl *Top, FieldDecl *Field) {
+
+  // Overwhelmingly common case:  we have a direct initializer for this field.
+  if (CXXBaseOrMemberInitializer *Init = Info.AllBaseFields.lookup(Field)) {
+    Info.AllToInit.push_back(Init);
+
+    if (Field != Top) {
+      Init->setMember(Top);
+      Init->setAnonUnionMember(Field);
+    }
+    return false;
+  }
+
+  if (Info.IIK == IIK_Default && Field->isAnonymousStructOrUnion()) {
+    const RecordType *FieldClassType = Field->getType()->getAs<RecordType>();
+    assert(FieldClassType && "anonymous struct/union without record type");
+
+    // Walk through the members, tying in any initializers for fields
+    // we find.  The earlier semantic checks should prevent redundant
+    // initialization of union members, given the requirement that
+    // union members never have non-trivial default constructors.
+
+    // TODO: in C++0x, it might be legal to have union members with
+    // non-trivial default constructors in unions.  Revise this
+    // implementation then with the appropriate semantics.
+    CXXRecordDecl *FieldClassDecl
+      = cast<CXXRecordDecl>(FieldClassType->getDecl());
+    for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
+           EA = FieldClassDecl->field_end(); FA != EA; FA++)
+      if (CollectFieldInitializer(Info, Top, *FA))
+        return true;
+  }
+
+  // Don't try to build an implicit initializer if there were semantic
+  // errors in any of the initializers (and therefore we might be
+  // missing some that the user actually wrote).
+  if (Info.AnyErrorsInInits)
+    return false;
+
+  CXXBaseOrMemberInitializer *Init = 0;
+  if (BuildImplicitMemberInitializer(Info.S, Info.Ctor, Info.IIK, Field, Init))
+    return true;
+    
+  // If the member doesn't need to be initialized, Init will still be null.
+  if (!Init) return false;
+
+  Info.AllToInit.push_back(Init);
+  if (Top != Field) {
+    Init->setMember(Top);
+    Init->setAnonUnionMember(Field);
+  }
+  return false;
+}
                                
 bool
 Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
@@ -1738,11 +1813,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     return false;
   }
 
-  ImplicitInitializerKind ImplicitInitKind = IIK_Default;
-  
-  // FIXME: Handle implicit move constructors.
-  if (Constructor->isImplicit() && Constructor->isCopyConstructor())
-    ImplicitInitKind = IIK_Copy;
+  BaseAndFieldInfo Info(*this, Constructor, AnyErrors);
 
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
@@ -1750,17 +1821,15 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
   if (!ClassDecl)
     return true;
   
-  llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
-  llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
   bool HadError = false;
 
   for (unsigned i = 0; i < NumInitializers; i++) {
     CXXBaseOrMemberInitializer *Member = Initializers[i];
     
     if (Member->isBaseInitializer())
-      AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
+      Info.AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
     else
-      AllBaseFields[Member->getMember()] = Member;
+      Info.AllBaseFields[Member->getMember()] = Member;
   }
 
   // Keep track of the direct virtual bases.
@@ -1776,22 +1845,23 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
 
     if (CXXBaseOrMemberInitializer *Value
-        = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
-      AllToInit.push_back(Value);
+        = Info.AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
+      Info.AllToInit.push_back(Value);
     } else if (!AnyErrors) {
       bool IsInheritedVirtualBase = !DirectVBases.count(VBase);
       CXXBaseOrMemberInitializer *CXXBaseInit;
-      if (BuildImplicitBaseInitializer(*this, Constructor, ImplicitInitKind,
+      if (BuildImplicitBaseInitializer(*this, Constructor, Info.IIK,
                                        VBase, IsInheritedVirtualBase, 
                                        CXXBaseInit)) {
         HadError = true;
         continue;
       }
 
-      AllToInit.push_back(CXXBaseInit);
+      Info.AllToInit.push_back(CXXBaseInit);
     }
   }
 
+  // Non-virtual bases.
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     // Virtuals are in the virtual base list and already constructed.
@@ -1799,72 +1869,33 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       continue;
 
     if (CXXBaseOrMemberInitializer *Value
-          = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
-      AllToInit.push_back(Value);
+          = Info.AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
+      Info.AllToInit.push_back(Value);
     } else if (!AnyErrors) {
       CXXBaseOrMemberInitializer *CXXBaseInit;
-      if (BuildImplicitBaseInitializer(*this, Constructor, ImplicitInitKind,
+      if (BuildImplicitBaseInitializer(*this, Constructor, Info.IIK,
                                        Base, /*IsInheritedVirtualBase=*/false,
                                        CXXBaseInit)) {
         HadError = true;
         continue;
       }
 
-      AllToInit.push_back(CXXBaseInit);
+      Info.AllToInit.push_back(CXXBaseInit);
     }
   }
 
-  // non-static data members.
+  // Fields.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field) {
-    if ((*Field)->isAnonymousStructOrUnion()) {
-      if (const RecordType *FieldClassType =
-          Field->getType()->getAs<RecordType>()) {
-        CXXRecordDecl *FieldClassDecl
-          = cast<CXXRecordDecl>(FieldClassType->getDecl());
-        for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
-            EA = FieldClassDecl->field_end(); FA != EA; FA++) {
-          if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*FA)) {
-            // 'Member' is the anonymous union field and 'AnonUnionMember' is
-            // set to the anonymous union data member used in the initializer
-            // list.
-            Value->setMember(*Field);
-            Value->setAnonUnionMember(*FA);
-            AllToInit.push_back(Value);
-            break;
-          }
-        }
-      }
-      
-      if (ImplicitInitKind == IIK_Default)        
-        continue;
-    }
-    if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
-      AllToInit.push_back(Value);
-      continue;
-    }
-
-    if (AnyErrors)
-      continue;
-    
-    CXXBaseOrMemberInitializer *Member;
-    if (BuildImplicitMemberInitializer(*this, Constructor, ImplicitInitKind,
-                                       *Field, Member)) {
+       E = ClassDecl->field_end(); Field != E; ++Field)
+    if (CollectFieldInitializer(Info, *Field, *Field))
       HadError = true;
-      continue;
-    }
-    
-    // If the member doesn't need to be initialized, it will be null.
-    if (Member)
-      AllToInit.push_back(Member);
-  }
 
-  NumInitializers = AllToInit.size();
+  NumInitializers = Info.AllToInit.size();
   if (NumInitializers > 0) {
     Constructor->setNumBaseOrMemberInitializers(NumInitializers);
     CXXBaseOrMemberInitializer **baseOrMemberInitializers =
       new (Context) CXXBaseOrMemberInitializer*[NumInitializers];
-    memcpy(baseOrMemberInitializers, AllToInit.data(),
+    memcpy(baseOrMemberInitializers, Info.AllToInit.data(),
            NumInitializers * sizeof(CXXBaseOrMemberInitializer*));
     Constructor->setBaseOrMemberInitializers(baseOrMemberInitializers);
 
