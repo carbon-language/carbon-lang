@@ -41,6 +41,10 @@ namespace llvm {
     /// the macho-specific .zerofill directive for emitting BSS Symbols.
     bool HasMachoZeroFillDirective;               // Default is false.
     
+    /// HasMachoTBSSDirective - True if this is a MachO target that supports
+    /// the macho-specific .tbss directive for emitting thread local BSS Symbols
+    bool HasMachoTBSSDirective;                 // Default is false.
+    
     /// HasStaticCtorDtorReferenceInStaticMode - True if the compiler should
     /// emit a ".reference .constructors_used" or ".reference .destructors_used"
     /// directive after the a static ctor/dtor list.  This directive is only
