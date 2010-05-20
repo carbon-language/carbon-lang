@@ -2811,6 +2811,9 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
       bool Any = false;
       for (size_t i = 0, e = LU.Formulae.size(); i != e; ++i) {
         Formula &F = LU.Formulae[i];
+        // Look for a formula with a constant or GV in a register. If the use
+        // also has a formula with that same value in an immediate field,
+        // delete the one that uses a register.
         for (SmallVectorImpl<const SCEV *>::const_iterator
              I = F.BaseRegs.begin(), E = F.BaseRegs.end(); I != E; ++I) {
           if (const SCEVConstant *C = dyn_cast<SCEVConstant>(*I)) {
@@ -2860,6 +2863,8 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
     DEBUG(dbgs() << "Narrowing the search space by assuming that uses "
                     "separated by a constant offset will use the same "
                     "registers.\n");
+
+    // This is especially useful for unrolled loops.
 
     for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
       LSRUse &LU = Uses[LUIdx];
@@ -3074,6 +3079,7 @@ void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
   DenseSet<const SCEV *> VisitedRegs;
   Workspace.reserve(Uses.size());
 
+  // SolveRecurse does all the work.
   SolveRecurse(Solution, SolutionCost, Workspace, CurCost,
                CurRegs, VisitedRegs);
 
