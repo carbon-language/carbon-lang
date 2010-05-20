@@ -17,12 +17,15 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 namespace llvm {
   class Twine;
 }
 
 namespace clang {
+  class Diagnostic;
+
 namespace driver {
   class Arg;
   class ArgList;
@@ -175,6 +178,25 @@ namespace driver {
 
     /// getArgString - Return the input argument string at \arg Index.
     virtual const char *getArgString(unsigned Index) const = 0;
+
+    /// @}
+    /// @name Argument Lookup Utilities
+    /// @{
+
+    /// getLastArgValue - Return the value of the last argument, or a default.
+    llvm::StringRef getLastArgValue(OptSpecifier Id,
+                                    llvm::StringRef Default = "") const;
+
+    /// getLastArgValue - Return the value of the last argument as an integer,
+    /// or a default. Emits an error if the argument is given, but non-integral.
+    int getLastArgIntValue(OptSpecifier Id, int Default,
+                           Diagnostic &Diags) const;
+
+    /// getAllArgValues - Get the values of all instances of the given argument
+    /// as strings.
+    std::vector<std::string> getAllArgValues(OptSpecifier Id) const;
+
+    /// @}
     /// @name Translation Utilities
     /// @{
 

@@ -9,6 +9,7 @@
 
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Arg.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Option.h"
 
 #include "llvm/ADT/SmallString.h"
@@ -106,6 +107,32 @@ bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default) const {
   if (Arg *A = getLastArg(Pos, Neg))
     return A->getOption().matches(Pos);
   return Default;
+}
+
+llvm::StringRef ArgList::getLastArgValue(OptSpecifier Id,
+                                         llvm::StringRef Default) const {
+  if (Arg *A = getLastArg(Id))
+    return A->getValue(*this);
+  return Default;
+}
+
+int ArgList::getLastArgIntValue(OptSpecifier Id, int Default,
+                                Diagnostic &Diags) const {
+  int Res = Default;
+
+  if (Arg *A = getLastArg(Id)) {
+    if (llvm::StringRef(A->getValue(*this)).getAsInteger(10, Res))
+      Diags.Report(diag::err_drv_invalid_int_value)
+        << A->getAsString(*this) << A->getValue(*this);
+  }
+
+  return Res;
+}
+
+std::vector<std::string> ArgList::getAllArgValues(OptSpecifier Id) const {
+  llvm::SmallVector<const char *, 16> Values;
+  AddAllArgValues(Values, Id);
+  return std::vector<std::string>(Values.begin(), Values.end());
 }
 
 void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id) const {
