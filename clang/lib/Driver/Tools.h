@@ -26,6 +26,7 @@ namespace toolchains {
 
 namespace tools {
 
+  /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
     void AddPreprocessingOptions(const Driver &D,
                                  const ArgList &Args,
@@ -45,6 +46,25 @@ namespace tools {
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedAssembler() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+
+  /// \brief Clang integrated assembler tool.
+  class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
+  public:
+    ClangAs(const ToolChain &TC) : Tool("clang::as", TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return true; }
+    virtual bool hasGoodDiagnostics() const { return true; }
+    virtual bool hasIntegratedAssembler() const { return false; }
+    virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,

@@ -1477,6 +1477,58 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_clang_ignored_m_Group);
 }
 
+void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
+                           Job &Dest,
+                           const InputInfo &Output,
+                           const InputInfoList &Inputs,
+                           const ArgList &Args,
+                           const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Unexpected number of inputs.");
+  const InputInfo &Input = Inputs[0];
+
+  // Invoke ourselves in -cc1as mode.
+  //
+  // FIXME: Implement custom jobs for internal actions.
+  CmdArgs.push_back("-cc1as");
+
+  // Add the "effective" target triple.
+  CmdArgs.push_back("-triple");
+  std::string TripleStr = getEffectiveClangTriple(D, getToolChain(), Args);
+  CmdArgs.push_back(Args.MakeArgString(TripleStr));
+
+  // Set the output mode, we currently only expect to be used as a real
+  // assembler.
+  CmdArgs.push_back("-filetype");
+  CmdArgs.push_back("obj");
+
+  // FIXME: Add -force_cpusubtype_ALL support, once we have it.
+
+  // FIXME: Add -g support, once we have it.
+
+  // FIXME: Add -static support, once we have it.
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  assert(Output.isFilename() && "Unexpected lipo output.");
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  if (Input.isPipe()) {
+    CmdArgs.push_back("-");
+  } else {
+    assert(Input.isFilename() && "Invalid input.");
+    CmdArgs.push_back(Input.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang"));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
                                Job &Dest,
                                const InputInfo &Output,
