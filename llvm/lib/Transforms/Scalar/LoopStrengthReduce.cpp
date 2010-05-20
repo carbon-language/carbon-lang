@@ -3091,17 +3091,6 @@ void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
         });
 }
 
-/// getImmediateDominator - A handy utility for the specific DominatorTree
-/// query that we need here.
-///
-static BasicBlock *getImmediateDominator(BasicBlock *BB, DominatorTree &DT) {
-  DomTreeNode *Node = DT.getNode(BB);
-  if (!Node) return 0;
-  Node = Node->getIDom();
-  if (!Node) return 0;
-  return Node->getBlock();
-}
-
 /// HoistInsertPosition - Helper for AdjustInsertPositionForExpand. Climb up
 /// the dominator tree far as we can go while still being dominated by the
 /// input positions. This helps canonicalize the insert position, which
@@ -3115,9 +3104,11 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
     unsigned IPLoopDepth = IPLoop ? IPLoop->getLoopDepth() : 0;
 
     BasicBlock *IDom;
-    for (BasicBlock *Rung = IP->getParent(); ; Rung = IDom) {
-      IDom = getImmediateDominator(Rung, DT);
-      if (!IDom) return IP;
+    for (DomTreeNode *Rung = DT.getNode(IP->getParent()); ; ) {
+      assert(Rung && "Block has no DomTreeNode!");
+      Rung = Rung->getIDom();
+      if (!Rung) return IP;
+      IDom = Rung->getBlock();
 
       // Don't climb into a loop though.
       const Loop *IDomLoop = LI.getLoopFor(IDom);
