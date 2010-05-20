@@ -757,7 +757,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         bool isVolatile) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
-  // Ignore empty classes in C++.
   if (getContext().getLangOptions().CPlusPlus) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
       CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
@@ -766,6 +765,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
               /*FIXME!*/getContext().getLangOptions().ObjC1) &&
              "Trying to aggregate-copy a type without a trivial copy "
              "constructor or assignment operator");
+      // Ignore empty classes in C++.
       if (Record->isEmpty())
         return;
     }
