@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGObjCRuntime.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -274,7 +275,10 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
       
       llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
       QualType Ty = E->getType();
-      EmitAggregateCopy(This, Src, Ty);
+      if (ClassDecl->hasObjectMember())
+        CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, This, Src, Ty);
+      else 
+        EmitAggregateCopy(This, Src, Ty);
       return RValue::get(This);
     }
   }
