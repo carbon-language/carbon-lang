@@ -761,8 +761,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
       CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
       assert((Record->hasTrivialCopyConstructor() || 
-              Record->hasTrivialCopyAssignment() ||
-              /*FIXME!*/getContext().getLangOptions().ObjC1) &&
+              Record->hasTrivialCopyAssignment()) &&
              "Trying to aggregate-copy a type without a trivial copy "
              "constructor or assignment operator");
       // Ignore empty classes in C++.
