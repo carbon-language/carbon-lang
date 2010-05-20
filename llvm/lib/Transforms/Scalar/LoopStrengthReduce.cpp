@@ -380,8 +380,7 @@ void Formula::dump() const {
 /// without changing its value.
 static bool isAddRecSExtable(const SCEVAddRecExpr *AR, ScalarEvolution &SE) {
   const Type *WideTy =
-    IntegerType::get(SE.getContext(),
-                     SE.getTypeSizeInBits(AR->getType()) + 1);
+    IntegerType::get(SE.getContext(), SE.getTypeSizeInBits(AR->getType()) + 1);
   return isa<SCEVAddRecExpr>(SE.getSignExtendExpr(AR, WideTy));
 }
 
@@ -389,8 +388,7 @@ static bool isAddRecSExtable(const SCEVAddRecExpr *AR, ScalarEvolution &SE) {
 /// without changing its value.
 static bool isAddSExtable(const SCEVAddExpr *A, ScalarEvolution &SE) {
   const Type *WideTy =
-    IntegerType::get(SE.getContext(),
-                     SE.getTypeSizeInBits(A->getType()) + 1);
+    IntegerType::get(SE.getContext(), SE.getTypeSizeInBits(A->getType()) + 1);
   return isa<SCEVAddExpr>(SE.getSignExtendExpr(A, WideTy));
 }
 
@@ -398,8 +396,7 @@ static bool isAddSExtable(const SCEVAddExpr *A, ScalarEvolution &SE) {
 /// without changing its value.
 static bool isMulSExtable(const SCEVMulExpr *A, ScalarEvolution &SE) {
   const Type *WideTy =
-    IntegerType::get(SE.getContext(),
-                     SE.getTypeSizeInBits(A->getType()) + 1);
+    IntegerType::get(SE.getContext(), SE.getTypeSizeInBits(A->getType()) + 1);
   return isa<SCEVMulExpr>(SE.getSignExtendExpr(A, WideTy));
 }
 
@@ -845,8 +842,7 @@ struct LSRFixup {
 }
 
 LSRFixup::LSRFixup()
-  : UserInst(0), OperandValToReplace(0),
-    LUIdx(~size_t(0)), Offset(0) {}
+  : UserInst(0), OperandValToReplace(0), LUIdx(~size_t(0)), Offset(0) {}
 
 /// isUseFullyOutsideLoop - Test whether this fixup always uses its
 /// value outside of the given loop.
@@ -1281,8 +1277,7 @@ class LSRInstance {
   typedef DenseMap<const SCEV *, size_t> UseMapTy;
   UseMapTy UseMap;
 
-  bool reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
-                          bool HasBaseReg,
+  bool reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
                           LSRUse::KindType Kind, const Type *AccessTy);
 
   std::pair<size_t, int64_t> getUse(const SCEV *&Expr,
@@ -1470,8 +1465,7 @@ void LSRInstance::OptimizeShadowIV() {
 /// FindIVUserForCond - If Cond has an operand that is an expression of an IV,
 /// set the IV user and stride information and return true, otherwise return
 /// false.
-bool LSRInstance::FindIVUserForCond(ICmpInst *Cond,
-                                    IVStrideUse *&CondUse) {
+bool LSRInstance::FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse) {
   for (IVUsers::iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI)
     if (UI->getUser() == Cond) {
       // NOTE: we could handle setcc instructions with multiple uses here, but
@@ -1784,8 +1778,7 @@ LSRInstance::OptimizeLoopTermCond() {
 }
 
 bool
-LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
-                                bool HasBaseReg,
+LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
                                 LSRUse::KindType Kind, const Type *AccessTy) {
   int64_t NewMinOffset = LU.MinOffset;
   int64_t NewMaxOffset = LU.MaxOffset;
@@ -2397,8 +2390,7 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
 
 /// GenerateScales - Generate stride factor reuse formulae by making use of
 /// scaled-offset address modes, for example.
-void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx,
-                                 Formula Base) {
+void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base) {
   // Determine the integer type for the base formula.
   const Type *IntTy = Base.getType();
   if (!IntTy) return;
@@ -2452,8 +2444,7 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx,
 }
 
 /// GenerateTruncates - Generate reuse formulae from different IV types.
-void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx,
-                                    Formula Base) {
+void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx, Formula Base) {
   // This requires TargetLowering to tell us which truncates are free.
   if (!TLI) return;
 
@@ -2723,7 +2714,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
   for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
     LSRUse &LU = Uses[LUIdx];
     FormulaSorter Sorter(L, LU, SE, DT);
-    DEBUG(dbgs() << "Filtering for use "; LU.print(dbgs()); dbgs() << "\n");
+    DEBUG(dbgs() << "Filtering for use "; LU.print(dbgs()); dbgs() << '\n');
 
     bool Any = false;
     for (size_t FIdx = 0, NumForms = LU.Formulae.size();
@@ -2909,7 +2900,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
                   Fixups[i].LUIdx = LUThatHas - &Uses.front();
                   Fixups[i].Offset += F.AM.BaseOffs;
                   DEBUG(errs() << "New fixup has offset "
-                               << Fixups[i].Offset << "\n");
+                               << Fixups[i].Offset << '\n');
                 }
                 if (Fixups[i].LUIdx == NumUses-1)
                   Fixups[i].LUIdx = LUIdx;
