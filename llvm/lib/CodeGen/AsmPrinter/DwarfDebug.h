@@ -558,6 +558,10 @@ private:
   /// findVariableLabel - Find MCSymbol for the variable.
   const MCSymbol *findVariableLabel(const DbgVariable *V);
 
+  /// findDbgScope - Find DbgScope for the debug loc attached with an 
+  /// instruction.
+  DbgScope *findDbgScope(const MachineInstr *MI);
+
   /// identifyScopeMarkers() - Indentify instructions that are marking
   /// beginning of or end of a scope.
   void identifyScopeMarkers();
@@ -569,6 +573,10 @@ private:
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
   void collectVariableInfo(const MachineFunction *);
   
+  /// collectVariableInfoFromMMITable - Collect variable information from
+  /// side table maintained by MMI.
+  void collectVariableInfoFromMMITable(const MachineFunction * MF,
+                                       SmallPtrSet<const MDNode *, 16> &P);
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

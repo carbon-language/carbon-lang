@@ -2077,10 +2077,12 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
   return AbsDbgVariable;
 }
 
-/// collectVariableInfo - Populate DbgScope entries with variables' info.
-void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
+/// collectVariableInfoFromMMITable - Collect variable information from
+/// side table maintained by MMI.
+void 
+DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
+                                   SmallPtrSet<const MDNode *, 16> &Processed) {
   const LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
-  SmallPtrSet<const MDNode *, 16> Processed;
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
@@ -2109,10 +2111,19 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
       VarToAbstractVarMap[RegVar] = AbsDbgVariable;
     }
   }
+}
 
+/// collectVariableInfo - Populate DbgScope entries with variables' info.
+void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
+  SmallPtrSet<const MDNode *, 16> Processed;
+  
+  /// collection info from MMI table.
+  collectVariableInfoFromMMITable(MF, Processed);
+
+  SmallVector<const MachineInstr *, 8> DbgValues;
   // Collect variable information from DBG_VALUE machine instructions;
   for (MachineFunction::const_iterator I = Asm->MF->begin(), E = Asm->MF->end();
-       I != E; ++I) {
+       I != E; ++I)
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
@@ -2123,41 +2134,41 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
       if (MInsn->getOperand(0).isReg() && !MInsn->getOperand(0).getReg())
         continue;
 
-      DIVariable DV(
-        const_cast<const MDNode *>(MInsn->getOperand(MInsn->getNumOperands() - 1)
-                               .getMetadata()));
-      if (DV.getTag() == dwarf::DW_TAG_arg_variable)  {
-        // FIXME Handle inlined subroutine arguments.
-        DbgVariable *ArgVar = new DbgVariable(DV);
-        CurrentFnDbgScope->addVariable(ArgVar);
-        DbgValueStartMap[MInsn] = ArgVar;
-        DbgVariableToDbgInstMap[ArgVar] = MInsn;
-        Processed.insert(DV);
-        continue;
-      }
+      DbgValues.push_back(MInsn);
+    }
 
-      DebugLoc DL = MInsn->getDebugLoc();
-      if (DL.isUnknown()) continue;
-      DbgScope *Scope = 0;
-      if (const MDNode *IA = DL.getInlinedAt(Ctx))
-        Scope = ConcreteScopes.lookup(IA);
-      if (Scope == 0)
-        Scope = DbgScopeMap.lookup(DL.getScope(Ctx));
-      
-      // If variable scope is not found then skip this variable.
-      if (Scope == 0)
-        continue;
+  for(SmallVector<const MachineInstr *, 8>::iterator I = DbgValues.begin(),
+        E = DbgValues.end(); I != E; ++I) {
+    const MachineInstr *MInsn = *I;
 
+    DIVariable DV(MInsn->getOperand(MInsn->getNumOperands() - 1).getMetadata());
+    if (Processed.count(DV) != 0)
+      continue;
+
+    if (DV.getTag() == dwarf::DW_TAG_arg_variable)  {
+      // FIXME Handle inlined subroutine arguments.
+      DbgVariable *ArgVar = new DbgVariable(DV);
+      CurrentFnDbgScope->addVariable(ArgVar);
+      DbgValueStartMap[MInsn] = ArgVar;
+      DbgVariableToDbgInstMap[ArgVar] = MInsn;
       Processed.insert(DV);
-      DbgVariable *AbsDbgVariable = findAbstractVariable(DV, DL);
-      DbgVariable *RegVar = new DbgVariable(DV);
-      DbgValueStartMap[MInsn] = RegVar;
-      DbgVariableToDbgInstMap[RegVar] = MInsn;
-      Scope->addVariable(RegVar);
-      if (AbsDbgVariable) {
-        DbgVariableToDbgInstMap[AbsDbgVariable] = MInsn;
-        VarToAbstractVarMap[RegVar] = AbsDbgVariable;
-      }
+      continue;
+    }
+
+    DbgScope *Scope = findDbgScope(MInsn);
+    // If variable scope is not found then skip this variable.
+    if (Scope == 0)
+      continue;
+
+    Processed.insert(DV);
+    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn->getDebugLoc());
+    DbgVariable *RegVar = new DbgVariable(DV);
+    DbgValueStartMap[MInsn] = RegVar;
+    DbgVariableToDbgInstMap[RegVar] = MInsn;
+    Scope->addVariable(RegVar);
+    if (AbsDbgVariable) {
+      DbgVariableToDbgInstMap[AbsDbgVariable] = MInsn;
+      VarToAbstractVarMap[RegVar] = AbsDbgVariable;
     }
   }
 
@@ -2166,7 +2177,7 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
       MF->getFunction()->getParent()->getNamedMetadata("llvm.dbg.lv")) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
-      if (!Processed.insert(DV))
+      if (!DV || !Processed.insert(DV))
         continue;
       DbgScope *Scope = DbgScopeMap.lookup(DV.getContext());
       if (Scope)
@@ -2638,6 +2649,26 @@ const MCSymbol *DwarfDebug::findVariableLabel(const DbgVariable *V) {
     return NULL;
   else return I->second;
 }
+
+/// findDbgScope - Find DbgScope for the debug loc attached with an 
+/// instruction.
+DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
+  DbgScope *Scope = NULL;
+  LLVMContext &Ctx = 
+    MInsn->getParent()->getParent()->getFunction()->getContext();
+  DebugLoc DL = MInsn->getDebugLoc();
+
+  if (DL.isUnknown()) 
+    return Scope;
+
+  if (const MDNode *IA = DL.getInlinedAt(Ctx))
+    Scope = ConcreteScopes.lookup(IA);
+  if (Scope == 0)
+    Scope = DbgScopeMap.lookup(DL.getScope(Ctx));
+    
+  return Scope;
+}
+
 
 /// recordSourceLine - Register a source line with debug info. Returns the
 /// unique label that was emitted and which provides correspondence to
