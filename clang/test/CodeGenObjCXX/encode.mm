@@ -5,7 +5,8 @@
 // CHECK: v24@0:816
 
 template <typename T1, typename T2, typename T3> struct vector {
-    vector(T1,T2,T3);
+  vector();
+  vector(T1,T2,T3);
 };
 
 typedef vector< float, float, float > vector3f;

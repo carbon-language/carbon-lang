@@ -1812,7 +1812,7 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
        E = OI->ivar_end(); I != E; ++I) {
     ObjCIvarDecl *Iv = (*I);
     QualType QT = Context.getBaseElementType(Iv->getType());
-    if (isa<RecordType>(QT))
+    if (QT->isRecordType())
       Ivars.push_back(*I);
   }
   
@@ -1822,7 +1822,7 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
          E = CDecl->ivar_end(); I != E; ++I) {
       ObjCIvarDecl *Iv = (*I);
       QualType QT = Context.getBaseElementType(Iv->getType());
-      if (isa<RecordType>(QT))
+      if (QT->isRecordType())
         Ivars.push_back(*I);
     }
   }
@@ -1834,7 +1834,7 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
          E = ImplDecl->ivar_end(); I != E; ++I) {
       ObjCIvarDecl *Iv = (*I);
       QualType QT = Context.getBaseElementType(Iv->getType());
-      if (isa<RecordType>(QT))
+      if (QT->isRecordType())
         Ivars.push_back(*I);
     }
   }

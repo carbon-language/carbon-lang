@@ -503,6 +503,10 @@ def err_access_copy_field :
 def err_access_copy_base :
     Error<"base class %0 has %select{private|protected}1 copy constructor">,
     NoSFINAE;
+def err_access_dtor_ivar :
+    Error<"instance variable of type %0 has %select{private|protected}1 "
+          "destructor">,
+    NoSFINAE;
 def note_previous_access_declaration : Note<
   "previously declared '%1' here">;
 def err_access_outside_class : Error<

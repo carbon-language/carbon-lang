@@ -1626,15 +1626,21 @@ addAssociatedClassesAndNamespaces(QualType T,
   //        member, if any; and its direct and indirect base
   //        classes. Its associated namespaces are the namespaces in
   //        which its associated classes are defined.
-  if (const RecordType *ClassType = T->getAs<RecordType>())
+  if (const RecordType *ClassType = T->getAs<RecordType>()) {
     if (CXXRecordDecl *ClassDecl
         = dyn_cast<CXXRecordDecl>(ClassType->getDecl())) {
+      // The __builtin_va_list type does not participate in ADL.
+      if (ClassDecl->getIdentifier() && 
+          ClassDecl->getIdentifier()->isStr("__va_list_tag"))
+        return;
+      
       addAssociatedClassesAndNamespaces(ClassDecl, Context,
                                         AssociatedNamespaces,
                                         AssociatedClasses);
       return;
     }
-
+  }
+  
   //     -- If T is an enumeration type, its associated namespace is
   //        the namespace in which it is defined. If it is class
   //        member, its associated class is the member’s class; else

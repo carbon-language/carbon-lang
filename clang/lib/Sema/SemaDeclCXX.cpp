@@ -6190,6 +6190,9 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
     llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
     for (unsigned i = 0; i < ivars.size(); i++) {
       FieldDecl *Field = ivars[i];
+      if (Field->isInvalidDecl())
+        continue;
+      
       CXXBaseOrMemberInitializer *Member;
       InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
       InitializationKind InitKind = 
@@ -6212,6 +6215,20 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
                                                  MemberInit.takeAs<Expr>(),
                                                  SourceLocation());
       AllToInit.push_back(Member);
+      
+      // Be sure that the destructor is accessible and is marked as referenced.
+      if (const RecordType *RecordTy
+                  = Context.getBaseElementType(Field->getType())
+                                                        ->getAs<RecordType>()) {
+                    CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+        if (CXXDestructorDecl *Destructor
+              = const_cast<CXXDestructorDecl*>(RD->getDestructor(Context))) {
+          MarkDeclarationReferenced(Field->getLocation(), Destructor);
+          CheckDestructorAccess(Field->getLocation(), Destructor,
+                            PDiag(diag::err_access_dtor_ivar)
+                              << Context.getBaseElementType(Field->getType()));
+        }
+      }      
     }
     ObjCImplementation->setIvarInitializers(Context, 
                                             AllToInit.data(), AllToInit.size());
