@@ -207,6 +207,8 @@ struct Formula {
   unsigned getNumRegs() const;
   const Type *getType() const;
 
+  void DeleteBaseReg(const SCEV *&S);
+
   bool referencesReg(const SCEV *S) const;
   bool hasRegsUsedByUsesOtherThan(size_t LUIdx,
                                   const RegUseTracker &RegUses) const;
@@ -308,6 +310,13 @@ const Type *Formula::getType() const {
          ScaledReg ? ScaledReg->getType() :
          AM.BaseGV ? AM.BaseGV->getType() :
          0;
+}
+
+/// DeleteBaseReg - Delete the given base reg from the BaseRegs list.
+void Formula::DeleteBaseReg(const SCEV *&S) {
+  if (&S != &BaseRegs.back())
+    std::swap(S, BaseRegs.back());
+  BaseRegs.pop_back();
 }
 
 /// referencesReg - Test if this formula references the given register.
@@ -1013,7 +1022,8 @@ bool LSRUse::InsertFormula(const Formula &F) {
 
 /// DeleteFormula - Remove the given formula from this use's list.
 void LSRUse::DeleteFormula(Formula &F) {
-  std::swap(F, Formulae.back());
+  if (&F != &Formulae.back())
+    std::swap(F, Formulae.back());
   Formulae.pop_back();
   assert(!Formulae.empty() && "LSRUse has no formulae left!");
 }
@@ -1278,6 +1288,8 @@ class LSRInstance {
   std::pair<size_t, int64_t> getUse(const SCEV *&Expr,
                                     LSRUse::KindType Kind,
                                     const Type *AccessTy);
+
+  void DeleteUse(LSRUse &LU);
 
   LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU);
 
@@ -1849,6 +1861,13 @@ LSRInstance::getUse(const SCEV *&Expr,
   LU.MinOffset = Offset;
   LU.MaxOffset = Offset;
   return std::make_pair(LUIdx, Offset);
+}
+
+/// DeleteUse - Delete the given use from the Uses list.
+void LSRInstance::DeleteUse(LSRUse &LU) {
+  if (&LU != &Uses.back())
+    std::swap(LU, Uses.back());
+  Uses.pop_back();
 }
 
 /// FindUseWithFormula - Look for a use distinct from OrigLU which is has
@@ -2423,8 +2442,7 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx,
           // TODO: This could be optimized to avoid all the copying.
           Formula F = Base;
           F.ScaledReg = Quotient;
-          std::swap(F.BaseRegs[i], F.BaseRegs.back());
-          F.BaseRegs.pop_back();
+          F.DeleteBaseReg(F.BaseRegs[i]);
           (void)InsertFormula(LU, LUIdx, F);
         }
       }
@@ -2895,8 +2913,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
               }
 
               // Delete the old use.
-              std::swap(LU, Uses.back());
-              Uses.pop_back();
+              DeleteUse(LU);
               --LUIdx;
               --NumUses;
               break;
