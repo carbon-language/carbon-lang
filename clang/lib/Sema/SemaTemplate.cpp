@@ -4219,10 +4219,10 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
   return false;
 }
 
-/// \brief Perform semantic analysis for the given function template 
+/// \brief Perform semantic analysis for the given function template
 /// specialization.
 ///
-/// This routine performs all of the semantic analysis required for an 
+/// This routine performs all of the semantic analysis required for an
 /// explicit function template specialization. On successful completion,
 /// the function declaration \p FD will become a function template
 /// specialization.
@@ -4230,24 +4230,14 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
 /// \param FD the function declaration, which will be updated to become a
 /// function template specialization.
 ///
-/// \param HasExplicitTemplateArgs whether any template arguments were
-/// explicitly provided.
+/// \param ExplicitTemplateArgs the explicitly-provided template arguments,
+/// if any. Note that this may be valid info even when 0 arguments are
+/// explicitly provided as in, e.g., \c void sort<>(char*, char*);
+/// as it anyway contains info on the angle brackets locations.
 ///
-/// \param LAngleLoc the location of the left angle bracket ('<'), if
-/// template arguments were explicitly provided.
-///
-/// \param ExplicitTemplateArgs the explicitly-provided template arguments, 
-/// if any.
-///
-/// \param NumExplicitTemplateArgs the number of explicitly-provided template
-/// arguments. This number may be zero even when HasExplicitTemplateArgs is
-/// true as in, e.g., \c void sort<>(char*, char*);
-///
-/// \param RAngleLoc the location of the right angle bracket ('>'), if
-/// template arguments were explicitly provided.
-/// 
-/// \param PrevDecl the set of declarations that 
-bool 
+/// \param PrevDecl the set of declarations that may be specialized by
+/// this function specialization.
+bool
 Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                           LookupResult &Previous) {
@@ -4349,12 +4339,16 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   // Turn the given function declaration into a function template
   // specialization, with the template arguments from the previous
   // specialization.
+  // Take copies of (semantic and syntactic) template argument lists.
+  const TemplateArgumentList* TemplArgs = new (Context)
+    TemplateArgumentList(Specialization->getTemplateSpecializationArgs());
+  const TemplateArgumentListInfo* TemplArgsAsWritten = ExplicitTemplateArgs
+    ? new (Context) TemplateArgumentListInfo(*ExplicitTemplateArgs) : 0;
   FD->setFunctionTemplateSpecialization(Specialization->getPrimaryTemplate(),
-                         new (Context) TemplateArgumentList(
-                             Specialization->getTemplateSpecializationArgs()), 
-                                        /*InsertPos=*/0, 
-                                    SpecInfo->getTemplateSpecializationKind());
-  
+                                        TemplArgs, /*InsertPos=*/0,
+                                    SpecInfo->getTemplateSpecializationKind(),
+                                        TemplArgsAsWritten);
+
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.
   Previous.clear();

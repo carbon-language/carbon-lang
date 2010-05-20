@@ -1424,6 +1424,16 @@ public:
   /// returns NULL.
   const TemplateArgumentList *getTemplateSpecializationArgs() const;
 
+  /// \brief Retrieve the template argument list as written in the sources,
+  /// if any.
+  ///
+  /// If this function declaration is not a function template specialization
+  /// or if it had no explicit template argument list, returns NULL.
+  /// Note that it an explicit template argument list may be written empty,
+  /// e.g., template<> void foo<>(char* s);
+  const TemplateArgumentListInfo*
+  getTemplateSpecializationArgsAsWritten() const;
+
   /// \brief Specify that this function declaration is actually a function
   /// template specialization.
   ///
@@ -1443,7 +1453,8 @@ public:
   void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos,
-                    TemplateSpecializationKind TSK = TSK_ImplicitInstantiation);
+                    TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
+                    const TemplateArgumentListInfo *TemplateArgsAsWritten = 0);
 
   /// \brief Specifies that this function declaration is actually a
   /// dependent function template specialization.

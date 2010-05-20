@@ -1289,11 +1289,22 @@ FunctionDecl::getTemplateSpecializationArgs() const {
   return 0;
 }
 
+const TemplateArgumentListInfo *
+FunctionDecl::getTemplateSpecializationArgsAsWritten() const {
+  if (FunctionTemplateSpecializationInfo *Info
+        = TemplateOrSpecialization
+            .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
+    return Info->TemplateArgumentsAsWritten;
+  }
+  return 0;
+}
+
 void
 FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
                                                 void *InsertPos,
-                                              TemplateSpecializationKind TSK) {
+                                                TemplateSpecializationKind TSK,
+                        const TemplateArgumentListInfo *TemplateArgsAsWritten) {
   assert(TSK != TSK_Undeclared && 
          "Must specify the type of function template specialization");
   FunctionTemplateSpecializationInfo *Info
@@ -1305,6 +1316,7 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
   Info->Template.setPointer(Template);
   Info->Template.setInt(TSK - 1);
   Info->TemplateArguments = TemplateArgs;
+  Info->TemplateArgumentsAsWritten = TemplateArgsAsWritten;
   TemplateOrSpecialization = Info;
 
   // Insert this function template specialization into the set of known

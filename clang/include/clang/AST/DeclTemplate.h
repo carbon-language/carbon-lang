@@ -283,6 +283,9 @@ public:
   /// specialization from the function template.
   const TemplateArgumentList *TemplateArguments;
 
+  /// \brief The template arguments as written in the sources, if provided.
+  const TemplateArgumentListInfo *TemplateArgumentsAsWritten;
+
   /// \brief The point at which this function template specialization was
   /// first instantiated. 
   SourceLocation PointOfInstantiation;
