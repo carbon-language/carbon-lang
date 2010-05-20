@@ -1263,7 +1263,7 @@ class LSRInstance {
   void OptimizeShadowIV();
   bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse);
   ICmpInst *OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse);
-  bool OptimizeLoopTermCond();
+  void OptimizeLoopTermCond();
 
   void CollectInterestingTypesAndFactors();
   void CollectFixupsAndInitialFormulae();
@@ -1458,6 +1458,7 @@ void LSRInstance::OptimizeShadowIV() {
     /* Remove cast operation */
     ShadowUse->replaceAllUsesWith(NewPH);
     ShadowUse->eraseFromParent();
+    Changed = true;
     break;
   }
 }
@@ -1637,7 +1638,7 @@ ICmpInst *LSRInstance::OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse) {
 
 /// OptimizeLoopTermCond - Change loop terminating condition to use the
 /// postinc iv when possible.
-bool
+void
 LSRInstance::OptimizeLoopTermCond() {
   SmallPtrSet<Instruction *, 4> PostIncs;
 
@@ -1773,8 +1774,6 @@ LSRInstance::OptimizeLoopTermCond() {
     else if (BB != IVIncInsertPos->getParent())
       IVIncInsertPos = BB->getTerminator();
   }
-
-  return Changed;
 }
 
 bool
@@ -2702,7 +2701,7 @@ LSRInstance::GenerateAllReuseFormulae() {
 /// by other uses, pick the best one and delete the others.
 void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 #ifndef NDEBUG
-  bool Changed = false;
+  bool ChangedFormulae = false;
 #endif
 
   // Collect the best formula for each unique set of shared registers. This
@@ -2746,7 +2745,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
                         "    in favor of formula "; Best.print(dbgs());
               dbgs() << '\n');
 #ifndef NDEBUG
-        Changed = true;
+        ChangedFormulae = true;
 #endif
         LU.DeleteFormula(F);
         --FIdx;
@@ -2764,7 +2763,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
     BestFormulae.clear();
   }
 
-  DEBUG(if (Changed) {
+  DEBUG(if (ChangedFormulae) {
           dbgs() << "\n"
                     "After filtering out undesirable candidates:\n";
           print_uses(dbgs());
@@ -3508,7 +3507,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   OptimizeShadowIV();
 
   // Change loop terminating condition to use the postinc iv when possible.
-  Changed |= OptimizeLoopTermCond();
+  OptimizeLoopTermCond();
 
   CollectInterestingTypesAndFactors();
   CollectFixupsAndInitialFormulae();
