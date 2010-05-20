@@ -39,6 +39,19 @@ def o : Separate<"-o">, MetaVarName<"<path>">, HelpText<"Specify output file">;
 def filetype : Separate<"-filetype">,
     HelpText<"Specify the output file type ('asm', 'null', or 'obj')">;
 
+def help : Flag<"-help">,
+  HelpText<"Print this help text">;
+def _help : Flag<"--help">, Alias<help>;
+
+def version : Flag<"-version">,
+  HelpText<"Print the assembler version">;
+def _version : Flag<"--version">, Alias<version>;
+
+// Generic forwarding to LLVM options. This should only be used for debugging
+// and experimental features.
+def mllvm : Separate<"-mllvm">,
+  HelpText<"Additional arguments to forward to LLVM's option processing">;
+
 //===----------------------------------------------------------------------===//
 // Transliterate Options
 //===----------------------------------------------------------------------===//

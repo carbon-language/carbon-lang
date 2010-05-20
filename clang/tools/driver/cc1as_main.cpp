@@ -28,6 +28,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -70,6 +71,7 @@ struct AssemblerInvocation {
   /// @{
 
   std::string InputFile;
+  std::vector<std::string> LLVMArgs;
   std::string OutputPath;
   enum FileType {
     FT_Asm,  ///< Assembly (.s) output, transliterate mode.
@@ -77,6 +79,8 @@ struct AssemblerInvocation {
     FT_Obj   ///< Object file output.
   };
   FileType OutputType;
+  unsigned ShowHelp : 1;
+  unsigned ShowVersion : 1;
 
   /// @}
   /// @name Transliterate Options
@@ -99,7 +103,7 @@ public:
     Triple = "";
     NoInitialTextSection = 0;
     InputFile = "-";
-    OutputPath = "a.out";
+    OutputPath = "-";
     OutputType = FT_Asm;
     OutputAsmVariant = 0;
     ShowInst = 0;
@@ -156,6 +160,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
         Diags.Report(diag::err_drv_unknown_argument) << it->getAsString(*Args);
     }
   }
+  Opts.LLVMArgs = Args->getAllArgValues(OPT_mllvm);
   Opts.OutputPath = Args->getLastArgValue(OPT_o);
   if (Arg *A = Args->getLastArg(OPT_filetype)) {
     StringRef Name = A->getValue(*Args);
@@ -170,6 +175,8 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
     else
       Opts.OutputType = FileType(OutputType);
   }
+  Opts.ShowHelp = Args->hasArg(OPT_help);
+  Opts.ShowVersion = Args->hasArg(OPT_version);
 
   // Transliterate Options
   Opts.OutputAsmVariant = Args->getLastArgIntValue(OPT_output_asm_variant,
@@ -184,6 +191,9 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
                                               Diagnostic &Diags,
                                               bool Binary) {
+  if (Opts.OutputPath.empty())
+    Opts.OutputPath = "-";
+
   // Make sure that the Out file gets unlinked from the disk if we get a
   // SIGINT.
   if (Opts.OutputPath != "-")
@@ -321,6 +331,34 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   // Parse the arguments.
   AssemblerInvocation Asm;
   AssemblerInvocation::CreateFromArgs(Asm, ArgBegin, ArgEnd, Diags);
+
+  // Honor -help.
+  if (Asm.ShowHelp) {
+    llvm::OwningPtr<driver::OptTable> Opts(driver::createCC1AsOptTable());
+    Opts->PrintHelp(llvm::outs(), "clang -cc1as", "Clang Integrated Assembler");
+    return 0;
+  }
+
+  // Honor -version.
+  //
+  // FIXME: Use a better -version message?
+  if (Asm.ShowVersion) {
+    llvm::cl::PrintVersionMessage();
+    return 0;
+  }
+
+  // Honor -mllvm.
+  //
+  // FIXME: Remove this, one day.
+  if (!Asm.LLVMArgs.empty()) {
+    unsigned NumArgs = Asm.LLVMArgs.size();
+    const char **Args = new const char*[NumArgs + 2];
+    Args[0] = "clang (LLVM option parsing)";
+    for (unsigned i = 0; i != NumArgs; ++i)
+      Args[i + 1] = Asm.LLVMArgs[i].c_str();
+    Args[NumArgs + 1] = 0;
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
+  }
 
   // Execute the invocation, unless there were parsing errors.
   bool Success = false;
