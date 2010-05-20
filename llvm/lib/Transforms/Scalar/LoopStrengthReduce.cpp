@@ -3127,7 +3127,7 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
 
     BasicBlock *IDom;
     for (DomTreeNode *Rung = DT.getNode(IP->getParent()); ; ) {
-      assert(Rung && "Block has no DomTreeNode!");
+      if (!Rung) return IP;
       Rung = Rung->getIDom();
       if (!Rung) return IP;
       IDom = Rung->getBlock();
