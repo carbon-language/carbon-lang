@@ -407,8 +407,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
   } else {
     if (MultipleDefsBySameMI(*mi, MOIdx))
-      // Mutple defs of the same virtual register by the same instruction. e.g.
-      // %reg1031:5<def>, %reg1031:6<def> = VLD1q16 %reg1024<kill>, ...
+      // Multiple defs of the same virtual register by the same instruction.
+      // e.g. %reg1031:5<def>, %reg1031:6<def> = VLD1q16 %reg1024<kill>, ...
       // This is likely due to elimination of REG_SEQUENCE instructions. Return
       // here since there is nothing to do.
       return;
