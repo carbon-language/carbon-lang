@@ -39,7 +39,7 @@ namespace {
   }
 
   void PrintCommand (const std::string& Cmd, const StrVector& Args) {
-    errs() << Cmd << " ";
+    errs() << Cmd << ' ';
     std::for_each(Args.begin(), Args.end(), &PrintString);
     errs() << '\n';
   }
@@ -89,7 +89,7 @@ namespace {
     int ret = sys::Program::ExecuteAndWait(prog, &argv[0], 0, &redirects[0]);
 
     if (IsSegmentationFault(ret)) {
-      errs() << "Segmentation fault:";
+      errs() << "Segmentation fault: ";
       PrintCommand(name, args);
     }
 
