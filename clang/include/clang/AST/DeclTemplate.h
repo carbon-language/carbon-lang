@@ -112,7 +112,7 @@ class TemplateArgumentListBuilder {
   unsigned MaxStructuredArgs;
   unsigned NumStructuredArgs;
 
-  TemplateArgument *FlatArgs;
+  llvm::SmallVector<TemplateArgument, 4> FlatArgs;
   unsigned MaxFlatArgs;
   unsigned NumFlatArgs;
 
@@ -127,16 +127,12 @@ public:
   MaxFlatArgs(std::max(MaxStructuredArgs, NumTemplateArgs)), NumFlatArgs(0),
   AddingToPack(false), PackBeginIndex(0) { }
 
-  void Append(const TemplateArgument& Arg);
+  void Append(const TemplateArgument &Arg);
   void BeginPack();
   void EndPack();
 
-  unsigned flatSize() const {
-    return NumFlatArgs;
-  }
-  const TemplateArgument *getFlatArguments() const {
-    return FlatArgs;
-  }
+  unsigned flatSize() const { return FlatArgs.size(); }
+  const TemplateArgument *getFlatArguments() const { return FlatArgs.data(); }
 
   unsigned structuredSize() const {
     // If we don't have any structured args, just reuse the flat size.

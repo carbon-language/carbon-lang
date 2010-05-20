@@ -303,22 +303,14 @@ TemplateTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
 // TemplateArgumentListBuilder Implementation
 //===----------------------------------------------------------------------===//
 
-void TemplateArgumentListBuilder::Append(const TemplateArgument& Arg) {
-  switch (Arg.getKind()) {
-    default: break;
-    case TemplateArgument::Type:
-      assert(Arg.getAsType().isCanonical() && "Type must be canonical!");
-      break;
-  }
-
-  assert(NumFlatArgs < MaxFlatArgs && "Argument list builder is full!");
+void TemplateArgumentListBuilder::Append(const TemplateArgument &Arg) {
+  assert((Arg.getKind() != TemplateArgument::Type ||
+          Arg.getAsType().isCanonical()) && "Type must be canonical!");
+  assert(FlatArgs.size() < MaxFlatArgs && "Argument list builder is full!");
   assert(!StructuredArgs &&
          "Can't append arguments when an argument pack has been added!");
 
-  if (!FlatArgs)
-    FlatArgs = new TemplateArgument[MaxFlatArgs];
-
-  FlatArgs[NumFlatArgs++] = Arg;
+  FlatArgs.push_back(Arg);
 }
 
 void TemplateArgumentListBuilder::BeginPack() {
@@ -326,7 +318,7 @@ void TemplateArgumentListBuilder::BeginPack() {
   assert(!StructuredArgs && "Argument list already contains a pack!");
 
   AddingToPack = true;
-  PackBeginIndex = NumFlatArgs;
+  PackBeginIndex = FlatArgs.size();
 }
 
 void TemplateArgumentListBuilder::EndPack() {
@@ -346,8 +338,9 @@ void TemplateArgumentListBuilder::EndPack() {
   // Next, set the pack.
   TemplateArgument *PackArgs = 0;
   unsigned NumPackArgs = NumFlatArgs - PackBeginIndex;
+  // FIXME: NumPackArgs shouldn't be negative here???
   if (NumPackArgs)
-    PackArgs = &FlatArgs[PackBeginIndex];
+    PackArgs = FlatArgs.data()+PackBeginIndex;
 
   StructuredArgs[NumStructuredArgs++].setArgumentPack(PackArgs, NumPackArgs,
                                                       /*CopyArgs=*/false);
