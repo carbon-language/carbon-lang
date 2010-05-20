@@ -229,6 +229,12 @@ static bool StripDebugInfo(Module &M) {
     NMD->eraseFromParent();
   }
   
+  NMD = M.getNamedMetadata("llvm.dbg.lv");
+  if (NMD) {
+    Changed = true;
+    NMD->eraseFromParent();
+  }
+  
   unsigned MDDbgKind = M.getMDKindID("dbg");
   for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) 
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
