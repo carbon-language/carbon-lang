@@ -1280,6 +1280,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
       }
     }
+
+    // FIXME: -fobjc-nonfragile-abi2 is a transient option meant to expose
+    // features in testing.  It will eventually be removed.
+    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi2))
+      CmdArgs.push_back("-fobjc-nonfragile-abi2");
   }
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
