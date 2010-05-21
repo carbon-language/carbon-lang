@@ -201,7 +201,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   if (Tok.is(tok::semi)) {
     DeclEnd = ConsumeToken();
-    DeclPtrTy Decl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DeclPtrTy Decl = Actions.ParsedFreeStandingDeclSpec(CurScope, AS, DS);
     DS.complete(Decl);
     return Decl;
   }

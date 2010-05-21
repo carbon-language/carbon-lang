@@ -121,3 +121,37 @@ typedef struct _s {
         int Foo;
     };
 } s, *ps;
+
+// <rdar://problem/7987650>
+namespace test4 {
+  class A {
+    struct {
+      int s0; // expected-note {{declared private here}}
+      double s1; // expected-note {{declared private here}}
+      union {
+        int su0; // expected-note {{declared private here}}
+        double su1; // expected-note {{declared private here}}
+      };
+    };
+    union {
+      int u0; // expected-note {{declared private here}}
+      double u1; // expected-note {{declared private here}}
+      struct {
+        int us0; // expected-note {{declared private here}}
+        double us1; // expected-note {{declared private here}}
+      };
+    };
+  };
+
+  void test() {
+    A a;
+    (void) a.s0;  // expected-error {{private member}}
+    (void) a.s1;  // expected-error {{private member}}
+    (void) a.su0; // expected-error {{private member}}
+    (void) a.su1; // expected-error {{private member}}
+    (void) a.u0;  // expected-error {{private member}}
+    (void) a.u1;  // expected-error {{private member}}
+    (void) a.us0; // expected-error {{private member}}
+    (void) a.us1; // expected-error {{private member}}
+  }
+}

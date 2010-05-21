@@ -364,7 +364,8 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
     if (RequireSemi) ConsumeToken();
-    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, AS_none,
+                                                           DS);
     DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
@@ -1676,7 +1677,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   // If there are no declarators, this is a free-standing declaration
   // specifier. Let the actions module cope with it.
   if (Tok.is(tok::semi)) {
-    Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    Actions.ParsedFreeStandingDeclSpec(CurScope, AS_none, DS);
     return;
   }
 

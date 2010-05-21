@@ -1455,7 +1455,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
-Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
+                                                 DeclSpec &DS) {
   // FIXME: Error on auto/register at file scope
   // FIXME: Error on inline/virtual/explicit
   // FIXME: Warn on useless __thread
@@ -1505,7 +1506,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
       if (getLangOptions().CPlusPlus ||
           Record->getDeclContext()->isRecord())
-        return BuildAnonymousStructOrUnion(S, DS, Record);
+        return BuildAnonymousStructOrUnion(S, DS, AS, Record);
 
       Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
         << DS.getSourceRange();
@@ -1583,8 +1584,10 @@ static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
 ///
 /// This routine is recursive, injecting the names of nested anonymous
 /// structs/unions into the owning context and scope as well.
-bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
-                                               RecordDecl *AnonRecord) {
+static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
+                                                DeclContext *Owner,
+                                                RecordDecl *AnonRecord,
+                                                AccessSpecifier AS) {
   unsigned diagKind
     = AnonRecord->isUnion() ? diag::err_anonymous_union_member_redecl
                             : diag::err_anonymous_struct_member_redecl;
@@ -1594,7 +1597,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      if (CheckAnonMemberRedeclaration(*this, S, Owner, (*F)->getDeclName(),
+      if (CheckAnonMemberRedeclaration(SemaRef, S, Owner, (*F)->getDeclName(),
                                        (*F)->getLocation(), diagKind)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
@@ -1608,15 +1611,19 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
         Owner->makeDeclVisibleInContext(*F);
-        S->AddDecl(DeclPtrTy::make(*F));
-        IdResolver.AddDecl(*F);
+        S->AddDecl(Sema::DeclPtrTy::make(*F));
+        SemaRef.IdResolver.AddDecl(*F);
+
+        // That includes picking up the appropriate access specifier.
+        if (AS != AS_none) (*F)->setAccess(AS);
       }
     } else if (const RecordType *InnerRecordType
                  = (*F)->getType()->getAs<RecordType>()) {
       RecordDecl *InnerRecord = InnerRecordType->getDecl();
       if (InnerRecord->isAnonymousStructOrUnion())
         Invalid = Invalid ||
-          InjectAnonymousStructOrUnionMembers(S, Owner, InnerRecord);
+          InjectAnonymousStructOrUnionMembers(SemaRef, S, Owner,
+                                              InnerRecord, AS);
     }
   }
 
@@ -1686,6 +1693,7 @@ StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec,
 /// (C++ [class.union]) and a GNU C extension; anonymous structures
 /// are a GNU C and GNU C++ extension.
 Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
+                                                  AccessSpecifier AS,
                                                   RecordDecl *Record) {
   DeclContext *Owner = Record->getDeclContext();
 
@@ -1740,7 +1748,8 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         // C++ [class.union]p3:
         //   An anonymous union shall not have private or protected
         //   members (clause 11).
-        if (FD->getAccess() == AS_protected || FD->getAccess() == AS_private) {
+        assert(FD->getAccess() != AS_none);
+        if (FD->getAccess() != AS_public) {
           Diag(FD->getLocation(), diag::err_anonymous_record_nonpublic_member)
             << (int)Record->isUnion() << (int)(FD->getAccess() == AS_protected);
           Invalid = true;
@@ -1797,7 +1806,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              Context.getTypeDeclType(Record),
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
-    Anon->setAccess(AS_public);
+    Anon->setAccess(AS);
     if (getLangOptions().CPlusPlus) {
       FieldCollector->Add(cast<FieldDecl>(Anon));
       if (!cast<CXXRecordDecl>(Record)->isEmpty())
@@ -1834,7 +1843,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
-  if (InjectAnonymousStructOrUnionMembers(S, Owner, Record))
+  if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS))
     Invalid = true;
 
   // Mark this as an anonymous struct/union type. Note that we do not

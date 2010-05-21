@@ -1307,7 +1307,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    Actions.ParsedFreeStandingDeclSpec(CurScope, AS, DS);
     return;
   }
 

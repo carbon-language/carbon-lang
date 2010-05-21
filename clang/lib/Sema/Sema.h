@@ -907,11 +907,11 @@ public:
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
-  virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);
+  virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
+                                               DeclSpec &DS);
 
-  bool InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
-                                           RecordDecl *AnonRecord);
   virtual DeclPtrTy BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
+                                                AccessSpecifier AS,
                                                 RecordDecl *Record);
 
   bool isAcceptableTagRedeclaration(const TagDecl *Previous,
