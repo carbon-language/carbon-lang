@@ -31,5 +31,11 @@ void foo(T *P) {
 -(void) im1 {
   ^(void) { [self im0]; }();
 }
+-(void) im2 {
+  ^{ [super im0]; }();
+}
+-(void) im3 {
+  ^{ ^{[super im0];}(); }();
+}
 @end
 

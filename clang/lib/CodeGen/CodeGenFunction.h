@@ -67,6 +67,7 @@ namespace CodeGen {
   class CGDebugInfo;
   class CGFunctionInfo;
   class CGRecordLayout;
+  class CGBlockInfo;
 
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
@@ -501,19 +502,18 @@ public:
                                            std::vector<HelperInfo> *);
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
-                                        const BlockInfo& Info,
+                                        CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
-                                  llvm::DenseMap<const Decl*, llvm::Value*> ldm,
-                                        CharUnits &Size, CharUnits &Align,
-                      llvm::SmallVectorImpl<const Expr*> &subBlockDeclRefDecls,
-                                        bool &subBlockHasCopyDispose);
+                                  llvm::DenseMap<const Decl*, llvm::Value*> ldm);
 
-  void BlockForwardSelf();
   llvm::Value *LoadBlockStruct();
 
   void AllocateBlockCXXThisPointer(const CXXThisExpr *E);
   void AllocateBlockDecl(const BlockDeclRefExpr *E);
-  llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
+  llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
+    return GetAddrOfBlockDecl(E->getDecl(), E->isByRef());
+  }
+  llvm::Value *GetAddrOfBlockDecl(const ValueDecl *D, bool ByRef);
   const llvm::Type *BuildByRefType(const ValueDecl *D);
 
   void GenerateCode(GlobalDecl GD, llvm::Function *Fn);

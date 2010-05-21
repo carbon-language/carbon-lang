@@ -148,30 +148,6 @@ public:
     BLOCK_BYREF_CURRENT_MAX = 256
   };
 
-  /// BlockInfo - Information to generate a block literal.
-  struct BlockInfo {
-    /// BlockLiteralTy - The type of the block literal.
-    const llvm::Type *BlockLiteralTy;
-
-    /// Name - the name of the function this block was created for, if any.
-    const char *Name;
-
-    /// ByCopyDeclRefs - Variables from parent scopes that have been imported
-    /// into this block.
-    llvm::SmallVector<const BlockDeclRefExpr *, 8> DeclRefs;
-
-    /// CXXThisRef - An expression referring to the required 'this'
-    /// expression.
-    const CXXThisExpr *CXXThisRef;
-
-    BlockInfo(const llvm::Type *blt, const char *n)
-      : BlockLiteralTy(blt), Name(n), CXXThisRef(0) {
-      // Skip asm prefix, if any.
-      if (Name && Name[0] == '\01')
-        ++Name;
-    }
-  };
-
   CGBuilderTy &Builder;
 
   BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf, CGBuilderTy &B);

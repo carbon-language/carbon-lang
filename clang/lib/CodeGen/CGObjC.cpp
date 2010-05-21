@@ -494,8 +494,6 @@ bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
 
 llvm::Value *CodeGenFunction::LoadObjCSelf() {
   const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
-  // See if we need to lazily forward self inside a block literal.
-  BlockForwardSelf();
   return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
 }
 
