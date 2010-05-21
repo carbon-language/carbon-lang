@@ -23,12 +23,16 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
 STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
+
+static cl::opt<bool> CSEPhysDef("machine-cse-phys-defs",
+                                cl::init(false), cl::Hidden);
 
 namespace {
   class MachineCSE : public MachineFunctionPass {
@@ -39,7 +43,7 @@ namespace {
     MachineRegisterInfo *MRI;
   public:
     static char ID; // Pass identification
-    MachineCSE() : MachineFunctionPass(&ID), CurrVN(0) {}
+    MachineCSE() : MachineFunctionPass(&ID), LookAheadLimit(5), CurrVN(0) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     
@@ -52,6 +56,7 @@ namespace {
     }
 
   private:
+    const unsigned LookAheadLimit;
     typedef ScopedHashTableScope<MachineInstr*, unsigned,
                                  MachineInstrExpressionTrait> ScopeType;
     DenseMap<MachineBasicBlock*, ScopeType*> ScopeMap;
@@ -62,8 +67,12 @@ namespace {
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
                                 MachineBasicBlock::const_iterator I,
-                                MachineBasicBlock::const_iterator E);
-    bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
+                                MachineBasicBlock::const_iterator E) const ;
+    bool hasLivePhysRegDefUse(const MachineInstr *MI,
+                              const MachineBasicBlock *MBB,
+                              unsigned &PhysDef) const;
+    bool PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
+                           unsigned PhysDef) const;
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
                            MachineInstr *CSMI, MachineInstr *MI);
@@ -124,10 +133,11 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
   return Changed;
 }
 
-bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
-                                        MachineBasicBlock::const_iterator I,
-                                        MachineBasicBlock::const_iterator E) {
-  unsigned LookAheadLeft = 5;
+bool
+MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
+                                   MachineBasicBlock::const_iterator I,
+                                   MachineBasicBlock::const_iterator E) const {
+  unsigned LookAheadLeft = LookAheadLeft;
   while (LookAheadLeft) {
     // Skip over dbg_value's.
     while (I != E && I->isDebugValue())
@@ -145,6 +155,7 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
       if (!TRI->regsOverlap(MO.getReg(), Reg))
         continue;
       if (MO.isUse())
+        // Found a use!
         return false;
       SeenDef = true;
     }
@@ -160,38 +171,70 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
 }
 
 /// hasLivePhysRegDefUse - Return true if the specified instruction read / write
-/// physical registers (except for dead defs of physical registers).
-bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
-  unsigned PhysDef = 0;
+/// physical registers (except for dead defs of physical registers). It also
+/// returns the physical register def by reference if it's the only one.
+bool MachineCSE::hasLivePhysRegDefUse(const MachineInstr *MI,
+                                      const MachineBasicBlock *MBB,
+                                      unsigned &PhysDef) const {
+  PhysDef = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
+    const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
-    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      if (MO.isUse())
-        // Can't touch anything to read a physical register.
-        return true;
-      if (MO.isDead())
-        // If the def is dead, it's ok.
-        continue;
-      // Ok, this is a physical register def that's not marked "dead". That's
-      // common since this pass is run before livevariables. We can scan
-      // forward a few instructions and check if it is obviously dead.
-      if (PhysDef)
-        // Multiple physical register defs. These are rare, forget about it.
-        return true;
-      PhysDef = Reg;
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
+    if (MO.isUse())
+      // Can't touch anything to read a physical register.
+      return true;
+    if (MO.isDead())
+      // If the def is dead, it's ok.
+      continue;
+    // Ok, this is a physical register def that's not marked "dead". That's
+    // common since this pass is run before livevariables. We can scan
+    // forward a few instructions and check if it is obviously dead.
+    if (PhysDef) {
+      // Multiple physical register defs. These are rare, forget about it.
+      PhysDef = 0;
+      return true;
     }
+    PhysDef = Reg;
   }
 
   if (PhysDef) {
-    MachineBasicBlock::iterator I = MI; I = llvm::next(I);
+    MachineBasicBlock::const_iterator I = MI; I = llvm::next(I);
     if (!isPhysDefTriviallyDead(PhysDef, I, MBB->end()))
       return true;
   }
+  return false;
+}
+
+bool MachineCSE::PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
+                                  unsigned PhysDef) const {
+  // For now conservatively returns false if the common subexpression is
+  // not in the same basic block as the given instruction.
+  MachineBasicBlock *MBB = MI->getParent();
+  if (CSMI->getParent() != MBB)
+    return false;
+  MachineBasicBlock::const_iterator I = CSMI; I = llvm::next(I);
+  MachineBasicBlock::const_iterator E = MI;
+  unsigned LookAheadLeft = LookAheadLimit;
+  while (LookAheadLeft) {
+    // Skip over dbg_value's.
+    while (I != E && I->isDebugValue())
+      ++I;
+
+    if (I == E)
+      return true;
+    if (I->modifiesRegister(PhysDef, TRI))
+      return false;
+
+    --LookAheadLeft;
+    ++I;
+  }
+
   return false;
 }
 
@@ -327,8 +370,19 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
 
     // If the instruction defines a physical register and the value *may* be
     // used, then it's not safe to replace it with a common subexpression.
-    if (FoundCSE && hasLivePhysRegDefUse(MI, MBB))
+    unsigned PhysDef = 0;
+    if (FoundCSE && hasLivePhysRegDefUse(MI, MBB, PhysDef)) {
       FoundCSE = false;
+
+      // ... Unless the CS is local and it also defines the physical register
+      // which is not clobbered in between.
+      if (PhysDef && CSEPhysDef) {
+        unsigned CSVN = VNT.lookup(MI);
+        MachineInstr *CSMI = Exps[CSVN];
+        if (PhysRegDefReaches(CSMI, MI, PhysDef))
+          FoundCSE = true;
+      }
+    }
 
     if (!FoundCSE) {
       VNT.insert(MI, CurrVN++);
