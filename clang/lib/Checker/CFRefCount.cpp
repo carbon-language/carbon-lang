@@ -37,6 +37,49 @@ using namespace clang;
 using llvm::StringRef;
 using llvm::StrInStrNoCase;
 
+namespace {
+class InstanceReceiver {
+  const ObjCMessageExpr *ME;
+  const LocationContext *LC;
+public:
+  InstanceReceiver(const ObjCMessageExpr *me = 0,
+                   const LocationContext *lc = 0) : ME(me), LC(lc) {}
+
+  bool isValid() const {
+    return ME && ME->isInstanceMessage();
+  }
+  operator bool() const {
+    return isValid();
+  }
+
+  SVal getSValAsScalarOrLoc(const GRState *state) {
+    assert(isValid());
+    // We have an expression for the receiver?  Fetch the value
+    // of that expression.
+    if (const Expr *Ex = ME->getInstanceReceiver())
+      return state->getSValAsScalarOrLoc(Ex);
+
+    // Otherwise we are sending a message to super.  In this case the
+    // object reference is the same as 'self'.
+    if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl())
+      return state->getSVal(state->getRegion(SelfDecl, LC));
+
+    return UnknownVal();
+  }
+
+  SourceRange getSourceRange() const {
+    assert(isValid());
+    if (const Expr *Ex = ME->getInstanceReceiver())
+      return Ex->getSourceRange();
+
+    // Otherwise we are sending a message to super.
+    SourceLocation L = ME->getSuperLoc();
+    assert(L.isValid());
+    return SourceRange(L, L);
+  }
+};
+}
+
 static const ObjCMethodDecl*
 ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
   ObjCInterfaceDecl *ID =
@@ -1768,7 +1811,7 @@ public:
                    GRExprEngine& Eng,
                    GRStmtNodeBuilder& Builder,
                    Expr* Ex,
-                   Expr* Receiver,
+                   InstanceReceiver Receiver,
                    const RetainSummary& Summ,
                    const MemRegion *Callee,
                    ExprIterator arg_beg, ExprIterator arg_end,
@@ -2563,7 +2606,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              GRExprEngine& Eng,
                              GRStmtNodeBuilder& Builder,
                              Expr* Ex,
-                             Expr* Receiver,
+                             InstanceReceiver Receiver,
                              const RetainSummary& Summ,
                              const MemRegion *Callee,
                              ExprIterator arg_beg, ExprIterator arg_end,
@@ -2679,12 +2722,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   // Evaluate the effect on the message receiver.
   if (!ErrorRange.isValid() && Receiver) {
-    SymbolRef Sym = state->getSValAsScalarOrLoc(Receiver).getAsLocSymbol();
+    SymbolRef Sym = Receiver.getSValAsScalarOrLoc(state).getAsLocSymbol();
     if (Sym) {
       if (const RefVal* T = state->get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
         if (hasErr) {
-          ErrorRange = Receiver->getSourceRange();
+          ErrorRange = Receiver.getSourceRange();
           ErrorSym = Sym;
         }
       }
@@ -2704,7 +2747,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
     bool found = false;
     if (Receiver) {
-      SVal V = state->getSValAsScalarOrLoc(Receiver);
+      SVal V = Receiver.getSValAsScalarOrLoc(state);
       if (SymbolRef Sym = V.getAsLocSymbol())
         if (state->get<RefBindings>(Sym)) {
           found = true;
@@ -2761,7 +2804,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
     case RetEffect::ReceiverAlias: {
       assert(Receiver);
-      SVal V = state->getSValAsScalarOrLoc(Receiver);
+      SVal V = Receiver.getSValAsScalarOrLoc(state);
       state = state->BindExpr(Ex, V, false);
       break;
     }
@@ -2849,7 +2892,8 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
       : Summaries.getClassMethodSummary(ME);
 
   assert(Summ && "RetainSummary is null");
-  EvalSummary(Dst, Eng, Builder, ME, ME->getInstanceReceiver(), *Summ, NULL,
+  EvalSummary(Dst, Eng, Builder, ME,
+              InstanceReceiver(ME, Pred->getLocationContext()), *Summ, NULL,
               ME->arg_begin(), ME->arg_end(), Pred, state);
 }
 

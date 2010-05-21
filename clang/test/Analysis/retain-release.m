@@ -1332,3 +1332,15 @@ void test_blocks_1_indirect_retain_via_call(void) {
   ^(NSObject *o){ [o retain]; }(number);
 }
 
+//===--------------------------------------------------------------------===//
+// Test sending message to super that returns an object alias.  Previously
+// this caused a crash in the analyzer.
+//===--------------------------------------------------------------------===//
+
+@interface Rdar8015556 : NSObject {} @end
+@implementation Rdar8015556
+- (id)retain {
+  return [super retain];
+}
+@end
+
