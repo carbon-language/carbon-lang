@@ -980,10 +980,11 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       TemplateTy Template;
       UnqualifiedId TemplateName;
       TemplateName.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+      bool MemberOfUnknownSpecialization;
       if (TemplateNameKind TNK
             = Actions.isTemplateName(CurScope, SS, TemplateName, 
                                      /*ObjectType=*/0, EnteringContext,
-                                     Template)) {
+                                     Template, MemberOfUnknownSpecialization)) {
         // Consume the identifier.
         ConsumeToken();
         if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName)) {

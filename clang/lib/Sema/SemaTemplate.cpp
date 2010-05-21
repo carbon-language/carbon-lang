@@ -100,10 +100,12 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                                       UnqualifiedId &Name,
                                       TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
-                                      TemplateTy &TemplateResult) {
+                                      TemplateTy &TemplateResult,
+                                      bool &MemberOfUnknownSpecialization) {
   assert(getLangOptions().CPlusPlus && "No template names in C!");
 
   DeclarationName TName;
+  MemberOfUnknownSpecialization = false;
   
   switch (Name.getKind()) {
   case UnqualifiedId::IK_Identifier:
@@ -128,7 +130,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
   LookupResult R(*this, TName, Name.getSourceRange().getBegin(), 
                  LookupOrdinaryName);
   R.suppressDiagnostics();
-  LookupTemplateName(R, S, SS, ObjectType, EnteringContext);
+  LookupTemplateName(R, S, SS, ObjectType, EnteringContext,
+                     MemberOfUnknownSpecialization);
   if (R.empty() || R.isAmbiguous())
     return TNK_Non_template;
 
@@ -191,8 +194,10 @@ bool Sema::DiagnoseUnknownTemplateName(const IdentifierInfo &II,
 void Sema::LookupTemplateName(LookupResult &Found,
                               Scope *S, CXXScopeSpec &SS,
                               QualType ObjectType,
-                              bool EnteringContext) {
+                              bool EnteringContext,
+                              bool &MemberOfUnknownSpecialization) {
   // Determine where to perform name lookup
+  MemberOfUnknownSpecialization = false;
   DeclContext *LookupCtx = 0;
   bool isDependent = false;
   if (!ObjectType.isNull()) {
@@ -241,6 +246,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
   } else if (isDependent) {
     // We cannot look into a dependent object type or nested nme
     // specifier.
+    MemberOfUnknownSpecialization = true;
     return;
   } else {
     // Perform unqualified name lookup in the current scope.
@@ -1641,8 +1647,10 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
       RequireCompleteDeclContext(SS, DC))
     return BuildDependentDeclRefExpr(SS, Name, NameLoc, &TemplateArgs);
 
+  bool MemberOfUnknownSpecialization;
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
-  LookupTemplateName(R, (Scope*) 0, SS, QualType(), /*Entering*/ false);
+  LookupTemplateName(R, (Scope*) 0, SS, QualType(), /*Entering*/ false,
+                     MemberOfUnknownSpecialization);
 
   if (R.isAmbiguous())
     return ExprError();
@@ -1699,8 +1707,10 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode, retroactively applying the DR.
     TemplateTy Template;
+    bool MemberOfUnknownSpecialization;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
-                                          EnteringContext, Template);
+                                          EnteringContext, Template,
+                                          MemberOfUnknownSpecialization);
     if (TNK == TNK_Non_template && LookupCtx->isDependentContext() &&
         isa<CXXRecordDecl>(LookupCtx) &&
         cast<CXXRecordDecl>(LookupCtx)->hasAnyDependentBases()) {

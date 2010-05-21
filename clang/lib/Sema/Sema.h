@@ -2800,14 +2800,16 @@ public:
   // C++ Templates [C++ 14]
   //
   void LookupTemplateName(LookupResult &R, Scope *S, CXXScopeSpec &SS,
-                          QualType ObjectType, bool EnteringContext);
+                          QualType ObjectType, bool EnteringContext,
+                          bool &MemberOfUnknownSpecialization);
 
   virtual TemplateNameKind isTemplateName(Scope *S,
                                           CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
-                                          TemplateTy &Template);
+                                          TemplateTy &Template,
+                                          bool &MemberOfUnknownSpecialization);
 
   virtual bool DiagnoseUnknownTemplateName(const IdentifierInfo &II,
                                            SourceLocation IILoc,

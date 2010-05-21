@@ -286,13 +286,18 @@ public:
   /// \param Template if the name does refer to a template, the declaration
   /// of the template that the name refers to.
   ///
+  /// \param MemberOfUnknownSpecialization Will be set true if the resulting 
+  /// member would be a member of an unknown specialization, in which case this
+  /// lookup cannot possibly pass at this time.
+  ///
   /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(Scope *S,
                                           CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
-                                          TemplateTy &Template) = 0;
+                                          TemplateTy &Template,
+                                      bool &MemberOfUnknownSpecialization) = 0;
 
   /// \brief Action called as part of error recovery when the parser has 
   /// determined that the given name must refer to a template, but 
@@ -3027,7 +3032,9 @@ public:
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
-                                          TemplateTy &Template);
+                                          TemplateTy &Template,
+                                          bool &MemberOfUnknownSpecialization);
+
   
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

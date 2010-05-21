@@ -1055,7 +1055,9 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // lookup to determine that it was a template name in the first place. If
     // this becomes a performance hit, we can work harder to preserve those
     // results until we get here but it's likely not worth it.
-    LookupTemplateName(R, S, SS, QualType(), /*EnteringContext=*/false);
+    bool MemberOfUnknownSpecialization;
+    LookupTemplateName(R, S, SS, QualType(), /*EnteringContext=*/false,
+                       MemberOfUnknownSpecialization);
   } else {
     bool IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);

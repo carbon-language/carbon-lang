@@ -1463,6 +1463,7 @@ private:
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);
   void AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
+  bool IsTemplateArgumentList();
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
   ParsedTemplateArgument ParseTemplateTemplateArgument();
   ParsedTemplateArgument ParseTemplateArgument();

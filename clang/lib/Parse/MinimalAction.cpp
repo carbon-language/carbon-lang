@@ -194,7 +194,9 @@ MinimalAction::isTemplateName(Scope *S,
                               UnqualifiedId &Name,
                               TypeTy *ObjectType,
                               bool EnteringScope,
-                              TemplateTy &TemplateDecl) {
+                              TemplateTy &TemplateDecl,
+                              bool &MemberOfUnknownSpecialization) {
+  MemberOfUnknownSpecialization = false;
   return TNK_Non_template;
 }
 

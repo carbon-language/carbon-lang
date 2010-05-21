@@ -313,6 +313,9 @@ def err_explicit_instantiation_with_definition : Error<
     "'template' keyword">;
 def err_enum_template : Error<"enumeration cannot be a template">;
 
+def err_missing_dependent_template_keyword : Error<
+  "use 'template' keyword to treat '%0' as a dependent template name">;
+
 // Constructor template diagnostics.
 def err_out_of_line_constructor_template_id : Error<
   "out-of-line constructor for %0 cannot have template arguments">;

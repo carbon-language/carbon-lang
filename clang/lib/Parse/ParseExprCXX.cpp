@@ -289,11 +289,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       TemplateTy Template;
       UnqualifiedId TemplateName;
       TemplateName.setIdentifier(&II, Tok.getLocation());
+      bool MemberOfUnknownSpecialization;
       if (TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, 
                                                         TemplateName,
                                                         ObjectType,
                                                         EnteringContext,
-                                                        Template)) {
+                                                        Template,
+                                              MemberOfUnknownSpecialization)) {
         // We have found a template name, so annotate this this token
         // with a template-id annotation. We do not permit the
         // template-id to be translated into a type annotation,
@@ -990,21 +992,54 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
       TNK = TNK_Dependent_template_name;
       if (!Template.get())
         return true;      
-    } else 
+    } else {
+      bool MemberOfUnknownSpecialization;
       TNK = Actions.isTemplateName(CurScope, SS, Id, ObjectType, 
-                                   EnteringContext, Template);
+                                   EnteringContext, Template,
+                                   MemberOfUnknownSpecialization);
+      
+      if (TNK == TNK_Non_template && MemberOfUnknownSpecialization &&
+          ObjectType && IsTemplateArgumentList()) {
+        // We have something like t->getAs<T>(), where getAs is a 
+        // member of an unknown specialization. However, this will only
+        // parse correctly as a template, so suggest the keyword 'template'
+        // before 'getAs' and treat this as a dependent template name.
+        std::string Name;
+        if (Id.getKind() == UnqualifiedId::IK_Identifier)
+          Name = Id.Identifier->getName();
+        else {
+          Name = "operator ";
+          if (Id.getKind() == UnqualifiedId::IK_OperatorFunctionId)
+            Name += getOperatorSpelling(Id.OperatorFunctionId.Operator);
+          else
+            Name += Id.Identifier->getName();
+        }
+        Diag(Id.StartLocation, diag::err_missing_dependent_template_keyword)
+          << Name
+          << FixItHint::CreateInsertion(Id.StartLocation, "template ");
+        Template = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, 
+                                                      Id, ObjectType,
+                                                      EnteringContext);
+        TNK = TNK_Dependent_template_name;
+        if (!Template.get())
+          return true;              
+      }
+    }
     break;
       
   case UnqualifiedId::IK_ConstructorName: {
     UnqualifiedId TemplateName;
+    bool MemberOfUnknownSpecialization;
     TemplateName.setIdentifier(Name, NameLoc);
     TNK = Actions.isTemplateName(CurScope, SS, TemplateName, ObjectType, 
-                                 EnteringContext, Template);
+                                 EnteringContext, Template,
+                                 MemberOfUnknownSpecialization);
     break;
   }
       
   case UnqualifiedId::IK_DestructorName: {
     UnqualifiedId TemplateName;
+    bool MemberOfUnknownSpecialization;
     TemplateName.setIdentifier(Name, NameLoc);
     if (ObjectType) {
       Template = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, 
@@ -1015,7 +1050,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
         return true;
     } else {
       TNK = Actions.isTemplateName(CurScope, SS, TemplateName, ObjectType, 
-                                   EnteringContext, Template);
+                                   EnteringContext, Template,
+                                   MemberOfUnknownSpecialization);
       
       if (TNK == TNK_Non_template && Id.DestructorName == 0) {
         Diag(NameLoc, diag::err_destructor_template_id)

@@ -902,10 +902,12 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
     ConsumeToken(); // the identifier
     
     if (isEndOfTemplateArgument(Tok)) {
+      bool MemberOfUnknownSpecialization;
       TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, Name, 
                                                     /*ObjectType=*/0, 
                                                     /*EnteringContext=*/false, 
-                                                    Template);
+                                                    Template,
+                                                MemberOfUnknownSpecialization);
       if (TNK == TNK_Dependent_template_name || TNK == TNK_Type_template) {
         // We have an id-expression that refers to a class template or
         // (C++0x) template alias. 
@@ -964,6 +966,32 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
 
   return ParsedTemplateArgument(ParsedTemplateArgument::NonType, 
                                 ExprArg.release(), Loc);
+}
+
+/// \brief Determine whether the current tokens can only be parsed as a 
+/// template argument list (starting with the '<') and never as a '<' 
+/// expression.
+bool Parser::IsTemplateArgumentList() {
+  struct AlwaysRevertAction : TentativeParsingAction {
+    AlwaysRevertAction(Parser &P) : TentativeParsingAction(P) { }
+    ~AlwaysRevertAction() { Revert(); }
+  } Tentative(*this);
+  
+  // '<'
+  if (!Tok.is(tok::less))
+    return false;
+  ConsumeToken();
+
+  // An empty template argument list.
+  if (Tok.is(tok::greater))
+    return true;
+  
+  // See whether we have declaration specifiers, which indicate a type.
+  while (isCXXDeclarationSpecifier() == TPResult::True())
+    ConsumeToken();
+  
+  // If we have a '>' or a ',' then this is a template argument list.
+  return Tok.is(tok::greater) || Tok.is(tok::comma);
 }
 
 /// ParseTemplateArgumentList - Parse a C++ template-argument-list
