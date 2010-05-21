@@ -123,10 +123,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return CGF.CGM.EmitNullConstant(E->getType());
   }
   Value *VisitGNUNullExpr(const GNUNullExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return CGF.CGM.EmitNullConstant(E->getType());
   }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()),

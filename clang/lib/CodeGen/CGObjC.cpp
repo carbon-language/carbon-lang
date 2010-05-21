@@ -632,7 +632,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // Fast enumeration state.
   QualType StateTy = getContext().getObjCFastEnumerationStateType();
   llvm::Value *StatePtr = CreateMemTemp(StateTy, "state.ptr");
-  EmitMemSetToZero(StatePtr, StateTy);
+  EmitNullInitialization(StatePtr, StateTy);
 
   // Number of elements in the items array.
   static const unsigned NumItems = 16;

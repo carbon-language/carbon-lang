@@ -465,7 +465,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
                                          /*IsInitializer=*/true);
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
   } else if (FieldType->isArrayType() && !MemberInit->getInit()) {
-    CGF.EmitMemSetToZero(LHS.getAddress(), Field->getType());
+    CGF.EmitNullInitialization(LHS.getAddress(), Field->getType());
   } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
     RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit(), true));
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);

@@ -1844,7 +1844,7 @@ LValue CodeGenFunction::EmitNullInitializationLValue(
                                               const CXXZeroInitValueExpr *E) {
   QualType Ty = E->getType();
   LValue LV = LValue::MakeAddr(CreateMemTemp(Ty), MakeQualifiers(Ty));
-  EmitMemSetToZero(LV.getAddress(), Ty);
+  EmitNullInitialization(LV.getAddress(), Ty);
   return LV;
 }
 
