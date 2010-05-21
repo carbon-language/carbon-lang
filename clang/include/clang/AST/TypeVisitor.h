@@ -1,4 +1,4 @@
-//===--- TypeVisitor.h - Visitor for Stmt subclasses ------------*- C++ -*-===//
+//===--- TypeVisitor.h - Visitor for Type subclasses ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,7 @@ template<typename ImplClass, typename RetTy=void>
 class TypeVisitor {
 public:
   RetTy Visit(Type *T) {
-    // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
+    // Top switch stmt: dispatch to VisitFooType for each FooType.
     switch (T->getTypeClass()) {
     default: assert(0 && "Unknown type class!");
 #define ABSTRACT_TYPE(CLASS, PARENT)
