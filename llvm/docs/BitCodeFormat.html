@@ -40,8 +40,9 @@
   </li>
 </ol>
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>
-  and <a href="http://www.reverberate.org">Joshua Haberman</a>.
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
+  <a href="http://www.reverberate.org">Joshua Haberman</a>,
+  and <a href="mailto:housel@acm.org">Peter S. Housel</a>.
 </p>
 </div>
 
@@ -1037,8 +1038,17 @@ fields of <tt>FUNCTION</tt> records.</p>
 
 <div class="doc_text">
 
-<p>The <tt>PARAMATTR_BLOCK</tt> block (id 9) ...
-</p>
+<p>The <tt>PARAMATTR_BLOCK</tt> block (id 9) contains a table of
+entries describing the attributes of function parameters. These
+entries are referenced by 1-based index in the <i>paramattr</i> field
+of module block <a name="MODULE_CODE_FUNCTION"><tt>FUNCTION</tt></a>
+records, or within the <i>attr</i> field of function block <a
+href="#FUNC_CODE_INST_INVOKE"><tt>INST_INVOKE</tt></a> and <a
+href="#FUNC_CODE_INST_CALL"><tt>INST_CALL</tt></a> records.</p>
+
+<p>Entries within <tt>PARAMATTR_BLOCK</tt> are constructed to ensure
+that each is unique (i.e., no two indicies represent equivalent
+attribute lists). </p>
 
 </div>
 
@@ -1051,8 +1061,41 @@ fields of <tt>FUNCTION</tt> records.</p>
 
 <p><tt>[ENTRY, paramidx0, attr0, paramidx1, attr1...]</tt></p>
 
-<p>The <tt>ENTRY</tt> record (code 1) ...
+<p>The <tt>ENTRY</tt> record (code 1) contains an even number of
+values describing a unique set of function parameter attributes. Each
+<i>paramidx</i> value indicates which set of attributes is
+represented, with 0 representing the return value attributes,
+0xFFFFFFFF representing function attributes, and other values
+representing 1-based function parameters. Each <i>attr</i> value is a
+bitmap with the following interpretation:
 </p>
+
+<ul>
+<li>bit 0: <tt>zeroext</tt></li>
+<li>bit 1: <tt>signext</tt></li>
+<li>bit 2: <tt>noreturn</tt></li>
+<li>bit 3: <tt>inreg</tt></li>
+<li>bit 4: <tt>sret</tt></li>
+<li>bit 5: <tt>nounwind</tt></li>
+<li>bit 6: <tt>noalias</tt></li>
+<li>bit 7: <tt>byval</tt></li>
+<li>bit 8: <tt>nest</tt></li>
+<li>bit 9: <tt>readnone</tt></li>
+<li>bit 10: <tt>readonly</tt></li>
+<li>bit 11: <tt>noinline</tt></li>
+<li>bit 12: <tt>alwaysinline</tt></li>
+<li>bit 13: <tt>optsize</tt></li>
+<li>bit 14: <tt>ssp</tt></li>
+<li>bit 15: <tt>sspreq</tt></li>
+<li>bits 16&ndash;31: <tt>align <var>n</var></tt></li>
+<li>bit 32: <tt>nocapture</tt></li>
+<li>bit 33: <tt>noredzone</tt></li>
+<li>bit 34: <tt>noimplicitfloat</tt></li>
+<li>bit 35: <tt>naked</tt></li>
+<li>bit 36: <tt>inlinehint</tt></li>
+<li>bits 37&ndash;39: <tt>alignstack <var>n</var></tt>, represented as
+the logarithm base 2 of the requested alignment, plus 1</li>
+</ul>
 </div>
 
 <!-- ======================================================================= -->
@@ -1061,11 +1104,283 @@ fields of <tt>FUNCTION</tt> records.</p>
 
 <div class="doc_text">
 
-<p>The <tt>TYPE_BLOCK</tt> block (id 10) ...
+<p>The <tt>TYPE_BLOCK</tt> block (id 10) contains records which
+constitute a table of type operator entries used to represent types
+referenced within an LLVM module. Each record (with the exception of
+<a href="#TYPE_CODE_NUMENTRY"><tt>NUMENTRY</tt></a>) generates a
+single type table entry, which may be referenced by 0-based index from
+instructions, constants, metadata, type symbol table entries, or other
+type operator records.
 </p>
+
+<p>Entries within <tt>TYPE_BLOCK</tt> are constructed to ensure that
+each entry is unique (i.e., no two indicies represent structurally
+equivalent types). </p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_NUMENTRY">TYPE_CODE_NUMENTRY Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[NUMENTRY, numentries]</tt></p>
+
+<p>The <tt>NUMENTRY</tt> record (code 1) contains a single value which
+indicates the total number of type code entries in the type table of
+the module. If present, <tt>NUMENTRY</tt> should be the first record
+in the block.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_VOID">TYPE_CODE_VOID Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[VOID]</tt></p>
+
+<p>The <tt>VOID</tt> record (code 2) adds a <tt>void</tt> type to the
+type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_FLOAT">TYPE_CODE_FLOAT Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[FLOAT]</tt></p>
+
+<p>The <tt>FLOAT</tt> record (code 3) adds a <tt>float</tt> (32-bit
+floating point) type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_DOUBLE">TYPE_CODE_DOUBLE Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[DOUBLE]</tt></p>
+
+<p>The <tt>DOUBLE</tt> record (code 4) adds a <tt>double</tt> (64-bit
+floating point) type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_LABEL">TYPE_CODE_LABEL Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[LABEL]</tt></p>
+
+<p>The <tt>LABEL</tt> record (code 5) adds a <tt>label</tt> type to
+the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_OPAQUE">TYPE_CODE_OPAQUE Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[OPAQUE]</tt></p>
+
+<p>The <tt>OPAQUE</tt> record (code 6) adds an <tt>opaque</tt> type to
+the type table. Note that distinct <tt>opaque</tt> types are not
+unified.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_INTEGER">TYPE_CODE_INTEGER  Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[INTEGER, width]</tt></p>
+
+<p>The <tt>INTEGER</tt> record (code 7) adds an integer type to the
+type table. The single <i>width</i> field indicates the width of the
+integer type.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_POINTER">TYPE_CODE_POINTER Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[POINTER, pointee type, address space]</tt></p>
+
+<p>The <tt>POINTER</tt> record (code 8) adds a pointer type to the
+type table. The operand fields are</p>
+
+<ul>
+<li><i>pointee type</i>: The type index of the pointed-to type</li>
+
+<li><i>address space</i>: If supplied, the target-specific numbered
+address space where the pointed-to object resides. Otherwise, the
+default address space is zero.
+</li>
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_FUNCTION">TYPE_CODE_FUNCTION Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[FUNCTION, vararg, ignored, retty, ...paramty... ]</tt></p>
+
+<p>The <tt>FUNCTION</tt> record (code 9) adds a function type to the
+type table. The operand fields are</p>
+
+<ul>
+<li><i>vararg</i>: Non-zero if the type represents a varargs function</li>
+
+<li><i>ignored</i>: This value field is present for backward
+compatibility only, and is ignored</li>
+
+<li><i>retty</i>: The type index of the function's return type</li>
+
+<li><i>paramty</i>: Zero or more type indices representing the
+parameter types of the function</li>
+</ul>
+	
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_STRUCT">TYPE_CODE_STRUCT Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[STRUCT, ispacked, ...eltty...]</tt></p>
+
+<p>The <tt>STRUCT </tt> record (code 10) adds a struct type to the
+type table. The operand fields are</p>
+
+<ul>
+<li><i>ispacked</i>: Non-zero if the type represents a packed structure</li>
+
+<li><i>eltty</i>: Zero or more type indices representing the element
+types of the structure</li>
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_ARRAY">TYPE_CODE_ARRAY Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[ARRAY, numelts, eltty]</tt></p>
+
+<p>The <tt>ARRAY</tt> record (code 11) adds an array type to the type
+table.  The operand fields are</p>
+
+<ul>
+<li><i>numelts</i>: The number of elements in arrays of this type</li>
+
+<li><i>eltty</i>: The type index of the array element type</li>
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_VECTOR">TYPE_CODE_VECTOR Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[VECTOR, numelts, eltty]</tt></p>
+
+<p>The <tt>VECTOR</tt> record (code 12) adds a vector type to the type
+table.  The operand fields are</p>
+
+<ul>
+<li><i>numelts</i>: The number of elements in vectors of this type</li>
+
+<li><i>eltty</i>: The type index of the vector element type</li>
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_X86_FP80">TYPE_CODE_X86_FP80 Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[X86_FP80]</tt></p>
+
+<p>The <tt>X86_FP80</tt> record (code 13) adds an <tt>x86_fp80</tt> (80-bit
+floating point) type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_FP128">TYPE_CODE_FP128 Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[FP128]</tt></p>
+
+<p>The <tt>FP128</tt> record (code 14) adds an <tt>fp128</tt> (128-bit
+floating point) type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_PPC_FP128">TYPE_CODE_PPC_FP128 Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[PPC_FP128]</tt></p>
+
+<p>The <tt>PPC_FP128</tt> record (code 15) adds a <tt>ppc_fp128</tt>
+(128-bit floating point) type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_METADATA">TYPE_CODE_METADATA Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[METADATA]</tt></p>
+
+<p>The <tt>METADATA</tt> record (code 16) adds a <tt>metadata</tt>
+type to the type table.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TYPE_CODE_UNION">TYPE_CODE_UNION Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[UNION, ...eltty...]</tt></p>
+
+<p>The <tt>UNION</tt> record (code 17) adds a <tt>union</tt> type to
+the type table. The <i>eltty</i> operand fields are zero or more type
+indices representing the element types of the union.
+</p>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a>
@@ -1107,9 +1422,26 @@ fields of <tt>FUNCTION</tt> records.</p>
 
 <div class="doc_text">
 
-<p>The <tt>TYPE_SYMTAB_BLOCK</tt> block (id 13) ...
+<p>The <tt>TYPE_SYMTAB_BLOCK</tt> block (id 13) contains entries which
+map between module-level named types and their corresponding type
+indices.
 </p>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="TST_CODE_ENTRY">TST_CODE_ENTRY Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[ENTRY, typeid, ...string...]</tt></p>
+
+<p>The <tt>ENTRY</tt> record (code 1) contains a variable number of
+values, with the first giving the type index of the designated type,
+and the remaining values giving the character codes of the type
+name. Each entry corresponds to a single named type.
+</p>
 </div>
 
 
