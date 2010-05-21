@@ -6281,7 +6281,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   // all scalar elements the same.
   if (cast<ShuffleVectorSDNode>(N)->isSplat()) {
     SDNode *V = N0.getNode();
-    
 
     // If this is a bit convert that changes the element type of the vector but
     // not the number of vector elements, look through it.  Be careful not to
