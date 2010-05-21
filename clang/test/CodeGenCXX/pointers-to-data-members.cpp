@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin10 | FileCheck %s
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin10 -O3 | FileCheck --check-prefix=CHECK-O3 %s
+
 struct A { int a; int b; };
 struct B { int b; };
 struct C : B, A { };
@@ -118,30 +118,3 @@ A::A() : a() {}
 
 }
 
-namespace PR7139 {
-
-struct pair {
-  int first;
-  int second;
-};
-
-typedef int pair::*ptr_to_member_type;
-
-struct ptr_to_member_struct { 
-  ptr_to_member_type data;
-  int i;
-};
-
-struct A {
-  ptr_to_member_struct a;
-
-  A() : a() {}
-};
-
-// CHECK-O3: define zeroext i1 @_ZN6PR71395checkEv() nounwind readnone
-bool check() {
-  // CHECK-O3: ret i1 true
-  return A().a.data == 0;
-}
-
-}

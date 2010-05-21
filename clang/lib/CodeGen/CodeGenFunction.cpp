@@ -472,23 +472,7 @@ void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
   CGM.ErrorUnsupported(S, Type, OmitOnError);
 }
 
-void
-CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
-  // If the type contains a pointer to data member we can't memset it to zero.
-  // Instead, create a null constant and copy it to the destination.
-  if (CGM.getTypes().ContainsPointerToDataMember(Ty)) {
-    llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
-    
-    llvm::GlobalVariable *NullVariable = 
-      new llvm::GlobalVariable(CGM.getModule(), NullConstant->getType(),
-                               /*isConstant=*/true, 
-                               llvm::GlobalVariable::PrivateLinkage,
-                               NullConstant, llvm::Twine());
-    EmitAggregateCopy(DestPtr, NullVariable, Ty, /*isVolatile=*/false);
-    return;
-  } 
-  
-
+void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
   // Ignore empty classes in C++.
   if (getContext().getLangOptions().CPlusPlus) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -497,9 +481,6 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     }
   }
   
-  // Otherwise, just memset the whole thing to zero.  This is legal
-  // because in LLVM, all default initializers (other than the ones we just
-  // handled above) are guaranteed to have a bit pattern of all zeros.
   const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
