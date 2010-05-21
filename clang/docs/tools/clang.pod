@@ -50,10 +50,13 @@ parse errors.  The output of this stage is an "Abstract Syntax Tree" (AST).
 =item B<Code Generation and Optimization>
 
 This stage translates an AST into low-level intermediate code (known as "LLVM
-IR") and ultimately to machine code (depending on the optimization level).  This
-phase is responsible for optimizing the generated code and handling
-target-specfic code generation.  The output of this stage is typically called a
-".s" file or "assembly" file.
+IR") and ultimately to machine code.  This phase is responsible for optimizing
+the generated code and handling target-specfic code generation.  The output of
+this stage is typically called a ".s" file or "assembly" file.
+
+Clang also supports the use of an integrated assembler, in which the code
+generator produces object files directly. This avoids the overhead of generating
+the ".s" file and of calling the target assembler.
 
 =item B<Assembler>
 
@@ -325,17 +328,21 @@ Pass I<arg> to the assembler.
 
 =item B<-Xclang> I<arg>
 
-Pass I<arg> to the clang compiler.
+Pass I<arg> to the clang compiler frontend.
 
 =item B<-Xlinker> I<arg>
 
 Pass I<arg> to the linker.
 
+=item B<-mllvm> I<arg>
+
+Pass I<arg> to the LLVM backend.
+
 =item B<-Xpreprocessor> I<arg>
 
 Pass I<arg> to the preprocessor.
 
-=item B<-o> I<file>               
+=item B<-o> I<file>
 
 Write output to I<file>.
 
@@ -358,6 +365,12 @@ Print the paths used for finding libraries and programs.
 =item B<-save-temps>
 
 Save intermediate compilation results.
+
+=item B<-integrated-as> B<-no-integrated-as>
+
+Used to enable and disable, respectively, the use of the integrated
+assembler. Whether the integrated assembler is on by default is target
+dependent.
 
 =item B<-time>
 
