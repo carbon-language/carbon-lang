@@ -137,7 +137,7 @@ bool
 MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
                                    MachineBasicBlock::const_iterator I,
                                    MachineBasicBlock::const_iterator E) const {
-  unsigned LookAheadLeft = LookAheadLeft;
+  unsigned LookAheadLeft = LookAheadLimit;
   while (LookAheadLeft) {
     // Skip over dbg_value's.
     while (I != E && I->isDebugValue())
