@@ -71,11 +71,13 @@ static bool ContainsFPStackCode(MachineBasicBlock *MBB, unsigned SSELevel,
       const TargetRegisterClass *RegClass =
         MRI.getRegClass(I->getOperand(op).getReg());
       
-      switch (RegClass->getID())
+      switch (RegClass->getID()) {
+      default: break;
       case X86::RFP32RegClassID:
       case X86::RFP64RegClassID:
       case X86::RFP80RegClassID:
-      return true;
+        return true;
+      }
     }
   }
   
