@@ -197,13 +197,13 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
   if (MI->getDesc().isTerminator() || MI->isLabel())
     return true;
 
-  // Don't attempt to schedule around any instruction that modifies
+  // Don't attempt to schedule around any instruction that defines
   // a stack-oriented pointer, as it's unlikely to be profitable. This
   // saves compile time, because it doesn't require every single
   // stack slot reference to depend on the instruction that does the
   // modification.
   const TargetLowering &TLI = *MF.getTarget().getTargetLowering();
-  if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore()))
+  if (MI->definesRegister(TLI.getStackPointerRegisterToSaveRestore()))
     return true;
 
   return false;

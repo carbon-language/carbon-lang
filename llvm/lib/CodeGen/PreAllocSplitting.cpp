@@ -882,7 +882,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
          !RefsInMBB.count(FoldPt))
     --FoldPt;
   
-  int OpIdx = FoldPt->findRegisterDefOperandIdx(vreg, false);
+  int OpIdx = FoldPt->findRegisterDefOperandIdx(vreg);
   if (OpIdx == -1)
     return 0;
   

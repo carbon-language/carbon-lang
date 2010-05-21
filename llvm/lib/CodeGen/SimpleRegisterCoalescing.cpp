@@ -626,7 +626,8 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
     if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg && DstSubIdx == 0) {
       // Last use is itself an identity code.
-      int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg, false, tri_);
+      int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg,
+                                                         false, false, tri_);
       LastUseMI->getOperand(DeadIdx).setIsDead();
     }
     return true;
@@ -949,7 +950,7 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
   MachineInstr *DefMI =
     li_->getInstructionFromIndex(LRStart.getDefIndex());
   if (DefMI && DefMI != CopyMI) {
-    int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg, false);
+    int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg);
     if (DeadIdx != -1)
       DefMI->getOperand(DeadIdx).setIsDead();
     else

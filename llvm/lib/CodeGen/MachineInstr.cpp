@@ -813,20 +813,25 @@ MachineInstr::readsWritesVirtualRegister(unsigned Reg,
 /// the specified register or -1 if it is not found. If isDead is true, defs
 /// that are not dead are skipped. If TargetRegisterInfo is non-null, then it
 /// also checks if there is a def of a super-register.
-int MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead,
-                                          const TargetRegisterInfo *TRI) const {
+int
+MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead, bool Overlap,
+                                        const TargetRegisterInfo *TRI) const {
+  bool isPhys = TargetRegisterInfo::isPhysicalRegister(Reg);
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
     if (!MO.isReg() || !MO.isDef())
       continue;
     unsigned MOReg = MO.getReg();
-    if (MOReg == Reg ||
-        (TRI &&
-         TargetRegisterInfo::isPhysicalRegister(MOReg) &&
-         TargetRegisterInfo::isPhysicalRegister(Reg) &&
-         TRI->isSubRegister(MOReg, Reg)))
-      if (!isDead || MO.isDead())
-        return i;
+    bool Found = (MOReg == Reg);
+    if (!Found && TRI && isPhys &&
+        TargetRegisterInfo::isPhysicalRegister(MOReg)) {
+      if (Overlap)
+        Found = TRI->regsOverlap(MOReg, Reg);
+      else
+        Found = TRI->isSubRegister(MOReg, Reg);
+    }
+    if (Found && (!isDead || MO.isDead()))
+      return i;
   }
   return -1;
 }

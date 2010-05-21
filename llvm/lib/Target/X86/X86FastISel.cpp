@@ -916,7 +916,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
                RI = MBB->rbegin(), RE = MBB->rend(); RI != RE; ++RI) {
           const MachineInstr &MI = *RI;
 
-          if (MI.modifiesRegister(Reg)) {
+          if (MI.definesRegister(Reg)) {
             unsigned Src, Dst, SrcSR, DstSR;
 
             if (getInstrInfo()->isMoveInstr(MI, Src, Dst, SrcSR, DstSR)) {

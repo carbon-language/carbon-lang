@@ -258,12 +258,19 @@ public:
     return findRegisterUseOperandIdx(Reg, true, TRI) != -1;
   }
 
-  /// modifiesRegister - Return true if the MachineInstr modifies the
+  /// definesRegister - Return true if the MachineInstr fully defines the
   /// specified register. If TargetRegisterInfo is passed, then it also checks
   /// if there is a def of a super-register.
-  bool modifiesRegister(unsigned Reg,
-                        const TargetRegisterInfo *TRI = NULL) const {
-    return findRegisterDefOperandIdx(Reg, false, TRI) != -1;
+  /// NOTE: It's ignoring subreg indices on virtual registers.
+  bool definesRegister(unsigned Reg, const TargetRegisterInfo *TRI=NULL) const {
+    return findRegisterDefOperandIdx(Reg, false, false, TRI) != -1;
+  }
+
+  /// modifiesRegister - Return true if the MachineInstr modifies (fully define
+  /// or partially define) the specified register.
+  /// NOTE: It's ignoring subreg indices on virtual registers.
+  bool modifiesRegister(unsigned Reg, const TargetRegisterInfo *TRI) const {
+    return findRegisterDefOperandIdx(Reg, false, true, TRI) != -1;
   }
 
   /// registerDefIsDead - Returns true if the register is dead in this machine
@@ -271,7 +278,7 @@ public:
   /// if there is a dead def of a super-register.
   bool registerDefIsDead(unsigned Reg,
                          const TargetRegisterInfo *TRI = NULL) const {
-    return findRegisterDefOperandIdx(Reg, true, TRI) != -1;
+    return findRegisterDefOperandIdx(Reg, true, false, TRI) != -1;
   }
 
   /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
@@ -290,16 +297,18 @@ public:
   
   /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
   /// the specified register or -1 if it is not found. If isDead is true, defs
-  /// that are not dead are skipped. If TargetRegisterInfo is non-null, then it
-  /// also checks if there is a def of a super-register.
-  int findRegisterDefOperandIdx(unsigned Reg, bool isDead = false,
+  /// that are not dead are skipped. If Overlap is true, then it also looks for
+  /// defs that merely overlap the specified register. If TargetRegisterInfo is
+  /// non-null, then it also checks if there is a def of a super-register.
+  int findRegisterDefOperandIdx(unsigned Reg,
+                                bool isDead = false, bool Overlap = false,
                                 const TargetRegisterInfo *TRI = NULL) const;
 
   /// findRegisterDefOperand - Wrapper for findRegisterDefOperandIdx, it returns
   /// a pointer to the MachineOperand rather than an index.
   MachineOperand *findRegisterDefOperand(unsigned Reg, bool isDead = false,
                                          const TargetRegisterInfo *TRI = NULL) {
-    int Idx = findRegisterDefOperandIdx(Reg, isDead, TRI);
+    int Idx = findRegisterDefOperandIdx(Reg, isDead, false, TRI);
     return (Idx == -1) ? NULL : &getOperand(Idx);
   }
 

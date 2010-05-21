@@ -562,7 +562,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       end = baseIndex.getDefIndex();
       goto exit;
     } else {
-      int DefIdx = mi->findRegisterDefOperandIdx(interval.reg, false, tri_);
+      int DefIdx = mi->findRegisterDefOperandIdx(interval.reg,false,false,tri_);
       if (DefIdx != -1) {
         if (mi->isRegTiedToUseOperand(DefIdx)) {
           // Two-address instruction.
@@ -624,7 +624,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     for (const unsigned* AS = tri_->getSubRegisters(MO.getReg()); *AS; ++AS)
       // If MI also modifies the sub-register explicitly, avoid processing it
       // more than once. Do not pass in TRI here so it checks for exact match.
-      if (!MI->modifiesRegister(*AS))
+      if (!MI->definesRegister(*AS))
         handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
                                   getOrCreateInterval(*AS), 0);
   }
@@ -665,7 +665,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       end = baseIndex.getDefIndex();
       SeenDefUse = true;
       break;
-    } else if (mi->modifiesRegister(interval.reg, tri_)) {
+    } else if (mi->definesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
       // Then the register is essentially dead at the instruction that defines
       // it. Hence its interval is:

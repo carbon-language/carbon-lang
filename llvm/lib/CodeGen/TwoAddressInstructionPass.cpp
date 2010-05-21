@@ -780,7 +780,7 @@ canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
     if (!LastKill)
       return false;
 
-    bool isModRef = LastKill->modifiesRegister(Kill);
+    bool isModRef = LastKill->definesRegister(Kill);
     NewKills.push_back(std::make_pair(std::make_pair(Kill, isModRef),
                                       LastKill));
   }
