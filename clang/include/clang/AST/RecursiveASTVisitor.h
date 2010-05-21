@@ -31,44 +31,50 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
-  
+
 #define DISPATCH(NAME, CLASS, Var) \
-return static_cast<Derived*>(this)->Visit ## NAME(static_cast<CLASS*>(Var))
+return getDerived().Visit ## NAME(static_cast<CLASS*>(Var))
 
-  /**
-   * \brief A visitor that recursively walks the entire Clang AST.
-   *
-   * Clients of this visitor should subclass the visitor (providing themselves
-   * as the template argument, using the curiously recurring template pattern)
-   * and override any of the Visit* methods for declaration, type, statement,
-   * expression, or other AST nodes where the visitor should customize
-   * behavior.  Returning "true" from one of these overridden functions will
-   * abort the entire traversal.  An overridden Visit* method will not descend
-   * further into the AST for that node unless Base::Visit* is called.
-   */
+  // We use preprocessor meta-programming to generate the Visit*()
+  // methods for all subclasses of Stmt, Decl, and Type.  Some of the
+  // generated definitions, however, need to be customized.  The
+  // meta-programming technique we use doesn't let us select which
+  // methods to generate.  Therefore we have to generate ALL of them in
+  // a helper class RecursiveASTVisitorImpl, and override the ones we
+  // don't like in a child class RecursiveASTVisitor (C++ doesn't allow
+  // overriding a method in the same class).
+  //
+  // Do not use this class directly - use RecursiveASTVisitor instead.
   template<typename Derived>
-  class RecursiveASTVisitor {
+  class RecursiveASTVisitorImpl {
   public:
-    typedef RecursiveASTVisitor<Derived> Base;
-
     /// \brief Return a reference to the derived class.
     Derived &getDerived() { return *static_cast<Derived*>(this); }
-    
-    /// \brief Recursively visit a statement or expression.
+
+    /// \brief Recursively visit a statement or expression, by
+    /// dispatching to Visit*() based on the argument's dynamic type.
+    /// This is NOT meant to be overridden by a subclass.
     ///
-    /// \returns true if the visitation was terminated early, false otherwise.
+    /// \returns true if the visitation was terminated early, false
+    /// otherwise (including when the argument is NULL).
     bool Visit(Stmt *S);
-        
-    /// \brief Recursively visit a type.
+
+    /// \brief Recursively visit a type, by dispatching to
+    /// Visit*Type() based on the argument's getTypeClass() property.
+    /// This is NOT meant to be overridden by a subclass.
     ///
-    /// \returns true if the visitation was terminated early, false otherwise.
-    bool Visit(QualType T);    
-    
-    /// \brief Recursively visit a declaration.
+    /// \returns true if the visitation was terminated early, false
+    /// otherwise (including when the argument is a Null type).
+    bool Visit(QualType T);
+
+    /// \brief Recursively visit a declaration, by dispatching to
+    /// Visit*Decl() based on the argument's dynamic type.  This is
+    /// NOT meant to be overridden by a subclass.
     ///
-    /// \returns true if the visitation was terminated early, false otherwise.
+    /// \returns true if the visitation was terminated early, false
+    /// otherwise (including when the argument is NULL).
     bool Visit(Decl *D);
-    
+
     /// \brief Recursively visit a C++ nested-name-specifier.
     ///
     /// \returns true if the visitation was terminated early, false otherwise.
@@ -142,19 +148,36 @@ DISPATCH(UnaryOperator, UnaryOperator, S);    \
     UNARYOP_FALLBACK(Real)      UNARYOP_FALLBACK(Imag)
     UNARYOP_FALLBACK(Extension) UNARYOP_FALLBACK(OffsetOf)
 #undef UNARYOP_FALLBACK
-    
-    /// \brief Basis base for statement and expression visitation, which
+
+    /// \brief Basis for statement and expression visitation, which
     /// visits all of the substatements and subexpressions.
-    bool VisitStmt(Stmt *Node);
-    
+    ///
+    /// The relation between Visit(Stmt *S) and this method is that
+    /// the former dispatches to Visit*() based on S's dynamic type,
+    /// which forwards the call up the inheritance chain until
+    /// reaching VisitStmt(), which then calls Visit() on each
+    /// substatement/subexpression.
+    bool VisitStmt(Stmt *S);
+
+    /// \brief Basis for type visitation, which by default does nothing.
+    ///
+    /// The relation between Visit(QualType T) and this method is
+    /// that the former dispatches to Visit*Type(), which forwards the
+    /// call up the inheritance chain until reaching VisitType().
     bool VisitType(Type *T);
-    
+
 #define TYPE(Class, Base) \
     bool Visit##Class##Type(Class##Type *T);
 #include "clang/AST/TypeNodes.def"
-    
+
+    /// \brief Basis for declaration and definition visitation, which
+    /// visits all of the subnodes.
+    ///
+    /// The relation between Visit(Decl *) and this method is that the
+    /// former dispatches to Visit*Decl(), which forwards the call up
+    /// the inheritance chain until reaching VisitDecl().
     bool VisitDecl(Decl *D);
-    
+
 #define DECL(Class, Base)                          \
     bool Visit##Class##Decl(Class##Decl *D) {      \
       return getDerived().Visit##Base(D);          \
@@ -164,7 +187,7 @@ DISPATCH(UnaryOperator, UnaryOperator, S);    \
   };
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::Visit(Stmt *S) {
+  bool RecursiveASTVisitorImpl<Derived>::Visit(Stmt *S) {
     if (!S)
       return false;
     
@@ -250,7 +273,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
   
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::Visit(QualType T) {
+  bool RecursiveASTVisitorImpl<Derived>::Visit(QualType T) {
     if (T.isNull())
       return false;
     
@@ -265,7 +288,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
   
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::Visit(Decl *D) {
+  bool RecursiveASTVisitorImpl<Derived>::Visit(Decl *D) {
     if (!D)
       return false;
     
@@ -280,7 +303,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitNestedNameSpecifier(
+  bool RecursiveASTVisitorImpl<Derived>::VisitNestedNameSpecifier(
                                                     NestedNameSpecifier *NNS) {
     if (NNS->getPrefix() && 
         getDerived().VisitNestedNameSpecifier(NNS->getPrefix()))
@@ -301,7 +324,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTemplateName(TemplateName Template) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitTemplateName(TemplateName Template) {
     if (DependentTemplateName *DTN = Template.getAsDependentTemplateName())
       return DTN->getQualifier() && 
              getDerived().VisitNestedNameSpecifier(DTN->getQualifier());
@@ -313,7 +336,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
   
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTemplateArgument(
+  bool RecursiveASTVisitorImpl<Derived>::VisitTemplateArgument(
                                                 const TemplateArgument &Arg) {
     switch (Arg.getKind()) {       
     case TemplateArgument::Null:
@@ -339,7 +362,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
   
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTemplateArguments(
+  bool RecursiveASTVisitorImpl<Derived>::VisitTemplateArguments(
                                                   const TemplateArgument *Args, 
                                                             unsigned NumArgs) {
     for (unsigned I = 0; I != NumArgs; ++I)
@@ -350,7 +373,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitStmt(Stmt *Node) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitStmt(Stmt *Node) {
     for (Stmt::child_iterator C = Node->child_begin(), CEnd = Node->child_end();
          C != CEnd; ++C) {
       if (Visit(*C))
@@ -361,17 +384,17 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitType(Type *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitType(Type *T) {
     return false;
   }
   
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitBuiltinType(BuiltinType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitBuiltinType(BuiltinType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitComplexType(ComplexType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitComplexType(ComplexType *T) {
     if (Visit(T->getElementType()))
       return true;
     
@@ -379,7 +402,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitPointerType(PointerType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitPointerType(PointerType *T) {
     if (Visit(T->getPointeeType()))
       return true;
     
@@ -387,7 +410,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitBlockPointerType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitBlockPointerType(
                                                          BlockPointerType *T) {
     if (Visit(T->getPointeeType()))
       return true;
@@ -396,7 +419,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitReferenceType(ReferenceType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitReferenceType(ReferenceType *T) {
     if (Visit(T->getPointeeType()))
       return true;
     
@@ -404,19 +427,19 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitLValueReferenceType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitLValueReferenceType(
                                                       LValueReferenceType *T) {
     return getDerived().VisitReferenceType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitRValueReferenceType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitRValueReferenceType(
                                                       RValueReferenceType *T) {
     return getDerived().VisitReferenceType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitMemberPointerType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitMemberPointerType(
                                                         MemberPointerType *T) {
     if (Visit(QualType(T->getClass(), 0)) || Visit(T->getPointeeType()))
       return true;
@@ -425,7 +448,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitArrayType(ArrayType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitArrayType(ArrayType *T) {
     if (Visit(T->getElementType()))
       return true;
     
@@ -433,19 +456,19 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitConstantArrayType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitConstantArrayType(
                                                         ConstantArrayType *T) {
     return getDerived().VisitArrayType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitIncompleteArrayType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitIncompleteArrayType(
                                                       IncompleteArrayType *T) {
     return getDerived().VisitArrayType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitVariableArrayType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitVariableArrayType(
                                                         VariableArrayType *T) {
     if (Visit(T->getSizeExpr()))
       return true;
@@ -454,7 +477,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitDependentSizedArrayType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitDependentSizedArrayType(
                                                   DependentSizedArrayType *T) {
     if (T->getSizeExpr() && Visit(T->getSizeExpr()))
       return true;
@@ -463,7 +486,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitDependentSizedExtVectorType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitDependentSizedExtVectorType(
                                               DependentSizedExtVectorType *T) {
     if ((T->getSizeExpr() && Visit(T->getSizeExpr())) ||
         Visit(T->getElementType()))
@@ -473,7 +496,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitVectorType(VectorType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitVectorType(VectorType *T) {
     if (Visit(T->getElementType()))
       return true;
     
@@ -481,12 +504,12 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitExtVectorType(ExtVectorType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitExtVectorType(ExtVectorType *T) {
     return getDerived().VisitVectorType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitFunctionType(FunctionType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitFunctionType(FunctionType *T) {
     if (Visit(T->getResultType()))
       return true;
     
@@ -494,13 +517,13 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitFunctionNoProtoType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitFunctionNoProtoType(
                                                       FunctionNoProtoType *T) {
     return getDerived().VisitFunctionType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitFunctionProtoType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitFunctionProtoType(
                                                         FunctionProtoType *T) {
     for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
                                            AEnd = T->arg_type_end();
@@ -520,18 +543,18 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitUnresolvedUsingType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitUnresolvedUsingType(
                                                       UnresolvedUsingType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTypedefType(TypedefType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitTypedefType(TypedefType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTypeOfExprType(TypeOfExprType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitTypeOfExprType(TypeOfExprType *T) {
     if (Visit(T->getUnderlyingExpr()))
       return true;
     
@@ -539,7 +562,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTypeOfType(TypeOfType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitTypeOfType(TypeOfType *T) {
     if (Visit(T->getUnderlyingType()))
       return true;
     
@@ -547,7 +570,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitDecltypeType(DecltypeType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitDecltypeType(DecltypeType *T) {
     if (Visit(T->getUnderlyingExpr()))
       return true;
     
@@ -555,34 +578,34 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTagType(TagType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitTagType(TagType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitRecordType(RecordType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitRecordType(RecordType *T) {
     return getDerived().VisitTagType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitEnumType(EnumType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitEnumType(EnumType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTemplateTypeParmType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitTemplateTypeParmType(
                                                       TemplateTypeParmType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitSubstTemplateTypeParmType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitSubstTemplateTypeParmType(
                                                 SubstTemplateTypeParmType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitTemplateSpecializationType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitTemplateSpecializationType(
                                                TemplateSpecializationType *T) {
     if (getDerived().VisitTemplateName(T->getTemplateName()) ||
         getDerived().VisitTemplateArguments(T->getArgs(), T->getNumArgs()))
@@ -592,13 +615,13 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitInjectedClassNameType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitInjectedClassNameType(
                                                     InjectedClassNameType *T) {
     return getDerived().VisitType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitElaboratedType(ElaboratedType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitElaboratedType(ElaboratedType *T) {
     if (T->getQualifier() &&
         getDerived().VisitNestedNameSpecifier(T->getQualifier()))
       return true;
@@ -609,7 +632,7 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitDependentNameType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitDependentNameType(
                                                         DependentNameType *T) {
     if (T->getQualifier() && 
         getDerived().VisitNestedNameSpecifier(T->getQualifier()))
@@ -624,13 +647,13 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitObjCInterfaceType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitObjCInterfaceType(
                                                         ObjCInterfaceType *T) {
     return getDerived().VisitObjCObjectType(T);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitObjCObjectType(ObjCObjectType *T) {
+  bool RecursiveASTVisitorImpl<Derived>::VisitObjCObjectType(ObjCObjectType *T) {
     // We have to watch out here because an ObjCInterfaceType's base
     // type is itself.
     if (T->getBaseType().getTypePtr() != T)
@@ -641,37 +664,104 @@ case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
   }
 
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitObjCObjectPointerType(
+  bool RecursiveASTVisitorImpl<Derived>::VisitObjCObjectPointerType(
                                                     ObjCObjectPointerType *T) {
     if (Visit(T->getPointeeType()))
       return true;
     
     return getDerived().VisitType(T);
   }
-  
+
   template<typename Derived>
-  bool RecursiveASTVisitor<Derived>::VisitDecl(Decl *D) {
-    // FIXME: This is a lazy shortcut, to avoid having to provide recursive 
-    // Visit*Decl defaults for every declaration kind.
-    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-      if (Function->isThisDeclarationADefinition())
-        return Visit(Function->getBody());
-      
-      return false;
-    } 
-    
+  bool RecursiveASTVisitorImpl<Derived>::VisitDecl(Decl *D) {
     if (DeclContext *DC = dyn_cast<DeclContext>(D)) {
       for (DeclContext::decl_iterator Child = DC->decls_begin(),
                                    ChildEnd = DC->decls_end();
            Child != ChildEnd; ++Child)
         if (Visit(*Child))
           return true;
-      
+
       return false;
     }
-    
+
     return false;
   }
+
+  /// \brief A visitor that recursively walks the entire Clang AST.
+  ///
+  /// Clients of this visitor should subclass the visitor (providing
+  /// themselves as the template argument, using the curiously
+  /// recurring template pattern) and override any of the Visit*
+  /// methods (except Visit()) for declaration, type, statement,
+  /// expression, or other AST nodes where the visitor should customize
+  /// behavior. Returning "true" from one of these overridden functions
+  /// will abort the entire traversal.  An overridden Visit* method
+  /// will not descend further into the AST for that node unless
+  /// Base::Visit* is called.
+  template<typename Derived>
+  class RecursiveASTVisitor : public RecursiveASTVisitorImpl<Derived> {
+    typedef RecursiveASTVisitorImpl<Derived> Impl;
+  public:
+    typedef RecursiveASTVisitor<Derived> Base;
+
+    bool VisitDeclaratorDecl(DeclaratorDecl *D);
+    bool VisitFunctionDecl(FunctionDecl *D);
+    bool VisitVarDecl(VarDecl *D);
+    bool VisitBlockDecl(BlockDecl *D);
+    bool VisitDeclStmt(DeclStmt *S);
+    bool VisitFunctionType(FunctionType *F);
+    bool VisitFunctionProtoType(FunctionProtoType *F);
+ };
+
+#define DEFINE_VISIT(Type, Name, Statement)                         \
+    template<typename Derived>                                      \
+    bool RecursiveASTVisitor<Derived>::Visit ## Type (Type *Name) { \
+      if (Impl::Visit ## Type (Name)) return true;                  \
+      { Statement; }                                                \
+      return false;                                                 \
+    }
+
+DEFINE_VISIT(DeclaratorDecl, D, {
+    if (TypeSourceInfo *TInfo = D->getTypeSourceInfo())
+      return this->Visit(TInfo->getType());
+  })
+
+DEFINE_VISIT(FunctionDecl, D, {
+    if (D->isThisDeclarationADefinition())
+      return this->Visit(D->getBody());
+  })
+
+DEFINE_VISIT(VarDecl, D, return this->Visit(D->getInit()))
+
+DEFINE_VISIT(BlockDecl, D, return this->Visit(D->getBody()))
+
+DEFINE_VISIT(DeclStmt, S, {
+    for (DeclStmt::decl_iterator I = S->decl_begin(), E = S->decl_end();
+         I != E; ++I) {
+      if (this->Visit(*I))
+        return true;
+    }
+  })
+
+// FunctionType is the common base class of FunctionNoProtoType (a
+// K&R-style function declaration that has no information about
+// its arguments) and FunctionProtoType.
+DEFINE_VISIT(FunctionType, F, return this->Visit(F->getResultType()))
+
+DEFINE_VISIT(FunctionProtoType, F, {
+    for (unsigned i = 0; i != F->getNumArgs(); ++i) {
+      if (this->Visit(F->getArgType(i)))
+        return true;
+    }
+    for (unsigned i = 0; i != F->getNumExceptions(); ++i) {
+      if (this->Visit(F->getExceptionType(i)))
+        return true;
+    }
+  })
+
+#undef DEFINE_VISIT
+
+#undef DISPATCH
 
 } // end namespace clang
 
