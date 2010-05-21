@@ -307,6 +307,31 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                     SourceLocation(), false))
           return true;
         continue;
+      } 
+      
+      if (MemberOfUnknownSpecialization && (ObjectType || SS.isSet()) && 
+          IsTemplateArgumentList(1)) {
+        // We have something like t::getAs<T>, where getAs is a 
+        // member of an unknown specialization. However, this will only
+        // parse correctly as a template, so suggest the keyword 'template'
+        // before 'getAs' and treat this as a dependent template name.
+        Diag(Tok.getLocation(), diag::err_missing_dependent_template_keyword)
+          << II.getName()
+          << FixItHint::CreateInsertion(Tok.getLocation(), "template ");
+        
+        Template = Actions.ActOnDependentTemplateName(Tok.getLocation(), SS, 
+                                                      TemplateName, ObjectType,
+                                                      EnteringContext);
+        if (!Template.get())
+          return true;     
+        
+        // Consume the identifier.
+        ConsumeToken();
+        if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name, &SS,
+                                    TemplateName, SourceLocation(), false))
+          return true;
+        
+        continue;        
       }
     }
 

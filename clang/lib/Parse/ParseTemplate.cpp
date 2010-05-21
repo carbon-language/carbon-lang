@@ -971,11 +971,16 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
 /// \brief Determine whether the current tokens can only be parsed as a 
 /// template argument list (starting with the '<') and never as a '<' 
 /// expression.
-bool Parser::IsTemplateArgumentList() {
+bool Parser::IsTemplateArgumentList(unsigned Skip) {
   struct AlwaysRevertAction : TentativeParsingAction {
     AlwaysRevertAction(Parser &P) : TentativeParsingAction(P) { }
     ~AlwaysRevertAction() { Revert(); }
   } Tentative(*this);
+  
+  while (Skip) {
+    ConsumeToken();
+    --Skip;
+  }
   
   // '<'
   if (!Tok.is(tok::less))

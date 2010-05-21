@@ -175,6 +175,7 @@ bool Sema::DiagnoseUnknownTemplateName(const IdentifierInfo &II,
                                        TemplateNameKind &SuggestedKind) {
   // We can't recover unless there's a dependent scope specifier preceding the
   // template name.
+  // FIXME: Typo correction?
   if (!SS || !SS->isSet() || !isDependentScopeSpecifier(*SS) ||
       computeDeclContext(*SS))
     return false;
