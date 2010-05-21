@@ -217,10 +217,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (!X86ScalarSSEf64) {
     setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
-    if (Subtarget->is64Bit() && Subtarget->hasMMX() && !DisableMMX) {
-      // Without SSE, i64->f64 goes through memory; i64->MMX is legal.
-      setOperationAction(ISD::BIT_CONVERT    , MVT::i64  , Custom);
+    if (Subtarget->is64Bit()) {
       setOperationAction(ISD::BIT_CONVERT    , MVT::f64  , Expand);
+      // Without SSE, i64->f64 goes through memory; i64->MMX is Legal.
+      if (Subtarget->hasMMX() && !DisableMMX)
+        setOperationAction(ISD::BIT_CONVERT    , MVT::i64  , Custom);
+      else 
+        setOperationAction(ISD::BIT_CONVERT    , MVT::i64  , Expand);
     }
   }
 
@@ -7485,6 +7488,9 @@ SDValue X86TargetLowering::LowerBIT_CONVERT(SDValue Op,
   if (SrcVT==MVT::i64 && DstVT.isVector())
     return Op;
   if (DstVT==MVT::i64 && SrcVT.isVector())
+    return Op;
+  // MMX <=> MMX conversions are Legal.
+  if (SrcVT.isVector() && DstVT.isVector())
     return Op;
   // All other conversions need to be expanded.
   return SDValue();
