@@ -1388,11 +1388,21 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
 
 void MachineInstr::addRegisterDefined(unsigned IncomingReg,
                                       const TargetRegisterInfo *RegInfo) {
-  MachineOperand *MO = findRegisterDefOperand(IncomingReg, false, RegInfo);
-  if (!MO || MO->getSubReg())
-    addOperand(MachineOperand::CreateReg(IncomingReg,
-                                         true  /*IsDef*/,
-                                         true  /*IsImp*/));
+  if (TargetRegisterInfo::isPhysicalRegister(IncomingReg)) {
+    MachineOperand *MO = findRegisterDefOperand(IncomingReg, false, RegInfo);
+    if (MO)
+      return;
+  } else {
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = getOperand(i);
+      if (MO.isReg() && MO.getReg() == IncomingReg && MO.isDef() &&
+          MO.getSubReg() == 0)
+        return;
+    }
+  }
+  addOperand(MachineOperand::CreateReg(IncomingReg,
+                                       true  /*IsDef*/,
+                                       true  /*IsImp*/));
 }
 
 unsigned

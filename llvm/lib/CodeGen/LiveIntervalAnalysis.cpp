@@ -320,6 +320,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // of inputs.
     if (MO.isEarlyClobber())
       defIndex = MIIdx.getUseIndex();
+
+    // Make sure the first definition is not a partial redefinition. Add an
+    // <imp-def> of the full register.
+    if (MO.getSubReg())
+      mi->addRegisterDefined(interval.reg);
+
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (mi->isExtractSubreg() || mi->isInsertSubreg() || mi->isSubregToReg() ||
@@ -1371,7 +1377,8 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
       MI->eraseFromParent();
       continue;
     }
-    assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
+    assert(!(O.isImplicit() && O.isUse()) &&
+           "Spilling register that's used as implicit use?");
     SlotIndex index = getInstructionIndex(MI);
     if (index < start || index >= end)
       continue;

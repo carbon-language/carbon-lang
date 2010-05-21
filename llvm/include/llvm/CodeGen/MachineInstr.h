@@ -338,7 +338,7 @@ public:
   /// addRegisterDefined - We have determined MI defines a register. Make sure
   /// there is an operand defining Reg.
   void addRegisterDefined(unsigned IncomingReg,
-                          const TargetRegisterInfo *RegInfo);
+                          const TargetRegisterInfo *RegInfo = 0);
 
   /// isSafeToMove - Return true if it is safe to move this instruction. If
   /// SawStore is set to true, it means that there is a store (or call) between
