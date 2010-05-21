@@ -2145,30 +2145,22 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     if (Processed.count(DV) != 0)
       continue;
 
-    if (DV.getTag() == dwarf::DW_TAG_arg_variable)  {
-      // FIXME Handle inlined subroutine arguments.
-      DbgVariable *ArgVar = new DbgVariable(DV);
-      CurrentFnDbgScope->addVariable(ArgVar);
-      DbgValueStartMap[MInsn] = ArgVar;
-      DbgVariableToDbgInstMap[ArgVar] = MInsn;
-      Processed.insert(DV);
-      continue;
-    }
-
     DbgScope *Scope = findDbgScope(MInsn);
+    if (!Scope && DV.getTag() == dwarf::DW_TAG_arg_variable)
+      Scope = CurrentFnDbgScope;
     // If variable scope is not found then skip this variable.
-    if (Scope == 0)
+    if (!Scope)
       continue;
 
     Processed.insert(DV);
-    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn->getDebugLoc());
     DbgVariable *RegVar = new DbgVariable(DV);
-    DbgValueStartMap[MInsn] = RegVar;
     DbgVariableToDbgInstMap[RegVar] = MInsn;
     Scope->addVariable(RegVar);
-    if (AbsDbgVariable) {
-      DbgVariableToDbgInstMap[AbsDbgVariable] = MInsn;
-      VarToAbstractVarMap[RegVar] = AbsDbgVariable;
+    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+      DbgValueStartMap[MInsn] = RegVar;
+    if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
+      DbgVariableToDbgInstMap[AbsVar] = MInsn;
+      VarToAbstractVarMap[RegVar] = AbsVar;
     }
   }
 
