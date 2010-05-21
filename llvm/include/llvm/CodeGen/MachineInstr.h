@@ -28,6 +28,7 @@
 
 namespace llvm {
 
+template <typename T> class SmallVectorImpl;
 class AliasAnalysis;
 class TargetInstrDesc;
 class TargetInstrInfo;
@@ -239,7 +240,16 @@ public:
   /// readsVirtualRegister - Return true if the MachineInstr reads the specified
   /// virtual register. Take into account that a partial define is a
   /// read-modify-write operation.
-  bool readsVirtualRegister(unsigned Reg) const;
+  bool readsVirtualRegister(unsigned Reg) const {
+    return readsWritesVirtualRegister(Reg).first;
+  }
+
+  /// readsWritesVirtualRegister - Return a pair of bools (reads, writes)
+  /// indicating if this instruction reads or writes Reg. This also considers
+  /// partial defines.
+  /// If Ops is not null, all operand indices for Reg are added.
+  std::pair<bool,bool> readsWritesVirtualRegister(unsigned Reg,
+                                      SmallVectorImpl<unsigned> *Ops = 0) const;
 
   /// killsRegister - Return true if the MachineInstr kills the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there is
