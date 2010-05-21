@@ -212,6 +212,18 @@ public:
   }
 };
 
+class ELFX86_32AsmBackend : public ELFX86AsmBackend {
+public:
+  ELFX86_32AsmBackend(const Target &T)
+    : ELFX86AsmBackend(T) {}
+};
+
+class ELFX86_64AsmBackend : public ELFX86AsmBackend {
+public:
+  ELFX86_64AsmBackend(const Target &T)
+    : ELFX86AsmBackend(T) {}
+};
+
 class DarwinX86AsmBackend : public X86AsmBackend {
 public:
   DarwinX86AsmBackend(const Target &T)
@@ -291,7 +303,7 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   case Triple::Darwin:
     return new DarwinX86_32AsmBackend(T);
   default:
-    return new ELFX86AsmBackend(T);
+    return new ELFX86_32AsmBackend(T);
   }
 }
 
@@ -301,6 +313,6 @@ TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
   case Triple::Darwin:
     return new DarwinX86_64AsmBackend(T);
   default:
-    return new ELFX86AsmBackend(T);
+    return new ELFX86_64AsmBackend(T);
   }
 }
