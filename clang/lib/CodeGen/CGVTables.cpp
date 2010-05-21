@@ -2642,9 +2642,15 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
     ParmVarDecl *Param = *I;
     QualType ArgType = Param->getType();
     
-    // FIXME: Declaring a DeclRefExpr on the stack is kinda icky.
-    DeclRefExpr ArgExpr(Param, ArgType.getNonReferenceType(), SourceLocation());
-    CallArgs.push_back(std::make_pair(EmitCallArg(&ArgExpr, ArgType), ArgType));
+    // Load the argument corresponding to this parameter.
+    RValue Arg;
+    if (ArgType->isReferenceType() ||
+        (hasAggregateLLVMType(ArgType) && !ArgType->isAnyComplexType()))
+      Arg = RValue::get(Builder.CreateLoad(LocalDeclMap[Param]));
+    else
+      Arg = RValue::get(EmitLoadOfScalar(LocalDeclMap[Param], false, ArgType));
+    
+    CallArgs.push_back(std::make_pair(Arg, ArgType));
   }
 
   // Get our callee.

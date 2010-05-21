@@ -173,6 +173,51 @@ namespace Test6 {
   X Thunks::f() { return X(); }
 }
 
+namespace Test7 {
+  // PR7188
+  struct X {
+    X();
+    X(const X&);
+    X &operator=(const X&);
+    ~X();
+  };
+
+  struct Small { short s; };
+  struct Large {
+    char array[1024];
+  };
+
+  class A {
+  protected:
+    virtual void foo() = 0;
+  };
+
+  class B : public A {
+  protected:
+    virtual void bar() = 0;
+  };
+
+  class C : public A  {
+  protected:
+    virtual void baz(X, X&, _Complex float, Small, Small&, Large) = 0;
+  };
+
+  class D : public B,
+            public C {
+
+    void foo() {}
+    void bar() {}
+    void baz(X, X&, _Complex float, Small, Small&, Large);
+  };
+
+  void D::baz(X, X&, _Complex float, Small, Small&, Large) { }
+
+  // CHECK: define void @_ZThn8_N5Test71D3bazENS_1XERS1_CfNS_5SmallERS4_NS_5LargeE(
+  // CHECK-NOT: memcpy
+  // CHECK: ret void
+  void testD() { D d; }
+}
+
 // This is from Test5:
 // CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 // CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
