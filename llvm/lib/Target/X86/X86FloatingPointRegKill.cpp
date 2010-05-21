@@ -42,12 +42,16 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
-    virtual const char *getPassName() const { return "X86 FP_REG_KILL inserter"; }
+    virtual const char *getPassName() const {
+      return "X86 FP_REG_KILL inserter";
+    }
   };
   char FPRegKiller::ID = 0;
 }
 
-FunctionPass *llvm::createX87FPRegKillInserterPass() { return new FPRegKiller(); }
+FunctionPass *llvm::createX87FPRegKillInserterPass() {
+  return new FPRegKiller();
+}
 
 bool FPRegKiller::runOnMachineFunction(MachineFunction &MF) {
   // If we are emitting FP stack code, scan the basic block to determine if this
@@ -112,15 +116,14 @@ bool FPRegKiller::runOnMachineFunction(MachineFunction &MF) {
       // Final check, check LLVM BB's that are successors to the LLVM BB
       // corresponding to BB for FP PHI nodes.
       const BasicBlock *LLVMBB = MBB->getBasicBlock();
-      const PHINode *PN;
       for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
            !ContainsFPCode && SI != E; ++SI) {
+        const PHINode *PN;
         for (BasicBlock::const_iterator II = SI->begin();
              (PN = dyn_cast<PHINode>(II)); ++II) {
-          if (PN->getType()==Type::getX86_FP80Ty(LLVMBB->getContext()) ||
+          if (PN->getType()->isX86_FP80Ty() ||
               (!Subtarget.hasSSE1() && PN->getType()->isFloatingPointTy()) ||
-              (!Subtarget.hasSSE2() &&
-                PN->getType()==Type::getDoubleTy(LLVMBB->getContext()))) {
+              (!Subtarget.hasSSE2() && PN->getType()->isDoubleTy())) {
             ContainsFPCode = true;
             break;
           }
