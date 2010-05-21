@@ -104,3 +104,8 @@ movl	0, %eax   // CHECK: movl 0, %eax # encoding: [0x8b,0x04,0x25,A,A,A,A]
 // CHECK: movq $10, %rax
 // CHECK: encoding: [0x48,0xc7,0xc0,0x0a,0x00,0x00,0x00]
         movq $10, %rax
+
+// rdar://8014869
+retq
+// CHECK: ret
+// CHECK:  encoding: [0xc3]

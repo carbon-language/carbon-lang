@@ -584,6 +584,8 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("repnz", "repne")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
     .Case("popf",  Is64Bit ? "popfq"  : "popfl")
+    .Case("retl", Is64Bit ? "retl" : "ret")
+    .Case("retq", Is64Bit ? "ret" : "retq")
     .Default(Name);
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 

@@ -84,3 +84,8 @@ int $255
         popf
 // CHECK: popfl	        # encoding: [0x9d]
         popfl
+
+// rdar://8014869
+retl
+// CHECK: ret
+// CHECK:  encoding: [0xc3]
