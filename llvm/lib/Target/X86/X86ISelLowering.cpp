@@ -217,6 +217,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (!X86ScalarSSEf64) {
     setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
+    if (Subtarget->is64Bit() && Subtarget->hasMMX() && !DisableMMX) {
+      // Without SSE, i64->f64 goes through memory; i64->MMX is legal.
+      setOperationAction(ISD::BIT_CONVERT    , MVT::i64  , Custom);
+      setOperationAction(ISD::BIT_CONVERT    , MVT::f64  , Expand);
+    }
   }
 
   // Scalar integer divide and remainder are lowered to use operations that
@@ -678,6 +683,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,             MVT::v8i8, Custom);
     setOperationAction(ISD::VSETCC,             MVT::v4i16, Custom);
     setOperationAction(ISD::VSETCC,             MVT::v2i32, Custom);
+
+    if (!X86ScalarSSEf64 && Subtarget->is64Bit()) {
+      setOperationAction(ISD::BIT_CONVERT,        MVT::v8i8,  Custom);
+      setOperationAction(ISD::BIT_CONVERT,        MVT::v4i16, Custom);
+      setOperationAction(ISD::BIT_CONVERT,        MVT::v2i32, Custom);
+      setOperationAction(ISD::BIT_CONVERT,        MVT::v2f32, Custom);
+      setOperationAction(ISD::BIT_CONVERT,        MVT::v1i64, Custom);
+    }
   }
 
   if (!UseSoftFloat && Subtarget->hasSSE1()) {
@@ -7458,6 +7471,24 @@ SDValue X86TargetLowering::LowerREADCYCLECOUNTER(SDValue Op,
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
+SDValue X86TargetLowering::LowerBIT_CONVERT(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  EVT SrcVT = Op.getOperand(0).getValueType();
+  EVT DstVT = Op.getValueType();
+  assert((Subtarget->is64Bit() && !Subtarget->hasSSE2() && 
+          Subtarget->hasMMX() && !DisableMMX) &&
+         "Unexpected custom BIT_CONVERT");
+  assert((DstVT == MVT::i64 || 
+          (DstVT.isVector() && DstVT.getSizeInBits()==64)) &&
+         "Unexpected custom BIT_CONVERT");
+  // i64 <=> MMX conversions are Legal.
+  if (SrcVT==MVT::i64 && DstVT.isVector())
+    return Op;
+  if (DstVT==MVT::i64 && SrcVT.isVector())
+    return Op;
+  // All other conversions need to be expanded.
+  return SDValue();
+}
 SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
@@ -7527,6 +7558,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SMULO:
   case ISD::UMULO:              return LowerXALUO(Op, DAG);
   case ISD::READCYCLECOUNTER:   return LowerREADCYCLECOUNTER(Op, DAG);
+  case ISD::BIT_CONVERT:        return LowerBIT_CONVERT(Op, DAG);
   }
 }
 
