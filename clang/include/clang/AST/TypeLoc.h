@@ -85,16 +85,15 @@ public:
     return Data;
   }
 
+  /// \brief Get the begin source location.
+  SourceLocation getBeginLoc() const;
+
+  /// \brief Get the end source location.
+  SourceLocation getEndLoc() const;
+
   /// \brief Get the full source range.
   SourceRange getSourceRange() const {
-    SourceLocation End = getLocalSourceRange().getEnd();
-    TypeLoc Cur = *this;
-    while (true) {
-      TypeLoc Next = Cur.getNextTypeLoc();
-      if (Next.isNull()) break;
-      Cur = Next;
-    }
-    return SourceRange(Cur.getLocalSourceRange().getBegin(), End);
+    return SourceRange(getBeginLoc(), getEndLoc());
   }
 
   /// \brief Get the local source range.

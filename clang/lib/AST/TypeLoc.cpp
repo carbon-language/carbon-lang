@@ -108,6 +108,42 @@ void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
   }
 }
 
+SourceLocation TypeLoc::getBeginLoc() const {
+  TypeLoc Cur = *this;
+  while (true) {
+    switch (Cur.getTypeLocClass()) {
+    // FIXME: Currently QualifiedTypeLoc does not have a source range
+    // case Qualified:
+    case Elaborated:
+      break;
+    default:
+      TypeLoc Next = Cur.getNextTypeLoc();
+      if (Next.isNull()) break;
+      Cur = Next;
+      continue;
+    }
+    break;
+  }
+  return Cur.getLocalSourceRange().getBegin();
+}
+
+SourceLocation TypeLoc::getEndLoc() const {
+  TypeLoc Cur = *this;
+  while (true) {
+    switch (Cur.getTypeLocClass()) {
+    default:
+      break;
+    case Qualified:
+    case Elaborated:
+      Cur = Cur.getNextTypeLoc();
+      continue;
+    }
+    break;
+  }
+  return Cur.getLocalSourceRange().getEnd();
+}
+
+
 namespace {
   struct TSTChecker : public TypeLocVisitor<TSTChecker, bool> {
     // Overload resolution does the real work for us.
