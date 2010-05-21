@@ -157,10 +157,11 @@ static void CollectBlockDeclRefInfo(const Stmt *S, CGBlockInfo &Info) {
   }
 
   // Make sure to capture implicit 'self' references due to super calls.
-  else if (const ObjCMessageExpr *E = dyn_cast<ObjCMessageExpr>(S))
+  else if (const ObjCMessageExpr *E = dyn_cast<ObjCMessageExpr>(S)) {
     if (E->getReceiverKind() == ObjCMessageExpr::SuperClass || 
         E->getReceiverKind() == ObjCMessageExpr::SuperInstance)
       Info.NeedsObjCSelf = true;
+  }
 
   // Getter/setter uses may also cause implicit super references,
   // which we can check for with:
