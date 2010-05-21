@@ -1,7 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
-// RUN: grep objc_memmove_collectable %t | grep call | count 3
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
-// RUN: grep objc_memmove_collectable %t | grep call | count 4
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o - %s | FileCheck -check-prefix C %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o - %s | FileCheck -check-prefix CP %s
 
 static int count;
 
@@ -52,6 +50,13 @@ struct Derived : type_s { };
 void foo(Derived* src, Derived* dest) {
         *dest = *src;
 }
-
 #endif
 
+// CHECK-C: call i8* @objc_memmove_collectable
+// CHECK-C: call i8* @objc_memmove_collectable
+// CHECK-C: call i8* @objc_memmove_collectable
+
+// CHECK-CP: call i8* @objc_memmove_collectable
+// CHECK-CP: call i8* @objc_memmove_collectable
+// CHECK-CP: call i8* @objc_memmove_collectable
+// CHECK-CP: call i8* @objc_memmove_collectable
