@@ -1895,6 +1895,11 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
 
   // Clear kill info.
   SmallSet<unsigned, 2> KilledMIRegs;
+
+  // Keep track of the registers we have already spilled in case there are
+  // multiple defs of the same register in MI.
+  SmallSet<unsigned, 8> SpilledMIRegs;
+
   RegKills.reset();
   KillOps.clear();
   KillOps.resize(TRI->getNumRegs(), NULL);
@@ -2412,6 +2417,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     }
 
     // Process all of the spilled defs.
+    SpilledMIRegs.clear();
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
       if (!(MO.isReg() && MO.getReg() && MO.isDef()))
@@ -2505,7 +2511,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
       MI.getOperand(i).setReg(RReg);
       MI.getOperand(i).setSubReg(0);
 
-      if (!MO.isDead()) {
+      if (!MO.isDead() && SpilledMIRegs.insert(VirtReg)) {
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         SpillRegToStackSlot(MII, -1, PhysReg, StackSlot, RC, true,
           LastStore, Spills, ReMatDefs, RegKills, KillOps);
