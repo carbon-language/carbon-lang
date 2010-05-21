@@ -1052,6 +1052,9 @@ public:
   
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
+  LValue EmitLValueForAnonRecordField(llvm::Value* Base,
+                                      const FieldDecl* Field,
+                                      unsigned CVRQualifiers);
   LValue EmitLValueForField(llvm::Value* Base, const FieldDecl* Field,
                             unsigned CVRQualifiers);
   

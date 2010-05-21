@@ -1611,6 +1611,35 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                              Field->getType().getCVRQualifiers()|CVRQualifiers);
 }
 
+/// EmitLValueForAnonRecordField - Given that the field is a member of
+/// an anonymous struct or union buried inside a record, and given
+/// that the base value is a pointer to the enclosing record, derive
+/// an lvalue for the ultimate field.
+LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
+                                                     const FieldDecl *Field,
+                                                     unsigned CVRQualifiers) {
+  llvm::SmallVector<const FieldDecl *, 8> Path;
+  Path.push_back(Field);
+
+  while (Field->getParent()->isAnonymousStructOrUnion()) {
+    const ValueDecl *VD = Field->getParent()->getAnonymousStructOrUnionObject();
+    if (!isa<FieldDecl>(VD)) break;
+    Field = cast<FieldDecl>(VD);
+    Path.push_back(Field);
+  }
+
+  llvm::SmallVectorImpl<const FieldDecl*>::reverse_iterator
+    I = Path.rbegin(), E = Path.rend();
+  while (true) {
+    LValue LV = EmitLValueForField(BaseValue, *I, CVRQualifiers);
+    if (++I == E) return LV;
+
+    assert(LV.isSimple());
+    BaseValue = LV.getAddress();
+    CVRQualifiers |= LV.getVRQualifiers();
+  }
+}
+
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                            const FieldDecl* Field,
                                            unsigned CVRQualifiers) {

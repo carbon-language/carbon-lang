@@ -446,13 +446,15 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   QualType FieldType = CGF.getContext().getCanonicalType(Field->getType());
 
   llvm::Value *ThisPtr = CGF.LoadCXXThis();
-  LValue LHS = CGF.EmitLValueForFieldInitialization(ThisPtr, Field, 0);
+  LValue LHS;
   
   // If we are initializing an anonymous union field, drill down to the field.
   if (MemberInit->getAnonUnionMember()) {
     Field = MemberInit->getAnonUnionMember();
-    LHS = CGF.EmitLValueForField(LHS.getAddress(), Field, 0);
+    LHS = CGF.EmitLValueForAnonRecordField(ThisPtr, Field, 0);
     FieldType = Field->getType();
+  } else {
+    LHS = CGF.EmitLValueForFieldInitialization(ThisPtr, Field, 0);
   }
 
   // FIXME: If there's no initializer and the CXXBaseOrMemberInitializer
