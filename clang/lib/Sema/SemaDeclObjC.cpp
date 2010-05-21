@@ -763,6 +763,10 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
       << (*IM)->getType();
     Diag((*IF)->getLocation(), diag::note_previous_definition);
   }
+  if (ImpMethodDecl->isVariadic() != IntfMethodDecl->isVariadic()) {
+    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_variadic);
+    Diag(IntfMethodDecl->getLocation(), diag::note_previous_declaration);
+  }
 }
 
 /// FIXME: Type hierarchies in Objective-C can be deep. We could most likely
