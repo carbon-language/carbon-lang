@@ -36,7 +36,7 @@ static const struct {
   { 0, /*FIXME??*/              "S_DTRACE_DOF" },                 // 0x0F
   { 0, /*FIXME??*/              "S_LAZY_DYLIB_SYMBOL_POINTERS" }, // 0x10
   { "thread_local_regular",     "S_THREAD_LOCAL_REGULAR" },       // 0x11
-  { "thread_bss",               "S_THREAD_LOCAL_ZEROFILL" },      // 0x12
+  { "thread_local_zerofill",    "S_THREAD_LOCAL_ZEROFILL" },      // 0x12
   { "thread_local_variables",   "S_THREAD_LOCAL_VARIABLES" },     // 0x13
   { "thread_local_variable_pointers",
     "S_THREAD_LOCAL_VARIABLE_POINTERS" },                         // 0x14
