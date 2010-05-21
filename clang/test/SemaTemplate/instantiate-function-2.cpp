@@ -10,3 +10,13 @@ void f() {
   S<int> s1;
   S<int> s2(10);
 }
+
+namespace PR7184 {
+  template<typename T>
+  void f() {
+    typedef T type;
+    void g(int array[sizeof(type)]);
+  }
+
+  template void f<int>();
+}

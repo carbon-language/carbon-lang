@@ -970,6 +970,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
 
   bool MergeWithParentScope = (TemplateParams != 0) ||
+    Owner->isFunctionOrMethod() ||
     !(isa<Decl>(Owner) && 
       cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
   Sema::LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
