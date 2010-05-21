@@ -496,35 +496,6 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
                                    D, Loc, Ty));
 }
 
-/// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
-/// variable corresponding to the anonymous union or struct whose type
-/// is Record.
-static Decl *getObjectForAnonymousRecordDecl(ASTContext &Context,
-                                             RecordDecl *Record) {
-  assert(Record->isAnonymousStructOrUnion() &&
-         "Record must be an anonymous struct or union!");
-
-  // FIXME: Once Decls are directly linked together, this will be an O(1)
-  // operation rather than a slow walk through DeclContext's vector (which
-  // itself will be eliminated). DeclGroups might make this even better.
-  DeclContext *Ctx = Record->getDeclContext();
-  for (DeclContext::decl_iterator D = Ctx->decls_begin(),
-                               DEnd = Ctx->decls_end();
-       D != DEnd; ++D) {
-    if (*D == Record) {
-      // The object for the anonymous struct/union directly
-      // follows its type in the list of declarations.
-      ++D;
-      assert(D != DEnd && "Missing object for anonymous record");
-      assert(!cast<NamedDecl>(*D)->getDeclName() && "Decl should be unnamed");
-      return *D;
-    }
-  }
-
-  assert(false && "Missing object for anonymous record");
-  return 0;
-}
-
 /// \brief Given a field that represents a member of an anonymous
 /// struct/union, build the path from that field's context to the
 /// actual member.
@@ -549,7 +520,7 @@ VarDecl *Sema::BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
   DeclContext *Ctx = Field->getDeclContext();
   do {
     RecordDecl *Record = cast<RecordDecl>(Ctx);
-    Decl *AnonObject = getObjectForAnonymousRecordDecl(Context, Record);
+    ValueDecl *AnonObject = Record->getAnonymousStructOrUnionObject();
     if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
       Path.push_back(AnonField);
     else {
