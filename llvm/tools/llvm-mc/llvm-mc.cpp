@@ -75,9 +75,6 @@ FileType("filetype", cl::init(OFT_AssemblyFile),
                   "Emit a native object ('.o') file"),
        clEnumValEnd));
 
-static cl::opt<bool>
-Force("f", cl::desc("Enable binary output on terminals"));
-
 static cl::list<std::string>
 IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
