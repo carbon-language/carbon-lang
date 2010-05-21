@@ -1374,7 +1374,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
   //  we just use the 'ID' from the message expression.
   SVal receiverV;
 
-  if (const Expr *Receiver = ME->getInstanceReceiver()) {
+  if (Receiver) {
     receiverV = state->getSValAsScalarOrLoc(Receiver);
   
     // FIXME: Eventually replace the use of state->get<RefBindings> with
@@ -1724,7 +1724,7 @@ private:
 
   void ProcessNonLeakError(ExplodedNodeSet& Dst,
                            GRStmtNodeBuilder& Builder,
-                           Expr* NodeExpr, Expr* ErrorExpr,
+                           Expr* NodeExpr, SourceRange ErrorRange,
                            ExplodedNode* Pred,
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolRef Sym);
@@ -2572,7 +2572,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
   unsigned idx = 0;
-  Expr* ErrorExpr = NULL;
+  SourceRange ErrorRange;
   SymbolRef ErrorSym = 0;
 
   llvm::SmallVector<const MemRegion*, 10> RegionsToInvalidate;
@@ -2585,7 +2585,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       if (RefBindings::data_type* T = state->get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, Summ.getArg(idx), hasErr);
         if (hasErr) {
-          ErrorExpr = *I;
+          ErrorRange = (*I)->getSourceRange();
           ErrorSym = Sym;
           break;
         }
@@ -2678,13 +2678,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   }
 
   // Evaluate the effect on the message receiver.
-  if (!ErrorExpr && Receiver) {
+  if (!ErrorRange.isValid() && Receiver) {
     SymbolRef Sym = state->getSValAsScalarOrLoc(Receiver).getAsLocSymbol();
     if (Sym) {
       if (const RefVal* T = state->get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
         if (hasErr) {
-          ErrorExpr = Receiver;
+          ErrorRange = Receiver->getSourceRange();
           ErrorSym = Sym;
         }
       }
@@ -2693,7 +2693,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   // Process any errors.
   if (hasErr) {
-    ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, state,
+    ProcessNonLeakError(Dst, Builder, Ex, ErrorRange, Pred, state,
                         hasErr, ErrorSym);
     return;
   }
@@ -2760,7 +2760,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
     }
 
     case RetEffect::ReceiverAlias: {
-      assert (Receiver);
+      assert(Receiver);
       SVal V = state->getSValAsScalarOrLoc(Receiver);
       state = state->BindExpr(Ex, V, false);
       break;
@@ -3409,7 +3409,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
                                      GRStmtNodeBuilder& Builder,
-                                     Expr* NodeExpr, Expr* ErrorExpr,
+                                     Expr* NodeExpr, SourceRange ErrorRange,
                                      ExplodedNode* Pred,
                                      const GRState* St,
                                      RefVal::Kind hasErr, SymbolRef Sym) {
@@ -3440,7 +3440,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
   }
 
   CFRefReport *report = new CFRefReport(*BT, *this, N, Sym);
-  report->addRange(ErrorExpr->getSourceRange());
+  report->addRange(ErrorRange);
   BR->EmitReport(report);
 }
 
