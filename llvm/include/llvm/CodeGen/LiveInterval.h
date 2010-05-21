@@ -551,10 +551,6 @@ namespace llvm {
     /// Also remove the value# from value# list.
     void removeValNo(VNInfo *ValNo);
 
-    /// scaleNumbering - Renumber VNI and ranges to provide gaps for new
-    /// instructions.
-    void scaleNumbering(unsigned factor);
-
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///
     unsigned getSize() const;
