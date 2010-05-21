@@ -1154,7 +1154,7 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
     // codegen is not modelling. Ignore these barriers for now.
     if (!TII->isSafeToMoveRegClassDefs(*RC))
       continue;
-    std::vector<unsigned> &VRs = MRI->getRegClassVirtRegs(*RC);
+    const std::vector<unsigned> &VRs = MRI->getRegClassVirtRegs(*RC);
     for (unsigned i = 0, e = VRs.size(); i != e; ++i) {
       unsigned Reg = VRs[i];
       if (!LIs->hasInterval(Reg))

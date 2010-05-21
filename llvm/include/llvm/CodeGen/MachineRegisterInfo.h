@@ -216,7 +216,8 @@ public:
 
   /// getRegClassVirtRegs - Return the list of virtual registers of the given
   /// target register class.
-  std::vector<unsigned> &getRegClassVirtRegs(const TargetRegisterClass *RC) {
+  const std::vector<unsigned> &
+  getRegClassVirtRegs(const TargetRegisterClass *RC) const {
     return RegClass2VRegMap[RC->getID()];
   }
 
