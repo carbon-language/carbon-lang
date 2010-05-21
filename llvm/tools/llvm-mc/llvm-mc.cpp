@@ -301,7 +301,8 @@ static int AssembleInput(const char *ProgName) {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     TAB.reset(TheTarget->createAsmBackend(TripleName));
-    Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get(), RelaxAll));
+    Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *TAB,
+                                              *Out, CE.get(), RelaxAll));
   }
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);

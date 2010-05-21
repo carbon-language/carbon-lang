@@ -73,6 +73,13 @@ namespace llvm {
     typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const Target &T,
                                                 TargetMachine &TM,
                                                 MCContext &Ctx);
+    typedef MCStreamer *(*ObjectStreamerCtorTy)(const Target &T,
+                                                const std::string &TT,
+                                                MCContext &Ctx,
+                                                TargetAsmBackend &TAB,
+                                                raw_ostream &_OS,
+                                                MCCodeEmitter *_Emitter,
+                                                bool RelaxAll);
 
   private:
     /// Next - The next registered target in the linked list, maintained by the
@@ -126,6 +133,10 @@ namespace llvm {
     /// if registered.
     CodeEmitterCtorTy CodeEmitterCtorFn;
 
+    /// ObjectStreamerCtorFn - Construction function for this target's
+    /// ObjectStreamer, if registered.
+    ObjectStreamerCtorTy ObjectStreamerCtorFn;
+
   public:
     /// @name Target Information
     /// @{
@@ -169,6 +180,9 @@ namespace llvm {
 
     /// hasCodeEmitter - Check if this target supports instruction encoding.
     bool hasCodeEmitter() const { return CodeEmitterCtorFn != 0; }
+
+    /// hasObjectStreamer - Check if this target supports streaming to files.
+    bool hasObjectStreamer() const { return ObjectStreamerCtorFn != 0; }
 
     /// @}
     /// @name Feature Constructors
@@ -256,6 +270,24 @@ namespace llvm {
       if (!CodeEmitterCtorFn)
         return 0;
       return CodeEmitterCtorFn(*this, TM, Ctx);
+    }
+
+    /// createObjectStreamer - Create a target specific MCStreamer.
+    ///
+    /// \arg TT - The target triple.
+    /// \arg Ctx - The target context.
+    /// \arg TAB - The target assembler backend object.
+    /// \arg _OS - The stream object.
+    /// \arg _Emitter - The target independent assembler object.
+    /// \arg RelaxAll - Relax all fixups?
+    MCStreamer *createObjectStreamer(const std::string &TT, MCContext &Ctx,
+                                     TargetAsmBackend &TAB,
+                                     raw_ostream &_OS,
+                                     MCCodeEmitter *_Emitter,
+                                     bool RelaxAll) const {
+      if (!ObjectStreamerCtorFn)
+        return 0;
+      return ObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, RelaxAll);
     }
 
     /// @}
@@ -477,6 +509,20 @@ namespace llvm {
     static void RegisterCodeEmitter(Target &T, Target::CodeEmitterCtorTy Fn) {
       if (!T.CodeEmitterCtorFn)
         T.CodeEmitterCtorFn = Fn;
+    }
+
+    /// RegisterObjectStreamer - Register an MCStreamer implementation
+    /// for the given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an MCStreamer for the target.
+    static void RegisterObjectStreamer(Target &T, Target::ObjectStreamerCtorTy Fn) {
+      if (!T.ObjectStreamerCtorFn)
+        T.ObjectStreamerCtorFn = Fn;
     }
 
     /// @}
