@@ -859,7 +859,7 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
   }
 
   // B is a base of D. But is it an allowed base? If not, it's a hard error.
-  if (Paths.isAmbiguous(DestClass)) {
+  if (Paths.isAmbiguous(Self.Context.getCanonicalType(DestClass))) {
     Paths.clear();
     Paths.setRecordingPaths(true);
     bool StillOkay = Self.IsDerivedFrom(SrcClass, DestClass, Paths);

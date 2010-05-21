@@ -49,9 +49,8 @@ CXXBasePaths::decl_iterator CXXBasePaths::found_decls_end() {
 /// ambiguous, i.e., there are two or more paths that refer to
 /// different base class subobjects of the same type. BaseType must be
 /// an unqualified, canonical class type.
-bool CXXBasePaths::isAmbiguous(QualType BaseType) {
-  assert(BaseType.isCanonical() && "Base type must be the canonical type");
-  assert(BaseType.hasQualifiers() == 0 && "Base type must be unqualified");
+bool CXXBasePaths::isAmbiguous(CanQualType BaseType) {
+  BaseType = BaseType.getUnqualifiedType();
   std::pair<bool, unsigned>& Subobjects = ClassSubobjects[BaseType];
   return Subobjects.second + (Subobjects.first? 1 : 0) > 1;
 }

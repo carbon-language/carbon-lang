@@ -389,7 +389,7 @@ bool Sema::CheckExceptionSpecSubset(
       if (!IsDerivedFrom(CanonicalSubT, CanonicalSuperT, Paths))
         continue;
 
-      if (Paths.isAmbiguous(CanonicalSuperT))
+      if (Paths.isAmbiguous(Context.getCanonicalType(CanonicalSuperT)))
         continue;
 
       // Do this check from a context without privileges.

@@ -157,3 +157,20 @@ namespace pr6783 {
     return object->*p2m; // expected-error {{left hand operand to ->*}}
   }
 }
+
+namespace PR7176 {
+  namespace base
+  {
+    struct Process
+    { };
+    struct Continuous : Process
+    {
+      bool cond();
+    };
+  }
+
+  typedef bool( base::Process::*Condition )();
+
+  void m()
+  { (void)(Condition) &base::Continuous::cond; }
+}
