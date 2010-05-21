@@ -54,7 +54,7 @@ static RegisterScheduler
                          createSourceListDAGScheduler);
 
 static RegisterScheduler
-  hybridListDAGScheduler("hybrid",
+  hybridListDAGScheduler("list-hybrid",
                          "Bottom-up rr list scheduling which avoid stalls for "
                          "long latency instructions",
                          createHybridListDAGScheduler);
