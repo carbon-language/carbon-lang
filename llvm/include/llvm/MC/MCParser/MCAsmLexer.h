@@ -47,7 +47,7 @@ public:
     Pipe, PipePipe, Caret, 
     Amp, AmpAmp, Exclaim, ExclaimEqual, Percent, Hash,
     Less, LessEqual, LessLess, LessGreater,
-    Greater, GreaterEqual, GreaterGreater
+    Greater, GreaterEqual, GreaterGreater, At
   };
 
   TokenKind Kind;
