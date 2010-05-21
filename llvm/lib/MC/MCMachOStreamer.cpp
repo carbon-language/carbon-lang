@@ -353,7 +353,8 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
     SectData.setAlignment(ByteAlignment);
 }
 
-// This should always be called with the thread local bss section.
+// This should always be called with the thread local bss section.  Like the
+// .zerofill directive this doesn't actually switch sections on us.
 void MCMachOStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                                      uint64_t Size, unsigned ByteAlignment) {
   EmitZerofill(Section, Symbol, Size, ByteAlignment);
