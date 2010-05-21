@@ -70,7 +70,8 @@ namespace {
     KEYGNU = 16,
     KEYMS = 32,
     BOOLSUPPORT = 64,
-    KEYALTIVEC = 128
+    KEYALTIVEC = 128,
+    KEYNOMS = 256
   };
 }
 
@@ -94,6 +95,7 @@ static void AddKeyword(llvm::StringRef Keyword,
   else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
   else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;
+  else if (!LangOpts.Microsoft && (Flags & KEYNOMS)) AddResult = 2;
 
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;
