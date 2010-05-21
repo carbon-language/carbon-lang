@@ -985,6 +985,11 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   } else
     LoopSuccessor = Succ;
 
+  // Save the current value for the break targets.
+  // All breaks should go to the code following the loop.
+  SaveAndRestore<CFGBlock*> save_break(BreakTargetBlock);
+  BreakTargetBlock = LoopSuccessor;
+
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
   // evaluate the condition.
@@ -1032,10 +1037,9 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   {
     assert(F->getBody());
 
-    // Save the current values for Block, Succ, and continue and break targets
-    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-      save_continue(ContinueTargetBlock),
-      save_break(BreakTargetBlock);
+   // Save the current values for Block, Succ, and continue targets.
+   SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
+      save_continue(ContinueTargetBlock);
 
     // Create a new block to contain the (bottom) of the loop body.
     Block = NULL;
@@ -1064,9 +1068,6 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // The starting block for the loop increment is the block that should
     // represent the 'loop target' for looping back to the start of the loop.
     ContinueTargetBlock->setLoopTarget(F);
-
-    // All breaks should go to the code following the loop.
-    BreakTargetBlock = LoopSuccessor;
 
     // Now populate the body block, and in the process create new blocks as we
     // walk the body of the loop.
