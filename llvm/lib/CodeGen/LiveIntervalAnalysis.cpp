@@ -1098,6 +1098,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     if (!mop.isReg())
       continue;
     unsigned Reg = mop.getReg();
+    unsigned RegI = Reg;
     if (Reg == 0 || TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
     if (Reg != li.reg)
@@ -1139,8 +1140,26 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     //
     // Keep track of whether we replace a use and/or def so that we can
     // create the spill interval with the appropriate range. 
+
+    HasUse = mop.isUse();
+    HasDef = mop.isDef();
     SmallVector<unsigned, 2> Ops;
-    tie(HasUse, HasDef) = MI->readsWritesVirtualRegister(Reg, &Ops);
+    Ops.push_back(i);
+    for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
+      const MachineOperand &MOj = MI->getOperand(j);
+      if (!MOj.isReg())
+        continue;
+      unsigned RegJ = MOj.getReg();
+      if (RegJ == 0 || TargetRegisterInfo::isPhysicalRegister(RegJ))
+        continue;
+      if (RegJ == RegI) {
+        Ops.push_back(j);
+        if (!MOj.isUndef()) {
+          HasUse |= MOj.isUse();
+          HasDef |= MOj.isDef();
+        }
+      }
+    }
 
     // Create a new virtual register for the spill interval.
     // Create the new register now so we can map the fold instruction
@@ -1293,7 +1312,10 @@ namespace {
   struct RewriteInfo {
     SlotIndex Index;
     MachineInstr *MI;
-    RewriteInfo(SlotIndex i, MachineInstr *mi) : Index(i), MI(mi) {}
+    bool HasUse;
+    bool HasDef;
+    RewriteInfo(SlotIndex i, MachineInstr *mi, bool u, bool d)
+      : Index(i), MI(mi), HasUse(u), HasDef(d) {}
   };
 
   struct RewriteInfoCompare {
@@ -1372,7 +1394,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
       // easily see a situation where both registers are reloaded before
       // the INSERT_SUBREG and both target registers that would overlap.
       continue;
-    RewriteMIs.push_back(RewriteInfo(index, MI));
+    RewriteMIs.push_back(RewriteInfo(index, MI, O.isUse(), O.isDef()));
   }
   std::sort(RewriteMIs.begin(), RewriteMIs.end(), RewriteInfoCompare());
 
@@ -1382,11 +1404,18 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     RewriteInfo &rwi = RewriteMIs[i];
     ++i;
     SlotIndex index = rwi.Index;
+    bool MIHasUse = rwi.HasUse;
+    bool MIHasDef = rwi.HasDef;
     MachineInstr *MI = rwi.MI;
     // If MI def and/or use the same register multiple times, then there
     // are multiple entries.
+    unsigned NumUses = MIHasUse;
     while (i != e && RewriteMIs[i].MI == MI) {
       assert(RewriteMIs[i].Index == index);
+      bool isUse = RewriteMIs[i].HasUse;
+      if (isUse) ++NumUses;
+      MIHasUse |= isUse;
+      MIHasDef |= RewriteMIs[i].HasDef;
       ++i;
     }
     MachineBasicBlock *MBB = MI->getParent();
@@ -1411,8 +1440,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         //     = use
         // It's better to start a new interval to avoid artifically
         // extend the new interval.
-        if (MI->readsWritesVirtualRegister(li.reg) ==
-            std::make_pair(false,true)) {
+        if (MIHasDef && !MIHasUse) {
           MBBVRegsMap.erase(MBB->getNumber());
           ThisVReg = 0;
         }
@@ -1646,9 +1674,19 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     MachineInstr* MI = &*RI;
     
     SmallVector<unsigned, 2> Indices;
-    bool HasUse, HasDef;
-    tie(HasUse, HasDef) = MI->readsWritesVirtualRegister(li.reg, &Indices);
-
+    bool HasUse = false;
+    bool HasDef = false;
+    
+    for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+      MachineOperand& mop = MI->getOperand(i);
+      if (!mop.isReg() || mop.getReg() != li.reg) continue;
+      
+      HasUse |= MI->getOperand(i).isUse();
+      HasDef |= MI->getOperand(i).isDef();
+      
+      Indices.push_back(i);
+    }
+    
     if (!tryFoldMemoryOperand(MI, vrm, NULL, getInstructionIndex(MI),
                               Indices, true, slot, li.reg)) {
       unsigned NewVReg = mri_->createVirtualRegister(rc);

@@ -782,31 +782,27 @@ int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill,
   return -1;
 }
 
-/// readsWritesVirtualRegister - Return a pair of bools (reads, writes)
-/// indicating if this instruction reads or writes Reg. This also considers
-/// partial defines.
-std::pair<bool,bool>
-MachineInstr::readsWritesVirtualRegister(unsigned Reg,
-                                         SmallVectorImpl<unsigned> *Ops) const {
-  bool PartDef = false; // Partial redefine.
-  bool FullDef = false; // Full define.
-  bool Use = false;
+/// readsVirtualRegister - Return true if the MachineInstr reads the specified
+/// virtual register. Take into account that a partial define is a
+/// read-modify-write operation.
+bool MachineInstr::readsVirtualRegister(unsigned Reg) const {
+  bool PartDef = false; // Partial redefine
+  bool FullDef = false; // Full define
 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
     if (!MO.isReg() || MO.getReg() != Reg)
       continue;
-    if (Ops)
-      Ops->push_back(i);
     if (MO.isUse())
-      Use |= !MO.isUndef();
-    else if (MO.getSubReg())
+      return true;
+    if (MO.getSubReg())
       PartDef = true;
     else
       FullDef = true;
   }
-  // A partial redefine uses Reg unless there is also a full define.
-  return std::make_pair(Use || (PartDef && !FullDef), PartDef || FullDef);
+  // A partial register definition causes a read unless the full register is
+  // also defined.
+  return PartDef && !FullDef;
 }
 
 /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
