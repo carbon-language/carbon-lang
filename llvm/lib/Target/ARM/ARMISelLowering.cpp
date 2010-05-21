@@ -467,7 +467,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
-  setSchedulingPreference(Sched::RegPressure);
+  if (UseSoftFloat || Subtarget->isThumb1Only() || !Subtarget->hasVFP2())
+    setSchedulingPreference(Sched::RegPressure);
+  else
+    setSchedulingPreference(Sched::Hybrid);
 
   // FIXME: If-converter should use instruction latency to determine
   // profitability rather than relying on fixed limits.
