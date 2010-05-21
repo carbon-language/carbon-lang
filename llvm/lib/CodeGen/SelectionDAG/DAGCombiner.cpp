@@ -6413,6 +6413,13 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
           break;
       }
 
+      // If the vector element type is not legal, the BUILD_VECTOR operands
+      // are promoted and implicitly truncated.  Make that explicit here.
+      if (LHSOp.getValueType() != EltType)
+        LHSOp = DAG.getNode(ISD::TRUNCATE, LHS.getDebugLoc(), EltType, LHSOp);
+      if (RHSOp.getValueType() != EltType)
+        RHSOp = DAG.getNode(ISD::TRUNCATE, RHS.getDebugLoc(), EltType, RHSOp);
+
       SDValue FoldOp = DAG.getNode(N->getOpcode(), LHS.getDebugLoc(), EltType,
                                    LHSOp, RHSOp);
       if (FoldOp.getOpcode() != ISD::UNDEF &&
