@@ -323,6 +323,13 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
 }
 
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
+  // If this is the variable for an anonymous struct or union,
+  // instantiate the anonymous struct/union type first.
+  if (const RecordType *RecordTy = D->getType()->getAs<RecordType>())
+    if (RecordTy->getDecl()->isAnonymousStructOrUnion())
+      if (!VisitCXXRecordDecl(cast<CXXRecordDecl>(RecordTy->getDecl())))
+        return 0;
+
   // Do substitution on the type of the declaration
   TypeSourceInfo *DI = SemaRef.SubstType(D->getTypeSourceInfo(),
                                          TemplateArgs,
@@ -490,6 +497,11 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   if (!Field->getDeclName()) {
     // Keep track of where this decl came from.
     SemaRef.Context.setInstantiatedFromUnnamedFieldDecl(Field, D);
+  } 
+  if (CXXRecordDecl *Parent= dyn_cast<CXXRecordDecl>(Field->getDeclContext())) {
+    if (Parent->isAnonymousStructOrUnion() &&
+        Parent->getLookupContext()->isFunctionOrMethod())
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Field);
   }
 
   Field->setImplicit(D->isImplicit());
@@ -913,7 +925,12 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (Decl::FriendObjectKind FOK = D->getFriendObjectKind())
     Record->setObjectOfFriendDecl(FOK == Decl::FOK_Declared);
 
-  Record->setAnonymousStructOrUnion(D->isAnonymousStructOrUnion());
+  // Make sure that anonymous structs and unions are recorded.
+  if (D->isAnonymousStructOrUnion()) {
+    Record->setAnonymousStructOrUnion(true);
+    if (Record->getDeclContext()->getLookupContext()->isFunctionOrMethod())
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Record);
+  }
 
   Owner->addDecl(Record);
   return Record;

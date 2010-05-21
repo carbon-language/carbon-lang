@@ -29,3 +29,21 @@ template <typename T> struct C {
 };
 
 C<int> c0(0);
+
+namespace PR7088 {
+  template<typename T>
+  void f() { 
+    union { 
+      int a; 
+      union {
+        float real;
+        T d;
+      };
+    }; 
+
+    a = 17;
+    d = 3.14;
+  }
+
+  template void f<double>();
+}
