@@ -57,22 +57,25 @@ FunctionPass *llvm::createX87FPRegKillInserterPass() {
 /// stack code, and thus needs an FP_REG_KILL.
 static bool ContainsFPStackCode(MachineBasicBlock *MBB, unsigned SSELevel,
                                 MachineRegisterInfo &MRI) {
-  
+  // Scan the block, looking for instructions that define fp stack vregs.
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
-    if (I->getNumOperands() != 0 && I->getOperand(0).isReg()) {
-      for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-        if (I->getOperand(op).isReg() && I->getOperand(op).isDef() &&
-            TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg())) {
-          const TargetRegisterClass *RegClass =
-            MRI.getRegClass(I->getOperand(op).getReg());
-          
-          if (RegClass == X86::RFP32RegisterClass ||
-             RegClass == X86::RFP64RegisterClass ||
-             RegClass == X86::RFP80RegisterClass)
-          return true;
-        }
-      }
+    if (I->getNumOperands() == 0 || !I->getOperand(0).isReg())
+      continue;
+    
+    for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
+      if (!I->getOperand(op).isReg() || !I->getOperand(op).isDef() ||
+          !TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()))
+        continue;
+      
+      const TargetRegisterClass *RegClass =
+        MRI.getRegClass(I->getOperand(op).getReg());
+      
+      switch (RegClass->getID())
+      case X86::RFP32RegClassID:
+      case X86::RFP64RegClassID:
+      case X86::RFP80RegClassID:
+      return true;
     }
   }
   
