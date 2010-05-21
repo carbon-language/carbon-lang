@@ -152,6 +152,8 @@ public:
   }
 
   void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
+    assert((ZeroFillSize == 0 || Str.size () <= ZeroFillSize) &&
+      "data size greater than fill size, unexpected large write will occur");
     OS << Str;
     if (ZeroFillSize)
       WriteZeros(ZeroFillSize - Str.size());
