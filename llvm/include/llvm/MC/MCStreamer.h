@@ -178,7 +178,7 @@ namespace llvm {
     /// @param Size - The size of the common symbol.
     virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) = 0;
     
-    /// EmitZerofill - Emit a the zerofill section and an option symbol.
+    /// EmitZerofill - Emit the zerofill section and an optional symbol.
     ///
     /// @param Section - The zerofill section to create and or to put the symbol
     /// @param Symbol - The zerofill symbol to emit, if non-NULL.
@@ -196,7 +196,7 @@ namespace llvm {
     /// @param ByteAlignment - The alignment of the thread local common symbol
     /// if non-zero.  This must be a power of 2 on some targets.
     virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                                uint64_t Size, unsigned ByteAlignment = 0) = 0;
+                                uint64_t Size, unsigned ByteAlignment = 0) = 0;                                
     /// @}
     /// @name Generating Data
     /// @{
