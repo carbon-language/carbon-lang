@@ -487,8 +487,6 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
-  // FIXME: What do we do if the increment (f.e.) contains a stmt expression,
-  // which contains a continue/break?
   CleanupScope ForScope(*this);
 
   // Evaluate the first part before the loop.
@@ -558,14 +556,14 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     EmitStmt(S.getBody());
   }
 
-  BreakContinueStack.pop_back();
-
   // If there is an increment, emit it next.
   if (S.getInc()) {
     EmitBlock(IncBlock);
     EmitStmt(S.getInc());
   }
 
+  BreakContinueStack.pop_back();
+  
   // Finally, branch back up to the condition for the next iteration.
   if (CondCleanup) {
     // Branch to the cleanup block.
