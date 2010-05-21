@@ -16,6 +16,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace clang;
 using namespace clang::driver;
 
 void arg_iterator::SkipToNextArg() {
