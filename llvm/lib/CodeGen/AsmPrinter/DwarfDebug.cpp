@@ -2183,59 +2183,34 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
 void DwarfDebug::beginScope(const MachineInstr *MI) {
   // Check location.
   DebugLoc DL = MI->getDebugLoc();
-  if (DL.isUnknown()) {
-    if (UnknownLocations) {
-      // This instruction has no debug location. If the preceding instruction
-      // did, emit debug location information to indicate that the debug
-      // location is now unknown.
-      MCSymbol *Label = NULL;
-      if (DL == PrevInstLoc)
-        Label = PrevLabel;
-      else {
-        Label = recordSourceLine(DL.getLine(), DL.getCol(), 0);
-        PrevInstLoc = DL;
-        PrevLabel = Label;
-      }
-
-      // If this instruction begins a scope then note down corresponding label
-      // even if previous label is reused.
-      if (InsnsBeginScopeSet.count(MI) != 0)
-        LabelsBeforeInsn[MI] = Label;
-    }
-
+  if (DL.isUnknown() && !UnknownLocations)
     return;
-  }
-
-  const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
-  
-  // FIXME: Should only verify each scope once!
-  if (!DIScope(Scope).Verify())
-    return;
-
-  // DBG_VALUE instruction establishes new value.
+ 
+  DbgVariable *LocalVar = NULL;
   if (MI->isDebugValue()) {
     DenseMap<const MachineInstr *, DbgVariable *>::iterator DI
       = DbgValueStartMap.find(MI);
-    if (DI != DbgValueStartMap.end()) {
-      MCSymbol *Label = NULL;
-      if (DL == PrevInstLoc)
-        Label = PrevLabel;
-      else {
-        Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
-        PrevInstLoc = DL;
-        PrevLabel = Label;
-      }
-      DbgVariableLabelsMap[DI->second] = Label;
-    }
-    return;
+    if (DI != DbgValueStartMap.end())
+      LocalVar = DI->second;
   }
 
-  // Emit a label to indicate location change. This is used for line 
-  // table even if this instruction does not start a new scope.
   MCSymbol *Label = NULL;
   if (DL == PrevInstLoc)
     Label = PrevLabel;
-  else {
+  // Do not emit line number entry for arguments.
+  else if (!MI->isDebugValue() || LocalVar) {
+    const MDNode *Scope = 0;
+    if (DL.isUnknown() == false) {
+      Scope = DL.getScope(Asm->MF->getFunction()->getContext());
+      // FIXME: Should only verify each scope once!
+      if (!DIScope(Scope).Verify())
+        return;
+    } 
+    // else ...
+    // This instruction has no debug location. If the preceding instruction
+    // did, emit debug location information to indicate that the debug
+    // location is now unknown.
+    
     Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
     PrevInstLoc = DL;
     PrevLabel = Label;
@@ -2245,6 +2220,10 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   // even if previous label is reused.
   if (InsnsBeginScopeSet.count(MI) != 0)
     LabelsBeforeInsn[MI] = Label;
+  
+  // If this is a DBG_VALUE instruction then record label to identify variable.
+  if (LocalVar)
+    DbgVariableLabelsMap[LocalVar] = Label;
 }
 
 /// endScope - Process end of a scope.
