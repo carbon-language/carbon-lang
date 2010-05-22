@@ -889,13 +889,17 @@ operator-(const SparseBitVector<ElementSize> &LHS,
 // Dump a SparseBitVector to a stream
 template <unsigned ElementSize>
 void dump(const SparseBitVector<ElementSize> &LHS, raw_ostream &out) {
-  out << "[ ";
+  out << "[";
 
-  typename SparseBitVector<ElementSize>::iterator bi;
-  for (bi = LHS.begin(); bi != LHS.end(); ++bi) {
-    out << *bi << " ";
+  typename SparseBitVector<ElementSize>::iterator bi = LHS.begin(),
+    be = LHS.end();
+  if (bi != be) {
+    out << *bi;
+    for (++bi; bi != be; ++bi) {
+      out << " " << *bi;
+    }
   }
-  out << " ]\n";
+  out << "]\n";
 }
 } // end namespace llvm
 
