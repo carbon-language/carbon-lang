@@ -794,15 +794,19 @@ void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
     ClassInfo *CI = AsmOperandClasses[*it];
     CI->Kind = ClassInfo::UserClass0 + Index;
 
-    Init *Super = (*it)->getValueInit("SuperClass");
-    if (DefInit *DI = dynamic_cast<DefInit*>(Super)) {
+    ListInit *Supers = (*it)->getValueAsListInit("SuperClasses");
+    for (unsigned i = 0, e = Supers->getSize(); i != e; ++i) {
+      DefInit *DI = dynamic_cast<DefInit*>(Supers->getElement(i));
+      if (!DI) {
+        PrintError((*it)->getLoc(), "Invalid super class reference!");
+        continue;
+      }
+
       ClassInfo *SC = AsmOperandClasses[DI->getDef()];
       if (!SC)
         PrintError((*it)->getLoc(), "Invalid super class reference!");
       else
         CI->SuperClasses.push_back(SC);
-    } else {
-      assert(dynamic_cast<UnsetInit*>(Super) && "Unexpected SuperClass field!");
     }
     CI->ClassName = (*it)->getValueAsString("Name");
     CI->Name = "MCK_" + CI->ClassName;

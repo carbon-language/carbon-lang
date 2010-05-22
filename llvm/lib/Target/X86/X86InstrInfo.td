@@ -195,15 +195,15 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 //
 def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
-  let SuperClass = ?;
+  let SuperClasses = [];
 }
 def X86NoSegMemAsmOperand : AsmOperandClass {
   let Name = "NoSegMem";
-  let SuperClass = X86MemAsmOperand;
+  let SuperClasses = [X86MemAsmOperand];
 }
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
-  let SuperClass = X86NoSegMemAsmOperand;
+  let SuperClasses = [X86NoSegMemAsmOperand];
 }
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
@@ -272,12 +272,12 @@ def SSECC : Operand<i8> {
 
 def ImmSExt32AsmOperand : AsmOperandClass {
   let Name = "ImmSExt32";
-  let SuperClass = ImmAsmOperand;
+  let SuperClasses = [ImmAsmOperand];
 }
 
 def ImmSExt8AsmOperand : AsmOperandClass {
   let Name = "ImmSExt8";
-  let SuperClass = ImmSExt32AsmOperand;
+  let SuperClasses = [ImmSExt32AsmOperand];
 }
 
 // A couple of more descriptive operand definitions.
