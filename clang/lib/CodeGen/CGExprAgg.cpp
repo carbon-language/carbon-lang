@@ -39,8 +39,14 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   bool RequiresGCollection;
 
   ReturnValueSlot getReturnValueSlot() const {
+    // If the destination slot requires garbage collection, we can't
+    // use the real return value slot, because we have to use the GC
+    // API.
+    if (RequiresGCollection) return ReturnValueSlot();
+
     return ReturnValueSlot(DestPtr, VolatileDest);
   }
+
 public:
   AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool v,
                  bool ignore, bool isinit, bool requiresGCollection)
@@ -61,6 +67,10 @@ public:
   /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
   void EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore = false);
   void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false);
+
+  void EmitGCMove(const Expr *E, RValue Src);
+
+  bool TypeRequiresGCollection(QualType T);
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -139,6 +149,39 @@ public:
 void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
   LValue LV = CGF.EmitLValue(E);
   EmitFinalDestCopy(E, LV);
+}
+
+/// \brief True if the given aggregate type requires special GC API calls.
+bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
+  // Only record types have members that might require garbage collection.
+  const RecordType *RecordTy = T->getAs<RecordType>();
+  if (!RecordTy) return false;
+
+  // Don't mess with non-trivial C++ types.
+  RecordDecl *Record = RecordTy->getDecl();
+  if (isa<CXXRecordDecl>(Record) &&
+      (!cast<CXXRecordDecl>(Record)->hasTrivialCopyConstructor() ||
+       !cast<CXXRecordDecl>(Record)->hasTrivialDestructor()))
+    return false;
+
+  // Check whether the type has an object member.
+  return Record->hasObjectMember();
+}
+
+/// \brief Perform the final move to DestPtr if RequiresGCollection is set.
+///
+/// The idea is that you do something like this:
+///   RValue Result = EmitSomething(..., getReturnValueSlot());
+///   EmitGCMove(E, Result);
+/// If GC doesn't interfere, this will cause the result to be emitted
+/// directly into the return value slot.  If GC does interfere, a final
+/// move will be performed.
+void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
+  if (!RequiresGCollection) return;
+
+  CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, DestPtr,
+                                                    Src.getAggregateAddr(),
+                                                    E->getType());
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
@@ -308,28 +351,24 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
     return;
   }
 
-  // If the struct doesn't require GC, we can just pass the destination
-  // directly to EmitCall.
-  if (!RequiresGCollection) {
-    CGF.EmitCallExpr(E, getReturnValueSlot());
-    return;
-  }
-  
-  RValue RV = CGF.EmitCallExpr(E);
-  EmitFinalDestCopy(E, RV);
+  RValue RV = CGF.EmitCallExpr(E, getReturnValueSlot());
+  EmitGCMove(E, RV);
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  CGF.EmitObjCMessageExpr(E, getReturnValueSlot());
+  RValue RV = CGF.EmitObjCMessageExpr(E, getReturnValueSlot());
+  EmitGCMove(E, RV);
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
+  RValue RV = CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
+  EmitGCMove(E, RV);
 }
 
 void AggExprEmitter::VisitObjCImplicitSetterGetterRefExpr(
                                    ObjCImplicitSetterGetterRefExpr *E) {
-  CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
+  RValue RV = CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
+  EmitGCMove(E, RV);
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
@@ -435,11 +474,9 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
                             RValue::getAggregate(AggLoc, VolatileDest));
   } else {
     bool RequiresGCollection = false;
-    if (CGF.getContext().getLangOptions().NeXTRuntime) {
-      QualType LHSTy = E->getLHS()->getType();
-      if (const RecordType *FDTTy = LHSTy.getTypePtr()->getAs<RecordType>())
-        RequiresGCollection = FDTTy->getDecl()->hasObjectMember();
-    }
+    if (CGF.getContext().getLangOptions().getGCMode())
+      RequiresGCollection = TypeRequiresGCollection(E->getLHS()->getType());
+
     // Codegen the RHS so that it stores directly into the LHS.
     CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified(),
                     false, false, RequiresGCollection);
