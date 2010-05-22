@@ -118,7 +118,7 @@ llvm::StringRef ArgList::getLastArgValue(OptSpecifier Id,
 }
 
 int ArgList::getLastArgIntValue(OptSpecifier Id, int Default,
-                                Diagnostic &Diags) const {
+                                clang::Diagnostic &Diags) const {
   int Res = Default;
 
   if (Arg *A = getLastArg(Id)) {
