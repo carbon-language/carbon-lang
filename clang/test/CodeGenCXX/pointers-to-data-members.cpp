@@ -144,4 +144,10 @@ bool check() {
   return A().a.data == 0;
 }
 
+// CHECK-O3: define zeroext i1 @_ZN6PR71396check2Ev() nounwind readnone
+bool check2() {
+  // CHECK-O3: ret i1 true
+  return ptr_to_member_type() == 0;
+}
+
 }

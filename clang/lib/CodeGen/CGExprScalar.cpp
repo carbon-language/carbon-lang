@@ -96,6 +96,9 @@ public:
   Value *EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
                                        QualType SrcTy, QualType DstTy);
 
+  /// EmitNullValue - Emit a value that corresponds to null for the given type.
+  Value *EmitNullValue(QualType Ty);
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -123,10 +126,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return EmitNullValue(E->getType());
   }
   Value *VisitGNUNullExpr(const GNUNullExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return EmitNullValue(E->getType());
   }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()),
@@ -278,7 +281,7 @@ public:
   }
 
   Value *VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    return EmitNullValue(E->getType());
   }
 
   Value *VisitCXXThrowExpr(const CXXThrowExpr *E) {
@@ -549,6 +552,19 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
   return EmitScalarConversion(Src.first, SrcTy, DstTy);
 }
 
+Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
+  const llvm::Type *LTy = ConvertType(Ty);
+  
+  if (!Ty->isMemberPointerType())
+    return llvm::Constant::getNullValue(LTy);
+  
+  assert(!Ty->isMemberFunctionPointerType() &&
+         "member function pointers are not scalar!");
+
+  // Itanium C++ ABI 2.3:
+  //   A NULL pointer is represented as -1.
+  return llvm::ConstantInt::get(LTy, -1ULL, /*isSigned=*/true);  
+}
 
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
