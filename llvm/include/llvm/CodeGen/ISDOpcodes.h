@@ -95,6 +95,13 @@ namespace ISD {
     // execution to HANDLER. Many platform-related details also :)
     EH_RETURN,
 
+
+    // OUTCHAIN = EH_SJLJ_LONGJMP(INCHAIN, buffer)
+    // This corresponds to the eh.sjlj.longjmp intrinsic.
+    // It takes an input chain and a pointer to the jump buffer as inputs
+    // and returns an outchain.
+    EH_SJLJ_LONGJMP,
+
     // TargetConstant* - Like Constant*, but the DAG does not do any folding,
     // simplification, or lowering of the constant. They are used for constants
     // which are known to fit in the immediate fields of their users, or for

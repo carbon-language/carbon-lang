@@ -46,6 +46,7 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
 def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisPtrTy<1>,
                                                  SDTCisInt<2>]>;
+def SDT_ARMEH_SJLJ_Longjmp: SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
 def SDT_ARMMEMBARRIERV7  : SDTypeProfile<0, 0, []>;
 def SDT_ARMSYNCBARRIERV7 : SDTypeProfile<0, 0, []>;
@@ -101,6 +102,8 @@ def ARMrrx           : SDNode<"ARMISD::RRX"     , SDTIntUnaryOp, [SDNPInFlag ]>;
 
 def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
+def ARMeh_sjlj_longjmp: SDNode<"ARMISD::EH_SJLJ_LONGJMP",
+                                SDT_ARMEH_SJLJ_Longjmp, [SDNPHasChain]>;
 
 def ARMMemBarrierV7  : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIERV7,
                               [SDNPHasChain]>;
@@ -2553,6 +2556,20 @@ let Defs =
                                    "mov\tr0, #1 ${:comment} eh_setjmp end", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                                 Requires<[IsARM, NoVFP]>;
+}
+
+// FIXME: Non-Darwin version(s)
+let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
+    Defs = [ R7, LR, SP ] in {
+def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
+                             AddrModeNone, SizeSpecial, IndexModeNone,
+                             Pseudo, NoItinerary,
+                             "ldr\tsp, [$src, #8]\n\t"
+                             "ldr\t$scratch, [$src, #4]\n\t"
+                             "ldr\tr7, [$src]\n\t"
+                             "bx\t$scratch", "",
+                         [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
+                                Requires<[IsARM, IsDarwin]>;
 }
 
 //===----------------------------------------------------------------------===//

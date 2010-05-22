@@ -481,6 +481,10 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // If this machine instr is a constant pool entry, its size is recorded as
       // operand #2.
       return MI->getOperand(2).getImm();
+    case ARM::Int_eh_sjlj_longjmp:
+      return 16;
+    case ARM::tInt_eh_sjlj_longjmp:
+      return 10;
     case ARM::Int_eh_sjlj_setjmp:
     case ARM::Int_eh_sjlj_setjmp_nofp:
       return 24;

@@ -938,6 +938,22 @@ let Defs =
                               "1:", "",
                    [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 }
+
+// FIXME: Non-Darwin version(s)
+let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
+    Defs = [ R7, LR, SP ] in {
+def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
+                             AddrModeNone, SizeSpecial, IndexModeNone,
+                             Pseudo, NoItinerary,
+                             "ldr\t$scratch, [$src, #8]\n\t"
+                             "mov\tsp, $scratch\n\t"
+                             "ldr\t$scratch, [$src, #4]\n\t"
+                             "ldr\tr7, [$src]\n\t"
+                             "bx\t$scratch", "",
+                         [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
+                                Requires<[IsThumb, IsDarwin]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
