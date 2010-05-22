@@ -186,32 +186,71 @@ struct X86Operand : public MCParsedAsmOperand {
 
   bool isImm() const { return Kind == Immediate; }
   
-  bool isImmSExt8() const { 
-    // Accept immediates which fit in 8 bits when sign extended, and
-    // non-absolute immediates.
+  bool isImmSExti16i8() const {
     if (!isImm())
       return false;
 
-    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
-      int64_t Value = CE->getValue();
-      return Value == (int64_t) (int8_t) Value;
-    }
+    // If this isn't a constant expr, just assume it fits and let relaxation
+    // handle it.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return true;
 
-    return true;
+    // Otherwise, check the value is in a range that makes sense for this
+    // extension.
+    uint64_t Value = CE->getValue();
+    return ((                                  Value <= 0x000000000000007FULL)||
+            (0x000000000000FF80ULL <= Value && Value <= 0x000000000000FFFFULL)||
+            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
   }
-  
-  bool isImmSExt32() const {
-    // Accept immediates which fit in 32 bits when sign extended, and
-    // non-absolute immediates.
+  bool isImmSExti32i8() const {
     if (!isImm())
       return false;
 
-    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
-      int64_t Value = CE->getValue();
-      return Value == (int64_t) (int32_t) Value;
-    }
+    // If this isn't a constant expr, just assume it fits and let relaxation
+    // handle it.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return true;
 
-    return true;
+    // Otherwise, check the value is in a range that makes sense for this
+    // extension.
+    uint64_t Value = CE->getValue();
+    return ((                                  Value <= 0x000000000000007FULL)||
+            (0x00000000FFFFFF80ULL <= Value && Value <= 0x00000000FFFFFFFFULL)||
+            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  }
+  bool isImmSExti64i8() const {
+    if (!isImm())
+      return false;
+
+    // If this isn't a constant expr, just assume it fits and let relaxation
+    // handle it.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return true;
+
+    // Otherwise, check the value is in a range that makes sense for this
+    // extension.
+    uint64_t Value = CE->getValue();
+    return ((                                  Value <= 0x000000000000007FULL)||
+            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  }
+  bool isImmSExti64i32() const {
+    if (!isImm())
+      return false;
+
+    // If this isn't a constant expr, just assume it fits and let relaxation
+    // handle it.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return true;
+
+    // Otherwise, check the value is in a range that makes sense for this
+    // extension.
+    uint64_t Value = CE->getValue();
+    return ((                                  Value <= 0x000000007FFFFFFFULL)||
+            (0xFFFFFFFF80000000ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
   }
 
   bool isMem() const { return Kind == Memory; }
@@ -241,18 +280,6 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImmSExt8Operands(MCInst &Inst, unsigned N) const {
-    // FIXME: Support user customization of the render method.
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImmSExt32Operands(MCInst &Inst, unsigned N) const {
-    // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }

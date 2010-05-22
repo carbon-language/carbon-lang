@@ -19,7 +19,7 @@
 
 // 64-bits but only 32 bits are significant.
 def i64i32imm  : Operand<i64> {
-  let ParserMatchClass = ImmSExt32AsmOperand;
+  let ParserMatchClass = ImmSExti64i32AsmOperand;
 }
 
 // 64-bits but only 32 bits are significant, and those bits are treated as being
@@ -32,7 +32,7 @@ def i64i32imm_pcrel : Operand<i64> {
 
 // 64-bits but only 8 bits are significant.
 def i64i8imm   : Operand<i64> {
-  let ParserMatchClass = ImmSExt8AsmOperand;
+  let ParserMatchClass = ImmSExti64i8AsmOperand;
 }
 
 // Special i64mem for addresses of load folding tail calls. These are not
