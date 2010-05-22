@@ -2810,21 +2810,60 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     }
   }
 
-  // If there are only 2 elements in a 128-bit vector, insert them into an
-  // undef vector.  This handles the common case for 128-bit vector argument
-  // passing, where the insertions should be translated to subreg accesses
-  // with no real instructions.
-  if (VT.is128BitVector() && Op.getNumOperands() == 2) {
-    SDValue Val = DAG.getUNDEF(VT);
-    SDValue Op0 = Op.getOperand(0);
-    SDValue Op1 = Op.getOperand(1);
-    if (Op0.getOpcode() != ISD::UNDEF)
-      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Val, Op0,
-                        DAG.getIntPtrConstant(0));
-    if (Op1.getOpcode() != ISD::UNDEF)
-      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Val, Op1,
-                        DAG.getIntPtrConstant(1));
-    return Val;
+  // Scan through the operands to see if only one value is used.
+  unsigned NumElts = VT.getVectorNumElements();
+  bool isOnlyLowElement = true;
+  bool usesOnlyOneValue = true;
+  bool isConstant = true;
+  SDValue Value;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue V = Op.getOperand(i);
+    if (V.getOpcode() == ISD::UNDEF)
+      continue;
+    if (i > 0)
+      isOnlyLowElement = false;
+    if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V))
+      isConstant = false;
+
+    if (!Value.getNode())
+      Value = V;
+    else if (V != Value)
+      usesOnlyOneValue = false;
+  }
+
+  if (!Value.getNode())
+    return DAG.getUNDEF(VT);
+
+  if (isOnlyLowElement)
+    return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value);
+
+  // If all elements are constants, fall back to the default expansion, which
+  // will generate a load from the constant pool.
+  if (isConstant)
+    return SDValue();
+
+  // Use VDUP for non-constant splats.
+  if (usesOnlyOneValue)
+    return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
+
+  // Vectors with 32- or 64-bit elements can be built by directly assigning
+  // the subregisters.
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize >= 32) {
+    // Do the expansion with floating-point types, since that is what the VFP
+    // registers are defined to use, and since i64 is not legal.
+    EVT EltVT = EVT::getFloatingPointVT(EltSize);
+    EVT VecVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts);
+    SDValue Val = DAG.getUNDEF(VecVT);
+    for (unsigned i = 0; i < NumElts; ++i) {
+      SDValue Elt = Op.getOperand(i);
+      if (Elt.getOpcode() == ISD::UNDEF)
+        continue;
+      Elt = DAG.getNode(ISD::BIT_CONVERT, dl, EltVT, Elt);
+      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VecVT, Val, Elt,
+                        DAG.getConstant(i, MVT::i32));
+    }
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
   }
 
   return SDValue();
@@ -3014,8 +3053,8 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   // If the shuffle is not directly supported and it has 4 elements, use
   // the PerfectShuffle-generated table to synthesize it from other shuffles.
-  if (VT.getVectorNumElements() == 4 &&
-      (VT.is128BitVector() || VT.is64BitVector())) {
+  unsigned NumElts = VT.getVectorNumElements();
+  if (NumElts == 4) {
     unsigned PFIndexes[4];
     for (unsigned i = 0; i != 4; ++i) {
       if (ShuffleMask[i] < 0)
@@ -3027,7 +3066,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     // Compute the index in the perfect shuffle table.
     unsigned PFTableIndex =
       PFIndexes[0]*9*9*9+PFIndexes[1]*9*9+PFIndexes[2]*9+PFIndexes[3];
-
     unsigned PFEntry = PerfectShuffleTable[PFTableIndex];
     unsigned Cost = (PFEntry >> 30);
 
@@ -3035,19 +3073,24 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return GeneratePerfectShuffle(PFEntry, V1, V2, DAG, dl);
   }
 
-  // v2f64 and v2i64 shuffles are just register copies.
-  if (VT == MVT::v2f64 || VT == MVT::v2i64) {
-    // Do the expansion as f64 since i64 is not legal.
-    V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, V1);
-    V2 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, V2);
-    SDValue Val = DAG.getUNDEF(MVT::v2f64);
-    for (unsigned i = 0; i < 2; ++i) {
+  // Implement shuffles with 32- or 64-bit elements as subreg copies.
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize >= 32) {
+    // Do the expansion with floating-point types, since that is what the VFP
+    // registers are defined to use, and since i64 is not legal.
+    EVT EltVT = EVT::getFloatingPointVT(EltSize);
+    EVT VecVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts);
+    V1 = DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, V1);
+    V2 = DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, V2);
+    SDValue Val = DAG.getUNDEF(VecVT);
+    for (unsigned i = 0; i < NumElts; ++i) {
       if (ShuffleMask[i] < 0)
         continue;
-      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
-                                ShuffleMask[i] < 2 ? V1 : V2,
-                                DAG.getConstant(ShuffleMask[i] & 1, MVT::i32));
-      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64, Val,
+      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                ShuffleMask[i] < (int)NumElts ? V1 : V2,
+                                DAG.getConstant(ShuffleMask[i] & (NumElts-1),
+                                                MVT::i32));
+      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VecVT, Val,
                         Elt, DAG.getConstant(i, MVT::i32));
     }
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);

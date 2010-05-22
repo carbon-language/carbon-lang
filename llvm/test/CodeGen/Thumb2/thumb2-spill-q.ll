@@ -46,7 +46,8 @@ bb4:                                              ; preds = %bb193, %entry
   %20 = shufflevector <2 x float> %19, <2 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
   %21 = fadd <4 x float> zeroinitializer, %20     ; <<4 x float>> [#uses=2]
   %22 = fcmp ogt <4 x float> %besterror.0.2264, %21 ; <<4 x i1>> [#uses=0]
-  br i1 undef, label %bb193, label %bb186
+  %tmp = extractelement <4 x i1> %22, i32 0
+  br i1 %tmp, label %bb193, label %bb186
 
 bb186:                                            ; preds = %bb4
   br label %bb193
