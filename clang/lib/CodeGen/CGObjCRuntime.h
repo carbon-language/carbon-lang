@@ -119,6 +119,7 @@ public:
   /// a property setter or getter.
   virtual CodeGen::RValue
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                      ReturnValueSlot ReturnSlot,
                       QualType ResultType,
                       Selector Sel,
                       llvm::Value *Receiver,
@@ -134,6 +135,7 @@ public:
   /// a property setter or getter.
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           ReturnValueSlot ReturnSlot,
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,

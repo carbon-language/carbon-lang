@@ -1150,9 +1150,12 @@ public:
   llvm::Value *EmitObjCProtocolExpr(const ObjCProtocolExpr *E);
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
-  RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
-  RValue EmitObjCPropertyGet(const Expr *E);
-  RValue EmitObjCSuperPropertyGet(const Expr *Exp, const Selector &S);
+  RValue EmitObjCMessageExpr(const ObjCMessageExpr *E,
+                             ReturnValueSlot Return = ReturnValueSlot());
+  RValue EmitObjCPropertyGet(const Expr *E,
+                             ReturnValueSlot Return = ReturnValueSlot());
+  RValue EmitObjCSuperPropertyGet(const Expr *Exp, const Selector &S,
+                                  ReturnValueSlot Return = ReturnValueSlot());
   void EmitObjCPropertySet(const Expr *E, RValue Src);
   void EmitObjCSuperPropertySet(const Expr *E, const Selector &S, RValue Src);
 

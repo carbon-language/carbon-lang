@@ -142,6 +142,7 @@ public:
   virtual llvm::Constant *GenerateConstantString(const StringLiteral *);
   virtual CodeGen::RValue
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                      ReturnValueSlot Return,
                       QualType ResultType,
                       Selector Sel,
                       llvm::Value *Receiver,
@@ -150,6 +151,7 @@ public:
                       const ObjCMethodDecl *Method);
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           ReturnValueSlot Return,
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,
@@ -455,6 +457,7 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
 ///should be called.
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                                    ReturnValueSlot Return,
                                     QualType ResultType,
                                     Selector Sel,
                                     const ObjCInterfaceDecl *Class,
@@ -582,7 +585,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
 
   llvm::Instruction *call;
-  RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
+  RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
       0, &call);
   call->setMetadata(msgSendMDKind, node);
   return msgRet;
@@ -591,6 +594,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 /// Generate code for a message send expression.
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                               ReturnValueSlot Return,
                                QualType ResultType,
                                Selector Sel,
                                llvm::Value *Receiver,
@@ -726,7 +730,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     cast<llvm::CallInst>(imp)->setMetadata(msgSendMDKind, node);
   }
   llvm::Instruction *call;
-  RValue msgRet = CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs,
+  RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
       0, &call);
   call->setMetadata(msgSendMDKind, node);
 

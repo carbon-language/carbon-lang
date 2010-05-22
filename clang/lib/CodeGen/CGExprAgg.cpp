@@ -37,6 +37,10 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   bool IgnoreResult;
   bool IsInitializer;
   bool RequiresGCollection;
+
+  ReturnValueSlot getReturnValueSlot() const {
+    return ReturnValueSlot(DestPtr, VolatileDest);
+  }
 public:
   AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool v,
                  bool ignore, bool isinit, bool requiresGCollection)
@@ -299,7 +303,7 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
   // If the struct doesn't require GC, we can just pass the destination
   // directly to EmitCall.
   if (!RequiresGCollection) {
-    CGF.EmitCallExpr(E, ReturnValueSlot(DestPtr, VolatileDest));
+    CGF.EmitCallExpr(E, getReturnValueSlot());
     return;
   }
   
@@ -308,19 +312,16 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  RValue RV = CGF.EmitObjCMessageExpr(E);
-  EmitFinalDestCopy(E, RV);
+  CGF.EmitObjCMessageExpr(E, getReturnValueSlot());
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  RValue RV = CGF.EmitObjCPropertyGet(E);
-  EmitFinalDestCopy(E, RV);
+  CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
 }
 
 void AggExprEmitter::VisitObjCImplicitSetterGetterRefExpr(
                                    ObjCImplicitSetterGetterRefExpr *E) {
-  RValue RV = CGF.EmitObjCPropertyGet(E);
-  EmitFinalDestCopy(E, RV);
+  CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
