@@ -24,3 +24,19 @@ namespace PR6045 {
     (void)(k % member);
   }
 }
+
+namespace PR7198 {
+  struct A
+  {
+    ~A() { }
+  };
+
+  template<typename T>
+  struct B {
+    struct C : A {};
+    void f()
+    {
+      C c = C();
+    }
+  };
+}

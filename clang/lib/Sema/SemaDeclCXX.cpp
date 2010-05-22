@@ -4795,7 +4795,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
 void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Record->getDecl());
   if (!ClassDecl->isInvalidDecl() && !VD->isInvalidDecl() &&
-      !ClassDecl->hasTrivialDestructor()) {
+      !ClassDecl->hasTrivialDestructor() && !ClassDecl->isDependentContext()) {
     CXXDestructorDecl *Destructor = ClassDecl->getDestructor(Context);
     MarkDeclarationReferenced(VD->getLocation(), Destructor);
     CheckDestructorAccess(VD->getLocation(), Destructor,
