@@ -88,6 +88,10 @@ protected:
   const MCSection *DwarfRangesSection;
   const MCSection *DwarfMacroInfoSection;
   
+  // Extra TLS Variable Data section.  If the target needs to put additional
+  // information for a TLS variable, it'll go here.
+  const MCSection *TLSExtraDataSection;
+  
   /// SupportsWeakEmptyEHFrame - True if target object file supports a
   /// weak_definition of constant 0 for an omitted EH frame.
   bool SupportsWeakOmittedEHFrame;
@@ -146,6 +150,9 @@ public:
   const MCSection *getDwarfRangesSection() const { return DwarfRangesSection; }
   const MCSection *getDwarfMacroInfoSection() const {
     return DwarfMacroInfoSection;
+  }
+  const MCSection *getTLSExtraDataSection() const {
+    return TLSExtraDataSection;
   }
   
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
