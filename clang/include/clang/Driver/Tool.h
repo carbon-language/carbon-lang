@@ -30,16 +30,22 @@ class Tool {
   /// The tool name (for debugging).
   const char *Name;
 
+  /// The human readable name for the tool, for use in diagnostics.
+  const char *ShortName;
+
   /// The tool chain this tool is a part of.
   const ToolChain &TheToolChain;
 
 public:
-  Tool(const char *Name, const ToolChain &TC);
+  Tool(const char *Name, const char *ShortName,
+       const ToolChain &TC);
 
 public:
   virtual ~Tool();
 
   const char *getName() const { return Name; }
+
+  const char *getShortName() const { return ShortName; }
 
   const ToolChain &getToolChain() const { return TheToolChain; }
 

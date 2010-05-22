@@ -39,7 +39,7 @@ namespace tools {
     void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
-    Clang(const ToolChain &TC) : Tool("clang", TC) {}
+    Clang(const ToolChain &TC) : Tool("clang", "clang frontend", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -58,7 +58,8 @@ namespace tools {
   /// \brief Clang integrated assembler tool.
   class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
   public:
-    ClangAs(const ToolChain &TC) : Tool("clang::as", TC) {}
+    ClangAs(const ToolChain &TC) : Tool("clang::as",
+                                        "clang integrated assembler", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -78,7 +79,8 @@ namespace tools {
 namespace gcc {
   class LLVM_LIBRARY_VISIBILITY Common : public Tool {
   public:
-    Common(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
+    Common(const char *Name, const char *ShortName,
+           const ToolChain &TC) : Tool(Name, ShortName, TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
@@ -96,7 +98,8 @@ namespace gcc {
 
   class LLVM_LIBRARY_VISIBILITY Preprocess : public Common {
   public:
-    Preprocess(const ToolChain &TC) : Common("gcc::Preprocess", TC) {}
+    Preprocess(const ToolChain &TC) : Common("gcc::Preprocess",
+                                             "gcc preprocessor", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -109,7 +112,8 @@ namespace gcc {
 
   class LLVM_LIBRARY_VISIBILITY Precompile : public Common  {
   public:
-    Precompile(const ToolChain &TC) : Common("gcc::Precompile", TC) {}
+    Precompile(const ToolChain &TC) : Common("gcc::Precompile",
+                                             "gcc precompile", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
@@ -122,7 +126,8 @@ namespace gcc {
 
   class LLVM_LIBRARY_VISIBILITY Compile : public Common  {
   public:
-    Compile(const ToolChain &TC) : Common("gcc::Compile", TC) {}
+    Compile(const ToolChain &TC) : Common("gcc::Compile",
+                                          "gcc frontend", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -135,7 +140,8 @@ namespace gcc {
 
   class LLVM_LIBRARY_VISIBILITY Assemble : public Common  {
   public:
-    Assemble(const ToolChain &TC) : Common("gcc::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Common("gcc::Assemble",
+                                           "assembler (via gcc)", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
@@ -147,7 +153,8 @@ namespace gcc {
 
   class LLVM_LIBRARY_VISIBILITY Link : public Common  {
   public:
-    Link(const ToolChain &TC) : Common("gcc::Link", TC) {}
+    Link(const ToolChain &TC) : Common("gcc::Link",
+                                       "linker (via gcc)", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
@@ -168,7 +175,8 @@ namespace darwin {
     }
 
   public:
-    DarwinTool(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
+    DarwinTool(const char *Name, const char *ShortName,
+               const ToolChain &TC) : Tool(Name, ShortName, TC) {}
   };
 
   class LLVM_LIBRARY_VISIBILITY CC1 : public DarwinTool  {
@@ -196,7 +204,8 @@ namespace darwin {
     void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
-    CC1(const char *Name, const ToolChain &TC) : DarwinTool(Name, TC) {}
+    CC1(const char *Name, const char *ShortName,
+        const ToolChain &TC) : DarwinTool(Name, ShortName, TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -206,7 +215,8 @@ namespace darwin {
 
   class LLVM_LIBRARY_VISIBILITY Preprocess : public CC1  {
   public:
-    Preprocess(const ToolChain &TC) : CC1("darwin::Preprocess", TC) {}
+    Preprocess(const ToolChain &TC) : CC1("darwin::Preprocess",
+                                          "gcc preprocessor", TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
@@ -218,7 +228,7 @@ namespace darwin {
 
   class LLVM_LIBRARY_VISIBILITY Compile : public CC1  {
   public:
-    Compile(const ToolChain &TC) : CC1("darwin::Compile", TC) {}
+    Compile(const ToolChain &TC) : CC1("darwin::Compile", "gcc frontend", TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
@@ -230,7 +240,8 @@ namespace darwin {
 
   class LLVM_LIBRARY_VISIBILITY Assemble : public DarwinTool  {
   public:
-    Assemble(const ToolChain &TC) : DarwinTool("darwin::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : DarwinTool("darwin::Assemble",
+                                               "assembler", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
@@ -248,7 +259,7 @@ namespace darwin {
     void AddLinkArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
-    Link(const ToolChain &TC) : DarwinTool("darwin::Link", TC) {}
+    Link(const ToolChain &TC) : DarwinTool("darwin::Link", "linker", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
@@ -264,7 +275,7 @@ namespace darwin {
 
   class LLVM_LIBRARY_VISIBILITY Lipo : public DarwinTool  {
   public:
-    Lipo(const ToolChain &TC) : DarwinTool("darwin::Lipo", TC) {}
+    Lipo(const ToolChain &TC) : DarwinTool("darwin::Lipo", "lipo", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
@@ -283,7 +294,8 @@ namespace darwin {
 namespace openbsd {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
   public:
-    Assemble(const ToolChain &TC) : Tool("openbsd::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Tool("openbsd::Assemble", "assembler",
+                                         TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -298,7 +310,7 @@ namespace openbsd {
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
-    Link(const ToolChain &TC) : Tool("openbsd::Link", TC) {}
+    Link(const ToolChain &TC) : Tool("openbsd::Link", "linker", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -317,7 +329,8 @@ namespace openbsd {
 namespace freebsd {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
   public:
-    Assemble(const ToolChain &TC) : Tool("freebsd::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Tool("freebsd::Assemble", "assembler",
+                                         TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -332,7 +345,7 @@ namespace freebsd {
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
-    Link(const ToolChain &TC) : Tool("freebsd::Link", TC) {}
+    Link(const ToolChain &TC) : Tool("freebsd::Link", "linker", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -351,7 +364,8 @@ namespace freebsd {
 namespace auroraux {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
   public:
-    Assemble(const ToolChain &TC) : Tool("auroraux::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Tool("auroraux::Assemble", "assembler",
+                                         TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -366,7 +380,7 @@ namespace auroraux {
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
-    Link(const ToolChain &TC) : Tool("auroraux::Link", TC) {}
+    Link(const ToolChain &TC) : Tool("auroraux::Link", "linker", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -385,7 +399,8 @@ namespace auroraux {
 namespace dragonfly {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
   public:
-    Assemble(const ToolChain &TC) : Tool("dragonfly::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Tool("dragonfly::Assemble", "assembler",
+                                         TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -400,7 +415,7 @@ namespace dragonfly {
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
-    Link(const ToolChain &TC) : Tool("dragonfly::Link", TC) {}
+    Link(const ToolChain &TC) : Tool("dragonfly::Link", "linker", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
