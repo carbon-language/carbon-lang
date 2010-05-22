@@ -36,6 +36,28 @@ def warn_float_underflow : Warning<
   "magnitude of floating-point constant too small for type %0; minimum is %1">,
   InGroup<LiteralRange>;
 
+// C99 variable-length arrays
+def ext_vla : Extension<
+  "variable length arrays are a C99 feature, accepted as an extension">;
+def err_vla_non_pod : Error<"variable length array of non-POD element type %0">;
+def err_vla_in_template : Error<
+  "variable length array cannot be used in a template %select{definition|"
+  "instantiation}0">;
+def err_array_star_in_function_definition : Error<
+  "variable length array must be bound in function definition">;
+def err_vla_decl_in_file_scope : Error<
+  "variable length array declaration not allowed at file scope">;
+def err_vla_decl_has_static_storage : Error<
+  "variable length array declaration can not have 'static' storage duration">;
+def err_vla_decl_has_extern_linkage : Error<
+  "variable length array declaration can not have 'extern' linkage">;
+  
+// C99 variably modified types
+def err_variably_modified_template_arg : Error<
+  "variably modified type %0 cannot be used as a template argument">;
+def err_variably_modified_nontype_template_param : Error<
+  "non-type template parameter of variably modified type %0">;
+
 // C99 Designated Initializers
 def err_array_designator_negative : Error<
   "array designator value '%0' is negative">;
@@ -71,11 +93,6 @@ def ext_flexible_array_init : Extension<
   "flexible array initialization is a GNU extension">, InGroup<GNU>;
 
 // Declarations.
-def ext_vla : Extension<
-  "variable length arrays are a C99 feature, accepted as an extension">;
-def err_vla_cxx : Error<
-  "variable length arrays are not permitted in C++">;
-  
 def ext_anon_param_requires_type_specifier : Extension<
   "type specifier required for unnamed parameter, defaults to int">;
 def err_bad_variable_name : Error<
@@ -89,8 +106,6 @@ def warn_unused_exception_param : Warning<"unused exception parameter %0">,
   InGroup<UnusedExceptionParameter>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
-def err_array_star_in_function_definition : Error<
-  "variable length array must be bound in function definition">;
 def warn_unused_function : Warning<"unused function %0">,
   InGroup<UnusedFunction>, DefaultIgnore;
   
@@ -1666,12 +1681,6 @@ def warn_enumerator_too_large : Warning<
   
 def warn_illegal_constant_array_size : Extension<
   "size of static array must be an integer constant expression">;
-def err_vla_decl_in_file_scope : Error<
-  "variable length array declaration not allowed at file scope">;
-def err_vla_decl_has_static_storage : Error<
-  "variable length array declaration can not have 'static' storage duration">;
-def err_vla_decl_has_extern_linkage : Error<
-  "variable length array declaration can not have 'extern' linkage">;
 def err_vm_decl_in_file_scope : Error<
   "variably modified type declaration not allowed at file scope">;
 def err_vm_decl_has_extern_linkage : Error<

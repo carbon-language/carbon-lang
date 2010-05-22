@@ -553,6 +553,13 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
       // assume that it is well-formed.
       T->isDependentType())
     return T;
+  // We don't allow variably-modified types as the type of non-type template
+  // parameters.
+  else if (T->isVariablyModifiedType()) {
+    Diag(Loc, diag::err_variably_modified_nontype_template_param)
+      << T;
+    return QualType();
+  }
   // C++ [temp.param]p8:
   //
   //   A non-type template-parameter of type "array of T" or
@@ -564,7 +571,7 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   else if (T->isFunctionType())
     // FIXME: Keep the type prior to promotion?
     return Context.getPointerType(T);
-
+  
   Diag(Loc, diag::err_template_nontype_parm_bad_type)
     << T;
 
@@ -2354,7 +2361,8 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //   compounded from any of these types shall not be used as a
   //   template-argument for a template type-parameter.
   //
-  // FIXME: Perform the recursive and no-linkage type checks.
+  // FIXME: Perform the unnamed type check.
+  SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
   const TagType *Tag = 0;
   if (const EnumType *EnumT = Arg->getAs<EnumType>())
     Tag = EnumT;
@@ -2366,12 +2374,14 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
       << QualType(Tag, 0) << SR;
   } else if (Tag && !Tag->getDecl()->getDeclName() &&
            !Tag->getDecl()->getTypedefForAnonDecl()) {
-    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
     Diag(SR.getBegin(), diag::err_template_arg_unnamed_type) << SR;
     Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
     return true;
+  } else if (Arg->isVariablyModifiedType()) {
+    Diag(SR.getBegin(), diag::err_variably_modified_template_arg)
+      << Arg;
+    return true;
   } else if (Context.hasSameUnqualifiedType(Arg, Context.OverloadTy)) {
-    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
     return Diag(SR.getBegin(), diag::err_template_arg_overload_type) << SR;
   }
 

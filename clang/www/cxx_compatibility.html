@@ -42,14 +42,28 @@ C++-conformance bug in your code and how you can fix it.</p>
 <h2 id="vla">Variable-length arrays</h2>
 <!-- ======================================================================= -->
 
-<p>GCC allows an array's size to be determined at run time. This,
-however, is not standard C++. Furthermore, it is a potential security
-hole as an incorrect array size may overflow the stack. If Clang tells
-you <tt>"variable length arrays are not permitted in C++"</tt>, here
-are some ways in which you can fix it:</p>
+<p>GCC and C99 allow an array's size to be determined at run
+time. This extension is not permitted in standard C++. However, Clang
+supports such variable length arrays in very limited circumstances for
+compatibility with GNU C and C99 programs:</p>
+
+<ul>  
+  <li>The element type of a variable length array must be a POD
+  ("plain old data") type, which means that it cannot have any
+  user-declared constructors or destructors, base classes, or any
+  members if non-POD type. All C types are POD types.</li>
+
+  <li>Variable length arrays cannot be used in conjunction with
+  templates. For example, one cannot use a variable length array
+  inside a template or use a variable length array type in a template
+  argument.</li>
+</ul>
+
+<p>If your code uses variable length arrays in a manner that Clang doesn't support, there are several ways to fix your code:
 
 <ol>
-<li>replace it with a fixed-size array if you can determine a
+<li>replace the variable length array with a fixed-size array if you can
+    determine a
     reasonable upper bound at compile time; sometimes this is as
     simple as changing <tt>int size = ...;</tt> to <tt>const int size
     = ...;</tt> (if the definition of <tt>size</tt> is a compile-time

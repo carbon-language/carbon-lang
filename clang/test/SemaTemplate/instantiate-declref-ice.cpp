@@ -31,5 +31,4 @@ struct X1 {
 template<typename T>
 const unsigned X1<T>::value = sizeof(T);
 
-int array3[X1<int>::value == sizeof(int)? 1 : -1]; // expected-error{{variable length arrays are not permitted in C++}} \
-// expected-error{{variable length array declaration not allowed at file scope}}
+int array3[X1<int>::value == sizeof(int)? 1 : -1]; // expected-error{{variable length array declaration not allowed at file scope}}

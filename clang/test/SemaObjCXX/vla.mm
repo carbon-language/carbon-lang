@@ -6,7 +6,7 @@
 @end
 
 void test(Data *d) {
-  char buffer[[d length]]; // expected-error{{variable length arrays are not permitted in C++}}
+  char buffer[[d length]];
   [d getData:buffer];
 }
 
