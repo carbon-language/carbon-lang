@@ -227,28 +227,31 @@ int Driver::ExecuteCompilation(const Compilation &C) const {
   // Remove temp files.
   C.CleanupFileList(C.getTempFiles());
 
-  // If the compilation failed, remove result files as well.
-  if (Res != 0 && !C.getArgs().hasArg(options::OPT_save_temps))
+  // If the command succeeded, we are done.
+  if (Res == 0)
+    return Res;
+
+  // Otherwise, remove result files as well.
+  if (!C.getArgs().hasArg(options::OPT_save_temps))
     C.CleanupFileList(C.getResultFiles(), true);
 
   // Print extra information about abnormal failures, if possible.
-  if (Res) {
-    // This is ad-hoc, but we don't want to be excessively noisy. If the result
-    // status was 1, assume the command failed normally. In particular, if it
-    // was the compiler then assume it gave a reasonable error code. Failures in
-    // other tools are less common, and they generally have worse diagnostics,
-    // so always print the diagnostic there.
-    const Action &Source = FailingCommand->getSource();
+  //
+  // This is ad-hoc, but we don't want to be excessively noisy. If the result
+  // status was 1, assume the command failed normally. In particular, if it was
+  // the compiler then assume it gave a reasonable error code. Failures in other
+  // tools are less common, and they generally have worse diagnostics, so always
+  // print the diagnostic there.
+  const Tool &FailingTool = FailingCommand->getCreator();
 
-    if (!FailingCommand->getCreator().hasGoodDiagnostics() || Res != 1) {
-      // FIXME: See FIXME above regarding result code interpretation.
-      if (Res < 0)
-        Diag(clang::diag::err_drv_command_signalled)
-          << Source.getClassName() << -Res;
-      else
-        Diag(clang::diag::err_drv_command_failed)
-          << Source.getClassName() << Res;
-    }
+  if (!FailingCommand->getCreator().hasGoodDiagnostics() || Res != 1) {
+    // FIXME: See FIXME above regarding result code interpretation.
+    if (Res < 0)
+      Diag(clang::diag::err_drv_command_signalled)
+        << FailingTool.getShortName() << -Res;
+    else
+      Diag(clang::diag::err_drv_command_failed)
+        << FailingTool.getShortName() << Res;
   }
 
   return Res;
