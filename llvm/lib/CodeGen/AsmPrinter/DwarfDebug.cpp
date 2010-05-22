@@ -2156,8 +2156,10 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     DbgVariable *RegVar = new DbgVariable(DV);
     DbgVariableToDbgInstMap[RegVar] = MInsn;
     Scope->addVariable(RegVar);
-    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+    if (DV.getTag() != dwarf::DW_TAG_arg_variable) {
       DbgValueStartMap[MInsn] = RegVar;
+      DbgVariableLabelsMap[RegVar] = LabelsBeforeInsn.lookup(MInsn);
+    }
     if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
       VarToAbstractVarMap[RegVar] = AbsVar;
@@ -2186,12 +2188,13 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   if (DL.isUnknown() && !UnknownLocations)
     return;
  
-  DbgVariable *LocalVar = NULL;
+  bool LocalVar = false;
   if (MI->isDebugValue()) {
-    DenseMap<const MachineInstr *, DbgVariable *>::iterator DI
-      = DbgValueStartMap.find(MI);
-    if (DI != DbgValueStartMap.end())
-      LocalVar = DI->second;
+    assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
+    DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
+    if (!DV.Verify()) return;
+    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+      LocalVar = true;
   }
 
   MCSymbol *Label = NULL;
@@ -2220,10 +2223,6 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   // even if previous label is reused.
   if (InsnsBeginScopeSet.count(MI) != 0)
     LabelsBeforeInsn[MI] = Label;
-  
-  // If this is a DBG_VALUE instruction then record label to identify variable.
-  if (LocalVar)
-    DbgVariableLabelsMap[LocalVar] = Label;
 }
 
 /// endScope - Process end of a scope.
@@ -2509,8 +2508,6 @@ static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo()) return;
   if (!extractScopeInformation()) return;
-  
-  collectVariableInfo(MF);
 
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());
@@ -2543,6 +2540,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo() || DbgScopeMap.empty()) return;
 
   if (CurrentFnDbgScope) {
+
+    collectVariableInfo(MF);
+
     // Define end label for subprogram.
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("func_end",
                                                   Asm->getFunctionNumber()));
