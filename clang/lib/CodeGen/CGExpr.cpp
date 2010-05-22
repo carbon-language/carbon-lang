@@ -211,9 +211,15 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     
     llvm::SmallVector<SubobjectAdjustment, 2> Adjustments;
     do {
-      if (const CastExpr *CE 
-                 = dyn_cast<CastExpr>(E->IgnoreParenNoopCasts(getContext()))) {
-        if (CE->getCastKind() == CastExpr::CK_DerivedToBase) {
+      if (const ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+        E = PE->getSubExpr();
+        continue;
+      } 
+
+      if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
+        if ((CE->getCastKind() == CastExpr::CK_DerivedToBase ||
+             CE->getCastKind() == CastExpr::CK_UncheckedDerivedToBase) &&
+            E->getType()->isRecordType()) {
           E = CE->getSubExpr();
           CXXRecordDecl *Derived 
             = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
@@ -221,9 +227,12 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                     Derived));
           continue;
         }
-      } else if (const MemberExpr *ME
-                      = dyn_cast<MemberExpr>(
-                                       E->IgnoreParenNoopCasts(getContext()))) {
+
+        if (CE->getCastKind() == CastExpr::CK_NoOp) {
+          E = CE->getSubExpr();
+          continue;
+        }
+      } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
         if (ME->getBase()->isLvalue(getContext()) != Expr::LV_Valid &&
             ME->getBase()->getType()->isRecordType()) {
           if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
@@ -234,7 +243,10 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
           }
         }
       }
-    } while (false);
+
+      // Nothing changed.
+      break;
+    } while (true);
       
     Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
                             IsInitializer);

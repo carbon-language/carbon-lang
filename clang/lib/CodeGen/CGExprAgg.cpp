@@ -216,6 +216,14 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
 
+  case CastExpr::CK_DerivedToBase:
+  case CastExpr::CK_BaseToDerived:
+  case CastExpr::CK_UncheckedDerivedToBase: {
+    assert(0 && "cannot perform hierarchy conversion in EmitAggExpr: "
+                "should have been unpacked before we got here");
+    break;
+  }
+
   // FIXME: Remove the CK_Unknown check here.
   case CastExpr::CK_Unknown:
   case CastExpr::CK_NoOp:

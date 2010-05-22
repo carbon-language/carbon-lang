@@ -764,15 +764,17 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   }
 
   // Construct the appropriate ObjCMessageExpr.
+  Expr *Result;
   if (SuperLoc.isValid())
-    return Owned(ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
-                                         SuperLoc, /*IsInstanceSuper=*/false, 
-                                         ReceiverType, Sel, Method, Args, 
-                                         NumArgs, RBracLoc));
-
-  return Owned(ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
-                                       ReceiverTypeInfo, Sel, Method, Args, 
-                                       NumArgs, RBracLoc));
+    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
+                                     SuperLoc, /*IsInstanceSuper=*/false, 
+                                     ReceiverType, Sel, Method, Args, 
+                                     NumArgs, RBracLoc);
+  else
+    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
+                                     ReceiverTypeInfo, Sel, Method, Args, 
+                                     NumArgs, RBracLoc);
+  return MaybeBindToTemporary(Result);
 }
 
 // ActOnClassMessage - used for both unary and keyword messages.
@@ -1007,14 +1009,16 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
     return ExprError();
 
   // Construct the appropriate ObjCMessageExpr instance.
+  Expr *Result;
   if (SuperLoc.isValid())
-    return Owned(ObjCMessageExpr::Create(Context, ReturnType, LBracLoc,
-                                         SuperLoc,  /*IsInstanceSuper=*/true,
-                                         ReceiverType, Sel, Method, 
-                                         Args, NumArgs, RBracLoc));
-
-  return Owned(ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, Receiver, 
-                                       Sel, Method, Args, NumArgs, RBracLoc));
+    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc,
+                                     SuperLoc,  /*IsInstanceSuper=*/true,
+                                     ReceiverType, Sel, Method, 
+                                     Args, NumArgs, RBracLoc);
+  else
+    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, Receiver, 
+                                     Sel, Method, Args, NumArgs, RBracLoc);
+  return MaybeBindToTemporary(Result);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.

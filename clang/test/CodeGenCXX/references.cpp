@@ -215,7 +215,11 @@ namespace N2 {
 
   // CHECK: define void @_ZN2N21gEi
   // CHECK: call void @_ZN2N24getZEv
-  // FIXME: Not treated as an lvalue!
+  // CHECK: {{getelementptr inbounds.*i32 0, i32 0}}
+  // CHECK: {{getelementptr inbounds.*i32 0, i32 0}}
+  // CHECK: store i32 19
+  // CHECK: call void @_ZN2N21ZD1Ev
+  // CHECK: ret void
   void g(int i) {
     const X &xr = getZ().has.x;
     i = 19;    
