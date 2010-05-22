@@ -627,6 +627,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
     getContext().getMachOSection("__DWARF", "__debug_inlined",
                                  MCSectionMachO::S_ATTR_DEBUG,
                                  SectionKind::getMetadata());
+                                 
+  TLSExtraDataSection = TLSTLVSection;
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
@@ -666,9 +668,13 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
 const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {                       
-  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
+                       Mangler *Mang, const TargetMachine &TM) const {
+  
+  // Handle one kind of thread local...
+  if (Kind.isThreadBSS()) return TLSBSSSection;
 
+  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
+  
   if (Kind.isText())
     return GV->isWeakForLinker() ? TextCoalSection : TextSection;
 
