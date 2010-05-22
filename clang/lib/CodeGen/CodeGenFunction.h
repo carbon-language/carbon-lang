@@ -747,8 +747,10 @@ public:
   llvm::BlockAddress *GetAddrOfLabel(const LabelStmt *L);
   llvm::BasicBlock *GetIndirectGotoBlock();
 
-  /// EmitMemSetToZero - Generate code to memset a value of the given type to 0.
-  void EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty);
+  /// EmitNullInitialization - Generate code to set a value of the given type to
+  /// null, If the type contains data member pointers, they will be initialized
+  /// to -1 in accordance with the Itanium C++ ABI.
+  void EmitNullInitialization(llvm::Value *DestPtr, QualType Ty);
 
   // EmitVAArg - Generate code to get an argument from the passed in pointer
   // and update it accordingly. The return value is a pointer to the argument.
