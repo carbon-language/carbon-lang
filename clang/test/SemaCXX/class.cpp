@@ -147,3 +147,15 @@ namespace PR7153 {
     ec.member = 0;
   }
 }
+
+namespace PR7196 {
+  struct A {
+    int a;
+
+    void f() {
+      char i[sizeof(a)];
+      enum { x = sizeof(i) };
+      enum { y = sizeof(a) };
+    }
+  };
+}

@@ -305,7 +305,7 @@ void Sema::ActOnEndOfTranslationUnit() {
 DeclContext *Sema::getFunctionLevelDeclContext() {
   DeclContext *DC = CurContext;
 
-  while (isa<BlockDecl>(DC))
+  while (isa<BlockDecl>(DC) || isa<EnumDecl>(DC))
     DC = DC->getParent();
 
   return DC;
