@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple x86_64-apple-darwin | FileCheck %s
 
 @a = thread_local global i32 0                    ; <i32*> [#uses=0]
 @b = thread_local global i32 0                    ; <i32*> [#uses=0]
