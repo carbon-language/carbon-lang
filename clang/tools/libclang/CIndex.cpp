@@ -44,8 +44,7 @@ using namespace clang::cxstring;
 // Crash Reporting.
 //===----------------------------------------------------------------------===//
 
-#ifdef __APPLE__
-#define USE_CRASHTRACER
+#ifdef USE_CRASHTRACER
 #include "clang/Analysis/Support/SaveAndRestore.h"
 // Integrate with crash reporter.
 static const char *__crashreporter_info__ = 0;
