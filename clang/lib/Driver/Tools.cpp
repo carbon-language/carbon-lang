@@ -1078,6 +1078,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   }
 
+  // Translate GCC's misnamer '-fasm' arguments to '-fgnu-keywords'.
+  if (Arg *Asm = Args.getLastArg(options::OPT_fasm, options::OPT_fno_asm)) {
+    if (Asm->getOption().matches(options::OPT_fasm))
+      CmdArgs.push_back("-fgnu-keywords");
+    else
+      CmdArgs.push_back("-fno-gnu-keywords");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
     CmdArgs.push_back(A->getValue(Args));
