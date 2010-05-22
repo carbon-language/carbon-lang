@@ -296,7 +296,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   if (! ShrinkWrapThisFunction) {
     // Spill using target interface.
     I = EntryBlock->begin();
-    if (!TII.spillCalleeSavedRegisters(*EntryBlock, I, CSI)) {
+    if (!TII.spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
       for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
         // Add the callee-saved register as live-in.
         // It's killed at the spill.
@@ -326,7 +326,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
 
       // Restore all registers immediately before the return and any
       // terminators that preceed it.
-      if (!TII.restoreCalleeSavedRegisters(*MBB, I, CSI)) {
+      if (!TII.restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
           TII.loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
                                    CSI[i].getFrameIdx(),

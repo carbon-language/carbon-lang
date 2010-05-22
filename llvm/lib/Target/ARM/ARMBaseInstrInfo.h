@@ -200,6 +200,11 @@ public:
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const =0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI,
+                                 const TargetRegisterInfo *TRI) const;
+
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,

@@ -125,6 +125,10 @@ class MachineFrameInfo {
   /// to builtin \@llvm.frameaddress.
   bool FrameAddressTaken;
 
+  /// ReturnAddressTaken - This boolean keeps track of whether there is a call
+  /// to builtin \@llvm.returnaddress.
+  bool ReturnAddressTaken;
+
   /// StackSize - The prolog/epilog code inserter calculates the final stack
   /// offsets for all of the fixed size objects, updating the Objects list
   /// above.  It then updates StackSize to contain the number of bytes that need
@@ -193,6 +197,7 @@ public:
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
+    ReturnAddressTaken = false;
     AdjustsStack = false;
     HasCalls = false;
     StackProtectorIdx = -1;
@@ -222,6 +227,12 @@ public:
   /// \@llvm.frameaddress in this function.
   bool isFrameAddressTaken() const { return FrameAddressTaken; }
   void setFrameAddressIsTaken(bool T) { FrameAddressTaken = T; }
+
+  /// isReturnAddressTaken - This method may be called any time after instruction
+  /// selection is complete to determine if there is a call to
+  /// \@llvm.returnaddress in this function.
+  bool isReturnAddressTaken() const { return ReturnAddressTaken; }
+  void setReturnAddressIsTaken(bool s) { ReturnAddressTaken = s; }
 
   /// getObjectIndexBegin - Return the minimum frame object index.
   ///

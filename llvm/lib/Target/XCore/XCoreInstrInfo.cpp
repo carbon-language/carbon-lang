@@ -420,7 +420,8 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                          const TargetRegisterInfo *TRI) const {
   if (CSI.empty()) {
     return true;
   }
@@ -450,7 +451,8 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
 bool XCoreInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
-                               const std::vector<CalleeSavedInfo> &CSI) const
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                            const TargetRegisterInfo *TRI) const
 {
   bool AtStart = MI == MBB.begin();
   MachineBasicBlock::iterator BeforeI = MI;
