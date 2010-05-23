@@ -530,8 +530,15 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
     UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
   }
 
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+  
   if (UpdateVBases) {
     // FIXME: Update virtual bases.
+  } else if (PrimaryBase && Layout.getPrimaryBaseWasVirtual()) {
+    // We always want to update the offsets of a primary virtual base.
+    assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+           "primary base class offset must always be 0!");
+    UpdateEmptyClassOffsets(PrimaryBase, Offset, /*UpdateVBases=*/false);
   }
 }
 

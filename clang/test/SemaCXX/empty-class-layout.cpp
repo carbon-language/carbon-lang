@@ -2,6 +2,8 @@
 
 #define SA(n, p) int a##n[(p) ? 1 : -1]
 
+namespace Test0 {
+
 struct A { int a; };
 SA(0, sizeof(A) == 4);
 
@@ -66,3 +68,19 @@ SA(11, sizeof(S7) == 8);
 struct S8 : Empty, A {
 };
 SA(12, sizeof(S8) == 4);
+
+}
+
+namespace Test1 {
+
+// Test that we don't try to place both A subobjects at offset 0.
+struct A { };
+class B { virtual void f(); };
+class C : A, virtual B { };
+struct D : virtual C { };
+struct E : virtual A { };
+class F : D, E { };
+
+SA(0, sizeof(F) == 24);
+
+}
