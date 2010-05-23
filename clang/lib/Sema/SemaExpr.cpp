@@ -1667,8 +1667,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                    (NestedNameSpecifier*) SS.getScopeRep(),
                                    SS.getRange(),
                                    R.getLookupName(), R.getNameLoc(),
-                                   NeedsADL, R.isOverloadedResult());
-  ULE->addDecls(R.begin(), R.end());
+                                   NeedsADL, R.isOverloadedResult(),
+                                   R.begin(), R.end());
 
   return Owned(ULE);
 }
@@ -2729,8 +2729,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
                                      IsArrow, OpLoc,
                                      Qualifier, SS.getRange(),
                                      MemberName, MemberLoc,
-                                     TemplateArgs);
-    MemExpr->addDecls(R.begin(), R.end());
+                                     TemplateArgs, R.begin(), R.end());
 
     return Owned(MemExpr);
   }

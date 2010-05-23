@@ -1366,11 +1366,14 @@ protected:
   OverloadExpr(StmtClass K, QualType T, bool Dependent,
                NestedNameSpecifier *Qualifier, SourceRange QRange,
                DeclarationName Name, SourceLocation NameLoc,
-               bool HasTemplateArgs)
+               bool HasTemplateArgs,
+               UnresolvedSetIterator Begin, UnresolvedSetIterator End)
     : Expr(K, T, Dependent, Dependent),
       Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
       NameLoc(NameLoc), HasExplicitTemplateArgs(HasTemplateArgs)
-  {}
+  {
+    Results.append(Begin, End);
+  }
 
 public:
   /// Computes whether an unresolved lookup on the given declarations
@@ -1394,19 +1397,12 @@ public:
     return llvm::PointerIntPair<OverloadExpr*,1>(cast<OverloadExpr>(E), op);
   }
 
-  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
-    Results.append(Begin, End);
-  }
-
   /// Gets the naming class of this lookup, if any.
   CXXRecordDecl *getNamingClass() const;
 
   typedef UnresolvedSetImpl::iterator decls_iterator;
   decls_iterator decls_begin() const { return Results.begin(); }
   decls_iterator decls_end() const { return Results.end(); }
-
-  /// Gets the decls as an unresolved set.
-  const UnresolvedSetImpl &getDecls() { return Results; }
 
   /// Gets the number of declarations in the unresolved set.
   unsigned getNumDecls() const { return Results.size(); }
@@ -1478,9 +1474,10 @@ class UnresolvedLookupExpr : public OverloadExpr {
   UnresolvedLookupExpr(QualType T, bool Dependent, CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
-                       bool RequiresADL, bool Overloaded, bool HasTemplateArgs)
+                       bool RequiresADL, bool Overloaded, bool HasTemplateArgs,
+                       UnresolvedSetIterator Begin, UnresolvedSetIterator End)
     : OverloadExpr(UnresolvedLookupExprClass, T, Dependent, Qualifier, QRange,
-                   Name, NameLoc, HasTemplateArgs),
+                   Name, NameLoc, HasTemplateArgs, Begin, End),
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
@@ -1492,11 +1489,14 @@ public:
                                       SourceRange QualifierRange,
                                       DeclarationName Name,
                                       SourceLocation NameLoc,
-                                      bool ADL, bool Overloaded) {
+                                      bool ADL, bool Overloaded,
+                                      UnresolvedSetIterator Begin, 
+                                      UnresolvedSetIterator End) {
     return new(C) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
                                        Dependent, NamingClass,
                                        Qualifier, QualifierRange,
-                                       Name, NameLoc, ADL, Overloaded, false);
+                                       Name, NameLoc, ADL, Overloaded, false,
+                                       Begin, End);
   }
 
   static UnresolvedLookupExpr *Create(ASTContext &C,
@@ -1507,7 +1507,9 @@ public:
                                       DeclarationName Name,
                                       SourceLocation NameLoc,
                                       bool ADL,
-                                      const TemplateArgumentListInfo &Args);
+                                      const TemplateArgumentListInfo &Args,
+                                      UnresolvedSetIterator Begin, 
+                                      UnresolvedSetIterator End);
 
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
@@ -2123,7 +2125,8 @@ class UnresolvedMemberExpr : public OverloadExpr {
                        SourceRange QualifierRange,
                        DeclarationName Member,
                        SourceLocation MemberLoc,
-                       const TemplateArgumentListInfo *TemplateArgs);
+                       const TemplateArgumentListInfo *TemplateArgs,
+                       UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
 public:
   static UnresolvedMemberExpr *
@@ -2134,7 +2137,8 @@ public:
          SourceRange QualifierRange,
          DeclarationName Member,
          SourceLocation MemberLoc,
-         const TemplateArgumentListInfo *TemplateArgs);
+         const TemplateArgumentListInfo *TemplateArgs,
+         UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source

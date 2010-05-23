@@ -6285,9 +6285,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, OpLoc,
-                                     /*ADL*/ true, IsOverloaded(Fns));
-    Fn->addDecls(Fns.begin(), Fns.end());
-
+                                     /*ADL*/ true, IsOverloaded(Fns),
+                                     Fns.begin(), Fns.end());
     input.release();
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    &Args[0], NumArgs,
@@ -6458,9 +6457,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, OpLoc,
-                                     /*ADL*/ true, IsOverloaded(Fns));
-
-    Fn->addDecls(Fns.begin(), Fns.end());
+                                     /*ADL*/ true, IsOverloaded(Fns),
+                                     Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    Args, 2,
                                                    Context.DependentTy,
@@ -6656,7 +6654,9 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, LLoc,
-                                     /*ADL*/ true, /*Overloaded*/ false);
+                                     /*ADL*/ true, /*Overloaded*/ false,
+                                     UnresolvedSetIterator(),
+                                     UnresolvedSetIterator());
     // Can't add any actual overloads yet
 
     Base.release();

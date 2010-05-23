@@ -1637,8 +1637,8 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
     = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
                                    Qualifier, QualifierRange,
                                    R.getLookupName(), R.getNameLoc(),
-                                   RequiresADL, TemplateArgs);
-  ULE->addDecls(R.begin(), R.end());
+                                   RequiresADL, TemplateArgs, 
+                                   R.begin(), R.end());
 
   return Owned(ULE);
 }
