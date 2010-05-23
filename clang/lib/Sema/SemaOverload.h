@@ -177,6 +177,12 @@ namespace clang {
     }
 
     void setAsIdentityConversion();
+    
+    bool isIdentityConversion() const {
+      return First == ICK_Identity && Second == ICK_Identity && 
+             Third == ICK_Identity;
+    }
+    
     ImplicitConversionRank getRank() const;
     bool isPointerConversionToBool() const;
     bool isPointerConversionToVoidPointer(ASTContext& Context) const;
