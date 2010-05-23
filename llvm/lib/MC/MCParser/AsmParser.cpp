@@ -1083,7 +1083,11 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
       if (ParseExpression(Value))
         return true;
 
-      Out.EmitValue(Value, Size, DEFAULT_ADDRSPACE);
+      // Special case constant expressions to match code generator.
+      if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Value))
+        Out.EmitIntValue(MCE->getValue(), Size, DEFAULT_ADDRSPACE);
+      else
+        Out.EmitValue(Value, Size, DEFAULT_ADDRSPACE);
 
       if (Lexer.is(AsmToken::EndOfStatement))
         break;
@@ -1165,8 +1169,7 @@ bool AsmParser::ParseDirectiveFill() {
     return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
-    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), FillSize,
-                  DEFAULT_ADDRSPACE);
+    Out.EmitIntValue(FillExpr, FillSize, DEFAULT_ADDRSPACE);
 
   return false;
 }
