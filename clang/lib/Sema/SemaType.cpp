@@ -716,15 +716,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
           << Context.getBaseElementType(T);
         return QualType();
       } 
-      // Prohibit the use of VLAs in template instantiations, since we don't
-      // want them to accidentally be used. This means that we handle VLAs in
-      // C-like contexts, but still ban them from C++-specific contexts.
-      // And, since we check template definitions early, prohibit them there,
-      // too.
-      else if (CurContext->isDependentContext() ||
-               ActiveTemplateInstantiations.size())
-        Diag(Loc, diag::err_vla_in_template)
-          << !CurContext->isDependentContext();
+      // Prohibit the use of VLAs during template argument deduction.
+      else if (isSFINAEContext()) {
+        Diag(Loc, diag::err_vla_in_sfinae);
+        return QualType();
+      }
       // Just extwarn about VLAs.
       else
         Diag(Loc, diag::ext_vla);

@@ -277,6 +277,9 @@ QualType Type::getPointeeType() const {
 /// array types and types that contain variable array types in their
 /// declarator
 bool Type::isVariablyModifiedType() const {
+  // FIXME: We should really keep a "variably modified" bit in Type, rather
+  // than walking the type hierarchy to recompute it.
+  
   // A VLA is a variably modified type.
   if (isVariableArrayType())
     return true;

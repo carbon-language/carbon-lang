@@ -53,11 +53,8 @@ compatibility with GNU C and C99 programs:</p>
   user-declared constructors or destructors, base classes, or any
   members if non-POD type. All C types are POD types.</li>
 
-  <li>Variable length arrays cannot be used in conjunction with
-  templates. For example, one cannot use a variable length array
-  inside a template or use a variable length array type in a template
-  argument.</li>
-</ul>
+  <li>Variable length arrays cannot be used as the type of a non-type
+template parameter.</li> </ul>
 
 <p>If your code uses variable length arrays in a manner that Clang doesn't support, there are several ways to fix your code:
 

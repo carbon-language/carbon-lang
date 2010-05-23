@@ -41,9 +41,8 @@ def ext_vla : Extension<
   "variable length arrays are a C99 feature, accepted as an extension">,
   InGroup<VLA>;
 def err_vla_non_pod : Error<"variable length array of non-POD element type %0">;
-def err_vla_in_template : Error<
-  "variable length array cannot be used in a template %select{definition|"
-  "instantiation}0">;
+def err_vla_in_sfinae : Error<
+  "variable length array cannot be formed during template argument deduction">;
 def err_array_star_in_function_definition : Error<
   "variable length array must be bound in function definition">;
 def err_vla_decl_in_file_scope : Error<

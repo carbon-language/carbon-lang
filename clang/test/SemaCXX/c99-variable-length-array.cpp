@@ -20,10 +20,10 @@ void vla(int N) {
   NonPOD2 array4[N][3]; // expected-error{{variable length array of non-POD element type 'NonPOD2'}}
 }
 
-// We disallow VLAs in templates
+/// Warn about VLAs in templates.
 template<typename T>
 void vla_in_template(int N, T t) {
-  int array1[N]; // expected-error{{variable length array cannot be used in a template definition}}
+  int array1[N]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
 }
 
 struct HasConstantValue {
@@ -36,7 +36,7 @@ struct HasNonConstantValue {
 
 template<typename T>
 void vla_in_template(T t) {
-  int array2[T::value]; // expected-error{{variable length array cannot be used in a template instantiation}}
+  int array2[T::value]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
 }
 
 template void vla_in_template<HasConstantValue>(HasConstantValue);
@@ -53,7 +53,8 @@ void inst_with_vla(int N) {
 
 template<typename T>
 struct X1 {
-  template<int (&Array)[T::value]> // expected-error{{variable length array cannot be used in a template instantiation}}
+  template<int (&Array)[T::value]> // expected-error{{non-type template parameter of variably modified type 'int (&)[HasNonConstantValue::value]'}}  \
+  // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   struct Inner {
     
   };

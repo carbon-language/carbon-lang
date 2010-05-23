@@ -534,6 +534,14 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
 /// otherwise, produces a diagnostic and returns a NULL type.
 QualType
 Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
+  // We don't allow variably-modified types as the type of non-type template
+  // parameters.
+  if (T->isVariablyModifiedType()) {
+    Diag(Loc, diag::err_variably_modified_nontype_template_param)
+      << T;
+    return QualType();
+  }
+
   // C++ [temp.param]p4:
   //
   // A non-type template-parameter shall have one of the following
@@ -553,13 +561,6 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
       // assume that it is well-formed.
       T->isDependentType())
     return T;
-  // We don't allow variably-modified types as the type of non-type template
-  // parameters.
-  else if (T->isVariablyModifiedType()) {
-    Diag(Loc, diag::err_variably_modified_nontype_template_param)
-      << T;
-    return QualType();
-  }
   // C++ [temp.param]p8:
   //
   //   A non-type template-parameter of type "array of T" or
