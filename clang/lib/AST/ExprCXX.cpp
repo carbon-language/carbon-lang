@@ -176,7 +176,8 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
   void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) + 
                          ExplicitTemplateArgumentList::sizeFor(Args));
   UnresolvedLookupExpr *ULE
-    = new (Mem) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
+    = new (Mem) UnresolvedLookupExpr(C, 
+                                     Dependent ? C.DependentTy : C.OverloadTy,
                                      Dependent, NamingClass,
                                      Qualifier, QualifierRange,
                                      Name, NameLoc, ADL,
@@ -187,6 +188,26 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
   reinterpret_cast<ExplicitTemplateArgumentList*>(ULE+1)->initializeFrom(Args);
 
   return ULE;
+}
+
+OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T, 
+                           bool Dependent, NestedNameSpecifier *Qualifier, 
+                           SourceRange QRange, DeclarationName Name, 
+                           SourceLocation NameLoc, bool HasTemplateArgs,
+                           UnresolvedSetIterator Begin, 
+                           UnresolvedSetIterator End)
+  : Expr(K, T, Dependent, Dependent),
+  Results(0), NumResults(End - Begin), Name(Name), Qualifier(Qualifier), 
+  QualifierRange(QRange), NameLoc(NameLoc), 
+  HasExplicitTemplateArgs(HasTemplateArgs)
+{
+  if (NumResults) {
+    Results = static_cast<DeclAccessPair *>(
+                                C.Allocate(sizeof(DeclAccessPair) * NumResults, 
+                                           llvm::alignof<DeclAccessPair>()));
+    memcpy(Results, &*Begin.getIterator(), 
+           (End - Begin) * sizeof(DeclAccessPair));
+  }
 }
 
 bool OverloadExpr::ComputeDependence(UnresolvedSetIterator Begin,
@@ -703,7 +724,8 @@ Stmt::child_iterator CXXDependentScopeMemberExpr::child_end() {
   return child_iterator(&Base + 1);
 }
 
-UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
+UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, QualType T, 
+                                           bool Dependent, 
                                            bool HasUnresolvedUsing,
                                            Expr *Base, QualType BaseType,
                                            bool IsArrow,
@@ -715,7 +737,7 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
                                    const TemplateArgumentListInfo *TemplateArgs,
                                            UnresolvedSetIterator Begin, 
                                            UnresolvedSetIterator End)
-  : OverloadExpr(UnresolvedMemberExprClass, T, Dependent,
+  : OverloadExpr(UnresolvedMemberExprClass, C, T, Dependent,
                  Qualifier, QualifierRange, MemberName, MemberLoc,
                  TemplateArgs != 0, Begin, End),
     IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
@@ -741,7 +763,7 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
     size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
 
   void *Mem = C.Allocate(size, llvm::alignof<UnresolvedMemberExpr>());
-  return new (Mem) UnresolvedMemberExpr(
+  return new (Mem) UnresolvedMemberExpr(C, 
                              Dependent ? C.DependentTy : C.OverloadTy,
                              Dependent, HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, Qualifier, QualifierRange,

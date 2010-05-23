@@ -31,9 +31,13 @@ private:
   IteratorTy ir;
 
   friend class UnresolvedSetImpl;
+  friend class OverloadExpr;
   explicit UnresolvedSetIterator(DeclsTy::iterator ir) : ir(ir) {}
   explicit UnresolvedSetIterator(DeclsTy::const_iterator ir) :
     ir(const_cast<DeclsTy::iterator>(ir)) {}
+  
+  IteratorTy getIterator() const { return ir; }
+  
 public:
   UnresolvedSetIterator() {}
 
@@ -81,9 +85,7 @@ public:
   bool operator>(const UnresolvedSetIterator &o) const { return ir > o.ir; }
 };
 
-/// UnresolvedSet - A set of unresolved declarations.  This is needed
-/// in a lot of places, but isn't really worth breaking into its own
-/// header right now.
+/// UnresolvedSet - A set of unresolved declarations.
 class UnresolvedSetImpl {
   typedef UnresolvedSetIterator::DeclsTy DeclsTy;
 

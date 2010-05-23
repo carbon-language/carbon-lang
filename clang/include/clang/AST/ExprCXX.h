@@ -1345,7 +1345,9 @@ class OverloadExpr : public Expr {
   /// The results.  These are undesugared, which is to say, they may
   /// include UsingShadowDecls.  Access is relative to the naming
   /// class.
-  UnresolvedSet<4> Results;
+  // FIXME: Allocate this data after the OverloadExpr subclass.
+  DeclAccessPair *Results;
+  unsigned NumResults;
 
   /// The common name of these declarations.
   DeclarationName Name;
@@ -1363,17 +1365,11 @@ class OverloadExpr : public Expr {
   bool HasExplicitTemplateArgs;
 
 protected:
-  OverloadExpr(StmtClass K, QualType T, bool Dependent,
+  OverloadExpr(StmtClass K, ASTContext &C, QualType T, bool Dependent,
                NestedNameSpecifier *Qualifier, SourceRange QRange,
                DeclarationName Name, SourceLocation NameLoc,
                bool HasTemplateArgs,
-               UnresolvedSetIterator Begin, UnresolvedSetIterator End)
-    : Expr(K, T, Dependent, Dependent),
-      Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
-      NameLoc(NameLoc), HasExplicitTemplateArgs(HasTemplateArgs)
-  {
-    Results.append(Begin, End);
-  }
+               UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
 public:
   /// Computes whether an unresolved lookup on the given declarations
@@ -1401,11 +1397,13 @@ public:
   CXXRecordDecl *getNamingClass() const;
 
   typedef UnresolvedSetImpl::iterator decls_iterator;
-  decls_iterator decls_begin() const { return Results.begin(); }
-  decls_iterator decls_end() const { return Results.end(); }
+  decls_iterator decls_begin() const { return UnresolvedSetIterator(Results); }
+  decls_iterator decls_end() const { 
+    return UnresolvedSetIterator(Results + NumResults);
+  }
 
   /// Gets the number of declarations in the unresolved set.
-  unsigned getNumDecls() const { return Results.size(); }
+  unsigned getNumDecls() const { return NumResults; }
 
   /// Gets the name looked up.
   DeclarationName getName() const { return Name; }
@@ -1471,13 +1469,14 @@ class UnresolvedLookupExpr : public OverloadExpr {
   /// against the qualified-lookup bits.
   CXXRecordDecl *NamingClass;
 
-  UnresolvedLookupExpr(QualType T, bool Dependent, CXXRecordDecl *NamingClass,
+  UnresolvedLookupExpr(ASTContext &C, QualType T, bool Dependent, 
+                       CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
                        bool RequiresADL, bool Overloaded, bool HasTemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End)
-    : OverloadExpr(UnresolvedLookupExprClass, T, Dependent, Qualifier, QRange,
-                   Name, NameLoc, HasTemplateArgs, Begin, End),
+    : OverloadExpr(UnresolvedLookupExprClass, C, T, Dependent, Qualifier, 
+                   QRange, Name, NameLoc, HasTemplateArgs, Begin, End),
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
@@ -1492,7 +1491,8 @@ public:
                                       bool ADL, bool Overloaded,
                                       UnresolvedSetIterator Begin, 
                                       UnresolvedSetIterator End) {
-    return new(C) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
+    return new(C) UnresolvedLookupExpr(C,
+                                       Dependent ? C.DependentTy : C.OverloadTy,
                                        Dependent, NamingClass,
                                        Qualifier, QualifierRange,
                                        Name, NameLoc, ADL, Overloaded, false,
@@ -2117,7 +2117,7 @@ class UnresolvedMemberExpr : public OverloadExpr {
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
 
-  UnresolvedMemberExpr(QualType T, bool Dependent,
+  UnresolvedMemberExpr(ASTContext &C, QualType T, bool Dependent,
                        bool HasUnresolvedUsing,
                        Expr *Base, QualType BaseType, bool IsArrow,
                        SourceLocation OperatorLoc,
