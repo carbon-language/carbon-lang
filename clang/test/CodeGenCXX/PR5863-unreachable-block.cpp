@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm-only %s
 
-// PR5836
+// PR5863
 class E { };
 
 void P1() {

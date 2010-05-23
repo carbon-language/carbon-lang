@@ -79,6 +79,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     // Expression emitters don't handle unreachable blocks yet, so look for one
     // explicitly here. This handles the common case of a call to a noreturn
     // function.
+    // We can't erase blocks with an associated cleanup size here since the
+    // memory might be reused, leaving the old cleanup info pointing at a new
+    // block.
     if (llvm::BasicBlock *CurBB = Builder.GetInsertBlock()) {
       if (CurBB->empty() && CurBB->use_empty() && !BlockScopes.count(CurBB)) {
         CurBB->eraseFromParent();
