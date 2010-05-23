@@ -1356,9 +1356,17 @@ QualType ASTContext::getVariableArrayType(QualType EltTy,
                                           SourceRange Brackets) {
   // Since we don't unique expressions, it isn't possible to unique VLA's
   // that have an expression provided for their size.
-
+  QualType CanonType;
+  
+  if (!EltTy.isCanonical()) {
+    if (NumElts)
+      NumElts->Retain();
+    CanonType = getVariableArrayType(getCanonicalType(EltTy), NumElts, ASM,
+                                     EltTypeQuals, Brackets);
+  }
+  
   VariableArrayType *New = new(*this, TypeAlignment)
-    VariableArrayType(EltTy, QualType(), NumElts, ASM, EltTypeQuals, Brackets);
+    VariableArrayType(EltTy, CanonType, NumElts, ASM, EltTypeQuals, Brackets);
 
   VariableArrayTypes.push_back(New);
   Types.push_back(New);

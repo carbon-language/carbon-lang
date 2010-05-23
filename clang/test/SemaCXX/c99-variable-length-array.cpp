@@ -78,3 +78,13 @@ void local_classes(int N) {
     int array[N]; // expected-error{{fields must have a constant size: 'variable length array in structure' extension will never be supported}}
   };
 }
+
+namespace PR7206 {
+  void f(int x) {
+    struct edge_info {
+      float left;
+      float right;
+    };
+    struct edge_info edgeInfo[x];
+  }
+}
