@@ -2876,12 +2876,12 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return SDValue();
 
   // Use VDUP for non-constant splats.
-  if (usesOnlyOneValue)
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (usesOnlyOneValue && EltSize <= 32)
     return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
 
   // Vectors with 32- or 64-bit elements can be built by directly assigning
   // the subregisters.
-  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize >= 32) {
     // Do the expansion with floating-point types, since that is what the VFP
     // registers are defined to use, and since i64 is not legal.
