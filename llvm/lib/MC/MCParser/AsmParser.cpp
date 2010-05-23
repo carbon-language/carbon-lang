@@ -432,6 +432,7 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
 ///   ::= Label* Identifier OperandList* EndOfStatement
 bool AsmParser::ParseStatement() {
   if (Lexer.is(AsmToken::EndOfStatement)) {
+    Out.AddBlankLine();
     Lex();
     return false;
   }
@@ -506,6 +507,14 @@ bool AsmParser::ParseStatement() {
     // Emit the label.
     Out.EmitLabel(Sym);
    
+    // Consume any end of statement token, if present, to avoid spurious
+    // AddBlankLine calls().
+    if (Lexer.is(AsmToken::EndOfStatement)) {
+      Lex();
+      if (Lexer.is(AsmToken::Eof))
+        return false;
+    }
+
     return ParseStatement();
   }
 
