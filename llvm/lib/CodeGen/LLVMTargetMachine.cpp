@@ -69,6 +69,8 @@ static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
     cl::desc("Show encoding in .s output"));
 static cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
     cl::desc("Show instruction structure in .s output"));
+static cl::opt<bool> EnableMCLogging("enable-mc-api-logging", cl::Hidden,
+    cl::desc("Enable MC API logging"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
@@ -168,7 +170,10 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     AsmStreamer.reset(createNullStreamer(*Context));
     break;
   }
-  
+
+  if (EnableMCLogging)
+    AsmStreamer.reset(createLoggingStreamer(AsmStreamer.take(), errs()));
+
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
   if (Printer == 0)
