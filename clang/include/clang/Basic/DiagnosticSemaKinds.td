@@ -1870,6 +1870,9 @@ def err_func_def_incomplete_result : Error<
 // Expressions.
 def ext_sizeof_function_type : Extension<
   "invalid application of 'sizeof' to a function type">, InGroup<PointerArith>;
+def err_sizeof_alignof_overloaded_function_type : Error<
+  "invalid application of '%select{sizeof|__alignof}0' to an overloaded "
+  "function">;
 def ext_sizeof_void_type : Extension<
   "invalid application of '%0' to a void type">, InGroup<PointerArith>;
 def err_sizeof_alignof_incomplete_type : Error<

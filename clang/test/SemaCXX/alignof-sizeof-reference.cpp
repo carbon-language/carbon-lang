@@ -7,3 +7,9 @@ void test() {
   static_assert(alignof(r) == 1, "bad alignment");
   static_assert(sizeof(r) == 1, "bad size");
 }
+
+void f(); 
+void f(int); 
+void g() { 
+  sizeof(&f); // expected-error{{invalid application of 'sizeof' to an overloaded function}}
+}

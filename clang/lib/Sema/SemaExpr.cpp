@@ -2027,6 +2027,12 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     return true;
   }
 
+  if (Context.hasSameUnqualifiedType(exprType, Context.OverloadTy)) {
+    Diag(OpLoc, diag::err_sizeof_alignof_overloaded_function_type)
+      << !isSizeof << ExprRange;
+    return true;
+  }
+  
   return false;
 }
 
