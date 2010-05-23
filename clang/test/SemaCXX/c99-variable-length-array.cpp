@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wvla %s
 struct NonPOD {
   NonPOD();
 };
@@ -14,8 +14,8 @@ struct POD {
 
 // We allow VLAs of POD types, only.
 void vla(int N) {
-  int array1[N];
-  POD array2[N];
+  int array1[N]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
+  POD array2[N]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   NonPOD array3[N]; // expected-error{{variable length array of non-POD element type 'NonPOD'}}
   NonPOD2 array4[N][3]; // expected-error{{variable length array of non-POD element type 'NonPOD2'}}
 }
@@ -47,7 +47,7 @@ template<typename T> struct X0 { };
 // Cannot use any variably-modified type with a template parameter or
 // argument.
 void inst_with_vla(int N) {
-  int array[N];
+  int array[N]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   X0<__typeof__(array)> x0a; // expected-error{{variably modified type 'typeof (array)' (aka 'int [N]') cannot be used as a template argument}}
 }
 
@@ -67,7 +67,7 @@ template<typename T, unsigned N>
 void accept_array(T (&array)[N]); // expected-note{{candidate template ignored: failed template argument deduction}}
 
 void test_accept_array(int N) {
-  int array[N];
+  int array[N]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   accept_array(array); // expected-error{{no matching function for call to 'accept_array'}}
 }
 
@@ -75,7 +75,8 @@ void test_accept_array(int N) {
 void local_classes(int N) {
   struct X {
     int size;
-    int array[N]; // expected-error{{fields must have a constant size: 'variable length array in structure' extension will never be supported}}
+    int array[N]; // expected-error{{fields must have a constant size: 'variable length array in structure' extension will never be supported}} \
+                  // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   };
 }
 
@@ -85,6 +86,6 @@ namespace PR7206 {
       float left;
       float right;
     };
-    struct edge_info edgeInfo[x];
+    struct edge_info edgeInfo[x]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   }
 }

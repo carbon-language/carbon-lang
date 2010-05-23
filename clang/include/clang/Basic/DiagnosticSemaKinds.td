@@ -38,7 +38,8 @@ def warn_float_underflow : Warning<
 
 // C99 variable-length arrays
 def ext_vla : Extension<
-  "variable length arrays are a C99 feature, accepted as an extension">;
+  "variable length arrays are a C99 feature, accepted as an extension">,
+  InGroup<VLA>;
 def err_vla_non_pod : Error<"variable length array of non-POD element type %0">;
 def err_vla_in_template : Error<
   "variable length array cannot be used in a template %select{definition|"
