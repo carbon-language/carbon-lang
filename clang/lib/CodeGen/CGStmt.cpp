@@ -80,7 +80,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     // explicitly here. This handles the common case of a call to a noreturn
     // function.
     if (llvm::BasicBlock *CurBB = Builder.GetInsertBlock()) {
-      if (CurBB->empty() && CurBB->use_empty()) {
+      if (CurBB->empty() && CurBB->use_empty() && !BlockScopes.count(CurBB)) {
         CurBB->eraseFromParent();
         Builder.ClearInsertionPoint();
       }
