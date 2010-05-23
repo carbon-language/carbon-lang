@@ -460,6 +460,8 @@ public:
   
 /// Declaration of a template function.
 class FunctionTemplateDecl : public TemplateDecl {
+  static void DeallocateCommon(void *Ptr);
+                        
 protected:
   /// \brief Data that is common to all of the declarations of a given
   /// function template.
@@ -1164,6 +1166,8 @@ public:
 
 /// Declaration of a class template.
 class ClassTemplateDecl : public TemplateDecl {
+  static void DeallocateCommon(void *Ptr);
+  
 protected:
   /// \brief Data that is common to all of the declarations of a given
   /// class template.

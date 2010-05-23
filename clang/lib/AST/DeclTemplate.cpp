@@ -94,6 +94,10 @@ TemplateDecl::~TemplateDecl() {
 // FunctionTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
+void FunctionTemplateDecl::DeallocateCommon(void *Ptr) {
+  static_cast<Common *>(Ptr)->~Common();
+}
+
 FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
                                                    DeclContext *DC,
                                                    SourceLocation L,
@@ -129,8 +133,9 @@ FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
     First = First->getPreviousDeclaration();
 
   if (First->CommonOrPrev.isNull()) {
-    // FIXME: Allocate with the ASTContext
-    First->CommonOrPrev = new Common;
+    Common *CommonPtr = new (getASTContext()) Common;
+    getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
+    First->CommonOrPrev = CommonPtr;
   }
   return First->CommonOrPrev.get<Common*>();
 }
@@ -138,6 +143,10 @@ FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
 //===----------------------------------------------------------------------===//
 // ClassTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
+
+void ClassTemplateDecl::DeallocateCommon(void *Ptr) {
+  static_cast<Common *>(Ptr)->~Common();
+}
 
 ClassTemplateDecl *ClassTemplateDecl::getCanonicalDecl() {
   ClassTemplateDecl *Template = this;
@@ -156,8 +165,10 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
   Common *CommonPtr;
   if (PrevDecl)
     CommonPtr = PrevDecl->CommonPtr;
-  else
+  else {
     CommonPtr = new (C) Common;
+    C.AddDeallocation(DeallocateCommon, CommonPtr);
+  }
 
   return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl, PrevDecl,
                                    CommonPtr);

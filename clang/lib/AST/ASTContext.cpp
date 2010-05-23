@@ -64,6 +64,12 @@ ASTContext::~ASTContext() {
   // FIXME: Is this the ideal solution?
   ReleaseDeclContextMaps();
 
+  if (!FreeMemory) {
+    // Call all of the deallocation functions.
+    for (unsigned I = 0, N = Deallocations.size(); I != N; ++I)
+      Deallocations[I].first(Deallocations[I].second);
+  }
+  
   // Release all of the memory associated with overridden C++ methods.
   for (llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::iterator 
          OM = OverriddenMethods.begin(), OMEnd = OverriddenMethods.end();
@@ -112,6 +118,10 @@ ASTContext::~ASTContext() {
     GlobalNestedNameSpecifier->Destroy(*this);
 
   TUDecl->Destroy(*this);
+}
+
+void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
+  Deallocations.push_back(std::make_pair(Callback, Data));
 }
 
 void

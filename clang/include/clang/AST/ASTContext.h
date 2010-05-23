@@ -1272,6 +1272,15 @@ public:
   TypeSourceInfo *
   getTrivialTypeSourceInfo(QualType T, SourceLocation Loc = SourceLocation());
 
+  /// \brief Add a deallocation callback that will be invoked when the 
+  /// ASTContext is destroyed.
+  ///
+  /// \brief Callback A callback function that will be invoked on destruction.
+  ///
+  /// \brief Data Pointer data that will be provided to the callback function
+  /// when it is called.
+  void AddDeallocation(void (*Callback)(void*), void *Data);
+  
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
@@ -1286,11 +1295,15 @@ private:
                                   const FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false);
-
+ 
   const ASTRecordLayout &getObjCLayout(const ObjCInterfaceDecl *D,
                                        const ObjCImplementationDecl *Impl);
   
 private:
+  /// \brief A set of deallocations that should be performed when the 
+  /// ASTContext is destroyed.
+  llvm::SmallVector<std::pair<void (*)(void*), void *>, 16> Deallocations;
+                                       
   // FIXME: This currently contains the set of StoredDeclMaps used
   // by DeclContext objects.  This probably should not be in ASTContext,
   // but we include it here so that ASTContext can quickly deallocate them.
