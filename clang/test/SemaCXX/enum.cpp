@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -pedantic -std=c++98 -verify -triple x86_64-apple-darwin %s
-
 enum E {
   Val1,
   Val2
@@ -70,4 +69,13 @@ namespace PR6061 {
 
 namespace Conditional {
   enum a { A }; a x(const enum a x) { return 1?x:A; }
+}
+
+namespace PR7051 {
+  enum E { e0 };
+  void f() {
+    E e;
+    e = 1; // expected-error{{assigning to 'PR7051::E' from incompatible type 'int'}}
+    e |= 1; // expected-error{{assigning to 'PR7051::E' from incompatible type 'int'}}
+  }
 }

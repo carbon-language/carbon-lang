@@ -4650,7 +4650,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
 
-  if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
+  if (lhsType->isArithmeticType() && rhsType->isArithmeticType() &&
+      !(getLangOptions().CPlusPlus && lhsType->isEnumeralType()))
     return Compatible;
 
   if (isa<PointerType>(lhsType)) {
