@@ -144,8 +144,10 @@ let Namespace = "Mips" in {
 // Subregister Set Definitions
 //===----------------------------------------------------------------------===//
 
-def mips_subreg_fpeven : PatLeaf<(i32 1)>;
-def mips_subreg_fpodd  : PatLeaf<(i32 2)>;
+let Namespace = "Mips" in {
+def sub_fpeven : SubRegIndex { let NumberHack = 1; }
+def sub_fpodd  : SubRegIndex { let NumberHack = 2; }
+}
 
 def : SubRegSet<1, [D0, D1, D2, D3, D4, D5, D6, D7, 
                     D8, D9, D10, D11, D12, D13, D14, D15],
