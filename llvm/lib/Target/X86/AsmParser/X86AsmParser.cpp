@@ -617,6 +617,20 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("setnz", "setne")
     .Case("jz", "je")
     .Case("jnz", "jne")
+    .Case("cmovcl", "cmovbl")
+    .Case("cmovcl", "cmovbl")
+    .Case("cmovnal", "cmovbel")
+    .Case("cmovnbl", "cmovael")
+    .Case("cmovnbel", "cmoval")
+    .Case("cmovncl", "cmovael")
+    .Case("cmovngl", "cmovlel")
+    .Case("cmovnl", "cmovgel")
+    .Case("cmovngl", "cmovlel")
+    .Case("cmovngel", "cmovll")
+    .Case("cmovnll", "cmovgel")
+    .Case("cmovnlel", "cmovgl")
+    .Case("cmovnzl", "cmovnel")
+    .Case("cmovzl", "cmovel")
     .Default(Name);
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 

@@ -89,3 +89,132 @@ int $255
 retl
 // CHECK: ret
 // CHECK:  encoding: [0xc3]
+
+// rdar://7973854
+// CHECK: cmoval	%eax, %edx
+// CHECK:  encoding: [0x0f,0x47,0xd0]
+        	cmoval	%eax,%edx
+
+// CHECK: cmovael	%eax, %edx
+// CHECK:  encoding: [0x0f,0x43,0xd0]
+        	cmovael	%eax,%edx
+
+// CHECK: cmovbel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x46,0xd0]
+        	cmovbel	%eax,%edx
+
+// CHECK: cmovbl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x42,0xd0]
+        	cmovbl	%eax,%edx
+
+// CHECK: cmovbel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x46,0xd0]
+        	cmovbel	%eax,%edx
+
+// CHECK: cmovbl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x42,0xd0]
+        	cmovcl	%eax,%edx
+
+// CHECK: cmovel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x44,0xd0]
+        	cmovel	%eax,%edx
+
+// CHECK: cmovgl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4f,0xd0]
+        	cmovgl	%eax,%edx
+
+// CHECK: cmovgel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4d,0xd0]
+        	cmovgel	%eax,%edx
+
+// CHECK: cmovll	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4c,0xd0]
+        	cmovll	%eax,%edx
+
+// CHECK: cmovlel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4e,0xd0]
+        	cmovlel	%eax,%edx
+
+// CHECK: cmovbel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x46,0xd0]
+        	cmovnal	%eax,%edx
+
+// CHECK: cmovnel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x45,0xd0]
+        	cmovnel	%eax,%edx
+
+// CHECK: cmovael	%eax, %edx
+// CHECK:  encoding: [0x0f,0x43,0xd0]
+        	cmovnbl	%eax,%edx
+
+// CHECK: cmoval	%eax, %edx
+// CHECK:  encoding: [0x0f,0x47,0xd0]
+        	cmovnbel	%eax,%edx
+
+// CHECK: cmovael	%eax, %edx
+// CHECK:  encoding: [0x0f,0x43,0xd0]
+        	cmovncl	%eax,%edx
+
+// CHECK: cmovnel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x45,0xd0]
+        	cmovnel	%eax,%edx
+
+// CHECK: cmovlel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4e,0xd0]
+        	cmovngl	%eax,%edx
+
+// CHECK: cmovgel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4d,0xd0]
+        	cmovnl	%eax,%edx
+
+// CHECK: cmovnel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x45,0xd0]
+        	cmovnel	%eax,%edx
+
+// CHECK: cmovlel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4e,0xd0]
+        	cmovngl	%eax,%edx
+
+// CHECK: cmovll	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4c,0xd0]
+        	cmovngel	%eax,%edx
+
+// CHECK: cmovgel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4d,0xd0]
+        	cmovnll	%eax,%edx
+
+// CHECK: cmovgl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4f,0xd0]
+        	cmovnlel	%eax,%edx
+
+// CHECK: cmovnol	%eax, %edx
+// CHECK:  encoding: [0x0f,0x41,0xd0]
+        	cmovnol	%eax,%edx
+
+// CHECK: cmovnpl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4b,0xd0]
+        	cmovnpl	%eax,%edx
+
+// CHECK: cmovnsl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x49,0xd0]
+        	cmovnsl	%eax,%edx
+
+// CHECK: cmovnel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x45,0xd0]
+        	cmovnzl	%eax,%edx
+
+// CHECK: cmovol	%eax, %edx
+// CHECK:  encoding: [0x0f,0x40,0xd0]
+        	cmovol	%eax,%edx
+
+// CHECK: cmovpl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x4a,0xd0]
+        	cmovpl	%eax,%edx
+
+// CHECK: cmovsl	%eax, %edx
+// CHECK:  encoding: [0x0f,0x48,0xd0]
+        	cmovsl	%eax,%edx
+
+// CHECK: cmovel	%eax, %edx
+// CHECK:  encoding: [0x0f,0x44,0xd0]
+        	cmovzl	%eax,%edx
