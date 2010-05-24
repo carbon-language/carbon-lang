@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "memory"
-#include <libkern/OSAtomic.h>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -16,56 +15,18 @@ namespace
 {
 
 template <class T>
-inline
-typename enable_if
-<
-    sizeof(T) * __CHAR_BIT__ == 32,
-    T
->::type
+inline T
 increment(T& t)
 {
-    return OSAtomicIncrement32Barrier((volatile int32_t*)&t);
+    return __sync_add_and_fetch(&t, 1);
 }
 
 template <class T>
-inline
-typename enable_if
-<
-    sizeof(T) * __CHAR_BIT__ == 32,
-    T
->::type
+inline T
 decrement(T& t)
 {
-    return OSAtomicDecrement32Barrier((volatile int32_t*)&t);
+    return __sync_add_and_fetch(&t, -1);
 }
-
-#ifndef __ppc__
-
-template <class T>
-inline
-typename enable_if
-<
-    sizeof(T) * __CHAR_BIT__ == 64,
-    T
->::type
-increment(T& t)
-{
-    return OSAtomicIncrement64Barrier((volatile int64_t*)&t);
-}
-
-template <class T>
-inline
-typename enable_if
-<
-    sizeof(T) * __CHAR_BIT__ == 64,
-    T
->::type
-decrement(T& t)
-{
-    return OSAtomicDecrement64Barrier((volatile int64_t*)&t);
-}
-
-#endif
 
 }  // namespace
 
@@ -134,9 +95,9 @@ __shared_weak_count::lock()
     long object_owners = __shared_owners_;
     while (object_owners != -1)
     {
-        if (OSAtomicCompareAndSwapLongBarrier(object_owners,
-                                              object_owners+1,
-                                              &__shared_owners_))
+        if (__sync_bool_compare_and_swap(&__shared_owners_,
+                                         object_owners,
+                                         object_owners+1))
         {
             __add_weak();
             return this;

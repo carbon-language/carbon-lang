@@ -148,7 +148,7 @@ timed_mutex::unlock()
 
 recursive_timed_mutex::recursive_timed_mutex()
     : __count_(0),
-      __id_(nullptr)
+      __id_(0)
 {
 }
 
@@ -197,7 +197,7 @@ recursive_timed_mutex::unlock()
     unique_lock<mutex> lk(__m_);
     if (--__count_ == 0)
     {
-        __id_ = nullptr;
+        __id_ = 0;
         lk.unlock();
         __cv_.notify_one();
     }

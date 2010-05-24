@@ -7,6 +7,7 @@ DESTDIR = $(DSTROOT)
 
 OBJROOT=.
 SYMROOT=.
+TRIPLE=-apple-
 
 installsrc:: $(SRCROOT)
 

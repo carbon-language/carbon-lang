@@ -9,7 +9,13 @@
 
 #include "chrono"
 #include <sys/time.h>        //for gettimeofday and timeval
+#if __APPLE__
 #include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
+#else  /* !__APPLE__ */
+#include <cerrno>  // errno
+#include <system_error>  // __throw_system_error
+#include <time.h>  // clock_gettime, CLOCK_MONOTONIC
+#endif  /* __APPLE__ */
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -40,6 +46,7 @@ system_clock::from_time_t(time_t t)
 
 // monotonic_clock
 
+#if __APPLE__
 //   mach_absolute_time() * MachInfo.numer / MachInfo.denom is the number of
 //   nanoseconds since the computer booted up.  MachInfo.numer and MachInfo.denom
 //   are run time constants supplied by the OS.  This clock has no relationship
@@ -95,6 +102,26 @@ monotonic_clock::now()
     static FP fp = init_monotonic_clock();
     return time_point(duration(fp()));
 }
+
+#else  /* !APPLE */
+// FIXME: We assume that clock_gettime(CLOCK_MONOTONIC) works on
+// non-apple systems.  Instead, we should check _POSIX_TIMERS and
+// _POSIX_MONOTONIC_CLOCK and fall back to something else if those
+// don't exist.
+
+// Warning:  If this is not truly monotonic, then it is non-conforming.  It is
+//  better for it to not exist and have the rest of libc++ use system_clock
+//  instead.
+
+monotonic_clock::time_point
+monotonic_clock::now()
+{
+    struct timespec tp;
+    if (0 != clock_gettime(CLOCK_MONOTONIC, &tp))
+        __throw_system_error(errno, "clock_gettime(CLOCK_MONOTONIC) failed");
+    return time_point(seconds(tp.tv_sec) + nanoseconds(tp.tv_nsec));
+}
+#endif  /* APPLE */
 
 }
 

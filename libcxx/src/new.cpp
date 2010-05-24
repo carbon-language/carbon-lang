@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdlib.h> 
-#include <cxxabi.h> 
+#include <stdlib.h>
 
 #include "new"
 
 
 #if __APPLE__
+    #include <cxxabi.h> 
     // On Darwin, there are two STL shared libraries and a lower level ABI
 	// shared libray.  The global holding the current new handler is
     // in the ABI library and named __cxa_new_handler.

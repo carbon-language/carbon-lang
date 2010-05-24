@@ -37,7 +37,16 @@
 #endif
 
 #if !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
-#error unable to determine endian
+# include <endian.h>
+# if __BYTE_ORDER == __LITTLE_ENDIAN
+#  define _LIBCPP_LITTLE_ENDIAN 1
+#  define _LIBCPP_BIG_ENDIAN    0
+# elif __BYTE_ORDER == __BIG_ENDIAN
+#  define _LIBCPP_LITTLE_ENDIAN 0
+#  define _LIBCPP_BIG_ENDIAN    1
+# else
+#  error unable to determine endian
+# endif
 #endif
 
 #ifndef _LIBCPP_VISIBILITY_TAG

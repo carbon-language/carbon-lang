@@ -15,7 +15,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 thread::~thread()
 {
-    if (__t_ != nullptr)
+    if (__t_ != 0)
         terminate();
 }
 
@@ -25,7 +25,7 @@ thread::join()
     int ec = pthread_join(__t_, 0);
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::join failed");
-    __t_ = nullptr;
+    __t_ = 0;
 }
 
 void
@@ -45,11 +45,17 @@ thread::detach()
 unsigned
 thread::hardware_concurrency()
 {
+#if defined(CTL_HW) && defined(HW_NCPU)
     int n;
     int mib[2] = {CTL_HW, HW_NCPU};
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
+#else  // !defined(CTL_HW && HW_NCPU)
+    // TODO: grovel through /proc or check cpuid on x86 and similar
+    // instructions on other architectures.
+    return 0;  // Means not computable [thread.thread.static]
+#endif
 }
 
 namespace this_thread

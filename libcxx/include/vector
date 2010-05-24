@@ -1118,7 +1118,7 @@ vector<_Tp, _Allocator>::assign(size_type __n, const_reference __u)
         if (__n > __s)
             __construct_at_end(__n - __s, __u);
         else
-            __destruct_at_end(this->__begin_ + __n);
+            this->__destruct_at_end(this->__begin_ + __n);
     }
     else
     {

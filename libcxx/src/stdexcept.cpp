@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <cstddef>
 #include "system_error"
-#include <libkern/OSAtomic.h>
 
 // Note:  optimize for size
 
@@ -59,7 +58,7 @@ inline
 __libcpp_nmstr::__libcpp_nmstr(const __libcpp_nmstr& s)
     : str_(s.str_)
 {
-    OSAtomicIncrement32Barrier(&count());
+    __sync_add_and_fetch(&count(), 1);
 }
 
 __libcpp_nmstr&
@@ -67,8 +66,8 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s)
 {
     const char* p = str_;
     str_ = s.str_;
-    OSAtomicIncrement32Barrier(&count());
-    if (OSAtomicDecrement32((count_t*)(p-sizeof(count_t))) < 0)
+    __sync_add_and_fetch(&count(), 1);
+    if (__sync_add_and_fetch((count_t*)(p-sizeof(count_t)), -1) < 0)
         delete [] (p-offset);
     return *this;
 }
@@ -76,7 +75,7 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s)
 inline
 __libcpp_nmstr::~__libcpp_nmstr()
 {
-    if (OSAtomicDecrement32(&count()) < 0)
+    if (__sync_add_and_fetch(&count(), -1) < 0)
         delete [] (str_ - offset);
 }
 

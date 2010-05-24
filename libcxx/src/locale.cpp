@@ -17,10 +17,11 @@
 #include "cstring"
 #include "cwctype"
 #include "__sso_allocator"
-#include <libkern/OSAtomic.h>
 #include <langinfo.h>
 #include <stdlib.h>
 
+// FIXME: Locales are hard.
+#if __APPLE__
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 namespace {
@@ -534,7 +535,7 @@ locale::id::__get()
 void
 locale::id::__init()
 {
-    __id_ = OSAtomicIncrement32Barrier(&__next_id);
+    __id_ = __sync_add_and_fetch(&__next_id, 1);
 }
 
 // template <> class collate_byname<char>
@@ -3678,3 +3679,4 @@ template class codecvt_byname<char32_t, char, mbstate_t>;
 template class __vector_base_common<true>;
 
 _LIBCPP_END_NAMESPACE_STD
+#endif  /* __APPLE__ */

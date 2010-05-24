@@ -72,8 +72,11 @@ bool std::uncaught_exception() throw()
 	// on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxxabiapple::__cxa_uncaught_exception();
 #else
-    __cxa_eh_globals * globals = __cxa_get_globals();
-    return (globals->uncaughtExceptions != 0);
+    #warning uncaught_exception not yet implemented
+    ::abort();
+    // Not provided by Ubuntu gcc-4.2.4's cxxabi.h.
+    // __cxa_eh_globals * globals = __cxa_get_globals();
+    // return (globals->uncaughtExceptions != 0);
 #endif
 }
 
@@ -168,4 +171,3 @@ void std::rethrow_exception(exception_ptr p)
 	::abort();
 #endif
 }
-

@@ -1,40 +1,59 @@
+#! /bin/sh
+#
+# Set the $TRIPLE environment variable to your system's triple before
+# running this script.  If you set $CXX, that will be used to compile
+# the library.  Otherwise we'll use g++.
+
+set -e
+
 if [ `basename $(pwd)` != "lib" ]
 then
 	echo "current directory must be lib"
 	exit 1
 fi
 
-if [ -z $CC ]
+if [ -z $CXX ]
 then
-	CC=g++
+	CXX=g++
 fi
+
+case $TRIPLE in
+  *-apple-*)
+    if [ -z $RC_BUILDIT ]
+    then
+      RC_CFLAGS="-arch i386 -arch ppc -arch x86_64"
+    fi
+    SOEXT=dylib
+    LDSHARED_FLAGS="-o libc++.1.dylib \
+        -dynamiclib -nodefaultlibs -current_version 1 \
+        -compatibility_version 1 \
+        -install_name /usr/lib/libc++.dylib \
+        -Wl,-reexport_library,/usr/lib/libc++abi.dylib \
+        /usr/lib/libSystem.B.dylib"
+    ;;
+  *)
+    RC_CFLAGS="-fPIC"
+    SOEXT=so
+    LDSHARED_FLAGS="-o libc++.so.1.0 \
+        -shared -nodefaultlibs -Wl,-soname,libc++.so.1 \
+        -lstdc++ -lc"
+    ;;
+esac
 
 if [ -z $RC_BUILDIT ]
 then
-	RC_CFLAGS="-arch i386 -arch ppc -arch x86_64"
-fi
-
-if [ -z $RC_BUILDIT ]
-then
-    rm libc++.1.dylib
+    rm -f libc++.1.$SOEXT*
 fi
 
 set -x
 
-for FILE in $(ls ../src/*.cpp); do
-	$CC -c -g -Os $RC_CFLAGS -nostdinc++ -I../include $FILE
+for FILE in ../src/*.cpp; do
+	$CXX -c -g -Os $RC_CFLAGS -nostdinc++ -I../include $FILE
 done
 
-$CC -dynamiclib -nodefaultlibs $RC_CFLAGS -current_version 1 \
-        -compatibility_version 1 \
-        -o libc++.1.dylib *.o \
-        -install_name /usr/lib/libc++.dylib \
-        -Wl,-reexport_library,/usr/lib/libc++abi.dylib \
-        /usr/lib/libSystem.B.dylib
+$CXX *.o $RC_CFLAGS $LDSHARED_FLAGS
 
 #libtool -static -o libc++.a *.o
-
-set +x
 
 if [ -z $RC_BUILDIT ]
 then

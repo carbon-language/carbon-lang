@@ -358,6 +358,7 @@ template <> struct hash<wstring>;
 #include <__config>
 #include <iosfwd>
 #include <cstring>
+#include <cstdio>  // For EOF.
 #include <cwchar>
 #include <algorithm>
 #include <iterator>

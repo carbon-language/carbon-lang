@@ -34,6 +34,8 @@ Types:
 */
 
 #include <__config>
+#define __need_ptrdiff_t
+#define __need_size_t
 #include <stddef.h>
 
 #pragma GCC system_header

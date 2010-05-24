@@ -106,7 +106,11 @@ __iostream_category::name() const
 string
 __iostream_category::message(int ev) const
 {
-    if (ev != static_cast<int>(io_errc::stream) && ev <= ELAST)
+    if (ev != static_cast<int>(io_errc::stream)
+#ifdef ELAST
+        && ev <= ELAST
+#endif
+        )
         return __do_message::message(ev);
     return string("unspecified iostream_category error");
 }

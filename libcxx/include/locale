@@ -137,6 +137,9 @@ template <class charT> class messages_byname;
 #include <streambuf>
 #include <iterator>
 #include <limits>
+#if !__APPLE__
+#include <cstdarg>
+#endif
 #include <cstdlib>
 #include <ctime>
 #include <nl_types.h>
@@ -144,6 +147,131 @@ template <class charT> class messages_byname;
 #pragma GCC system_header
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+// OSX has nice foo_l() functions that let you turn off use of the global
+// locale.  Linux, not so much.  The following functions avoid the locale when
+// that's possible and otherwise do the wrong thing.  FIXME.
+#if __APPLE__
+
+template <class _Tp>
+inline
+int
+__nolocale_sprintf(char* __restrict __str,
+                   const char* __restrict __format, _Tp __v)
+{
+    return sprintf_l(__str, 0, __format, __v);
+}
+
+template <class _Tp>
+inline
+int
+__nolocale_snprintf(char* __restrict __str, size_t __size,
+                    const char* __restrict __format, _Tp __v)
+{
+    return snprintf_l(__str, __size, 0, __format, __v);
+}
+
+template <class _Tp>
+inline
+int
+__nolocale_snprintf(char* __restrict __str, size_t __size,
+                    const char* __restrict __format, int __prec, _Tp __v)
+{
+    return snprintf_l(__str, __size, 0, __format, __prec, __v);
+}
+
+template <class _Tp>
+inline
+int
+__nolocale_asprintf(char** __ret, const char* __restrict __format, _Tp __v)
+{
+    return asprintf_l(__ret, 0, __format, __v);
+}
+
+template <class _Tp>
+inline
+int
+__nolocale_asprintf(char** __ret, const char* __restrict __format, int __prec,
+                                                                        _Tp __v)
+{
+    return asprintf_l(__ret, 0, __format, __prec, __v);
+}
+
+template <class _Tp>
+inline
+int
+__nolocale_sscanf(const char* __restrict __str,
+                  const char* __restrict __format, _Tp* __v)
+{
+    return sscanf_l(__str, 0, __format, __v);
+}
+
+inline
+int
+__nolocale_isxdigit(int __c)
+{
+    return isxdigit_l(__c, 0);
+}
+
+inline
+int
+__nolocale_isdigit(int __c)
+{
+    return isdigit_l(__c, 0);
+}
+
+#else  /* !__APPLE__ */
+inline int
+__nolocale_sprintf(char* __restrict __str,
+                   const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsprintf(__str, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline int
+__nolocale_snprintf(char* __restrict __str, size_t __size,
+                    const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsnprintf(__str, __size, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline int
+__nolocale_asprintf(char** __ret,
+                    const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vasprintf(__ret, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline int
+__nolocale_sscanf(const char* __restrict __str,
+                  const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsscanf(__str, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline int
+__nolocale_isxdigit(int __c)
+{
+    return isxdigit(__c);
+}
+inline int
+__nolocale_isdigit(int __c)
+{
+    return isdigit(__c);
+}
+#endif  /* __APPLE__ */
 
 // __scan_keyword
 // Scans [__b, __e) until a match is found in the basic_strings range
@@ -1002,7 +1130,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
             break;
     // Stage 3
     __a[sizeof(__a)-1] = 0;
-    if (sscanf_l(__a, 0, "%p", &__v) != 1)
+    if (__nolocale_sscanf(__a, "%p", &__v) != 1)
         __err = ios_base::failbit;
     // EOF checked
     if (__b == __e)
@@ -1107,13 +1235,13 @@ __num_put<_CharT>::__widen_and_group_float(char* __nb, char* __np, char* __ne,
         *__oe++ = __ct.widen(*__nf++);
         *__oe++ = __ct.widen(*__nf++);
         for (__ns = __nf; __ns < __ne; ++__ns)
-            if (!isxdigit_l(*__ns, 0))
+            if (!__nolocale_isxdigit(*__ns))
                 break;
     }
     else
     {
         for (__ns = __nf; __ns < __ne; ++__ns)
-            if (!isdigit_l(*__ns, 0))
+            if (!__nolocale_isdigit(*__ns))
                 break;
     }
     if (__grouping.empty())
@@ -1310,7 +1438,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = __nolocale_sprintf(__nar, __fmt, __v);
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1336,7 +1464,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<long long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = __nolocale_sprintf(__nar, __fmt, __v);
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1362,7 +1490,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<unsigned long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = __nolocale_sprintf(__nar, __fmt, __v);
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1388,7 +1516,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<unsigned long long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = __nolocale_sprintf(__nar, __fmt, __v);
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1415,16 +1543,18 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char* __nb = __nar;
     int __nc;
     if (__specify_precision)
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, (int)__iob.precision(), __v);
+        __nc = __nolocale_snprintf(__nb, __nbuf, __fmt,
+                                   (int)__iob.precision(), __v);
     else
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, __v);
+        __nc = __nolocale_snprintf(__nb, __nbuf, __fmt, __v);
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
     {
         if (__specify_precision)
-            __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
+            __nc = __nolocale_asprintf(&__nb, __fmt, (int)__iob.precision(),
+                                       __v);
         else
-            __nc = asprintf_l(&__nb, 0, __fmt, __v);
+            __nc = __nolocale_asprintf(&__nb, __fmt, __v);
         if (__nb == 0)
             __throw_bad_alloc();
         __nbh.reset(__nb);
@@ -1465,16 +1595,18 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char* __nb = __nar;
     int __nc;
     if (__specify_precision)
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, (int)__iob.precision(), __v);
+        __nc = __nolocale_snprintf(__nb, __nbuf, __fmt,
+                                   (int)__iob.precision(), __v);
     else
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, __v);
+        __nc = __nolocale_snprintf(__nb, __nbuf, __fmt, __v);
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
     {
         if (__specify_precision)
-            __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
+            __nc = __nolocale_asprintf(&__nb, __fmt, (int)__iob.precision(),
+                                       __v);
         else
-            __nc = asprintf_l(&__nb, 0, __fmt, __v);
+            __nc = __nolocale_asprintf(&__nb, __fmt, __v);
         if (__nb == 0)
             __throw_bad_alloc();
         __nbh.reset(__nb);
@@ -1510,7 +1642,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char __fmt[6] = "%p";
     const unsigned __nbuf = 20;
     char __nar[__nbuf];
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = __nolocale_sprintf(__nar, __fmt, __v);
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar
@@ -3162,7 +3294,7 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     // secure memory for digit storage
     if (__n > __bs-1)
     {
-        __n = asprintf_l(&__bb, 0, "%.0Lf", __units);
+        __n = __nolocale_asprintf(&__bb, "%.0Lf", __units);
         if (__bb == 0)
             __throw_bad_alloc();
         __hn.reset(__bb);

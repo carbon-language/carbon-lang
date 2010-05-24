@@ -18,6 +18,7 @@
 #include <mutex>
 #include <cstdint>
 #include <cctype>
+#include <locale.h>
 #include <xlocale.h>
 
 #pragma GCC system_header
@@ -294,6 +295,7 @@ class ctype_base {
 public:
     typedef __uint32_t mask;
 
+#if __APPLE__
     static const mask space  = _CTYPE_S;
     static const mask print  = _CTYPE_R;
     static const mask cntrl  = _CTYPE_C;
@@ -304,6 +306,18 @@ public:
     static const mask punct  = _CTYPE_P;
     static const mask xdigit = _CTYPE_X;
     static const mask blank  = _CTYPE_B;
+#else  /* !__APPLE__ */
+    static const mask space  = _ISspace;
+    static const mask print  = _ISprint;
+    static const mask cntrl  = _IScntrl;
+    static const mask upper  = _ISupper;
+    static const mask lower  = _ISlower;
+    static const mask alpha  = _ISalpha;
+    static const mask digit  = _ISdigit;
+    static const mask punct  = _ISpunct;
+    static const mask xdigit = _ISxdigit;
+    static const mask blank  = _ISblank;
+#endif  /* __APPLE__ */
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 
@@ -507,7 +521,11 @@ public:
 
     static locale::id id;
 
+#ifdef _CACHED_RUNES
     static const size_t table_size = _CACHED_RUNES;
+#else
+    static const size_t table_size = 256;  // FIXME: Don't hardcode this.
+#endif
     const mask* table() const throw() {return __tab_;}
     static const mask* classic_table() throw();
 

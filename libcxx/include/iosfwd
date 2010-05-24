@@ -86,7 +86,7 @@ typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
 */
 
 #include <__config>
-#include <_types.h>  // for __darwin_mbstate_t
+#include <wchar.h>  // for mbstate_t
 
 #pragma GCC system_header
 
@@ -153,11 +153,11 @@ typedef basic_ofstream<wchar_t>      wofstream;
 typedef basic_fstream<wchar_t>       wfstream;
 
 template <class _State>             class fpos;
-typedef fpos<__darwin_mbstate_t>    streampos;
-typedef fpos<__darwin_mbstate_t>    wstreampos;
+typedef fpos<mbstate_t>    streampos;
+typedef fpos<mbstate_t>    wstreampos;
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
-typedef fpos<__darwin_mbstate_t>    u16streampos;
-typedef fpos<__darwin_mbstate_t>    u32streampos;
+typedef fpos<mbstate_t>    u16streampos;
+typedef fpos<mbstate_t>    u32streampos;
 #endif
 
 typedef long long streamoff;        // for char_traits in <string>

@@ -115,6 +115,9 @@ __thread_id get_id();
 
 class __thread_id
 {
+    // FIXME: pthread_t is a pointer on Darwin but a long on Linux.
+    // NULL is the no-thread value on Darwin.  Someone needs to check
+    // on other platforms.  We assume 0 works everywhere for now.
     pthread_t __id_;
 
 public:
@@ -206,7 +209,7 @@ public:
 
     void swap(thread& __t) {_STD::swap(__t_, __t.__t_);}
 
-    bool joinable() const {return __t_ != nullptr;}
+    bool joinable() const {return __t_ != 0;}
     void join();
     void detach();
     id get_id() const {return __t_;}
