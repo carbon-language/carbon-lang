@@ -16,6 +16,7 @@
 #define CODEGEN_REGISTERS_H
 
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/ADT/DenseMap.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -40,7 +41,8 @@ namespace llvm {
     unsigned SpillSize;
     unsigned SpillAlignment;
     int CopyCost;
-    std::vector<Record*> SubRegClasses;
+    // Map SubRegIndex -> RegisterClass
+    DenseMap<Record*,Record*> SubRegClasses;
     std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;

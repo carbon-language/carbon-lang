@@ -278,7 +278,7 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile, but not allocable
    R14D, R15D]>
 {
-  let SubRegClassList = [GR32];
+  let SubRegClasses = [(GR32 subreg_32bit)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -325,7 +325,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile, but not allocable
    R14D, R15D]>
 {
-  let SubRegClassList = [ADDR32];
+  let SubRegClasses = [(ADDR32 subreg_32bit)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -368,7 +368,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
 def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
   [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]>
 {
-  let SubRegClassList = [GR32, GR32];
+  let SubRegClasses = [(GR32 subreg_even32, subreg_odd32)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -404,7 +404,8 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
 def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
   [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
 {
-  let SubRegClassList = [GR32, GR32, GR64, GR64];
+  let SubRegClasses = [(GR32 subreg_even32, subreg_odd32),
+                         (GR64 subreg_even, subreg_odd)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -464,7 +465,7 @@ def FP32 : RegisterClass<"SystemZ", [f32], 32,
 def FP64 : RegisterClass<"SystemZ", [f64], 64,
  [F0L, F1L,  F2L,  F3L,  F4L,  F5L,  F6L,  F7L, 
   F8L, F9L, F10L, F11L, F12L, F13L, F14L, F15L]> {
-  let SubRegClassList = [FP32];
+  let SubRegClasses = [(FP32 subreg_32bit)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;

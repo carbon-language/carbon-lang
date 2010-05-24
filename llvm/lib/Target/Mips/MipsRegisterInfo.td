@@ -257,7 +257,7 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64,
   // Reserved
   D15]>
 {
-  let SubRegClassList = [FGR32, FGR32];
+  let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];

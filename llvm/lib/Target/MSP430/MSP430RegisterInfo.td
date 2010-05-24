@@ -104,7 +104,7 @@ def GR16 : RegisterClass<"MSP430", [i16], 16,
    // Volatile, but not allocable
    PCW, SPW, SRW, CGW]>
 {
-  let SubRegClassList = [GR8];
+  let SubRegClasses = [(GR8 subreg_8bit)];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];

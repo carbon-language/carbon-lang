@@ -379,7 +379,7 @@ def CRBITRC : RegisterClass<"PPC", [i32], 32,
 def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
   CR3, CR4]>
 {
-  let SubRegClassList = [CRBITRC, CRBITRC, CRBITRC, CRBITRC];
+  let SubRegClasses = [(CRBITRC sub_lt, sub_gt, sub_eq, sub_un)];
 }
 
 def CTRRC : RegisterClass<"PPC", [i32], 32, [CTR]>;

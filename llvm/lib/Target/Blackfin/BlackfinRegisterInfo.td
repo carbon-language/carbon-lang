@@ -260,11 +260,11 @@ def GR16 : RegisterClass<"BF", [i16], 16,
      L0H, L0L, L1H, L1L, L2H, L2L, L3H, L3L]>;
 
 def D : RegisterClass<"BF", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
-  let SubRegClassList = [D16L, D16H];
+  let SubRegClasses = [(D16L lo16), (D16H hi16)];
 }
 
 def P : RegisterClass<"BF", [i32], 32, [P0, P1, P2, P3, P4, P5, FP, SP]> {
-  let SubRegClassList = [P16L, P16H];
+  let SubRegClasses = [(P16L lo16), (P16H hi16)];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
@@ -287,7 +287,7 @@ def L : RegisterClass<"BF", [i32], 32, [L0, L1, L2, L3]>;
 def DP : RegisterClass<"BF", [i32], 32,
     [R0, R1, R2, R3, R4, R5, R6, R7,
      P0, P1, P2, P3, P4, P5, FP, SP]> {
-  let SubRegClassList = [DP16L, DP16H];
+  let SubRegClasses = [(DP16L lo16), (DP16H hi16)];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];

@@ -173,6 +173,10 @@ const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
 
+void CodeGenTarget::ReadSubRegIndices() const {
+  SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
+}
+
 void CodeGenTarget::ReadRegisterClasses() const {
   std::vector<Record*> RegClasses =
     Records.getAllDerivedDefinitions("RegisterClass");
@@ -229,17 +233,30 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
             "' does not derive from the Register class!";
     Elements.push_back(Reg);
   }
-  
-  std::vector<Record*> SubRegClassList = 
-                        R->getValueAsListOfDefs("SubRegClassList");
-  for (unsigned i = 0, e = SubRegClassList.size(); i != e; ++i) {
-    Record *SubRegClass = SubRegClassList[i];
-    if (!SubRegClass->isSubClassOf("RegisterClass"))
-      throw "Register Class member '" + SubRegClass->getName() +
-            "' does not derive from the RegisterClass class!";
-    SubRegClasses.push_back(SubRegClass);
-  }  
-  
+
+  // SubRegClasses is a list<dag> containing (RC, subregindex, ...) dags.
+  ListInit *SRC = R->getValueAsListInit("SubRegClasses");
+  for (ListInit::const_iterator i = SRC->begin(), e = SRC->end(); i != e; ++i) {
+    DagInit *DAG = dynamic_cast<DagInit*>(*i);
+    if (!DAG) throw "SubRegClasses must contain DAGs";
+    DefInit *DAGOp = dynamic_cast<DefInit*>(DAG->getOperator());
+    Record *RCRec;
+    if (!DAGOp || !(RCRec = DAGOp->getDef())->isSubClassOf("RegisterClass"))
+      throw "Operator '" + DAG->getOperator()->getAsString() +
+        "' in SubRegClasses is not a RegisterClass";
+    // Iterate over args, all SubRegIndex instances.
+    for (DagInit::const_arg_iterator ai = DAG->arg_begin(), ae = DAG->arg_end();
+         ai != ae; ++ai) {
+      DefInit *Idx = dynamic_cast<DefInit*>(*ai);
+      Record *IdxRec;
+      if (!Idx || !(IdxRec = Idx->getDef())->isSubClassOf("SubRegIndex"))
+        throw "Argument '" + (*ai)->getAsString() +
+          "' in SubRegClasses is not a SubRegIndex";
+      if (!SubRegClasses.insert(std::make_pair(IdxRec, RCRec)).second)
+        throw "SubRegIndex '" + IdxRec->getName() + "' mentioned twice";
+    }
+  }
+
   // Allow targets to override the size in bits of the RegisterClass.
   unsigned Size = R->getValueAsInt("Size");
 

@@ -19,14 +19,12 @@
 
 #include "CodeGenRegisters.h"
 #include "CodeGenInstruction.h"
+#include "Record.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 
 namespace llvm {
 
-class Record;
-class RecordKeeper;
 struct CodeGenRegister;
 class CodeGenTarget;
 
@@ -65,9 +63,11 @@ class CodeGenTarget {
 
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
+  mutable std::vector<Record*> SubRegIndices;
   mutable std::vector<CodeGenRegisterClass> RegisterClasses;
   mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
   void ReadRegisters() const;
+  void ReadSubRegIndices() const;
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
@@ -100,11 +100,21 @@ public:
     return Registers;
   }
 
+  const std::vector<Record*> &getSubRegIndices() const {
+    if (SubRegIndices.empty()) ReadSubRegIndices();
+    return SubRegIndices;
+  }
+
+  // Map a SubRegIndex Record to its number.
+  unsigned getSubRegIndexNo(Record *idx) const {
+    return idx->getValueAsInt("NumberHack");
+  }
+
   const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
     if (RegisterClasses.empty()) ReadRegisterClasses();
     return RegisterClasses;
   }
-  
+
   const CodeGenRegisterClass &getRegisterClass(Record *R) const {
     const std::vector<CodeGenRegisterClass> &RC = getRegisterClasses();
     for (unsigned i = 0, e = RC.size(); i != e; ++i)
