@@ -825,6 +825,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
       OptionName = "-W";
       OptionName += Opt;
+    } else if (Info.getID() == diag::fatal_too_many_errors) {
+      OptionName = "-ferror-limit=";
     } else {
       // If the diagnostic is an extension diagnostic and not enabled by default
       // then it must have been turned on with -pedantic.
