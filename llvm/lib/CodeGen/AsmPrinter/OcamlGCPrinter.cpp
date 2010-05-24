@@ -104,6 +104,21 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), AP, "frametable");
 
+  int NumDescriptors = 0;
+  for (iterator I = begin(), IE = end(); I != IE; ++I) {
+    GCFunctionInfo &FI = **I;
+    for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
+      NumDescriptors++;
+    }
+  }
+
+  if (NumDescriptors >= 1<<16) {
+    // Very rude!
+    report_fatal_error(" Too much descriptor for ocaml GC");
+  }
+  AP.EmitInt16(NumDescriptors);
+  AP.EmitAlignment(IntPtrSize == 4 ? 2 : 3);
+
   for (iterator I = begin(), IE = end(); I != IE; ++I) {
     GCFunctionInfo &FI = **I;
 
@@ -135,11 +150,13 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
 
       for (GCFunctionInfo::live_iterator K = FI.live_begin(J),
                                          KE = FI.live_end(J); K != KE; ++K) {
-        assert(K->StackOffset < 1<<16 &&
-               "GC root stack offset is outside of fixed stack frame and out "
-               "of range for ocaml GC!");
-
-        AP.EmitInt32(K->StackOffset);
+        if (K->StackOffset >= 1<<16) {
+          // Very rude!
+          report_fatal_error(
+                 "GC root stack offset is outside of fixed stack frame and out "
+                 "of range for ocaml GC!");
+        }
+        AP.EmitInt16(K->StackOffset);
       }
 
       AP.EmitAlignment(IntPtrSize == 4 ? 2 : 3);
