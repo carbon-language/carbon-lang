@@ -234,6 +234,13 @@ def CR5 : CR<5, "cr5", [CR5LT, CR5GT, CR5EQ, CR5UN]>, DwarfRegNum<[73]>;
 def CR6 : CR<6, "cr6", [CR6LT, CR6GT, CR6EQ, CR6UN]>, DwarfRegNum<[74]>;
 def CR7 : CR<7, "cr7", [CR7LT, CR7GT, CR7EQ, CR7UN]>, DwarfRegNum<[75]>;
 
+let Namespace = "PPC" in {
+def sub_lt : SubRegIndex { let NumberHack = 1; }
+def sub_gt : SubRegIndex { let NumberHack = 2; }
+def sub_eq : SubRegIndex { let NumberHack = 3; }
+def sub_un : SubRegIndex { let NumberHack = 4; }
+}
+
 def : SubRegSet<1, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
                    [CR0LT, CR1LT, CR2LT, CR3LT, CR4LT, CR5LT, CR6LT, CR7LT]>;
 def : SubRegSet<2, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
