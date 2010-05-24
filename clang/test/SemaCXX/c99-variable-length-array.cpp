@@ -90,3 +90,13 @@ namespace PR7206 {
     struct edge_info edgeInfo[x]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
   }
 }
+
+namespace rdar8020206 {
+  template<typename T>
+  void f(int i) {
+    const unsigned value = i;
+    int array[value * i]; // expected-warning 2{{variable length arrays are a C99 feature, accepted as an extension}}
+  }
+
+  template void f<int>(int); // expected-note{{instantiation of}}
+}

@@ -627,7 +627,7 @@ bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   if (T.isNull())
     return true;
   
-  if (T->isDependentType())
+  if (T->isDependentType() || T->isVariablyModifiedType())
     return false;
   
   getSema().MarkDeclarationsReferencedInType(Loc, T);
@@ -942,7 +942,8 @@ TypeSourceInfo *Sema::SubstType(TypeSourceInfo *T,
          "Cannot perform an instantiation without some context on the "
          "instantiation stack");
   
-  if (!T->getType()->isDependentType())
+  if (!T->getType()->isDependentType() && 
+      !T->getType()->isVariablyModifiedType())
     return T;
 
   TemplateInstantiator Instantiator(*this, Args, Loc, Entity);
@@ -957,8 +958,9 @@ QualType Sema::SubstType(QualType T,
          "Cannot perform an instantiation without some context on the "
          "instantiation stack");
 
-  // If T is not a dependent type, there is nothing to do.
-  if (!T->isDependentType())
+  // If T is not a dependent type or a variably-modified type, there
+  // is nothing to do.
+  if (!T->isDependentType() && !T->isVariablyModifiedType())
     return T;
 
   TemplateInstantiator Instantiator(*this, TemplateArgs, Loc, Entity);
@@ -966,7 +968,7 @@ QualType Sema::SubstType(QualType T,
 }
 
 static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
-  if (T->getType()->isDependentType())
+  if (T->getType()->isDependentType() || T->getType()->isVariablyModifiedType())
     return true;
 
   TypeLoc TL = T->getTypeLoc();

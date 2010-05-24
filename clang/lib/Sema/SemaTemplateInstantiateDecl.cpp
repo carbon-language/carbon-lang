@@ -184,7 +184,8 @@ TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI->getType()->isDependentType()) {
+  if (DI->getType()->isDependentType() ||
+      DI->getType()->isVariablyModifiedType()) {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());
     if (!DI) {
@@ -438,7 +439,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI->getType()->isDependentType())  {
+  if (DI->getType()->isDependentType() ||
+      DI->getType()->isVariablyModifiedType())  {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());
     if (!DI) {
