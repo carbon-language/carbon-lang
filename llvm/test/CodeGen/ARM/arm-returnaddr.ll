@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin
 ; rdar://8015977
+; rdar://8020118
 
 define arm_apcscc i8* @rt0(i32 %x) nounwind readnone {
 entry:
