@@ -375,9 +375,9 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
         if (LastSubIdx != SubIdx-Stride)
           return false;
       } else {
-        // Must start from arm_dsubreg_0 or arm_qsubreg_0.
-        if (SubIdx != (ARM::DSUBREG_0+Offset) &&
-            SubIdx != (ARM::QSUBREG_0+Offset))
+        // Must start from dsub_0 or qsub_0.
+        if (SubIdx != (ARM::dsub_0+Offset) &&
+            SubIdx != (ARM::qsub_0+Offset))
           return false;
       }
       RegSeq = UseMI;
@@ -423,9 +423,9 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
       if (LastSubIdx != SubIdx-Stride)
         return false;
     } else {
-      // Must start from arm_dsubreg_0 or arm_qsubreg_0.
-      if (SubIdx != (ARM::DSUBREG_0+Offset) &&
-          SubIdx != (ARM::QSUBREG_0+Offset))
+      // Must start from dsub_0 or qsub_0.
+      if (SubIdx != (ARM::dsub_0+Offset) &&
+          SubIdx != (ARM::qsub_0+Offset))
         return false;
     }
     SubIds.push_back(SubIdx);

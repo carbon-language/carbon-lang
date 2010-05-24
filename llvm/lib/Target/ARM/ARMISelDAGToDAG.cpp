@@ -964,8 +964,8 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDNode *N) {
 ///
 SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
   if (llvm::ModelWithRegSequence()) {
     const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
@@ -982,8 +982,8 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
 ///
 SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::QSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::QSUBREG_1, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::qsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::qsub_1, MVT::i32);
   const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
 }
@@ -993,10 +993,10 @@ SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
 SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::DSUBREG_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::DSUBREG_3, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
+  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::dsub_2, MVT::i32);
+  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::dsub_3, MVT::i32);
   const SDValue Ops[] = { V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3 };
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
@@ -1006,10 +1006,10 @@ SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
 SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::QSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::QSUBREG_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::QSUBREG_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::QSUBREG_3, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::qsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::qsub_1, MVT::i32);
+  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::qsub_2, MVT::i32);
+  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::qsub_3, MVT::i32);
   const SDValue Ops[] = { V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3 };
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
@@ -1021,14 +1021,14 @@ SDNode *ARMDAGToDAGISel::OctoDRegs(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V4, SDValue V5,
                                    SDValue V6, SDValue V7) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::DSUBREG_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::DSUBREG_3, MVT::i32);
-  SDValue SubReg4 = CurDAG->getTargetConstant(ARM::DSUBREG_4, MVT::i32);
-  SDValue SubReg5 = CurDAG->getTargetConstant(ARM::DSUBREG_5, MVT::i32);
-  SDValue SubReg6 = CurDAG->getTargetConstant(ARM::DSUBREG_6, MVT::i32);
-  SDValue SubReg7 = CurDAG->getTargetConstant(ARM::DSUBREG_7, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
+  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::dsub_2, MVT::i32);
+  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::dsub_3, MVT::i32);
+  SDValue SubReg4 = CurDAG->getTargetConstant(ARM::dsub_4, MVT::i32);
+  SDValue SubReg5 = CurDAG->getTargetConstant(ARM::dsub_5, MVT::i32);
+  SDValue SubReg6 = CurDAG->getTargetConstant(ARM::dsub_6, MVT::i32);
+  SDValue SubReg7 = CurDAG->getTargetConstant(ARM::dsub_7, MVT::i32);
   const SDValue Ops[] ={ V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3,
                          V4, SubReg4, V5, SubReg5, V6, SubReg6, V7, SubReg7 };
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 16);
@@ -1108,7 +1108,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     }
 
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-      SDValue D = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0+Vec,
+      SDValue D = CurDAG->getTargetExtractSubreg(ARM::dsub_0+Vec,
                                                  dl, VT, RegSeq);
       ReplaceUses(SDValue(N, Vec), D);
     }
@@ -1136,8 +1136,8 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
         SDValue QQ = SDValue(QuadDRegs(MVT::v4i64,
                                        SDValue(VLd, 0), SDValue(VLd, 1),
                                        SDValue(VLd, 2), SDValue(VLd, 3)), 0);
-        SDValue Q0 = CurDAG->getTargetExtractSubreg(ARM::QSUBREG_0, dl, VT, QQ);
-        SDValue Q1 = CurDAG->getTargetExtractSubreg(ARM::QSUBREG_1, dl, VT, QQ);
+        SDValue Q0 = CurDAG->getTargetExtractSubreg(ARM::qsub_0, dl, VT, QQ);
+        SDValue Q1 = CurDAG->getTargetExtractSubreg(ARM::qsub_1, dl, VT, QQ);
         ReplaceUses(SDValue(N, 0), Q0);
         ReplaceUses(SDValue(N, 1), Q1);
       }
@@ -1188,7 +1188,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
 
       // Extract out the 3 / 4 Q registers.
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-        SDValue Q = CurDAG->getTargetExtractSubreg(ARM::QSUBREG_0+Vec,
+        SDValue Q = CurDAG->getTargetExtractSubreg(ARM::qsub_0+Vec,
                                                    dl, VT, RegSeq);
         ReplaceUses(SDValue(N, Vec), Q);
       }
@@ -1264,15 +1264,15 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
       }
 
       // Now extract the D registers back out.
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, VT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, VT,
                                                    RegSeq));
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, VT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, VT,
                                                    RegSeq));
       if (NumVecs > 2)
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, VT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_2, dl, VT,
                                                      RegSeq));
       if (NumVecs > 3)
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, VT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, VT,
                                                      RegSeq));
     } else {
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
@@ -1299,13 +1299,13 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
       SDValue QQ = SDValue(PairQRegs(MVT::v4i64, Q0, Q1), 0);
 
       // Now extract the D registers back out.
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, RegVT,
                                                    QQ));
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, RegVT,
                                                    QQ));
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, RegVT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_2, dl, RegVT,
                                                    QQ));
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, RegVT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, RegVT,
                                                    QQ));
       Ops.push_back(Pred);
       Ops.push_back(Reg0); // predicate register
@@ -1313,9 +1313,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
       return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 5 + 4);
     } else {
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, RegVT,
                                                      N->getOperand(Vec+3)));
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, RegVT,
                                                      N->getOperand(Vec+3)));
       }
       Ops.push_back(Pred);
@@ -1332,9 +1332,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // Form the QQQQ REG_SEQUENCE.
     SDValue V[8];
     for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
-      V[i]   = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+      V[i]   = CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, RegVT,
                                               N->getOperand(Vec+3));
-      V[i+1] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+      V[i+1] = CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, RegVT,
                                               N->getOperand(Vec+3));
     }
     if (NumVecs == 3)
@@ -1347,7 +1347,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // Store the even D registers.
     Ops.push_back(Reg0); // post-access address offset
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0+Vec*2, dl,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0+Vec*2, dl,
                                                    RegVT, RegSeq));
     Ops.push_back(Pred);
     Ops.push_back(Reg0); // predicate register
@@ -1360,7 +1360,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // Store the odd D registers.
     Ops[0] = SDValue(VStA, 0); // MemAddr
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1+Vec*2, dl,
+      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::dsub_1+Vec*2, dl,
                                                   RegVT, RegSeq);
     Ops[NumVecs+5] = Chain;
     Opc = QOpcodes1[OpcodeIndex];
@@ -1374,7 +1374,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
 
     // Store the even subregs.
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, RegVT,
                                                    N->getOperand(Vec+3)));
     Ops.push_back(Pred);
     Ops.push_back(Reg0); // predicate register
@@ -1387,7 +1387,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     // Store the odd subregs.
     Ops[0] = SDValue(VStA, 0); // MemAddr
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+      Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, RegVT,
                                                   N->getOperand(Vec+3));
     Ops[NumVecs+5] = Chain;
     Opc = QOpcodes1[OpcodeIndex];
@@ -1424,7 +1424,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   if (!is64BitVector) {
     RegVT = GetNEONSubregVT(VT);
     NumElts = RegVT.getVectorNumElements();
-    SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+    SubregIdx = (Lane < NumElts) ? ARM::dsub_0 : ARM::dsub_1;
     Even = Lane < NumElts;
   }
 
@@ -1467,15 +1467,15 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
       }
 
       // Now extract the D registers back out.
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, VT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, VT,
                                                    RegSeq));
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, VT,
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, VT,
                                                    RegSeq));
       if (NumVecs > 2)
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_2, dl, VT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_2, dl, VT,
                                                      RegSeq));
       if (NumVecs > 3)
-        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_3, dl, VT,
+        Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, VT,
                                                      RegSeq));
     } else {
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
@@ -1505,7 +1505,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
       }
 
       // Extract the subregs of the input vector.
-      unsigned SubIdx = Even ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+      unsigned SubIdx = Even ? ARM::dsub_0 : ARM::dsub_1;
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
         Ops.push_back(CurDAG->getTargetExtractSubreg(SubIdx+Vec*2, dl, RegVT,
                                                      RegSeq));
@@ -1570,7 +1570,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
                                    V[4], V[5], V[6], V[7]), 0);
     }
 
-    unsigned SubIdx = is64BitVector ? ARM::DSUBREG_0 : ARM::QSUBREG_0;
+    unsigned SubIdx = is64BitVector ? ARM::dsub_0 : ARM::qsub_0;
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
       ReplaceUses(SDValue(N, Vec),
                   CurDAG->getTargetExtractSubreg(SubIdx+Vec, dl, VT, RegSeq));
@@ -1830,8 +1830,8 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   SDValue V0 = N->getOperand(0);
   SDValue V1 = N->getOperand(1);
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
   const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
 }

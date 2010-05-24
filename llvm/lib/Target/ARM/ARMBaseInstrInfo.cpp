@@ -834,10 +834,10 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       // spilled def has a sub-register index.
       MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VST2q32))
         .addFrameIndex(FI).addImm(128);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_0, getKillRegState(isKill), TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_2, 0, TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_3, 0, TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
       AddDefaultPred(MIB.addMemOperand(MMO));
     } else {
       MachineInstrBuilder MIB =
@@ -845,10 +845,10 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                        .addFrameIndex(FI)
                        .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
         .addMemOperand(MMO);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_0, getKillRegState(isKill), TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_2, 0, TRI);
-            AddDReg(MIB, SrcReg, ARM::DSUBREG_3, 0, TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
+      MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
+            AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
     }
   } else {
     assert(RC == ARM::QQQQPRRegisterClass && "Unknown regclass!");
@@ -857,14 +857,14 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addFrameIndex(FI)
                      .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
       .addMemOperand(MMO);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_0, getKillRegState(isKill), TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_1, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_2, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_3, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_4, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_5, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::DSUBREG_6, 0, TRI);
-          AddDReg(MIB, SrcReg, ARM::DSUBREG_7, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_4, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_5, 0, TRI);
+    MIB = AddDReg(MIB, SrcReg, ARM::dsub_6, 0, TRI);
+          AddDReg(MIB, SrcReg, ARM::dsub_7, 0, TRI);
   }
 }
 
@@ -916,10 +916,10 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   } else if (RC == ARM::QQPRRegisterClass || RC == ARM::QQPR_VFP2RegisterClass){
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VLD2q32));
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_0, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_2, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_3, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
       AddDefaultPred(MIB.addFrameIndex(FI).addImm(128).addMemOperand(MMO));
     } else {
       MachineInstrBuilder MIB =
@@ -927,10 +927,10 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                        .addFrameIndex(FI)
                        .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
         .addMemOperand(MMO);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_0, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_2, RegState::Define, TRI);
-            AddDReg(MIB, DestReg, ARM::DSUBREG_3, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
+            AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
     }
   } else {
     assert(RC == ARM::QQQQPRRegisterClass && "Unknown regclass!");
@@ -939,14 +939,14 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                        .addFrameIndex(FI)
                        .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
         .addMemOperand(MMO);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_0, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_1, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_2, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_3, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_4, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_5, RegState::Define, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::DSUBREG_6, RegState::Define, TRI);
-            AddDReg(MIB, DestReg, ARM::DSUBREG_7, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_4, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_5, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_6, RegState::Define, TRI);
+            AddDReg(MIB, DestReg, ARM::dsub_7, RegState::Define, TRI);
   }
 }
 

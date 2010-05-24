@@ -319,8 +319,8 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));
     if (Modifier && strcmp(Modifier, "dregpair") == 0) {
-      unsigned DRegLo = TM.getRegisterInfo()->getSubReg(Reg, 5);// arm_dsubreg_0
-      unsigned DRegHi = TM.getRegisterInfo()->getSubReg(Reg, 6);// arm_dsubreg_1
+      unsigned DRegLo = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_0);
+      unsigned DRegHi = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_1);
       O << '{'
         << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
         << '}';

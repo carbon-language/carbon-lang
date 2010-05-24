@@ -135,12 +135,12 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     case ARM::VMOVQQ: {
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
-      unsigned EvenDst = TRI->getSubReg(DstReg, ARM::QSUBREG_0);
-      unsigned OddDst  = TRI->getSubReg(DstReg, ARM::QSUBREG_1);
+      unsigned EvenDst = TRI->getSubReg(DstReg, ARM::qsub_0);
+      unsigned OddDst  = TRI->getSubReg(DstReg, ARM::qsub_1);
       unsigned SrcReg = MI.getOperand(1).getReg();
       bool SrcIsKill = MI.getOperand(1).isKill();
-      unsigned EvenSrc = TRI->getSubReg(SrcReg, ARM::QSUBREG_0);
-      unsigned OddSrc  = TRI->getSubReg(SrcReg, ARM::QSUBREG_1);
+      unsigned EvenSrc = TRI->getSubReg(SrcReg, ARM::qsub_0);
+      unsigned OddSrc  = TRI->getSubReg(SrcReg, ARM::qsub_1);
       MachineInstrBuilder Even =
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(ARM::VMOVQ))

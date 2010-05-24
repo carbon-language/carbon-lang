@@ -195,8 +195,8 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       // FIXME: Breaks e.g. ARM/vmul.ll.
       assert(0);
       /*
-      unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
-      unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
+      unsigned DRegLo = TRI->getSubReg(Reg, ARM::dsub_0);
+      unsigned DRegHi = TRI->getSubReg(Reg, ARM::dsub_1);
       O << '{'
       << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
       << '}';*/

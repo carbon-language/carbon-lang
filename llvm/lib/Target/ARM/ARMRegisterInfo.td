@@ -445,29 +445,29 @@ def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
 // Subregister Set Definitions... now that we have all of the pieces, define the
 // sub registers for each register.
 //
+let Namespace = "ARM" in {
+def ssub_0 : SubRegIndex { let NumberHack = 1; }
+def ssub_1 : SubRegIndex { let NumberHack = 2; }
+def ssub_2 : SubRegIndex { let NumberHack = 3; }
+def ssub_3 : SubRegIndex { let NumberHack = 4; }
 
-def arm_ssubreg_0 : PatLeaf<(i32 1)>;
-def arm_ssubreg_1 : PatLeaf<(i32 2)>;
-def arm_ssubreg_2 : PatLeaf<(i32 3)>;
-def arm_ssubreg_3 : PatLeaf<(i32 4)>;
+def dsub_0 : SubRegIndex { let NumberHack = 5; }
+def dsub_1 : SubRegIndex { let NumberHack = 6; }
+def dsub_2 : SubRegIndex { let NumberHack = 7; }
+def dsub_3 : SubRegIndex { let NumberHack = 8; }
+def dsub_4 : SubRegIndex { let NumberHack = 9; }
+def dsub_5 : SubRegIndex { let NumberHack = 10; }
+def dsub_6 : SubRegIndex { let NumberHack = 11; }
+def dsub_7 : SubRegIndex { let NumberHack = 12; }
 
-def arm_dsubreg_0 : PatLeaf<(i32 5)>;
-def arm_dsubreg_1 : PatLeaf<(i32 6)>;
-def arm_dsubreg_2 : PatLeaf<(i32 7)>;
-def arm_dsubreg_3 : PatLeaf<(i32 8)>;
-def arm_dsubreg_4 : PatLeaf<(i32 9)>;
-def arm_dsubreg_5 : PatLeaf<(i32 10)>;
-def arm_dsubreg_6 : PatLeaf<(i32 11)>;
-def arm_dsubreg_7 : PatLeaf<(i32 12)>;
+def qsub_0 : SubRegIndex { let NumberHack = 13; }
+def qsub_1 : SubRegIndex { let NumberHack = 14; }
+def qsub_2 : SubRegIndex { let NumberHack = 15; }
+def qsub_3 : SubRegIndex { let NumberHack = 16; }
 
-def arm_qsubreg_0 : PatLeaf<(i32 13)>;
-def arm_qsubreg_1 : PatLeaf<(i32 14)>;
-def arm_qsubreg_2 : PatLeaf<(i32 15)>;
-def arm_qsubreg_3 : PatLeaf<(i32 16)>;
-
-def arm_qqsubreg_0 : PatLeaf<(i32 17)>;
-def arm_qqsubreg_1 : PatLeaf<(i32 18)>;
-
+def qqsub_0 : SubRegIndex { let NumberHack = 17; }
+def qqsub_1 : SubRegIndex { let NumberHack = 18; }
+}
 
 // S sub-registers of D registers.
 def : SubRegSet<1, [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,

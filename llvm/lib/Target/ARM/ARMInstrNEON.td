@@ -796,7 +796,7 @@ def VST4LNq32_UPD : VST4LNWB<0b1011, {?,1,?,?}, "32">;
 //===----------------------------------------------------------------------===//
 
 // Extract D sub-registers of Q registers.
-// (arm_dsubreg_0 is 5; arm_dsubreg_1 is 6)
+// (dsub_0 is 5; dsub_1 is 6)
 def DSubReg_i8_reg  : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue() / 8, MVT::i32);
 }]>;
@@ -814,7 +814,7 @@ def DSubReg_f64_other_reg : SDNodeXForm<imm, [{
 }]>;
 
 // Extract S sub-registers of Q/D registers.
-// (arm_ssubreg_0 is 1; arm_ssubreg_1 is 2; etc.)
+// (ssub_0 is 1; ssub_1 is 2; etc.)
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(1 + N->getZExtValue(), MVT::i32);
 }]>;
@@ -3011,11 +3011,11 @@ def : Pat<(v2f64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
           (INSERT_SUBREG QPR:$src1, DPR:$src2, (DSubReg_f64_reg imm:$src3))>;
 
 def : Pat<(v2f32 (scalar_to_vector SPR:$src)),
-          (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$src, arm_ssubreg_0)>;
+          (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$src, ssub_0)>;
 def : Pat<(v2f64 (scalar_to_vector (f64 DPR:$src))),
-          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), DPR:$src, arm_dsubreg_0)>;
+          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), DPR:$src, dsub_0)>;
 def : Pat<(v4f32 (scalar_to_vector SPR:$src)),
-          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), SPR:$src, arm_ssubreg_0)>;
+          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), SPR:$src, ssub_0)>;
 
 def : Pat<(v8i8 (scalar_to_vector GPR:$src)),
           (VSETLNi8  (v8i8  (IMPLICIT_DEF)), GPR:$src, (i32 0))>;
@@ -3027,15 +3027,15 @@ def : Pat<(v2i32 (scalar_to_vector GPR:$src)),
 def : Pat<(v16i8 (scalar_to_vector GPR:$src)),
           (INSERT_SUBREG (v16i8 (IMPLICIT_DEF)),
                          (VSETLNi8 (v8i8 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
-                         arm_dsubreg_0)>;
+                         dsub_0)>;
 def : Pat<(v8i16 (scalar_to_vector GPR:$src)),
           (INSERT_SUBREG (v8i16 (IMPLICIT_DEF)),
                          (VSETLNi16 (v4i16 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
-                         arm_dsubreg_0)>;
+                         dsub_0)>;
 def : Pat<(v4i32 (scalar_to_vector GPR:$src)),
           (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)),
                          (VSETLNi32 (v2i32 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
-                         arm_dsubreg_0)>;
+                         dsub_0)>;
 
 //   VDUP     : Vector Duplicate (from ARM core register to all elements)
 
@@ -3369,27 +3369,27 @@ def  VTBX4
 class N2VSPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, NeonI Inst>
   : NEONFPPat<(ResTy (OpNode SPR:$a)),
               (EXTRACT_SUBREG (OpTy (Inst (INSERT_SUBREG (OpTy (IMPLICIT_DEF)),
-                                                       SPR:$a, arm_ssubreg_0))),
-                              arm_ssubreg_0)>;
+                                                       SPR:$a, ssub_0))),
+                              ssub_0)>;
 
 class N3VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
               (EXTRACT_SUBREG (v2f32
                                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                      SPR:$a, arm_ssubreg_0),
+                                                      SPR:$a, ssub_0),
                                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                      SPR:$b, arm_ssubreg_0))),
-                              arm_ssubreg_0)>;
+                                                      SPR:$b, ssub_0))),
+                              ssub_0)>;
 
 class N3VSMulOpPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$acc, (f32 (MulNode SPR:$a, SPR:$b)))),
               (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$acc, arm_ssubreg_0),
+                                                   SPR:$acc, ssub_0),
                                     (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$a, arm_ssubreg_0),
+                                                   SPR:$a, ssub_0),
                                     (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$b, arm_ssubreg_0)),
-                              arm_ssubreg_0)>;
+                                                   SPR:$b, ssub_0)),
+                              ssub_0)>;
 
 // These need separate instructions because they must use DPR_VFP2 register
 // class which have SPR sub-registers.
