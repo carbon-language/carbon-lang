@@ -11,8 +11,17 @@
 //  Declarations that describe the Blackfin register file
 //===----------------------------------------------------------------------===//
 
-// Registers are identified with 3-bit group and 3-bit ID numbers.
+// Subregs are:
+// 1: .L
+// 2: .H
+// 3: .W (32 low bits of 40-bit accu)
+let Namespace = "BF" in {
+def lo16 : SubRegIndex { let NumberHack = 1; }
+def hi16 : SubRegIndex { let NumberHack = 2; }
+def lo32 : SubRegIndex { let NumberHack = 3; }
+}
 
+// Registers are identified with 3-bit group and 3-bit ID numbers.
 class BlackfinReg<string n> : Register<n> {
   field bits<3> Group;
   field bits<3> Num;
@@ -181,15 +190,6 @@ def LC0 : Ri<6, 0, "lc0">, DwarfRegNum<[46]>;
 def LC1 : Ri<6, 3, "lc1">, DwarfRegNum<[47]>;
 def LB0 : Ri<6, 2, "lb0">, DwarfRegNum<[48]>;
 def LB1 : Ri<6, 5, "lb1">, DwarfRegNum<[49]>;
-
-// Subregs are:
-// 1: .L
-// 2: .H
-// 3: .W (32 low bits of 40-bit accu)
-// Keep in sync with enum in BlackfinRegisterInfo.h
-def bfin_subreg_lo16  : PatLeaf<(i32 1)>;
-def bfin_subreg_hi16  : PatLeaf<(i32 2)>;
-def bfin_subreg_32bit : PatLeaf<(i32 3)>;
 
 def : SubRegSet<1,
     [R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,

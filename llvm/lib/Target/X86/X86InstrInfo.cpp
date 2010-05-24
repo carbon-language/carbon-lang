@@ -2483,9 +2483,9 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         unsigned DstReg = NewMI->getOperand(0).getReg();
         if (TargetRegisterInfo::isPhysicalRegister(DstReg))
           NewMI->getOperand(0).setReg(RI.getSubReg(DstReg,
-                                                   4/*x86_subreg_32bit*/));
+                                                   X86::x86_subreg_32bit));
         else
-          NewMI->getOperand(0).setSubReg(4/*x86_subreg_32bit*/);
+          NewMI->getOperand(0).setSubReg(X86::x86_subreg_32bit);
       }
       return NewMI;
     }

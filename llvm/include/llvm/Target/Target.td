@@ -21,6 +21,14 @@ include "llvm/Intrinsics.td"
 
 class RegisterClass; // Forward def
 
+class SubRegIndex {
+  string Namespace = "";
+
+  // This explicit numbering is going away after RegisterClass::SubRegClassList
+  // is replaced.
+  int NumberHack;
+}
+
 // Register - You should define one instance of this class for each register
 // in the target machine.  String n will become the "name" of the register.
 class Register<string n> {

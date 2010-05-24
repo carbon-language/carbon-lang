@@ -18,6 +18,17 @@
 //
 let Namespace = "X86" in {
 
+  // Subregister indices.
+  def x86_subreg_8bit    : SubRegIndex { let NumberHack = 1; }
+  def x86_subreg_8bit_hi : SubRegIndex { let NumberHack = 2; }
+  def x86_subreg_16bit   : SubRegIndex { let NumberHack = 3; }
+  def x86_subreg_32bit   : SubRegIndex { let NumberHack = 4; }
+
+  def x86_subreg_ss   : SubRegIndex { let NumberHack = 1; }
+  def x86_subreg_sd   : SubRegIndex { let NumberHack = 2; }
+  def x86_subreg_xmm  : SubRegIndex { let NumberHack = 3; }
+
+
   // In the register alias definitions below, we define which registers alias
   // which others.  We only specify which registers the small registers alias,
   // because the register file generator is smart enough to figure out that
@@ -223,15 +234,6 @@ let Namespace = "X86" in {
 // Subregister Set Definitions... now that we have all of the pieces, define the
 // sub registers for each register.
 //
-
-def x86_subreg_8bit    : PatLeaf<(i32 1)>;
-def x86_subreg_8bit_hi : PatLeaf<(i32 2)>;
-def x86_subreg_16bit   : PatLeaf<(i32 3)>;
-def x86_subreg_32bit   : PatLeaf<(i32 4)>;
-
-def x86_subreg_ss   : PatLeaf<(i32 1)>;
-def x86_subreg_sd   : PatLeaf<(i32 2)>;
-def x86_subreg_xmm  : PatLeaf<(i32 3)>;
 
 def : SubRegSet<1, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
                     R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],

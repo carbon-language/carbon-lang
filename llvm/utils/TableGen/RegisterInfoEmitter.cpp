@@ -35,14 +35,31 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
 
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
-  OS << "  enum {\n    NoRegister,\n";
+  OS << "enum {\n  NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "    " << Registers[i].getName() << ", \t// " << i+1 << "\n";
-  OS << "    NUM_TARGET_REGS \t// " << Registers.size()+1 << "\n";
-  OS << "  };\n";
+    OS << "  " << Registers[i].getName() << ", \t// " << i+1 << "\n";
+  OS << "  NUM_TARGET_REGS \t// " << Registers.size()+1 << "\n";
+  OS << "};\n";
   if (!Namespace.empty())
     OS << "}\n";
+
+  const std::vector<Record*> SubRegIndices =
+    Records.getAllDerivedDefinitions("SubRegIndex");
+  if (!SubRegIndices.empty()) {
+    OS << "\n// Subregister indices\n";
+    Namespace = SubRegIndices[0]->getValueAsString("Namespace");
+    if (!Namespace.empty())
+      OS << "namespace " << Namespace << " {\n";
+    OS << "enum {\n  NoSubRegister,\n";
+    for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
+      OS << "  " << SubRegIndices[i]->getName() << " = "
+         << SubRegIndices[i]->getValueAsInt("NumberHack") << ",\n";
+    OS << "  NUM_TARGET_SUBREGS = " << SubRegIndices.size()+1 << "\n";
+    OS << "};\n";
+    if (!Namespace.empty())
+      OS << "}\n";
+  }
   OS << "} // End llvm namespace \n";
 }
 

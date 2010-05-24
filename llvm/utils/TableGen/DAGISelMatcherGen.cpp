@@ -224,6 +224,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   if (// Handle register references.  Nothing to do here, they always match.
       LeafRec->isSubClassOf("RegisterClass") || 
       LeafRec->isSubClassOf("PointerLikeRegClass") ||
+      LeafRec->isSubClassOf("SubRegIndex") ||
       // Place holder for SRCVALUE nodes. Nothing to do here.
       LeafRec->getName() == "srcvalue")
     return;
@@ -593,6 +594,14 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
     // in COPY_TO_SUBREG instructions.
     if (DI->getDef()->isSubClassOf("RegisterClass")) {
       std::string Value = getQualifiedName(DI->getDef()) + "RegClassID";
+      AddMatcher(new EmitStringIntegerMatcher(Value, MVT::i32));
+      ResultOps.push_back(NextRecordedOperandNo++);
+      return;
+    }
+
+    // Handle a subregister index. This is used for INSERT_SUBREG etc.
+    if (DI->getDef()->isSubClassOf("SubRegIndex")) {
+      std::string Value = getQualifiedName(DI->getDef());
       AddMatcher(new EmitStringIntegerMatcher(Value, MVT::i32));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;

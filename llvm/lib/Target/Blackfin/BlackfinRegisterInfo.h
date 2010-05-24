@@ -24,13 +24,6 @@ namespace llvm {
   class TargetInstrInfo;
   class Type;
 
-  // Subregister indices, keep in sync with BlackfinRegisterInfo.td
-  enum BfinSubregIdx {
-    bfin_subreg_lo16 = 1,
-    bfin_subreg_hi16 = 2,
-    bfin_subreg_lo32 = 3
-  };
-
   struct BlackfinRegisterInfo : public BlackfinGenRegisterInfo {
     BlackfinSubtarget &Subtarget;
     const TargetInstrInfo &TII;

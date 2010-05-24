@@ -177,11 +177,11 @@ void BlackfinRegisterInfo::loadConstant(MachineBasicBlock &MBB,
 
   // We must split into halves
   BuildMI(MBB, I, DL,
-          TII.get(BF::LOAD16i), getSubReg(Reg, bfin_subreg_hi16))
+          TII.get(BF::LOAD16i), getSubReg(Reg, BF::hi16))
     .addImm((value >> 16) & 0xffff)
     .addReg(Reg, RegState::ImplicitDefine);
   BuildMI(MBB, I, DL,
-          TII.get(BF::LOAD16i), getSubReg(Reg, bfin_subreg_lo16))
+          TII.get(BF::LOAD16i), getSubReg(Reg, BF::lo16))
     .addImm(value & 0xffff)
     .addReg(Reg, RegState::ImplicitKill)
     .addReg(Reg, RegState::ImplicitDefine);

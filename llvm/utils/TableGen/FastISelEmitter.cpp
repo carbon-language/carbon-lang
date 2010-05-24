@@ -31,7 +31,7 @@ namespace {
 struct InstructionMemo {
   std::string Name;
   const CodeGenRegisterClass *RC;
-  unsigned char SubRegNo;
+  std::string SubRegNo;
   std::vector<std::string>* PhysRegs;
 };
 
@@ -278,7 +278,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     // For now, ignore instructions where the first operand is not an
     // output register.
     const CodeGenRegisterClass *DstRC = 0;
-    unsigned SubRegNo = ~0;
+    std::string SubRegNo;
     if (Op->getName() != "EXTRACT_SUBREG") {
       Record *Op0Rec = II.OperandList[0].Rec;
       if (!Op0Rec->isSubClassOf("RegisterClass"))
@@ -287,8 +287,11 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       if (!DstRC)
         continue;
     } else {
-      SubRegNo = static_cast<IntInit*>(
-                 Dst->getChild(1)->getLeafValue())->getValue();
+      DefInit *SR = dynamic_cast<DefInit*>(Dst->getChild(1)->getLeafValue());
+      if (SR)
+        SubRegNo = getQualifiedName(SR->getDef());
+      else
+        SubRegNo = Dst->getChild(1)->getLeafValue()->getAsString();
     }
 
     // Inspect the pattern.
@@ -437,7 +440,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               }
               
               OS << "  return FastEmitInst_";
-              if (Memo.SubRegNo == (unsigned char)~0) {
+              if (Memo.SubRegNo.empty()) {
                 Operands.PrintManglingSuffix(OS, *Memo.PhysRegs);
                 OS << "(" << InstNS << Memo.Name << ", ";
                 OS << InstNS << Memo.RC->getName() << "RegisterClass";
@@ -448,7 +451,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               } else {
                 OS << "extractsubreg(" << getName(RetVT);
                 OS << ", Op0, Op0IsKill, ";
-                OS << (unsigned)Memo.SubRegNo;
+                OS << Memo.SubRegNo;
                 OS << ");\n";
               }
               
@@ -532,7 +535,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
             
             OS << "  return FastEmitInst_";
             
-            if (Memo.SubRegNo == (unsigned char)~0) {
+            if (Memo.SubRegNo.empty()) {
               Operands.PrintManglingSuffix(OS, *Memo.PhysRegs);
               OS << "(" << InstNS << Memo.Name << ", ";
               OS << InstNS << Memo.RC->getName() << "RegisterClass";
@@ -542,7 +545,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               OS << ");\n";
             } else {
               OS << "extractsubreg(RetVT, Op0, Op0IsKill, ";
-              OS << (unsigned)Memo.SubRegNo;
+              OS << Memo.SubRegNo;
               OS << ");\n";
             }
             
