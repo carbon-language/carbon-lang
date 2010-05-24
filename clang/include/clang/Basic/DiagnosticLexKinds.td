@@ -11,7 +11,7 @@
 // Lexer Diagnostics
 //===----------------------------------------------------------------------===//
 
-let Component = "Lex" in {
+let Component = "Lex", CategoryName = "Lexical or Preprocessor Issue" in {
 
 def null_in_string : Warning<"null character(s) preserved in string literal">;
 def null_in_char : Warning<"null character(s) preserved in character literal">;
