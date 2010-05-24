@@ -145,11 +145,13 @@ def F15L : FPRL<15, "f15", [F15S]>, DwarfRegNum<[31]>;
 // Status register
 def PSW : SystemZReg<"psw">;
 
-def subreg_32bit  : PatLeaf<(i32 1)>;
-def subreg_even32 : PatLeaf<(i32 1)>;
-def subreg_odd32  : PatLeaf<(i32 2)>;
-def subreg_even   : PatLeaf<(i32 3)>;
-def subreg_odd    : PatLeaf<(i32 4)>;
+let Namespace = "SystemZ" in {
+def subreg_32bit  : SubRegIndex { let NumberHack = 1; }
+def subreg_even32 : SubRegIndex { let NumberHack = 1; }
+def subreg_odd32  : SubRegIndex { let NumberHack = 2; }
+def subreg_even   : SubRegIndex { let NumberHack = 3; }
+def subreg_odd    : SubRegIndex { let NumberHack = 4; }
+}
 
 def : SubRegSet<1, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
                     R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],

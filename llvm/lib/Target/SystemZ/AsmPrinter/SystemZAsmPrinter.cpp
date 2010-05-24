@@ -124,9 +124,9 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", 6) == 0) {
       if (strncmp(Modifier + 7, "even", 4) == 0)
-        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::SUBREG_EVEN);
+        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::subreg_even32);
       else if (strncmp(Modifier + 7, "odd", 3) == 0)
-        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::SUBREG_ODD);
+        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::subreg_odd32);
       else
         assert(0 && "Invalid subreg modifier");
     }

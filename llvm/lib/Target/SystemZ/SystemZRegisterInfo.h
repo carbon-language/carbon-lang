@@ -1,4 +1,4 @@
-//===- SystemZRegisterInfo.h - SystemZ Register Information Impl ----*- C++ -*-===//
+//===-- SystemZRegisterInfo.h - SystemZ Register Information ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,15 +18,6 @@
 #include "SystemZGenRegisterInfo.h.inc"
 
 namespace llvm {
-
-namespace SystemZ {
-  /// SubregIndex - The index of various sized subregister classes. Note that
-  /// these indices must be kept in sync with the class indices in the
-  /// SystemZRegisterInfo.td file.
-  enum SubregIndex {
-    SUBREG_32BIT = 1, SUBREG_EVEN = 1, SUBREG_ODD = 2
-  };
-}
 
 class SystemZSubtarget;
 class SystemZInstrInfo;
