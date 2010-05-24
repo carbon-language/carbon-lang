@@ -228,7 +228,7 @@ class PseudoInst<dag oops, dag iops, InstrItinClass itin,
             "", itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
 }
 
@@ -240,7 +240,7 @@ class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
-  let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }
@@ -252,7 +252,7 @@ class InoP<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = !strconcat(opc, asm);
+  let AsmString = !strconcat(opc, asm);
   let Pattern = pattern;
   let isPredicable = 0;
   list<Predicate> Predicates = [IsARM];
@@ -268,7 +268,7 @@ class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
-  let AsmString   = !strconcat(opc, !strconcat("${p}${s}", asm));
+  let AsmString = !strconcat(opc, !strconcat("${p}${s}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }
@@ -280,7 +280,7 @@ class XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }
@@ -959,7 +959,7 @@ class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb];
 }
@@ -995,7 +995,7 @@ class Thumb1I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb1Only];
 }
@@ -1140,7 +1140,7 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
-  let AsmString   = !strconcat(opc, !strconcat("${s}${p}", asm));
+  let AsmString = !strconcat(opc, !strconcat("${s}${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
 }
@@ -1152,7 +1152,7 @@ class Thumb2XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
 }
@@ -1163,7 +1163,7 @@ class ThumbXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb1Only];
 }
@@ -1280,7 +1280,7 @@ class VFPI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, VFPDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
-  let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasVFP2];
 }
@@ -1292,7 +1292,7 @@ class VFPXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   : InstARM<am, sz, im, f, VFPDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString   = asm;
+  let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [HasVFP2];
 }
