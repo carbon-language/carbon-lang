@@ -100,3 +100,17 @@ namespace rdar8020206 {
 
   template void f<int>(int); // expected-note{{instantiation of}}
 }
+
+namespace rdar8021385 {
+  typedef int my_int;
+  struct A { typedef int my_int; };
+  template<typename T>
+  struct B {
+    typedef typename T::my_int my_int;
+    void f0() {
+      int M = 4;
+      my_int a[M]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
+    }
+  };
+  B<A> a;
+}

@@ -711,7 +711,8 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   if (!getLangOptions().C99) {
     if (T->isVariableArrayType()) {
       // Prohibit the use of non-POD types in VLAs.
-      if (!Context.getBaseElementType(T)->isPODType()) {
+      if (!T->isDependentType() && 
+          !Context.getBaseElementType(T)->isPODType()) {
         Diag(Loc, diag::err_vla_non_pod)
           << Context.getBaseElementType(T);
         return QualType();
