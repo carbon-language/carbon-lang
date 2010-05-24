@@ -2195,6 +2195,9 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
     if (!DV.Verify()) return;
     if (DV.getTag() != dwarf::DW_TAG_arg_variable)
       LocalVar = true;
+    // Ignore Undef values.
+    if (MI->getOperand(0).isReg() && !MI->getOperand(0).getReg())
+      LocalVar = false;
   }
 
   MCSymbol *Label = NULL;
