@@ -5220,6 +5220,12 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
         // FIXME: Conform to ABI ([[obj retain] autorelease]).
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
+        if (HasLocalVariableExternalStorage(*I)) {
+          QualType QT = (*I)->getType();
+          QT = Context->getPointerType(QT);
+          Exp = new (Context) UnaryOperator(Exp, UnaryOperator::AddrOf, QT,
+                                            SourceLocation());
+        }
       } else if (isTopLevelBlockPointerType((*I)->getType())) {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
