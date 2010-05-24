@@ -315,8 +315,29 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
         // Eat the colon.
         ColonLoc = ConsumeToken();
       } else {
+        // Otherwise, we're missing a ':'.  Assume that this was a typo that the
+        // user forgot.  If we're not in a macro instantion, we can suggest a
+        // fixit hint.  If there were two spaces before the current token,
+        // suggest inserting the colon in between them, otherwise insert ": ".
+        SourceLocation FILoc = Tok.getLocation();
+        const char *FIText = ": ";
+        if (FILoc.isFileID()) {
+          const SourceManager &SM = PP.getSourceManager();
+          bool IsInvalid = false;
+          const char *SourcePtr =
+            SM.getCharacterData(FILoc.getFileLocWithOffset(-1), &IsInvalid);
+          if (!IsInvalid && *SourcePtr == ' ') {
+            SourcePtr =
+              SM.getCharacterData(FILoc.getFileLocWithOffset(-2), &IsInvalid);
+            if (!IsInvalid && *SourcePtr == ' ') {
+              FILoc = FILoc.getFileLocWithOffset(-1);
+              FIText = ":";
+            }
+          }
+        }
+        
         Diag(Tok, diag::err_expected_colon)
-          << FixItHint::CreateInsertion(Tok.getLocation(), ": ");
+          << FixItHint::CreateInsertion(FILoc, FIText);
         Diag(OpToken, diag::note_matching) << "?";
         ColonLoc = Tok.getLocation();
       }
