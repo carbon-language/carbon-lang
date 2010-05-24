@@ -71,3 +71,35 @@
 // CHECK: crc32q 	4(%rbx), %rax
 // CHECK:  encoding: [0xf2,0x48,0x0f,0x38,0xf1,0x43,0x04]
         crc32q	4(%rbx), %rax
+
+// CHECK: movd %r8, %mm1
+// CHECK:  encoding: [0x49,0x0f,0x6e,0xc8]
+movd %r8, %mm1
+
+// CHECK: movd %r8d, %mm1
+// CHECK:  encoding: [0x41,0x0f,0x6e,0xc8]
+movd %r8d, %mm1
+
+// CHECK: movd %rdx, %mm1
+// CHECK:  encoding: [0x48,0x0f,0x6e,0xca]
+movd %rdx, %mm1
+
+// CHECK: movd %edx, %mm1
+// CHECK:  encoding: [0x0f,0x6e,0xca]
+movd %edx, %mm1
+
+// CHECK: movd %mm1, %r8
+// CHECK:  encoding: [0x49,0x0f,0x7e,0xc8]
+movd %mm1, %r8
+
+// CHECK: movd %mm1, %r8d
+// CHECK:  encoding: [0x41,0x0f,0x7e,0xc8]
+movd %mm1, %r8d
+
+// CHECK: movd %mm1, %rdx
+// CHECK:  encoding: [0x48,0x0f,0x7e,0xca]
+movd %mm1, %rdx
+
+// CHECK: movd %mm1, %edx
+// CHECK:  encoding: [0x0f,0x7e,0xca]
+movd %mm1, %edx
