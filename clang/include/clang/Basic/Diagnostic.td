@@ -42,7 +42,10 @@ class InGroup<DiagGroup G> { DiagGroup Group = G; }
 //class IsGroup<string Name> { DiagGroup Group = DiagGroup<Name>; }
 
 
-// This defines the diagnostic groups that have references to them.
+// This defines all of the named diagnostic categories.
+include "DiagnosticCategories.td"
+
+// This defines all of the named diagnostic groups.
 include "DiagnosticGroups.td"
 
 

@@ -13,9 +13,12 @@
 
 let Component = "Parse" in {
 
-def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">;
+def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">,
+                              CatInlineAsm;
 def warn_file_asm_volatile : Warning<
-  "meaningless 'volatile' on asm outside function">;
+  "meaningless 'volatile' on asm outside function">, CatInlineAsm;
+
+let CategoryName = "Parse Issue" in {
 
 def ext_empty_source_file : Extension<"ISO C forbids an empty source file">;
 def ext_top_level_semi : Extension<
@@ -131,7 +134,7 @@ def err_label_end_of_compound_statement : Error<
   "label at end of compound statement: expected statement">;
 def err_expected_string_literal : Error<"expected string literal">;
 def err_expected_asm_operand : Error<
-  "expected string literal or '[' for asm operand">;
+  "expected string literal or '[' for asm operand">, CatInlineAsm;
 def err_expected_selector_for_method : Error<
   "expected selector for Objective-C method">;
 def err_expected_property_name : Error<"expected property name">;
@@ -373,4 +376,5 @@ def warn_pragma_unused_expected_var : Warning<
 def warn_pragma_unused_expected_punc : Warning<
   "expected ')' or ',' in '#pragma unused'">;
 
+} // end of Parse Issue category.
 } // end of Parser diagnostics

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 let Component = "Sema" in {
+let CategoryName = "Semantic Issue" in {
 
 // Constant expressions
 def err_expr_not_ice : Error<
@@ -2580,31 +2581,35 @@ def warn_unused_call : Warning<
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;
 def err_expected_ident_or_lparen : Error<"expected identifier or '('">;
-  
+
+} // End of general sema category.
+
 // inline asm.
-def err_asm_wide_character : Error<"wide string is invalid in 'asm'">;
-def err_asm_invalid_lvalue_in_output : Error<"invalid lvalue in asm output">;
-def err_asm_invalid_output_constraint : Error<
-  "invalid output constraint '%0' in asm">;
-def err_asm_invalid_lvalue_in_input : Error<
-  "invalid lvalue in asm input for constraint '%0'">;
-def err_asm_invalid_input_constraint : Error<
-  "invalid input constraint '%0' in asm">;
-def err_asm_invalid_type_in_input : Error<
-  "invalid type %0 in asm input for constraint '%1'">;
-def err_asm_tying_incompatible_types : Error<
-  "unsupported inline asm: input with type %0 matching output with type %1">;
-def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
-def err_invalid_asm_cast_lvalue : Error<
-  "invalid use of a cast in a inline asm context requiring an l-value: "
-  "remove the cast or build with -fheinous-gnu-extensions">;
+let CategoryName = "Inline Assembly Issue" in {
+  def err_asm_wide_character : Error<"wide string is invalid in 'asm'">;
+  def err_asm_invalid_lvalue_in_output : Error<"invalid lvalue in asm output">;
+  def err_asm_invalid_output_constraint : Error<
+    "invalid output constraint '%0' in asm">;
+  def err_asm_invalid_lvalue_in_input : Error<
+    "invalid lvalue in asm input for constraint '%0'">;
+  def err_asm_invalid_input_constraint : Error<
+    "invalid input constraint '%0' in asm">;
+  def err_asm_invalid_type_in_input : Error<
+    "invalid type %0 in asm input for constraint '%1'">;
+  def err_asm_tying_incompatible_types : Error<
+    "unsupported inline asm: input with type %0 matching output with type %1">;
+  def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
+  def err_invalid_asm_cast_lvalue : Error<
+    "invalid use of a cast in a inline asm context requiring an l-value: "
+    "remove the cast or build with -fheinous-gnu-extensions">;
 
-def warn_invalid_asm_cast_lvalue : Warning<
-  "invalid use of a cast in a inline asm context requiring an l-value: "
-  "accepted due to -fheinous-gnu-extensions, but clang may remove support "
-  "for this in the future">;
+  def warn_invalid_asm_cast_lvalue : Warning<
+    "invalid use of a cast in a inline asm context requiring an l-value: "
+    "accepted due to -fheinous-gnu-extensions, but clang may remove support "
+    "for this in the future">;
+}
 
-
+let CategoryName = "Semantic Issue" in {
 
 def err_invalid_conversion_between_vectors : Error<
   "invalid conversion between vector type %0 and %1 of different size">;
@@ -3082,6 +3087,6 @@ def err_undeclared_protocol_suggest : Error<
 def note_base_class_specified_here : Note<
   "base class %0 specified here">;
 
-}
-
+} // end of sema category
+} // end of sema component.
 
