@@ -293,6 +293,10 @@ public:
   /// corresponding live-in physical register.
   unsigned getLiveInPhysReg(unsigned VReg) const;
 
+  /// getLiveInVirtReg - If PReg is a live-in physical register, return the
+  /// corresponding live-in physical register.
+  unsigned getLiveInVirtReg(unsigned PReg) const;
+
   /// EmitLiveInCopies - Emit copies to initialize livein virtual registers
   /// into the given entry block.
   void EmitLiveInCopies(MachineBasicBlock *EntryMBB,

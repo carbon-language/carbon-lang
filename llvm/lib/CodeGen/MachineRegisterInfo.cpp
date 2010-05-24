@@ -165,6 +165,15 @@ unsigned MachineRegisterInfo::getLiveInPhysReg(unsigned VReg) const {
   return 0;
 }
 
+/// getLiveInVirtReg - If PReg is a live-in physical register, return the
+/// corresponding live-in physical register.
+unsigned MachineRegisterInfo::getLiveInVirtReg(unsigned PReg) const {
+  for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
+    if (I->first == PReg)
+      return I->second;
+  return 0;
+}
+
 static cl::opt<bool>
 SchedLiveInCopies("schedule-livein-copies", cl::Hidden,
                   cl::desc("Schedule copies of livein registers"),

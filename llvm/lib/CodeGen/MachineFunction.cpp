@@ -398,8 +398,14 @@ void MachineFunction::viewCFGOnly() const
 unsigned MachineFunction::addLiveIn(unsigned PReg,
                                     const TargetRegisterClass *RC) {
   assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = getRegInfo().createVirtualRegister(RC);
-  getRegInfo().addLiveIn(PReg, VReg);
+  MachineRegisterInfo &MRI = getRegInfo();
+  unsigned VReg = MRI.getLiveInVirtReg(PReg);
+  if (VReg) {
+    assert(MRI.getRegClass(VReg) == RC && "Register class mismatch!");
+    return VReg;
+  }
+  VReg = MRI.createVirtualRegister(RC);
+  MRI.addLiveIn(PReg, VReg);
   return VReg;
 }
 
