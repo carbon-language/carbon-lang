@@ -1398,7 +1398,13 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         << Type << Ex->getSourceRange());
 
     QualType Pointee = Type->getAs<PointerType>()->getPointeeType();
-    if (Pointee->isFunctionType() || Pointee->isVoidType())
+    if (Pointee->isVoidType() && !isSFINAEContext()) {
+      // The C++ standard bans deleting a pointer to a non-object type, which 
+      // effectively bans deletion of "void*". However, most compilers support
+      // this, so we treat it as a warning unless we're in a SFINAE context.
+      Diag(StartLoc, diag::ext_delete_void_ptr_operand)
+        << Type << Ex->getSourceRange();
+    } else if (Pointee->isFunctionType() || Pointee->isVoidType())
       return ExprError(Diag(StartLoc, diag::err_delete_operand)
         << Type << Ex->getSourceRange());
     else if (!Pointee->isDependentType() &&
