@@ -21,6 +21,7 @@ include "llvm/Intrinsics.td"
 
 class RegisterClass; // Forward def
 
+// SubRegIndex - Use instances on SubRegIndex to identify subregisters.
 class SubRegIndex {
   string Namespace = "";
 
@@ -80,8 +81,8 @@ class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
 // indices, for use as named subregs of a particular physical register.  Each
 // register in 'subregs' becomes an addressable subregister at index 'n' of the
 // corresponding register in 'regs'.
-class SubRegSet<int n, list<Register> regs, list<Register> subregs> {
-  int index = n;
+class SubRegSet<SubRegIndex n, list<Register> regs, list<Register> subregs> {
+  SubRegIndex Index = n;
   
   list<Register> From = regs;
   list<Register> To = subregs;

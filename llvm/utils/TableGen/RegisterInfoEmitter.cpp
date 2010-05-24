@@ -456,7 +456,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   std::map<Record*, std::set<Record*>, LessRecord> RegisterSubRegs;
   std::map<Record*, std::set<Record*>, LessRecord> RegisterSuperRegs;
   std::map<Record*, std::set<Record*>, LessRecord> RegisterAliases;
-  std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
+  // Register -> [(SubRegIndex, Register)]
+  std::map<Record*, std::vector<std::pair<Record*, Record*> > > SubRegVectors;
   typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
   
@@ -818,7 +819,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Calculate the mapping of subregister+index pairs to physical registers.
   std::vector<Record*> SubRegs = Records.getAllDerivedDefinitions("SubRegSet");
   for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
-    int subRegIndex = SubRegs[i]->getValueAsInt("index");
+    Record *subRegIndex = SubRegs[i]->getValueAsDef("Index");
     std::vector<Record*> From = SubRegs[i]->getValueAsListOfDefs("From");
     std::vector<Record*> To   = SubRegs[i]->getValueAsListOfDefs("To");
     
@@ -839,13 +840,14 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "::getSubReg(unsigned RegNo, unsigned Index) const {\n"
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
-  for (std::map<Record*, std::vector<std::pair<int, Record*> > >::iterator 
+  for (std::map<Record*, std::vector<std::pair<Record*, Record*> > >::iterator
         I = SubRegVectors.begin(), E = SubRegVectors.end(); I != E; ++I) {
     OS << "  case " << getQualifiedName(I->first) << ":\n";
     OS << "    switch (Index) {\n";
     OS << "    default: return 0;\n";
     for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-      OS << "    case " << (I->second)[i].first << ": return "
+      OS << "    case "
+         << getQualifiedName((I->second)[i].first) << ": return "
          << getQualifiedName((I->second)[i].second) << ";\n";
     OS << "    };\n" << "    break;\n";
   }
@@ -857,13 +859,14 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n"
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
-  for (std::map<Record*, std::vector<std::pair<int, Record*> > >::iterator 
+  for (std::map<Record*, std::vector<std::pair<Record*, Record*> > >::iterator
         I = SubRegVectors.begin(), E = SubRegVectors.end(); I != E; ++I) {
     OS << "  case " << getQualifiedName(I->first) << ":\n";
     for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       OS << "    if (SubRegNo == "
          << getQualifiedName((I->second)[i].second)
-         << ")  return " << (I->second)[i].first << ";\n";
+         << ")  return "
+         << getQualifiedName((I->second)[i].first) << ";\n";
     OS << "    return 0;\n";
   }
   OS << "  };\n";

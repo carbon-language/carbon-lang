@@ -153,28 +153,28 @@ def subreg_even   : SubRegIndex { let NumberHack = 3; }
 def subreg_odd    : SubRegIndex { let NumberHack = 4; }
 }
 
-def : SubRegSet<1, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
-                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                   [R0W, R1W,  R2W,  R3W,  R4W,  R5W,  R6W,  R7W,
-                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+def : SubRegSet<subreg_32bit, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
+                               R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
+                              [R0W, R1W,  R2W,  R3W,  R4W,  R5W,  R6W,  R7W,
+                               R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
 
-def : SubRegSet<3, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                   [R0D, R2D, R4D, R6D, R8D, R10D, R12D, R14D]>;
+def : SubRegSet<subreg_even, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                             [R0D, R2D, R4D, R6D, R8D, R10D, R12D, R14D]>;
 
-def : SubRegSet<4, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                   [R1D, R3D, R5D, R7D, R9D, R11D, R13D, R15D]>;
+def : SubRegSet<subreg_odd, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                            [R1D, R3D, R5D, R7D, R9D, R11D, R13D, R15D]>;
 
-def : SubRegSet<1, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
-                   [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
+def : SubRegSet<subreg_even32, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
+                               [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
 
-def : SubRegSet<2, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
-                   [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
+def : SubRegSet<subreg_odd32, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
+                              [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
 
-def : SubRegSet<1, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                   [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
+def : SubRegSet<subreg_even32, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                               [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
 
-def : SubRegSet<2, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                   [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
+def : SubRegSet<subreg_odd32, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                              [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
 
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,

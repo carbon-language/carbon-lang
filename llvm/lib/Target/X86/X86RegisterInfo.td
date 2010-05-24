@@ -235,69 +235,69 @@ let Namespace = "X86" in {
 // sub registers for each register.
 //
 
-def : SubRegSet<1, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
-                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
-                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+def : SubRegSet<sub_8bit, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
+                           R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
+                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
 
-def : SubRegSet<2, [AX, CX, DX, BX],
-                   [AH, CH, DH, BH]>;
+def : SubRegSet<sub_8bit_hi, [AX, CX, DX, BX],
+                             [AH, CH, DH, BH]>;
 
-def : SubRegSet<1, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,  
-                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+def : SubRegSet<sub_8bit, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,  
+                           R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
+                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
 
-def : SubRegSet<2, [EAX, ECX, EDX, EBX],
-                   [AH, CH, DH, BH]>;
+def : SubRegSet<sub_8bit_hi, [EAX, ECX, EDX, EBX],
+                             [AH, CH, DH, BH]>;
 
-def : SubRegSet<3, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,
-                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                   [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
-                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+def : SubRegSet<sub_16bit, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,
+                            R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
+                           [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
+                            R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
 
-def : SubRegSet<1, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
-                    R8,  R9,  R10, R11, R12, R13, R14, R15],
-                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+def : SubRegSet<sub_8bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
+                           R8,  R9,  R10, R11, R12, R13, R14, R15],
+                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
 
-def : SubRegSet<2, [RAX, RCX, RDX, RBX],
-                   [AH, CH, DH, BH]>;
+def : SubRegSet<sub_8bit_hi, [RAX, RCX, RDX, RBX],
+                             [AH, CH, DH, BH]>;
 
-def : SubRegSet<3, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
-                    R8,  R9,  R10, R11, R12, R13, R14, R15],
-                   [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
-                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+def : SubRegSet<sub_16bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
+                            R8,  R9,  R10, R11, R12, R13, R14, R15],
+                           [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
+                            R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
 
-def : SubRegSet<4, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
-                    R8,  R9,  R10, R11, R12, R13, R14, R15],
-                   [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
-                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
+def : SubRegSet<sub_32bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
+                            R8,  R9,  R10, R11, R12, R13, R14, R15],
+                           [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
+                            R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
 
-def : SubRegSet<1, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
-                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+def : SubRegSet<sub_ss, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+                         YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
-def : SubRegSet<2, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
-                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+def : SubRegSet<sub_sd, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+                         YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
-def : SubRegSet<3, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
-                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, 
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+def : SubRegSet<sub_xmm, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
+                          YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, 
+                          XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
-def : SubRegSet<1, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
-                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+def : SubRegSet<sub_ss, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
+                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
-def : SubRegSet<2, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
-                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+def : SubRegSet<sub_sd, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
+                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the

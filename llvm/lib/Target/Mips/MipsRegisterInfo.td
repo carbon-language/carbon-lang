@@ -149,15 +149,15 @@ def sub_fpeven : SubRegIndex { let NumberHack = 1; }
 def sub_fpodd  : SubRegIndex { let NumberHack = 2; }
 }
 
-def : SubRegSet<1, [D0, D1, D2, D3, D4, D5, D6, D7, 
-                    D8, D9, D10, D11, D12, D13, D14, D15],
-                   [F0, F2, F4, F6, F8, F10, F12, F14,
-                    F16, F18, F20, F22, F24, F26, F28, F30]>;
+def : SubRegSet<sub_fpeven, [D0, D1, D2, D3, D4, D5, D6, D7,
+                             D8, D9, D10, D11, D12, D13, D14, D15],
+                            [F0, F2, F4, F6, F8, F10, F12, F14,
+                             F16, F18, F20, F22, F24, F26, F28, F30]>;
 
-def : SubRegSet<2, [D0, D1, D2, D3, D4, D5, D6, D7, 
-                    D8, D9, D10, D11, D12, D13, D14, D15],
-                   [F1, F3, F5, F7, F9, F11, F13, F15,
-                    F17, F19, F21, F23, F25, F27, F29, F31]>;
+def : SubRegSet<sub_fpodd, [D0, D1, D2, D3, D4, D5, D6, D7,
+                            D8, D9, D10, D11, D12, D13, D14, D15],
+                           [F1, F3, F5, F7, F9, F11, F13, F15,
+                            F17, F19, F21, F23, F25, F27, F29, F31]>;
 
 //===----------------------------------------------------------------------===//
 // Register Classes

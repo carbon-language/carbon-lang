@@ -191,7 +191,7 @@ def LC1 : Ri<6, 3, "lc1">, DwarfRegNum<[47]>;
 def LB0 : Ri<6, 2, "lb0">, DwarfRegNum<[48]>;
 def LB1 : Ri<6, 5, "lb1">, DwarfRegNum<[49]>;
 
-def : SubRegSet<1,
+def : SubRegSet<lo16,
     [R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,
      P0,  P1,  P2,  P3,  P4,  P5,  SP,  FP,
      I0,  I1,  I2,  I3,  M0,  M1,  M2,  M3,
@@ -201,7 +201,7 @@ def : SubRegSet<1,
      I0L, I1L, I2L, I3L, M0L, M1L, M2L, M3L,
      B0L, B1L, B2L, B3L, L0L, L1L, L2L, L3L]>;
 
-def : SubRegSet<2,
+def : SubRegSet<hi16,
     [R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,
      P0,  P1,  P2,  P3,  P4,  P5,  SP,  FP,
      I0,  I1,  I2,  I3,  M0,  M1,  M2,  M3,
@@ -211,8 +211,8 @@ def : SubRegSet<2,
      I0H, I1H, I2H, I3H, M0H, M1H, M2H, M3H,
      B0H, B1H, B2H, B3H, L0H, L1H, L2H, L3H]>;
 
-def : SubRegSet<1, [A0, A0W, A1, A1W], [A0L, A0L, A1L, A1L]>;
-def : SubRegSet<2, [A0, A0W, A1, A1W], [A0H, A0H, A1H, A1H]>;
+def : SubRegSet<lo16, [A0, A0W, A1, A1W], [A0L, A0L, A1L, A1L]>;
+def : SubRegSet<hi16, [A0, A0W, A1, A1W], [A0H, A0H, A1H, A1H]>;
 
 // Register classes.
 def D16 : RegisterClass<"BF", [i16], 16,

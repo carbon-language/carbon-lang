@@ -241,14 +241,18 @@ def sub_eq : SubRegIndex { let NumberHack = 3; }
 def sub_un : SubRegIndex { let NumberHack = 4; }
 }
 
-def : SubRegSet<1, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                   [CR0LT, CR1LT, CR2LT, CR3LT, CR4LT, CR5LT, CR6LT, CR7LT]>;
-def : SubRegSet<2, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                   [CR0GT, CR1GT, CR2GT, CR3GT, CR4GT, CR5GT, CR6GT, CR7GT]>;
-def : SubRegSet<3, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                   [CR0EQ, CR1EQ, CR2EQ, CR3EQ, CR4EQ, CR5EQ, CR6EQ, CR7EQ]>;
-def : SubRegSet<4, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                   [CR0UN, CR1UN, CR2UN, CR3UN, CR4UN, CR5UN, CR6UN, CR7UN]>;
+def : SubRegSet<sub_lt,
+                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                [CR0LT, CR1LT, CR2LT, CR3LT, CR4LT, CR5LT, CR6LT, CR7LT]>;
+def : SubRegSet<sub_gt,
+                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                [CR0GT, CR1GT, CR2GT, CR3GT, CR4GT, CR5GT, CR6GT, CR7GT]>;
+def : SubRegSet<sub_eq,
+                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                [CR0EQ, CR1EQ, CR2EQ, CR3EQ, CR4EQ, CR5EQ, CR6EQ, CR7EQ]>;
+def : SubRegSet<sub_un,
+                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                [CR0UN, CR1UN, CR2UN, CR3UN, CR4UN, CR5UN, CR6UN, CR7UN]>;
 
 // Link register
 def LR  : SPR<8, "lr">, DwarfRegNum<[65]>;
