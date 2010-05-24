@@ -185,8 +185,8 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // register
-   def r : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
-               opc, ".w\t$dst, $src",
+   def r : T2sI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
+                opc, ".w\t$dst, $src",
                 [(set GPR:$dst, (opnode GPR:$src))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
@@ -198,9 +198,9 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def s : T2I<(outs GPR:$dst), (ins t2_so_reg:$src), IIC_iMOVsi,
-               opc, ".w\t$dst, $src",
-               [(set GPR:$dst, (opnode t2_so_reg:$src))]> {
+   def s : T2sI<(outs GPR:$dst), (ins t2_so_reg:$src), IIC_iMOVsi,
+                opc, ".w\t$dst, $src",
+                [(set GPR:$dst, (opnode t2_so_reg:$src))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
