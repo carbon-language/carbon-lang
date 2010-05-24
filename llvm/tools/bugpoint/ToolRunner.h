@@ -112,14 +112,17 @@ public:
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  It returns false if the code generator fails.
-  virtual void compileProgram(const std::string &Bitcode, std::string *Error) {}
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error,
+                              unsigned Timeout = 0, unsigned MemoryLimit = 0) {}
 
   /// OutputCode - Compile the specified program from bitcode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
   /// fails, it sets Error, otherwise, this function returns the type of code
   /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile, std::string &Error) {
+                                   sys::Path &OutFile, std::string &Error,
+                                   unsigned Timeout = 0,
+                                   unsigned MemoryLimit = 0) {
     Error = "OutputCode not supported by this AbstractInterpreter!";
     return GCC::AsmFile;
   }
@@ -161,7 +164,8 @@ public:
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  Returns false if the code generator fails.
-  virtual void compileProgram(const std::string &Bitcode, std::string *Error);
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error,
+                              unsigned Timeout = 0, unsigned MemoryLimit = 0);
 
   virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
@@ -180,7 +184,9 @@ public:
   /// fails, it sets Error, otherwise, this function returns the type of code
   /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile, std::string &Error);
+                                   sys::Path &OutFile, std::string &Error,
+                                   unsigned Timeout = 0,
+                                   unsigned MemoryLimit = 0);
 };
 
 
@@ -206,7 +212,8 @@ public:
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  Returns false if the code generator fails.
-  virtual void compileProgram(const std::string &Bitcode, std::string *Error);
+  virtual void compileProgram(const std::string &Bitcode, std::string *Error,
+                              unsigned Timeout = 0, unsigned MemoryLimit = 0);
 
   virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
@@ -225,7 +232,9 @@ public:
   /// fails, it sets Error, otherwise, this function returns the type of code
   /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile, std::string &Error);
+                                   sys::Path &OutFile, std::string &Error,
+                                   unsigned Timeout = 0,
+                                   unsigned MemoryLimit = 0);
 };
 
 } // End llvm namespace

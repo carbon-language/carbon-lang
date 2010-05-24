@@ -312,7 +312,7 @@ void BugDriver::compileProgram(Module *M, std::string *Error) {
   FileRemover BitcodeFileRemover(BitcodeFile, !SaveTemps);
 
   // Actually compile the program!
-  Interpreter->compileProgram(BitcodeFile.str(), Error);
+  Interpreter->compileProgram(BitcodeFile.str(), Error, Timeout, MemoryLimit);
 }
 
 
