@@ -1154,7 +1154,7 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
     BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg)
     .addReg(leaInReg)
     .addReg(Src, getKillRegState(isKill))
-    .addImm(X86::SUBREG_16BIT);
+    .addImm(X86::sub_16bit);
 
   MachineInstrBuilder MIB = BuildMI(*MFI, MBBI, MI->getDebugLoc(),
                                     get(Opc), leaOutReg);
@@ -1198,7 +1198,7 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
         BuildMI(*MFI, MIB, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg2)
         .addReg(leaInReg2)
         .addReg(Src2, getKillRegState(isKill2))
-        .addImm(X86::SUBREG_16BIT);
+        .addImm(X86::sub_16bit);
       addRegReg(MIB, leaInReg, true, leaInReg2, true);
     }
     if (LV && isKill2 && InsMI2)
@@ -1212,7 +1212,7 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
     BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::EXTRACT_SUBREG))
     .addReg(Dest, RegState::Define | getDeadRegState(isDead))
     .addReg(leaOutReg, RegState::Kill)
-    .addImm(X86::SUBREG_16BIT);
+    .addImm(X86::sub_16bit);
 
   if (LV) {
     // Update live variables
@@ -2483,9 +2483,9 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         unsigned DstReg = NewMI->getOperand(0).getReg();
         if (TargetRegisterInfo::isPhysicalRegister(DstReg))
           NewMI->getOperand(0).setReg(RI.getSubReg(DstReg,
-                                                   X86::x86_subreg_32bit));
+                                                   X86::sub_32bit));
         else
-          NewMI->getOperand(0).setSubReg(X86::x86_subreg_32bit);
+          NewMI->getOperand(0).setSubReg(X86::sub_32bit);
       }
       return NewMI;
     }

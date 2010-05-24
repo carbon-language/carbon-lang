@@ -19,14 +19,14 @@
 let Namespace = "X86" in {
 
   // Subregister indices.
-  def x86_subreg_8bit    : SubRegIndex { let NumberHack = 1; }
-  def x86_subreg_8bit_hi : SubRegIndex { let NumberHack = 2; }
-  def x86_subreg_16bit   : SubRegIndex { let NumberHack = 3; }
-  def x86_subreg_32bit   : SubRegIndex { let NumberHack = 4; }
+  def sub_8bit    : SubRegIndex { let NumberHack = 1; }
+  def sub_8bit_hi : SubRegIndex { let NumberHack = 2; }
+  def sub_16bit   : SubRegIndex { let NumberHack = 3; }
+  def sub_32bit   : SubRegIndex { let NumberHack = 4; }
 
-  def x86_subreg_ss   : SubRegIndex { let NumberHack = 1; }
-  def x86_subreg_sd   : SubRegIndex { let NumberHack = 2; }
-  def x86_subreg_xmm  : SubRegIndex { let NumberHack = 3; }
+  def sub_ss  : SubRegIndex { let NumberHack = 1; }
+  def sub_sd  : SubRegIndex { let NumberHack = 2; }
+  def sub_xmm : SubRegIndex { let NumberHack = 3; }
 
 
   // In the register alias definitions below, we define which registers alias

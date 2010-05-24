@@ -1693,7 +1693,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                                 Result,
                                    CurDAG->getTargetConstant(8, MVT::i8)), 0);
         // Then truncate it down to i8.
-        Result = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+        Result = CurDAG->getTargetExtractSubreg(X86::sub_8bit, dl,
                                                 MVT::i8, Result);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
@@ -1834,7 +1834,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                       CurDAG->getTargetConstant(8, MVT::i8)),
                          0);
         // Then truncate it down to i8.
-        Result = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+        Result = CurDAG->getTargetExtractSubreg(X86::sub_8bit, dl,
                                                 MVT::i8, Result);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
@@ -1883,7 +1883,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         }
 
         // Extract the l-register.
-        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_8bit, dl,
                                                         MVT::i8, Reg);
 
         // Emit a testb.
@@ -1912,7 +1912,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
                                              Reg.getValueType(), Reg, RC), 0);
 
         // Extract the h-register.
-        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT_HI, dl,
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_8bit_hi, dl,
                                                         MVT::i8, Reg);
 
         // Emit a testb. No special NOREX tricks are needed since there's
@@ -1930,7 +1930,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         SDValue Reg = N0.getNode()->getOperand(0);
 
         // Extract the 16-bit subregister.
-        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_16BIT, dl,
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_16bit, dl,
                                                         MVT::i16, Reg);
 
         // Emit a testw.
@@ -1946,7 +1946,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         SDValue Reg = N0.getNode()->getOperand(0);
 
         // Extract the 32-bit subregister.
-        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_32BIT, dl,
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_32bit, dl,
                                                         MVT::i32, Reg);
 
         // Emit a testl.

@@ -1029,7 +1029,7 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
   // we're doing here.
   if (CReg != X86::CL)
     BuildMI(MBB, DL, TII.get(TargetOpcode::EXTRACT_SUBREG), X86::CL)
-      .addReg(CReg).addImm(X86::SUBREG_8BIT);
+      .addReg(CReg).addImm(X86::sub_8bit);
 
   unsigned ResultReg = createResultReg(RC);
   BuildMI(MBB, DL, TII.get(OpReg), ResultReg).addReg(Op0Reg);
@@ -1137,7 +1137,7 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   // Then issue an extract_subreg.
   unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
                                                   CopyReg, /*Kill=*/true,
-                                                  X86::SUBREG_8BIT);
+                                                  X86::sub_8bit);
   if (!ResultReg)
     return false;
 
