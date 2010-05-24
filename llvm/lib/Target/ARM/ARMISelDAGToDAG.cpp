@@ -1107,6 +1107,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
       RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
     }
 
+    assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
       SDValue D = CurDAG->getTargetExtractSubreg(ARM::dsub_0+Vec,
                                                  dl, VT, RegSeq);
@@ -1187,6 +1188,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
                                          V4, V5, V6, V7), 0);
 
       // Extract out the 3 / 4 Q registers.
+      assert(ARM::qsub_3 == ARM::qsub_0+3 && "Unexpected subreg numbering");
       for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
         SDValue Q = CurDAG->getTargetExtractSubreg(ARM::qsub_0+Vec,
                                                    dl, VT, RegSeq);
@@ -1345,6 +1347,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
                                        V[4], V[5], V[6], V[7]), 0);
 
     // Store the even D registers.
+    assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
     Ops.push_back(Reg0); // post-access address offset
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
       Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0+Vec*2, dl,
@@ -1570,6 +1573,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
                                    V[4], V[5], V[6], V[7]), 0);
     }
 
+    assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+    assert(ARM::qsub_3 == ARM::qsub_0+3 && "Unexpected subreg numbering");
     unsigned SubIdx = is64BitVector ? ARM::dsub_0 : ARM::qsub_0;
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
       ReplaceUses(SDValue(N, Vec),

@@ -446,6 +446,7 @@ def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
 // sub registers for each register.
 //
 let Namespace = "ARM" in {
+// Note: Code depends on these having consecutive numbers.
 def ssub_0 : SubRegIndex { let NumberHack = 1; }
 def ssub_1 : SubRegIndex { let NumberHack = 2; }
 def ssub_2 : SubRegIndex { let NumberHack = 3; }

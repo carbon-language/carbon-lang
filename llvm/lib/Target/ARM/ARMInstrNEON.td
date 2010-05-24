@@ -796,27 +796,32 @@ def VST4LNq32_UPD : VST4LNWB<0b1011, {?,1,?,?}, "32">;
 //===----------------------------------------------------------------------===//
 
 // Extract D sub-registers of Q registers.
-// (dsub_0 is 5; dsub_1 is 6)
 def DSubReg_i8_reg  : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 8, MVT::i32);
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/8, MVT::i32);
 }]>;
 def DSubReg_i16_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 4, MVT::i32);
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/4, MVT::i32);
 }]>;
 def DSubReg_i32_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 2, MVT::i32);
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/2, MVT::i32);
 }]>;
 def DSubReg_f64_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue(), MVT::i32);
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue(), MVT::i32);
 }]>;
 def DSubReg_f64_other_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + (1 - N->getZExtValue()), MVT::i32);
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::dsub_0 + (1 - N->getZExtValue()),
+                                   MVT::i32);
 }]>;
 
 // Extract S sub-registers of Q/D registers.
-// (ssub_0 is 1; ssub_1 is 2; etc.)
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(1 + N->getZExtValue(), MVT::i32);
+  assert(ARM::ssub_3 == ARM::ssub_0+3 && "Unexpected subreg numbering");
+  return CurDAG->getTargetConstant(ARM::ssub_0 + N->getZExtValue(), MVT::i32);
 }]>;
 
 // Translate lane numbers from Q registers to D subregs.
