@@ -84,7 +84,6 @@ def S24 : ARMFReg<24, "s24">; def S25 : ARMFReg<25, "s25">;
 def S26 : ARMFReg<26, "s26">; def S27 : ARMFReg<27, "s27">;
 def S28 : ARMFReg<28, "s28">; def S29 : ARMFReg<29, "s29">;
 def S30 : ARMFReg<30, "s30">; def S31 : ARMFReg<31, "s31">;
-def SDummy : ARMFReg<63, "sINVALID">;
 
 // Aliases of the F* registers used to hold 64-bit fp values (doubles)
 def D0  : ARMReg< 0,  "d0", [S0,   S1]>;
@@ -113,7 +112,6 @@ def D24 : ARMFReg<24, "d24">; def D25 : ARMFReg<25, "d25">;
 def D26 : ARMFReg<26, "d26">; def D27 : ARMFReg<27, "d27">;
 def D28 : ARMFReg<28, "d28">; def D29 : ARMFReg<29, "d29">;
 def D30 : ARMFReg<30, "d30">; def D31 : ARMFReg<31, "d31">;
-def DDummy : ARMFReg<31, "dINVALID">;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
@@ -132,7 +130,6 @@ def Q12 : ARMReg<12, "q12", [D24, D25]>;
 def Q13 : ARMReg<13, "q13", [D26, D27]>;
 def Q14 : ARMReg<14, "q14", [D28, D29]>;
 def Q15 : ARMReg<15, "q15", [D30, D31]>;
-def QDummy : ARMFReg<16, "qINVALID">;
 
 // Pseudo 256-bit registers to represent pairs of Q registers. These should
 // never be present in the emitted code.
@@ -320,11 +317,6 @@ def SPR_8 : RegisterClass<"ARM", [f32], 32,
                           [S0, S1,  S2,  S3,  S4,  S5,  S6,  S7,
                            S8, S9, S10, S11, S12, S13, S14, S15]>;
 
-// Dummy f32 regclass to represent impossible subreg indices.
-def SPR_INVALID : RegisterClass<"ARM", [f32], 32, [SDummy]> {
-  let CopyCost = -1;
-}
-
 // Scalar double precision floating point / generic 64-bit vector register
 // class.
 // ARM requires only word alignment for double. It's more performant if it
@@ -391,13 +383,6 @@ def DPR_8 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
   let SubRegClasses = [(SPR_8 ssub_0, ssub_1)];
 }
 
-// Dummy 64-bit regclass to represent impossible subreg indices.
-def DPR_INVALID : RegisterClass<"ARM",
-                                [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
-                                [DDummy]> {
-  let CopyCost = -1;
-}
-
 // Generic 128-bit vector register class.
 def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
                         [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
@@ -419,13 +404,6 @@ def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
                            [Q0,  Q1,  Q2,  Q3]> {
   let SubRegClasses = [(SPR_8 ssub_0, ssub_1, ssub_2, ssub_3),
                        (DPR_8 dsub_0, dsub_1)];
-}
-
-// Dummy 128-bit regclass to represent impossible subreg indices.
-def QPR_INVALID : RegisterClass<"ARM",
-                                [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
-                                [QDummy]> {
-  let CopyCost = -1;
 }
 
 // Pseudo 256-bit vector register class to model pairs of Q registers
