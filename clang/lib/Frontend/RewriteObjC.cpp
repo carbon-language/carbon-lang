@@ -971,7 +971,8 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(CatDecl->getAtEndRange().getBegin(), 0, "// ");
+  ReplaceText(CatDecl->getAtEndRange().getBegin(), 
+              strlen("@end"), "/* @end */");
 }
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
@@ -991,7 +992,7 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
-  ReplaceText(LocEnd, 0, "// ");
+  ReplaceText(LocEnd, strlen("@end"), "/* @end */");
 
   // Must comment out @optional/@required
   const char *startBuf = SM->getCharacterData(LocStart);
@@ -1220,7 +1221,8 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(ClassDecl->getAtEndRange().getBegin(), 0, "// ");
+  ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
+              "/* @end */");
 }
 
 Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
