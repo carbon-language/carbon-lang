@@ -2729,6 +2729,9 @@ unsigned ASTContext::getIntegerRank(Type *T) {
 /// \returns the type this bit-field will promote to, or NULL if no
 /// promotion occurs.
 QualType ASTContext::isPromotableBitField(Expr *E) {
+  if (E->isTypeDependent() || E->isValueDependent())
+    return QualType();
+  
   FieldDecl *Field = E->getBitField();
   if (!Field)
     return QualType();

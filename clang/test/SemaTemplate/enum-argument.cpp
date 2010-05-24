@@ -21,3 +21,16 @@ struct X0 {
 };
 
 X0<int> x0i;
+
+namespace rdar8020920 {
+  template<typename T>
+  struct X {
+    enum { e0 = 32 };
+
+    unsigned long long bitfield : e0;
+
+    void f(int j) {
+      bitfield + j;
+    }
+  };
+}
