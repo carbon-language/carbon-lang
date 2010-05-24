@@ -70,15 +70,16 @@ getCategoryFromDiagGroup(const Record *Group,
 /// lives in.
 static std::string getDiagnosticCategory(const Record *R,
                                          DiagGroupParentMap &DiagGroupParents) {
+  // If the diagnostic is in a group, and that group has a category, use it.
+  if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
+    // Check the diagnostic's diag group for a category.
+    std::string CatName = getCategoryFromDiagGroup(Group->getDef(),
+                                                   DiagGroupParents);
+    if (!CatName.empty()) return CatName;
+  }
+  
   // If the diagnostic itself has a category, get it.
-  std::string CatName = R->getValueAsString("CategoryName");
-  if (!CatName.empty()) return CatName;
-  
-  DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"));
-  if (Group == 0) return "";
-  
-  // Check the diagnostic's diag group for a category.
-  return getCategoryFromDiagGroup(Group->getDef(), DiagGroupParents);
+  return R->getValueAsString("CategoryName");
 }
 
 namespace {
