@@ -1233,7 +1233,7 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
   if (CanonToPointee.getLocalQualifiers() == Quals) {
     // ToType is exactly what we need. Return it.
     if (!ToType.isNull())
-      return ToType;
+      return ToType.getUnqualifiedType();
 
     // Build a pointer to ToPointee. It has the right qualifiers
     // already.

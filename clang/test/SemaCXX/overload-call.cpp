@@ -444,3 +444,19 @@ namespace PR7095 {
   void f(const X *);
   void g(Y y) { f(y); }
 }
+
+namespace PR7224 {
+  class A {};
+  class B : public A {};
+
+  int &foo(A *const d);
+  float &foo(const A *const d);
+
+  void bar()
+  {
+    B *const d = 0;
+    B const *const d2 = 0;
+    int &ir = foo(d);
+    float &fr = foo(d2);
+  }
+}
