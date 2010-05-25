@@ -442,7 +442,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
-          " to avoid cast: " << CI);
+          " to avoid cast: " << CI << '\n');
     Value *Res = EvaluateInDifferentType(Src, DestTy, false);
     assert(Res->getType() == DestTy);
     return ReplaceInstUsesWith(CI, Res);
