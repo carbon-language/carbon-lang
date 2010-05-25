@@ -276,6 +276,7 @@ namespace {
     bool isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
     QualType getConstantStringStructType();
+    QualType convertFunctionTypeOfBlocks(const FunctionType *FT);
     bool BufferContainsPPDirectives(const char *startBuf, const char *endBuf);
 
     // Expression Rewriting.
@@ -2945,6 +2946,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       QualType type = ICE->getType()->isObjCQualifiedIdType()
                                 ? Context->getObjCIdType()
                                 : ICE->getType();
+      // Make sure we convert "type (^)(...)" to "type (*)(...)".
+      if (isTopLevelBlockPointerType(type)) {
+        const BlockPointerType *BPT = type->getAs<BlockPointerType>();
+        type = Context->getPointerType(BPT->getPointeeType());
+      }
       userExpr = NoTypeInfoCStyleCastExpr(Context, type, CastExpr::CK_Unknown,
                                           userExpr);
     }
@@ -4113,7 +4119,14 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) S += ", ";
       ParamStr = (*AI)->getNameAsString();
-      (*AI)->getType().getAsStringInternal(ParamStr, Context->PrintingPolicy);
+      QualType QT = (*AI)->getType();
+      if (isTopLevelBlockPointerType(QT)) {
+        const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
+        Context->getPointerType(BPT->getPointeeType()).
+        getAsStringInternal(ParamStr, Context->PrintingPolicy);
+      }
+      else
+        QT.getAsStringInternal(ParamStr, Context->PrintingPolicy);      
       S += ParamStr;
     }
     if (FT->isVariadic()) {
@@ -4532,6 +4545,47 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
   }
   
   return;
+}
+
+/// convertFunctionTypeOfBlocks - This routine converts a function type
+/// whose result type may be a block pointer or whose argument type(s)
+/// might be block pointers to an equivalent funtion type replacing
+/// all block pointers to function pointers.
+QualType RewriteObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) {
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FT);
+  // FTP will be null for closures that don't take arguments.
+  // Generate a funky cast.
+  llvm::SmallVector<QualType, 8> ArgTypes;
+  bool HasBlockType = false;
+  QualType Res = FT->getResultType();
+  if (isTopLevelBlockPointerType(Res)) {
+    const BlockPointerType *BPT = Res->getAs<BlockPointerType>();
+    Res = Context->getPointerType(BPT->getPointeeType());
+    HasBlockType = true;
+  }
+  
+  if (FTP) {
+    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
+         E = FTP->arg_type_end(); I && (I != E); ++I) {
+      QualType t = *I;
+      // Make sure we convert "t (^)(...)" to "t (*)(...)".
+      if (isTopLevelBlockPointerType(t)) {
+        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
+        t = Context->getPointerType(BPT->getPointeeType());
+        HasBlockType = true;
+      }
+      ArgTypes.push_back(t);
+    }
+  }
+  QualType FuncType;
+  // FIXME. Does this work if block takes no argument but has a return type
+  // which is of block type?
+  if (HasBlockType)
+    FuncType = Context->getFunctionType(Res,
+                        &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0,
+                        false, false, 0, 0, FunctionType::ExtInfo());
+  else FuncType = QualType(FT, 0);
+  return FuncType;
 }
 
 Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
@@ -5176,7 +5230,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
 
   // Get a pointer to the function type so we can cast appropriately.
-  QualType FType = Context->getPointerType(QualType(Exp->getFunctionType(),0));
+  QualType BFT = convertFunctionTypeOfBlocks(Exp->getFunctionType());
+  QualType FType = Context->getPointerType(BFT);
 
   FunctionDecl *FD;
   Expr *NewRep;
