@@ -2395,9 +2395,9 @@ static SDValue LowerShift(SDNode *N, SelectionDAG &DAG,
 
   // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
   SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
+                           DAG.getConstant(0, MVT::i32));
   SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(0),
-                             DAG.getConstant(1, MVT::i32));
+                           DAG.getConstant(1, MVT::i32));
 
   // First, build a SRA_FLAG/SRL_FLAG op, which shifts the top part by one and
   // captures the result into a carry flag.
