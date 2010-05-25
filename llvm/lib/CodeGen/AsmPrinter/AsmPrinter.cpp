@@ -241,6 +241,12 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (EmitSpecialLLVMGlobal(GV))
     return;
 
+  if (isVerbose()) {
+    WriteAsOperand(OutStreamer.GetCommentOS(), GV,
+                   /*PrintType=*/false, GV->getParent());
+    OutStreamer.GetCommentOS() << '\n';
+  }
+  
   MCSymbol *GVSym = Mang->getSymbol(GV);
   EmitVisibility(GVSym, GV->getVisibility());
 
@@ -361,11 +367,6 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   EmitLinkage(GV->getLinkage(), GVSym);
   EmitAlignment(AlignLog, GV);
 
-  if (isVerbose()) {
-    WriteAsOperand(OutStreamer.GetCommentOS(), GV,
-                   /*PrintType=*/false, GV->getParent());
-    OutStreamer.GetCommentOS() << '\n';
-  }
   OutStreamer.EmitLabel(GVSym);
 
   EmitGlobalConstant(GV->getInitializer());
