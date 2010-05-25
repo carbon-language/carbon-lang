@@ -9,6 +9,7 @@
 
 #include "thread"
 #include "exception"
+#include <sys/types.h>
 #include <sys/sysctl.h>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
