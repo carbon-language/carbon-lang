@@ -374,7 +374,8 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
 
   // If this does take ownership of the arguments, then we have to new them
   // and copy over.
-  TemplateArgument *NewArgs = new TemplateArgument[Builder.flatSize()];
+  TemplateArgument *NewArgs =
+    new (Context) TemplateArgument[Builder.flatSize()];
   std::copy(Builder.getFlatArguments(),
             Builder.getFlatArguments()+Builder.flatSize(), NewArgs);
   FlatArguments.setPointer(NewArgs);
@@ -384,7 +385,8 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
     StructuredArguments.setPointer(NewArgs);    
     StructuredArguments.setInt(0);
   } else {
-    TemplateArgument *NewSArgs = new TemplateArgument[Builder.flatSize()];
+    TemplateArgument *NewSArgs =
+      new (Context) TemplateArgument[Builder.flatSize()];
     std::copy(Builder.getFlatArguments(),
               Builder.getFlatArguments()+Builder.flatSize(), NewSArgs);
     StructuredArguments.setPointer(NewSArgs);
@@ -401,12 +403,14 @@ TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList *Other)
     StructuredArguments(Other->StructuredArguments.getPointer(), false),
     NumStructuredArguments(Other->NumStructuredArguments) { }
 
-TemplateArgumentList::~TemplateArgumentList() {
+void TemplateArgumentList::Destroy(ASTContext &C) {
   if (FlatArguments.getInt())
-    delete [] FlatArguments.getPointer();
+    C.Deallocate((void*)FlatArguments.getPointer());
   if (StructuredArguments.getInt())
-    delete [] StructuredArguments.getPointer();
+    C.Deallocate((void*)StructuredArguments.getPointer());
 }
+
+TemplateArgumentList::~TemplateArgumentList() {}
 
 //===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation

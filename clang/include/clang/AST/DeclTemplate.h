@@ -186,6 +186,11 @@ public:
   /// really isn't safe to use that way.
   explicit TemplateArgumentList(const TemplateArgumentList *Other);
   
+  /// Used to release the memory associated with a TemplateArgumentList
+  ///  object.  FIXME: This is currently not called anywhere, but the
+  ///  memory will still be freed when using a BumpPtrAllocator.
+  void Destroy(ASTContext &C);
+
   ~TemplateArgumentList();
 
   /// \brief Retrieve the template argument at a given index.
