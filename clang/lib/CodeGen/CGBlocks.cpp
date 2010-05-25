@@ -791,9 +791,10 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
 
+  MangleBuffer Name;
+  CGM.getMangledName(Name, BD);
   llvm::Function *Fn =
-    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           llvm::Twine("__") + Info.Name + "_block_invoke_",
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage, Name,
                            &CGM.getModule());
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);

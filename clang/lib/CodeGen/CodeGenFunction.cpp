@@ -37,6 +37,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   LLVMPointerWidth = Target.getPointerWidth(0);
   Exceptions = getContext().getLangOptions().Exceptions;
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
+  CGM.getMangleContext().startNewFunction();
 }
 
 ASTContext &CodeGenFunction::getContext() const {

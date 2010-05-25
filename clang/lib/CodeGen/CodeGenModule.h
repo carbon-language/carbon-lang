@@ -413,6 +413,7 @@ public:
 
   void getMangledName(MangleBuffer &Buffer, GlobalDecl D);
   void getMangledName(MangleBuffer &Buffer, const NamedDecl *ND);
+  void getMangledName(MangleBuffer &Buffer, const BlockDecl *BD);
   void getMangledCXXCtorName(MangleBuffer &Buffer,
                              const CXXConstructorDecl *D,
                              CXXCtorType Type);

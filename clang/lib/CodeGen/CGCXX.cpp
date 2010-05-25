@@ -230,6 +230,10 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                       GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
 }
 
+void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
+  getMangleContext().mangleBlock(BD, Buffer.getBuffer());
+}
+
 void CodeGenModule::getMangledCXXCtorName(MangleBuffer &Name,
                                           const CXXConstructorDecl *D,
                                           CXXCtorType Type) {

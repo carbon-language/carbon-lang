@@ -26,6 +26,7 @@
 
 namespace clang {
   class ASTContext;
+  class BlockDecl;
   class CXXConstructorDecl;
   class CXXDestructorDecl;
   class CXXMethodDecl;
@@ -73,6 +74,8 @@ class MangleContext {
   llvm::DenseMap<const TagDecl *, uint64_t> AnonStructIds;
   unsigned Discriminator;
   llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
+  llvm::DenseMap<const BlockDecl*, unsigned> GlobalBlockIds;
+  llvm::DenseMap<const BlockDecl*, unsigned> LocalBlockIds;
   
 public:
   explicit MangleContext(ASTContext &Context,
@@ -83,6 +86,8 @@ public:
 
   Diagnostic &getDiags() const { return Diags; }
 
+  void startNewFunction() { LocalBlockIds.clear(); }
+  
   uint64_t getAnonymousStructId(const TagDecl *TD) {
     std::pair<llvm::DenseMap<const TagDecl *,
       uint64_t>::iterator, bool> Result =
@@ -90,11 +95,18 @@ public:
     return Result.first->second;
   }
 
+  unsigned getBlockId(const BlockDecl *BD, bool Local) {
+    llvm::DenseMap<const BlockDecl *, unsigned> &BlockIds
+      = Local? LocalBlockIds : GlobalBlockIds;
+    std::pair<llvm::DenseMap<const BlockDecl *, unsigned>::iterator, bool>
+      Result = BlockIds.insert(std::make_pair(BD, BlockIds.size()));
+    return Result.first->second;
+  }
+  
   /// @name Mangler Entry Points
   /// @{
 
   bool shouldMangleDeclName(const NamedDecl *D);
-
   void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleThunk(const CXXMethodDecl *MD,
                    const ThunkInfo &Thunk,
@@ -114,7 +126,8 @@ public:
                      llvm::SmallVectorImpl<char> &);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                      llvm::SmallVectorImpl<char> &);
-  
+  void mangleBlock(const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
+
   void mangleInitDiscriminator() {
     Discriminator = 0;
   }
