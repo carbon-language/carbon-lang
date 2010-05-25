@@ -47,7 +47,13 @@ namespace llvm {
       reloc_arm_pic_jt,
 
       // reloc_arm_branch - Branch address relocation.
-      reloc_arm_branch
+      reloc_arm_branch,
+
+      // reloc_arm_movt  - MOVT immediate relocation.
+      reloc_arm_movt,
+
+      // reloc_arm_movw  - MOVW immediate relocation.
+      reloc_arm_movw
     };
   }
 }

@@ -318,6 +318,18 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       *((intptr_t*)RelocPos) |= ResultPtr;
       break;
     }
+    case ARM::reloc_arm_movw: {
+      ResultPtr = ResultPtr & 0xFFFF; 
+      *((intptr_t*)RelocPos) |= ResultPtr & 0xFFF;
+      *((intptr_t*)RelocPos) |= ((ResultPtr >> 12) & 0xF) << 16;
+      break;
+    }
+    case ARM::reloc_arm_movt: {
+      ResultPtr = (ResultPtr >> 16) & 0xFFFF; 
+      *((intptr_t*)RelocPos) |= ResultPtr & 0xFFF;
+      *((intptr_t*)RelocPos) |= ((ResultPtr >> 12) & 0xF) << 16;
+      break;
+    }
     }
   }
 }
