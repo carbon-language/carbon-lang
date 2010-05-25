@@ -6119,8 +6119,7 @@ bool Sema::DefineUsedVTables() {
   // time through the loop and prefer indices (with are stable) to
   // iterators (which are not).
   for (unsigned I = 0; I != VTableUses.size(); ++I) {
-    CXXRecordDecl *Class
-      = cast_or_null<CXXRecordDecl>(VTableUses[I].first)->getDefinition();
+    CXXRecordDecl *Class = VTableUses[I].first->getDefinition();
     if (!Class)
       continue;
 
