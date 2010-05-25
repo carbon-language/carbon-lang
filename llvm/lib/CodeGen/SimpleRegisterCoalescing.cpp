@@ -853,8 +853,11 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     // EAX: 1 -> AL, 2 -> AX
     // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
     // sub-register 2 is also AX.
+    //
+    // FIXME: Properly compose subreg indices for all targets.
+    //
     if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
-      assert(OldSubIdx < SubIdx && "Conflicting sub-register index!");
+      ;
     else if (SubIdx)
       O.setSubReg(SubIdx);
     O.setReg(DstReg);
