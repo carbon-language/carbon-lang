@@ -839,7 +839,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       CCC = Action::CCC_ObjCImplementation;
     
     Actions.CodeCompleteOrdinaryName(CurScope, CCC);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
   
   DS.SetRangeStart(Tok.getLocation());
@@ -1870,7 +1870,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::code_completion)) {
     // Code completion for an enum name.
     Actions.CodeCompleteTag(CurScope, DeclSpec::TST_enum);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
   
   llvm::OwningPtr<AttributeList> Attr;

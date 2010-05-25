@@ -2649,9 +2649,13 @@ public:
     /// \brief Code completion occurs at the beginning of the
     /// initialization statement (or expression) in a for loop.
     CCC_ForInit,
-    /// \brief Code completion ocurs within the condition of an if,
+    /// \brief Code completion occurs within the condition of an if,
     /// while, switch, or for statement.
-    CCC_Condition
+    CCC_Condition,
+    /// \brief Code completion occurs within the body of a function on a 
+    /// recovery path, where we do not have a specific handle on our position
+    /// in the grammar.
+    CCC_RecoveryInFunction
   };
     
   /// \brief Code completion for an ordinary name that occurs within the given

@@ -110,7 +110,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         // Code completion for a nested-name-specifier, where the code
         // code completion token follows the '::'.
         Actions.CodeCompleteQualifiedId(CurScope, SS, EnteringContext);
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
     }
 
@@ -729,7 +729,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Condition);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (!isCXXConditionDeclaration()) {
@@ -1274,7 +1274,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
       Actions.CodeCompleteOperatorName(CurScope);
       
       // Consume the operator token.
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
       
       // Don't try to parse any further.
       return true;

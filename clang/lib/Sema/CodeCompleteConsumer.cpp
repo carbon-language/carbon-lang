@@ -459,11 +459,6 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     }
     }
   }
-  
-  // Once we've printed the code-completion results, suppress remaining
-  // diagnostics.
-  // FIXME: Move this somewhere else!
-  SemaRef.PP.getDiagnostics().setSuppressAllDiagnostics();
 }
 
 void 
@@ -478,11 +473,6 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
       delete CCS;
     }
   }
-
-  // Once we've printed the code-completion results, suppress remaining
-  // diagnostics.
-  // FIXME: Move this somewhere else!
-  SemaRef.PP.getDiagnostics().setSuppressAllDiagnostics();
 }
 
 void 
@@ -599,11 +589,6 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     CCS->Serialize(OS);
     delete CCS;
   }
-  
-  // Once we've printed the code-completion results, suppress remaining
-  // diagnostics.
-  // FIXME: Move this somewhere else!
-  SemaRef.PP.getDiagnostics().setSuppressAllDiagnostics();
 }
 
 void 
@@ -619,9 +604,4 @@ CIndexCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
     CCS->Serialize(OS);
     delete CCS;
   }
-  
-  // Once we've printed the code-completion results, suppress remaining
-  // diagnostics.
-  // FIXME: Move this somewhere else!
-  SemaRef.PP.getDiagnostics().setSuppressAllDiagnostics();
 }

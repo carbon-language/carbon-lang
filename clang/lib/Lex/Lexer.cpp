@@ -1359,6 +1359,9 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     
     // Only do the eof -> code_completion translation once.
     PP->SetCodeCompletionPoint(0, 0, 0);
+    
+    // Silence any diagnostics that occur once we hit the code-completion point.
+    PP->getDiagnostics().setSuppressAllDiagnostics(true);
     return true;
   }
   

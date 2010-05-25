@@ -32,7 +32,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtDirectives() {
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, false);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   switch (Tok.getObjCKeywordID()) {
@@ -131,7 +131,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
   // Code completion after '@interface'.
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCInterfaceDecl(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (Tok.isNot(tok::identifier)) {
@@ -149,7 +149,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     IdentifierInfo *categoryId = 0;
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCInterfaceCategory(CurScope, nameId, nameLoc);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     // For ObjC2, the category name is optional (not an error).
@@ -204,7 +204,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     // Code completion of superclass names.
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCSuperclass(CurScope, nameId, nameLoc);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
 
     if (Tok.isNot(tok::identifier)) {
@@ -350,7 +350,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
       Actions.CodeCompleteOrdinaryName(CurScope, 
                                   ObjCImpDecl? Action::CCC_ObjCImplementation
                                              : Action::CCC_ObjCInterface);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     // If we don't have an @ directive, parse it as a function definition.
@@ -371,7 +371,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
     SourceLocation AtLoc = ConsumeToken(); // the "@"
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, true);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
       break;
     }
 
@@ -438,7 +438,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
   // EOF.  In the former case, eat the @end.  In the later case, emit an error.
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, true);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   } else if (Tok.isObjCAtKeyword(tok::objc_end))
     ConsumeToken(); // the "end" identifier
   else
@@ -477,7 +477,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, DeclPtrTy ClassDecl,
   while (1) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCPropertyFlags(CurScope, DS);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     const IdentifierInfo *II = Tok.getIdentifierInfo();
 
@@ -514,7 +514,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, DeclPtrTy ClassDecl,
         else
           Actions.CodeCompleteObjCPropertyGetter(CurScope, ClassDecl,
                                                  Methods, NumMethods);
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
 
       if (Tok.isNot(tok::identifier)) {
@@ -782,7 +782,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(CurScope, mType == tok::minus, 
                                        /*ReturnType=*/0, IDecl);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   // Parse the return type if present.
@@ -799,7 +799,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(CurScope, mType == tok::minus, 
                                        ReturnType, IDecl);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   // Now parse the selector.
@@ -945,7 +945,7 @@ ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &Protocols,
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCProtocolReferences(ProtocolIdents.data(), 
                                                  ProtocolIdents.size());
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
 
     if (Tok.isNot(tok::identifier)) {
@@ -1026,7 +1026,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteObjCAtVisibility(CurScope);
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
       
       switch (Tok.getObjCKeywordID()) {
@@ -1046,7 +1046,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(CurScope, 
                                        Action::CCC_ObjCInstanceVariableList);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     struct ObjCIvarCallback : FieldCallback {
@@ -1117,7 +1117,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCProtocolDecl(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (Tok.isNot(tok::identifier)) {
@@ -1203,7 +1203,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
   // Code completion after '@implementation'.
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCImplementationDecl(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (Tok.isNot(tok::identifier)) {
@@ -1222,7 +1222,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCImplementationCategory(CurScope, nameId, nameLoc);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     if (Tok.is(tok::identifier)) {
@@ -1342,7 +1342,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   while (true) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCPropertyDefinition(CurScope, ObjCImpDecl);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     if (Tok.isNot(tok::identifier)) {
@@ -1361,7 +1361,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteObjCPropertySynthesizeIvar(CurScope, propertyId,
                                                        ObjCImpDecl);
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
       
       if (Tok.isNot(tok::identifier)) {
@@ -1400,7 +1400,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
   while (true) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCPropertyDefinition(CurScope, ObjCImpDecl);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     if (Tok.isNot(tok::identifier)) {
@@ -1654,7 +1654,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDefinition() {
 Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtStatement(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
     return StmtError();
   }
   
@@ -1685,7 +1685,7 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
   case tok::code_completion:
     Actions.CodeCompleteObjCAtExpression(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
     return ExprError();
 
   case tok::string_literal:    // primary-expression: string-literal
@@ -1925,7 +1925,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     else
       Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get(), 
                                               0, 0);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
   
   // Parse objc-selector
@@ -1979,7 +1979,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
           Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get(),
                                                   KeyIdents.data(), 
                                                   KeyIdents.size());
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
             
       // Check for another keyword selector.

@@ -283,7 +283,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteCase(CurScope);
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     /// We don't want to treat 'case x : y' as a potential typo for 'case x::y'.
@@ -1000,7 +1000,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
     Actions.CodeCompleteOrdinaryName(CurScope, 
                                      C99orCXXorObjC? Action::CCC_ForInit
                                                    : Action::CCC_Expression);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
   
   // Parse the first part of the for specifier.

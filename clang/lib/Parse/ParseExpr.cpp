@@ -222,7 +222,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Expression);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (Tok.is(tok::kw_throw))
@@ -906,7 +906,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
   case tok::code_completion:
     Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Expression);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
     return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
                                NotCastExpr, TypeOfCast);
   case tok::l_square:
@@ -975,7 +975,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(CurScope, LHS.get(), 0, 0);
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
       
       if (Tok.isNot(tok::r_paren)) {
@@ -1029,7 +1029,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         Actions.CodeCompleteMemberReferenceExpr(CurScope, LHS.get(),
                                                 OpLoc, OpKind == tok::arrow);
         
-        ConsumeToken();
+        ConsumeCodeCompletionToken();
       }
       
       if (MayBePseudoDestructor) {
@@ -1562,7 +1562,7 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
     if (Tok.is(tok::code_completion)) {
       if (Completer)
         (Actions.*Completer)(CurScope, Data, Exprs.data(), Exprs.size());
-      ConsumeToken();
+      ConsumeCodeCompletionToken();
     }
     
     OwningExprResult Expr(ParseAssignmentExpression());

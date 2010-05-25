@@ -843,6 +843,7 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
   case Action::CCC_Statement:
   case Action::CCC_ForInit:
   case Action::CCC_Condition:
+  case Action::CCC_RecoveryInFunction:
     break;
   }
 }
@@ -994,6 +995,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     AddObjCVisibilityResults(SemaRef.getLangOptions(), Results, true);
     break;
       
+  case Action::CCC_RecoveryInFunction:
   case Action::CCC_Statement: {
     Results.AddResult(Result("typedef"));
 
@@ -1924,6 +1926,10 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case CCC_ForInit:
   case CCC_Condition:
     Results.setFilter(&ResultBuilder::IsOrdinaryName);
+    break;
+      
+  case CCC_RecoveryInFunction:
+    // Unfiltered
     break;
   }
 
@@ -3079,8 +3085,6 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
   }
 
   Results.ExitScope();
-  
-  // This also suppresses remaining diagnostics.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 

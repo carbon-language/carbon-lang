@@ -234,6 +234,11 @@ private:
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
+    if (Tok.is(tok::code_completion)) {
+      CodeCompletionRecovery();
+      return ConsumeCodeCompletionToken();
+    }
+    
     PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
     return PrevTokLocation;
@@ -307,6 +312,22 @@ private:
     PP.Lex(Tok);
     return PrevTokLocation;
   }
+
+  /// \brief Consume the current code-completion token.
+  ///
+  /// This routine should be called to consume the code-completion token once
+  /// a code-completion action has already been invoked.
+  SourceLocation ConsumeCodeCompletionToken() {
+    assert(Tok.is(tok::code_completion));
+    PrevTokLocation = Tok.getLocation();
+    PP.Lex(Tok);
+    return PrevTokLocation;    
+  }
+  
+  ///\ brief When we are consuming a code-completion token within having 
+  /// matched specific position in the grammar, provide code-completion results
+  /// based on context.
+  void CodeCompletionRecovery();
 
   /// GetLookAheadToken - This peeks ahead N tokens and returns that token
   /// without consuming any tokens.  LookAhead(0) returns 'Tok', LookAhead(1)

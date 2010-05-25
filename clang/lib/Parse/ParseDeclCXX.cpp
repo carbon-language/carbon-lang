@@ -50,7 +50,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceDecl(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   SourceLocation IdentLoc;
@@ -136,7 +136,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceAliasDecl(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   CXXScopeSpec SS;
@@ -231,7 +231,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteUsing(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   if (Tok.is(tok::kw_namespace))
@@ -268,7 +268,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteUsingDirective(CurScope);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   CXXScopeSpec SS;
@@ -610,7 +610,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (Tok.is(tok::code_completion)) {
     // Code completion for a struct, class, or union name.
     Actions.CodeCompleteTag(CurScope, TagType);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
   }
 
   AttributeList *AttrList = 0;
