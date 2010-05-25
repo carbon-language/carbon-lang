@@ -99,8 +99,9 @@ unsigned FastISel::getRegForValue(const Value *V) {
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
   // def-dominates-use requirement enforced.
-  if (ValueMap.count(V))
-    return ValueMap[V];
+  DenseMap<const Value *, unsigned>::iterator I = ValueMap.find(V);
+  if (I != ValueMap.end())
+    return I->second;
   unsigned Reg = LocalValueMap[V];
   if (Reg != 0)
     return Reg;
