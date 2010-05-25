@@ -509,6 +509,17 @@ let mayLoad = 1 in
   def CMPSSrm : SSIi8<0xC2, MRMSrcMem,
                     (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, SSECC:$cc),
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
+
+  // Accept explicit immediate argument form instead of comparison code.
+let isAsmParserOnly = 1 in {
+  def CMPSSrr_alt : SSIi8<0xC2, MRMSrcReg,
+                    (outs FR32:$dst), (ins FR32:$src1, FR32:$src, i8imm:$src2),
+                    "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+let mayLoad = 1 in
+  def CMPSSrm_alt : SSIi8<0xC2, MRMSrcMem,
+                    (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, i8imm:$src2),
+                    "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+}
 }
 
 let Defs = [EFLAGS] in {
@@ -1009,6 +1020,16 @@ let Constraints = "$src1 = $dst" in {
                   "cmp${cc}ps\t{$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
                                             (memop addr:$src), imm:$cc))]>;
+
+  // Accept explicit immediate argument form instead of comparison code.
+let isAsmParserOnly = 1 in {
+  def CMPPSrri_alt : PSIi8<0xC2, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, i8imm:$src2),
+                    "cmpps\t{$src2, $src, $dst|$dst, $src, $src}", []>;
+  def CMPPSrmi_alt : PSIi8<0xC2, MRMSrcMem,
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, i8imm:$src2),
+                  "cmpps\t{$src2, $src, $dst|$dst, $src, $src}", []>;
+}
 }
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
@@ -1298,6 +1319,17 @@ let mayLoad = 1 in
   def CMPSDrm : SDIi8<0xC2, MRMSrcMem,
                     (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
+
+  // Accept explicit immediate argument form instead of comparison code.
+let isAsmParserOnly = 1 in {
+  def CMPSDrr_alt : SDIi8<0xC2, MRMSrcReg,
+                    (outs FR64:$dst), (ins FR64:$src1, FR64:$src, i8imm:$src2),
+                    "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+let mayLoad = 1 in
+  def CMPSDrm_alt : SDIi8<0xC2, MRMSrcMem,
+                    (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, i8imm:$src2),
+                    "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+}
 }
 
 let Defs = [EFLAGS] in {
@@ -1891,6 +1923,16 @@ let Constraints = "$src1 = $dst" in {
                   "cmp${cc}pd\t{$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
                                                  (memop addr:$src), imm:$cc))]>;
+
+  // Accept explicit immediate argument form instead of comparison code.
+let isAsmParserOnly = 1 in {
+  def CMPPDrri_alt : PDIi8<0xC2, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, i8imm:$src2),
+                    "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+  def CMPPDrmi_alt : PDIi8<0xC2, MRMSrcMem,
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, i8imm:$src2),
+                  "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+}
 }
 def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
