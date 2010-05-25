@@ -350,6 +350,8 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-help");
   if (Opts.ShowMacrosInCodeCompletion)
     Res.push_back("-code-completion-macros");
+  if (Opts.ShowCodePatternsInCodeCompletion)
+    Res.push_back("-code-completion-patterns");
   if (Opts.ShowStats)
     Res.push_back("-print-stats");
   if (Opts.ShowTimers)
@@ -986,6 +988,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
   Opts.ShowHelp = Args.hasArg(OPT_help);
   Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
+  Opts.ShowCodePatternsInCodeCompletion
+    = Args.hasArg(OPT_code_completion_patterns);
   Opts.ShowStats = Args.hasArg(OPT_print_stats);
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
   Opts.ShowVersion = Args.hasArg(OPT_version);

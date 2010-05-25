@@ -243,6 +243,8 @@ def no_code_completion_debug_printer : Flag<"-no-code-completion-debug-printer">
   HelpText<"Don't use the \"debug\" code-completion print">;
 def code_completion_macros : Flag<"-code-completion-macros">,
   HelpText<"Include macros in code-completion results">;
+def code_completion_patterns : Flag<"-code-completion-patterns">,
+  HelpText<"Include code patterns in code-completion results">;
 def disable_free : Flag<"-disable-free">,
   HelpText<"Disable freeing of memory on exit">;
 def help : Flag<"-help">,

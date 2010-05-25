@@ -519,7 +519,7 @@ public:
   createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
                                unsigned Line, unsigned Column,
                                bool UseDebugPrinter, bool ShowMacros,
-                               llvm::raw_ostream &OS);
+                               bool ShowCodePatterns, llvm::raw_ostream &OS);
 
   /// Create the frontend timer and replace any existing one with it.
   void createFrontendTimer();

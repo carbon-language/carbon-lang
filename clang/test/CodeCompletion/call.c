@@ -6,7 +6,7 @@ void test() {
   f0(0, 0);
   g0(0, 0);
   f1(0, 0);
-  // RUN: %clang_cc1 -std=c89 -fsyntax-only -code-completion-at=%s:6:6 %s -o - | FileCheck -check-prefix=CC1 %s
+  // RUN: %clang_cc1 -std=c89 -fsyntax-only  -code-completion-at=%s:6:6 %s -o - | FileCheck -check-prefix=CC1 %s
   // CHECK-CC1: f0(<#float x#>, float y)
   // RUN: %clang_cc1 -std=c89 -fsyntax-only -code-completion-at=%s:6:9 %s -o - | FileCheck -check-prefix=CC2 %s
   // CHECK-CC2: f0(float x, <#float y#>)

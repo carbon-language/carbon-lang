@@ -4,7 +4,7 @@ typedef struct t TYPEDEF;
 
 void foo() {
   int y = 17;
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:6:14 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
+  // RUN: %clang_cc1 -fsyntax-only -code-completion-patterns -code-completion-at=%s:6:14 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
   // CHECK-CC1: COMPLETION: bool
   // CHECK-CC1-NEXT: COMPLETION: char
   // CHECK-CC1-NEXT: COMPLETION: class
@@ -57,7 +57,7 @@ void foo() {
   // CHECK-CC1-NEXT: COMPLETION: y : [#int#]y
   // CHECK-CC1-NEXT: COMPLETION: z : [#void#]z(<#int#>)
 
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:4:1 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
+  // RUN: %clang_cc1 -fsyntax-only  -code-completion-patterns -code-completion-at=%s:4:1 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
   // CHECK-CC2: COMPLETION: Pattern : asm(<#string-literal#>)
   // CHECK-CC2-NEXT: COMPLETION: bool
   // CHECK-CC2-NEXT: COMPLETION: char
@@ -93,7 +93,7 @@ void foo() {
   // CHECK-CC2-NEXT: COMPLETION: wchar_t
   // CHECK-CC2-NEXT: COMPLETION: X : X
 
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:1:19 %s -o - | FileCheck -check-prefix=CHECK-CC3 %s
+  // RUN: %clang_cc1 -fsyntax-only -code-completion-patterns -code-completion-at=%s:1:19 %s -o - | FileCheck -check-prefix=CHECK-CC3 %s
   // CHECK-CC3: COMPLETION: bool
   // CHECK-CC3-NEXT: COMPLETION: char
   // CHECK-CC3-NEXT: COMPLETION: class
@@ -129,7 +129,7 @@ void foo() {
   // CHECK-CC3-NEXT: COMPLETION: wchar_t
   // CHECK-CC3-NEXT: COMPLETION: X : X
 
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:6:11 %s -o - | FileCheck -check-prefix=CHECK-CC4 %s
+  // RUN: %clang_cc1 -fsyntax-only -code-completion-patterns -code-completion-at=%s:6:11 %s -o - | FileCheck -check-prefix=CHECK-CC4 %s
   // CHECK-CC4: COMPLETION: bool
   // CHECK-CC4-NEXT: COMPLETION: char
   // CHECK-CC4-NEXT: COMPLETION: class

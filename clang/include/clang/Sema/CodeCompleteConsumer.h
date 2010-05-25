@@ -246,6 +246,10 @@ protected:
   /// \brief Whether to include macros in the code-completion results.
   bool IncludeMacros;
 
+  /// \brief Whether to include code patterns (such as for loops) within
+  /// the completion results.
+  bool IncludeCodePatterns;
+  
   /// \brief Whether the output format for the code-completion consumer is
   /// binary.
   bool OutputIsBinary;
@@ -420,12 +424,17 @@ public:
   
   CodeCompleteConsumer() : IncludeMacros(false), OutputIsBinary(false) { }
   
-  CodeCompleteConsumer(bool IncludeMacros, bool OutputIsBinary)
-    : IncludeMacros(IncludeMacros), OutputIsBinary(OutputIsBinary) { }
+  CodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
+                       bool OutputIsBinary)
+    : IncludeMacros(IncludeMacros), IncludeCodePatterns(IncludeCodePatterns),
+      OutputIsBinary(OutputIsBinary) { }
   
   /// \brief Whether the code-completion consumer wants to see macros.
   bool includeMacros() const { return IncludeMacros; }
 
+  /// \brief Whether the code-completion consumer wants to see code patterns.
+  bool includeCodePatterns() const { return IncludeCodePatterns; }
+  
   /// \brief Determine whether the output of this consumer is binary.
   bool isOutputBinary() const { return OutputIsBinary; }
   
@@ -461,9 +470,9 @@ class PrintingCodeCompleteConsumer : public CodeCompleteConsumer {
 public:
   /// \brief Create a new printing code-completion consumer that prints its
   /// results to the given raw output stream.
-  PrintingCodeCompleteConsumer(bool IncludeMacros,
+  PrintingCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
                                llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros, false), OS(OS) { }
+    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, false), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
@@ -484,8 +493,9 @@ public:
   /// \brief Create a new CIndex code-completion consumer that prints its
   /// results to the given raw output stream in a format readable to the CIndex
   /// library.
-  CIndexCodeCompleteConsumer(bool IncludeMacros, llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros, true), OS(OS) { }
+  CIndexCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
+                             llvm::raw_ostream &OS)
+    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, true), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, Result *Results, 

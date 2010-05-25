@@ -295,6 +295,7 @@ void CompilerInstance::createCodeCompletionConsumer() {
                                  Loc.FileName, Loc.Line, Loc.Column,
                                  getFrontendOpts().DebugCodeCompletionPrinter,
                                  getFrontendOpts().ShowMacrosInCodeCompletion,
+                             getFrontendOpts().ShowCodePatternsInCodeCompletion,
                                  llvm::outs()));
   if (!CompletionConsumer)
     return;
@@ -317,6 +318,7 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                unsigned Column,
                                                bool UseDebugPrinter,
                                                bool ShowMacros,
+                                               bool ShowCodePatterns,
                                                llvm::raw_ostream &OS) {
   // Tell the source manager to chop off the given file at a specific
   // line and column.
@@ -332,9 +334,9 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
 
   // Set up the creation routine for code-completion.
   if (UseDebugPrinter)
-    return new PrintingCodeCompleteConsumer(ShowMacros, OS);
+    return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
   else
-    return new CIndexCodeCompleteConsumer(ShowMacros, OS);
+    return new CIndexCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
 }
 
 // Output Files

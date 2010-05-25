@@ -79,6 +79,8 @@ public:
   unsigned ShowHelp : 1;                   ///< Show the -help text.
   unsigned ShowMacrosInCodeCompletion : 1; ///< Show macros in code completion
                                            /// results.
+  unsigned ShowCodePatternsInCodeCompletion : 1; ///< Show code patterns in code
+                                                 /// completion results.
   unsigned ShowStats : 1;                  ///< Show frontend performance
                                            /// metrics and statistics.
   unsigned ShowTimers : 1;                 ///< Show timers for individual
@@ -125,6 +127,7 @@ public:
     RelocatablePCH = 0;
     ShowHelp = 0;
     ShowMacrosInCodeCompletion = 0;
+    ShowCodePatternsInCodeCompletion = 0;
     ShowStats = 0;
     ShowTimers = 0;
     ShowVersion = 0;
