@@ -1638,7 +1638,19 @@ class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
     : TypeDecl(Typedef, DC, L, Id), TInfo(TInfo) {}
 
   virtual ~TypedefDecl();
+
+protected:
+  typedef Redeclarable<TypedefDecl> redeclarable_base;
+  virtual TypedefDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+
 public:
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  }
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
 
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id,
