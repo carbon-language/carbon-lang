@@ -786,9 +786,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_aesni_aesdeclast : GCCBuiltin<"__builtin_ia32_aesdeclast128">,
               Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
                         [IntrNoMem]>;
-  def int_x86_aesni_aeskeygenassist : 
+  def int_x86_aesni_aeskeygenassist :
               GCCBuiltin<"__builtin_ia32_aeskeygenassist128">,
-              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty],
+              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i8_ty],
                         [IntrNoMem]>;
 }
 

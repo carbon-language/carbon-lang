@@ -9962,11 +9962,16 @@
 // CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0x14,0x82,0x7d]
                 aeskeygenassist $125, (%edx,%eax,4), %xmm2
 
+// rdar://8017638
+// CHECK: aeskeygenassist	$128, %xmm1, %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0x14,0x82,0x80]
+		aeskeygenassist $128, %xmm1, %xmm2
+
 // rdar://7840289
 // CHECK: pshufb	CPI1_0(%rip), %xmm1
 // CHECK:  encoding: [0x66,0x0f,0x38,0x00,0x0d,A,A,A,A]
 // CHECK:  fixup A - offset: 5, value: CPI1_0-4
-pshufb	CPI1_0(%rip), %xmm1   
+pshufb	CPI1_0(%rip), %xmm1
 
 // rdar://7910087
 // CHECK: bsfw	%bx, %bx
@@ -10018,7 +10023,7 @@ pshufb	CPI1_0(%rip), %xmm1
 // radr://7914715
 // CHECK: fcoml   3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xdc,0x94,0xcb,0xef,0xbe,0xad,0xde]
-          fcoml   3735928559(%ebx,%ecx,8) 
+          fcoml   3735928559(%ebx,%ecx,8)
 
 // CHECK: fcoms   32493
 // CHECK:  encoding: [0xd8,0x15,0xed,0x7e,0x00,0x00]
