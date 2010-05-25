@@ -3431,8 +3431,12 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
     SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
     if (NarrowLoad.getNode()) {
-      if (NarrowLoad.getNode() != N0.getNode())
+      SDNode* oye = N0.getNode()->getOperand(0).getNode();
+      if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
+        // CombineTo deleted the truncate, if needed, but not what's under it.
+        AddToWorkList(oye);
+      }
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
 
@@ -3619,8 +3623,12 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
     if (NarrowLoad.getNode()) {
-      if (NarrowLoad.getNode() != N0.getNode())
+      SDNode* oye = N0.getNode()->getOperand(0).getNode();
+      if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
+        // CombineTo deleted the truncate, if needed, but not what's under it.
+        AddToWorkList(oye);
+      }
       return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, NarrowLoad);
     }
   }
