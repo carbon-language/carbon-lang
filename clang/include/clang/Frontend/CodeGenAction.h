@@ -57,6 +57,11 @@ public:
   EmitLLVMOnlyAction();
 };
 
+class EmitCodeGenOnlyAction : public CodeGenAction {
+public:
+  EmitCodeGenOnlyAction();
+};
+
 class EmitObjAction : public CodeGenAction {
 public:
   EmitObjAction();

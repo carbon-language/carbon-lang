@@ -30,7 +30,8 @@ namespace frontend {
     EmitBC,                 ///< Emit a .bc file.
     EmitHTML,               ///< Translate input source into HTML.
     EmitLLVM,               ///< Emit a .ll file.
-    EmitLLVMOnly,           ///< Generate LLVM IR, but do not
+    EmitLLVMOnly,           ///< Generate LLVM IR, but do not emit anything.
+    EmitCodeGenOnly,        ///< Generate machine code, but don't emit anything.
     EmitObj,                ///< Emit a .o file.
     FixIt,                  ///< Parse and apply any fixits to the source.
     GeneratePCH,            ///< Generate pre-compiled header.
