@@ -315,6 +315,10 @@ namespace llvm {
     ///
     virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
 
+    /// getValue - Get MCSymbol.
+    ///
+    const MCSymbol *getValue()       const { return Label; }
+
     /// SizeOf - Determine size of label value in bytes.
     ///
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;

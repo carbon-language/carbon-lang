@@ -168,15 +168,18 @@ public:
 ///
 class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
-  DIE *TheDIE;
+  DIE *TheDIE;                       // Variable DIE.
+  unsigned DotDebugLocOffset;        // Offset in DotDebugLocEntries.
 public:
   // AbsVar may be NULL.
-  DbgVariable(DIVariable V) : Var(V), TheDIE(0) {}
+  DbgVariable(DIVariable V) : Var(V), TheDIE(0), DotDebugLocOffset(~0U) {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
   void setDIE(DIE *D)                      { TheDIE = D; }
   DIE *getDIE()                      const { return TheDIE; }
+  void setDotDebugLocOffset(unsigned O)    { DotDebugLocOffset = O; }
+  unsigned getDotDebugLocOffset()    const { return DotDebugLocOffset; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -317,8 +320,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
-  DwarfDebugRangeSectionSym = 0;
-  FunctionBeginSym = 0;
+  DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0; 
+  FunctionBeginSym = FunctionEndSym = 0;
   if (TimePassesIsEnabled) {
       NamedRegionTimer T(DbgTimerName, DWARFGroupName);
       beginModule(M);
@@ -1441,18 +1444,18 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
             DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
     for (SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
-      DebugRangeSymbols.push_back(LabelsBeforeInsn.lookup(RI->first));
-      DebugRangeSymbols.push_back(LabelsAfterInsn.lookup(RI->second));
+      DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
+      DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
     }
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
     return ScopeDIE;
   }
 
-  MCSymbol *Start = LabelsBeforeInsn.lookup(RI->first);
-  MCSymbol *End = LabelsAfterInsn.lookup(RI->second);
+  const MCSymbol *Start = getLabelBeforeInsn(RI->first);
+  const MCSymbol *End = getLabelAfterInsn(RI->second);
 
-  if (Start == 0 || End == 0) return 0;
+  if (End == 0) return 0;
 
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
@@ -1477,10 +1480,10 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   // For now, use first instruction range and emit low_pc/high_pc pair and
   // corresponding .debug_inlined section entry for this pair.
   SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin();
-  MCSymbol *StartLabel = LabelsBeforeInsn.lookup(RI->first);
-  MCSymbol *EndLabel = LabelsAfterInsn.lookup(RI->second);
+  const MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
+  const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
-  if (StartLabel == 0 || EndLabel == 0) {
+  if (StartLabel == FunctionBeginSym || EndLabel == 0) {
     assert (0 && "Unexpected Start and End  labels for a inlined scope!");
     return 0;
   }
@@ -1573,61 +1576,76 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
       addType(VariableDie, VD.getType());
   }
 
-  // Add variable address.
-  if (!Scope->isAbstractScope()) {
-    // Check if variable is described by DBG_VALUE instruction.
-    DenseMap<const DbgVariable *, const MachineInstr *>::iterator DVI =
-      DbgVariableToDbgInstMap.find(DV);
-    if (DVI != DbgVariableToDbgInstMap.end()) {
-      const MachineInstr *DVInsn = DVI->second;
-      const MCSymbol *DVLabel = findVariableLabel(DV);
-      bool updated = false;
-      // FIXME : Handle getNumOperands != 3 
-      if (DVInsn->getNumOperands() == 3) {
-        if (DVInsn->getOperand(0).isReg())
-          updated = addRegisterAddress(VariableDie, DVLabel, DVInsn->getOperand(0));
-        else if (DVInsn->getOperand(0).isImm())
-          updated = addConstantValue(VariableDie, DVLabel, DVInsn->getOperand(0));
-        else if (DVInsn->getOperand(0).isFPImm()) 
-          updated = addConstantFPValue(VariableDie, DVLabel, DVInsn->getOperand(0));
-      } else {
-        MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
-        if (Location.getReg()) {
-          addAddress(VariableDie, dwarf::DW_AT_location, Location);
-          if (DVLabel)
-            addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
-                     DVLabel);
-          updated = true;
-        }
-      }
-      if (!updated) {
-        // If variableDie is not updated then DBG_VALUE instruction does not
-        // have valid variable info.
-        delete VariableDie;
-        return NULL;
-      }
-    } 
-    else {
-      MachineLocation Location;
-      unsigned FrameReg;
-      const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-      int FI = 0;
-      if (findVariableFrameIndex(DV, &FI)) {
-        int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-        Location.set(FrameReg, Offset);
-        
-        if (VD.hasComplexAddress())
-          addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-        else if (VD.isBlockByrefVariable())
-          addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-        else
-          addAddress(VariableDie, dwarf::DW_AT_location, Location);
-      }
-    }
-  }
-
   if (Tag == dwarf::DW_TAG_formal_parameter && VD.getType().isArtificial())
     addUInt(VariableDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+
+  if (Scope->isAbstractScope()) {
+    DV->setDIE(VariableDie);
+    return VariableDie;
+  }
+
+  // Add variable address.
+
+  unsigned Offset = DV->getDotDebugLocOffset();
+  if (Offset != ~0U) {
+    addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
+             Asm->GetTempSymbol("debug_loc", Offset));
+    DV->setDIE(VariableDie);
+    UseDotDebugLocEntry.insert(VariableDie);
+    return VariableDie;
+  }
+
+  // Check if variable is described by a  DBG_VALUE instruction.
+  DenseMap<const DbgVariable *, const MachineInstr *>::iterator DVI =
+    DbgVariableToDbgInstMap.find(DV);
+  if (DVI != DbgVariableToDbgInstMap.end()) {
+    const MachineInstr *DVInsn = DVI->second;
+    const MCSymbol *DVLabel = findVariableLabel(DV);
+    bool updated = false;
+    // FIXME : Handle getNumOperands != 3 
+    if (DVInsn->getNumOperands() == 3) {
+      if (DVInsn->getOperand(0).isReg())
+        updated = addRegisterAddress(VariableDie, DVLabel, DVInsn->getOperand(0));
+      else if (DVInsn->getOperand(0).isImm())
+        updated = addConstantValue(VariableDie, DVLabel, DVInsn->getOperand(0));
+      else if (DVInsn->getOperand(0).isFPImm()) 
+        updated = addConstantFPValue(VariableDie, DVLabel, DVInsn->getOperand(0));
+    } else {
+      MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
+      if (Location.getReg()) {
+        addAddress(VariableDie, dwarf::DW_AT_location, Location);
+        if (DVLabel)
+          addLabel(VariableDie, dwarf::DW_AT_start_scope, dwarf::DW_FORM_addr,
+                   DVLabel);
+        updated = true;
+      }
+    }
+    if (!updated) {
+      // If variableDie is not updated then DBG_VALUE instruction does not
+      // have valid variable info.
+      delete VariableDie;
+      return NULL;
+    }
+    DV->setDIE(VariableDie);
+    return VariableDie;
+  } 
+
+  // .. else use frame index, if available.
+  MachineLocation Location;
+  unsigned FrameReg;
+  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  int FI = 0;
+  if (findVariableFrameIndex(DV, &FI)) {
+    int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+    Location.set(FrameReg, Offset);
+    
+    if (VD.hasComplexAddress())
+      addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+    else if (VD.isBlockByrefVariable())
+      addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+    else
+      addAddress(VariableDie, dwarf::DW_AT_location, Location);
+  }
   DV->setDIE(VariableDie);
   return VariableDie;
 
@@ -2113,6 +2131,24 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
   }
 }
 
+/// isDbgValueInUndefinedReg - Return true if debug value, encoded by 
+/// DBG_VALUE instruction, is in undefined reg.
+static bool isDbgValueInUndefinedReg(const MachineInstr *MI) {
+  assert (MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
+  if (MI->getOperand(0).isReg() && !MI->getOperand(0).getReg())
+    return true;
+  return false;
+}
+
+/// isDbgValueInDefinedReg - Return true if debug value, encoded by 
+/// DBG_VALUE instruction, is in a defined reg.
+static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
+  assert (MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
+  if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg())
+    return true;
+  return false;
+}
+
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
 void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
   SmallPtrSet<const MDNode *, 16> Processed;
@@ -2127,23 +2163,30 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      if (!MInsn->isDebugValue())
+      if (!MInsn->isDebugValue() || isDbgValueInUndefinedReg(MInsn))
         continue;
-
-      // Ignore Undef values.
-      if (MInsn->getOperand(0).isReg() && !MInsn->getOperand(0).getReg())
-        continue;
-
       DbgValues.push_back(MInsn);
     }
 
+  // This is a collection of DBV_VALUE instructions describing same variable.
+  SmallVector<const MachineInstr *, 4> MultipleValues;
   for(SmallVector<const MachineInstr *, 8>::iterator I = DbgValues.begin(),
         E = DbgValues.end(); I != E; ++I) {
     const MachineInstr *MInsn = *I;
-
+    MultipleValues.clear();
+    if (isDbgValueInDefinedReg(MInsn))
+      MultipleValues.push_back(MInsn);
     DIVariable DV(MInsn->getOperand(MInsn->getNumOperands() - 1).getMetadata());
     if (Processed.count(DV) != 0)
       continue;
+
+    for (SmallVector<const MachineInstr *, 8>::iterator MI = I+1, 
+           ME = DbgValues.end(); MI != ME; ++MI) {
+      const MDNode *Var = 
+        (*MI)->getOperand((*MI)->getNumOperands()-1).getMetadata();
+      if (Var == DV && isDbgValueInDefinedReg(*MI))
+        MultipleValues.push_back(*MI);
+    }
 
     DbgScope *Scope = findDbgScope(MInsn);
     if (!Scope && DV.getTag() == dwarf::DW_TAG_arg_variable)
@@ -2154,16 +2197,45 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
 
     Processed.insert(DV);
     DbgVariable *RegVar = new DbgVariable(DV);
-    DbgVariableToDbgInstMap[RegVar] = MInsn;
     Scope->addVariable(RegVar);
     if (DV.getTag() != dwarf::DW_TAG_arg_variable) {
       DbgValueStartMap[MInsn] = RegVar;
-      DbgVariableLabelsMap[RegVar] = LabelsBeforeInsn.lookup(MInsn);
+      DbgVariableLabelsMap[RegVar] = getLabelBeforeInsn(MInsn); 
     }
     if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
       VarToAbstractVarMap[RegVar] = AbsVar;
     }
+    if (MultipleValues.size() <= 1) {
+      DbgVariableToDbgInstMap[RegVar] = MInsn;
+      continue;
+    }
+
+    // handle multiple DBG_VALUE instructions describing one variable.
+    RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
+    if (DotDebugLocEntries.empty())
+      DotDebugLocEntries.push_back(DotDebugLocEntry());
+    const MachineInstr *Current = MultipleValues.back(); 
+    MultipleValues.pop_back();
+    while (!MultipleValues.empty()) {
+      const MachineInstr *Next = MultipleValues.back();
+      MultipleValues.pop_back();
+      DbgValueStartMap[Next] = RegVar;
+      MachineLocation MLoc;
+      MLoc.set(Current->getOperand(0).getReg(), 0);
+      const MCSymbol *FLabel = getLabelBeforeInsn(Next);
+      const MCSymbol *SLabel = getLabelBeforeInsn(Current);
+      DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
+      Current = Next;
+      if (MultipleValues.empty()) {
+        // If Next is the last instruction then its value is valid
+        // until the end of the funtion.
+        MLoc.set(Next->getOperand(0).getReg(), 0);
+        DotDebugLocEntries.
+          push_back(DotDebugLocEntry(SLabel, FunctionEndSym, MLoc));
+      }
+    }
+    DotDebugLocEntries.push_back(DotDebugLocEntry());
   }
 
   // Collect info for variables that were optimized out.
@@ -2178,26 +2250,45 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
         Scope->addVariable(new DbgVariable(DV));
     }
   }
+}
 
+/// getLabelBeforeInsn - Return Label preceding the instruction.
+const MCSymbol *DwarfDebug::getLabelBeforeInsn(const MachineInstr *MI) {
+  DenseMap<const MachineInstr *, MCSymbol *>::iterator I =
+    LabelsBeforeInsn.find(MI);
+  if (I == LabelsBeforeInsn.end())
+    // FunctionBeginSym always preceeds all the instruction in current function.
+    return FunctionBeginSym;
+  return I->second;
+}
+
+/// getLabelAfterInsn - Return Label immediately following the instruction.
+const MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
+  DenseMap<const MachineInstr *, MCSymbol *>::iterator I =
+    LabelsAfterInsn.find(MI);
+  if (I == LabelsAfterInsn.end())
+    return NULL;
+  return I->second;
 }
 
 /// beginScope - Process beginning of a scope.
 void DwarfDebug::beginScope(const MachineInstr *MI) {
   // Check location.
   DebugLoc DL = MI->getDebugLoc();
-  if (DL.isUnknown() && !UnknownLocations)
+  if (DL.isUnknown() && !UnknownLocations) {
+    if (MI->isDebugValue() && PrevLabel)
+      LabelsBeforeInsn[MI] = PrevLabel;
     return;
+  }
  
   bool LocalVar = false;
   if (MI->isDebugValue()) {
     assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
     DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
     if (!DV.Verify()) return;
-    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+    if (DV.getTag() != dwarf::DW_TAG_arg_variable
+        && !isDbgValueInUndefinedReg(MI))
       LocalVar = true;
-    // Ignore Undef values.
-    if (MI->getOperand(0).isReg() && !MI->getOperand(0).getReg())
-      LocalVar = false;
   }
 
   MCSymbol *Label = NULL;
@@ -2224,7 +2315,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
 
   // If this instruction begins a scope then note down corresponding label
   // even if previous label is reused.
-  if (InsnsBeginScopeSet.count(MI) != 0)
+  if (Label && (InsnsBeginScopeSet.count(MI) != 0 || MI->isDebugValue()))
     LabelsBeforeInsn[MI] = Label;
 }
 
@@ -2544,12 +2635,14 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   if (CurrentFnDbgScope) {
 
+    // Define end label for subprogram.
+    FunctionEndSym = Asm->GetTempSymbol("func_end",
+                                        Asm->getFunctionNumber());
+    // Assumes in correct section after the entry point.
+    Asm->OutStreamer.EmitLabel(FunctionEndSym);
+    
     collectVariableInfo(MF);
 
-    // Define end label for subprogram.
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("func_end",
-                                                  Asm->getFunctionNumber()));
-    
     // Get function line info.
     if (!Lines.empty()) {
       // Get section line info.
@@ -2790,6 +2883,9 @@ void DwarfDebug::EmitSectionLabels() {
   DwarfDebugRangeSectionSym = EmitSectionSym(Asm, TLOF.getDwarfRangesSection(),
                                              "debug_range");
 
+  DwarfDebugLocSectionSym = EmitSectionSym(Asm, TLOF.getDwarfLocSection(),
+                                           "section_debug_loc");
+
   TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
   EmitSectionSym(Asm, TLOF.getDataSection());
 }
@@ -2839,6 +2935,14 @@ void DwarfDebug::emitDIE(DIE *Die) {
                                      V->getValue(),
                                      DwarfDebugRangeSectionSym,
                                      4);
+      break;
+    }
+    case dwarf::DW_AT_location: {
+      if (UseDotDebugLocEntry.count(Die) != 0) {
+        DIELabel *L = cast<DIELabel>(Values[i]);
+        Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
+      } else
+        Values[i]->EmitValue(Asm, Form);
       break;
     }
     default:
@@ -3356,7 +3460,38 @@ void DwarfDebug::emitDebugStr() {
 void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
-                              Asm->getObjFileLowering().getDwarfLocSection());
+    Asm->getObjFileLowering().getDwarfLocSection());
+  unsigned char Size = Asm->getTargetData().getPointerSize();
+  unsigned index = 0;
+  bool needMarker = true;
+  for (SmallVector<DotDebugLocEntry, 4>::iterator I = DotDebugLocEntries.begin(),
+         E = DotDebugLocEntries.end(); I != E; ++I, ++index) {
+    DotDebugLocEntry Entry = *I;
+    if (needMarker) {
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
+      needMarker = false;
+    }
+    if (Entry.isEmpty()) {
+      Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
+      Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
+      needMarker = true;
+    } else {
+      Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
+      Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
+      const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+      unsigned Reg = RI->getDwarfRegNum(Entry.Loc.getReg(), false);
+      if (Reg < 32) {
+        Asm->OutStreamer.AddComment("Loc expr size");
+        Asm->EmitInt16(1);
+        Asm->EmitInt8(dwarf::DW_OP_reg0 + Reg);
+      } else {
+        Asm->OutStreamer.AddComment("Loc expr size");
+        Asm->EmitInt16(1+MCAsmInfo::getULEB128Size(Reg));
+        Asm->EmitInt8(dwarf::DW_OP_regx);
+        Asm->EmitULEB128(Reg);
+      }
+    }
+  }
 }
 
 /// EmitDebugARanges - Emit visible names into a debug aranges section.
