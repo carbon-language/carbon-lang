@@ -19,7 +19,7 @@ void foo(T *P) {
 -(void) im0;
 @end
 
-// RUN: grep 'define internal i32 @"__-\[A im0\]_block_invoke_"' %t
+// RUN: grep 'define internal i32 @"__8-\[A im0\]_block_invoke_0"' %t
 @implementation A
 -(void) im0 {
   (void) ^{ return 1; }();
