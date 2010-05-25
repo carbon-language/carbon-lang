@@ -6,16 +6,16 @@ void *realloc(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
 
 void f1() {
-  int *p = malloc(10);
+  int *p = malloc(12);
   return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
 }
 
 void f1_b() {
-  int *p = malloc(10); // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  int *p = malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
 }
 
 void f2() {
-  int *p = malloc(10);
+  int *p = malloc(12);
   free(p);
   free(p); // expected-warning{{Try to free a memory block that has been released}}
 }
@@ -25,7 +25,7 @@ void f2() {
 // or inter-procedural analysis, this is a conservative answer.
 int *f3() {
   static int *p = 0;
-  p = malloc(10); 
+  p = malloc(12); 
   return p; // no-warning
 }
 
@@ -34,18 +34,18 @@ int *f3() {
 // functions or inter-procedural analysis, this is a conservative answer.
 static int *p_f4 = 0;
 int *f4() {
-  p_f4 = malloc(10); 
+  p_f4 = malloc(12); 
   return p_f4; // no-warning
 }
 
 int *f5() {
-  int *q = malloc(10);
+  int *q = malloc(12);
   q = realloc(q, 20);
   return q; // no-warning
 }
 
 void f6() {
-  int *p = malloc(10);
+  int *p = malloc(12);
   if (!p)
     return; // no-warning
   else
@@ -66,4 +66,14 @@ void f7() {
   char *x = (char*) malloc(4);
   free(x);
   x[0] = 'a'; // expected-warning{{Use dynamically allocated memory after it is freed.}}
+}
+
+void PR6123() {
+  int *x = malloc(11); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+}
+
+void PR7217() {
+  int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
+  buf[1] = 'c'; // not crash
+
 }

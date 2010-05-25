@@ -36,5 +36,6 @@ void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
   RegisterPointerSubChecker(Eng);
   RegisterPointerArithChecker(Eng);
   RegisterCastToStructChecker(Eng);
+  RegisterCastSizeChecker(Eng);
   RegisterArrayBoundChecker(Eng);
 }

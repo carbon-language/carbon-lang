@@ -26,6 +26,7 @@ void RegisterAttrNonNullChecker(GRExprEngine &Eng);
 void RegisterBuiltinFunctionChecker(GRExprEngine &Eng);
 void RegisterCallAndMessageChecker(GRExprEngine &Eng);
 void RegisterCastToStructChecker(GRExprEngine &Eng);
+void RegisterCastSizeChecker(GRExprEngine &Eng);
 void RegisterDereferenceChecker(GRExprEngine &Eng);
 void RegisterDivZeroChecker(GRExprEngine &Eng);
 void RegisterFixedAddressChecker(GRExprEngine &Eng);

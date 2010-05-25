@@ -364,7 +364,18 @@ public: // Part of public interface to class.
   // Region "extents".
   //===------------------------------------------------------------------===//
 
-  const GRState *setExtent(const GRState *state,const MemRegion* R,SVal Extent);
+  const GRState *setExtent(const GRState *state,const MemRegion* R,SVal Extent){
+    return state->set<RegionExtents>(R, Extent);
+  }
+
+  Optional<SVal> getExtent(const GRState *state, const MemRegion *R) {
+    const SVal *V = state->get<RegionExtents>(R);
+    if (V)
+      return *V;
+    else
+      return Optional<SVal>();
+  }
+
   DefinedOrUnknownSVal getSizeInElements(const GRState *state,
                                          const MemRegion* R, QualType EleTy);
 
@@ -796,12 +807,6 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
 
   assert(0 && "Unreachable");
   return UnknownVal();
-}
-
-const GRState *RegionStoreManager::setExtent(const GRState *state,
-                                             const MemRegion *region,
-                                             SVal extent) {
-  return state->set<RegionExtents>(region, extent);
 }
 
 //===----------------------------------------------------------------------===//
