@@ -145,8 +145,8 @@ let Namespace = "Mips" in {
 //===----------------------------------------------------------------------===//
 
 let Namespace = "Mips" in {
-def sub_fpeven : SubRegIndex { let NumberHack = 1; }
-def sub_fpodd  : SubRegIndex { let NumberHack = 2; }
+def sub_fpeven : SubRegIndex;
+def sub_fpodd  : SubRegIndex;
 }
 
 def : SubRegSet<sub_fpeven, [D0, D1, D2, D3, D4, D5, D6, D7,

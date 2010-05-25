@@ -26,27 +26,27 @@ class ARMFReg<bits<6> num, string n> : Register<n> {
 // Subregister indices.
 let Namespace = "ARM" in {
 // Note: Code depends on these having consecutive numbers.
-def ssub_0 : SubRegIndex { let NumberHack = 1; }
-def ssub_1 : SubRegIndex { let NumberHack = 2; }
-def ssub_2 : SubRegIndex { let NumberHack = 3; }
-def ssub_3 : SubRegIndex { let NumberHack = 4; }
+def ssub_0 : SubRegIndex;
+def ssub_1 : SubRegIndex;
+def ssub_2 : SubRegIndex;
+def ssub_3 : SubRegIndex;
 
-def dsub_0 : SubRegIndex { let NumberHack = 5; }
-def dsub_1 : SubRegIndex { let NumberHack = 6; }
-def dsub_2 : SubRegIndex { let NumberHack = 7; }
-def dsub_3 : SubRegIndex { let NumberHack = 8; }
-def dsub_4 : SubRegIndex { let NumberHack = 9; }
-def dsub_5 : SubRegIndex { let NumberHack = 10; }
-def dsub_6 : SubRegIndex { let NumberHack = 11; }
-def dsub_7 : SubRegIndex { let NumberHack = 12; }
+def dsub_0 : SubRegIndex;
+def dsub_1 : SubRegIndex;
+def dsub_2 : SubRegIndex;
+def dsub_3 : SubRegIndex;
+def dsub_4 : SubRegIndex;
+def dsub_5 : SubRegIndex;
+def dsub_6 : SubRegIndex;
+def dsub_7 : SubRegIndex;
 
-def qsub_0 : SubRegIndex { let NumberHack = 13; }
-def qsub_1 : SubRegIndex { let NumberHack = 14; }
-def qsub_2 : SubRegIndex { let NumberHack = 15; }
-def qsub_3 : SubRegIndex { let NumberHack = 16; }
+def qsub_0 : SubRegIndex;
+def qsub_1 : SubRegIndex;
+def qsub_2 : SubRegIndex;
+def qsub_3 : SubRegIndex;
 
-def qqsub_0 : SubRegIndex { let NumberHack = 17; }
-def qqsub_1 : SubRegIndex { let NumberHack = 18; }
+def qqsub_0 : SubRegIndex;
+def qqsub_1 : SubRegIndex;
 }
 
 // Integer registers

@@ -60,10 +60,7 @@ def R13W : MSP430RegWithSubregs<13, "r13", [R13B]>;
 def R14W : MSP430RegWithSubregs<14, "r14", [R14B]>;
 def R15W : MSP430RegWithSubregs<15, "r15", [R15B]>;
 
-def subreg_8bit : SubRegIndex {
-  let NumberHack = 1;
-  let Namespace = "MSP430";
-}
+def subreg_8bit : SubRegIndex { let Namespace = "MSP430"; }
 
 def : SubRegSet<subreg_8bit, [PCW, SPW, SRW, CGW, FPW, R5W, R6W, R7W,
                               R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],

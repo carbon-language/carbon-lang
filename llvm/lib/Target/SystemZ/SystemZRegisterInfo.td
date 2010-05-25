@@ -146,11 +146,11 @@ def F15L : FPRL<15, "f15", [F15S]>, DwarfRegNum<[31]>;
 def PSW : SystemZReg<"psw">;
 
 let Namespace = "SystemZ" in {
-def subreg_32bit  : SubRegIndex { let NumberHack = 1; }
-def subreg_even32 : SubRegIndex { let NumberHack = 1; }
-def subreg_odd32  : SubRegIndex { let NumberHack = 2; }
-def subreg_even   : SubRegIndex { let NumberHack = 3; }
-def subreg_odd    : SubRegIndex { let NumberHack = 4; }
+def subreg_32bit  : SubRegIndex;
+def subreg_even32 : SubRegIndex;
+def subreg_odd32  : SubRegIndex;
+def subreg_even   : SubRegIndex;
+def subreg_odd    : SubRegIndex;
 }
 
 def : SubRegSet<subreg_32bit, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,

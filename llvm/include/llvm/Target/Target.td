@@ -21,13 +21,9 @@ include "llvm/Intrinsics.td"
 
 class RegisterClass; // Forward def
 
-// SubRegIndex - Use instances on SubRegIndex to identify subregisters.
+// SubRegIndex - Use instances of SubRegIndex to identify subregisters.
 class SubRegIndex {
   string Namespace = "";
-
-  // This explicit numbering is going away after RegisterClass::SubRegClassList
-  // is replaced.
-  int NumberHack;
 }
 
 // Register - You should define one instance of this class for each register

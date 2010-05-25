@@ -16,9 +16,9 @@
 // 2: .H
 // 3: .W (32 low bits of 40-bit accu)
 let Namespace = "BF" in {
-def lo16 : SubRegIndex { let NumberHack = 1; }
-def hi16 : SubRegIndex { let NumberHack = 2; }
-def lo32 : SubRegIndex { let NumberHack = 3; }
+def lo16 : SubRegIndex;
+def hi16 : SubRegIndex;
+def lo32 : SubRegIndex;
 }
 
 // Registers are identified with 3-bit group and 3-bit ID numbers.

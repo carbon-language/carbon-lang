@@ -235,10 +235,10 @@ def CR6 : CR<6, "cr6", [CR6LT, CR6GT, CR6EQ, CR6UN]>, DwarfRegNum<[74]>;
 def CR7 : CR<7, "cr7", [CR7LT, CR7GT, CR7EQ, CR7UN]>, DwarfRegNum<[75]>;
 
 let Namespace = "PPC" in {
-def sub_lt : SubRegIndex { let NumberHack = 1; }
-def sub_gt : SubRegIndex { let NumberHack = 2; }
-def sub_eq : SubRegIndex { let NumberHack = 3; }
-def sub_un : SubRegIndex { let NumberHack = 4; }
+def sub_lt : SubRegIndex;
+def sub_gt : SubRegIndex;
+def sub_eq : SubRegIndex;
+def sub_un : SubRegIndex;
 }
 
 def : SubRegSet<sub_lt,
