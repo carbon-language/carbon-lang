@@ -160,4 +160,18 @@ void use_F(F<char> &fc) {
 // CHECK-12: @_ZTSN12_GLOBAL__N_11AE = internal constant
 // CHECK-12: @_ZTIN12_GLOBAL__N_11AE = internal constant
 
-
+// RUN: FileCheck --check-prefix=CHECK-G %s < %t
+//
+// CHECK-G: @_ZTV1GIiE = weak_odr constant
+template <typename T>
+class G {
+public:
+  G() {}
+  virtual void f0();
+  virtual void f1();
+};
+template <>
+void G<int>::f1() {}
+template <typename T>
+void G<T>::f0() {}
+void G_f0()  { new G<int>(); }

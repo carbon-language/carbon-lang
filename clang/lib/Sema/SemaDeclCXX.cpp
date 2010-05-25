@@ -6085,8 +6085,15 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
   std::pair<llvm::DenseMap<CXXRecordDecl *, bool>::iterator, bool>
     Pos = VTablesUsed.insert(std::make_pair(Class, DefinitionRequired));
   if (!Pos.second) {
-    Pos.first->second = Pos.first->second || DefinitionRequired;
-    return;
+    // If we already had an entry, check to see if we are promoting this vtable
+    // to required a definition. If so, we need to reappend to the VTableUses
+    // list, since we may have already processed the first entry.
+    if (DefinitionRequired && !Pos.first->second) {
+      Pos.first->second = true;
+    } else {
+      // Otherwise, we can early exit.
+      return;
+    }
   }
 
   // Local classes need to have their virtual members marked
