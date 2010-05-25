@@ -260,8 +260,6 @@ class TargetRegisterInfo {
 protected:
   const unsigned* SubregHash;
   const unsigned SubregHashSize;
-  const unsigned* SuperregHash;
-  const unsigned SuperregHashSize;
   const unsigned* AliasesHash;
   const unsigned AliasesHashSize;
 public:
@@ -284,8 +282,6 @@ protected:
                      int CallFrameDestroyOpcode = -1,
                      const unsigned* subregs = 0,
                      const unsigned subregsize = 0,
-                     const unsigned* superregs = 0,
-                     const unsigned superregsize = 0,
                      const unsigned* aliases = 0,
                      const unsigned aliasessize = 0);
   virtual ~TargetRegisterInfo();
@@ -432,19 +428,7 @@ public:
   /// isSuperRegister - Returns true if regB is a super-register of regA.
   ///
   bool isSuperRegister(unsigned regA, unsigned regB) const {
-    // SuperregHash is a simple quadratically probed hash table.
-    size_t index = (regA + regB * 37) & (SuperregHashSize-1);
-    unsigned ProbeAmt = 2;
-    while (SuperregHash[index*2] != 0 &&
-           SuperregHash[index*2+1] != 0) {
-      if (SuperregHash[index*2] == regA && SuperregHash[index*2+1] == regB)
-        return true;
-
-      index = (index + ProbeAmt) & (SuperregHashSize-1);
-      ProbeAmt += 2;
-    }
-
-    return false;
+    return isSubRegister(regB, regA);
   }
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the

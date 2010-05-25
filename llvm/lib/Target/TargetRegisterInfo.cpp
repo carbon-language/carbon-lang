@@ -25,10 +25,8 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              const char *const *subregindexnames,
                              int CFSO, int CFDO,
                              const unsigned* subregs, const unsigned subregsize,
-                         const unsigned* superregs, const unsigned superregsize,
                          const unsigned* aliases, const unsigned aliasessize)
   : SubregHash(subregs), SubregHashSize(subregsize),
-    SuperregHash(superregs), SuperregHashSize(superregsize),
     AliasesHash(aliases), AliasesHashSize(aliasessize),
     Desc(D), SubRegIndexNames(subregindexnames), NumRegs(NR),
     RegClassBegin(RCB), RegClassEnd(RCE) {
