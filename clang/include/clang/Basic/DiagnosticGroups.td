@@ -195,4 +195,4 @@ def NonGCC : DiagGroup<"non-gcc",
     [SignCompare, Conversion, LiteralRange]>;
 
 // A warning group for warnings about GCC extensions.
-def GNU : DiagGroup<"gnu", [GNUDesignator]>;
+def GNU : DiagGroup<"gnu", [GNUDesignator, VLA]>;
