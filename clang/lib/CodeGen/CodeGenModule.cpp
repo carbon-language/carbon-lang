@@ -361,7 +361,6 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
 /// variables (these details are set in EmitGlobalVarDefinition for variables).
 void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
                                                     llvm::GlobalValue *GV) {
-  GV->setLinkage(getFunctionLinkage(D));
   SetCommonAttributes(D, GV);
 }
 
@@ -1330,6 +1329,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   }
 
   llvm::Function *Fn = cast<llvm::Function>(Entry);
+  setFunctionLinkage(D, Fn);
 
   CodeGenFunction(*this).GenerateCode(D, Fn);
 

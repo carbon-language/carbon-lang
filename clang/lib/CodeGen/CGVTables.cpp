@@ -2723,7 +2723,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   CXXThisDecl->Destroy(getContext());
   
   // Set the right linkage.
-  Fn->setLinkage(CGM.getFunctionLinkage(MD));
+  CGM.setFunctionLinkage(MD, Fn);
   
   // Set the right visibility.
   CGM.setGlobalVisibility(Fn, MD);

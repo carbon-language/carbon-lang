@@ -436,6 +436,10 @@ public:
   llvm::GlobalVariable::LinkageTypes
   getFunctionLinkage(const FunctionDecl *FD);
 
+  void setFunctionLinkage(const FunctionDecl *FD, llvm::GlobalValue *V) {
+    V->setLinkage(getFunctionLinkage(FD));
+  }
+
   /// getVTableLinkage - Return the appropriate linkage for the vtable, VTT,
   /// and type information of the given class.
   static llvm::GlobalVariable::LinkageTypes 

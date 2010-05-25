@@ -206,6 +206,7 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
     return;
 
   llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXConstructor(D, Type));
+  setFunctionLinkage(D, Fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 
@@ -269,6 +270,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
     return;
 
   llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXDestructor(D, Type));
+  setFunctionLinkage(D, Fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 

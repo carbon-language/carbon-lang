@@ -114,14 +114,14 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
     llvm::GlobalValue::LinkageTypes Linkage = 
       llvm::GlobalValue::InternalLinkage;
 
-    // If this is a static declaration inside an inline function, it must have
-    // weak linkage so that the linker will merge multiple definitions of it.
-    if (getContext().getLangOptions().CPlusPlus) {
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
-        if (FD->isInlined())
-          Linkage = llvm::GlobalValue::WeakAnyLinkage;
-      }
-    }
+    // If the function definition has some sort of weak linkage, its
+    // static variables should also be weak so that they get properly
+    // uniqued.  We can't do this in C, though, because there's no
+    // standard way to agree on which variables are the same (i.e.
+    // there's no mangling).
+    if (getContext().getLangOptions().CPlusPlus)
+      if (llvm::GlobalValue::isWeakForLinker(CurFn->getLinkage()))
+        Linkage = CurFn->getLinkage();
     
     return EmitStaticBlockVarDecl(D, Linkage);
   }
