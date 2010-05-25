@@ -126,3 +126,8 @@ movl	0, %eax   // CHECK: movl 0, %eax # encoding: [0x8b,0x04,0x25,A,A,A,A]
 // CHECK: jne
 // CHECK: encoding: [0x75,A]
         jnz 0
+
+// rdar://8017515
+btq $0x01,%rdx
+// CHECK: btq	$1, %rdx
+// CHECK:  encoding: [0x48,0x0f,0xba,0xe2,0x01]
