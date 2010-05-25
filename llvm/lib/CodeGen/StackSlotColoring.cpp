@@ -118,7 +118,7 @@ namespace {
 
   private:
     void InitializeSlots();
-    bool CheckForSetJmpCall(const MachineFunction &MF);
+    bool CheckForSetJmpCall(const MachineFunction &MF) const;
     void ScanForSpillSlotRefs(MachineFunction &MF);
     bool OverlapWithAssignments(LiveInterval *li, int Color) const;
     int ColorSlot(LiveInterval *li);
@@ -164,7 +164,7 @@ namespace {
 
 /// CheckForSetJmpCall - Return true if there's a call to setjmp/sigsetjmp in
 /// this function.
-bool StackSlotColoring::CheckForSetJmpCall(const MachineFunction &MF) {
+bool StackSlotColoring::CheckForSetJmpCall(const MachineFunction &MF) const {
   const Function *F = MF.getFunction();
   const Module *M = F->getParent();
   const Function *SetJmp = M->getFunction("setjmp");
