@@ -277,3 +277,28 @@ retl
 // CHECK: cmpsd $7, %xmm0, %xmm1
 // CHECK: encoding: [0xf2,0x0f,0xc2,0xc8,0x07]
         cmpordsd %xmm0, %xmm1
+
+// rdar://7995856
+// CHECK: fmul	%st(0)
+// CHECK:  encoding: [0xd8,0xc8]
+        fmul %st(0), %st
+
+// CHECK: fadd	%st(0)
+// CHECK:  encoding: [0xd8,0xc0]
+        fadd %st(0), %st
+
+// CHECK: fsub	%st(0)
+// CHECK:  encoding: [0xd8,0xe0]
+        fsub %st(0), %st
+
+// CHECK: fsubr	%st(0)
+// CHECK:  encoding: [0xd8,0xe8]
+        fsubr %st(0), %st
+
+// CHECK: fdivr	%st(0)
+// CHECK:  encoding: [0xd8,0xf8]
+        fdivr %st(0), %st
+
+// CHECK: fdiv	%st(0)
+// CHECK:  encoding: [0xd8,0xf0]
+        fdiv %st(0), %st

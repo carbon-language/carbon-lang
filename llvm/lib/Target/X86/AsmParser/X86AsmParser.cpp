@@ -706,6 +706,17 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     Operands.erase(Operands.begin() + 1);
   }
 
+  // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
+  // "f{mul*,add*,sub*,div*} $op"
+  if ((Name.startswith("fmul") || Name.startswith("fadd") ||
+       Name.startswith("fsub") || Name.startswith("fdiv")) &&
+      Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands[2])->isReg() &&
+      static_cast<X86Operand*>(Operands[2])->getReg() == X86::ST0) {
+    delete Operands[2];
+    Operands.erase(Operands.begin() + 2);
+  }
+
   return false;
 }
 
