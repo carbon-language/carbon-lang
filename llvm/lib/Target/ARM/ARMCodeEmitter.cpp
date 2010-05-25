@@ -1465,11 +1465,54 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
 }
 
 void ARMCodeEmitter::emitMiscInstruction(const MachineInstr &MI) {
+  unsigned Opcode = MI.getDesc().Opcode;
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  switch(Opcode) {
+  default:
+    llvm_unreachable("ARMCodeEmitter::emitMiscInstruction");
+
+  case ARM::FMSTAT:
+    // No further encoding needed.
+    break;
+
+  case ARM::VMRS:
+  case ARM::VMSR: {
+    const MachineOperand &MO0 = MI.getOperand(0);
+    // Encode Rt.
+    Binary |= ARMRegisterInfo::getRegisterNumbering(MO0.getReg())
+                << ARMII::RegRdShift;
+    break;
+  }
+
+  case ARM::FCONSTD:
+  case ARM::FCONSTS: {
+    // Encode Dd / Sd.
+    Binary |= encodeVFPRd(MI, 0);
+
+    // Encode imm., Table A7-18 VFP modified immediate constants
+    const MachineOperand &MO1 = MI.getOperand(1);
+    unsigned Imm = static_cast<unsigned>(MO1.getFPImm()->getValueAPF()
+                      .bitcastToAPInt().getHiBits(32).getLimitedValue());
+    unsigned ModifiedImm;
+
+    if(Opcode == ARM::FCONSTS)
+      ModifiedImm = (Imm & 0x80000000) >> 24 | // a
+                    (Imm & 0x03F80000) >> 19;  // bcdefgh
+    else // Opcode == ARM::FCONSTD
+      ModifiedImm = (Imm & 0x80000000) >> 24 | // a
+                    (Imm & 0x007F0000) >> 16;  // bcdefgh
+
+    // Insts{19-16} = abcd, Insts{3-0} = efgh
+    Binary |= ((ModifiedImm & 0xF0) >> 4) << 16;
+    Binary |= (ModifiedImm & 0xF);
+    break;
+  }
+  }
 
   emitWordLE(Binary);
 }
