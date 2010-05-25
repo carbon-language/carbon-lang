@@ -259,10 +259,10 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
                                               unsigned SubIdx) const {
   switch (SubIdx) {
   default: return 0;
-  case 1:
-  case 2:
-  case 3:
-  case 4: {
+  case ARM::ssub_0:
+  case ARM::ssub_1:
+  case ARM::ssub_2:
+  case ARM::ssub_3: {
     // S sub-registers.
     if (A->getSize() == 8) {
       if (B == &ARM::SPR_8RegClass)
@@ -288,10 +288,10 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     assert(A->getSize() == 64 && "Expecting a QQQQ register class!");
     return 0;  // Do not allow coalescing!
   }
-  case 5:
-  case 6:
-  case 7:
-  case 8: {
+  case ARM::dsub_0:
+  case ARM::dsub_1:
+  case ARM::dsub_2:
+  case ARM::dsub_3: {
     // D sub-registers.
     if (A->getSize() == 16) {
       if (B == &ARM::DPR_VFP2RegClass)
@@ -314,18 +314,18 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return 0;  // Do not allow coalescing!
     return A;
   }
-  case 9:
-  case 10:
-  case 11:
-  case 12: {
+  case ARM::dsub_4:
+  case ARM::dsub_5:
+  case ARM::dsub_6:
+  case ARM::dsub_7: {
     // D sub-registers of QQQQ registers.
     if (A->getSize() == 64 && B == &ARM::DPRRegClass)
       return A;
     return 0;  // Do not allow coalescing!
   }
 
-  case 13:
-  case 14: {
+  case ARM::qsub_0:
+  case ARM::qsub_1: {
     // Q sub-registers.
     if (A->getSize() == 32) {
       if (B == &ARM::QPR_VFP2RegClass)
@@ -340,8 +340,8 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return A;
     return 0;  // Do not allow coalescing!
   }
-  case 15:
-  case 16: {
+  case ARM::qsub_2:
+  case ARM::qsub_3: {
     // Q sub-registers of QQQQ registers.
     if (A->getSize() == 64 && B == &ARM::QPRRegClass)
       return A;

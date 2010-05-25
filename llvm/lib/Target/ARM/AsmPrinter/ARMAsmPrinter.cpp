@@ -327,8 +327,8 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     } else if (Modifier && strcmp(Modifier, "lane") == 0) {
       unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
       unsigned DReg =
-        TM.getRegisterInfo()->getMatchingSuperReg(Reg, RegNum & 1 ? 2 : 1,
-                                                  &ARM::DPR_VFP2RegClass);
+        TM.getRegisterInfo()->getMatchingSuperReg(Reg,
+          RegNum & 1 ? ARM::ssub_1 : ARM::ssub_0, &ARM::DPR_VFP2RegClass);
       O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
     } else {
       assert(!MO.getSubReg() && "Subregs should be eliminated!");
