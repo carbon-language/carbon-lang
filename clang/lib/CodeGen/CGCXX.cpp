@@ -13,6 +13,7 @@
 
 // We might split this into multiple files if it gets too unwieldy
 
+#include "CGCXXABI.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "Mangle.h"
@@ -333,3 +334,5 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
 
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
+
+CXXABI::~CXXABI() {}
