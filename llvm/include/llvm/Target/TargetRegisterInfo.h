@@ -268,6 +268,7 @@ public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
   const TargetRegisterDesc *Desc;             // Pointer to the descriptor array
+  const char *const *SubRegIndexNames;        // Names of subreg indexes.
   unsigned NumRegs;                           // Number of entries in the array
 
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
@@ -278,6 +279,7 @@ protected:
   TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                      regclass_iterator RegClassBegin,
                      regclass_iterator RegClassEnd,
+                     const char *const *subregindexnames,
                      int CallFrameSetupOpcode = -1,
                      int CallFrameDestroyOpcode = -1,
                      const unsigned* subregs = 0,
@@ -376,6 +378,13 @@ public:
   /// sizing arrays holding per register information)
   unsigned getNumRegs() const {
     return NumRegs;
+  }
+
+  /// getSubRegIndexName - Return the human-readable symbolic target-specific
+  /// name for the specified SubRegIndex.
+  const char *getSubRegIndexName(unsigned SubIdx) const {
+    assert(SubIdx && "This is not a subregister index");
+    return SubRegIndexNames[SubIdx-1];
   }
 
   /// regsOverlap - Returns true if the two registers are equal or alias each

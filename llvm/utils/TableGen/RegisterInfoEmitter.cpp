@@ -811,6 +811,16 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "Empty_SuperRegsSet },\n";
   }
   OS << "  };\n";      // End of register descriptors...
+
+  // Emit SubRegIndex names, skipping 0
+  const std::vector<Record*> SubRegIndices = Target.getSubRegIndices();
+  OS << "\n  const char *const SubRegIndexTable[] = { \"";
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
+    OS << SubRegIndices[i]->getName();
+    if (i+1 != e)
+      OS << "\", \"";
+  }
+  OS << "\" };\n\n";
   OS << "}\n\n";       // End of anonymous namespace...
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
@@ -876,7 +886,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   OS << ClassName << "::" << ClassName
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : TargetRegisterInfo(RegisterDescriptors, " << Registers.size()+1
-     << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
+     << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
+     << "                 SubRegIndexTable,\n"
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode,\n"
      << "                 SubregHashTable, SubregHashTableSize,\n"
      << "                 SuperregHashTable, SuperregHashTableSize,\n"

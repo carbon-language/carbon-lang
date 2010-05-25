@@ -22,6 +22,7 @@ using namespace llvm;
 
 TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
+                             const char *const *subregindexnames,
                              int CFSO, int CFDO,
                              const unsigned* subregs, const unsigned subregsize,
                          const unsigned* superregs, const unsigned superregsize,
@@ -29,7 +30,8 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
   : SubregHash(subregs), SubregHashSize(subregsize),
     SuperregHash(superregs), SuperregHashSize(superregsize),
     AliasesHash(aliases), AliasesHashSize(aliasessize),
-    Desc(D), NumRegs(NR), RegClassBegin(RCB), RegClassEnd(RCE) {
+    Desc(D), SubRegIndexNames(subregindexnames), NumRegs(NR),
+    RegClassBegin(RCB), RegClassEnd(RCE) {
   assert(NumRegs < FirstVirtualRegister &&
          "Target has too many physical registers!");
 

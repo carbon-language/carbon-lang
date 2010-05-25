@@ -219,8 +219,12 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
         OS << "%physreg" << getReg();
     }
 
-    if (getSubReg() != 0)
-      OS << ':' << getSubReg();
+    if (getSubReg() != 0) {
+      if (TM)
+        OS << ':' << TM->getRegisterInfo()->getSubRegIndexName(getSubReg());
+      else
+        OS << ':' << getSubReg();
+    }
 
     if (isDef() || isKill() || isDead() || isImplicit() || isUndef() ||
         isEarlyClobber()) {
