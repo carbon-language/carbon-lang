@@ -670,11 +670,10 @@ const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   
-  // Handle one kind of thread local...
+  // Handle thread local data.
   if (Kind.isThreadBSS()) return TLSBSSSection;
+  if (Kind.isThreadData()) return TLSDataSection;
 
-  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
-  
   if (Kind.isText())
     return GV->isWeakForLinker() ? TextCoalSection : TextSection;
 
