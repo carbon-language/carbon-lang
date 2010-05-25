@@ -52,8 +52,7 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n  NoSubRegister,\n";
     for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
-      OS << "  " << SubRegIndices[i]->getName() << " = "
-         << SubRegIndices[i]->getValueAsInt("NumberHack") << ",\n";
+      OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
     OS << "  NUM_TARGET_SUBREGS = " << SubRegIndices.size()+1 << "\n";
     OS << "};\n";
     if (!Namespace.empty())

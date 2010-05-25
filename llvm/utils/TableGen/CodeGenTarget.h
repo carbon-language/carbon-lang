@@ -107,7 +107,11 @@ public:
 
   // Map a SubRegIndex Record to its number.
   unsigned getSubRegIndexNo(Record *idx) const {
-    return idx->getValueAsInt("NumberHack");
+    if (SubRegIndices.empty()) ReadSubRegIndices();
+    std::vector<Record*>::const_iterator i =
+      std::find(SubRegIndices.begin(), SubRegIndices.end(), idx);
+    assert(i != SubRegIndices.end() && "Not a SubRegIndex");
+    return (i - SubRegIndices.begin()) + 1;
   }
 
   const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
