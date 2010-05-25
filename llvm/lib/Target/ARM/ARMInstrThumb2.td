@@ -1575,9 +1575,9 @@ def t2MOVrx : T2sI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
 }
 
 let Defs = [CPSR] in {
-def t2MOVsrl_flag : T2XI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
-                         "lsrs.w\t$dst, $src, #1",
-                         [(set GPR:$dst, (ARMsrl_flag GPR:$src))]> {
+def t2MOVsrl_flag : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
+                        "lsrs", ".w\t$dst, $src, #1",
+                        [(set GPR:$dst, (ARMsrl_flag GPR:$src))]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -1588,9 +1588,9 @@ def t2MOVsrl_flag : T2XI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
   let Inst{14-12} = 0b000;
   let Inst{7-6} = 0b01;
 }
-def t2MOVsra_flag : T2XI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
-                         "asrs.w\t$dst, $src, #1",
-                         [(set GPR:$dst, (ARMsra_flag GPR:$src))]> {
+def t2MOVsra_flag : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
+                        "asrs", ".w\t$dst, $src, #1",
+                        [(set GPR:$dst, (ARMsra_flag GPR:$src))]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
