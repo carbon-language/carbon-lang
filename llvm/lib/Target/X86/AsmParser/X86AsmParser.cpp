@@ -632,7 +632,42 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("cmovnzl", "cmovnel")
     .Case("cmovzl", "cmovel")
     .Default(Name);
+
+  // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
+  const MCExpr *ExtraImmOp = 0;
+  if (PatchedName.startswith("cmp") &&
+      (PatchedName.endswith("ss") || PatchedName.endswith("sd") ||
+       PatchedName.endswith("ps") || PatchedName.endswith("pd"))) {
+    unsigned SSEComparisonCode = StringSwitch<unsigned>(
+      PatchedName.slice(3, PatchedName.size() - 2))
+      .Case("eq", 0)
+      .Case("lt", 1)
+      .Case("le", 2)
+      .Case("unord", 3)
+      .Case("neq", 4)
+      .Case("nlt", 5)
+      .Case("nle", 6)
+      .Case("ord", 7)
+      .Default(~0U);
+    if (SSEComparisonCode != ~0U) {
+      ExtraImmOp = MCConstantExpr::Create(SSEComparisonCode,
+                                          getParser().getContext());
+      if (PatchedName.endswith("ss")) {
+        PatchedName = "cmpss";
+      } else if (PatchedName.endswith("sd")) {
+        PatchedName = "cmpsd";
+      } else if (PatchedName.endswith("ps")) {
+        PatchedName = "cmpps";
+      } else {
+        assert(PatchedName.endswith("pd") && "Unexpected mnemonic!");
+        PatchedName = "cmppd";
+      }
+    }
+  }
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
+
+  if (ExtraImmOp)
+    Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
@@ -648,7 +683,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
       Operands.push_back(Op);
     else
       return true;
-    
+
     while (getLexer().is(AsmToken::Comma)) {
       Parser.Lex();  // Eat the comma.
 
