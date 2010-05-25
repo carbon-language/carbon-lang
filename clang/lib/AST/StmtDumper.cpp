@@ -66,8 +66,8 @@ namespace  {
               DumpSubTree(*CI++);
             }
           }
-          OS << ')';
         }
+        OS << ')';
       } else {
         Indent();
         OS << "<<<NULL>>>";
