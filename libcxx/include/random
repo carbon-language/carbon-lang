@@ -1552,7 +1552,82 @@ class piecewise_constant_distribution
 };
 
 template<class RealType = double>
-    class piecewise_linear_distribution;
+class piecewise_linear_distribution
+{
+    // types
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        typedef piecewise_linear_distribution distribution_type;
+
+        param_type();
+        template<class InputIteratorB, class InputIteratorW>
+            param_type(InputIteratorB firstB, InputIteratorB lastB,
+                       InputIteratorW firstW);
+        template<class UnaryOperation>
+            param_type(initializer_list<result_type> bl, UnaryOperation fw);
+        template<class UnaryOperation>
+            param_type(size_t nw, result_type xmin, result_type xmax,
+                       UnaryOperation fw);
+
+        vector<result_type> intervals() const;
+        vector<double> densities() const;
+
+        friend bool operator==(const param_type& x, const param_type& y);
+        friend bool operator!=(const param_type& x, const param_type& y);
+    };
+
+    // constructor and reset functions
+    piecewise_linear_distribution();
+    template<class InputIteratorB, class InputIteratorW>
+        piecewise_linear_distribution(InputIteratorB firstB,
+                                      InputIteratorB lastB,
+                                      InputIteratorW firstW);
+        
+    template<class UnaryOperation>
+        piecewise_linear_distribution(initializer_list<result_type> bl,
+                                      UnaryOperation fw);
+
+    template<class UnaryOperation>
+        piecewise_linear_distribution(size_t nw, result_type xmin,
+                                      result_type xmax, UnaryOperation fw);
+
+    explicit piecewise_linear_distribution(const param_type& parm);
+    void reset();
+
+    // generating functions
+    template<class URNG> result_type operator()(URNG& g);
+    template<class URNG> result_type operator()(URNG& g, const param_type& parm);
+
+    // property functions
+    vector<result_type> intervals() const;
+    vector<double> densities() const;
+
+    param_type param() const;
+    void param(const param_type& parm);
+
+    result_type min() const;
+    result_type max() const;
+
+    friend bool operator==(const piecewise_linear_distribution& x,
+                           const piecewise_linear_distribution& y);
+    friend bool operator!=(const piecewise_linear_distribution& x,
+                           const piecewise_linear_distribution& y);
+
+    template <class charT, class traits>
+    friend
+    basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os,
+               const piecewise_linear_distribution& x);
+    
+    template <class charT, class traits>
+    friend
+    basic_istream<charT, traits>&
+    operator>>(basic_istream<charT, traits>& is,
+               piecewise_linear_distribution& x);
+};
 
 } // std
 */
@@ -5772,7 +5847,8 @@ piecewise_constant_distribution<_RealType>::param_type::__init()
 template<class _RealType>
 piecewise_constant_distribution<_RealType>::param_type::param_type()
     : __b_(2),
-      __densities_(1, 1.0)
+      __densities_(1, 1.0),
+      __areas_(1, 0.0)
 {
     __b_[1] = 1;
 }
@@ -5789,6 +5865,7 @@ piecewise_constant_distribution<_RealType>::param_type::param_type(
         __b_[0] = 0;
         __b_[1] = 1;
         __densities_.assign(1, 1.0);
+        __areas_.assign(1, 0.0);
     }
     else
     {
@@ -5811,6 +5888,7 @@ piecewise_constant_distribution<_RealType>::param_type::param_type(
         __b_[0] = 0;
         __b_[1] = 1;
         __densities_.assign(1, 1.0);
+        __areas_.assign(1, 0.0);
     }
     else
     {
@@ -5883,6 +5961,301 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
            piecewise_constant_distribution<_RT>& __x)
 {
     typedef piecewise_constant_distribution<_RT> _Eng;
+    typedef typename _Eng::result_type result_type;
+    typedef typename _Eng::param_type param_type;
+    typedef typename param_type::__area_type __area_type;
+    __save_flags<_CharT, _Traits> _(__is);
+    __is.flags(ios_base::dec | ios_base::skipws);
+    size_t __n;
+    __is >> __n;
+    vector<result_type> __b(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+        __is >> __b[__i];
+    __is >> __n;
+    vector<double> __densities(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+        __is >> __densities[__i];
+    __is >> __n;
+    vector<__area_type> __areas(__n);
+    for (size_t __i = 0; __i < __n; ++__i)
+        __is >> __areas[__i];
+    if (!__is.fail())
+    {
+        swap(__x.__p_.__b_, __b);
+        swap(__x.__p_.__densities_, __densities);
+        swap(__x.__p_.__areas_, __areas);
+    }
+    return __is;
+}
+
+// piecewise_linear_distribution
+
+template<class _RealType = double>
+class piecewise_linear_distribution
+{
+public:
+    // types
+    typedef _RealType result_type;
+
+    class param_type
+    {
+        typedef typename common_type<double, result_type>::type __area_type;
+        vector<result_type> __b_;
+        vector<double> __densities_;
+        vector<__area_type> __areas_;
+    public:
+        typedef piecewise_linear_distribution distribution_type;
+
+        param_type();
+        template<class _InputIteratorB, class _InputIteratorW>
+            param_type(_InputIteratorB __fB, _InputIteratorB __lB,
+                       _InputIteratorW __fW);
+        template<class _UnaryOperation>
+            param_type(initializer_list<result_type> __bl, _UnaryOperation __fw);
+        template<class _UnaryOperation>
+            param_type(size_t __nw, result_type __xmin, result_type __xmax,
+                       _UnaryOperation __fw);
+
+        vector<result_type> intervals() const {return __b_;}
+        vector<double> densities() const {return __densities_;}
+
+        friend bool operator==(const param_type& __x, const param_type& __y)
+            {return __x.__densities_ == __y.__densities_ && __x.__b_ == __y.__b_;}
+        friend bool operator!=(const param_type& __x, const param_type& __y)
+            {return !(__x == __y);}
+
+    private:
+        void __init();
+
+        friend class piecewise_linear_distribution;
+
+        template <class _CharT, class _Traits, class _RT>
+        friend
+        basic_ostream<_CharT, _Traits>&
+        operator<<(basic_ostream<_CharT, _Traits>& __os,
+                   const piecewise_linear_distribution<_RT>& __x);
+        
+        template <class _CharT, class _Traits, class _RT>
+        friend
+        basic_istream<_CharT, _Traits>&
+        operator>>(basic_istream<_CharT, _Traits>& __is,
+                   piecewise_linear_distribution<_RT>& __x);
+    };
+
+private:
+    param_type __p_;
+
+public:
+    // constructor and reset functions
+    piecewise_linear_distribution() {}
+    template<class _InputIteratorB, class _InputIteratorW>
+        piecewise_linear_distribution(_InputIteratorB __fB,
+                                      _InputIteratorB __lB,
+                                      _InputIteratorW __fW)
+        : __p_(__fB, __lB, __fW) {}
+        
+    template<class _UnaryOperation>
+        piecewise_linear_distribution(initializer_list<result_type> __bl,
+                                      _UnaryOperation __fw)
+        : __p_(__bl, __fw) {}
+
+    template<class _UnaryOperation>
+        piecewise_linear_distribution(size_t __nw, result_type __xmin,
+                                      result_type __xmax, _UnaryOperation __fw)
+        : __p_(__nw, __xmin, __xmax, __fw) {}
+
+    explicit piecewise_linear_distribution(const param_type& __p)
+        : __p_(__p) {}
+
+    void reset() {}
+
+    // generating functions
+    template<class _URNG> result_type operator()(_URNG& __g)
+        {return (*this)(__g, __p_);}
+    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+
+    // property functions
+    vector<result_type> intervals() const {return __p_.intervals();}
+    vector<double> densities() const {return __p_.densities();}
+
+    param_type param() const {return __p_;}
+    void param(const param_type& __p) {__p_ = __p;}
+
+    result_type min() const {return __p_.__b_.front();}
+    result_type max() const {return __p_.__b_.back();}
+
+    friend bool operator==(const piecewise_linear_distribution& __x,
+                           const piecewise_linear_distribution& __y)
+        {return __x.__p_ == __y.__p_;}
+    friend bool operator!=(const piecewise_linear_distribution& __x,
+                           const piecewise_linear_distribution& __y)
+        {return !(__x == __y);}
+
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_ostream<_CharT, _Traits>&
+    operator<<(basic_ostream<_CharT, _Traits>& __os,
+               const piecewise_linear_distribution<_RT>& __x);
+    
+    template <class _CharT, class _Traits, class _RT>
+    friend
+    basic_istream<_CharT, _Traits>&
+    operator>>(basic_istream<_CharT, _Traits>& __is,
+               piecewise_linear_distribution<_RT>& __x);
+};
+
+template<class _RealType>
+void
+piecewise_linear_distribution<_RealType>::param_type::__init()
+{
+    __areas_.assign(__densities_.size() - 1, __area_type());
+    __area_type _S = 0;
+    for (size_t __i = 0; __i < __areas_.size(); ++__i)
+    {
+        __areas_[__i] = (__densities_[__i+1] + __densities_[__i]) *
+                        (__b_[__i+1] - __b_[__i]) * .5;
+        _S += __areas_[__i];
+    }
+    for (size_t __i = __areas_.size(); __i > 1;)
+    {
+        --__i;
+        __areas_[__i] = __areas_[__i-1] / _S;
+    }
+    __areas_[0] = 0;
+    for (size_t __i = 1; __i < __areas_.size(); ++__i)
+        __areas_[__i] += __areas_[__i-1];
+    for (size_t __i = 0; __i < __densities_.size(); ++__i)
+        __densities_[__i] /= _S;
+}
+
+template<class _RealType>
+piecewise_linear_distribution<_RealType>::param_type::param_type()
+    : __b_(2),
+      __densities_(2, 1.0),
+      __areas_(1, 0.0)
+{
+    __b_[1] = 1;
+}
+
+template<class _RealType>
+template<class _InputIteratorB, class _InputIteratorW>
+piecewise_linear_distribution<_RealType>::param_type::param_type(
+        _InputIteratorB __fB, _InputIteratorB __lB, _InputIteratorW __fW)
+    : __b_(__fB, __lB)
+{
+    if (__b_.size() < 2)
+    {
+        __b_.resize(2);
+        __b_[0] = 0;
+        __b_[1] = 1;
+        __densities_.assign(2, 1.0);
+        __areas_.assign(1, 0.0);
+    }
+    else
+    {
+        __densities_.reserve(__b_.size());
+        for (size_t __i = 0; __i < __b_.size(); ++__i, ++__fW)
+            __densities_.push_back(*__fW);
+        __init();
+    }
+}
+
+template<class _RealType>
+template<class _UnaryOperation>
+piecewise_linear_distribution<_RealType>::param_type::param_type(
+        initializer_list<result_type> __bl, _UnaryOperation __fw)
+    : __b_(__bl.begin(), __bl.end())
+{
+    if (__b_.size() < 2)
+    {
+        __b_.resize(2);
+        __b_[0] = 0;
+        __b_[1] = 1;
+        __densities_.assign(2, 1.0);
+        __areas_.assign(1, 0.0);
+    }
+    else
+    {
+        __densities_.reserve(__b_.size());
+        for (size_t __i = 0; __i < __b_.size(); ++__i)
+            __densities_.push_back(__fw(__b_[__i]));
+        __init();
+    }
+}
+
+template<class _RealType>
+template<class _UnaryOperation>
+piecewise_linear_distribution<_RealType>::param_type::param_type(
+        size_t __nw, result_type __xmin, result_type __xmax, _UnaryOperation __fw)
+    : __b_(__nw == 0 ? 2 : __nw + 1)
+{
+    size_t __n = __b_.size() - 1;
+    result_type __d = (__xmax - __xmin) / __n;
+    __densities_.reserve(__b_.size());
+    for (size_t __i = 0; __i < __n; ++__i)
+    {
+        __b_[__i] = __xmin + __i * __d;
+        __densities_.push_back(__fw(__b_[__i]));
+    }
+    __b_[__n] = __xmax;
+    __densities_.push_back(__fw(__b_[__n]));
+    __init();
+}
+
+template<class _RealType>
+template<class _URNG>
+_RealType
+piecewise_linear_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
+{
+    typedef uniform_real_distribution<result_type> _Gen;
+    result_type __u = _Gen()(__g);
+    ptrdiff_t __k = _STD::upper_bound(__p.__areas_.begin(), __p.__areas_.end(),
+                               static_cast<double>(__u)) - __p.__areas_.begin() - 1;
+    __u -= __p.__areas_[__k];
+    const double __dk = __p.__densities_[__k];
+    const double __dk1 = __p.__densities_[__k+1];
+    const double __deltad = __dk1 - __dk;
+    const result_type __bk = __p.__b_[__k];
+    if (__deltad == 0)
+        return static_cast<result_type>(__u / __dk + __bk);
+    const result_type __bk1 = __p.__b_[__k+1];
+    const result_type __deltab = __bk1 - __bk;
+    return static_cast<result_type>((__bk * __dk1 - __bk1 * __dk + 
+        _STD::sqrt(__deltab * (__deltab * __dk * __dk + 2 * __deltad * __u))) /
+        __deltad);
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os,
+           const piecewise_linear_distribution<_RT>& __x)
+{
+    __save_flags<_CharT, _Traits> _(__os);
+    __os.flags(ios_base::dec | ios_base::left | ios_base::fixed |
+               ios_base::scientific);
+    _CharT __sp = __os.widen(' ');
+    __os.fill(__sp);
+    size_t __n = __x.__p_.__b_.size();
+    __os << __n;
+    for (size_t __i = 0; __i < __n; ++__i)
+        __os << __sp << __x.__p_.__b_[__i];
+    __n = __x.__p_.__densities_.size();
+    __os << __sp << __n;
+    for (size_t __i = 0; __i < __n; ++__i)
+        __os << __sp << __x.__p_.__densities_[__i];
+    __n = __x.__p_.__areas_.size();
+    __os << __sp << __n;
+    for (size_t __i = 0; __i < __n; ++__i)
+        __os << __sp << __x.__p_.__areas_[__i];
+    return __os;
+}
+
+template <class _CharT, class _Traits, class _RT>
+basic_istream<_CharT, _Traits>&
+operator>>(basic_istream<_CharT, _Traits>& __is,
+           piecewise_linear_distribution<_RT>& __x)
+{
+    typedef piecewise_linear_distribution<_RT> _Eng;
     typedef typename _Eng::result_type result_type;
     typedef typename _Eng::param_type param_type;
     typedef typename param_type::__area_type __area_type;
