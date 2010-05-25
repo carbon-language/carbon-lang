@@ -744,17 +744,17 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
     case X86::MOVZX32rr8:
     case X86::MOVSX64rr8:
     case X86::MOVZX64rr8:
-      SubIdx = 1;
+      SubIdx = X86::sub_8bit;
       break;
     case X86::MOVSX32rr16:
     case X86::MOVZX32rr16:
     case X86::MOVSX64rr16:
     case X86::MOVZX64rr16:
-      SubIdx = 3;
+      SubIdx = X86::sub_16bit;
       break;
     case X86::MOVSX64rr32:
     case X86::MOVZX64rr32:
-      SubIdx = 4;
+      SubIdx = X86::sub_32bit;
       break;
     }
     return true;

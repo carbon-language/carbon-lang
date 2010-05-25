@@ -157,8 +157,8 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
                                           unsigned SubIdx) const {
   switch (SubIdx) {
   default: return 0;
-  case 1:
-    // 8-bit
+  case X86::sub_8bit:
+  //case X86::sub_ss:
     if (B == &X86::GR8RegClass) {
       if (A->getSize() == 2 || A->getSize() == 4 || A->getSize() == 8)
         return A;
@@ -194,8 +194,8 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return A;
     }
     break;
-  case 2:
-    // 8-bit hi
+  case X86::sub_8bit_hi:
+  //case X86::sub_sd:
     if (B == &X86::GR8_ABCD_HRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
           A == &X86::GR64_NOREXRegClass ||
@@ -212,8 +212,8 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return A;
     }
     break;
-  case 3:
-    // 16-bit
+  case X86::sub_16bit:
+  //case X86::sub_xmm:
     if (B == &X86::GR16RegClass) {
       if (A->getSize() == 4 || A->getSize() == 8)
         return A;
@@ -241,8 +241,7 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       return A;
     }
     break;
-  case 4:
-    // 32-bit
+  case X86::sub_32bit:
     if (B == &X86::GR32RegClass || B == &X86::GR32_NOSPRegClass) {
       if (A->getSize() == 8)
         return A;
