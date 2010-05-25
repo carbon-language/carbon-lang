@@ -404,6 +404,18 @@ namespace {
       return isa<BlockPointerType>(T);
     }
 
+    /// convertBlockPointerToFunctionPointer - Converts a block-pointer type
+    /// to a function pointer type and upon success, returns true; false
+    /// otherwise.
+    bool convertBlockPointerToFunctionPointer(QualType &T) {
+      if (isTopLevelBlockPointerType(T)) {
+        const BlockPointerType *BPT = T->getAs<BlockPointerType>();
+        T = Context->getPointerType(BPT->getPointeeType());
+        return true;
+      }
+      return false;
+    }
+    
     // FIXME: This predicate seems like it would be useful to add to ASTContext.
     bool isObjCType(QualType T) {
       if (!LangOpts.ObjC1 && !LangOpts.ObjC2)
@@ -1111,12 +1123,11 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       ResultStr += PDecl->getNameAsString();
     } else {
       std::string Name = PDecl->getNameAsString();
-      if (isTopLevelBlockPointerType(PDecl->getType())) {
-        // Make sure we convert "t (^)(...)" to "t (*)(...)".
-        const BlockPointerType *BPT = PDecl->getType()->getAs<BlockPointerType>();
-        Context->getPointerType(BPT->getPointeeType()).getAsStringInternal(Name,
-                                                        Context->PrintingPolicy);
-      } else
+      QualType QT = PDecl->getType();
+      // Make sure we convert "t (^)(...)" to "t (*)(...)".
+      if (convertBlockPointerToFunctionPointer(QT))
+        QT.getAsStringInternal(Name, Context->PrintingPolicy);
+      else
         PDecl->getType().getAsStringInternal(Name, Context->PrintingPolicy);
       ResultStr += Name;
     }
@@ -2947,10 +2958,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                 ? Context->getObjCIdType()
                                 : ICE->getType();
       // Make sure we convert "type (^)(...)" to "type (*)(...)".
-      if (isTopLevelBlockPointerType(type)) {
-        const BlockPointerType *BPT = type->getAs<BlockPointerType>();
-        type = Context->getPointerType(BPT->getPointeeType());
-      }
+      (void)convertBlockPointerToFunctionPointer(type);
       userExpr = NoTypeInfoCStyleCastExpr(Context, type, CastExpr::CK_Unknown,
                                           userExpr);
     }
@@ -2988,18 +2996,12 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                      ? Context->getObjCIdType()
                      : (*PI)->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (isTopLevelBlockPointerType(t)) {
-        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
-        t = Context->getPointerType(BPT->getPointeeType());
-      }
+      (void)convertBlockPointerToFunctionPointer(t);
       ArgTypes.push_back(t);
     }
     returnType = OMD->getResultType()->isObjCQualifiedIdType()
                    ? Context->getObjCIdType() : OMD->getResultType();
-    if (isTopLevelBlockPointerType(returnType)) {
-      const BlockPointerType *BPT = returnType->getAs<BlockPointerType>();
-      returnType = Context->getPointerType(BPT->getPointeeType());
-    }
+    (void)convertBlockPointerToFunctionPointer(returnType);
   } else {
     returnType = Context->getObjCIdType();
   }
@@ -4120,11 +4122,8 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       if (AI != BD->param_begin()) S += ", ";
       ParamStr = (*AI)->getNameAsString();
       QualType QT = (*AI)->getType();
-      if (isTopLevelBlockPointerType(QT)) {
-        const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
-        Context->getPointerType(BPT->getPointeeType()).
-        getAsStringInternal(ParamStr, Context->PrintingPolicy);
-      }
+      if (convertBlockPointerToFunctionPointer(QT))
+        QT.getAsStringInternal(ParamStr, Context->PrintingPolicy);
       else
         QT.getAsStringInternal(ParamStr, Context->PrintingPolicy);      
       S += ParamStr;
@@ -4556,24 +4555,16 @@ QualType RewriteObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) {
   // FTP will be null for closures that don't take arguments.
   // Generate a funky cast.
   llvm::SmallVector<QualType, 8> ArgTypes;
-  bool HasBlockType = false;
   QualType Res = FT->getResultType();
-  if (isTopLevelBlockPointerType(Res)) {
-    const BlockPointerType *BPT = Res->getAs<BlockPointerType>();
-    Res = Context->getPointerType(BPT->getPointeeType());
-    HasBlockType = true;
-  }
+  bool HasBlockType = convertBlockPointerToFunctionPointer(Res);
   
   if (FTP) {
     for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (isTopLevelBlockPointerType(t)) {
-        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
-        t = Context->getPointerType(BPT->getPointeeType());
+      if (convertBlockPointerToFunctionPointer(t))
         HasBlockType = true;
-      }
       ArgTypes.push_back(t);
     }
   }
@@ -4644,10 +4635,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (isTopLevelBlockPointerType(t)) {
-        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
-        t = Context->getPointerType(BPT->getPointeeType());
-      }
+      (void)convertBlockPointerToFunctionPointer(t);
       ArgTypes.push_back(t);
     }
   }
