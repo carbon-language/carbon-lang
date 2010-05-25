@@ -558,9 +558,12 @@ struct MemCmpOpt : public LibCallOptimization {
     if (Len == 0) // memcmp(s1,s2,0) -> 0
       return Constant::getNullValue(CI->getType());
 
-    if (Len == 1) { // memcmp(S1,S2,1) -> *LHS - *RHS
-      Value *LHSV = B.CreateLoad(CastToCStr(LHS, B), "lhsv");
-      Value *RHSV = B.CreateLoad(CastToCStr(RHS, B), "rhsv");
+    // memcmp(S1,S2,1) -> *(unsigned char*)LHS - *(unsigned char*)RHS
+    if (Len == 1) {
+      Value *LHSV = B.CreateZExt(B.CreateLoad(CastToCStr(LHS, B), "lhsc"),
+                                 CI->getType(), "lhsv");
+      Value *RHSV = B.CreateZExt(B.CreateLoad(CastToCStr(RHS, B), "rhsc"),
+                                 CI->getType(), "rhsv");
       return B.CreateSExt(B.CreateSub(LHSV, RHSV, "chardiff"), CI->getType());
     }
 
