@@ -158,7 +158,6 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   switch (SubIdx) {
   default: return 0;
   case X86::sub_8bit:
-  case X86::sub_ss:
     if (B == &X86::GR8RegClass) {
       if (A->getSize() == 2 || A->getSize() == 4 || A->getSize() == 8)
         return A;
@@ -190,12 +189,9 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
         return &X86::GR16_NOREXRegClass;
       else if (A == &X86::GR16_ABCDRegClass)
         return &X86::GR16_ABCDRegClass;
-    } else if (B == &X86::FR32RegClass) {
-      return A;
     }
     break;
   case X86::sub_8bit_hi:
-  case X86::sub_sd:
     if (B == &X86::GR8_ABCD_HRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
           A == &X86::GR64_NOREXRegClass ||
@@ -208,12 +204,9 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       else if (A == &X86::GR16RegClass || A == &X86::GR16_ABCDRegClass ||
                A == &X86::GR16_NOREXRegClass)
         return &X86::GR16_ABCDRegClass;
-    } else if (B == &X86::FR64RegClass) {
-      return A;
     }
     break;
   case X86::sub_16bit:
-  case X86::sub_xmm:
     if (B == &X86::GR16RegClass) {
       if (A->getSize() == 4 || A->getSize() == 8)
         return A;
@@ -237,8 +230,6 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
         return &X86::GR32_NOREXRegClass;
       else if (A == &X86::GR32_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
-    } else if (B == &X86::VR128RegClass) {
-      return A;
     }
     break;
   case X86::sub_32bit:
@@ -258,6 +249,18 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       else if (A == &X86::GR64_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
     }
+    break;
+  case X86::sub_ss:
+    if (B == &X86::FR32RegClass)
+      return A;
+    break;
+  case X86::sub_sd:
+    if (B == &X86::FR64RegClass)
+      return A;
+    break;
+  case X86::sub_xmm:
+    if (B == &X86::VR128RegClass)
+      return A;
     break;
   }
   return 0;
