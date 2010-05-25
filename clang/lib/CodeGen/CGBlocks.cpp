@@ -794,8 +794,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   MangleBuffer Name;
   CGM.getMangledName(Name, BD);
   llvm::Function *Fn =
-    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage, Name,
-                           &CGM.getModule());
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage, 
+                           Name.getString(), &CGM.getModule());
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
 
