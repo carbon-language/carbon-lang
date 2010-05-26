@@ -118,7 +118,6 @@ namespace {
 
   private:
     void InitializeSlots();
-    bool CheckForSetJmpCall(const MachineFunction &MF) const;
     void ScanForSpillSlotRefs(MachineFunction &MF);
     bool OverlapWithAssignments(LiveInterval *li, int Color) const;
     int ColorSlot(LiveInterval *li);
@@ -160,34 +159,6 @@ namespace {
       return LHS->weight > RHS->weight;
     }
   };
-}
-
-/// CheckForSetJmpCall - Return true if there's a call to setjmp/sigsetjmp in
-/// this function.
-bool StackSlotColoring::CheckForSetJmpCall(const MachineFunction &MF) const {
-  const Function *F = MF.getFunction();
-  const Module *M = F->getParent();
-  const Function *SetJmp = M->getFunction("setjmp");
-  const Function *SigSetJmp = M->getFunction("sigsetjmp");
-
-  if (!SetJmp && !SigSetJmp)
-    return false;
-
-  if (SetJmp && !SetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SetJmp->use_begin(), E = SetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
-
-  if (SigSetJmp && !SigSetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SigSetJmp->use_begin(), E = SigSetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
-
-  return false;
 }
 
 /// ScanForSpillSlotRefs - Scan all the machine instructions for spill slot
@@ -753,14 +724,11 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
       return false;
   }
 
-  // If there are calls to setjmp or sigsetjmp, don't perform stack slot
-  // coloring. The stack could be modified before the longjmp is executed,
-  // resulting in the wrong value being used afterwards. (See
-  // <rdar://problem/8007500>.)
-  //
-  // FIXME: This goes beyond the setjmp/sigsetjmp functions. Ideally, we should
-  // check for the GCC "returns twice" attribute.
-  if (CheckForSetJmpCall(MF))
+  // If there is a call to a function with the attribute "returns_twice" (like
+  // setjmp or sigsetjmp), don't perform stack slot coloring. The stack could be
+  // modified before the the second return, resulting in the wrong value being
+  // used afterwards. (See <rdar://problem/8007500>.)
+  if (MF.hasReturnsTwiceCall())
     return false;
 
   // Gather spill slot references
