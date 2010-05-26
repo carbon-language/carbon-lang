@@ -195,6 +195,8 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 /// FunctionCallsSetJmp - Return true if the function has a call to setjmp or
 /// other function that gcc recognizes as "returning twice". This is used to
 /// limit code-gen optimizations on the machine function.
+///
+/// FIXME: Remove after <rdar://problem/8031714> is fixed.
 static bool FunctionCallsSetJmp(const Function *F) {
   const Module *M = F->getParent();
   static const char *ReturnsTwiceFns[] = {
