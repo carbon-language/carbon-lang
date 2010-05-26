@@ -250,6 +250,13 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   MachineBasicBlock *EntryMBB = MF->begin();
   RegInfo->EmitLiveInCopies(EntryMBB, TRI, TII);
 
+  DenseMap<unsigned, unsigned> LiveInMap;
+  if (!FuncInfo->ArgDbgValues.empty())
+    for (MachineRegisterInfo::livein_iterator LI = RegInfo->livein_begin(),
+           E = RegInfo->livein_end(); LI != E; ++LI)
+      if (LI->second) 
+        LiveInMap.insert(std::make_pair(LI->first, LI->second));
+
   // Insert DBG_VALUE instructions for function arguments to the entry block.
   for (unsigned i = 0, e = FuncInfo->ArgDbgValues.size(); i != e; ++i) {
     MachineInstr *MI = FuncInfo->ArgDbgValues[e-i-1];
@@ -261,6 +268,21 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       MachineBasicBlock::iterator InsertPos = Def;
       // FIXME: VR def may not be in entry block.
       Def->getParent()->insert(llvm::next(InsertPos), MI);
+    }
+
+    // If Reg is live-in then update debug info to track its copy in a vreg.
+    DenseMap<unsigned, unsigned>::iterator LDI = LiveInMap.find(Reg);
+    if (LDI != LiveInMap.end()) {
+      MachineInstr *Def = RegInfo->getVRegDef(LDI->second);
+      MachineBasicBlock::iterator InsertPos = Def;
+      const MDNode *Variable = 
+        MI->getOperand(MI->getNumOperands()-1).getMetadata();
+      unsigned Offset = MI->getOperand(1).getImm();
+      // Def is never a terminator here, so it is ok to increment InsertPos.
+      BuildMI(*EntryMBB, ++InsertPos, MI->getDebugLoc(), 
+              TII.get(TargetOpcode::DBG_VALUE))
+        .addReg(LDI->second, RegState::Debug)
+        .addImm(Offset).addMetadata(Variable);
     }
   }
 
