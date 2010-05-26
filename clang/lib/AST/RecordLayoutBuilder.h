@@ -174,8 +174,6 @@ class ASTRecordLayoutBuilder {
   ASTRecordLayoutBuilder(const ASTRecordLayoutBuilder&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
-  static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
-                                              const RecordDecl *RD);
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
 

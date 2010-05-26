@@ -244,7 +244,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // Skip the primary base.
-    if (Base == PrimaryBase && PrimaryBaseIsVirtual)
+    if (Base == PrimaryBase && !PrimaryBaseIsVirtual)
       continue;
 
     // Lay out the base.
@@ -878,41 +878,6 @@ void ASTRecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
   assert(llvm::isPowerOf2_32(NewAlignment && "Alignment not a power of 2"));
 
   Alignment = NewAlignment;
-}
-
-const ASTRecordLayout *
-ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
-                                      const RecordDecl *D) {
-  ASTRecordLayoutBuilder Builder(Ctx);
-
-  Builder.Layout(D);
-
-  if (!isa<CXXRecordDecl>(D))
-    return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
-                                     Builder.Size,
-                                     Builder.FieldOffsets.data(),
-                                     Builder.FieldOffsets.size());
-
-  // FIXME: This is not always correct. See the part about bitfields at
-  // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
-  // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
-  bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
-
-  // FIXME: This should be done in FinalizeLayout.
-  uint64_t DataSize =
-    IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
-  uint64_t NonVirtualSize =
-    IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
-
-  return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
-                                   DataSize, Builder.FieldOffsets.data(),
-                                   Builder.FieldOffsets.size(),
-                                   NonVirtualSize,
-                                   Builder.NonVirtualAlignment,
-                                   Builder.SizeOfLargestEmptySubobject,
-                                   Builder.PrimaryBase,
-                                   Builder.PrimaryBaseIsVirtual,
-                                   Builder.Bases, Builder.VBases);
 }
 
 const CXXMethodDecl *
