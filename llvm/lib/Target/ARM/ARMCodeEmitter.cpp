@@ -781,10 +781,6 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
                                                    unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
 
-  if (TID.Opcode == ARM::BFC) {
-    report_fatal_error("ARMv6t2 JIT is not yet supported.");
-  }
-
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -818,6 +814,15 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
                        ARM::reloc_arm_movt) >> 16);
       Binary |= Hi16 & 0xFFF;
       Binary |= ((Hi16 >> 12) & 0xF) << 16;
+      emitWordLE(Binary);
+      return;
+  } else if((TID.Opcode == ARM::BFC) || (TID.Opcode == ARM::BFI)) {
+      uint32_t v = ~MI.getOperand(2).getImm();
+      int32_t lsb = CountTrailingZeros_32(v);
+      int32_t msb = (32 - CountLeadingZeros_32(v)) - 1;
+      // Insts[20-16] = msb, Insts[11-7] = lsb
+      Binary |= (msb & 0x1F) << 16;
+      Binary |= (lsb & 0x1F) << 7;
       emitWordLE(Binary);
       return;
   }
