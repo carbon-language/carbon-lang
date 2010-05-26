@@ -43,8 +43,8 @@ namespace llvm {
     /// Queue - The queue.
     PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
 
-public:
-  LatencyPriorityQueue() : Queue(latency_sort(this)) {
+  public:
+    LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
 
     void initNodes(std::vector<SUnit> &sunits) {
