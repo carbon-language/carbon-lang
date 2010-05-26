@@ -969,6 +969,79 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   return 0;
 }
 
+/// getASTRecordLayout - Get or compute information about the layout of the
+/// specified record (struct/union/class), which indicates its size and field
+/// position information.
+const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
+  D = D->getDefinition();
+  assert(D && "Cannot get layout of forward declarations!");
+
+  // Look up this layout, if already laid out, return what we have.
+  // Note that we can't save a reference to the entry because this function
+  // is recursive.
+  const ASTRecordLayout *Entry = ASTRecordLayouts[D];
+  if (Entry) return *Entry;
+
+  const ASTRecordLayout *NewEntry =
+    ASTRecordLayoutBuilder::ComputeLayout(*this, D);
+  ASTRecordLayouts[D] = NewEntry;
+
+  if (getLangOptions().DumpRecordLayouts) {
+    llvm::errs() << "\n*** Dumping AST Record Layout\n";
+    DumpRecordLayout(D, llvm::errs());
+  }
+
+  return *NewEntry;
+}
+
+const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
+  RD = cast<CXXRecordDecl>(RD->getDefinition());
+  assert(RD && "Cannot get key function for forward declarations!");
+  
+  const CXXMethodDecl *&Entry = KeyFunctions[RD];
+  if (!Entry) 
+    Entry = ASTRecordLayoutBuilder::ComputeKeyFunction(RD);
+  else
+    assert(Entry == ASTRecordLayoutBuilder::ComputeKeyFunction(RD) &&
+           "Key function changed!");
+  
+  return Entry;
+}
+
+/// getInterfaceLayoutImpl - Get or compute information about the
+/// layout of the given interface.
+///
+/// \param Impl - If given, also include the layout of the interface's
+/// implementation. This may differ by including synthesized ivars.
+const ASTRecordLayout &
+ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
+                          const ObjCImplementationDecl *Impl) {
+  assert(!D->isForwardDecl() && "Invalid interface decl!");
+
+  // Look up this layout, if already laid out, return what we have.
+  ObjCContainerDecl *Key =
+    Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D;
+  if (const ASTRecordLayout *Entry = ObjCLayouts[Key])
+    return *Entry;
+
+  // Add in synthesized ivar count if laying out an implementation.
+  if (Impl) {
+    unsigned SynthCount = CountNonClassIvars(D);
+    // If there aren't any sythesized ivars then reuse the interface
+    // entry. Note we can't cache this because we simply free all
+    // entries later; however we shouldn't look up implementations
+    // frequently.
+    if (SynthCount == 0)
+      return getObjCLayout(D, 0);
+  }
+
+  const ASTRecordLayout *NewEntry =
+    ASTRecordLayoutBuilder::ComputeLayout(*this, D, Impl);
+  ObjCLayouts[Key] = NewEntry;
+
+  return *NewEntry;
+}
+
 static void PrintOffset(llvm::raw_ostream &OS,
                         uint64_t Offset, unsigned IndentLevel) {
   OS << llvm::format("%4d | ", Offset);
