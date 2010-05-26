@@ -93,7 +93,6 @@ class ASTRecordLayoutBuilder {
   ASTRecordLayoutBuilder(ASTContext &Ctx);
 
   void Layout(const RecordDecl *D);
-  void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
 
   void LayoutFields(const RecordDecl *D);

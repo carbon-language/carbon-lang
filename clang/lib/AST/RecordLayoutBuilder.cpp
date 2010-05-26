@@ -967,8 +967,43 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   const ASTRecordLayout *Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
 
-  const ASTRecordLayout *NewEntry =
-    ASTRecordLayoutBuilder::ComputeLayout(*this, D);
+  const ASTRecordLayout *NewEntry;
+
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+    ASTRecordLayoutBuilder Builder(*this);
+    Builder.Layout(RD);
+
+    // FIXME: This is not always correct. See the part about bitfields at
+    // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
+    // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
+    bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
+
+    // FIXME: This should be done in FinalizeLayout.
+    uint64_t DataSize =
+      IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
+    uint64_t NonVirtualSize =
+      IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
+
+    NewEntry = 
+      new (*this) ASTRecordLayout(*this, Builder.Size, Builder.Alignment,
+                                  DataSize, Builder.FieldOffsets.data(),
+                                  Builder.FieldOffsets.size(),
+                                  NonVirtualSize,
+                                  Builder.NonVirtualAlignment,
+                                  Builder.SizeOfLargestEmptySubobject,
+                                  Builder.PrimaryBase,
+                                  Builder.Bases, Builder.VBases);
+  } else {
+    ASTRecordLayoutBuilder Builder(*this);
+    Builder.Layout(D);
+  
+    NewEntry =
+      new (*this) ASTRecordLayout(*this, Builder.Size, Builder.Alignment,
+                                  Builder.Size,
+                                  Builder.FieldOffsets.data(),
+                                  Builder.FieldOffsets.size());
+  }
+
   ASTRecordLayouts[D] = NewEntry;
 
   if (getLangOptions().DumpRecordLayouts) {
