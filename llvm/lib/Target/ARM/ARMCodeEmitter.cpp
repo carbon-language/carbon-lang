@@ -820,8 +820,20 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
       uint32_t v = ~MI.getOperand(2).getImm();
       int32_t lsb = CountTrailingZeros_32(v);
       int32_t msb = (32 - CountLeadingZeros_32(v)) - 1;
-      // Insts[20-16] = msb, Insts[11-7] = lsb
+      // Instr{20-16} = msb, Instr{11-7} = lsb
       Binary |= (msb & 0x1F) << 16;
+      Binary |= (lsb & 0x1F) << 7;
+      emitWordLE(Binary);
+      return;
+  } else if ((TID.Opcode == ARM::UBFX) || (TID.Opcode == ARM::SBFX)) {
+      // Encode Rn in Instr{0-3}
+      Binary |= getMachineOpValue(MI, OpIdx++);
+
+      uint32_t lsb = MI.getOperand(OpIdx++).getImm();
+      uint32_t widthm1 = MI.getOperand(OpIdx++).getImm() - 1;
+
+      // Instr{20-16} = widthm1, Instr{11-7} = lsb
+      Binary |= (widthm1 & 0x1F) << 16;
       Binary |= (lsb & 0x1F) << 7;
       emitWordLE(Binary);
       return;
