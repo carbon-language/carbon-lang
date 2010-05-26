@@ -218,6 +218,24 @@ namespace Test7 {
   void testD() { D d; }
 }
 
+namespace Test8 {
+  struct NonPOD { ~NonPOD(); int x, y, z; };
+  struct A { virtual void foo(); };
+  struct B { virtual void bar(NonPOD); };
+  struct C : A, B { virtual void bar(NonPOD); static void helper(NonPOD); };
+
+  // CHECK: define void @_ZN5Test81C6helperENS_6NonPODE([[NONPODTYPE:%.*]]*
+  void C::helper(NonPOD var) {}
+
+  // CHECK: define void @_ZThn8_N5Test81C3barENS_6NonPODE(
+  // CHECK-NOT: load [[NONPODTYPE]]*
+  // CHECK-NOT: memcpy
+  // CHECK: ret void
+  void C::bar(NonPOD var) {}
+}
+
+/**** The following has to go at the end of the file ****/
+
 // This is from Test5:
 // CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 // CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(

@@ -2641,14 +2641,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
        E = MD->param_end(); I != E; ++I) {
     ParmVarDecl *Param = *I;
     QualType ArgType = Param->getType();
-    
-    // Load the argument corresponding to this parameter.
-    RValue Arg;
-    if (ArgType->isReferenceType() ||
-        (hasAggregateLLVMType(ArgType) && !ArgType->isAnyComplexType()))
-      Arg = RValue::get(Builder.CreateLoad(LocalDeclMap[Param]));
-    else
-      Arg = RValue::get(EmitLoadOfScalar(LocalDeclMap[Param], false, ArgType));
+    RValue Arg = EmitDelegateCallArg(Param);
     
     CallArgs.push_back(std::make_pair(Arg, ArgType));
   }

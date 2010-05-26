@@ -1302,6 +1302,11 @@ public:
   /// EmitCallArg - Emit a single call argument.
   RValue EmitCallArg(const Expr *E, QualType ArgType);
 
+  /// EmitDelegateCallArg - We are performing a delegate call; that
+  /// is, the current function is delegating to another one.  Produce
+  /// a r-value suitable for passing the given parameter.
+  RValue EmitDelegateCallArg(const VarDecl *Param);
+
 private:
 
   void EmitReturnOfRValue(RValue RV, QualType Ty);

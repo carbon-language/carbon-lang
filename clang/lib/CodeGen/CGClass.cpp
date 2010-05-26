@@ -1137,34 +1137,9 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
   // Explicit arguments.
   for (; I != E; ++I) {
-    
     const VarDecl *Param = I->first;
     QualType ArgType = Param->getType(); // because we're passing it to itself
-
-    // StartFunction converted the ABI-lowered parameter(s) into a
-    // local alloca.  We need to turn that into an r-value suitable
-    // for EmitCall.
-    llvm::Value *Local = GetAddrOfLocalVar(Param);
-    RValue Arg;
- 
-    // For the most part, we just need to load the alloca, except:
-    // 1) aggregate r-values are actually pointers to temporaries, and
-    // 2) references to aggregates are pointers directly to the aggregate.
-    // I don't know why references to non-aggregates are different here.
-    if (ArgType->isReferenceType()) {
-      const ReferenceType *RefType = ArgType->getAs<ReferenceType>();
-      if (hasAggregateLLVMType(RefType->getPointeeType()))
-        Arg = RValue::getAggregate(Local);
-      else
-        // Locals which are references to scalars are represented
-        // with allocas holding the pointer.
-        Arg = RValue::get(Builder.CreateLoad(Local));
-    } else {
-      if (hasAggregateLLVMType(ArgType))
-        Arg = RValue::getAggregate(Local);
-      else
-        Arg = RValue::get(EmitLoadOfScalar(Local, false, ArgType));
-    }
+    RValue Arg = EmitDelegateCallArg(Param);
 
     DelegateArgs.push_back(std::make_pair(Arg, ArgType));
   }
