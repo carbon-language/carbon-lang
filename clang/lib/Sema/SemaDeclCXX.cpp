@@ -2142,6 +2142,9 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Init = MemInits[i];
 
+    // Set the source order index.
+    Init->setSourceOrder(i);
+
     if (Init->isMemberInitializer()) {
       FieldDecl *Field = Init->getMember();
       if (CheckRedundantInit(*this, Init, Members[Field]) ||

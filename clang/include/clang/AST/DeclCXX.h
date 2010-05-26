@@ -1068,14 +1068,20 @@ class CXXBaseOrMemberInitializer {
   /// RParenLoc - Location of the right paren of the ctor-initializer.
   SourceLocation RParenLoc;
 
-  /// \brief The number of array index variables stored after this object
-  /// in memory.
-  unsigned NumArrayIndices;
-  
   /// IsVirtual - If the initializer is a base initializer, this keeps track
   /// of whether the base is virtual or not.
-  bool IsVirtual;
-  
+  bool IsVirtual : 1;
+
+  /// IsWritten - Whether or not the initializer is explicitly written
+  /// in the sources.
+  bool IsWritten : 1;
+  /// SourceOrderOrNumArrayIndices - If IsImplicit is false, then this
+  /// number keeps track of the textual order of this initializer in the
+  /// original sources, counting from 0; otherwise, if IsImplicit is true,
+  /// it stores the number of array index variables stored after this
+  /// object in memory.
+  unsigned SourceOrderOrNumArrayIndices : 14;
+
   CXXBaseOrMemberInitializer(ASTContext &Context,
                              FieldDecl *Member, SourceLocation MemberLoc,
                              SourceLocation L,
@@ -1169,6 +1175,30 @@ public:
   
   /// \brief Determine the source range covering the entire initializer.
   SourceRange getSourceRange() const;
+
+  /// isWritten - Returns true if this initializer is explicitly written
+  /// in the source code.
+  bool isWritten() const { return IsWritten; }
+
+  /// \brief Return the source position of the initializer, counting from 0.
+  /// If the initializer was implicit, -1 is returned.
+  int getSourceOrder() const {
+    return IsWritten ? static_cast<int>(SourceOrderOrNumArrayIndices) : -1;
+  }
+
+  /// \brief Set the source order of this initializer. This method can only
+  /// be called once for each initializer; it cannot be called on an
+  /// initializer having a positive number of (implicit) array indices.
+  void setSourceOrder(int pos) {
+    assert(!IsWritten &&
+           "calling twice setSourceOrder() on the same initializer");
+    assert(SourceOrderOrNumArrayIndices == 0 &&
+           "setSourceOrder() used when there are implicit array indices");
+    assert(pos >= 0 &&
+           "setSourceOrder() used to make an initializer implicit");
+    IsWritten = true;
+    SourceOrderOrNumArrayIndices = static_cast<unsigned>(pos);
+  }
   
   FieldDecl *getAnonUnionMember() const {
     return AnonUnionMember;
@@ -1183,20 +1213,22 @@ public:
 
   /// \brief Determine the number of implicit array indices used while
   /// described an array member initialization.
-  unsigned getNumArrayIndices() const { return NumArrayIndices; }
+  unsigned getNumArrayIndices() const {
+    return IsWritten ? 0 : SourceOrderOrNumArrayIndices;
+  }
 
   /// \brief Retrieve a particular array index variable used to 
   /// describe an array member initialization.
   VarDecl *getArrayIndex(unsigned I) {
-    assert(I < NumArrayIndices && "Out of bounds member array index");
+    assert(I < getNumArrayIndices() && "Out of bounds member array index");
     return reinterpret_cast<VarDecl **>(this + 1)[I];
   }
   const VarDecl *getArrayIndex(unsigned I) const {
-    assert(I < NumArrayIndices && "Out of bounds member array index");
+    assert(I < getNumArrayIndices() && "Out of bounds member array index");
     return reinterpret_cast<const VarDecl * const *>(this + 1)[I];
   }
   void setArrayIndex(unsigned I, VarDecl *Index) {
-    assert(I < NumArrayIndices && "Out of bounds member array index");
+    assert(I < getNumArrayIndices() && "Out of bounds member array index");
     reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
   }
   

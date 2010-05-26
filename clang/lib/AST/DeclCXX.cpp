@@ -700,8 +700,9 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            TypeSourceInfo *TInfo, bool IsVirtual,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0), 
-    LParenLoc(L), RParenLoc(R), NumArrayIndices(0), IsVirtual(IsVirtual)
+  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0),
+    LParenLoc(L), RParenLoc(R), IsVirtual(IsVirtual), IsWritten(false),
+    SourceOrderOrNumArrayIndices(0)
 {
 }
 
@@ -709,9 +710,9 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            FieldDecl *Member, SourceLocation MemberLoc,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
-    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) , NumArrayIndices(0),
-    IsVirtual(false)
+  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init),
+    AnonUnionMember(0), LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
 
@@ -722,8 +723,8 @@ CXXBaseOrMemberInitializer(ASTContext &Context,
                            VarDecl **Indices,
                            unsigned NumIndices)
   : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
-    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) , 
-    NumArrayIndices(NumIndices), IsVirtual(false)
+    AnonUnionMember(0), LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
 {
   VarDecl **MyIndices = reinterpret_cast<VarDecl **> (this + 1);
   memcpy(MyIndices, Indices, NumIndices * sizeof(VarDecl *));
