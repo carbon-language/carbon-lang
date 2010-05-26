@@ -1105,8 +1105,6 @@ namespace {
       return scheduleDAG->DAG->GetOrdering(SU->getNode());
     }
 
-    unsigned size() const { return Queue.size(); }
-
     bool empty() const { return Queue.empty(); }
     
     void push(SUnit *U) {
