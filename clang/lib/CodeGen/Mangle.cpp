@@ -108,7 +108,8 @@ public:
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
   void mangleType(QualType T);
-
+  void mangleNameOrStandardSubstitution(const NamedDecl *ND);
+  
 private:
   bool mangleSubstitution(const NamedDecl *ND);
   bool mangleSubstitution(QualType T);
@@ -1023,6 +1024,11 @@ void CXXNameMangler::mangleType(QualType T) {
   // Add the substitution.
   if (IsSubstitutable)
     addSubstitution(T);
+}
+
+void CXXNameMangler::mangleNameOrStandardSubstitution(const NamedDecl *ND) {
+  if (!mangleStandardSubstitution(ND))
+    mangleName(ND);
 }
 
 void CXXNameMangler::mangleType(const BuiltinType *T) {
@@ -2137,7 +2143,7 @@ void MangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
   // <special-name> ::= TV <type>  # virtual table
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTV";
-  Mangler.mangleName(RD);
+  Mangler.mangleNameOrStandardSubstitution(RD);
 }
 
 void MangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
@@ -2145,7 +2151,7 @@ void MangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
   // <special-name> ::= TT <type>  # VTT structure
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTT";
-  Mangler.mangleName(RD);
+  Mangler.mangleNameOrStandardSubstitution(RD);
 }
 
 void MangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
@@ -2154,10 +2160,10 @@ void MangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
   // <special-name> ::= TC <type> <offset number> _ <base type>
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTC";
-  Mangler.mangleName(RD);
+  Mangler.mangleNameOrStandardSubstitution(RD);
   Mangler.getStream() << Offset;
   Mangler.getStream() << '_';
-  Mangler.mangleName(Type);
+  Mangler.mangleNameOrStandardSubstitution(Type);
 }
 
 void MangleContext::mangleCXXRTTI(QualType Ty,
