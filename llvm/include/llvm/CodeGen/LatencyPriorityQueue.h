@@ -75,15 +75,7 @@ public:
     
     bool empty() const { return Queue.empty(); }
     
-    virtual void push(SUnit *U) {
-      push_impl(U);
-    }
-    void push_impl(SUnit *U);
-    
-    void push_all(const std::vector<SUnit *> &Nodes) {
-      for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-        push_impl(Nodes[i]);
-    }
+    virtual void push(SUnit *U);
     
     SUnit *pop() {
       if (empty()) return NULL;

@@ -1115,11 +1115,6 @@ namespace {
       Queue.push(U);
     }
 
-    void push_all(const std::vector<SUnit *> &Nodes) {
-      for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-        push(Nodes[i]);
-    }
-    
     SUnit *pop() {
       if (empty()) return NULL;
       SUnit *V = Queue.top();

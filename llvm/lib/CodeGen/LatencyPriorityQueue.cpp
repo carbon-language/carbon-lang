@@ -68,7 +68,7 @@ SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
   return OnlyAvailablePred;
 }
 
-void LatencyPriorityQueue::push_impl(SUnit *SU) {
+void LatencyPriorityQueue::push(SUnit *SU) {
   // Look at all of the successors of this node.  Count the number of nodes that
   // this node is the sole unscheduled node for.
   unsigned NumNodesBlocking = 0;

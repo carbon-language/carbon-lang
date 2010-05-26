@@ -427,7 +427,12 @@ namespace llvm {
     virtual bool empty() const = 0;
     virtual void push(SUnit *U) = 0;
   
-    virtual void push_all(const std::vector<SUnit *> &Nodes) = 0;
+    void push_all(const std::vector<SUnit *> &Nodes) {
+      for (std::vector<SUnit *>::const_iterator I = Nodes.begin(),
+           E = Nodes.end(); I != E; ++I)
+        push(*I);
+    }
+
     virtual SUnit *pop() = 0;
 
     virtual void remove(SUnit *SU) = 0;
