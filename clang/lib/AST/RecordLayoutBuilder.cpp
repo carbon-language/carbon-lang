@@ -638,7 +638,6 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 #endif
 }
 
-// FIXME. Impl is no longer needed.
 void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     const ASTRecordLayout &SL = Context.getASTObjCInterfaceLayout(SD);
