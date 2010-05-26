@@ -73,8 +73,6 @@ public:
       return NumNodesSolelyBlocking[NodeNum];
     }
     
-    unsigned size() const { return Queue.size(); }
-
     bool empty() const { return Queue.empty(); }
     
     virtual void push(SUnit *U) {

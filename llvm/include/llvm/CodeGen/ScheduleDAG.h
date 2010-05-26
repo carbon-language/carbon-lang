@@ -424,7 +424,6 @@ namespace llvm {
     virtual void updateNode(const SUnit *SU) = 0;
     virtual void releaseState() = 0;
 
-    virtual unsigned size() const = 0;
     virtual bool empty() const = 0;
     virtual void push(SUnit *U) = 0;
   
