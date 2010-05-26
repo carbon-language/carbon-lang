@@ -824,7 +824,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
       // Relax the fragment.
 
       MCInst Relaxed;
-      getBackend().RelaxInstruction(IF, Relaxed);
+      getBackend().RelaxInstruction(IF->getInst(), Relaxed);
 
       // Encode the new instruction.
       //

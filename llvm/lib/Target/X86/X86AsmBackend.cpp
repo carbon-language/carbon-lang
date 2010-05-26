@@ -56,7 +56,7 @@ public:
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
-  void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
+  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
 };
@@ -101,20 +101,19 @@ bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions
 // we can relax?
-void X86AsmBackend::RelaxInstruction(const MCInstFragment *IF,
-                                     MCInst &Res) const {
+void X86AsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
   // The only relaxations X86 does is from a 1byte pcrel to a 4byte pcrel.
-  unsigned RelaxedOp = getRelaxedOpcode(IF->getInst().getOpcode());
+  unsigned RelaxedOp = getRelaxedOpcode(Inst.getOpcode());
 
-  if (RelaxedOp == IF->getInst().getOpcode()) {
+  if (RelaxedOp == Inst.getOpcode()) {
     SmallString<256> Tmp;
     raw_svector_ostream OS(Tmp);
-    IF->getInst().dump_pretty(OS);
+    Inst.dump_pretty(OS);
     OS << "\n";
     report_fatal_error("unexpected instruction to relax: " + OS.str());
   }
 
-  Res = IF->getInst();
+  Res = Inst;
   Res.setOpcode(RelaxedOp);
 }
 

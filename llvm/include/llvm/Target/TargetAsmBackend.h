@@ -16,7 +16,6 @@ namespace llvm {
 class MCDataFragment;
 class MCFixup;
 class MCInst;
-class MCInstFragment;
 class MCObjectWriter;
 class MCSection;
 template<typename T>
@@ -111,13 +110,16 @@ public:
   /// MayNeedRelaxation - Check whether the given instruction may need
   /// relaxation.
   ///
-  /// \arg Inst - The instruction to test.
+  /// \param Inst - The instruction to test.
   virtual bool MayNeedRelaxation(const MCInst &Inst) const = 0;
 
   /// RelaxInstruction - Relax the instruction in the given fragment to the next
   /// wider instruction.
-  virtual void RelaxInstruction(const MCInstFragment *IF,
-                                MCInst &Res) const = 0;
+  ///
+  /// \param Inst - The instruction to relax, which may be the same as the
+  /// output.
+  /// \parm Res [output] - On return, the relaxed instruction.
+  virtual void RelaxInstruction(const MCInst &Inst, MCInst &Res) const = 0;
 
   /// WriteNopData - Write an (optimal) nop sequence of Count bytes to the given
   /// output. If the target cannot generate such a sequence, it should return an
