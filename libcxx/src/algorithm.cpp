@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "algorithm"
+#include "random"
+#include "mutex"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -44,5 +46,38 @@ template bool __insertion_sort_incomplete<__less<double>&, double*>(double*, dou
 template bool __insertion_sort_incomplete<__less<long double>&, long double*>(long double*, long double*, __less<long double>&);
 
 template unsigned __sort5<__less<long double>&, long double*>(long double*, long double*, long double*, long double*, long double*, __less<long double>&);
+
+static pthread_mutex_t __rs_mut = PTHREAD_MUTEX_INITIALIZER;
+unsigned __rs_default::__c_ = 0;
+
+__rs_default::__rs_default()
+{
+    pthread_mutex_lock(&__rs_mut);
+    __c_ = 1;
+}
+
+__rs_default::__rs_default(const __rs_default&)
+{
+    ++__c_;
+}
+
+__rs_default::~__rs_default()
+{
+    if (--__c_ == 0)
+        pthread_mutex_unlock(&__rs_mut);
+}
+
+__rs_default::result_type
+__rs_default::operator()()
+{
+    static mt19937 __rs_g;
+    return __rs_g();
+}
+
+__rs_default
+__rs_get()
+{
+    return __rs_default();
+}
 
 _LIBCPP_END_NAMESPACE_STD

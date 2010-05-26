@@ -16,21 +16,22 @@
 //   random_shuffle(Iter first, Iter last, Rand&& rand);
 
 #include <algorithm>
-
-#include "../../iterators.h"
+#include <cassert>
 
 struct gen
 {
     int operator()(int n)
     {
-        return 0;
+        return n-1;
     }
 };
 
 int main()
 {
     int ia[] = {1, 2, 3, 4};
+    int ia1[] = {4, 1, 2, 3};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
     gen r;
     std::random_shuffle(ia, ia+sa, r);
+    assert(std::equal(ia, ia+sa, ia1));
 }

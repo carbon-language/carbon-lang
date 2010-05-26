@@ -9,14 +9,23 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, UniformRandomNumberGenerator Rand> 
-//   void
-//   random_shuffle(Iter first, Iter last, Rand&& g);
+// template<class RandomAccessIterator, class UniformRandomNumberGenerator>
+//     void shuffle(RandomAccessIterator first, RandomAccessIterator last,
+//                  UniformRandomNumberGenerator& g);
 
 #include <algorithm>
-
-#error random_shuffle for UniformRandomNumberGenerator not implemented
+#include <random>
+#include <cassert>
 
 int main()
 {
+    int ia[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    int ia1[] = {2, 7, 1, 4, 3, 6, 5, 10, 9, 8};
+    int ia2[] = {1, 8, 3, 4, 6, 9, 5, 7, 2, 10};
+    const unsigned sa = sizeof(ia)/sizeof(ia[0]);
+    std::minstd_rand g;
+    std::shuffle(ia, ia+sa, g);
+    assert(std::equal(ia, ia+sa, ia1));
+    std::shuffle(ia, ia+sa, g);
+    assert(std::equal(ia, ia+sa, ia2));
 }
