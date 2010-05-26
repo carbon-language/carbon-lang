@@ -816,7 +816,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
       Binary |= ((Hi16 >> 12) & 0xF) << 16;
       emitWordLE(Binary);
       return;
-  } else if((TID.Opcode == ARM::BFC) || (TID.Opcode == ARM::BFI)) {
+  } else if ((TID.Opcode == ARM::BFC) || (TID.Opcode == ARM::BFI)) {
       uint32_t v = ~MI.getOperand(2).getImm();
       int32_t lsb = CountTrailingZeros_32(v);
       int32_t msb = (32 - CountLeadingZeros_32(v)) - 1;
