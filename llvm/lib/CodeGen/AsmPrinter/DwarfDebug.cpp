@@ -2210,9 +2210,10 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     }
 
     // handle multiple DBG_VALUE instructions describing one variable.
-    RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
     if (DotDebugLocEntries.empty())
-      DotDebugLocEntries.push_back(DotDebugLocEntry());
+      RegVar->setDotDebugLocOffset(0);
+    else
+      RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
     const MachineInstr *Begin = NULL;
     const MachineInstr *End = NULL;
     for (SmallVector<const MachineInstr *, 4>::iterator 
@@ -3481,23 +3482,22 @@ void DwarfDebug::emitDebugStr() {
 /// emitDebugLoc - Emit visible names into a debug loc section.
 ///
 void DwarfDebug::emitDebugLoc() {
+  if (DotDebugLocEntries.empty())
+    return;
+
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
     Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getTargetData().getPointerSize();
-  unsigned index = 0;
-  bool needMarker = true;
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
+  unsigned index = 1;
   for (SmallVector<DotDebugLocEntry, 4>::iterator I = DotDebugLocEntries.begin(),
          E = DotDebugLocEntries.end(); I != E; ++I, ++index) {
     DotDebugLocEntry Entry = *I;
-    if (needMarker) {
-      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
-      needMarker = false;
-    }
     if (Entry.isEmpty()) {
       Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
       Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
-      needMarker = true;
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
     } else {
       Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
       Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
