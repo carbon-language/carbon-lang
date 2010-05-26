@@ -227,6 +227,13 @@ class DwarfDebug {
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
+  /// insnNeedsLabel - Collection of instructions that need a label to mark
+  /// a debuggging information entity.
+  SmallPtrSet<const MachineInstr *, 8> InsnNeedsLabel;
+
+  /// ProcessedArgs - Collection of arguments already processed.
+  SmallPtrSet<const MDNode *, 8> ProcessedArgs;
+
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
 
   /// Previous instruction's location information. This is used to determine

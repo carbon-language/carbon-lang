@@ -2274,50 +2274,38 @@ const MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
 
 /// beginScope - Process beginning of a scope.
 void DwarfDebug::beginScope(const MachineInstr *MI) {
-  // Check location.
-  DebugLoc DL = MI->getDebugLoc();
-  if (DL.isUnknown() && !UnknownLocations) {
-    if (MI->isDebugValue() && PrevLabel)
-      LabelsBeforeInsn[MI] = PrevLabel;
+  if (InsnNeedsLabel.count(MI) == 0) {
+    LabelsBeforeInsn[MI] = PrevLabel;
     return;
   }
- 
-  bool LocalVar = false;
-  if (MI->isDebugValue()) {
-    assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
-    DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
-    if (!DV.Verify()) return;
-    if (DV.getTag() != dwarf::DW_TAG_arg_variable
-        && !isDbgValueInUndefinedReg(MI))
-      LocalVar = true;
-  }
 
-  MCSymbol *Label = NULL;
-  if (DL == PrevInstLoc)
-    Label = PrevLabel;
-  // Do not emit line number entry for arguments.
-  else if (!MI->isDebugValue() || LocalVar) {
-    const MDNode *Scope = 0;
-    if (DL.isUnknown() == false) {
-      Scope = DL.getScope(Asm->MF->getFunction()->getContext());
-      // FIXME: Should only verify each scope once!
-      if (!DIScope(Scope).Verify())
-        return;
-    } 
-    // else ...
-    // This instruction has no debug location. If the preceding instruction
-    // did, emit debug location information to indicate that the debug
-    // location is now unknown.
-    
-    Label = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
+  // Check location.
+  DebugLoc DL = MI->getDebugLoc();
+  if (!DL.isUnknown()) {
+    const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
+    PrevLabel = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
     PrevInstLoc = DL;
-    PrevLabel = Label;
+    LabelsBeforeInsn[MI] = PrevLabel;
+    return;
   }
 
-  // If this instruction begins a scope then note down corresponding label
-  // even if previous label is reused.
-  if (Label && (InsnsBeginScopeSet.count(MI) != 0 || MI->isDebugValue()))
-    LabelsBeforeInsn[MI] = Label;
+  // If location is unknown then Use last known location for this DBG_VALUE 
+  // instruction.
+  if (MI->isDebugValue()) {
+    const MDNode *Scope = 
+      PrevInstLoc.getScope(Asm->MF->getFunction()->getContext());
+    PrevLabel = recordSourceLine(PrevInstLoc.getLine(), PrevInstLoc.getCol(), Scope);
+    LabelsBeforeInsn[MI] = PrevLabel;
+    return;
+  }
+
+  if (UnknownLocations) {
+    PrevLabel = recordSourceLine(0, 0, 0);
+    LabelsBeforeInsn[MI] = PrevLabel;
+    return;
+  }
+
+  assert (0 && "Instruction is not processed!");
 }
 
 /// endScope - Process end of a scope.
@@ -2627,6 +2615,40 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   }
   
   recordSourceLine(Line, Col, Scope);
+
+  DebugLoc PrevLoc;
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I)
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
+      const MachineInstr *MI = II;
+      DebugLoc DL = MI->getDebugLoc();
+      if (MI->isDebugValue()) {
+        // DBG_VALUE needs a label if the variable is local variable or
+        // an argument whose location is changing.
+        assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
+        DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
+        if (!DV.Verify()) continue;
+        if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+          InsnNeedsLabel.insert(MI);
+        else if (!ProcessedArgs.insert(DV))
+          InsnNeedsLabel.insert(MI);
+      } else {
+        // If location is unknown then instruction needs a location only if 
+        // UnknownLocations flag is set.
+        if (DL.isUnknown()) {
+          if (UnknownLocations && !PrevLoc.isUnknown())
+            InsnNeedsLabel.insert(MI);
+        } else if (DL != PrevLoc)
+          // Otherwise, instruction needs a location only if it is new location.
+          InsnNeedsLabel.insert(MI);
+      }
+      
+      if (!DL.isUnknown() || UnknownLocations)
+        PrevLoc = DL;
+    }
+
+  PrevLabel = FunctionBeginSym;
 }
 
 /// endFunction - Gather and emit post-function debug information.
@@ -2673,6 +2695,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   // Clear debug info
   CurrentFnDbgScope = NULL;
+  InsnNeedsLabel.clear();
+  ProcessedArgs.clear();
   DbgVariableToFrameIndexMap.clear();
   VarToAbstractVarMap.clear();
   DbgVariableToDbgInstMap.clear();
