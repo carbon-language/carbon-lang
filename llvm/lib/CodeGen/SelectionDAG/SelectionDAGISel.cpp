@@ -25,7 +25,6 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
@@ -252,39 +251,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       }
     }
   done:;
-  }
-
-  // Set a flag indicating if the machine function makes a call to setjmp /
-  // sigsetjmp (i.e., a function marked "returns_twice"). We'll use this to
-  // disable certain optimizations which cannot handle such control flows.
-  // 
-  // FIXME: This goes beyond the setjmp/sigsetjmp functions. We should check for
-  // the GCC "returns twice" attribute.
-  const Module *M = Fn.getParent();
-  const Function *SetJmp = M->getFunction("setjmp");
-  const Function *SigSetJmp = M->getFunction("sigsetjmp");
-  bool HasReturnsTwiceCall = false;
-
-  if (SetJmp || SigSetJmp) {
-    if (SetJmp && !SetJmp->use_empty())
-      for (Value::const_use_iterator
-             I = SetJmp->use_begin(), E = SetJmp->use_end(); I != E; ++I)
-        if (const CallInst *CI = dyn_cast<CallInst>(I))
-          if (CI->getParent()->getParent() == &Fn) {
-            HasReturnsTwiceCall = true;
-            break;
-          }
-
-    if (!HasReturnsTwiceCall && SigSetJmp && !SigSetJmp->use_empty())
-      for (Value::const_use_iterator
-             I = SigSetJmp->use_begin(), E = SigSetJmp->use_end(); I != E; ++I)
-        if (const CallInst *CI = dyn_cast<CallInst>(I))
-          if (CI->getParent()->getParent() == &Fn) {
-            HasReturnsTwiceCall = true;
-            break;
-          }
-
-    mf.setReturnsTwiceCall(HasReturnsTwiceCall);
   }
 
   // Release function-specific state. SDB and CurDAG are already cleared
