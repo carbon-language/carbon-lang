@@ -96,6 +96,7 @@ class RecordLayoutBuilder {
   RecordLayoutBuilder(ASTContext &Ctx);
 
   void Layout(const RecordDecl *D);
+  void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
 
   void LayoutFields(const RecordDecl *D);
@@ -162,6 +163,9 @@ class RecordLayoutBuilder {
   /// given offset.
   void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
   
+  /// InitializeLayout - Initialize record layout for the given record decl.
+  void InitializeLayout(const RecordDecl *D);
+
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
   void FinishLayout();
@@ -732,65 +736,71 @@ RecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
   }
 }
 
-void RecordLayoutBuilder::Layout(const RecordDecl *D) {
+void RecordLayoutBuilder::InitializeLayout(const RecordDecl *D) {
   IsUnion = D->isUnion();
-
+  
   Packed = D->hasAttr<PackedAttr>();
-
+  
   // The #pragma pack attribute specifies the maximum field alignment.
   if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
     MaxFieldAlignment = PPA->getAlignment();
-
+  
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getMaxAlignment());
+}
 
-  // If this is a C++ class, lay out the vtable and the non-virtual bases.
-  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
-  if (RD) {
-    ComputeEmptySubobjectSizes(RD);
-    LayoutNonVirtualBases(RD);
-  }
-
+void RecordLayoutBuilder::Layout(const RecordDecl *D) {
+  InitializeLayout(D);
   LayoutFields(D);
-
-  NonVirtualSize = Size;
-  NonVirtualAlignment = Alignment;
-
-  // If this is a C++ class, lay out its virtual bases and add its primary
-  // virtual base offsets.
-  if (RD) {
-    LayoutVirtualBases(RD, RD);
-
-    VisitedVirtualBases.clear();
-    AddPrimaryVirtualBaseOffsets(RD, 0, RD);
-  }
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   FinishLayout();
-  
+}
+
+void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
+  InitializeLayout(RD);
+
+  ComputeEmptySubobjectSizes(RD);
+
+  // Lay out the vtable and the non-virtual bases.
+  LayoutNonVirtualBases(RD);
+
+  LayoutFields(RD);
+
+  NonVirtualSize = Size;
+  NonVirtualAlignment = Alignment;
+
+  // Lay out the virtual bases and add the primary virtual base offsets.
+  LayoutVirtualBases(RD, RD);
+
+  VisitedVirtualBases.clear();
+  AddPrimaryVirtualBaseOffsets(RD, 0, RD);
+
+  // Finally, round the size of the total struct up to the alignment of the
+  // struct itself.
+  FinishLayout();
+
 #ifndef NDEBUG
-  if (RD) {
-    // Check that we have base offsets for all bases.
-    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-      if (I->isVirtual())
-        continue;
+  // Check that we have base offsets for all bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
       
-      const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-      
-      assert(Bases.count(BaseDecl) && "Did not find base offset!");
-    }
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    assert(Bases.count(BaseDecl) && "Did not find base offset!");
+  }
+  
+  // And all virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+       E = RD->vbases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
-    // And all virtual bases.
-    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
-         E = RD->vbases_end(); I != E; ++I) {
-      const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-      
-      assert(VBases.count(BaseDecl) && "Did not find base offset!");
-    }
+    assert(VBases.count(BaseDecl) && "Did not find base offset!");
   }
 #endif
 }
