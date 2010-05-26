@@ -10,25 +10,11 @@
 #ifndef LLVM_MC_MCFIXUP_H
 #define LLVM_MC_MCFIXUP_H
 
+#include "llvm/System/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
 class MCExpr;
-
-// Private constants, do not use.
-//
-// This is currently laid out so that the MCFixup fields can be efficiently
-// accessed, while keeping the offset field large enough that the assembler
-// backend can reasonably use the MCFixup representation for an entire fragment
-// (splitting any overly large fragments).
-//
-// The division of bits between the kind and the opindex can be tweaked if we
-// end up needing more bits for target dependent kinds.
-enum {
-  MCFIXUP_NUM_GENERIC_KINDS = 128,
-  MCFIXUP_NUM_KIND_BITS = 16,
-  MCFIXUP_NUM_OFFSET_BITS = (32 - MCFIXUP_NUM_KIND_BITS)
-};
 
 /// MCFixupKind - Extensible enumeration to represent the type of a fixup.
 enum MCFixupKind {
@@ -37,12 +23,14 @@ enum MCFixupKind {
   FK_Data_4,     ///< A four-byte fixup.
   FK_Data_8,     ///< A eight-byte fixup.
 
-  FirstTargetFixupKind = MCFIXUP_NUM_GENERIC_KINDS,
+  FirstTargetFixupKind = 128,
 
-  MaxTargetFixupKind = (1 << MCFIXUP_NUM_KIND_BITS)
+  // Limit range of target fixups, in case we want to pack more efficiently
+  // later.
+  MaxTargetFixupKind = (1 << 8)
 };
 
-/// MCFixup - Encode information on a single operation to perform on an byte
+/// MCFixup - Encode information on a single operation to perform on a byte
 /// sequence (e.g., an encoded instruction) which requires assemble- or run-
 /// time patching.
 ///
@@ -57,36 +45,33 @@ enum MCFixupKind {
 /// fixups become relocations in the object file (or errors, if the fixup cannot
 /// be encoded on the target).
 class MCFixup {
-  static const unsigned MaxOffset = 1 << MCFIXUP_NUM_KIND_BITS;
-
   /// The value to put into the fixup location. The exact interpretation of the
-  /// expression is target dependent, usually it will one of the operands to an
-  /// instruction or an assembler directive.
+  /// expression is target dependent, usually it will be one of the operands to
+  /// an instruction or an assembler directive.
   const MCExpr *Value;
 
   /// The byte index of start of the relocation inside the encoded instruction.
-  unsigned Offset : MCFIXUP_NUM_OFFSET_BITS;
+  uint32_t Offset;
 
   /// The target dependent kind of fixup item this is. The kind is used to
   /// determine how the operand value should be encoded into the instruction.
-  unsigned Kind : MCFIXUP_NUM_KIND_BITS;
+  unsigned Kind;
 
 public:
-  static MCFixup Create(unsigned Offset, const MCExpr *Value,
+  static MCFixup Create(uint32_t Offset, const MCExpr *Value,
                         MCFixupKind Kind) {
+    assert(unsigned(Kind) < MaxTargetFixupKind && "Kind out of range!");
     MCFixup FI;
     FI.Value = Value;
     FI.Offset = Offset;
     FI.Kind = unsigned(Kind);
-
-    assert(Offset == FI.getOffset() && "Offset out of range!");
-    assert(Kind == FI.getKind() && "Kind out of range!");
     return FI;
   }
 
   MCFixupKind getKind() const { return MCFixupKind(Kind); }
 
-  unsigned getOffset() const { return Offset; }
+  uint32_t getOffset() const { return Offset; }
+  void setOffset(uint32_t Value) { Offset = Value; }
 
   const MCExpr *getValue() const { return Value; }
 
