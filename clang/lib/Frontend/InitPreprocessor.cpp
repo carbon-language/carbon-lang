@@ -428,6 +428,11 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   if (FEOpts.ProgramAction == frontend::RewriteObjC)
     Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
+
+  // Define a macro that exists only when using the static analyzer.
+  if (FEOpts.ProgramAction == frontend::RunAnalysis)
+    Builder.defineMacro("__clang_analyzer__");
+
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }
