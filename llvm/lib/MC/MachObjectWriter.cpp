@@ -145,7 +145,8 @@ class MachObjectWriterImpl {
     RIT_Pair                = 1,
     RIT_Difference          = 2,
     RIT_PreboundLazyPointer = 3,
-    RIT_LocalDifference     = 4
+    RIT_LocalDifference     = 4,
+    RIT_TLV                 = 5
   };
 
   /// X86_64 uses its own relocation types.
@@ -158,7 +159,8 @@ class MachObjectWriterImpl {
     RIT_X86_64_Subtractor = 5,
     RIT_X86_64_Signed1    = 6,
     RIT_X86_64_Signed2    = 7,
-    RIT_X86_64_Signed4    = 8
+    RIT_X86_64_Signed4    = 8,
+    RIT_X86_64_TLV        = 9
   };
 
   /// MachSymbolData - Helper struct for containing some precomputed information
@@ -610,6 +612,8 @@ public:
               Type = RIT_X86_64_GOT;
           } else if (Modifier != MCSymbolRefExpr::VK_None) {
             report_fatal_error("unsupported symbol modifier in relocation");
+          } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
+            Type = RIT_X86_64_TLV;
           } else {
             Type = RIT_X86_64_Signed;
 
@@ -650,6 +654,8 @@ public:
           // required to include any necessary offset directly.
           Type = RIT_X86_64_GOT;
           IsPCRel = 1;
+        } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
+          report_fatal_error("TLVP symbol modifier should have been rip-rel");
         } else if (Modifier != MCSymbolRefExpr::VK_None)
           report_fatal_error("unsupported symbol modifier in relocation");
         else
