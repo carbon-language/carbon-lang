@@ -193,7 +193,6 @@ void Lint::visitCallSite(CallSite CS) {
   Instruction &I = *CS.getInstruction();
   Value *Callee = CS.getCalledValue();
 
-  // TODO: Check function alignment?
   visitMemoryReference(I, Callee, 0, 0, MemRef::Callee);
 
   if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
