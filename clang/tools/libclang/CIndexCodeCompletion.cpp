@@ -37,12 +37,27 @@
 using namespace clang;
 using namespace clang::cxstring;
 
+namespace {
+  /// \brief Stored representation of a completion string.
+  ///
+  /// This is the representation behind a CXCompletionString.
+  class CXStoredCodeCompletionString : public CodeCompletionString {
+    unsigned Priority;
+    
+  public:
+    CXStoredCodeCompletionString(unsigned Priority) : Priority(Priority) { }
+    
+    unsigned getPriority() const { return Priority; }
+  };
+}
+
 extern "C" {
 
 enum CXCompletionChunkKind
 clang_getCompletionChunkKind(CXCompletionString completion_string,
                              unsigned chunk_number) {
-  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  CXStoredCodeCompletionString *CCStr 
+    = (CXStoredCodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
     return CXCompletionChunk_Text;
 
@@ -97,7 +112,8 @@ clang_getCompletionChunkKind(CXCompletionString completion_string,
 
 CXString clang_getCompletionChunkText(CXCompletionString completion_string,
                                       unsigned chunk_number) {
-  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  CXStoredCodeCompletionString *CCStr
+    = (CXStoredCodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
     return createCXString(0);
 
@@ -140,7 +156,8 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
 CXCompletionString
 clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
                                          unsigned chunk_number) {
-  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  CXStoredCodeCompletionString *CCStr 
+    = (CXStoredCodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
     return 0;
 
@@ -177,10 +194,17 @@ clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
 }
 
 unsigned clang_getNumCompletionChunks(CXCompletionString completion_string) {
-  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  CXStoredCodeCompletionString *CCStr
+    = (CXStoredCodeCompletionString *)completion_string;
   return CCStr? CCStr->size() : 0;
 }
 
+unsigned clang_getCompletionPriority(CXCompletionString completion_string) {
+  CXStoredCodeCompletionString *CCStr
+    = (CXStoredCodeCompletionString *)completion_string;
+  return CCStr? CCStr->getPriority() : CCP_Unlikely;
+}
+  
 static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
                          unsigned &Value) {
   if (Memory + sizeof(unsigned) > MemoryEnd)
@@ -226,7 +250,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults()
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = NumResults; I != N; ++I)
-    delete (CodeCompletionString *)Results[I].CompletionString;
+    delete (CXStoredCodeCompletionString *)Results[I].CompletionString;
   delete [] Results;
   delete Buffer;
   
@@ -376,10 +400,16 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
       if (ReadUnsigned(Str, StrEnd, KindValue))
         break;
 
-      CodeCompletionString *CCStr 
-        = CodeCompletionString::Deserialize(Str, StrEnd);
-      if (!CCStr)
+      unsigned Priority;
+      if (ReadUnsigned(Str, StrEnd, Priority))
+        break;
+      
+      CXStoredCodeCompletionString *CCStr
+        = new CXStoredCodeCompletionString(Priority);
+      if (!CCStr->Deserialize(Str, StrEnd)) {
+        delete CCStr;
         continue;
+      }
 
       if (!CCStr->empty()) {
         // Vend the code-completion result to the caller.

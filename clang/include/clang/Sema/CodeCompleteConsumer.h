@@ -24,6 +24,41 @@ class raw_ostream;
 
 namespace clang {
 
+/// \brief Default priority values for code-completion results based
+/// on their kind.
+enum {
+  /// \brief Priority for a declaration that is in the local scope.
+  CCP_LocalDeclaration = 8,
+  /// \brief Priority for a member declaration found from the current
+  /// method or member function.
+  CCP_MemberDeclaration = 20,
+  /// \brief Priority for a language keyword (that isn't any of the other
+  /// categories).
+  CCP_Keyword = 30,
+  /// \brief Priority for a code pattern.
+  CCP_CodePattern = 30,
+  /// \brief Priority for a type.
+  CCP_Type = 40,
+  /// \brief Priority for a non-type declaration.
+  CCP_Declaration = 50,
+  /// \brief Priority for a constant value (e.g., enumerator).
+  CCP_Constant = 60,
+  /// \brief Priority for a preprocessor macro.
+  CCP_Macro = 70,
+  /// \brief Priority for a nested-name-specifier.
+  CCP_NestedNameSpecifier = 75,
+  /// \brief Priority for a result that isn't likely to be what the user wants,
+  /// but is included for completeness.
+  CCP_Unlikely = 80
+};
+
+/// \brief Priority value deltas that are applied to code-completion results
+/// based on the context of the result.
+enum {
+  /// \brief The result is in a base class.
+  CCD_InBaseClass = 2
+};
+
 class FunctionDecl;
 class FunctionType;
 class FunctionTemplateDecl;
@@ -156,13 +191,14 @@ private:
   
 public:
   CodeCompletionString() { }
-  ~CodeCompletionString();
+  ~CodeCompletionString() { clear(); }
   
   typedef llvm::SmallVector<Chunk, 4>::const_iterator iterator;
   iterator begin() const { return Chunks.begin(); }
   iterator end() const { return Chunks.end(); }
   bool empty() const { return Chunks.empty(); }
   unsigned size() const { return Chunks.size(); }
+  void clear();
   
   Chunk &operator[](unsigned I) {
     assert(I < size() && "Chunk index out-of-range");
@@ -232,8 +268,9 @@ public:
   void Serialize(llvm::raw_ostream &OS) const;
   
   /// \brief Deserialize a code-completion string from the given string.
-  static CodeCompletionString *Deserialize(const char *&Str, 
-                                           const char *StrEnd);
+  ///
+  /// \returns true if successful, false otherwise.
+  bool Deserialize(const char *&Str, const char *StrEnd);
 };
   
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
@@ -284,8 +321,11 @@ public:
       /// \brief When Kind == RK_Macro, the identifier that refers to a macro.
       IdentifierInfo *Macro;
     };
-    
-    /// \brief Specifiers which parameter (of a function, Objective-C method,
+
+    /// \brief The priority of this particular code-completion result.
+    unsigned Priority;
+
+    /// \brief Specifies which parameter (of a function, Objective-C method,
     /// macro, etc.) we should start with when formatting the result.
     unsigned StartParameter;
     
@@ -313,29 +353,30 @@ public:
            NestedNameSpecifier *Qualifier = 0,
            bool QualifierIsInformative = false)
       : Kind(RK_Declaration), Declaration(Declaration), 
-        StartParameter(0), Hidden(false), 
-        QualifierIsInformative(QualifierIsInformative),
+        Priority(getPriorityFromDecl(Declaration)), StartParameter(0), 
+        Hidden(false), QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        Qualifier(Qualifier) { }
+        Qualifier(Qualifier) { 
+    }
     
     /// \brief Build a result that refers to a keyword or symbol.
-    Result(const char *Keyword)
-      : Kind(RK_Keyword), Keyword(Keyword), StartParameter(0),
-        Hidden(false), QualifierIsInformative(0), 
+    Result(const char *Keyword, unsigned Priority = CCP_Keyword)
+      : Kind(RK_Keyword), Keyword(Keyword), Priority(Priority), 
+        StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         Qualifier(0) { }
     
     /// \brief Build a result that refers to a macro.
-    Result(IdentifierInfo *Macro)
-     : Kind(RK_Macro), Macro(Macro), StartParameter(0), 
+    Result(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
+     : Kind(RK_Macro), Macro(Macro), Priority(Priority), StartParameter(0), 
        Hidden(false), QualifierIsInformative(0), 
        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
        Qualifier(0) { }
 
     /// \brief Build a result that refers to a pattern.
-    Result(CodeCompletionString *Pattern)
-      : Kind(RK_Pattern), Pattern(Pattern), StartParameter(0), 
-        Hidden(false), QualifierIsInformative(0), 
+    Result(CodeCompletionString *Pattern, unsigned Priority = CCP_CodePattern)
+      : Kind(RK_Pattern), Pattern(Pattern), Priority(Priority), 
+        StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         Qualifier(0) { }
     
@@ -356,6 +397,9 @@ public:
     CodeCompletionString *CreateCodeCompletionString(Sema &S);
     
     void Destroy();
+    
+    /// brief Determine a base priority for the given declaration.
+    static unsigned getPriorityFromDecl(NamedDecl *ND);
   };
     
   class OverloadCandidate {

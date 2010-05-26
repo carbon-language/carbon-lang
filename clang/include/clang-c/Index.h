@@ -1795,6 +1795,21 @@ CINDEX_LINKAGE unsigned
 clang_getNumCompletionChunks(CXCompletionString completion_string);
 
 /**
+ * \brief Determine the priority of this code completion.
+ *
+ * The priority of a code completion indicates how likely it is that this 
+ * particular completion is the completion that the user will select. The
+ * priority is selected by various internal heuristics.
+ *
+ * \param completion_string The completion string to query.
+ *
+ * \returns The priority of this completion string. Smaller values indicate
+ * higher-priority (more likely) completions.
+ */
+CINDEX_LINKAGE unsigned
+clang_getCompletionPriority(CXCompletionString completion_string);
+  
+/**
  * \brief Contains the results of code-completion.
  *
  * This data structure contains the results of code completion, as

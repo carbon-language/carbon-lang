@@ -539,8 +539,10 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
-  if (AsNestedNameSpecifier)
+  if (AsNestedNameSpecifier) {
     R.StartsNestedNameSpecifier = true;
+    R.Priority = CCP_NestedNameSpecifier;
+  }
   
   // If this result is supposed to have an informative qualifier, add one.
   if (R.QualifierIsInformative && !R.Qualifier &&
@@ -588,8 +590,10 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
-  if (AsNestedNameSpecifier)
+  if (AsNestedNameSpecifier) {
     R.StartsNestedNameSpecifier = true;
+    R.Priority = CCP_NestedNameSpecifier;
+  }
   else if (Filter == &ResultBuilder::IsMember && !R.Qualifier && InBaseClass &&
            isa<CXXRecordDecl>(R.Declaration->getDeclContext()
                                                   ->getLookupContext()))
@@ -607,6 +611,10 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
     else
       R.QualifierIsInformative = false;
   }
+  
+  // Adjust the priority if this result comes from a base class.
+  if (InBaseClass)
+    R.Priority += CCD_InBaseClass;
   
   // Insert this result into the set of results.
   Results.push_back(R);
@@ -751,34 +759,34 @@ namespace {
 static void AddTypeSpecifierResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
-  Results.AddResult(Result("short"));
-  Results.AddResult(Result("long"));
-  Results.AddResult(Result("signed"));
-  Results.AddResult(Result("unsigned"));
-  Results.AddResult(Result("void"));
-  Results.AddResult(Result("char"));
-  Results.AddResult(Result("int"));
-  Results.AddResult(Result("float"));
-  Results.AddResult(Result("double"));
-  Results.AddResult(Result("enum"));
-  Results.AddResult(Result("struct"));
-  Results.AddResult(Result("union"));
-  Results.AddResult(Result("const"));
-  Results.AddResult(Result("volatile"));
+  Results.AddResult(Result("short", CCP_Type));
+  Results.AddResult(Result("long", CCP_Type));
+  Results.AddResult(Result("signed", CCP_Type));
+  Results.AddResult(Result("unsigned", CCP_Type));
+  Results.AddResult(Result("void", CCP_Type));
+  Results.AddResult(Result("char", CCP_Type));
+  Results.AddResult(Result("int", CCP_Type));
+  Results.AddResult(Result("float", CCP_Type));
+  Results.AddResult(Result("double", CCP_Type));
+  Results.AddResult(Result("enum", CCP_Type));
+  Results.AddResult(Result("struct", CCP_Type));
+  Results.AddResult(Result("union", CCP_Type));
+  Results.AddResult(Result("const", CCP_Type));
+  Results.AddResult(Result("volatile", CCP_Type));
 
   if (LangOpts.C99) {
     // C99-specific
-    Results.AddResult(Result("_Complex"));
-    Results.AddResult(Result("_Imaginary"));
-    Results.AddResult(Result("_Bool"));
-    Results.AddResult(Result("restrict"));
+    Results.AddResult(Result("_Complex", CCP_Type));
+    Results.AddResult(Result("_Imaginary", CCP_Type));
+    Results.AddResult(Result("_Bool", CCP_Type));
+    Results.AddResult(Result("restrict", CCP_Type));
   }
   
   if (LangOpts.CPlusPlus) {
     // C++-specific
-    Results.AddResult(Result("bool"));
-    Results.AddResult(Result("class"));
-    Results.AddResult(Result("wchar_t"));
+    Results.AddResult(Result("bool", CCP_Type));
+    Results.AddResult(Result("class", CCP_Type));
+    Results.AddResult(Result("wchar_t", CCP_Type));
     
     if (Results.includeCodePatterns()) {
       // typename qualified-id
@@ -790,10 +798,17 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts,
     }
     
     if (LangOpts.CPlusPlus0x) {
-      Results.AddResult(Result("auto"));
-      Results.AddResult(Result("char16_t"));
-      Results.AddResult(Result("char32_t"));
-      Results.AddResult(Result("decltype"));
+      Results.AddResult(Result("auto", CCP_Type));
+      Results.AddResult(Result("char16_t", CCP_Type));
+      Results.AddResult(Result("char32_t", CCP_Type));
+      if (Results.includeCodePatterns()) {
+        CodeCompletionString *Pattern = new CodeCompletionString;
+        Pattern->AddTypedTextChunk("decltype");
+        Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+        Pattern->AddPlaceholderChunk("expression-or-type");
+        Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Pattern));
+      }
     }
   }
   
@@ -1299,6 +1314,8 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
         Pattern->AddPlaceholderChunk("expression");
         Results.AddResult(Result(Pattern));
       }
+      
+      // FIXME: Rethrow?
     }
 
     if (SemaRef.getLangOptions().ObjC1) {

@@ -782,7 +782,8 @@ void print_completion_result(CXCompletionResult *completion_result,
   clang_disposeString(ks);
 
   print_completion_string(completion_result->CompletionString, file);
-  fprintf(file, "\n");
+  fprintf(file, " (%u)\n", 
+          clang_getCompletionPriority(completion_result->CompletionString));
 }
 
 int perform_code_completion(int argc, const char **argv) {
