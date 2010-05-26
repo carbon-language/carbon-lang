@@ -60,6 +60,9 @@ private:
     return DF;
   }
 
+  void EmitInstToFragment(const MCInst &Inst);
+  void EmitInstToData(const MCInst &Inst);
+
 public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &_OS, MCCodeEmitter *_Emitter)
@@ -140,14 +143,14 @@ public:
                                  unsigned MaxBytesToEmit = 0);
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
-  
+
   virtual void EmitFileDirective(StringRef Filename) {
     report_fatal_error("unsupported directive: '.file'");
   }
   virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
     report_fatal_error("unsupported directive: '.file'");
   }
-  
+
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void Finish();
 
@@ -158,7 +161,7 @@ public:
 
 void MCMachOStreamer::SwitchSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
-  
+
   // If already in this section, then this is a noop.
   if (Section == CurSection) return;
 
@@ -200,7 +203,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   // FIXME: Cleanup this code, these bits should be emitted based on semantic
   // properties, not on the order of definition, etc.
   SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
-  
+
   Symbol->setSection(*CurSection);
 }
 
@@ -308,7 +311,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
 void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   // Encode the 'desc' value into the lowest implementation defined bits.
-  assert(DescValue == (DescValue & SF_DescFlagsMask) && 
+  assert(DescValue == (DescValue & SF_DescFlagsMask) &&
          "Invalid .desc value!");
   Assembler.getOrCreateSymbolData(*Symbol).setFlags(DescValue&SF_DescFlagsMask);
 }
@@ -417,6 +420,41 @@ void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
   F->setAtom(CurrentAtomMap.lookup(CurSectionData));
 }
 
+void MCMachOStreamer::EmitInstToFragment(const MCInst &Inst) {
+  MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
+  IF->setAtom(CurrentAtomMap.lookup(CurSectionData));
+
+  // Add the fixups and data.
+  //
+  // FIXME: Revisit this design decision when relaxation is done, we may be
+  // able to get away with not storing any extra data in the MCInst.
+  SmallVector<MCFixup, 4> Fixups;
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  VecOS.flush();
+
+  IF->getCode() = Code;
+  IF->getFixups() = Fixups;
+}
+
+void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {
+  MCDataFragment *DF = getOrCreateDataFragment();
+
+  SmallVector<MCFixup, 4> Fixups;
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  VecOS.flush();
+
+  // Add the fixups and data.
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
+    DF->addFixup(Fixups[i]);
+  }
+  DF->getContents().append(Code.begin(), Code.end());
+}
+
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // Scan for values.
   for (unsigned i = Inst.getNumOperands(); i--; )
@@ -424,15 +462,6 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
       AddValueSymbols(Inst.getOperand(i).getExpr());
 
   CurSectionData->setHasInstructions(true);
-
-  // FIXME-PERF: Common case is that we don't need to relax, encode directly
-  // onto the data fragments buffers.
-
-  SmallVector<MCFixup, 4> Fixups;
-  SmallString<256> Code;
-  raw_svector_ostream VecOS(Code);
-  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
-  VecOS.flush();
 
   // See if we might need to relax this instruction, if so it needs its own
   // fragment.
@@ -447,27 +476,10 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // total knowledge about undefined symbols at that point). Even now, though,
   // we can do a decent job, especially on Darwin where scattering means that we
   // are going to often know that we can never fully resolve a fixup.
-  if (Assembler.getBackend().MayNeedRelaxation(Inst)) {
-    MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
-    IF->setAtom(CurrentAtomMap.lookup(CurSectionData));
-
-    // Add the fixups and data.
-    //
-    // FIXME: Revisit this design decision when relaxation is done, we may be
-    // able to get away with not storing any extra data in the MCInst.
-    IF->getCode() = Code;
-    IF->getFixups() = Fixups;
-
-    return;
-  }
-
-  // Add the fixups and data.
-  MCDataFragment *DF = getOrCreateDataFragment();
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
-    DF->addFixup(Fixups[i]);
-  }
-  DF->getContents().append(Code.begin(), Code.end());
+  if (Assembler.getBackend().MayNeedRelaxation(Inst))
+    EmitInstToFragment(Inst);
+  else
+    EmitInstToData(Inst);
 }
 
 void MCMachOStreamer::Finish() {
