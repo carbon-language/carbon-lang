@@ -132,7 +132,6 @@ private:
   CXXRecordLayoutInfo *CXXInfo;
 
   friend class ASTContext;
-  friend class ASTRecordLayoutBuilder;
 
   ASTRecordLayout(ASTContext &Ctx, uint64_t size, unsigned alignment,
                   unsigned datasize, const uint64_t *fieldoffsets,
