@@ -93,8 +93,13 @@ class RecordLayoutBuilder {
   typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
   EmptyClassOffsetsTy EmptyClassOffsets;
   
-  RecordLayoutBuilder(ASTContext &Ctx);
-
+  RecordLayoutBuilder(ASTContext &Context)
+    : Context(Context), Size(0), Alignment(8), Packed(false), 
+    UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
+    IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0), 
+    PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0),
+    SizeOfLargestEmptySubobject(0) { }
+  
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
@@ -178,13 +183,6 @@ public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
 } // end anonymous namespace
-
-RecordLayoutBuilder::RecordLayoutBuilder(ASTContext &Context)
-  : Context(Context), Size(0), Alignment(8), Packed(false), 
-  UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), IsUnion(false),
-  NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0), 
-  PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0),
-  SizeOfLargestEmptySubobject(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
