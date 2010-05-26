@@ -146,11 +146,11 @@ namespace {
       return getMachineOpValue(MI, MI.getOperand(OpIdx));
     }
 
-    /// getMovi32Value - Return binary encoding of operand for movw/movt. If the 
+    /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
     /// machine operand requires relocation, record the relocation and return zero.
-    unsigned getMovi32Value(const MachineInstr &MI,const MachineOperand &MO, 
+    unsigned getMovi32Value(const MachineInstr &MI,const MachineOperand &MO,
                             unsigned Reloc);
-    unsigned getMovi32Value(const MachineInstr &MI, unsigned OpIdx, 
+    unsigned getMovi32Value(const MachineInstr &MI, unsigned OpIdx,
                             unsigned Reloc) {
       return getMovi32Value(MI, MI.getOperand(OpIdx), Reloc);
     }
@@ -227,12 +227,12 @@ unsigned ARMCodeEmitter::getShiftOp(unsigned Imm) const {
   return 0;
 }
 
-/// getMovi32Value - Return binary encoding of operand for movw/movt. If the 
+/// getMovi32Value - Return binary encoding of operand for movw/movt. If the
 /// machine operand requires relocation, record the relocation and return zero.
 unsigned ARMCodeEmitter::getMovi32Value(const MachineInstr &MI,
-                                        const MachineOperand &MO, 
+                                        const MachineOperand &MO,
                                         unsigned Reloc) {
-  assert(((Reloc == ARM::reloc_arm_movt) || (Reloc == ARM::reloc_arm_movw)) 
+  assert(((Reloc == ARM::reloc_arm_movt) || (Reloc == ARM::reloc_arm_movw))
       && "Relocation to this function should be for movt or movw");
 
   if (MO.isImm())
@@ -1459,7 +1459,12 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
       break;
     ++NumRegs;
   }
-  Binary |= NumRegs * 2;
+  // Bit 8 will be set if <list> is consecutive 64-bit registers (e.g., D0)
+  // Otherwise, it will be 0, in the case of 32-bit registers.
+  if(Binary & 0x100)
+    Binary |= NumRegs * 2;
+  else
+    Binary |= NumRegs;
 
   emitWordLE(Binary);
 }
