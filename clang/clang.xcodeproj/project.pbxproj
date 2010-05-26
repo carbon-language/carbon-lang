@@ -466,7 +466,6 @@
 		1ABD23C71182449800A48E65 /* ParentMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParentMap.cpp; sourceTree = "<group>"; };
 		1ABD23C81182449800A48E65 /* RecordLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RecordLayout.cpp; sourceTree = "<group>"; };
 		1ABD23C91182449800A48E65 /* RecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RecordLayoutBuilder.cpp; sourceTree = "<group>"; };
-		1ABD23CA1182449800A48E65 /* RecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RecordLayoutBuilder.h; sourceTree = "<group>"; };
 		1ABD23CB1182449800A48E65 /* Stmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stmt.cpp; sourceTree = "<group>"; };
 		1ABD23CC1182449800A48E65 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StmtDumper.cpp; sourceTree = "<group>"; };
 		1ABD23CD1182449800A48E65 /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StmtIterator.cpp; sourceTree = "<group>"; };
@@ -1494,7 +1493,6 @@
 				1ABD23C71182449800A48E65 /* ParentMap.cpp */,
 				1ABD23C81182449800A48E65 /* RecordLayout.cpp */,
 				1ABD23C91182449800A48E65 /* RecordLayoutBuilder.cpp */,
-				1ABD23CA1182449800A48E65 /* RecordLayoutBuilder.h */,
 				1ABD23CB1182449800A48E65 /* Stmt.cpp */,
 				1ABD23CC1182449800A48E65 /* StmtDumper.cpp */,
 				1ABD23CD1182449800A48E65 /* StmtIterator.cpp */,
