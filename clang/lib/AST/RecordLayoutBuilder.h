@@ -26,6 +26,9 @@ namespace clang {
   class RecordDecl;
 
 class ASTRecordLayoutBuilder {
+  // FIXME: Remove this and make the appropriate fields public.
+  friend class ASTContext;
+  
   ASTContext &Context;
 
   /// Size - The current size of the record layout.
@@ -91,8 +94,7 @@ class ASTRecordLayoutBuilder {
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
-  void Layout(const ObjCInterfaceDecl *D,
-              const ObjCImplementationDecl *Impl);
+  void Layout(const ObjCInterfaceDecl *D);
 
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
@@ -169,9 +171,6 @@ class ASTRecordLayoutBuilder {
 public:
   static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
                                               const RecordDecl *RD);
-  static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
-                                              const ObjCInterfaceDecl *D,
-                                            const ObjCImplementationDecl *Impl);
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
 

@@ -639,8 +639,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 }
 
 // FIXME. Impl is no longer needed.
-void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
-                                    const ObjCImplementationDecl *Impl) {
+void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     const ASTRecordLayout &SL = Context.getASTObjCInterfaceLayout(SD);
 
@@ -913,20 +912,6 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                                    Builder.Bases, Builder.VBases);
 }
 
-const ASTRecordLayout *
-ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
-                                      const ObjCInterfaceDecl *D,
-                                      const ObjCImplementationDecl *Impl) {
-  ASTRecordLayoutBuilder Builder(Ctx);
-
-  Builder.Layout(D, Impl);
-
-  return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
-                                   Builder.DataSize,
-                                   Builder.FieldOffsets.data(),
-                                   Builder.FieldOffsets.size());
-}
-
 const CXXMethodDecl *
 ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   assert(RD->isDynamicClass() && "Class does not have any virtual methods!");
@@ -1035,8 +1020,15 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       return getObjCLayout(D, 0);
   }
 
+  ASTRecordLayoutBuilder Builder(*this);
+  Builder.Layout(D);
+
   const ASTRecordLayout *NewEntry =
-    ASTRecordLayoutBuilder::ComputeLayout(*this, D, Impl);
+    new (*this) ASTRecordLayout(*this, Builder.Size, Builder.Alignment,
+                                Builder.DataSize,
+                                Builder.FieldOffsets.data(),
+                                Builder.FieldOffsets.size());
+  
   ObjCLayouts[Key] = NewEntry;
 
   return *NewEntry;
