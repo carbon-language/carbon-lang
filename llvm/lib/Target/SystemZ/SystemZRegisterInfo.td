@@ -53,6 +53,14 @@ class FPRL<bits<4> num, string n, list<Register> subregs>
   field bits<4> Num = num;
 }
 
+let Namespace = "SystemZ" in {
+def subreg_32bit  : SubRegIndex;
+def subreg_even32 : SubRegIndex;
+def subreg_odd32  : SubRegIndex;
+def subreg_even   : SubRegIndex;
+def subreg_odd    : SubRegIndex;
+}
+
 // General-purpose registers
 def R0W  : GPR32< 0,  "r0">, DwarfRegNum<[0]>;
 def R1W  : GPR32< 1,  "r1">, DwarfRegNum<[1]>;
@@ -71,6 +79,7 @@ def R13W : GPR32<13, "r13">, DwarfRegNum<[13]>;
 def R14W : GPR32<14, "r14">, DwarfRegNum<[14]>;
 def R15W : GPR32<15, "r15">, DwarfRegNum<[15]>;
 
+let SubRegIndices = [subreg_32bit] in {
 def R0D  : GPR64< 0,  "r0", [R0W]>,  DwarfRegNum<[0]>;
 def R1D  : GPR64< 1,  "r1", [R1W]>,  DwarfRegNum<[1]>;
 def R2D  : GPR64< 2,  "r2", [R2W]>,  DwarfRegNum<[2]>;
@@ -87,8 +96,10 @@ def R12D : GPR64<12, "r12", [R12W]>, DwarfRegNum<[12]>;
 def R13D : GPR64<13, "r13", [R13W]>, DwarfRegNum<[13]>;
 def R14D : GPR64<14, "r14", [R14W]>, DwarfRegNum<[14]>;
 def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
+}
 
 // Register pairs
+let SubRegIndices = [subreg_even32, subreg_odd32] in {
 def R0P  : GPR64< 0,  "r0", [R0W,  R1W],  [R0D,  R1D]>,  DwarfRegNum<[0]>;
 def R2P  : GPR64< 2,  "r2", [R2W,  R3W],  [R2D,  R3D]>,  DwarfRegNum<[2]>;
 def R4P  : GPR64< 4,  "r4", [R4W,  R5W],  [R4D,  R5D]>,  DwarfRegNum<[4]>;
@@ -97,7 +108,11 @@ def R8P  : GPR64< 8,  "r8", [R8W,  R9W],  [R8D,  R9D]>,  DwarfRegNum<[8]>;
 def R10P : GPR64<10, "r10", [R10W, R11W], [R10D, R11D]>, DwarfRegNum<[10]>;
 def R12P : GPR64<12, "r12", [R12W, R13W], [R12D, R13D]>, DwarfRegNum<[12]>;
 def R14P : GPR64<14, "r14", [R14W, R15W], [R14D, R15D]>, DwarfRegNum<[14]>;
+}
 
+let SubRegIndices = [subreg_even, subreg_odd],
+ CompositeIndices = [(subreg_even32 subreg_even, subreg_32bit),
+                     (subreg_odd32  subreg_odd,  subreg_32bit)] in {
 def R0Q  : GPR128< 0,  "r0", [R0D,  R1D],  [R0P]>,  DwarfRegNum<[0]>;
 def R2Q  : GPR128< 2,  "r2", [R2D,  R3D],  [R2P]>,  DwarfRegNum<[2]>;
 def R4Q  : GPR128< 4,  "r4", [R4D,  R5D],  [R4P]>,  DwarfRegNum<[4]>;
@@ -106,6 +121,7 @@ def R8Q  : GPR128< 8,  "r8", [R8D,  R9D],  [R8P]>,  DwarfRegNum<[8]>;
 def R10Q : GPR128<10, "r10", [R10D, R11D], [R10P]>, DwarfRegNum<[10]>;
 def R12Q : GPR128<12, "r12", [R12D, R13D], [R12P]>, DwarfRegNum<[12]>;
 def R14Q : GPR128<14, "r14", [R14D, R15D], [R14P]>, DwarfRegNum<[14]>;
+}
 
 // Floating-point registers
 def F0S  : FPRS< 0,  "f0">, DwarfRegNum<[16]>;
@@ -125,6 +141,7 @@ def F13S : FPRS<13, "f13">, DwarfRegNum<[29]>;
 def F14S : FPRS<14, "f14">, DwarfRegNum<[30]>;
 def F15S : FPRS<15, "f15">, DwarfRegNum<[31]>;
 
+let SubRegIndices = [subreg_32bit] in {
 def F0L  : FPRL< 0,  "f0", [F0S]>,  DwarfRegNum<[16]>;
 def F1L  : FPRL< 1,  "f1", [F1S]>,  DwarfRegNum<[17]>;
 def F2L  : FPRL< 2,  "f2", [F2S]>,  DwarfRegNum<[18]>;
@@ -141,40 +158,10 @@ def F12L : FPRL<12, "f12", [F12S]>, DwarfRegNum<[28]>;
 def F13L : FPRL<13, "f13", [F13S]>, DwarfRegNum<[29]>;
 def F14L : FPRL<14, "f14", [F14S]>, DwarfRegNum<[30]>;
 def F15L : FPRL<15, "f15", [F15S]>, DwarfRegNum<[31]>;
+}
 
 // Status register
 def PSW : SystemZReg<"psw">;
-
-let Namespace = "SystemZ" in {
-def subreg_32bit  : SubRegIndex;
-def subreg_even32 : SubRegIndex;
-def subreg_odd32  : SubRegIndex;
-def subreg_even   : SubRegIndex;
-def subreg_odd    : SubRegIndex;
-}
-
-def : SubRegSet<subreg_32bit, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
-                               R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                              [R0W, R1W,  R2W,  R3W,  R4W,  R5W,  R6W,  R7W,
-                               R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
-
-def : SubRegSet<subreg_even, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                             [R0D, R2D, R4D, R6D, R8D, R10D, R12D, R14D]>;
-
-def : SubRegSet<subreg_odd, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                            [R1D, R3D, R5D, R7D, R9D, R11D, R13D, R15D]>;
-
-def : SubRegSet<subreg_even32, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
-                               [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
-
-def : SubRegSet<subreg_odd32, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
-                              [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
-
-def : SubRegSet<subreg_even32, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                               [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
-
-def : SubRegSet<subreg_odd32, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
-                              [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
 
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,

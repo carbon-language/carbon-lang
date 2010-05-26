@@ -86,6 +86,7 @@ def S28 : ARMFReg<28, "s28">; def S29 : ARMFReg<29, "s29">;
 def S30 : ARMFReg<30, "s30">; def S31 : ARMFReg<31, "s31">;
 
 // Aliases of the F* registers used to hold 64-bit fp values (doubles)
+let SubRegIndices = [ssub_0, ssub_1] in {
 def D0  : ARMReg< 0,  "d0", [S0,   S1]>;
 def D1  : ARMReg< 1,  "d1", [S2,   S3]>;
 def D2  : ARMReg< 2,  "d2", [S4,   S5]>;
@@ -102,6 +103,7 @@ def D12 : ARMReg<12, "d12", [S24, S25]>;
 def D13 : ARMReg<13, "d13", [S26, S27]>;
 def D14 : ARMReg<14, "d14", [S28, S29]>;
 def D15 : ARMReg<15, "d15", [S30, S31]>;
+}
 
 // VFP3 defines 16 additional double registers
 def D16 : ARMFReg<16, "d16">; def D17 : ARMFReg<17, "d17">;
@@ -114,6 +116,9 @@ def D28 : ARMFReg<28, "d28">; def D29 : ARMFReg<29, "d29">;
 def D30 : ARMFReg<30, "d30">; def D31 : ARMFReg<31, "d31">;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
+let SubRegIndices = [dsub_0, dsub_1],
+ CompositeIndices = [(ssub_2 dsub_1, ssub_0),
+                     (ssub_3 dsub_1, ssub_1)] in {
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
 def Q1  : ARMReg< 1,  "q1", [D2,   D3]>;
 def Q2  : ARMReg< 2,  "q2", [D4,   D5]>;
@@ -122,6 +127,8 @@ def Q4  : ARMReg< 4,  "q4", [D8,   D9]>;
 def Q5  : ARMReg< 5,  "q5", [D10, D11]>;
 def Q6  : ARMReg< 6,  "q6", [D12, D13]>;
 def Q7  : ARMReg< 7,  "q7", [D14, D15]>;
+}
+let SubRegIndices = [dsub_0, dsub_1] in {
 def Q8  : ARMReg< 8,  "q8", [D16, D17]>;
 def Q9  : ARMReg< 9,  "q9", [D18, D19]>;
 def Q10 : ARMReg<10, "q10", [D20, D21]>;
@@ -130,6 +137,7 @@ def Q12 : ARMReg<12, "q12", [D24, D25]>;
 def Q13 : ARMReg<13, "q13", [D26, D27]>;
 def Q14 : ARMReg<14, "q14", [D28, D29]>;
 def Q15 : ARMReg<15, "q15", [D30, D31]>;
+}
 
 // Pseudo 256-bit registers to represent pairs of Q registers. These should
 // never be present in the emitted code.
@@ -138,6 +146,9 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 // starting D register number doesn't have to be multiple of 4. e.g. 
 // D1, D2, D3, D4 would be a legal quad. But that would make the sub-register
 // stuffs very messy.
+let SubRegIndices = [qsub_0, qsub_1],
+ CompositeIndices = [(dsub_2 qsub_1, dsub_0),
+                     (dsub_3 qsub_1, dsub_1)] in {
 def QQ0 : ARMReg<0, "qq0", [Q0,  Q1]>;
 def QQ1 : ARMReg<1, "qq1", [Q2,  Q3]>;
 def QQ2 : ARMReg<2, "qq2", [Q4,  Q5]>;
@@ -146,12 +157,21 @@ def QQ4 : ARMReg<4, "qq4", [Q8,  Q9]>;
 def QQ5 : ARMReg<5, "qq5", [Q10, Q11]>;
 def QQ6 : ARMReg<6, "qq6", [Q12, Q13]>;
 def QQ7 : ARMReg<7, "qq7", [Q14, Q15]>;
+}
 
 // Pseudo 512-bit registers to represent four consecutive Q registers.
+let SubRegIndices = [qqsub_0, qqsub_1],
+ CompositeIndices = [(qsub_2 qqsub_1, qsub_0),
+                     (qsub_3 qqsub_1, qsub_1),
+                     (dsub_4 qqsub_1, dsub_0),
+                     (dsub_5 qqsub_1, dsub_1),
+                     (dsub_6 qqsub_1, dsub_2),
+                     (dsub_7 qqsub_1, dsub_3)] in {
 def QQQQ0 : ARMReg<0, "qqqq0", [QQ0, QQ1]>;
 def QQQQ1 : ARMReg<1, "qqqq1", [QQ2, QQ3]>;
 def QQQQ2 : ARMReg<2, "qqqq2", [QQ4, QQ5]>;
 def QQQQ3 : ARMReg<3, "qqqq3", [QQ6, QQ7]>;
+}
 
 // Current Program Status Register.
 def CPSR  : ARMReg<0, "cpsr">;
@@ -437,103 +457,4 @@ def QQQQPR : RegisterClass<"ARM", [v8i64],
 
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
-
-//===----------------------------------------------------------------------===//
-// Subregister Set Definitions... now that we have all of the pieces, define the
-// sub registers for each register.
-//
-
-// S sub-registers of D registers.
-def : SubRegSet<ssub_0, [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-                         D8,  D9,  D10, D11, D12, D13, D14, D15],
-                        [S0,  S2,  S4,  S6,  S8,  S10, S12, S14,
-                         S16, S18, S20, S22, S24, S26, S28, S30]>;
-def : SubRegSet<ssub_1, [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-                         D8,  D9,  D10, D11, D12, D13, D14, D15],
-                        [S1,  S3,  S5,  S7,  S9,  S11, S13, S15,
-                         S17, S19, S21, S23, S25, S27, S29, S31]>;
-
-// S sub-registers of Q registers.
-def : SubRegSet<ssub_0, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7],
-                        [S0,  S4,  S8,  S12, S16, S20, S24, S28]>;
-def : SubRegSet<ssub_1, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7],
-                        [S1,  S5,  S9,  S13, S17, S21, S25, S29]>;
-def : SubRegSet<ssub_2, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7],
-                        [S2,  S6,  S10, S14, S18, S22, S26, S30]>;
-def : SubRegSet<ssub_3, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7],
-                        [S3,  S7,  S11, S15, S19, S23, S27, S31]>;
-
-// D sub-registers of Q registers.
-def : SubRegSet<dsub_0, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
-                         Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15],
-                        [D0,  D2,  D4,  D6,  D8,  D10, D12, D14,
-                         D16, D18, D20, D22, D24, D26, D28, D30]>;
-def : SubRegSet<dsub_1, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
-                         Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15],
-                        [D1,  D3,  D5,  D7,  D9,  D11, D13, D15,
-                         D17, D19, D21, D23, D25, D27, D29, D31]>;
-
-// S sub-registers of QQ registers. Note there are no sub-indices
-// for referencing S4 - S7, S12 - S15, and S20 - S23. It doesn't
-// look like we need them.
-def : SubRegSet<ssub_0, [QQ0, QQ1, QQ2, QQ3],
-                        [S0,  S8,  S16, S24]>;
-def : SubRegSet<ssub_1, [QQ0, QQ1, QQ2, QQ3],
-                        [S1,  S9,  S17, S25]>;
-def : SubRegSet<ssub_2, [QQ0, QQ1, QQ2, QQ3],
-                        [S2,  S10, S18, S26]>;
-def : SubRegSet<ssub_3, [QQ0, QQ1, QQ2, QQ3],
-                        [S3,  S11, S19, S27]>;
-
-// D sub-registers of QQ registers.
-def : SubRegSet<dsub_0, [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                        [D0,  D4,  D8,  D12, D16, D20, D24, D28]>;
-def : SubRegSet<dsub_1, [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                        [D1,  D5,  D9,  D13, D17, D21, D25, D29]>;
-def : SubRegSet<dsub_2, [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                        [D2,  D6,  D10, D14, D18, D22, D26, D30]>;
-def : SubRegSet<dsub_3, [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                        [D3,  D7,  D11, D15, D19, D23, D27, D31]>;
-
-// Q sub-registers of QQ registers.
-def : SubRegSet<qsub_0, [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                        [Q0,  Q2,  Q4,  Q6,  Q8,  Q10, Q12, Q14]>;
-def : SubRegSet<qsub_1,[QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7],
-                       [Q1,  Q3,  Q5,  Q7,  Q9,  Q11, Q13, Q15]>;
-
-
-// D sub-registers of QQQQ registers.
-def : SubRegSet<dsub_0, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D0,    D8,    D16,   D24]>;
-def : SubRegSet<dsub_1, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D1,    D9,    D17,   D25]>;
-def : SubRegSet<dsub_2, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D2,    D10,   D18,   D26]>;
-def : SubRegSet<dsub_3, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D3,    D11,   D19,   D27]>;
-
-def : SubRegSet<dsub_4, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D4,    D12,   D20,   D28]>;
-def : SubRegSet<dsub_5, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D5,    D13,   D21,   D29]>;
-def : SubRegSet<dsub_6, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D6,    D14,   D22,   D30]>;
-def : SubRegSet<dsub_7, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [D7,    D15,   D23,   D31]>;
-
-// Q sub-registers of QQQQ registers.
-def : SubRegSet<qsub_0, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [Q0,    Q4,    Q8,    Q12]>;
-def : SubRegSet<qsub_1, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [Q1,    Q5,    Q9,    Q13]>;
-def : SubRegSet<qsub_2, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [Q2,    Q6,    Q10,   Q14]>;
-def : SubRegSet<qsub_3, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                        [Q3,    Q7,    Q11,   Q15]>;
-
-// QQ sub-registers of QQQQ registers.
-def : SubRegSet<qqsub_0, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                         [QQ0,   QQ2,   QQ4,   QQ6]>;
-def : SubRegSet<qqsub_1, [QQQQ0, QQQQ1, QQQQ2, QQQQ3],
-                         [QQ1,   QQ3,   QQ5,   QQ7]>;
 
