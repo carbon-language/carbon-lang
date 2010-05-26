@@ -669,9 +669,11 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     AddEncodingComment(Inst);
 
   // Show the MCInst if enabled.
-  if (ShowInst)
+  if (ShowInst) {
     Inst.dump_pretty(GetCommentOS(), &MAI, InstPrinter.get(), "\n ");
-  
+    GetCommentOS() << "\n";
+  }
+
   // If we have an AsmPrinter, use that to print, otherwise print the MCInst.
   if (InstPrinter)
     InstPrinter->printInst(&Inst, OS);

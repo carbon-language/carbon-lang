@@ -57,7 +57,7 @@ void MCInst::dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI,
     OS << Separator;
     getOperand(i).print(OS, MAI);
   }
-  OS << ">\n";
+  OS << ">";
 }
 
 void MCInst::dump() const {
