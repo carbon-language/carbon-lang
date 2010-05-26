@@ -61,13 +61,19 @@ class ASTRecordLayoutBuilder {
   
   /// PrimaryBase - the primary base class (if one exists) of the class
   /// we're laying out.
-  ASTRecordLayout::PrimaryBaseInfo PrimaryBase;
+  const CXXRecordDecl *PrimaryBase;
+  
+  /// PrimaryBaseIsVirtual - Whether the primary base of the class we're laying
+  /// out is virtual.
+  bool PrimaryBaseIsVirtual;
 
+  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsetsMapTy;
+  
   /// Bases - base classes and their offsets in the record.
-  ASTRecordLayout::BaseOffsetsMapTy Bases;
+  BaseOffsetsMapTy Bases;
   
   // VBases - virtual base classes and their offsets in the record.
-  ASTRecordLayout::BaseOffsetsMapTy VBases;
+  BaseOffsetsMapTy VBases;
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
   /// primary base classes for some other direct or indirect base class.

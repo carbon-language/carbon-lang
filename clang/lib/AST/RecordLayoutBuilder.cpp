@@ -24,7 +24,8 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Context)
   : Context(Context), Size(0), Alignment(8), Packed(false), 
   UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), IsUnion(false),
-  NonVirtualSize(0), NonVirtualAlignment(8), FirstNearlyEmptyVBase(0),
+  PrimaryBase(0), PrimaryBaseIsVirtual(false), NonVirtualSize(0), 
+  NonVirtualAlignment(8), FirstNearlyEmptyVBase(0),
   SizeOfLargestEmptySubobject(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
@@ -128,8 +129,8 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
       // If it's not an indirect primary base, then we've found our primary
       // base.
       if (!IndirectPrimaryBases.count(Base)) {
-        PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base,
-                                                       /*IsVirtual=*/true);
+        PrimaryBase = Base;
+        PrimaryBaseIsVirtual = true;
         return;
       }
 
@@ -139,7 +140,7 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
     }
 
     SelectPrimaryVBase(Base);
-    if (PrimaryBase.getBase())
+    if (PrimaryBase)
       return;
   }
 }
@@ -175,7 +176,8 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
 
     if (Base->isDynamicClass()) {
       // We found it.
-      PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base, /*IsVirtual=*/false);
+      PrimaryBase = Base;
+      PrimaryBaseIsVirtual = false;
       return;
     }
   }
@@ -184,20 +186,20 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   // indirect primary virtual base class, if one exists.
   if (RD->getNumVBases() != 0) {
     SelectPrimaryVBase(RD);
-    if (PrimaryBase.getBase())
+    if (PrimaryBase)
       return;
   }
 
   // Otherwise, it is the first nearly empty virtual base that is not an
   // indirect primary virtual base class, if one exists.
   if (FirstNearlyEmptyVBase) {
-    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase,
-                                                   /*IsVirtual=*/true);
+    PrimaryBase = FirstNearlyEmptyVBase;
+    PrimaryBaseIsVirtual = true;
     return;
   }
 
   // Otherwise there is no primary base class.
-  assert(!PrimaryBase.getBase() && "Should not get here with a primary base!");
+  assert(!PrimaryBase && "Should not get here with a primary base!");
 
   // Allocate the virtual table pointer at offset zero.
   assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
@@ -216,17 +218,18 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
   DeterminePrimaryBase(RD);
 
   // If we have a primary base class, lay it out.
-  if (const CXXRecordDecl *Base = PrimaryBase.getBase()) {
-    if (PrimaryBase.isVirtual()) {
+  if (PrimaryBase) {
+    if (PrimaryBaseIsVirtual) {
       // We have a virtual primary base, insert it as an indirect primary base.
-      IndirectPrimaryBases.insert(Base);
+      IndirectPrimaryBases.insert(PrimaryBase);
 
-      assert(!VisitedVirtualBases.count(Base) && "vbase already visited!");
-      VisitedVirtualBases.insert(Base);
+      assert(!VisitedVirtualBases.count(PrimaryBase) && 
+             "vbase already visited!");
+      VisitedVirtualBases.insert(PrimaryBase);
       
-      LayoutVirtualBase(Base);
+      LayoutVirtualBase(PrimaryBase);
     } else
-      LayoutNonVirtualBase(Base);
+      LayoutNonVirtualBase(PrimaryBase);
   }
 
   // Now lay out the non-virtual bases.
@@ -241,7 +244,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // Skip the primary base.
-    if (Base == PrimaryBase.getBase() && !PrimaryBase.isVirtual())
+    if (Base == PrimaryBase && PrimaryBaseIsVirtual)
       continue;
 
     // Lay out the base.
@@ -322,8 +325,8 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
   bool PrimaryBaseIsVirtual;
 
   if (MostDerivedClass == RD) {
-    PrimaryBase = this->PrimaryBase.getBase();
-    PrimaryBaseIsVirtual = this->PrimaryBase.isVirtual();
+    PrimaryBase = this->PrimaryBase;
+    PrimaryBaseIsVirtual = this->PrimaryBaseIsVirtual;
   } else {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     PrimaryBase = Layout.getPrimaryBase();

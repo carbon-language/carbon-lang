@@ -145,7 +145,8 @@ private:
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   uint64_t SizeOfLargestEmptySubobject,
-                  const PrimaryBaseInfo &PrimaryBase,
+                  const CXXRecordDecl *PrimaryBase,
+                  bool PrimaryBaseIsVirtual,
                   const BaseOffsetsMapTy& BaseOffsets,
                   const BaseOffsetsMapTy& VBaseOffsets);
 
