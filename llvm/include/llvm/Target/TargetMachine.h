@@ -101,7 +101,9 @@ protected: // Can only create subclasses.
   /// AsmInfo - Contains target specific asm information.
   ///
   const MCAsmInfo *AsmInfo;
-  
+
+  unsigned MCRelaxAll : 1;
+
 public:
   virtual ~TargetMachine();
 
@@ -157,6 +159,14 @@ public:
   /// information for it, otherwise return null.
   /// 
   virtual const TargetELFWriterInfo *getELFWriterInfo() const { return 0; }
+
+  /// hasMCRelaxAll - Check whether all machine code instructions should be
+  /// relaxed.
+  bool hasMCRelaxAll() const { return MCRelaxAll; }
+
+  /// setMCRelaxAll - Set whether all machine code instructions should be
+  /// relaxed.
+  void setMCRelaxAll(bool Value) { MCRelaxAll = Value; }
 
   /// getRelocationModel - Returns the code generation relocation model. The
   /// choices are static, PIC, and dynamic-no-pic, and target default.

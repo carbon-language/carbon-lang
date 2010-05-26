@@ -212,7 +212,8 @@ FunctionSections("ffunction-sections",
 //
 
 TargetMachine::TargetMachine(const Target &T) 
-  : TheTarget(T), AsmInfo(0) {
+  : TheTarget(T), AsmInfo(0),
+    MCRelaxAll(false) {
   // Typically it will be subtargets that will adjust FloatABIType from Default
   // to Soft or Hard.
   if (UseSoftFloat)
