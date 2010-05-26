@@ -77,8 +77,20 @@ define void @not_vararg(i8* %p) nounwind {
   ret void
 }
 
+; CHECK: Undefined behavior: Branch to non-blockaddress
 define void @use_indbr() {
   indirectbr i8* bitcast (i32()* @foo to i8*), [label %block]
 block:
   unreachable
+}
+
+; CHECK: Undefined behavior: Call with "tail" keyword references alloca or va_arg
+; CHECK: Undefined behavior: Call with "tail" keyword references alloca or va_arg
+declare void @tailcallee(i8*)
+define void @use_tail(i8* %valist) {
+  %t = alloca i8
+  tail call void @tailcallee(i8* %t)
+  %s = va_arg i8* %valist, i8*
+  tail call void @tailcallee(i8* %s)
+  ret void
 }

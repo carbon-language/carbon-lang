@@ -219,7 +219,15 @@ void Lint::visitCallSite(CallSite CS) {
     // TODO: Check sret attribute.
   }
 
-  // TODO: Check the "tail" keyword constraints.
+  if (CS.isCall() && cast<CallInst>(CS.getInstruction())->isTailCall())
+    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+         AI != AE; ++AI) {
+      Value *Obj = (*AI)->getUnderlyingObject();
+      Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
+              "Undefined behavior: Call with \"tail\" keyword references "
+              "alloca or va_arg", &I);
+    }
+
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I))
     switch (II->getIntrinsicID()) {
