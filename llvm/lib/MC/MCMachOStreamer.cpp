@@ -376,8 +376,9 @@ void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
     for (unsigned i = 0; i != Size; ++i)
       DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
   } else {
-    DF->addFixup(MCAsmFixup(DF->getContents().size(), *AddValueSymbols(Value),
-                            MCFixup::getKindForSize(Size)));
+    DF->addFixup(MCFixup::Create(DF->getContents().size(),
+                                 AddValueSymbols(Value),
+                                 MCFixup::getKindForSize(Size)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
 }
@@ -434,12 +435,9 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   VecOS.flush();
 
   // FIXME: Eliminate this copy.
-  SmallVector<MCAsmFixup, 4> AsmFixups;
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    MCFixup &F = Fixups[i];
-    AsmFixups.push_back(MCAsmFixup(F.getOffset(), *F.getValue(),
-                                   F.getKind()));
-  }
+  SmallVector<MCFixup, 4> AsmFixups;
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
+    AsmFixups.push_back(Fixups[i]);
 
   // See if we might need to relax this instruction, if so it needs its own
   // fragment.

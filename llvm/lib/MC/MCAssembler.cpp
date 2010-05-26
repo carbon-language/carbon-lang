@@ -226,7 +226,7 @@ MCAssembler::~MCAssembler() {
 }
 
 static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
-                                                const MCAsmFixup &Fixup,
+                                                const MCFixup &Fixup,
                                                 const MCValue Target,
                                                 const MCSection *BaseSection) {
   // The effective fixup address is
@@ -264,7 +264,7 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
 
 static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
                                           const MCAsmLayout &Layout,
-                                          const MCAsmFixup &Fixup,
+                                          const MCFixup &Fixup,
                                           const MCValue Target,
                                           const MCSymbolData *BaseSymbol) {
   // The effective fixup address is
@@ -343,7 +343,7 @@ const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
 }
 
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
-                                const MCAsmFixup &Fixup, const MCFragment *DF,
+                                const MCFixup &Fixup, const MCFragment *DF,
                                 MCValue &Target, uint64_t &Value) const {
   ++stats::EvaluateFixup;
 
@@ -740,7 +740,7 @@ void MCAssembler::Finish() {
 
       for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
              ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
-        MCAsmFixup &Fixup = *it3;
+        MCFixup &Fixup = *it3;
 
         // Evaluate the fixup.
         MCValue Target;
@@ -764,7 +764,7 @@ void MCAssembler::Finish() {
   stats::ObjectBytes += OS.tell() - StartOffset;
 }
 
-bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
+bool MCAssembler::FixupNeedsRelaxation(const MCFixup &Fixup,
                                        const MCFragment *DF,
                                        const MCAsmLayout &Layout) const {
   if (getRelaxAll())
@@ -841,11 +841,9 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
       IF->setInst(Relaxed);
       IF->getCode() = Code;
       IF->getFixups().clear();
-      for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-        MCFixup &F = Fixups[i];
-        IF->getFixups().push_back(MCAsmFixup(F.getOffset(), *F.getValue(),
-                                             F.getKind()));
-      }
+      // FIXME: Eliminate copy.
+      for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
+        IF->getFixups().push_back(Fixups[i]);
 
       // Update the layout, and remember that we relaxed. If we are relaxing
       // everything, we can skip this step since nothing will depend on updating
@@ -904,8 +902,8 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
 
 namespace llvm {
 
-raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
-  OS << "<MCAsmFixup" << " Offset:" << AF.getOffset()
+raw_ostream &operator<<(raw_ostream &OS, const MCFixup &AF) {
+  OS << "<MCFixup" << " Offset:" << AF.getOffset()
      << " Value:" << *AF.getValue()
      << " Kind:" << AF.getKind() << ">";
   return OS;

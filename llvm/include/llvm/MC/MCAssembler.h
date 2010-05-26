@@ -36,33 +36,6 @@ class MCSymbolData;
 class MCValue;
 class TargetAsmBackend;
 
-/// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
-/// which needs to be rewritten. This region will either be rewritten by the
-/// assembler or cause a relocation entry to be generated.
-//
-// FIXME: This should probably just be merged with MCFixup.
-class MCAsmFixup {
-  /// Offset - The offset inside the fragment which needs to be rewritten.
-  uint64_t Offset;
-
-  /// Value - The expression to eventually write into the fragment.
-  const MCExpr *Value;
-
-  /// Kind - The fixup kind.
-  MCFixupKind Kind;
-
-public:
-  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, MCFixupKind _Kind)
-    : Offset(_Offset), Value(&_Value), Kind(_Kind) {}
-
-  MCFixupKind getKind() const { return MCFixupKind(Kind); }
-
-  uint64_t getOffset() const { return Offset; }
-  void setOffset(uint64_t Value) { Offset = Value; }
-
-  const MCExpr *getValue() const { return Value; }
-};
-
 class MCFragment : public ilist_node<MCFragment> {
   friend class MCAsmLayout;
 
@@ -135,11 +108,11 @@ class MCDataFragment : public MCFragment {
   SmallString<32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
-  std::vector<MCAsmFixup> Fixups;
+  std::vector<MCFixup> Fixups;
 
 public:
-  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
-  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
+  typedef std::vector<MCFixup>::const_iterator const_fixup_iterator;
+  typedef std::vector<MCFixup>::iterator fixup_iterator;
 
 public:
   MCDataFragment(MCSectionData *SD = 0) : MCFragment(FT_Data, SD) {}
@@ -154,15 +127,15 @@ public:
   /// @name Fixup Access
   /// @{
 
-  void addFixup(MCAsmFixup Fixup) {
+  void addFixup(MCFixup Fixup) {
     // Enforce invariant that fixups are in offset order.
     assert((Fixups.empty() || Fixup.getOffset() > Fixups.back().getOffset()) &&
            "Fixups must be added in order!");
     Fixups.push_back(Fixup);
   }
 
-  std::vector<MCAsmFixup> &getFixups() { return Fixups; }
-  const std::vector<MCAsmFixup> &getFixups() const { return Fixups; }
+  std::vector<MCFixup> &getFixups() { return Fixups; }
+  const std::vector<MCFixup> &getFixups() const { return Fixups; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
@@ -193,11 +166,11 @@ class MCInstFragment : public MCFragment {
   SmallString<8> Code;
 
   /// Fixups - The list of fixups in this fragment.
-  SmallVector<MCAsmFixup, 1> Fixups;
+  SmallVector<MCFixup, 1> Fixups;
 
 public:
-  typedef SmallVectorImpl<MCAsmFixup>::const_iterator const_fixup_iterator;
-  typedef SmallVectorImpl<MCAsmFixup>::iterator fixup_iterator;
+  typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
+  typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
 
 public:
   MCInstFragment(MCInst _Inst, MCSectionData *SD = 0)
@@ -221,8 +194,8 @@ public:
   /// @name Fixup Access
   /// @{
 
-  SmallVectorImpl<MCAsmFixup> &getFixups() { return Fixups; }
-  const SmallVectorImpl<MCAsmFixup> &getFixups() const { return Fixups; }
+  SmallVectorImpl<MCFixup> &getFixups() { return Fixups; }
+  const SmallVectorImpl<MCFixup> &getFixups() const { return Fixups; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
@@ -633,12 +606,12 @@ private:
   /// \arg Value result is fixed, otherwise the value may change due to
   /// relocation.
   bool EvaluateFixup(const MCAsmLayout &Layout,
-                     const MCAsmFixup &Fixup, const MCFragment *DF,
+                     const MCFixup &Fixup, const MCFragment *DF,
                      MCValue &Target, uint64_t &Value) const;
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool FixupNeedsRelaxation(const MCAsmFixup &Fixup, const MCFragment *DF,
+  bool FixupNeedsRelaxation(const MCFixup &Fixup, const MCFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// Check whether the given fragment needs relaxation.

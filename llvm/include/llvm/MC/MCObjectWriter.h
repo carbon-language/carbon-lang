@@ -15,9 +15,9 @@
 #include <cassert>
 
 namespace llvm {
-class MCAsmFixup;
 class MCAsmLayout;
 class MCAssembler;
+class MCFixup;
 class MCFragment;
 class MCValue;
 class raw_ostream;
@@ -72,7 +72,7 @@ public:
   virtual void RecordRelocation(const MCAssembler &Asm,
                                 const MCAsmLayout &Layout,
                                 const MCFragment *Fragment,
-                                const MCAsmFixup &Fixup, MCValue Target,
+                                const MCFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue) = 0;
 
   /// Write the object file.

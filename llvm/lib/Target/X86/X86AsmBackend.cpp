@@ -44,7 +44,7 @@ public:
   X86AsmBackend(const Target &T)
     : TargetAsmBackend(T) {}
 
-  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF,
+  void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                   uint64_t Value) const {
     unsigned Size = 1 << getFixupKindLog2Size(Fixup.getKind());
 
@@ -55,7 +55,7 @@ public:
   }
 
   bool MayNeedRelaxation(const MCInst &Inst,
-                         const SmallVectorImpl<MCAsmFixup> &Fixups) const;
+                         const SmallVectorImpl<MCFixup> &Fixups) const;
 
   void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
 
@@ -89,9 +89,9 @@ static unsigned getRelaxedOpcode(unsigned Op) {
 }
 
 bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst,
-                              const SmallVectorImpl<MCAsmFixup> &Fixups) const {
+                              const SmallVectorImpl<MCFixup> &Fixups) const {
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    const MCAsmFixup &F = Fixups[i];
+    const MCFixup &F = Fixups[i];
 
     // We don't support relaxing anything else currently. Make sure we error out
     // if we see a non-constant 1 or 2 byte fixup.

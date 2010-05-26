@@ -472,7 +472,7 @@ public:
 
   void RecordX86_64Relocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                               const MCFragment *Fragment,
-                              const MCAsmFixup &Fixup, MCValue Target,
+                              const MCFixup &Fixup, MCValue Target,
                               uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
     unsigned IsRIPRel = isFixupKindRIPRel(Fixup.getKind());
@@ -682,7 +682,7 @@ public:
   void RecordScatteredRelocation(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
-                                 const MCAsmFixup &Fixup, MCValue Target,
+                                 const MCFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
@@ -739,7 +739,7 @@ public:
   }
 
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                        const MCFragment *Fragment, const MCAsmFixup &Fixup,
+                        const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {
     if (Is64Bit) {
       RecordX86_64Relocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
@@ -1168,7 +1168,7 @@ void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
 void MachObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                         const MCAsmLayout &Layout,
                                         const MCFragment *Fragment,
-                                        const MCAsmFixup &Fixup, MCValue Target,
+                                        const MCFixup &Fixup, MCValue Target,
                                         uint64_t &FixedValue) {
   ((MachObjectWriterImpl*) Impl)->RecordRelocation(Asm, Layout, Fragment, Fixup,
                                                    Target, FixedValue);

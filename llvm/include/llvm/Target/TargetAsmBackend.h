@@ -13,8 +13,8 @@
 #include "llvm/System/DataTypes.h"
 
 namespace llvm {
-class MCAsmFixup;
 class MCDataFragment;
+class MCFixup;
 class MCInst;
 class MCInstFragment;
 class MCObjectWriter;
@@ -105,7 +105,7 @@ public:
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
-  virtual void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &Fragment,
+  virtual void ApplyFixup(const MCFixup &Fixup, MCDataFragment &Fragment,
                           uint64_t Value) const = 0;
 
   /// MayNeedRelaxation - Check whether the given instruction may need
@@ -115,7 +115,7 @@ public:
   /// \arg Fixups - The actual fixups this instruction encoded to, for potential
   /// use by the target backend.
   virtual bool MayNeedRelaxation(const MCInst &Inst,
-                           const SmallVectorImpl<MCAsmFixup> &Fixups) const = 0;
+                           const SmallVectorImpl<MCFixup> &Fixups) const = 0;
 
   /// RelaxInstruction - Relax the instruction in the given fragment to the next
   /// wider instruction.
