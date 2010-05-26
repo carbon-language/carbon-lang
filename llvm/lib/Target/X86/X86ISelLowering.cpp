@@ -1259,10 +1259,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     MachineFunction &MF = DAG.getMachineFunction();
     X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
     unsigned Reg = FuncInfo->getSRetReturnReg();
-    if (!Reg) {
-      Reg = MRI.createVirtualRegister(getRegClassFor(MVT::i64));
-      FuncInfo->setSRetReturnReg(Reg);
-    }
+    assert(Reg && 
+           "SRetReturnReg should have been set in LowerFormalArguments().");
     SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
 
     Chain = DAG.getCopyToReg(Chain, dl, X86::RAX, Val, Flag);
