@@ -2,6 +2,7 @@
 target datalayout = "e-p:64:64:64"
 
 declare fastcc void @bar()
+declare void @llvm.stackrestore(i8*)
 
 @CG = constant i32 7
 
@@ -50,6 +51,8 @@ define i32 @foo() noreturn {
   %lb = load i32* bitcast (i8* blockaddress(@foo, %next) to i32*)
 ; CHECK: Call to block address
   call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
+; CHECK: Undefined behavior: Null pointer dereference
+  call void @llvm.stackrestore(i8* null)
 
   br label %next
 

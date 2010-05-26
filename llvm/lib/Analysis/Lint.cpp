@@ -285,6 +285,14 @@ void Lint::visitCallSite(CallSite CS) {
       visitMemoryReference(I, CS.getArgument(0), 0, 0,
                            MemRef::Read | MemRef::Write);
       break;
+
+    case Intrinsic::stackrestore:
+      // Stackrestore doesn't read or write memory, but it sets the
+      // stack pointer, which the compiler may read from or write to
+      // at any time, so check it for both readability and writeability.
+      visitMemoryReference(I, CS.getArgument(0), 0, 0,
+                           MemRef::Read | MemRef::Write);
+      break;
     }
 }
 
