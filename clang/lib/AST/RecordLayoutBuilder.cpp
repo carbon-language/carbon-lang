@@ -22,12 +22,29 @@
 using namespace clang;
 
 namespace {
+
+/// EmptySubobjectMap - Keeps track of which empty subobjects exist at different
+/// offsets while laying out a C++ class.
+class EmptySubobjectMap {
+  ASTContext &Context;
+  
+  /// Class - The class whose empty entries we're keeping track of.
+  const CXXRecordDecl *Class;
+  
+public:
+  EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
+    : Context(Context), Class(Class) { }
+                    
+};
+  
 class RecordLayoutBuilder {
   // FIXME: Remove this and make the appropriate fields public.
   friend class clang::ASTContext;
   
   ASTContext &Context;
 
+  EmptySubobjectMap *EmptySubobjects;
+  
   /// Size - The current size of the record layout.
   uint64_t Size;
   
@@ -94,8 +111,8 @@ class RecordLayoutBuilder {
   EmptyClassOffsetsTy EmptyClassOffsets;
   
   RecordLayoutBuilder(ASTContext &Context)
-    : Context(Context), Size(0), Alignment(8), Packed(false), 
-    UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
+    : Context(Context), EmptySubobjects(0), Size(0), Alignment(8),
+    Packed(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
     IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0), 
     PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0),
     SizeOfLargestEmptySubobject(0) { }
@@ -757,6 +774,10 @@ void RecordLayoutBuilder::Layout(const RecordDecl *D) {
 }
 
 void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
+  // Create our empty subobject offset map.
+  EmptySubobjectMap EmptySubobjectMap(Context, RD);
+  EmptySubobjects = &EmptySubobjectMap;
+
   InitializeLayout(RD);
 
   ComputeEmptySubobjectSizes(RD);
