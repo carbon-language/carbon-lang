@@ -1044,12 +1044,14 @@ def MOV16sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i16mem:$src),
 def MOV32sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
 
+let isCodeGenOnly = 1 in {
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
                    "mov{b}\t{$src, $dst|$dst, $src}", []>;
 def MOV16rr_REV : I<0x8B, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                     "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32rr_REV : I<0x8B, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                     "mov{l}\t{$src, $dst|$dst, $src}", []>;
+}
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
@@ -1800,6 +1802,7 @@ def AND32rr : I<0x21, MRMDestReg,
 
 // AND instructions with the destination register in REG and the source register
 //   in R/M.  Included for the disassembler.
+let isCodeGenOnly = 1 in {
 def AND8rr_REV : I<0x22, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                   "and{b}\t{$src2, $dst|$dst, $src2}", []>;
 def AND16rr_REV : I<0x23, MRMSrcReg, (outs GR16:$dst), 
@@ -1808,6 +1811,7 @@ def AND16rr_REV : I<0x23, MRMSrcReg, (outs GR16:$dst),
 def AND32rr_REV : I<0x23, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                    "and{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 def AND8rm   : I<0x22, MRMSrcMem, 
                  (outs GR8 :$dst), (ins GR8 :$src1, i8mem :$src2),
@@ -1926,6 +1930,7 @@ def OR32rr   : I<0x09, MRMDestReg, (outs GR32:$dst),
 
 // OR instructions with the destination register in REG and the source register
 //   in R/M.  Included for the disassembler.
+let isCodeGenOnly = 1 in {
 def OR8rr_REV : I<0x0A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                   "or{b}\t{$src2, $dst|$dst, $src2}", []>;
 def OR16rr_REV : I<0x0B, MRMSrcReg, (outs GR16:$dst),
@@ -1934,6 +1939,7 @@ def OR16rr_REV : I<0x0B, MRMSrcReg, (outs GR16:$dst),
 def OR32rr_REV : I<0x0B, MRMSrcReg, (outs GR32:$dst), 
                    (ins GR32:$src1, GR32:$src2),
                    "or{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
                   
 def OR8rm    : I<0x0A, MRMSrcMem, (outs GR8 :$dst), 
                  (ins GR8 :$src1, i8mem :$src2),
@@ -2042,6 +2048,7 @@ let isCommutable = 1 in { // X = XOR Y, Z --> X = XOR Z, Y
 
 // XOR instructions with the destination register in REG and the source register
 //   in R/M.  Included for the disassembler.
+let isCodeGenOnly = 1 in {
 def XOR8rr_REV : I<0x32, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                   "xor{b}\t{$src2, $dst|$dst, $src2}", []>;
 def XOR16rr_REV : I<0x33, MRMSrcReg, (outs GR16:$dst), 
@@ -2050,6 +2057,7 @@ def XOR16rr_REV : I<0x33, MRMSrcReg, (outs GR16:$dst),
 def XOR32rr_REV : I<0x33, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                    "xor{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 def XOR8rm   : I<0x32, MRMSrcMem, 
                  (outs GR8 :$dst), (ins GR8:$src1, i8mem :$src2), 
@@ -2847,6 +2855,7 @@ def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst),
                  [(set GR32:$dst, (adde GR32:$src1, GR32:$src2))]>;
 }
 
+let isCodeGenOnly = 1 in {
 def ADC8rr_REV : I<0x12, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                  "adc{b}\t{$src2, $dst|$dst, $src2}", []>;
 def ADC16rr_REV : I<0x13, MRMSrcReg, (outs GR16:$dst), 
@@ -2855,6 +2864,7 @@ def ADC16rr_REV : I<0x13, MRMSrcReg, (outs GR16:$dst),
 def ADC32rr_REV : I<0x13, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "adc{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 def ADC8rm   : I<0x12, MRMSrcMem , (outs GR8:$dst), 
                                    (ins GR8:$src1, i8mem:$src2),
@@ -2942,6 +2952,7 @@ def SUB32rr : I<0x29, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                 [(set GR32:$dst, EFLAGS,
                       (X86sub_flag GR32:$src1, GR32:$src2))]>;
 
+let isCodeGenOnly = 1 in {
 def SUB8rr_REV : I<0x2A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>;
 def SUB16rr_REV : I<0x2B, MRMSrcReg, (outs GR16:$dst), 
@@ -2950,6 +2961,7 @@ def SUB16rr_REV : I<0x2B, MRMSrcReg, (outs GR16:$dst),
 def SUB32rr_REV : I<0x2B, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 // Register-Memory Subtraction
 def SUB8rm  : I<0x2A, MRMSrcMem, (outs GR8 :$dst),
@@ -3093,6 +3105,7 @@ let isTwoAddress = 0 in {
                       "sbb{l}\t{$src, %eax|%eax, $src}", []>;
 }
 
+let isCodeGenOnly = 1 in {
 def SBB8rr_REV : I<0x1A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                    "sbb{b}\t{$src2, $dst|$dst, $src2}", []>;
 def SBB16rr_REV : I<0x1B, MRMSrcReg, (outs GR16:$dst), 
@@ -3101,6 +3114,7 @@ def SBB16rr_REV : I<0x1B, MRMSrcReg, (outs GR16:$dst),
 def SBB32rr_REV : I<0x1B, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 def SBB8rm   : I<0x1A, MRMSrcMem, (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
                     "sbb{b}\t{$src2, $dst|$dst, $src2}",

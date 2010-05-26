@@ -361,8 +361,10 @@ def MOV64ri_alt : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "mov{q}\t{$src, $dst|$dst, $src}", []>;
 }
 
+let isCodeGenOnly = 1 in {
 def MOV64rr_REV : RI<0x8B, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "mov{q}\t{$src, $dst|$dst, $src}", []>;
+}
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOV64rm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
@@ -585,9 +587,11 @@ def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (adde GR64:$src1, GR64:$src2))]>;
 
+let isCodeGenOnly = 1 in {
 def ADC64rr_REV : RI<0x13, MRMSrcReg , (outs GR32:$dst), 
                      (ins GR64:$src1, GR64:$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), 
                   (ins GR64:$src1, i64mem:$src2),
@@ -625,9 +629,11 @@ def SUB64rr  : RI<0x29, MRMDestReg, (outs GR64:$dst),
                   [(set GR64:$dst, EFLAGS,
                         (X86sub_flag GR64:$src1, GR64:$src2))]>;
 
+let isCodeGenOnly = 1 in {
 def SUB64rr_REV : RI<0x2B, MRMSrcReg, (outs GR64:$dst), 
                      (ins GR64:$src1, GR64:$src2),
                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
 
 // Register-Memory Subtraction
 def SUB64rm  : RI<0x2B, MRMSrcMem, (outs GR64:$dst), 
@@ -677,9 +683,11 @@ def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (sube GR64:$src1, GR64:$src2))]>;
 
+let isCodeGenOnly = 1 in {
 def SBB64rr_REV : RI<0x1B, MRMSrcReg, (outs GR64:$dst), 
                      (ins GR64:$src1, GR64:$src2),
                      "sbb{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
                      
 def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst), 
                   (ins GR64:$src1, i64mem:$src2),
@@ -1106,9 +1114,11 @@ def AND64rr  : RI<0x21, MRMDestReg,
                   "and{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, EFLAGS,
                         (X86and_flag GR64:$src1, GR64:$src2))]>;
+let isCodeGenOnly = 1 in {
 def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst), 
                      (ins GR64:$src1, GR64:$src2),
                      "and{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
 def AND64rm  : RI<0x23, MRMSrcMem,
                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "and{q}\t{$src2, $dst|$dst, $src2}",
@@ -1149,9 +1159,11 @@ def OR64rr   : RI<0x09, MRMDestReg, (outs GR64:$dst),
                   "or{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, EFLAGS,
                         (X86or_flag GR64:$src1, GR64:$src2))]>;
+let isCodeGenOnly = 1 in {
 def OR64rr_REV : RI<0x0B, MRMSrcReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
                     "or{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
 def OR64rm   : RI<0x0B, MRMSrcMem , (outs GR64:$dst),
                   (ins GR64:$src1, i64mem:$src2),
                   "or{q}\t{$src2, $dst|$dst, $src2}",
@@ -1192,9 +1204,11 @@ def XOR64rr  : RI<0x31, MRMDestReg,  (outs GR64:$dst),
                   "xor{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, EFLAGS,
                         (X86xor_flag GR64:$src1, GR64:$src2))]>;
+let isCodeGenOnly = 1 in {
 def XOR64rr_REV : RI<0x33, MRMSrcReg, (outs GR64:$dst), 
                      (ins GR64:$src1, GR64:$src2),
                     "xor{q}\t{$src2, $dst|$dst, $src2}", []>;
+}
 def XOR64rm  : RI<0x33, MRMSrcMem, (outs GR64:$dst), 
                   (ins GR64:$src1, i64mem:$src2), 
                   "xor{q}\t{$src2, $dst|$dst, $src2}",
