@@ -41,5 +41,5 @@ struct S {
 
 struct X {
    int blah;
-   S strings[];	// expected-error {{flexible array 'strings' must have a non-dependent, non-POD type}}
+   S strings[];	// expected-error {{flexible array member 'strings' of non-POD element type 'S []'}}
 };

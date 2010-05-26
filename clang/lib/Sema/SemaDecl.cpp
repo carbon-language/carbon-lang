@@ -6139,7 +6139,7 @@ void Sema::ActOnFields(Scope* S,
       if (!FD->getType()->isDependentType() &&
           !Context.getBaseElementType(FD->getType())->isPODType()) {
         Diag(FD->getLocation(), diag::err_flexible_array_has_nonpod_type)
-        << FD->getDeclName();
+          << FD->getDeclName() << FD->getType();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
