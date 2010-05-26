@@ -42,7 +42,6 @@ class TargetAsmBackend;
 //
 // FIXME: This should probably just be merged with MCFixup.
 class MCAsmFixup {
-public:
   /// Offset - The offset inside the fragment which needs to be rewritten.
   uint64_t Offset;
 
@@ -55,6 +54,13 @@ public:
 public:
   MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, MCFixupKind _Kind)
     : Offset(_Offset), Value(&_Value), Kind(_Kind) {}
+
+  MCFixupKind getKind() const { return MCFixupKind(Kind); }
+
+  uint64_t getOffset() const { return Offset; }
+  void setOffset(uint64_t Value) { Offset = Value; }
+
+  const MCExpr *getValue() const { return Value; }
 };
 
 class MCFragment : public ilist_node<MCFragment> {
@@ -150,7 +156,7 @@ public:
 
   void addFixup(MCAsmFixup Fixup) {
     // Enforce invariant that fixups are in offset order.
-    assert((Fixups.empty() || Fixup.Offset > Fixups.back().Offset) &&
+    assert((Fixups.empty() || Fixup.getOffset() > Fixups.back().getOffset()) &&
            "Fixups must be added in order!");
     Fixups.push_back(Fixup);
   }

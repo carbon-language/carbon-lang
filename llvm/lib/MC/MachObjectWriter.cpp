@@ -474,13 +474,15 @@ public:
                               const MCFragment *Fragment,
                               const MCAsmFixup &Fixup, MCValue Target,
                               uint64_t &FixedValue) {
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
-    unsigned IsRIPRel = isFixupKindRIPRel(Fixup.Kind);
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned IsRIPRel = isFixupKindRIPRel(Fixup.getKind());
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
     // See <reloc.h>.
-    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
-    uint32_t FixupAddress = Layout.getFragmentAddress(Fragment) + Fixup.Offset;
+    uint32_t FixupOffset =
+      Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
+    uint32_t FixupAddress =
+      Layout.getFragmentAddress(Fragment) + Fixup.getOffset();
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -606,7 +608,7 @@ public:
             // x86_64 distinguishes movq foo@GOTPCREL so that the linker can
             // rewrite the movq to an leaq at link time if the symbol ends up in
             // the same linkage unit.
-            if (unsigned(Fixup.Kind) == X86::reloc_riprel_4byte_movq_load)
+            if (unsigned(Fixup.getKind()) == X86::reloc_riprel_4byte_movq_load)
               Type = RIT_X86_64_GOTLoad;
             else
               Type = RIT_X86_64_GOT;
@@ -682,9 +684,9 @@ public:
                                  const MCFragment *Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
-    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
     unsigned Type = RIT_Vanilla;
 
     // See <reloc.h>.
@@ -744,8 +746,8 @@ public:
       return;
     }
 
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
@@ -769,7 +771,7 @@ public:
                                        Target, FixedValue);
 
     // See <reloc.h>.
-    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;

@@ -347,7 +347,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
                                 MCValue &Target, uint64_t &Value) const {
   ++stats::EvaluateFixup;
 
-  if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
+  if (!Fixup.getValue()->EvaluateAsRelocatable(Target, &Layout))
     report_fatal_error("expected relocatable expression");
 
   // FIXME: How do non-scattered symbols work in ELF? I presume the linker
@@ -356,8 +356,8 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
 
   Value = Target.getConstant();
 
-  bool IsPCRel =
-    Emitter.getFixupKindInfo(Fixup.Kind).Flags & MCFixupKindInfo::FKF_IsPCRel;
+  bool IsPCRel = Emitter.getFixupKindInfo(
+    Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
   bool IsResolved = true;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     if (A->getSymbol().isDefined())
@@ -399,7 +399,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   }
 
   if (IsPCRel)
-    Value -= Layout.getFragmentAddress(DF) + Fixup.Offset;
+    Value -= Layout.getFragmentAddress(DF) + Fixup.getOffset();
 
   return IsResolved;
 }
@@ -905,8 +905,9 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
 namespace llvm {
 
 raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
-  OS << "<MCAsmFixup" << " Offset:" << AF.Offset << " Value:" << *AF.Value
-     << " Kind:" << AF.Kind << ">";
+  OS << "<MCAsmFixup" << " Offset:" << AF.getOffset()
+     << " Value:" << *AF.getValue()
+     << " Kind:" << AF.getKind() << ">";
   return OS;
 }
 

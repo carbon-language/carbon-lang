@@ -471,7 +471,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // Add the fixups and data.
   MCDataFragment *DF = getOrCreateDataFragment();
   for (unsigned i = 0, e = AsmFixups.size(); i != e; ++i) {
-    AsmFixups[i].Offset += DF->getContents().size();
+    AsmFixups[i].setOffset(AsmFixups[i].getOffset() + DF->getContents().size());
     DF->addFixup(AsmFixups[i]);
   }
   DF->getContents().append(Code.begin(), Code.end());
