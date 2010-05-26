@@ -36,6 +36,57 @@
 using namespace clang;
 using namespace CodeGen;
 
+MiscNameMangler::MiscNameMangler(MangleContext &C,
+                                 llvm::SmallVectorImpl<char> &Res)
+  : Context(C), Out(Res) { }
+
+void MiscNameMangler::mangleBlock(const BlockDecl *BD) {
+  // Mangle the context of the block.
+  // FIXME: We currently mimic GCC's mangling scheme, which leaves much to be
+  // desired. Come up with a better mangling scheme.
+  const DeclContext *DC = BD->getDeclContext();
+  while (isa<BlockDecl>(DC) || isa<EnumDecl>(DC))
+    DC = DC->getParent();
+  if (DC->isFunctionOrMethod()) {
+    Out << "__";
+    if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC))
+      mangleObjCMethodName(Method);
+    else {
+      const NamedDecl *ND = cast<NamedDecl>(DC);
+      if (IdentifierInfo *II = ND->getIdentifier())
+        Out << II->getName();
+      else {
+        // FIXME: We were doing a mangleUnqualifiedName() before, but that's
+        // a private member of a class that will soon itself be private to the
+        // Itanium C++ ABI object. What should we do now? Right now, I'm just
+        // calling the mangleName() method on the MangleContext; is there a
+        // better way?
+        llvm::SmallString<64> Buffer;
+        Context.mangleName(ND, Buffer);
+        Out << Buffer;
+      }
+    }
+    Out << "_block_invoke_" << Context.getBlockId(BD, true);
+  } else {
+    Out << "__block_global_" << Context.getBlockId(BD, false);
+  }
+}
+
+void MiscNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
+  llvm::SmallString<64> Name;
+  llvm::raw_svector_ostream OS(Name);
+  
+  const ObjCContainerDecl *CD =
+  dyn_cast<ObjCContainerDecl>(MD->getDeclContext());
+  assert (CD && "Missing container decl in GetNameForMethod");
+  OS << (MD->isInstanceMethod() ? '-' : '+') << '[' << CD->getName();
+  if (const ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(CD))
+    OS << '(' << CID << ')';
+  OS << ' ' << MD->getSelector().getAsString() << ']';
+  
+  Out << OS.str().size() << OS.str();
+}
+
 namespace {
 
 static const DeclContext *GetLocalClassFunctionDeclContext(
@@ -102,7 +153,6 @@ public:
   llvm::raw_svector_ostream &getStream() { return Out; }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
-  void mangleBlock(const BlockDecl *BD);
   void mangleCallOffset(int64_t NonVirtual, int64_t Virtual);
   void mangleNumber(int64_t Number);
   void mangleFunctionEncoding(const FunctionDecl *FD);
@@ -471,31 +521,6 @@ void CXXNameMangler::mangleNumber(int64_t Number) {
   Out << Number;
 }
 
-void CXXNameMangler::mangleBlock(const BlockDecl *BD) {
-  // Mangle the context of the block.
-  // FIXME: We currently mimic GCC's mangling scheme, which leaves much to be
-  // desired. Come up with a better mangling scheme.
-  const DeclContext *DC = BD->getDeclContext();
-  while (isa<BlockDecl>(DC) || isa<EnumDecl>(DC))
-    DC = DC->getParent();
-  if (DC->isFunctionOrMethod()) {
-    Out << "__";
-    if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC))
-      mangleObjCMethodName(Method);
-    else {
-      const NamedDecl *ND = cast<NamedDecl>(DC);
-      if (IdentifierInfo *II = ND->getIdentifier())
-        Out << II->getName();
-      else {
-        mangleUnqualifiedName(ND);
-      }
-    }
-    Out << "_block_invoke_" << Context.getBlockId(BD, true);
-  } else {
-    Out << "__block_global_" << Context.getBlockId(BD, false);
-  }
-}
-
 void CXXNameMangler::mangleCallOffset(int64_t NonVirtual, int64_t Virtual) {
   //  <call-offset>  ::= h <nv-offset> _
   //                 ::= v <v-offset> _
@@ -741,8 +766,9 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   const DeclContext *DC = ND->getDeclContext();
   Out << 'Z';
 
-  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC))
-    mangleObjCMethodName(MD);
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC)) {
+   mangleObjCMethodName(MD);
+  }
   else if (const DeclContext *CDC = GetLocalClassFunctionDeclContext(DC)) {
     mangleFunctionEncoding(cast<FunctionDecl>(CDC));
     Out << 'E';
@@ -979,18 +1005,9 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
 }
 
 void CXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
-  llvm::SmallString<64> Name;
-  llvm::raw_svector_ostream OS(Name);
-
-  const ObjCContainerDecl *CD =
-    dyn_cast<ObjCContainerDecl>(MD->getDeclContext());
-  assert (CD && "Missing container decl in GetNameForMethod");
-  OS << (MD->isInstanceMethod() ? '-' : '+') << '[' << CD->getName();
-  if (const ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(CD))
-    OS << '(' << CID << ')';
-  OS << ' ' << MD->getSelector().getAsString() << ']';
-
-  Out << OS.str().size() << OS.str();
+  llvm::SmallString<64> Buffer;
+  MiscNameMangler(Context, Buffer).mangleObjCMethodName(MD);
+  Out << Buffer;
 }
 
 void CXXNameMangler::mangleType(QualType T) {
@@ -2077,7 +2094,7 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
 
 void MangleContext::mangleBlock(const BlockDecl *BD,
                                 llvm::SmallVectorImpl<char> &Res) {
-  CXXNameMangler Mangler(*this, Res);
+  MiscNameMangler Mangler(*this, Res);
   Mangler.mangleBlock(BD);
 }
 

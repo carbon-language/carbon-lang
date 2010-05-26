@@ -23,6 +23,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
   class ASTContext;
@@ -32,6 +33,7 @@ namespace clang {
   class CXXMethodDecl;
   class FunctionDecl;
   class NamedDecl;
+  class ObjCMethodDecl;
   class VarDecl;
 
 namespace CodeGen {
@@ -64,7 +66,7 @@ private:
   llvm::StringRef String;
   llvm::SmallString<256> Buffer;
 };
-   
+
 /// MangleContext - Context for tracking state which persists across multiple
 /// calls to the C++ name mangler.
 class MangleContext {
@@ -107,25 +109,28 @@ public:
   /// @{
 
   bool shouldMangleDeclName(const NamedDecl *D);
-  void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
-  void mangleThunk(const CXXMethodDecl *MD,
-                   const ThunkInfo &Thunk,
-                   llvm::SmallVectorImpl<char> &);
-  void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
-                          const ThisAdjustment &ThisAdjustment,
+  virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
+  virtual void mangleThunk(const CXXMethodDecl *MD,
+                          const ThunkInfo &Thunk,
                           llvm::SmallVectorImpl<char> &);
-  void mangleGuardVariable(const VarDecl *D, llvm::SmallVectorImpl<char> &);
-  void mangleCXXVTable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
-  void mangleCXXVTT(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
-  void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
-                           const CXXRecordDecl *Type,
-                           llvm::SmallVectorImpl<char> &);
-  void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
-  void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
-  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                     llvm::SmallVectorImpl<char> &);
-  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                     llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
+                                  const ThisAdjustment &ThisAdjustment,
+                                  llvm::SmallVectorImpl<char> &);
+  virtual void mangleGuardVariable(const VarDecl *D,
+                                   llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXVTable(const CXXRecordDecl *RD,
+                               llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXVTT(const CXXRecordDecl *RD,
+                            llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
+                                   const CXXRecordDecl *Type,
+                                   llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                             llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
+                             llvm::SmallVectorImpl<char> &);
   void mangleBlock(const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
 
   void mangleInitDiscriminator() {
@@ -143,7 +148,23 @@ public:
   }
   /// @}
 };
+
+/// MiscNameMangler - Mangles Objective-C method names and blocks.
+class MiscNameMangler {
+  MangleContext &Context;
+  llvm::raw_svector_ostream Out;
   
+  ASTContext &getASTContext() const { return Context.getASTContext(); }
+
+public:
+  MiscNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res);
+
+  llvm::raw_svector_ostream &getStream() { return Out; }
+  
+  void mangleBlock(const BlockDecl *BD);
+  void mangleObjCMethodName(const ObjCMethodDecl *MD);
+};
+
 }
 }
 
