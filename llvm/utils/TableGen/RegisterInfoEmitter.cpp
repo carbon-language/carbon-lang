@@ -186,7 +186,7 @@ static SubRegMap &inferSubRegIndices(Record *Reg, AllSubRegMap &ASRM) {
   if (SubRegs.size() != Indices.size())
     throw "Register " + Reg->getName() + " SubRegIndices doesn't match SubRegs";
 
-  // First insert the direct subregs.
+  // First insert the direct subregs and make sure they are fully indexed.
   for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
     if (!SRM.insert(std::make_pair(Indices[i], SubRegs[i])).second)
       throw "SubRegIndex " + Indices[i]->getName()
@@ -194,11 +194,18 @@ static SubRegMap &inferSubRegIndices(Record *Reg, AllSubRegMap &ASRM) {
     inferSubRegIndices(SubRegs[i], ASRM);
   }
 
+  // Keep track of inherited subregs and how they can be reached.
+  // Register -> (SubRegIndex, SubRegIndex)
+  typedef std::map<Record*, std::pair<Record*,Record*>, LessRecord> OrphanMap;
+  OrphanMap Orphans;
+
   // Clone inherited subregs. Here the order is important - earlier subregs take
   // precedence.
   for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
     SubRegMap &M = ASRM[SubRegs[i]];
-    SRM.insert(M.begin(), M.end());
+    for (SubRegMap::iterator si = M.begin(), se = M.end(); si != se; ++si)
+      if (!SRM.insert(*si).second)
+        Orphans[si->second] = std::make_pair(Indices[i], si->first);
   }
 
   // Finally process the composites.
@@ -228,6 +235,22 @@ static SubRegMap &inferSubRegIndices(Record *Reg, AllSubRegMap &ASRM) {
 
     // Insert composite index. Allow overriding inherited indices etc.
     SRM[BaseIdxInit->getDef()] = R2;
+
+    // R2 is now directly addressable, no longer an orphan.
+    Orphans.erase(R2);
+  }
+
+  // Now, Orphans contains the inherited subregisters without a direct index.
+  if (!Orphans.empty()) {
+    errs() << "Error: Register " << getQualifiedName(Reg)
+           << " inherited subregisters without an index:\n";
+    for (OrphanMap::iterator i = Orphans.begin(), e = Orphans.end(); i != e;
+         ++i) {
+      errs() << "  " << getQualifiedName(i->first)
+             << " = " << i->second.first->getName()
+             << ", " << i->second.second->getName() << "\n";
+    }
+    abort();
   }
   return SRM;
 }
