@@ -144,9 +144,9 @@ public:
     return UnknownVal();
   }
 
-  virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
-                                   const StackFrameContext *LCtx,
-                                   SymbolReaper& SymReaper,
+  virtual const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc,
+                                            const StackFrameContext *LCtx,
+                                            SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
   virtual Store BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;

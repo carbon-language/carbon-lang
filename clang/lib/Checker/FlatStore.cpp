@@ -44,11 +44,11 @@ public:
   }
 
   SVal ArrayToPointer(Loc Array);
-  Store RemoveDeadBindings(Store store, Stmt* Loc, 
+  const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc, 
                            const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
-    return store;
+    return StateMgr.getPersistentState(state);
   }
 
   Store BindDecl(Store store, const VarRegion *VR, SVal initVal);

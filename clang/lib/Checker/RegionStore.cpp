@@ -352,9 +352,9 @@ public: // Part of public interface to class.
 
   /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  Store RemoveDeadBindings(Store store, Stmt* Loc, 
-                           const StackFrameContext *LCtx,
-                           SymbolReaper& SymReaper,
+  const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc, 
+                                    const StackFrameContext *LCtx,
+                                    SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   const GRState *EnterStackFrame(const GRState *state,
@@ -1822,12 +1822,12 @@ bool RemoveDeadBindingsWorker::UpdatePostponed() {
   return changed;
 }
 
-Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                                              const StackFrameContext *LCtx,
                                              SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
-  RegionBindings B = GetRegionBindings(store);
+  RegionBindings B = GetRegionBindings(state.getStore());
   RemoveDeadBindingsWorker W(*this, StateMgr, B, SymReaper, Loc, LCtx);
   W.GenerateClusters();
 
@@ -1860,8 +1860,16 @@ Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
     for (; SI != SE; ++SI)
       SymReaper.maybeDead(*SI);
   }
-
-  return B.getRoot();
+  state.setStore(B.getRoot());
+  const GRState *s = StateMgr.getPersistentState(state);
+  // Remove the extents of dead symbolic regions.
+  llvm::ImmutableMap<const MemRegion*,SVal> Extents =state.get<RegionExtents>();
+  for (llvm::ImmutableMap<const MemRegion *, SVal>::iterator I=Extents.begin(),
+         E = Extents.end(); I != E; ++I) {
+    if (!W.isVisited(I->first))
+      s = s->remove<RegionExtents>(I->first);
+  }
+  return s;
 }
 
 
