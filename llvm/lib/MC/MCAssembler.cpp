@@ -845,11 +845,8 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
       for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
         IF->getFixups().push_back(Fixups[i]);
 
-      // Update the layout, and remember that we relaxed. If we are relaxing
-      // everything, we can skip this step since nothing will depend on updating
-      // the values.
-      if (!getRelaxAll())
-        Layout.UpdateForSlide(IF, SlideAmount);
+      // Update the layout, and remember that we relaxed.
+      Layout.UpdateForSlide(IF, SlideAmount);
       WasRelaxed = true;
     }
   }

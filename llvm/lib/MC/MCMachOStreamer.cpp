@@ -463,23 +463,25 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   CurSectionData->setHasInstructions(true);
 
-  // See if we might need to relax this instruction, if so it needs its own
-  // fragment.
-  //
-  // FIXME-PERF: Support target hook to do a fast path that avoids the encoder,
-  // when we can immediately tell that we will get something which might need
-  // relaxation (and compute its size).
-  //
-  // FIXME-PERF: We should also be smart about immediately relaxing instructions
-  // which we can already show will never possibly fit (we can also do a very
-  // good job of this before we do the first relaxation pass, because we have
-  // total knowledge about undefined symbols at that point). Even now, though,
-  // we can do a decent job, especially on Darwin where scattering means that we
-  // are going to often know that we can never fully resolve a fixup.
-  if (Assembler.getBackend().MayNeedRelaxation(Inst))
-    EmitInstToFragment(Inst);
-  else
+  // If this instruction doesn't need relaxation, just emit it as data.
+  if (!Assembler.getBackend().MayNeedRelaxation(Inst)) {
     EmitInstToData(Inst);
+    return;
+  }
+
+  // Otherwise, if we are relaxing everything, relax the instruction as much as
+  // possible and emit it as data.
+  if (Assembler.getRelaxAll()) {
+    MCInst Relaxed;
+    Assembler.getBackend().RelaxInstruction(Inst, Relaxed);
+    while (Assembler.getBackend().MayNeedRelaxation(Relaxed))
+      Assembler.getBackend().RelaxInstruction(Relaxed, Relaxed);
+    EmitInstToData(Relaxed);
+    return;
+  }
+
+  // Otherwise emit to a separate fragment.
+  EmitInstToFragment(Inst);
 }
 
 void MCMachOStreamer::Finish() {
