@@ -2198,10 +2198,8 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     Processed.insert(DV);
     DbgVariable *RegVar = new DbgVariable(DV);
     Scope->addVariable(RegVar);
-    if (DV.getTag() != dwarf::DW_TAG_arg_variable) {
-      DbgValueStartMap[MInsn] = RegVar;
+    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
       DbgVariableLabelsMap[RegVar] = getLabelBeforeInsn(MInsn); 
-    }
     if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
       VarToAbstractVarMap[RegVar] = AbsVar;
@@ -2224,7 +2222,6 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
         continue;
       } 
       End = *MVI;
-      DbgValueStartMap[End] = RegVar;
       MachineLocation MLoc;
       MLoc.set(Begin->getOperand(0).getReg(), 0);
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
@@ -2683,7 +2680,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DeleteContainerSeconds(DbgScopeMap);
   InsnsBeginScopeSet.clear();
   InsnsEndScopeSet.clear();
-  DbgValueStartMap.clear();
   ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();

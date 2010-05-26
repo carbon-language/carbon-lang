@@ -164,12 +164,6 @@ class DwarfDebug {
   /// DbgScopes in AbstractScopes.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
-  /// DbgValueStartMap - Tracks starting scope of variable DIEs.
-  /// If the scope of an object begins sometime after the low pc value for the 
-  /// scope most closely enclosing the object, the object entry may have a 
-  /// DW_AT_start_scope attribute.
-  DenseMap<const MachineInstr *, DbgVariable *> DbgValueStartMap;
-
   /// DbgVariableToFrameIndexMap - Tracks frame index used to find 
   /// variable's value.
   DenseMap<const DbgVariable *, int> DbgVariableToFrameIndexMap;
