@@ -179,6 +179,7 @@ bool Lint::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
   visit(F);
   dbgs() << MessagesStr.str();
+  Messages.clear();
   return false;
 }
 
@@ -492,14 +493,10 @@ void llvm::lintFunction(const Function &f) {
 }
 
 /// lintModule - Check a module for errors, printing messages on stderr.
-/// Return true if the module is corrupt.
 ///
-void llvm::lintModule(const Module &M, std::string *ErrorInfo) {
+void llvm::lintModule(const Module &M) {
   PassManager PM;
   Lint *V = new Lint();
   PM.add(V);
   PM.run(const_cast<Module&>(M));
-
-  if (ErrorInfo)
-    *ErrorInfo = V->MessagesStr.str();
 }

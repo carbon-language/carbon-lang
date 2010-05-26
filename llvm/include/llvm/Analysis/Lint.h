@@ -38,8 +38,7 @@ FunctionPass *createLintPass();
 /// This should only be used for debugging, because it plays games with
 /// PassManagers and stuff.
 void lintModule(
-  const Module &M,  ///< The module to be checked
-  std::string *ErrorInfo = 0      ///< Information about failures.
+  const Module &M    ///< The module to be checked
 );
 
 // lintFunction - Check a function.
