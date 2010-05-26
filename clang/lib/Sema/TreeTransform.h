@@ -5210,6 +5210,9 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   // transform the constructor arguments (if any).
   ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I) {
+    if (getDerived().DropCallArgument(E->getConstructorArg(I)))
+      break;
+    
     OwningExprResult Arg = getDerived().TransformExpr(E->getConstructorArg(I));
     if (Arg.isInvalid())
       return SemaRef.ExprError();

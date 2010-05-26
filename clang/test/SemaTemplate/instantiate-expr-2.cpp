@@ -194,6 +194,37 @@ namespace N12 {
   void f0(int **a) { C::f0(a); }
 }
 
+namespace PR7202 {
+  template<typename U, typename T>
+  struct meta {
+    typedef T type;
+  };
+
+  struct X {
+    struct dummy;
+
+    template<typename T>
+    X(T, typename meta<T, dummy*>::type = 0);
+
+    template<typename T, typename A>
+    X(T, A);
+  };
+
+  template<typename T>
+  struct Z { };
+
+  template<typename T> Z<T> g(T);
+
+  struct Y {
+    template<typename T>
+    void f(T t) {
+      new X(g(*this));
+    }
+  };
+
+  template void Y::f(int);
+}
+
 namespace N13 {
   class A{
     A(const A&);
