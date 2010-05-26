@@ -175,7 +175,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
         // Each argument to a call takes on average one instruction to set up.
         NumInsts += CS.arg_size();
-        ++NumCalls;
+
+        // We don't want inline asm to count as a call - that would prevent loop
+        // unrolling. The argument setup cost is still real, though.
+        if (!isa<InlineAsm>(CS.getCalledValue()))
+          ++NumCalls;
       }
     }
     
