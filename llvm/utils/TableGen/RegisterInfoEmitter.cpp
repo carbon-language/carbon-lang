@@ -719,6 +719,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // to memory.
   for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
          I = RegisterAliases.begin(), E = RegisterAliases.end(); I != E; ++I) {
+    if (I->second.empty())
+      continue;
     OS << "  const unsigned " << I->first->getName() << "_AliasSet[] = { ";
     for (std::set<Record*>::iterator ASI = I->second.begin(),
            E = I->second.end(); ASI != E; ++ASI)
@@ -735,6 +737,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // sub-registers list to memory.
   for (std::map<Record*, std::set<Record*>, LessRecord>::iterator
          I = RegisterSubRegs.begin(), E = RegisterSubRegs.end(); I != E; ++I) {
+   if (I->second.empty())
+     continue;
     OS << "  const unsigned " << I->first->getName() << "_SubRegsSet[] = { ";
     std::vector<Record*> SubRegsVector;
     for (std::set<Record*>::iterator ASI = I->second.begin(),
@@ -756,6 +760,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // super-registers list to memory.
   for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
          I = RegisterSuperRegs.begin(), E = RegisterSuperRegs.end(); I != E; ++I) {
+    if (I->second.empty())
+      continue;
     OS << "  const unsigned " << I->first->getName() << "_SuperRegsSet[] = { ";
 
     std::vector<Record*> SuperRegsVector;
@@ -778,15 +784,15 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     const CodeGenRegister &Reg = Regs[i];
     OS << "    { \"";
     OS << Reg.getName() << "\",\t";
-    if (RegisterAliases.count(Reg.TheDef))
+    if (!RegisterAliases[Reg.TheDef].empty())
       OS << Reg.getName() << "_AliasSet,\t";
     else
       OS << "Empty_AliasSet,\t";
-    if (RegisterSubRegs.count(Reg.TheDef))
+    if (!RegisterSubRegs[Reg.TheDef].empty())
       OS << Reg.getName() << "_SubRegsSet,\t";
     else
       OS << "Empty_SubRegsSet,\t";
-    if (RegisterSuperRegs.count(Reg.TheDef))
+    if (!RegisterSuperRegs[Reg.TheDef].empty())
       OS << Reg.getName() << "_SuperRegsSet },\n";
     else
       OS << "Empty_SuperRegsSet },\n";
