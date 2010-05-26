@@ -54,8 +54,7 @@ public:
       DF.getContents()[Fixup.getOffset() + i] = uint8_t(Value >> (i * 8));
   }
 
-  bool MayNeedRelaxation(const MCInst &Inst,
-                         const SmallVectorImpl<MCFixup> &Fixups) const;
+  bool MayNeedRelaxation(const MCInst &Inst) const;
 
   void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
 
@@ -88,31 +87,16 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   }
 }
 
-bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst,
-                              const SmallVectorImpl<MCFixup> &Fixups) const {
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    const MCFixup &F = Fixups[i];
+bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
+  // Check if this instruction is ever relaxable.
+  if (getRelaxedOpcode(Inst.getOpcode()) == Inst.getOpcode())
+    return false;
 
-    // We don't support relaxing anything else currently. Make sure we error out
-    // if we see a non-constant 1 or 2 byte fixup.
-    //
-    // FIXME: We should need to check this here, this is better checked in the
-    // object writer which should be verifying that any final relocations match
-    // the expected fixup. However, that code is more complicated and hasn't
-    // been written yet. See the FIXMEs in MachObjectWriter.cpp.
-    if ((F.getKind() == FK_Data_1 || F.getKind() == FK_Data_2) &&
-        !isa<MCConstantExpr>(F.getValue()))
-      report_fatal_error("unexpected small fixup with a non-constant operand!");
-
-    // Check for a 1byte pcrel fixup, and enforce that we would know how to
-    // relax this instruction.
-    if (unsigned(F.getKind()) == X86::reloc_pcrel_1byte) {
-      assert(getRelaxedOpcode(Inst.getOpcode()) != Inst.getOpcode());
-      return true;
-    }
-  }
-
-  return false;
+  // If so, just assume it can be relaxed. Once we support relaxing more complex
+  // instructions we should check that the instruction actually has symbolic
+  // operands before doing this, but we need to be careful about things like
+  // PCrel.
+  return true;
 }
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions

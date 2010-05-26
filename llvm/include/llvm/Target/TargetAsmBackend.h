@@ -112,10 +112,7 @@ public:
   /// relaxation.
   ///
   /// \arg Inst - The instruction to test.
-  /// \arg Fixups - The actual fixups this instruction encoded to, for potential
-  /// use by the target backend.
-  virtual bool MayNeedRelaxation(const MCInst &Inst,
-                           const SmallVectorImpl<MCFixup> &Fixups) const = 0;
+  virtual bool MayNeedRelaxation(const MCInst &Inst) const = 0;
 
   /// RelaxInstruction - Relax the instruction in the given fragment to the next
   /// wider instruction.

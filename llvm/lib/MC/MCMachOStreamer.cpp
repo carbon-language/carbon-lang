@@ -452,7 +452,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // total knowledge about undefined symbols at that point). Even now, though,
   // we can do a decent job, especially on Darwin where scattering means that we
   // are going to often know that we can never fully resolve a fixup.
-  if (Assembler.getBackend().MayNeedRelaxation(Inst, AsmFixups)) {
+  if (Assembler.getBackend().MayNeedRelaxation(Inst)) {
     MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
     IF->setAtom(CurrentAtomMap.lookup(CurSectionData));
 
