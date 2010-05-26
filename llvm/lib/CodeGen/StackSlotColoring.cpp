@@ -162,34 +162,6 @@ namespace {
   };
 }
 
-/// CheckForSetJmpCall - Return true if there's a call to setjmp/sigsetjmp in
-/// this function.
-bool StackSlotColoring::CheckForSetJmpCall(const MachineFunction &MF) const {
-  const Function *F = MF.getFunction();
-  const Module *M = F->getParent();
-  const Function *SetJmp = M->getFunction("setjmp");
-  const Function *SigSetJmp = M->getFunction("sigsetjmp");
-
-  if (!SetJmp && !SigSetJmp)
-    return false;
-
-  if (SetJmp && !SetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SetJmp->use_begin(), E = SetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
-
-  if (SigSetJmp && !SigSetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SigSetJmp->use_begin(), E = SigSetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
-
-  return false;
-}
-
 /// ScanForSpillSlotRefs - Scan all the machine instructions for spill slot
 /// references and update spill slot weights.
 void StackSlotColoring::ScanForSpillSlotRefs(MachineFunction &MF) {
@@ -757,10 +729,7 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   // coloring. The stack could be modified before the longjmp is executed,
   // resulting in the wrong value being used afterwards. (See
   // <rdar://problem/8007500>.)
-  //
-  // FIXME: This goes beyond the setjmp/sigsetjmp functions. Ideally, we should
-  // check for the GCC "returns twice" attribute.
-  if (CheckForSetJmpCall(MF))
+  if (MF.callsSetJmp())
     return false;
 
   // Gather spill slot references

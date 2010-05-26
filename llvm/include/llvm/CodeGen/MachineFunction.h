@@ -114,8 +114,13 @@ class MachineFunction {
   ///
   unsigned FunctionNumber;
   
-  /// The alignment of the function.
+  /// Alignment - The alignment of the function.
   unsigned Alignment;
+
+  /// CallsSetJmp - True if the function calls setjmp or sigsetjmp. This is used
+  /// to limit optimizations which cannot reason about the control flow of
+  /// setjmp.
+  bool CallsSetJmp;
 
   MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
   void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
@@ -180,6 +185,17 @@ public:
   /// EnsureAlignment - Make sure the function is at least 'A' bits aligned.
   void EnsureAlignment(unsigned A) {
     if (Alignment < A) Alignment = A;
+  }
+
+  /// callsSetJmp - Returns true if the function calls setjmp or sigsetjmp.
+  bool callsSetJmp() const {
+    return CallsSetJmp;
+  }
+
+  /// setCallsSetJmp - Set a flag that indicates if there's a call to setjmp or
+  /// sigsetjmp.
+  void setCallsSetJmp(bool B) {
+    CallsSetJmp = B;
   }
   
   /// getInfo - Keep track of various per-function pieces of information for
