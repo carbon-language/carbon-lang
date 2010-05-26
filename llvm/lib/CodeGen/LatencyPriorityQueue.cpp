@@ -79,7 +79,7 @@ void LatencyPriorityQueue::push(SUnit *SU) {
   }
   NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
   
-  Queue.push(SU);
+  Queue.push_back(SU);
 }
 
 
@@ -113,4 +113,26 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
   // Reinsert the node into the priority queue, which recomputes its
   // NumNodesSolelyBlocking value.
   push(OnlyAvailablePred);
+}
+
+SUnit *LatencyPriorityQueue::pop() {
+  if (empty()) return NULL;
+  std::vector<SUnit *>::iterator Best = Queue.begin();
+  for (std::vector<SUnit *>::iterator I = next(Queue.begin()),
+       E = Queue.end(); I != E; ++I)
+    if (Picker(*Best, *I))
+      Best = I;
+  SUnit *V = *Best;
+  if (Best != prior(Queue.end()))
+    std::swap(*Best, Queue.back());
+  Queue.pop_back();
+  return V;
+}
+
+void LatencyPriorityQueue::remove(SUnit *SU) {
+  assert(!Queue.empty() && "Queue is empty!");
+  std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(), SU);
+  if (I != prior(Queue.end()))
+    std::swap(*I, Queue.back());
+  Queue.pop_back();
 }

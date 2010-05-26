@@ -24,7 +24,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1027,7 +1026,8 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
 namespace {
   template<class SF>
   class RegReductionPriorityQueue : public SchedulingPriorityQueue {
-    PriorityQueue<SUnit*, std::vector<SUnit*>, SF> Queue;
+    std::vector<SUnit*> Queue;
+    SF Picker;
     unsigned CurQueueId;
 
   protected:
@@ -1044,7 +1044,7 @@ namespace {
   public:
     RegReductionPriorityQueue(const TargetInstrInfo *tii,
                               const TargetRegisterInfo *tri)
-      : Queue(SF(this)), CurQueueId(0),
+      : Picker(this), CurQueueId(0),
         TII(tii), TRI(tri), scheduleDAG(NULL) {}
     
     void initNodes(std::vector<SUnit> &sunits) {
@@ -1110,13 +1110,20 @@ namespace {
     void push(SUnit *U) {
       assert(!U->NodeQueueId && "Node in the queue already");
       U->NodeQueueId = ++CurQueueId;
-      Queue.push(U);
+      Queue.push_back(U);
     }
 
     SUnit *pop() {
       if (empty()) return NULL;
-      SUnit *V = Queue.top();
-      Queue.pop();
+      std::vector<SUnit *>::iterator Best = Queue.begin();
+      for (std::vector<SUnit *>::iterator I = next(Queue.begin()),
+           E = Queue.end(); I != E; ++I)
+        if (Picker(*Best, *I))
+          Best = I;
+      SUnit *V = *Best;
+      if (Best != prior(Queue.end()))
+        std::swap(*Best, Queue.back());
+      Queue.pop_back();
       V->NodeQueueId = 0;
       return V;
     }
@@ -1124,7 +1131,11 @@ namespace {
     void remove(SUnit *SU) {
       assert(!Queue.empty() && "Queue is empty!");
       assert(SU->NodeQueueId != 0 && "Not in queue!");
-      Queue.erase_one(SU);
+      std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(),
+                                                   SU);
+      if (I != prior(Queue.end()))
+        std::swap(*I, Queue.back());
+      Queue.pop_back();
       SU->NodeQueueId = 0;
     }
 
