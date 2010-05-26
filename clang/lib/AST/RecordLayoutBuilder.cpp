@@ -24,8 +24,8 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Context)
   : Context(Context), Size(0), Alignment(8), Packed(false), 
   UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), IsUnion(false),
-  PrimaryBase(0), PrimaryBaseIsVirtual(false), NonVirtualSize(0), 
-  NonVirtualAlignment(8), FirstNearlyEmptyVBase(0),
+  NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0), 
+  PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0),
   SizeOfLargestEmptySubobject(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
@@ -911,6 +911,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                                    Builder.NonVirtualAlignment,
                                    Builder.SizeOfLargestEmptySubobject,
                                    Builder.PrimaryBase,
+                                   Builder.PrimaryBaseIsVirtual,
                                    Builder.Bases, Builder.VBases);
 }
 
@@ -994,6 +995,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
                                   Builder.NonVirtualAlignment,
                                   Builder.SizeOfLargestEmptySubobject,
                                   Builder.PrimaryBase,
+                                  Builder.PrimaryBaseIsVirtual,
                                   Builder.Bases, Builder.VBases);
   } else {
     ASTRecordLayoutBuilder Builder(*this);
