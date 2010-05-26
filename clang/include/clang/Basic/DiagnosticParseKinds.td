@@ -363,6 +363,13 @@ def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">;  
 def warn_pragma_extra_tokens_at_eol : Warning<
   "extra tokens at end of '#pragma %0' - ignored">; 
+// - #pragma options
+def warn_pragma_options_expected_align : Warning<
+  "expected 'align' following '#pragma options' - ignored">;
+def warn_pragma_options_expected_equal : Warning<
+  "expected '=' following '#pragma options align' - ignored">;
+def warn_pragma_options_invalid_option : Warning<
+  "invalid alignment option in '#pragma options align' - ignored">;
 // - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
   "unknown action for '#pragma pack' - ignored">;

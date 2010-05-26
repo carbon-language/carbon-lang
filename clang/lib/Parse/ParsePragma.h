@@ -20,6 +20,15 @@ namespace clang {
   class Action;
   class Parser;
 
+class PragmaOptionsHandler : public PragmaHandler {
+  Action &Actions;
+public:
+  PragmaOptionsHandler(const IdentifierInfo *N, Action &A) : PragmaHandler(N),
+                                                             Actions(A) {}
+
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+};
+
 class PragmaPackHandler : public PragmaHandler {
   Action &Actions;
 public:

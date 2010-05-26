@@ -23,7 +23,6 @@ using namespace clang;
 //   pack '(' 'show' ')'
 //   pack '(' ('push' | 'pop') [',' identifier] [, integer] ')'
 void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
-  // FIXME: Should we be expanding macros here? My guess is no.
   SourceLocation PackLoc = PackTok.getLocation();
 
   Token Tok;
@@ -100,15 +99,65 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
     return;
   }
 
+  SourceLocation RParenLoc = Tok.getLocation();
   PP.Lex(Tok);
   if (Tok.isNot(tok::eom)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "pack";
     return;
   }
 
-  SourceLocation RParenLoc = Tok.getLocation();
   Actions.ActOnPragmaPack(Kind, Name, Alignment.release(), PackLoc,
                           LParenLoc, RParenLoc);
+}
+
+// #pragma 'options' 'align' '=' {'natural', 'mac68k', 'power', 'reset'}
+void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
+  SourceLocation OptionsLoc = OptionsTok.getLocation();
+
+  Token Tok;
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier) || !Tok.getIdentifierInfo()->isStr("align")) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_align);
+    return;
+  }
+  
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::equal)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_equal);
+    return;
+  }
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
+      << "options";
+    return;
+  }
+
+  Action::PragmaOptionsAlignKind Kind = Action::POAK_Natural;
+  const IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (II->isStr("natural"))
+    Kind = Action::POAK_Natural;
+  else if (II->isStr("power"))
+    Kind = Action::POAK_Power;
+  else if (II->isStr("mac68k"))
+    Kind = Action::POAK_Mac68k;
+  else if (II->isStr("reset"))
+    Kind = Action::POAK_Reset;
+  else {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_invalid_option);
+    return;
+  }
+
+  SourceLocation KindLoc = Tok.getLocation();
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::eom)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+      << "options";
+    return;
+  }
+
+  Actions.ActOnPragmaOptionsAlign(Kind, OptionsLoc, KindLoc);
 }
 
 // #pragma unused(identifier)

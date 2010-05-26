@@ -110,6 +110,7 @@ class Parser {
   IdentifierInfo *Ident_vector;
   IdentifierInfo *Ident_pixel;
 
+  llvm::OwningPtr<PragmaHandler> OptionsHandler;
   llvm::OwningPtr<PragmaHandler> PackHandler;
   llvm::OwningPtr<PragmaHandler> UnusedHandler;
   llvm::OwningPtr<PragmaHandler> WeakHandler;

@@ -2564,6 +2564,21 @@ public:
 
   //===---------------------------- Pragmas -------------------------------===//
 
+  enum PragmaOptionsAlignKind {
+    POAK_Natural, // #pragma options align=natural
+    POAK_Power,   // #pragma options align=power
+    POAK_Mac68k,  // #pragma options align=mac68k
+    POAK_Reset    // #pragma options align=reset
+  };
+
+  /// ActOnPragmaOptionsAlign - Called on well formed #pragma options
+  /// align={...}.
+  virtual void ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
+                                       SourceLocation PragmaLoc,
+                                       SourceLocation KindLoc) {
+    return;
+  }
+
   enum PragmaPackKind {
     PPK_Default, // #pragma pack([n])
     PPK_Show,    // #pragma pack(show), only supported by MSVC.
