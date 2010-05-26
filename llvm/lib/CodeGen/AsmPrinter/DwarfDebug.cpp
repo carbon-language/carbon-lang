@@ -2289,12 +2289,11 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
     return;
   }
 
-  // If location is unknown then Use last known location for this DBG_VALUE 
+  // If location is unknown then use temp label for this DBG_VALUE 
   // instruction.
   if (MI->isDebugValue()) {
-    const MDNode *Scope = 
-      PrevInstLoc.getScope(Asm->MF->getFunction()->getContext());
-    PrevLabel = recordSourceLine(PrevInstLoc.getLine(), PrevInstLoc.getCol(), Scope);
+    PrevLabel = MMI->getContext().CreateTempSymbol();
+    Asm->OutStreamer.EmitLabel(PrevLabel);
     LabelsBeforeInsn[MI] = PrevLabel;
     return;
   }
