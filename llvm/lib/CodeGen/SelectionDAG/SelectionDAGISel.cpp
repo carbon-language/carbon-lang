@@ -193,31 +193,34 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 /// FunctionCallsSetJmp - Return true if the function has a call to setjmp or
-/// sigsetjmp. This is used to limit code-gen optimizations on the machine
-/// function.
+/// other function that gcc recognizes as "returning twice". This is used to
+/// limit code-gen optimizations on the machine function.
 static bool FunctionCallsSetJmp(const Function *F) {
   const Module *M = F->getParent();
-  const Function *SetJmp = M->getFunction("setjmp");
-  const Function *SigSetJmp = M->getFunction("sigsetjmp");
+  static const char *ReturnsTwiceFns[] = {
+    "setjmp",
+    "sigsetjmp",
+    "setjmp_syscall",
+    "savectx",
+    "qsetjmp",
+    "vfork",
+    "getcontext"
+  };
+#define NUM_RETURNS_TWICE_FNS sizeof(ReturnsTwiceFns) / sizeof(const char *)
 
-  if (!SetJmp && !SigSetJmp)
-    return false;
-
-  if (SetJmp && !SetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SetJmp->use_begin(), E = SetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
-
-  if (SigSetJmp && !SigSetJmp->use_empty())
-    for (Value::const_use_iterator
-           I = SigSetJmp->use_begin(), E = SigSetJmp->use_end(); I != E; ++I)
-      if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (CI->getParent()->getParent() == F)
-          return true;
+  for (unsigned I = 0; I < NUM_RETURNS_TWICE_FNS; ++I)
+    if (const Function *Callee = M->getFunction(ReturnsTwiceFns[I])) {
+      if (!Callee->use_empty())
+        for (Value::const_use_iterator
+               I = Callee->use_begin(), E = Callee->use_end();
+             I != E; ++I)
+          if (const CallInst *CI = dyn_cast<CallInst>(I))
+            if (CI->getParent()->getParent() == F)
+              return true;
+    }
 
   return false;
+#undef NUM_RETURNS_TWICE_FNS
 }
 
 bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
