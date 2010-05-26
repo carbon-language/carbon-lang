@@ -10,6 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+let Namespace = "PPC" in {
+def sub_lt : SubRegIndex;
+def sub_gt : SubRegIndex;
+def sub_eq : SubRegIndex;
+def sub_un : SubRegIndex;
+def sub_32 : SubRegIndex;
+}
+
+
 class PPCReg<string n> : Register<n> {
   let Namespace = "PPC";
 }
@@ -25,6 +34,7 @@ class GPR<bits<5> num, string n> : PPCReg<n> {
 class GP8<GPR SubReg, string n> : PPCReg<n> {
   field bits<5> Num = SubReg.Num;
   let SubRegs = [SubReg];
+  let SubRegIndices = [sub_32];
 }
 
 // SPR - One of the 32-bit special-purpose registers
@@ -225,6 +235,7 @@ def CR7EQ : CRBIT<30, "30">, DwarfRegNum<[0]>;
 def CR7UN : CRBIT<31, "31">, DwarfRegNum<[0]>;
 
 // Condition registers
+let SubRegIndices = [sub_lt, sub_gt, sub_eq, sub_un] in {
 def CR0 : CR<0, "cr0", [CR0LT, CR0GT, CR0EQ, CR0UN]>, DwarfRegNum<[68]>;
 def CR1 : CR<1, "cr1", [CR1LT, CR1GT, CR1EQ, CR1UN]>, DwarfRegNum<[69]>;
 def CR2 : CR<2, "cr2", [CR2LT, CR2GT, CR2EQ, CR2UN]>, DwarfRegNum<[70]>;
@@ -233,26 +244,7 @@ def CR4 : CR<4, "cr4", [CR4LT, CR4GT, CR4EQ, CR4UN]>, DwarfRegNum<[72]>;
 def CR5 : CR<5, "cr5", [CR5LT, CR5GT, CR5EQ, CR5UN]>, DwarfRegNum<[73]>;
 def CR6 : CR<6, "cr6", [CR6LT, CR6GT, CR6EQ, CR6UN]>, DwarfRegNum<[74]>;
 def CR7 : CR<7, "cr7", [CR7LT, CR7GT, CR7EQ, CR7UN]>, DwarfRegNum<[75]>;
-
-let Namespace = "PPC" in {
-def sub_lt : SubRegIndex;
-def sub_gt : SubRegIndex;
-def sub_eq : SubRegIndex;
-def sub_un : SubRegIndex;
 }
-
-def : SubRegSet<sub_lt,
-                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                [CR0LT, CR1LT, CR2LT, CR3LT, CR4LT, CR5LT, CR6LT, CR7LT]>;
-def : SubRegSet<sub_gt,
-                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                [CR0GT, CR1GT, CR2GT, CR3GT, CR4GT, CR5GT, CR6GT, CR7GT]>;
-def : SubRegSet<sub_eq,
-                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                [CR0EQ, CR1EQ, CR2EQ, CR3EQ, CR4EQ, CR5EQ, CR6EQ, CR7EQ]>;
-def : SubRegSet<sub_un,
-                [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
-                [CR0UN, CR1UN, CR2UN, CR3UN, CR4UN, CR5UN, CR6UN, CR7UN]>;
 
 // Link register
 def LR  : SPR<8, "lr">, DwarfRegNum<[65]>;

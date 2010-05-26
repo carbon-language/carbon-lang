@@ -54,6 +54,23 @@ class Register<string n> {
   // not [AX, AH, AL].
   list<Register> SubRegs = [];
 
+  // SubRegIndices - For each register in SubRegs, specify the SubRegIndex used
+  // to address it. Sub-sub-register indices are automatically inherited from
+  // SubRegs.
+  list<SubRegIndex> SubRegIndices = [];
+
+  // CompositeIndices - Specify subreg indices that don't correspond directly to
+  // a register in SubRegs and are not inherited. The following formats are
+  // supported:
+  //
+  // (a)     Identity  - Reg:a == Reg
+  // (a b)   Alias     - Reg:a == Reg:b
+  // (a b,c) Composite - Reg:a == (Reg:b):c
+  //
+  // This can be used to disambiguate a sub-sub-register that exists in more
+  // than one subregister and other weird stuff.
+  list<dag> CompositeIndices = [];
+
   // DwarfNumbers - Numbers used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
@@ -71,17 +88,6 @@ class Register<string n> {
 // overlapping live ranges into registers which alias.
 class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
   let SubRegs = subregs;
-}
-
-// SubRegSet - This can be used to define a specific mapping of registers to
-// indices, for use as named subregs of a particular physical register.  Each
-// register in 'subregs' becomes an addressable subregister at index 'n' of the
-// corresponding register in 'regs'.
-class SubRegSet<SubRegIndex n, list<Register> regs, list<Register> subregs> {
-  SubRegIndex Index = n;
-  
-  list<Register> From = regs;
-  list<Register> To = subregs;
 }
 
 // RegisterClass - Now that all of the registers are defined, and aliases

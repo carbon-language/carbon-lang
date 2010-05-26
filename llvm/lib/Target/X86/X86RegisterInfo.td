@@ -68,17 +68,22 @@ let Namespace = "X86" in {
   def BH : Register<"bh">, DwarfRegNum<[3, 3, 3]>;
 
   // 16-bit registers
+  let SubRegIndices = [sub_8bit, sub_8bit_hi] in {
   def AX : RegisterWithSubRegs<"ax", [AL,AH]>, DwarfRegNum<[0, 0, 0]>;
   def DX : RegisterWithSubRegs<"dx", [DL,DH]>, DwarfRegNum<[1, 2, 2]>;
   def CX : RegisterWithSubRegs<"cx", [CL,CH]>, DwarfRegNum<[2, 1, 1]>;
   def BX : RegisterWithSubRegs<"bx", [BL,BH]>, DwarfRegNum<[3, 3, 3]>;
+  }
+  let SubRegIndices = [sub_8bit] in {
   def SI : RegisterWithSubRegs<"si", [SIL]>, DwarfRegNum<[4, 6, 6]>;
   def DI : RegisterWithSubRegs<"di", [DIL]>, DwarfRegNum<[5, 7, 7]>;
   def BP : RegisterWithSubRegs<"bp", [BPL]>, DwarfRegNum<[6, 4, 5]>;
   def SP : RegisterWithSubRegs<"sp", [SPL]>, DwarfRegNum<[7, 5, 4]>;
+  }
   def IP : Register<"ip">, DwarfRegNum<[16]>;
   
   // X86-64 only
+  let SubRegIndices = [sub_8bit] in {
   def R8W  : RegisterWithSubRegs<"r8w", [R8B]>, DwarfRegNum<[8, -2, -2]>;
   def R9W  : RegisterWithSubRegs<"r9w", [R9B]>, DwarfRegNum<[9, -2, -2]>;
   def R10W : RegisterWithSubRegs<"r10w", [R10B]>, DwarfRegNum<[10, -2, -2]>;
@@ -87,8 +92,9 @@ let Namespace = "X86" in {
   def R13W : RegisterWithSubRegs<"r13w", [R13B]>, DwarfRegNum<[13, -2, -2]>;
   def R14W : RegisterWithSubRegs<"r14w", [R14B]>, DwarfRegNum<[14, -2, -2]>;
   def R15W : RegisterWithSubRegs<"r15w", [R15B]>, DwarfRegNum<[15, -2, -2]>;
-
+  }
   // 32-bit registers
+  let SubRegIndices = [sub_16bit] in {
   def EAX : RegisterWithSubRegs<"eax", [AX]>, DwarfRegNum<[0, 0, 0]>;
   def EDX : RegisterWithSubRegs<"edx", [DX]>, DwarfRegNum<[1, 2, 2]>;
   def ECX : RegisterWithSubRegs<"ecx", [CX]>, DwarfRegNum<[2, 1, 1]>;
@@ -108,8 +114,10 @@ let Namespace = "X86" in {
   def R13D : RegisterWithSubRegs<"r13d", [R13W]>, DwarfRegNum<[13, -2, -2]>;
   def R14D : RegisterWithSubRegs<"r14d", [R14W]>, DwarfRegNum<[14, -2, -2]>;
   def R15D : RegisterWithSubRegs<"r15d", [R15W]>, DwarfRegNum<[15, -2, -2]>;
+  }
 
   // 64-bit registers, X86-64 only
+  let SubRegIndices = [sub_32bit] in {
   def RAX : RegisterWithSubRegs<"rax", [EAX]>, DwarfRegNum<[0, -2, -2]>;
   def RDX : RegisterWithSubRegs<"rdx", [EDX]>, DwarfRegNum<[1, -2, -2]>;
   def RCX : RegisterWithSubRegs<"rcx", [ECX]>, DwarfRegNum<[2, -2, -2]>;
@@ -128,6 +136,7 @@ let Namespace = "X86" in {
   def R14 : RegisterWithSubRegs<"r14", [R14D]>, DwarfRegNum<[14, -2, -2]>;
   def R15 : RegisterWithSubRegs<"r15", [R15D]>, DwarfRegNum<[15, -2, -2]>;
   def RIP : RegisterWithSubRegs<"rip", [EIP]>,  DwarfRegNum<[16, -2, -2]>;
+  }
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
   def MM0 : Register<"mm0">, DwarfRegNum<[41, 29, 29]>;
@@ -148,7 +157,9 @@ let Namespace = "X86" in {
   def FP5 : Register<"fp5">;
   def FP6 : Register<"fp6">; 
 
-  // XMM Registers, used by the various SSE instruction set extensions
+  // XMM Registers, used by the various SSE instruction set extensions.
+  // The sub_ss and sub_sd subregs are the same registers with another regclass.
+  let CompositeIndices = [(sub_ss), (sub_sd)] in {
   def XMM0: Register<"xmm0">, DwarfRegNum<[17, 21, 21]>;
   def XMM1: Register<"xmm1">, DwarfRegNum<[18, 22, 22]>;
   def XMM2: Register<"xmm2">, DwarfRegNum<[19, 23, 23]>;
@@ -167,8 +178,10 @@ let Namespace = "X86" in {
   def XMM13: Register<"xmm13">, DwarfRegNum<[30, -2, -2]>;
   def XMM14: Register<"xmm14">, DwarfRegNum<[31, -2, -2]>;
   def XMM15: Register<"xmm15">, DwarfRegNum<[32, -2, -2]>;
+  }
 
   // YMM Registers, used by AVX instructions
+  let SubRegIndices = [sub_xmm] in {
   def YMM0: RegisterWithSubRegs<"ymm0", [XMM0]>, DwarfRegNum<[17, 21, 21]>;
   def YMM1: RegisterWithSubRegs<"ymm1", [XMM1]>, DwarfRegNum<[18, 22, 22]>;
   def YMM2: RegisterWithSubRegs<"ymm2", [XMM2]>, DwarfRegNum<[19, 23, 23]>;
@@ -185,6 +198,7 @@ let Namespace = "X86" in {
   def YMM13: RegisterWithSubRegs<"ymm13", [XMM13]>, DwarfRegNum<[30, -2, -2]>;
   def YMM14: RegisterWithSubRegs<"ymm14", [XMM14]>, DwarfRegNum<[31, -2, -2]>;
   def YMM15: RegisterWithSubRegs<"ymm15", [XMM15]>, DwarfRegNum<[32, -2, -2]>;
+  }
 
   // Floating point stack registers
   def ST0 : Register<"st(0)">, DwarfRegNum<[33, 12, 11]>;
@@ -229,75 +243,6 @@ let Namespace = "X86" in {
   def CR8 : Register<"cr8">;
 }
 
-
-//===----------------------------------------------------------------------===//
-// Subregister Set Definitions... now that we have all of the pieces, define the
-// sub registers for each register.
-//
-
-def : SubRegSet<sub_8bit, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
-                           R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
-                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
-
-def : SubRegSet<sub_8bit_hi, [AX, CX, DX, BX],
-                             [AH, CH, DH, BH]>;
-
-def : SubRegSet<sub_8bit, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,  
-                           R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
-
-def : SubRegSet<sub_8bit_hi, [EAX, ECX, EDX, EBX],
-                             [AH, CH, DH, BH]>;
-
-def : SubRegSet<sub_16bit, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,
-                            R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
-                           [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
-                            R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
-
-def : SubRegSet<sub_8bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
-                           R8,  R9,  R10, R11, R12, R13, R14, R15],
-                          [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
-                           R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
-
-def : SubRegSet<sub_8bit_hi, [RAX, RCX, RDX, RBX],
-                             [AH, CH, DH, BH]>;
-
-def : SubRegSet<sub_16bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
-                            R8,  R9,  R10, R11, R12, R13, R14, R15],
-                           [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
-                            R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
-
-def : SubRegSet<sub_32bit, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
-                            R8,  R9,  R10, R11, R12, R13, R14, R15],
-                           [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
-                            R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
-
-def : SubRegSet<sub_ss, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
-                         YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
-
-def : SubRegSet<sub_sd, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
-                         YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
-
-def : SubRegSet<sub_xmm, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
-                          YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
-                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, 
-                          XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
-
-def : SubRegSet<sub_ss, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
-                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
-
-def : SubRegSet<sub_sd, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
-                        [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-                         XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the
