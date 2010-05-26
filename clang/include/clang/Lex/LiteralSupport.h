@@ -147,7 +147,7 @@ class StringLiteralParser {
   char *ResultPtr; // cursor
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                      Preprocessor &PP);
+                      Preprocessor &PP, bool Complain = true);
   bool hadError;
   bool AnyWide;
   bool Pascal;
@@ -164,7 +164,7 @@ public:
   /// specified byte of the string data represented by Token.  This handles
   /// advancing over escape sequences in the string.
   static unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo,
-                                        Preprocessor &PP);
+                                        Preprocessor &PP, bool Complain = true);
 };
 
 }  // end namespace clang

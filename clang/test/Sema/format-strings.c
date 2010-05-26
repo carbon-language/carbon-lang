@@ -251,3 +251,6 @@ void test_pr_6697() {
   myprintf_PR_6697("%1$s\n", 1, (int) 0); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
 }
 
+void rdar8026030(FILE *fp) {
+  fprintf(fp, "\%"); // expected-warning{{incomplete format specifier}}
+}
