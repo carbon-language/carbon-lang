@@ -21,6 +21,7 @@
 
 using namespace clang;
 
+namespace {
 class RecordLayoutBuilder {
   // FIXME: Remove this and make the appropriate fields public.
   friend class clang::ASTContext;
@@ -172,6 +173,7 @@ class RecordLayoutBuilder {
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
+} // end anonymous namespace
 
 RecordLayoutBuilder::RecordLayoutBuilder(ASTContext &Context)
   : Context(Context), Size(0), Alignment(8), Packed(false), 
