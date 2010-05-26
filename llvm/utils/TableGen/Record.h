@@ -1461,7 +1461,7 @@ public:
 ///
 struct LessRecord {
   bool operator()(const Record *Rec1, const Record *Rec2) const {
-    return Rec1->getName() < Rec2->getName();
+    return StringRef(Rec1->getName()).compare_numeric(Rec2->getName()) < 0;
   }
 };
 

@@ -128,6 +128,10 @@ namespace llvm {
     /// compare_lower - Compare two strings, ignoring case.
     int compare_lower(StringRef RHS) const;
 
+    /// compare_numeric - Compare two strings, treating sequences of digits as
+    /// numbers.
+    int compare_numeric(StringRef RHS) const;
+
     /// \brief Determine the edit distance between this string and another 
     /// string.
     ///

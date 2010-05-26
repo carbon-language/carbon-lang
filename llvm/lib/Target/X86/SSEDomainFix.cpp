@@ -155,9 +155,7 @@ char SSEDomainFixPass::ID = 0;
 /// Translate TRI register number to an index into our smaller tables of
 /// interesting registers. Return -1 for boring registers.
 int SSEDomainFixPass::RegIndex(unsigned reg) {
-  // Registers are sorted lexicographically.
-  // We just need them to be consecutive, ordering doesn't matter.
-  assert(X86::XMM9 == X86::XMM0+NumRegs-1 && "Unexpected sort");
+  assert(X86::XMM15 == X86::XMM0+NumRegs-1 && "Unexpected sort");
   reg -= X86::XMM0;
   return reg < NumRegs ? (int) reg : -1;
 }

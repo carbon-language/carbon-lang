@@ -159,6 +159,7 @@ void CodeGenTarget::ReadRegisters() const {
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
   if (Regs.empty())
     throw std::string("No 'Register' subclasses defined!");
+  std::sort(Regs.begin(), Regs.end(), LessRecord());
 
   Registers.reserve(Regs.size());
   Registers.assign(Regs.begin(), Regs.end());
@@ -175,6 +176,7 @@ const std::string &CodeGenRegister::getName() const {
 
 void CodeGenTarget::ReadSubRegIndices() const {
   SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
+  std::sort(SubRegIndices.begin(), SubRegIndices.end(), LessRecord());
 }
 
 void CodeGenTarget::ReadRegisterClasses() const {
