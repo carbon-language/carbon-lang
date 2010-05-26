@@ -30,7 +30,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
 using namespace llvm;
