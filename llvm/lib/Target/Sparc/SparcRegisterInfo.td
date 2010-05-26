@@ -20,11 +20,6 @@ class SparcCtrlReg<string n>: Register<n> {
   let Namespace = "SP";
 }
 
-let Namespace = "SP" in {
-def sub_even : SubRegIndex;
-def sub_odd  : SubRegIndex;
-}
-
 // Registers are identified with 5-bit ID numbers.
 // Ri - 32-bit integer registers
 class Ri<bits<5> num, string n> : SparcReg<n> {
@@ -38,7 +33,6 @@ class Rf<bits<5> num, string n> : SparcReg<n> {
 class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
   let Num = num;
   let SubRegs = subregs;
-  let SubRegIndices = [sub_even, sub_odd];
 }
 
 // Control Registers

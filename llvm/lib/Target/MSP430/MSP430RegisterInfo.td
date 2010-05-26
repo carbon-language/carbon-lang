@@ -43,9 +43,6 @@ def R13B : MSP430Reg<13, "r13">;
 def R14B : MSP430Reg<14, "r14">;
 def R15B : MSP430Reg<15, "r15">;
 
-def subreg_8bit : SubRegIndex { let Namespace = "MSP430"; }
-
-let SubRegIndices = [subreg_8bit] in {
 def PCW  : MSP430RegWithSubregs<0,  "r0",  [PCB]>;
 def SPW  : MSP430RegWithSubregs<1,  "r1",  [SPB]>;
 def SRW  : MSP430RegWithSubregs<2,  "r2",  [SRB]>;
@@ -62,7 +59,13 @@ def R12W : MSP430RegWithSubregs<12, "r12", [R12B]>;
 def R13W : MSP430RegWithSubregs<13, "r13", [R13B]>;
 def R14W : MSP430RegWithSubregs<14, "r14", [R14B]>;
 def R15W : MSP430RegWithSubregs<15, "r15", [R15B]>;
-}
+
+def subreg_8bit : SubRegIndex { let Namespace = "MSP430"; }
+
+def : SubRegSet<subreg_8bit, [PCW, SPW, SRW, CGW, FPW, R5W, R6W, R7W,
+                              R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
+                             [PCB, SPB, SRB, CGB, FPB, R5B, R6B, R7B,
+                              R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
 
 def GR8 : RegisterClass<"MSP430", [i8], 8,
    // Volatile registers

@@ -17,15 +17,21 @@ class MBlazeReg<string n> : Register<n> {
   let Namespace = "MBlaze";
 }
 
+class MBlazeRegWithSubRegs<string n, list<Register> subregs>
+  : RegisterWithSubRegs<n, subregs> {
+  field bits<5> Num;
+  let Namespace = "MBlaze";
+}
+
 // MBlaze CPU Registers
 class MBlazeGPRReg<bits<5> num, string n> : MBlazeReg<n> {
   let Num = num;
 }
 
 // MBlaze 32-bit (aliased) FPU Registers
-class FPR<bits<5> num, string n, list<Register> aliases> : MBlazeReg<n> {
+class FPR<bits<5> num, string n, list<Register> subregs>
+  : MBlazeRegWithSubRegs<n, subregs> {
   let Num = num;
-  let Aliases = aliases;
 }
 
 //===----------------------------------------------------------------------===//
