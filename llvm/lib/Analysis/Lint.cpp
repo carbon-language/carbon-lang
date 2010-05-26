@@ -285,11 +285,6 @@ void Lint::visitCallSite(CallSite CS) {
       visitMemoryReference(I, CS.getArgument(0), 0, 0,
                            MemRef::Read | MemRef::Write);
       break;
-
-    case Intrinsic::stackrestore:
-      visitMemoryReference(I, CS.getArgument(0), 0, 0,
-                           MemRef::Read);
-      break;
     }
 }
 
