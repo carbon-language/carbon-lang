@@ -1863,7 +1863,7 @@ const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   state.setStore(B.getRoot());
   const GRState *s = StateMgr.getPersistentState(state);
   // Remove the extents of dead symbolic regions.
-  llvm::ImmutableMap<const MemRegion*,SVal> Extents =state.get<RegionExtents>();
+  llvm::ImmutableMap<const MemRegion*,SVal> Extents = s->get<RegionExtents>();
   for (llvm::ImmutableMap<const MemRegion *, SVal>::iterator I=Extents.begin(),
          E = Extents.end(); I != E; ++I) {
     if (!W.isVisited(I->first))
