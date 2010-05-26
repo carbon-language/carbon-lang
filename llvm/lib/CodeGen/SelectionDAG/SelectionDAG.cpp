@@ -5627,6 +5627,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::LSDAADDR: return "LSDAADDR";
   case ISD::EHSELECTION: return "EHSELECTION";
   case ISD::EH_RETURN: return "EH_RETURN";
+  case ISD::EH_SJLJ_SETJMP: return "EH_SJLJ_SETJMP";
+  case ISD::EH_SJLJ_LONGJMP: return "EH_SJLJ_LONGJMP";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::BlockAddress:  return "BlockAddress";

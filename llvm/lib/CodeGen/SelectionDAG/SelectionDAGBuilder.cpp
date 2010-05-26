@@ -4038,8 +4038,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     MMI.setCurrentCallSite(CI->getZExtValue());
     return 0;
   }
+  case Intrinsic::eh_sjlj_setjmp: {
+    setValue(&I, DAG.getNode(ISD::EH_SJLJ_SETJMP, dl, MVT::i32, getRoot(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  }
   case Intrinsic::eh_sjlj_longjmp: {
-    DAG.setRoot(DAG.getNode(ISD::EH_SJLJ_LONGJMP, dl, MVT::Other, getRoot(),
+    DAG.setRoot(DAG.getNode(ISD::EH_SJLJ_LONGJMP, dl, MVT::Other,
+                            getRoot(),
                             getValue(I.getOperand(1))));
     return 0;
   }
