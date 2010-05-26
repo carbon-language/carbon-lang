@@ -50,6 +50,9 @@ template <class InputIterator, class OutputIterator, class BinaryOperation>
     OutputIterator
     adjacent_difference(InputIterator first, InputIterator last, OutputIterator result, BinaryOperation binary_op);
 
+template <class ForwardIterator, class T>
+    void iota(ForwardIterator first, ForwardIterator last, T value);
+
 }  // std
 
 */
@@ -176,6 +179,15 @@ adjacent_difference(_InputIterator __first, _InputIterator __last, _OutputIterat
         }
     }
     return __result;
+}
+
+template <class _ForwardIterator, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+iota(_ForwardIterator __first, _ForwardIterator __last, _Tp __value)
+{
+    for (; __first != __last; ++__first, ++__value)
+        *__first = __value;
 }
 
 _LIBCPP_END_NAMESPACE_STD
