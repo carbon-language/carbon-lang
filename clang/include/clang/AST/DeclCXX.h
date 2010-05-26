@@ -1075,9 +1075,9 @@ class CXXBaseOrMemberInitializer {
   /// IsWritten - Whether or not the initializer is explicitly written
   /// in the sources.
   bool IsWritten : 1;
-  /// SourceOrderOrNumArrayIndices - If IsImplicit is false, then this
+  /// SourceOrderOrNumArrayIndices - If IsWritten is true, then this
   /// number keeps track of the textual order of this initializer in the
-  /// original sources, counting from 0; otherwise, if IsImplicit is true,
+  /// original sources, counting from 0; otherwise, if IsWritten is false,
   /// it stores the number of array index variables stored after this
   /// object in memory.
   unsigned SourceOrderOrNumArrayIndices : 14;
