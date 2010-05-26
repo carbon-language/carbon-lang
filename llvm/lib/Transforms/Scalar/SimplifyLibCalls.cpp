@@ -564,7 +564,7 @@ struct MemCmpOpt : public LibCallOptimization {
                                  CI->getType(), "lhsv");
       Value *RHSV = B.CreateZExt(B.CreateLoad(CastToCStr(RHS, B), "rhsc"),
                                  CI->getType(), "rhsv");
-      return B.CreateSExt(B.CreateSub(LHSV, RHSV, "chardiff"), CI->getType());
+      return B.CreateSub(LHSV, RHSV, "chardiff");
     }
 
     // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
