@@ -108,7 +108,6 @@ protected:
 public:
   // Only for sentinel.
   MCFragment();
-  virtual ~MCFragment();
 
   FragmentType getKind() const { return Kind; }
 
@@ -123,7 +122,7 @@ public:
 
   static bool classof(const MCFragment *O) { return true; }
 
-  virtual void dump();
+  void dump();
 };
 
 class MCDataFragment : public MCFragment {
@@ -173,8 +172,6 @@ public:
     return F->getKind() == MCFragment::FT_Data;
   }
   static bool classof(const MCDataFragment *) { return true; }
-
-  virtual void dump();
 };
 
 // FIXME: This current incarnation of MCInstFragment doesn't make much sense, as
@@ -235,8 +232,6 @@ public:
     return F->getKind() == MCFragment::FT_Inst;
   }
   static bool classof(const MCInstFragment *) { return true; }
-
-  virtual void dump();
 };
 
 class MCAlignFragment : public MCFragment {
@@ -295,8 +290,6 @@ public:
     return F->getKind() == MCFragment::FT_Align;
   }
   static bool classof(const MCAlignFragment *) { return true; }
-
-  virtual void dump();
 };
 
 class MCFillFragment : public MCFragment {
@@ -334,8 +327,6 @@ public:
     return F->getKind() == MCFragment::FT_Fill;
   }
   static bool classof(const MCFillFragment *) { return true; }
-
-  virtual void dump();
 };
 
 class MCOrgFragment : public MCFragment {
@@ -363,8 +354,6 @@ public:
     return F->getKind() == MCFragment::FT_Org;
   }
   static bool classof(const MCOrgFragment *) { return true; }
-
-  virtual void dump();
 };
 
 // FIXME: Should this be a separate class, or just merged into MCSection? Since

@@ -185,9 +185,6 @@ MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
     Parent->getFragmentList().push_back(this);
 }
 
-MCFragment::~MCFragment() {
-}
-
 /* *** */
 
 MCSectionData::MCSectionData() : Section(0) {}
@@ -918,79 +915,75 @@ raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
 void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
+  OS << "<";
+  switch (getKind()) {
+  case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
+  case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
+  case MCFragment::FT_Fill:  OS << "MCFillFragment"; break;
+  case MCFragment::FT_Inst:  OS << "MCInstFragment"; break;
+  case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
+  }
+
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
      << " Offset:" << Offset << " EffectiveSize:" << EffectiveSize << ">";
-}
 
-void MCAlignFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCAlignFragment ";
-  this->MCFragment::dump();
-  if (hasEmitNops())
-    OS << " (emit nops)";
-  if (hasOnlyAlignAddress())
-    OS << " (only align section)";
-  OS << "\n       ";
-  OS << " Alignment:" << getAlignment()
-     << " Value:" << getValue() << " ValueSize:" << getValueSize()
-     << " MaxBytesToEmit:" << getMaxBytesToEmit() << ">";
-}
-
-void MCDataFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCDataFragment ";
-  this->MCFragment::dump();
-  OS << "\n       ";
-  OS << " Contents:[";
-  for (unsigned i = 0, e = getContents().size(); i != e; ++i) {
-    if (i) OS << ",";
-    OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
+  switch (getKind()) {
+  case MCFragment::FT_Align: {
+    const MCAlignFragment *AF = cast<MCAlignFragment>(this);
+    if (AF->hasEmitNops())
+      OS << " (emit nops)";
+    if (AF->hasOnlyAlignAddress())
+      OS << " (only align section)";
+    OS << "\n       ";
+    OS << " Alignment:" << AF->getAlignment()
+       << " Value:" << AF->getValue() << " ValueSize:" << AF->getValueSize()
+       << " MaxBytesToEmit:" << AF->getMaxBytesToEmit() << ">";
+    break;
   }
-  OS << "] (" << getContents().size() << " bytes)";
-
-  if (!getFixups().empty()) {
-    OS << ",\n       ";
-    OS << " Fixups:[";
-    for (fixup_iterator it = fixup_begin(), ie = fixup_end(); it != ie; ++it) {
-      if (it != fixup_begin()) OS << ",\n                ";
-      OS << *it;
+  case MCFragment::FT_Data:  {
+    const MCDataFragment *DF = cast<MCDataFragment>(this);
+    OS << "\n       ";
+    OS << " Contents:[";
+    const SmallVectorImpl<char> &Contents = DF->getContents();
+    for (unsigned i = 0, e = Contents.size(); i != e; ++i) {
+      if (i) OS << ",";
+      OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
     }
-    OS << "]";
+    OS << "] (" << Contents.size() << " bytes)";
+
+    if (!DF->getFixups().empty()) {
+      OS << ",\n       ";
+      OS << " Fixups:[";
+      for (MCDataFragment::const_fixup_iterator it = DF->fixup_begin(),
+             ie = DF->fixup_end(); it != ie; ++it) {
+        if (it != DF->fixup_begin()) OS << ",\n                ";
+        OS << *it;
+      }
+      OS << "]";
+    }
+    break;
   }
-
+  case MCFragment::FT_Fill:  {
+    const MCFillFragment *FF = cast<MCFillFragment>(this);
+    OS << " Value:" << FF->getValue() << " ValueSize:" << FF->getValueSize()
+       << " Size:" << FF->getSize();
+    break;
+  }
+  case MCFragment::FT_Inst:  {
+    const MCInstFragment *IF = cast<MCInstFragment>(this);
+    OS << "\n       ";
+    OS << " Inst:";
+    IF->getInst().dump_pretty(OS);
+    break;
+  }
+  case MCFragment::FT_Org:  {
+    const MCOrgFragment *OF = cast<MCOrgFragment>(this);
+    OS << "\n       ";
+    OS << " Offset:" << OF->getOffset() << " Value:" << OF->getValue();
+    break;
+  }
+  }
   OS << ">";
-}
-
-void MCFillFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCFillFragment ";
-  this->MCFragment::dump();
-  OS << "\n       ";
-  OS << " Value:" << getValue() << " ValueSize:" << getValueSize()
-     << " Size:" << getSize() << ">";
-}
-
-void MCInstFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCInstFragment ";
-  this->MCFragment::dump();
-  OS << "\n       ";
-  OS << " Inst:";
-  getInst().dump_pretty(OS);
-  OS << ">";
-}
-
-void MCOrgFragment::dump() {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCOrgFragment ";
-  this->MCFragment::dump();
-  OS << "\n       ";
-  OS << " Offset:" << getOffset() << " Value:" << getValue() << ">";
 }
 
 void MCSectionData::dump() {
