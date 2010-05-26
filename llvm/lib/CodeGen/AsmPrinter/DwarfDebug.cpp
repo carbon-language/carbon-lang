@@ -2215,22 +2215,26 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
     if (DotDebugLocEntries.empty())
       DotDebugLocEntries.push_back(DotDebugLocEntry());
-    const MachineInstr *Current = MultipleValues.back(); 
-    MultipleValues.pop_back();
-    while (!MultipleValues.empty()) {
-      const MachineInstr *Next = MultipleValues.back();
-      MultipleValues.pop_back();
-      DbgValueStartMap[Next] = RegVar;
+    const MachineInstr *Begin = NULL;
+    const MachineInstr *End = NULL;
+    for (SmallVector<const MachineInstr *, 4>::iterator 
+           MVI = MultipleValues.begin(), MVE = MultipleValues.end(); MVI != MVE; ++MVI) {
+      if (!Begin) {
+        Begin = *MVI;
+        continue;
+      } 
+      End = *MVI;
+      DbgValueStartMap[End] = RegVar;
       MachineLocation MLoc;
-      MLoc.set(Current->getOperand(0).getReg(), 0);
-      const MCSymbol *FLabel = getLabelBeforeInsn(Next);
-      const MCSymbol *SLabel = getLabelBeforeInsn(Current);
+      MLoc.set(Begin->getOperand(0).getReg(), 0);
+      const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
+      const MCSymbol *SLabel = getLabelBeforeInsn(End);
       DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
-      Current = Next;
-      if (MultipleValues.empty()) {
-        // If Next is the last instruction then its value is valid
+      Begin = End;
+      if (MVI + 1 == MVE) {
+        // If End is the last instruction then its value is valid
         // until the end of the funtion.
-        MLoc.set(Next->getOperand(0).getReg(), 0);
+        MLoc.set(End->getOperand(0).getReg(), 0);
         DotDebugLocEntries.
           push_back(DotDebugLocEntry(SLabel, FunctionEndSym, MLoc));
       }
