@@ -449,7 +449,7 @@ def Int_CVTSS2SIrm : SSI<0x2D, MRMSrcMem, (outs GR32:$dst), (ins f32mem:$src),
                          [(set GR32:$dst, (int_x86_sse_cvtss2si
                                            (load addr:$src)))]>;
 
-// Match intrinisics which expect MM and XMM operand(s).
+// Match intrinsics which expect MM and XMM operand(s).
 def Int_CVTPS2PIrr : PSI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                          "cvtps2pi\t{$src, $dst|$dst, $src}",
                          [(set VR64:$dst, (int_x86_sse_cvtps2pi VR128:$src))]>;
@@ -1277,7 +1277,7 @@ def Int_CVTSD2SIrm : SDI<0x2D, MRMSrcMem, (outs GR32:$dst), (ins f128mem:$src),
                          [(set GR32:$dst, (int_x86_sse2_cvtsd2si
                                            (load addr:$src)))]>;
 
-// Match intrinisics which expect MM and XMM operand(s).
+// Match intrinsics which expect MM and XMM operand(s).
 def Int_CVTPD2PIrr : PDI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                          "cvtpd2pi\t{$src, $dst|$dst, $src}",
                          [(set VR64:$dst, (int_x86_sse_cvtpd2pi VR128:$src))]>;
@@ -2460,7 +2460,7 @@ def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
 // Pause. This "instruction" is encoded as "rep; nop", so even though it
-// was introduced with SSE2, it's backward compabitle.
+// was introduced with SSE2, it's backward compatible.
 def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
 
 //TODO: custom lower this so as to never even generate the noop
