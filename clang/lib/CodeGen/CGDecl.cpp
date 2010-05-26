@@ -239,8 +239,6 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
   DMEntry = GV;
-  if (getContext().getLangOptions().CPlusPlus)
-    CGM.setStaticLocalDeclAddress(&D, GV);
 
   // We can't have a VLA here, but we can have a pointer to a VLA,
   // even though that doesn't really make any sense.
@@ -269,6 +267,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   if (D.hasAttr<UsedAttr>())
     CGM.AddUsedGlobal(GV);
 
+  if (getContext().getLangOptions().CPlusPlus)
+    CGM.setStaticLocalDeclAddress(&D, GV);
+  
   // We may have to cast the constant because of the initializer
   // mismatch above.
   //
