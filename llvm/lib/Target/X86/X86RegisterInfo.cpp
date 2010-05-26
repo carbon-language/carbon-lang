@@ -144,6 +144,19 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   case X86::XMM7: case X86::XMM15: case X86::MM7:
     return 7;
 
+  case X86::ES:
+    return 0;
+  case X86::CS:
+    return 1;
+  case X86::SS:
+    return 2;
+  case X86::DS:
+    return 3;
+  case X86::FS:
+    return 4;
+  case X86::GS:
+    return 5;
+
   default:
     assert(isVirtualRegister(RegNo) && "Unknown physical register!");
     llvm_unreachable("Register allocator hasn't allocated reg correctly yet!");

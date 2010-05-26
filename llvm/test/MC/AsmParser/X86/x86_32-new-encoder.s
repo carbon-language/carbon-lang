@@ -302,3 +302,32 @@ retl
 // CHECK: fdiv	%st(0)
 // CHECK:  encoding: [0xd8,0xf0]
         fdiv %st(0), %st
+
+// radr://8017519
+// CHECK: movl	%cs, %eax
+// CHECK:  encoding: [0x8c,0xc8]
+        movl %cs, %eax
+
+// CHECK: movw	%cs, %ax
+// CHECK:  encoding: [0x66,0x8c,0xc8]
+        movw %cs, %ax
+
+// CHECK: movl	%cs, (%eax)
+// CHECK:  encoding: [0x8c,0x08]
+        movl %cs, (%eax)
+
+// CHECK: movw	%cs, (%eax)
+// CHECK:  encoding: [0x66,0x8c,0x08]
+        movw %cs, (%eax)
+
+// CHECK: movl	%eax, %cs
+// CHECK:  encoding: [0x8e,0xc8]
+        movl %eax, %cs
+
+// CHECK: movl	(%eax), %cs
+// CHECK:  encoding: [0x8e,0x08]
+        movl (%eax), %cs
+
+// CHECK: movw	(%eax), %cs
+// CHECK:  encoding: [0x66,0x8e,0x08]
+        movw (%eax), %cs

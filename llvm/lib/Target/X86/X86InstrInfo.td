@@ -1028,13 +1028,21 @@ def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
                       
 // Moves to and from segment registers
 def MOV16rs : I<0x8C, MRMDestReg, (outs GR16:$dst), (ins SEGMENT_REG:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32rs : I<0x8C, MRMDestReg, (outs GR32:$dst), (ins SEGMENT_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
 def MOV16ms : I<0x8C, MRMDestMem, (outs i16mem:$dst), (ins SEGMENT_REG:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32ms : I<0x8C, MRMDestMem, (outs i32mem:$dst), (ins SEGMENT_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
 def MOV16sr : I<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32sr : I<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
 def MOV16sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i16mem:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i32mem:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
 
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
                    "mov{b}\t{$src, $dst|$dst, $src}", []>;
