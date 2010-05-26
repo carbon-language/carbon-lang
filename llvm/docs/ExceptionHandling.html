@@ -492,6 +492,26 @@
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection">
+  <a name="llvm_eh_sjlj_longjmp">llvm.eh.sjlj.longjmp</a>
+</div>
+
+<div class="doc_text">
+
+<pre>
+  void %<a href="#llvm_eh_sjlj_longjmp">llvm.eh.sjlj.setjmp</a>(i8*)
+</pre>
+
+<p>The <a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a>
+   intrinsic is used to implement <tt>__builtin_longjmp()</tt> for SJLJ
+   style exception handling. The single parameter is a pointer to a
+   buffer populated by <a href="#llvm_eh_sjlj_setjmp">
+     <tt>llvm.eh.sjlj.setjmp</tt></a>. The frame pointer and stack pointer
+   are restored from the buffer, then control is transfered to the
+   destination address.</p>
+
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
   <a name="llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>
 </div>
 
