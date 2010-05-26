@@ -434,11 +434,6 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
   VecOS.flush();
 
-  // FIXME: Eliminate this copy.
-  SmallVector<MCFixup, 4> AsmFixups;
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
-    AsmFixups.push_back(Fixups[i]);
-
   // See if we might need to relax this instruction, if so it needs its own
   // fragment.
   //
@@ -461,16 +456,16 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
     // FIXME: Revisit this design decision when relaxation is done, we may be
     // able to get away with not storing any extra data in the MCInst.
     IF->getCode() = Code;
-    IF->getFixups() = AsmFixups;
+    IF->getFixups() = Fixups;
 
     return;
   }
 
   // Add the fixups and data.
   MCDataFragment *DF = getOrCreateDataFragment();
-  for (unsigned i = 0, e = AsmFixups.size(); i != e; ++i) {
-    AsmFixups[i].setOffset(AsmFixups[i].getOffset() + DF->getContents().size());
-    DF->addFixup(AsmFixups[i]);
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
+    DF->addFixup(Fixups[i]);
   }
   DF->getContents().append(Code.begin(), Code.end());
 }
