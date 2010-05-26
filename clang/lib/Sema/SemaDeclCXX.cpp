@@ -1892,9 +1892,15 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
 
   // Fields.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field)
+       E = ClassDecl->field_end(); Field != E; ++Field) {
+    if ((*Field)->getType()->isIncompleteArrayType()) {
+      assert(ClassDecl->hasFlexibleArrayMember() &&
+             "Incomplete array type is not valid");
+      continue;
+    }
     if (CollectFieldInitializer(Info, *Field, *Field))
       HadError = true;
+  }
 
   NumInitializers = Info.AllToInit.size();
   if (NumInitializers > 0) {
@@ -4577,6 +4583,11 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
     
     QualType FieldType = Field->getType().getNonReferenceType();
+    if (FieldType->isIncompleteArrayType()) {
+      assert(ClassDecl->hasFlexibleArrayMember() && 
+             "Incomplete array type is not valid");
+      continue;
+    }
     
     // Build references to the field in the object we're copying from and to.
     CXXScopeSpec SS; // Intentionally empty

@@ -1828,6 +1828,8 @@ def ext_variable_sized_type_in_struct : ExtWarn<
 
 def err_flexible_array_empty_struct : Error<
   "flexible array %0 not allowed in otherwise empty struct">;
+def err_flexible_array_has_nonpod_type : Error<
+  "flexible array %0 must have a non-dependent, non-POD type">;
 def ext_flexible_array_in_struct : Extension<
   "%0 may not be nested in a struct due to flexible array member">;
 def ext_flexible_array_in_array : Extension<
