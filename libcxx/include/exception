@@ -76,6 +76,7 @@ template <class E> void rethrow_if_nested(const E& e);
 
 #include <__config>
 #include <cstddef>
+#include <type_traits>
 
 #pragma GCC system_header
 
@@ -148,6 +149,83 @@ make_exception_ptr(_E __e)
     {
         return current_exception();
     }
+}
+
+// nested_exception
+
+class _LIBCPP_EXCEPTION_ABI nested_exception
+{
+    exception_ptr __ptr_;
+public:
+    nested_exception();
+//     nested_exception(const nested_exception&) throw() = default;
+//     nested_exception& operator=(const nested_exception&) throw() = default;
+    virtual ~nested_exception();
+
+    // access functions
+    void rethrow_nested /*[[noreturn]]*/ () const;
+    exception_ptr nested_ptr() const {return __ptr_;}
+};
+
+template <class _Tp>
+struct __nested
+    : public _Tp,
+      public nested_exception
+{
+    explicit __nested(const _Tp& __t) : _Tp(__t) {}
+};
+
+template <class _Tp>
+void 
+#ifdef _LIBCPP_MOVE
+throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
+                  is_class<typename remove_reference<_Tp>::type>::value &&
+                  !is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
+                                    >::type* = 0)
+#else
+throw_with_nested (_Tp& __t, typename enable_if<
+                  is_class<_Tp>::value && !is_base_of<nested_exception, _Tp>::value
+                                    >::type* = 0)
+#endif
+{
+    throw __nested<typename remove_reference<_Tp>::type>(_STD::forward<_Tp>(__t));
+}
+
+template <class _Tp>
+void 
+#ifdef _LIBCPP_MOVE
+throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
+                  !is_class<typename remove_reference<_Tp>::type>::value ||
+                  is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
+                                    >::type* = 0)
+#else
+throw_with_nested (_Tp& __t, typename enable_if<
+                  !is_class<_Tp>::value || is_base_of<nested_exception, _Tp>::value
+                                    >::type* = 0)
+#endif
+{
+    throw _STD::forward<_Tp>(__t);
+}
+
+template <class _E>
+inline
+void
+rethrow_if_nested(const _E& __e, typename enable_if<
+                                   !is_same<_E, nested_exception>::value &&
+                                   is_convertible<_E*, nested_exception*>::value
+                                                   >::type* = 0)
+{
+    static_cast<const nested_exception&>(__e).rethrow_nested();
+}
+
+template <class _E>
+inline
+void
+rethrow_if_nested(const _E& __e, typename enable_if<
+                                   is_same<_E, nested_exception>::value ||
+                                   !is_convertible<_E*, nested_exception*>::value
+                                                   >::type* = 0)
+{
 }
 
 }  // std

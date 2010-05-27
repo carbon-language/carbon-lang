@@ -142,6 +142,23 @@ exception_ptr& exception_ptr::operator=(const exception_ptr& other)
 #endif
 }
 
+nested_exception::nested_exception()
+    : __ptr_(current_exception())
+{
+}
+
+nested_exception::~nested_exception()
+{
+}
+
+void
+nested_exception::rethrow_nested /*[[noreturn]]*/ () const
+{
+    if (__ptr_ == nullptr)
+        terminate();
+    rethrow_exception(__ptr_);
+}
+
 } // std
 
 
