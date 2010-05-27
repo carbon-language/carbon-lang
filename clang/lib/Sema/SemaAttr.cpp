@@ -24,10 +24,15 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace {
+  struct PackStackEntry {
+    unsigned Alignment;
+    IdentifierInfo *Name;
+  };
+
   /// PragmaPackStack - Simple class to wrap the stack used by #pragma
   /// pack.
   class PragmaPackStack {
-    typedef std::vector< std::pair<unsigned, IdentifierInfo*> > stack_ty;
+    typedef std::vector<PackStackEntry> stack_ty;
 
     /// Alignment - The current user specified alignment.
     unsigned Alignment;
@@ -45,7 +50,8 @@ namespace {
     /// push - Push the current alignment onto the stack, optionally
     /// using the given \arg Name for the record, if non-zero.
     void push(IdentifierInfo *Name) {
-      Stack.push_back(std::make_pair(Alignment, Name));
+      PackStackEntry PSE = { Alignment, Name };
+      Stack.push_back(PSE);
     }
 
     /// pop - Pop a record from the stack and restore the current
@@ -62,7 +68,7 @@ bool PragmaPackStack::pop(IdentifierInfo *Name) {
 
   // If name is empty just pop top.
   if (!Name) {
-    Alignment = Stack.back().first;
+    Alignment = Stack.back().Alignment;
     Stack.pop_back();
     return true;
   }
@@ -70,9 +76,9 @@ bool PragmaPackStack::pop(IdentifierInfo *Name) {
   // Otherwise, find the named record.
   for (unsigned i = Stack.size(); i != 0; ) {
     --i;
-    if (Stack[i].second == Name) {
+    if (Stack[i].Name == Name) {
       // Found it, pop up to and including this record.
-      Alignment = Stack[i].first;
+      Alignment = Stack[i].Alignment;
       Stack.erase(Stack.begin() + i, Stack.end());
       return true;
     }
