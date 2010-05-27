@@ -1664,9 +1664,6 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
 
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());
-
-  // Make sure it hits disk now.
-  Out.flush();
 }
 
 /// WriteBitcodeToStream - Write the specified module to the specified output
