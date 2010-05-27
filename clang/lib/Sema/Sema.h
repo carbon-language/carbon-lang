@@ -4015,6 +4015,11 @@ public:
                                                 MultiExprArg Args);
 
 
+  /// ActOnPragmaOptionsAlign - Called on well formed #pragma options align.
+  virtual void ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
+                                       SourceLocation PragmaLoc,
+                                       SourceLocation KindLoc);
+
   /// ActOnPragmaPack - Called on well formed #pragma pack(...).
   virtual void ActOnPragmaPack(PragmaPackKind Kind,
                                IdentifierInfo *Name,

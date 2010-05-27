@@ -18,7 +18,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Pragma Packed
+// Pragma 'pack' and 'options align'
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -92,6 +92,41 @@ unsigned Sema::getPragmaPackAlignment() const {
   if (PackContext)
     return static_cast<PragmaPackStack*>(PackContext)->getAlignment();
   return 0;
+}
+
+void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
+                                   SourceLocation PragmaLoc,
+                                   SourceLocation KindLoc) {
+  if (PackContext == 0)
+    PackContext = new PragmaPackStack();
+
+  PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
+
+  // Reset just pops the top of the stack.
+  if (Kind == Action::POAK_Reset) {
+    // Do the pop.
+    if (!Context->pop(0)) {
+      // If a name was specified then failure indicates the name
+      // wasn't found. Otherwise failure indicates the stack was
+      // empty.
+      Diag(PragmaLoc, diag::warn_pragma_options_align_reset_failed)
+        << "stack empty";
+    }
+    return;
+  }
+
+  // We don't support #pragma options align=power.
+  switch (Kind) {
+  case POAK_Natural:
+    Context->push(0);
+    Context->setAlignment(0);
+    break;
+
+  default:
+    Diag(PragmaLoc, diag::warn_pragma_options_align_unsupported_option)
+      << KindLoc;
+    break;
+  }
 }
 
 void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,

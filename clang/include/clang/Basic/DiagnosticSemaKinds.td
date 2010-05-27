@@ -236,6 +236,10 @@ def err_object_cannot_be_passed_returned_by_value : Error<
   "interface type %1 cannot be %select{returned|passed}0 by value"
   "; did you forget * in %1">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
+def warn_pragma_options_align_unsupported_option : Warning<
+  "unsupported alignment option in '#pragma options align'">;
+def warn_pragma_options_align_reset_failed : Warning<
+  "#pragma options align=reset failed: %0">;
 def warn_pragma_pack_invalid_alignment : Warning<
   "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
 // Follow the MSVC implementation.
