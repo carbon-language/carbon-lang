@@ -379,26 +379,28 @@ int main(int argc, char **argv) {
   // Figure out what stream we are supposed to write to...
   // FIXME: outs() is not binary!
   raw_ostream *Out = 0;
-  bool DeleteStream = true;
-  if (OutputFilename == "-") {
-    Out = &outs();  // Default to printing to stdout...
-    DeleteStream = false;
-  } else {
-    if (NoOutput || AnalyzeOnly) {
-      errs() << "WARNING: The -o (output filename) option is ignored when\n"
-                "the --disable-output or --analyze options are used.\n";
+  bool DeleteStream = false;
+  if (!NoOutput && !AnalyzeOnly) {
+    if (OutputFilename == "-") {
+      Out = &outs();  // Default to printing to stdout...
     } else {
-      // Make sure that the Output file gets unlinked from the disk if we get a
-      // SIGINT
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+      if (NoOutput || AnalyzeOnly) {
+        errs() << "WARNING: The -o (output filename) option is ignored when\n"
+                  "the --disable-output or --analyze options are used.\n";
+      } else {
+        // Make sure that the Output file gets unlinked from the disk if we get
+        // a SIGINT.
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
-      std::string ErrorInfo;
-      Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                               raw_fd_ostream::F_Binary);
-      if (!ErrorInfo.empty()) {
-        errs() << ErrorInfo << '\n';
-        delete Out;
-        return 1;
+        std::string ErrorInfo;
+        Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                                 raw_fd_ostream::F_Binary);
+        if (!ErrorInfo.empty()) {
+          errs() << ErrorInfo << '\n';
+          delete Out;
+          return 1;
+        }
+        DeleteStream = true;
       }
     }
   }
