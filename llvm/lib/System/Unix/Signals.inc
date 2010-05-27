@@ -111,6 +111,14 @@ static void UnregisterHandlers() {
 }
 
 
+/// RemoveFilesToRemove - Process the FilesToRemove list. This function
+/// should be called with the SignalsMutex lock held.
+static void RemoveFilesToRemove() {
+  while (!FilesToRemove.empty()) {
+    FilesToRemove.back().eraseFromDisk(true);
+    FilesToRemove.pop_back();
+  }
+}
 
 // SignalHandler - The signal handler that runs.
 static RETSIGTYPE SignalHandler(int Sig) {
@@ -126,10 +134,7 @@ static RETSIGTYPE SignalHandler(int Sig) {
   sigprocmask(SIG_UNBLOCK, &SigMask, 0);
 
   SignalsMutex.acquire();
-  while (!FilesToRemove.empty()) {
-    FilesToRemove.back().eraseFromDisk(true);
-    FilesToRemove.pop_back();
-  }
+  RemoveFilesToRemove();
 
   if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
     if (InterruptFunction) {
@@ -153,7 +158,9 @@ static RETSIGTYPE SignalHandler(int Sig) {
 }
 
 void llvm::sys::RunInterruptHandlers() {
-  SignalHandler(SIGINT);
+  SignalsMutex.acquire();
+  RemoveFilesToRemove();
+  SignalsMutex.release();
 }
 
 void llvm::sys::SetInterruptFunction(void (*IF)()) {
