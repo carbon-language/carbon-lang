@@ -2183,6 +2183,13 @@ SDValue ARMTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   return FrameAddr;
 }
 
+SDValue ARMTargetLowering::LowerSTACKADDR(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();  // FIXME probably not meaningful
+  SDValue StackAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, ARM::SP, VT);
+  return StackAddr;
+}
+
 /// ExpandBIT_CONVERT - If the target supports VFP, this function is called to
 /// expand a bit convert where either the source or destination type is i64 to
 /// use a VMOVDRR or VMOVRRD node.  This should not be done when the non-i64
@@ -3187,6 +3194,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
   case ISD::RETURNADDR:    return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:     return LowerFRAMEADDR(Op, DAG);
+  case ISD::STACKADDR:     return LowerSTACKADDR(Op, DAG);
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::EH_SJLJ_SETJMP: return LowerEH_SJLJ_SETJMP(Op, DAG);
   case ISD::EH_SJLJ_LONGJMP: return LowerEH_SJLJ_LONGJMP(Op, DAG);
