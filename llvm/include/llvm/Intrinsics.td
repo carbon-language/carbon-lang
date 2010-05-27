@@ -197,12 +197,13 @@ def int_gcwrite : Intrinsic<[],
 def int_returnaddress : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
 
-// Note: we treat stacksave/stackrestore as writemem because we don't otherwise
-// model their dependencies on allocas.
+// Note: we treat stacksave/stackrestore and stackaddr as writemem because we
+// don't otherwise model their dependencies on allocas.
 def int_stacksave     : Intrinsic<[llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_save">;
 def int_stackrestore  : Intrinsic<[], [llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_restore">;
+def int_stackaddress  : Intrinsic<[llvm_ptr_ty], []>;
 
 // IntrWriteArgMem is more pessimistic than strictly necessary for prefetch,
 // however it does conveniently prevent the prefetch from being reordered
