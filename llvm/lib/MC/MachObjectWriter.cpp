@@ -612,10 +612,10 @@ public:
               Type = RIT_X86_64_GOTLoad;
             else
               Type = RIT_X86_64_GOT;
-          } else if (Modifier != MCSymbolRefExpr::VK_None) {
-            report_fatal_error("unsupported symbol modifier in relocation");
-          } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
+          }  else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
             Type = RIT_X86_64_TLV;
+          }  else if (Modifier != MCSymbolRefExpr::VK_None) {
+            report_fatal_error("unsupported symbol modifier in relocation");
           } else {
             Type = RIT_X86_64_Signed;
 
