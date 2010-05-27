@@ -1662,10 +1662,6 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
 
   WriteBitcodeToStream( M, Stream );
 
-  // If writing to stdout, set binary mode.
-  if (&llvm::outs() == &Out)
-    sys::Program::ChangeStdoutToBinary();
-
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());
 

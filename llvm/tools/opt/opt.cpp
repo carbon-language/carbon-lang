@@ -377,12 +377,16 @@ int main(int argc, char **argv) {
   }
 
   // Figure out what stream we are supposed to write to...
-  // FIXME: outs() is not binary!
   raw_ostream *Out = 0;
   bool DeleteStream = false;
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputFilename == "-") {
-      Out = &outs();  // Default to printing to stdout...
+      // Print to stdout.
+      Out = &outs();
+      // If we're printing a bitcode file, switch stdout to binary mode.
+      // FIXME: This switches outs() globally, not just for the bitcode output.
+      if (!OutputAssembly)
+        sys::Program::ChangeStdoutToBinary(); 
     } else {
       if (NoOutput || AnalyzeOnly) {
         errs() << "WARNING: The -o (output filename) option is ignored when\n"

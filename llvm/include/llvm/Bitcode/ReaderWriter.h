@@ -40,7 +40,8 @@ namespace llvm {
                            std::string *ErrMsg = 0);
 
   /// WriteBitcodeToFile - Write the specified module to the specified
-  /// raw output stream.
+  /// raw output stream.  For streams where it matters, the given stream
+  /// should be in "binary" mode.
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
 
   /// WriteBitcodeToStream - Write the specified module to the specified
