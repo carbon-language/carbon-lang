@@ -15,6 +15,7 @@
 #define X86SUBTARGET_H
 
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/CallingConv.h"
 #include <string>
 
 namespace llvm {
@@ -237,6 +238,9 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   unsigned getSpecialAddressLatency() const;
+
+  /// IsCalleePop - Test whether a function should pop its own arguments.
+  bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv) const;
 };
 
 } // End llvm namespace

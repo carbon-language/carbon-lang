@@ -372,3 +372,26 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   if (StackAlignment)
     stackAlignment = StackAlignment;
 }
+
+/// IsCalleePop - Determines whether the callee is required to pop its
+/// own arguments. Callee pop is necessary to support tail calls.
+bool X86Subtarget::IsCalleePop(bool IsVarArg,
+                               CallingConv::ID CallingConv) const {
+  if (IsVarArg)
+    return false;
+
+  switch (CallingConv) {
+  default:
+    return false;
+  case CallingConv::X86_StdCall:
+    return !is64Bit();
+  case CallingConv::X86_FastCall:
+    return !is64Bit();
+  case CallingConv::X86_ThisCall:
+    return !is64Bit();
+  case CallingConv::Fast:
+    return GuaranteedTailCallOpt;
+  case CallingConv::GHC:
+    return GuaranteedTailCallOpt;
+  }
+}
