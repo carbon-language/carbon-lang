@@ -78,7 +78,6 @@ _clang_getTypeKindSpelling
 _clang_isCursorDefinition
 _clang_isDeclaration
 _clang_isExpression
-_clang_isFromMainFile
 _clang_isInvalid
 _clang_isPreprocessing
 _clang_isReference
