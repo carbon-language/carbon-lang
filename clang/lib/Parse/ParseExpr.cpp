@@ -1022,6 +1022,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 
         ParseOptionalCXXScopeSpecifier(SS, ObjectType, false,
                                        &MayBePseudoDestructor);
+        if (SS.isNotEmpty())
+          ObjectType = 0;
       }
 
       if (Tok.is(tok::code_completion)) {

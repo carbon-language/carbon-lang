@@ -40,3 +40,13 @@ namespace cvquals {
 
   template void f<const volatile int>(int *);
 }
+
+namespace PR7239 {
+  template<class E> class A { };
+  class B {
+    void f() {
+      A<int>* x;
+      x->A<int>::~A<int>();
+    }
+  };
+}

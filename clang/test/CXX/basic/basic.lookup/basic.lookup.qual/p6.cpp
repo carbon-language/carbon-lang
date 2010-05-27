@@ -20,5 +20,5 @@ struct A {
 typedef A AB; 
 int main() {
   AB *p; 
-  p->AB::~AB(); // expected-error{{identifier 'AB' in pseudo-destructor expression does not name a type}}
+  p->AB::~AB(); // expected-error{{expected the class name after '~' to name a destructor}}
 }
