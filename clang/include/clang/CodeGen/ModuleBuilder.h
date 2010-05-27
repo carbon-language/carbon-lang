@@ -33,6 +33,9 @@ namespace clang {
     virtual llvm::Module* ReleaseModule() = 0;
   };
 
+  /// CreateLLVMCodeGen - Create a CodeGenerator instance.
+  /// It is the responsibility of the caller to call delete on
+  /// the allocated CodeGenerator instance.
   CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
                                    const std::string &ModuleName,
                                    const CodeGenOptions &CGO,
