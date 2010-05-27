@@ -24,6 +24,11 @@ using namespace llvm;
 //===---------------------------------------------------------------------===//
 MachinePassRegistry RegisterRegAlloc::Registry;
 
+static FunctionPass *createDefaultRegisterAllocator() { return 0; }
+static RegisterRegAlloc
+defaultRegAlloc("default",
+                "pick register allocator based on -O option",
+                createDefaultRegisterAllocator);
 
 //===---------------------------------------------------------------------===//
 ///
@@ -33,8 +38,8 @@ MachinePassRegistry RegisterRegAlloc::Registry;
 static cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
                RegisterPassParser<RegisterRegAlloc> >
 RegAlloc("regalloc",
-         cl::init(&createLinearScanRegisterAllocator),
-         cl::desc("Register allocator to use (default=linearscan)")); 
+         cl::init(&createDefaultRegisterAllocator),
+         cl::desc("Register allocator to use"));
 
 
 //===---------------------------------------------------------------------===//
@@ -42,13 +47,22 @@ RegAlloc("regalloc",
 /// createRegisterAllocator - choose the appropriate register allocator.
 ///
 //===---------------------------------------------------------------------===//
-FunctionPass *llvm::createRegisterAllocator() {
+FunctionPass *llvm::createRegisterAllocator(CodeGenOpt::Level OptLevel) {
   RegisterRegAlloc::FunctionPassCtor Ctor = RegisterRegAlloc::getDefault();
-  
+
   if (!Ctor) {
     Ctor = RegAlloc;
     RegisterRegAlloc::setDefault(RegAlloc);
   }
-  
-  return Ctor();
+
+  if (Ctor != createDefaultRegisterAllocator)
+    return Ctor();
+
+  // When the 'default' allocator is requested, pick one based on OptLevel.
+  switch (OptLevel) {
+  case CodeGenOpt::None:
+    return createLocalRegisterAllocator();
+  default:
+    return createLinearScanRegisterAllocator();
+  }
 }

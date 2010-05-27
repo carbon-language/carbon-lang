@@ -358,7 +358,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                    /* allowDoubleDefs= */ true);
 
   // Perform register allocation.
-  PM.add(createRegisterAllocator());
+  PM.add(createRegisterAllocator(OptLevel));
   printAndVerify(PM, "After Register Allocation");
 
   // Perform stack slot coloring and post-ra machine LICM.

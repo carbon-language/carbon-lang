@@ -85,9 +85,10 @@ namespace llvm {
   ///
   FunctionPass *createDeadMachineInstructionElimPass();
 
-  /// Creates a register allocator as the user specified on the command line.
+  /// Creates a register allocator as the user specified on the command line, or
+  /// picks one that matches OptLevel.
   ///
-  FunctionPass *createRegisterAllocator();
+  FunctionPass *createRegisterAllocator(CodeGenOpt::Level OptLevel);
 
   /// LocalRegisterAllocation Pass - This pass register allocates the input code
   /// a basic block at a time, yielding code better than the simple register

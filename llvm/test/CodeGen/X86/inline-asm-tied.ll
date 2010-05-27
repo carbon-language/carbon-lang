@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin9 -O0 | grep {movl	%edx, 12(%esp)} | count 2
+; RUN: llc < %s -mtriple=i386-apple-darwin9 -O0 -regalloc=linearscan | grep {movl	%edx, 12(%esp)} | count 2
 ; rdar://6992609
 
 target triple = "i386-apple-darwin9.0"
