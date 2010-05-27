@@ -388,6 +388,9 @@ public:
 
   /// operator< - Compare two classes.
   bool operator<(const ClassInfo &RHS) const {
+    if (this == &RHS)
+      return false;
+
     // Unrelated classes can be ordered by kind.
     if (!isRelatedTo(RHS))
       return Kind < RHS.Kind;
@@ -403,7 +406,13 @@ public:
 
     default:
       // This class preceeds the RHS if it is a proper subset of the RHS.
-      return this != &RHS && isSubsetOf(RHS);
+      if (isSubsetOf(RHS))
+	return true;
+      if (RHS.isSubsetOf(*this))
+	return false;
+
+      // Otherwise, order by name to ensure we have a total ordering.
+      return ValueName < RHS.ValueName;
     }
   }
 };
