@@ -2857,7 +2857,8 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
     if (getLangOptions().CPlusPlus)
-      if (CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(ObjCFastEnumerationStateTypeDecl))
+      if (CXXRecordDecl *CXXRD = 
+            dyn_cast<CXXRecordDecl>(ObjCFastEnumerationStateTypeDecl))
         CXXRD->setEmpty(false);
 
     ObjCFastEnumerationStateTypeDecl->completeDefinition();
