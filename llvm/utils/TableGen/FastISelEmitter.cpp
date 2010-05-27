@@ -54,15 +54,15 @@ struct OperandsSignature {
   bool initialize(TreePatternNode *InstPatNode,
                   const CodeGenTarget &Target,
                   MVT::SimpleValueType VT) {
-    if (!InstPatNode->isLeaf() &&
-        InstPatNode->getOperator()->getName() == "imm") {
-      Operands.push_back("i");
-      return true;
-    }
-    if (!InstPatNode->isLeaf() &&
-        InstPatNode->getOperator()->getName() == "fpimm") {
-      Operands.push_back("f");
-      return true;
+    if (!InstPatNode->isLeaf()) {
+      if (InstPatNode->getOperator()->getName() == "imm") {
+        Operands.push_back("i");
+        return true;
+      }
+      if (InstPatNode->getOperator()->getName() == "fpimm") {
+        Operands.push_back("f");
+        return true;
+      }
     }
     
     const CodeGenRegisterClass *DstRC = 0;
