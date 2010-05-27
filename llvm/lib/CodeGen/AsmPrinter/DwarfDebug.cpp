@@ -2635,13 +2635,16 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       const MachineInstr *MI = II;
       DebugLoc DL = MI->getDebugLoc();
       if (MI->isDebugValue()) {
-        // DBG_VALUE needs a label if the variable is local variable or
-        // an argument whose location is changing.
         assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
         DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
         if (!DV.Verify()) continue;
+        // If DBG_VALUE is for a local variable then it needs a label.
         if (DV.getTag() != dwarf::DW_TAG_arg_variable)
           InsnNeedsLabel.insert(MI);
+        // DBG_VALUE for inlined functions argument needs a label.
+        else if (!DISubprogram(DV.getContext()).describes(MF->getFunction()))
+          InsnNeedsLabel.insert(MI);
+        // DBG_VALUE indicating argument location change needs a label.
         else if (!ProcessedArgs.insert(DV))
           InsnNeedsLabel.insert(MI);
       } else {
