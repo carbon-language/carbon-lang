@@ -72,9 +72,6 @@ namespace ISD {
     // parent's frame or return address, and so on.
     FRAMEADDR, RETURNADDR,
 
-    // STACKADDR - The current stack pointer address.
-    STACKADDR,
-
     // FRAME_TO_ARGS_OFFSET - This node represents offset from frame pointer to
     // first (possible) on-stack argument. This is needed for correct stack
     // adjustment during unwind.
