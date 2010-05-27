@@ -666,6 +666,7 @@ Attr *PCHReader::ReadAttributes() {
       assert(0 && "Unknown attribute!");
       break;
     STRING_ATTR(Alias);
+    SIMPLE_ATTR(AlignMac68k);
     UNSIGNED_ATTR(Aligned);
     SIMPLE_ATTR(AlwaysInline);
     SIMPLE_ATTR(AnalyzerNoReturn);

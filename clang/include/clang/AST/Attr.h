@@ -45,6 +45,7 @@ public:
   enum Kind {
     Alias,
     Aligned,
+    AlignMac68k,
     AlwaysInline,
     AnalyzerNoReturn, // Clang-specific.
     Annotate,
@@ -206,6 +207,8 @@ public:
   }
   static bool classof(const MaxFieldAlignmentAttr *A) { return true; }
 };
+
+DEF_SIMPLE_ATTR(AlignMac68k);
 
 class AlignedAttr : public Attr {
   unsigned Alignment;

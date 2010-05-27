@@ -1836,6 +1836,9 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       AddString(cast<AliasAttr>(Attr)->getAliasee(), Record);
       break;
 
+    case Attr::AlignMac68k:
+      break;
+
     case Attr::Aligned:
       Record.push_back(cast<AlignedAttr>(Attr)->getAlignment());
       break;

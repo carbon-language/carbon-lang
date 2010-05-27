@@ -74,6 +74,7 @@ void NonNullAttr::Destroy(ASTContext &C) {
 // FIXME: Can we use variadic macro to define DEF_SIMPLE_ATTR_CLONE for
 // "non-simple" classes?
 
+DEF_SIMPLE_ATTR_CLONE(AlignMac68k)
 DEF_SIMPLE_ATTR_CLONE(AlwaysInline)
 DEF_SIMPLE_ATTR_CLONE(AnalyzerNoReturn)
 DEF_SIMPLE_ATTR_CLONE(BaseCheck)
