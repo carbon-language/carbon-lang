@@ -147,10 +147,6 @@ namespace llvm {
   /// headers to target specific alignment boundary.
   FunctionPass *createCodePlacementOptPass();
 
-  /// getRegisterAllocator - This creates an instance of the register allocator
-  /// for the Sparc.
-  FunctionPass *getRegisterAllocator(TargetMachine &T);
-
   /// IntrinsicLowering Pass - Performs target-independent LLVM IR
   /// transformations for highly portable strategies.
   FunctionPass *createGCLoweringPass();
