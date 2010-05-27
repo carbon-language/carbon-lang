@@ -4050,9 +4050,9 @@ public:
                                     SourceLocation WeakNameLoc,
                                     SourceLocation AliasNameLoc);
 
-  /// getPragmaPackAlignment() - Return the current alignment as specified by
-  /// the current #pragma pack directive, or 0 if none is currently active.
-  unsigned getPragmaPackAlignment() const;
+  /// AddAlignmentAttributesForRecord - Adds any needed alignment attributes to
+  /// a the record decl, to handle '#pragma pack' and '#pragma options align'.
+  void AddAlignmentAttributesForRecord(RecordDecl *RD);
 
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();

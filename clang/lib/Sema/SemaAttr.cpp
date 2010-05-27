@@ -88,12 +88,16 @@ void Sema::FreePackedContext() {
   PackContext = 0;
 }
 
-/// getPragmaPackAlignment() - Return the current alignment as specified by
-/// the current #pragma pack directive, or 0 if none is currently active.
-unsigned Sema::getPragmaPackAlignment() const {
-  if (PackContext)
-    return static_cast<PragmaPackStack*>(PackContext)->getAlignment();
-  return 0;
+void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
+  // If there is no pack context, we don't need any attributes.
+  if (!PackContext)
+    return;
+
+  PragmaPackStack *Stack = static_cast<PragmaPackStack*>(PackContext);
+
+  // Otherwise, check to see if we need a max field alignment attribute.
+  if (unsigned Alignment = Stack->getAlignment())
+    RD->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,

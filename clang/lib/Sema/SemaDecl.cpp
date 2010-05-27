@@ -5397,11 +5397,9 @@ CreateNewDecl:
       Invalid = true;
   }
 
-  if (Kind != TTK_Enum) {
-    // Handle #pragma pack: if the #pragma pack stack has non-default
-    // alignment, make up a packed attribute for this decl. These
-    // attributes are checked when the ASTContext lays out the
-    // structure.
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(New)) {
+    // Add alignment attributes if necessary; these attributes are checked when
+    // the ASTContext lays out the structure.
     //
     // It is important for implementing the correct semantics that this
     // happen here (in act on tag decl). The #pragma pack stack is
@@ -5409,15 +5407,14 @@ CreateNewDecl:
     // many points during the parsing of a struct declaration (because
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
-    if (unsigned Alignment = getPragmaPackAlignment())
-      New->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
+    AddAlignmentAttributesForRecord(RD);
   }
 
   // If this is a specialization of a member class (of a class template),
   // check the specialization.
   if (isExplicitSpecialization && CheckMemberSpecialization(New, Previous))
     Invalid = true;
-      
+
   if (Invalid)
     New->setInvalidDecl();
 
