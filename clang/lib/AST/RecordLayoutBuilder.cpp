@@ -297,7 +297,11 @@ class RecordLayoutBuilder {
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
 
   /// Packed - Whether the record is packed or not.
-  bool Packed;
+  unsigned Packed : 1;
+
+  unsigned IsUnion : 1;
+
+  unsigned IsMac68kAlign : 1;
 
   /// UnfilledBitsInLastByte - If the last field laid out was a bitfield,
   /// this contains the number of bits in the last byte that can be used for
@@ -310,8 +314,6 @@ class RecordLayoutBuilder {
 
   /// DataSize - The data size of the record being laid out.
   uint64_t DataSize;
-
-  bool IsUnion;
 
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
@@ -350,9 +352,10 @@ class RecordLayoutBuilder {
 
   RecordLayoutBuilder(ASTContext &Context, EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
-    Packed(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0),
-    IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
-    PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
+      Packed(false), IsUnion(false), IsMac68kAlign(false),
+      UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0),
+      NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
+      PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
@@ -423,7 +426,7 @@ class RecordLayoutBuilder {
   void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
 
   /// InitializeLayout - Initialize record layout for the given record decl.
-  void InitializeLayout(const RecordDecl *D);
+  void InitializeLayout(const Decl *D);
 
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
@@ -942,16 +945,27 @@ RecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
   }
 }
 
-void RecordLayoutBuilder::InitializeLayout(const RecordDecl *D) {
-  IsUnion = D->isUnion();
+void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+    IsUnion = RD->isUnion();
 
   Packed = D->hasAttr<PackedAttr>();
 
-  if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
-    MaxFieldAlignment = MFAA->getAlignment();
+  // mac68k alignment supersedes maximum field alignment and attribute aligned,
+  // and forces all structures to have 2-byte alignment. The IBM docs on it
+  // allude to additional (more complicated) semantics, especially with regard
+  // to bit-fields, but gcc appears not to follow that.
+  if (D->hasAttr<AlignMac68kAttr>()) {
+    IsMac68kAlign = true;
+    MaxFieldAlignment = 2 * 8;
+    Alignment = 2 * 8;
+  } else {
+    if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
+      MaxFieldAlignment = MFAA->getAlignment();
 
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    UpdateAlignment(AA->getMaxAlignment());
+    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+      UpdateAlignment(AA->getMaxAlignment());
+  }
 }
 
 void RecordLayoutBuilder::Layout(const RecordDecl *D) {
@@ -1020,13 +1034,7 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
     DataSize = Size;
   }
 
-  Packed = D->hasAttr<PackedAttr>();
-
-  if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
-    MaxFieldAlignment = MFAA->getAlignment();
-
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    UpdateAlignment(AA->getMaxAlignment());
+  InitializeLayout(D);
 
   // Layout each ivar sequentially.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
@@ -1239,6 +1247,10 @@ void RecordLayoutBuilder::FinishLayout() {
 }
 
 void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
+  // The alignment is not modified when using 'mac68k' alignment.
+  if (IsMac68kAlign)
+    return;
+
   if (NewAlignment <= Alignment)
     return;
 

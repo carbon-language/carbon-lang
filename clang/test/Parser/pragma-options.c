@@ -8,5 +8,5 @@
 
 #pragma options align=natural
 #pragma options align=reset
-/* expected-warning {{unsupported alignment option}} */ #pragma options align=mac68k
+#pragma options align=mac68k
 /* expected-warning {{unsupported alignment option}} */ #pragma options align=power

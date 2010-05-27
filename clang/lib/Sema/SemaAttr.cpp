@@ -25,6 +25,10 @@ using namespace clang;
 
 namespace {
   struct PackStackEntry {
+    // We just use a sentinel to represent when the stack is set to mac68k
+    // alignment.
+    static const unsigned kMac68kAlignmentSentinel = ~0U;
+
     unsigned Alignment;
     IdentifierInfo *Name;
   };
@@ -102,8 +106,12 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
   PragmaPackStack *Stack = static_cast<PragmaPackStack*>(PackContext);
 
   // Otherwise, check to see if we need a max field alignment attribute.
-  if (unsigned Alignment = Stack->getAlignment())
-    RD->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
+  if (unsigned Alignment = Stack->getAlignment()) {
+    if (Alignment == PackStackEntry::kMac68kAlignmentSentinel)
+      RD->addAttr(::new (Context) AlignMac68kAttr());
+    else
+      RD->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
+  }
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
@@ -139,11 +147,9 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
     if (!PP.getTargetInfo().hasAlignMac68kSupport()) {
       Diag(PragmaLoc, diag::err_pragma_options_align_mac68k_target_unsupported);
       return;
-    } else {
-      // Otherwise, just warn about it for now.
-      Diag(PragmaLoc, diag::warn_pragma_options_align_unsupported_option)
-        << KindLoc;
     }
+    Context->push(0);
+    Context->setAlignment(PackStackEntry::kMac68kAlignmentSentinel);
     break;
 
   default:
@@ -195,7 +201,10 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     // FIXME: This should come from the target.
     if (AlignmentVal == 0)
       AlignmentVal = 8;
-    Diag(PragmaLoc, diag::warn_pragma_pack_show) << AlignmentVal;
+    if (AlignmentVal == PackStackEntry::kMac68kAlignmentSentinel)
+      Diag(PragmaLoc, diag::warn_pragma_pack_show) << "mac68k";
+    else
+      Diag(PragmaLoc, diag::warn_pragma_pack_show) << AlignmentVal;
     break;
 
   case Action::PPK_Push: // pack(push [, id] [, [n])
