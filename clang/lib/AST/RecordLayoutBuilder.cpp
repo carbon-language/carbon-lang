@@ -31,10 +31,35 @@ class EmptySubobjectMap {
   /// Class - The class whose empty entries we're keeping track of.
   const CXXRecordDecl *Class;
 
+  /// EmptyClassOffsets - A map from offsets to empty record decls.
+  typedef llvm::SmallVector<const CXXRecordDecl *, 1> ClassVectorTy;
+  typedef llvm::DenseMap<uint64_t, ClassVectorTy> EmptyClassOffsetsMapTy;
+  EmptyClassOffsetsMapTy EmptyClassOffsets;
+  
   /// ComputeEmptySubobjectSizes - Compute the size of the largest base or
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
 
+  struct BaseInfo {
+    const CXXRecordDecl *Class;
+    bool IsVirtual;
+
+    const CXXRecordDecl *PrimaryVirtualBase;
+    
+    llvm::SmallVector<BaseInfo*, 4> Bases;
+    const BaseInfo *Derived;
+  };
+  
+  llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> VirtualBaseInfo;
+  llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> NonVirtualBaseInfo;
+  
+  BaseInfo *ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
+                            const BaseInfo *Derived);
+  void ComputeBaseInfo();
+  
+  bool CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, uint64_t Offset);
+  void UpdateEmptyBaseSubobjects(const BaseInfo *Info, uint64_t Offset);
+  
 public:
   /// This holds the size of the largest empty subobject (either a base
   /// or a member). Will be zero if the record being built doesn't contain
@@ -44,6 +69,8 @@ public:
   EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
     : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) {
       ComputeEmptySubobjectSizes();
+      
+      ComputeBaseInfo();
   }
 
   /// CanPlaceBaseAtOffset - Return whether the given base class can be placed
@@ -103,15 +130,153 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   }
 }
 
+EmptySubobjectMap::BaseInfo *
+EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
+                                   const BaseInfo *Derived) {
+  BaseInfo *Info;
+  
+  if (IsVirtual) {
+    BaseInfo *&InfoSlot = VirtualBaseInfo[RD];
+    if (InfoSlot) {
+      assert(InfoSlot->Class == RD && "Wrong class for virtual base info!");
+      return InfoSlot;
+    }
+
+    InfoSlot = new (Context) BaseInfo;
+    Info = InfoSlot;
+  } else {
+    Info = new (Context) BaseInfo;
+  }
+  
+  Info->Class = RD;
+  Info->IsVirtual = IsVirtual;
+  Info->Derived = Derived;
+  Info->PrimaryVirtualBase = 0;
+  
+  if (RD->getNumVBases()) {
+    // Check if this class has a primary virtual base.
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      Info->PrimaryVirtualBase = Layout.getPrimaryBase();
+      assert(Info->PrimaryVirtualBase && 
+             "Didn't have a primary virtual base!");
+    }
+  }
+
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    bool IsVirtual = I->isVirtual();
+    
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    Info->Bases.push_back(ComputeBaseInfo(BaseDecl, IsVirtual, Info));
+  }
+  
+  return Info;
+}
+
+void EmptySubobjectMap::ComputeBaseInfo() {
+  for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
+       E = Class->bases_end(); I != E; ++I) {
+    bool IsVirtual = I->isVirtual();
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    BaseInfo *Info = ComputeBaseInfo(BaseDecl, IsVirtual, /*Derived=*/0);
+    if (IsVirtual) {
+      // ComputeBaseInfo has already added this base for us.
+      continue;
+    }
+
+    // Add the base info to the map of non-virtual bases.
+    assert(!NonVirtualBaseInfo.count(BaseDecl) &&
+           "Non-virtual base already exists!");
+    NonVirtualBaseInfo.insert(std::make_pair(BaseDecl, Info));
+  }
+}
+
 bool
-EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
-                                        bool BaseIsVirtual,
-                                        uint64_t Offset) {
+EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, 
+                                                 uint64_t Offset) {
+  // Traverse all non-virtual bases.
+  for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
+    BaseInfo* Base = Info->Bases[I];
+    if (Base->IsVirtual)
+      continue;
+
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
+
+    if (!CanPlaceBaseSubobjectAtOffset(Base, BaseOffset))
+      return false;
+  }
+
+  if (Info->PrimaryVirtualBase) {
+    BaseInfo *PrimaryVirtualBaseInfo = 
+      VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
+    assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
+
+    if (Info == PrimaryVirtualBaseInfo->Derived) {
+      if (!CanPlaceBaseSubobjectAtOffset(PrimaryVirtualBaseInfo, Offset))
+        return false;
+    }
+  }
+  
+  // FIXME: Member variables.
+  return true;
+}
+
+void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseInfo *Info, 
+                                                  uint64_t Offset) {
+  if (Info->Class->isEmpty()) {
+    // FIXME: Record that there is an empty class at this offset.
+  }
+  
+  // Traverse all non-virtual bases.
+  for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
+    BaseInfo* Base = Info->Bases[I];
+    if (Base->IsVirtual)
+      continue;
+    
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
+    
+    UpdateEmptyBaseSubobjects(Base, BaseOffset);
+  }
+
+  if (Info->PrimaryVirtualBase) {
+    BaseInfo *PrimaryVirtualBaseInfo = 
+    VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
+    assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
+    
+    if (Info == PrimaryVirtualBaseInfo->Derived)
+      UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset);
+  }
+  
+  // FIXME: Member variables.
+}
+
+bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
+                                             bool BaseIsVirtual,
+                                             uint64_t Offset) {
   // If we know this class doesn't have any empty subobjects we don't need to
   // bother checking.
   if (!SizeOfLargestEmptySubobject)
     return true;
 
+  BaseInfo *Info;
+  
+  if (BaseIsVirtual)
+    Info = VirtualBaseInfo.lookup(RD);
+  else
+    Info = NonVirtualBaseInfo.lookup(RD);
+  
+  if (!CanPlaceBaseSubobjectAtOffset(Info, Offset))
+    return false;
+  
+  UpdateEmptyBaseSubobjects(Info, Offset);
   return true;
 }
 
@@ -799,10 +964,6 @@ void RecordLayoutBuilder::Layout(const RecordDecl *D) {
 }
 
 void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
-  // Create our empty subobject offset map.
-  EmptySubobjectMap EmptySubobjectMap(Context, RD);
-  EmptySubobjects = &EmptySubobjectMap;
-
   InitializeLayout(RD);
 
   // Lay out the vtable and the non-virtual bases.
@@ -1145,6 +1306,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
+
     RecordLayoutBuilder Builder(*this, &EmptySubobjects);
     Builder.Layout(RD);
 
