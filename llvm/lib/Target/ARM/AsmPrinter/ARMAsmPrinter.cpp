@@ -1064,21 +1064,27 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       printOperand(MI, OpNum, O);
       return false;
     case 'Q':
-      if (TM.getTargetData()->isLittleEndian())
-        break;
-      // Fallthrough
-    case 'R':
+      // Print the least significant half of a register pair.
       if (TM.getTargetData()->isBigEndian())
         break;
-      // Fallthrough
-    case 'H': // Write second word of DI / DF reference.
-      // Verify that this operand has two consecutive registers.
-      if (!MI->getOperand(OpNum).isReg() ||
-          OpNum+1 == MI->getNumOperands() ||
-          !MI->getOperand(OpNum+1).isReg())
-        return true;
-      ++OpNum;   // Return the high-part.
+      printOperand(MI, OpNum, O);
+      return false;
+    case 'R':
+      // Print the most significant half of a register pair.
+      if (TM.getTargetData()->isLittleEndian())
+        break;
+      printOperand(MI, OpNum, O);
+      return false;
+    case 'H':
+      break;
     }
+    // Print the second half of a register pair (for 'Q', 'R' or 'H').
+    // Verify that this operand has two consecutive registers.
+    if (!MI->getOperand(OpNum).isReg() ||
+        OpNum+1 == MI->getNumOperands() ||
+        !MI->getOperand(OpNum+1).isReg())
+      return true;
+    ++OpNum;
   }
 
   printOperand(MI, OpNum, O);
