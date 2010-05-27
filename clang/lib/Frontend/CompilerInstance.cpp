@@ -442,7 +442,7 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
     }
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    SourceMgr.createMainFileIDForMemBuffer(SB);
+    if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
     if (SourceMgr.getMainFileID().isInvalid()) {
       Diags.Report(diag::err_fe_error_reading_stdin);
       return false;
