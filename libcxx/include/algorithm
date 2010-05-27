@@ -655,6 +655,20 @@ struct __debug_less
 
 #endif  // _LIBCPP_DEBUG
 
+// Precondition:  __x != 0
+inline _LIBCPP_INLINE_VISIBILITY unsigned           __ctz(unsigned           __x) {return __builtin_ctz  (__x);}
+inline _LIBCPP_INLINE_VISIBILITY unsigned      long __ctz(unsigned      long __x) {return __builtin_ctzl (__x);}
+inline _LIBCPP_INLINE_VISIBILITY unsigned long long __ctz(unsigned long long __x) {return __builtin_ctzll(__x);}
+
+// Precondition:  __x != 0
+inline _LIBCPP_INLINE_VISIBILITY unsigned           __clz(unsigned           __x) {return __builtin_clz  (__x);}
+inline _LIBCPP_INLINE_VISIBILITY unsigned      long __clz(unsigned      long __x) {return __builtin_clzl (__x);}
+inline _LIBCPP_INLINE_VISIBILITY unsigned long long __clz(unsigned long long __x) {return __builtin_clzll(__x);}
+
+inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned           __x) {return __builtin_popcount  (__x);}
+inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned      long __x) {return __builtin_popcountl (__x);}
+inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned long long __x) {return __builtin_popcountll(__x);}
+
 // all_of
 
 template <class _InputIterator, class _Predicate>
@@ -5184,20 +5198,6 @@ __rotate_right(_Tp __t, _Tp __n = 1)
     __n &= __bits;
     return static_cast<_Tp>((__t << (__bits - __n)) | (static_cast<typename make_unsigned<_Tp>::type>(__t) >> __n));
 }
-
-// Precondition:  __x != 0
-inline _LIBCPP_INLINE_VISIBILITY unsigned           __ctz(unsigned           __x) {return __builtin_ctz  (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned      long __ctz(unsigned      long __x) {return __builtin_ctzl (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned long long __ctz(unsigned long long __x) {return __builtin_ctzll(__x);}
-
-// Precondition:  __x != 0
-inline _LIBCPP_INLINE_VISIBILITY unsigned           __clz(unsigned           __x) {return __builtin_clz  (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned      long __clz(unsigned      long __x) {return __builtin_clzl (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned long long __clz(unsigned long long __x) {return __builtin_clzll(__x);}
-
-inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned           __x) {return __builtin_popcount  (__x);}
-inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned      long __x) {return __builtin_popcountl (__x);}
-inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned long long __x) {return __builtin_popcountll(__x);}
 
 _LIBCPP_END_NAMESPACE_STD
 
