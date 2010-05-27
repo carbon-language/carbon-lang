@@ -174,13 +174,11 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
     return error("Cannot link stdin: " + Error);
   }
 
-  // Make sure we can at least read the file
-  if (!File.canRead())
+  // Determine what variety of file it is.
+  std::string Magic;
+  if (!File.getMagicNumber(Magic, 64))
     return error("Cannot find linker input '" + File.str() + "'");
 
-  // If its an archive, try to link it in
-  std::string Magic;
-  File.getMagicNumber(Magic, 64);
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
     default: llvm_unreachable("Bad file type identification");
     case sys::Unknown_FileType:
