@@ -1089,7 +1089,7 @@ class ReturnStmt : public Stmt {
   
 public:
   ReturnStmt(SourceLocation RL)
-    : Stmt(ReturnStmtClass), RetExpr(0), NRVOCandidate(0) { }
+    : Stmt(ReturnStmtClass), RetExpr(0), RetLoc(RL), NRVOCandidate(0) { }
 
   ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
     : Stmt(ReturnStmtClass), RetExpr((Stmt*) E), RetLoc(RL),
