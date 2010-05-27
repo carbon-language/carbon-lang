@@ -1,10 +1,14 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -mconstructor-aliases | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -mconstructor-aliases -fexceptions | FileCheck %s
 
 // CHECK: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
 // CHECK: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+
+// CHECK: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
+// CHECK: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+// CHECK: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 
 struct A {
   int a;
@@ -146,4 +150,63 @@ namespace test2 {
   B::~B() {}
   // CHECK: define void @_ZN5test21BD2Ev
   // CHECK: call void @_ZN5test21AD2Ev
+}
+
+// PR7142
+namespace test3 {
+  struct A { virtual ~A(); };
+  struct B { virtual ~B(); };
+  namespace { // internal linkage => deferred
+    struct C : A, B {}; // ~B() in D requires a this-adjustment thunk
+    struct D : C {};    // D::~D() is an alias to C::~C()
+  }
+
+  void test() {
+    new D; // Force emission of D's vtable
+  }
+
+  // Checked at top of file:
+  // @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+
+  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(
+  // CHECK: call void @_ZN5test31BD2Ev(
+  // CHECK: call void @_ZN5test31AD2Ev(
+  // CHECK: ret void
+
+  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11DD1Ev(
+  // CHECK: call void @_ZdlPv(
+  // CHECK: ret void
+
+  // Checked at top of file:
+  // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
+  // @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+
+  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11DD1Ev(
+  // CHECK: ret void
+
+  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
+  // CHECK: ret void
+
+  // CHECK: declare void @_ZN5test31BD2Ev(
+  // CHECK: declare void @_ZN5test31AD2Ev(
+
+  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: call void @_ZdlPv(
+  // CHECK: ret void
+
+  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: ret void
+
+  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
+  // CHECK: ret void
 }

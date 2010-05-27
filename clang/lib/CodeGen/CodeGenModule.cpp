@@ -513,15 +513,25 @@ void CodeGenModule::EmitDeferred() {
     GlobalDecl D = DeferredDeclsToEmit.back();
     DeferredDeclsToEmit.pop_back();
 
-    // Look it up to see if it was defined with a stronger definition (e.g. an
-    // extern inline function with a strong function redefinition).  If so,
-    // just ignore the deferred decl.
+    // Check to see if we've already emitted this.  This is necessary
+    // for a couple of reasons: first, decls can end up in the
+    // deferred-decls queue multiple times, and second, decls can end
+    // up with definitions in unusual ways (e.g. by an extern inline
+    // function acquiring a strong function redefinition).  Just
+    // ignore these cases.
+    //
+    // TODO: That said, looking this up multiple times is very wasteful.
     MangleBuffer Name;
     getMangledName(Name, D);
     llvm::GlobalValue *CGRef = GetGlobalValue(Name);
     assert(CGRef && "Deferred decl wasn't referenced?");
 
     if (!CGRef->isDeclaration())
+      continue;
+
+    // GlobalAlias::isDeclaration() defers to the aliasee, but for our
+    // purposes an alias counts as a definition.
+    if (isa<llvm::GlobalAlias>(CGRef))
       continue;
 
     // Otherwise, emit the definition and move on to the next one.
