@@ -1046,7 +1046,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
     if (A->getOption().matches(options::OPT_O4))
       CmdArgs.push_back("-O3");
-    else if (A->getValue(Args)[0] == '\0')
+    else if (A->getOption().matches(options::OPT_O) &&
+             A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O2");
     else
       A->render(Args, CmdArgs);
