@@ -1014,3 +1014,22 @@ void pr6854(void * arg) {
   float f = *(float*) a;
 }
 
+// <rdar://problem/8032791> False positive due to symbolic store not find
+//  value because of 'const' qualifier
+double rdar_8032791_2();
+double rdar_8032791_1() {
+   struct R8032791 { double x[2]; double y; }
+   data[3] = {
+     {{1.0, 3.0}, 3.0},  //  1   2   3
+     {{1.0, 1.0}, 0.0},  // 1 1 2 2 3 3
+     {{1.0, 3.0}, 1.0}   //    1   2   3
+   };
+
+   double x = 0.0;
+   for (unsigned i = 0 ; i < 3; i++) {
+     const struct R8032791 *p = &data[i];
+     x += p->y + rdar_8032791_2(); // no-warning
+   }
+   return x;
+}
+

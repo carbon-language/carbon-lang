@@ -539,7 +539,7 @@ MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
                                    const MemRegion* superRegion,
                                    ASTContext& Ctx){
 
-  QualType T = Ctx.getCanonicalType(elementType);
+  QualType T = Ctx.getCanonicalType(elementType).getUnqualifiedType();
 
   llvm::FoldingSetNodeID ID;
   ElementRegion::ProfileRegion(ID, T, Idx, superRegion);
