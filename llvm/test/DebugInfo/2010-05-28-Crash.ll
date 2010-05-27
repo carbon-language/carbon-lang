@@ -45,5 +45,5 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !16 = metadata !{i32 9, i32 0, metadata !9, null}
 
 ;CHECK:	        ##DEBUG_VALUE: bar:x 
-;CHECK-NEXT:Ltmp1:
+;CHECK-NEXT:Ltmp
 ;CHECK-NEXT	##DEBUG_VALUE: foo:__x 
