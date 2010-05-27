@@ -202,7 +202,7 @@ unsigned clang_getNumCompletionChunks(CXCompletionString completion_string) {
 unsigned clang_getCompletionPriority(CXCompletionString completion_string) {
   CXStoredCodeCompletionString *CCStr
     = (CXStoredCodeCompletionString *)completion_string;
-  return CCStr? CCStr->getPriority() : CCP_Unlikely;
+  return CCStr? CCStr->getPriority() : unsigned(CCP_Unlikely);
 }
   
 static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
