@@ -136,26 +136,23 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
 
 bool
 Path::isArchive() const {
-  if (canRead())
-    return hasMagicNumber("!<arch>\012");
-  return false;
+  return hasMagicNumber("!<arch>\012");
 }
 
 bool
 Path::isDynamicLibrary() const {
-  if (canRead()) {
-    std::string Magic;
-    if (getMagicNumber(Magic, 64))
-      switch (IdentifyFileType(Magic.c_str(),
-                               static_cast<unsigned>(Magic.length()))) {
-        default: return false;
-        case Mach_O_FixedVirtualMemorySharedLib_FileType:
-        case Mach_O_DynamicallyLinkedSharedLib_FileType:
-        case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
-        case ELF_SharedObject_FileType:
-        case COFF_FileType:  return true;
-      }
-  }
+  std::string Magic;
+  if (getMagicNumber(Magic, 64))
+    switch (IdentifyFileType(Magic.c_str(),
+                             static_cast<unsigned>(Magic.length()))) {
+      default: return false;
+      case Mach_O_FixedVirtualMemorySharedLib_FileType:
+      case Mach_O_DynamicallyLinkedSharedLib_FileType:
+      case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
+      case ELF_SharedObject_FileType:
+      case COFF_FileType:  return true;
+    }
+
   return false;
 }
 
