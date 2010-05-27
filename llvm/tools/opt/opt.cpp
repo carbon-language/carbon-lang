@@ -378,8 +378,12 @@ int main(int argc, char **argv) {
 
   // Figure out what stream we are supposed to write to...
   // FIXME: outs() is not binary!
-  raw_ostream *Out = &outs();  // Default to printing to stdout...
-  if (OutputFilename != "-") {
+  raw_ostream *Out = 0;
+  bool DeleteStream = true;
+  if (OutputFilename == "-") {
+    Out = &outs();  // Default to printing to stdout...
+    DeleteStream = false;
+  } else {
     if (NoOutput || AnalyzeOnly) {
       errs() << "WARNING: The -o (output filename) option is ignored when\n"
                 "the --disable-output or --analyze options are used.\n";
@@ -540,7 +544,7 @@ int main(int argc, char **argv) {
   Passes.run(*M.get());
 
   // Delete the raw_fd_ostream.
-  if (Out != &outs())
+  if (DeleteStream)
     delete Out;
   return 0;
 }

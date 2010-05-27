@@ -124,7 +124,8 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
                                               const char *ProgName) {
   if (OutputFilename != "") {
     if (OutputFilename == "-")
-      return &fouts();
+      return new formatted_raw_ostream(outs(),
+                                       formatted_raw_ostream::PRESERVE_STREAM);
 
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
@@ -147,7 +148,8 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
 
   if (InputFilename == "-") {
     OutputFilename = "-";
-    return &fouts();
+    return new formatted_raw_ostream(outs(),
+                                     formatted_raw_ostream::PRESERVE_STREAM);
   }
 
   OutputFilename = GetFileNameRoot(InputFilename);
@@ -332,7 +334,7 @@ int main(int argc, char **argv) {
                                  DisableVerify)) {
     errs() << argv[0] << ": target does not support generation of this"
            << " file type!\n";
-    if (Out != &fouts()) delete Out;
+    delete Out;
     // And the Out file is empty and useless, so remove it now.
     sys::Path(OutputFilename).eraseFromDisk();
     return 1;
@@ -340,8 +342,8 @@ int main(int argc, char **argv) {
 
   PM.run(mod);
 
-  // Delete the ostream if it's not a stdout stream
-  if (Out != &fouts()) delete Out;
+  // Delete the ostream.
+  delete Out;
 
   return 0;
 }

@@ -323,8 +323,7 @@ static int AssembleInput(const char *ProgName) {
   Parser.setTargetParser(*TAP.get());
 
   int Res = Parser.Run(NoInitialTextSection);
-  if (Out != &fouts())
-    delete Out;
+  delete Out;
 
   // Delete output on errors.
   if (Res && OutputFilename != "-")
