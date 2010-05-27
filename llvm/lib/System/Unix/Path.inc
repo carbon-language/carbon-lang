@@ -421,10 +421,8 @@ bool Path::getMagicNumber(std::string &Magic, unsigned len) const {
     return false;
   ssize_t bytes_read = ::read(fd, Buf, len);
   ::close(fd);
-  if (ssize_t(len) != bytes_read) {
-    Magic.clear();
+  if (ssize_t(len) != bytes_read)
     return false;
-  }
   Magic.assign(Buf, len);
   return true;
 }
