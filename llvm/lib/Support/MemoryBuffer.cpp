@@ -137,7 +137,7 @@ MemoryBuffer *MemoryBuffer::getFileOrSTDIN(StringRef Filename,
                                            int64_t FileSize,
                                            struct stat *FileInfo) {
   if (Filename == "-")
-    return getSTDIN();
+    return getSTDIN(ErrStr);
   return getFile(Filename, ErrStr, FileSize, FileInfo);
 }
 
@@ -263,7 +263,7 @@ public:
 };
 }
 
-MemoryBuffer *MemoryBuffer::getSTDIN() {
+MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
   char Buffer[4096*4];
 
   std::vector<char> FileData;
@@ -278,6 +278,11 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
     ReadBytes = fread(Buffer, sizeof(char), sizeof(Buffer), stdin);
     FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
   } while (ReadBytes == sizeof(Buffer));
+
+  if (!feof(stdin)) {
+    if (ErrStr) *ErrStr = "error reading from stdin";
+    return 0;
+  }
 
   FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
   size_t Size = FileData.size();

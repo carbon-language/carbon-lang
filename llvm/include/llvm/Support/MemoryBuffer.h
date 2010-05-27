@@ -89,7 +89,8 @@ public:
                                              StringRef BufferName = "");
 
   /// getSTDIN - Read all of stdin into a file buffer, and return it.
-  static MemoryBuffer *getSTDIN();
+  /// If an error occurs, this returns null and fills in *ErrStr with a reason.
+  static MemoryBuffer *getSTDIN(std::string *ErrStr = 0);
 
 
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin

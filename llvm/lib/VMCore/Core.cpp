@@ -2205,15 +2205,14 @@ LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(
 
 LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                          char **OutMessage) {
-  MemoryBuffer *MB = MemoryBuffer::getSTDIN();
-  if (!MB->getBufferSize()) {
-    delete MB;
-    *OutMessage = strdup("stdin is empty.");
-    return 1;
+  std::string Error;
+  if (MemoryBuffer *MB = MemoryBuffer::getSTDIN(&Error)) {
+    *OutMemBuf = wrap(MB);
+    return 0;
   }
 
-  *OutMemBuf = wrap(MB);
-  return 0;
+  *OutMessage = strdup(Error.c_str());
+  return 1;
 }
 
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
