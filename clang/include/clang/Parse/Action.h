@@ -2567,6 +2567,7 @@ public:
   enum PragmaOptionsAlignKind {
     POAK_Native,  // #pragma options align=native
     POAK_Natural, // #pragma options align=natural
+    POAK_Packed,  // #pragma options align=packed
     POAK_Power,   // #pragma options align=power
     POAK_Mac68k,  // #pragma options align=mac68k
     POAK_Reset    // #pragma options align=reset

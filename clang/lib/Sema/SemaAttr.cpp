@@ -146,6 +146,13 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
     Context->setAlignment(0);
     break;
 
+    // Note that '#pragma options align=packed' is not equivalent to attribute
+    // packed, it has a different precedence relative to attribute aligned.
+  case POAK_Packed:
+    Context->push(0);
+    Context->setAlignment(1);
+    break;
+
   case POAK_Mac68k:
     // Check if the target supports this.
     if (!PP.getTargetInfo().hasAlignMac68kSupport()) {

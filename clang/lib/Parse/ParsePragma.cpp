@@ -140,6 +140,8 @@ void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
     Kind = Action::POAK_Native;
   else if (II->isStr("natural"))
     Kind = Action::POAK_Natural;
+  else if (II->isStr("packed"))
+    Kind = Action::POAK_Packed;
   else if (II->isStr("power"))
     Kind = Action::POAK_Power;
   else if (II->isStr("mac68k"))
