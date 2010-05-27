@@ -1670,7 +1670,9 @@ protected:
 
 public:
   DarwinARMTargetInfo(const std::string& triple)
-    : DarwinTargetInfo<ARMTargetInfo>(triple) {}
+    : DarwinTargetInfo<ARMTargetInfo>(triple) {
+    HasAlignMac68kSupport = true;
+  }
 };
 } // end anonymous namespace.
 
