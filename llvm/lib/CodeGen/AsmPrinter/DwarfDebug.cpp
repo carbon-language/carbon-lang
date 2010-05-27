@@ -2200,7 +2200,11 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     }
 
     DbgScope *Scope = findDbgScope(MInsn);
-    if (!Scope && DV.getTag() == dwarf::DW_TAG_arg_variable)
+    bool CurFnArg = false;
+    if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
+        DISubprogram(DV.getContext()).describes(MF->getFunction()))
+      CurFnArg = true;
+    if (!Scope && CurFnArg)
       Scope = CurrentFnDbgScope;
     // If variable scope is not found then skip this variable.
     if (!Scope)
@@ -2209,7 +2213,7 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
     Processed.insert(DV);
     DbgVariable *RegVar = new DbgVariable(DV);
     Scope->addVariable(RegVar);
-    if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+    if (!CurFnArg)
       DbgVariableLabelsMap[RegVar] = getLabelBeforeInsn(MInsn); 
     if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
