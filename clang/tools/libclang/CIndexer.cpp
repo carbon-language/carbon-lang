@@ -135,6 +135,7 @@ bool clang::RemapFiles(unsigned num_unsaved_files,
     OS.close();
     if (OS.has_error()) {
       SavedFile.eraseFromDisk();
+      OS.clear_error();
       return true;
     }
     
