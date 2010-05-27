@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   if (OutStream.has_error()) {
     errs() << argv[0] << ": Could not open output file '"
            << OutputFilename << "': " << ErrorStr << '\n';
+    OutStream.clear_error();
     return 1;
   }
 
