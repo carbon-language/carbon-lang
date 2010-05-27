@@ -60,7 +60,8 @@ namespace llvm {
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
       Err = SMDiagnostic(Filename, 
-                         "Could not open input file '" + Filename + "'");
+                         "Could not open input file "
+                         "'" + Filename + "': " + ErrMsg);
       return 0;
     }
 
@@ -98,7 +99,8 @@ namespace llvm {
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
       Err = SMDiagnostic(Filename, 
-                         "Could not open input file '" + Filename + "'");
+                         "Could not open input file "
+                         "'" + Filename + "': " + ErrMsg);
       return 0;
     }
 
