@@ -54,6 +54,7 @@ public:
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
+  unsigned RelaxAll          : 1; /// Relax all machine code instructions.
   unsigned SoftFloat         : 1; /// -soft-float.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
@@ -108,6 +109,7 @@ public:
     ObjCDispatchMethod = Legacy;
     OptimizationLevel = 0;
     OptimizeSize = 0;
+    RelaxAll = 0;
     SoftFloat = 0;
     TimePasses = 0;
     UnitAtATime = 1;

@@ -147,6 +147,8 @@ def mno_zero_initialized_in_bss : Flag<"-mno-zero-initialized-in-bss">,
   HelpText<"Do not put zero initialized data in the BSS">;
 def msoft_float : Flag<"-msoft-float">,
   HelpText<"Use software floating point">;
+def mrelax_all : Flag<"-mrelax-all">,
+  HelpText<"Relax all machine instructions">;
 def mrelocation_model : Separate<"-mrelocation-model">,
   HelpText<"The relocation model to use">;
 def munwind_tables : Flag<"-munwind-tables">,

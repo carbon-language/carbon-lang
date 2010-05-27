@@ -321,6 +321,9 @@ bool BackendConsumer::AddEmitPasses() {
   }
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
 
+  if (CodeGenOpts.RelaxAll)
+    TM->setMCRelaxAll(true);
+
   // Set register scheduler & allocation policy.
   RegisterScheduler::setDefault(createDefaultScheduler);
   RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
