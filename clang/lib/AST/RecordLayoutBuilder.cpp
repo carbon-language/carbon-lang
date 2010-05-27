@@ -42,8 +42,16 @@ public:
   uint64_t SizeOfLargestEmptySubobject;
   
   EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
-    : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) { }
-                    
+    : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) {
+      ComputeEmptySubobjectSizes();
+  }
+
+  /// CanPlaceBaseAtOffset - Return whether the given base class can be placed
+  /// at the given offset.
+  /// Returns false if placing the record will result in two components 
+  /// (direct or indirect) of the same type having the same offset.
+  bool CanPlaceBaseAtOffset(const CXXRecordDecl *RD, bool BaseIsVirtual,
+                            uint64_t Offset);
 };
 
 void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
@@ -93,6 +101,18 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
    SizeOfLargestEmptySubobject = std::max(SizeOfLargestEmptySubobject, 
                                           EmptySize);
   }
+}
+
+bool 
+EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD, 
+                                        bool BaseIsVirtual,
+                                        uint64_t Offset) {
+  // If we know this class doesn't have any empty subobjects we don't need to
+  // bother checking.
+  if (!SizeOfLargestEmptySubobject)
+    return true;
+
+  return true;
 }
 
 class RecordLayoutBuilder {
@@ -163,8 +183,8 @@ class RecordLayoutBuilder {
   typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
   EmptyClassOffsetsTy EmptyClassOffsets;
   
-  RecordLayoutBuilder(ASTContext &Context)
-    : Context(Context), EmptySubobjects(0), Size(0), Alignment(8),
+  RecordLayoutBuilder(ASTContext &Context, EmptySubobjectMap *EmptySubobjects)
+    : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
     Packed(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
     IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0), 
     PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
@@ -199,7 +219,7 @@ class RecordLayoutBuilder {
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
 
   /// LayoutNonVirtualBase - Lays out a single non-virtual base.
-  void LayoutNonVirtualBase(const CXXRecordDecl *RD);
+  void LayoutNonVirtualBase(const CXXRecordDecl *Base);
 
   void AddPrimaryVirtualBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
                                     const CXXRecordDecl *MostDerivedClass);
@@ -209,11 +229,11 @@ class RecordLayoutBuilder {
                           const CXXRecordDecl *MostDerivedClass);
 
   /// LayoutVirtualBase - Lays out a single virtual base.
-  void LayoutVirtualBase(const CXXRecordDecl *RD);
+  void LayoutVirtualBase(const CXXRecordDecl *Base);
 
   /// LayoutBase - Will lay out a base and return the offset where it was 
   /// placed, in bits.
-  uint64_t LayoutBase(const CXXRecordDecl *RD);
+  uint64_t LayoutBase(const CXXRecordDecl *Base, bool BaseIsVirtual);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
   /// or a field) can be placed at the given offset. 
@@ -250,10 +270,6 @@ class RecordLayoutBuilder {
   void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
-  
-  uint64_t getSizeOfLargestEmptySubobject() {
-    return EmptySubobjects->SizeOfLargestEmptySubobject;
-  }
 };
 } // end anonymous namespace
 
@@ -431,12 +447,12 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
   }
 }
 
-void RecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
+void RecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(RD);
+  uint64_t Offset = LayoutBase(Base, /*BaseIsVirtual=*/false);
 
   // Add its base class offset.
-  if (!Bases.insert(std::make_pair(RD, Offset)).second)
+  if (!Bases.insert(std::make_pair(Base, Offset)).second)
     assert(false && "Added same base offset more than once!");
 }
 
@@ -544,22 +560,25 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
-void RecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
+void RecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(RD);
+  uint64_t Offset = LayoutBase(Base, /*BaseIsVirtual=*/true);
 
   // Add its base class offset.
-  if (!VBases.insert(std::make_pair(RD, Offset)).second)
+  if (!VBases.insert(std::make_pair(Base, Offset)).second)
     assert(false && "Added same vbase offset more than once!");
 }
 
-uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
+                                         bool BaseIsVirtual) {
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base);
 
   // If we have an empty base class, try to place it at offset 0.
-  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0, /*CheckVBases=*/false)) {
+  if (Base->isEmpty() && 
+      EmptySubobjects->CanPlaceBaseAtOffset(Base, BaseIsVirtual, 0) &&
+      canPlaceRecordAtOffset(Base, 0, /*CheckVBases=*/false)) {
     // We were able to place the class at offset 0.
-    UpdateEmptyClassOffsets(RD, 0, /*UpdateVBases=*/false);
+    UpdateEmptyClassOffsets(Base, 0, /*UpdateVBases=*/false);
 
     Size = std::max(Size, Layout.getSize());
 
@@ -573,13 +592,14 @@ uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
 
   // Try to place the base.
   while (true) {
-    if (canPlaceRecordAtOffset(RD, Offset, /*CheckVBases=*/false))
+    if (EmptySubobjects->CanPlaceBaseAtOffset(Base, BaseIsVirtual, Offset) &&
+        canPlaceRecordAtOffset(Base, Offset, /*CheckVBases=*/false))
       break;
 
     Offset += BaseAlign;
   }
 
-  if (!RD->isEmpty()) {
+  if (!Base->isEmpty()) {
     // Update the data size.
     DataSize = Offset + Layout.getNonVirtualSize();
 
@@ -590,7 +610,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
-  UpdateEmptyClassOffsets(RD, Offset, /*UpdateVBases=*/false);
+  UpdateEmptyClassOffsets(Base, Offset, /*UpdateVBases=*/false);
   return Offset;
 }
 
@@ -1125,7 +1145,8 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   const ASTRecordLayout *NewEntry;
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
-    RecordLayoutBuilder Builder(*this);
+    EmptySubobjectMap EmptySubobjects(*this, RD);
+    RecordLayoutBuilder Builder(*this, &EmptySubobjects);
     Builder.Layout(RD);
 
     // FIXME: This is not always correct. See the part about bitfields at
@@ -1145,12 +1166,12 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
                                   Builder.FieldOffsets.size(),
                                   NonVirtualSize,
                                   Builder.NonVirtualAlignment,
-                                  Builder.getSizeOfLargestEmptySubobject(),
+                                  EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder.PrimaryBase,
                                   Builder.PrimaryBaseIsVirtual,
                                   Builder.Bases, Builder.VBases);
   } else {
-    RecordLayoutBuilder Builder(*this);
+    RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
     Builder.Layout(D);
   
     NewEntry =
@@ -1211,7 +1232,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       return getObjCLayout(D, 0);
   }
 
-  RecordLayoutBuilder Builder(*this);
+  RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
   Builder.Layout(D);
 
   const ASTRecordLayout *NewEntry =
