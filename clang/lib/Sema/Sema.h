@@ -4440,7 +4440,7 @@ public:
   virtual void CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ClassDecl,
                                               DeclPtrTy *Methods,
                                               unsigned NumMethods);
-
+  virtual void CodeCompleteObjCMessageReceiver(Scope *S);
   virtual void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                             IdentifierInfo **SelIdents,
                                             unsigned NumSelIdents);

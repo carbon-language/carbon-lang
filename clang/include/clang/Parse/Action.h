@@ -2853,6 +2853,14 @@ public:
                                               unsigned NumMethods) {
   }
 
+  /// \brief Code completion for the receiver in an Objective-C message send.
+  ///
+  /// This code completion action is invoked when we see a '[' that indicates
+  /// the start of an Objective-C message send.
+  ///
+  /// \param S The scope in which the Objective-C message send occurs.
+  virtual void CodeCompleteObjCMessageReceiver(Scope *S) { }
+  
   /// \brief Code completion for an ObjC message expression that sends
   /// a message to the superclass.
   ///

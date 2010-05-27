@@ -1807,6 +1807,13 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.is(tok::l_square) && "'[' expected");
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCMessageReceiver(CurScope);
+    ConsumeCodeCompletionToken();
+    SkipUntil(tok::r_square);
+    return ExprError();
+  }
+  
   if (getLang().CPlusPlus) {
     // We completely separate the C and C++ cases because C++ requires
     // more complicated (read: slower) parsing. 

@@ -51,7 +51,7 @@ void func() {
   return 3;
 }
 @end
-
+MyClass *getMyClass();
 @implementation MySubClass
 + (int)MySubClassMethod {
   return 2;
@@ -160,14 +160,13 @@ void msg_id(id x) {
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCA %s
-// CHECK-CCA: {ResultType SEL}{TypedText _cmd}
 // CHECK-CCA: TypedefDecl:{TypedText Class}
-// CHECK-CCA: ObjCInterfaceDecl:{TypedText Foo}
-// CHECK-CCA: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCA-NEXT: ObjCInterfaceDecl:{TypedText Foo}
+// CHECK-CCA-NOT: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCA:FunctionDecl:{ResultType MyClass *}{TypedText getMyClass}{LeftParen (}{RightParen )}
 // CHECK-CCA: TypedefDecl:{TypedText id}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}
-// CHECK-CCA: TypedefDecl:{TypedText SEL}
 // CHECK-CCA: {ResultType Class}{TypedText self}
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
@@ -188,14 +187,12 @@ void msg_id(id x) {
 // CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
 // CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCF %s
-// CHECK-CCF: {ResultType SEL}{TypedText _cmd}
 // CHECK-CCF: TypedefDecl:{TypedText Class}
 // CHECK-CCF: ObjCInterfaceDecl:{TypedText Foo}
-// CHECK-CCF: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCF-NOT: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
 // CHECK-CCF: TypedefDecl:{TypedText id}
 // CHECK-CCF: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CCF: ObjCInterfaceDecl:{TypedText MySubClass}
-// CHECK-CCF: TypedefDecl:{TypedText SEL}
 // CHECK-CCF: {ResultType Class}{TypedText self}
 // CHECK-CCF: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:120:6 %s | FileCheck -check-prefix=CHECK-CCG %s
@@ -230,4 +227,3 @@ void msg_id(id x) {
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText new}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText protocolClassMethod}
-

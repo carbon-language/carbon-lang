@@ -222,6 +222,7 @@ namespace {
     bool IsType(NamedDecl *ND) const;
     bool IsMember(NamedDecl *ND) const;
     bool IsObjCIvar(NamedDecl *ND) const;
+    bool IsObjCMessageReceiver(NamedDecl *ND) const;
     //@}    
   };  
 }
@@ -731,6 +732,78 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
   return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
     isa<ObjCPropertyDecl>(ND);
 }
+
+/// \brief Get the type that a given expression will have if this declaration
+/// is used as an expression in its "typical" code-completion form.
+static QualType getDeclUsageType(ASTContext &C, NamedDecl *ND) {
+  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
+  
+  if (TypeDecl *Type = dyn_cast<TypeDecl>(ND))
+    return C.getTypeDeclType(Type);
+  if (ObjCInterfaceDecl *Iface = dyn_cast<ObjCInterfaceDecl>(ND))
+    return C.getObjCInterfaceType(Iface);
+    
+  QualType T;
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
+    T = Function->getResultType();
+  else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
+    T = Method->getResultType();
+  else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND))
+    T = FunTmpl->getTemplatedDecl()->getResultType();
+  else if (EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
+    T = C.getTypeDeclType(cast<EnumDecl>(Enumerator->getDeclContext()));
+  else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
+    T = Property->getType();
+  else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND))
+    T = Value->getType();
+  else
+    return QualType();
+  
+  return T.getNonReferenceType();
+}
+
+static bool isObjCReceiverType(ASTContext &C, QualType T) {
+  T = C.getCanonicalType(T);
+  switch (T->getTypeClass()) {
+  case Type::ObjCObject: 
+  case Type::ObjCInterface:
+  case Type::ObjCObjectPointer:
+    return true;
+      
+  case Type::Builtin:
+    switch (cast<BuiltinType>(T)->getKind()) {
+    case BuiltinType::ObjCId:
+    case BuiltinType::ObjCClass:
+    case BuiltinType::ObjCSel:
+      return true;
+      
+    default:
+      break;
+    }
+    return false;
+      
+  default:
+    break;
+  }
+  
+  if (!C.getLangOptions().CPlusPlus)
+    return false;
+
+  // FIXME: We could perform more analysis here to determine whether a 
+  // particular class type has any conversions to Objective-C types. For now,
+  // just accept all class types.
+  return T->isDependentType() || T->isRecordType();
+}
+
+bool ResultBuilder::IsObjCMessageReceiver(NamedDecl *ND) const {
+  QualType T = getDeclUsageType(SemaRef.Context, ND);
+  if (T.isNull())
+    return false;
+  
+  T = SemaRef.Context.getBaseElementType(T);
+  return isObjCReceiverType(SemaRef.Context, T);
+}
+
 
 /// \rief Determines whether the given declaration is an Objective-C
 /// instance variable.
@@ -3019,6 +3092,31 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
     .Case("class", IFace)
     .Case("superclass", Super)
     .Default(0);
+}
+
+void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  
+  // Find anything that looks like it could be a message receiver.
+  Results.setFilter(&ResultBuilder::IsObjCMessageReceiver);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  Results.EnterNewScope();
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
+  
+  // If we are in an Objective-C method inside a class that has a superclass,
+  // add "super" as an option.
+  if (ObjCMethodDecl *Method = getCurMethodDecl())
+    if (ObjCInterfaceDecl *Iface = Method->getClassInterface())
+      if (Iface->getSuperClass())
+        Results.AddResult(Result("super"));
+  
+  Results.ExitScope();
+  
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, Results);
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+  
 }
 
 void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
