@@ -111,8 +111,8 @@ DEF_SIMPLE_ATTR_CLONE(WeakImport)
 DEF_SIMPLE_ATTR_CLONE(WeakRef)
 DEF_SIMPLE_ATTR_CLONE(X86ForceAlignArgPointer)
 
-Attr* PragmaPackAttr::clone(ASTContext &C) const {
-  return ::new (C) PragmaPackAttr(Alignment);
+Attr* MaxFieldAlignmentAttr::clone(ASTContext &C) const {
+  return ::new (C) MaxFieldAlignmentAttr(Alignment);
 }
 
 Attr* AlignedAttr::clone(ASTContext &C) const {

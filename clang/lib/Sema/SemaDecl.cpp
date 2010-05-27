@@ -5410,7 +5410,7 @@ CreateNewDecl:
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
     if (unsigned Alignment = getPragmaPackAlignment())
-      New->addAttr(::new (Context) PragmaPackAttr(Alignment * 8));
+      New->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
   }
 
   // If this is a specialization of a member class (of a class template),

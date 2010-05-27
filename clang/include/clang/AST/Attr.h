@@ -67,6 +67,7 @@ public:
     IBOutletCollectionKind, // Clang-specific.
     IBActionKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
     Malloc,
+    MaxFieldAlignment,
     NoDebug,
     NoInline,
     NonNull,
@@ -81,7 +82,6 @@ public:
     NSReturnsNotRetained,   // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
-    PragmaPack,
     Pure,
     Regparm,
     ReqdWorkGroupSize,   // OpenCL-specific
@@ -186,11 +186,14 @@ public:                                                                 \
 
 DEF_SIMPLE_ATTR(Packed);
 
-class PragmaPackAttr : public Attr {
+/// \brief Attribute for specifying a maximum field alignment; this is only
+/// valid on record decls.
+class MaxFieldAlignmentAttr : public Attr {
   unsigned Alignment;
 
 public:
-  PragmaPackAttr(unsigned alignment) : Attr(PragmaPack), Alignment(alignment) {}
+  MaxFieldAlignmentAttr(unsigned alignment)
+    : Attr(MaxFieldAlignment), Alignment(alignment) {}
 
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
@@ -199,9 +202,9 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == PragmaPack;
+    return A->getKind() == MaxFieldAlignment;
   }
-  static bool classof(const PragmaPackAttr *A) { return true; }
+  static bool classof(const MaxFieldAlignmentAttr *A) { return true; }
 };
 
 class AlignedAttr : public Attr {

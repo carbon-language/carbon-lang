@@ -329,8 +329,9 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
 
   if (const RecordType *RT = D->getType()->getAs<RecordType>()) {
     const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
-    if (const PragmaPackAttr *PPA = RD->getAttr<PragmaPackAttr>()) {
-      if (PPA->getAlignment() != TypeAlignment * 8 && !Packed)
+    if (const MaxFieldAlignmentAttr *MFAA =
+          RD->getAttr<MaxFieldAlignmentAttr>()) {
+      if (MFAA->getAlignment() != TypeAlignment * 8 && !Packed)
         return false;
     }
   }

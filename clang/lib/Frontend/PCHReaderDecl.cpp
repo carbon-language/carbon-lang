@@ -765,7 +765,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Overloadable);
     SIMPLE_ATTR(Override);
     SIMPLE_ATTR(Packed);
-    UNSIGNED_ATTR(PragmaPack);
+    UNSIGNED_ATTR(MaxFieldAlignment);
     SIMPLE_ATTR(Pure);
     UNSIGNED_ATTR(Regparm);
     STRING_ATTR(Section);

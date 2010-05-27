@@ -1943,8 +1943,8 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::Override:
       break;
 
-    case Attr::PragmaPack:
-      Record.push_back(cast<PragmaPackAttr>(Attr)->getAlignment());
+    case Attr::MaxFieldAlignment:
+      Record.push_back(cast<MaxFieldAlignmentAttr>(Attr)->getAlignment());
       break;
 
     case Attr::Packed:

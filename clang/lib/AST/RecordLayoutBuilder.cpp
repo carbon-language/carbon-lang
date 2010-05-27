@@ -782,9 +782,8 @@ void RecordLayoutBuilder::InitializeLayout(const RecordDecl *D) {
   
   Packed = D->hasAttr<PackedAttr>();
   
-  // The #pragma pack attribute specifies the maximum field alignment.
-  if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
-    MaxFieldAlignment = PPA->getAlignment();
+  if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
+    MaxFieldAlignment = MFAA->getAlignment();
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getMaxAlignment());
@@ -862,12 +861,12 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 
   Packed = D->hasAttr<PackedAttr>();
 
-  // The #pragma pack attribute specifies the maximum field alignment.
-  if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
-    MaxFieldAlignment = PPA->getAlignment();
+  if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
+    MaxFieldAlignment = MFAA->getAlignment();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getMaxAlignment());
+
   // Layout each ivar sequentially.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
   Context.ShallowCollectObjCIvars(D, Ivars);
