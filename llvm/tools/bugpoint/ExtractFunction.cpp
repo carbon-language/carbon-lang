@@ -365,8 +365,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   PI.push_back(getPI(createBlockExtractorPass(EmptyBBs)));
   Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
 
-  if (uniqueFilename.exists())
-    uniqueFilename.eraseFromDisk(); // Free disk space
+  uniqueFilename.eraseFromDisk(); // Free disk space
 
   if (Ret == 0) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";

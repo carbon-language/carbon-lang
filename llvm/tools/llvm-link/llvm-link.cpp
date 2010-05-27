@@ -62,20 +62,14 @@ static inline std::auto_ptr<Module> LoadFile(const char *argv0,
   }
 
   SMDiagnostic Err;
-  if (Filename.exists()) {
-    if (Verbose) errs() << "Loading '" << Filename.c_str() << "'\n";
-    Module* Result = 0;
-    
-    const std::string &FNStr = Filename.str();
-    Result = ParseIRFile(FNStr, Err, Context);
-    if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
+  if (Verbose) errs() << "Loading '" << Filename.c_str() << "'\n";
+  Module* Result = 0;
+  
+  const std::string &FNStr = Filename.str();
+  Result = ParseIRFile(FNStr, Err, Context);
+  if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
-    if (Verbose)
-      Err.Print(argv0, errs());
-  } else {
-    errs() << "Bitcode file: '" << Filename.c_str() << "' does not exist.\n";
-  }
-
+  Err.Print(argv0, errs());
   return std::auto_ptr<Module>();
 }
 
