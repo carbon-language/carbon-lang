@@ -250,6 +250,8 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   if (isFreeCall(&CI))
     return visitFree(CI);
+  if (isMalloc(&CI))
+    return visitMalloc(CI);
 
   // If the caller function is nounwind, mark the call as nounwind, even if the
   // callee isn't.

@@ -1924,35 +1924,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         }
         break;
       }
-      case Instruction::Call:
-        // If we have (malloc != null), and if the malloc has a single use, we
-        // can assume it is successful and remove the malloc.
-        if (isMalloc(LHSI) && LHSI->hasOneUse() &&
-            isa<ConstantPointerNull>(RHSC)) {
-          // Need to explicitly erase malloc call here, instead of adding it to
-          // Worklist, because it won't get DCE'd from the Worklist since
-          // isInstructionTriviallyDead() returns false for function calls.
-          // It is OK to replace LHSI/MallocCall with Undef because the 
-          // instruction that uses it will be erased via Worklist.
-          if (extractMallocCall(LHSI)) {
-            LHSI->replaceAllUsesWith(UndefValue::get(LHSI->getType()));
-            EraseInstFromFunction(*LHSI);
-            return ReplaceInstUsesWith(I,
-                               ConstantInt::get(Type::getInt1Ty(I.getContext()),
-                                                      !I.isTrueWhenEqual()));
-          }
-          if (CallInst* MallocCall = extractMallocCallFromBitCast(LHSI))
-            if (MallocCall->hasOneUse()) {
-              MallocCall->replaceAllUsesWith(
-                                        UndefValue::get(MallocCall->getType()));
-              EraseInstFromFunction(*MallocCall);
-              Worklist.Add(LHSI); // The malloc's bitcast use.
-              return ReplaceInstUsesWith(I,
-                               ConstantInt::get(Type::getInt1Ty(I.getContext()),
-                                                      !I.isTrueWhenEqual()));
-            }
-        }
-        break;
       case Instruction::IntToPtr:
         // icmp pred inttoptr(X), null -> icmp pred X, 0
         if (RHSC->isNullValue() && TD &&

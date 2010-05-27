@@ -178,6 +178,7 @@ public:
   Instruction *visitPHINode(PHINode &PN);
   Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
   Instruction *visitAllocaInst(AllocaInst &AI);
+  Instruction *visitMalloc(Instruction &FI);
   Instruction *visitFree(Instruction &FI);
   Instruction *visitLoadInst(LoadInst &LI);
   Instruction *visitStoreInst(StoreInst &SI);

@@ -710,6 +710,52 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   return 0;
 }
 
+
+
+static bool IsOnlyNullComparedAndFreed(const Value &V) {
+  for (Value::const_use_iterator UI = V.use_begin(), UE = V.use_end();
+       UI != UE; ++UI) {
+    if (isFreeCall(*UI))
+      continue;
+    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(*UI))
+      if (ICI->isEquality() && isa<ConstantPointerNull>(ICI->getOperand(1)))
+        continue;
+    return false;
+  }
+  return true;
+}
+
+Instruction *InstCombiner::visitMalloc(Instruction &MI) {
+  // If we have a malloc call which is only used in any amount of comparisons
+  // to null and free calls, delete the calls and replace the comparisons with
+  // true or false as appropriate.
+  if (IsOnlyNullComparedAndFreed(MI)) {
+    for (Value::use_iterator UI = MI.use_begin(), UE = MI.use_end();
+         UI != UE;) {
+      // We can assume that every remaining use is a free call or an icmp eq/ne
+      // to null, so the cast is safe.
+      Instruction *I = cast<Instruction>(*UI);
+
+      // Early increment here, as we're about to get rid of the user.
+      ++UI;
+
+      if (isFreeCall(I)) {
+        EraseInstFromFunction(*cast<CallInst>(I));
+        continue;
+      }
+      // Again, the cast is safe.
+      ICmpInst *C = cast<ICmpInst>(I);
+      ReplaceInstUsesWith(*C, ConstantInt::get(Type::getInt1Ty(C->getContext()),
+                                               C->isFalseWhenEqual()));
+      EraseInstFromFunction(*C);
+    }
+    return EraseInstFromFunction(MI);
+  }
+  return 0;
+}
+
+
+
 Instruction *InstCombiner::visitFree(Instruction &FI) {
   Value *Op = FI.getOperand(1);
 
@@ -725,23 +771,6 @@ Instruction *InstCombiner::visitFree(Instruction &FI) {
   // when lots of inlining happens.
   if (isa<ConstantPointerNull>(Op))
     return EraseInstFromFunction(FI);
-
-  // If we have a malloc call whose only use is a free call, delete both.
-  if (isMalloc(Op)) {
-    if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
-      if (Op->hasOneUse() && CI->hasOneUse()) {
-        EraseInstFromFunction(FI);
-        EraseInstFromFunction(*CI);
-        return EraseInstFromFunction(*cast<Instruction>(Op));
-      }
-    } else {
-      // Op is a call to malloc
-      if (Op->hasOneUse()) {
-        EraseInstFromFunction(FI);
-        return EraseInstFromFunction(*cast<Instruction>(Op));
-      }
-    }
-  }
 
   return 0;
 }

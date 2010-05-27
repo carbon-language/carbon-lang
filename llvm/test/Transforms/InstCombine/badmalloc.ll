@@ -10,6 +10,7 @@ declare void @free(i8*)
 define i1 @test1() {
   %A = call noalias i8* @malloc(i64 4) nounwind
   %B = icmp eq i8* %A, null
+  store i8 0, i8* %A
 
   call void @free(i8* %A)
   ret i1 %B
