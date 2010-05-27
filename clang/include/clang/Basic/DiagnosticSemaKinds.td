@@ -240,6 +240,8 @@ def warn_pragma_options_align_unsupported_option : Warning<
   "unsupported alignment option in '#pragma options align'">;
 def warn_pragma_options_align_reset_failed : Warning<
   "#pragma options align=reset failed: %0">;
+def err_pragma_options_align_mac68k_target_unsupported : Error<
+  "mac68k alignment pragma is not supported on this target">;
 def warn_pragma_pack_invalid_alignment : Warning<
   "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
 // Follow the MSVC implementation.

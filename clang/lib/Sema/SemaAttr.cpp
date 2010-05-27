@@ -15,6 +15,8 @@
 #include "Sema.h"
 #include "Lookup.h"
 #include "clang/AST/Expr.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -120,6 +122,18 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
   case POAK_Natural:
     Context->push(0);
     Context->setAlignment(0);
+    break;
+
+  case POAK_Mac68k:
+    // Check if the target supports this.
+    if (!PP.getTargetInfo().hasAlignMac68kSupport()) {
+      Diag(PragmaLoc, diag::err_pragma_options_align_mac68k_target_unsupported);
+      return;
+    } else {
+      // Otherwise, just warn about it for now.
+      Diag(PragmaLoc, diag::warn_pragma_options_align_unsupported_option)
+        << KindLoc;
+    }
     break;
 
   default:

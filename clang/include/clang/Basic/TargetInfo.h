@@ -58,6 +58,8 @@ protected:
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
 
+  unsigned HasAlignMac68kSupport : 1;
+
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const std::string &T);
 
@@ -208,6 +210,12 @@ public:
 
   bool useBitFieldTypeAlignment() const {
     return UseBitFieldTypeAlignment;
+  }
+
+  /// hasAlignMac68kSupport - Check whether this target support '#pragma options
+  /// align=mac68k'.
+  bool hasAlignMac68kSupport() const {
+    return HasAlignMac68kSupport;
   }
 
   /// getTypeName - Return the user string for the specified integer type enum.
