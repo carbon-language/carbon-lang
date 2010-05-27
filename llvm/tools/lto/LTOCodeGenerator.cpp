@@ -152,10 +152,12 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
     
   // write bitcode to it
   WriteBitcodeToFile(_linker.getModule(), Out);
-  
+  Out.close();
+
   if (Out.has_error()) {
     errMsg = "could not write bitcode file: ";
     errMsg += path;
+    Out.clear_error();
     return true;
   }
   
