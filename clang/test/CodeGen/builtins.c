@@ -195,3 +195,10 @@ void test_float_builtins(float F, double D, long double LD) {
   // CHECK: and i1
 }
 
+// CHECK: define void @test_builtin_longjmp
+void test_builtin_longjmp(void **buffer) {
+  // CHECK: [[BITCAST:%.*]] = bitcast
+  // CHECK-NEXT: call void @llvm.eh.sjlj.longjmp(i8* [[BITCAST]])
+  __builtin_longjmp(buffer, 1);
+  // CHECK-NEXT: unreachable
+}

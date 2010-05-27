@@ -557,30 +557,33 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     else
       return RValue::get(Builder.CreateZExt(Result, Int64Ty, "extend.zext"));
   }
-#if 0
-  // FIXME: Finish/enable when LLVM backend support stabilizes
   case Builtin::BI__builtin_setjmp: {
+    // Buffer is a void**.
     Value *Buf = EmitScalarExpr(E->getArg(0));
-    // Store the frame pointer to the buffer
-    Value *FrameAddrF = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
+
+    // Store the frame pointer to the setjmp buffer.
     Value *FrameAddr =
-        Builder.CreateCall(FrameAddrF,
-                           Constant::getNullValue(llvm::Type::getInt32Ty(VMContext)));
+      Builder.CreateCall(CGM.getIntrinsic(Intrinsic::frameaddress),
+                         ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
     Builder.CreateStore(FrameAddr, Buf);
-    // Call the setjmp intrinsic
-    Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_setjmp, 0, 0);
-    const llvm::Type *DestType = llvm::Type::getInt8PtrTy(VMContext);
-    Buf = Builder.CreateBitCast(Buf, DestType);
+
+    // Call LLVM's EH setjmp, which is lightweight.
+    Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_setjmp);
+    Buf = Builder.CreateBitCast(Buf, llvm::Type::getInt8PtrTy(VMContext));
     return RValue::get(Builder.CreateCall(F, Buf));
   }
   case Builtin::BI__builtin_longjmp: {
-    Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_longjmp, 0, 0);
     Value *Buf = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *DestType = llvm::Type::getInt8PtrTy(VMContext);
-    Buf = Builder.CreateBitCast(Buf, DestType);
-    return RValue::get(Builder.CreateCall(F, Buf));
+    Buf = Builder.CreateBitCast(Buf, llvm::Type::getInt8PtrTy(VMContext));
+
+    // Call LLVM's EH longjmp, which is lightweight.
+    Builder.CreateCall(CGM.getIntrinsic(Intrinsic::eh_sjlj_longjmp), Buf);
+
+    // longjmp doesn't return; mark this as unreachable
+    Value *V = Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+    return RValue::get(V);
   }
-#endif
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:
   case Builtin::BI__sync_fetch_and_or:
