@@ -103,10 +103,18 @@ namespace Test3 {
 // Test that B::a isn't laid out at offset 0.
 struct Empty { };
 struct A { Empty e; };
-struct B : Empty {
-  A a;
-};
-
+struct B : Empty { A a; };
 SA(0, sizeof(B) == 2);
+
+}
+
+namespace Test4 {
+
+// Test that C::Empty isn't laid out at offset 0.
+struct Empty { };
+struct A : Empty { };
+struct B { A a; };
+struct C : B, Empty { };
+SA(0, sizeof(C) == 2);
 
 }
