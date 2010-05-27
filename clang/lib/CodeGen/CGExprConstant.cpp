@@ -1009,7 +1009,11 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
     // Go through all bases and fill in any null pointer to data members.
     for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
-      assert(!I->isVirtual() && "Should not see virtual bases here!");
+      if (I->isVirtual()) {
+        // FIXME: We should initialize null pointer to data members in virtual
+        // bases here.
+        continue;
+      }
       
       const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
@@ -1088,7 +1092,11 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     // Go through all bases and fill in any null pointer to data members.
     for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
-      assert(!I->isVirtual() && "Should not see virtual bases here!");
+      if (I->isVirtual()) {
+        // FIXME: We should initialize null pointer to data members in virtual
+        // bases here.
+        continue;
+      }
 
       const CXXRecordDecl *BaseDecl = 
         cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());

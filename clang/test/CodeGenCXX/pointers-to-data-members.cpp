@@ -151,3 +151,24 @@ bool check2() {
 }
 
 }
+
+namespace VirtualBases {
+
+struct A {
+  char c;
+  int A::*i;
+};
+
+// FIXME: A::i should be initialized to -1 here.
+struct B : virtual A { };
+B b;
+
+// FIXME: A::i should be initialized to -1 here.
+struct C : virtual A { int A::*i; };
+C c;
+
+// FIXME: C::A::i should be initialized to -1 here.
+struct D : C { int A::*i; };
+D d;
+
+}
