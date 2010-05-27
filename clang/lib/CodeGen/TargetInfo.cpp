@@ -23,6 +23,18 @@
 using namespace clang;
 using namespace CodeGen;
 
+static void AssignToArrayRange(CodeGen::CGBuilderTy &Builder,
+                               llvm::Value *Array,
+                               llvm::Value *Value,
+                               unsigned FirstIndex,
+                               unsigned LastIndex) {
+  // Alternatively, we could emit this as a loop in the source.
+  for (unsigned I = FirstIndex; I <= LastIndex; ++I) {
+    llvm::Value *Cell = Builder.CreateConstInBoundsGEP1_32(Array, I);
+    Builder.CreateStore(Value, Cell);
+  }
+}
+
 ABIInfo::~ABIInfo() {}
 
 void ABIArgInfo::dump() const {
@@ -621,20 +633,14 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
   // 0-7 are the eight integer registers;  the order is different
   //   on Darwin (for EH), but the range is the same.
   // 8 is %eip.
-  for (unsigned I = 0, E = 9; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Four8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Four8, 0, 8);
 
   if (CGF.CGM.isTargetDarwin()) {
     // 12-16 are st(0..4).  Not sure why we stop at 4.
     // These have size 16, which is sizeof(long double) on
     // platforms with 8-byte alignment for that type.
     llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
-    for (unsigned I = 12, E = 17; I != E; ++I) {
-      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-      Builder.CreateStore(Sixteen8, Slot);
-    }
+    AssignToArrayRange(Builder, Address, Sixteen8, 12, 16);
       
   } else {
     // 9 is %eflags, which doesn't get a size on Darwin for some
@@ -645,11 +651,8 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
     // These have size 12, which is sizeof(long double) on
     // platforms with 4-byte alignment for that type.
     llvm::Value *Twelve8 = llvm::ConstantInt::get(i8, 12);
-    for (unsigned I = 11, E = 17; I != E; ++I) {
-      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-      Builder.CreateStore(Twelve8, Slot);
-    }
-  }      
+    AssignToArrayRange(Builder, Address, Twelve8, 11, 16);
+  }
 
   return false;
 }
@@ -758,12 +761,9 @@ public:
     const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
     llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
       
-    // 0-16 are the 16 integer registers.
-    // 17 is %rip.
-    for (unsigned I = 0, E = 17; I != E; ++I) {
-      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-      Builder.CreateStore(Eight8, Slot);
-    }
+    // 0-15 are the 16 integer registers.
+    // 16 is %rip.
+    AssignToArrayRange(Builder, Address, Eight8, 0, 16);
 
     return false;
   }
@@ -1691,16 +1691,10 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
 
   // 0-31: r0-31, the 4-byte general-purpose registers
-  for (unsigned I = 0, E = 32; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Four8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Four8, 0, 31);
 
   // 32-63: fp0-31, the 8-byte floating-point registers
-  for (unsigned I = 32, E = 64; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Eight8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Eight8, 32, 63);
 
   // 64-76 are various 4-byte special-purpose registers:
   // 64: mq
@@ -1709,26 +1703,17 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   // 67: ap
   // 68-75 cr0-7
   // 76: xer
-  for (unsigned I = 64, E = 77; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Four8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Four8, 64, 76);
 
   // 77-108: v0-31, the 16-byte vector registers
-  for (unsigned I = 77, E = 109; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Sixteen8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Sixteen8, 77, 108);
 
   // 109: vrsave
   // 110: vscr
   // 111: spe_acc
   // 112: spefscr
   // 113: sfp
-  for (unsigned I = 109, E = 114; I != E; ++I) {
-    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
-    Builder.CreateStore(Four8, Slot);
-  }
+  AssignToArrayRange(Builder, Address, Four8, 109, 113);
 
   return false;  
 }
@@ -2153,6 +2138,56 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   }
 }
 
+// MIPS ABI Implementation.  This works for both little-endian and
+// big-endian variants.
+namespace {
+class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  MIPSTargetCodeGenInfo(): TargetCodeGenInfo(new DefaultABIInfo()) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
+    return 29;
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const;  
+};
+}
+
+bool
+MIPSTargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                                               llvm::Value *Address) const {
+  // This information comes from gcc's implementation, which seems to
+  // as canonical as it gets.
+
+  CodeGen::CGBuilderTy &Builder = CGF.Builder;
+  llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+  // Everything on MIPS is 4 bytes.  Double-precision FP registers
+  // are aliased to pairs of single-precision FP registers.
+  const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+  llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
+
+  // 0-31 are the general purpose registers, $0 - $31.
+  // 32-63 are the floating-point registers, $f0 - $f31.
+  // 64 and 65 are the multiply/divide registers, $hi and $lo.
+  // 66 is the (notional, I think) register for signal-handler return.
+  AssignToArrayRange(Builder, Address, Four8, 0, 65);
+
+  // 67-74 are the floating-point status registers, $fcc0 - $fcc7.
+  // They are one bit wide and ignored here.
+
+  // 80-111 are the coprocessor 0 registers, $c0r0 - $c0r31.
+  // (coprocessor 1 is the FP unit)
+  // 112-143 are the coprocessor 2 registers, $c2r0 - $c2r31.
+  // 144-175 are the coprocessor 3 registers, $c3r0 - $c3r31.
+  // 176-181 are the DSP accumulator registers.
+  AssignToArrayRange(Builder, Address, Four8, 80, 181);
+
+  return false;
+}
+
+
 const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
   if (TheTargetCodeGenInfo)
     return *TheTargetCodeGenInfo;
@@ -2164,6 +2199,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
   switch (Triple.getArch()) {
   default:
     return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo);
+
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo());
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
