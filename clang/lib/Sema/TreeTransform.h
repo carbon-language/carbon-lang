@@ -582,6 +582,9 @@ public:
     if (!DC)
       return QualType();
 
+    if (SemaRef.RequireCompleteDeclContext(SS, DC))
+      return QualType();
+
     TagDecl *Tag = 0;
     SemaRef.LookupQualifiedName(Result, DC);
     switch (Result.getResultKind()) {
