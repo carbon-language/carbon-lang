@@ -412,8 +412,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
-  setOperationAction(ISD::EH_SJLJ_SETJMP, MVT::i32, Custom);
-  setOperationAction(ISD::EH_SJLJ_LONGJMP, MVT::Other, Custom);
 
   setOperationAction(ISD::SETCC,     MVT::i32, Expand);
   setOperationAction(ISD::SETCC,     MVT::f32, Expand);
@@ -1552,9 +1550,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
 SDValue
 ARMTargetLowering::LowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
-  SDValue Val = Subtarget->isThumb() ?
-    DAG.getCopyFromReg(DAG.getEntryNode(), dl, ARM::SP, MVT::i32) :
-    DAG.getConstant(0, MVT::i32);
+  SDValue Val = DAG.getConstant(0, MVT::i32);
   return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32, Op.getOperand(0),
                      Op.getOperand(1), Val);
 }

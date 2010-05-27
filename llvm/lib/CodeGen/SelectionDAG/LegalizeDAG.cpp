@@ -862,6 +862,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TRAMPOLINE:
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
+  case ISD::EH_SJLJ_SETJMP:
+  case ISD::EH_SJLJ_LONGJMP:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be custom-lowered.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
