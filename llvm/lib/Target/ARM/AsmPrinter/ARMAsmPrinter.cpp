@@ -1064,27 +1064,11 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       printOperand(MI, OpNum, O);
       return false;
     case 'Q':
-      // Print the least significant half of a register pair.
-      if (TM.getTargetData()->isBigEndian())
-        break;
-      printOperand(MI, OpNum, O);
-      return false;
     case 'R':
-      // Print the most significant half of a register pair.
-      if (TM.getTargetData()->isLittleEndian())
-        break;
-      printOperand(MI, OpNum, O);
-      return false;
     case 'H':
-      break;
-    }
-    // Print the second half of a register pair (for 'Q', 'R' or 'H').
-    // Verify that this operand has two consecutive registers.
-    if (!MI->getOperand(OpNum).isReg() ||
-        OpNum+1 == MI->getNumOperands() ||
-        !MI->getOperand(OpNum+1).isReg())
+      llvm_unreachable("llvm does not support 'Q', 'R', and 'H' modifiers!");
       return true;
-    ++OpNum;
+    }
   }
 
   printOperand(MI, OpNum, O);
