@@ -57,8 +57,22 @@ class EmptySubobjectMap {
                             const BaseInfo *Derived);
   void ComputeBaseInfo();
   
+  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
+  void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
+  
   bool CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, uint64_t Offset);
   void UpdateEmptyBaseSubobjects(const BaseInfo *Info, uint64_t Offset);
+  
+  bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                      const CXXRecordDecl *Class,
+                                      uint64_t Offset);
+  bool CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
+                                      uint64_t Offset);
+  
+  void UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
+                                  const CXXRecordDecl *Class,
+                                  uint64_t Offset);
+  void UpdateEmptyFieldSubobjects(const FieldDecl *FD, uint64_t Offset);
   
 public:
   /// This holds the size of the largest empty subobject (either a base
@@ -79,6 +93,10 @@ public:
   /// (direct or indirect) of the same type having the same offset.
   bool CanPlaceBaseAtOffset(const CXXRecordDecl *RD, bool BaseIsVirtual,
                             uint64_t Offset);
+
+  /// CanPlaceFieldAtOffset - Return whether a field can be placed at the given
+  /// offset.
+  bool CanPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset);
 };
 
 void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
@@ -198,8 +216,43 @@ void EmptySubobjectMap::ComputeBaseInfo() {
 }
 
 bool
+EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                             uint64_t Offset) {
+  // We only need to check empty bases.
+  if (!RD->isEmpty())
+    return true;
+
+  EmptyClassOffsetsMapTy::const_iterator I = EmptyClassOffsets.find(Offset);
+  if (I == EmptyClassOffsets.end())
+    return true;
+  
+  const ClassVectorTy& Classes = I->second;
+  if (std::find(Classes.begin(), Classes.end(), RD) == Classes.end())
+    return true;
+
+  // There is already an empty class of the same type at this offset.
+  return false;
+}
+  
+void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                             uint64_t Offset) {
+  // We only care about empty bases.
+  if (!RD->isEmpty())
+    return;
+
+  ClassVectorTy& Classes = EmptyClassOffsets[Offset];
+  assert(std::find(Classes.begin(), Classes.end(), RD) == Classes.end() &&
+         "Duplicate empty class detected!");
+    
+  Classes.push_back(RD);
+}
+
+bool
 EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, 
                                                  uint64_t Offset) {
+  if (!CanPlaceSubobjectAtOffset(Info->Class, Offset))
+    return false;
+
   // Traverse all non-virtual bases.
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
     BaseInfo* Base = Info->Bases[I];
@@ -224,15 +277,26 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info,
     }
   }
   
-  // FIXME: Member variables.
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+
+  // Traverse all member variables.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
+       E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
+    
+    if (!CanPlaceFieldSubobjectAtOffset(FD, FieldOffset))
+      return false;
+  }
+  
   return true;
 }
 
 void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseInfo *Info, 
                                                   uint64_t Offset) {
-  if (Info->Class->isEmpty()) {
-    // FIXME: Record that there is an empty class at this offset.
-  }
+  AddSubobjectAtOffset(Info->Class, Offset);
   
   // Traverse all non-virtual bases.
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
@@ -254,8 +318,19 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseInfo *Info,
     if (Info == PrimaryVirtualBaseInfo->Derived)
       UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset);
   }
-  
-  // FIXME: Member variables.
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+
+  // Traverse all member variables.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
+       E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
+    
+    UpdateEmptyFieldSubobjects(FD, FieldOffset);
+  }
 }
 
 bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
@@ -275,9 +350,152 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
   
   if (!CanPlaceBaseSubobjectAtOffset(Info, Offset))
     return false;
-  
+
+  // We are able to place the base at this offset. Make sure to update the
+  // empty base subobject map.
   UpdateEmptyBaseSubobjects(Info, Offset);
   return true;
+}
+
+bool
+EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                                  const CXXRecordDecl *Class,
+                                                  uint64_t Offset) {
+  if (!CanPlaceSubobjectAtOffset(RD, Offset))
+    return false;
+  
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  // Traverse all non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(BaseDecl);
+    if (!CanPlaceFieldSubobjectAtOffset(BaseDecl, Class, BaseOffset))
+      return false;
+  }
+
+  // Traverse all member variables.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
+    
+    if (!CanPlaceFieldSubobjectAtOffset(FD, FieldOffset))
+      return false;
+  }
+
+  return true;
+}
+
+bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
+                                                       uint64_t Offset) {
+  QualType T = FD->getType();
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    return CanPlaceFieldSubobjectAtOffset(RD, RD, Offset);
+  }
+
+  // If we have an array type we need to look at every element.
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(T)) {
+    QualType ElemTy = Context.getBaseElementType(AT);
+    const RecordType *RT = ElemTy->getAs<RecordType>();
+    if (!RT)
+      return true;
+  
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+    uint64_t NumElements = Context.getConstantArrayElementCount(AT);
+    uint64_t ElementOffset = Offset;
+    for (uint64_t I = 0; I != NumElements; ++I) {
+      if (!CanPlaceFieldSubobjectAtOffset(RD, RD, ElementOffset))
+        return false;
+
+      ElementOffset += Layout.getSize();
+    }
+  }
+
+  return true;
+}
+
+bool
+EmptySubobjectMap::CanPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset) {
+  if (!CanPlaceFieldSubobjectAtOffset(FD, Offset))
+    return false;
+  
+  // We are able to place the member variable at this offset.
+  // Make sure to update the empty base subobject map.
+  UpdateEmptyFieldSubobjects(FD, Offset);
+  return true;
+}
+
+void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
+                                                   const CXXRecordDecl *Class,
+                                                   uint64_t Offset) {
+  AddSubobjectAtOffset(RD, Offset);
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  // Traverse all non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(BaseDecl);
+    UpdateEmptyFieldSubobjects(BaseDecl, Class, BaseOffset);
+  }
+
+  // Traverse all member variables.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
+
+    UpdateEmptyFieldSubobjects(FD, FieldOffset);
+  }
+}
+  
+void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
+                                                   uint64_t Offset) {
+  QualType T = FD->getType();
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    UpdateEmptyFieldSubobjects(RD, RD, Offset);
+    return;
+  }
+
+  // If we have an array type we need to update every element.
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(T)) {
+    QualType ElemTy = Context.getBaseElementType(AT);
+    const RecordType *RT = ElemTy->getAs<RecordType>();
+    if (!RT)
+      return;
+    
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    
+    uint64_t NumElements = Context.getConstantArrayElementCount(AT);
+    uint64_t ElementOffset = Offset;
+    
+    for (uint64_t I = 0; I != NumElements; ++I) {
+      UpdateEmptyFieldSubobjects(RD, RD, ElementOffset);
+      ElementOffset += Layout.getSize();
+    }
+  }
 }
 
 class RecordLayoutBuilder {
