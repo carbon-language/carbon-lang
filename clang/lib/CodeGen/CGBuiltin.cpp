@@ -567,6 +567,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                          ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
     Builder.CreateStore(FrameAddr, Buf);
 
+    // Store the stack pointer to the setjmp buffer.
+    Value *StackAddr =
+      Builder.CreateCall(CGM.getIntrinsic(Intrinsic::stacksave));
+    Value *StackSaveSlot =
+      Builder.CreateGEP(Buf, ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                              2));
+    Builder.CreateStore(StackAddr, StackSaveSlot);
+
     // Call LLVM's EH setjmp, which is lightweight.
     Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_setjmp);
     Buf = Builder.CreateBitCast(Buf, llvm::Type::getInt8PtrTy(VMContext));
