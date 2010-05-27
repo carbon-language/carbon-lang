@@ -191,105 +191,101 @@ int main(int argc, char **argv) {
   if (ParseFile(InputFilename, IncludeDirs, SrcMgr))
     return 1;
 
-  raw_ostream *Out = &outs();
-  if (OutputFilename != "-") {
-    std::string Error;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), Error);
-
-    if (!Error.empty()) {
-      errs() << argv[0] << ": error opening " << OutputFilename
-             << ":" << Error << "\n";
-      return 1;
-    }
-
-    // Make sure the file gets removed if *gasp* tablegen crashes...
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  std::string Error;
+  raw_fd_ostream Out(OutputFilename.c_str(), Error);
+  if (!Error.empty()) {
+    errs() << argv[0] << ": error opening " << OutputFilename
+           << ":" << Error << "\n";
+    return 1;
   }
+
+  // Make sure the file gets removed if *gasp* tablegen crashes...
+  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   try {
     switch (Action) {
     case PrintRecords:
-      *Out << Records;           // No argument, dump all contents
+      Out << Records;           // No argument, dump all contents
       break;
     case GenEmitter:
-      CodeEmitterGen(Records).run(*Out);
+      CodeEmitterGen(Records).run(Out);
       break;
 
     case GenRegisterEnums:
-      RegisterInfoEmitter(Records).runEnums(*Out);
+      RegisterInfoEmitter(Records).runEnums(Out);
       break;
     case GenRegister:
-      RegisterInfoEmitter(Records).run(*Out);
+      RegisterInfoEmitter(Records).run(Out);
       break;
     case GenRegisterHeader:
-      RegisterInfoEmitter(Records).runHeader(*Out);
+      RegisterInfoEmitter(Records).runHeader(Out);
       break;
     case GenInstrEnums:
-      InstrEnumEmitter(Records).run(*Out);
+      InstrEnumEmitter(Records).run(Out);
       break;
     case GenInstrs:
-      InstrInfoEmitter(Records).run(*Out);
+      InstrInfoEmitter(Records).run(Out);
       break;
     case GenCallingConv:
-      CallingConvEmitter(Records).run(*Out);
+      CallingConvEmitter(Records).run(Out);
       break;
     case GenAsmWriter:
-      AsmWriterEmitter(Records).run(*Out);
+      AsmWriterEmitter(Records).run(Out);
       break;
     case GenARMDecoder:
-      ARMDecoderEmitter(Records).run(*Out);
+      ARMDecoderEmitter(Records).run(Out);
       break;
     case GenAsmMatcher:
-      AsmMatcherEmitter(Records).run(*Out);
+      AsmMatcherEmitter(Records).run(Out);
       break;
     case GenClangDiagsDefs:
-      ClangDiagsDefsEmitter(Records, ClangComponent).run(*Out);
+      ClangDiagsDefsEmitter(Records, ClangComponent).run(Out);
       break;
     case GenClangDiagGroups:
-      ClangDiagGroupsEmitter(Records).run(*Out);
+      ClangDiagGroupsEmitter(Records).run(Out);
       break;
     case GenClangStmtNodes:
-      ClangStmtNodesEmitter(Records).run(*Out);
+      ClangStmtNodesEmitter(Records).run(Out);
       break;
     case GenDisassembler:
-      DisassemblerEmitter(Records).run(*Out);
+      DisassemblerEmitter(Records).run(Out);
       break;
     case GenOptParserDefs:
-      OptParserEmitter(Records, true).run(*Out);
+      OptParserEmitter(Records, true).run(Out);
       break;
     case GenOptParserImpl:
-      OptParserEmitter(Records, false).run(*Out);
+      OptParserEmitter(Records, false).run(Out);
       break;
     case GenDAGISel:
-      DAGISelEmitter(Records).run(*Out);
+      DAGISelEmitter(Records).run(Out);
       break;
     case GenFastISel:
-      FastISelEmitter(Records).run(*Out);
+      FastISelEmitter(Records).run(Out);
       break;
     case GenSubtarget:
-      SubtargetEmitter(Records).run(*Out);
+      SubtargetEmitter(Records).run(Out);
       break;
     case GenIntrinsic:
-      IntrinsicEmitter(Records).run(*Out);
+      IntrinsicEmitter(Records).run(Out);
       break;
     case GenTgtIntrinsic:
-      IntrinsicEmitter(Records, true).run(*Out);
+      IntrinsicEmitter(Records, true).run(Out);
       break;
     case GenLLVMCConf:
-      LLVMCConfigurationEmitter(Records).run(*Out);
+      LLVMCConfigurationEmitter(Records).run(Out);
       break;
     case GenEDHeader:
-      EDEmitter(Records).runHeader(*Out);
+      EDEmitter(Records).runHeader(Out);
       break;
     case GenEDInfo:
-      EDEmitter(Records).run(*Out);
+      EDEmitter(Records).run(Out);
       break;
     case PrintEnums:
     {
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
-        *Out << Recs[i]->getName() << ", ";
-      *Out << "\n";
+        Out << Recs[i]->getName() << ", ";
+      Out << "\n";
       break;
     }
     default:
@@ -297,8 +293,6 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (Out != &outs())
-      delete Out;                               // Close the file
     return 0;
 
   } catch (const TGError &Error) {
@@ -313,9 +307,7 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": Unknown unexpected exception occurred.\n";
   }
 
-  if (Out != &outs()) {
-    delete Out;                             // Close the file
+  if (OutputFilename != "-")
     std::remove(OutputFilename.c_str());    // Remove the file, it's broken
-  }
   return 1;
 }
