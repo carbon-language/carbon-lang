@@ -866,6 +866,10 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   } else if (Context.isNameSpace()) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
     ContextDIE->addChild(Die);
+  } else if (Context.isSubprogram()) {
+    DIE *ContextDIE = createSubprogramDIE(DISubprogram(Context),
+                                          /*MakeDecl=*/false);
+    ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = getCompileUnit(Context)->getDIE(Context))
     ContextDIE->addChild(Die);
   else 
@@ -1055,6 +1059,10 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, 
                   getOrCreateTypeDIE(DIType(ContainingType)));
+    else {
+      DIDescriptor Context = CTy.getContext();
+      addToContextOwner(&Buffer, Context);
+    }
     break;
   }
   default:
@@ -1328,6 +1336,9 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPCU->insertDIE(SP, SPDie);
+
+  // Add to context owner.
+  addToContextOwner(SPDie, SP.getContext());
 
   return SPDie;
 }
