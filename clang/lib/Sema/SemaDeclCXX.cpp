@@ -2990,8 +2990,11 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     QualType ClassTy = Context.getTagDeclType(ClassDecl);
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
       SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
+      const char *ConstRef 
+        = Constructor->getParamDecl(0)->getIdentifier() ? "const &" 
+                                                        : " const &";
       Diag(ParamLoc, diag::err_constructor_byvalue_arg)
-        << FixItHint::CreateInsertion(ParamLoc, " const &");
+        << FixItHint::CreateInsertion(ParamLoc, ConstRef);
 
       // FIXME: Rather that making the constructor invalid, we should endeavor
       // to fix the type.
