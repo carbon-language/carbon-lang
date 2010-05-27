@@ -768,6 +768,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-E");
   } else if (isa<AssembleJobAction>(JA)) {
     CmdArgs.push_back("-emit-obj");
+
+    // At -O0, we use -mrelax-all by default.
+    bool IsOpt = false;
+    if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+      IsOpt = !A->getOption().matches(options::OPT_O0);
+    if (Args.hasFlag(options::OPT_mrelax_all,
+                      options::OPT_mno_relax_all,
+                      !IsOpt))
+      CmdArgs.push_back("-mrelax-all");
   } else if (isa<PrecompileJobAction>(JA)) {
     // Use PCH if the user requested it, except for C++ (for now).
     bool UsePCH = D.CCCUsePCH;
@@ -1511,6 +1520,15 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // assembler.
   CmdArgs.push_back("-filetype");
   CmdArgs.push_back("obj");
+
+  // At -O0, we use -mrelax-all by default.
+  bool IsOpt = false;
+  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+    IsOpt = !A->getOption().matches(options::OPT_O0);
+  if (Args.hasFlag(options::OPT_mrelax_all,
+                    options::OPT_mno_relax_all,
+                    !IsOpt))
+    CmdArgs.push_back("-mrelax-all");
 
   // FIXME: Add -force_cpusubtype_ALL support, once we have it.
 
