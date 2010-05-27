@@ -16,6 +16,14 @@ struct s1 {
 };
 extern int a[sizeof(struct s1) == 8 ? 1 : -1];
 
+#pragma options align=reset
+#pragma options align=native
+struct s1_1 {
+  char c;
+  int x;
+};
+extern int a[sizeof(struct s1_1) == 8 ? 1 : -1];
+
 #pragma pack(pop)
 struct s2 {
   char c;

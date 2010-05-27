@@ -137,6 +137,10 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
 
   // We don't support #pragma options align=power.
   switch (Kind) {
+    // For all targets we support native and natural are the same.
+    //
+    // FIXME: This is not true on Darwin/PPC.
+  case POAK_Native:
   case POAK_Natural:
     Context->push(0);
     Context->setAlignment(0);

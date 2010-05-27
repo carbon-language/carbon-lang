@@ -110,7 +110,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
                           LParenLoc, RParenLoc);
 }
 
-// #pragma 'options' 'align' '=' {'natural', 'mac68k', 'power', 'reset'}
+// #pragma 'options' 'align' '=' {'native','natural','mac68k','power','reset'}
 void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
   SourceLocation OptionsLoc = OptionsTok.getLocation();
 
@@ -120,7 +120,7 @@ void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_align);
     return;
   }
-  
+
   PP.Lex(Tok);
   if (Tok.isNot(tok::equal)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_equal);
@@ -136,7 +136,9 @@ void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
 
   Action::PragmaOptionsAlignKind Kind = Action::POAK_Natural;
   const IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (II->isStr("natural"))
+  if (II->isStr("native"))
+    Kind = Action::POAK_Native;
+  else if (II->isStr("natural"))
     Kind = Action::POAK_Natural;
   else if (II->isStr("power"))
     Kind = Action::POAK_Power;
