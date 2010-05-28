@@ -645,6 +645,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("cmovnzl", "cmovnel")
     .Case("cmovzl", "cmovel")
     .Case("fwait", "wait")
+    .Case("movzx", "movzb")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.

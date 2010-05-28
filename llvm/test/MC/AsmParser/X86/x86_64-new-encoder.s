@@ -131,3 +131,16 @@ movl	0, %eax   // CHECK: movl 0, %eax # encoding: [0x8b,0x04,0x25,A,A,A,A]
 btq $0x01,%rdx
 // CHECK: btq	$1, %rdx
 // CHECK:  encoding: [0x48,0x0f,0xba,0xe2,0x01]
+
+//rdar://8017633
+// CHECK: movzbl	%al, %esi
+// CHECK:  encoding: [0x0f,0xb6,0xf0]
+        movzx %al, %esi
+
+// CHECK: movzbq	%al, %rsi
+// CHECK:  encoding: [0x48,0x0f,0xb6,0xf0]
+        movzx %al, %rsi
+
+// CHECK: movzbq	(%rsp), %rsi
+// CHECK:  encoding: [0x48,0x0f,0xb6,0x34,0x24]
+        movzx 0(%rsp), %rsi
