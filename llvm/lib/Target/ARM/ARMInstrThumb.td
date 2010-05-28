@@ -929,12 +929,12 @@ let Defs =
    isBarrier = 1  in {
   def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
                               AddrModeNone, SizeSpecial, NoItinerary,
-                              "mov\t$val, pc\t${:comment} begin eh.setjmp\n"
-                              "\tadds\t$val, #7\n"
-                              "\tstr\t$val, [$src, #4]\n"
-                              "\tmovs\tr0, #0\n"
-                              "\tb\t1f\n"
-                              "\tmovs\tr0, #1\t${:comment} end eh.setjmp\n"
+                              "mov\t$val, pc\t${:comment} begin eh.setjmp\n\t"
+                              "adds\t$val, #7\n\t"
+                              "str\t$val, [$src, #4]\n\t"
+                              "movs\tr0, #0\n\t"
+                              "b\t1f\n\t"
+                              "movs\tr0, #1\t${:comment} end eh.setjmp\n\t"
                               "1:", "",
                    [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 }
