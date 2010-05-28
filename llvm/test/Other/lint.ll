@@ -87,8 +87,8 @@ block:
   unreachable
 }
 
-; CHECK: Undefined behavior: Call with "tail" keyword references alloca or va_arg
-; CHECK: Undefined behavior: Call with "tail" keyword references alloca or va_arg
+; CHECK: Undefined behavior: Call with "tail" keyword references alloca
+; CHECK: Undefined behavior: Call with "tail" keyword references alloca
 declare void @tailcallee(i8*)
 define void @use_tail(i8* %valist) {
   %t = alloca i8
@@ -98,14 +98,14 @@ define void @use_tail(i8* %valist) {
   ret void
 }
 
-; CHECK: Unusual: Returning alloca or va_arg value
+; CHECK: Unusual: Returning alloca value
 define i8* @return_local(i32 %n, i32 %m) {
   %t = alloca i8, i32 %n
   %s = getelementptr i8* %t, i32 %m
   ret i8* %s
 }
 
-; CHECK: Unusual: Returning alloca or va_arg value
+; CHECK: Unusual: Returning alloca value
 define i32* @return_obscured_local() {
 entry:
   %retval = alloca i32*

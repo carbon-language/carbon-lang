@@ -232,9 +232,9 @@ void Lint::visitCallSite(CallSite CS) {
     for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI) {
       Value *Obj = findValue(*AI, /*OffsetOk=*/true);
-      Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
+      Assert1(!isa<AllocaInst>(Obj),
               "Undefined behavior: Call with \"tail\" keyword references "
-              "alloca or va_arg", &I);
+              "alloca", &I);
     }
 
 
@@ -323,8 +323,8 @@ void Lint::visitReturnInst(ReturnInst &I) {
 
   if (Value *V = I.getReturnValue()) {
     Value *Obj = findValue(V, /*OffsetOk=*/true);
-    Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
-            "Unusual: Returning alloca or va_arg value", &I);
+    Assert1(!isa<AllocaInst>(Obj),
+            "Unusual: Returning alloca value", &I);
   }
 }
 
