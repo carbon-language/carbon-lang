@@ -1544,12 +1544,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
-  if (!TagDecl) {
-    SkipUntil(tok::r_brace, false, false);
-    return;
-  }
-
-  Actions.ActOnStartCXXMemberDeclarations(CurScope, TagDecl, LBraceLoc);
+  if (TagDecl)
+    Actions.ActOnStartCXXMemberDeclarations(CurScope, TagDecl, LBraceLoc);
 
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union
@@ -1594,9 +1590,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   if (Tok.is(tok::kw___attribute))
     AttrList.reset(ParseGNUAttributes());
 
-  Actions.ActOnFinishCXXMemberSpecification(CurScope, RecordLoc, TagDecl,
-                                            LBraceLoc, RBraceLoc,
-                                            AttrList.get());
+  if (TagDecl)
+    Actions.ActOnFinishCXXMemberSpecification(CurScope, RecordLoc, TagDecl,
+                                              LBraceLoc, RBraceLoc,
+                                              AttrList.get());
 
   // C++ 9.2p2: Within the class member-specification, the class is regarded as
   // complete within function bodies, default arguments,
@@ -1613,7 +1610,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     ParseLexedMethodDefs(getCurrentClass());
   }
 
-  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
+  if (TagDecl)
+    Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
 
   // Leave the class scope.
   ParsingDef.Pop();
