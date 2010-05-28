@@ -86,3 +86,14 @@ namespace P {
   }
 }
 
+namespace test5 {
+  namespace NS {
+    struct A;
+    void foo(void (*)(A&));
+  }
+  void bar(NS::A& a);
+
+  void test() {
+    foo(&bar);
+  }
+}
