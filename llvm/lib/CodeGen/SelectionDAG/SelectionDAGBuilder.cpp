@@ -2643,12 +2643,13 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
 
   SDValue AllocSize = getValue(I.getArraySize());
 
-  AllocSize = DAG.getNode(ISD::MUL, getCurDebugLoc(), AllocSize.getValueType(),
-                          AllocSize,
-                          DAG.getConstant(TySize, AllocSize.getValueType()));
-
   EVT IntPtr = TLI.getPointerTy();
-  AllocSize = DAG.getZExtOrTrunc(AllocSize, getCurDebugLoc(), IntPtr);
+  if (AllocSize.getValueType() != IntPtr)
+    AllocSize = DAG.getZExtOrTrunc(AllocSize, getCurDebugLoc(), IntPtr);
+
+  AllocSize = DAG.getNode(ISD::MUL, getCurDebugLoc(), IntPtr,
+                          AllocSize,
+                          DAG.getConstant(TySize, IntPtr));
 
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to

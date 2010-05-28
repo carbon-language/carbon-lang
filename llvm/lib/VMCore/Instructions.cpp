@@ -828,8 +828,8 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");
-    assert(Amt->getType()->isIntegerTy(32) &&
-           "Allocation array size is not a 32-bit integer!");
+    assert(Amt->getType()->isIntegerTy() &&
+           "Allocation array size is not an integer!");
   }
   return Amt;
 }

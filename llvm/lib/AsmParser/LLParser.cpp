@@ -3791,8 +3791,8 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     }
   }
 
-  if (Size && !Size->getType()->isIntegerTy(32))
-    return Error(SizeLoc, "element count must be i32");
+  if (Size && !Size->getType()->isIntegerTy())
+    return Error(SizeLoc, "element count must have integer type");
 
   if (isAlloca) {
     Inst = new AllocaInst(Ty, Size, Alignment);
@@ -3801,6 +3801,8 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
 
   // Autoupgrade old malloc instruction to malloc call.
   // FIXME: Remove in LLVM 3.0.
+  if (Size && !Size->getType()->isIntegerTy(32))
+    return Error(SizeLoc, "element count must be i32");
   const Type *IntPtrTy = Type::getInt32Ty(Context);
   Constant *AllocSize = ConstantExpr::getSizeOf(Ty);
   AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, IntPtrTy);
