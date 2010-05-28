@@ -3872,7 +3872,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       Pattern->AddTextChunk("...");
     }
 
-    if (IsInImplementation) {
+    if (IsInImplementation && Results.includeCodePatterns()) {
       // We will be defining the method here, so add a compound statement.
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
