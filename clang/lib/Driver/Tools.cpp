@@ -1529,7 +1529,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_mrelax_all,
                     options::OPT_mno_relax_all,
                     !IsOpt))
-    CmdArgs.push_back("-mrelax-all");
+    CmdArgs.push_back("-relax-all");
 
   // FIXME: Add -force_cpusubtype_ALL support, once we have it.
 
