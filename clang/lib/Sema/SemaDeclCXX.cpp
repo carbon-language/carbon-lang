@@ -5762,13 +5762,18 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
 
     LookupQualifiedName(Previous, DC);
 
-    // If searching in that context implicitly found a declaration in
-    // a different context, treat it like it wasn't found at all.
+    // Ignore things found implicitly in the wrong scope.
     // TODO: better diagnostics for this case.  Suggesting the right
     // qualified scope would be nice...
-    // FIXME: getRepresentativeDecl() is not right here at all
-    if (Previous.empty() ||
-        !Previous.getRepresentativeDecl()->getDeclContext()->Equals(DC)) {
+    LookupResult::Filter F = Previous.makeFilter();
+    while (F.hasNext()) {
+      NamedDecl *D = F.next();
+      if (!D->getDeclContext()->getLookupContext()->Equals(DC))
+        F.erase();
+    }
+    F.done();
+
+    if (Previous.empty()) {
       D.setInvalidType();
       Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
       return DeclPtrTy();
