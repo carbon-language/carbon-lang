@@ -43,6 +43,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
 
+  VAListTagName = PP.getIdentifierInfo("__va_list_tag");
+
   if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
     TypeSourceInfo *TInfo;
 

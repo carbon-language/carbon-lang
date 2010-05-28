@@ -239,6 +239,10 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
+  /// VAListTagName - The declaration name corresponding to __va_list_tag.
+  /// This is used as part of a hack to omit that class from ADL results.
+  DeclarationName VAListTagName;
+
   /// A RAII object to temporarily push a declaration context.
   class ContextRAII {
   private:
