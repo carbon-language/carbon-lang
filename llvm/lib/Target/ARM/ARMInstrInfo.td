@@ -2534,7 +2534,7 @@ let Defs =
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src, GPR:$val),
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
-                               "add\t$val, pc, #4\t${:comment} eh_setjmp begin\n\t"
+                               "add\t$val, pc, #8\t${:comment} eh_setjmp begin\n\t"
                                "str\t$val, [$src, #+4]\n\t"
                                "mov\tr0, #0\n\t"
                                "add\tpc, pc, #0\n\t"
@@ -2549,7 +2549,7 @@ let Defs =
   def Int_eh_sjlj_setjmp_nofp : XI<(outs), (ins GPR:$src, GPR:$val),
                                    AddrModeNone, SizeSpecial, IndexModeNone,
                                    Pseudo, NoItinerary,
-                                   "add\t$val, pc, #4\n ${:comment} eh_setjmp begin\n\t"
+                                   "add\t$val, pc, #8\n ${:comment} eh_setjmp begin\n\t"
                                    "str\t$val, [$src, #+4]\n\t"
                                    "mov\tr0, #0\n\t"
                                    "add\tpc, pc, #0\n\t"
