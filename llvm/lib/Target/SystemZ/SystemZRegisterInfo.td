@@ -55,7 +55,6 @@ class FPRL<bits<4> num, string n, list<Register> subregs>
 
 let Namespace = "SystemZ" in {
 def subreg_32bit  : SubRegIndex;
-def subreg_even32 : SubRegIndex;
 def subreg_odd32  : SubRegIndex;
 def subreg_even   : SubRegIndex;
 def subreg_odd    : SubRegIndex;
@@ -99,7 +98,7 @@ def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
 }
 
 // Register pairs
-let SubRegIndices = [subreg_even32, subreg_odd32] in {
+let SubRegIndices = [subreg_32bit, subreg_odd32] in {
 def R0P  : GPR64< 0,  "r0", [R0W,  R1W],  [R0D,  R1D]>,  DwarfRegNum<[0]>;
 def R2P  : GPR64< 2,  "r2", [R2W,  R3W],  [R2D,  R3D]>,  DwarfRegNum<[2]>;
 def R4P  : GPR64< 4,  "r4", [R4W,  R5W],  [R4D,  R5D]>,  DwarfRegNum<[4]>;
@@ -111,8 +110,7 @@ def R14P : GPR64<14, "r14", [R14W, R15W], [R14D, R15D]>, DwarfRegNum<[14]>;
 }
 
 let SubRegIndices = [subreg_even, subreg_odd],
- CompositeIndices = [(subreg_even32 subreg_even, subreg_32bit),
-                     (subreg_odd32  subreg_odd,  subreg_32bit)] in {
+ CompositeIndices = [(subreg_odd32  subreg_odd,  subreg_32bit)] in {
 def R0Q  : GPR128< 0,  "r0", [R0D,  R1D],  [R0P]>,  DwarfRegNum<[0]>;
 def R2Q  : GPR128< 2,  "r2", [R2D,  R3D],  [R2P]>,  DwarfRegNum<[2]>;
 def R4Q  : GPR128< 4,  "r4", [R4D,  R5D],  [R4P]>,  DwarfRegNum<[4]>;
@@ -355,7 +353,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
 def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
   [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]>
 {
-  let SubRegClasses = [(GR32 subreg_even32, subreg_odd32)];
+  let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -391,7 +389,7 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
 def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
   [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
 {
-  let SubRegClasses = [(GR32 subreg_even32, subreg_odd32),
+  let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32),
                          (GR64 subreg_even, subreg_odd)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;

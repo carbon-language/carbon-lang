@@ -670,7 +670,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     // Copy the remainder (even subreg) result, if it is needed.
     if (!SDValue(Node, 1).use_empty()) {
       unsigned SubRegIdx = (is32Bit ?
-                            SystemZ::subreg_even32 : SystemZ::subreg_even);
+                            SystemZ::subreg_32bit : SystemZ::subreg_even);
       SDNode *Rem = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
                                            dl, NVT,
                                            SDValue(Result, 0),
@@ -754,7 +754,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     // Copy the remainder (even subreg) result, if it is needed.
     if (!SDValue(Node, 1).use_empty()) {
       unsigned SubRegIdx = (is32Bit ?
-                            SystemZ::subreg_even32 : SystemZ::subreg_even);
+                            SystemZ::subreg_32bit : SystemZ::subreg_even);
       SDNode *Rem = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
                                            dl, NVT,
                                            SDValue(Result, 0),

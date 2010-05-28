@@ -1129,13 +1129,13 @@ def : Pat<(mulhs GR32:$src1, GR32:$src2),
           (EXTRACT_SUBREG (MUL64rrP (INSERT_SUBREG (v2i32 (IMPLICIT_DEF)),
                                                    GR32:$src1, subreg_odd32),
                                     GR32:$src2),
-                          subreg_even32)>;
+                          subreg_32bit)>;
 
 def : Pat<(mulhu GR32:$src1, GR32:$src2),
           (EXTRACT_SUBREG (UMUL64rrP (INSERT_SUBREG (v2i32 (IMPLICIT_DEF)),
                                                     GR32:$src1, subreg_odd32),
                                      GR32:$src2),
-                          subreg_even32)>;
+                          subreg_32bit)>;
 def : Pat<(mulhu GR64:$src1, GR64:$src2),
           (EXTRACT_SUBREG (UMUL128rrP (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)),
                                                      GR64:$src1, subreg_odd),

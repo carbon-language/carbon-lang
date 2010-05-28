@@ -124,7 +124,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", 6) == 0) {
       if (strncmp(Modifier + 7, "even", 4) == 0)
-        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::subreg_even32);
+        Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::subreg_32bit);
       else if (strncmp(Modifier + 7, "odd", 3) == 0)
         Reg = TM.getRegisterInfo()->getSubReg(Reg, SystemZ::subreg_odd32);
       else
