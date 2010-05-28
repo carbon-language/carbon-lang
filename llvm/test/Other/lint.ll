@@ -88,13 +88,10 @@ block:
 }
 
 ; CHECK: Undefined behavior: Call with "tail" keyword references alloca
-; CHECK: Undefined behavior: Call with "tail" keyword references alloca
 declare void @tailcallee(i8*)
 define void @use_tail(i8* %valist) {
   %t = alloca i8
   tail call void @tailcallee(i8* %t)
-  %s = va_arg i8* %valist, i8*
-  tail call void @tailcallee(i8* %s)
   ret void
 }
 
