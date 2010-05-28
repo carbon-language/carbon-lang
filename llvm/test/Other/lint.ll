@@ -4,6 +4,9 @@ target datalayout = "e-p:64:64:64"
 declare fastcc void @bar()
 declare void @llvm.stackrestore(i8*)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+declare void @has_sret(i8* sret %p)
+declare void @has_noaliases(i32* noalias %p, i32* %q)
+declare void @one_arg(i32)
 
 @CG = constant i32 7
 
@@ -18,6 +21,10 @@ define i32 @foo() noreturn {
   store i32 0, i32* undef
 ; CHECK: Undef pointer dereference
   %u = load i32* undef
+; CHECK: All-ones pointer dereference
+  store i32 0, i32* inttoptr (i64 -1 to i32*)
+; CHECK: Address one pointer dereference
+  store i32 0, i32* inttoptr (i64 1 to i32*)
 ; CHECK: Memory reference address is misaligned
   %x = inttoptr i32 1 to i32*
   load i32* %x, align 4
@@ -54,6 +61,16 @@ define i32 @foo() noreturn {
   call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
 ; CHECK: Undefined behavior: Null pointer dereference
   call void @llvm.stackrestore(i8* null)
+; CHECK: Undefined behavior: Null pointer dereference
+  call void @has_sret(i8* null)
+; CHECK: Unusual: noalias argument aliases another argument
+  call void @has_noaliases(i32* @CG, i32* @CG)
+; CHECK: Call argument count mismatches callee argument count
+  call void (i32, i32)* bitcast (void (i32)* @one_arg to void (i32, i32)*)(i32 0, i32 0)
+; CHECK: Call argument count mismatches callee argument count
+  call void ()* bitcast (void (i32)* @one_arg to void ()*)()
+; CHECK: Call argument type mismatches callee parameter type
+  call void (float)* bitcast (void (i32)* @one_arg to void (float)*)(float 0.0)
 
 ; CHECK: Write to read-only memory
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (i32* @CG to i8*), i8* bitcast (i32* @CG to i8*), i64 1, i32 1, i1 0)
