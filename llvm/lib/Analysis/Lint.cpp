@@ -310,6 +310,12 @@ void Lint::visitReturnInst(ReturnInst &I) {
   Assert1(!F->doesNotReturn(),
           "Unusual: Return statement in function with noreturn attribute",
           &I);
+
+  if (Value *V = I.getReturnValue()) {
+    Value *Obj = V->getUnderlyingObject();
+    Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
+            "Unusual: Returning alloca or va_arg value", &I);
+  }
 }
 
 // TODO: Add a length argument and check that the reference is in bounds

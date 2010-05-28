@@ -97,3 +97,10 @@ define void @use_tail(i8* %valist) {
   tail call void @tailcallee(i8* %s)
   ret void
 }
+
+; CHECK: Unusual: Returning alloca or va_arg value
+define i8* @return_local(i32 %n, i32 %m) {
+  %t = alloca i8, i32 %n
+  %s = getelementptr i8* %t, i32 %m
+  ret i8* %s
+}
