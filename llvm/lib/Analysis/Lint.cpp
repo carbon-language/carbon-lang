@@ -248,9 +248,9 @@ void Lint::visitCallSite(CallSite CS) {
 
     case Intrinsic::memcpy: {
       MemCpyInst *MCI = cast<MemCpyInst>(&I);
-      visitMemoryReference(I, MCI->getSource(), MCI->getAlignment(), 0,
-                           MemRef::Write);
       visitMemoryReference(I, MCI->getDest(), MCI->getAlignment(), 0,
+                           MemRef::Write);
+      visitMemoryReference(I, MCI->getSource(), MCI->getAlignment(), 0,
                            MemRef::Read);
 
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
@@ -269,9 +269,9 @@ void Lint::visitCallSite(CallSite CS) {
     }
     case Intrinsic::memmove: {
       MemMoveInst *MMI = cast<MemMoveInst>(&I);
-      visitMemoryReference(I, MMI->getSource(), MMI->getAlignment(), 0,
-                           MemRef::Write);
       visitMemoryReference(I, MMI->getDest(), MMI->getAlignment(), 0,
+                           MemRef::Write);
+      visitMemoryReference(I, MMI->getSource(), MMI->getAlignment(), 0,
                            MemRef::Read);
       break;
     }
@@ -519,11 +519,14 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
   if (LoadInst *L = dyn_cast<LoadInst>(V)) {
     BasicBlock::iterator BBI = L;
     BasicBlock *BB = L->getParent();
+    SmallPtrSet<BasicBlock *, 4> VisitedBlocks;
     for (;;) {
+      if (!VisitedBlocks.insert(BB)) break;
       if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
                                               BB, BBI, 6, AA))
         return findValueImpl(U, OffsetOk, Visited);
-      BB = L->getParent()->getUniquePredecessor();
+      if (BBI != BB->begin()) break;
+      BB = BB->getUniquePredecessor();
       if (!BB) break;
       BBI = BB->end();
     }

@@ -3,6 +3,7 @@ target datalayout = "e-p:64:64:64"
 
 declare fastcc void @bar()
 declare void @llvm.stackrestore(i8*)
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 @CG = constant i32 7
 
@@ -53,6 +54,9 @@ define i32 @foo() noreturn {
   call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
 ; CHECK: Undefined behavior: Null pointer dereference
   call void @llvm.stackrestore(i8* null)
+
+; CHECK: Write to read-only memory
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (i32* @CG to i8*), i8* bitcast (i32* @CG to i8*), i64 1, i32 1, i1 0)
 
   br label %next
 
