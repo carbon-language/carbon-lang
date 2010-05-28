@@ -237,8 +237,6 @@ bool BackendConsumer::AddEmitPasses() {
     return true;
   }
 
-  bool Fast = CodeGenOpts.OptimizationLevel == 0;
-
   // Create the TargetMachine for generating code.
   std::string Error;
   std::string Triple = TheModule->getTargetTriple();
@@ -323,11 +321,6 @@ bool BackendConsumer::AddEmitPasses() {
 
   if (CodeGenOpts.RelaxAll)
     TM->setMCRelaxAll(true);
-
-  // Set register scheduler & allocation policy.
-  RegisterScheduler::setDefault(createDefaultScheduler);
-  RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
-                               createLinearScanRegisterAllocator);
 
   // Create the code generator passes.
   FunctionPassManager *PM = getCodeGenPasses();
