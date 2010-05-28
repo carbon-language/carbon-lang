@@ -212,6 +212,7 @@ namespace {
     /// 
     //@{
     bool IsOrdinaryName(NamedDecl *ND) const;
+    bool IsOrdinaryNonTypeName(NamedDecl *ND) const;
     bool IsOrdinaryNonValueName(NamedDecl *ND) const;
     bool IsNestedNameSpecifier(NamedDecl *ND) const;
     bool IsEnum(NamedDecl *ND) const;
@@ -646,6 +647,8 @@ void ResultBuilder::ExitScope() {
 /// \brief Determines whether this given declaration will be found by
 /// ordinary name lookup.
 bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
+  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
+
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
@@ -656,14 +659,33 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
 }
 
 /// \brief Determines whether this given declaration will be found by
+/// ordinary name lookup but is not a type name.
+bool ResultBuilder::IsOrdinaryNonTypeName(NamedDecl *ND) const {
+  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
+  if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND))
+    return false;
+  
+  unsigned IDNS = Decl::IDNS_Ordinary;
+  if (SemaRef.getLangOptions().CPlusPlus)
+    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
+  else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
+    return true;
+  
+  return ND->getIdentifierNamespace() & IDNS;
+}
+
+/// \brief Determines whether this given declaration will be found by
 /// ordinary name lookup.
 bool ResultBuilder::IsOrdinaryNonValueName(NamedDecl *ND) const {
+  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
+
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
   
   return (ND->getIdentifierNamespace() & IDNS) && 
-    !isa<ValueDecl>(ND) && !isa<FunctionTemplateDecl>(ND);
+    !isa<ValueDecl>(ND) && !isa<FunctionTemplateDecl>(ND) && 
+    !isa<ObjCPropertyDecl>(ND);
 }
 
 /// \brief Determines whether the given declaration is suitable as the 
@@ -971,6 +993,34 @@ static void AddTypedefResult(ResultBuilder &Results) {
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("name");
   Results.AddResult(CodeCompleteConsumer::Result(Pattern));        
+}
+
+static bool WantTypesInContext(Action::CodeCompletionContext CCC,
+                               const LangOptions &LangOpts) {
+  if (LangOpts.CPlusPlus)
+    return true;
+  
+  switch (CCC) {
+  case Action::CCC_Namespace:
+  case Action::CCC_Class:
+  case Action::CCC_ObjCInstanceVariableList:
+  case Action::CCC_Template:
+  case Action::CCC_MemberTemplate:
+  case Action::CCC_Statement:
+  case Action::CCC_RecoveryInFunction:
+    return true;
+    
+  case Action::CCC_ObjCInterface:
+  case Action::CCC_ObjCImplementation:
+  case Action::CCC_Expression:
+  case Action::CCC_Condition:
+    return false;
+    
+  case Action::CCC_ForInit:
+    return LangOpts.ObjC1 || LangOpts.C99;
+  }
+  
+  return false;
 }
 
 /// \brief Add language constructs that show up for "ordinary" names.
@@ -1431,7 +1481,8 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
   }
   }
 
-  AddTypeSpecifierResults(SemaRef.getLangOptions(), Results);
+  if (WantTypesInContext(CCC, SemaRef.getLangOptions()))
+    AddTypeSpecifierResults(SemaRef.getLangOptions(), Results);
 
   if (SemaRef.getLangOptions().CPlusPlus)
     Results.AddResult(Result("operator"));
@@ -2057,7 +2108,10 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case CCC_Statement:
   case CCC_ForInit:
   case CCC_Condition:
-    Results.setFilter(&ResultBuilder::IsOrdinaryName);
+    if (WantTypesInContext(CompletionContext, getLangOptions()))
+      Results.setFilter(&ResultBuilder::IsOrdinaryName);
+    else
+      Results.setFilter(&ResultBuilder::IsOrdinaryNonTypeName);
     break;
       
   case CCC_RecoveryInFunction:

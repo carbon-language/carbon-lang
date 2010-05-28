@@ -39,11 +39,6 @@
 // CHECK-CC5: {TypedText @optional}
 // CHECK-CC5: {TypedText @property}
 // CHECK-CC5: {TypedText @required}
-// CHECK-CC5: NotImplemented:{TypedText _Bool}
-// CHECK-CC5: TypedefDecl:{TypedText Class}
-// CHECK-CC5: TypedefDecl:{TypedText id}
-// CHECK-CC5: ObjCInterfaceDecl:{TypedText MyClass}
-// CHECK-CC5: TypedefDecl:{TypedText SEL}
 
 // RUN: c-index-test -code-completion-at=%s:2:23 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: NotImplemented:{TypedText package}
