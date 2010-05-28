@@ -1283,8 +1283,10 @@ target datalayout = "<i>layout specification</i>"
 
   <dt><tt>f<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the alignment for a floating point type of a given bit
-      <i>size</i>. The value of <i>size</i> must be either 32 (float) or 64
-      (double).</dd>
+      <i>size</i>. Only values of <i>size</i> that are supported by the target
+      will work.  32 (float) and 64 (double) are supported on all targets;
+      80 or 128 (different flavors of long double) are also supported on some
+      targets.
 
   <dt><tt>a<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the alignment for an aggregate type of a given bit
