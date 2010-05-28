@@ -2320,8 +2320,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
   }
 
-  // Look for obvious safe cases to perform tail call optimization that does not
-  // requite ABI changes. This is what gcc calls sibcall.
+  // Look for obvious safe cases to perform tail call optimization that do not
+  // require ABI changes. This is what gcc calls sibcall.
 
   // Can't do sibcall if stack needs to be dynamically re-aligned. PEI needs to
   // emit a special epilogue.
