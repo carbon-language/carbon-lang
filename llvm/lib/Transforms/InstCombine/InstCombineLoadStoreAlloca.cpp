@@ -22,6 +22,18 @@ using namespace llvm;
 STATISTIC(NumDeadStore, "Number of dead stores eliminated");
 
 Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
+  // Ensure that the alloca array size argument has type intptr_t, so that
+  // any casting is exposed early.
+  if (TD) {
+    const Type *IntPtrTy = TD->getIntPtrType(AI.getContext());
+    if (AI.getArraySize()->getType() != IntPtrTy) {
+      Value *V = Builder->CreateIntCast(AI.getArraySize(),
+                                        IntPtrTy, false);
+      AI.setOperand(0, V);
+      return &AI;
+    }
+  }
+
   // Convert: alloca Ty, C - where C is a constant != 1 into: alloca [C x Ty], 1
   if (AI.isArrayAllocation()) {  // Check C != 1
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
