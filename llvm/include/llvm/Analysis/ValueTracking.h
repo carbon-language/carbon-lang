@@ -97,7 +97,7 @@ namespace llvm {
     
   
   
-  /// FindScalarValue - Given an aggregrate and an sequence of indices, see if
+  /// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
   /// the scalar value indexed is already around as a register, for example if
   /// it were inserted directly into the aggregrate.
   ///
