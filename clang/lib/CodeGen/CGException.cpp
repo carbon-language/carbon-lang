@@ -126,9 +126,12 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 static llvm::Constant *getPersonalityFn(CodeGenModule &CGM) {
   const char *PersonalityFnName = "__gcc_personality_v0";
   LangOptions Opts = CGM.getLangOptions();
-  if (Opts.CPlusPlus)
+  if (Opts.CPlusPlus) {
+    if (Opts.SjLjExceptions)
+     PersonalityFnName = "__gxx_personality_sj0";
+    else
      PersonalityFnName = "__gxx_personality_v0";
-  else if (Opts.ObjC1) {
+  } else if (Opts.ObjC1) {
     if (Opts.NeXTRuntime) {
       if (Opts.ObjCNonFragileABI)
         PersonalityFnName = "__gcc_personality_v0";
