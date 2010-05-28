@@ -104,3 +104,24 @@ define i8* @return_local(i32 %n, i32 %m) {
   %s = getelementptr i8* %t, i32 %m
   ret i8* %s
 }
+
+; CHECK: Unusual: Returning alloca or va_arg value
+define i32* @return_obscured_local() {
+entry:
+  %retval = alloca i32*
+  %x = alloca i32
+  store i32* %x, i32** %retval
+  br label %next
+next:
+  %t0 = load i32** %retval
+  %t1 = insertvalue { i32, i32, i32* } zeroinitializer, i32* %t0, 2
+  %t2 = extractvalue { i32, i32, i32* } %t1, 2
+  br label %exit
+exit:
+  %t3 = phi i32* [ %t2, %next ]
+  %t4 = bitcast i32* %t3 to i32*
+  %t5 = ptrtoint i32* %t4 to i64
+  %t6 = add i64 %t5, 0
+  %t7 = inttoptr i64 %t6 to i32*
+  ret i32* %t7
+}

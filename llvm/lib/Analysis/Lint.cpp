@@ -35,7 +35,11 @@
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Lint.h"
+#include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
@@ -88,9 +92,12 @@ namespace {
     void visitInsertElementInst(InsertElementInst &I);
     void visitUnreachableInst(UnreachableInst &I);
 
+    Value *findValue(Value *V, bool OffsetOk) const;
+
   public:
     Module *Mod;
     AliasAnalysis *AA;
+    DominatorTree *DT;
     TargetData *TD;
 
     std::string Messages;
@@ -104,6 +111,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<DominatorTree>();
     }
     virtual void print(raw_ostream &O, const Module *M) const {}
 
@@ -176,6 +184,7 @@ X("lint", "Statically lint-checks LLVM IR", false, true);
 bool Lint::runOnFunction(Function &F) {
   Mod = F.getParent();
   AA = &getAnalysis<AliasAnalysis>();
+  DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
   visit(F);
   dbgs() << MessagesStr.str();
@@ -196,7 +205,7 @@ void Lint::visitCallSite(CallSite CS) {
 
   visitMemoryReference(I, Callee, 0, 0, MemRef::Callee);
 
-  if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
+  if (Function *F = dyn_cast<Function>(findValue(Callee, /*OffsetOk=*/false))) {
     Assert1(CS.getCallingConv() == F->getCallingConv(),
             "Undefined behavior: Caller and callee calling convention differ",
             &I);
@@ -222,7 +231,7 @@ void Lint::visitCallSite(CallSite CS) {
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->isTailCall())
     for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI) {
-      Value *Obj = (*AI)->getUnderlyingObject();
+      Value *Obj = findValue(*AI, /*OffsetOk=*/true);
       Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
               "Undefined behavior: Call with \"tail\" keyword references "
               "alloca or va_arg", &I);
@@ -247,7 +256,8 @@ void Lint::visitCallSite(CallSite CS) {
       // overlap is not distinguished from the case where nothing is known.
       unsigned Size = 0;
       if (const ConstantInt *Len =
-            dyn_cast<ConstantInt>(MCI->getLength()->stripPointerCasts()))
+            dyn_cast<ConstantInt>(findValue(MCI->getLength(),
+                                            /*OffsetOk=*/false)))
         if (Len->getValue().isIntN(32))
           Size = Len->getValue().getZExtValue();
       Assert1(AA->alias(MCI->getSource(), Size, MCI->getDest(), Size) !=
@@ -312,7 +322,7 @@ void Lint::visitReturnInst(ReturnInst &I) {
           &I);
 
   if (Value *V = I.getReturnValue()) {
-    Value *Obj = V->getUnderlyingObject();
+    Value *Obj = findValue(V, /*OffsetOk=*/true);
     Assert1(!isa<AllocaInst>(Obj) && !isa<VAArgInst>(Obj),
             "Unusual: Returning alloca or va_arg value", &I);
   }
@@ -322,7 +332,7 @@ void Lint::visitReturnInst(ReturnInst &I) {
 void Lint::visitMemoryReference(Instruction &I,
                                 Value *Ptr, unsigned Align, const Type *Ty,
                                 unsigned Flags) {
-  Value *UnderlyingObject = Ptr->getUnderlyingObject();
+  Value *UnderlyingObject = findValue(Ptr, /*OffsetOk=*/true);
   Assert1(!isa<ConstantPointerNull>(UnderlyingObject),
           "Undefined behavior: Null pointer dereference", &I);
   Assert1(!isa<UndefValue>(UnderlyingObject),
@@ -390,21 +400,21 @@ void Lint::visitSub(BinaryOperator &I) {
 
 void Lint::visitLShr(BinaryOperator &I) {
   if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
             "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitAShr(BinaryOperator &I) {
   if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
             "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitShl(BinaryOperator &I) {
   if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(I.getOperand(1)->stripPointerCasts()))
+        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
     Assert1(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
             "Undefined result: Shift count out of range", &I);
 }
@@ -458,14 +468,16 @@ void Lint::visitIndirectBrInst(IndirectBrInst &I) {
 
 void Lint::visitExtractElementInst(ExtractElementInst &I) {
   if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(I.getIndexOperand()->stripPointerCasts()))
+        dyn_cast<ConstantInt>(findValue(I.getIndexOperand(),
+                                        /*OffsetOk=*/false)))
     Assert1(CI->getValue().ult(I.getVectorOperandType()->getNumElements()),
             "Undefined result: extractelement index out of range", &I);
 }
 
 void Lint::visitInsertElementInst(InsertElementInst &I) {
   if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(I.getOperand(2)->stripPointerCasts()))
+        dyn_cast<ConstantInt>(findValue(I.getOperand(2),
+                                        /*OffsetOk=*/false)))
     Assert1(CI->getValue().ult(I.getType()->getNumElements()),
             "Undefined result: insertelement index out of range", &I);
 }
@@ -476,6 +488,59 @@ void Lint::visitUnreachableInst(UnreachableInst &I) {
           prior(BasicBlock::iterator(&I))->mayHaveSideEffects(),
           "Unusual: unreachable immediately preceded by instruction without "
           "side effects", &I);
+}
+
+/// findValue - Look through bitcasts and simple memory reference patterns
+/// to identify an equivalent, but more informative, value.  If OffsetOk
+/// is true, look through getelementptrs with non-zero offsets too.
+///
+/// Most analysis passes don't require this logic, because instcombine
+/// will simplify most of these kinds of things away. But it's a goal of
+/// this Lint pass to be useful even on non-optimized IR.
+Value *Lint::findValue(Value *V, bool OffsetOk) const {
+  // TODO: Look through sext or zext cast, when the result is known to
+  // be interpreted as signed or unsigned, respectively.
+  // TODO: Look through calls with unique return values.
+  // TODO: Look through vector insert/extract/shuffle.
+  V = OffsetOk ? V->getUnderlyingObject() : V->stripPointerCasts();
+  if (LoadInst *L = dyn_cast<LoadInst>(V)) {
+    BasicBlock::iterator BBI = L;
+    BasicBlock *BB = L->getParent();
+    for (;;) {
+      if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
+                                              BB, BBI, 6, AA))
+        return findValue(U, OffsetOk);
+      BB = L->getParent()->getUniquePredecessor();
+      if (!BB) break;
+      BBI = BB->end();
+    }
+  } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+    if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
+                            Type::getInt64Ty(V->getContext())))
+      return findValue(CI->getOperand(0), OffsetOk);
+  } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
+    if (Value *W = PN->hasConstantValue(DT))
+      return findValue(W, OffsetOk);
+  } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
+    if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
+                                     Ex->idx_begin(),
+                                     Ex->idx_end()))
+      if (W != V)
+        return findValue(W, OffsetOk);
+  }
+
+  // As a last resort, try SimplifyInstruction or constant folding.
+  if (Instruction *Inst = dyn_cast<Instruction>(V)) {
+    if (Value *W = SimplifyInstruction(Inst, TD))
+      if (W != Inst)
+        return findValue(W, OffsetOk);
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (Value *W = ConstantFoldConstantExpression(CE, TD))
+      if (W != V)
+        return findValue(W, OffsetOk);
+  }
+
+  return V;
 }
 
 //===----------------------------------------------------------------------===//
