@@ -1,6 +1,5 @@
 set(files
   altivec.h
-  arm_neon.h
   emmintrin.h	
   float.h		
   iso646.h	
@@ -22,6 +21,15 @@ else ()
   set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
 endif ()
 
+# Generate arm_neon.h
+set(LLVM_TARGET_DEFINITIONS arm_neon.td)
+tablegen(arm_neon.h.inc -gen-arm-neon-header)
+add_custom_target(ClangARMNeon DEPENDS arm_neon.h.inc)
+
+add_custom_command(OUTPUT ${output_dir}/arm_neon.h 
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc ${output_dir}/arm_neon.h
+  COMMENT "Copying clang's arm_neon.h...")
 
 foreach( f ${files} )
   set( src ${CMAKE_CURRENT_SOURCE_DIR}/${f} )
@@ -33,8 +41,8 @@ foreach( f ${files} )
 endforeach( f )
 
 add_custom_target(clang-headers ALL
-  DEPENDS ${files})
+  DEPENDS ${files} ${output_dir}/arm_neon.h)
 
-install(FILES ${files}
+install(FILES ${files} ${output_dir}/arm_neon.h
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
