@@ -157,6 +157,34 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   case X86::GS:
     return 5;
 
+  case X86::CR0:
+    return 0;
+  case X86::CR1:
+    return 1;
+  case X86::CR2:
+    return 2;
+  case X86::CR3:
+    return 3;
+  case X86::CR4:
+    return 4;
+
+  case X86::DR0:
+    return 0;
+  case X86::DR1:
+    return 1;
+  case X86::DR2:
+    return 2;
+  case X86::DR3:
+    return 3;
+  case X86::DR4:
+    return 4;
+  case X86::DR5:
+    return 5;
+  case X86::DR6:
+    return 6;
+  case X86::DR7:
+    return 7;
+
   default:
     assert(isVirtualRegister(RegNo) && "Unknown physical register!");
     llvm_unreachable("Register allocator hasn't allocated reg correctly yet!");

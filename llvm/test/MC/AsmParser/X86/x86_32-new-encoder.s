@@ -331,3 +331,60 @@ retl
 // CHECK: movw	(%eax), %cs
 // CHECK:  encoding: [0x66,0x8e,0x08]
         movw (%eax), %cs
+
+// radr://8033374
+// CHECK: movl	%cr0, %eax
+// CHECK:  encoding: [0x0f,0x20,0xc0]
+        movl %cr0,%eax
+
+// CHECK: movl	%cr1, %eax
+// CHECK:  encoding: [0x0f,0x20,0xc8]
+        movl %cr1,%eax
+
+// CHECK: movl	%cr2, %eax
+// CHECK:  encoding: [0x0f,0x20,0xd0]
+        movl %cr2,%eax
+
+// CHECK: movl	%cr3, %eax
+// CHECK:  encoding: [0x0f,0x20,0xd8]
+        movl %cr3,%eax
+
+// CHECK: movl	%cr4, %eax
+// CHECK:  encoding: [0x0f,0x20,0xe0]
+        movl %cr4,%eax
+
+// CHECK: movl	%dr0, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc0]
+        movl %dr0,%eax
+
+// CHECK: movl	%dr1, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc8]
+        movl %dr1,%eax
+
+// CHECK: movl	%dr1, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc8]
+        movl %dr1,%eax
+
+// CHECK: movl	%dr2, %eax
+// CHECK:  encoding: [0x0f,0x21,0xd0]
+        movl %dr2,%eax
+
+// CHECK: movl	%dr3, %eax
+// CHECK:  encoding: [0x0f,0x21,0xd8]
+        movl %dr3,%eax
+
+// CHECK: movl	%dr4, %eax
+// CHECK:  encoding: [0x0f,0x21,0xe0]
+        movl %dr4,%eax
+
+// CHECK: movl	%dr5, %eax
+// CHECK:  encoding: [0x0f,0x21,0xe8]
+        movl %dr5,%eax
+
+// CHECK: movl	%dr6, %eax
+// CHECK:  encoding: [0x0f,0x21,0xf0]
+        movl %dr6,%eax
+
+// CHECK: movl	%dr7, %eax
+// CHECK:  encoding: [0x0f,0x21,0xf8]
+        movl %dr7,%eax
