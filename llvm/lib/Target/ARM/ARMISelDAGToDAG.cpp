@@ -1954,8 +1954,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
         SDValue ShImmOp = CurDAG->getTargetConstant(ShImm, MVT::i32);
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         if (Subtarget->isThumb()) {
-          SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::t2RSBrs, MVT::i32, Ops, 5);
+          SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
+          return CurDAG->SelectNodeTo(N, ARM::t2RSBrs, MVT::i32, Ops, 6);
         } else {
           SDValue Ops[] = { V, V, Reg0, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
           return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 7);
