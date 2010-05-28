@@ -23,6 +23,16 @@ using namespace clang;
 
 namespace {
 
+struct BaseInfo {
+  const CXXRecordDecl *Class;
+  bool IsVirtual;
+
+  const CXXRecordDecl *PrimaryVirtualBase;
+    
+  llvm::SmallVector<BaseInfo*, 4> Bases;
+  const BaseInfo *Derived;
+};
+
 /// EmptySubobjectMap - Keeps track of which empty subobjects exist at different
 /// offsets while laying out a C++ class.
 class EmptySubobjectMap {
@@ -40,16 +50,6 @@ class EmptySubobjectMap {
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
 
-  struct BaseInfo {
-    const CXXRecordDecl *Class;
-    bool IsVirtual;
-
-    const CXXRecordDecl *PrimaryVirtualBase;
-    
-    llvm::SmallVector<BaseInfo*, 4> Bases;
-    const BaseInfo *Derived;
-  };
-  
   llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> VirtualBaseInfo;
   llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> NonVirtualBaseInfo;
   
@@ -148,9 +148,9 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   }
 }
 
-EmptySubobjectMap::BaseInfo *
-EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
-                                   const BaseInfo *Derived) {
+BaseInfo *EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, 
+                                             bool IsVirtual,
+                                             const BaseInfo *Derived) {
   BaseInfo *Info;
   
   if (IsVirtual) {
