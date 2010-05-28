@@ -2278,7 +2278,8 @@ const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
 
   Constant *C = ConstantExpr::getSizeOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    C = ConstantFoldConstantExpression(CE, TD);
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+      C = Folded;
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
@@ -2286,7 +2287,8 @@ const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
 const SCEV *ScalarEvolution::getAlignOfExpr(const Type *AllocTy) {
   Constant *C = ConstantExpr::getAlignOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    C = ConstantFoldConstantExpression(CE, TD);
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+      C = Folded;
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
@@ -2302,7 +2304,8 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(const StructType *STy,
 
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    C = ConstantFoldConstantExpression(CE, TD);
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+      C = Folded;
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
@@ -2311,7 +2314,8 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(const Type *CTy,
                                              Constant *FieldNo) {
   Constant *C = ConstantExpr::getOffsetOf(CTy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    C = ConstantFoldConstantExpression(CE, TD);
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+      C = Folded;
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(CTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
