@@ -2178,13 +2178,18 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, op, align]
-      if (Record.size() < 3)
+    case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, opty, op, align]
+      // For backward compatibility, tolerate a lack of an opty, and use i32.
+      // LLVM 3.0: Remove this.
+      if (Record.size() < 3 || Record.size() > 4)
         return Error("Invalid ALLOCA record");
+      unsigned OpNum = 0;
       const PointerType *Ty =
-        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
-      Value *Size = getFnValueByID(Record[1], Type::getInt32Ty(Context));
-      unsigned Align = Record[2];
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[OpNum++]));
+      const Type *OpTy = Record.size() == 4 ? getTypeByID(Record[OpNum++]) :
+                                              Type::getInt32Ty(Context);
+      Value *Size = getFnValueByID(Record[OpNum++], OpTy);
+      unsigned Align = Record[OpNum++];
       if (!Ty || !Size) return Error("Invalid ALLOCA record");
       I = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
       InstructionList.push_back(I);
