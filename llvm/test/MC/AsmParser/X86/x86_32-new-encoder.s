@@ -388,3 +388,8 @@ retl
 // CHECK: movl	%dr7, %eax
 // CHECK:  encoding: [0x0f,0x21,0xf8]
         movl %dr7,%eax
+
+// radr://8017522
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+	fwait
