@@ -897,7 +897,7 @@ void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   // Propagate any debug metadata from the store onto the dbg.value.
   if (MDNode *SIMD = SI->getMetadata("dbg"))
     DbgVal->setMetadata("dbg", SIMD);
-  // Otherwise propgate debug metadata from dbg.delcare for inlined fn args.
+  // Otherwise propgate debug metadata from dbg.declare for inlined fn args.
   else if (!DISubprogram(DIVar.getContext()).
            describes(DDI->getParent()->getParent()))
     if (MDNode *MD = DDI->getMetadata("dbg"))
