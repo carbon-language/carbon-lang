@@ -5200,23 +5200,6 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   return Context.getDependentNameType(Kwd, NNS, Name).getAsOpaquePtr();
 }
 
-static void FillTypeLoc(DependentNameTypeLoc TL,
-                        SourceLocation TypenameLoc,
-                        SourceRange QualifierRange,
-                        SourceLocation NameLoc) {
-  TL.setKeywordLoc(TypenameLoc);
-  TL.setQualifierRange(QualifierRange);
-  TL.setNameLoc(NameLoc);
-}
-
-static void FillTypeLoc(ElaboratedTypeLoc TL,
-                        SourceLocation TypenameLoc,
-                        SourceRange QualifierRange) {
-  // FIXME: inner locations.
-  TL.setKeywordLoc(TypenameLoc);
-  TL.setQualifierRange(QualifierRange);
-}
-
 Sema::TypeResult
 Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                         const IdentifierInfo &II, SourceLocation IdLoc) {
@@ -5233,12 +5216,14 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   if (isa<DependentNameType>(T)) {
     DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
-    // FIXME: fill inner type loc
-    FillTypeLoc(TL, TypenameLoc, SS.getRange(), IdLoc);
+    TL.setKeywordLoc(TypenameLoc);
+    TL.setQualifierRange(SS.getRange());
+    TL.setNameLoc(IdLoc);
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
-    // FIXME: fill inner type loc
-    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+    TL.setKeywordLoc(TypenameLoc);
+    TL.setQualifierRange(SS.getRange());
+    cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(IdLoc);
   }
   
   return CreateLocInfoType(T, TSI).getAsOpaquePtr();
@@ -5247,30 +5232,44 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 Sema::TypeResult
 Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                         SourceLocation TemplateLoc, TypeTy *Ty) {
-  QualType T = GetTypeFromParser(Ty);
+  TypeSourceInfo *InnerTSI = 0;
+  QualType T = GetTypeFromParser(Ty, &InnerTSI);
   NestedNameSpecifier *NNS
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  const TemplateSpecializationType *TemplateId
-    = T->getAs<TemplateSpecializationType>();
-  assert(TemplateId && "Expected a template specialization type");
+
+  assert(isa<TemplateSpecializationType>(T) && 
+         "Expected a template specialization type");
 
   if (computeDeclContext(SS, false)) {
     // If we can compute a declaration context, then the "typename"
     // keyword was superfluous. Just build an ElaboratedType to keep
     // track of the nested-name-specifier.
+
+    // Push the inner type, preserving its source locations if possible.
+    TypeLocBuilder Builder;
+    if (InnerTSI)
+      Builder.pushFullCopy(InnerTSI->getTypeLoc());
+    else
+      Builder.push<TemplateSpecializationTypeLoc>(T).initialize(TemplateLoc);
+
     T = Context.getElaboratedType(ETK_Typename, NNS, T);
-    TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
-    ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
-    // FIXME: fill inner type loc
-    FillTypeLoc(TL, TypenameLoc, SS.getRange());
+    ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
+    TL.setKeywordLoc(TypenameLoc);
+    TL.setQualifierRange(SS.getRange());
+
+    TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
     return CreateLocInfoType(T, TSI).getAsOpaquePtr();
   }
 
-  T = Context.getDependentNameType(ETK_Typename, NNS, TemplateId);
+  T = Context.getDependentNameType(ETK_Typename, NNS,
+                                   cast<TemplateSpecializationType>(T));
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
-  // FIXME: fill inner type loc
-  FillTypeLoc(TL, TypenameLoc, SS.getRange(), TemplateLoc);
+  TL.setKeywordLoc(TypenameLoc);
+  TL.setQualifierRange(SS.getRange());
+
+  // FIXME: the inner type is a template here; remember its full source info
+  TL.setNameLoc(InnerTSI ? InnerTSI->getTypeLoc().getBeginLoc() : TemplateLoc);
   return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 

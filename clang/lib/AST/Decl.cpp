@@ -531,15 +531,8 @@ void DeclaratorDecl::Destroy(ASTContext &C) {
 }
 
 SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
-  if (DeclInfo) {
-    TypeLoc TL = getTypeSourceInfo()->getTypeLoc();
-    while (true) {
-      TypeLoc NextTL = TL.getNextTypeLoc();
-      if (!NextTL)
-        return TL.getLocalSourceRange().getBegin();
-      TL = NextTL;
-    }
-  }
+  TypeSourceInfo *TSI = getTypeSourceInfo();
+  if (TSI) return TSI->getTypeLoc().getBeginLoc();
   return SourceLocation();
 }
 
