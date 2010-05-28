@@ -625,6 +625,14 @@ public:
   /// platform. Generally, the result of TargetData::getIntPtrType() should be
   /// passed in. If that's not available, use Type::Int64Ty, which will make
   /// the isNoopCast call conservative.
+  /// @brief Determine if the described cast is a no-op cast.
+  static bool isNoopCast(
+    Instruction::CastOps Opcode,  ///< Opcode of cast
+    const Type *SrcTy,   ///< SrcTy of cast
+    const Type *DstTy,   ///< DstTy of cast
+    const Type *IntPtrTy ///< Integer type corresponding to Ptr types, or null
+  );
+
   /// @brief Determine if this cast is a no-op cast.
   bool isNoopCast(
     const Type *IntPtrTy ///< Integer type corresponding to pointer

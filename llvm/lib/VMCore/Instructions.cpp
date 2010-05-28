@@ -1911,9 +1911,12 @@ bool CastInst::isLosslessCast() const {
 /// # bitcast i32* %x to i8*
 /// # bitcast <2 x i32> %x to <4 x i16> 
 /// # ptrtoint i32* %x to i32     ; on 32-bit plaforms only
-/// @brief Determine if a cast is a no-op.
-bool CastInst::isNoopCast(const Type *IntPtrTy) const {
-  switch (getOpcode()) {
+/// @brief Determine if the described cast is a no-op.
+bool CastInst::isNoopCast(Instruction::CastOps Opcode,
+                          const Type *SrcTy,
+                          const Type *DestTy,
+                          const Type *IntPtrTy) {
+  switch (Opcode) {
     default:
       assert(!"Invalid CastOp");
     case Instruction::Trunc:
@@ -1930,11 +1933,16 @@ bool CastInst::isNoopCast(const Type *IntPtrTy) const {
       return true;  // BitCast never modifies bits.
     case Instruction::PtrToInt:
       return IntPtrTy->getScalarSizeInBits() ==
-             getType()->getScalarSizeInBits();
+             DestTy->getScalarSizeInBits();
     case Instruction::IntToPtr:
       return IntPtrTy->getScalarSizeInBits() ==
-             getOperand(0)->getType()->getScalarSizeInBits();
+             SrcTy->getScalarSizeInBits();
   }
+}
+
+/// @brief Determine if a cast is a no-op.
+bool CastInst::isNoopCast(const Type *IntPtrTy) const {
+  return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
 
 /// This function determines if a pair of casts can be eliminated and what 
