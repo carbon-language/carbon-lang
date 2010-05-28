@@ -925,7 +925,8 @@ let isCall = 1,
 //   all of the callee-saved resgisters, which is exactly what we want.
 //   $val is a scratch register for our use.
 let Defs =
-  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ] in {
+  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ], hasSideEffects = 1,
+   isBarrier = 1  in {
   def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
                               AddrModeNone, SizeSpecial, NoItinerary,
                               "mov\t$val, pc\t${:comment} begin eh.setjmp\n"
