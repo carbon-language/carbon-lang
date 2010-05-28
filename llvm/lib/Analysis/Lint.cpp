@@ -93,6 +93,8 @@ namespace {
     void visitUnreachableInst(UnreachableInst &I);
 
     Value *findValue(Value *V, bool OffsetOk) const;
+    Value *findValueImpl(Value *V, bool OffsetOk,
+                         SmallPtrSet<Value *, 4> &Visited) const;
 
   public:
     Module *Mod;
@@ -498,6 +500,17 @@ void Lint::visitUnreachableInst(UnreachableInst &I) {
 /// will simplify most of these kinds of things away. But it's a goal of
 /// this Lint pass to be useful even on non-optimized IR.
 Value *Lint::findValue(Value *V, bool OffsetOk) const {
+  SmallPtrSet<Value *, 4> Visited;
+  return findValueImpl(V, OffsetOk, Visited);
+}
+
+/// findValueImpl - Implementation helper for findValue.
+Value *Lint::findValueImpl(Value *V, bool OffsetOk,
+                           SmallPtrSet<Value *, 4> &Visited) const {
+  // Detect self-referential values.
+  if (!Visited.insert(V))
+    return UndefValue::get(V->getType());
+
   // TODO: Look through sext or zext cast, when the result is known to
   // be interpreted as signed or unsigned, respectively.
   // TODO: Look through calls with unique return values.
@@ -509,7 +522,7 @@ Value *Lint::findValue(Value *V, bool OffsetOk) const {
     for (;;) {
       if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
                                               BB, BBI, 6, AA))
-        return findValue(U, OffsetOk);
+        return findValueImpl(U, OffsetOk, Visited);
       BB = L->getParent()->getUniquePredecessor();
       if (!BB) break;
       BBI = BB->end();
@@ -517,27 +530,27 @@ Value *Lint::findValue(Value *V, bool OffsetOk) const {
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
                             Type::getInt64Ty(V->getContext())))
-      return findValue(CI->getOperand(0), OffsetOk);
+      return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     if (Value *W = PN->hasConstantValue(DT))
-      return findValue(W, OffsetOk);
+      return findValueImpl(W, OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
     if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
                                      Ex->idx_begin(),
                                      Ex->idx_end()))
       if (W != V)
-        return findValue(W, OffsetOk);
+        return findValueImpl(W, OffsetOk, Visited);
   }
 
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Value *W = SimplifyInstruction(Inst, TD))
       if (W != Inst)
-        return findValue(W, OffsetOk);
+        return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (Value *W = ConstantFoldConstantExpression(CE, TD))
       if (W != V)
-        return findValue(W, OffsetOk);
+        return findValueImpl(W, OffsetOk, Visited);
   }
 
   return V;
