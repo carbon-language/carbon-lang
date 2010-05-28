@@ -22,19 +22,18 @@ using namespace PatternMatch;
 /// X*Scale+Offset.
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
-                                        int &Offset) {
-  assert(Val->getType()->isIntegerTy(32) && "Unexpected allocation size type!");
+                                        uint64_t &Offset) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
     Scale  = 0;
-    return ConstantInt::get(Type::getInt32Ty(Val->getContext()), 0);
+    return ConstantInt::get(Val->getType(), 0);
   }
   
   if (BinaryOperator *I = dyn_cast<BinaryOperator>(Val)) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
       if (I->getOpcode() == Instruction::Shl) {
         // This is a value scaled by '1 << the shift amt'.
-        Scale = 1U << RHS->getZExtValue();
+        Scale = UINT64_C(1) << RHS->getZExtValue();
         Offset = 0;
         return I->getOperand(0);
       }
@@ -100,7 +99,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   // See if we can satisfy the modulus by pulling a scale out of the array
   // size argument.
   unsigned ArraySizeScale;
-  int ArrayOffset;
+  uint64_t ArrayOffset;
   Value *NumElements = // See if the array size is a decomposable linear expr.
     DecomposeSimpleLinearExpr(AI.getOperand(0), ArraySizeScale, ArrayOffset);
  
@@ -114,13 +113,13 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   if (Scale == 1) {
     Amt = NumElements;
   } else {
-    Amt = ConstantInt::get(Type::getInt32Ty(CI.getContext()), Scale);
+    Amt = ConstantInt::get(AI.getArraySize()->getType(), Scale);
     // Insert before the alloca, not before the cast.
     Amt = AllocaBuilder.CreateMul(Amt, NumElements, "tmp");
   }
   
-  if (int Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
-    Value *Off = ConstantInt::get(Type::getInt32Ty(CI.getContext()),
+  if (uint64_t Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
+    Value *Off = ConstantInt::get(AI.getArraySize()->getType(),
                                   Offset, true);
     Amt = AllocaBuilder.CreateAdd(Amt, Off, "tmp");
   }
