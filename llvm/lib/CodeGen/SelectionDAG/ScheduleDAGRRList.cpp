@@ -320,7 +320,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     CapturePred(&*I);
-    if (I->isAssignedRegDep() && SU->getHeight() == LiveRegCycles[I->getReg()]) {
+    if (I->isAssignedRegDep() && SU->getHeight() == LiveRegCycles[I->getReg()]){
       assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       assert(LiveRegDefs[I->getReg()] == I->getSUnit() &&
              "Physical register dependency violated?");
@@ -1275,6 +1275,17 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
       return left->getHeight() > right->getHeight();
   } else if (RStall)
       return false;
+
+  // If either node is scheduling for latency, sort them by height and latency
+  // first.
+  if (left->SchedulingPref == Sched::Latency ||
+      right->SchedulingPref == Sched::Latency) {
+    if (left->getHeight() != right->getHeight())
+      return left->getHeight() > right->getHeight();
+    if (left->Latency != right->Latency)
+      return left->Latency > right->Latency;
+  }
+
   return BURRSort(left, right, SPQ);
 }
 

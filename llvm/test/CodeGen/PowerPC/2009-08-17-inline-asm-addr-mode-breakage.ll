@@ -10,8 +10,8 @@ target triple = "powerpc-apple-darwin10.0"
 define void @foo(i32 %y) nounwind ssp {
 entry:
 ; CHECK: foo
-; CHECK: add r4
-; CHECK: 0(r4)
+; CHECK: add r3
+; CHECK: 0(r3)
   %y_addr = alloca i32                            ; <i32*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store i32 %y, i32* %y_addr

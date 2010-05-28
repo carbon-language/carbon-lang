@@ -45,9 +45,9 @@ define arm_apcscc void @t2(i16* %i_ptr, i16* %o_ptr, %struct.int16x8_t* nocaptur
 entry:
 ; CHECK:        t2:
 ; CHECK:        vld1.16
-; CHECK:        vld1.16
-; CHECK-NOT:    vmov
 ; CHECK:        vmul.i16
+; CHECK-NOT:    vmov
+; CHECK:        vld1.16
 ; CHECK:        vmul.i16
 ; CHECK-NOT:    vmov
 ; CHECK:        vst1.16
@@ -238,8 +238,9 @@ bb14:                                             ; preds = %bb6
 define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; CHECK:        t9:
 ; CHECK:        vldr.64
+; CHECK-NOT:    vmov d{{.*}}, d0
 ; CHECK:        vmov.i8 d1
-; CHECK-NEXT:   vstmia r0, {d2,d3}
+; CHECK-NEXT:   vstmia r0, {d0,d1}
 ; CHECK-NEXT:   vstmia r0, {d0,d1}
   %3 = bitcast double 0.000000e+00 to <2 x float> ; <<2 x float>> [#uses=2]
   %4 = shufflevector <2 x float> %3, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]

@@ -59,7 +59,11 @@ SUnit *ScheduleDAGSDNodes::NewSUnit(SDNode *N) {
   SUnits.back().OrigNode = &SUnits.back();
   SUnit *SU = &SUnits.back();
   const TargetLowering &TLI = DAG->getTargetLoweringInfo();
-  SU->SchedulingPref = TLI.getSchedulingPreference(N);
+  if (N->isMachineOpcode() &&
+      N->getMachineOpcode() == TargetOpcode::IMPLICIT_DEF)
+    SU->SchedulingPref = Sched::None;
+  else
+    SU->SchedulingPref = TLI.getSchedulingPreference(N);
   return SU;
 }
 
@@ -364,8 +368,10 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         if (Cost >= 0)
           PhysReg = 0;
 
-        const SDep& dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
-                               OpSU->Latency, PhysReg);
+        // If this is a ctrl dep, latency is 1.
+        unsigned OpLatency = isChain ? 1 : OpSU->Latency;
+        const SDep &dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
+                               OpLatency, PhysReg);
         if (!isChain && !UnitLatencies) {
           ComputeOperandLatency(OpN, N, i, const_cast<SDep &>(dep));
           ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
@@ -427,15 +433,18 @@ void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
     return;
 
   unsigned DefIdx = Use->getOperand(OpIdx).getResNo();
-  if (Def->isMachineOpcode() && Use->isMachineOpcode()) {
+  if (Def->isMachineOpcode()) {
     const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (DefIdx >= II.getNumDefs())
       return;
     int DefCycle = InstrItins.getOperandCycle(II.getSchedClass(), DefIdx);
     if (DefCycle < 0)
       return;
-    const unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
-    int UseCycle = InstrItins.getOperandCycle(UseClass, OpIdx);
+    int UseCycle = 1;
+    if (Use->isMachineOpcode()) {
+      const unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
+      UseCycle = InstrItins.getOperandCycle(UseClass, OpIdx);
+    }
     if (UseCycle >= 0) {
       int Latency = DefCycle - UseCycle + 1;
       if (Latency >= 0)
