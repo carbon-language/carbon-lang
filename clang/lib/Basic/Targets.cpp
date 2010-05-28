@@ -1272,7 +1272,7 @@ public:
            "  unsigned fp_offset;"
            "  void* overflow_arg_area;"
            "  void* reg_save_area;"
-           "} __va_list_tag;"
+           "} __attribute__((adl_invisible)) __va_list_tag;"
            "typedef __va_list_tag __builtin_va_list[1];";
   }
   

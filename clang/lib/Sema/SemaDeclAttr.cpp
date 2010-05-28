@@ -703,7 +703,7 @@ static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
 
 static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
   if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
@@ -720,7 +720,7 @@ static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
 static void
 HandleOverloadableAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
 
@@ -730,6 +730,21 @@ HandleOverloadableAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   D->addAttr(::new (S.Context) OverloadableAttr());
+}
+
+static void HandleADLInvisibleAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<RecordDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << "adl_invisible" << 12;
+    return;
+  }
+
+  cast<RecordDecl>(d)->setInvisibleToADL();
 }
 
 static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -941,7 +956,7 @@ static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
                                     Sema &S) {
   // Attribute has 3 arguments.
   if (Attr.getNumArgs() != 3) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 3;
     return;
   }
 
@@ -1969,6 +1984,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     HandleObjCExceptionAttr(D, Attr, S);
     break;
   case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
+  case AttributeList::AT_adl_invisible: HandleADLInvisibleAttr(D, Attr, S); break;
   case AttributeList::AT_nsobject:    HandleObjCNSObject    (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr      (D, Attr, S); break;
   case AttributeList::AT_sentinel:    HandleSentinelAttr    (D, Attr, S); break;

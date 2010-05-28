@@ -169,6 +169,7 @@ void PCHDeclWriter::VisitRecordDecl(RecordDecl *D) {
   Record.push_back(D->hasFlexibleArrayMember());
   Record.push_back(D->isAnonymousStructOrUnion());
   Record.push_back(D->hasObjectMember());
+  Record.push_back(D->isInvisibleToADL());
   Code = pch::DECL_RECORD;
 }
 

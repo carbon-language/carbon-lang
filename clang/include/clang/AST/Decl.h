@@ -1999,6 +1999,11 @@ class RecordDecl : public TagDecl {
   /// containing an object.
   bool HasObjectMember : 1;
 
+  /// InvisibleToADL - This is true if this struct is invisible to
+  /// argument-dependent lookup.  Certain builtin types have this
+  /// property.
+  bool InvisibleToADL : 1;
+
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id,
@@ -2040,6 +2045,18 @@ public:
 
   bool hasObjectMember() const { return HasObjectMember; }
   void setHasObjectMember (bool val) { HasObjectMember = val; }
+
+  /// \brief Determines whether this type is invisible to C++
+  /// argument-dependent lookup.
+  ///
+  /// Types with this bit set behave like fundamental types: they are
+  /// never associated classes, and they do not add their contexts as
+  /// associated namespaces.
+  ///
+  /// This can be specified in user code as __attribute__((adl_invisible)),
+  /// but it's generally better not to.
+  bool isInvisibleToADL() const { return InvisibleToADL; }
+  void setInvisibleToADL(bool val = true) { InvisibleToADL = val; }
 
   /// \brief Determines whether this declaration represents the
   /// injected class name.

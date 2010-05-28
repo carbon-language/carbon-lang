@@ -171,6 +171,7 @@ void PCHDeclReader::VisitRecordDecl(RecordDecl *RD) {
   RD->setHasFlexibleArrayMember(Record[Idx++]);
   RD->setAnonymousStructOrUnion(Record[Idx++]);
   RD->setHasObjectMember(Record[Idx++]);
+  RD->setInvisibleToADL(Record[Idx++]);
 }
 
 void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {

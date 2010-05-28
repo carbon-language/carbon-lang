@@ -1500,6 +1500,10 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
                                   ASTContext &Context,
                             Sema::AssociatedNamespaceSet &AssociatedNamespaces,
                             Sema::AssociatedClassSet &AssociatedClasses) {
+
+  // Some classes are invisible to ADL.
+  if (Class->isInvisibleToADL()) return;
+
   // C++ [basic.lookup.koenig]p2:
   //   [...]
   //     -- If T is a class type (including unions), its associated

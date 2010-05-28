@@ -884,9 +884,9 @@ def warn_attribute_wrong_decl_type : Warning<
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"
-  "parameter or Objective-C method |function, method or block|"
+  "parameter or Objective-C method|function, method or block|"
   "virtual method or class|function, method, or parameter|class|virtual method"
-  "|member}1 types">;
+  "|member|struct or union}1 types">;
 def warn_function_attribute_wrong_type : Warning<
   "%0 only applies to function types; type here is %1">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
