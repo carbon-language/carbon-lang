@@ -172,9 +172,29 @@ def VSLI_N : Inst<"dddi", "csilUcUsUiUlPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.14 Loads and stores of a single vector
+def VLD1      : Inst<"d*cs",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1_LANE : Inst<"d*csi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1_DUP  : Inst<"d*cs",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST1      : Inst<"v*sd",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST1_LANE : Inst<"v*sdi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.15 Loads and stores of an N-element structure
+def VLD2      : Inst<"2d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD3      : Inst<"3d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD4      : Inst<"4d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD2_DUP  : Inst<"2d*cs",  "UcUsUiUlcsilhfPcPs">;
+def VLD3_DUP  : Inst<"3d*cs",  "UcUsUiUlcsilhfPcPs">;
+def VLD4_DUP  : Inst<"4d*cs",  "UcUsUiUlcsilhfPcPs">;
+def VLD2_LANE : Inst<"2d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD3_LANE : Inst<"3d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD4_LANE : Inst<"4d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST2      : Inst<"v*s2d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST3      : Inst<"v*s3d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST4      : Inst<"v*s4d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST2_LANE : Inst<"v*s2di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST3_LANE : Inst<"v*s3di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST4_LANE : Inst<"v*s4di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.16 Extract lanes from a vector
@@ -280,7 +300,9 @@ def VBSL : Inst<"dxdd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations
-def VTRN: Inst<"", "">;
+def VTRN: Inst<"2ddd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VZIP: Inst<"2ddd", "csUcUsfPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VUZP: Inst<"2ddd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.31 Vector reinterpret cast operations
