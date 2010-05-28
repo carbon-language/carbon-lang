@@ -905,6 +905,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
 
   if (Pascal) {
     ResultBuf[0] = ResultPtr-&ResultBuf[0]-1;
+    if (AnyWide)
+      ResultBuf[0] /= wchar_tByteWidth;
 
     // Verify that pascal strings aren't too large.
     if (GetStringLength() > 256 && Complain) {
