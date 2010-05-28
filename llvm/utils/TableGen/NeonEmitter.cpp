@@ -53,9 +53,8 @@ void NeonEmitter::run(raw_ostream &OS) {
     OS << LowercaseString(R->getName()) << "\n";
 
     std::string Types = R->getValueAsString("Types");
-    std::string Pattern = R->getValueAsString("Pattern");
-    
-    OS << Types << "\n" << Pattern << "\n\n";
+    //std::string Pattern = R->getValueAsString("Pattern");
+    //OS << Types << "\n" << Pattern << "\n\n";
   }
   
   OS << "#endif /* __ARM_NEON_H */\n";
