@@ -97,7 +97,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 
   case tok::code_completion:
     Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Statement);
-    ConsumeToken();
+    ConsumeCodeCompletionToken();
     return ParseStatementOrDeclaration(OnlyStatement);
       
   case tok::identifier:
