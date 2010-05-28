@@ -440,6 +440,15 @@ public:
     return CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
   }
 
+  /// ExceptionRethrowFn - LLVM objc_exception_rethrow function.
+  llvm::Constant *getExceptionRethrowFn() {
+    // void objc_exception_rethrow(void)
+    std::vector<const llvm::Type*> Args;
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, true);
+    return CGM.CreateRuntimeFunction(FTy, "objc_exception_rethrow");
+  }
+  
   /// SyncEnterFn - LLVM object_sync_enter function.
   llvm::Constant *getSyncEnterFn() {
     // void objc_sync_enter (id)
@@ -5803,12 +5812,15 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                                            const ObjCAtThrowStmt &S) {
   llvm::Value *Exception;
+  llvm::Constant *FunctionThrowOrRethrow;
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
     Exception = CGF.EmitScalarExpr(ThrowExpr);
+    FunctionThrowOrRethrow = ObjCTypes.getExceptionThrowFn();
   } else {
     assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) &&
            "Unexpected rethrow outside @catch block.");
     Exception = CGF.ObjCEHValueStack.back();
+    FunctionThrowOrRethrow = ObjCTypes.getExceptionRethrowFn();
   }
 
   llvm::Value *ExceptionAsObject =
@@ -5816,12 +5828,12 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *InvokeDest = CGF.getInvokeDest();
   if (InvokeDest) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-    CGF.Builder.CreateInvoke(ObjCTypes.getExceptionThrowFn(),
+    CGF.Builder.CreateInvoke(FunctionThrowOrRethrow,
                              Cont, InvokeDest,
                              &ExceptionAsObject, &ExceptionAsObject + 1);
     CGF.EmitBlock(Cont);
   } else
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), ExceptionAsObject);
+    CGF.Builder.CreateCall(FunctionThrowOrRethrow, ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
 
   // Clear the insertion point to indicate we are in unreachable code.
