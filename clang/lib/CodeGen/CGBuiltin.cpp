@@ -398,9 +398,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       
   case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
-    // FIXME: LLVM IR Should allow alloca with an i64 size!
     Value *Size = EmitScalarExpr(E->getArg(0));
-    Size = Builder.CreateIntCast(Size, llvm::Type::getInt32Ty(VMContext), false, "tmp");
     return RValue::get(Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext), Size, "tmp"));
   }
   case Builtin::BIbzero:
