@@ -27,6 +27,7 @@ class MachineInstr;
 class MachineRegisterInfo;
 class MDNode;
 class TargetMachine;
+class TargetRegisterInfo;
 class raw_ostream;
 class MCSymbol;
   
@@ -246,7 +247,20 @@ public:
     assert(isReg() && "Wrong MachineOperand accessor");
     SubReg = (unsigned char)subReg;
   }
-  
+
+  /// substVirtReg - Substitute the current register with the virtual
+  /// subregister Reg:SubReg. Take any existing SubReg index into account,
+  /// using TargetRegisterInfo to compose the subreg indices if necessary.
+  /// Reg must be a virtual register, SubIdx can be 0.
+  ///
+  void substVirtReg(unsigned Reg, unsigned SubIdx, const TargetRegisterInfo&);
+
+  /// substPhysReg - Substitute the current register with the physical register
+  /// Reg, taking any existing SubReg into account. For instance,
+  /// substPhysReg(%EAX) will change %reg1024:sub_8bit to %AL.
+  ///
+  void substPhysReg(unsigned Reg, const TargetRegisterInfo&);
+
   void setIsUse(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand accessor");
     assert((Val || !isDebug()) && "Marking a debug operation as def");

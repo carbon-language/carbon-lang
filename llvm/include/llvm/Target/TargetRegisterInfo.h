@@ -490,6 +490,23 @@ public:
     return 0;
   }
 
+  /// composeSubRegIndices - Return the subregister index you get from composing
+  /// two subregister indices.
+  ///
+  /// If R:a:b is the same register as R:c, then composeSubRegIndices(a, b)
+  /// returns c. Note that composeSubRegIndices does not tell you about illegal
+  /// compositions. If R does not have a subreg a, or R:a does not have a subreg
+  /// b, composeSubRegIndices doesn't tell you.
+  ///
+  /// The ARM register Q0 has two D subregs dsub_0:D0 and dsub_1:D1. It also has
+  /// ssub_0:S0 - ssub_3:S3 subregs.
+  /// If you compose subreg indices dsub_1, ssub_0 you get ssub_2.
+  ///
+  virtual unsigned composeSubRegIndices(unsigned a, unsigned b) const {
+    // This default implementation is correct for most targets.
+    return b;
+  }
+
   //===--------------------------------------------------------------------===//
   // Register Class Information
   //
