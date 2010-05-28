@@ -496,8 +496,9 @@ size_t raw_fd_ostream::preferred_buffer_size() const {
     return 0;
   // Return the preferred block size.
   return statbuf.st_blksize;
-#endif
+#else
   return raw_ostream::preferred_buffer_size();
+#endif
 }
 
 raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
