@@ -612,7 +612,7 @@ public:
 
   /// A lossless cast is one that does not alter the basic value. It implies
   /// a no-op cast but is more stringent, preventing things like int->float,
-  /// long->double, int->ptr, or vector->anything.
+  /// long->double, or int->ptr.
   /// @returns true iff the cast is lossless.
   /// @brief Determine if this is a lossless cast.
   bool isLosslessCast() const;
