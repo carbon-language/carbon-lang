@@ -195,6 +195,12 @@ static void DefineTypeWidth(llvm::StringRef MacroName, TargetInfo::IntType Ty,
   Builder.defineMacro(MacroName, llvm::Twine(TI.getTypeWidth(Ty)));
 }
 
+static void DefineTypeSizeof(llvm::StringRef MacroName, unsigned BitWidth,
+                             const TargetInfo &TI, MacroBuilder &Builder) {
+  Builder.defineMacro(MacroName,
+                      llvm::Twine(BitWidth / TI.getCharWidth()));
+}
+
 static void DefineExactWidthIntType(TargetInfo::IntType Ty, 
                                const TargetInfo &TI, MacroBuilder &Builder) {
   int TypeWidth = TI.getTypeWidth(Ty);
@@ -293,6 +299,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   if (LangOpts.Exceptions)
     Builder.defineMacro("__EXCEPTIONS");
+  if (LangOpts.RTTI)
+    Builder.defineMacro("__GXX_RTTI");
   if (LangOpts.SjLjExceptions)
     Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
 
@@ -350,6 +358,23 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Builder);
   DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Builder);
 
+  DefineTypeSizeof("__SIZEOF_DOUBLE__", TI.getDoubleWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_FLOAT__", TI.getFloatWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_INT__", TI.getIntWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_LONG__", TI.getLongWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_LONG_DOUBLE__",TI.getLongDoubleWidth(),TI,Builder);
+  DefineTypeSizeof("__SIZEOF_LONG_LONG__", TI.getLongLongWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_POINTER__", TI.getPointerWidth(0), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_SHORT__", TI.getShortWidth(), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_PTRDIFF_T__",
+                   TI.getTypeWidth(TI.getPtrDiffType(0)), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_SIZE_T__",
+                   TI.getTypeWidth(TI.getSizeType()), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_WCHAR_T__",
+                   TI.getTypeWidth(TI.getWCharType()), TI, Builder);
+  DefineTypeSizeof("__SIZEOF_WINT_T__",
+                   TI.getTypeWidth(TI.getWIntType()), TI, Builder);
+
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Builder);
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Builder);
   DefineTypeWidth("__INTMAX_WIDTH__",  TI.getIntMaxType(), TI, Builder);
@@ -364,6 +389,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__WINT_TYPE__", TI.getWIntType(), Builder);
   DefineTypeWidth("__WINT_WIDTH__", TI.getWIntType(), TI, Builder);
   DefineTypeWidth("__SIG_ATOMIC_WIDTH__", TI.getSigAtomicType(), TI, Builder);
+  DefineType("__CHAR16_TYPE__", TI.getChar16Type(), Builder);
+  DefineType("__CHAR32_TYPE__", TI.getChar32Type(), Builder);
 
   DefineFloatMacros(Builder, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Builder, "DBL", &TI.getDoubleFormat());
