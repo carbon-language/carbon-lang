@@ -1590,7 +1590,7 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
 // argument-dependent lookup with an argument of type T
 // (C++ [basic.lookup.koenig]p2).
 static void
-addAssociatedClassesAndNamespaces(QualType T,
+addAssociatedClassesAndNamespaces(QualType Ty,
                                   ASTContext &Context,
                             Sema::AssociatedNamespaceSet &AssociatedNamespaces,
                                   Sema::AssociatedClassSet &AssociatedClasses) {
@@ -1604,109 +1604,139 @@ addAssociatedClassesAndNamespaces(QualType T,
   //   argument). Typedef names and using-declarations used to specify
   //   the types do not contribute to this set. The sets of namespaces
   //   and classes are determined in the following way:
-  T = Context.getCanonicalType(T).getUnqualifiedType();
 
-  //    -- If T is a pointer to U or an array of U, its associated
-  //       namespaces and classes are those associated with U.
-  //
-  // We handle this by unwrapping pointer and array types immediately,
-  // to avoid unnecessary recursion.
+  llvm::SmallVector<const Type *, 16> Queue;
+  const Type *T = Ty->getCanonicalTypeInternal().getTypePtr();
+
   while (true) {
-    if (const PointerType *Ptr = T->getAs<PointerType>())
-      T = Ptr->getPointeeType();
-    else if (const ArrayType *Ptr = Context.getAsArrayType(T))
-      T = Ptr->getElementType();
-    else
+    switch (T->getTypeClass()) {
+
+#define TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define ABSTRACT_TYPE(Class, Base)
+#include "clang/AST/TypeNodes.def"
+      // T is canonical.  We can also ignore dependent types because
+      // we don't need to do ADL at the definition point, but if we
+      // wanted to implement template export (or if we find some other
+      // use for associated classes and namespaces...) this would be
+      // wrong.
       break;
-  }
 
-  //     -- If T is a fundamental type, its associated sets of
-  //        namespaces and classes are both empty.
-  if (T->getAs<BuiltinType>())
-    return;
+    //    -- If T is a pointer to U or an array of U, its associated
+    //       namespaces and classes are those associated with U.
+    case Type::Pointer:
+      T = cast<PointerType>(T)->getPointeeType().getTypePtr();
+      continue;
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+      T = cast<ArrayType>(T)->getElementType().getTypePtr();
+      continue;
 
-  //     -- If T is a class type (including unions), its associated
-  //        classes are: the class itself; the class of which it is a
-  //        member, if any; and its direct and indirect base
-  //        classes. Its associated namespaces are the namespaces in
-  //        which its associated classes are defined.
-  if (const RecordType *ClassType = T->getAs<RecordType>())
-    if (CXXRecordDecl *ClassDecl
-        = dyn_cast<CXXRecordDecl>(ClassType->getDecl())) {
-      addAssociatedClassesAndNamespaces(ClassDecl, Context,
+    //     -- If T is a fundamental type, its associated sets of
+    //        namespaces and classes are both empty.
+    case Type::Builtin:
+      break;
+
+    //     -- If T is a class type (including unions), its associated
+    //        classes are: the class itself; the class of which it is a
+    //        member, if any; and its direct and indirect base
+    //        classes. Its associated namespaces are the namespaces in
+    //        which its associated classes are defined.
+    case Type::Record: {
+      CXXRecordDecl *Class
+        = cast<CXXRecordDecl>(cast<RecordType>(T)->getDecl());
+      addAssociatedClassesAndNamespaces(Class, Context,
                                         AssociatedNamespaces,
                                         AssociatedClasses);
-      return;
+      break;
     }
 
-  //     -- If T is an enumeration type, its associated namespace is
-  //        the namespace in which it is defined. If it is class
-  //        member, its associated class is the member’s class; else
-  //        it has no associated class.
-  if (const EnumType *EnumT = T->getAs<EnumType>()) {
-    EnumDecl *Enum = EnumT->getDecl();
+    //     -- If T is an enumeration type, its associated namespace is
+    //        the namespace in which it is defined. If it is class
+    //        member, its associated class is the member’s class; else
+    //        it has no associated class.
+    case Type::Enum: {
+      EnumDecl *Enum = cast<EnumType>(T)->getDecl();
 
-    DeclContext *Ctx = Enum->getDeclContext();
-    if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
-      AssociatedClasses.insert(EnclosingClass);
+      DeclContext *Ctx = Enum->getDeclContext();
+      if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
+        AssociatedClasses.insert(EnclosingClass);
 
-    // Add the associated namespace for this class.
-    CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
+      // Add the associated namespace for this class.
+      CollectEnclosingNamespace(AssociatedNamespaces, Ctx);
 
-    return;
+      break;
+    }
+
+    //     -- If T is a function type, its associated namespaces and
+    //        classes are those associated with the function parameter
+    //        types and those associated with the return type.
+    case Type::FunctionProto: {
+      const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
+      for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
+                                             ArgEnd = Proto->arg_type_end();
+             Arg != ArgEnd; ++Arg)
+        Queue.push_back(Arg->getTypePtr());
+      // fallthrough
+    }
+    case Type::FunctionNoProto: {
+      const FunctionType *FnType = cast<FunctionType>(T);
+      T = FnType->getResultType().getTypePtr();
+      continue;
+    }
+
+    //     -- If T is a pointer to a member function of a class X, its
+    //        associated namespaces and classes are those associated
+    //        with the function parameter types and return type,
+    //        together with those associated with X.
+    //
+    //     -- If T is a pointer to a data member of class X, its
+    //        associated namespaces and classes are those associated
+    //        with the member type together with those associated with
+    //        X.
+    case Type::MemberPointer: {
+      const MemberPointerType *MemberPtr = cast<MemberPointerType>(T);
+
+      // Queue up the class type into which this points.
+      Queue.push_back(MemberPtr->getClass());
+
+      // And directly continue with the pointee type.
+      T = MemberPtr->getPointeeType().getTypePtr();
+      continue;
+    }
+
+    // As an extension, treat this like a normal pointer.
+    case Type::BlockPointer:
+      T = cast<BlockPointerType>(T)->getPointeeType().getTypePtr();
+      continue;
+
+    // References aren't covered by the standard, but that's such an
+    // obvious defect that we cover them anyway.
+    case Type::LValueReference:
+    case Type::RValueReference:
+      T = cast<ReferenceType>(T)->getPointeeType().getTypePtr();
+      continue;
+
+    // These are fundamental types.
+    case Type::Vector:
+    case Type::ExtVector:
+    case Type::Complex:
+      break;
+
+    // These are ignored by ADL.
+    case Type::ObjCObject:
+    case Type::ObjCInterface:
+    case Type::ObjCObjectPointer:
+      break;
+    }
+
+    if (Queue.empty()) break;
+    T = Queue.back();
+    Queue.pop_back();
   }
-
-  //     -- If T is a function type, its associated namespaces and
-  //        classes are those associated with the function parameter
-  //        types and those associated with the return type.
-  if (const FunctionType *FnType = T->getAs<FunctionType>()) {
-    // Return type
-    addAssociatedClassesAndNamespaces(FnType->getResultType(),
-                                      Context,
-                                      AssociatedNamespaces, AssociatedClasses);
-
-    const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FnType);
-    if (!Proto)
-      return;
-
-    // Argument types
-    for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-                                           ArgEnd = Proto->arg_type_end();
-         Arg != ArgEnd; ++Arg)
-      addAssociatedClassesAndNamespaces(*Arg, Context,
-                                        AssociatedNamespaces, AssociatedClasses);
-
-    return;
-  }
-
-  //     -- If T is a pointer to a member function of a class X, its
-  //        associated namespaces and classes are those associated
-  //        with the function parameter types and return type,
-  //        together with those associated with X.
-  //
-  //     -- If T is a pointer to a data member of class X, its
-  //        associated namespaces and classes are those associated
-  //        with the member type together with those associated with
-  //        X.
-  if (const MemberPointerType *MemberPtr = T->getAs<MemberPointerType>()) {
-    // Handle the type that the pointer to member points to.
-    addAssociatedClassesAndNamespaces(MemberPtr->getPointeeType(),
-                                      Context,
-                                      AssociatedNamespaces,
-                                      AssociatedClasses);
-
-    // Handle the class type into which this points.
-    if (const RecordType *Class = MemberPtr->getClass()->getAs<RecordType>())
-      addAssociatedClassesAndNamespaces(cast<CXXRecordDecl>(Class->getDecl()),
-                                        Context,
-                                        AssociatedNamespaces,
-                                        AssociatedClasses);
-
-    return;
-  }
-
-  // FIXME: What about block pointers?
-  // FIXME: What about Objective-C message sends?
 }
 
 /// \brief Find the associated classes and namespaces for
