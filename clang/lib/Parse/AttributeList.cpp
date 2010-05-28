@@ -120,7 +120,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("cf_returns_retained", AT_cf_returns_retained)
     .Case("reqd_work_group_size", AT_reqd_wg_size)
     .Case("no_instrument_function", AT_no_instrument_function)
-    .Case("adl_invisible", AT_adl_invisible)
     .Case("thiscall", AT_thiscall)
     .Case("__cdecl", AT_cdecl)
     .Case("__stdcall", AT_stdcall)

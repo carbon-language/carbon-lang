@@ -115,7 +115,6 @@ public:
     AT_weakref,
     AT_weak_import,
     AT_reqd_wg_size,
-    AT_adl_invisible,
     IgnoredAttribute,
     UnknownAttribute
   };

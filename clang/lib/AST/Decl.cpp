@@ -1596,7 +1596,6 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
-  InvisibleToADL = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
 }
 
