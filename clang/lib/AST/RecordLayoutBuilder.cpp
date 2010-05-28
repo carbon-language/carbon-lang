@@ -23,14 +23,33 @@ using namespace clang;
 
 namespace {
 
-struct BaseInfo {
+/// BaseSubobjectInfo - Represents a single base subobject in a complete class.
+/// For a class hierarchy like
+///
+/// class A { };
+/// class B : A { };
+/// class C : A, B { };
+///
+/// The BaseSubobjectInfo graph for C will have three BaseSubobjectInfo
+/// instances, one for B and two for A.
+///
+/// If a base is virtual, it will only have one BaseSubobjectInfo allocated.
+struct BaseSubobjectInfo {
+  /// Class - The class for this base info.
   const CXXRecordDecl *Class;
+
+  /// IsVirtual - Whether the BaseInfo represents a virtual base or not.
   bool IsVirtual;
 
+  /// Bases - Information about the base subobjects.
+  llvm::SmallVector<BaseSubobjectInfo*, 4> Bases;
+
+  /// PrimaryVirtualBase - Holds the base info for the primary virtual base of
+  /// this base info (if one exists).
   const CXXRecordDecl *PrimaryVirtualBase;
-    
-  llvm::SmallVector<BaseInfo*, 4> Bases;
-  const BaseInfo *Derived;
+
+  // FIXME: Document.
+  const BaseSubobjectInfo *Derived;
 };
 
 /// EmptySubobjectMap - Keeps track of which empty subobjects exist at different
@@ -50,18 +69,20 @@ class EmptySubobjectMap {
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
 
-  llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> VirtualBaseInfo;
-  llvm::DenseMap<const CXXRecordDecl *, BaseInfo *> NonVirtualBaseInfo;
+  llvm::DenseMap<const CXXRecordDecl *, BaseSubobjectInfo *> VirtualBaseInfo;
+  llvm::DenseMap<const CXXRecordDecl *, BaseSubobjectInfo *> NonVirtualBaseInfo;
   
-  BaseInfo *ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
-                            const BaseInfo *Derived);
+  BaseSubobjectInfo *ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
+                                     const BaseSubobjectInfo *Derived);
   void ComputeBaseInfo();
   
   bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
   void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
   
-  bool CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, uint64_t Offset);
-  void UpdateEmptyBaseSubobjects(const BaseInfo *Info, uint64_t Offset);
+  bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
+                                     uint64_t Offset);
+  void UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
+                                 uint64_t Offset);
   
   bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
                                       const CXXRecordDecl *Class,
@@ -148,22 +169,22 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   }
 }
 
-BaseInfo *EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, 
-                                             bool IsVirtual,
-                                             const BaseInfo *Derived) {
-  BaseInfo *Info;
+BaseSubobjectInfo *
+EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
+                                   const BaseSubobjectInfo *Derived) {
+  BaseSubobjectInfo *Info;
   
   if (IsVirtual) {
-    BaseInfo *&InfoSlot = VirtualBaseInfo[RD];
+    BaseSubobjectInfo *&InfoSlot = VirtualBaseInfo[RD];
     if (InfoSlot) {
       assert(InfoSlot->Class == RD && "Wrong class for virtual base info!");
       return InfoSlot;
     }
 
-    InfoSlot = new (Context) BaseInfo;
+    InfoSlot = new (Context) BaseSubobjectInfo;
     Info = InfoSlot;
   } else {
-    Info = new (Context) BaseInfo;
+    Info = new (Context) BaseSubobjectInfo;
   }
   
   Info->Class = RD;
@@ -202,7 +223,8 @@ void EmptySubobjectMap::ComputeBaseInfo() {
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
-    BaseInfo *Info = ComputeBaseInfo(BaseDecl, IsVirtual, /*Derived=*/0);
+    BaseSubobjectInfo *Info = 
+      ComputeBaseInfo(BaseDecl, IsVirtual, /*Derived=*/0);
     if (IsVirtual) {
       // ComputeBaseInfo has already added this base for us.
       continue;
@@ -248,14 +270,14 @@ void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD,
 }
 
 bool
-EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info, 
+EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info, 
                                                  uint64_t Offset) {
   if (!CanPlaceSubobjectAtOffset(Info->Class, Offset))
     return false;
 
   // Traverse all non-virtual bases.
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
-    BaseInfo* Base = Info->Bases[I];
+    BaseSubobjectInfo* Base = Info->Bases[I];
     if (Base->IsVirtual)
       continue;
 
@@ -267,7 +289,7 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info,
   }
 
   if (Info->PrimaryVirtualBase) {
-    BaseInfo *PrimaryVirtualBaseInfo = 
+    BaseSubobjectInfo *PrimaryVirtualBaseInfo = 
       VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
     assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
 
@@ -294,13 +316,13 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseInfo *Info,
   return true;
 }
 
-void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseInfo *Info, 
+void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info, 
                                                   uint64_t Offset) {
   AddSubobjectAtOffset(Info->Class, Offset);
   
   // Traverse all non-virtual bases.
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
-    BaseInfo* Base = Info->Bases[I];
+    BaseSubobjectInfo* Base = Info->Bases[I];
     if (Base->IsVirtual)
       continue;
     
@@ -311,7 +333,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseInfo *Info,
   }
 
   if (Info->PrimaryVirtualBase) {
-    BaseInfo *PrimaryVirtualBaseInfo = 
+    BaseSubobjectInfo *PrimaryVirtualBaseInfo = 
     VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
     assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
     
@@ -341,7 +363,7 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
   if (!SizeOfLargestEmptySubobject)
     return true;
 
-  BaseInfo *Info;
+  BaseSubobjectInfo *Info;
   
   if (BaseIsVirtual)
     Info = VirtualBaseInfo.lookup(RD);
