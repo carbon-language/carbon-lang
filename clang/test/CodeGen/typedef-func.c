@@ -2,7 +2,7 @@
 
 // PR2414
 struct mad_frame{};
-enum mad_flow {};
+enum mad_flow {ont};
 
 typedef enum mad_flow filter_func_t(void *, struct mad_frame *);
 

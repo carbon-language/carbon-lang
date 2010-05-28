@@ -51,7 +51,7 @@ void test4() {
 }
 
 // PR2416
-enum someenum {};  // expected-warning {{use of empty enum extension}}
+enum someenum {};  // expected-error {{use of empty union}}
 
 // <rdar://problem/6093889>
 enum e0 { // expected-note {{previous definition is here}}

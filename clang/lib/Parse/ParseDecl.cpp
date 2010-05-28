@@ -2013,7 +2013,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
 
   // C does not allow an empty enumerator-list, C++ does [dcl.enum].
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
-    Diag(Tok, diag::ext_empty_struct_union_enum) << "enum";
+    Diag(Tok, diag::error_empty_enum);
 
   llvm::SmallVector<DeclPtrTy, 32> EnumConstantDecls;
 

@@ -126,6 +126,6 @@ void test_x() {
   x2(5); // expected-warning{{incompatible integer to pointer conversion passing 'int' to parameter of type 'int *'}}
 }
 
-enum e0 {}; 
+enum e0 {one}; 
 void f3(); 
 void f3(enum e0 x) {}

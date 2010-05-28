@@ -35,6 +35,7 @@ def ext_thread_before : Extension<"'__thread' before 'static'">;
 
 def ext_empty_struct_union_enum : Extension<"use of empty %0 extension">;
 
+def error_empty_enum : Error<"use of empty union">;
 def err_invalid_sign_spec : Error<"'%0' cannot be signed or unsigned">;
 def err_invalid_short_spec : Error<"'short %0' is invalid">;
 def err_invalid_long_spec : Error<"'long %0' is invalid">;
