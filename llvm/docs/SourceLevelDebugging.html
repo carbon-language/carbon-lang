@@ -401,7 +401,7 @@ height="369">
   metadata, ;; Reference to type descriptor
   i1,       ;; True if the global is local to compile unit (static)
   i1,       ;; True if the global is defined in the compile unit (not extern)
-  {  }*     ;; Reference to the global variable
+  {}*       ;; Reference to the global variable
 }
 </pre>
 </div>
@@ -782,11 +782,11 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_declare">llvm.dbg.declare</a>({ }*, metadata)
+  void %<a href="#format_common_declare">llvm.dbg.declare</a>({}*, metadata)
 </pre>
 
 <p>This intrinsic provides information about a local element (ex. variable.) The
-   first argument is the alloca for the variable, cast to a <tt>{ }*</tt>. The
+   first argument is the alloca for the variable, cast to a <tt>{}*</tt>. The
    second argument is
    the <tt>%<a href="#format_variables">llvm.dbg.variable</a></tt> containing
    the description of the variable. </p>
@@ -854,14 +854,14 @@ entry:
   %X = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=4]
   %Y = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=4]
   %Z = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=3]
-  %0 = bitcast i32* %X to { }*                    ; &lt;{ }*&gt; [#uses=1]
-  call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7
+  %0 = bitcast i32* %X to {}*                     ; &lt;{}*&gt; [#uses=1]
+  call void @llvm.dbg.declare({}* %0, metadata !0), !dbg !7
   store i32 21, i32* %X, !dbg !8
-  %1 = bitcast i32* %Y to { }*                    ; &lt;{ }*&gt; [#uses=1]
-  call void @llvm.dbg.declare({ }* %1, metadata !9), !dbg !10
+  %1 = bitcast i32* %Y to {}*                     ; &lt;{}*&gt; [#uses=1]
+  call void @llvm.dbg.declare({}* %1, metadata !9), !dbg !10
   store i32 22, i32* %Y, !dbg !11
-  %2 = bitcast i32* %Z to { }*                    ; &lt;{ }*&gt; [#uses=1]
-  call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
+  %2 = bitcast i32* %Z to {}*                     ; &lt;{}*&gt; [#uses=1]
+  call void @llvm.dbg.declare({}* %2, metadata !12), !dbg !14
   store i32 23, i32* %Z, !dbg !15
   %tmp = load i32* %X, !dbg !16                   ; &lt;i32&gt; [#uses=1]
   %tmp1 = load i32* %Y, !dbg !16                  ; &lt;i32&gt; [#uses=1]
@@ -872,7 +872,7 @@ entry:
   ret void, !dbg !18
 }
 
-declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
+declare void @llvm.dbg.declare({}*, metadata) nounwind readnone
 
 !0 = metadata !{i32 459008, metadata !1, metadata !"X", 
                 metadata !3, i32 2, metadata !6}; [ DW_TAG_auto_variable ]
@@ -914,7 +914,7 @@ declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
 
 <div class="doc_code">
 <pre>
-call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7   
+call void @llvm.dbg.declare({}* %0, metadata !0), !dbg !7   
 </pre>
 </div>
 
@@ -949,7 +949,7 @@ call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7
 
 <div class="doc_code">
 <pre>
-call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
+call void @llvm.dbg.declare({}* %2, metadata !12), !dbg !14
 </pre>
 </div>
 

@@ -503,15 +503,15 @@
 <a href="#identifiers">@.LC0</a> = <a href="#linkage_internal">internal</a> <a href="#globalvars">constant</a> <a href="#t_array">[13 x i8]</a> c"hello world\0A\00"    <i>; [13 x i8]*</i>
 
 <i>; External declaration of the puts function</i>
-<a href="#functionstructure">declare</a> i32 @puts(i8 *)                                     <i>; i32(i8 *)* </i>
+<a href="#functionstructure">declare</a> i32 @puts(i8*)                                     <i>; i32 (i8*)* </i>
 
 <i>; Definition of main function</i>
 define i32 @main() {                                        <i>; i32()* </i>
   <i>; Convert [13 x i8]* to i8  *...</i>
-  %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0   <i>; i8 *</i>
+  %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0   <i>; i8*</i>
 
   <i>; Call puts function to write out the string to stdout.</i>
-  <a href="#i_call">call</a> i32 @puts(i8 * %cast210)                             <i>; i32</i>
+  <a href="#i_call">call</a> i32 @puts(i8* %cast210)                             <i>; i32</i>
   <a href="#i_ret">ret</a> i32 0<br>}
 
 <i>; Named metadata</i>
@@ -1900,7 +1900,7 @@ Classifications</a> </div>
                     href="#t_array">array</a> of four <tt>i32</tt> values.</td>
   </tr>
   <tr class="layout">
-    <td class="left"><tt>i32 (i32 *) *</tt></td>
+    <td class="left"><tt>i32 (i32*) *</tt></td>
     <td class="left"> A <a href="#t_pointer">pointer</a> to a <a
       href="#t_function">function</a> that takes an <tt>i32*</tt>, returning an
       <tt>i32</tt>.</td>
@@ -5406,7 +5406,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
 <h5>Example:</h5>
 <pre>
   %retval = call i32 @test(i32 %argc)
-  call i32 (i8 *, ...)* @printf(i8 * %msg, i32 12, i8 42)      <i>; yields i32</i>
+  call i32 (i8*, ...)* @printf(i8* %msg, i32 12, i8 42)        <i>; yields i32</i>
   %X = tail call i32 @foo()                                    <i>; yields i32</i>
   %Y = tail call <a href="#callingconv">fastcc</a> i32 @foo()  <i>; yields i32</i>
   call void %foo(i8 97 signext)
@@ -5839,7 +5839,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare i8 *@llvm.frameaddress(i32 &lt;level&gt;)
+  declare i8* @llvm.frameaddress(i32 &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -5873,7 +5873,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare i8 *@llvm.stacksave()
+  declare i8* @llvm.stacksave()
 </pre>
 
 <h5>Overview:</h5>
@@ -5903,7 +5903,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.stackrestore(i8 * %ptr)
+  declare void @llvm.stackrestore(i8* %ptr)
 </pre>
 
 <h5>Overview:</h5>
@@ -6037,9 +6037,9 @@ LLVM</a>.</p>
    all bit widths however.</p>
 
 <pre>
-  declare void @llvm.memcpy.p0i8.p0i8.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+  declare void @llvm.memcpy.p0i8.p0i8.i32(i8* &lt;dest&gt;, i8* &lt;src&gt;,
                                           i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
-  declare void @llvm.memcpy.p0i8.p0i8.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+  declare void @llvm.memcpy.p0i8.p0i8.i64(i8* &lt;dest&gt;, i8* &lt;src&gt;,
                                           i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
 </pre>
 
@@ -6091,9 +6091,9 @@ LLVM</a>.</p>
    widths however.</p>
 
 <pre>
-  declare void @llvm.memmove.p0i8.p0i8.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+  declare void @llvm.memmove.p0i8.p0i8.i32(i8* &lt;dest&gt;, i8* &lt;src&gt;,
                                            i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
-  declare void @llvm.memmove.p0i8.p0i8.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
+  declare void @llvm.memmove.p0i8.p0i8.i64(i8* &lt;dest&gt;, i8* &lt;src&gt;,
                                            i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
 </pre>
 
@@ -6147,9 +6147,9 @@ LLVM</a>.</p>
    widths however.</p>
 
 <pre>
-  declare void @llvm.memset.p0i8.i32(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
+  declare void @llvm.memset.p0i8.i32(i8* &lt;dest&gt;, i8 &lt;val&gt;,
                                      i32 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
-  declare void @llvm.memset.p0i8.i64(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
+  declare void @llvm.memset.p0i8.i64(i8* &lt;dest&gt;, i8 &lt;val&gt;,
                                      i64 &lt;len&gt;, i32 &lt;align&gt;, i1 &lt;isvolatile&gt;)
 </pre>
 
