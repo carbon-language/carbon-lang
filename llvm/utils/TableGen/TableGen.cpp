@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
       EDEmitter(Records).run(Out);
       break;
     case GenNeonHeader:
-      NeonEmitter(Records).run(*Out);
+      NeonEmitter(Records).run(Out);
       break;
     case PrintEnums:
     {
