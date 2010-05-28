@@ -605,11 +605,29 @@ unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
 }
 
 Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
-  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+  unsigned NumVals = N->getNumValues();
+  if (!NumVals)
+    return Sched::RegPressure;
+
+  for (unsigned i = 0; i != NumVals; ++i) {
     EVT VT = N->getValueType(i);
     if (VT.isFloatingPoint() || VT.isVector())
       return Sched::Latency;
   }
+
+  if (!N->isMachineOpcode())
+    return Sched::RegPressure;
+
+  // Load are scheduled for latency even if there instruction itinerary
+  // is not available.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
+  if (TID.mayLoad())
+    return Sched::Latency;
+
+  const InstrItineraryData &Itins = getTargetMachine().getInstrItineraryData();
+  if (!Itins.isEmpty() && Itins.getStageLatency(TID.getSchedClass()) > 2)
+    return Sched::Latency;
   return Sched::RegPressure;
 }
 
