@@ -2,8 +2,10 @@
 
 namespace test0 {
   class A {
-    protected: int x; // expected-note 3 {{declared}}
-    static int sx; // expected-note 3 {{declared}}
+    protected: int x; // expected-note 3 {{declared}} \
+    // expected-note {{member is declared here}}
+    static int sx; // expected-note 3 {{declared}} \
+    // expected-note {{member is declared here}}
   };
   class B : public A {
   };
@@ -136,8 +138,8 @@ namespace test3 {
 namespace test4 {
   class C;
   class A {
-    protected: int x; // expected-note 2 {{declared}}
-    static int sx;
+    protected: int x; // expected-note 3 {{declared}}
+    static int sx;    // expected-note 3{{member is declared here}}
     static void test(C&);
   };
   class B : public A {
@@ -174,8 +176,8 @@ namespace test4 {
 namespace test5 {
   class D;
   class A {
-    protected: int x;
-    static int sx;
+    protected: int x; // expected-note 3{{member is declared here}}
+    static int sx; // expected-note 3{{member is declared here}}
     static void test(D&);
   };
   class B : public A {
@@ -326,11 +328,12 @@ namespace test8 {
 }
 
 namespace test9 {
-  class A {
-  protected: int foo(); // expected-note 8 {{declared}}
+  class A { // expected-note {{member is declared here}}
+  protected: int foo(); // expected-note 8 {{declared}} \
+    // expected-note {{member is declared here}}
   };
 
-  class B : public A {
+  class B : public A { // expected-note {{member is declared here}}
     friend class D;
   };
 

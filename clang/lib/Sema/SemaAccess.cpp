@@ -870,6 +870,10 @@ static void DiagnoseAccessPath(Sema &S,
         << BS->getSourceRange()
         << (BaseAccess == AS_protected)
         << (BS->getAccessSpecifierAsWritten() == AS_none);
+      
+      if (D)
+        S.Diag(D->getLocation(), diag::note_field_decl);
+      
       return;
     }
   }

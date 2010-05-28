@@ -121,7 +121,7 @@ namespace test2 {
     friend struct ilist_walker_bad;
     X *Prev;
   protected:
-    X *getPrev() { return Prev; }
+    X *getPrev() { return Prev; } // expected-note{{member is declared here}}
   };
 
   class ilist_node : private ilist_half_node { // expected-note {{declared private here}} expected-note {{constrained by private inheritance here}}

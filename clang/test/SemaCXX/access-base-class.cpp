@@ -61,7 +61,7 @@ namespace T5 {
 namespace T6 {
   class C;
   
-  class A {};
+  class A {}; // expected-note{{member is declared here}}
   
   class B : private A { // expected-note {{declared private here}} expected-note {{constrained by private inheritance here}}
     void f(C* c);

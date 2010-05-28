@@ -27,7 +27,7 @@ namespace test1 {
   };
 
   struct D {
-    public: static int x;
+    public: static int x; // expected-note{{member is declared here}}
     static int test() { return x; }
   };
   struct E : private D { // expected-note{{constrained by private inheritance}}
@@ -45,7 +45,7 @@ namespace test1 {
 
 namespace test2 {
   class A {
-  protected: static int x;
+  protected: static int x; // expected-note{{member is declared here}}
   };
 
   class B : private A {}; // expected-note {{private inheritance}}

@@ -54,8 +54,10 @@ namespace test0 {
 //   of the base class are accessible as protected members of the
 //   derived class.
 namespace test1 {
-  class Base {
-  public: int pub; static int spub;
+  class Base { // expected-note 6{{member is declared here}}
+  public: 
+    int pub; // expected-note{{member is declared here}}
+    static int spub; // expected-note{{member is declared here}}
   protected: int prot; static int sprot; // expected-note 4 {{declared protected here}}
   private: int priv; static int spriv; // expected-note 8 {{declared private here}}
   };
@@ -102,13 +104,15 @@ namespace test1 {
 //   the base class are accessible as private members of the derived
 //   class.
 namespace test2 {
-  class Base {
+  class Base { // expected-note 6{{member is declared here}}
   public:
-    int pub;
-    static int spub;
+    int pub; // expected-note{{member is declared here}}
+    static int spub; // expected-note{{member is declared here}}
   protected:
-    int prot; // expected-note {{declared protected here}}
-    static int sprot; // expected-note {{declared protected here}}
+    int prot; // expected-note {{declared protected here}} \
+    // expected-note{{member is declared here}}
+    static int sprot; // expected-note {{declared protected here}} \
+    // expected-note{{member is declared here}}
   private:
     int priv; // expected-note 4 {{declared private here}}
     static int spriv; // expected-note 4 {{declared private here}}
