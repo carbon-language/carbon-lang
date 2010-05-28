@@ -29,6 +29,7 @@
 #include "InstrInfoEmitter.h"
 #include "IntrinsicEmitter.h"
 #include "LLVMCConfigurationEmitter.h"
+#include "NeonEmitter.h"
 #include "OptParserEmitter.h"
 #include "Record.h"
 #include "RegisterInfoEmitter.h"
@@ -63,6 +64,7 @@ enum ActionType {
   GenTgtIntrinsic,
   GenLLVMCConf,
   GenEDHeader, GenEDInfo,
+  GenNeonHeader,
   PrintEnums
 };
 
@@ -119,6 +121,8 @@ namespace {
                                "Generate enhanced disassembly info header"),
                     clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
                                "Generate enhanced disassembly info"),
+                    clEnumValN(GenNeonHeader, "gen-arm-neon-header",
+                               "Generate arm_neon.h for clang"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValEnd));
@@ -279,6 +283,9 @@ int main(int argc, char **argv) {
       break;
     case GenEDInfo:
       EDEmitter(Records).run(Out);
+      break;
+    case GenNeonHeader:
+      NeonEmitter(Records).run(*Out);
       break;
     case PrintEnums:
     {
