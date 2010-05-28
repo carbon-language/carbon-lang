@@ -211,19 +211,19 @@ template <class _E>
 inline
 void
 rethrow_if_nested(const _E& __e, typename enable_if<
-                                   !is_same<_E, nested_exception>::value &&
-                                   is_convertible<_E*, nested_exception*>::value
+                                   is_polymorphic<_E>::value
                                                    >::type* = 0)
 {
-    static_cast<const nested_exception&>(__e).rethrow_nested();
+    const nested_exception* __nep = dynamic_cast<const nested_exception*>(&__e);
+    if (__nep)
+        __nep->rethrow_nested();
 }
 
 template <class _E>
 inline
 void
 rethrow_if_nested(const _E& __e, typename enable_if<
-                                   is_same<_E, nested_exception>::value ||
-                                   !is_convertible<_E*, nested_exception*>::value
+                                   !is_polymorphic<_E>::value
                                                    >::type* = 0)
 {
 }

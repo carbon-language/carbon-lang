@@ -22,19 +22,18 @@ class A
     int data_;
 public:
     explicit A(int data) : data_(data) {}
+    virtual ~A() {}
 
     friend bool operator==(const A& x, const A& y) {return x.data_ == y.data_;}
 };
 
 class B
-    : public std::nested_exception
+    : public std::nested_exception,
+      public A
 {
-    int data_;
 public:
-    explicit B(int data) : data_(data) {}
-    B(const B& b) : data_(b.data_) {}
-
-    friend bool operator==(const B& x, const B& y) {return x.data_ == y.data_;}
+    explicit B(int data) : A(data) {}
+    B(const B& b) : A(b) {}
 };
 
 int main()
@@ -56,18 +55,35 @@ int main()
         {
             throw B(5);
         }
-        catch (const B& b0)
+        catch (const B& b)
         {
             try
             {
-                B b = b0;
-                std::rethrow_if_nested(b);
-                assert(false);
+                throw b;
             }
-            catch (const B& b)
+            catch (const A& a)
             {
-                assert(b == B(5));
+                try
+                {
+                    std::rethrow_if_nested(a);
+                    assert(false);
+                }
+                catch (const B& b)
+                {
+                    assert(b == B(5));
+                }
             }
+        }
+    }
+    {
+        try
+        {
+            std::rethrow_if_nested(1);
+            assert(true);
+        }
+        catch (...)
+        {
+            assert(false);
         }
     }
 }
