@@ -559,10 +559,25 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
     break;
   case llvm::Triple::Darwin:
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
-                                "i686-apple-darwin10", "", "x86_64", triple);
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
-                                "i686-apple-darwin8", "", "", triple);
+    switch (triple.getArch()) {
+    default: break;
+
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+                                  "i686-apple-darwin10", "", "x86_64", triple);
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
+                                  "i686-apple-darwin8", "", "", triple);
+      break;
+
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+                                  "arm-apple-darwin10", "v7", "", triple);
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+                                  "arm-apple-darwin10", "v6", "", triple);
+      break;
+    }
     break;
   case llvm::Triple::DragonFly:
     AddPath("/usr/include/c++/4.1", System, true, false, false);
