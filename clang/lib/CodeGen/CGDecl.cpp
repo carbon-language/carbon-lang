@@ -505,10 +505,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
-    // Downcast the VLA size expression
-    VLASize = Builder.CreateIntCast(VLASize, llvm::Type::getInt32Ty(VMContext),
-                                    false, "tmp");
-
     // Allocate memory for the array.
     llvm::AllocaInst *VLA = 
       Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext), VLASize, "vla");
