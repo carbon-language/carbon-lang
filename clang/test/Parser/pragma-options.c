@@ -9,4 +9,4 @@
 #pragma options align=natural
 #pragma options align=reset
 #pragma options align=mac68k
-/* expected-warning {{unsupported alignment option}} */ #pragma options align=power
+#pragma options align=power
