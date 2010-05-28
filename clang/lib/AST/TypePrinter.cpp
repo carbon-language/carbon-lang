@@ -452,11 +452,13 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
       if (!HasKindDecoration)
         OS << " " << D->getKindName();
 
-      PresumedLoc PLoc = D->getASTContext().getSourceManager().getPresumedLoc(
-        D->getLocation());
-      OS << " at " << PLoc.getFilename()
-         << ':' << PLoc.getLine()
-         << ':' << PLoc.getColumn();
+      if (D->getLocation().isValid()) {
+        PresumedLoc PLoc = D->getASTContext().getSourceManager().getPresumedLoc(
+          D->getLocation());
+        OS << " at " << PLoc.getFilename()
+           << ':' << PLoc.getLine()
+           << ':' << PLoc.getColumn();
+      }
     }
     
     OS << '>';
