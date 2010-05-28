@@ -371,7 +371,7 @@ entry:
 ready&gt; <b>testfunc(4, 10);</b>
 define double @""() {
 entry:
-        %calltmp = call double @testfunc( double 4.000000e+00, double 1.000000e+01 )
+        %calltmp = call double @testfunc(double 4.000000e+00, double 1.000000e+01)
         ret double %calltmp
 }
 
@@ -410,9 +410,9 @@ ready&gt; <b>def foo(x) sin(x)*sin(x) + cos(x)*cos(x);</b>
 Read function definition:
 define double @foo(double %x) {
 entry:
-        %calltmp = call double @sin( double %x )
+        %calltmp = call double @sin(double %x)
         %multmp = fmul double %calltmp, %calltmp
-        %calltmp2 = call double @cos( double %x )
+        %calltmp2 = call double @cos(double %x)
         %multmp4 = fmul double %calltmp2, %calltmp2
         %addtmp = fadd double %multmp, %multmp4
         ret double %addtmp
