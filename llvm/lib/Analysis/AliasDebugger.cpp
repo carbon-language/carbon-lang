@@ -45,8 +45,12 @@ namespace {
       InitializeAliasAnalysis(this);                 // set up super class
 
       for(Module::global_iterator I = M.global_begin(),
-            E = M.global_end(); I != E; ++I)
+            E = M.global_end(); I != E; ++I) {
         Vals.insert(&*I);
+        for (User::const_op_iterator OI = I->op_begin(),
+             OE = I->op_end(); OI != OE; ++OI)
+          Vals.insert(*OI);
+      }
 
       for(Module::iterator I = M.begin(),
             E = M.end(); I != E; ++I){
@@ -58,8 +62,12 @@ namespace {
           for (Function::const_iterator FI = I->begin(), FE = I->end();
                FI != FE; ++FI) 
             for (BasicBlock::const_iterator BI = FI->begin(), BE = FI->end();
-                 BI != BE; ++BI)
+                 BI != BE; ++BI) {
               Vals.insert(&*BI);
+              for (User::const_op_iterator OI = BI->op_begin(),
+                   OE = BI->op_end(); OI != OE; ++OI)
+                Vals.insert(*OI);
+            }
         }
         
       }
