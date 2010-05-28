@@ -468,3 +468,12 @@ define i1 @test37() nounwind {
                    getelementptr ([1 x i8]* @A37, i64 1, i64 0)
   ret i1 %t
 }
+
+; Test index promotion
+define i32* @test38(i32* %I, i32 %n) {
+        %A = getelementptr i32* %I, i32 %n
+        ret i32* %A
+; CHECK: @test38
+; CHECK: = sext i32 %n to i64
+; CHECK: %A = getelementptr i32* %I, i64 %
+}
