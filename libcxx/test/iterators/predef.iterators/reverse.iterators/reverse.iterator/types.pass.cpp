@@ -18,11 +18,11 @@
 // protected: 
 //   Iter current; 
 // public: 
-//   typedef Iter iterator_type; 
-//   typedef Iter::value_type value_type; 
-//   typedef Iter::difference_type difference_type; 
-//   typedef Iter::reference reference; 
-//   typedef Iter::pointer pointer; 
+//   iterator<typename iterator_traits<Iterator>::iterator_category,
+//   typename iterator_traits<Iterator>::value_type,
+//   typename iterator_traits<Iterator>::difference_type,
+//   typename iterator_traits<Iterator>::pointer,
+//   typename iterator_traits<Iterator>::reference> {
 // };
 
 #include <iterator>
@@ -49,7 +49,7 @@ test()
     static_assert((std::is_same<typename R::value_type, typename T::value_type>::value), "");
     static_assert((std::is_same<typename R::difference_type, typename T::difference_type>::value), "");
     static_assert((std::is_same<typename R::reference, typename T::reference>::value), "");
-    static_assert((std::is_same<typename R::pointer, It>::value), "");
+    static_assert((std::is_same<typename R::pointer, typename std::iterator_traits<It>::pointer>::value), "");
     static_assert((std::is_same<typename R::iterator_category, typename T::iterator_category>::value), "");
 }
 
