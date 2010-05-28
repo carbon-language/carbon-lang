@@ -249,6 +249,10 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                                         SourceLocation NewLoc,
                                         bool *MissingExceptionSpecification,
                                      bool *MissingEmptyExceptionSpecification)  {
+  // Just completely ignore this under -fno-exceptions.
+  if (!getLangOptions().Exceptions)
+    return false;
+
   if (MissingExceptionSpecification)
     *MissingExceptionSpecification = false;
 
@@ -318,6 +322,11 @@ bool Sema::CheckExceptionSpecSubset(
     const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
     const FunctionProtoType *Superset, SourceLocation SuperLoc,
     const FunctionProtoType *Subset, SourceLocation SubLoc) {
+
+  // Just auto-succeed under -fno-exceptions.
+  if (!getLangOptions().Exceptions)
+    return false;
+
   // FIXME: As usual, we could be more specific in our error messages, but
   // that better waits until we've got types with source locations.
 
