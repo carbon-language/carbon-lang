@@ -564,6 +564,9 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
 
     case llvm::Triple::ppc: 
     case llvm::Triple::ppc64:
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+                                  "powerpc-apple-darwin10", "", "ppc64", 
+                                  triple);
       AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
                                   "powerpc-apple-darwin10", "", "ppc64", 
                                   triple);
