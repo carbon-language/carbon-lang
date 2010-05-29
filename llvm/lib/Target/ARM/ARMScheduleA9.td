@@ -28,6 +28,61 @@ def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 //
 def CortexA9Itineraries : ProcessorItineraries<
   [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1, A9_Issue], [
+  // Two fully-pipelined integer ALU pipelines
+  // FIXME: There are no operand latencies for these instructions at all!
+  //
+  // Move instructions, unconditional
+  InstrItinData<IIC_iMOVi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMOVr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsr   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  //
+  // No operand cycles
+  InstrItinData<IIC_iALUx    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+  //
+  // Binary Instructions that produce a result
+  InstrItinData<IIC_iALUi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iALUr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2, 2]>,
+  InstrItinData<IIC_iALUsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iALUsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
+  //
+  // Unary Instructions that produce a result
+  InstrItinData<IIC_iUNAr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iUNAsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iUNAsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  //
+  // Compare instructions
+  InstrItinData<IIC_iCMPi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMPr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iCMPsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMPsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  //
+  // Move instructions, conditional
+  InstrItinData<IIC_iCMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+
+  // Integer multiply pipeline
+  //
+  InstrItinData<IIC_iMUL16   , [InstrStage<1, [A9_Pipe1], 0>,
+                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1]>,
+  InstrItinData<IIC_iMAC16   , [InstrStage<1, [A9_Pipe1], 0>,
+                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1, 2]>,
+  InstrItinData<IIC_iMUL32   , [InstrStage<1, [A9_Pipe1], 0>,
+                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1]>,
+  InstrItinData<IIC_iMAC32   , [InstrStage<1, [A9_Pipe1], 0>,
+                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1, 2]>,
+  InstrItinData<IIC_iMUL64   , [InstrStage<2, [A9_Pipe1], 0>,
+                                InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
+  InstrItinData<IIC_iMAC64   , [InstrStage<2, [A9_Pipe1], 0>,
+                                InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
+
+  // Branch
+  //
+  // no delay slots, so the latency of a branch is unimportant
+  InstrItinData<IIC_Br       , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+
   // VFP and NEON shares the same register file. This means that every VFP
   // instruction should wait for full completion of the consecutive NEON
   // instruction and vice-versa. We model this behavior with two artificial FUs:
