@@ -77,7 +77,66 @@ def CortexA9Itineraries : ProcessorItineraries<
                                 InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
   InstrItinData<IIC_iMAC64   , [InstrStage<2, [A9_Pipe1], 0>,
                                 InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
+  // Integer load pipeline
+  // FIXME: The timings are some rough approximations
+  //
+  // Immediate offset
+  InstrItinData<IIC_iLoadi   , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [3, 1]>,
+  //
+  // Register offset
+  InstrItinData<IIC_iLoadr   , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [3, 1, 1]>,
+  //
+  // Scaled register offset
+  InstrItinData<IIC_iLoadsi  , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [4, 1, 1]>,
+  //
+  // Immediate offset with update
+  InstrItinData<IIC_iLoadiu  , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [3, 2, 1]>,
+  //
+  // Register offset with update
+  InstrItinData<IIC_iLoadru  , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [3, 2, 1, 1]>,
+  //
+  // Scaled register offset with update
+  InstrItinData<IIC_iLoadsiu , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [4, 3, 1, 1]>,
+  //
+  // Load multiple
+  InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>]>,
 
+  // Integer store pipeline
+  ///
+  // Immediate offset
+  InstrItinData<IIC_iStorei  , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [3, 1]>,
+  //
+  // Register offset
+  InstrItinData<IIC_iStorer  , [InstrStage<1, [ A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [3, 1, 1]>,
+  //
+  // Scaled register offset
+  InstrItinData<IIC_iStoresi , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [3, 1, 1]>,
+  //
+  // Immediate offset with update
+  InstrItinData<IIC_iStoreiu , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [2, 3, 1]>,
+  //
+  // Register offset with update
+  InstrItinData<IIC_iStoreru , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>], [2, 3, 1, 1]>,
+  //
+  // Scaled register offset with update
+  InstrItinData<IIC_iStoresiu, [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<2, [A9_LSPipe]>], [3, 3, 1, 1]>,
+  //
+  // Store multiple
+  InstrItinData<IIC_iStorem  , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>]>,
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant
