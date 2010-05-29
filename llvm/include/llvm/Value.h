@@ -210,7 +210,7 @@ public:
     UndefValueVal,            // This is an instance of UndefValue
     BlockAddressVal,          // This is an instance of BlockAddress
     ConstantExprVal,          // This is an instance of ConstantExpr
-    ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
+    ConstantAggregateZeroVal, // This is an instance of ConstantAggregateZero
     ConstantIntVal,           // This is an instance of ConstantInt
     ConstantFPVal,            // This is an instance of ConstantFP
     ConstantArrayVal,         // This is an instance of ConstantArray
