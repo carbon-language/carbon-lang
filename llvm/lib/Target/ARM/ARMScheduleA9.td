@@ -16,7 +16,6 @@
 // Reference Manual".
 //
 // Functional units
-def A9_Issue   : FuncUnit; // issue
 def A9_Pipe0   : FuncUnit; // pipeline 0
 def A9_Pipe1   : FuncUnit; // pipeline 1
 def A9_LSPipe  : FuncUnit; // LS pipe
@@ -27,7 +26,7 @@ def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 // Dual issue pipeline represented by A9_Pipe0 | A9_Pipe1
 //
 def CortexA9Itineraries : ProcessorItineraries<
-  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1, A9_Issue], [
+  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1], [
   // Two fully-pipelined integer ALU pipelines
   // FIXME: There are no operand latencies for these instructions at all!
   //
@@ -332,57 +331,45 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_NPipe]>], [1, 1, 1]>,
   //
   // Single-precision FP Load
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // Double-precision FP Load
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpLoad64, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // FP Load Multiple
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpLoadm,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // Single-precision FP Store
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // Double-precision FP Store
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpStore64,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // FP Store Multiple
-  // use A9_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpStorem, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
@@ -392,9 +379,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // VLD2
@@ -402,9 +388,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD2,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>], [2, 2, 1]>,
   //
   // VLD3
@@ -412,9 +397,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD3,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>], [2, 2, 2, 1]>,
   //
   // VLD4
@@ -422,9 +406,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>], [2, 2, 2, 2, 1]>,
   //
   // VST
@@ -432,9 +415,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VST,      [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue], 0>, 
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_LSPipe], 0>,
+                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_LSPipe]>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // Double-register Integer Unary
