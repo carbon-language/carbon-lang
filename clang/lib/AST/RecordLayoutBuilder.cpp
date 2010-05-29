@@ -44,9 +44,9 @@ struct BaseSubobjectInfo {
   /// Bases - Information about the base subobjects.
   llvm::SmallVector<BaseSubobjectInfo*, 4> Bases;
 
-  /// PrimaryVirtualBase - Holds the base info for the primary virtual base of
-  /// this base info (if one exists).
-  const CXXRecordDecl *PrimaryVirtualBase;
+  /// PrimaryVirtualBaseInfo - Holds the base info for the primary virtual base
+  /// of this base info (if one exists).
+  BaseSubobjectInfo *PrimaryVirtualBaseInfo;
 
   // FIXME: Document.
   const BaseSubobjectInfo *Derived;
@@ -68,13 +68,6 @@ class EmptySubobjectMap {
   /// ComputeEmptySubobjectSizes - Compute the size of the largest base or
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
-
-  llvm::DenseMap<const CXXRecordDecl *, BaseSubobjectInfo *> VirtualBaseInfo;
-  llvm::DenseMap<const CXXRecordDecl *, BaseSubobjectInfo *> NonVirtualBaseInfo;
-  
-  BaseSubobjectInfo *ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
-                                     const BaseSubobjectInfo *Derived);
-  void ComputeBaseInfo();
   
   bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
   void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
@@ -104,8 +97,6 @@ public:
   EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
     : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) {
       ComputeEmptySubobjectSizes();
-      
-      ComputeBaseInfo();
   }
 
   /// CanPlaceBaseAtOffset - Return whether the given base class can be placed
@@ -169,74 +160,6 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   }
 }
 
-BaseSubobjectInfo *
-EmptySubobjectMap::ComputeBaseInfo(const CXXRecordDecl *RD, bool IsVirtual,
-                                   const BaseSubobjectInfo *Derived) {
-  BaseSubobjectInfo *Info;
-  
-  if (IsVirtual) {
-    BaseSubobjectInfo *&InfoSlot = VirtualBaseInfo[RD];
-    if (InfoSlot) {
-      assert(InfoSlot->Class == RD && "Wrong class for virtual base info!");
-      return InfoSlot;
-    }
-
-    InfoSlot = new (Context) BaseSubobjectInfo;
-    Info = InfoSlot;
-  } else {
-    Info = new (Context) BaseSubobjectInfo;
-  }
-  
-  Info->Class = RD;
-  Info->IsVirtual = IsVirtual;
-  Info->Derived = Derived;
-  Info->PrimaryVirtualBase = 0;
-  
-  if (RD->getNumVBases()) {
-    // Check if this class has a primary virtual base.
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    if (Layout.getPrimaryBaseWasVirtual()) {
-      Info->PrimaryVirtualBase = Layout.getPrimaryBase();
-      assert(Info->PrimaryVirtualBase && 
-             "Didn't have a primary virtual base!");
-    }
-  }
-
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    bool IsVirtual = I->isVirtual();
-    
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-    
-    Info->Bases.push_back(ComputeBaseInfo(BaseDecl, IsVirtual, Info));
-  }
-  
-  return Info;
-}
-
-void EmptySubobjectMap::ComputeBaseInfo() {
-  for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
-       E = Class->bases_end(); I != E; ++I) {
-    bool IsVirtual = I->isVirtual();
-
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-    
-    BaseSubobjectInfo *Info = 
-      ComputeBaseInfo(BaseDecl, IsVirtual, /*Derived=*/0);
-    if (IsVirtual) {
-      // ComputeBaseInfo has already added this base for us.
-      continue;
-    }
-
-    // Add the base info to the map of non-virtual bases.
-    assert(!NonVirtualBaseInfo.count(BaseDecl) &&
-           "Non-virtual base already exists!");
-    NonVirtualBaseInfo.insert(std::make_pair(BaseDecl, Info));
-  }
-}
-
 bool
 EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
                                              uint64_t Offset) {
@@ -288,10 +211,8 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
       return false;
   }
 
-  if (Info->PrimaryVirtualBase) {
-    BaseSubobjectInfo *PrimaryVirtualBaseInfo = 
-      VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
-    assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
+  if (Info->PrimaryVirtualBaseInfo) {
+    BaseSubobjectInfo *PrimaryVirtualBaseInfo = Info->PrimaryVirtualBaseInfo;
 
     if (Info == PrimaryVirtualBaseInfo->Derived) {
       if (!CanPlaceBaseSubobjectAtOffset(PrimaryVirtualBaseInfo, Offset))
@@ -332,10 +253,8 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
     UpdateEmptyBaseSubobjects(Base, BaseOffset);
   }
 
-  if (Info->PrimaryVirtualBase) {
-    BaseSubobjectInfo *PrimaryVirtualBaseInfo = 
-    VirtualBaseInfo.lookup(Info->PrimaryVirtualBase);    
-    assert(PrimaryVirtualBaseInfo && "Didn't find base info!");
+  if (Info->PrimaryVirtualBaseInfo) {
+    BaseSubobjectInfo *PrimaryVirtualBaseInfo = Info->PrimaryVirtualBaseInfo;
     
     if (Info == PrimaryVirtualBaseInfo->Derived)
       UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset);
@@ -363,19 +282,22 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
   if (!SizeOfLargestEmptySubobject)
     return true;
 
+  // FIXME: Re-enable this.
+#if 0
   BaseSubobjectInfo *Info;
-  
+
   if (BaseIsVirtual)
     Info = VirtualBaseInfo.lookup(RD);
   else
     Info = NonVirtualBaseInfo.lookup(RD);
-  
+
   if (!CanPlaceBaseSubobjectAtOffset(Info, Offset))
     return false;
 
   // We are able to place the base at this offset. Make sure to update the
   // empty base subobject map.
   UpdateEmptyBaseSubobjects(Info, Offset);
+#endif
   return true;
 }
 
@@ -606,9 +528,29 @@ class RecordLayoutBuilder {
   void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize);
   void LayoutBitField(const FieldDecl *D);
 
-  /// ComputeEmptySubobjectSizes - Compute the size of the largest base or
-  /// member subobject that is empty.
-  void ComputeEmptySubobjectSizes(const CXXRecordDecl *RD);
+  /// BaseSubobjectInfoAllocator - Allocator for BaseSubobjectInfo objects.
+  llvm::SpecificBumpPtrAllocator<BaseSubobjectInfo> BaseSubobjectInfoAllocator;
+  
+  typedef llvm::DenseMap<const CXXRecordDecl *, BaseSubobjectInfo *>
+    BaseSubobjectInfoMapTy;
+
+  /// VirtualBaseInfo - Map from all the (direct or indirect) virtual bases
+  /// of the class we're laying out to their base subobject info.
+  BaseSubobjectInfoMapTy VirtualBaseInfo;
+  
+  /// NonVirtualBaseInfo - Map from all the direct non-virtual bases of the
+  /// class we're laying out to their base subobject info.
+  BaseSubobjectInfoMapTy NonVirtualBaseInfo;
+
+  /// ComputeBaseSubobjectInfo - Compute the base subobject information for the
+  /// bases of the given class.
+  void ComputeBaseSubobjectInfo(const CXXRecordDecl *RD);
+
+  /// ComputeBaseSubobjectInfo - Compute the base subobject information for a
+  /// single class and all of its base classes.
+  BaseSubobjectInfo *ComputeBaseSubobjectInfo(const CXXRecordDecl *RD, 
+                                              bool IsVirtual,
+                                              BaseSubobjectInfo *Derived);
 
   /// DeterminePrimaryBase - Determine the primary base of the given class.
   void DeterminePrimaryBase(const CXXRecordDecl *RD);
@@ -815,14 +757,127 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   UpdateAlignment(Context.Target.getPointerAlign(0));
 }
 
+BaseSubobjectInfo *
+RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD, 
+                                              bool IsVirtual,
+                                              BaseSubobjectInfo *Derived) {
+  BaseSubobjectInfo *Info;
+  
+  if (IsVirtual) {
+    // Check if we already have info about this virtual base.
+    BaseSubobjectInfo *&InfoSlot = VirtualBaseInfo[RD];
+    if (InfoSlot) {
+      assert(InfoSlot->Class == RD && "Wrong class for virtual base info!");
+      return InfoSlot;
+    }
+
+    // We don't, create it.
+    InfoSlot = new (BaseSubobjectInfoAllocator.Allocate()) BaseSubobjectInfo;
+    Info = InfoSlot;
+  } else {
+    Info = new (BaseSubobjectInfoAllocator.Allocate()) BaseSubobjectInfo;
+  }
+  
+  Info->Class = RD;
+  Info->IsVirtual = IsVirtual;
+  Info->Derived = 0;
+  Info->PrimaryVirtualBaseInfo = 0;
+  
+  const CXXRecordDecl *PrimaryVirtualBase = 0;
+  BaseSubobjectInfo *PrimaryVirtualBaseInfo = 0;
+
+  // Check if this base has a primary virtual base.
+  if (RD->getNumVBases()) {
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      // This base does have a primary virtual base.
+      PrimaryVirtualBase = Layout.getPrimaryBase();
+      assert(PrimaryVirtualBase && "Didn't have a primary virtual base!");
+      
+      // Now check if we have base subobject info about this primary base.
+      PrimaryVirtualBaseInfo = VirtualBaseInfo.lookup(PrimaryVirtualBase);
+      
+      if (PrimaryVirtualBaseInfo) {
+        if (PrimaryVirtualBaseInfo->Derived) {
+          // We did have info about this primary base, and it turns out that it
+          // has already been claimed as a primary virtual base for another
+          // base. 
+          PrimaryVirtualBase = 0;        
+        } else {
+          // We can claim this base as our primary base.
+          Info->PrimaryVirtualBaseInfo = PrimaryVirtualBaseInfo;
+          PrimaryVirtualBaseInfo->Derived = Info;
+        }
+      }
+    }
+  }
+
+  // Now go through all direct bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    bool IsVirtual = I->isVirtual();
+    
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    Info->Bases.push_back(ComputeBaseSubobjectInfo(BaseDecl, IsVirtual, Info));
+  }
+  
+  if (PrimaryVirtualBase && !PrimaryVirtualBaseInfo) {
+    // Traversing the bases must have created the base info for our primary
+    // virtual base.
+    PrimaryVirtualBaseInfo = VirtualBaseInfo.lookup(PrimaryVirtualBase);
+    assert(PrimaryVirtualBaseInfo &&
+           "Did not create a primary virtual base!");
+      
+    // Claim the primary virtual base as our primary virtual base.
+    Info->PrimaryVirtualBaseInfo = PrimaryVirtualBaseInfo;
+    PrimaryVirtualBaseInfo->Derived = Info;
+  }
+  
+  return Info;
+}
+
+void RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD) {
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    bool IsVirtual = I->isVirtual();
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    // Compute the base subobject info for this base.
+    BaseSubobjectInfo *Info = ComputeBaseSubobjectInfo(BaseDecl, IsVirtual, 0);
+
+    if (IsVirtual) {
+      // ComputeBaseInfo has already added this base for us.
+      assert(VirtualBaseInfo.count(BaseDecl) &&
+             "Did not add virtual base!");
+    } else {
+      // Add the base info to the map of non-virtual bases.
+      assert(!NonVirtualBaseInfo.count(BaseDecl) &&
+             "Non-virtual base already exists!");
+      NonVirtualBaseInfo.insert(std::make_pair(BaseDecl, Info));
+    }
+  }
+}
+
 void
 RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
-  // First, determine the primary base class.
+  // Then, determine the primary base class.
   DeterminePrimaryBase(RD);
 
+  // Compute base subobject info.
+  ComputeBaseSubobjectInfo(RD);
+  
   // If we have a primary base class, lay it out.
   if (PrimaryBase) {
     if (PrimaryBaseIsVirtual) {
+      // If the primary virtual base was a primary virtual base of some other
+      // base class we'll have to steal it.
+      BaseSubobjectInfo *PrimaryBaseInfo = VirtualBaseInfo.lookup(PrimaryBase);
+      PrimaryBaseInfo->Derived = 0;
+      
       // We have a virtual primary base, insert it as an indirect primary base.
       IndirectPrimaryBases.insert(PrimaryBase);
 
