@@ -583,7 +583,7 @@ class RecordLayoutBuilder {
 
   /// LayoutBase - Will lay out a base and return the offset where it was
   /// placed, in bits.
-  uint64_t LayoutBase(const CXXRecordDecl *Base, bool BaseIsVirtual);
+  uint64_t LayoutBase(const BaseSubobjectInfo *Base);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
   /// or a field) can be placed at the given offset.
@@ -921,7 +921,7 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
 
 void RecordLayoutBuilder::LayoutNonVirtualBase(const BaseSubobjectInfo *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base->Class, /*BaseIsVirtual=*/false);
+  uint64_t Offset = LayoutBase(Base);
 
   // Add its base class offset.
   assert(!Bases.count(Base->Class) && "base offset already exists!");
@@ -1018,7 +1018,7 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
   assert(!Base->Derived && "Trying to lay out a primary virtual base!");
   
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base->Class, /*BaseIsVirtual=*/true);
+  uint64_t Offset = LayoutBase(Base);
 
   // Add its base class offset.
   assert(!VBases.count(Base->Class) && "vbase offset already exists!");
@@ -1027,16 +1027,15 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
   AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
-uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
-                                         bool BaseIsVirtual) {
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base);
+uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base->Class);
 
   // If we have an empty base class, try to place it at offset 0.
-  if (Base->isEmpty() &&
-      EmptySubobjects->CanPlaceBaseAtOffset(Base, BaseIsVirtual, 0) &&
-      canPlaceRecordAtOffset(Base, 0, /*CheckVBases=*/false)) {
+  if (Base->Class->isEmpty() &&
+      EmptySubobjects->CanPlaceBaseAtOffset(Base->Class, Base->IsVirtual, 0) &&
+      canPlaceRecordAtOffset(Base->Class, 0, /*CheckVBases=*/false)) {
     // We were able to place the class at offset 0.
-    UpdateEmptyClassOffsets(Base, 0, /*UpdateVBases=*/false);
+    UpdateEmptyClassOffsets(Base->Class, 0, /*UpdateVBases=*/false);
 
     Size = std::max(Size, Layout.getSize());
 
@@ -1050,14 +1049,15 @@ uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
 
   // Try to place the base.
   while (true) {
-    if (EmptySubobjects->CanPlaceBaseAtOffset(Base, BaseIsVirtual, Offset) &&
-        canPlaceRecordAtOffset(Base, Offset, /*CheckVBases=*/false))
+    if (EmptySubobjects->CanPlaceBaseAtOffset(Base->Class, Base->IsVirtual, 
+                                              Offset) &&
+        canPlaceRecordAtOffset(Base->Class, Offset, /*CheckVBases=*/false))
       break;
 
     Offset += BaseAlign;
   }
 
-  if (!Base->isEmpty()) {
+  if (!Base->Class->isEmpty()) {
     // Update the data size.
     DataSize = Offset + Layout.getNonVirtualSize();
 
@@ -1068,7 +1068,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
-  UpdateEmptyClassOffsets(Base, Offset, /*UpdateVBases=*/false);
+  UpdateEmptyClassOffsets(Base->Class, Offset, /*UpdateVBases=*/false);
   return Offset;
 }
 
