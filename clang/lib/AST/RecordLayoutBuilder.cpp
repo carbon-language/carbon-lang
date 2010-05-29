@@ -198,12 +198,12 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
     return false;
 
   // Traverse all non-virtual bases.
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
     BaseSubobjectInfo* Base = Info->Bases[I];
     if (Base->IsVirtual)
       continue;
 
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
     uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
 
     if (!CanPlaceBaseSubobjectAtOffset(Base, BaseOffset))
@@ -219,16 +219,13 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
     }
   }
   
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
-
   // Traverse all member variables.
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
-    
+
     uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
-    
     if (!CanPlaceFieldSubobjectAtOffset(FD, FieldOffset))
       return false;
   }
@@ -239,16 +236,15 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
 void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info, 
                                                   uint64_t Offset) {
   AddSubobjectAtOffset(Info->Class, Offset);
-  
+
   // Traverse all non-virtual bases.
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
   for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
     BaseSubobjectInfo* Base = Info->Bases[I];
     if (Base->IsVirtual)
       continue;
-    
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+
     uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
-    
     UpdateEmptyBaseSubobjects(Base, BaseOffset);
   }
 
@@ -259,16 +255,13 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
       UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset);
   }
 
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
-
   // Traverse all member variables.
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
-    
+
     uint64_t FieldOffset = Offset + Layout.getFieldOffset(FieldNo);
-    
     UpdateEmptyFieldSubobjects(FD, FieldOffset);
   }
 }
