@@ -174,11 +174,6 @@ unsigned MachineRegisterInfo::getLiveInVirtReg(unsigned PReg) const {
   return 0;
 }
 
-static cl::opt<bool>
-SchedLiveInCopies("schedule-livein-copies", cl::Hidden,
-                  cl::desc("Schedule copies of livein registers"),
-                  cl::init(false));
-
 /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
 /// physical register has only a single copy use, then coalesced the copy
 /// if possible.
@@ -254,34 +249,21 @@ void
 MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
                                       const TargetRegisterInfo &TRI,
                                       const TargetInstrInfo &TII) {
-  if (SchedLiveInCopies) {
-    // Emit the copies at a heuristically-determined location in the block.
-    DenseMap<MachineInstr*, unsigned> CopyRegMap;
-    MachineBasicBlock::iterator InsertPos = EntryMBB->begin();
-    for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
-           E = livein_end(); LI != E; ++LI)
-      if (LI->second) {
-        const TargetRegisterClass *RC = getRegClass(LI->second);
-        EmitLiveInCopy(EntryMBB, InsertPos, LI->second, LI->first,
-                       RC, CopyRegMap, *this, TRI, TII);
-      }
-  } else {
-    // Emit the copies into the top of the block.
-    for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
-           E = livein_end(); LI != E; ++LI)
-      if (LI->second) {
-        const TargetRegisterClass *RC = getRegClass(LI->second);
-        bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
-                                        LI->second, LI->first, RC, RC,
-                                        DebugLoc());
-        assert(Emitted && "Unable to issue a live-in copy instruction!\n");
-        (void) Emitted;
-      }
-  }
+  // Emit the copies into the top of the block.
+  for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
+         E = livein_end(); LI != E; ++LI)
+    if (LI->second) {
+      const TargetRegisterClass *RC = getRegClass(LI->second);
+      bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
+                                      LI->second, LI->first, RC, RC,
+                                      DebugLoc());
+      assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+      (void) Emitted;
+    }
 
   // Add function live-ins to entry block live-in set.
   for (MachineRegisterInfo::livein_iterator I = livein_begin(),
-       E = livein_end(); I != E; ++I)
+         E = livein_end(); I != E; ++I)
     EntryMBB->addLiveIn(I->first);
 }
 
