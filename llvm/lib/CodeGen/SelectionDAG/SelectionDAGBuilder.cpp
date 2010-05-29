@@ -70,108 +70,6 @@ LimitFPPrecision("limit-float-precision",
                  cl::location(LimitFloatPrecision),
                  cl::init(0));
 
-namespace {
-  /// RegsForValue - This struct represents the registers (physical or virtual)
-  /// that a particular set of values is assigned, and the type information
-  /// about the value. The most common situation is to represent one value at a
-  /// time, but struct or array values are handled element-wise as multiple
-  /// values.  The splitting of aggregates is performed recursively, so that we
-  /// never have aggregate-typed registers. The values at this point do not
-  /// necessarily have legal types, so each value may require one or more
-  /// registers of some legal type.
-  ///
-  struct RegsForValue {
-    /// ValueVTs - The value types of the values, which may not be legal, and
-    /// may need be promoted or synthesized from one or more registers.
-    ///
-    SmallVector<EVT, 4> ValueVTs;
-
-    /// RegVTs - The value types of the registers. This is the same size as
-    /// ValueVTs and it records, for each value, what the type of the assigned
-    /// register or registers are. (Individual values are never synthesized
-    /// from more than one type of register.)
-    ///
-    /// With virtual registers, the contents of RegVTs is redundant with TLI's
-    /// getRegisterType member function, however when with physical registers
-    /// it is necessary to have a separate record of the types.
-    ///
-    SmallVector<EVT, 4> RegVTs;
-
-    /// Regs - This list holds the registers assigned to the values.
-    /// Each legal or promoted value requires one register, and each
-    /// expanded value requires multiple registers.
-    ///
-    SmallVector<unsigned, 4> Regs;
-
-    RegsForValue() {}
-
-    RegsForValue(const SmallVector<unsigned, 4> &regs,
-                 EVT regvt, EVT valuevt)
-      : ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
-
-    RegsForValue(const SmallVector<unsigned, 4> &regs,
-                 const SmallVector<EVT, 4> &regvts,
-                 const SmallVector<EVT, 4> &valuevts)
-      : ValueVTs(valuevts), RegVTs(regvts), Regs(regs) {}
-
-    RegsForValue(LLVMContext &Context, const TargetLowering &tli,
-                 unsigned Reg, const Type *Ty) {
-      ComputeValueVTs(tli, Ty, ValueVTs);
-
-      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        EVT ValueVT = ValueVTs[Value];
-        unsigned NumRegs = tli.getNumRegisters(Context, ValueVT);
-        EVT RegisterVT = tli.getRegisterType(Context, ValueVT);
-        for (unsigned i = 0; i != NumRegs; ++i)
-          Regs.push_back(Reg + i);
-        RegVTs.push_back(RegisterVT);
-        Reg += NumRegs;
-      }
-    }
-
-    /// areValueTypesLegal - Return true if types of all the values are legal.
-    bool areValueTypesLegal(const TargetLowering &TLI) {
-      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        EVT RegisterVT = RegVTs[Value];
-        if (!TLI.isTypeLegal(RegisterVT))
-          return false;
-      }
-      return true;
-    }
-
-    /// append - Add the specified values to this one.
-    void append(const RegsForValue &RHS) {
-      ValueVTs.append(RHS.ValueVTs.begin(), RHS.ValueVTs.end());
-      RegVTs.append(RHS.RegVTs.begin(), RHS.RegVTs.end());
-      Regs.append(RHS.Regs.begin(), RHS.Regs.end());
-    }
-
-
-    /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
-    /// this value and returns the result as a ValueVTs value.  This uses
-    /// Chain/Flag as the input and updates them for the output Chain/Flag.
-    /// If the Flag pointer is NULL, no flag is used.
-    SDValue getCopyFromRegs(SelectionDAG &DAG, FunctionLoweringInfo &FuncInfo,
-                            DebugLoc dl,
-                            SDValue &Chain, SDValue *Flag) const;
-
-    /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
-    /// specified value into the registers specified by this object.  This uses
-    /// Chain/Flag as the input and updates them for the output Chain/Flag.
-    /// If the Flag pointer is NULL, no flag is used.
-    void getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                       SDValue &Chain, SDValue *Flag) const;
-
-    /// AddInlineAsmOperands - Add this value to the specified inlineasm node
-    /// operand list.  This adds the code marker, matching input operand index
-    /// (if applicable), and includes the number of values added into it.
-    void AddInlineAsmOperands(unsigned Kind,
-                              bool HasMatching, unsigned MatchingIdx,
-                              SelectionDAG &DAG,
-                              std::vector<SDValue> &Ops) const;
-  };
-}
-
 /// getCopyFromParts - Create a value that contains the specified legal parts
 /// combined into the value they represent.  If the parts combine to a type
 /// larger then ValueVT then AssertOp can be used to specify whether the extra
@@ -523,6 +421,268 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl,
   }
 }
 
+namespace {
+  /// RegsForValue - This struct represents the registers (physical or virtual)
+  /// that a particular set of values is assigned, and the type information
+  /// about the value. The most common situation is to represent one value at a
+  /// time, but struct or array values are handled element-wise as multiple
+  /// values.  The splitting of aggregates is performed recursively, so that we
+  /// never have aggregate-typed registers. The values at this point do not
+  /// necessarily have legal types, so each value may require one or more
+  /// registers of some legal type.
+  ///
+  struct RegsForValue {
+    /// ValueVTs - The value types of the values, which may not be legal, and
+    /// may need be promoted or synthesized from one or more registers.
+    ///
+    SmallVector<EVT, 4> ValueVTs;
+
+    /// RegVTs - The value types of the registers. This is the same size as
+    /// ValueVTs and it records, for each value, what the type of the assigned
+    /// register or registers are. (Individual values are never synthesized
+    /// from more than one type of register.)
+    ///
+    /// With virtual registers, the contents of RegVTs is redundant with TLI's
+    /// getRegisterType member function, however when with physical registers
+    /// it is necessary to have a separate record of the types.
+    ///
+    SmallVector<EVT, 4> RegVTs;
+
+    /// Regs - This list holds the registers assigned to the values.
+    /// Each legal or promoted value requires one register, and each
+    /// expanded value requires multiple registers.
+    ///
+    SmallVector<unsigned, 4> Regs;
+
+    RegsForValue() {}
+
+    RegsForValue(const SmallVector<unsigned, 4> &regs,
+                 EVT regvt, EVT valuevt)
+      : ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
+
+    RegsForValue(const SmallVector<unsigned, 4> &regs,
+                 const SmallVector<EVT, 4> &regvts,
+                 const SmallVector<EVT, 4> &valuevts)
+      : ValueVTs(valuevts), RegVTs(regvts), Regs(regs) {}
+
+    RegsForValue(LLVMContext &Context, const TargetLowering &tli,
+                 unsigned Reg, const Type *Ty) {
+      ComputeValueVTs(tli, Ty, ValueVTs);
+
+      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
+        EVT ValueVT = ValueVTs[Value];
+        unsigned NumRegs = tli.getNumRegisters(Context, ValueVT);
+        EVT RegisterVT = tli.getRegisterType(Context, ValueVT);
+        for (unsigned i = 0; i != NumRegs; ++i)
+          Regs.push_back(Reg + i);
+        RegVTs.push_back(RegisterVT);
+        Reg += NumRegs;
+      }
+    }
+
+    /// areValueTypesLegal - Return true if types of all the values are legal.
+    bool areValueTypesLegal(const TargetLowering &TLI) {
+      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
+        EVT RegisterVT = RegVTs[Value];
+        if (!TLI.isTypeLegal(RegisterVT))
+          return false;
+      }
+      return true;
+    }
+
+    /// append - Add the specified values to this one.
+    void append(const RegsForValue &RHS) {
+      ValueVTs.append(RHS.ValueVTs.begin(), RHS.ValueVTs.end());
+      RegVTs.append(RHS.RegVTs.begin(), RHS.RegVTs.end());
+      Regs.append(RHS.Regs.begin(), RHS.Regs.end());
+    }
+
+    /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
+    /// this value and returns the result as a ValueVTs value.  This uses
+    /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    /// If the Flag pointer is NULL, no flag is used.
+    SDValue getCopyFromRegs(SelectionDAG &DAG, FunctionLoweringInfo &FuncInfo,
+                            DebugLoc dl,
+                            SDValue &Chain, SDValue *Flag) const;
+
+    /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
+    /// specified value into the registers specified by this object.  This uses
+    /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    /// If the Flag pointer is NULL, no flag is used.
+    void getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
+                       SDValue &Chain, SDValue *Flag) const;
+
+    /// AddInlineAsmOperands - Add this value to the specified inlineasm node
+    /// operand list.  This adds the code marker, matching input operand index
+    /// (if applicable), and includes the number of values added into it.
+    void AddInlineAsmOperands(unsigned Kind,
+                              bool HasMatching, unsigned MatchingIdx,
+                              SelectionDAG &DAG,
+                              std::vector<SDValue> &Ops) const;
+  };
+}
+
+/// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
+/// this value and returns the result as a ValueVT value.  This uses
+/// Chain/Flag as the input and updates them for the output Chain/Flag.
+/// If the Flag pointer is NULL, no flag is used.
+SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
+                                      FunctionLoweringInfo &FuncInfo,
+                                      DebugLoc dl,
+                                      SDValue &Chain, SDValue *Flag) const {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Assemble the legal parts into the final values.
+  SmallVector<SDValue, 4> Values(ValueVTs.size());
+  SmallVector<SDValue, 8> Parts;
+  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
+    // Copy the legal parts from the registers.
+    EVT ValueVT = ValueVTs[Value];
+    unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
+    EVT RegisterVT = RegVTs[Value];
+
+    Parts.resize(NumRegs);
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      SDValue P;
+      if (Flag == 0) {
+        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT);
+      } else {
+        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT, *Flag);
+        *Flag = P.getValue(2);
+      }
+
+      Chain = P.getValue(1);
+
+      // If the source register was virtual and if we know something about it,
+      // add an assert node.
+      if (TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) &&
+          RegisterVT.isInteger() && !RegisterVT.isVector()) {
+        unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
+        if (FuncInfo.LiveOutRegInfo.size() > SlotNo) {
+          const FunctionLoweringInfo::LiveOutInfo &LOI =
+            FuncInfo.LiveOutRegInfo[SlotNo];
+
+          unsigned RegSize = RegisterVT.getSizeInBits();
+          unsigned NumSignBits = LOI.NumSignBits;
+          unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
+
+          // FIXME: We capture more information than the dag can represent.  For
+          // now, just use the tightest assertzext/assertsext possible.
+          bool isSExt = true;
+          EVT FromVT(MVT::Other);
+          if (NumSignBits == RegSize)
+            isSExt = true, FromVT = MVT::i1;   // ASSERT SEXT 1
+          else if (NumZeroBits >= RegSize-1)
+            isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
+          else if (NumSignBits > RegSize-8)
+            isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
+          else if (NumZeroBits >= RegSize-8)
+            isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
+          else if (NumSignBits > RegSize-16)
+            isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
+          else if (NumZeroBits >= RegSize-16)
+            isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
+          else if (NumSignBits > RegSize-32)
+            isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
+          else if (NumZeroBits >= RegSize-32)
+            isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
+
+          if (FromVT != MVT::Other)
+            P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext, dl,
+                            RegisterVT, P, DAG.getValueType(FromVT));
+        }
+      }
+
+      Parts[i] = P;
+    }
+
+    Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
+                                     NumRegs, RegisterVT, ValueVT);
+    Part += NumRegs;
+    Parts.clear();
+  }
+
+  return DAG.getNode(ISD::MERGE_VALUES, dl,
+                     DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                     &Values[0], ValueVTs.size());
+}
+
+/// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
+/// specified value into the registers specified by this object.  This uses
+/// Chain/Flag as the input and updates them for the output Chain/Flag.
+/// If the Flag pointer is NULL, no flag is used.
+void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
+                                 SDValue &Chain, SDValue *Flag) const {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Get the list of the values's legal parts.
+  unsigned NumRegs = Regs.size();
+  SmallVector<SDValue, 8> Parts(NumRegs);
+  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
+    EVT ValueVT = ValueVTs[Value];
+    unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
+    EVT RegisterVT = RegVTs[Value];
+
+    getCopyToParts(DAG, dl,
+                   Val.getValue(Val.getResNo() + Value),
+                   &Parts[Part], NumParts, RegisterVT);
+    Part += NumParts;
+  }
+
+  // Copy the parts into the registers.
+  SmallVector<SDValue, 8> Chains(NumRegs);
+  for (unsigned i = 0; i != NumRegs; ++i) {
+    SDValue Part;
+    if (Flag == 0) {
+      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i]);
+    } else {
+      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i], *Flag);
+      *Flag = Part.getValue(1);
+    }
+
+    Chains[i] = Part.getValue(0);
+  }
+
+  if (NumRegs == 1 || Flag)
+    // If NumRegs > 1 && Flag is used then the use of the last CopyToReg is
+    // flagged to it. That is the CopyToReg nodes and the user are considered
+    // a single scheduling unit. If we create a TokenFactor and return it as
+    // chain, then the TokenFactor is both a predecessor (operand) of the
+    // user as well as a successor (the TF operands are flagged to the user).
+    // c1, f1 = CopyToReg
+    // c2, f2 = CopyToReg
+    // c3     = TokenFactor c1, c2
+    // ...
+    //        = op c3, ..., f2
+    Chain = Chains[NumRegs-1];
+  else
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Chains[0], NumRegs);
+}
+
+/// AddInlineAsmOperands - Add this value to the specified inlineasm node
+/// operand list.  This adds the code marker and includes the number of
+/// values added into it.
+void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
+                                        unsigned MatchingIdx,
+                                        SelectionDAG &DAG,
+                                        std::vector<SDValue> &Ops) const {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  unsigned Flag = InlineAsm::getFlagWord(Code, Regs.size());
+  if (HasMatching)
+    Flag = InlineAsm::getFlagWordForMatchingOp(Flag, MatchingIdx);
+  SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
+  Ops.push_back(Res);
+
+  for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
+    unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
+    EVT RegisterVT = RegVTs[Value];
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      assert(Reg < Regs.size() && "Mismatch in # registers expected");
+      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
+    }
+  }
+}
 
 void SelectionDAGBuilder::init(GCFunctionInfo *gfi, AliasAnalysis &aa) {
   AA = &aa;
@@ -4744,218 +4904,8 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
   LowerCallTo(&I, Callee, I.isTailCall());
 }
 
-/// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
-/// this value and returns the result as a ValueVT value.  This uses
-/// Chain/Flag as the input and updates them for the output Chain/Flag.
-/// If the Flag pointer is NULL, no flag is used.
-SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
-                                      FunctionLoweringInfo &FuncInfo,
-                                      DebugLoc dl,
-                                      SDValue &Chain, SDValue *Flag) const {
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-
-  // Assemble the legal parts into the final values.
-  SmallVector<SDValue, 4> Values(ValueVTs.size());
-  SmallVector<SDValue, 8> Parts;
-  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    // Copy the legal parts from the registers.
-    EVT ValueVT = ValueVTs[Value];
-    unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    EVT RegisterVT = RegVTs[Value];
-
-    Parts.resize(NumRegs);
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      SDValue P;
-      if (Flag == 0) {
-        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT);
-      } else {
-        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT, *Flag);
-        *Flag = P.getValue(2);
-      }
-
-      Chain = P.getValue(1);
-
-      // If the source register was virtual and if we know something about it,
-      // add an assert node.
-      if (TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) &&
-          RegisterVT.isInteger() && !RegisterVT.isVector()) {
-        unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
-        if (FuncInfo.LiveOutRegInfo.size() > SlotNo) {
-          const FunctionLoweringInfo::LiveOutInfo &LOI =
-            FuncInfo.LiveOutRegInfo[SlotNo];
-
-          unsigned RegSize = RegisterVT.getSizeInBits();
-          unsigned NumSignBits = LOI.NumSignBits;
-          unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
-
-          // FIXME: We capture more information than the dag can represent.  For
-          // now, just use the tightest assertzext/assertsext possible.
-          bool isSExt = true;
-          EVT FromVT(MVT::Other);
-          if (NumSignBits == RegSize)
-            isSExt = true, FromVT = MVT::i1;   // ASSERT SEXT 1
-          else if (NumZeroBits >= RegSize-1)
-            isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
-          else if (NumSignBits > RegSize-8)
-            isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
-          else if (NumZeroBits >= RegSize-8)
-            isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
-          else if (NumSignBits > RegSize-16)
-            isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
-          else if (NumZeroBits >= RegSize-16)
-            isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
-          else if (NumSignBits > RegSize-32)
-            isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
-          else if (NumZeroBits >= RegSize-32)
-            isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
-
-          if (FromVT != MVT::Other)
-            P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext, dl,
-                            RegisterVT, P, DAG.getValueType(FromVT));
-        }
-      }
-
-      Parts[i] = P;
-    }
-
-    Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
-                                     NumRegs, RegisterVT, ValueVT);
-    Part += NumRegs;
-    Parts.clear();
-  }
-
-  return DAG.getNode(ISD::MERGE_VALUES, dl,
-                     DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                     &Values[0], ValueVTs.size());
-}
-
-/// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
-/// specified value into the registers specified by this object.  This uses
-/// Chain/Flag as the input and updates them for the output Chain/Flag.
-/// If the Flag pointer is NULL, no flag is used.
-void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                                 SDValue &Chain, SDValue *Flag) const {
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-
-  // Get the list of the values's legal parts.
-  unsigned NumRegs = Regs.size();
-  SmallVector<SDValue, 8> Parts(NumRegs);
-  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    EVT ValueVT = ValueVTs[Value];
-    unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    EVT RegisterVT = RegVTs[Value];
-
-    getCopyToParts(DAG, dl,
-                   Val.getValue(Val.getResNo() + Value),
-                   &Parts[Part], NumParts, RegisterVT);
-    Part += NumParts;
-  }
-
-  // Copy the parts into the registers.
-  SmallVector<SDValue, 8> Chains(NumRegs);
-  for (unsigned i = 0; i != NumRegs; ++i) {
-    SDValue Part;
-    if (Flag == 0) {
-      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i]);
-    } else {
-      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i], *Flag);
-      *Flag = Part.getValue(1);
-    }
-
-    Chains[i] = Part.getValue(0);
-  }
-
-  if (NumRegs == 1 || Flag)
-    // If NumRegs > 1 && Flag is used then the use of the last CopyToReg is
-    // flagged to it. That is the CopyToReg nodes and the user are considered
-    // a single scheduling unit. If we create a TokenFactor and return it as
-    // chain, then the TokenFactor is both a predecessor (operand) of the
-    // user as well as a successor (the TF operands are flagged to the user).
-    // c1, f1 = CopyToReg
-    // c2, f2 = CopyToReg
-    // c3     = TokenFactor c1, c2
-    // ...
-    //        = op c3, ..., f2
-    Chain = Chains[NumRegs-1];
-  else
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Chains[0], NumRegs);
-}
-
-/// AddInlineAsmOperands - Add this value to the specified inlineasm node
-/// operand list.  This adds the code marker and includes the number of
-/// values added into it.
-void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
-                                        unsigned MatchingIdx,
-                                        SelectionDAG &DAG,
-                                        std::vector<SDValue> &Ops) const {
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-
-  unsigned Flag = InlineAsm::getFlagWord(Code, Regs.size());
-  if (HasMatching)
-    Flag = InlineAsm::getFlagWordForMatchingOp(Flag, MatchingIdx);
-  SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
-  Ops.push_back(Res);
-
-  for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
-    EVT RegisterVT = RegVTs[Value];
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      assert(Reg < Regs.size() && "Mismatch in # registers expected");
-      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
-    }
-  }
-}
-
-/// isAllocatableRegister - If the specified register is safe to allocate,
-/// i.e. it isn't a stack pointer or some other special register, return the
-/// register class for the register.  Otherwise, return null.
-static const TargetRegisterClass *
-isAllocatableRegister(unsigned Reg, MachineFunction &MF,
-                      const TargetLowering &TLI,
-                      const TargetRegisterInfo *TRI) {
-  EVT FoundVT = MVT::Other;
-  const TargetRegisterClass *FoundRC = 0;
-  for (TargetRegisterInfo::regclass_iterator RCI = TRI->regclass_begin(),
-       E = TRI->regclass_end(); RCI != E; ++RCI) {
-    EVT ThisVT = MVT::Other;
-
-    const TargetRegisterClass *RC = *RCI;
-    // If none of the value types for this register class are valid, we
-    // can't use it.  For example, 64-bit reg classes on 32-bit targets.
-    for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
-         I != E; ++I) {
-      if (TLI.isTypeLegal(*I)) {
-        // If we have already found this register in a different register class,
-        // choose the one with the largest VT specified.  For example, on
-        // PowerPC, we favor f64 register classes over f32.
-        if (FoundVT == MVT::Other || FoundVT.bitsLT(*I)) {
-          ThisVT = *I;
-          break;
-        }
-      }
-    }
-
-    if (ThisVT == MVT::Other) continue;
-
-    // NOTE: This isn't ideal.  In particular, this might allocate the
-    // frame pointer in functions that need it (due to them not being taken
-    // out of allocation, because a variable sized allocation hasn't been seen
-    // yet).  This is a slight code pessimization, but should still work.
-    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
-         E = RC->allocation_order_end(MF); I != E; ++I)
-      if (*I == Reg) {
-        // We found a matching register class.  Keep looking at others in case
-        // we find one with larger registers that this physreg is also in.
-        FoundRC = RC;
-        FoundVT = ThisVT;
-        break;
-      }
-  }
-  return FoundRC;
-}
-
-
 namespace llvm {
+
 /// AsmOperandInfo - This contains information for each constraint that we are
 /// lowering.
 class LLVM_LIBRARY_VISIBILITY SDISelAsmOperandInfo :
@@ -5044,8 +4994,56 @@ private:
         Regs.insert(*Aliases);
   }
 };
+
 } // end llvm namespace.
 
+/// isAllocatableRegister - If the specified register is safe to allocate,
+/// i.e. it isn't a stack pointer or some other special register, return the
+/// register class for the register.  Otherwise, return null.
+static const TargetRegisterClass *
+isAllocatableRegister(unsigned Reg, MachineFunction &MF,
+                      const TargetLowering &TLI,
+                      const TargetRegisterInfo *TRI) {
+  EVT FoundVT = MVT::Other;
+  const TargetRegisterClass *FoundRC = 0;
+  for (TargetRegisterInfo::regclass_iterator RCI = TRI->regclass_begin(),
+       E = TRI->regclass_end(); RCI != E; ++RCI) {
+    EVT ThisVT = MVT::Other;
+
+    const TargetRegisterClass *RC = *RCI;
+    // If none of the value types for this register class are valid, we
+    // can't use it.  For example, 64-bit reg classes on 32-bit targets.
+    for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
+         I != E; ++I) {
+      if (TLI.isTypeLegal(*I)) {
+        // If we have already found this register in a different register class,
+        // choose the one with the largest VT specified.  For example, on
+        // PowerPC, we favor f64 register classes over f32.
+        if (FoundVT == MVT::Other || FoundVT.bitsLT(*I)) {
+          ThisVT = *I;
+          break;
+        }
+      }
+    }
+
+    if (ThisVT == MVT::Other) continue;
+
+    // NOTE: This isn't ideal.  In particular, this might allocate the
+    // frame pointer in functions that need it (due to them not being taken
+    // out of allocation, because a variable sized allocation hasn't been seen
+    // yet).  This is a slight code pessimization, but should still work.
+    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
+         E = RC->allocation_order_end(MF); I != E; ++I)
+      if (*I == Reg) {
+        // We found a matching register class.  Keep looking at others in case
+        // we find one with larger registers that this physreg is also in.
+        FoundRC = RC;
+        FoundVT = ThisVT;
+        break;
+      }
+  }
+  return FoundRC;
+}
 
 /// GetRegistersForValue - Assign registers (virtual or physical) for the
 /// specified operand.  We prefer to assign virtual registers, to allow the
