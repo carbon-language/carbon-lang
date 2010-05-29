@@ -579,7 +579,7 @@ class RecordLayoutBuilder {
                           const CXXRecordDecl *MostDerivedClass);
 
   /// LayoutVirtualBase - Lays out a single virtual base.
-  void LayoutVirtualBase(const CXXRecordDecl *Base);
+  void LayoutVirtualBase(const BaseSubobjectInfo *Base);
 
   /// LayoutBase - Will lay out a base and return the offset where it was
   /// placed, in bits.
@@ -885,7 +885,7 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
              "vbase already visited!");
       VisitedVirtualBases.insert(PrimaryBase);
 
-      LayoutVirtualBase(PrimaryBase);
+      LayoutVirtualBase(PrimaryBaseInfo);
     } else {
       BaseSubobjectInfo *PrimaryBaseInfo = 
         NonVirtualBaseInfo.lookup(PrimaryBase);
@@ -1005,40 +1005,42 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
 
-    const CXXRecordDecl *Base =
+    const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
-      if (PrimaryBase != Base || !PrimaryBaseIsVirtual) {
-        bool IndirectPrimaryBase = IndirectPrimaryBases.count(Base);
+      if (PrimaryBase != BaseDecl || !PrimaryBaseIsVirtual) {
+        bool IndirectPrimaryBase = IndirectPrimaryBases.count(BaseDecl);
 
         // Only lay out the virtual base if it's not an indirect primary base.
         if (!IndirectPrimaryBase) {
           // Only visit virtual bases once.
-          if (!VisitedVirtualBases.insert(Base))
+          if (!VisitedVirtualBases.insert(BaseDecl))
             continue;
 
-          LayoutVirtualBase(Base);
+          const BaseSubobjectInfo *BaseInfo = VirtualBaseInfo.lookup(BaseDecl);
+          assert(BaseInfo && "Did not find virtual base info!");
+          LayoutVirtualBase(BaseInfo);
         }
       }
     }
 
-    if (!Base->getNumVBases()) {
+    if (!BaseDecl->getNumVBases()) {
       // This base isn't interesting since it doesn't have any virtual bases.
       continue;
     }
 
-    LayoutVirtualBases(Base, MostDerivedClass);
+    LayoutVirtualBases(BaseDecl, MostDerivedClass);
   }
 }
 
-void RecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *Base) {
+void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base, /*BaseIsVirtual=*/true);
+  uint64_t Offset = LayoutBase(Base->Class, /*BaseIsVirtual=*/true);
 
   // Add its base class offset.
-  if (!VBases.insert(std::make_pair(Base, Offset)).second)
-    assert(false && "Added same vbase offset more than once!");
+  assert(!VBases.count(Base->Class) && "vbase offset already exists!");
+  VBases.insert(std::make_pair(Base->Class, Offset));
 }
 
 uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
