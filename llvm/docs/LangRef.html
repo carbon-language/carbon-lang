@@ -2574,6 +2574,18 @@ end:
   <dd>Perform the <a href="#i_shufflevector">shufflevector operation</a> on
       constants.</dd>
 
+  <dt><b><tt>extractvalue (VAL, IDX0, IDX1, ...)</tt></b></dt>
+  <dd>Perform the <a href="#i_extractvalue">extractvalue operation</a> on
+    constants. The index list is interpreted in a similar manner as indices in
+    a '<a href="#i_getelementptr">getelementptr</a>' operation. At least one
+    index value must be specified.</dd>
+
+  <dt><b><tt>insertvalue (VAL, ELT, IDX0, IDX1, ...)</tt></b></dt>
+  <dd>Perform the <a href="#i_insertvalue">insertvalue operation</a> on
+    constants. The index list is interpreted in a similar manner as indices in
+    a '<a href="#i_getelementptr">getelementptr</a>' operation. At least one
+    index value must be specified.</dd>
+
   <dt><b><tt>OPCODE (LHS, RHS)</tt></b></dt>
   <dd>Perform the specified operation of the LHS and RHS constants. OPCODE may
       be any of the <a href="#binaryops">binary</a>
