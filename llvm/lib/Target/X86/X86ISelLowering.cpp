@@ -2427,6 +2427,24 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
         }
       }
     }
+
+    // If the tailcall address may be in a register, then make sure it's
+    // possible to register allocate for it. In 32-bit, the call address can
+    // only target EAX, EDX, or ECX since the tail call must be scheduled after
+    // callee-saved registers are restored. In 64-bit, it's RAX, RCX, RDX, RSI,
+    // RDI, R8, R9, R11.
+    if (!isa<GlobalAddressSDNode>(Callee) &&
+        !isa<ExternalSymbolSDNode>(Callee)) {
+      unsigned Limit = Subtarget->is64Bit() ? 8 : 3;
+      unsigned NumInRegs = 0;
+      for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+        CCValAssign &VA = ArgLocs[i];
+        if (VA.isRegLoc()) {
+          if (++NumInRegs == Limit)
+            return false;
+        }
+      }
+    }
   }
 
   return true;
