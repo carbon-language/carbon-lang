@@ -562,6 +562,13 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     switch (triple.getArch()) {
     default: break;
 
+    case llvm::Triple::ppc: 
+    case llvm::Triple::ppc64:
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
+                                  "powerpc-apple-darwin10", "", "ppc64", 
+                                  triple);
+      break;
+
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
       AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
