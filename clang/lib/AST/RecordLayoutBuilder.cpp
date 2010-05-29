@@ -103,8 +103,7 @@ public:
   /// at the given offset.
   /// Returns false if placing the record will result in two components
   /// (direct or indirect) of the same type having the same offset.
-  bool CanPlaceBaseAtOffset(const CXXRecordDecl *RD, bool BaseIsVirtual,
-                            uint64_t Offset);
+  bool CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info, uint64_t Offset);
 
   /// CanPlaceFieldAtOffset - Return whether a field can be placed at the given
   /// offset.
@@ -274,8 +273,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
   }
 }
 
-bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
-                                             bool BaseIsVirtual,
+bool EmptySubobjectMap::CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info,
                                              uint64_t Offset) {
   // If we know this class doesn't have any empty subobjects we don't need to
   // bother checking.
@@ -283,21 +281,12 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const CXXRecordDecl *RD,
     return true;
 
   // FIXME: Re-enable this.
-#if 0
-  BaseSubobjectInfo *Info;
-
-  if (BaseIsVirtual)
-    Info = VirtualBaseInfo.lookup(RD);
-  else
-    Info = NonVirtualBaseInfo.lookup(RD);
-
   if (!CanPlaceBaseSubobjectAtOffset(Info, Offset))
     return false;
 
   // We are able to place the base at this offset. Make sure to update the
   // empty base subobject map.
   UpdateEmptyBaseSubobjects(Info, Offset);
-#endif
   return true;
 }
 
@@ -1032,7 +1021,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   // If we have an empty base class, try to place it at offset 0.
   if (Base->Class->isEmpty() &&
-      EmptySubobjects->CanPlaceBaseAtOffset(Base->Class, Base->IsVirtual, 0) &&
+      EmptySubobjects->CanPlaceBaseAtOffset(Base, 0) &&
       canPlaceRecordAtOffset(Base->Class, 0, /*CheckVBases=*/false)) {
     // We were able to place the class at offset 0.
     UpdateEmptyClassOffsets(Base->Class, 0, /*UpdateVBases=*/false);
@@ -1049,8 +1038,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   // Try to place the base.
   while (true) {
-    if (EmptySubobjects->CanPlaceBaseAtOffset(Base->Class, Base->IsVirtual, 
-                                              Offset) &&
+    if (EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset) &&
         canPlaceRecordAtOffset(Base->Class, Offset, /*CheckVBases=*/false))
       break;
 
