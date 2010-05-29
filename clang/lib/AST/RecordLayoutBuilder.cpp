@@ -569,7 +569,7 @@ class RecordLayoutBuilder {
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
 
   /// LayoutNonVirtualBase - Lays out a single non-virtual base.
-  void LayoutNonVirtualBase(const CXXRecordDecl *Base);
+  void LayoutNonVirtualBase(const BaseSubobjectInfo *Base);
 
   void AddPrimaryVirtualBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
                                     const CXXRecordDecl *MostDerivedClass);
@@ -886,8 +886,14 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       VisitedVirtualBases.insert(PrimaryBase);
 
       LayoutVirtualBase(PrimaryBase);
-    } else
-      LayoutNonVirtualBase(PrimaryBase);
+    } else {
+      BaseSubobjectInfo *PrimaryBaseInfo = 
+        NonVirtualBaseInfo.lookup(PrimaryBase);
+      assert(PrimaryBaseInfo && 
+             "Did not find base info for non-virtual primary base!");
+
+      LayoutNonVirtualBase(PrimaryBaseInfo);
+    }
   }
 
   // Now lay out the non-virtual bases.
@@ -898,25 +904,28 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     if (I->isVirtual())
       continue;
 
-    const CXXRecordDecl *Base =
+    const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // Skip the primary base.
-    if (Base == PrimaryBase && !PrimaryBaseIsVirtual)
+    if (BaseDecl == PrimaryBase && !PrimaryBaseIsVirtual)
       continue;
 
     // Lay out the base.
-    LayoutNonVirtualBase(Base);
+    BaseSubobjectInfo *BaseInfo = NonVirtualBaseInfo.lookup(BaseDecl);
+    assert(BaseInfo && "Did not find base info for non-virtual base!");
+
+    LayoutNonVirtualBase(BaseInfo);
   }
 }
 
-void RecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *Base) {
+void RecordLayoutBuilder::LayoutNonVirtualBase(const BaseSubobjectInfo *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base, /*BaseIsVirtual=*/false);
+  uint64_t Offset = LayoutBase(Base->Class, /*BaseIsVirtual=*/false);
 
   // Add its base class offset.
-  if (!Bases.insert(std::make_pair(Base, Offset)).second)
-    assert(false && "Added same base offset more than once!");
+  assert(!Bases.count(Base->Class) && "base offset already exists!");
+  Bases.insert(std::make_pair(Base->Class, Offset));
 }
 
 void
