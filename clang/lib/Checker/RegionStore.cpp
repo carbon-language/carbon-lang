@@ -213,6 +213,11 @@ public:
 
   RegionStoreSubRegionMap *getRegionStoreSubRegionMap(Store store);
 
+  /// canHaveDirectBinding - Disallow direct bindings for certain types,
+  ///  like arrays. This lets us distinguish between x and x[0], which was
+  ///  causing PR7218 "Assigning to buf[0] makes buf[1] valid".
+  bool canHaveDirectBinding (const MemRegion *R);
+
   Optional<SVal> getBinding(RegionBindings B, const MemRegion *R);
   Optional<SVal> getDirectBinding(RegionBindings B, const MemRegion *R);
   /// getDefaultBinding - Returns an SVal* representing an optional default
@@ -944,11 +949,20 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
 //===----------------------------------------------------------------------===//
 // Loading values from regions.
 //===----------------------------------------------------------------------===//
+bool RegionStoreManager::canHaveDirectBinding (const MemRegion *R) {
+  // Arrays can't have direct binding -- must bind to elements
+  if (const TypedRegion *TR = dyn_cast<TypedRegion>(R))    
+    if (TR->getValueType(getContext())->isArrayType())   
+      return false;
+  
+  return true;
+}
 
 Optional<SVal> RegionStoreManager::getDirectBinding(RegionBindings B,
-                                                 const MemRegion *R) {
-  if (const SVal *V = Lookup(B, R, BindingKey::Direct))
-    return *V;
+                                                    const MemRegion *R) {
+  if (canHaveDirectBinding(R))
+    if (const SVal *V = Lookup(B, R, BindingKey::Direct))
+      return *V;
 
   return Optional<SVal>();
 }
