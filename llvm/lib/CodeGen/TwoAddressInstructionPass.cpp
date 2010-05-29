@@ -1136,14 +1136,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
 static void UpdateRegSequenceSrcs(unsigned SrcReg,
                                   unsigned DstReg, unsigned SubIdx,
-                                  MachineRegisterInfo *MRI) {
+                                  MachineRegisterInfo *MRI,
+                                  const TargetRegisterInfo &TRI) {
   for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
          RE = MRI->reg_end(); RI != RE; ) {
     MachineOperand &MO = RI.getOperand();
     ++RI;
-    MO.setReg(DstReg);
-    assert(MO.getSubReg() == 0);
-    MO.setSubReg(SubIdx);
+    MO.substVirtReg(DstReg, SubIdx, TRI);
   }
 }
 
@@ -1315,7 +1314,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
       unsigned SrcReg = MI->getOperand(i).getReg();
       unsigned SubIdx = MI->getOperand(i+1).getImm();
-      UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI);
+      UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI, *TRI);
     }
 
     if (IsImpDef) {
