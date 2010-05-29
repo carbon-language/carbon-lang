@@ -571,8 +571,8 @@ class RecordLayoutBuilder {
   /// LayoutNonVirtualBase - Lays out a single non-virtual base.
   void LayoutNonVirtualBase(const BaseSubobjectInfo *Base);
 
-  void AddPrimaryVirtualBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
-                                    const CXXRecordDecl *MostDerivedClass);
+  void AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info, 
+                                    uint64_t Offset);
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -926,62 +926,42 @@ void RecordLayoutBuilder::LayoutNonVirtualBase(const BaseSubobjectInfo *Base) {
   // Add its base class offset.
   assert(!Bases.count(Base->Class) && "base offset already exists!");
   Bases.insert(std::make_pair(Base->Class, Offset));
+
+  AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
 void
-RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const CXXRecordDecl *RD,
-                                        uint64_t Offset,
-                                        const CXXRecordDecl *MostDerivedClass) {
-  // We already have the offset for the primary base of the most derived class.
-  if (RD != MostDerivedClass) {
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info, 
+                                                  uint64_t Offset) {
+  // This base isn't interesting, it has no virtual bases.
+  if (!Info->Class->getNumVBases())
+    return;
+  
+  // First, check if we have a virtual primary base to add offsets for.
+  if (Info->PrimaryVirtualBaseInfo) {
+    assert(Info->PrimaryVirtualBaseInfo->IsVirtual && 
+           "Primary virtual base is not virtual!");
+    if (Info->PrimaryVirtualBaseInfo->Derived == Info) {
+      // Add the offset.
+      assert(!VBases.count(Info->PrimaryVirtualBaseInfo->Class) && 
+             "primary vbase offset already exists!");
+      VBases.insert(std::make_pair(Info->PrimaryVirtualBaseInfo->Class,
+                                   Offset));
 
-    // If this is a primary virtual base and we haven't seen it before, add it.
-    if (PrimaryBase && Layout.getPrimaryBaseWasVirtual() &&
-        !VBases.count(PrimaryBase))
-      VBases.insert(std::make_pair(PrimaryBase, Offset));
+      // Traverse the primary virtual base.
+      AddPrimaryVirtualBaseOffsets(Info->PrimaryVirtualBaseInfo, Offset);
+    }
   }
 
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    assert(!I->getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
-
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-    if (!BaseDecl->getNumVBases()) {
-      // This base isn't interesting since it doesn't have any virtual bases.
+  // Now go through all direct non-virtual bases.
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
+  for (unsigned I = 0, E = Info->Bases.size(); I != E; ++I) {
+    const BaseSubobjectInfo *Base = Info->Bases[I];
+    if (Base->IsVirtual)
       continue;
-    }
 
-    // Compute the offset of this base.
-    uint64_t BaseOffset;
-
-    if (I->isVirtual()) {
-      // If we don't know this vbase yet, don't visit it. It will be visited
-      // later.
-      if (!VBases.count(BaseDecl)) {
-        continue;
-      }
-
-      // Check if we've already visited this base.
-      if (!VisitedVirtualBases.insert(BaseDecl))
-        continue;
-
-      // We want the vbase offset from the class we're currently laying out.
-      BaseOffset = VBases[BaseDecl];
-    } else if (RD == MostDerivedClass) {
-      // We want the base offset from the class we're currently laying out.
-      assert(Bases.count(BaseDecl) && "Did not find base!");
-      BaseOffset = Bases[BaseDecl];
-    } else {
-      const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-      BaseOffset = Offset + Layout.getBaseClassOffset(BaseDecl);
-    }
-
-    AddPrimaryVirtualBaseOffsets(BaseDecl, BaseOffset, MostDerivedClass);
+    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
+    AddPrimaryVirtualBaseOffsets(Base, BaseOffset);
   }
 }
 
@@ -1035,12 +1015,16 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
 }
 
 void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
+  assert(!Base->Derived && "Trying to lay out a primary virtual base!");
+  
   // Layout the base.
   uint64_t Offset = LayoutBase(Base->Class, /*BaseIsVirtual=*/true);
 
   // Add its base class offset.
   assert(!VBases.count(Base->Class) && "vbase offset already exists!");
   VBases.insert(std::make_pair(Base->Class, Offset));
+  
+  AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
 uint64_t RecordLayoutBuilder::LayoutBase(const CXXRecordDecl *Base,
@@ -1298,7 +1282,6 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
   LayoutVirtualBases(RD, RD);
 
   VisitedVirtualBases.clear();
-  AddPrimaryVirtualBaseOffsets(RD, 0, RD);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.

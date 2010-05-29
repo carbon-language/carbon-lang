@@ -71,3 +71,17 @@ struct D : C { bool iv0 : 1; };
 SA(10, sizeof(D) == 2);
 
 }
+
+namespace Test1 {
+
+// Test that we don't assert on this hierarchy.
+struct A { };
+struct B : A { virtual void b(); };
+class C : virtual A { int c; };
+struct D : virtual B { };
+struct E : C, virtual D { };
+class F : virtual E { };
+struct G : virtual E, F { };
+
+SA(0, sizeof(G) == 24);
+}
