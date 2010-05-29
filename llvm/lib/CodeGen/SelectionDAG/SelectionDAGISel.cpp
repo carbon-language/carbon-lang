@@ -171,7 +171,7 @@ TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm, CodeGenOpt::Level OL) :
   MachineFunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
-  CurDAG(new SelectionDAG(tm, *FuncInfo)),
+  CurDAG(new SelectionDAG(tm)),
   SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
   GFI(),
   OptLevel(OL),
@@ -244,7 +244,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
 
   CurDAG->init(*MF);
-  FuncInfo->set(Fn, *MF, EnableFastISel);
+  FuncInfo->set(Fn, *MF);
   SDB->init(GFI, *AA);
 
   SelectAllBasicBlocks(Fn);

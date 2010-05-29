@@ -29,7 +29,6 @@
 namespace llvm {
 
 class AliasAnalysis;
-class FunctionLoweringInfo;
 class MachineConstantPoolValue;
 class MachineFunction;
 class MDNode;
@@ -134,7 +133,6 @@ class SelectionDAG {
   const TargetLowering &TLI;
   const TargetSelectionDAGInfo &TSI;
   MachineFunction *MF;
-  FunctionLoweringInfo &FLI;
   LLVMContext *Context;
 
   /// EntryNode - The starting token.
@@ -187,7 +185,7 @@ class SelectionDAG {
   SelectionDAG(const SelectionDAG&);   // Do not implement.
 
 public:
-  SelectionDAG(const TargetMachine &TM, FunctionLoweringInfo &fli);
+  explicit SelectionDAG(const TargetMachine &TM);
   ~SelectionDAG();
 
   /// init - Prepare this SelectionDAG to process code in the given
@@ -204,7 +202,6 @@ public:
   const TargetMachine &getTarget() const { return TM; }
   const TargetLowering &getTargetLoweringInfo() const { return TLI; }
   const TargetSelectionDAGInfo &getSelectionDAGInfo() const { return TSI; }
-  FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   LLVMContext *getContext() const {return Context; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.

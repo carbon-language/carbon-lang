@@ -74,8 +74,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(const TargetLowering &tli)
   : TLI(tli) {
 }
 
-void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
-                               bool EnableFastISel) {
+void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   Fn = &fn;
   MF = &mf;
   RegInfo = &MF->getRegInfo();

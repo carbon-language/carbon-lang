@@ -106,7 +106,7 @@ public:
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.
   ///
-  void set(const Function &Fn, MachineFunction &MF, bool EnableFastISel);
+  void set(const Function &Fn, MachineFunction &MF);
 
   /// clear - Clear out all the function-specific state. This returns this
   /// FunctionLoweringInfo to an empty state, ready to be used for a
