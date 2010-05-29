@@ -165,8 +165,15 @@ CXType clang_getPointeeType(CXType CT) {
 }
 
 CXCursor clang_getTypeDeclaration(CXType CT) {
+  if (CT.kind == CXType_Invalid)
+    return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
+
   QualType T = GetQualType(CT);
   Type *TP = T.getTypePtr();
+
+  if (!TP)
+    return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
+
   Decl *D = 0;
 
   switch (TP->getTypeClass()) {
