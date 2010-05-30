@@ -1014,11 +1014,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   // If we have an empty base class, try to place it at offset 0.
   if (Base->Class->isEmpty() &&
-      EmptySubobjects->CanPlaceBaseAtOffset(Base, 0) &&
-      canPlaceRecordAtOffset(Base->Class, 0, /*CheckVBases=*/false)) {
-    // We were able to place the class at offset 0.
-    UpdateEmptyClassOffsets(Base->Class, 0, /*UpdateVBases=*/false);
-
+      EmptySubobjects->CanPlaceBaseAtOffset(Base, 0)) {
     Size = std::max(Size, Layout.getSize());
 
     return 0;
@@ -1030,13 +1026,8 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
 
   // Try to place the base.
-  while (true) {
-    if (EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset) &&
-        canPlaceRecordAtOffset(Base->Class, Offset, /*CheckVBases=*/false))
-      break;
-
+  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset))
     Offset += BaseAlign;
-  }
 
   if (!Base->Class->isEmpty()) {
     // Update the data size.
@@ -1478,17 +1469,12 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   // Round up the current record size to the field's alignment boundary.
   FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
-  if (!IsUnion) {
-    while (true) {
-      // Check if we can place the field at this offset.
-      if (canPlaceFieldAtOffset(D, FieldOffset))
-        break;
-
+  if (!IsUnion && EmptySubobjects) {
+    // Check if we can place the field at this offset.
+    while (!EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset)) {
       // We couldn't place the field at the offset. Try again at a new offset.
       FieldOffset += FieldAlign;
     }
-
-    UpdateEmptyClassOffsets(D, FieldOffset);
   }
 
   // Place this field at the current location.

@@ -84,4 +84,21 @@ class F : virtual E { };
 struct G : virtual E, F { };
 
 SA(0, sizeof(G) == 24);
+
+}
+
+namespace Test2 {
+
+// Test that this somewhat complex class structure is laid out correctly.
+struct A { };
+struct B : A { virtual void b(); };
+struct C : virtual B { };
+struct D : virtual A { };
+struct E : virtual B, D { };
+struct F : E, virtual C { };
+struct G : virtual F, A { };
+struct H { G g; };
+
+SA(0, sizeof(H) == 24);
+
 }
