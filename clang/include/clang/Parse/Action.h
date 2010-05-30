@@ -2729,7 +2729,27 @@ public:
   /// \param NumArgs the number of arguments in \p Args.
   virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
                                 ExprTy **Args, unsigned NumArgs) { }
-                                
+                 
+  /// \brief Code completion for the initializer of a variable declaration.
+  ///
+  /// \param S The scope in which the initializer occurs.
+  ///
+  /// \param D The declaration being initialized.
+  virtual void CodeCompleteInitializer(Scope *S, DeclPtrTy D) { }
+  
+  /// \brief Code completion after the "return" keyword within a function.
+  ///
+  /// \param S The scope in which the return statement occurs.
+  virtual void CodeCompleteReturn(Scope *S) { }
+  
+  /// \brief Code completion for the right-hand side of an assignment or
+  /// compound assignment operator.
+  ///
+  /// \param S The scope in which the assignment occurs.
+  ///
+  /// \param LHS The left-hand side of the assignment expression.
+  virtual void CodeCompleteAssignmentRHS(Scope *S, ExprTy *LHS) { }
+  
   /// \brief Code completion for a C++ nested-name-specifier that precedes a
   /// qualified-id of some form.
   ///

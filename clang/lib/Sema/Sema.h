@@ -4417,6 +4417,7 @@ public:
   //@{
   virtual void CodeCompleteOrdinaryName(Scope *S,
                                      CodeCompletionContext CompletionContext);
+  virtual void CodeCompleteExpression(Scope *S, QualType T);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
@@ -4424,6 +4425,10 @@ public:
   virtual void CodeCompleteCase(Scope *S);
   virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
                                 ExprTy **Args, unsigned NumArgs);
+  virtual void CodeCompleteInitializer(Scope *S, DeclPtrTy D);
+  virtual void CodeCompleteReturn(Scope *S);
+  virtual void CodeCompleteAssignmentRHS(Scope *S, ExprTy *LHS);
+  
   virtual void CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
                                        bool EnteringContext);
   virtual void CodeCompleteUsing(Scope *S);

@@ -343,6 +343,14 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
       }
     }
     
+    // Code completion for the right-hand side of an assignment expression
+    // goes through a special hook that takes the left-hand side into account.
+    if (Tok.is(tok::code_completion) && NextTokPrec == prec::Assignment) {
+      Actions.CodeCompleteAssignmentRHS(CurScope, LHS.get());
+      ConsumeCodeCompletionToken();
+      return ExprError();
+    }
+    
     // Parse another leaf here for the RHS of the operator.
     // ParseCastExpression works here because all RHS expressions in C have it
     // as a prefix, at least. However, in C++, an assignment-expression could

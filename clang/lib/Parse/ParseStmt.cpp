@@ -1199,6 +1199,13 @@ Parser::OwningStmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
 
   OwningExprResult R(Actions);
   if (Tok.isNot(tok::semi)) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteReturn(CurScope);
+      ConsumeCodeCompletionToken();
+      SkipUntil(tok::semi, false, true);
+      return StmtError();
+    }
+        
     R = ParseExpression();
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);

@@ -556,6 +556,13 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
         Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
       }
 
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteInitializer(CurScope, ThisDecl);
+        ConsumeCodeCompletionToken();
+        SkipUntil(tok::comma, true, true);
+        return ThisDecl;
+      }
+      
       OwningExprResult Init(ParseInitializer());
 
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {

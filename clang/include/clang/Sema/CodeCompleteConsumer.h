@@ -59,6 +59,18 @@ enum {
   CCD_InBaseClass = 2
 };
 
+/// \brief Priority value factors by which we will divide or multiply the
+/// priority of a code-completion result.
+enum {
+  /// \brief Divide by this factor when a code-completion result's type exactly
+  /// matches the type we expect.
+  CCF_ExactTypeMatch = 4,
+  /// \brief Divide by this factor when a code-completion result's type is
+  /// similar to the type we expect (e.g., both arithmetic types, both
+  /// Objective-C object pointer types).
+  CCF_SimilarTypeMatch = 2
+};
+  
 class FunctionDecl;
 class FunctionType;
 class FunctionTemplateDecl;
