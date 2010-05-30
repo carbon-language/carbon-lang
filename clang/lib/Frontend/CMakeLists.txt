@@ -56,4 +56,5 @@ add_dependencies(clangFrontend
   ClangDiagnosticFrontend 
   ClangDiagnosticLex
   ClangDiagnosticSema
+  ClangDeclNodes
   ClangStmtNodes)

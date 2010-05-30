@@ -89,7 +89,7 @@ namespace {
                           uint64_t VisibleOffset);
 
 
-    // FIXME: Put in the same order is DeclNodes.def?
+    // FIXME: Put in the same order is DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);

@@ -42,7 +42,7 @@ namespace {
 
     // FIXME: Once we get closer to completion, replace these manually-written
     // declarations with automatically-generated ones from
-    // clang/AST/DeclNodes.def.
+    // clang/AST/DeclNodes.inc.
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);

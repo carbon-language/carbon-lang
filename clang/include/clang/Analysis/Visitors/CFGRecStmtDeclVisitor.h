@@ -22,13 +22,14 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 
-#define DISPATCH_CASE(CASE,CLASS) \
-case Decl::CASE: \
-static_cast<ImplClass*>(this)->Visit##CLASS(static_cast<CLASS*>(D));\
+#define DISPATCH_CASE(CLASS)                                  \
+case Decl::CLASS:                                             \
+static_cast<ImplClass*>(this)->Visit##CLASS##Decl(            \
+                               static_cast<CLASS##Decl*>(D)); \
 break;
 
-#define DEFAULT_DISPATCH(CLASS) void Visit##CLASS(CLASS* D) {}
-#define DEFAULT_DISPATCH_VARDECL(CLASS) void Visit##CLASS(CLASS* D)\
+#define DEFAULT_DISPATCH(CLASS) void Visit##CLASS##Decl(CLASS##Decl* D) {}
+#define DEFAULT_DISPATCH_VARDECL(CLASS) void Visit##CLASS##Decl(CLASS##Decl* D)\
   { static_cast<ImplClass*>(this)->VisitVarDecl(D); }
 
 
@@ -55,34 +56,34 @@ public:
 
   void VisitDecl(Decl* D) {
     switch (D->getKind()) {
-        DISPATCH_CASE(Function,FunctionDecl)
-        DISPATCH_CASE(CXXMethod,CXXMethodDecl)
-        DISPATCH_CASE(Var,VarDecl)
-        DISPATCH_CASE(ParmVar,ParmVarDecl)       // FIXME: (same)
-        DISPATCH_CASE(ImplicitParam,ImplicitParamDecl)
-        DISPATCH_CASE(EnumConstant,EnumConstantDecl)
-        DISPATCH_CASE(Typedef,TypedefDecl)
-        DISPATCH_CASE(Record,RecordDecl)    // FIXME: Refine.  VisitStructDecl?
-        DISPATCH_CASE(Enum,EnumDecl)
+        DISPATCH_CASE(Function)
+        DISPATCH_CASE(CXXMethod)
+        DISPATCH_CASE(Var)
+        DISPATCH_CASE(ParmVar)       // FIXME: (same)
+        DISPATCH_CASE(ImplicitParam)
+        DISPATCH_CASE(EnumConstant)
+        DISPATCH_CASE(Typedef)
+        DISPATCH_CASE(Record)    // FIXME: Refine.  VisitStructDecl?
+        DISPATCH_CASE(Enum)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");
     }
   }
 
-  DEFAULT_DISPATCH(VarDecl)
-  DEFAULT_DISPATCH(FunctionDecl)
-  DEFAULT_DISPATCH(CXXMethodDecl)
-  DEFAULT_DISPATCH_VARDECL(ParmVarDecl)
-  DEFAULT_DISPATCH(ImplicitParamDecl)
-  DEFAULT_DISPATCH(EnumConstantDecl)
-  DEFAULT_DISPATCH(TypedefDecl)
-  DEFAULT_DISPATCH(RecordDecl)
-  DEFAULT_DISPATCH(EnumDecl)
-  DEFAULT_DISPATCH(ObjCInterfaceDecl)
-  DEFAULT_DISPATCH(ObjCClassDecl)
-  DEFAULT_DISPATCH(ObjCMethodDecl)
-  DEFAULT_DISPATCH(ObjCProtocolDecl)
-  DEFAULT_DISPATCH(ObjCCategoryDecl)
+  DEFAULT_DISPATCH(Var)
+  DEFAULT_DISPATCH(Function)
+  DEFAULT_DISPATCH(CXXMethod)
+  DEFAULT_DISPATCH_VARDECL(ParmVar)
+  DEFAULT_DISPATCH(ImplicitParam)
+  DEFAULT_DISPATCH(EnumConstant)
+  DEFAULT_DISPATCH(Typedef)
+  DEFAULT_DISPATCH(Record)
+  DEFAULT_DISPATCH(Enum)
+  DEFAULT_DISPATCH(ObjCInterface)
+  DEFAULT_DISPATCH(ObjCClass)
+  DEFAULT_DISPATCH(ObjCMethod)
+  DEFAULT_DISPATCH(ObjCProtocol)
+  DEFAULT_DISPATCH(ObjCCategory)
 };
 
 } // end namespace clang

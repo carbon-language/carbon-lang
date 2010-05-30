@@ -71,4 +71,4 @@ add_clang_library(clangChecker
   VLASizeChecker.cpp
   )
 
-add_dependencies(clangChecker ClangStmtNodes)
+add_dependencies(clangChecker ClangDeclNodes ClangStmtNodes)

@@ -34,4 +34,4 @@ add_clang_library(clangCodeGen
   TargetInfo.cpp
   )
 
-add_dependencies(clangCodeGen ClangStmtNodes)
+add_dependencies(clangCodeGen ClangDeclNodes ClangStmtNodes)

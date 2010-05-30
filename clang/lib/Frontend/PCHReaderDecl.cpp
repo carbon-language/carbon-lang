@@ -84,7 +84,7 @@ namespace {
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
 
-    // FIXME: Reorder according to DeclNodes.def?
+    // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);

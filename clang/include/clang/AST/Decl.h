@@ -216,7 +216,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamedDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= NamedFirst && K <= NamedLast; }
+  static bool classofKind(Kind K) { return K >= firstNamed && K <= lastNamed; }
 };
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
@@ -361,7 +361,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ValueDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= ValueFirst && K <= ValueLast; }
+  static bool classofKind(Kind K) { return K >= firstValue && K <= lastValue; }
 };
 
 /// \brief Represents a ValueDecl that came out of a declarator.
@@ -417,7 +417,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const DeclaratorDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= DeclaratorFirst && K <= DeclaratorLast;
+    return K >= firstDeclarator && K <= lastDeclarator;
   }
 };
 
@@ -908,7 +908,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const VarDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= VarFirst && K <= VarLast; }
+  static bool classofKind(Kind K) { return K >= firstVar && K <= lastVar; }
 };
 
 class ImplicitParamDecl : public VarDecl {
@@ -1493,7 +1493,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FunctionDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= FunctionFirst && K <= FunctionLast;
+    return K >= firstFunction && K <= lastFunction;
   }
   static DeclContext *castToDeclContext(const FunctionDecl *D) {
     return static_cast<DeclContext *>(const_cast<FunctionDecl*>(D));
@@ -1556,7 +1556,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FieldDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= FieldFirst && K <= FieldLast; }
+  static bool classofKind(Kind K) { return K >= firstField && K <= lastField; }
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
@@ -1625,7 +1625,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TypeDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= TypeFirst && K <= TypeLast; }
+  static bool classofKind(Kind K) { return K >= firstType && K <= lastType; }
 };
 
 
@@ -1847,7 +1847,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TagDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K >= TagFirst && K <= TagLast; }
+  static bool classofKind(Kind K) { return K >= firstTag && K <= lastTag; }
 
   static DeclContext *castToDeclContext(const TagDecl *D) {
     return static_cast<DeclContext *>(const_cast<TagDecl*>(D));
@@ -2092,7 +2092,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= RecordFirst && K <= RecordLast;
+    return K >= firstRecord && K <= lastRecord;
   }
 };
 

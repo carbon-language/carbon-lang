@@ -417,8 +417,8 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCContainerDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= ObjCContainerFirst &&
-           K <= ObjCContainerLast;
+    return K >= firstObjCContainer &&
+           K <= lastObjCContainer;
   }
 
   static DeclContext *castToDeclContext(const ObjCContainerDecl *D) {
@@ -1059,7 +1059,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCImplDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= ObjCImplFirst && K <= ObjCImplLast;
+    return K >= firstObjCImpl && K <= lastObjCImpl;
   }
 };
 

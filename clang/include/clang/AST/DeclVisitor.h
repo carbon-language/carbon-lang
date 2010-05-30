@@ -30,20 +30,19 @@ class DeclVisitor {
 public:
   RetTy Visit(Decl *D) {
     switch (D->getKind()) {
-      default: assert(false && "Decl that isn't part of DeclNodes.def!");
-#define DECL(Derived, Base) \
-      case Decl::Derived: DISPATCH(Derived##Decl, Derived##Decl);
-#define ABSTRACT_DECL(Derived, Base)
-#include "clang/AST/DeclNodes.def"
+      default: assert(false && "Decl that isn't part of DeclNodes.inc!");
+#define DECL(DERIVED, BASE) \
+      case Decl::DERIVED: DISPATCH(DERIVED##Decl, DERIVED##Decl);
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
     }
   }
 
   // If the implementation chooses not to implement a certain visit
   // method, fall back to the parent.
-#define DECL(Derived, Base)                                             \
-  RetTy Visit##Derived##Decl(Derived##Decl *D) { DISPATCH(Base, Base); }
-#define ABSTRACT_DECL(Derived, Base) DECL(Derived, Base)
-#include "clang/AST/DeclNodes.def"
+#define DECL(DERIVED, BASE) \
+  RetTy Visit##DERIVED##Decl(DERIVED##Decl *D) { DISPATCH(BASE, BASE); }
+#include "clang/AST/DeclNodes.inc"
 
   RetTy VisitDecl(Decl *D) { return RetTy(); }
 };

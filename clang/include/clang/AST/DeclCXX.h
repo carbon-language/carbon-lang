@@ -920,9 +920,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
-    return K == CXXRecord ||
-           K == ClassTemplateSpecialization ||
-           K == ClassTemplatePartialSpecialization;
+    return K >= firstCXXRecord && K <= lastCXXRecord;
   }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static bool classof(const ClassTemplateSpecializationDecl *D) {
@@ -1012,7 +1010,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXMethodDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= CXXMethod && K <= CXXConversion;
+    return K >= firstCXXMethod && K <= lastCXXMethod;
   }
 };
 
@@ -1607,7 +1605,7 @@ class UsingDirectiveDecl : public NamedDecl {
                      SourceLocation IdentLoc,
                      NamedDecl *Nominated,
                      DeclContext *CommonAncestor)
-    : NamedDecl(Decl::UsingDirective, DC, L, getName()),
+    : NamedDecl(UsingDirective, DC, L, getName()),
       NamespaceLoc(NamespcLoc), QualifierRange(QualifierRange),
       Qualifier(Qualifier), IdentLoc(IdentLoc),
       NominatedNamespace(Nominated),
@@ -1680,7 +1678,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDirectiveDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::UsingDirective; }
+  static bool classofKind(Kind K) { return K == UsingDirective; }
 
   // Friend for getUsingDirectiveName.
   friend class DeclContext;
@@ -1714,7 +1712,7 @@ class NamespaceAliasDecl : public NamedDecl {
                      SourceRange QualifierRange,
                      NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc, NamedDecl *Namespace)
-    : NamedDecl(Decl::NamespaceAlias, DC, L, Alias), AliasLoc(AliasLoc),
+    : NamedDecl(NamespaceAlias, DC, L, Alias), AliasLoc(AliasLoc),
       QualifierRange(QualifierRange), Qualifier(Qualifier),
       IdentLoc(IdentLoc), Namespace(Namespace) { }
 
@@ -1786,7 +1784,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceAliasDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::NamespaceAlias; }
+  static bool classofKind(Kind K) { return K == NamespaceAlias; }
 };
 
 /// UsingShadowDecl - Represents a shadow declaration introduced into
@@ -1866,7 +1864,7 @@ class UsingDecl : public NamedDecl {
   UsingDecl(DeclContext *DC, SourceLocation L, SourceRange NNR,
             SourceLocation UL, NestedNameSpecifier* TargetNNS,
             DeclarationName Name, bool IsTypeNameArg)
-    : NamedDecl(Decl::Using, DC, L, Name),
+    : NamedDecl(Using, DC, L, Name),
       NestedNameRange(NNR), UsingLocation(UL), TargetNestedName(TargetNNS),
       IsTypeName(IsTypeNameArg) {
   }
@@ -1934,7 +1932,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::Using; }
+  static bool classofKind(Kind K) { return K == Using; }
 };
 
 /// UnresolvedUsingValueDecl - Represents a dependent using
@@ -1960,7 +1958,7 @@ class UnresolvedUsingValueDecl : public ValueDecl {
                            NestedNameSpecifier *TargetNNS,
                            SourceLocation TargetNameLoc,
                            DeclarationName TargetName)
-    : ValueDecl(Decl::UnresolvedUsingValue, DC, TargetNameLoc, TargetName, Ty),
+    : ValueDecl(UnresolvedUsingValue, DC, TargetNameLoc, TargetName, Ty),
     TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
     TargetNestedNameSpecifier(TargetNNS)
   { }
@@ -1997,7 +1995,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::UnresolvedUsingValue; }
+  static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }
 };
 
 /// UnresolvedUsingTypenameDecl - Represents a dependent using
@@ -2026,7 +2024,7 @@ class UnresolvedUsingTypenameDecl : public TypeDecl {
                     SourceLocation TypenameLoc,
                     SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
                     SourceLocation TargetNameLoc, IdentifierInfo *TargetName)
-  : TypeDecl(Decl::UnresolvedUsingTypename, DC, TargetNameLoc, TargetName),
+  : TypeDecl(UnresolvedUsingTypename, DC, TargetNameLoc, TargetName),
     TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
     TypenameLocation(TypenameLoc), TargetNestedNameSpecifier(TargetNNS)
   { }
@@ -2070,7 +2068,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::UnresolvedUsingTypename; }
+  static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }
 };
 
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.
@@ -2098,7 +2096,7 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(StaticAssertDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == Decl::StaticAssert; }
+  static bool classofKind(Kind K) { return K == StaticAssert; }
 };
 
 /// Insertion operator for diagnostics.  This allows sending AccessSpecifier's

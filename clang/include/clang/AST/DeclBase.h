@@ -68,12 +68,13 @@ class Decl {
 public:
   /// \brief Lists the kind of concrete classes of Decl.
   enum Kind {
-#define DECL(Derived, Base) Derived,
-#define DECL_RANGE(CommonBase, Start, End) \
-    CommonBase##First = Start, CommonBase##Last = End,
-#define LAST_DECL_RANGE(CommonBase, Start, End) \
-    CommonBase##First = Start, CommonBase##Last = End
-#include "clang/AST/DeclNodes.def"
+#define DECL(DERIVED, BASE) DERIVED,
+#define ABSTRACT_DECL(DECL)
+#define DECL_RANGE(BASE, START, END) \
+        first##BASE = START, last##BASE = END,
+#define LAST_DECL_RANGE(BASE, START, END) \
+        first##BASE = START, last##BASE = END
+#include "clang/AST/DeclNodes.inc"
   };
 
   /// \brief A placeholder type used to construct an empty shell of a
@@ -244,7 +245,7 @@ protected:
       HasAttrs(false), Implicit(false), Used(false),
       Access(AS_none), PCHLevel(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
-    if (Decl::CollectingStats()) addDeclKind(DK);
+    if (Decl::CollectingStats()) add(DK);
   }
 
   virtual ~Decl();
@@ -482,7 +483,7 @@ public:
   SourceLocation getBodyRBrace() const;
 
   // global temp stats (until we have a per-module visitor)
-  static void addDeclKind(Kind k);
+  static void add(Kind k);
   static bool CollectingStats(bool Enable = false);
   static void PrintStats();
 
@@ -687,7 +688,7 @@ public:
     case Decl::ObjCMethod:
       return true;
     default:
-      return DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast;
+      return DeclKind >= Decl::firstFunction && DeclKind <= Decl::lastFunction;
     }
   }
 
@@ -700,7 +701,7 @@ public:
   }
 
   bool isRecord() const {
-    return DeclKind >= Decl::RecordFirst && DeclKind <= Decl::RecordLast;
+    return DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord;
   }
 
   bool isNamespace() const {
@@ -1083,9 +1084,10 @@ public:
 
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }
-#define DECL_CONTEXT(Name) \
-  static bool classof(const Name##Decl *D) { return true; }
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT(NAME) \
+  static bool classof(const NAME##Decl *D) { return true; }
+#include "clang/AST/DeclNodes.inc"
 
   void dumpDeclContext() const;
 

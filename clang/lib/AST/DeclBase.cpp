@@ -35,16 +35,18 @@ using namespace clang;
 //  Statistics
 //===----------------------------------------------------------------------===//
 
-#define DECL(Derived, Base) static int n##Derived##s = 0;
-#include "clang/AST/DeclNodes.def"
+#define DECL(DERIVED, BASE) static int n##DERIVED##s = 0;
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
 
 static bool StatSwitch = false;
 
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Declaration not in DeclNodes.def!");
-#define DECL(Derived, Base) case Derived: return #Derived;
-#include "clang/AST/DeclNodes.def"
+  default: assert(0 && "Declaration not in DeclNodes.inc!");
+#define DECL(DERIVED, BASE) case DERIVED: return #DERIVED;
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
   }
 }
 
@@ -60,9 +62,10 @@ void Decl::setInvalidDecl(bool Invalid) {
 
 const char *DeclContext::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Declaration context not in DeclNodes.def!");
-#define DECL(Derived, Base) case Decl::Derived: return #Derived;
-#include "clang/AST/DeclNodes.def"
+  default: assert(0 && "Declaration context not in DeclNodes.inc!");
+#define DECL(DERIVED, BASE) case Decl::DERIVED: return #DERIVED;
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
   }
 }
 
@@ -75,28 +78,31 @@ void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
 
   int totalDecls = 0;
-#define DECL(Derived, Base) totalDecls += n##Derived##s;
-#include "clang/AST/DeclNodes.def"
+#define DECL(DERIVED, BASE) totalDecls += n##DERIVED##s;
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
   fprintf(stderr, "  %d decls total.\n", totalDecls);
 
   int totalBytes = 0;
-#define DECL(Derived, Base)                                             \
-  if (n##Derived##s > 0) {                                              \
-    totalBytes += (int)(n##Derived##s * sizeof(Derived##Decl));         \
-    fprintf(stderr, "    %d " #Derived " decls, %d each (%d bytes)\n",  \
-            n##Derived##s, (int)sizeof(Derived##Decl),                  \
-            (int)(n##Derived##s * sizeof(Derived##Decl)));              \
+#define DECL(DERIVED, BASE)                                             \
+  if (n##DERIVED##s > 0) {                                              \
+    totalBytes += (int)(n##DERIVED##s * sizeof(DERIVED##Decl));         \
+    fprintf(stderr, "    %d " #DERIVED " decls, %d each (%d bytes)\n",  \
+            n##DERIVED##s, (int)sizeof(DERIVED##Decl),                  \
+            (int)(n##DERIVED##s * sizeof(DERIVED##Decl)));              \
   }
-#include "clang/AST/DeclNodes.def"
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
 
   fprintf(stderr, "Total bytes = %d\n", totalBytes);
 }
 
-void Decl::addDeclKind(Kind k) {
+void Decl::add(Kind k) {
   switch (k) {
-  default: assert(0 && "Declaration not in DeclNodes.def!");
-#define DECL(Derived, Base) case Derived: ++n##Derived##s; break;
-#include "clang/AST/DeclNodes.def"
+  default: assert(0 && "Declaration not in DeclNodes.inc!");
+#define DECL(DERIVED, BASE) case DERIVED: ++n##DERIVED##s; break;
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
   }
 }
 
@@ -392,16 +398,18 @@ void Decl::Destroy(ASTContext &C) {
 Decl *Decl::castFromDeclContext (const DeclContext *D) {
   Decl::Kind DK = D->getDeclKind();
   switch(DK) {
-#define DECL_CONTEXT(Name) \
-    case Decl::Name:     \
-      return static_cast<Name##Decl*>(const_cast<DeclContext*>(D));
-#define DECL_CONTEXT_BASE(Name)
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT(NAME) \
+    case Decl::NAME:       \
+      return static_cast<NAME##Decl*>(const_cast<DeclContext*>(D));
+#define DECL_CONTEXT_BASE(NAME)
+#include "clang/AST/DeclNodes.inc"
     default:
-#define DECL_CONTEXT_BASE(Name)                                   \
-      if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
-        return static_cast<Name##Decl*>(const_cast<DeclContext*>(D));
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT_BASE(NAME)                  \
+      if (DK >= first##NAME && DK <= last##NAME) \
+        return static_cast<NAME##Decl*>(const_cast<DeclContext*>(D));
+#include "clang/AST/DeclNodes.inc"
       assert(false && "a decl that inherits DeclContext isn't handled");
       return 0;
   }
@@ -410,16 +418,18 @@ Decl *Decl::castFromDeclContext (const DeclContext *D) {
 DeclContext *Decl::castToDeclContext(const Decl *D) {
   Decl::Kind DK = D->getKind();
   switch(DK) {
-#define DECL_CONTEXT(Name) \
-    case Decl::Name:     \
-      return static_cast<Name##Decl*>(const_cast<Decl*>(D));
-#define DECL_CONTEXT_BASE(Name)
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT(NAME) \
+    case Decl::NAME:       \
+      return static_cast<NAME##Decl*>(const_cast<Decl*>(D));
+#define DECL_CONTEXT_BASE(NAME)
+#include "clang/AST/DeclNodes.inc"
     default:
-#define DECL_CONTEXT_BASE(Name)                                   \
-      if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
-        return static_cast<Name##Decl*>(const_cast<Decl*>(D));
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT_BASE(NAME)                                   \
+      if (DK >= first##NAME && DK <= last##NAME)                  \
+        return static_cast<NAME##Decl*>(const_cast<Decl*>(D));
+#include "clang/AST/DeclNodes.inc"
       assert(false && "a decl that inherits DeclContext isn't handled");
       return 0;
   }
@@ -466,16 +476,18 @@ void Decl::CheckAccessDeclContext() const {
 
 bool DeclContext::classof(const Decl *D) {
   switch (D->getKind()) {
-#define DECL_CONTEXT(Name) case Decl::Name:
-#define DECL_CONTEXT_BASE(Name)
-#include "clang/AST/DeclNodes.def"
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT(NAME) case Decl::NAME:
+#define DECL_CONTEXT_BASE(NAME)
+#include "clang/AST/DeclNodes.inc"
       return true;
     default:
-#define DECL_CONTEXT_BASE(Name)                   \
-      if (D->getKind() >= Decl::Name##First &&  \
-          D->getKind() <= Decl::Name##Last)     \
+#define DECL(NAME, BASE)
+#define DECL_CONTEXT_BASE(NAME)                 \
+      if (D->getKind() >= Decl::first##NAME &&  \
+          D->getKind() <= Decl::last##NAME)     \
         return true;
-#include "clang/AST/DeclNodes.def"
+#include "clang/AST/DeclNodes.inc"
       return false;
   }
 }
@@ -537,7 +549,7 @@ bool DeclContext::isTransparentContext() const {
     return true; // FIXME: Check for C++0x scoped enums
   else if (DeclKind == Decl::LinkageSpec)
     return true;
-  else if (DeclKind >= Decl::RecordFirst && DeclKind <= Decl::RecordLast)
+  else if (DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord)
     return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
   else if (DeclKind == Decl::Namespace)
     return false; // FIXME: Check for C++0x inline namespaces
@@ -581,7 +593,7 @@ DeclContext *DeclContext::getPrimaryContext() {
     return this;
 
   default:
-    if (DeclKind >= Decl::TagFirst && DeclKind <= Decl::TagLast) {
+    if (DeclKind >= Decl::firstTag && DeclKind <= Decl::lastTag) {
       // If this is a tag type that has a definition or is currently
       // being defined, that definition is our primary context.
       TagDecl *Tag = cast<TagDecl>(this);
@@ -602,7 +614,7 @@ DeclContext *DeclContext::getPrimaryContext() {
       return Tag;
     }
 
-    assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&
+    assert(DeclKind >= Decl::firstFunction && DeclKind <= Decl::lastFunction &&
           "Unknown DeclContext kind");
     return this;
   }

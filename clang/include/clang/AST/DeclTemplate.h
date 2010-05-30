@@ -261,7 +261,7 @@ public:
   static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
   static bool classofKind(Kind K) {
-    return K >= TemplateFirst && K <= TemplateLast;
+    return K >= firstTemplate && K <= lastTemplate;
   }
 
 protected:
@@ -1001,8 +1001,8 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
-    return K == ClassTemplateSpecialization ||
-           K == ClassTemplatePartialSpecialization;
+    return K >= firstClassTemplateSpecialization &&
+           K <= lastClassTemplateSpecialization;
   }
 
   static bool classof(const ClassTemplateSpecializationDecl *) {

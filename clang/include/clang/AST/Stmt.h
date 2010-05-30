@@ -99,11 +99,9 @@ public:
     NoStmtClass = 0,
 #define STMT(CLASS, PARENT) CLASS##Class,
 #define STMT_RANGE(BASE, FIRST, LAST) \
-        first##BASE##Constant = FIRST##Class, \
-        last##BASE##Constant = LAST##Class,
+        first##BASE##Constant=FIRST##Class, last##BASE##Constant=LAST##Class,
 #define LAST_STMT_RANGE(BASE, FIRST, LAST) \
-        first##BASE##Constant = FIRST##Class, \
-        last##BASE##Constant = LAST##Class
+        first##BASE##Constant=FIRST##Class, last##BASE##Constant=LAST##Class
 #define ABSTRACT_STMT(STMT)
 #include "clang/AST/StmtNodes.inc"
 };

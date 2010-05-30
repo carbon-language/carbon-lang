@@ -178,12 +178,12 @@ DISPATCH(UnaryOperator, UnaryOperator, S);    \
   /// the inheritance chain until reaching VisitDecl().
   bool VisitDecl(Decl *D);
 
-#define DECL(Class, Base)                        \
-  bool Visit##Class##Decl(Class##Decl *D) {      \
-    return getDerived().Visit##Base(D);          \
+#define DECL(CLASS, BASE)                   \
+  bool Visit##CLASS##Decl(CLASS##Decl *D) { \
+    return getDerived().Visit##BASE(D);     \
   }
-#define ABSTRACT_DECL(Class, Base) DECL(Class, Base)
-#include "clang/AST/DeclNodes.def"
+#include "clang/AST/DeclNodes.inc"
+
 };
 
 template<typename Derived>
@@ -257,15 +257,15 @@ bool RecursiveASTVisitorImpl<Derived>::Visit(Stmt *S) {
     case UnaryOperator::Imag:      DISPATCH(UnaryImag,      UnaryOperator, S);
     case UnaryOperator::Extension: DISPATCH(UnaryExtension, UnaryOperator, S);
     case UnaryOperator::OffsetOf:  DISPATCH(UnaryOffsetOf,  UnaryOperator, S);
-    }
+   }
   }
 
   // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
   switch (S->getStmtClass()) {
   case Stmt::NoStmtClass: break;
 #define ABSTRACT_STMT(STMT)
-#define STMT(CLASS, PARENT)                              \
-case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
+#define STMT(CLASS, PARENT) \
+  case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS, S);
 #include "clang/AST/StmtNodes.inc"
   }
 
@@ -293,11 +293,11 @@ bool RecursiveASTVisitorImpl<Derived>::Visit(Decl *D) {
     return false;
 
   switch (D->getKind()) {
-#define ABSTRACT_DECL(Class, Base)
-#define DECL(Class, Base) \
-  case Decl::Class: DISPATCH(Class##Decl, Class##Decl, D);
-#include "clang/AST/DeclNodes.def"
-  }
+#define ABSTRACT_DECL(DECL)
+#define DECL(CLASS, BASE) \
+    case Decl::CLASS: DISPATCH(CLASS##Decl, CLASS##Decl, D);
+#include "clang/AST/DeclNodes.inc"
+ }
 
   return false;
 }
