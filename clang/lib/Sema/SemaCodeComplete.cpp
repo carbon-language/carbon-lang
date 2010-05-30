@@ -2534,6 +2534,17 @@ namespace {
   };
 }
 
+static bool anyNullArguments(Expr **Args, unsigned NumArgs) {
+  if (NumArgs && !Args)
+    return true;
+  
+  for (unsigned I = 0; I != NumArgs; ++I)
+    if (!Args[I])
+      return true;
+  
+  return false;
+}
+
 void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
                             ExprTy **ArgsIn, unsigned NumArgs) {
   if (!CodeCompleter)
@@ -2548,7 +2559,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   Expr **Args = (Expr **)ArgsIn;
 
   // Ignore type-dependent call expressions entirely.
-  if (Fn->isTypeDependent() || 
+  if (!Fn || Fn->isTypeDependent() || anyNullArguments(Args, NumArgs) ||
       Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
     CodeCompleteOrdinaryName(S, CCC_Expression);
     return;
@@ -2572,7 +2583,8 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(NakedFn)) {
     FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
     if (FDecl) {
-      if (!FDecl->getType()->getAs<FunctionProtoType>())
+      if (!getLangOptions().CPlusPlus || 
+          !FDecl->getType()->getAs<FunctionProtoType>())
         Results.push_back(ResultCandidate(FDecl));
       else
         // FIXME: access?
