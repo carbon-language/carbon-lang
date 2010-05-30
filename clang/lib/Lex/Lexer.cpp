@@ -752,24 +752,21 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
 
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '"') {
-    // Skip escaped characters.
-    bool Escaped = false;
-    if (C == '\\') {
-      // Skip the escaped character.
+    // Skip escaped characters.  Escaped newlines will already be processed by
+    // getAndAdvanceChar.
+    if (C == '\\')
       C = getAndAdvanceChar(CurPtr, Result);
-      Escaped = true;
-    } 
     
-    if ((!Escaped && (C == '\n' || C == '\r')) ||             // Newline.
+    if (C == '\n' || C == '\r' ||             // Newline.
         (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
-    } else if (C == 0) {
-      NulCharacter = CurPtr-1;
     }
-
+    
+    if (C == 0)
+      NulCharacter = CurPtr-1;
     C = getAndAdvanceChar(CurPtr, Result);
   }
 
