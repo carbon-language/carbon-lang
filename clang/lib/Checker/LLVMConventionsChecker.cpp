@@ -34,13 +34,15 @@ static bool IsLLVMStringRef(QualType T) {
           "class llvm::StringRef";
 }
 
-static bool InStdNamespace(const Decl *D) {
+/// Check whether the declaration is semantically inside the top-level
+/// namespace named by ns.
+static bool InNamespace(const Decl *D, const llvm::StringRef &NS) {
   const DeclContext *DC = D->getDeclContext();
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext());
   if (!ND)
     return false;
   const IdentifierInfo *II = ND->getIdentifier();
-  if (!II || II->getName() != "std")
+  if (!II || !II->getName().equals(NS))
     return false;
   DC = ND->getDeclContext();
   return isa<TranslationUnitDecl>(DC);
@@ -56,50 +58,26 @@ static bool IsStdString(QualType T) {
 
   const TypedefDecl *TD = TT->getDecl();
 
-  if (!InStdNamespace(TD))
+  if (!InNamespace(TD, "std"))
     return false;
 
   return TD->getName() == "string";
 }
 
-static bool InClangNamespace(const Decl *D) {
-  const DeclContext *DC = D->getDeclContext();
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext());
-  if (!ND)
-    return false;
-  const IdentifierInfo *II = ND->getIdentifier();
-  if (!II || II->getName() != "clang")
-    return false;
-  DC = ND->getDeclContext();
-  return isa<TranslationUnitDecl>(DC);
-}
-
-static bool InLLVMNamespace(const Decl *D) {
-  const DeclContext *DC = D->getDeclContext();
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext());
-  if (!ND)
-    return false;
-  const IdentifierInfo *II = ND->getIdentifier();
-  if (!II || II->getName() != "llvm")
-    return false;
-  DC = ND->getDeclContext();
-  return isa<TranslationUnitDecl>(DC);
-}
-
 static bool IsClangType(const RecordDecl *RD) {
-  return RD->getName() == "Type" && InClangNamespace(RD);
+  return RD->getName() == "Type" && InNamespace(RD, "clang");
 }
 
 static bool IsClangDecl(const RecordDecl *RD) {
-  return RD->getName() == "Decl" && InClangNamespace(RD);
+  return RD->getName() == "Decl" && InNamespace(RD, "clang");
 }
 
 static bool IsClangStmt(const RecordDecl *RD) {
-  return RD->getName() == "Stmt" && InClangNamespace(RD);
+  return RD->getName() == "Stmt" && InNamespace(RD, "clang");
 }
 
-static bool isClangAttr(const RecordDecl *RD) {
-  return RD->getName() == "Attr" && InClangNamespace(RD);
+static bool IsClangAttr(const RecordDecl *RD) {
+  return RD->getName() == "Attr" && InNamespace(RD, "clang");
 }
 
 static bool IsStdVector(QualType T) {
@@ -110,7 +88,7 @@ static bool IsStdVector(QualType T) {
   TemplateName TM = TS->getTemplateName();
   TemplateDecl *TD = TM.getAsTemplateDecl();
 
-  if (!TD || !InStdNamespace(TD))
+  if (!TD || !InNamespace(TD, "std"))
     return false;
 
   return TD->getName() == "vector";
@@ -124,7 +102,7 @@ static bool IsSmallVector(QualType T) {
   TemplateName TM = TS->getTemplateName();
   TemplateDecl *TD = TM.getAsTemplateDecl();
 
-  if (!TD || !InLLVMNamespace(TD))
+  if (!TD || !InNamespace(TD, "llvm"))
     return false;
 
   return TD->getName() == "SmallVector";
@@ -214,7 +192,7 @@ static bool AllocatesMemory(QualType T) {
 
 // This type checking could be sped up via dynamic programming.
 static bool IsPartOfAST(const CXXRecordDecl *R) {
-  if (IsClangStmt(R) || IsClangType(R) || IsClangDecl(R) || isClangAttr(R))
+  if (IsClangStmt(R) || IsClangType(R) || IsClangDecl(R) || IsClangAttr(R))
     return true;
 
   for (CXXRecordDecl::base_class_const_iterator I = R->bases_begin(),
