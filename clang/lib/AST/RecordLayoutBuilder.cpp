@@ -490,10 +490,6 @@ class RecordLayoutBuilder {
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
-  /// EmptyClassOffsets - A map from offsets to empty record decls.
-  typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
-  EmptyClassOffsetsTy EmptyClassOffsets;
-
   RecordLayoutBuilder(ASTContext &Context, EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
       Packed(false), IsUnion(false), IsMac68kAlign(false),
@@ -566,28 +562,6 @@ class RecordLayoutBuilder {
   /// LayoutBase - Will lay out a base and return the offset where it was
   /// placed, in bits.
   uint64_t LayoutBase(const BaseSubobjectInfo *Base);
-
-  /// canPlaceRecordAtOffset - Return whether a record (either a base class
-  /// or a field) can be placed at the given offset.
-  /// Returns false if placing the record will result in two components
-  /// (direct or indirect) of the same type having the same offset.
-  bool canPlaceRecordAtOffset(const CXXRecordDecl *RD, uint64_t Offset,
-                              bool CheckVBases) const;
-
-  /// canPlaceFieldAtOffset - Return whether a field can be placed at the given
-  /// offset.
-  bool canPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset) const;
-
-  /// UpdateEmptyClassOffsets - Called after a record (either a base class
-  /// or a field) has been placed at the given offset. Will update the
-  /// EmptyClassOffsets map if the class is empty or has any empty bases or
-  /// fields.
-  void UpdateEmptyClassOffsets(const CXXRecordDecl *RD, uint64_t Offset,
-                               bool UpdateVBases);
-
-  /// UpdateEmptyClassOffsets - Called after a field has been placed at the
-  /// given offset.
-  void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
 
   /// InitializeLayout - Initialize record layout for the given record decl.
   void InitializeLayout(const Decl *D);
@@ -1040,171 +1014,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
-  UpdateEmptyClassOffsets(Base->Class, Offset, /*UpdateVBases=*/false);
   return Offset;
-}
-
-bool
-RecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
-                                               uint64_t Offset,
-                                               bool CheckVBases) const {
-  // Look for an empty class with the same type at the same offset.
-  for (EmptyClassOffsetsTy::const_iterator I =
-         EmptyClassOffsets.lower_bound(Offset),
-         E = EmptyClassOffsets.upper_bound(Offset); I != E; ++I) {
-
-    if (I->second == RD)
-      return false;
-  }
-
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-
-  // Check bases.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-    assert(!I->getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
-    if (I->isVirtual())
-      continue;
-
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
-
-    if (!canPlaceRecordAtOffset(BaseDecl, Offset + BaseOffset,
-                                /*CheckVBases=*/false))
-      return false;
-  }
-
-  // Check fields.
-  unsigned FieldNo = 0;
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
-
-    uint64_t FieldOffset = Layout.getFieldOffset(FieldNo);
-
-    if (!canPlaceFieldAtOffset(FD, Offset + FieldOffset))
-      return false;
-  }
-
-  if (CheckVBases) {
-    // FIXME: virtual bases.
-  }
-
-  return true;
-}
-
-bool RecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD,
-                                                   uint64_t Offset) const {
-  QualType T = FD->getType();
-  if (const RecordType *RT = T->getAs<RecordType>()) {
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-      return canPlaceRecordAtOffset(RD, Offset, /*CheckVBases=*/true);
-  }
-
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(T)) {
-    QualType ElemTy = Context.getBaseElementType(AT);
-    const RecordType *RT = ElemTy->getAs<RecordType>();
-    if (!RT)
-      return true;
-    const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD)
-      return true;
-
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-
-    uint64_t NumElements = Context.getConstantArrayElementCount(AT);
-    uint64_t ElementOffset = Offset;
-    for (uint64_t I = 0; I != NumElements; ++I) {
-      if (!canPlaceRecordAtOffset(RD, ElementOffset, /*CheckVBases=*/true))
-        return false;
-
-      ElementOffset += Layout.getSize();
-    }
-  }
-
-  return true;
-}
-
-void RecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
-                                                     uint64_t Offset,
-                                                     bool UpdateVBases) {
-  if (RD->isEmpty())
-    EmptyClassOffsets.insert(std::make_pair(Offset, RD));
-
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-
-  // Update bases.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-    assert(!I->getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
-    if (I->isVirtual())
-      continue;
-
-    const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-    uint64_t BaseClassOffset = Layout.getBaseClassOffset(Base);
-    UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset,
-                            /*UpdateVBases=*/false);
-  }
-
-  // Update fields.
-  unsigned FieldNo = 0;
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
-
-    uint64_t FieldOffset = Layout.getFieldOffset(FieldNo);
-    UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
-  }
-
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-
-  if (UpdateVBases) {
-    // FIXME: Update virtual bases.
-  } else if (PrimaryBase && Layout.getPrimaryBaseWasVirtual()) {
-    // We always want to update the offsets of a primary virtual base.
-    assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
-           "primary base class offset must always be 0!");
-    UpdateEmptyClassOffsets(PrimaryBase, Offset, /*UpdateVBases=*/false);
-  }
-}
-
-void
-RecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
-                                                uint64_t Offset) {
-  QualType T = FD->getType();
-
-  if (const RecordType *RT = T->getAs<RecordType>()) {
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      UpdateEmptyClassOffsets(RD, Offset, /*UpdateVBases=*/true);
-      return;
-    }
-  }
-
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(T)) {
-    QualType ElemTy = Context.getBaseElementType(AT);
-    const RecordType *RT = ElemTy->getAs<RecordType>();
-    if (!RT)
-      return;
-    const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD)
-      return;
-
-    const ASTRecordLayout &Info = Context.getASTRecordLayout(RD);
-
-    uint64_t NumElements = Context.getConstantArrayElementCount(AT);
-    uint64_t ElementOffset = Offset;
-
-    for (uint64_t I = 0; I != NumElements; ++I) {
-      UpdateEmptyClassOffsets(RD, ElementOffset, /*UpdateVBases=*/true);
-      ElementOffset += Info.getSize();
-    }
-  }
 }
 
 void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
