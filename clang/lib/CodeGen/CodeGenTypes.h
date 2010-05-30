@@ -122,6 +122,10 @@ public:
 
   const llvm::FunctionType *GetFunctionType(GlobalDecl GD);
 
+  /// VerifyFuncTypeComplete - Utility to check whether a function type can
+  /// be converted to an LLVM type (i.e. doesn't depend on an incomplete tag
+  /// type).
+  static const TagType *VerifyFuncTypeComplete(const Type* T);
 
   /// GetFunctionTypeForVTable - Get the LLVM function type for use in a vtable,
   /// given a CXXMethodDecl. If the method to has an incomplete return type, 

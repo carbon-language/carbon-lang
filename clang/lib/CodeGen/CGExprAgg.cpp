@@ -396,35 +396,11 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   const llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
-
   llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "dst.ptr");
-  llvm::Value *FuncPtr;
-  
-  if (MD->isVirtual()) {
-    int64_t Index = CGF.CGM.getVTables().getMethodVTableIndex(MD);
-    
-    // FIXME: We shouldn't use / 8 here.
-    uint64_t PointerWidthInBytes = 
-      CGF.CGM.getContext().Target.getPointerWidth(0) / 8;
-
-    // Itanium C++ ABI 2.3:
-    //   For a non-virtual function, this field is a simple function pointer. 
-    //   For a virtual function, it is 1 plus the virtual table offset 
-    //   (in bytes) of the function, represented as a ptrdiff_t. 
-    FuncPtr = llvm::ConstantInt::get(PtrDiffTy,
-                                     (Index * PointerWidthInBytes) + 1);
-  } else {
-    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-    const llvm::Type *Ty =
-      CGF.CGM.getTypes().GetFunctionType(CGF.CGM.getTypes().getFunctionInfo(MD),
-                                         FPT->isVariadic());
-    llvm::Constant *Fn = CGF.CGM.GetAddrOfFunction(MD, Ty);
-    FuncPtr = llvm::ConstantExpr::getPtrToInt(Fn, PtrDiffTy);
-  }
+  llvm::Value *FuncPtr = CGF.CGM.GetCXXMemberFunctionPointerValue(MD);
   Builder.CreateStore(FuncPtr, DstPtr, VolatileDest);
 
   llvm::Value *AdjPtr = Builder.CreateStructGEP(DestPtr, 1, "dst.adj");
-  
   // The adjustment will always be 0.
   Builder.CreateStore(llvm::ConstantInt::get(PtrDiffTy, 0), AdjPtr,
                       VolatileDest);

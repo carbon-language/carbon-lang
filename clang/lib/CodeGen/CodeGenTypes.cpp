@@ -108,7 +108,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
 
 // Code to verify a given function type is complete, i.e. the return type
 // and all of the argument types are complete.
-static const TagType *VerifyFuncTypeComplete(const Type* T) {
+const TagType *CodeGenTypes::VerifyFuncTypeComplete(const Type* T) {
   const FunctionType *FT = cast<FunctionType>(T);
   if (const TagType* TT = FT->getResultType()->getAs<TagType>())
     if (!TT->getDecl()->isDefinition())

@@ -443,30 +443,8 @@ public:
       CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
     
     llvm::Constant *Values[2];
-    
-    // Get the function pointer (or index if this is a virtual function).
-    if (MD->isVirtual()) {
-      uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
 
-      // FIXME: We shouldn't use / 8 here.
-      uint64_t PointerWidthInBytes = 
-        CGM.getContext().Target.getPointerWidth(0) / 8;
-      
-      // Itanium C++ ABI 2.3:
-      //   For a non-virtual function, this field is a simple function pointer. 
-      //   For a virtual function, it is 1 plus the virtual table offset 
-      //   (in bytes) of the function, represented as a ptrdiff_t. 
-      Values[0] = llvm::ConstantInt::get(PtrDiffTy, 
-                                         (Index * PointerWidthInBytes) + 1);
-    } else {
-      const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-      const llvm::Type *Ty =
-        CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                       FPT->isVariadic());
-
-      llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD, Ty);
-      Values[0] = llvm::ConstantExpr::getPtrToInt(FuncPtr, PtrDiffTy);
-    } 
+    Values[0] = CGM.GetCXXMemberFunctionPointerValue(MD);
     
     // The adjustment will always be 0.
     Values[1] = llvm::ConstantInt::get(PtrDiffTy, 0);

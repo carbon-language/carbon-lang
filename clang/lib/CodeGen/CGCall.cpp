@@ -515,27 +515,11 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
-static bool HasIncompleteReturnTypeOrArgumentTypes(const FunctionProtoType *T) {
-  if (const TagType *TT = T->getResultType()->getAs<TagType>()) {
-    if (!TT->getDecl()->isDefinition())
-      return true;
-  }
-
-  for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i) {
-    if (const TagType *TT = T->getArgType(i)->getAs<TagType>()) {
-      if (!TT->getDecl()->isDefinition())
-        return true;
-    }
-  }
-
-  return false;
-}
-
 const llvm::Type *
 CodeGenTypes::GetFunctionTypeForVTable(const CXXMethodDecl *MD) {
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   
-  if (!HasIncompleteReturnTypeOrArgumentTypes(FPT))
+  if (!VerifyFuncTypeComplete(FPT))
     return GetFunctionType(getFunctionInfo(MD), FPT->isVariadic());
 
   return llvm::OpaqueType::get(getLLVMContext());
