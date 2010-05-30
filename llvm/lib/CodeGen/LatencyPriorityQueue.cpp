@@ -118,7 +118,7 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
 SUnit *LatencyPriorityQueue::pop() {
   if (empty()) return NULL;
   std::vector<SUnit *>::iterator Best = Queue.begin();
-  for (std::vector<SUnit *>::iterator I = next(Queue.begin()),
+  for (std::vector<SUnit *>::iterator I = llvm::next(Queue.begin()),
        E = Queue.end(); I != E; ++I)
     if (Picker(*Best, *I))
       Best = I;
