@@ -83,3 +83,6 @@ void test12() {
 
 // rdar://7608537
 struct test13 { int a; } (test13x);
+
+// <rdar://problem/8044088>
+struct X<foo::int> { }; // expected-error{{expected identifier or '('}}

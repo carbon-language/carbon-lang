@@ -670,7 +670,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
 
-    if (Tok.is(tok::less)) {
+    if (Tok.is(tok::less) && getLang().CPlusPlus) {
       // The name was supposed to refer to a template, but didn't.
       // Eat the template argument list and try to continue parsing this as
       // a class (or template thereof).
@@ -713,8 +713,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         const_cast<ParsedTemplateInfo&>(TemplateInfo).ExternLoc
           = SourceLocation();
       }
-
-
     }
   } else if (Tok.is(tok::annot_template_id)) {
     TemplateId = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
