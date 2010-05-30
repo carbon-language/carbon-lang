@@ -12,33 +12,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangASTNodesEmitter.h"
-#include "Record.h"
-#include <map>
-#include <cctype>
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 // Statement Node Tables (.inc file) generation.
 //===----------------------------------------------------------------------===//
 
-// Create a macro-ized version of a name
-static std::string macroName(std::string S) {
-  for (unsigned i = 0; i < S.size(); ++i)
-    S[i] = std::toupper(S[i]);
-
-  return S;
-}
-
-// A map from a node to each of its derived nodes.
-typedef std::multimap<Record*, Record*> ChildMap;
-typedef ChildMap::const_iterator ChildIterator;
-
 // Returns the first and last non-abstract subrecords
 // Called recursively to ensure that nodes remain contiguous
-static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
-                                                  raw_ostream &OS,
-                                                  Record *Base,
-						  bool Root = true) {
+std::pair<Record *, Record *> ClangASTNodesEmitter::EmitNode(
+                                                           const ChildMap &Tree,
+                                                           raw_ostream &OS,
+                                                           Record *Base) {
   std::string BaseName = macroName(Base->getName());
 
   ChildIterator i = Tree.lower_bound(Base), e = Tree.upper_bound(Base);
@@ -60,15 +46,15 @@ static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
     OS << "#endif\n";
 
     if (Abstract)
-      OS << "ABSTRACT_STMT(" << NodeName << "(" << R->getName() << ", "
-          << Base->getName() << "))\n";
+      OS << "ABSTRACT_" << macroName(Root.getName()) << "(" << NodeName << "("
+          << R->getName() << ", " << baseName(*Base) << "))\n";
     else
       OS << NodeName << "(" << R->getName() << ", "
-          << Base->getName() << ")\n";
+          << baseName(*Base) << ")\n";
 
     if (Tree.find(R) != Tree.end()) {
       const std::pair<Record *, Record *> &Result
-        = EmitStmtNode(Tree, OS, R, false);
+        = EmitNode(Tree, OS, R);
       if (!First && Result.first)
         First = Result.first;
       if (Result.second)
@@ -87,11 +73,10 @@ static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
 
   if (First) {
     assert (Last && "Got a first node but not a last node for a range!");
-    if (Root)
-      OS << "LAST_STMT_RANGE(";
+    if (Base == &Root)
+      OS << "LAST_" << macroName(Root.getName()) << "_RANGE(";
     else
-      OS << "STMT_RANGE(";
- 
+      OS << macroName(Root.getName()) << "_RANGE(";
     OS << Base->getName() << ", " << First->getName() << ", "
        << Last->getName() << ")\n\n";
   }
@@ -99,29 +84,28 @@ static std::pair<Record *, Record *> EmitStmtNode(const ChildMap &Tree,
   return std::make_pair(First, Last);
 }
 
-void ClangStmtNodesEmitter::run(raw_ostream &OS) {
+void ClangASTNodesEmitter::run(raw_ostream &OS) {
   // Write the preamble
-  OS << "#ifndef ABSTRACT_STMT\n";
-  OS << "#  define ABSTRACT_STMT(Stmt) Stmt\n";
+  OS << "#ifndef ABSTRACT_" << macroName(Root.getName()) << "\n";
+  OS << "#  define ABSTRACT_" << macroName(Root.getName()) << "(Type) Type\n";
   OS << "#endif\n";
 
-  OS << "#ifndef STMT_RANGE\n";
-  OS << "#  define STMT_RANGE(Base, First, Last)\n";
+  OS << "#ifndef " << macroName(Root.getName()) << "_RANGE\n";
+  OS << "#  define "
+     << macroName(Root.getName()) << "_RANGE(Base, First, Last)\n";
   OS << "#endif\n\n";
 
-  OS << "#ifndef LAST_STMT_RANGE\n";
-  OS << "#  define LAST_STMT_RANGE(Base, First, Last) "
-          "STMT_RANGE(Base, First, Last)\n";
+  OS << "#ifndef LAST_" << macroName(Root.getName()) << "_RANGE\n";
+  OS << "#  define LAST_" 
+     << macroName(Root.getName()) << "_RANGE(Base, First, Last) " 
+     << macroName(Root.getName()) << "_RANGE(Base, First, Last)\n";
   OS << "#endif\n\n";
  
   // Emit statements
-  const std::vector<Record*> Stmts = Records.getAllDerivedDefinitions("Stmt");
+  const std::vector<Record*> Stmts
+    = Records.getAllDerivedDefinitions(Root.getName());
 
   ChildMap Tree;
-
-  // Create a pseudo-record to serve as the Stmt node, which isn't actually
-  // output.
-  Record Stmt ("Stmt", SMLoc());
 
   for (unsigned i = 0, e = Stmts.size(); i != e; ++i) {
     Record *R = Stmts[i];
@@ -129,13 +113,53 @@ void ClangStmtNodesEmitter::run(raw_ostream &OS) {
     if (R->getValue("Base"))
       Tree.insert(std::make_pair(R->getValueAsDef("Base"), R));
     else
-      Tree.insert(std::make_pair(&Stmt, R));
+      Tree.insert(std::make_pair(&Root, R));
   }
 
-  EmitStmtNode(Tree, OS, &Stmt);
+  EmitNode(Tree, OS, &Root);
 
-  OS << "#undef STMT\n";
-  OS << "#undef STMT_RANGE\n";
-  OS << "#undef LAST_STMT_RANGE\n";
-  OS << "#undef ABSTRACT_STMT\n";
+  OS << "#undef " << macroName(Root.getName()) << "\n";
+  OS << "#undef " << macroName(Root.getName()) << "_RANGE\n";
+  OS << "#undef LAST_" << macroName(Root.getName()) << "_RANGE\n";
+  OS << "#undef ABSTRACT_" << macroName(Root.getName()) << "\n";
+}
+
+void ClangDeclContextEmitter::run(raw_ostream &OS) {
+  // FIXME: Find a .td file format to allow for this to be represented better.
+
+  OS << "#ifndef DECL_CONTEXT\n";
+  OS << "#  define DECL_CONTEXT(DECL)\n";
+  OS << "#endif\n";
+  
+  OS << "#ifndef DECL_CONTEXT_BASE\n";
+  OS << "#  define DECL_CONTEXT_BASE(DECL) DECL_CONTEXT(DECL)\n";
+  OS << "#endif\n";
+  
+  typedef std::set<Record*> RecordSet;
+  typedef std::vector<Record*> RecordVector;
+  
+  RecordVector DeclContextsVector
+    = Records.getAllDerivedDefinitions("DeclContext");
+  RecordVector Decls = Records.getAllDerivedDefinitions("Decl");
+  RecordSet DeclContexts (DeclContextsVector.begin(), DeclContextsVector.end());
+   
+  for (RecordVector::iterator i = Decls.begin(), e = Decls.end(); i != e; ++i) {
+    Record *R = *i;
+
+    if (R->getValue("Base")) {
+      Record *B = R->getValueAsDef("Base");
+      if (DeclContexts.find(B) != DeclContexts.end()) {
+        OS << "DECL_CONTEXT_BASE(" << B->getName() << ")\n";
+        DeclContexts.erase(B);
+      }
+    }
+  }
+
+  for (RecordSet::iterator i = DeclContexts.begin(), e = DeclContexts.end();
+       i != e; ++i) {
+    OS << "DECL_CONTEXT(" << (*i)->getName() << ")\n";
+  }
+
+  OS << "#undef DECL_CONTEXT\n";
+  OS << "#undef DECL_CONTEXT_BASE\n";
 }

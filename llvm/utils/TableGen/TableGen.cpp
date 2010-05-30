@@ -55,6 +55,7 @@ enum ActionType {
   GenCallingConv,
   GenClangDiagsDefs,
   GenClangDiagGroups,
+  GenClangDeclNodes,
   GenClangStmtNodes,
   GenDAGISel,
   GenFastISel,
@@ -113,6 +114,8 @@ namespace {
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
                                "Generate Clang diagnostic groups"),
+                    clEnumValN(GenClangDeclNodes, "gen-clang-decl-nodes",
+                               "Generate Clang AST statement nodes"),
                     clEnumValN(GenClangStmtNodes, "gen-clang-stmt-nodes",
                                "Generate Clang AST statement nodes"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
@@ -248,8 +251,12 @@ int main(int argc, char **argv) {
     case GenClangDiagGroups:
       ClangDiagGroupsEmitter(Records).run(Out);
       break;
+    case GenClangDeclNodes:
+      ClangASTNodesEmitter(Records, "Decl", "Decl").run(Out);
+      ClangDeclContextEmitter(Records).run(Out);
+      break;
     case GenClangStmtNodes:
-      ClangStmtNodesEmitter(Records).run(Out);
+      ClangASTNodesEmitter(Records, "Stmt", "").run(Out);
       break;
     case GenDisassembler:
       DisassemblerEmitter(Records).run(Out);
