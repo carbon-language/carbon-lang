@@ -151,7 +151,6 @@ private:
   /// and we want to override B::f with C::f, we also need to override A::f with
   /// C::f.
   void PropagateOverrider(const CXXMethodDecl *OldMD,
-                          BaseSubobject NewBase,
                           uint64_t OverriderOffsetInLayoutClass,
                           const CXXMethodDecl *NewMD,
                           SubobjectOffsetsMapTy &Offsets);
@@ -243,7 +242,7 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
       continue;
 
     // First, propagate the overrider.
-    PropagateOverrider(MD, Base, OffsetInLayoutClass, MD, Offsets);
+    PropagateOverrider(MD, OffsetInLayoutClass, MD, Offsets);
 
     // Add the overrider as the final overrider of itself.
     OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
@@ -366,7 +365,6 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
 }
 
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
-                                         BaseSubobject NewBase,
                                          uint64_t OverriderOffsetInLayoutClass,
                                          const CXXMethodDecl *NewMD,
                                          SubobjectOffsetsMapTy &Offsets) {
@@ -415,8 +413,8 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
       Overrider.Method = NewMD;
       
       // And propagate it further.
-      PropagateOverrider(OverriddenMD, NewBase, OverriderOffsetInLayoutClass,
-                         NewMD, Offsets);
+      PropagateOverrider(OverriddenMD, OverriderOffsetInLayoutClass, NewMD,
+                         Offsets);
     }
   }
 }
