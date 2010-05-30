@@ -10,6 +10,8 @@ int test(int i, int j, int k, int l) {
 struct X f1 = { 17 };
 void f2() { f1(17); }
 
+const char *str = "Hello, \nWorld";
+
 // RUN: c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: macro definition:{TypedText __VERSION__} (70)
 // CHECK-CC1: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (12)
@@ -35,3 +37,6 @@ void f2() { f1(17); }
 // CHECK-CC4: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
 // CHECK-CC4: VarDecl:{ResultType struct X}{TypedText f1} (50)
 
+// RUN: c-index-test -code-completion-at=%s:13:28 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: NotImplemented:{TypedText void} (40)
+// CHECK-CC5: NotImplemented:{TypedText volatile} (40)
