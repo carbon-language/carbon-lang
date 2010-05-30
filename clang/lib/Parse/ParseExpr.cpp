@@ -580,7 +580,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     
       Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
                                  TypeOfCast, CastTy, RParenLoc);
-      if (Res.isInvalid()) return move(Res);
+      if (Res.isInvalid()) 
+        return move(Res);
     }
 
     switch (ParenExprType) {
@@ -672,6 +673,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(CurScope, ScopeSpec, Name, 
                                     Tok.is(tok::l_paren), false);
+
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(move(Res));
   }
@@ -980,6 +982,11 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       CommaLocsTy CommaLocs;
 
       Loc = ConsumeParen();
+
+      if (LHS.isInvalid()) {
+        SkipUntil(tok::r_paren);
+        return ExprError();
+      }
 
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(CurScope, LHS.get(), 0, 0);
