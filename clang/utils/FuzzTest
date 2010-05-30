@@ -233,6 +233,9 @@ and you can run a particular test with '--test <index>'.
     group.add_option("", "--replacement-string", dest="replacement_strings",
                      action="append", help="Add a replacement string to use",
                      default=[])
+    group.add_option("", "--replacement-list", dest="replacement_lists",
+                     help="Add a list of replacement strings (one per line)",
+                     action="append", default=[])
     group.add_option("", "--no-delete", help="Don't delete characters",
                      action='store_false', dest="enable_delete", default=True)
     group.add_option("", "--no-insert", help="Don't insert strings",
@@ -291,6 +294,19 @@ and you can run a particular test with '--test <index>'.
     # Get the list if insert/replacement strings.
     replacements = list(opts.replacement_chars)
     replacements.extend(opts.replacement_strings)
+    for replacement_list in opts.replacement_lists:
+        f = open(replacement_list)
+        try:
+            for ln in f:
+                ln = ln[:-1]
+                if ln:
+                    replacements.append(ln)
+        finally:
+            f.close()
+
+    # Unique and order the replacement list.
+    replacements = list(set(replacements))
+    replacements.sort()
 
     # Create the test generator.
     tg = TestGenerator(input_files, opts.enable_delete, opts.enable_insert,
