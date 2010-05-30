@@ -70,6 +70,8 @@ def : DiagGroup<"overflow">;
 def : DiagGroup<"overloaded-virtual">;
 def : DiagGroup<"packed">;
 def PointerArith : DiagGroup<"pointer-arith">;
+def PoundWarning : DiagGroup<"#warnings">,
+                   DiagCategory<"#warning Directive">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def ReturnType : DiagGroup<"return-type">;
