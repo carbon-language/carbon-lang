@@ -600,6 +600,27 @@ public:
 };
 } // end anonymous namespace.
 
+
+namespace {
+class DarwinPPCTargetInfo :
+  public DarwinTargetInfo<PPCTargetInfo> {
+public:
+  DarwinPPCTargetInfo(const std::string& triple)
+    : DarwinTargetInfo<PPCTargetInfo>(triple) {
+    HasAlignMac68kSupport = true;
+  }
+};
+
+class DarwinPPC64TargetInfo :
+  public DarwinTargetInfo<PPC64TargetInfo> {
+public:
+  DarwinPPC64TargetInfo(const std::string& triple)
+    : DarwinTargetInfo<PPC64TargetInfo>(triple) {
+    HasAlignMac68kSupport = true;
+  }
+};
+} // end anonymous namespace.
+
 namespace {
 // MBlaze abstract base class
 class MBlazeTargetInfo : public TargetInfo {
@@ -2327,14 +2348,14 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::ppc:
     if (os == llvm::Triple::Darwin)
-      return new DarwinTargetInfo<PPCTargetInfo>(T);
+      return new DarwinPPCTargetInfo(T);
     else if (os == llvm::Triple::FreeBSD)
       return new FreeBSDTargetInfo<PPC32TargetInfo>(T);
     return new PPC32TargetInfo(T);
 
   case llvm::Triple::ppc64:
     if (os == llvm::Triple::Darwin)
-      return new DarwinTargetInfo<PPC64TargetInfo>(T);
+      return new DarwinPPC64TargetInfo(T);
     else if (os == llvm::Triple::Lv2)
       return new PS3PPUTargetInfo<PPC64TargetInfo>(T);
     else if (os == llvm::Triple::FreeBSD)
