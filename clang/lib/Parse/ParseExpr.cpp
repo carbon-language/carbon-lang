@@ -961,7 +961,14 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
     default:  // Not a postfix-expression suffix.
       return move(LHS);
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
-      if (getLang().ObjC1 && isSimpleObjCMessageExpression())
+      // If we have a array postfix expression that starts on a new line and
+      // Objective-C is enabled, it is highly likely that the user forgot a
+      // semicolon after the base expression and that the array postfix-expr is
+      // actually another message send.  In this case, do some look-ahead to see
+      // if the contents of the square brackets are obviously not a valid
+      // expression and recover by pretending there is no suffix.
+      if (getLang().ObjC1 && Tok.isAtStartOfLine() &&
+          isSimpleObjCMessageExpression())
         return move(LHS);
           
       Loc = ConsumeBracket();

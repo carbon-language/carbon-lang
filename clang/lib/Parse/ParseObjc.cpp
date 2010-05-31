@@ -1730,7 +1730,6 @@ Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     expression
 ///     simple-type-specifier
 ///     typename-specifier
-
 bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
   if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) || 
       Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope))
@@ -1800,11 +1799,8 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
 /// This routine will only return true for a subset of valid message-send
 /// expressions.
 bool Parser::isSimpleObjCMessageExpression() {
-  assert(Tok.is(tok::l_square) && 
+  assert(Tok.is(tok::l_square) && getLang().ObjC1 &&
          "Incorrect start for isSimpleObjCMessageExpression");
-  if (!getLang().ObjC1)
-    return false;
-  
   return GetLookAheadToken(1).is(tok::identifier) &&
          GetLookAheadToken(2).is(tok::identifier);
 }
@@ -1855,7 +1851,9 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 
     return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
                                           TypeOrExpr, ExprArg(Actions));
-  } else if (Tok.is(tok::identifier)) {
+  }
+  
+  if (Tok.is(tok::identifier)) {
     IdentifierInfo *Name = Tok.getIdentifierInfo();
     SourceLocation NameLoc = Tok.getLocation();
     TypeTy *ReceiverType;
