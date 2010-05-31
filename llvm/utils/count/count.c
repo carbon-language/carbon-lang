@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   }
 
   NumLines = 0;
-  while ((NumRead = fread(Buffer, 1, sizeof(Buffer), stdin))) {
+  while ((NumRead = fread(Buffer, 1, sizeof(Buffer), stdin)) == sizeof(Buffer)){
     unsigned i;
 
     for (i = 0; i != NumRead; ++i)
