@@ -961,6 +961,9 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
     default:  // Not a postfix-expression suffix.
       return move(LHS);
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
+      if (getLang().ObjC1 && isSimpleObjCMessageExpression())
+        return move(LHS);
+          
       Loc = ConsumeBracket();
       OwningExprResult Idx(ParseExpression());
 

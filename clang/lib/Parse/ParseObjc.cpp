@@ -1794,6 +1794,21 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
   return false;
 }
 
+/// \brief Determine whether the parser is currently referring to a an
+/// Objective-C message send, using a simplified heuristic to avoid overhead.
+///
+/// This routine will only return true for a subset of valid message-send
+/// expressions.
+bool Parser::isSimpleObjCMessageExpression() {
+  assert(Tok.is(tok::l_square) && 
+         "Incorrect start for isSimpleObjCMessageExpression");
+  if (!getLang().ObjC1)
+    return false;
+  
+  return GetLookAheadToken(1).is(tok::identifier) &&
+         GetLookAheadToken(2).is(tok::identifier);
+}
+
 ///   objc-message-expr:
 ///     '[' objc-receiver objc-message-args ']'
 ///

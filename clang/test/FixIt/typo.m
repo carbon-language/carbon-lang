@@ -24,7 +24,8 @@ void test() {
   int his_ivar; // expected-note 2{{'his_ivar' declared here}}
   float wibble;
 }
-
+- (void)method;
++ (void)method;
 @property int his_prop; // expected-note{{'his_prop' declared here}}
 @end
 
@@ -145,4 +146,9 @@ double *isupper(int);
 @end
 #endif
 
+void f(A *a) {
+  f(a) // expected-error{{expected ';' after expression}}
+  [a method] // expected-error{{expected ';' after expression}}
+  [A method] // expected-error{{expected ';' after expression}}
+}
 

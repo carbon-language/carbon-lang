@@ -1059,6 +1059,7 @@ private:
   OwningExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
   OwningExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
   OwningExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
+  bool isSimpleObjCMessageExpression();
   OwningExprResult ParseObjCMessageExpression();
   OwningExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
                                                   SourceLocation SuperLoc,
