@@ -3266,6 +3266,15 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
     if (VT.bitsGT(LVT))
       VT = LVT;
   }
+  
+  // If we're optimizing for size, and there is a limit, bump the maximum number
+  // of operations inserted down to 4.  This is a wild guess that approximates
+  // the size of a call to memcpy or memset (3 arguments + call).
+  if (Limit != ~0U) {
+    const Function *F = DAG.getMachineFunction().getFunction();
+    if (F->hasFnAttr(Attribute::OptimizeForSize))
+      Limit = 4;
+  }
 
   unsigned NumMemOps = 0;
   while (Size != 0) {

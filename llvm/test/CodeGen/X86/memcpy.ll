@@ -25,3 +25,33 @@ entry:
 ; CHECK: memcpy
 }
 
+; Large constant memcpy's should lower to a call when optimizing for size.
+; PR6623
+define void @test3(i8* nocapture %A, i8* nocapture %B) nounwind optsize noredzone {
+entry:
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
+  ret void
+; CHECK: test3:
+; CHECK: memcpy
+}
+
+; Large constant memcpy's should be inlined when not optimizing for size.
+define void @test4(i8* nocapture %A, i8* nocapture %B) nounwind noredzone {
+entry:
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
+  ret void
+; CHECK: test4:
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+; CHECK: movq
+}
+
