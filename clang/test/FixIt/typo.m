@@ -24,8 +24,8 @@ void test() {
   int his_ivar; // expected-note 2{{'his_ivar' declared here}}
   float wibble;
 }
-- (void)method;
-+ (void)method;
+- (void)methodA;
++ (void)methodA;
 @property int his_prop; // expected-note{{'his_prop' declared here}}
 @end
 
@@ -41,6 +41,8 @@ void test() {
 
 @implementation A
 @synthesize his_prop = his_ivar;
+- (void)methodA { }
++ (void)methodA { }
 @end
 
 @implementation B
@@ -148,7 +150,7 @@ double *isupper(int);
 
 void f(A *a) {
   f(a) // expected-error{{expected ';' after expression}}
-  [a method] // expected-error{{expected ';' after expression}}
-  [A method] // expected-error{{expected ';' after expression}}
+  [a methodA] // expected-error{{expected ';' after expression}}
+  [A methodA] // expected-error{{expected ';' after expression}}
 }
 
