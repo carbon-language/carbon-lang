@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -verify %s
-// XFAIL: *
 char PR7218(char a) {
     char buf[2];
     buf[0] = a;

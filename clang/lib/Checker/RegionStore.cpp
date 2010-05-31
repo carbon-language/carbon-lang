@@ -1173,27 +1173,33 @@ SVal RegionStoreManager::RetrieveElement(Store store,
     }
   }
 
-  // Check if the immediate super region has a direct binding.
-  if (const Optional<SVal> &V = getDirectBinding(B, superR)) {
-    if (SymbolRef parentSym = V->getAsSymbol()) {
-      return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+  // Handle the case where we are indexing into a larger scalar object.
+  // For example, this handles:
+  //   int x = ...
+  //   char *y = &x;
+  //   return *y;
+  // FIXME: This is a hack, and doesn't do anything really intelligent yet.
+  const RegionRawOffset &O = R->getAsRawOffset();
+  if (const TypedRegion *baseR = dyn_cast_or_null<TypedRegion>(O.getRegion())) {
+    QualType baseT = baseR->getValueType(Ctx);
+    if (baseT->isScalarType()) {
+      QualType elemT = R->getElementType();
+      if (elemT->isScalarType()) {
+        if (Ctx.getTypeSizeInChars(baseT) >= Ctx.getTypeSizeInChars(elemT)) {
+          if (const Optional<SVal> &V = getDirectBinding(B, superR)) {
+            if (SymbolRef parentSym = V->getAsSymbol())
+              return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+ 
+            if (V->isUnknownOrUndef())
+              return *V;
+            // Other cases: give up.  We are indexing into a larger object
+            // that has some value, but we don't know how to handle that yet.
+            return UnknownVal();
+          }
+        }
+      }
     }
-
-    if (V->isUnknownOrUndef())
-      return *V;
-
-    // Handle LazyCompoundVals for the immediate super region.  Other cases
-    // are handled in 'RetrieveFieldOrElementCommon'.
-    if (const nonloc::LazyCompoundVal *LCV =
-        dyn_cast<nonloc::LazyCompoundVal>(V)) {
-      R = MRMgr.getElementRegionWithSuper(R, LCV->getRegion());
-      return RetrieveElement(LCV->getStore(), R);
-    }
-
-    // Other cases: give up.
-    return UnknownVal();
   }
-
   return RetrieveFieldOrElementCommon(store, R, R->getElementType(), superR);
 }
 
