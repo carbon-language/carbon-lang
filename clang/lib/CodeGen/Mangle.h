@@ -84,6 +84,8 @@ public:
                          Diagnostic &Diags)
     : Context(Context), Diags(Diags) { }
 
+  virtual ~MangleContext() { }
+
   ASTContext &getASTContext() const { return Context; }
 
   Diagnostic &getDiags() const { return Diags; }
