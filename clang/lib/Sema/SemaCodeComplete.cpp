@@ -1573,10 +1573,13 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
 
     if (SemaRef.getLangOptions().ObjC1) {
       // Add "super", if we're in an Objective-C class with a superclass.
-      if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
-        if (Method->getClassInterface()->getSuperClass())
-          Results.AddResult(Result("super"));
-      
+      if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl()) {
+        // The interface can be NULL.
+        if (ObjCInterfaceDecl *ID = Method->getClassInterface())
+          if (ID->getSuperClass())
+            Results.AddResult(Result("super"));
+      }
+
       AddObjCExpressionResults(Results, true);
     }
 
