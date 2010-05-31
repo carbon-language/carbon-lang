@@ -112,10 +112,10 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
 Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len, unsigned Align,
                         bool isVolatile, IRBuilder<> &B, const TargetData *TD) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
-  const Type *ArgTys[3] = { Dst->getType(), Src->getType(), Len->getType() };
-  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, ArgTys, 3);
   Dst = CastToCStr(Dst, B);
   Src = CastToCStr(Src, B);
+  const Type *ArgTys[3] = { Dst->getType(), Src->getType(), Len->getType() };
+  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, ArgTys, 3);
   return B.CreateCall5(MemCpy, Dst, Src, Len,
                        ConstantInt::get(B.getInt32Ty(), Align),
                        ConstantInt::get(B.getInt1Ty(), isVolatile));
