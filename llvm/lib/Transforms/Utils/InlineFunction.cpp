@@ -351,6 +351,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         // Uses of the argument in the function should use our new alloca
         // instead.
         ActualArg = NewAlloca;
+
+        // Calls that we inline may use the new alloca, so we need to clear
+        // their 'tail' flags.
+        MustClearTailCallFlags = true;
       }
 
       ValueMap[I] = ActualArg;
