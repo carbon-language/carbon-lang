@@ -468,7 +468,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
       // move a call site to a function in this SCC before the
       // 'FirstCallInSCC' barrier.
       if (SCC.isSingular()) {
-        std::swap(CallSites[CSi], CallSites.back());
+        CallSites[CSi] = CallSites.back();
         CallSites.pop_back();
       } else {
         CallSites.erase(CallSites.begin()+CSi);
