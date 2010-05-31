@@ -3197,7 +3197,7 @@ __codecvt_utf16<wchar_t, true>::do_encoding() const throw()
 bool
 __codecvt_utf16<wchar_t, true>::do_always_noconv() const throw()
 {
-    return true;
+    return false;
 }
 
 int
@@ -3347,7 +3347,7 @@ __codecvt_utf16<char16_t, true>::do_encoding() const throw()
 bool
 __codecvt_utf16<char16_t, true>::do_always_noconv() const throw()
 {
-    return true;
+    return false;
 }
 
 int
@@ -3497,7 +3497,7 @@ __codecvt_utf16<char32_t, true>::do_encoding() const throw()
 bool
 __codecvt_utf16<char32_t, true>::do_always_noconv() const throw()
 {
-    return true;
+    return false;
 }
 
 int
