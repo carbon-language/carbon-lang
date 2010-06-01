@@ -26,13 +26,15 @@ int main(int argc, char **argv) {
   }
 
   NumLines = 0;
-  while ((NumRead = fread(Buffer, 1, sizeof(Buffer), stdin))) {
+  do {
     unsigned i;
+
+    NumRead = fread(Buffer, 1, sizeof(Buffer), stdin);
 
     for (i = 0; i != NumRead; ++i)
       if (Buffer[i] == '\n')
         ++NumLines;
-  }
+  } while (NumRead == sizeof(Buffer));
     
   if (!feof(stdin)) {
     fprintf(stderr, "%s: error reading stdin\n", argv[0]);
