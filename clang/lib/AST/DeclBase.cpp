@@ -638,9 +638,8 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   ExternalASTSource *Source = getParentASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
 
-  llvm::SmallVector<uint32_t, 64> Decls;
-  if (Source->ReadDeclsLexicallyInContext(const_cast<DeclContext *>(this),
-                                          Decls))
+  llvm::SmallVector<Decl*, 64> Decls;
+  if (Source->FindExternalLexicalDecls(this, Decls))
     return;
 
   // There is no longer any lexical storage in this context
@@ -654,7 +653,7 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   Decl *FirstNewDecl = 0;
   Decl *PrevDecl = 0;
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
-    Decl *D = Source->GetDecl(Decls[I]);
+    Decl *D = Decls[I];
     if (PrevDecl)
       PrevDecl->NextDeclInContext = D;
     else
@@ -671,25 +670,80 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
     LastDecl = PrevDecl;
 }
 
-void
-DeclContext::LoadVisibleDeclsFromExternalStorage() const {
-  DeclContext *This = const_cast<DeclContext *>(this);
-  ExternalASTSource *Source = getParentASTContext().getExternalSource();
-  assert(hasExternalVisibleStorage() && Source && "No external storage?");
+DeclContext::lookup_result
+ExternalASTSource::SetNoExternalVisibleDeclsForName(const DeclContext *DC,
+                                                    DeclarationName Name) {
+  ASTContext &Context = DC->getParentASTContext();
+  StoredDeclsMap *Map;
+  if (!(Map = DC->LookupPtr))
+    Map = DC->CreateStoredDeclsMap(Context);
 
-  llvm::SmallVector<VisibleDeclaration, 64> Decls;
-  if (Source->ReadDeclsVisibleInContext(This, Decls))
-    return;
+  StoredDeclsList &List = (*Map)[Name];
+  assert(List.isNull());
+  (void) List;
 
-  // There is no longer any visible storage in this context
-  ExternalVisibleStorage = false;
+  return DeclContext::lookup_result();
+}
 
-  // Load the declaration IDs for all of the names visible in this
-  // context.
-  assert(!LookupPtr && "Have a lookup map before de-serialization?");
-  StoredDeclsMap *Map = CreateStoredDeclsMap(getParentASTContext());
+DeclContext::lookup_result
+ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
+                                          const VisibleDeclaration &VD) {
+  ASTContext &Context = DC->getParentASTContext();
+  StoredDeclsMap *Map;
+  if (!(Map = DC->LookupPtr))
+    Map = DC->CreateStoredDeclsMap(Context);
+
+  StoredDeclsList &List = (*Map)[VD.Name];
+  List.setFromDeclIDs(VD.Declarations);
+  return List.getLookupResult(Context);
+}
+
+DeclContext::lookup_result
+ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
+                                                  DeclarationName Name,
+                                    llvm::SmallVectorImpl<NamedDecl*> &Decls) {
+  ASTContext &Context = DC->getParentASTContext();;
+
+  StoredDeclsMap *Map;
+  if (!(Map = DC->LookupPtr))
+    Map = DC->CreateStoredDeclsMap(Context);
+
+  StoredDeclsList &List = (*Map)[Name];
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    if (List.isNull())
+      List.setOnlyValue(Decls[I]);
+    else
+      List.AddSubsequentDecl(Decls[I]);
+  }
+
+  return List.getLookupResult(Context);
+}
+
+void ExternalASTSource::SetExternalVisibleDecls(const DeclContext *DC,
+                    const llvm::SmallVectorImpl<VisibleDeclaration> &Decls) {
+  // There is no longer any visible storage in this context.
+  DC->ExternalVisibleStorage = false;
+
+  assert(!DC->LookupPtr && "Have a lookup map before de-serialization?");
+  StoredDeclsMap *Map = DC->CreateStoredDeclsMap(DC->getParentASTContext());
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
     (*Map)[Decls[I].Name].setFromDeclIDs(Decls[I].Declarations);
+  }
+}
+
+void ExternalASTSource::SetExternalVisibleDecls(const DeclContext *DC,
+                            const llvm::SmallVectorImpl<NamedDecl*> &Decls) {
+  // There is no longer any visible storage in this context.
+  DC->ExternalVisibleStorage = false;
+
+  assert(!DC->LookupPtr && "Have a lookup map before de-serialization?");
+  StoredDeclsMap &Map = *DC->CreateStoredDeclsMap(DC->getParentASTContext());
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    StoredDeclsList &List = Map[Decls[I]->getDeclName()];
+    if (List.isNull())
+      List.setOnlyValue(Decls[I]);
+    else
+      List.AddSubsequentDecl(Decls[I]);
   }
 }
 
@@ -813,8 +867,17 @@ DeclContext::lookup(DeclarationName Name) {
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
 
-  if (hasExternalVisibleStorage())
-    LoadVisibleDeclsFromExternalStorage();
+  if (hasExternalVisibleStorage()) {
+    // Check to see if we've already cached the lookup results.
+    if (LookupPtr) {
+      StoredDeclsMap::iterator I = LookupPtr->find(Name);
+      if (I != LookupPtr->end())
+        return I->second.getLookupResult(getParentASTContext());
+    }
+
+    ExternalASTSource *Source = getParentASTContext().getExternalSource();
+    return Source->FindExternalVisibleDeclsByName(this, Name);
+  }
 
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
@@ -944,7 +1007,7 @@ void StoredDeclsList::materializeDecls(ASTContext &Context) {
     ExternalASTSource *Source = Context.getExternalSource();
     assert(Source && "No external AST source available!");
 
-    Data = reinterpret_cast<uintptr_t>(Source->GetDecl(DeclID));
+    Data = reinterpret_cast<uintptr_t>(Source->GetExternalDecl(DeclID));
     break;
   }
 
@@ -956,7 +1019,7 @@ void StoredDeclsList::materializeDecls(ASTContext &Context) {
     assert(Source && "No external AST source available!");
 
     for (unsigned I = 0, N = Vector.size(); I != N; ++I)
-      Vector[I] = reinterpret_cast<uintptr_t>(Source->GetDecl(Vector[I]));
+      Vector[I] = reinterpret_cast<uintptr_t>(Source->GetExternalDecl(Vector[I]));
 
     Data = (Data & ~0x03) | DK_Decl_Vector;
     break;

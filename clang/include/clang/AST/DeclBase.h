@@ -632,6 +632,8 @@ class DeclContext {
   /// another pointer.
   mutable Decl *LastDecl;
 
+  friend class ExternalASTSource;
+
 protected:
    DeclContext(Decl::Kind K)
      : DeclKind(K), ExternalLexicalStorage(false),

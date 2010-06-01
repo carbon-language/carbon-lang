@@ -29,6 +29,8 @@ public:
     ExternalASTSource::SemaSource = true;
   }
 
+  ~ExternalSemaSource();
+
   /// \brief Initialize the semantic source with the Sema instance
   /// being used to perform semantic analysis on the abstract syntax
   /// tree.

@@ -3494,9 +3494,9 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
     // If we have an external source, load the entire class method
     // pool from the PCH file.
     if (ExternalSource) {
-      for (uint32_t I = 0, N = ExternalSource->GetNumKnownSelectors(); I != N;
-           ++I) {
-        Selector Sel = ExternalSource->GetSelector(I);
+      for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
+           I != N; ++I) {
+        Selector Sel = ExternalSource->GetExternalSelector(I);
         if (Sel.isNull() || FactoryMethodPool.count(Sel) || 
             InstanceMethodPool.count(Sel))
           continue;
@@ -3595,9 +3595,9 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
     // If we have an external source, load the entire class method
     // pool from the PCH file.
     if (ExternalSource) {
-      for (uint32_t I = 0, N = ExternalSource->GetNumKnownSelectors(); I != N;
-           ++I) {
-        Selector Sel = ExternalSource->GetSelector(I);
+      for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
+           I != N; ++I) {
+        Selector Sel = ExternalSource->GetExternalSelector(I);
         if (Sel.isNull() || InstanceMethodPool.count(Sel) ||
             FactoryMethodPool.count(Sel))
           continue;

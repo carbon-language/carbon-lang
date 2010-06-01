@@ -17,6 +17,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/APFloat.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
@@ -427,3 +428,6 @@ BlockScopeInfo *Sema::getCurBlock() {
   
   return dyn_cast<BlockScopeInfo>(FunctionScopes.back());  
 }
+
+// Pin this vtable to this file.
+ExternalSemaSource::~ExternalSemaSource() {}

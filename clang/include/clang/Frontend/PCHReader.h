@@ -570,28 +570,36 @@ public:
                              const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a declarator info from the given record.
-  virtual TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
-                                            unsigned &Idx);
+  TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
+                                    unsigned &Idx);
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
-  virtual QualType GetType(pch::TypeID ID);
+  QualType GetType(pch::TypeID ID);
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
-  virtual Decl *GetDecl(pch::DeclID ID);
+  Decl *GetDecl(pch::DeclID ID);
+  virtual Decl *GetExternalDecl(uint32_t ID);
 
   /// \brief Resolve the offset of a statement into a statement.
   ///
   /// This operation will read a new statement from the external
   /// source each time it is called, and is meant to be used via a
   /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
-  virtual Stmt *GetDeclStmt(uint64_t Offset);
+  virtual Stmt *GetExternalDeclStmt(uint64_t Offset);
 
   /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
   /// specified cursor.  Read the abbreviations that are at the top of the block
   /// and then leave the cursor pointing into the block.
   bool ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor, unsigned BlockID);
+
+  /// \brief Finds all the visible declarations with a given name.
+  /// The current implementation of this method just loads the entire
+  /// lookup table as unmaterialized references.
+  virtual DeclContext::lookup_result
+  FindExternalVisibleDeclsByName(const DeclContext *DC,
+                                 DeclarationName Name);
 
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.
@@ -606,27 +614,8 @@ public:
   ///
   /// \returns true if there was an error while reading the
   /// declarations for this declaration context.
-  virtual bool ReadDeclsLexicallyInContext(DeclContext *DC,
-                                 llvm::SmallVectorImpl<pch::DeclID> &Decls);
-
-  /// \brief Read all of the declarations visible from a declaration
-  /// context.
-  ///
-  /// \param DC The declaration context whose visible declarations
-  /// will be read.
-  ///
-  /// \param Decls A vector of visible declaration structures,
-  /// providing the mapping from each name visible in the declaration
-  /// context to the declaration IDs of declarations with that name.
-  ///
-  /// \returns true if there was an error while reading the
-  /// declarations for this declaration context.
-  ///
-  /// FIXME: Using this intermediate data structure results in an
-  /// extraneous copying of the data. Could we pass in a reference to
-  /// the StoredDeclsMap instead?
-  virtual bool ReadDeclsVisibleInContext(DeclContext *DC,
-                       llvm::SmallVectorImpl<VisibleDeclaration> & Decls);
+  virtual bool FindExternalLexicalDecls(const DeclContext *DC,
+                                        llvm::SmallVectorImpl<Decl*> &Decls);
 
   /// \brief Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.
@@ -691,8 +680,8 @@ public:
 
   Selector DecodeSelector(unsigned Idx);
 
-  virtual Selector GetSelector(uint32_t ID);
-  virtual uint32_t GetNumKnownSelectors();
+  virtual Selector GetExternalSelector(uint32_t ID);
+  uint32_t GetNumExternalSelectors();
 
   Selector GetSelector(const RecordData &Record, unsigned &Idx) {
     return DecodeSelector(Record[Idx++]);

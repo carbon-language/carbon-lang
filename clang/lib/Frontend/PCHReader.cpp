@@ -2476,6 +2476,10 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   return TemplateArgumentLocInfo();
 }
 
+Decl *PCHReader::GetExternalDecl(uint32_t ID) {
+  return GetDecl(ID);
+}
+
 Decl *PCHReader::GetDecl(pch::DeclID ID) {
   if (ID == 0)
     return 0;
@@ -2497,15 +2501,15 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 /// This operation will read a new statement from the external
 /// source each time it is called, and is meant to be used via a
 /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
-Stmt *PCHReader::GetDeclStmt(uint64_t Offset) {
+Stmt *PCHReader::GetExternalDeclStmt(uint64_t Offset) {
   // Since we know tha this statement is part of a decl, make sure to use the
   // decl cursor to read it.
   DeclsCursor.JumpToBit(Offset);
   return ReadStmt(DeclsCursor);
 }
 
-bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
-                                  llvm::SmallVectorImpl<pch::DeclID> &Decls) {
+bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
+                                         llvm::SmallVectorImpl<Decl*> &Decls) {
   assert(DC->hasExternalLexicalStorage() &&
          "DeclContext has no lexical decls in storage");
 
@@ -2531,20 +2535,22 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
   }
 
   // Load all of the declaration IDs
-  Decls.clear();
-  Decls.insert(Decls.end(), Record.begin(), Record.end());
+  for (RecordData::iterator I = Record.begin(), E = Record.end(); I != E; ++I)
+    Decls.push_back(GetDecl(*I));
   ++NumLexicalDeclContextsRead;
   return false;
 }
 
-bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
-                           llvm::SmallVectorImpl<VisibleDeclaration> &Decls) {
+DeclContext::lookup_result
+PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
+                                          DeclarationName Name) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
   uint64_t Offset = DeclContextOffsets[DC].second;
   if (Offset == 0) {
     Error("DeclContext has no visible decls in storage");
-    return true;
+    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
+                                      DeclContext::lookup_iterator());
   }
 
   // Keep track of where we are in the stream, then jump back there
@@ -2559,13 +2565,16 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
   if (RecCode != pch::DECL_CONTEXT_VISIBLE) {
     Error("Expected visible block");
-    return true;
+    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
+                                      DeclContext::lookup_iterator());
   }
 
-  if (Record.size() == 0)
-    return false;
-
-  Decls.clear();
+  llvm::SmallVector<VisibleDeclaration, 64> Decls;
+  if (Record.empty()) {
+    SetExternalVisibleDecls(DC, Decls);
+    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
+                                      DeclContext::lookup_iterator());
+  }
 
   unsigned Idx = 0;
   while (Idx < Record.size()) {
@@ -2580,7 +2589,9 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   }
 
   ++NumVisibleDeclContextsRead;
-  return false;
+
+  SetExternalVisibleDecls(DC, Decls);
+  return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 
 void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
@@ -2853,11 +2864,11 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   return SelectorsLoaded[Index];
 }
 
-Selector PCHReader::GetSelector(uint32_t ID) { 
+Selector PCHReader::GetExternalSelector(uint32_t ID) { 
   return DecodeSelector(ID);
 }
 
-uint32_t PCHReader::GetNumKnownSelectors() {
+uint32_t PCHReader::GetNumExternalSelectors() {
   return TotalNumSelectors + 1;
 }
 
