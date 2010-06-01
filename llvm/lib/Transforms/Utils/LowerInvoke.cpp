@@ -63,10 +63,7 @@ static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
 namespace {
   class LowerInvoke : public FunctionPass {
     // Used for both models.
-    Constant *WriteFn;
     Constant *AbortFn;
-    Value *AbortMessage;
-    unsigned AbortMessageLength;
 
     // Used for expensive EH support.
     const Type *JBLinkTy;
@@ -93,8 +90,6 @@ namespace {
     }
 
   private:
-    void createAbortMessage(Module *M);
-    void writeAbortMessage(Instruction *IB);
     bool insertCheapEHSupport(Function &F);
     void splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*>&Invokes);
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
@@ -124,7 +119,6 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
 bool LowerInvoke::doInitialization(Module &M) {
   const Type *VoidPtrTy =
           Type::getInt8PtrTy(M.getContext());
-  AbortMessage = 0;
   if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
@@ -176,59 +170,7 @@ bool LowerInvoke::doInitialization(Module &M) {
   // We need the 'write' and 'abort' functions for both models.
   AbortFn = M.getOrInsertFunction("abort", Type::getVoidTy(M.getContext()),
                                   (Type *)0);
-#if 0 // "write" is Unix-specific.. code is going away soon anyway.
-  WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
-                                  VoidPtrTy, Type::Int32Ty, (Type *)0);
-#else
-  WriteFn = 0;
-#endif
   return true;
-}
-
-void LowerInvoke::createAbortMessage(Module *M) {
-  Constant *Null32 = Constant::getNullValue(Type::getInt32Ty(M->getContext()));
-  Constant *GEPIdx[2] = { Null32, Null32 };
-  if (useExpensiveEHSupport) {
-    // The abort message for expensive EH support tells the user that the
-    // program 'unwound' without an 'invoke' instruction.
-    Constant *Msg =
-      ConstantArray::get(M->getContext(),
-                         "ERROR: Exception thrown, but not caught!\n");
-    AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
-
-    GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
-                                               GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg");
-    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
-  } else {
-    // The abort message for cheap EH support tells the user that EH is not
-    // enabled.
-    Constant *Msg =
-      ConstantArray::get(M->getContext(), 
-                        "Exception handler needed, but not enabled."      
-                        "Recompile program with -enable-correct-eh-support.\n");
-    AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
-
-    GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
-                                               GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg");
-    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
-  }
-}
-
-
-void LowerInvoke::writeAbortMessage(Instruction *IB) {
-#if 0
-  if (AbortMessage == 0)
-    createAbortMessage(IB->getParent()->getParent()->getParent());
-
-  // These are the arguments we WANT...
-  Value* Args[3];
-  Args[0] = ConstantInt::get(Type::Int32Ty, 2);
-  Args[1] = AbortMessage;
-  Args[2] = ConstantInt::get(Type::Int32Ty, AbortMessageLength);
-  (new CallInst(WriteFn, Args, 3, "", IB))->setTailCall();
-#endif
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {
@@ -256,9 +198,6 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
 
       ++NumInvokes; Changed = true;
     } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-      // Insert a new call to write(2, AbortMessage, AbortMessageLength);
-      writeAbortMessage(UI);
-
       // Insert a call to abort()
       CallInst::Create(AbortFn, "", UI)->setTailCall();
 
@@ -633,9 +572,6 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   // Set up the term block ("throw without a catch").
   new UnreachableInst(F.getContext(), TermBlock);
-
-  // Insert a new call to write(2, AbortMessage, AbortMessageLength);
-  writeAbortMessage(TermBlock->getTerminator());
 
   // Insert a call to abort()
   CallInst::Create(AbortFn, "",
