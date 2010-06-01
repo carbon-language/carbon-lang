@@ -334,10 +334,15 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
   // so just duck out immediately if the block is empty.
   if (SUnits.empty()) return 0;
 
+  // Keep a map of the MachineInstr*'s back to the SUnit representing them.
+  // This is used for updating debug information.
+  DenseMap<MachineInstr*,const SUnit*> MISUnitMap;
+
   // Find the node at the bottom of the critical path.
   const SUnit *Max = 0;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     const SUnit *SU = &SUnits[i];
+    MISUnitMap[SU->getInstr()] = SU;
     if (!Max || SU->getDepth() + SU->Latency > Max->getDepth() + Max->Latency)
       Max = SU;
   }
@@ -519,8 +524,21 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
                   std::multimap<unsigned, MachineOperand *>::iterator>
            Range = RegRefs.equal_range(AntiDepReg);
         for (std::multimap<unsigned, MachineOperand *>::iterator
-             Q = Range.first, QE = Range.second; Q != QE; ++Q)
+             Q = Range.first, QE = Range.second; Q != QE; ++Q) {
           Q->second->setReg(NewReg);
+          // If the SU for the instruction being updated has debug information
+          // related to the anti-dependency register, make sure to update that
+          // as well.
+          const SUnit *SU = MISUnitMap[Q->second->getParent()];
+          for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
+            MachineInstr *DI = SU->DbgInstrList[i];
+            assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&
+                    DI->getOperand(0).getReg()
+                    && "Non register dbg_value attached to SUnit!");
+            if (DI->getOperand(0).getReg() == AntiDepReg)
+              DI->getOperand(0).setReg(NewReg);
+          }
+        }
 
         // We just went back in time and modified history; the
         // liveness information for the anti-depenence reg is now

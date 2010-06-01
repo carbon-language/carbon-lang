@@ -905,6 +905,18 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
                  AggressiveAntiDepState::RegisterReference>::iterator
                    Q = Range.first, QE = Range.second; Q != QE; ++Q) {
               Q->second.Operand->setReg(NewReg);
+              // If the SU for the instruction being updated has debug
+              // information related to the anti-dependency register, make
+              // sure to update that as well.
+              const SUnit *SU = MISUnitMap[Q->second.Operand->getParent()];
+              for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
+                MachineInstr *DI = SU->DbgInstrList[i];
+                assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&
+                        DI->getOperand(0).getReg()
+                        && "Non register dbg_value attached to SUnit!");
+                if (DI->getOperand(0).getReg() == AntiDepReg)
+                  DI->getOperand(0).setReg(NewReg);
+              }
             }
 
             // We just went back in time and modified history; the
