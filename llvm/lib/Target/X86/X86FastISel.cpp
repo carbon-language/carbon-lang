@@ -1391,6 +1391,12 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, false, TM, ArgLocs, I->getParent()->getContext());
+  
+  // Allocate shadow area for Win64
+  if (Subtarget->isTargetWin64()) {  
+    CCInfo.AllocateStack(32, 8); 
+  }
+
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC));
 
   // Get a count of how many bytes are to be pushed on the stack.
