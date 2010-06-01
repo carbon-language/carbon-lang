@@ -2171,41 +2171,28 @@ def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
                                              (undef))))]>,
                 XD, Requires<[HasSSE2]>;
 
+// Unpack instructions
+multiclass sse2_unpack<bits<8> opc, string OpcodeStr, ValueType vt,
+                       PatFrag unp_frag, PatFrag bc_frag> {
+  def rr : PDI<opc, MRMSrcReg,
+               (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (vt (unp_frag VR128:$src1, VR128:$src2)))]>;
+  def rm : PDI<opc, MRMSrcMem,
+               (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+               !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (unp_frag VR128:$src1,
+                                           (bc_frag (memopv2i64
+                                                        addr:$src2))))]>;
+}
 
 let Constraints = "$src1 = $dst" in {
-  def PUNPCKLBWrr : PDI<0x60, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpcklbw\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v16i8 (unpckl VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKLBWrm : PDI<0x60, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpcklbw\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckl VR128:$src1,
-                                  (bc_v16i8 (memopv2i64 addr:$src2))))]>;
-  def PUNPCKLWDrr : PDI<0x61, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpcklwd\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v8i16 (unpckl VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKLWDrm : PDI<0x61, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpcklwd\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckl VR128:$src1,
-                                  (bc_v8i16 (memopv2i64 addr:$src2))))]>;
-  def PUNPCKLDQrr : PDI<0x62, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpckldq\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v4i32 (unpckl VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKLDQrm : PDI<0x62, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpckldq\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckl VR128:$src1,
-                                  (bc_v4i32 (memopv2i64 addr:$src2))))]>;
+  defm PUNPCKLBW  : sse2_unpack<0x60, "punpcklbw", v16i8, unpckl, bc_v16i8>;
+  defm PUNPCKLWD  : sse2_unpack<0x61, "punpcklwd", v8i16, unpckl, bc_v8i16>;
+  defm PUNPCKLDQ  : sse2_unpack<0x62, "punpckldq", v4i32, unpckl, bc_v4i32>;
+
+  /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
+  /// knew to collapse (bitconvert VT to VT) into its operand.
   def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg,
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpcklqdq\t{$src2, $dst|$dst, $src2}",
@@ -2218,39 +2205,12 @@ let Constraints = "$src1 = $dst" in {
                           (v2i64 (unpckl VR128:$src1,
                                          (memopv2i64 addr:$src2))))]>;
 
-  def PUNPCKHBWrr : PDI<0x68, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpckhbw\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v16i8 (unpckh VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKHBWrm : PDI<0x68, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpckhbw\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckh VR128:$src1,
-                                  (bc_v16i8 (memopv2i64 addr:$src2))))]>;
-  def PUNPCKHWDrr : PDI<0x69, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpckhwd\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v8i16 (unpckh VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKHWDrm : PDI<0x69, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpckhwd\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckh VR128:$src1,
-                                  (bc_v8i16 (memopv2i64 addr:$src2))))]>;
-  def PUNPCKHDQrr : PDI<0x6A, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "punpckhdq\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v4i32 (unpckh VR128:$src1, VR128:$src2)))]>;
-  def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "punpckhdq\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (unpckh VR128:$src1,
-                                  (bc_v4i32 (memopv2i64 addr:$src2))))]>;
+  defm PUNPCKHBW  : sse2_unpack<0x68, "punpckhbw", v16i8, unpckh, bc_v16i8>;
+  defm PUNPCKHWD  : sse2_unpack<0x69, "punpckhwd", v8i16, unpckh, bc_v8i16>;
+  defm PUNPCKHDQ  : sse2_unpack<0x6A, "punpckhdq", v4i32, unpckh, bc_v4i32>;
+
+  /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
+  /// knew to collapse (bitconvert VT to VT) into its operand.
   def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg,
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpckhqdq\t{$src2, $dst|$dst, $src2}",
