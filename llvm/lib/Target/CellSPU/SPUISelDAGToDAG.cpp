@@ -611,13 +611,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
 
     if (OpOpc == ISD::STORE || OpOpc == ISD::LOAD) {
       // Direct load/store without getelementptr
-      SDValue Addr, Offs;
-
-      // Get the register from CopyFromReg
-      if (Opc == ISD::CopyFromReg)
-        Addr = N.getOperand(1);
-      else
-        Addr = N;                       // Register
+      SDValue Offs;
 
       Offs = ((OpOpc == ISD::STORE) ? Op->getOperand(3) : Op->getOperand(2));
 
@@ -626,7 +620,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
           Offs = CurDAG->getTargetConstant(0, Offs.getValueType());
 
         Base = Offs;
-        Index = Addr;
+        Index = N;
         return true;
       }
     } else {

@@ -18,3 +18,16 @@ entry:
 	ret <4 x float> %tmp1
 ; CHECK:	lqd	$3, 16($3)
 }
+
+
+declare <4 x i32>* @getv4f32ptr()
+define <4 x i32> @func() {
+        ;CHECK: brasl
+        ;CHECK: lr	{{\$[0-9]*, \$3}}
+        ;CHECK: brasl
+        %rv1 = call <4 x i32>* @getv4f32ptr()
+        %rv2 = call <4 x i32>* @getv4f32ptr()
+        %rv3 = load <4 x i32>* %rv1
+        ret <4 x i32> %rv3
+}
+
