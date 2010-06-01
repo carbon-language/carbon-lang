@@ -986,7 +986,7 @@ ifeq ($(HOST_OS),Darwin)
 # Darwin convention prefixes symbols with underscores.
 NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE)).sed
 $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
-	$(Verb) sed -e 's/[[:<:]]/_/' < $< > $@
+	$(Verb) sed -e 's/^/_/' < $< > $@
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
 else
@@ -996,7 +996,7 @@ NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE)).map
 $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 	$(Verb) echo "{" > $@
 	$(Verb) grep -q "\<" $< && echo "  global:" >> $@ || :
-	$(Verb) sed -e 's/\>/;/' -e 's/^\</    /' < $< >> $@
+	$(Verb) sed -e 's/$$/;/' -e 's/^/    /' < $< >> $@
 	$(Verb) echo "  local: *;" >> $@
 	$(Verb) echo "};" >> $@
 clean-local::
