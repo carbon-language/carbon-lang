@@ -103,13 +103,6 @@ private:
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
-  typedef llvm::DenseMap<BaseSubobjectMethodPairTy, BaseOffset>
-    AdjustmentOffsetsMapTy;
-
-  /// ReturnAdjustments - Holds return adjustments for all the overriders that 
-  /// need to perform return value adjustments.
-  AdjustmentOffsetsMapTy ReturnAdjustments;
-
   // FIXME: We might be able to get away with making this a SmallSet.
   typedef llvm::SmallSetVector<uint64_t, 2> OffsetSetVectorTy;
   
@@ -168,21 +161,12 @@ public:
   OverriderInfo getOverrider(const CXXMethodDecl *MD, 
                              uint64_t BaseOffset) const {
     BaseSubobject Base(MD->getParent(), BaseOffset);
-
     assert(OverridersMap.count(std::make_pair(Base, MD)) && 
            "Did not find overrider!");
     
     return OverridersMap.lookup(std::make_pair(Base, MD));
   }
   
-  /// getReturnAdjustmentOffset - Get the return adjustment offset for the
-  /// method decl in the given base subobject. Returns an empty base offset if
-  /// no adjustment is needed.
-  BaseOffset getReturnAdjustmentOffset(BaseSubobject Base,
-                                       const CXXMethodDecl *MD) const {
-    return ReturnAdjustments.lookup(std::make_pair(Base, MD));
-  }
-
   /// dump - dump the final overriders.
   void dump() {
     assert(VisitedVirtualBases.empty() &&
@@ -397,19 +381,6 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
 
       assert(Overrider.Method && "Did not find existing overrider!");
 
-      // Check if we need return adjustments or base adjustments.
-      // (We don't want to do this for pure virtual member functions).
-      if (!NewMD->isPure()) {
-        // Get the return adjustment base offset.
-        BaseOffset ReturnBaseOffset =
-          ComputeReturnAdjustmentBaseOffset(Context, NewMD, OverriddenMD);
-
-        if (!ReturnBaseOffset.isEmpty()) {
-          // Store the return adjustment base offset.
-          ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
-        }
-      }
-
       // Set the new overrider.
       Overrider.Offset = OverriderOffsetInLayoutClass;
       Overrider.Method = NewMD;
@@ -557,11 +528,11 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
     Out << Overrider.Method->getQualifiedNameAsString();
     Out << ", " << ", " << Overrider.Offset / 8 << ')';
 
-    AdjustmentOffsetsMapTy::const_iterator AI =
-      ReturnAdjustments.find(std::make_pair(Base, MD));
-    if (AI != ReturnAdjustments.end()) {
-      const BaseOffset &Offset = AI->second;
+    BaseOffset Offset;
+    if (!Overrider.Method->isPure())
+      Offset = ComputeReturnAdjustmentBaseOffset(Context, Overrider.Method, MD);
 
+    if (!Offset.isEmpty()) {
       Out << " [ret-adj: ";
       if (Offset.VirtualBase)
         Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
@@ -1827,8 +1798,12 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
     }
     
     // Check if this overrider needs a return adjustment.
-    BaseOffset ReturnAdjustmentOffset = 
-      Overriders.getReturnAdjustmentOffset(Base, MD);
+    // We don't want to do this for pure virtual member functions.
+    BaseOffset ReturnAdjustmentOffset;
+    if (!OverriderMD->isPure()) {
+      ReturnAdjustmentOffset = 
+        ComputeReturnAdjustmentBaseOffset(Context, OverriderMD, MD);
+    }
 
     ReturnAdjustment ReturnAdjustment = 
       ComputeReturnAdjustment(ReturnAdjustmentOffset);
