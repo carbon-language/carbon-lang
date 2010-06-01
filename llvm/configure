@@ -8994,7 +8994,7 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	llvm_cv_link_version_script=no
+	llvm_cv_link_use_version_script=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \

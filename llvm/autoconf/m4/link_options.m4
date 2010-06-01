@@ -74,7 +74,7 @@ AC_DEFUN([AC_LINK_VERSION_SCRIPT],
 
   CFLAGS="$CFLAGS -Wl,--version-script=$tmp/export.map"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
-    [llvm_cv_link_use_version_script=yes],[llvm_cv_link_version_script=no])
+    [llvm_cv_link_use_version_script=yes],[llvm_cv_link_use_version_script=no])
   rm "$tmp/export.map"
   rmdir "$tmp"
   CFLAGS="$oldcflags"
