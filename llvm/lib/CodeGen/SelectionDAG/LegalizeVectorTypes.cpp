@@ -448,6 +448,11 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
+  case ISD::FEXP:
+  case ISD::FEXP2:
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
     SplitVecRes_UnaryOp(N, Lo, Hi);
     break;
 
@@ -1199,7 +1204,6 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FDIV:
   case ISD::FMUL:
   case ISD::FPOW:
-  case ISD::FPOWI:
   case ISD::FREM:
   case ISD::FSUB:
   case ISD::MUL:
@@ -1213,6 +1217,10 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SUB:
   case ISD::XOR:
     Res = WidenVecRes_Binary(N);
+    break;
+
+  case ISD::FPOWI:
+    Res = WidenVecRes_POWI(N);
     break;
 
   case ISD::SHL:
@@ -1241,6 +1249,11 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FNEG:
   case ISD::FSIN:
   case ISD::FSQRT:
+  case ISD::FEXP:
+  case ISD::FEXP2:
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
     Res = WidenVecRes_Unary(N);
     break;
   }
@@ -1408,6 +1421,13 @@ SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
     Ops[i] = UndefVal;
 
   return DAG.getNode(ISD::BUILD_VECTOR, dl, WidenVT, &Ops[0], WidenNumElts);
+}
+
+SDValue DAGTypeLegalizer::WidenVecRes_POWI(SDNode *N) {
+  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue InOp = GetWidenedVector(N->getOperand(0));
+  SDValue ShOp = N->getOperand(1);
+  return DAG.getNode(N->getOpcode(), N->getDebugLoc(), WidenVT, InOp, ShOp);
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_Shift(SDNode *N) {

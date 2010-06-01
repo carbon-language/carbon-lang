@@ -620,6 +620,7 @@ private:
 
   SDValue WidenVecRes_Binary(SDNode *N);
   SDValue WidenVecRes_Convert(SDNode *N);
+  SDValue WidenVecRes_POWI(SDNode *N);
   SDValue WidenVecRes_Shift(SDNode *N);
   SDValue WidenVecRes_Unary(SDNode *N);
   SDValue WidenVecRes_InregOp(SDNode *N);

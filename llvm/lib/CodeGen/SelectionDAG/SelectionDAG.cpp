@@ -5674,13 +5674,16 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FSQRT:  return "fsqrt";
   case ISD::FSIN:   return "fsin";
   case ISD::FCOS:   return "fcos";
-  case ISD::FPOWI:  return "fpowi";
-  case ISD::FPOW:   return "fpow";
   case ISD::FTRUNC: return "ftrunc";
   case ISD::FFLOOR: return "ffloor";
   case ISD::FCEIL:  return "fceil";
   case ISD::FRINT:  return "frint";
   case ISD::FNEARBYINT: return "fnearbyint";
+  case ISD::FEXP:   return "fexp";
+  case ISD::FEXP2:  return "fexp2";
+  case ISD::FLOG:   return "flog";
+  case ISD::FLOG2:  return "flog2";
+  case ISD::FLOG10: return "flog10";
 
   // Binary operators
   case ISD::ADD:    return "add";
@@ -5711,7 +5714,9 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FREM:   return "frem";
   case ISD::FCOPYSIGN: return "fcopysign";
   case ISD::FGETSIGN:  return "fgetsign";
+  case ISD::FPOW:   return "fpow";
 
+  case ISD::FPOWI:  return "fpowi";
   case ISD::SETCC:       return "setcc";
   case ISD::VSETCC:      return "vsetcc";
   case ISD::SELECT:      return "select";
