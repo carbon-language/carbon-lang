@@ -179,6 +179,8 @@ static void MarkBlocksLiveIn(BasicBlock *BB, std::set<BasicBlock*> &LiveBBs) {
 /// we spill into a stack location, guaranteeing that there is nothing live
 /// across the unwind edge.  This process also splits all critical edges
 /// coming out of invoke's.
+/// FIXME: Move this function to a common utility file (Local.cpp?) so
+/// both SjLj and LowerInvoke can use it.
 void SjLjEHPass::
 splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
   // First step, split all critical edges from invoke instructions.
