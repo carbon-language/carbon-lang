@@ -752,7 +752,7 @@ OCAMLOPT
 OCAMLDEP
 OCAMLDOC
 GAS
-HAVE_LINK_RETAIN_SYMBOLS_FILE
+HAVE_LINK_VERSION_SCRIPT
 INSTALL_LTDL_TRUE
 INSTALL_LTDL_FALSE
 CONVENIENCE_LTDL_TRUE
@@ -8905,9 +8905,9 @@ _ACEOF
   fi
 
 
-{ echo "$as_me:$LINENO: checking for compiler -Wl,-retain-symbols-file option" >&5
-echo $ECHO_N "checking for compiler -Wl,-retain-symbols-file option... $ECHO_C" >&6; }
-if test "${llvm_cv_link_use_retain_symbols_file+set}" = set; then
+{ echo "$as_me:$LINENO: checking for compiler -Wl,--version-script option" >&5
+echo $ECHO_N "checking for compiler -Wl,--version-script option... $ECHO_C" >&6; }
+if test "${llvm_cv_link_use_version_script+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
    ac_ext=c
@@ -8934,9 +8934,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     (umask 077 && mkdir "$tmp")
   } || exit $?
 
-  echo "main" > "$tmp/exports"
+  echo "{" > "$tmp/export.map"
+  echo "  global: main;" >> "$tmp/export.map"
+  echo "  local: *;" >> "$tmp/export.map"
+  echo "};" >> "$tmp/export.map"
 
-  CFLAGS="$CFLAGS -Wl,-retain-symbols-file=$tmp/exports"
+  CFLAGS="$CFLAGS -Wl,--version-script=$tmp/export.map"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -8986,17 +8989,17 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  llvm_cv_link_use_retain_symbols_file=yes
+  llvm_cv_link_use_version_script=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	llvm_cv_link_use_retain_symbols_file=no
+	llvm_cv_link_version_script=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-  rm "$tmp/exports"
+  rm "$tmp/export.map"
   rmdir "$tmp"
   CFLAGS="$oldcflags"
   ac_ext=c
@@ -9007,10 +9010,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 fi
-{ echo "$as_me:$LINENO: result: $llvm_cv_link_use_retain_symbols_file" >&5
-echo "${ECHO_T}$llvm_cv_link_use_retain_symbols_file" >&6; }
-if test "$llvm_cv_link_use_retain_symbols_file" = yes ; then
-  HAVE_LINK_RETAIN_SYMBOLS_FILE=1
+{ echo "$as_me:$LINENO: result: $llvm_cv_link_use_version_script" >&5
+echo "${ECHO_T}$llvm_cv_link_use_version_script" >&6; }
+if test "$llvm_cv_link_use_version_script" = yes ; then
+  HAVE_LINK_VERSION_SCRIPT=1
 
   fi
 
@@ -11384,7 +11387,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11387 "configure"
+#line 11390 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21297,7 +21300,7 @@ OCAMLOPT!$OCAMLOPT$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
 OCAMLDOC!$OCAMLDOC$ac_delim
 GAS!$GAS$ac_delim
-HAVE_LINK_RETAIN_SYMBOLS_FILE!$HAVE_LINK_RETAIN_SYMBOLS_FILE$ac_delim
+HAVE_LINK_VERSION_SCRIPT!$HAVE_LINK_VERSION_SCRIPT$ac_delim
 INSTALL_LTDL_TRUE!$INSTALL_LTDL_TRUE$ac_delim
 INSTALL_LTDL_FALSE!$INSTALL_LTDL_FALSE$ac_delim
 CONVENIENCE_LTDL_TRUE!$CONVENIENCE_LTDL_TRUE$ac_delim

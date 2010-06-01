@@ -990,7 +990,20 @@ $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
 else
+ifeq ($(HAVE_LINK_VERSION_SCRIPT),1)
+# Gold and BFD ld require a version script rather than a plain list.
+NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE)).map
+$(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
+	$(Verb) echo "{" > $@
+	$(Verb) grep -q "\<" $< && echo "  global:" >> $@ || :
+	$(Verb) sed -e 's/\>/;/' -e 's/^\</    /' < $< >> $@
+	$(Verb) echo "  local: *;" >> $@
+	$(Verb) echo "};" >> $@
+clean-local::
+	-$(Verb) $(RM) -f $(NativeExportsFile)
+else
 NativeExportsFile := $(EXPORTED_SYMBOL_FILE)
+endif
 endif
 
 # Now add the linker command-line options to use the native export file.
@@ -1000,8 +1013,8 @@ LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
 endif
 
 # gold, bfd ld, etc.
-ifeq ($(HAVE_LINK_RETAIN_SYMBOLS_FILE),1)
-LLVMLibsOptions += -Wl,-retain-symbols-file,$(NativeExportsFile)
+ifeq ($(HAVE_LINK_VERSION_SCRIPT),1)
+LLVMLibsOptions += -Wl,--version-script,$(NativeExportsFile)
 endif
 
 endif

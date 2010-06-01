@@ -40,14 +40,14 @@ if test "$llvm_cv_link_use_export_dynamic" = yes ; then
 ])
 
 #
-# Determine if the system can handle the -retain-symbols-file option being
+# Determine if the system can handle the --version-script option being
 # passed to the linker.
 #
 # This macro is specific to LLVM.
 #
-AC_DEFUN([AC_LINK_RETAIN_SYMBOLS_FILE],
-[AC_CACHE_CHECK([for compiler -Wl,-retain-symbols-file option],
-                [llvm_cv_link_use_retain_symbols_file],
+AC_DEFUN([AC_LINK_VERSION_SCRIPT],
+[AC_CACHE_CHECK([for compiler -Wl,--version-script option],
+                [llvm_cv_link_use_version_script],
 [ AC_LANG_PUSH([C])
   oldcflags="$CFLAGS"
 
@@ -67,18 +67,21 @@ AC_DEFUN([AC_LINK_RETAIN_SYMBOLS_FILE],
     (umask 077 && mkdir "$tmp")
   } || exit $?
 
-  echo "main" > "$tmp/exports"
+  echo "{" > "$tmp/export.map"
+  echo "  global: main;" >> "$tmp/export.map"
+  echo "  local: *;" >> "$tmp/export.map"
+  echo "};" >> "$tmp/export.map"
 
-  CFLAGS="$CFLAGS -Wl,-retain-symbols-file=$tmp/exports"
+  CFLAGS="$CFLAGS -Wl,--version-script=$tmp/export.map"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
-    [llvm_cv_link_use_retain_symbols_file=yes],[llvm_cv_link_use_retain_symbols_file=no])
-  rm "$tmp/exports"
+    [llvm_cv_link_use_version_script=yes],[llvm_cv_link_version_script=no])
+  rm "$tmp/export.map"
   rmdir "$tmp"
   CFLAGS="$oldcflags"
   AC_LANG_POP([C])
 ])
-if test "$llvm_cv_link_use_retain_symbols_file" = yes ; then
-  AC_SUBST(HAVE_LINK_RETAIN_SYMBOLS_FILE,1)
+if test "$llvm_cv_link_use_version_script" = yes ; then
+  AC_SUBST(HAVE_LINK_VERSION_SCRIPT,1)
   fi
 ])
 
