@@ -164,9 +164,11 @@ public:
                   const CXXRecordDecl *LayoutClass);
 
   /// getOverrider - Get the final overrider for the given method declaration in
-  /// the given base subobject.
-  OverriderInfo getOverrider(BaseSubobject Base,
-                             const CXXMethodDecl *MD) const {
+  /// the subobject with the given base offset. 
+  OverriderInfo getOverrider(const CXXMethodDecl *MD, 
+                             uint64_t BaseOffset) const {
+    BaseSubobject Base(MD->getParent(), BaseOffset);
+
     assert(OverridersMap.count(std::make_pair(Base, MD)) && 
            "Did not find overrider!");
     
@@ -549,7 +551,7 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
     if (!MD->isVirtual())
       continue;
   
-    OverriderInfo Overrider = getOverrider(Base, MD);
+    OverriderInfo Overrider = getOverrider(MD, Base.getBaseOffset());
 
     Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
@@ -1011,7 +1013,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     if (Overriders) {
       // Get the final overrider.
       FinalOverriders::OverriderInfo Overrider = 
-        Overriders->getOverrider(Base, MD);
+        Overriders->getOverrider(MD, Base.getBaseOffset());
       
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
@@ -1388,8 +1390,7 @@ void VTableBuilder::ComputeThisAdjustments() {
     
     // Get the final overrider for this method.
     FinalOverriders::OverriderInfo Overrider =
-      Overriders.getOverrider(BaseSubobject(MD->getParent(), 
-                                            MethodInfo.BaseOffset), MD);
+      Overriders.getOverrider(MD, MethodInfo.BaseOffset);
     
     // Check if we need an adjustment at all.
     if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset) {
@@ -1761,7 +1762,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
 
     // Get the final overrider.
     FinalOverriders::OverriderInfo Overrider = 
-      Overriders.getOverrider(Base, MD);
+      Overriders.getOverrider(MD, Base.getBaseOffset());
 
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
