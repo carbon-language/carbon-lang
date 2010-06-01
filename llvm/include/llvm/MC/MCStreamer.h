@@ -341,7 +341,7 @@ namespace llvm {
                                 MCCodeEmitter *CE = 0,
                                 bool ShowInst = false);
 
-  /// createMachOStreamer - Create a machine code streamer which will generative
+  /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.
   MCStreamer *createMachOStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
                                   raw_ostream &OS, MCCodeEmitter *CE,
