@@ -759,7 +759,6 @@ void MCAssembler::Finish() {
 
   // Write the object file.
   Writer->WriteObject(*this, Layout);
-  OS.flush();
 
   stats::ObjectBytes += OS.tell() - StartOffset;
 }

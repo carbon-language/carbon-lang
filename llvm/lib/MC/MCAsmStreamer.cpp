@@ -693,7 +693,6 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
 }
 
 void MCAsmStreamer::Finish() {
-  OS.flush();
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,

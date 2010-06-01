@@ -314,7 +314,7 @@ namespace llvm {
     virtual void EmitRawText(StringRef String);
     void EmitRawText(const Twine &String);
     
-    /// Finish - Finish emission of machine code and flush any output.
+    /// Finish - Finish emission of machine code.
     virtual void Finish() = 0;
   };
 
