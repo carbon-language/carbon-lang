@@ -698,6 +698,7 @@ void SelectionDAGBuilder::init(GCFunctionInfo *gfi, AliasAnalysis &aa) {
 /// consumed.
 void SelectionDAGBuilder::clear() {
   NodeMap.clear();
+  UnusedArgNodeMap.clear();
   PendingLoads.clear();
   PendingExports.clear();
   CurDebugLoc = DebugLoc();
@@ -4063,7 +4064,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       bool createUndef = false;
       // FIXME : Why not use getValue() directly ?
-      SDValue &N = NodeMap[V];
+      SDValue N = NodeMap[V];
+      if (!N.getNode() && isa<Argument>(V))
+        // Check unused arguments map.
+        N = UnusedArgNodeMap[V];
       if (N.getNode()) {
         if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
           SDV = DAG.getDbgValue(Variable, N.getNode(),
@@ -6032,6 +6036,12 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     SmallVector<EVT, 4> ValueVTs;
     ComputeValueVTs(TLI, I->getType(), ValueVTs);
     unsigned NumValues = ValueVTs.size();
+
+    // If this argument is unused then remember its value. It is used to generate
+    // debugging information.
+    if (I->use_empty() && NumValues)
+      SDB->setUnusedArgValue(I, InVals[i]);
+
     for (unsigned Value = 0; Value != NumValues; ++Value) {
       EVT VT = ValueVTs[Value];
       EVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
