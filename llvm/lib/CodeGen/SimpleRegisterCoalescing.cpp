@@ -848,19 +848,7 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       continue;
     }
 
-    // Sub-register indexes goes from small to large. e.g.
-    // RAX: 1 -> AL, 2 -> AX, 3 -> EAX
-    // EAX: 1 -> AL, 2 -> AX
-    // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
-    // sub-register 2 is also AX.
-    //
-    // FIXME: Properly compose subreg indices for all targets.
-    //
-    if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
-      ;
-    else if (SubIdx)
-      O.setSubReg(SubIdx);
-    O.setReg(DstReg);
+    O.substVirtReg(DstReg, SubIdx, *tri_);
 
     DEBUG({
         dbgs() << "\t\tupdated: ";

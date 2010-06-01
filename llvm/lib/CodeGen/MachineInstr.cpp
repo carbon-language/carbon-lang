@@ -117,7 +117,8 @@ void MachineOperand::substVirtReg(unsigned Reg, unsigned SubIdx,
   if (SubIdx && getSubReg())
     SubIdx = TRI.composeSubRegIndices(SubIdx, getSubReg());
   setReg(Reg);
-  setSubReg(SubIdx);
+  if (SubIdx)
+    setSubReg(SubIdx);
 }
 
 void MachineOperand::substPhysReg(unsigned Reg, const TargetRegisterInfo &TRI) {
