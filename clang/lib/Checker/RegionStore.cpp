@@ -280,8 +280,12 @@ public: // Part of public interface to class.
 
   Store Bind(Store store, Loc LV, SVal V);
 
+  // BindDefault is only used to initialize a region with a default value.
   Store BindDefault(Store store, const MemRegion *R, SVal V) {
-    return Add(GetRegionBindings(store), R, BindingKey::Default, V).getRoot();
+    RegionBindings B = GetRegionBindings(store);
+    assert(!Lookup(B, R, BindingKey::Default));
+    assert(!Lookup(B, R, BindingKey::Direct));
+    return Add(B, R, BindingKey::Default, V).getRoot();
   }
 
   Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
