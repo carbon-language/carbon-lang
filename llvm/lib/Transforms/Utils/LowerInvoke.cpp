@@ -45,6 +45,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
@@ -95,7 +96,7 @@ namespace {
     void createAbortMessage(Module *M);
     void writeAbortMessage(Instruction *IB);
     bool insertCheapEHSupport(Function &F);
-    void splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes);
+    void splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                 AllocaInst *InvokeNum, AllocaInst *StackPtr,
                                 SwitchInst *CatchSwitch);
@@ -196,7 +197,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    std::vector<Constant*> GEPIdx(2,
+    SmallVector<Constant*,2> GEPIdx(2,
                      Constant::getNullValue(Type::getInt32Ty(M->getContext())));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
@@ -211,7 +212,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(
+    SmallVector<Constant*,2> GEPIdx(2, Constant::getNullValue(
                                             Type::getInt32Ty(M->getContext())));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
@@ -236,7 +237,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
-      std::vector<Value*> CallArgs(II->op_begin(), II->op_end() - 3);
+      SmallVector<Value*,16> CallArgs(II->op_begin(), II->op_end() - 3);
       // Insert a normal call instruction...
       CallInst *NewCall = CallInst::Create(II->getCalledValue(),
                                            CallArgs.begin(), CallArgs.end(),
@@ -320,7 +321,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
 
   // Insert a normal call instruction.
-  std::vector<Value*> CallArgs(II->op_begin(), II->op_end() - 3);
+  SmallVector<Value*,16> CallArgs(II->op_begin(), II->op_end() - 3);
   CallInst *NewCall = CallInst::Create(II->getCalledValue(),
                                        CallArgs.begin(), CallArgs.end(), "",
                                        II);
@@ -349,7 +350,7 @@ static void MarkBlocksLiveIn(BasicBlock *BB, std::set<BasicBlock*> &LiveBBs) {
 // across the unwind edge.  This process also splits all critical edges
 // coming out of invoke's.
 void LowerInvoke::
-splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
+splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
   // First step, split all critical edges from invoke instructions.
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
     InvokeInst *II = Invokes[i];
@@ -402,7 +403,7 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
           continue;
 
       // Avoid iterator invalidation by copying users to a temporary vector.
-      std::vector<Instruction*> Users;
+      SmallVector<Instruction*,16> Users;
       for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
            UI != E; ++UI) {
         Instruction *User = cast<Instruction>(*UI);
@@ -452,9 +453,9 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
 }
 
 bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
-  std::vector<ReturnInst*> Returns;
-  std::vector<UnwindInst*> Unwinds;
-  std::vector<InvokeInst*> Invokes;
+  SmallVector<ReturnInst*,16> Returns;
+  SmallVector<UnwindInst*,16> Unwinds;
+  SmallVector<InvokeInst*,16> Invokes;
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
@@ -502,7 +503,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       new AllocaInst(JBLinkTy, 0, Align,
                      "jblink", F.begin()->begin());
 
-    std::vector<Value*> Idx;
+    SmallVector<Value*,2> Idx;
     Idx.push_back(Constant::getNullValue(Type::getInt32Ty(F.getContext())));
     Idx.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()), 1));
     OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
@@ -605,7 +606,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   // Create the block to do the longjmp.
   // Get a pointer to the jmpbuf and longjmp.
-  std::vector<Value*> Idx;
+  SmallVector<Value*,2> Idx;
   Idx.push_back(Constant::getNullValue(Type::getInt32Ty(F.getContext())));
   Idx.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()), 0));
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
