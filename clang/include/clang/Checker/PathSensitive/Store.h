@@ -64,6 +64,10 @@ public:
   ///   to the location given for \c loc.
   virtual Store Bind(Store store, Loc loc, SVal val) = 0;
 
+  virtual Store BindDefault(Store store, const MemRegion *R, SVal V) {
+    return store;
+  }
+
   virtual Store Remove(Store St, Loc L) = 0;
 
   /// BindCompoundLiteral - Return the store that has the bindings currently

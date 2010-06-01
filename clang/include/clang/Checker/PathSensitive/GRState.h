@@ -211,6 +211,8 @@ public:
 
   const GRState *bindLoc(SVal location, SVal V) const;
 
+  const GRState *bindDefault(SVal loc, SVal V) const;
+
   const GRState *unbindLoc(Loc LV) const;
 
   /// Get the lvalue for a variable reference.
@@ -618,6 +620,12 @@ inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
 
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
   return !isa<Loc>(LV) ? this : bindLoc(cast<Loc>(LV), V);
+}
+
+inline const GRState *GRState::bindDefault(SVal loc, SVal V) const {
+  const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
+  Store new_store = getStateManager().StoreMgr->BindDefault(St, R, V);
+  return makeWithStore(new_store);
 }
 
 inline SVal GRState::getLValue(const VarDecl* VD,

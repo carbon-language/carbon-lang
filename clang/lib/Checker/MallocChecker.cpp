@@ -59,12 +59,12 @@ class MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   BuiltinBug *BT_Leak;
   BuiltinBug *BT_UseFree;
-  IdentifierInfo *II_malloc, *II_free, *II_realloc;
+  IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc;
 
 public:
   MallocChecker() 
     : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), 
-      II_malloc(0), II_free(0), II_realloc(0) {}
+      II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
@@ -76,12 +76,20 @@ public:
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
-                              const Expr *SizeEx, const GRState *state);
+                              const Expr *SizeEx, SVal Init,
+                              const GRState *state) {
+    return MallocMemAux(C, CE, state->getSVal(SizeEx), Init, state);
+  }
+  const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
+                              SVal SizeEx, SVal Init,
+                              const GRState *state);
+
   void FreeMem(CheckerContext &C, const CallExpr *CE);
   const GRState *FreeMemAux(CheckerContext &C, const CallExpr *CE,
                             const GRState *state);
 
   void ReallocMem(CheckerContext &C, const CallExpr *CE);
+  void CallocMem(CheckerContext &C, const CallExpr *CE);
 };
 } // end anonymous namespace
 
@@ -120,6 +128,8 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     II_free = &Ctx.Idents.get("free");
   if (!II_realloc)
     II_realloc = &Ctx.Idents.get("realloc");
+  if (!II_calloc)
+    II_calloc = &Ctx.Idents.get("calloc");
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
@@ -136,27 +146,33 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     return true;
   }
 
+  if (FD->getIdentifier() == II_calloc) {
+    CallocMem(C, CE);
+    return true;
+  }
+
   return false;
 }
 
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
-  const GRState *state = MallocMemAux(C, CE, CE->getArg(0), C.getState());
+  const GRState *state = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(),
+                                      C.getState());
   C.addTransition(state);
 }
 
 const GRState *MallocChecker::MallocMemAux(CheckerContext &C,  
                                            const CallExpr *CE,
-                                           const Expr *SizeEx,
+                                           SVal Size, SVal Init,
                                            const GRState *state) {
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
 
   SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
 
-  SVal Size = state->getSVal(SizeEx);
-
   state = C.getEngine().getStoreManager().setExtent(state, RetVal.getAsRegion(),
                                                     Size);
+
+  state = state->bindDefault(RetVal, Init);
 
   state = state->BindExpr(CE, RetVal);
   
@@ -234,7 +250,8 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
     if (Sym)
       stateEqual = stateEqual->set<RegionState>(Sym, RefState::getReleased(CE));
 
-    const GRState *stateMalloc = MallocMemAux(C, CE, CE->getArg(1), stateEqual);
+    const GRState *stateMalloc = MallocMemAux(C, CE, CE->getArg(1), 
+                                              UndefinedVal(), stateEqual);
     C.addTransition(stateMalloc);
   }
 
@@ -256,11 +273,28 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
       if (stateFree) {
         // FIXME: We should copy the content of the original buffer.
         const GRState *stateRealloc = MallocMemAux(C, CE, CE->getArg(1), 
-                                                   stateFree);
+                                                   UnknownVal(), stateFree);
         C.addTransition(stateRealloc);
       }
     }
   }
+}
+
+void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  
+  ValueManager &ValMgr = C.getValueManager();
+  SValuator &SVator = C.getSValuator();
+
+  SVal Count = state->getSVal(CE->getArg(0));
+  SVal EleSize = state->getSVal(CE->getArg(1));
+  SVal TotalSize = SVator.EvalBinOp(state, BinaryOperator::Mul, Count, EleSize,
+                                    ValMgr.getContext().getSizeType());
+  
+  SVal Zero = ValMgr.makeZeroVal(ValMgr.getContext().CharTy);
+
+  state = MallocMemAux(C, CE, TotalSize, Zero, state);
+  C.addTransition(state);
 }
 
 void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,

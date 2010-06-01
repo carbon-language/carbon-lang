@@ -280,6 +280,10 @@ public: // Part of public interface to class.
 
   Store Bind(Store store, Loc LV, SVal V);
 
+  Store BindDefault(Store store, const MemRegion *R, SVal V) {
+    return Add(GetRegionBindings(store), R, BindingKey::Default, V).getRoot();
+  }
+
   Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
                             const LocationContext *LC, SVal V);
 
@@ -1233,7 +1237,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
       if (D->isZeroConstant())
         return ValMgr.makeZeroVal(Ty);
 
-      if (D->isUnknown())
+      if (D->isUnknownOrUndef())
         return *D;
 
       assert(0 && "Unknown default value");
@@ -1455,6 +1459,7 @@ Store RegionStoreManager::BindCompoundLiteral(Store store,
   return Bind(store, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
               V);
 }
+
 
 Store RegionStoreManager::setImplicitDefaultValue(Store store,
                                                   const MemRegion *R,

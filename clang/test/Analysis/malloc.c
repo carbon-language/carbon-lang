@@ -77,3 +77,35 @@ void PR7217() {
   buf[1] = 'c'; // not crash
 
 }
+// This tests that malloc() buffers are undefined by default
+char mallocGarbage () {
+	char *buf = malloc(2);
+	char result = buf[1]; // expected-warning{{undefined}}
+	free(buf);
+	return result;
+}
+
+// This tests that calloc() buffers need to be freed
+void callocNoFree () {
+  char *buf = calloc(2,2);
+  return; // expected-warning{{never released}}
+}
+
+// These test that calloc() buffers are zeroed by default
+char callocZeroesGood () {
+	char *buf = calloc(2,2);
+	char result = buf[3]; // no-warning
+	if (buf[1] == 0) {
+	  free(buf);
+	}
+	return result; // no-warning
+}
+
+char callocZeroesBad () {
+	char *buf = calloc(2,2);
+	char result = buf[3]; // no-warning
+	if (buf[1] != 0) {
+	  free(buf);
+	}
+	return result; // expected-warning{{never released}}
+}
