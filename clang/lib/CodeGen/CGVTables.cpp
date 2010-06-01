@@ -87,12 +87,11 @@ private:
   /// MostDerivedClassLayout - the AST record layout of the most derived class.
   const ASTRecordLayout &MostDerivedClassLayout;
 
-  /// BaseSubobjectMethodPairTy - Uniquely identifies a member function
+  /// MethodBaseOffsetPairTy - Uniquely identifies a member function
   /// in a base subobject.
-  typedef std::pair<BaseSubobject, const CXXMethodDecl *>
-    BaseSubobjectMethodPairTy;
-  
-  typedef llvm::DenseMap<BaseSubobjectMethodPairTy,
+  typedef std::pair<const CXXMethodDecl *, uint64_t> MethodBaseOffsetPairTy;
+
+  typedef llvm::DenseMap<MethodBaseOffsetPairTy,
                          OverriderInfo> OverridersMapTy;
   
   /// OverridersMap - The final overriders for all virtual member functions of 
@@ -160,11 +159,10 @@ public:
   /// the subobject with the given base offset. 
   OverriderInfo getOverrider(const CXXMethodDecl *MD, 
                              uint64_t BaseOffset) const {
-    BaseSubobject Base(MD->getParent(), BaseOffset);
-    assert(OverridersMap.count(std::make_pair(Base, MD)) && 
+    assert(OverridersMap.count(std::make_pair(MD, BaseOffset)) && 
            "Did not find overrider!");
     
-    return OverridersMap.lookup(std::make_pair(Base, MD));
+    return OverridersMap.lookup(std::make_pair(MD, BaseOffset));
   }
   
   /// dump - dump the final overriders.
@@ -231,7 +229,8 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
     PropagateOverrider(MD, OffsetInLayoutClass, MD, Offsets);
 
     // Add the overrider as the final overrider of itself.
-    OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
+    OverriderInfo& Overrider = 
+      OverridersMap[std::make_pair(MD, Base.getBaseOffset())];
     assert(!Overrider.Method && "Overrider should not exist yet!");
 
     Overrider.Offset = OffsetInLayoutClass;
@@ -373,11 +372,8 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
       uint64_t Offset = OffsetVector[I];
 
-      BaseSubobject OverriddenSubobject = BaseSubobject(OverriddenRD, Offset);
-      BaseSubobjectMethodPairTy SubobjectAndMethod =
-        std::make_pair(OverriddenSubobject, OverriddenMD);
-      
-      OverriderInfo &Overrider = OverridersMap[SubobjectAndMethod];
+      MethodBaseOffsetPairTy MethodAndBaseOffset(OverriddenMD, Offset);
+      OverriderInfo &Overrider = OverridersMap[MethodAndBaseOffset];
 
       assert(Overrider.Method && "Did not find existing overrider!");
 
