@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-/// ClangStmtNodesEmitter - The top-level class emits .inc files containing
+/// ClangASTNodesEmitter - The top-level class emits .inc files containing
 ///  declarations of Clang statements.
 ///
 class ClangASTNodesEmitter : public TableGenBackend {
