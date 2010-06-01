@@ -215,7 +215,6 @@ void Lint::visitCallSite(CallSite CS) {
 
     const FunctionType *FT = F->getFunctionType();
     unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
-    std::vector<Value *> NoAliasVals;
 
     Assert1(FT->isVarArg() ?
               FT->getNumParams() <= NumActualArgs :
@@ -233,8 +232,19 @@ void Lint::visitCallSite(CallSite CS) {
         Assert1(Formal->getType() == Actual->getType(),
                 "Undefined behavior: Call argument type mismatches "
                 "callee parameter type", &I);
+
+        // Check that noalias arguments don't alias other arguments. The
+        // AliasAnalysis API isn't expressive enough for what we really want
+        // to do. Known partial overlap is not distinguished from the case
+        // where nothing is known.
         if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
-          NoAliasVals.push_back(Actual);
+          for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI) {
+            Assert1(AI == BI ||
+                    AA->alias(*AI, ~0u, *BI, ~0u) != AliasAnalysis::MustAlias,
+                    "Unusual: noalias argument aliases another argument", &I);
+          }
+
+        // Check that an sret argument points to valid memory.
         if (Formal->hasStructRetAttr() && Actual->getType()->isPointerTy()) {
           const Type *Ty =
             cast<PointerType>(Formal->getType())->getElementType();
@@ -244,16 +254,6 @@ void Lint::visitCallSite(CallSite CS) {
         }
       }
     }
-
-    // Check that the noalias arguments don't overlap. The AliasAnalysis API
-    // isn't expressive enough for what we really want to do. Known partial
-    // overlap is not distinguished from the case where nothing is known.
-    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
-         AI != AE; ++AI)
-      for (std::vector<Value *>::iterator J = NoAliasVals.begin(),
-           E = NoAliasVals.end(); J != E; ++J)
-        Assert1(AA->alias(*J, ~0u, *AI, ~0u) != AliasAnalysis::MustAlias,
-                "Unusual: noalias argument aliases another argument", &I);
   }
 
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->isTailCall())
