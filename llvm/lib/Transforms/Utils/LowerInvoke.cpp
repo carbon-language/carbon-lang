@@ -186,6 +186,8 @@ bool LowerInvoke::doInitialization(Module &M) {
 }
 
 void LowerInvoke::createAbortMessage(Module *M) {
+  Constant *Null32 = Constant::getNullValue(Type::getInt32Ty(M->getContext()));
+  Constant *GEPIdx[2] = { Null32, Null32 };
   if (useExpensiveEHSupport) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
@@ -197,9 +199,6 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    Constant *GEPIdx[2] = {
-      ConstantInt::get(Type::getInt32Ty(M->getContext()), 2),
-      Constant::getNullValue(Type::getInt32Ty(M->getContext())) };
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
@@ -213,9 +212,6 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    Constant *GEPIdx[2] = {
-      ConstantInt::get(Type::getInt32Ty(M->getContext()), 2),
-      Constant::getNullValue(Type::getInt32Ty(M->getContext())) };
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
 }
