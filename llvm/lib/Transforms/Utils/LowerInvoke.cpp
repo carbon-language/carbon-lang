@@ -96,7 +96,7 @@ namespace {
     void createAbortMessage(Module *M);
     void writeAbortMessage(Instruction *IB);
     bool insertCheapEHSupport(Function &F);
-    void splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
+    void splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*>&Invokes);
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                 AllocaInst *InvokeNum, AllocaInst *StackPtr,
                                 SwitchInst *CatchSwitch);
@@ -197,8 +197,9 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    SmallVector<Constant*,2> GEPIdx(2,
-                     Constant::getNullValue(Type::getInt32Ty(M->getContext())));
+    Constant *GEPIdx[2] = {
+      ConstantInt::get(Type::getInt32Ty(M->getContext()), 2),
+      Constant::getNullValue(Type::getInt32Ty(M->getContext())) };
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
@@ -212,8 +213,9 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    SmallVector<Constant*,2> GEPIdx(2, Constant::getNullValue(
-                                            Type::getInt32Ty(M->getContext())));
+    Constant *GEPIdx[2] = {
+      ConstantInt::get(Type::getInt32Ty(M->getContext()), 2),
+      Constant::getNullValue(Type::getInt32Ty(M->getContext())) };
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
 }
@@ -350,7 +352,7 @@ static void MarkBlocksLiveIn(BasicBlock *BB, std::set<BasicBlock*> &LiveBBs) {
 // across the unwind edge.  This process also splits all critical edges
 // coming out of invoke's.
 void LowerInvoke::
-splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
+splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
   // First step, split all critical edges from invoke instructions.
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
     InvokeInst *II = Invokes[i];
@@ -520,12 +522,11 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       new AllocaInst(JBLinkTy, 0, Align,
                      "jblink", F.begin()->begin());
 
-    SmallVector<Value*,2> Idx;
-    Idx.push_back(Constant::getNullValue(Type::getInt32Ty(F.getContext())));
-    Idx.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()), 1));
-    OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
+    Value *Idx[] = { Constant::getNullValue(Type::getInt32Ty(F.getContext())),
+                     ConstantInt::get(Type::getInt32Ty(F.getContext()), 1) };
+    OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, &Idx[0], &Idx[2],
                                              "OldBuf",
-                                              EntryBB->getTerminator());
+                                             EntryBB->getTerminator());
 
     // Copy the JBListHead to the alloca.
     Value *OldBuf = new LoadInst(JBListHead, "oldjmpbufptr", true,
@@ -570,7 +571,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                      "setjmp.cont");
 
     Idx[1] = ConstantInt::get(Type::getInt32Ty(F.getContext()), 0);
-    Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
+    Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, &Idx[0], &Idx[2],
                                                  "TheJmpBuf",
                                                  EntryBB->getTerminator());
     JmpBufPtr = new BitCastInst(JmpBufPtr,
@@ -623,16 +624,15 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   // Create the block to do the longjmp.
   // Get a pointer to the jmpbuf and longjmp.
-  SmallVector<Value*,2> Idx;
-  Idx.push_back(Constant::getNullValue(Type::getInt32Ty(F.getContext())));
-  Idx.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()), 0));
-  Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
+  Value *Idx[] = { Constant::getNullValue(Type::getInt32Ty(F.getContext())),
+                   ConstantInt::get(Type::getInt32Ty(F.getContext()), 0) };
+  Idx[0] = GetElementPtrInst::Create(BufPtr, &Idx[0], &Idx[2], "JmpBuf",
                                      UnwindBlock);
   Idx[0] = new BitCastInst(Idx[0],
              Type::getInt8PtrTy(F.getContext()),
                            "tmp", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::getInt32Ty(F.getContext()), 1);
-  CallInst::Create(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
+  CallInst::Create(LongJmpFn, &Idx[0], &Idx[2], "", UnwindBlock);
   new UnreachableInst(F.getContext(), UnwindBlock);
 
   // Set up the term block ("throw without a catch").
