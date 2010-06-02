@@ -234,6 +234,18 @@ namespace Test8 {
   void C::bar(NonPOD var) {}
 }
 
+// PR7241: Emitting thunks for a method shouldn't require the vtable for
+// that class to be emitted.
+namespace Test9 {
+  struct A { virtual ~A() { } };
+  struct B : A { virtual void test() const {} };
+  struct C : B { C(); ~C(); };
+  struct D : C { D() {} };
+  void test() {
+    D d;
+  }
+}
+
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:

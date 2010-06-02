@@ -2745,7 +2745,7 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   const CXXRecordDecl *RD = MD->getParent();
   
   // Compute VTable related info for this class.
-  ComputeVTableRelatedInformation(RD);
+  ComputeVTableRelatedInformation(RD, false);
   
   ThunksMapTy::const_iterator I = Thunks.find(MD);
   if (I == Thunks.end()) {
@@ -2758,24 +2758,30 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
     EmitThunk(GD, ThunkInfoVector[I]);
 }
 
-void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
-  uint64_t *&LayoutData = VTableLayoutMap[RD];
-  
-  // Check if we've computed this information before.
-  if (LayoutData)
-    return;
+void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
+                                                     bool RequireVTable) {
+  VTableLayoutData &Entry = VTableLayoutMap[RD];
 
   // We may need to generate a definition for this vtable.
-  if (!isKeyFunctionInAnotherTU(CGM.getContext(), RD) &&
-      RD->getTemplateSpecializationKind()
-                                      != TSK_ExplicitInstantiationDeclaration)
-    CGM.DeferredVTables.push_back(RD);
+  if (RequireVTable && !Entry.getInt()) {
+    if (!isKeyFunctionInAnotherTU(CGM.getContext(), RD) &&
+        RD->getTemplateSpecializationKind()
+          != TSK_ExplicitInstantiationDeclaration)
+      CGM.DeferredVTables.push_back(RD);
+
+    Entry.setInt(true);
+  }
+  
+  // Check if we've computed this information before.
+  if (Entry.getPointer())
+    return;
 
   VTableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
 
   // Add the VTable layout.
   uint64_t NumVTableComponents = Builder.getNumVTableComponents();
-  LayoutData = new uint64_t[NumVTableComponents + 1];
+  uint64_t *LayoutData = new uint64_t[NumVTableComponents + 1];
+  Entry.setPointer(LayoutData);
 
   // Store the number of components.
   LayoutData[0] = NumVTableComponents;
@@ -2990,7 +2996,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   CGM.getMangleContext().mangleCXXVTable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
-  ComputeVTableRelatedInformation(RD);
+  ComputeVTableRelatedInformation(RD, true);
   
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 

@@ -27,6 +27,11 @@ int main() {
 //  CHECK: call void @_ZN13basic_istreamIcED2Ev
 //  CHECK: }
 
+// basic_istream's base dtor is a no-op.
+//  CHECK: define linkonce_odr void @_ZN13basic_istreamIcED2Ev
+//  CHECK-NOT: call
+//  CHECK: }
+
 // basic_iostream's deleting dtor calls its complete dtor, then
 // operator delete().
 //  CHECK: define linkonce_odr void @_ZN14basic_iostreamIcED0Ev
@@ -44,9 +49,3 @@ int main() {
 //  CHECK: define linkonce_odr void @_ZN13basic_istreamIcED0Ev
 //  CHECK: call void @_ZN13basic_istreamIcED1Ev
 //  CHECK: call void @_ZdlPv
-
-// basic_istream's base dtor is a no-op.
-//  CHECK: define linkonce_odr void @_ZN13basic_istreamIcED2Ev
-//  CHECK-NOT: call
-//  CHECK: }
-
