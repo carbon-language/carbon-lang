@@ -723,7 +723,7 @@ _mm_setcsr(unsigned int i)
 }
 
 #define _mm_shuffle_ps(a, b, mask) \
-        (__builtin_shufflevector((__v4sf)a, (__v4sf)b, \
+        (__builtin_shufflevector((__v4sf)(a), (__v4sf)(b),                \
                                  (mask) & 0x3, ((mask) & 0xc) >> 2, \
                                  (((mask) & 0x30) >> 4) + 4, \
                                  (((mask) & 0xc0) >> 6) + 4))

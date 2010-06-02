@@ -183,13 +183,13 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
 #define _mm_insert_ps(X, Y, N) __builtin_ia32_insertps128((X), (Y), (N))
 #define _mm_extract_ps(X, N) (__extension__                      \
                               ({ union { int i; float f; } __t;  \
-                                 __v4sf __a = (__v4sf)X;         \
+                                 __v4sf __a = (__v4sf)(X);       \
                                  __t.f = __a[N];                 \
                                  __t.i;}))
 
 /* Miscellaneous insert and extract macros.  */
 /* Extract a single-precision float from X at index N into D.  */
-#define _MM_EXTRACT_FLOAT(D, X, N) (__extension__ ({ __v4sf __a = (__v4sf)X; \
+#define _MM_EXTRACT_FLOAT(D, X, N) (__extension__ ({ __v4sf __a = (__v4sf)(X); \
                                                     (D) = __a[N]; }))
                                                     
 /* Or together 2 sets of indexes (X and Y) with the zeroing bits (Z) to create
@@ -201,25 +201,25 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                              _MM_MK_INSERTPS_NDX((N), 0, 0x0e))
                                              
 /* Insert int into packed integer array at index.  */
-#define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)X; \
+#define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
                                                    __a[N] = I;               \
                                                    __a;}))
-#define _mm_insert_epi32(X, I, N) (__extension__ ({ __v4si __a = (__v4si)X; \
+#define _mm_insert_epi32(X, I, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
                                                     __a[N] = I;             \
                                                     __a;}))
 #ifdef __x86_64__
-#define _mm_insert_epi64(X, I, N) (__extension__ ({ __v2di __a = (__v2di)X; \
+#define _mm_insert_epi64(X, I, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
                                                     __a[N] = I;             \
                                                     __a;}))
 #endif /* __x86_64__ */
 
 /* Extract int from packed integer array at index.  */
-#define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)X; \
+#define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
                                                  __a[N];}))
-#define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)X; \
+#define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
                                                   __a[N];}))
 #ifdef __x86_64__
-#define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)X; \
+#define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
                                                   __a[N];}))
 #endif /* __x86_64 */
 
