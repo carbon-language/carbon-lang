@@ -170,56 +170,6 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return STI.isTargetDarwin() ? DarwinCalleeSavedRegs : CalleeSavedRegs;
 }
 
-const TargetRegisterClass* const *
-ARMBaseRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    0
-  };
-
-  static const TargetRegisterClass * const ThumbCalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::tGPRRegClass,
-    &ARM::tGPRRegClass,&ARM::tGPRRegClass,&ARM::tGPRRegClass,
-
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    0
-  };
-
-  static const TargetRegisterClass * const DarwinCalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass,
-
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    0
-  };
-
-  static const TargetRegisterClass * const DarwinThumbCalleeSavedRegClasses[] ={
-    &ARM::GPRRegClass,  &ARM::tGPRRegClass, &ARM::tGPRRegClass,
-    &ARM::tGPRRegClass, &ARM::tGPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass,  &ARM::GPRRegClass,
-
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    0
-  };
-
-  if (STI.isThumb1Only()) {
-    return STI.isTargetDarwin()
-      ? DarwinThumbCalleeSavedRegClasses : ThumbCalleeSavedRegClasses;
-  }
-  return STI.isTargetDarwin()
-    ? DarwinCalleeSavedRegClasses : CalleeSavedRegClasses;
-}
-
 BitVector ARMBaseRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   // FIXME: avoid re-calculating this everytime.
@@ -780,7 +730,6 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
   const unsigned *CSRegs = getCalleeSavedRegs();
-  const TargetRegisterClass* const *CSRegClasses = getCalleeSavedRegClasses();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
@@ -798,50 +747,50 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       }
     }
 
-    if (CSRegClasses[i] == ARM::GPRRegisterClass ||
-        CSRegClasses[i] == ARM::tGPRRegisterClass) {
-      if (Spilled) {
-        NumGPRSpills++;
+    if (!ARM::GPRRegisterClass->contains(Reg))
+      continue;
 
-        if (!STI.isTargetDarwin()) {
-          if (Reg == ARM::LR)
-            LRSpilled = true;
-          CS1Spilled = true;
-          continue;
-        }
+    if (Spilled) {
+      NumGPRSpills++;
 
-        // Keep track if LR and any of R4, R5, R6, and R7 is spilled.
-        switch (Reg) {
-        case ARM::LR:
+      if (!STI.isTargetDarwin()) {
+        if (Reg == ARM::LR)
           LRSpilled = true;
-          // Fallthrough
-        case ARM::R4:
-        case ARM::R5:
-        case ARM::R6:
-        case ARM::R7:
-          CS1Spilled = true;
-          break;
-        default:
-          break;
-        }
-      } else {
-        if (!STI.isTargetDarwin()) {
-          UnspilledCS1GPRs.push_back(Reg);
-          continue;
-        }
+        CS1Spilled = true;
+        continue;
+      }
 
-        switch (Reg) {
-        case ARM::R4:
-        case ARM::R5:
-        case ARM::R6:
-        case ARM::R7:
-        case ARM::LR:
-          UnspilledCS1GPRs.push_back(Reg);
-          break;
-        default:
-          UnspilledCS2GPRs.push_back(Reg);
-          break;
-        }
+      // Keep track if LR and any of R4, R5, R6, and R7 is spilled.
+      switch (Reg) {
+      case ARM::LR:
+        LRSpilled = true;
+        // Fallthrough
+      case ARM::R4:
+      case ARM::R5:
+      case ARM::R6:
+      case ARM::R7:
+        CS1Spilled = true;
+        break;
+      default:
+        break;
+      }
+    } else {
+      if (!STI.isTargetDarwin()) {
+        UnspilledCS1GPRs.push_back(Reg);
+        continue;
+      }
+
+      switch (Reg) {
+      case ARM::R4:
+      case ARM::R5:
+      case ARM::R6:
+      case ARM::R7:
+      case ARM::LR:
+        UnspilledCS1GPRs.push_back(Reg);
+        break;
+      default:
+        UnspilledCS2GPRs.push_back(Reg);
+        break;
       }
     }
   }
