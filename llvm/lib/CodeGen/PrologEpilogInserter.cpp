@@ -202,22 +202,18 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   if (Fn.getFunction()->hasFnAttr(Attribute::Naked))
     return;
 
-  // Figure out which *callee saved* registers are modified by the current
-  // function, thus needing to be saved and restored in the prolog/epilog.
-  const TargetRegisterClass * const *CSRegClasses =
-    RegInfo->getCalleeSavedRegClasses(&Fn);
-
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
+    const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
     if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
       // If the reg is modified, save it!
-      CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
+      CSI.push_back(CalleeSavedInfo(Reg, RC));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too.
         if (Fn.getRegInfo().isPhysRegUsed(*AliasSet)) {
-          CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
+          CSI.push_back(CalleeSavedInfo(Reg, RC));
           break;
         }
       }

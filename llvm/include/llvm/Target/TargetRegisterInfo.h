@@ -319,6 +319,10 @@ public:
   virtual const TargetRegisterClass *
     getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
+  /// getMinimalPhysRegClass - Returns the Register Class of a physical
+  /// register of the given type.
+  const TargetRegisterClass * getMinimalPhysRegClass(unsigned Reg) const;
+
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is
   /// specified, returns the subset for the class.
@@ -438,11 +442,6 @@ public:
   virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF = 0)
                                                                       const = 0;
 
-  /// getCalleeSavedRegClasses - Return a null-terminated list of the preferred
-  /// register classes to spill each callee saved register with.  The order and
-  /// length of this list match the getCalleeSaveRegs() list.
-  virtual const TargetRegisterClass* const *getCalleeSavedRegClasses(
-                                            const MachineFunction *MF) const =0;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses

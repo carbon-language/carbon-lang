@@ -60,6 +60,25 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
   return BestRC;
 }
 
+/// getMinimalPhysRegClass - Returns the Register Class of a physical
+/// register of the given type.
+const TargetRegisterClass *
+TargetRegisterInfo::getMinimalPhysRegClass(unsigned reg) const {
+  assert(isPhysicalRegister(reg) && "reg must be a physical register");
+
+  // Pick the most sub register class of the right type that contains
+  // this physreg.
+  const TargetRegisterClass* BestRC = 0;
+  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I){
+    const TargetRegisterClass* RC = *I;
+    if (RC->contains(reg) && (!BestRC || BestRC->hasSubClass(RC)))
+      BestRC = RC;
+  }
+
+  assert(BestRC && "Couldn't find the register class");
+  return BestRC;
+}
+
 /// getAllocatableSetForRC - Toggle the bits that represent allocatable
 /// registers for the specific register class.
 static void getAllocatableSetForRC(const MachineFunction &MF,
