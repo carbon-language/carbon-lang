@@ -257,6 +257,8 @@ void ValueEnumerator::EnumerateMetadata(const Value *MD) {
       else
         EnumerateType(Type::getVoidTy(MD->getContext()));
     }
+    if (N->isFunctionLocal() && N->getFunction())
+      FunctionLocalMDs.push_back(N);
     return;
   }
   
@@ -414,7 +416,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
 
   FirstInstID = Values.size();
 
-  SmallVector<MDNode *, 8> FunctionLocalMDs;
+  FunctionLocalMDs.clear();
+  SmallVector<MDNode *, 8> FnLocalMDVector;
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
@@ -423,7 +426,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
         if (MDNode *MD = dyn_cast<MDNode>(*OI))
           if (MD->isFunctionLocal() && MD->getFunction())
             // Enumerate metadata after the instructions they might refer to.
-            FunctionLocalMDs.push_back(MD);
+            FnLocalMDVector.push_back(MD);
       }
       if (!I->getType()->isVoidTy())
         EnumerateValue(I);
@@ -431,8 +434,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   }
 
   // Add all of the function-local metadata.
-  for (unsigned i = 0, e = FunctionLocalMDs.size(); i != e; ++i)
-    EnumerateOperandType(FunctionLocalMDs[i]);
+  for (unsigned i = 0, e = FnLocalMDVector.size(); i != e; ++i)
+    EnumerateOperandType(FnLocalMDVector[i]);
 }
 
 void ValueEnumerator::purgeFunction() {

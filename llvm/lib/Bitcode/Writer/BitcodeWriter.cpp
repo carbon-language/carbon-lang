@@ -577,10 +577,9 @@ static void WriteFunctionLocalMetadata(const Function &F,
                                        BitstreamWriter &Stream) {
   bool StartedMetadataBlock = false;
   SmallVector<uint64_t, 64> Record;
-  const ValueEnumerator::ValueList &Vals = VE.getMDValues();
-  
+  const SmallVector<const MDNode *, 8> &Vals = VE.getFunctionLocalMDValues();
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
-    if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first))
+    if (const MDNode *N = Vals[i])
       if (N->isFunctionLocal() && N->getFunction() == &F) {
         if (!StartedMetadataBlock) {
           Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
@@ -588,7 +587,7 @@ static void WriteFunctionLocalMetadata(const Function &F,
         }
         WriteMDNode(N, VE, Stream, Record);
       }
-
+      
   if (StartedMetadataBlock)
     Stream.ExitBlock();
 }
