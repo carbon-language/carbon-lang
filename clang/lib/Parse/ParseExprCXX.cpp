@@ -1851,7 +1851,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       // will be consumed.
       Result = ParseCastExpression(false/*isUnaryExpression*/,
                                    false/*isAddressofOperand*/,
-                                   NotCastExpr, false);
+                                   NotCastExpr, 0/*TypeOfCast*/);
     }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's
