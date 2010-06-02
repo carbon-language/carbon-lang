@@ -909,6 +909,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
               // information related to the anti-dependency register, make
               // sure to update that as well.
               const SUnit *SU = MISUnitMap[Q->second.Operand->getParent()];
+              if (!SU) continue;
               for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
                 MachineInstr *DI = SU->DbgInstrList[i];
                 assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&

@@ -530,6 +530,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
           // related to the anti-dependency register, make sure to update that
           // as well.
           const SUnit *SU = MISUnitMap[Q->second->getParent()];
+          if (!SU) continue;
           for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
             MachineInstr *DI = SU->DbgInstrList[i];
             assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&
