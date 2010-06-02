@@ -72,7 +72,7 @@ static void ParseTypes(Record *r, std::string &s,
   }
 }
 
-static const char Widen(const char t) {
+static char Widen(const char t) {
   switch (t) {
     case 'c':
       return 's';
