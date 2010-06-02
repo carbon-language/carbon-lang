@@ -300,12 +300,47 @@ static OpKind ParseOp(Record *R) {
   return OpNone;
 }
 
-static std::string GenOpstring(OpKind op) {
+// Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
+// If structTypes is true, the NEON types are structs of vector types rather
+// than vector types, and the call becomes "a.val + b.val"
+static std::string GenOpString(OpKind op, const std::string &proto,
+                               bool structTypes = true) {
   return "";
 }
 
-static std::string GenBuiltin(std::string &name) {
-  return "";
+// Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
+// If structTypes is true, the NEON types are structs of vector types rather
+// than vector types, and the call becomes __builtin_neon_cls(a.val)
+static std::string GenBuiltin(const std::string &name, const std::string &proto,
+                              StringRef typestr, bool structTypes = true) {
+  char arg = 'a';
+  std::string s("return ");
+  
+  // FIXME: if return type is 2/3/4, emit unioning code.
+  
+  if (structTypes) {
+    s += "(";
+    s += TypeString(proto[0], typestr);
+    s += "){";
+  }
+  
+  s += "__builtin_neon_";
+  s += name;
+  s += "(";
+  
+  for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
+    s.push_back(arg);
+    if (structTypes)
+      s += ".val";
+    if ((i + 1) < e)
+      s += ", ";
+  }
+  
+  s += ")";
+  if (structTypes)
+    s += "}";
+  s += ";";
+  return s;
 }
 
 void NeonEmitter::run(raw_ostream &OS) {
@@ -321,9 +356,45 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "#endif\n\n";
 
   OS << "#include <stdint.h>\n\n";
+
+  // Emit NEON-specific scalar typedefs.
+  // FIXME: probably need to do something better for polynomial types.
+  OS << "typedef float float32_t;\n";
+  OS << "typedef uint8_t poly8_t;\n";
+  OS << "typedef uint16_t poly16_t;\n";
   
-  // EmitTypedefs(OS);
+  // Emit Neon vector typedefs.
+  std::string TypedefTypes("cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfPcQPcPsQPs");
+  SmallVector<StringRef, 24> TDTypeVec;
+  ParseTypes(0, TypedefTypes, TDTypeVec);
+
+  // Emit vector typedefs.
+  for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
+    bool dummy, quad = false;
+    (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
+    OS << "typedef __attribute__(( __vector_size__(";
+    OS << (quad ? "16) )) " : "8) ))  ");
+    OS << TypeString('s', TDTypeVec[i]);
+    OS << " __neon_";
+    OS << TypeString('d', TDTypeVec[i]) << "\n";
+  }
+  OS << "\n";
+
+  // Emit struct typedefs.
+  for (unsigned vi = 1; vi != 5; ++vi) {
+    for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
+      std::string ts = TypeString('d', TDTypeVec[i]);
+      std::string vs = (vi > 1) ? TypeString('0' + vi, TDTypeVec[i]) : ts;
+      OS << "typedef struct __" << vs << " {\n";
+      OS << "  __neon_" << ts << " val";
+      if (vi > 1)
+        OS << "[" << utostr(vi) << "]";
+      OS << ";\n} " << vs << ";\n\n";
+    }
+  }
   
+  OS << "#define __ai static __attribute__((__always_inline__))\n\n";
+
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
   
   // Unique the return+pattern types, and assign them.
@@ -341,8 +412,8 @@ void NeonEmitter::run(raw_ostream &OS) {
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       assert(!Proto.empty() && "");
       
-      // Return type
-      OS << TypeString(Proto[0], TypeVec[ti]);
+      // static always inline + return type
+      OS << "__ai " << TypeString(Proto[0], TypeVec[ti]);
       
       // Function name with type suffix
       OS << " " << MangleName(name, TypeVec[ti]);
@@ -354,11 +425,11 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << " { ";
       
       if (k != OpNone)
-        OS << GenOpstring(k);
+        OS << GenOpString(k, Proto);
       else
-        OS << GenBuiltin(name);
+        OS << GenBuiltin(name, Proto, TypeVec[ti]);
 
-      OS << "}\n";
+      OS << " }\n";
     }
     OS << "\n";
   }
@@ -368,5 +439,5 @@ void NeonEmitter::run(raw_ostream &OS) {
   // Emit a #define for each unique "type" of intrinsic declaring all variants.
   // Emit a #define for each intrinsic mapping it to a particular type.
   
-  OS << "\n#endif /* __ARM_NEON_H */\n";
+  OS << "#endif /* __ARM_NEON_H */\n";
 }
