@@ -2953,8 +2953,9 @@ PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
 
 SourceRange
 PCHReader::ReadSourceRange(const RecordData &Record, unsigned &Idx) {
-  return SourceRange(SourceLocation::getFromRawEncoding(Record[Idx++]),
-                     SourceLocation::getFromRawEncoding(Record[Idx++]));
+  SourceLocation beg = SourceLocation::getFromRawEncoding(Record[Idx++]);
+  SourceLocation end = SourceLocation::getFromRawEncoding(Record[Idx++]);
+  return SourceRange(beg, end);
 }
 
 /// \brief Read an integral value
