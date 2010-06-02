@@ -418,7 +418,8 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
 static bool BBHasFallthrough(MachineBasicBlock *MBB) {
   // Get the next machine basic block in the function.
   MachineFunction::iterator MBBI = MBB;
-  if (llvm::next(MBBI) == MBB->getParent()->end())  // Can't fall off end of function.
+  // Can't fall off end of function.
+  if (llvm::next(MBBI) == MBB->getParent()->end())
     return false;
 
   MachineBasicBlock *NextBB = llvm::next(MBBI);

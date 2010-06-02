@@ -51,7 +51,8 @@ public:
   // could not be handled directly in MI.
   int rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
                         unsigned FrameReg, int Offset,
-                        unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc) const;
+                        unsigned MOVOpc, unsigned ADDriOpc,
+                        unsigned SUBriOpc) const;
 
   bool saveScavengerRegister(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator I,

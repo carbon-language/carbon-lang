@@ -1898,8 +1898,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                       PseudoSourceValue::getFixedStack(AFI->getVarArgsFrameIndex()), 0,
-                       false, false, 0);
+               PseudoSourceValue::getFixedStack(AFI->getVarArgsFrameIndex()),
+               0, false, false, 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
                           DAG.getConstant(4, getPointerTy()));
@@ -3907,7 +3907,8 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
       // Narrowing shifts require an immediate right shift.
       if (isVShiftRImm(N->getOperand(2), VT, true, true, Cnt))
         break;
-      llvm_unreachable("invalid shift count for narrowing vector shift intrinsic");
+      llvm_unreachable("invalid shift count for narrowing vector shift "
+                       "intrinsic");
 
     default:
       llvm_unreachable("unhandled vector shift");

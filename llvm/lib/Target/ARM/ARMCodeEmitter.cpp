@@ -147,7 +147,8 @@ namespace {
     }
 
     /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
-    /// machine operand requires relocation, record the relocation and return zero.
+    /// machine operand requires relocation, record the relocation and return
+    /// zero.
     unsigned getMovi32Value(const MachineInstr &MI,const MachineOperand &MO,
                             unsigned Reloc);
     unsigned getMovi32Value(const MachineInstr &MI, unsigned OpIdx,

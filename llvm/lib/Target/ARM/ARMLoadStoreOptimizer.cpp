@@ -968,8 +968,8 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       Pred, PredReg, TII, isT2);
       } else {
         if (OddReg == EvenReg && EvenDeadKill) {
-          // If the two source operands are the same, the kill marker is probably
-          // on the first one. e.g.
+          // If the two source operands are the same, the kill marker is
+          // probably on the first one. e.g.
           // t2STRDi8 %R5<kill>, %R5, %R9<kill>, 0, 14, %reg0
           EvenDeadKill = false;
           OddDeadKill = true;

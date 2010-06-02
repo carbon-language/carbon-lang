@@ -61,7 +61,8 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 
   // Handle SPR, DPR, and QPR copies.
-  return ARMBaseInstrInfo::copyRegToReg(MBB, I, DestReg, SrcReg, DestRC, SrcRC, DL);
+  return ARMBaseInstrInfo::copyRegToReg(MBB, I, DestReg, SrcReg, DestRC,
+                                        SrcRC, DL);
 }
 
 void Thumb2InstrInfo::

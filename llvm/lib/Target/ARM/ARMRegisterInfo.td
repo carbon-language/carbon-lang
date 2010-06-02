@@ -183,7 +183,8 @@ let CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
                         (ssub_8  qqsub_1, ssub_0), (ssub_9  qqsub_1, ssub_1),
                         (ssub_10 qqsub_1, ssub_2), (ssub_11 qqsub_1, ssub_3),
                         (ssub_12 qqsub_1, ssub_4), (ssub_13 qqsub_1, ssub_5),
-                        (ssub_14 qqsub_1, ssub_6), (ssub_15 qqsub_1, ssub_7)] in {
+                        (ssub_14 qqsub_1, ssub_6), (ssub_15 qqsub_1, ssub_7)] in
+{
 def QQQQ0 : ARMReg<0, "qqqq0", [QQ0, QQ1]>;
 def QQQQ1 : ARMReg<1, "qqqq1", [QQ2, QQ3]>;
 }

@@ -16,7 +16,7 @@
 // Functional Units
 def V6_Pipe : FuncUnit; // pipeline
 
-// Scheduling information derived from "ARM1176JZF-S Technical Reference Manual".
+// Scheduling information derived from "ARM1176JZF-S Technical Reference Manual"
 //
 def ARMV6Itineraries : ProcessorItineraries<
   [V6_Pipe], [

@@ -148,8 +148,8 @@ public:
   virtual bool canSimplifyCallFramePseudos(MachineFunction &MF) const;
 
   virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                             MachineBasicBlock &MBB,
-                                             MachineBasicBlock::iterator I) const;
+                                           MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator I) const;
 
   virtual unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
                                        int SPAdj, FrameIndexValue *Value = NULL,

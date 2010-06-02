@@ -144,13 +144,15 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       MachineInstrBuilder Even =
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(ARM::VMOVQ))
-                       .addReg(EvenDst, getDefRegState(true) | getDeadRegState(DstIsDead))
-                       .addReg(EvenSrc, getKillRegState(SrcIsKill)));
+                     .addReg(EvenDst,
+                             getDefRegState(true) | getDeadRegState(DstIsDead))
+                     .addReg(EvenSrc, getKillRegState(SrcIsKill)));
       MachineInstrBuilder Odd =
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(ARM::VMOVQ))
-                       .addReg(OddDst, getDefRegState(true) | getDeadRegState(DstIsDead))
-                       .addReg(OddSrc, getKillRegState(SrcIsKill)));
+                     .addReg(OddDst,
+                             getDefRegState(true) | getDeadRegState(DstIsDead))
+                     .addReg(OddSrc, getKillRegState(SrcIsKill)));
       TransferImpOps(MI, Even, Odd);
       MI.eraseFromParent();
       Modified = true;

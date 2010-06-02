@@ -143,7 +143,8 @@ namespace llvm {
       JumpTableId2AddrMap[JTI] = Addr;
     }
 
-    /// getPCLabelAddr - Retrieve the address of the PC label of the specified id.
+    /// getPCLabelAddr - Retrieve the address of the PC label of the
+    /// specified id.
     intptr_t getPCLabelAddr(unsigned Id) const {
       DenseMap<unsigned, intptr_t>::const_iterator I = PCLabelMap.find(Id);
       assert(I != PCLabelMap.end());
