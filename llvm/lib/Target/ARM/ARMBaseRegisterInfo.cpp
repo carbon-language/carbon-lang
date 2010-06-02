@@ -302,7 +302,7 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
 }
 
 bool
-ARMBaseRegisterInfo::canCombinedSubRegIndex(const TargetRegisterClass *RC,
+ARMBaseRegisterInfo::canCombineSubRegIndices(const TargetRegisterClass *RC,
                                           SmallVectorImpl<unsigned> &SubIndices,
                                           unsigned &NewSubIdx) const {
 

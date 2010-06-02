@@ -469,14 +469,15 @@ public:
     return 0;
   }
 
-  /// canCombinedSubRegIndex - Given a register class and a list of sub-register
-  /// indices, return true if it's possible to combine the sub-register indices
-  /// into one that corresponds to a larger sub-register. Return the new sub-
-  /// register index by reference. Note the new index by be zero if the given
-  /// sub-registers combined to form the whole register.
-  virtual bool canCombinedSubRegIndex(const TargetRegisterClass *RC,
-                                      SmallVectorImpl<unsigned> &SubIndices,
-                                      unsigned &NewSubIdx) const {
+  /// canCombineSubRegIndices - Given a register class and a list of
+  /// subregister indices, return true if it's possible to combine the
+  /// subregister indices into one that corresponds to a larger
+  /// subregister. Return the new subregister index by reference. Note the
+  /// new index may be zero if the given subregisters can be combined to
+  /// form the whole register.
+  virtual bool canCombineSubRegIndices(const TargetRegisterClass *RC,
+                                       SmallVectorImpl<unsigned> &SubIndices,
+                                       unsigned &NewSubIdx) const {
     return 0;
   }
 

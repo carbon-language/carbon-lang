@@ -1185,8 +1185,8 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
 
     std::sort(SubIndices.begin(), SubIndices.end());
     unsigned NewSubIdx = 0;
-    if (TRI->canCombinedSubRegIndex(MRI->getRegClass(SrcReg), SubIndices,
-                                    NewSubIdx)) {
+    if (TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SubIndices,
+                                     NewSubIdx)) {
       bool Proceed = true;
       if (NewSubIdx)
         for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
