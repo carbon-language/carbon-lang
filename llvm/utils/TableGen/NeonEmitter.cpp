@@ -64,9 +64,32 @@ static const char Widen(const char t) {
   return '\0';
 }
 
-static std::string TypeString(const char mod, StringRef typestr) {
+static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   unsigned off = 0;
   
+  // remember quad.
+  if (ty[off] == 'Q') {
+    quad = true;
+    ++off;
+  }
+  
+  // remember poly.
+  if (ty[off] == 'P') {
+    poly = true;
+    ++off;
+  }
+  
+  // remember unsigned.
+  if (ty[off] == 'U') {
+    usgn = true;
+    ++off;
+  }
+  
+  // base type to get the type string for.
+  return ty[off];
+}
+
+static std::string TypeString(const char mod, StringRef typestr) {
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -74,26 +97,8 @@ static std::string TypeString(const char mod, StringRef typestr) {
   bool cnst = false;
   bool pntr = false;
   
-  // remember quad.
-  if (typestr[off] == 'Q') {
-    quad = true;
-    ++off;
-  }
-    
-  // remember poly.
-  if (typestr[off] == 'P') {
-    poly = true;
-    ++off;
-  }
-  
-  // remember unsigned.
-  if (typestr[off] == 'U') {
-    usgn = true;
-    ++off;
-  }
-  
   // base type to get the type string for.
-  char type = typestr[off];
+  char type = ClassifyType(typestr, quad, poly, usgn);
   
   // Based on the modifying character, change the type and width if necessary.
   switch (mod) {
@@ -220,12 +225,63 @@ static std::string TypeString(const char mod, StringRef typestr) {
 
 // Turn "vst2_lane" into "vst2q_lane_f32", etc.
 static std::string MangleName(const std::string &name, StringRef typestr) {
-  return "";
+  bool quad = false;
+  bool poly = false;
+  bool usgn = false;
+  char type = ClassifyType(typestr, quad, poly, usgn);
+
+  std::string s = name;
+  
+  switch (type) {
+    case 'c':
+      s += poly ? "_p8" : usgn ? "_u8" : "_s8";
+      break;
+    case 's':
+      s += poly ? "_p16" : usgn ? "_u16" : "_s16";
+      break;
+    case 'i':
+      s += usgn ? "_u32" : "_s32";
+      break;
+    case 'l':
+      s += usgn ? "_u64" : "_s64";
+      break;
+    case 'h':
+      s += "_f16";
+      break;
+    case 'f':
+      s += "_f32";
+      break;
+    default:
+      throw "unhandled type!";
+      break;
+  }
+
+  // Insert a 'q' before the first '_' character so that it ends up before 
+  // _lane or _n on vector-scalar operations.
+  if (quad) {
+    size_t pos = s.find('_');
+    s = s.insert(pos, "q");
+  }
+  return s;
 }
 
-// 
+// Generate the string "(argtype a, argtype b, ...)"
 static std::string GenArgs(const std::string &proto, StringRef typestr) {
-  return "";
+  char arg = 'a';
+  
+  std::string s;
+  s += "(";
+  
+  for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
+    s += TypeString(proto[i], typestr);
+    s.push_back(' ');
+    s.push_back(arg);
+    if ((i + 1) < e)
+      s += ", ";
+  }
+  
+  s += ")";
+  return s;
 }
 
 void NeonEmitter::run(raw_ostream &OS) {
