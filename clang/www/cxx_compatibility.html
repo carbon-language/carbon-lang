@@ -25,6 +25,7 @@
 <li><a href="#init_static_const">Initialization of non-integral static const data members within a class definition</a></li>
 <li><a href="#dep_lookup">Unqualified lookup in templates</a></li>
 <li><a href="#dep_lookup_bases">Unqualified lookup into dependent bases of class templates</a></li>
+<li><a href="#undep_incomplete">Incomplete types in templates</a></li>
 <li><a href="#bad_templates">Templates with no valid instantiations</a></li>
 <li><a href="#default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</a></li>
 </ul>
@@ -213,6 +214,37 @@ Alternatively, you can tell the compiler exactly where to look:
 This works whether the methods are static or not, but be careful:
 if <tt>DoThis</tt> is virtual, calling it this way will bypass virtual
 dispatch!
+
+<!-- ======================================================================= -->
+<h2 id="undep_incomplete">Incomplete types in templates</h2>
+<!-- ======================================================================= -->
+
+The following code is invalid, but compilers are allowed to accept it:
+
+<pre>
+  class IOOptions;
+  template &lt;class T&gt; bool read(T &amp;value) {
+    IOOptions opts;
+    return read(opts, value);
+  }
+
+  class IOOptions { bool ForceReads; };
+  bool read(const IOOptions &amp;opts, int &amp;x);
+  template bool read&lt;&gt;(int &amp;);
+</pre>
+
+The standard says that types which don't depend on template parameters
+must be complete when a template is defined if they affect the
+program's behavior.  However, the standard also says that compilers
+are free to not enforce this rule.  Most compilers enforce it to some
+extent; for example, it would be an error in GCC to
+write <tt>opts.ForceReads</tt> in the code above.  In Clang, we feel
+that enforcing the rule consistently lets us provide a better
+experience, but unfortunately it also means we reject some code that
+other compilers accept.
+
+<p>We've explained the rule here in very imprecise terms; see
+[temp.res]p8 for details.
 
 <!-- ======================================================================= -->
 <h2 id="bad_templates">Templates with no valid instantiations</h2>
