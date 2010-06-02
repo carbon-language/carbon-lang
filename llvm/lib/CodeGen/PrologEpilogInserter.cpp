@@ -205,15 +205,14 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
-    const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
     if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
       // If the reg is modified, save it!
-      CSI.push_back(CalleeSavedInfo(Reg, RC));
+      CSI.push_back(CalleeSavedInfo(Reg));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too.
         if (Fn.getRegInfo().isPhysRegUsed(*AliasSet)) {
-          CSI.push_back(CalleeSavedInfo(Reg, RC));
+          CSI.push_back(CalleeSavedInfo(Reg));
           break;
         }
       }
@@ -232,7 +231,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   for (std::vector<CalleeSavedInfo>::iterator
          I = CSI.begin(), E = CSI.end(); I != E; ++I) {
     unsigned Reg = I->getReg();
-    const TargetRegisterClass *RC = I->getRegClass();
+    const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
 
     int FrameIdx;
     if (RegInfo->hasReservedSpillSlot(Fn, Reg, FrameIdx)) {
@@ -299,8 +298,10 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
         EntryBlock->addLiveIn(CSI[i].getReg());
 
         // Insert the spill to the stack frame.
-        TII.storeRegToStackSlot(*EntryBlock, I, CSI[i].getReg(), true,
-                                CSI[i].getFrameIdx(), CSI[i].getRegClass(),TRI);
+        unsigned Reg = CSI[i].getReg();
+        const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+        TII.storeRegToStackSlot(*EntryBlock, I, Reg, true,
+                                CSI[i].getFrameIdx(), RC, TRI);
       }
     }
 
@@ -324,9 +325,11 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
       // terminators that preceed it.
       if (!TII.restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-          TII.loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
+          unsigned Reg = CSI[i].getReg();
+          const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+          TII.loadRegFromStackSlot(*MBB, I, Reg,
                                    CSI[i].getFrameIdx(),
-                                   CSI[i].getRegClass(), TRI);
+                                   RC, TRI);
           assert(I != MBB->begin() &&
                  "loadRegFromStackSlot didn't insert any code!");
           // Insert in reverse order.  loadRegFromStackSlot can insert
@@ -370,10 +373,12 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
       MBB->addLiveIn(blockCSI[i].getReg());
 
       // Insert the spill to the stack frame.
-      TII.storeRegToStackSlot(*MBB, I, blockCSI[i].getReg(),
+      unsigned Reg = blockCSI[i].getReg();
+      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+      TII.storeRegToStackSlot(*MBB, I, Reg,
                               true,
                               blockCSI[i].getFrameIdx(),
-                              blockCSI[i].getRegClass(), TRI);
+                              RC, TRI);
     }
   }
 
@@ -419,9 +424,11 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
     // Restore all registers immediately before the return and any
     // terminators that preceed it.
     for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
-      TII.loadRegFromStackSlot(*MBB, I, blockCSI[i].getReg(),
+      unsigned Reg = blockCSI[i].getReg();
+      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+      TII.loadRegFromStackSlot(*MBB, I, Reg,
                                blockCSI[i].getFrameIdx(),
-                               blockCSI[i].getRegClass(), TRI);
+                               RC, TRI);
       assert(I != MBB->begin() &&
              "loadRegFromStackSlot didn't insert any code!");
       // Insert in reverse order.  loadRegFromStackSlot can insert

@@ -227,8 +227,9 @@ ARMBaseInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
     // Insert the spill to the stack frame. The register is killed at the spill
     // 
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
     storeRegToStackSlot(MBB, MI, Reg, isKill,
-                        CSI[i].getFrameIdx(), CSI[i].getRegClass(), TRI);
+                        CSI[i].getFrameIdx(), RC, TRI);
   }
   return true;
 }

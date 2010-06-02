@@ -33,16 +33,14 @@ class BitVector;
 /// callee saved register in the current frame.  
 class CalleeSavedInfo {
   unsigned Reg;
-  const TargetRegisterClass *RegClass;
   int FrameIdx;
   
 public:
-  CalleeSavedInfo(unsigned R, const TargetRegisterClass *RC, int FI = 0)
-  : Reg(R), RegClass(RC), FrameIdx(FI) {}
+  CalleeSavedInfo(unsigned R, int FI = 0)
+  : Reg(R), FrameIdx(FI) {}
   
   // Accessors.
   unsigned getReg()                        const { return Reg; }
-  const TargetRegisterClass *getRegClass() const { return RegClass; }
   int getFrameIdx()                        const { return FrameIdx; }
   void setFrameIdx(int FI)                       { FrameIdx = FI; }
 };

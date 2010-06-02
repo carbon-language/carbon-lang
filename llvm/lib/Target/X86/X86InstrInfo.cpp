@@ -2277,18 +2277,17 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned Opc = is64Bit ? X86::PUSH64r : X86::PUSH32r;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
-    const TargetRegisterClass *RegClass = CSI[i-1].getRegClass();
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     if (Reg == FPReg)
       // X86RegisterInfo::emitPrologue will handle spilling of frame register.
       continue;
-    if (RegClass != &X86::VR128RegClass && !isWin64) {
+    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
       CalleeFrameSize += SlotSize;
       BuildMI(MBB, MI, DL, get(Opc)).addReg(Reg, RegState::Kill);
     } else {
-      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(), RegClass,
-                          &RI);
+      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(),
+                          &X86::VR128RegClass, &RI);
     }
   }
 
@@ -2315,11 +2314,11 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (Reg == FPReg)
       // X86RegisterInfo::emitEpilogue will handle restoring of frame register.
       continue;
-    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
-    if (RegClass != &X86::VR128RegClass && !isWin64) {
+    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
       BuildMI(MBB, MI, DL, get(Opc), Reg);
     } else {
-      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass, &RI);
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),
+                           &X86::VR128RegClass, &RI);
     }
   }
   return true;
@@ -3783,4 +3782,3 @@ void X86InstrInfo::SetSSEDomain(MachineInstr *MI, unsigned Domain) const {
 void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
 }
-

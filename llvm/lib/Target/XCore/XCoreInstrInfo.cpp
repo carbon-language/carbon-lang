@@ -438,8 +438,10 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(it->getReg());
 
-    storeRegToStackSlot(MBB, MI, it->getReg(), true,
-                        it->getFrameIdx(), it->getRegClass(), &RI);
+    unsigned Reg = it->getReg();
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+    storeRegToStackSlot(MBB, MI, Reg, true,
+                        it->getFrameIdx(), RC, &RI);
     if (emitFrameMoves) {
       MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
       BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addSym(SaveLabel);
@@ -460,10 +462,11 @@ bool XCoreInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     --BeforeI;
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
-    
+    unsigned Reg = it->getReg();
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
     loadRegFromStackSlot(MBB, MI, it->getReg(),
                                   it->getFrameIdx(),
-                         it->getRegClass(), &RI);
+                         RC, &RI);
     assert(MI != MBB.begin() &&
            "loadRegFromStackSlot didn't insert any code!");
     // Insert in reverse order.  loadRegFromStackSlot can insert multiple

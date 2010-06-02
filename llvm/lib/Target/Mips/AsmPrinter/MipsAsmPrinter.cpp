@@ -133,8 +133,9 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   const MachineFrameInfo *MFI = MF->getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(CSI[i].getReg());
-    if (CSI[i].getRegClass() == Mips::CPURegsRegisterClass)
+    unsigned Reg = CSI[i].getReg();
+    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
+    if (Mips::CPURegsRegisterClass->contains(Reg))
       CPUBitmask |= (1 << RegNum);
     else
       FPUBitmask |= (1 << RegNum);

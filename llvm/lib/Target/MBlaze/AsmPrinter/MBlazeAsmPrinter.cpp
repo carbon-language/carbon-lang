@@ -145,8 +145,9 @@ void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   const MachineFrameInfo *MFI = MF->getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned RegNum = MBlazeRegisterInfo::getRegisterNumbering(CSI[i].getReg());
-    if (CSI[i].getRegClass() == MBlaze::CPURegsRegisterClass)
+    unsigned Reg = CSI[i].getReg();
+    unsigned RegNum = MBlazeRegisterInfo::getRegisterNumbering(Reg);
+    if (MBlaze::CPURegsRegisterClass->contains(Reg))
       CPUBitmask |= (1 << RegNum);
   }
 

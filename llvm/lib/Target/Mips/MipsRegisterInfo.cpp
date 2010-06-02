@@ -251,7 +251,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
 
   for (unsigned i = 0, e = CSI.size(); i != e ; ++i) {
-    if (CSI[i].getRegClass() != Mips::CPURegsRegisterClass)
+    unsigned Reg = CSI[i].getReg();
+    if (!Mips::CPURegsRegisterClass->contains(Reg))
       break;
     MFI->setObjectOffset(CSI[i].getFrameIdx(), StackOffset);
     TopCPUSavedRegOff = StackOffset;
@@ -283,7 +284,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   // Adjust FPU Callee Saved Registers Area. This Area must be 
   // aligned to the default Stack Alignment requirements.
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    if (CSI[i].getRegClass() == Mips::CPURegsRegisterClass)
+    unsigned Reg = CSI[i].getReg();
+    if (Mips::CPURegsRegisterClass->contains(Reg))
       continue;
     MFI->setObjectOffset(CSI[i].getFrameIdx(), StackOffset);
     TopFPUSavedRegOff = StackOffset;
@@ -500,4 +502,3 @@ getDwarfRegNum(unsigned RegNum, bool isEH) const {
 }
 
 #include "MipsGenRegisterInfo.inc"
-

@@ -993,9 +993,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
   
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    const TargetRegisterClass *RC = CSI[i].getRegClass();
-    
-    if (RC == PPC::GPRCRegisterClass) {
+    if (PPC::GPRCRegisterClass->contains(Reg)) {
       HasGPSaveArea = true;
       
       GPRegs.push_back(CSI[i]);
@@ -1003,7 +1001,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
       if (Reg < MinGPR) {
         MinGPR = Reg;
       }
-    } else if (RC == PPC::G8RCRegisterClass) {
+    } else if (PPC::G8RCRegisterClass->contains(Reg)) {
       HasG8SaveArea = true;
 
       G8Regs.push_back(CSI[i]);
@@ -1011,7 +1009,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
       if (Reg < MinG8R) {
         MinG8R = Reg;
       }
-    } else if (RC == PPC::F8RCRegisterClass) {
+    } else if (PPC::F8RCRegisterClass->contains(Reg)) {
       HasFPSaveArea = true;
       
       FPRegs.push_back(CSI[i]);
@@ -1020,12 +1018,12 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
         MinFPR = Reg;
       }
 // FIXME SVR4: Disable CR save area for now.
-    } else if (   RC == PPC::CRBITRCRegisterClass
-               || RC == PPC::CRRCRegisterClass) {
+    } else if (PPC::CRBITRCRegisterClass->contains(Reg)
+               || PPC::CRRCRegisterClass->contains(Reg)) {
 //      HasCRSaveArea = true;
-    } else if (RC == PPC::VRSAVERCRegisterClass) {
+    } else if (PPC::VRSAVERCRegisterClass->contains(Reg)) {
       HasVRSAVESaveArea = true;
-    } else if (RC == PPC::VRRCRegisterClass) {
+    } else if (PPC::VRRCRegisterClass->contains(Reg)) {
       HasVRSaveArea = true;
       
       VRegs.push_back(CSI[i]);
@@ -1106,9 +1104,10 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
     //             which have the CR/CRBIT register class?
     // Adjust the frame index of the CR spill slot.
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-      const TargetRegisterClass *RC = CSI[i].getRegClass();
+      unsigned Reg = CSI[i].getReg();
     
-      if (RC == PPC::CRBITRCRegisterClass || RC == PPC::CRRCRegisterClass) {
+      if (PPC::CRBITRCRegisterClass->contains(Reg) ||
+          PPC::CRRCRegisterClass->contains(Reg)) {
         int FI = CSI[i].getFrameIdx();
 
         FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
@@ -1123,9 +1122,9 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
     //             which have the VRSAVE register class?
     // Adjust the frame index of the VRSAVE spill slot.
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-      const TargetRegisterClass *RC = CSI[i].getRegClass();
+      unsigned Reg = CSI[i].getReg();
     
-      if (RC == PPC::VRSAVERCRegisterClass) {
+      if (PPC::VRSAVERCRegisterClass->contains(Reg)) {
         int FI = CSI[i].getFrameIdx();
 
         FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
@@ -1628,4 +1627,3 @@ int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
 }
 
 #include "PPCGenRegisterInfo.inc"
-

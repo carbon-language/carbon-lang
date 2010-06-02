@@ -286,8 +286,7 @@ SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned LowReg = 0, HighReg = 0, StartOffset = -1U, EndOffset = 0;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
-    if (RegClass != &SystemZ::FP64RegClass) {
+    if (!SystemZ::FP64RegClass.contains(Reg)) {
       unsigned Offset = RegSpillOffsets[Reg];
       CalleeFrameSize += 8;
       if (StartOffset > Offset) {
@@ -332,11 +331,10 @@ SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   // Save FPRs
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
-    if (RegClass == &SystemZ::FP64RegClass) {
+    if (SystemZ::FP64RegClass.contains(Reg)) {
       MBB.addLiveIn(Reg);
-      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i].getFrameIdx(), RegClass,
-                          &RI);
+      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i].getFrameIdx(),
+                          &SystemZ::FP64RegClass, &RI);
     }
   }
 
@@ -361,9 +359,9 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   // Restore FP registers
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
-    if (RegClass == &SystemZ::FP64RegClass)
-      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass, &RI);
+    if (SystemZ::FP64RegClass.contains(Reg))
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),
+                           &SystemZ::FP64RegClass, &RI);
   }
 
   // Restore GP registers
