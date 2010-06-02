@@ -1200,8 +1200,6 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
             Proceed = false;
             break;
           }
-          MO.setReg(DstReg);
-          MO.setSubReg(NewSubIdx);
         }
       if (Proceed)
         for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
