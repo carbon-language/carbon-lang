@@ -201,11 +201,11 @@ def VST4_LANE : Inst<"vp4i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.16 Extract lanes from a vector
-def VGET_LANE : Inst<"ddi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VGET_LANE : Inst<"sdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.17 Set lanes within a vector
-def VSET_LANE : Inst<"dddi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VSET_LANE : Inst<"dsdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.18 Initialize a vector from bit pattern
