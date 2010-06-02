@@ -34,6 +34,13 @@ Types:
 */
 
 #include <__config>
+
+#ifdef __GLIBC__
+#define __need_NULL
+#define __need_ptrdiff_t
+#define __need_size_t
+#endif
+
 #include <stddef.h>
 
 #pragma GCC system_header
