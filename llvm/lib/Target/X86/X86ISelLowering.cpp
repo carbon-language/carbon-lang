@@ -976,15 +976,17 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // Add/Sub/Mul with overflow operations are custom lowered.
   setOperationAction(ISD::SADDO, MVT::i32, Custom);
-  setOperationAction(ISD::SADDO, MVT::i64, Custom);
   setOperationAction(ISD::UADDO, MVT::i32, Custom);
-  setOperationAction(ISD::UADDO, MVT::i64, Custom);
   setOperationAction(ISD::SSUBO, MVT::i32, Custom);
-  setOperationAction(ISD::SSUBO, MVT::i64, Custom);
   setOperationAction(ISD::USUBO, MVT::i32, Custom);
-  setOperationAction(ISD::USUBO, MVT::i64, Custom);
   setOperationAction(ISD::SMULO, MVT::i32, Custom);
-  setOperationAction(ISD::SMULO, MVT::i64, Custom);
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::SADDO, MVT::i64, Custom);
+    setOperationAction(ISD::UADDO, MVT::i64, Custom);
+    setOperationAction(ISD::SSUBO, MVT::i64, Custom);
+    setOperationAction(ISD::USUBO, MVT::i64, Custom);
+    setOperationAction(ISD::SMULO, MVT::i64, Custom);
+  }
 
   if (!Subtarget->is64Bit()) {
     // These libcalls are not available in 32-bit.
