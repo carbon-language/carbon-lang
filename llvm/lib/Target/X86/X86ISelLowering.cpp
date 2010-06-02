@@ -980,6 +980,17 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SSUBO, MVT::i32, Custom);
   setOperationAction(ISD::USUBO, MVT::i32, Custom);
   setOperationAction(ISD::SMULO, MVT::i32, Custom);
+
+  // Don't try to custom-lower 64-bit add-with-overflow and friends
+  // on x86-32; the x86 backend currently doesn't know how to handle them.
+  //
+  // This doesn't really fix anything because LegalizeTypes doesn't know
+  // how to handle them either.  We do get a better error message, though.
+  //
+  // This may not be hard to implement though.
+  // In fact you could even cheat, and turn the 64 bit add-with-overflow
+  // into a 65 bit add, with the top bit being used to compute the overflow
+  // flag.  That should then all get expanded out automagically.
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::SADDO, MVT::i64, Custom);
     setOperationAction(ISD::UADDO, MVT::i64, Custom);
