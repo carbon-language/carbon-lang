@@ -99,3 +99,13 @@ void f(not_string) { }
 void create_streams() {
   std::basic_iostream<char> bio(17);
 }
+
+// Make sure we don't mangle 'std' as 'St' here.
+namespace N {
+  namespace std {
+    struct A { void f(); };
+    
+    // CHECK: define void @_ZN1N3std1A1fEv
+    void A::f() { }
+  }
+}

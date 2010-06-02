@@ -362,12 +362,6 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   mangleBareFunctionType(FT, MangleReturnType);
 }
 
-/// isStd - Return whether a given namespace is the 'std' namespace.
-static bool isStd(const NamespaceDecl *NS) {
-  const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
-  return II && II->isStr("std");
-}
-
 static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
   while (isa<LinkageSpecDecl>(DC)) {
     DC = DC->getParent();
@@ -376,13 +370,19 @@ static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
   return DC;
 }
 
+/// isStd - Return whether a given namespace is the 'std' namespace.
+static bool isStd(const NamespaceDecl *NS) {
+  if (!IgnoreLinkageSpecDecls(NS->getParent())->isTranslationUnit())
+    return false;
+  
+  const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
+  return II && II->isStr("std");
+}
+
 // isStdNamespace - Return whether a given decl context is a toplevel 'std'
 // namespace.
 static bool isStdNamespace(const DeclContext *DC) {
   if (!DC->isNamespace())
-    return false;
-
-  if (!IgnoreLinkageSpecDecls(DC->getParent())->isTranslationUnit())
     return false;
 
   return isStd(cast<NamespaceDecl>(DC));
