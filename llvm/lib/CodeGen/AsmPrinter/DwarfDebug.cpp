@@ -2620,6 +2620,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   
   recordSourceLine(Line, Col, Scope);
 
+  /// ProcessedArgs - Collection of arguments already processed.
+  SmallPtrSet<const MDNode *, 8> ProcessedArgs;
+
   DebugLoc PrevLoc;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I)
@@ -2704,7 +2707,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Clear debug info
   CurrentFnDbgScope = NULL;
   InsnNeedsLabel.clear();
-  ProcessedArgs.clear();
   DbgVariableToFrameIndexMap.clear();
   VarToAbstractVarMap.clear();
   DbgVariableToDbgInstMap.clear();
