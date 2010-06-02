@@ -296,8 +296,11 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
       if (BDRE && BDRE->isByRef()) {
-        Types[i+BlockFields] = llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
-      } else
+        Types[i+BlockFields] = 
+          llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
+      } else if (BDRE && BDRE->getDecl()->getType()->isReferenceType()) {
+         Types[i+BlockFields] = llvm::PointerType::get(ConvertType(Ty), 0);
+      } else 
         Types[i+BlockFields] = ConvertType(Ty);
     }
 
@@ -359,8 +362,13 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           continue;
         } else {
           E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
-                                             VD->getType(),
-                                             SourceLocation());
+                                            VD->getType().getNonReferenceType(),
+                                            SourceLocation());
+          if (VD->getType()->isReferenceType())
+            E = new (getContext())
+              UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+                          getContext().getPointerType(E->getType()),
+                          SourceLocation());
         }
       }
 
@@ -629,6 +637,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
 
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
+    if (VD->getType()->isReferenceType())
+      V = Builder.CreateLoad(V, "tmp");
   }
   return V;
 }
