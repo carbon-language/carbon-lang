@@ -50,7 +50,10 @@ class Inst <string p, string t, Op o = OP_NONE> {
 // i: constant int
 // l: constant uint64
 // s: scalar of element type
-// c: default elt width, double num elts
+// k: default elt width, double num elts
+// #: array of default vectors
+// p: pointer type
+// c: const pointer type
 
 // sizes:
 // c: char
@@ -172,29 +175,29 @@ def VSLI_N : Inst<"dddi", "csilUcUsUiUlPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.14 Loads and stores of a single vector
-def VLD1      : Inst<"d*cs",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD1_LANE : Inst<"d*csi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD1_DUP  : Inst<"d*cs",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VST1      : Inst<"v*sd",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VST1_LANE : Inst<"v*sdi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1      : Inst<"dc",   "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1_LANE : Inst<"dci",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1_DUP  : Inst<"dc",   "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST1      : Inst<"vpd",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST1_LANE : Inst<"vpdi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.15 Loads and stores of an N-element structure
-def VLD2      : Inst<"2d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD3      : Inst<"3d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD4      : Inst<"4d*cs",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD2_DUP  : Inst<"2d*cs",  "UcUsUiUlcsilhfPcPs">;
-def VLD3_DUP  : Inst<"3d*cs",  "UcUsUiUlcsilhfPcPs">;
-def VLD4_DUP  : Inst<"4d*cs",  "UcUsUiUlcsilhfPcPs">;
-def VLD2_LANE : Inst<"2d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VLD3_LANE : Inst<"3d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VLD4_LANE : Inst<"4d*csi", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VST2      : Inst<"v*s2d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VST3      : Inst<"v*s3d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VST4      : Inst<"v*s4d",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VST2_LANE : Inst<"v*s2di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VST3_LANE : Inst<"v*s3di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VST4_LANE : Inst<"v*s4di", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD2      : Inst<"2c",   "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD3      : Inst<"3c",   "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD4      : Inst<"4c",   "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD2_DUP  : Inst<"2c",   "UcUsUiUlcsilhfPcPs">;
+def VLD3_DUP  : Inst<"3c",   "UcUsUiUlcsilhfPcPs">;
+def VLD4_DUP  : Inst<"4c",   "UcUsUiUlcsilhfPcPs">;
+def VLD2_LANE : Inst<"2ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD3_LANE : Inst<"3ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD4_LANE : Inst<"4ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST2      : Inst<"vp2",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST3      : Inst<"vp3",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST4      : Inst<"vp4",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VST2_LANE : Inst<"vp2i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST3_LANE : Inst<"vp3i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VST4_LANE : Inst<"vp4i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.16 Extract lanes from a vector
@@ -215,12 +218,12 @@ def VMOV_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors
-def VCOMBINE : Inst<"cdd", "csilhfUcUsUiUlPcPs">;
+def VCOMBINE : Inst<"kdd", "csilhfUcUsUiUlPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.21 Splitting vectors
-def VGET_HIGH : Inst<"dc", "csilhfUcUsUiUlPcPs">;
-def VGET_LOW  : Inst<"dc", "csilhfUcUsUiUlPcPs">;
+def VGET_HIGH : Inst<"dk", "csilhfUcUsUiUlPcPs">;
+def VGET_LOW  : Inst<"dk", "csilhfUcUsUiUlPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.22 Converting vectors
@@ -234,14 +237,14 @@ def VCVT_N_F32 : Inst<"fdi", "iUiQiQUi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.23-24 Table lookup, Extended table lookup
-def VTBL1 : Inst<"ddt",   "UccPc">;
-def VTBL2 : Inst<"d2dt",  "UccPc">;
-def VTBL3 : Inst<"d3dt",  "UccPc">;
-def VTBL4 : Inst<"d4dt",  "UccPc">;
-def VTBX1 : Inst<"dddt",  "UccPc">;
-def VTBX2 : Inst<"dd2dt", "UccPc">;
-def VTBX3 : Inst<"dd3dt", "UccPc">;
-def VTBX4 : Inst<"dd4dt", "UccPc">;
+def VTBL1 : Inst<"ddt",  "UccPc">;
+def VTBL2 : Inst<"d2t",  "UccPc">;
+def VTBL3 : Inst<"d3t",  "UccPc">;
+def VTBL4 : Inst<"d4t",  "UccPc">;
+def VTBX1 : Inst<"dddt", "UccPc">;
+def VTBX2 : Inst<"dd2t", "UccPc">;
+def VTBX3 : Inst<"dd3t", "UccPc">;
+def VTBX4 : Inst<"dd4t", "UccPc">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.25 Operations with a scalar value
@@ -300,9 +303,9 @@ def VBSL : Inst<"dxdd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations
-def VTRN: Inst<"2ddd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
-def VZIP: Inst<"2ddd", "csUcUsfPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
-def VUZP: Inst<"2ddd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VTRN: Inst<"2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VZIP: Inst<"2dd", "csUcUsfPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VUZP: Inst<"2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.31 Vector reinterpret cast operations
