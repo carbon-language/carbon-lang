@@ -265,10 +265,10 @@ inline
 thread&
 thread::operator=(thread&& __t)
 {
-    if (__t_ != nullptr)
+    if (__t_ != 0)
         terminate();
     __t_ = __t.__t_;
-    __t.__t_ = nullptr;
+    __t.__t_ = 0;
     return *this;
 }
 

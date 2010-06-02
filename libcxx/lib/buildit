@@ -12,7 +12,7 @@ then
 	exit 1
 fi
 
-if [ -z $CXX ]
+if [ -z "$CXX" ]
 then
 	CXX=g++
 fi
