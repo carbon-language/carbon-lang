@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass moves instructions into successor blocks, when possible, so that
+// This pass moves instructions into successor blocks when possible, so that
 // they aren't executed on paths where their results aren't needed.
 //
 // This pass is not intended to be a replacement or a complete alternative
@@ -80,21 +80,24 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   // This may leave a referencing dbg_value in the original block, before
   // the definition of the vreg.  Dwarf generator handles this although the
   // user might not get the right info at runtime.
-  for (MachineRegisterInfo::use_nodbg_iterator I = 
-       RegInfo->use_nodbg_begin(Reg),
-       E = RegInfo->use_nodbg_end(); I != E; ++I) {
+  for (MachineRegisterInfo::use_nodbg_iterator
+         I = RegInfo->use_nodbg_begin(Reg), E = RegInfo->use_nodbg_end();
+       I != E; ++I) {
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
+
     if (UseInst->isPHI()) {
       // PHI nodes use the operand in the predecessor block, not the block with
       // the PHI.
       UseBlock = UseInst->getOperand(I.getOperandNo()+1).getMBB();
     }
+
     // Check that it dominates.
     if (!DT->dominates(MBB, UseBlock))
       return false;
   }
+
   return true;
 }
 
@@ -200,13 +203,16 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
         // it could get allocated to something with a def during allocation.
         if (!RegInfo->def_empty(Reg))
           return false;
+
         if (AllocatableSet.test(Reg))
           return false;
+
         // Check for a def among the register's aliases too.
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           unsigned AliasReg = *Alias;
           if (!RegInfo->def_empty(AliasReg))
             return false;
+
           if (AllocatableSet.test(AliasReg))
             return false;
         }
@@ -226,10 +232,12 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       // successor that dominates all the uses.  However, there are cases where
       // sinking can happen but where the sink point isn't a successor.  For
       // example:
+      // 
       //   x = computation
       //   if () {} else {}
       //   use x
-      // the instruction could be sunk over the whole diamond for the 
+      // 
+      // the instruction could be sunk over the whole diamond for the
       // if/then/else (or loop, etc), allowing it to be sunk into other blocks
       // after that.
       
@@ -240,6 +248,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
         // must be sinkable to the same block.
         if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo)) 
           return false;
+
         continue;
       }
       
@@ -273,9 +282,8 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (MI->getParent() == SuccToSinkTo)
     return false;
   
-  DEBUG(dbgs() << "Sink instr " << *MI);
-  DEBUG(dbgs() << "to block " << *SuccToSinkTo);
-  
+  DEBUG(dbgs() << "Sink instr " << *MI << "\tinto block " << *SuccToSinkTo);
+
   // If the block has multiple predecessors, this would introduce computation on
   // a path that it doesn't already exist.  We could split the critical edge,
   // but for now we just punt.
@@ -306,7 +314,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     DEBUG(dbgs() << "Sinking along critical edge.\n");
   }
   
-  // Determine where to insert into.  Skip phi nodes.
+  // Determine where to insert into. Skip phi nodes.
   MachineBasicBlock::iterator InsertPos = SuccToSinkTo->begin();
   while (InsertPos != SuccToSinkTo->end() && InsertPos->isPHI())
     ++InsertPos;
@@ -315,8 +323,8 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   SuccToSinkTo->splice(InsertPos, ParentBlock, MI,
                        ++MachineBasicBlock::iterator(MI));
 
-  // Conservatively, clear any kill flags, since it's possible that
-  // they are no longer correct.
+  // Conservatively, clear any kill flags, since it's possible that they are no
+  // longer correct.
   MI->clearKillInfo();
 
   return true;
