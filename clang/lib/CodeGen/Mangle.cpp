@@ -1143,7 +1143,8 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
   if (MangleReturnType)
     mangleType(Proto->getResultType());
 
-  if (Proto->getNumArgs() == 0) {
+  if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
+    //   <builtin-type> ::= v	# void
     Out << 'v';
     return;
   }
