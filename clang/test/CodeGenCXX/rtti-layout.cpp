@@ -93,6 +93,14 @@ struct VMI7 : VMIBase1, VMI5, private VMI6 { };
 #define CHECK_BASE_INFO_TYPE(type, index, base) CHECK(to<__vmi_class_type_info>(typeid(type)).__base_info[(index)].__base_type == &typeid(base))
 #define CHECK_BASE_INFO_OFFSET_FLAGS(type, index, offset, flags) CHECK(to<__vmi_class_type_info>(typeid(type)).__base_info[(index)].__offset_flags == (((offset) << 8) | (flags)))
 
+struct B {
+  static int const volatile (*a)[10];
+  static int (*b)[10];
+  
+  static int const volatile (B::*c)[10];
+  static int (B::*d)[10];
+};
+
 // CHECK: define i32 @_Z1fv()
 int f() {
   // Vectors should be treated as fundamental types.
@@ -167,6 +175,12 @@ int f() {
   CHECK(to<__pbase_type_info>(typeid(int Incomplete::*)).__flags == __pbase_type_info::__incomplete_class_mask);
   CHECK(to<__pbase_type_info>(typeid(Incomplete Incomplete::*)).__flags == (__pbase_type_info::__incomplete_class_mask | __pbase_type_info::__incomplete_mask));
   CHECK(to<__pbase_type_info>(typeid(Incomplete A::*)).__flags == (__pbase_type_info::__incomplete_mask));
+
+  // Check that when stripping qualifiers off the pointee type, we correctly handle arrays.
+  CHECK(to<__pbase_type_info>(typeid(B::a)).__flags == (__pbase_type_info::__const_mask | __pbase_type_info::__volatile_mask));
+  CHECK(to<__pbase_type_info>(typeid(B::a)).__pointee == to<__pbase_type_info>(typeid(B::b)).__pointee);
+  CHECK(to<__pbase_type_info>(typeid(B::c)).__flags == (__pbase_type_info::__const_mask | __pbase_type_info::__volatile_mask));
+  CHECK(to<__pbase_type_info>(typeid(B::c)).__pointee == to<__pbase_type_info>(typeid(B::d)).__pointee);
 
   // Success!
   // CHECK: ret i32 0

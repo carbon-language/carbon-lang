@@ -728,15 +728,19 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
 void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
   QualType PointeeTy = Ty->getPointeeType();
   
+  Qualifiers Quals;
+  QualType UnqualifiedPointeeTy = 
+    CGM.getContext().getUnqualifiedArrayType(PointeeTy, Quals);
+  
   // Itanium C++ ABI 2.9.5p7:
   //   __flags is a flag word describing the cv-qualification and other 
   //   attributes of the type pointed to
-  unsigned Flags = ComputeQualifierFlags(PointeeTy.getQualifiers());
+  unsigned Flags = ComputeQualifierFlags(Quals);
 
   // Itanium C++ ABI 2.9.5p7:
   //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
   //   incomplete class type, the incomplete target type flag is set. 
-  if (ContainsIncompleteClassType(PointeeTy))
+  if (ContainsIncompleteClassType(UnqualifiedPointeeTy))
     Flags |= PTI_Incomplete;
 
   const llvm::Type *UnsignedIntLTy = 
@@ -747,7 +751,7 @@ void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
   //  __pointee is a pointer to the std::type_info derivation for the 
   //  unqualified type being pointed to.
   llvm::Constant *PointeeTypeInfo = 
-    RTTIBuilder(CGM).BuildTypeInfo(PointeeTy.getUnqualifiedType());
+    RTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
   Fields.push_back(PointeeTypeInfo);
 }
 
@@ -756,17 +760,21 @@ void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
 void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   QualType PointeeTy = Ty->getPointeeType();
   
+  Qualifiers Quals;
+  QualType UnqualifiedPointeeTy = 
+    CGM.getContext().getUnqualifiedArrayType(PointeeTy, Quals);
+  
   // Itanium C++ ABI 2.9.5p7:
   //   __flags is a flag word describing the cv-qualification and other 
   //   attributes of the type pointed to.
-  unsigned Flags = ComputeQualifierFlags(PointeeTy.getQualifiers());
+  unsigned Flags = ComputeQualifierFlags(Quals);
 
   const RecordType *ClassType = cast<RecordType>(Ty->getClass());
 
   // Itanium C++ ABI 2.9.5p7:
   //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
   //   incomplete class type, the incomplete target type flag is set. 
-  if (ContainsIncompleteClassType(PointeeTy))
+  if (ContainsIncompleteClassType(UnqualifiedPointeeTy))
     Flags |= PTI_Incomplete;
 
   if (IsIncompleteClassType(ClassType))
@@ -780,7 +788,7 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   //   __pointee is a pointer to the std::type_info derivation for the 
   //   unqualified type being pointed to.
   llvm::Constant *PointeeTypeInfo = 
-    RTTIBuilder(CGM).BuildTypeInfo(PointeeTy.getUnqualifiedType());
+    RTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
   Fields.push_back(PointeeTypeInfo);
 
   // Itanium C++ ABI 2.9.5p9:
