@@ -31,9 +31,6 @@ using namespace llvm;
 STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
 
-static cl::opt<bool> CSEPhysDef("machine-cse-phys-defs",
-                                cl::init(false), cl::Hidden);
-
 namespace {
   class MachineCSE : public MachineFunctionPass {
     const TargetInstrInfo *TII;
@@ -376,7 +373,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
 
       // ... Unless the CS is local and it also defines the physical register
       // which is not clobbered in between.
-      if (PhysDef && CSEPhysDef) {
+      if (PhysDef) {
         unsigned CSVN = VNT.lookup(MI);
         MachineInstr *CSMI = Exps[CSVN];
         if (PhysRegDefReaches(CSMI, MI, PhysDef))
