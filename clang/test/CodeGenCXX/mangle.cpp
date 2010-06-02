@@ -489,3 +489,10 @@ namespace test11 {
   // CHECK: @_ZN6test111A1fEz
   void A::f(...) { }
 }
+
+namespace test12 {
+
+  // CHECK: _ZN6test121fENS_1AILt33000EEE
+  template <unsigned short> struct A { };
+  void f(A<33000>) { }
+}

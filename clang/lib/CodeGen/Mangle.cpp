@@ -1391,9 +1391,11 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
     // Boolean values are encoded as 0/1.
     Out << (Value.getBoolValue() ? '1' : '0');
   } else {
-    if (Value.isNegative())
+    if (Value.isSigned() && Value.isNegative()) {
       Out << 'n';
-    Value.abs().print(Out, false);
+      Value.abs().print(Out, true);
+    } else
+      Value.print(Out, Value.isSigned());
   }
   Out << 'E';
 
