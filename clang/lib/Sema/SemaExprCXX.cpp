@@ -284,7 +284,10 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
   //   that is the operand of typeid are always ignored.
   //   If the type of the type-id is a class type or a reference to a class 
   //   type, the class shall be completely-defined.
-  QualType T = Operand->getType().getNonReferenceType();
+  Qualifiers Quals;
+  QualType T
+    = Context.getUnqualifiedArrayType(Operand->getType().getNonReferenceType(),
+                                      Quals);
   if (T->getAs<RecordType>() &&
       RequireCompleteType(TypeidLoc, T, diag::err_incomplete_typeid))
     return ExprError();
@@ -328,9 +331,11 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     //   cv-qualified type, the result of the typeid expression refers to a 
     //   std::type_info object representing the cv-unqualified referenced 
     //   type.
-    if (T.hasQualifiers()) {
-      ImpCastExprToType(E, T.getUnqualifiedType(), CastExpr::CK_NoOp,
-                        E->isLvalue(Context));
+    Qualifiers Quals;
+    QualType UnqualT = Context.getUnqualifiedArrayType(T, Quals);
+    if (!Context.hasSameType(T, UnqualT)) {
+      T = UnqualT;
+      ImpCastExprToType(E, UnqualT, CastExpr::CK_NoOp, E->isLvalue(Context));
       Operand.release();
       Operand = Owned(E);
     }

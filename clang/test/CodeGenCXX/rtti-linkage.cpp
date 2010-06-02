@@ -14,6 +14,7 @@
 // CHECK: _ZTI1A = weak_odr constant
 // CHECK: _ZTI1B = constant
 // CHECK: _ZTI1C = internal constant
+// CHECK: _ZTIA10_i = weak_odr constant
 // CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal constant
 // CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
 // CHECK: _ZTIFvvE = weak_odr
@@ -33,6 +34,7 @@
 // CHECK: _ZTS1B = constant
 // CHECK: _ZTS1C = internal constant
 // CHECK: _ZTS1F = weak_odr constant
+// CHECK: _ZTSA10_i = weak_odr constant
 // CHECK: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
 // CHECK: _ZTSFvN12_GLOBAL__N_11DEE = internal constant
 // CHECK: _ZTSFvvE = weak_odr constant
@@ -106,4 +108,13 @@ const std::type_info &t2() {
   (void)typeid(E);
   
   return typeid(getD());  
+}
+
+namespace Arrays {
+  struct A {
+    static const int a[10];
+  };
+  const std::type_info &f() {
+    return typeid(A::a);
+  }
 }
